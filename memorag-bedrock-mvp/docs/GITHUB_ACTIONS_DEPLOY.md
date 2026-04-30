@@ -30,7 +30,7 @@ RepositoryまたはEnvironment secretに次を設定する。
 
 GitHub OIDC providerをAWSアカウントに作成し、deploy用Roleのtrust policyで対象repoとbranch/environmentを制限する。
 
-CloudFormationで作成する場合:
+CloudFormationで作成する場合は、`memorag-bedrock-mvp` ディレクトリから実行する。
 
 ```bash
 aws cloudformation deploy \
@@ -54,6 +54,8 @@ aws cloudformation deploy \
 ```
 
 Outputsの `GitHubActionsDeployRoleArn` をGitHub secret `AWS_DEPLOY_ROLE_ARN` に設定する。
+
+リポジトリルートから実行する場合は、`--template-file memorag-bedrock-mvp/infra/bootstrap/github-actions-oidc-role.yaml` を指定する。
 
 例:
 

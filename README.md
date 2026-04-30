@@ -68,7 +68,7 @@ workflow input:
 
 GitHub OIDC providerとAssumeRole用IAM Roleを作成します。Role ARNをGitHub secret `AWS_DEPLOY_ROLE_ARN` に設定してください。
 
-CloudFormationテンプレートを用意しています。
+CloudFormationテンプレートを用意しています。リポジトリルート、つまり `~/project/rag-assist` から実行する場合は次のパスを使います。
 
 ```bash
 aws cloudformation deploy \
@@ -80,6 +80,8 @@ aws cloudformation deploy \
 ```
 
 Outputsの `GitHubActionsDeployRoleArn` をGitHub secret `AWS_DEPLOY_ROLE_ARN` に設定してください。
+
+`memorag-bedrock-mvp` ディレクトリに移動してから実行する場合は、`--template-file infra/bootstrap/github-actions-oidc-role.yaml` を指定してください。
 
 Trust policy例:
 
