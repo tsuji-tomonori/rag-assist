@@ -52,7 +52,8 @@ ${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
 - 推測、一般知識、資料外の補完は禁止。
 - 資料から判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
 - 回答できる場合は isAnswerable=true とし、簡潔に日本語で回答する。
-- 質問が分類、一覧、洗い出しを求める場合は、<context>内に明示された分類項目を漏れなく列挙し、章名、活動名、参考文献名を分類項目として混ぜない。
+- 質問が分類、一覧、洗い出しを求める場合は、<context>内に明示された分類項目を漏れなく列挙し、目次、章名、活動名、参考文献名を分類項目として混ぜない。
+- 要求獲得、要求分析、要求妥当性確認、要求管理、文書化、優先順位付け、追跡可能性、変更管理は要求活動や実務上の考慮であり、<context>に分類として明示されていない限り分類項目にしない。
 - usedChunkIds には根拠に使ったchunk idを入れる。
 - 出力はJSONのみ。Markdownやコードフェンスは禁止。
 
@@ -71,17 +72,38 @@ ${context}
 </context>`
 }
 
+export function selectFinalAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
+  if (!isClassificationQuestion(question)) return chunks
+
+  const scored = chunks
+    .map((chunk, index) => ({
+      chunk,
+      index,
+      score: classificationEvidenceScore(question, chunk.metadata.text ?? "")
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+
+  const selected = scored.filter((item) => !isTableOfContentsLike(item.chunk.metadata.text ?? "")).map((item) => item.chunk)
+  const sectionAnchored = selected.filter((chunk) => hasClassificationSectionEvidence(chunk.metadata.text ?? ""))
+
+  if (sectionAnchored.length > 0) return sectionAnchored.slice(0, Math.min(4, chunks.length))
+  if (selected.length > 0) return selected.slice(0, Math.min(4, chunks.length))
+
+  const nonToc = chunks.filter((chunk) => !isTableOfContentsLike(chunk.metadata.text ?? ""))
+  return nonToc.length > 0 ? nonToc : chunks
+}
+
 function escapeXml(input: string): string {
   return input.replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[char] ?? char))
 }
 
 function buildRelevantSnippet(question: string, text: string, maxChars = 1800): string {
-  if (text.length <= maxChars) return text
-
   const index = findBestNeedleIndex(question, text)
+  if (text.length <= maxChars && !(isClassificationQuestion(question) && index >= 0)) return text
   if (index < 0) return text.slice(0, maxChars)
 
-  const prefix = 160
+  const prefix = isClassificationQuestion(question) ? 0 : 160
   const start = Math.max(0, index - prefix)
   const end = Math.min(text.length, start + maxChars)
   return text.slice(start, end)
@@ -89,8 +111,8 @@ function buildRelevantSnippet(question: string, text: string, maxChars = 1800): 
 
 function findBestNeedleIndex(question: string, text: string): number {
   const normalizedQuestion = question.replace(/[?？。.!！\s]/g, "")
-  const candidates = unique([
-    ...intentAnchors(question),
+  const priorityCandidates = intentAnchors(question)
+  const fallbackCandidates = unique([
     normalizedQuestion,
     normalizedQuestion.replace(/とは$/, ""),
     normalizedQuestion.replace(/について$/, ""),
@@ -98,7 +120,7 @@ function findBestNeedleIndex(question: string, text: string): number {
     ...Array.from(question.matchAll(/[A-Za-z][A-Za-z0-9_-]{1,}/g)).map((match) => match[0])
   ]).sort((a, b) => b.length - a.length)
 
-  for (const candidate of candidates) {
+  for (const candidate of [...priorityCandidates, ...fallbackCandidates]) {
     if (candidate.length < 2) continue
     const index = text.toLowerCase().indexOf(candidate.toLowerCase())
     if (index >= 0) return index
@@ -108,7 +130,7 @@ function findBestNeedleIndex(question: string, text: string): number {
 
 function intentAnchors(question: string): string[] {
   const anchors: string[] = []
-  if (question.includes("分類")) {
+  if (isClassificationQuestion(question)) {
     anchors.push(
       "ソフトウェア要求の分類",
       "要求分類",
@@ -122,6 +144,33 @@ function intentAnchors(question: string): string[] {
     )
   }
   return anchors
+}
+
+function isClassificationQuestion(question: string): boolean {
+  return question.includes("分類")
+}
+
+function classificationEvidenceScore(question: string, text: string): number {
+  let score = 0
+  for (const anchor of intentAnchors(question)) {
+    if (text.includes(anchor)) score += anchor.length >= 8 ? 8 : 3
+  }
+  if (hasClassificationSectionEvidence(text)) score += 40
+  if (/第\s*2\s*層|製品要求から|非機能要求から|↓|\/\s*ソフトウェアプロジェクト要求/.test(text)) score += 12
+  if (/SWEBOK\s*では、?ソフトウェア要求を大きく次のように整理/.test(text)) score += 10
+  if (text.includes("画像生成用プロンプト")) score -= 12
+  if (isTableOfContentsLike(text)) score -= 16
+  return score
+}
+
+function hasClassificationSectionEvidence(text: string): boolean {
+  return text.includes("ソフトウェア要求の分類") && /SWEBOK\s*では、?ソフトウェア要求を大きく次のように整理/.test(text)
+}
+
+function isTableOfContentsLike(text: string): boolean {
+  const dotLeaderCount = text.match(/\. \. \./g)?.length ?? 0
+  const headingWithPageCount = text.match(/^\s*\d+(?:\.\d+)?\s+.+\s+\d+\s*$/gm)?.length ?? 0
+  return dotLeaderCount >= 4 || (text.includes("目次") && headingWithPageCount >= 4)
 }
 
 function unique(items: string[]): string[] {

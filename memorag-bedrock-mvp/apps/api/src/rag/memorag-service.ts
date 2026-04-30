@@ -4,7 +4,7 @@ import type { Dependencies } from "../dependencies.js"
 import type { Citation, DocumentManifest, JsonValue, MemoryCard, RetrievedVector, VectorRecord } from "../types.js"
 import { chunkText } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
-import { buildCluePrompt, buildFinalAnswerPrompt, buildMemoryCardPrompt } from "./prompts.js"
+import { buildCluePrompt, buildFinalAnswerPrompt, buildMemoryCardPrompt, selectFinalAnswerChunks } from "./prompts.js"
 import { extractTextFromUpload } from "./text-extract.js"
 
 type IngestInput = {
@@ -213,7 +213,8 @@ export class MemoRagService {
       }
     }
 
-    const answerRaw = await this.deps.textModel.generate(buildFinalAnswerPrompt(input.question, retrieved), {
+    const answerChunks = selectFinalAnswerChunks(input.question, retrieved)
+    const answerRaw = await this.deps.textModel.generate(buildFinalAnswerPrompt(input.question, answerChunks), {
       modelId: input.modelId ?? config.defaultModelId,
       temperature: 0,
       maxTokens: 1200
