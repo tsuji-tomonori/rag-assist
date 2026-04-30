@@ -1,11 +1,15 @@
 import { describe, expect, it, vi } from "vitest"
 import {
   chat,
+  answerQuestion,
+  createQuestion,
   deleteDocument,
   fileToBase64,
   getDebugRun,
   listDebugRuns,
   listDocuments,
+  listQuestions,
+  resolveQuestion,
   uploadDocument
 } from "./api.js"
 
@@ -86,6 +90,39 @@ describe("API client", () => {
     await expect(freshApi.listDocuments()).resolves.toEqual([])
 
     expect(fetchMock).toHaveBeenNthCalledWith(2, "http://localhost:8787/documents")
+  })
+
+  it("falls back to localhost when runtime config is not ok", async () => {
+    vi.resetModules()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, json: vi.fn().mockResolvedValue({}) })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ questions: undefined }) })
+    vi.stubGlobal("fetch", fetchMock)
+
+    const freshApi = await import("./api.js")
+    await expect(freshApi.listQuestions()).resolves.toEqual([])
+
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://localhost:8787/questions")
+  })
+
+  it("calls human question APIs", async () => {
+    const fetchMock = mockFetch({ questionId: "question-1", status: "open" })
+    await expect(createQuestion({ title: "確認", question: "質問" })).resolves.toMatchObject({ questionId: "question-1" })
+
+    mockFetch({ questions: [{ questionId: "question-1" }] })
+    await expect(listQuestions()).resolves.toEqual([{ questionId: "question-1" }])
+
+    mockFetch({ questionId: "question-1", status: "answered" })
+    await expect(answerQuestion("question-1", { answerTitle: "回答", answerBody: "本文" })).resolves.toMatchObject({ status: "answered" })
+
+    mockFetch({ questionId: "question-1", status: "resolved" })
+    await expect(resolveQuestion("question-1")).resolves.toMatchObject({ status: "resolved" })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/questions$/),
+      expect.objectContaining({ method: "POST" })
+    )
   })
 
   it("uses Vite env API base URL and raises GET/POST errors", async () => {

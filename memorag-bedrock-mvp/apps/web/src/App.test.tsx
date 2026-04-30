@@ -2,11 +2,14 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import App from "./App.js"
+import type { HumanQuestion } from "./api.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
   { documentId: "doc-2", fileName: "policy.md", chunkCount: 1, memoryCardCount: 1, createdAt: "2026-04-29T00:00:00.000Z" }
 ]
+
+const longFinalizeResponse = `ソフトウェア要求は製品要求とプロジェクト要求に分類されます。${"分類根拠。".repeat(220)}END_OF_FINALIZE_RESPONSE`
 
 const debugTrace = {
   runId: "run/with:unsafe*chars",
@@ -59,6 +62,55 @@ const debugTrace = {
   ]
 }
 
+const answerableDebugTrace = {
+  ...debugTrace,
+  status: "success" as const,
+  answerPreview: longFinalizeResponse,
+  isAnswerable: true,
+  steps: [
+    ...debugTrace.steps,
+    {
+      id: 3,
+      label: "finalize_response",
+      status: "success" as const,
+      latencyMs: 9,
+      summary: "finalized",
+      detail: longFinalizeResponse,
+      tokenCount: 430,
+      startedAt: "2026-04-30T00:00:01.250Z",
+      completedAt: "2026-04-30T00:00:01.259Z"
+    }
+  ]
+}
+
+const humanQuestion: HumanQuestion = {
+  questionId: "question-1",
+  title: "山田さんの昼食について確認したい",
+  question: "今日山田さんは何を食べたか、担当者に確認してください。",
+  requesterName: "山田 太郎",
+  requesterDepartment: "利用部門",
+  assigneeDepartment: "総務部",
+  category: "その他の質問",
+  priority: "normal" as const,
+  status: "open" as const,
+  sourceQuestion: "今日山田さんは何を食べた?",
+  chatAnswer: "資料からは回答できません。",
+  createdAt: "2026-04-30T00:00:00.000Z",
+  updatedAt: "2026-04-30T00:00:00.000Z"
+}
+
+const answeredHumanQuestion: HumanQuestion = {
+  ...humanQuestion,
+  status: "answered" as const,
+  answerTitle: "山田さんの昼食についての回答",
+  answerBody: "山田さんは本日、社内食堂でカレーを食べました。",
+  responderName: "佐藤 花子",
+  responderDepartment: "総務部",
+  references: "社内食堂メニュー表",
+  answeredAt: "2026-04-30T00:03:16.000Z",
+  updatedAt: "2026-04-30T00:03:16.000Z"
+}
+
 function response(body: unknown, ok = true) {
   return {
     ok,
@@ -93,7 +145,7 @@ function mockAppFetch() {
             }
           ],
           retrieved: [],
-          debug: body.includeDebug ? debugTrace : undefined
+          debug: body.includeDebug ? answerableDebugTrace : undefined
         })
       )
     }
@@ -248,6 +300,9 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(screen.getByTitle("Markdownでダウンロード"))
     expect(createObjectUrl).toHaveBeenCalled()
+    const markdown = await (createObjectUrl.mock.calls[0]?.[0] as Blob).text()
+    expect(markdown).toContain("### 3. finalize_response")
+    expect(markdown).toContain("END_OF_FINALIZE_RESPONSE")
     expect(click).toHaveBeenCalled()
     expect(revokeObjectUrl).toHaveBeenCalledWith("blob:trace")
 
@@ -343,5 +398,112 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("送信"))
 
     expect(await screen.findByText("chat failed")).toBeInTheDocument()
+  })
+
+  it("escalates an unanswerable response, supports assignee answer, and resolves the ticket", async () => {
+    let storedQuestions: typeof humanQuestion[] = []
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      const requestUrl = String(url)
+      if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/questions") && !init) return Promise.resolve(response({ questions: storedQuestions }))
+      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+        return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
+      }
+      if (requestUrl.endsWith("/questions") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body ?? "{}"))
+        storedQuestions = [{ ...humanQuestion, ...body }]
+        return Promise.resolve(response(storedQuestions[0]))
+      }
+      if (requestUrl.endsWith("/questions/question-1/answer") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body ?? "{}"))
+        const current = storedQuestions[0] ?? humanQuestion
+        storedQuestions = [{ ...current, ...body, status: "answered", updatedAt: answeredHumanQuestion.updatedAt, answeredAt: answeredHumanQuestion.answeredAt }]
+        return Promise.resolve(response(storedQuestions[0]))
+      }
+      if (requestUrl.endsWith("/questions/question-1/resolve") && init?.method === "POST") {
+        const current = storedQuestions[0] ?? answeredHumanQuestion
+        storedQuestions = [{ ...current, status: "resolved", resolvedAt: "2026-04-30T00:04:16.000Z" }]
+        return Promise.resolve(response(storedQuestions[0]))
+      }
+      return Promise.resolve(response({}))
+    })
+    vi.stubGlobal("fetch", fetchMock)
+    render(<App />)
+
+    await userEvent.type(screen.getByLabelText("質問"), "今日山田さんは何を食べた?")
+    await userEvent.click(screen.getByTitle("送信"))
+
+    expect(await screen.findByText("資料からは回答できません。")).toBeInTheDocument()
+    expect(await screen.findByLabelText("担当者へ質問")).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText("優先度"), "high")
+    await userEvent.selectOptions(screen.getByLabelText("カテゴリ"), "手続き")
+    await userEvent.selectOptions(screen.getByLabelText("担当部署"), "人事部")
+    await userEvent.click(screen.getByText("担当者へ送信"))
+
+    await screen.findByText("担当者へ送信済み")
+    await userEvent.click(screen.getByTitle("担当者対応"))
+    expect(await screen.findByText("問い合わせ概要")).toBeInTheDocument()
+    expect(screen.getByText(/件が対応待ち/)).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText("回答内容"), "山田さんは本日、社内食堂でカレーを食べました。")
+    await userEvent.type(screen.getByLabelText("参照資料 / 関連リンク"), "社内食堂メニュー表")
+    await userEvent.type(screen.getByLabelText("内部メモ"), "確認済み")
+    await userEvent.click(screen.getByLabelText("質問者へ通知する"))
+    await userEvent.click(screen.getByText("回答を送信"))
+
+    await userEvent.click(screen.getByTitle("チャットへ戻る"))
+    expect(await screen.findByText("担当者からの回答")).toBeInTheDocument()
+    expect(screen.getByText("山田さんは本日、社内食堂でカレーを食べました。")).toBeInTheDocument()
+    await userEvent.click(screen.getByText("追加で質問する"))
+    expect(screen.getByLabelText("質問")).toHaveValue("追加確認: 今日山田さんは何を食べた?について確認したい\n")
+    await userEvent.click(screen.getByText("解決した"))
+    expect(await screen.findByText("解決済み")).toBeInTheDocument()
+  })
+
+  it("renders empty and preloaded assignee workspaces", async () => {
+    const resolvedQuestion = {
+      ...answeredHumanQuestion,
+      questionId: "question-2",
+      title: "緊急確認",
+      priority: "urgent" as const,
+      status: "resolved" as const,
+      resolvedAt: "2026-04-30T00:05:16.000Z"
+    }
+    const questions = [humanQuestion, answeredHumanQuestion, resolvedQuestion]
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      const requestUrl = String(url)
+      if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents: [] }))
+      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/questions") && !init) return Promise.resolve(response({ questions }))
+      return Promise.resolve(response({}))
+    })
+    vi.stubGlobal("fetch", fetchMock)
+    render(<App />)
+
+    expect(await screen.findByText("資料を添付して開始できます")).toBeInTheDocument()
+    await userEvent.click(screen.getByTitle("担当者対応"))
+    expect(await screen.findByText("問い合わせ一覧")).toBeInTheDocument()
+    expect(screen.getByText("対応中 / 総務部")).toBeInTheDocument()
+    await userEvent.click(screen.getByText("緊急確認"))
+    expect(screen.getByText("解決済み / 総務部")).toBeInTheDocument()
+    expect(screen.getByText("緊急")).toBeInTheDocument()
+  })
+
+  it("shows an empty assignee workspace when no questions exist", async () => {
+    const fetchMock = vi.fn((url: RequestInfo | URL) => {
+      const requestUrl = String(url)
+      if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/documents")) return Promise.resolve(response({ documents: [] }))
+      if (requestUrl.endsWith("/debug-runs")) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/questions")) return Promise.resolve(response({ questions: [] }))
+      return Promise.resolve(response({}))
+    })
+    vi.stubGlobal("fetch", fetchMock)
+    render(<App />)
+
+    await userEvent.click(await screen.findByTitle("担当者対応"))
+    expect(await screen.findByText("担当者へ送信された質問はまだありません。")).toBeInTheDocument()
   })
 })

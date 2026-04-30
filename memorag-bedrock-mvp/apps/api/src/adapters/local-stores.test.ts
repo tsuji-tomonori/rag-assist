@@ -4,6 +4,7 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
 import { LocalObjectStore } from "./local-object-store.js"
+import { LocalQuestionStore } from "./local-question-store.js"
 import { LocalVectorStore } from "./local-vector-store.js"
 
 test("local object store writes, lists nested keys, reads, and deletes objects", async () => {
@@ -78,4 +79,47 @@ test("local vector store upserts, filters, ranks, and deletes vectors", async ()
   await store.delete([])
   await store.delete(["doc-1-chunk"])
   assert.deepEqual((await store.query([1, 0], 5)).map((hit) => hit.key), ["doc-2-memory"])
+})
+
+test("local question store creates, lists, answers, resolves, and rejects missing questions", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-question-test-"))
+  const store = new LocalQuestionStore(dataDir)
+
+  assert.deepEqual(await store.list(), [])
+
+  const question = await store.create({
+    title: "資料外の確認",
+    question: "担当者へ確認してください。",
+    requesterName: "  ",
+    requesterDepartment: "  ",
+    assigneeDepartment: "  ",
+    category: "  ",
+    sourceQuestion: "資料外の質問は？",
+    chatAnswer: "資料からは回答できません。"
+  })
+
+  assert.equal(question.status, "open")
+  assert.equal(question.requesterName, "山田 太郎")
+  assert.equal(question.assigneeDepartment, "総務部")
+  assert.equal((await store.get(question.questionId))?.questionId, question.questionId)
+  assert.deepEqual((await store.list()).map((item) => item.questionId), [question.questionId])
+
+  const answered = await store.answer(question.questionId, {
+    answerTitle: "回答",
+    answerBody: "担当者の確認結果です。",
+    responderName: "  ",
+    responderDepartment: "  ",
+    references: "社内確認",
+    internalMemo: "memo",
+    notifyRequester: false
+  })
+  assert.equal(answered.status, "answered")
+  assert.equal(answered.responderName, "佐藤 花子")
+  assert.equal(answered.responderDepartment, "総務部")
+  assert.equal(answered.notifyRequester, false)
+
+  const resolved = await store.resolve(question.questionId)
+  assert.equal(resolved.status, "resolved")
+  assert.ok(resolved.resolvedAt)
+  await assert.rejects(() => store.answer("missing", { answerTitle: "x", answerBody: "y" }), /Question not found/)
 })

@@ -5,6 +5,7 @@ import path from "node:path"
 import { mkdtemp } from "node:fs/promises"
 import test from "node:test"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
+import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
@@ -59,13 +60,39 @@ test("service rejects empty uploads and missing documents", async () => {
   assert.equal(await service.getDebugRun("missing-run"), undefined)
 })
 
+test("service delegates human question lifecycle to the question store", async () => {
+  const { service } = await createService()
+
+  const question = await service.createQuestion({
+    title: "資料外の質問",
+    question: "担当者へ確認してください。",
+    sourceQuestion: "資料外の質問は？",
+    chatAnswer: "資料からは回答できません。"
+  })
+  assert.equal(question.status, "open")
+  assert.equal((await service.listQuestions())[0]?.questionId, question.questionId)
+  assert.equal((await service.getQuestion(question.questionId))?.questionId, question.questionId)
+
+  const answered = await service.answerQuestion(question.questionId, {
+    answerTitle: "回答",
+    answerBody: "担当者の確認結果です。",
+    references: "社内確認"
+  })
+  assert.equal(answered.status, "answered")
+  assert.equal(answered.answerBody, "担当者の確認結果です。")
+
+  const resolved = await service.resolveQuestion(question.questionId)
+  assert.equal(resolved.status, "resolved")
+})
+
 async function createService(): Promise<{ service: MemoRagService; dataDir: string }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-service-test-"))
   const deps = {
     objectStore: new LocalObjectStore(dataDir),
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
-    textModel: new MockBedrockTextModel()
+    textModel: new MockBedrockTextModel(),
+    questionStore: new LocalQuestionStore(dataDir)
   } as unknown as Dependencies
   return { service: new MemoRagService(deps), dataDir }
 }
