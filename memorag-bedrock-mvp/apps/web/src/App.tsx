@@ -34,6 +34,7 @@ type IconName =
   | "expand"
   | "info"
   | "plus"
+  | "download"
   | "share"
   | "thumbUp"
   | "thumbDown"
@@ -54,7 +55,7 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [debugMode, setDebugMode] = useState(true)
+  const [debugMode, setDebugMode] = useState(false)
   const [expandedStepId, setExpandedStepId] = useState<number | null>(null)
   const [allExpanded, setAllExpanded] = useState(false)
 
@@ -66,7 +67,7 @@ export default function App() {
     return latestTrace ?? debugRuns[0]
   }, [debugRuns, latestTrace, selectedRunId])
   const totalLatency = selectedTrace ? formatLatency(selectedTrace.totalLatencyMs) : "-"
-  const visibleMessages = messages.length > 0 ? messages : getInitialMessages()
+  const visibleMessages = messages
 
   useEffect(() => {
     refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
@@ -361,6 +362,10 @@ function DebugPanel({
           <span>{steps.length} ステップ</span>
         </div>
         <div className="debug-head-actions">
+          <button type="button" onClick={() => downloadDebugTrace(trace)} disabled={!trace} title="Markdownでダウンロード">
+            <Icon name="download" />
+            <span>MD DL</span>
+          </button>
           <button type="button" onClick={onToggleAll}>{allExpanded ? "すべて閉じる" : "すべて展開"}</button>
           <button type="button" title="拡大表示">
             <Icon name="expand" />
@@ -444,6 +449,8 @@ function getIconPath(name: IconName) {
       return <path d="M11 10h2v8h-2v-8Zm0-4h2v2h-2V6Zm1-4a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" />
     case "plus":
       return <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
+    case "download":
+      return <path d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4 3.3 3.3V3Zm-6 15h14v3H5v-3Z" />
     case "share":
       return <path d="M18 16.1a3 3 0 0 0-2.2 1l-6.1-3.5a3.2 3.2 0 0 0 0-1.2l6-3.5A3 3 0 1 0 14.8 7l-6 3.5a3 3 0 1 0 0 5l6.1 3.6A3 3 0 1 0 18 16.1Z" />
     case "thumbUp":
@@ -453,16 +460,93 @@ function getIconPath(name: IconName) {
   }
 }
 
-function getInitialMessages(): Message[] {
-  const now = new Date().toISOString()
-  return [
-    { role: "user", text: "在宅勤務手当の金額と申請方法を教えてください。", createdAt: now },
-    {
-      role: "assistant",
-      text: "質問を送信すると、回答とあわせて右側に実行ステップ、検索ヒット数、モデル、レイテンシが表示されます。",
-      createdAt: now
-    }
+function downloadDebugTrace(trace?: DebugTrace) {
+  if (!trace) return
+
+  const markdown = formatDebugTraceMarkdown(trace)
+  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = `debug-trace-${sanitizeFileName(trace.runId)}.md`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
+function formatDebugTraceMarkdown(trace: DebugTrace): string {
+  const statusLabel = trace.status === "success" ? "成功" : trace.status === "warning" ? "注意" : "失敗"
+  const lines = [
+    `# Debug Trace ${trace.runId}`,
+    "",
+    "## Summary",
+    "",
+    `- Run ID: ${trace.runId}`,
+    `- Status: ${statusLabel}`,
+    `- Question: ${trace.question}`,
+    `- Answerable: ${trace.isAnswerable ? "Yes" : "No"}`,
+    `- Started At: ${trace.startedAt}`,
+    `- Completed At: ${trace.completedAt}`,
+    `- Total Latency: ${formatLatency(trace.totalLatencyMs)}`,
+    `- Model ID: ${trace.modelId}`,
+    `- Embedding Model ID: ${trace.embeddingModelId}`,
+    `- Clue Model ID: ${trace.clueModelId}`,
+    `- Top K: ${trace.topK}`,
+    `- Memory Top K: ${trace.memoryTopK}`,
+    `- Min Score: ${trace.minScore}`,
+    "",
+    "## Answer Preview",
+    "",
+    trace.answerPreview || "-",
+    "",
+    "## Steps",
+    "",
+    ...trace.steps.flatMap((step) => [
+      `### ${step.id}. ${step.label}`,
+      "",
+      `- Status: ${step.status}`,
+      `- Latency: ${formatLatency(step.latencyMs)}`,
+      step.modelId ? `- Model ID: ${step.modelId}` : undefined,
+      step.hitCount !== undefined ? `- Hit Count: ${step.hitCount}` : undefined,
+      step.tokenCount !== undefined ? `- Token Count: ${step.tokenCount}` : undefined,
+      `- Started At: ${step.startedAt}`,
+      `- Completed At: ${step.completedAt}`,
+      "",
+      step.summary,
+      "",
+      ...(step.detail ? ["```text", step.detail, "```", ""] : [])
+    ].filter((line): line is string => line !== undefined)),
+    "## Citations",
+    "",
+    ...formatCitationMarkdown(trace.citations),
+    "## Retrieved",
+    "",
+    ...formatCitationMarkdown(trace.retrieved)
   ]
+
+  return `${lines.join("\n")}\n`
+}
+
+function formatCitationMarkdown(citations: DebugTrace["citations"]): string[] {
+  if (citations.length === 0) return ["なし", ""]
+
+  return citations.flatMap((citation, index) => [
+    `### ${index + 1}. ${citation.fileName}`,
+    "",
+    `- Document ID: ${citation.documentId}`,
+    citation.chunkId ? `- Chunk ID: ${citation.chunkId}` : undefined,
+    `- Score: ${citation.score}`,
+    "",
+    "```text",
+    citation.text,
+    "```",
+    ""
+  ].filter((line): line is string => line !== undefined))
+}
+
+function sanitizeFileName(input: string): string {
+  return input.replace(/[^a-zA-Z0-9._-]/g, "_")
 }
 
 function getPlaceholderSteps(): DebugStep[] {

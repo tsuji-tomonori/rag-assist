@@ -584,7 +584,7 @@ button:disabled {
   font-size: 20px;
 }
 
-.debug-head span {
+.debug-head > div:first-child span {
   display: inline-flex;
   margin-left: 16px;
   border: 1px solid #cbd9f0;
@@ -606,6 +606,10 @@ button:disabled {
   min-height: 34px;
   border: 1px solid #d7e0ea;
   border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 0 12px;
   color: #243552;
   background: #f8fafc;
@@ -616,8 +620,6 @@ button:disabled {
 .debug-head-actions button:last-child {
   width: 34px;
   padding: 0;
-  display: grid;
-  place-items: center;
 }
 
 .debug-head-actions .icon {
@@ -953,7 +955,7 @@ button:disabled {
     padding: 14px;
   }
 
-  .debug-head span {
+  .debug-head > div:first-child span {
     margin-left: 0;
     margin-top: 8px;
   }
