@@ -9,6 +9,8 @@ import {
   BenchmarkQueryRequestSchema,
   BenchmarkQueryResponseSchema,
   DeleteDocumentResponseSchema,
+  DebugTraceListResponseSchema,
+  DebugTraceSchema,
   DocumentListResponseSchema,
   DocumentManifestSchema,
   DocumentUploadRequestSchema,
@@ -131,6 +133,40 @@ app.openapi(chatRoute, async (c) => {
   const body = (c.req as any).valid("json") as z.infer<typeof ChatRequestSchema>
   return c.json(await service.chat(body), 200)
 })
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/debug-runs",
+    responses: {
+      200: {
+        description: "List persisted chat debug traces",
+        content: { "application/json": { schema: DebugTraceListResponseSchema } }
+      }
+    }
+  }),
+  async (c) => c.json({ debugRuns: await service.listDebugRuns() }, 200)
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/debug-runs/{runId}",
+    request: {
+      params: z.object({ runId: z.string().min(1) })
+    },
+    responses: {
+      200: { description: "Get a persisted chat debug trace", content: { "application/json": { schema: DebugTraceSchema } } },
+      404: { description: "Debug run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const { runId } = (c.req as any).valid("param") as { runId: string }
+    const trace = await service.getDebugRun(runId)
+    if (!trace) return c.json({ error: "Debug run not found" }, 404)
+    return c.json(trace, 200)
+  }
+)
 
 app.openapi(
   looseRoute({

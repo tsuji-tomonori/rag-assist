@@ -64,3 +64,39 @@ export type Citation = {
   score: number
   text: string
 }
+
+export type DebugStepStatus = "success" | "warning" | "error"
+
+export type DebugStep = {
+  id: number
+  label: string
+  status: DebugStepStatus
+  latencyMs: number
+  modelId?: string
+  summary: string
+  detail?: string
+  hitCount?: number
+  tokenCount?: number
+  startedAt: string
+  completedAt: string
+}
+
+export type DebugTrace = {
+  runId: string
+  question: string
+  modelId: string
+  embeddingModelId: string
+  clueModelId: string
+  topK: number
+  memoryTopK: number
+  minScore: number
+  startedAt: string
+  completedAt: string
+  totalLatencyMs: number
+  status: DebugStepStatus
+  answerPreview: string
+  isAnswerable: boolean
+  citations: Citation[]
+  retrieved: Citation[]
+  steps: DebugStep[]
+}

@@ -61,12 +61,50 @@ export const CitationSchema = z.object({
   text: z.string()
 })
 
+export const DebugStepSchema = z.object({
+  id: z.number(),
+  label: z.string(),
+  status: z.enum(["success", "warning", "error"]),
+  latencyMs: z.number(),
+  modelId: z.string().optional(),
+  summary: z.string(),
+  detail: z.string().optional(),
+  hitCount: z.number().optional(),
+  tokenCount: z.number().optional(),
+  startedAt: z.string(),
+  completedAt: z.string()
+})
+
+export const DebugTraceSchema = z.object({
+  runId: z.string(),
+  question: z.string(),
+  modelId: z.string(),
+  embeddingModelId: z.string(),
+  clueModelId: z.string(),
+  topK: z.number(),
+  memoryTopK: z.number(),
+  minScore: z.number(),
+  startedAt: z.string(),
+  completedAt: z.string(),
+  totalLatencyMs: z.number(),
+  status: z.enum(["success", "warning", "error"]),
+  answerPreview: z.string(),
+  isAnswerable: z.boolean(),
+  citations: z.array(CitationSchema),
+  retrieved: z.array(CitationSchema),
+  steps: z.array(DebugStepSchema)
+})
+
 export const ChatResponseSchema = z.object({
   answer: z.string(),
   isAnswerable: z.boolean(),
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
-  debug: z.record(z.unknown()).optional()
+  debug: DebugTraceSchema.optional()
+})
+
+export const DebugTraceListResponseSchema = z.object({
+  debugRuns: z.array(DebugTraceSchema)
 })
 
 export const BenchmarkQueryRequestSchema = ChatRequestSchema.extend({

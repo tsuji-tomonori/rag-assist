@@ -28,12 +28,46 @@ export type Citation = {
   text: string
 }
 
+export type DebugStep = {
+  id: number
+  label: string
+  status: "success" | "warning" | "error"
+  latencyMs: number
+  modelId?: string
+  summary: string
+  detail?: string
+  hitCount?: number
+  tokenCount?: number
+  startedAt: string
+  completedAt: string
+}
+
+export type DebugTrace = {
+  runId: string
+  question: string
+  modelId: string
+  embeddingModelId: string
+  clueModelId: string
+  topK: number
+  memoryTopK: number
+  minScore: number
+  startedAt: string
+  completedAt: string
+  totalLatencyMs: number
+  status: "success" | "warning" | "error"
+  answerPreview: string
+  isAnswerable: boolean
+  citations: Citation[]
+  retrieved: Citation[]
+  steps: DebugStep[]
+}
+
 export type ChatResponse = {
   answer: string
   isAnswerable: boolean
   citations: Citation[]
   retrieved: Citation[]
-  debug?: Record<string, unknown>
+  debug?: DebugTrace
 }
 
 export type DocumentManifest = {
@@ -58,6 +92,15 @@ export async function uploadDocument(input: {
 export async function listDocuments(): Promise<DocumentManifest[]> {
   const result = await get<{ documents: DocumentManifest[] }>("/documents")
   return result.documents
+}
+
+export async function listDebugRuns(): Promise<DebugTrace[]> {
+  const result = await get<{ debugRuns: DebugTrace[] }>("/debug-runs")
+  return result.debugRuns
+}
+
+export async function getDebugRun(runId: string): Promise<DebugTrace> {
+  return get<DebugTrace>(`/debug-runs/${encodeURIComponent(runId)}`)
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {
