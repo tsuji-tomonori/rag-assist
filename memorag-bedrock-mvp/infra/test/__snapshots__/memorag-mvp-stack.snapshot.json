@@ -773,7 +773,10 @@
             ]
           ]
         },
-        "indexName": "memorag-index",
+        "indexNames": [
+          "memory-index",
+          "evidence-index"
+        ],
         "dimension": 1024,
         "distanceMetric": "cosine"
       },
@@ -925,7 +928,8 @@
                 ]
               ]
             },
-            "VECTOR_INDEX_NAME": "memorag-index",
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
             "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
             "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
             "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
@@ -1276,8 +1280,11 @@
         ]
       }
     },
-    "VectorIndexName": {
-      "Value": "memorag-index"
+    "MemoryVectorIndexName": {
+      "Value": "memory-index"
+    },
+    "EvidenceVectorIndexName": {
+      "Value": "evidence-index"
     },
     "DocumentsBucketName": {
       "Value": {

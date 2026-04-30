@@ -60,7 +60,7 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::CloudFront::OriginAccessControl", 1)
   template.hasResourceProperties("AWS::CloudFormation::CustomResource", {
     vectorBucketName: Match.anyValue(),
-    indexName: "memorag-index",
+    indexNames: ["memory-index", "evidence-index"],
     dimension: 1024,
     distanceMetric: "cosine"
   })

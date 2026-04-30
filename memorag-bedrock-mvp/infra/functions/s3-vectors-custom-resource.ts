@@ -13,7 +13,8 @@ const client = new S3VectorsClient({})
 
 type Props = {
   vectorBucketName: string
-  indexName: string
+  indexName?: string
+  indexNames?: string[]
   dimension: number | string
   distanceMetric?: "cosine" | "euclidean"
 }
@@ -21,25 +22,37 @@ type Props = {
 export const handler = async (event: CloudFormationCustomResourceEvent) => {
   const props = event.ResourceProperties as unknown as Props
   const vectorBucketName = props.vectorBucketName
-  const indexName = props.indexName
+  const indexNames = props.indexNames ?? (props.indexName ? [props.indexName] : [])
   const dimension = Number(props.dimension)
   const distanceMetric = props.distanceMetric ?? "cosine"
-  const physicalResourceId = `${vectorBucketName}/${indexName}`
+  const physicalResourceId = `${vectorBucketName}/${indexNames.join("+")}`
 
   if (event.RequestType === "Delete") {
-    await ignoreNotFound(() => client.send(new DeleteIndexCommand({ vectorBucketName, indexName })))
+    for (const indexName of indexNames) {
+      await ignoreNotFound(() => client.send(new DeleteIndexCommand({ vectorBucketName, indexName })))
+    }
     await ignoreNotFound(() => client.send(new DeleteVectorBucketCommand({ vectorBucketName })))
     return { PhysicalResourceId: event.PhysicalResourceId ?? physicalResourceId }
   }
 
+  if (event.RequestType === "Update") {
+    const oldProps = event.OldResourceProperties as unknown as Partial<Props> | undefined
+    const oldIndexNames = oldProps ? oldProps.indexNames ?? (oldProps.indexName ? [oldProps.indexName] : []) : []
+    for (const indexName of oldIndexNames.filter((name) => !indexNames.includes(name))) {
+      await ignoreNotFound(() => client.send(new DeleteIndexCommand({ vectorBucketName, indexName })))
+    }
+  }
+
   await ensureVectorBucket(vectorBucketName)
-  await ensureIndex(vectorBucketName, indexName, dimension, distanceMetric)
+  for (const indexName of indexNames) {
+    await ensureIndex(vectorBucketName, indexName, dimension, distanceMetric)
+  }
 
   return {
     PhysicalResourceId: physicalResourceId,
     Data: {
       vectorBucketName,
-      indexName
+      indexNames
     }
   }
 }

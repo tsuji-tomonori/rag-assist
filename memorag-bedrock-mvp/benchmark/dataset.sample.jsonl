@@ -1,2 +1,2 @@
-{"id":"q1","question":"経費精算の期限は？","expected":"30日以内"}
-{"id":"q2","question":"資料にない休日制度は？","expected":"資料からは回答できません。"}
+{"id":"q1","question":"経費精算の期限は？","answerable":true,"expected":"30日以内","expectedContains":["30日以内"],"expectedFiles":["handbook.md"]}
+{"id":"q2","question":"資料にない休日制度は？","answerable":false,"expected":"資料からは回答できません。"}

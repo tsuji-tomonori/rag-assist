@@ -45,6 +45,8 @@ curl -fsS http://localhost:8787/openapi.json >/dev/null
 API_BASE_URL=http://localhost:8787 \
 DATASET=benchmark/dataset.sample.jsonl \
 OUTPUT=.local-data/benchmark-results.jsonl \
+SUMMARY=.local-data/benchmark-summary.json \
+REPORT=.local-data/benchmark-report.md \
 npm run start -w @memorag-mvp/benchmark
 ```
 
@@ -54,4 +56,4 @@ npm run start -w @memorag-mvp/benchmark
 - `/documents` が `documentId`、`chunkCount`、`memoryCardCount` を返す。
 - `/chat` が回答本文と `citations`、`retrieved` を返す。
 - `/openapi.json` がJSONとして取得できる。
-- benchmark CLIが `.local-data/benchmark-results.jsonl` を作成する。
+- benchmark CLIが `.local-data/benchmark-results.jsonl`、`.local-data/benchmark-summary.json`、`.local-data/benchmark-report.md` を作成する。

@@ -36,6 +36,8 @@ export type DocumentManifest = {
   sourceObjectKey: string
   manifestObjectKey: string
   vectorKeys: string[]
+  memoryVectorKeys?: string[]
+  evidenceVectorKeys?: string[]
   chunkCount: number
   memoryCardCount: number
   createdAt: string

@@ -11,7 +11,8 @@ import type { VectorStore } from "./adapters/vector-store.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
-  vectorStore: VectorStore
+  memoryVectorStore: VectorStore
+  evidenceVectorStore: VectorStore
   textModel: TextModel
 }
 
@@ -24,12 +25,16 @@ export function createDependencies(): Dependencies {
     ? new LocalObjectStore(config.localDataDir)
     : new S3ObjectStore(config.docsBucketName)
 
-  const vectorStore = config.useLocalVectorStore
-    ? new LocalVectorStore(config.localDataDir)
-    : new S3VectorsStore(config.vectorBucketName, config.vectorIndexName)
+  const memoryVectorStore = config.useLocalVectorStore
+    ? new LocalVectorStore(config.localDataDir, "memory-vectors.json")
+    : new S3VectorsStore(config.vectorBucketName, config.memoryVectorIndexName)
+
+  const evidenceVectorStore = config.useLocalVectorStore
+    ? new LocalVectorStore(config.localDataDir, "evidence-vectors.json")
+    : new S3VectorsStore(config.vectorBucketName, config.evidenceVectorIndexName)
 
   const textModel = config.mockBedrock ? new MockBedrockTextModel() : new BedrockTextModel()
 
-  cached = { objectStore, vectorStore, textModel }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel }
   return cached
 }

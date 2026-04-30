@@ -29,7 +29,8 @@ export class MemoRagMvpStack extends Stack {
     const embeddingModelId = String(this.node.tryGetContext("embeddingModelId") ?? "amazon.titan-embed-text-v2:0")
     const suffix = this.node.addr.slice(0, 8).toLowerCase()
     const vectorBucketName = `memorag-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.REGION}-${suffix}`
-    const vectorIndexName = "memorag-index"
+    const memoryVectorIndexName = "memory-index"
+    const evidenceVectorIndexName = "evidence-index"
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -93,7 +94,7 @@ export class MemoRagMvpStack extends Stack {
       serviceToken: s3VectorsProvider.serviceToken,
       properties: {
         vectorBucketName,
-        indexName: vectorIndexName,
+        indexNames: [memoryVectorIndexName, evidenceVectorIndexName],
         dimension: embeddingDimensions,
         distanceMetric: "cosine"
       }
@@ -117,7 +118,8 @@ export class MemoRagMvpStack extends Stack {
         MOCK_BEDROCK: "false",
         DOCS_BUCKET_NAME: docsBucket.bucketName,
         VECTOR_BUCKET_NAME: vectorBucketName,
-        VECTOR_INDEX_NAME: vectorIndexName,
+        MEMORY_VECTOR_INDEX_NAME: memoryVectorIndexName,
+        EVIDENCE_VECTOR_INDEX_NAME: evidenceVectorIndexName,
         DEFAULT_MODEL_ID: defaultModelId,
         DEFAULT_MEMORY_MODEL_ID: defaultModelId,
         EMBEDDING_MODEL_ID: embeddingModelId,
@@ -262,7 +264,8 @@ export class MemoRagMvpStack extends Stack {
     new cdk.CfnOutput(this, "OpenApiUrl", { value: `${httpStage.url}openapi.json` })
     new cdk.CfnOutput(this, "FrontendUrl", { value: `https://${distribution.distributionDomainName}` })
     new cdk.CfnOutput(this, "VectorBucketName", { value: vectorBucketName })
-    new cdk.CfnOutput(this, "VectorIndexName", { value: vectorIndexName })
+    new cdk.CfnOutput(this, "MemoryVectorIndexName", { value: memoryVectorIndexName })
+    new cdk.CfnOutput(this, "EvidenceVectorIndexName", { value: evidenceVectorIndexName })
     new cdk.CfnOutput(this, "DocumentsBucketName", { value: docsBucket.bucketName })
   }
 }

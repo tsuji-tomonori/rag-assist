@@ -27,6 +27,8 @@ export const DocumentManifestSchema = z.object({
   sourceObjectKey: z.string(),
   manifestObjectKey: z.string(),
   vectorKeys: z.array(z.string()),
+  memoryVectorKeys: z.array(z.string()).optional(),
+  evidenceVectorKeys: z.array(z.string()).optional(),
   chunkCount: z.number(),
   memoryCardCount: z.number(),
   createdAt: z.string()
@@ -50,7 +52,9 @@ export const ChatRequestSchema = z.object({
   memoryTopK: z.number().int().min(1).max(10).optional().openapi({ example: 4 }),
   minScore: z.number().min(-1).max(1).optional().openapi({ example: 0.20 }),
   strictGrounded: z.boolean().optional().openapi({ example: true }),
-  includeDebug: z.boolean().optional().openapi({ example: false })
+  includeDebug: z.boolean().optional().openapi({ example: false }),
+  debug: z.boolean().optional().openapi({ example: false }),
+  useMemory: z.boolean().optional().openapi({ example: true })
 })
 
 export const CitationSchema = z.object({

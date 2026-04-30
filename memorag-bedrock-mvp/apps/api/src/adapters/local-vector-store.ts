@@ -10,8 +10,8 @@ type Persisted = {
 export class LocalVectorStore implements VectorStore {
   private readonly filePath: string
 
-  constructor(baseDir: string) {
-    this.filePath = path.join(baseDir, "vectors.json")
+  constructor(baseDir: string, fileName = "vectors.json") {
+    this.filePath = path.join(baseDir, fileName)
   }
 
   async put(records: VectorRecord[]): Promise<void> {

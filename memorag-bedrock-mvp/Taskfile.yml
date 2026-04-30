@@ -99,11 +99,13 @@ tasks:
       - npm run cdk -w @memorag-mvp/infra -- destroy
 
   benchmark:sample:
-    desc: Run the sample benchmark against a running local/API endpoint
+    desc: Run the sample benchmark and generate JSONL/JSON/Markdown reports
     env:
       API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
       DATASET: 'benchmark/dataset.sample.jsonl'
       OUTPUT: '.local-data/benchmark-results.jsonl'
+      SUMMARY: '.local-data/benchmark-summary.json'
+      REPORT: '.local-data/benchmark-report.md'
     cmds:
       - npm run start -w @memorag-mvp/benchmark
 

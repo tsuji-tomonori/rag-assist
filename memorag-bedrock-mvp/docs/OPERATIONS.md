@@ -81,3 +81,7 @@ task benchmark:sample
 - 回答が空になる場合は `/chat` の `includeDebug=true` でmemory/chunk検索結果とscoreを確認する。
 - 文書が検索されない場合はdocument manifest、vector metadata、embedding dimensionの不一致を確認する。
 - AWS実行時にBedrockエラーが出る場合はリージョン、モデル有効化、IAMの `bedrock:InvokeModel` と `bedrock:Converse` を確認する。
+
+## ベンチマークレポート
+
+`task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、p95 latencyを確認できる。
