@@ -54,23 +54,29 @@ export default function App() {
   const [minScore] = useState(0.2)
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
+  const [pendingActivity, setPendingActivity] = useState<string | null>(null)
+  const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [debugMode, setDebugMode] = useState(false)
   const [expandedStepId, setExpandedStepId] = useState<number | null>(null)
   const [allExpanded, setAllExpanded] = useState(false)
+  const [conversationKey, setConversationKey] = useState(0)
 
   const canAsk = useMemo(() => (question.trim().length > 0 || file !== null) && !loading, [question, file, loading])
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
   const latestTrace = latestAssistant?.result?.debug
+  const isProcessing = pendingActivity !== null
   const selectedDocument = useMemo(
     () => documents.find((document) => document.documentId === selectedDocumentId),
     [documents, selectedDocumentId]
   )
   const selectedTrace = useMemo(() => {
+    if (pendingDebugQuestion) return undefined
     if (selectedRunId) return debugRuns.find((run) => run.runId === selectedRunId) ?? latestTrace
-    return latestTrace ?? debugRuns[0]
-  }, [debugRuns, latestTrace, selectedRunId])
-  const totalLatency = selectedTrace ? formatLatency(selectedTrace.totalLatencyMs) : "-"
+    return latestTrace
+  }, [debugRuns, latestTrace, pendingDebugQuestion, selectedRunId])
+  const totalLatency = pendingDebugQuestion ? "処理中" : selectedTrace ? formatLatency(selectedTrace.totalLatencyMs) : "-"
+  const selectedRunValue = pendingDebugQuestion ? "__processing__" : selectedTrace?.runId ?? ""
   const visibleMessages = messages
 
   useEffect(() => {
@@ -96,9 +102,15 @@ export default function App() {
 
     const typedQuestion = question.trim()
     const userQuestion = typedQuestion || `${file?.name ?? "添付資料"}を取り込んでください`
+    const hasAttachment = file !== null
     setQuestion("")
     setMessages((prev) => [...prev, { role: "user", text: userQuestion, createdAt: new Date().toISOString() }])
     setLoading(true)
+    setPendingActivity(hasAttachment && typedQuestion ? "資料を取り込み、回答を生成中" : typedQuestion ? "回答を生成中" : "資料を取り込み中")
+    setPendingDebugQuestion(userQuestion)
+    setSelectedRunId("")
+    setExpandedStepId(null)
+    setAllExpanded(false)
     setError(null)
 
     try {
@@ -138,6 +150,8 @@ export default function App() {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
+      setPendingActivity(null)
+      setPendingDebugQuestion(null)
       setLoading(false)
     }
   }
@@ -165,8 +179,13 @@ export default function App() {
     setMessages([])
     setQuestion("")
     setFile(null)
+    setError(null)
+    setPendingActivity(null)
+    setPendingDebugQuestion(null)
     setSelectedRunId("")
     setExpandedStepId(null)
+    setAllExpanded(false)
+    setConversationKey((current) => current + 1)
   }
 
   return (
@@ -239,13 +258,17 @@ export default function App() {
           </div>
           <label className="top-control run-control">
             <span>実行ID</span>
-            <select value={selectedTrace?.runId ?? ""} onChange={(event) => setSelectedRunId(event.target.value)} disabled={debugRuns.length === 0 && !latestTrace}>
+            <select
+              value={selectedRunValue}
+              onChange={(event) => setSelectedRunId(event.target.value)}
+              disabled={pendingDebugQuestion !== null || (debugRuns.length === 0 && !latestTrace)}
+            >
+              {pendingDebugQuestion ? <option value="__processing__">処理中</option> : <option value="">未実行</option>}
               {(latestTrace && !debugRuns.some((run) => run.runId === latestTrace.runId) ? [latestTrace, ...debugRuns] : debugRuns).map((run) => (
                 <option value={run.runId} key={run.runId}>
                   {run.runId}
                 </option>
               ))}
-              {!selectedTrace && <option value="">未実行</option>}
             </select>
           </label>
           <div className="latency-block">
@@ -268,6 +291,7 @@ export default function App() {
         <section className={`split-workspace ${debugMode ? "" : "debug-off"}`}>
           <section className="chat-card" aria-label="チャット">
             <div className="message-list">
+              {visibleMessages.length === 0 && !isProcessing && <ChatEmptyState documentsCount={documents.length} onSelectPrompt={setQuestion} />}
               {visibleMessages.map((message, index) => (
                 <article className={`message-row ${message.role}`} key={`${message.role}-${message.createdAt}-${index}`}>
                   <div className="message-avatar">{message.role === "user" ? "U" : <Icon name="logo" />}</div>
@@ -280,6 +304,20 @@ export default function App() {
                   </div>
                 </article>
               ))}
+              {pendingActivity && (
+                <article className="message-row assistant processing-row" aria-live="polite">
+                  <div className="message-avatar">
+                    <span className="loading-spinner" aria-hidden="true" />
+                  </div>
+                  <div className="message-content">
+                    <div className="message-meta">
+                      <strong>エージェント</strong>
+                      <span>{pendingActivity}</span>
+                    </div>
+                    <ProcessingAnswer label={pendingActivity} />
+                  </div>
+                </article>
+              )}
             </div>
 
             <form className="composer" onSubmit={onAsk}>
@@ -299,7 +337,7 @@ export default function App() {
                 {file && <span className="file-chip">{file.name}</span>}
                 <label className="icon-button attach-button" title="資料を添付">
                   <Icon name="paperclip" />
-                  <input type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+                  <input key={conversationKey} type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
                 </label>
                 <button className="send-button" disabled={!canAsk} type="submit" title="送信">
                   <Icon name="send" />
@@ -312,6 +350,8 @@ export default function App() {
           {debugMode && (
             <DebugPanel
               trace={selectedTrace}
+              pending={pendingDebugQuestion !== null}
+              pendingQuestion={pendingDebugQuestion ?? undefined}
               allExpanded={allExpanded}
               expandedStepId={expandedStepId}
               onToggleAll={() => setAllExpanded((value) => !value)}
@@ -358,31 +398,78 @@ function AssistantAnswer({ message }: { message: Message }) {
   )
 }
 
+function ChatEmptyState({ documentsCount, onSelectPrompt }: { documentsCount: number; onSelectPrompt: (value: string) => void }) {
+  const prompts = [
+    "社内規程の申請手順を確認したい",
+    "この資料の重要ポイントを整理して",
+    "担当部署へ確認が必要な内容を洗い出して"
+  ]
+
+  return (
+    <section className="chat-empty-state" aria-label="チャット開始">
+      <div className="empty-orbit" aria-hidden="true">
+        <Icon name="logo" />
+      </div>
+      <div className="empty-copy">
+        <span>{documentsCount > 0 ? `${documentsCount} 件の資料を参照できます` : "資料を添付して開始できます"}</span>
+        <h2>何を確認しますか？</h2>
+      </div>
+      <div className="prompt-grid">
+        {prompts.map((prompt) => (
+          <button type="button" key={prompt} onClick={() => onSelectPrompt(prompt)}>
+            {prompt}
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ProcessingAnswer({ label }: { label: string }) {
+  return (
+    <div className="answer-card processing-answer">
+      <span className="loading-spinner" aria-hidden="true" />
+      <p>
+        {label}
+        <span className="animated-dots" aria-hidden="true">
+          <span>.</span>
+          <span>.</span>
+          <span>.</span>
+        </span>
+      </p>
+    </div>
+  )
+}
+
 function DebugPanel({
   trace,
+  pending = false,
+  pendingQuestion,
   allExpanded,
   expandedStepId,
   onToggleAll,
   onToggleStep
 }: {
   trace?: DebugTrace
+  pending?: boolean
+  pendingQuestion?: string
   allExpanded: boolean
   expandedStepId: number | null
   onToggleAll: () => void
   onToggleStep: (stepId: number) => void
 }) {
-  const steps = trace?.steps ?? getPlaceholderSteps()
-  const statusLabel = trace ? (trace.status === "success" ? "成功" : trace.status === "warning" ? "注意" : "失敗") : "未実行"
+  const steps = pending ? getProcessingSteps(pendingQuestion) : trace?.steps ?? getPlaceholderSteps()
+  const statusLabel = pending ? "処理中" : trace ? (trace.status === "success" ? "成功" : trace.status === "warning" ? "注意" : "失敗") : "未実行"
 
   return (
-    <aside className="debug-card" aria-label="デバッグパネル">
+    <aside className={`debug-card ${pending ? "processing" : ""}`} aria-label="デバッグパネル" aria-busy={pending}>
       <header className="debug-head">
         <div>
           <h2>デバッグパネル</h2>
-          <span>{steps.length} ステップ</span>
+          <span>{pending ? "実行中" : `${steps.length} ステップ`}</span>
         </div>
         <div className="debug-head-actions">
-          <button type="button" onClick={() => downloadDebugTrace(trace)} disabled={!trace} title="Markdownでダウンロード">
+          <button type="button" onClick={() => downloadDebugTrace(trace)} disabled={!trace || pending} title="Markdownでダウンロード">
             <Icon name="download" />
             <span>MD DL</span>
           </button>
@@ -397,12 +484,12 @@ function DebugPanel({
         {steps.map((step) => {
           const expanded = allExpanded || expandedStepId === step.id
           return (
-            <article className={`debug-step ${step.status}`} key={step.id}>
+            <article className={`debug-step ${step.status} ${pending ? "processing" : ""}`} key={step.id}>
               <div className="step-index">{step.id}</div>
               <div className="step-body">
                 <button className="step-summary" type="button" onClick={() => onToggleStep(step.id)}>
                   <span className="step-state">
-                    <Icon name={step.status === "warning" ? "warning" : "check"} />
+                    {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={step.status === "warning" ? "warning" : "check"} />}
                   </span>
                   <strong>{step.label}</strong>
                   <span className="step-latency">{formatLatency(step.latencyMs)}</span>
@@ -419,13 +506,13 @@ function DebugPanel({
         })}
       </div>
 
-      <footer className={`debug-footer ${trace?.status ?? "idle"}`}>
+      <footer className={`debug-footer ${pending ? "processing" : trace?.status ?? "idle"}`}>
         <span className="footer-status">
-          <Icon name={trace?.status === "warning" ? "warning" : "check"} />
+          {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={trace?.status === "warning" ? "warning" : "check"} />}
           <strong>{statusLabel}</strong>
         </span>
-        <span>{trace ? (trace.isAnswerable ? "正常に完了しました" : "回答拒否として完了しました") : "質問すると実行トレースを保存します"}</span>
-        <span className="footer-latency">合計レイテンシ <strong>{trace ? formatLatency(trace.totalLatencyMs) : "-"}</strong></span>
+        <span>{pending ? "検索と回答生成を実行しています" : trace ? (trace.isAnswerable ? "正常に完了しました" : "回答拒否として完了しました") : "質問すると実行トレースを保存します"}</span>
+        <span className="footer-latency">合計レイテンシ <strong>{pending ? "計測中" : trace ? formatLatency(trace.totalLatencyMs) : "-"}</strong></span>
       </footer>
     </aside>
   )
@@ -577,6 +664,28 @@ function getPlaceholderSteps(): DebugStep[] {
     status: "success" as const,
     latencyMs: 0,
     summary: "質問を送信すると、このステップの実行内容が表示されます。",
+    startedAt: now,
+    completedAt: now
+  }))
+}
+
+function getProcessingSteps(question?: string): DebugStep[] {
+  const now = new Date().toISOString()
+  const compactQuestion = question?.replace(/\s+/g, " ").trim()
+  const summaries = [
+    compactQuestion ? `質問を受け付けました: ${compactQuestion.slice(0, 72)}` : "質問を受け付けました。",
+    "検索しやすい形に整えています。",
+    "関連するメモリとドキュメントを探しています。",
+    "候補の根拠を確認しています。",
+    "回答を生成しています。"
+  ]
+
+  return ["入力受付", "クエリ準備", "根拠検索", "根拠チェック", "回答生成"].map((label, index) => ({
+    id: index + 1,
+    label,
+    status: "success" as const,
+    latencyMs: 0,
+    summary: summaries[index] ?? "処理しています。",
     startedAt: now,
     completedAt: now
   }))
