@@ -216,7 +216,7 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
 
   const regexMatched =
     expectedAnswerable && expectedRegex.length > 0
-      ? expectedRegex.every((pattern) => new RegExp(pattern, "iu").test(answer))
+      ? expectedRegex.every((pattern) => safeRegexTest(pattern, answer))
       : null
   if (regexMatched === false) failureReasons.push("answer_regex_mismatch")
 
@@ -471,6 +471,14 @@ function escapeMarkdown(value: string): string {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function safeRegexTest(pattern: string, value: string): boolean {
+  try {
+    return new RegExp(pattern, "iu").test(value)
+  } catch {
+    return false
+  }
 }
 
 async function closeStream(stream: NodeJS.WritableStream): Promise<void> {
