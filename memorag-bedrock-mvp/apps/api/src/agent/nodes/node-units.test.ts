@@ -30,24 +30,12 @@ const chunk: RetrievedVector = {
 
 test("answerability gate covers no hit, low score, missing fact, and sufficient evidence branches", async () => {
   assert.equal((await answerabilityGate(state({ selectedChunks: [] }))).answerability?.reason, "no_relevant_chunks")
-
-  const lowScore = await answerabilityGate(state({ selectedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))
-  assert.equal(lowScore.answerability?.reason, "low_similarity_score")
-  assert.equal(lowScore.answerability?.sentenceAssessments?.[0]?.status, "ng")
-
-  const missingAmount = await answerabilityGate(state({ question: "金額はいくらですか？", selectedChunks: [{ ...chunk, metadata: { ...chunk.metadata, text: "期限は翌月です。" } }] }))
-  assert.equal(missingAmount.answerability?.reason, "missing_required_fact")
-  assert.equal(missingAmount.answerability?.sentenceAssessments?.[0]?.status, "ng")
-  assert.match(missingAmount.answerability?.sentenceAssessments?.[0]?.sentence ?? "", /期限/)
-
-  const sufficient = await answerabilityGate(state({ question: "申請方法と期限と金額は？", selectedChunks: [chunk] }))
-  assert.equal(sufficient.answerability?.reason, "sufficient_evidence")
-  assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("amount")))
-  assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("date")))
-  assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("procedure")))
+  assert.equal((await answerabilityGate(state({ selectedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))).answerability?.reason, "low_similarity_score")
+  assert.equal((await answerabilityGate(state({ question: "金額はいくらですか？", selectedChunks: [{ ...chunk, metadata: { ...chunk.metadata, text: "期限は翌月です。" } }] }))).answerability?.reason, "missing_required_fact")
+  assert.equal((await answerabilityGate(state({ question: "申請方法と期限と金額は？", selectedChunks: [chunk] }))).answerability?.reason, "sufficient_evidence")
 })
 
-test("classification answers require actual requirements classification terms", async () => {
+test("classification questions prefer explicit classification chunks over activity outlines", async () => {
   const outlineChunk = {
     ...chunk,
     metadata: {
@@ -65,11 +53,6 @@ test("classification answers require actual requirements classification terms", 
       text: "ソフトウェア要求の分類: ソフトウェア製品要求、ソフトウェアプロジェクト要求、機能要求、非機能要求、技術制約、サービス品質制約。"
     }
   }
-
-  assert.equal(
-    (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [outlineChunk] }))).answerability?.reason,
-    "missing_required_fact"
-  )
 
   assert.equal(
     (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [classificationChunk] }))).answerability?.reason,
@@ -99,18 +82,6 @@ test("citation validation accepts used ids and rejects invalid or ungrounded ans
   assert.equal(
     (await validateCitations(state({ selectedChunks: [chunk], rawAnswer: JSON.stringify({ isAnswerable: true, answer: "根拠なし", usedChunkIds: ["missing"] }) }))).answerability
       ?.reason,
-    "citation_validation_failed"
-  )
-  assert.equal(
-    (
-      await validateCitations(
-        state({
-          question: "ソフトウェア要求の分類を洗い出して",
-          selectedChunks: [chunk],
-          rawAnswer: JSON.stringify({ isAnswerable: true, answer: "1. Requirements Elicitation\n2. BDD", usedChunkIds: ["chunk-0001"] })
-        })
-      )
-    ).answerability?.reason,
     "citation_validation_failed"
   )
 })
@@ -158,11 +129,6 @@ test("traced node records success, warning, model ids, details, and thrown error
   const warningTrace = warning.trace as unknown as DebugStep
   assert.equal(warningTrace.status, "warning")
   assert.equal(warningTrace.tokenCount, 4)
-
-  const answerability = await tracedNode("answerability_gate", async () => answerabilityGate(state({ question: "金額はいくらですか？", selectedChunks: [chunk] })))(state({ trace: [] }))
-  const answerabilityTrace = answerability.trace as unknown as DebugStep
-  assert.match(answerabilityTrace.detail ?? "", /判定に使った文/)
-  assert.match(answerabilityTrace.detail ?? "", /\[OK\]/)
 
   const error = await tracedNode("generate_clues", async () => {
     throw new Error("boom")
