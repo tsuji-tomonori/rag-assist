@@ -38,6 +38,7 @@ type IconName =
   | "share"
   | "thumbUp"
   | "thumbDown"
+  | "trash"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -62,6 +63,10 @@ export default function App() {
   const canAsk = useMemo(() => (question.trim().length > 0 || file !== null) && !loading, [question, file, loading])
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
   const latestTrace = latestAssistant?.result?.debug
+  const selectedDocument = useMemo(
+    () => documents.find((document) => document.documentId === selectedDocumentId),
+    [documents, selectedDocumentId]
+  )
   const selectedTrace = useMemo(() => {
     if (selectedRunId) return debugRuns.find((run) => run.runId === selectedRunId) ?? latestTrace
     return latestTrace ?? debugRuns[0]
@@ -140,10 +145,15 @@ export default function App() {
 
   async function onDelete(documentId?: string) {
     if (!documentId) return
+    const document = documents.find((item) => item.documentId === documentId)
+    const label = document?.fileName ?? documentId
+    if (!window.confirm(`「${label}」を削除します。元資料、manifest、検索ベクトルが削除されます。`)) return
+
     setLoading(true)
     setError(null)
     try {
       await deleteDocument(documentId)
+      setSelectedDocumentId("all")
       await refreshDocuments()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -206,17 +216,28 @@ export default function App() {
               <option value="anthropic.claude-3-haiku-20240307-v1:0">Claude 3 Haiku</option>
             </select>
           </label>
-          <label className="top-control">
-            <span>ドキュメント</span>
-            <select value={selectedDocumentId} onChange={(event) => setSelectedDocumentId(event.target.value)}>
-              <option value="all">すべての資料</option>
-              {documents.map((document) => (
-                <option value={document.documentId} key={document.documentId}>
-                  {document.fileName}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="top-control document-control">
+            <label htmlFor="document-select">ドキュメント</label>
+            <div className="document-select-row">
+              <select id="document-select" value={selectedDocumentId} onChange={(event) => setSelectedDocumentId(event.target.value)}>
+                <option value="all">すべての資料</option>
+                {documents.map((document) => (
+                  <option value={document.documentId} key={document.documentId}>
+                    {document.fileName}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="delete-document-button"
+                type="button"
+                title={selectedDocument ? `${selectedDocument.fileName}を削除` : "削除する資料を選択"}
+                disabled={!selectedDocument || loading}
+                onClick={() => onDelete(selectedDocument?.documentId)}
+              >
+                <Icon name="trash" />
+              </button>
+            </div>
+          </div>
           <label className="top-control run-control">
             <span>実行ID</span>
             <select value={selectedTrace?.runId ?? ""} onChange={(event) => setSelectedRunId(event.target.value)} disabled={debugRuns.length === 0 && !latestTrace}>
@@ -457,6 +478,8 @@ function getIconPath(name: IconName) {
       return <path d="M2 10h4v11H2V10Zm6 10h8.5a3 3 0 0 0 3-2.5l1.2-7A3 3 0 0 0 17.8 7H14l.6-3.2A2.3 2.3 0 0 0 12.3 1h-.5L8 8.2V20Z" />
     case "thumbDown":
       return <path d="M2 3h4v11H2V3Zm6 1v11.8l3.8 7.2h.5a2.3 2.3 0 0 0 2.3-2.8L14 17h3.8a3 3 0 0 0 2.9-3.5l-1.2-7a3 3 0 0 0-3-2.5H8Z" />
+    case "trash":
+      return <path d="M8 3h8l1 2h4v2H3V5h4l1-2Zm-2 6h12l-1 12H7L6 9Zm3 2 .5 8h2L11 11H9Zm4 0-.5 8h2l.5-8h-2Z" />
   }
 }
 
