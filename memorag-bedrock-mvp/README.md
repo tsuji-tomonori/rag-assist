@@ -102,7 +102,7 @@ npm run cdk -w @memorag-mvp/infra -- deploy
 
 Taskfileを使う場合は `task cdk:deploy` でフロントエンドbuild、Lambda bundle、CDK deployを順に実行します。
 
-GitHub Actionsからの手動デプロイは `.github/workflows/deploy.yml` を使います。AWS側のOIDC RoleとGitHub secret `AWS_DEPLOY_ROLE_ARN` を設定してください。
+GitHub Actionsでは `.github/workflows/memorag-ci.yml` がpull requestとmain branchへのpushで `npm run ci` を実行します。デプロイは `.github/workflows/memorag-deploy.yml` を使います。AWS側のOIDC RoleとGitHub secret `AWS_DEPLOY_ROLE_ARN` を設定してください。
 
 デプロイ後、CDK Outputs にAPI URLとCloudFront URLが出ます。
 
