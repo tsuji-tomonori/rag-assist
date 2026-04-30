@@ -665,7 +665,7 @@ blockquote span {
   inset: auto 8px 0 8px;
   min-height: 108px;
   display: grid;
-  grid-template-columns: 210px repeat(3, minmax(190px, 1fr)) 210px;
+  grid-template-columns: repeat(3, minmax(190px, 1fr)) 210px;
   align-items: center;
   gap: 20px;
   border: 1px solid #dbe3ee;
@@ -675,11 +675,6 @@ blockquote span {
   box-shadow: 0 -8px 24px rgba(34, 50, 84, 0.05);
   backdrop-filter: blur(18px);
   z-index: 30;
-}
-
-.accessibility-bar > strong {
-  color: #17233f;
-  font-size: 15px;
 }
 
 .accessibility-bar div {

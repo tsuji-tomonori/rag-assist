@@ -313,7 +313,6 @@ export default function App() {
       </section>
 
       <footer className="accessibility-bar">
-        <strong>誰もが使いやすい設計です</strong>
         <div>
           <Icon name="keyboard" />
           <span><b>キーボード操作に対応</b><small>Tab や Enter で快適に操作できます</small></span>
