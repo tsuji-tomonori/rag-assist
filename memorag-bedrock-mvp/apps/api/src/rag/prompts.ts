@@ -39,7 +39,7 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
   const context = chunks
     .map(
       (chunk) => `<chunk id="${chunk.metadata.chunkId ?? chunk.key}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
-${chunk.metadata.text ?? ""}
+${buildRelevantSnippet(question, chunk.metadata.text ?? "")}
 </chunk>`
     )
     .join("\n\n")
@@ -72,4 +72,38 @@ ${context}
 
 function escapeXml(input: string): string {
   return input.replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[char] ?? char))
+}
+
+function buildRelevantSnippet(question: string, text: string, maxChars = 1000): string {
+  if (text.length <= maxChars) return text
+
+  const index = findBestNeedleIndex(question, text)
+  if (index < 0) return text.slice(0, maxChars)
+
+  const prefix = 160
+  const start = Math.max(0, index - prefix)
+  const end = Math.min(text.length, start + maxChars)
+  return text.slice(start, end)
+}
+
+function findBestNeedleIndex(question: string, text: string): number {
+  const normalizedQuestion = question.replace(/[?？。.!！\s]/g, "")
+  const candidates = unique([
+    normalizedQuestion,
+    normalizedQuestion.replace(/とは$/, ""),
+    normalizedQuestion.replace(/について$/, ""),
+    ...Array.from(normalizedQuestion.matchAll(/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー]{2,}/gu)).map((match) => match[0]),
+    ...Array.from(question.matchAll(/[A-Za-z][A-Za-z0-9_-]{1,}/g)).map((match) => match[0])
+  ]).sort((a, b) => b.length - a.length)
+
+  for (const candidate of candidates) {
+    if (candidate.length < 2) continue
+    const index = text.toLowerCase().indexOf(candidate.toLowerCase())
+    if (index >= 0) return index
+  }
+  return -1
+}
+
+function unique(items: string[]): string[] {
+  return [...new Set(items.map((item) => item.trim()).filter(Boolean))]
 }

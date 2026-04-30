@@ -1,4 +1,11 @@
 import { config } from "../config.js"
+import { execFile } from "node:child_process"
+import { promises as fs } from "node:fs"
+import os from "node:os"
+import path from "node:path"
+import { promisify } from "node:util"
+
+const execFileAsync = promisify(execFile)
 
 export type UploadLike = {
   fileName: string
@@ -16,9 +23,7 @@ export async function extractTextFromUpload(input: UploadLike): Promise<string> 
   const mimeType = input.mimeType?.toLowerCase() ?? ""
 
   if (mimeType.includes("pdf") || ext === "pdf") {
-    const pdfParse = (await import("pdf-parse")).default
-    const parsed = await pdfParse(buffer)
-    return limit(parsed.text)
+    return limit(await extractPdfText(buffer))
   }
 
   if (mimeType.includes("wordprocessingml") || ext === "docx") {
@@ -28,6 +33,43 @@ export async function extractTextFromUpload(input: UploadLike): Promise<string> 
   }
 
   return limit(buffer.toString("utf-8"))
+}
+
+async function extractPdfText(buffer: Buffer): Promise<string> {
+  const pdfParse = (await import("pdf-parse")).default
+  const parsed = await pdfParse(buffer)
+  const parsedText = parsed.text ?? ""
+  const pdftotextText = await extractWithPdftotext(buffer)
+
+  if (!pdftotextText) return parsedText
+  return pdfTextQualityScore(pdftotextText) > pdfTextQualityScore(parsedText) ? pdftotextText : parsedText
+}
+
+async function extractWithPdftotext(buffer: Buffer): Promise<string | undefined> {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "memorag-pdf-"))
+  const filePath = path.join(tempDir, "source.pdf")
+  try {
+    await fs.writeFile(filePath, buffer)
+    const { stdout } = await execFileAsync("pdftotext", ["-layout", filePath, "-"], {
+      maxBuffer: config.maxUploadChars * 4,
+      timeout: 20_000
+    })
+    return stdout
+  } catch {
+    return undefined
+  } finally {
+    await fs.rm(tempDir, { recursive: true, force: true })
+  }
+}
+
+function pdfTextQualityScore(text: string): number {
+  const normalized = text.replace(/\s+/g, "")
+  if (!normalized) return 0
+
+  const japaneseChars = normalized.match(/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]/gu)?.length ?? 0
+  const latinChars = normalized.match(/[A-Za-z]/g)?.length ?? 0
+  const dotLeaders = text.match(/\. \. \./g)?.length ?? 0
+  return normalized.length + japaneseChars * 2 + latinChars * 0.25 - dotLeaders * 80
 }
 
 function limit(text: string): string {

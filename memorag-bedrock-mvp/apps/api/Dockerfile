@@ -1,5 +1,6 @@
 FROM node:22-alpine
 WORKDIR /workspace
+RUN apk add --no-cache poppler-utils
 COPY package.json tsconfig.base.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
