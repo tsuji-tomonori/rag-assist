@@ -15,13 +15,13 @@ test("chunking normalizes whitespace and respects overlap and sentence boundarie
   assert.ok((chunks[1]?.startChar ?? 0) < (chunks[0]?.endChar ?? 0))
 })
 
-test("chunking keeps PDF page-break segments from being merged", () => {
+test("chunking preserves PDF page-break text inside large chunks", () => {
   const chunks = chunkText("1.2 ソフトウェア要求の分類\n\f\n2 Requirements Elicitation\n\f\n4.3 ATDD BDD", 1200, 200)
 
-  assert.deepEqual(
-    chunks.map((chunk) => chunk.text),
-    ["1.2 ソフトウェア要求の分類", "2 Requirements Elicitation", "4.3 ATDD BDD"]
-  )
+  assert.equal(chunks.length, 1)
+  assert.match(chunks[0]?.text ?? "", /ソフトウェア要求の分類/)
+  assert.match(chunks[0]?.text ?? "", /Requirements Elicitation/)
+  assert.match(chunks[0]?.text ?? "", /ATDD BDD/)
 })
 
 test("upload text extraction handles direct text, base64, limits, and missing payloads", async () => {

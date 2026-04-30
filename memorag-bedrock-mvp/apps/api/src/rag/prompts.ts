@@ -73,7 +73,7 @@ ${context}
 }
 
 export function selectFinalAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
-  if (!isClassificationQuestion(question)) return chunks
+  if (!isRequirementsClassificationQuestion(question)) return chunks
 
   const scored = chunks
     .map((chunk, index) => ({
@@ -100,10 +100,10 @@ function escapeXml(input: string): string {
 
 function buildRelevantSnippet(question: string, text: string, maxChars = 1800): string {
   const index = findBestNeedleIndex(question, text)
-  if (text.length <= maxChars && !(isClassificationQuestion(question) && index >= 0)) return text
+  if (text.length <= maxChars && !(isRequirementsClassificationQuestion(question) && index >= 0)) return text
   if (index < 0) return text.slice(0, maxChars)
 
-  const prefix = isClassificationQuestion(question) ? 0 : 160
+  const prefix = isRequirementsClassificationQuestion(question) ? 0 : 160
   const start = Math.max(0, index - prefix)
   const end = Math.min(text.length, start + maxChars)
   return text.slice(start, end)
@@ -130,7 +130,7 @@ function findBestNeedleIndex(question: string, text: string): number {
 
 function intentAnchors(question: string): string[] {
   const anchors: string[] = []
-  if (isClassificationQuestion(question)) {
+  if (isRequirementsClassificationQuestion(question)) {
     anchors.push(
       "ソフトウェア要求の分類",
       "要求分類",
@@ -146,8 +146,8 @@ function intentAnchors(question: string): string[] {
   return anchors
 }
 
-function isClassificationQuestion(question: string): boolean {
-  return question.includes("分類")
+export function isRequirementsClassificationQuestion(question: string): boolean {
+  return question.includes("分類") && /ソフトウェア要求|要求/.test(question)
 }
 
 function classificationEvidenceScore(question: string, text: string): number {
@@ -165,6 +165,30 @@ function classificationEvidenceScore(question: string, text: string): number {
 
 function hasClassificationSectionEvidence(text: string): boolean {
   return text.includes("ソフトウェア要求の分類") && /SWEBOK\s*では、?ソフトウェア要求を大きく次のように整理/.test(text)
+}
+
+export function hasUsableRequirementsClassificationEvidence(text: string): boolean {
+  const categoryCount = countRequirementsClassificationTerms(text)
+  if (categoryCount >= 2) return true
+  return hasClassificationSectionEvidence(text) && categoryCount >= 1
+}
+
+export function hasInvalidRequirementsClassificationAnswer(answer: string): boolean {
+  return /Requirements Elicitation|Requirements Validation|Requirements Scrubbing|ATDD|BDD|UML\s*SysML|UML\/SysML|Kano|要求獲得|要求妥当性確認|要求管理|要求スクラビング|要求の優先順位付け|要求の追跡可能性/.test(
+    answer
+  )
+}
+
+function countRequirementsClassificationTerms(text: string): number {
+  const patterns = [
+    /ソフトウェア製品要求|software product requirements?/i,
+    /ソフトウェアプロジェクト要求|software project requirements?/i,
+    /機能要求|functional requirements?/i,
+    /非機能要求|non[-\s]?functional requirements?/i,
+    /技術制約|technical constraints?/i,
+    /サービス品質制約|quality constraints?|quality requirements?/i
+  ]
+  return patterns.filter((pattern) => pattern.test(text)).length
 }
 
 function isTableOfContentsLike(text: string): boolean {

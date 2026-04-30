@@ -1,4 +1,5 @@
 import { parseJsonObject } from "../../rag/json.js"
+import { hasInvalidRequirementsClassificationAnswer, isRequirementsClassificationQuestion } from "../../rag/prompts.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 import { NO_ANSWER } from "../state.js"
 import type { AnswerJson } from "../types.js"
@@ -18,6 +19,10 @@ export async function validateCitations(state: QaAgentState): Promise<QaAgentUpd
     .slice(0, 5)
 
   if (state.strictGrounded && citations.length === 0) {
+    return citationFailure(state.rawAnswer)
+  }
+
+  if (isRequirementsClassificationQuestion(state.question) && hasInvalidRequirementsClassificationAnswer(answerJson.answer)) {
     return citationFailure(state.rawAnswer)
   }
 

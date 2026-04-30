@@ -119,10 +119,34 @@ function detailUpdate(update: QaAgentUpdate): string | undefined {
   if (update.selectedChunks) {
     return update.selectedChunks.map((hit) => `${hit.metadata.fileName} ${hit.metadata.chunkId ?? hit.key} score=${hit.score.toFixed(4)}`).join("\n")
   }
-  if (update.answerability) return `reason=${update.answerability.reason}\nconfidence=${update.answerability.confidence}`
+  if (update.answerability) return formatAnswerabilityDetail(update.answerability)
   if (update.rawAnswer) return update.rawAnswer.slice(0, 1200)
   if (update.answer) return update.answer.slice(0, 1200)
   return undefined
+}
+
+function formatAnswerabilityDetail(answerability: NonNullable<QaAgentUpdate["answerability"]>): string {
+  const lines = [`reason=${answerability.reason}`, `confidence=${answerability.confidence}`]
+  const assessments = answerability.sentenceAssessments ?? []
+
+  lines.push("", "判定に使った文:")
+  if (assessments.length === 0) {
+    lines.push("なし")
+    return lines.join("\n")
+  }
+
+  for (const assessment of assessments) {
+    const status = assessment.status.toUpperCase()
+    const source = [assessment.fileName, assessment.chunkId].filter(Boolean).join(" ")
+    const score = assessment.score === undefined ? "" : ` score=${assessment.score.toFixed(4)}`
+    const matchedChecks = assessment.checks ?? []
+    const checks = matchedChecks.length > 0 ? ` checks=${matchedChecks.join(",")}` : ""
+    lines.push(`[${status}]${source ? ` ${source}` : ""}${score}${checks}`)
+    lines.push(`reason=${assessment.reason}`)
+    lines.push(assessment.sentence)
+  }
+
+  return lines.join("\n")
 }
 
 function inferHitCount(update: QaAgentUpdate): number | undefined {

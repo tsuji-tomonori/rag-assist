@@ -28,6 +28,16 @@ export const CitationSchema = z.object({
   text: z.string()
 })
 
+const AnswerabilitySentenceAssessmentSchema = z.object({
+  status: z.enum(["ok", "ng"]),
+  sentence: z.string(),
+  fileName: z.string().optional(),
+  chunkId: z.string().optional(),
+  score: z.number().optional(),
+  checks: z.array(z.string()).default(() => []),
+  reason: z.string()
+})
+
 export const AnswerabilitySchema = z.object({
   isAnswerable: z.boolean().default(false),
   reason: z
@@ -41,7 +51,8 @@ export const AnswerabilitySchema = z.object({
       "citation_validation_failed"
     ])
     .default("not_checked"),
-  confidence: z.number().min(0).max(1).default(0)
+  confidence: z.number().min(0).max(1).default(0),
+  sentenceAssessments: z.array(AnswerabilitySentenceAssessmentSchema).optional()
 })
 
 export const DebugStepSchema = z.object({
