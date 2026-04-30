@@ -163,7 +163,7 @@ async function persistDebugTrace(
     completedAt: completedAt.toISOString(),
     totalLatencyMs: Math.max(0, Date.now() - input.startedMs),
     status: input.isAnswerable ? "success" : "warning",
-    answerPreview: input.answer.slice(0, 400),
+    answerPreview: input.answer,
     isAnswerable: input.isAnswerable,
     citations: input.citations,
     retrieved: input.retrieved,

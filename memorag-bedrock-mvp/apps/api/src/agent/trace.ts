@@ -120,8 +120,8 @@ function detailUpdate(update: QaAgentUpdate): string | undefined {
     return update.selectedChunks.map((hit) => `${hit.metadata.fileName} ${hit.metadata.chunkId ?? hit.key} score=${hit.score.toFixed(4)}`).join("\n")
   }
   if (update.answerability) return formatAnswerabilityDetail(update.answerability)
-  if (update.rawAnswer) return update.rawAnswer.slice(0, 1200)
-  if (update.answer) return update.answer.slice(0, 1200)
+  if (update.rawAnswer) return update.rawAnswer
+  if (update.answer) return update.answer
   return undefined
 }
 

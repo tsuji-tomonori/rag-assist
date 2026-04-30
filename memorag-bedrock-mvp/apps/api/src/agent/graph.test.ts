@@ -45,6 +45,38 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
   )
 })
 
+test("LangGraph debug trace keeps the full finalize response detail", async () => {
+  const deps = await createTestDeps()
+  const baseTextModel = deps.textModel
+  const longAnswer = `在宅勤務手当の申請期限は翌月5営業日までです。${"詳細説明。".repeat(220)}END_OF_FINALIZE_RESPONSE`
+  deps.textModel = {
+    embed: baseTextModel.embed.bind(baseTextModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("FINAL_ANSWER_JSON")) {
+        return JSON.stringify({ isAnswerable: true, answer: longAnswer, usedChunkIds: [] })
+      }
+      return baseTextModel.generate(prompt, options)
+    }
+  }
+  const service = new MemoRagService(deps)
+
+  await service.ingest({
+    fileName: "remote-work-policy.txt",
+    text: "在宅勤務手当は、月10日以上在宅勤務を実施した従業員に月額5,000円を支給する。申請期限は翌月5営業日までで、勤怠システムから申請する。"
+  })
+
+  const result = await service.chat({
+    question: "在宅勤務手当の申請期限はいつですか？",
+    includeDebug: true,
+    minScore: 0.05
+  })
+
+  const finalizeStep = result.debug?.steps.find((step) => step.label === "finalize_response")
+  assert.equal(result.answer.endsWith("END_OF_FINALIZE_RESPONSE"), true)
+  assert.equal(result.debug?.answerPreview, longAnswer)
+  assert.equal(finalizeStep?.detail, longAnswer)
+})
+
 test("LangGraph MemoRAG workflow refuses before answer generation when evidence is missing", async () => {
   const service = new MemoRagService(await createTestDeps())
 
