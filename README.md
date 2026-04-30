@@ -68,6 +68,21 @@ workflow input:
 
 GitHub OIDC providerとAssumeRole用IAM Roleを作成します。Role ARNをGitHub secret `AWS_DEPLOY_ROLE_ARN` に設定してください。
 
+CloudFormationテンプレートを用意しています。
+
+```bash
+aws cloudformation deploy \
+  --stack-name memorag-github-actions-oidc-role \
+  --template-file memorag-bedrock-mvp/infra/bootstrap/github-actions-oidc-role.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    GitHubOwner=<OWNER> \
+    GitHubRepository=<REPO> \
+    GitHubEnvironment=dev
+```
+
+Outputsの `GitHubActionsDeployRoleArn` をGitHub secret `AWS_DEPLOY_ROLE_ARN` に設定してください。
+
 Trust policy例:
 
 ```json

@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: GitHub Actions OIDC role for deploying the MemoRAG Bedrock MVP with AWS CDK.
+
+Parameters:
+  GitHubOwner:
+    Type: String
+    Description: GitHub organization or user name.
+    AllowedPattern: "^[A-Za-z0-9_.-]+$"
+
+  GitHubRepository:
+    Type: String
+    Description: GitHub repository name.
+    AllowedPattern: "^[A-Za-z0-9_.-]+$"
+
+  GitHubEnvironment:
+    Type: String
+    Default: dev
+    Description: GitHub Environment name used by the deployment workflow.
+    AllowedPattern: "^[A-Za-z0-9_.:/@-]+$"
+
+  DeployRoleName:
+    Type: String
+    Default: memorag-github-actions-deploy
+    Description: IAM role name assumed by GitHub Actions.
+    AllowedPattern: "^[A-Za-z0-9+=,.@_-]{1,64}$"
+
+  ExistingGitHubOidcProviderArn:
+    Type: String
+    Default: ""
+    Description: Optional existing GitHub OIDC provider ARN. Leave empty to create one in this stack.
+
+  ManagedPolicyArns:
+    Type: CommaDelimitedList
+    Default: arn:aws:iam::aws:policy/AdministratorAccess
+    Description: Comma-separated IAM managed policy ARNs attached to the deploy role. Restrict this for production.
+
+Conditions:
+  CreateGitHubOidcProvider:
+    Fn::Equals:
+      - Ref: ExistingGitHubOidcProviderArn
+      - ""
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateGitHubOidcProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      Tags:
+        - Key: Name
+          Value: github-actions-oidc
+        - Key: Project
+          Value: memorag-bedrock-mvp
+
+  GitHubActionsDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Ref: DeployRoleName
+      Description:
+        Fn::Sub: GitHub Actions deployment role for ${GitHubOwner}/${GitHubRepository}.
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+        Ref: ManagedPolicyArns
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated:
+                Fn::If:
+                  - CreateGitHubOidcProvider
+                  - Ref: GitHubOidcProvider
+                  - Ref: ExistingGitHubOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  Fn::Sub: repo:${GitHubOwner}/${GitHubRepository}:environment:${GitHubEnvironment}
+      Tags:
+        - Key: Project
+          Value: memorag-bedrock-mvp
+        - Key: ManagedBy
+          Value: cloudformation
+
+Outputs:
+  GitHubOidcProviderArn:
+    Description: GitHub OIDC provider ARN used by the deploy role.
+    Value:
+      Fn::If:
+        - CreateGitHubOidcProvider
+        - Ref: GitHubOidcProvider
+        - Ref: ExistingGitHubOidcProviderArn
+
+  GitHubActionsDeployRoleArn:
+    Description: Set this value as the GitHub secret AWS_DEPLOY_ROLE_ARN.
+    Value:
+      Fn::GetAtt:
+        - GitHubActionsDeployRole
+        - Arn
+
+  GitHubActionsSubject:
+    Description: GitHub OIDC subject claim allowed to assume the role.
+    Value:
+      Fn::Sub: repo:${GitHubOwner}/${GitHubRepository}:environment:${GitHubEnvironment}

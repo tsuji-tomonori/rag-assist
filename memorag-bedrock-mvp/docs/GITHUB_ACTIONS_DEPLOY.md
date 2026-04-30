@@ -30,6 +30,35 @@ RepositoryまたはEnvironment secretに次を設定する。
 
 GitHub OIDC providerをAWSアカウントに作成し、deploy用Roleのtrust policyで対象repoとbranch/environmentを制限する。
 
+CloudFormationで作成する場合:
+
+```bash
+aws cloudformation deploy \
+  --stack-name memorag-github-actions-oidc-role \
+  --template-file infra/bootstrap/github-actions-oidc-role.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    GitHubOwner=<OWNER> \
+    GitHubRepository=<REPO> \
+    GitHubEnvironment=dev
+```
+
+既にGitHub OIDC providerがあるアカウントでは `ExistingGitHubOidcProviderArn` を指定する。
+
+```bash
+aws cloudformation deploy \
+  --stack-name memorag-github-actions-oidc-role \
+  --template-file infra/bootstrap/github-actions-oidc-role.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    GitHubOwner=<OWNER> \
+    GitHubRepository=<REPO> \
+    GitHubEnvironment=dev \
+    ExistingGitHubOidcProviderArn=arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com
+```
+
+Outputsの `GitHubActionsDeployRoleArn` をGitHub secret `AWS_DEPLOY_ROLE_ARN` に設定する。
+
 例:
 
 ```json
