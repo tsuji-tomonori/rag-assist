@@ -12,12 +12,12 @@
     "ci": "npm run typecheck --workspaces --if-present && npm test --workspaces --if-present && npm run build --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
+    "test:coverage": "npm run test:coverage -w @memorag-mvp/api && npm run test:coverage -w @memorag-mvp/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev:api": "npm run dev -w @memorag-mvp/api",
     "dev:web": "npm run dev -w @memorag-mvp/web",
     "benchmark": "npm run start -w @memorag-mvp/benchmark",
-    "cdk": "npm run cdk -w @memorag-mvp/infra",
-    "test:coverage": "npm run test:coverage -w @memorag-mvp/api && npm run test:coverage -w @memorag-mvp/web"
+    "cdk": "npm run cdk -w @memorag-mvp/infra"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

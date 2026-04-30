@@ -107,6 +107,62 @@ export const ChatResponseSchema = z.object({
   debug: DebugTraceSchema.optional()
 })
 
+export const QuestionPrioritySchema = z.enum(["normal", "high", "urgent"])
+export const QuestionStatusSchema = z.enum(["open", "answered", "resolved"])
+
+export const QuestionSchema = z.object({
+  questionId: z.string(),
+  title: z.string(),
+  question: z.string(),
+  requesterName: z.string(),
+  requesterDepartment: z.string(),
+  assigneeDepartment: z.string(),
+  category: z.string(),
+  priority: QuestionPrioritySchema,
+  status: QuestionStatusSchema,
+  sourceQuestion: z.string().optional(),
+  chatAnswer: z.string().optional(),
+  chatRunId: z.string().optional(),
+  references: z.string().optional(),
+  answerTitle: z.string().optional(),
+  answerBody: z.string().optional(),
+  responderName: z.string().optional(),
+  responderDepartment: z.string().optional(),
+  internalMemo: z.string().optional(),
+  notifyRequester: z.boolean().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  answeredAt: z.string().optional(),
+  resolvedAt: z.string().optional()
+})
+
+export const QuestionListResponseSchema = z.object({
+  questions: z.array(QuestionSchema)
+})
+
+export const CreateQuestionRequestSchema = z.object({
+  title: z.string().min(1).max(120).openapi({ example: "山田さんの昼食について確認したい" }),
+  question: z.string().min(1).max(2000).openapi({ example: "今日山田さんは何を食べたか、担当者に確認してください。" }),
+  requesterName: z.string().optional().openapi({ example: "山田 太郎" }),
+  requesterDepartment: z.string().optional().openapi({ example: "総務部" }),
+  assigneeDepartment: z.string().optional().openapi({ example: "総務部" }),
+  category: z.string().optional().openapi({ example: "その他の質問" }),
+  priority: QuestionPrioritySchema.optional(),
+  sourceQuestion: z.string().optional(),
+  chatAnswer: z.string().optional(),
+  chatRunId: z.string().optional()
+})
+
+export const AnswerQuestionRequestSchema = z.object({
+  answerTitle: z.string().min(1).max(120).openapi({ example: "山田さんの昼食についての回答" }),
+  answerBody: z.string().min(1).max(4000).openapi({ example: "山田さんは本日、社内食堂でカレーを食べました。" }),
+  responderName: z.string().optional().openapi({ example: "佐藤 花子" }),
+  responderDepartment: z.string().optional().openapi({ example: "総務部" }),
+  references: z.string().optional(),
+  internalMemo: z.string().optional(),
+  notifyRequester: z.boolean().optional()
+})
+
 export const DebugTraceListResponseSchema = z.object({
   debugRuns: z.array(DebugTraceSchema)
 })

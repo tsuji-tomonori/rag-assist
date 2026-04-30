@@ -102,3 +102,32 @@ export type DebugTrace = {
   retrieved: Citation[]
   steps: DebugStep[]
 }
+
+export type QuestionStatus = "open" | "answered" | "resolved"
+export type QuestionPriority = "normal" | "high" | "urgent"
+
+export type HumanQuestion = {
+  questionId: string
+  title: string
+  question: string
+  requesterName: string
+  requesterDepartment: string
+  assigneeDepartment: string
+  category: string
+  priority: QuestionPriority
+  status: QuestionStatus
+  sourceQuestion?: string
+  chatAnswer?: string
+  chatRunId?: string
+  references?: string
+  answerTitle?: string
+  answerBody?: string
+  responderName?: string
+  responderDepartment?: string
+  internalMemo?: string
+  notifyRequester?: boolean
+  createdAt: string
+  updatedAt: string
+  answeredAt?: string
+  resolvedAt?: string
+}

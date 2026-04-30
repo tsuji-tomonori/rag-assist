@@ -6,8 +6,10 @@ import { MemoRagService } from "./rag/memorag-service.js"
 import {
   ChatRequestSchema,
   ChatResponseSchema,
+  AnswerQuestionRequestSchema,
   BenchmarkQueryRequestSchema,
   BenchmarkQueryResponseSchema,
+  CreateQuestionRequestSchema,
   DeleteDocumentResponseSchema,
   DebugTraceListResponseSchema,
   DebugTraceSchema,
@@ -15,7 +17,9 @@ import {
   DocumentManifestSchema,
   DocumentUploadRequestSchema,
   ErrorResponseSchema,
-  HealthResponseSchema
+  HealthResponseSchema,
+  QuestionListResponseSchema,
+  QuestionSchema
 } from "./schemas.js"
 
 const deps = createDependencies()
@@ -133,6 +137,112 @@ app.openapi(chatRoute, async (c) => {
   const body = (c.req as any).valid("json") as z.infer<typeof ChatRequestSchema>
   return c.json(await service.chat(body), 200)
 })
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/questions",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: CreateQuestionRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Created human follow-up question", content: { "application/json": { schema: QuestionSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const body = (c.req as any).valid("json") as z.infer<typeof CreateQuestionRequestSchema>
+    return c.json(await service.createQuestion(body), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/questions",
+    responses: {
+      200: { description: "List human follow-up questions", content: { "application/json": { schema: QuestionListResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => c.json({ questions: await service.listQuestions() }, 200)
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/questions/{questionId}",
+    request: {
+      params: z.object({ questionId: z.string().min(1) })
+    },
+    responses: {
+      200: { description: "Get a human follow-up question", content: { "application/json": { schema: QuestionSchema } } },
+      404: { description: "Question not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const { questionId } = (c.req as any).valid("param") as { questionId: string }
+    const question = await service.getQuestion(questionId)
+    if (!question) return c.json({ error: "Question not found" }, 404)
+    return c.json(question, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/questions/{questionId}/answer",
+    request: {
+      params: z.object({ questionId: z.string().min(1) }),
+      body: {
+        required: true,
+        content: { "application/json": { schema: AnswerQuestionRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Answered human follow-up question", content: { "application/json": { schema: QuestionSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      404: { description: "Question not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    try {
+      const { questionId } = (c.req as any).valid("param") as { questionId: string }
+      const body = (c.req as any).valid("json") as z.infer<typeof AnswerQuestionRequestSchema>
+      return c.json(await service.answerQuestion(questionId, body), 200)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("Question not found")) return c.json({ error: "Question not found" }, 404)
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/questions/{questionId}/resolve",
+    request: {
+      params: z.object({ questionId: z.string().min(1) })
+    },
+    responses: {
+      200: { description: "Resolved human follow-up question", content: { "application/json": { schema: QuestionSchema } } },
+      404: { description: "Question not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    try {
+      const { questionId } = (c.req as any).valid("param") as { questionId: string }
+      return c.json(await service.resolveQuestion(questionId), 200)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("Question not found")) return c.json({ error: "Question not found" }, 404)
+      throw err
+    }
+  }
+)
 
 app.openapi(
   looseRoute({

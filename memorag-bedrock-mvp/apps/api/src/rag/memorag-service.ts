@@ -3,7 +3,8 @@ import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
-import type { Citation, DebugTrace, DocumentManifest, JsonValue, MemoryCard, VectorRecord } from "../types.js"
+import type { Citation, DebugTrace, DocumentManifest, HumanQuestion, JsonValue, MemoryCard, VectorRecord } from "../types.js"
+import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import { chunkText } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
@@ -168,6 +169,26 @@ export class MemoRagService {
     debug?: DebugTrace
   }> {
     return runQaAgent(this.deps, input)
+  }
+
+  async createQuestion(input: CreateQuestionInput): Promise<HumanQuestion> {
+    return this.deps.questionStore.create(input)
+  }
+
+  async listQuestions(): Promise<HumanQuestion[]> {
+    return this.deps.questionStore.list()
+  }
+
+  async getQuestion(questionId: string): Promise<HumanQuestion | undefined> {
+    return this.deps.questionStore.get(questionId)
+  }
+
+  async answerQuestion(questionId: string, input: AnswerQuestionInput): Promise<HumanQuestion> {
+    return this.deps.questionStore.answer(questionId, input)
+  }
+
+  async resolveQuestion(questionId: string): Promise<HumanQuestion> {
+    return this.deps.questionStore.resolve(questionId)
   }
 
   private async createMemoryCards(input: { fileName: string; text: string; modelId?: string }): Promise<MemoryCard[]> {

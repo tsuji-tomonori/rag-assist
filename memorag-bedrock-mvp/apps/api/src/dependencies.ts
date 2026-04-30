@@ -8,12 +8,16 @@ import { LocalVectorStore } from "./adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "./adapters/mock-bedrock.js"
 import { S3VectorsStore } from "./adapters/s3-vectors-store.js"
 import type { VectorStore } from "./adapters/vector-store.js"
+import { DynamoDbQuestionStore } from "./adapters/dynamodb-question-store.js"
+import { LocalQuestionStore } from "./adapters/local-question-store.js"
+import type { QuestionStore } from "./adapters/question-store.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
   memoryVectorStore: VectorStore
   evidenceVectorStore: VectorStore
   textModel: TextModel
+  questionStore: QuestionStore
 }
 
 let cached: Dependencies | undefined
@@ -34,7 +38,10 @@ export function createDependencies(): Dependencies {
     : new S3VectorsStore(config.vectorBucketName, config.evidenceVectorIndexName)
 
   const textModel = config.mockBedrock ? new MockBedrockTextModel() : new BedrockTextModel()
+  const questionStore = config.useLocalQuestionStore
+    ? new LocalQuestionStore(config.localDataDir)
+    : new DynamoDbQuestionStore(config.questionTableName)
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore }
   return cached
 }

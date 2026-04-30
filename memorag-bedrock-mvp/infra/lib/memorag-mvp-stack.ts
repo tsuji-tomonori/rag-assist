@@ -7,6 +7,7 @@ import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2"
 import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations"
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront"
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins"
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb"
 import * as iam from "aws-cdk-lib/aws-iam"
 import * as lambda from "aws-cdk-lib/aws-lambda"
 import * as logs from "aws-cdk-lib/aws-logs"
@@ -60,6 +61,13 @@ export class MemoRagMvpStack extends Stack {
       serverAccessLogsPrefix: "s3/frontend/",
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true
+    })
+
+    const questionsTable = new dynamodb.Table(this, "HumanQuestionsTable", {
+      partitionKey: { name: "questionId", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
     })
 
     const s3VectorsProviderLogGroup = new logs.LogGroup(this, "S3VectorsProviderLogGroup", {
@@ -117,6 +125,8 @@ export class MemoRagMvpStack extends Stack {
         USE_LOCAL_VECTOR_STORE: "false",
         MOCK_BEDROCK: "false",
         DOCS_BUCKET_NAME: docsBucket.bucketName,
+        QUESTION_TABLE_NAME: questionsTable.tableName,
+        USE_LOCAL_QUESTION_STORE: "false",
         VECTOR_BUCKET_NAME: vectorBucketName,
         MEMORY_VECTOR_INDEX_NAME: memoryVectorIndexName,
         EVIDENCE_VECTOR_INDEX_NAME: evidenceVectorIndexName,
@@ -129,6 +139,7 @@ export class MemoRagMvpStack extends Stack {
     })
 
     docsBucket.grantReadWrite(apiFn)
+    questionsTable.grantReadWriteData(apiFn)
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],

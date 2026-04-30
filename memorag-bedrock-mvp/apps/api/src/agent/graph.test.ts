@@ -5,6 +5,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import type { Dependencies } from "../dependencies.js"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
+import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
@@ -67,6 +68,7 @@ async function createTestDeps(): Promise<Dependencies> {
     objectStore: new LocalObjectStore(dataDir),
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
-    textModel: new MockBedrockTextModel()
+    textModel: new MockBedrockTextModel(),
+    questionStore: new LocalQuestionStore(dataDir)
   }
 }

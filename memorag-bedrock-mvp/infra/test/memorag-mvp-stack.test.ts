@@ -57,6 +57,19 @@ test("implements the designed serverless resources", () => {
       })
     })
   })
+  template.hasResourceProperties("AWS::DynamoDB::Table", {
+    KeySchema: [{ AttributeName: "questionId", KeyType: "HASH" }],
+    BillingMode: "PAY_PER_REQUEST",
+    PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+  })
+  template.hasResourceProperties("AWS::Lambda::Function", {
+    Environment: Match.objectLike({
+      Variables: Match.objectLike({
+        QUESTION_TABLE_NAME: Match.anyValue(),
+        USE_LOCAL_QUESTION_STORE: "false"
+      })
+    })
+  })
   template.resourceCountIs("AWS::CloudFront::OriginAccessControl", 1)
   template.hasResourceProperties("AWS::CloudFormation::CustomResource", {
     vectorBucketName: Match.anyValue(),

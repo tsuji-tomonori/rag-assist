@@ -1,22 +1,29 @@
-import { FormEvent, useEffect, useMemo, useState } from "react"
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
+  answerQuestion,
   chat,
+  createQuestion,
   deleteDocument,
   fileToBase64,
+  listQuestions,
   listDebugRuns,
   listDocuments,
+  resolveQuestion,
   uploadDocument,
   type ChatResponse,
   type DebugStep,
   type DebugTrace,
-  type DocumentManifest
+  type DocumentManifest,
+  type HumanQuestion
 } from "./api.js"
 
 type Message = {
   role: "user" | "assistant"
   text: string
   createdAt: string
+  sourceQuestion?: string
   result?: ChatResponse
+  questionTicket?: HumanQuestion
 }
 
 type IconName =
@@ -38,6 +45,9 @@ type IconName =
   | "thumbUp"
   | "thumbDown"
   | "trash"
+  | "inbox"
+
+type AppView = "chat" | "assignee"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -45,8 +55,11 @@ const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 export default function App() {
   const [documents, setDocuments] = useState<DocumentManifest[]>([])
   const [debugRuns, setDebugRuns] = useState<DebugTrace[]>([])
+  const [questions, setQuestions] = useState<HumanQuestion[]>([])
+  const [activeView, setActiveView] = useState<AppView>("chat")
   const [selectedDocumentId, setSelectedDocumentId] = useState("all")
   const [selectedRunId, setSelectedRunId] = useState("")
+  const [selectedQuestionId, setSelectedQuestionId] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [question, setQuestion] = useState("")
   const [modelId, setModelId] = useState(defaultModelId)
@@ -61,6 +74,7 @@ export default function App() {
   const [expandedStepId, setExpandedStepId] = useState<number | null>(null)
   const [allExpanded, setAllExpanded] = useState(false)
   const [conversationKey, setConversationKey] = useState(0)
+  const latestMessageRef = useRef<HTMLElement | null>(null)
 
   const canAsk = useMemo(() => (question.trim().length > 0 || file !== null) && !loading, [question, file, loading])
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
@@ -78,11 +92,27 @@ export default function App() {
   const totalLatency = pendingDebugQuestion ? "処理中" : selectedTrace ? formatLatency(selectedTrace.totalLatencyMs) : "-"
   const selectedRunValue = pendingDebugQuestion ? "__processing__" : selectedTrace?.runId ?? ""
   const visibleMessages = messages
+  const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
 
   useEffect(() => {
     refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
     refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
+    refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
   }, [])
+
+  useEffect(() => {
+    if (activeView !== "chat") return
+    const latestMessage = latestMessageRef.current
+    if (!latestMessage) return
+
+    const prefersReducedMotion =
+      typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    latestMessage.scrollIntoView?.({
+      block: "start",
+      inline: "nearest",
+      behavior: prefersReducedMotion ? "auto" : "smooth"
+    })
+  }, [activeView, latestMessageCreatedAt, pendingActivity])
 
   async function refreshDocuments() {
     const nextDocuments = await listDocuments()
@@ -94,6 +124,15 @@ export default function App() {
 
   async function refreshDebugRuns() {
     setDebugRuns(await listDebugRuns())
+  }
+
+  async function refreshQuestions() {
+    const nextQuestions = await listQuestions()
+    setQuestions(nextQuestions)
+    setSelectedQuestionId((current) => {
+      if (current && nextQuestions.some((questionItem) => questionItem.questionId === current)) return current
+      return nextQuestions[0]?.questionId ?? ""
+    })
   }
 
   async function onAsk(event: FormEvent) {
@@ -136,7 +175,7 @@ export default function App() {
           minScore,
           includeDebug: debugMode
         })
-        setMessages((prev) => [...prev, { role: "assistant", text: result.answer, result, createdAt: new Date().toISOString() }])
+        setMessages((prev) => [...prev, { role: "assistant", text: result.answer, sourceQuestion: userQuestion, result, createdAt: new Date().toISOString() }])
         if (result.debug) {
           setSelectedRunId(result.debug.runId)
           setDebugRuns((prev) => [result.debug as DebugTrace, ...prev.filter((run) => run.runId !== result.debug?.runId)])
@@ -188,6 +227,56 @@ export default function App() {
     setConversationKey((current) => current + 1)
   }
 
+  async function onCreateQuestion(messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) {
+    setLoading(true)
+    setError(null)
+    try {
+      const questionTicket = await createQuestion(input)
+      setMessages((prev) => prev.map((item, index) => (index === messageIndex ? { ...item, questionTicket } : item)))
+      await refreshQuestions()
+      setQuestions((prev) =>
+        prev.some((questionItem) => questionItem.questionId === questionTicket.questionId) ? prev : [questionTicket, ...prev]
+      )
+      setSelectedQuestionId(questionTicket.questionId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onAnswerQuestion(questionId: string, input: Parameters<typeof answerQuestion>[1]) {
+    setLoading(true)
+    setError(null)
+    try {
+      const answered = await answerQuestion(questionId, input)
+      setQuestions((prev) => [answered, ...prev.filter((questionItem) => questionItem.questionId !== answered.questionId)])
+      setMessages((prev) =>
+        prev.map((item) => (item.questionTicket?.questionId === answered.questionId ? { ...item, questionTicket: answered } : item))
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onResolveQuestion(questionId: string) {
+    setLoading(true)
+    setError(null)
+    try {
+      const resolved = await resolveQuestion(questionId)
+      setQuestions((prev) => [resolved, ...prev.filter((questionItem) => questionItem.questionId !== resolved.questionId)])
+      setMessages((prev) =>
+        prev.map((item) => (item.questionTicket?.questionId === resolved.questionId ? { ...item, questionTicket: resolved } : item))
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <main className="app-frame">
       <aside className="rail" aria-label="主要ナビゲーション">
@@ -195,9 +284,13 @@ export default function App() {
           <Icon name="logo" />
         </a>
         <nav className="rail-nav">
-          <button className="rail-item active" type="button" title="チャット">
+          <button className={`rail-item ${activeView === "chat" ? "active" : ""}`} type="button" title="チャット" onClick={() => setActiveView("chat")}>
             <Icon name="chat" />
             <span>チャット</span>
+          </button>
+          <button className={`rail-item ${activeView === "assignee" ? "active" : ""}`} type="button" title="担当者対応" onClick={() => setActiveView("assignee")}>
+            <Icon name="inbox" />
+            <span>担当者対応</span>
           </button>
           <button className="rail-item" type="button" title="履歴">
             <Icon name="clock" />
@@ -288,24 +381,40 @@ export default function App() {
 
         {error && <div className="error-banner">{error}</div>}
 
+        {activeView === "chat" ? (
         <section className={`split-workspace ${debugMode ? "" : "debug-off"}`}>
           <section className="chat-card" aria-label="チャット">
             <div className="message-list">
               {visibleMessages.length === 0 && !isProcessing && <ChatEmptyState documentsCount={documents.length} onSelectPrompt={setQuestion} />}
               {visibleMessages.map((message, index) => (
-                <article className={`message-row ${message.role}`} key={`${message.role}-${message.createdAt}-${index}`}>
+                <article
+                  className={`message-row ${message.role}`}
+                  key={`${message.role}-${message.createdAt}-${index}`}
+                  ref={index === visibleMessages.length - 1 && !pendingActivity ? latestMessageRef : undefined}
+                >
                   <div className="message-avatar">{message.role === "user" ? "U" : <Icon name="logo" />}</div>
                   <div className="message-content">
                     <div className="message-meta">
                       <strong>{message.role === "user" ? "あなた" : "エージェント"}</strong>
                       <span>{formatTime(message.createdAt)}</span>
                     </div>
-                    {message.role === "assistant" ? <AssistantAnswer message={message} /> : <p className="user-bubble">{message.text}</p>}
+                    {message.role === "assistant" ? (
+                      <AssistantAnswer
+                        message={message}
+                        linkedQuestion={getLinkedQuestion(message, questions)}
+                        loading={loading}
+                        onCreateQuestion={(input) => onCreateQuestion(index, message, input)}
+                        onResolveQuestion={onResolveQuestion}
+                        onAdditionalQuestion={(value) => setQuestion(value)}
+                      />
+                    ) : (
+                      <p className="user-bubble">{message.text}</p>
+                    )}
                   </div>
                 </article>
               ))}
               {pendingActivity && (
-                <article className="message-row assistant processing-row" aria-live="polite">
+                <article className="message-row assistant processing-row" aria-live="polite" ref={latestMessageRef}>
                   <div className="message-avatar">
                     <span className="loading-spinner" aria-hidden="true" />
                   </div>
@@ -359,12 +468,36 @@ export default function App() {
             />
           )}
         </section>
+        ) : (
+          <AssigneeWorkspace
+            questions={questions}
+            selectedQuestionId={selectedQuestionId}
+            loading={loading}
+            onSelect={setSelectedQuestionId}
+            onAnswer={onAnswerQuestion}
+            onBack={() => setActiveView("chat")}
+          />
+        )}
       </section>
     </main>
   )
 }
 
-function AssistantAnswer({ message }: { message: Message }) {
+function AssistantAnswer({
+  message,
+  linkedQuestion,
+  loading,
+  onCreateQuestion,
+  onResolveQuestion,
+  onAdditionalQuestion
+}: {
+  message: Message
+  linkedQuestion?: HumanQuestion
+  loading: boolean
+  onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
+  onResolveQuestion: (questionId: string) => Promise<void>
+  onAdditionalQuestion: (value: string) => void
+}) {
   const citations = message.result?.citations ?? []
   return (
     <div className="answer-card">
@@ -394,6 +527,12 @@ function AssistantAnswer({ message }: { message: Message }) {
           <Icon name="share" />
         </button>
       </div>
+      {message.result && !message.result.isAnswerable && (
+        <QuestionEscalationPanel message={message} questionTicket={linkedQuestion} loading={loading} onCreateQuestion={onCreateQuestion} />
+      )}
+      {linkedQuestion?.status === "answered" || linkedQuestion?.status === "resolved" ? (
+        <QuestionAnswerPanel question={linkedQuestion} loading={loading} onResolveQuestion={onResolveQuestion} onAdditionalQuestion={onAdditionalQuestion} />
+      ) : null}
     </div>
   )
 }
@@ -438,6 +577,279 @@ function ProcessingAnswer({ label }: { label: string }) {
         </span>
       </p>
     </div>
+  )
+}
+
+function QuestionEscalationPanel({
+  message,
+  questionTicket,
+  loading,
+  onCreateQuestion
+}: {
+  message: Message
+  questionTicket?: HumanQuestion
+  loading: boolean
+  onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
+}) {
+  const sourceQuestion = message.sourceQuestion ?? ""
+  const [title, setTitle] = useState(defaultQuestionTitle(sourceQuestion))
+  const [body, setBody] = useState(defaultQuestionBody(sourceQuestion))
+  const [category, setCategory] = useState("その他の質問")
+  const [priority, setPriority] = useState<HumanQuestion["priority"]>("normal")
+  const [assigneeDepartment, setAssigneeDepartment] = useState("総務部")
+
+  if (questionTicket) {
+    return (
+      <section className="question-status-panel">
+        <div>
+          <strong>{questionTicket.status === "open" ? "担当者へ送信済み" : questionTicket.status === "answered" ? "担当者が回答済み" : "解決済み"}</strong>
+          <span>{questionTicket.assigneeDepartment} / {formatDateTime(questionTicket.updatedAt)}</span>
+        </div>
+        <p>{questionTicket.title}</p>
+      </section>
+    )
+  }
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    await onCreateQuestion({
+      title,
+      question: body,
+      requesterName: "山田 太郎",
+      requesterDepartment: "利用部門",
+      assigneeDepartment,
+      category,
+      priority,
+      sourceQuestion,
+      chatAnswer: message.text,
+      chatRunId: message.result?.debug?.runId
+    })
+  }
+
+  return (
+    <form className="question-escalation-panel" onSubmit={onSubmit} aria-label="担当者へ質問">
+      <div className="question-panel-head">
+        <div>
+          <h3>担当者へ質問</h3>
+          <span>自動表示</span>
+        </div>
+      </div>
+      <label>
+        <span>件名</span>
+        <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} required />
+      </label>
+      <label>
+        <span>質問内容</span>
+        <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} required />
+      </label>
+      <div className="question-form-grid">
+        <label>
+          <span>カテゴリ</span>
+          <select value={category} onChange={(event) => setCategory(event.target.value)}>
+            <option value="その他の質問">その他の質問</option>
+            <option value="手続き">手続き</option>
+            <option value="社内制度">社内制度</option>
+            <option value="資料確認">資料確認</option>
+          </select>
+        </label>
+        <label>
+          <span>優先度</span>
+          <select value={priority} onChange={(event) => setPriority(event.target.value as HumanQuestion["priority"])}>
+            <option value="normal">通常</option>
+            <option value="high">高</option>
+            <option value="urgent">緊急</option>
+          </select>
+        </label>
+      </div>
+      <label>
+        <span>担当部署</span>
+        <select value={assigneeDepartment} onChange={(event) => setAssigneeDepartment(event.target.value)}>
+          <option value="総務部">総務部</option>
+          <option value="人事部">人事部</option>
+          <option value="情報システム部">情報システム部</option>
+          <option value="経理部">経理部</option>
+        </select>
+      </label>
+      <div className="question-form-actions">
+        <span>通常 1 営業日以内に回答予定</span>
+        <button type="submit" disabled={loading || !title.trim() || !body.trim()}>
+          担当者へ送信
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function QuestionAnswerPanel({
+  question,
+  loading,
+  onResolveQuestion,
+  onAdditionalQuestion
+}: {
+  question: HumanQuestion
+  loading: boolean
+  onResolveQuestion: (questionId: string) => Promise<void>
+  onAdditionalQuestion: (value: string) => void
+}) {
+  return (
+    <section className="question-answer-panel" aria-label="担当者からの回答">
+      <header>
+        <span className="status-dot"><Icon name="check" /></span>
+        <div>
+          <strong>担当者からの回答</strong>
+          <span>{question.responderName ?? "担当者"}（{question.responderDepartment ?? question.assigneeDepartment}）</span>
+        </div>
+      </header>
+      <p>{question.answerBody}</p>
+      <dl>
+        <div>
+          <dt>回答日時</dt>
+          <dd>{formatDateTime(question.answeredAt ?? question.updatedAt)}</dd>
+        </div>
+        {question.references && (
+          <div>
+            <dt>参照情報</dt>
+            <dd>{question.references}</dd>
+          </div>
+        )}
+      </dl>
+      <footer>
+        <button type="button" disabled={loading || question.status === "resolved"} onClick={() => onResolveQuestion(question.questionId)}>
+          解決した
+        </button>
+        <button type="button" onClick={() => onAdditionalQuestion(`追加確認: ${question.title}\n`)}>
+          追加で質問する
+        </button>
+      </footer>
+    </section>
+  )
+}
+
+function AssigneeWorkspace({
+  questions,
+  selectedQuestionId,
+  loading,
+  onSelect,
+  onAnswer,
+  onBack
+}: {
+  questions: HumanQuestion[]
+  selectedQuestionId: string
+  loading: boolean
+  onSelect: (questionId: string) => void
+  onAnswer: (questionId: string, input: Parameters<typeof answerQuestion>[1]) => Promise<void>
+  onBack: () => void
+}) {
+  const selected = questions.find((question) => question.questionId === selectedQuestionId) ?? questions[0]
+  const [answerTitle, setAnswerTitle] = useState("")
+  const [answerBody, setAnswerBody] = useState("")
+  const [references, setReferences] = useState("")
+  const [internalMemo, setInternalMemo] = useState("")
+  const [notifyRequester, setNotifyRequester] = useState(true)
+
+  useEffect(() => {
+    setAnswerTitle(selected ? `${selected.title}への回答` : "")
+    setAnswerBody(selected?.answerBody ?? "")
+    setReferences(selected?.references ?? "")
+    setInternalMemo(selected?.internalMemo ?? "")
+    setNotifyRequester(selected?.notifyRequester ?? true)
+  }, [selected?.questionId])
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!selected) return
+    await onAnswer(selected.questionId, {
+      answerTitle,
+      answerBody,
+      responderName: "佐藤 花子",
+      responderDepartment: selected.assigneeDepartment,
+      references,
+      internalMemo,
+      notifyRequester
+    })
+  }
+
+  return (
+    <section className="assignee-workspace" aria-label="担当者対応">
+      <header className="assignee-header">
+        <button type="button" onClick={onBack} title="チャットへ戻る">
+          <Icon name="chevron" />
+        </button>
+        <div>
+          <h2>担当者対応</h2>
+          <span>{questions.filter((question) => question.status === "open").length} 件が対応待ち</span>
+        </div>
+      </header>
+      {selected ? (
+        <div className="assignee-grid">
+          <aside className="question-list-panel">
+            <h3>問い合わせ一覧</h3>
+            <div className="question-list">
+              {questions.map((question) => (
+                <button
+                  type="button"
+                  className={`question-list-item ${question.questionId === selected.questionId ? "active" : ""}`}
+                  key={question.questionId}
+                  onClick={() => onSelect(question.questionId)}
+                >
+                  <strong>{question.title}</strong>
+                  <span>{statusLabel(question.status)} / {question.assigneeDepartment}</span>
+                </button>
+              ))}
+            </div>
+          </aside>
+          <section className="question-detail-panel">
+            <h3>問い合わせ概要</h3>
+            <div className="requester-question">
+              <span className="message-avatar">U</span>
+              <p>{selected.question}</p>
+            </div>
+            <dl>
+              <div><dt>ステータス</dt><dd>{statusLabel(selected.status)}</dd></div>
+              <div><dt>優先度</dt><dd>{priorityLabel(selected.priority)}</dd></div>
+              <div><dt>カテゴリ</dt><dd>{selected.category}</dd></div>
+              <div><dt>受付日時</dt><dd>{formatDateTime(selected.createdAt)}</dd></div>
+              <div><dt>質問者</dt><dd>{selected.requesterName}（{selected.requesterDepartment}）</dd></div>
+              <div><dt>担当部署</dt><dd>{selected.assigneeDepartment}</dd></div>
+            </dl>
+            <h4>チャット履歴</h4>
+            <div className="chat-excerpt">
+              <strong>エージェント</strong>
+              <p>{selected.chatAnswer || "資料からは回答できません。担当者へ確認します。"}</p>
+            </div>
+          </section>
+          <form className="answer-form-panel" onSubmit={onSubmit}>
+            <h3>回答作成</h3>
+            <label>
+              <span>回答タイトル</span>
+              <input value={answerTitle} onChange={(event) => setAnswerTitle(event.target.value)} maxLength={120} required />
+            </label>
+            <label>
+              <span>回答内容</span>
+              <textarea value={answerBody} onChange={(event) => setAnswerBody(event.target.value)} maxLength={4000} required />
+            </label>
+            <label>
+              <span>参照資料 / 関連リンク</span>
+              <input value={references} onChange={(event) => setReferences(event.target.value)} placeholder="資料名、URL、またはナレッジリンク" />
+            </label>
+            <label>
+              <span>内部メモ</span>
+              <textarea value={internalMemo} onChange={(event) => setInternalMemo(event.target.value)} maxLength={1000} />
+            </label>
+            <label className="notify-row">
+              <input type="checkbox" checked={notifyRequester} onChange={(event) => setNotifyRequester(event.target.checked)} />
+              <span>質問者へ通知する</span>
+            </label>
+            <div className="answer-form-actions">
+              <button type="button" disabled={loading}>下書き保存</button>
+              <button type="submit" disabled={loading || !answerTitle.trim() || !answerBody.trim()}>回答を送信</button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="empty-question-panel">担当者へ送信された質問はまだありません。</div>
+      )}
+    </section>
   )
 }
 
@@ -564,6 +976,8 @@ function getIconPath(name: IconName) {
       return <path d="M2 3h4v11H2V3Zm6 1v11.8l3.8 7.2h.5a2.3 2.3 0 0 0 2.3-2.8L14 17h3.8a3 3 0 0 0 2.9-3.5l-1.2-7a3 3 0 0 0-3-2.5H8Z" />
     case "trash":
       return <path d="M8 3h8l1 2h4v2H3V5h4l1-2Zm-2 6h12l-1 12H7L6 9Zm3 2 .5 8h2L11 11H9Zm4 0-.5 8h2l.5-8h-2Z" />
+    case "inbox":
+      return <path d="M4 4h16l2 9v7H2v-7l2-9Zm1.6 2-1.3 6h4.4l1.2 2h4.2l1.2-2h4.4l-1.3-6H5.6ZM4 14v4h16v-4h-3.5l-1.2 2H8.7l-1.2-2H4Z" />
   }
 }
 
@@ -700,4 +1114,47 @@ function formatTime(input: string): string {
   const date = new Date(input)
   if (Number.isNaN(date.getTime())) return "--:--:--"
   return date.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+}
+
+function formatDateTime(input: string): string {
+  const date = new Date(input)
+  if (Number.isNaN(date.getTime())) return "-"
+  return date.toLocaleString("ja-JP", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  })
+}
+
+function defaultQuestionTitle(sourceQuestion: string): string {
+  const compact = sourceQuestion.replace(/\s+/g, " ").trim()
+  return compact ? `${compact.slice(0, 42)}について確認したい` : "資料外の内容について確認したい"
+}
+
+function defaultQuestionBody(sourceQuestion: string): string {
+  const compact = sourceQuestion.trim()
+  return compact
+    ? `${compact}\n\n資料を確認しましたが、該当する情報が見つかりませんでした。ご教示いただけますでしょうか。`
+    : "資料を確認しましたが、該当する情報が見つかりませんでした。ご教示いただけますでしょうか。"
+}
+
+function getLinkedQuestion(message: Message, questions: HumanQuestion[]): HumanQuestion | undefined {
+  if (message.questionTicket) {
+    return questions.find((question) => question.questionId === message.questionTicket?.questionId) ?? message.questionTicket
+  }
+  return questions.find((question) => question.sourceQuestion && question.sourceQuestion === message.sourceQuestion)
+}
+
+function statusLabel(status: HumanQuestion["status"]): string {
+  if (status === "open") return "対応中"
+  if (status === "answered") return "回答済み"
+  return "解決済み"
+}
+
+function priorityLabel(priority: HumanQuestion["priority"]): string {
+  if (priority === "urgent") return "緊急"
+  if (priority === "high") return "高"
+  return "通常"
 }
