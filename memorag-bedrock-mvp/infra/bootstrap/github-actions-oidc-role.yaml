@@ -2,16 +2,6 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: GitHub Actions OIDC role for deploying the MemoRAG Bedrock MVP with AWS CDK.
 
 Parameters:
-  GitHubOwner:
-    Type: String
-    Description: GitHub organization or user name.
-    AllowedPattern: "^[A-Za-z0-9_.-]+$"
-
-  GitHubRepository:
-    Type: String
-    Description: GitHub repository name.
-    AllowedPattern: "^[A-Za-z0-9_.-]+$"
-
   GitHubEnvironment:
     Type: String
     Default: dev
@@ -60,7 +50,7 @@ Resources:
       RoleName:
         Ref: DeployRoleName
       Description:
-        Fn::Sub: GitHub Actions deployment role for ${GitHubOwner}/${GitHubRepository}.
+        Fn::Sub: GitHub Actions deployment role for tsuji-tomonori/rag-assist ${GitHubEnvironment}.
       MaxSessionDuration: 3600
       ManagedPolicyArns:
         Ref: ManagedPolicyArns
@@ -80,7 +70,7 @@ Resources:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
               StringLike:
                 token.actions.githubusercontent.com:sub:
-                  Fn::Sub: repo:${GitHubOwner}/${GitHubRepository}:environment:${GitHubEnvironment}
+                  Fn::Sub: repo:tsuji-tomonori/rag-assist:environment:${GitHubEnvironment}
       Tags:
         - Key: Project
           Value: memorag-bedrock-mvp
@@ -106,4 +96,4 @@ Outputs:
   GitHubActionsSubject:
     Description: GitHub OIDC subject claim allowed to assume the role.
     Value:
-      Fn::Sub: repo:${GitHubOwner}/${GitHubRepository}:environment:${GitHubEnvironment}
+      Fn::Sub: repo:tsuji-tomonori/rag-assist:environment:${GitHubEnvironment}
