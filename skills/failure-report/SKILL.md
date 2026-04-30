@@ -58,7 +58,7 @@ description: "Use this skill when a test fails, a requested deliverable does not
 - ユーザーが別の保存先を明示しない限り、実質的な障害・中断レポートはチャット本文だけで完結させず、`reports/bugs/` 配下へ保存する。
 - 最終回答では、生成したレポートの保存先パスを明示する。
 - Markdown の強制改行用の末尾スペースは使わない。サマリ項目は通常の改行で分け、pre-commit の `trailing-whitespace` hook と衝突しないようにする。
-- 保存後、可能であれば `task docs:check:changed` を実行し、`failure_report` JSON ブロックが構文的に有効であることを確認する。
+- 保存後、可能であればリポジトリで定義済みのドキュメント検証を実行し、`failure_report` JSON ブロックが構文的に有効であることを確認する。
 
 ## 出力手順
 

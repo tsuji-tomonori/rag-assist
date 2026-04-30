@@ -15,7 +15,7 @@ Use this skill to create or update repository documentation under `docs/` using 
 4. Create the document with `scripts/new_doc.py` whenever possible so the filename uses the next available `CODE_NNN.md`.
 5. Keep the document lightweight. Fill only sections that are known; leave `TBD` for deliberate follow-up.
 6. Put transient Codex work logs in `reports/`, not in `docs/`.
-7. Before finalizing docs changes, run `task docs:check:changed` when available. Use `task docs:check` for a full docs/reports/skills scan.
+7. Before finalizing docs changes, run a repository-defined docs validation command when available, or use a targeted whitespace/diff check.
 
 ## Diagram Policy
 
@@ -27,7 +27,7 @@ Use this skill to create or update repository documentation under `docs/` using 
 
 - Treat `docs/` as the durable location for requirements, architecture, design, and operations artifacts. Use `reports/working/` only for auxiliary work reports.
 - Do not use Markdown hard-break trailing spaces in generated reports or docs; the repository pre-commit hook removes trailing whitespace and will interrupt commits.
-- When searching for Markdown code fences, avoid shell patterns that include raw triple backticks in double quotes. Prefer `task docs:check:changed`, `task docs:check`, or simpler `rg -n 'mermaid' ...` checks.
+- When searching for Markdown code fences, avoid shell patterns that include raw triple backticks in double quotes. Prefer repository-defined docs validation commands when present, or simpler `rg -n 'mermaid' ...` checks.
 
 ## Skill Structure Policy
 

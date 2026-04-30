@@ -16,8 +16,11 @@
 - アップロード時に文書を抽出、チャンク化し、memory cardを生成して検索対象に登録する。
 - 質問時にmemory card検索、clue生成、chunk検索、grounded answer生成を行う。
 - 回答はアップロード済み資料の根拠に限定し、根拠不足時は回答不可を返す。
-- `modelId`、`embeddingModelId`、`topK`、`minScore` をAPIパラメータから指定できる。
+- `modelId`、`embeddingModelId`、`clueModelId`、`topK`、`memoryTopK`、`minScore`、`strictGrounded`、`useMemory` をAPIパラメータから指定できる。
+- `includeDebug` または `debug` 指定時に、LangGraph nodeごとの実行traceを永続化して取得できる。
+- 文書を `documentId` 単位で削除でき、source、manifest、memory vectors、evidence vectorsを削除対象にする。
 - UIは資料アップロード、モデルID指定、チャット、引用表示を1画面に集約する。
+- UIはdebug modeを持ち、最新または過去のdebug traceを表示、Markdownとしてダウンロードできる。
 - ベンチマークは `/benchmark/query` APIとCLIから実行できる。
 - API仕様は `/openapi.json` で取得できる。
 
@@ -27,6 +30,10 @@
 - AWSではAPI Gateway、Lambda、Bedrock、S3、S3 Vectors、CloudFrontを基本構成とする。
 - MVPではサーバ管理を避け、固定費を抑えやすいサーバレス構成を優先する。
 - 文書本文、manifest、vector metadataはdocumentId単位で追跡できる。
+- debug traceは `debug-runs/<yyyy-mm-dd>/<runId>.json` として保存し、MVPの評価・原因分析に使える。
+- CloudWatch LogsはMVPコスト抑制のため1週間保持とする。
+- S3 Vectors index dimensionはCDK context `embeddingDimensions` とAPI実行時の `EMBEDDING_DIMENSIONS` を一致させる。
+- 月額費用は小規模検証 `$2-5`、社内MVP `$25-35`、活発なpilot `$200-250` を初期目安とし、Bedrock tokens、CloudWatch Logs、CloudFront転送量を主要変動費として監視する。
 - 型チェックとビルドがCI相当の最低限の品質ゲートになる。
 
 ## 受け入れ条件
@@ -34,7 +41,7 @@
 - `npm install` が成功する。
 - `npm run typecheck --workspaces --if-present` が成功する。
 - `npm run build --workspaces --if-present` が成功する。
-- ローカルAPIで `GET /health`、`POST /documents`、`POST /chat`、`GET /openapi.json` が成功する。
+- ローカルAPIで `GET /health`、`POST /documents`、`GET /documents`、`DELETE /documents/{documentId}`、`POST /chat`、`GET /debug-runs`、`GET /openapi.json` が成功する。
 - サンプルdatasetでbenchmark CLIが結果JSONLを出力する。
 
 ## MVP外
@@ -43,3 +50,4 @@
 - Bedrock Guardrailsや別モデルjudgeによる厳密なgroundedness評価。
 - Textractなどを使った高精度OCR/文書変換パイプライン。
 - マルチテナント分離、文書ACL、部署別権限制御。
+- WAF、カスタムドメイン、独自証明書、VPC閉域化、KMS CMKによる本番暗号化管理。

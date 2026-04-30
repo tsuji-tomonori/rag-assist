@@ -36,6 +36,24 @@ curl -s http://localhost:8787/chat \
   }' | jq
 ```
 
+## List debug traces
+
+```bash
+curl -s http://localhost:8787/debug-runs | jq
+```
+
+## Get a debug trace
+
+```bash
+curl -s http://localhost:8787/debug-runs/run_20260101_120000Z_abc12345 | jq
+```
+
+## Delete document
+
+```bash
+curl -s -X DELETE http://localhost:8787/documents/<documentId> | jq
+```
+
 ## Benchmark query
 
 ```bash
