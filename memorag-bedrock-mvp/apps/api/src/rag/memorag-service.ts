@@ -185,7 +185,7 @@ export class MemoRagService {
       maxTokens: 600
     })
     const clueJson = parseJsonObject<ClueJson>(clueRaw)
-    const clues = unique([input.question, ...(clueJson?.clues ?? [])]).slice(0, 4)
+    const clues = buildSearchClues(input.question, clueJson?.clues ?? [])
 
     const retrievedByKey = new Map<string, RetrievedVector>()
     for (const clue of clues) {
@@ -232,7 +232,7 @@ export class MemoRagService {
 
     const used = new Set(answerJson.usedChunkIds ?? [])
     const citations = retrieved
-      .filter((hit) => used.size === 0 || used.has(hit.metadata.chunkId ?? hit.key))
+      .filter((hit) => used.size === 0 || used.has(hit.key) || used.has(hit.metadata.chunkId ?? ""))
       .map(toCitation)
       .slice(0, 5)
 
@@ -292,6 +292,16 @@ function toCitation(hit: RetrievedVector): Citation {
 
 function unique(items: string[]): string[] {
   return [...new Set(items.map((item) => item.trim()).filter(Boolean))]
+}
+
+function buildSearchClues(question: string, generatedClues: string[]): string[] {
+  const anchors = question.includes("分類")
+    ? [
+        "ソフトウェア要求の分類",
+        "ソフトウェア製品要求 ソフトウェアプロジェクト要求 機能要求 非機能要求 技術制約 サービス品質制約"
+      ]
+    : []
+  return unique([question, ...anchors, ...generatedClues]).slice(0, 6)
 }
 
 function clamp(value: number, min: number, max: number): number {

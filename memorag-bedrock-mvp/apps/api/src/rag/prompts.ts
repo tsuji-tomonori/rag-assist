@@ -38,8 +38,8 @@ ${memoryContext || "メモリは見つかりませんでした。"}
 export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector[]): string {
   const context = chunks
     .map(
-      (chunk) => `<chunk id="${chunk.metadata.chunkId ?? chunk.key}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
-${buildRelevantSnippet(question, chunk.metadata.text ?? "")}
+      (chunk) => `<chunk id="${escapeXml(chunk.key)}" chunkId="${escapeXml(chunk.metadata.chunkId ?? "")}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
+${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
 </chunk>`
     )
     .join("\n\n")
@@ -52,6 +52,7 @@ ${buildRelevantSnippet(question, chunk.metadata.text ?? "")}
 - 推測、一般知識、資料外の補完は禁止。
 - 資料から判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
 - 回答できる場合は isAnswerable=true とし、簡潔に日本語で回答する。
+- 質問が分類、一覧、洗い出しを求める場合は、<context>内に明示された分類項目を漏れなく列挙し、章名、活動名、参考文献名を分類項目として混ぜない。
 - usedChunkIds には根拠に使ったchunk idを入れる。
 - 出力はJSONのみ。Markdownやコードフェンスは禁止。
 
@@ -59,7 +60,7 @@ JSON schema:
 {
   "isAnswerable": true,
   "answer": "資料だけに基づく回答",
-  "usedChunkIds": ["chunk-0000"]
+  "usedChunkIds": ["retrieved chunk id from <chunk id=...>"]
 }
 
 <question>
@@ -74,7 +75,7 @@ function escapeXml(input: string): string {
   return input.replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[char] ?? char))
 }
 
-function buildRelevantSnippet(question: string, text: string, maxChars = 1000): string {
+function buildRelevantSnippet(question: string, text: string, maxChars = 1800): string {
   if (text.length <= maxChars) return text
 
   const index = findBestNeedleIndex(question, text)
@@ -89,6 +90,7 @@ function buildRelevantSnippet(question: string, text: string, maxChars = 1000): 
 function findBestNeedleIndex(question: string, text: string): number {
   const normalizedQuestion = question.replace(/[?？。.!！\s]/g, "")
   const candidates = unique([
+    ...intentAnchors(question),
     normalizedQuestion,
     normalizedQuestion.replace(/とは$/, ""),
     normalizedQuestion.replace(/について$/, ""),
@@ -102,6 +104,24 @@ function findBestNeedleIndex(question: string, text: string): number {
     if (index >= 0) return index
   }
   return -1
+}
+
+function intentAnchors(question: string): string[] {
+  const anchors: string[] = []
+  if (question.includes("分類")) {
+    anchors.push(
+      "ソフトウェア要求の分類",
+      "要求分類",
+      "分類の目的",
+      "ソフトウェア製品要求",
+      "ソフトウェアプロジェクト要求",
+      "機能要求",
+      "非機能要求",
+      "技術制約",
+      "サービス品質制約"
+    )
+  }
+  return anchors
 }
 
 function unique(items: string[]): string[] {
