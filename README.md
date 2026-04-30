@@ -51,7 +51,7 @@ GitHub ActionsからAWSへデプロイするには、GitHub側とAWS側の設定
 ### GitHub側
 
 1. `Settings > Environments` で `dev` を作成する。
-2. Repository secret または Environment secret に `AWS_DEPLOY_ROLE_ARN` を設定する。
+2. Repository secret または Environment secret に `AWS_DEPLOY_ROLE_ARN` を設定する。値はCloudFormation Outputsの `GitHubActionsDeployRoleArn` を使う。
 3. `Settings > Actions > General` でActionsを有効化する。
 4. `Actions > Deploy MemoRAG MVP > Run workflow` から手動実行する。
 
@@ -79,7 +79,9 @@ aws cloudformation deploy \
     GitHubEnvironment=dev
 ```
 
-Outputsの `GitHubActionsDeployRoleArn` をGitHub secret `AWS_DEPLOY_ROLE_ARN` に設定してください。
+CloudFormation Outputsのうち、GitHub EnvironmentまたはRepository secretに設定するのは `GitHubActionsDeployRoleArn` です。この値を secret `AWS_DEPLOY_ROLE_ARN` に設定してください。
+
+`GitHubOidcProviderArn` はAWS側のOIDC provider ARN確認用です。GitHub secretには設定しません。
 
 `memorag-bedrock-mvp` ディレクトリに移動してから実行する場合は、`--template-file infra/bootstrap/github-actions-oidc-role.yaml` を指定してください。
 

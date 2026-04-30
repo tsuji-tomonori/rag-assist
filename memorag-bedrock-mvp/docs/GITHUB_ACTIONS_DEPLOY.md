@@ -24,7 +24,7 @@ RepositoryまたはEnvironment secretに次を設定する。
 
 | Secret | 内容 |
 | --- | --- |
-| `AWS_DEPLOY_ROLE_ARN` | GitHub Actions OIDCからAssumeRoleするAWS IAM Role ARN。 |
+| `AWS_DEPLOY_ROLE_ARN` | CloudFormation Outputsの `GitHubActionsDeployRoleArn`。GitHub Actions OIDCからAssumeRoleするAWS IAM Role ARN。 |
 
 ## AWS IAM Role
 
@@ -53,7 +53,9 @@ aws cloudformation deploy \
     ExistingGitHubOidcProviderArn=arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com
 ```
 
-Outputsの `GitHubActionsDeployRoleArn` をGitHub secret `AWS_DEPLOY_ROLE_ARN` に設定する。
+CloudFormation Outputsのうち、GitHub EnvironmentまたはRepository secretに設定するのは `GitHubActionsDeployRoleArn`。この値を secret `AWS_DEPLOY_ROLE_ARN` に設定する。
+
+`GitHubOidcProviderArn` はAWS側のOIDC provider ARN確認用で、GitHub secretには設定しない。
 
 リポジトリルートから実行する場合は、`--template-file memorag-bedrock-mvp/infra/bootstrap/github-actions-oidc-role.yaml` を指定する。
 
