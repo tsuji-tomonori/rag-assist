@@ -1,0 +1,29 @@
+{
+  "name": "@memorag-mvp/infra",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && npm run bundle",
+    "bundle": "node scripts/bundle-lambdas.mjs",
+    "synth:yaml": "mkdir -p cdk.out && cdk synth > cdk.out/MemoRagMvpStack.template.yaml",
+    "test": "node --test -r ts-node/register test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "cdk": "cdk"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3vectors": "^3.1024.0",
+    "aws-cdk-lib": "^2.190.0",
+    "constructs": "^10.4.2",
+    "source-map-support": "^0.5.21"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.149",
+    "@types/node": "^22.15.0",
+    "aws-cdk": "^2.190.0",
+    "cdk-nag": "^2.38.2",
+    "esbuild": "^0.25.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

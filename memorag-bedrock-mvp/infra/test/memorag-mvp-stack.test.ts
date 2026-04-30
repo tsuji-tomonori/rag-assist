@@ -1,0 +1,120 @@
+import assert from "node:assert/strict"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import path from "node:path"
+import test from "node:test"
+import * as cdk from "aws-cdk-lib"
+import { Match, Template } from "aws-cdk-lib/assertions"
+import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
+
+function synthesize() {
+  const app = new cdk.App()
+  const stack = new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
+    env: { account: "111111111111", region: "ap-northeast-1" },
+    includeFrontendDeployment: false
+  })
+  return Template.fromStack(stack)
+}
+
+test("implements the designed serverless resources", () => {
+  const template = synthesize()
+
+  template.resourceCountIs("AWS::S3::Bucket", 3)
+  template.hasResourceProperties("AWS::S3::Bucket", {
+    BucketEncryption: {
+      ServerSideEncryptionConfiguration: [
+        { ServerSideEncryptionByDefault: { SSEAlgorithm: "AES256" } }
+      ]
+    },
+    PublicAccessBlockConfiguration: {
+      BlockPublicAcls: true,
+      BlockPublicPolicy: true,
+      IgnorePublicAcls: true,
+      RestrictPublicBuckets: true
+    }
+  })
+  template.hasResourceProperties("AWS::Lambda::Function", {
+    Handler: "index.handler",
+    Runtime: "nodejs22.x",
+    Architectures: ["arm64"]
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
+    ProtocolType: "HTTP"
+  })
+  template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
+    StageName: "$default",
+    AutoDeploy: true,
+    AccessLogSettings: Match.objectLike({
+      DestinationArn: Match.anyValue(),
+      Format: Match.serializedJson(Match.objectLike({ requestId: "$context.requestId" }))
+    })
+  })
+  template.hasResourceProperties("AWS::CloudFront::Distribution", {
+    DistributionConfig: Match.objectLike({
+      DefaultRootObject: "index.html",
+      Logging: Match.objectLike({ Prefix: "cloudfront/frontend/" }),
+      DefaultCacheBehavior: Match.objectLike({
+        ViewerProtocolPolicy: "redirect-to-https"
+      })
+    })
+  })
+  template.resourceCountIs("AWS::CloudFront::OriginAccessControl", 1)
+  template.hasResourceProperties("AWS::CloudFormation::CustomResource", {
+    vectorBucketName: Match.anyValue(),
+    indexName: "memorag-index",
+    dimension: 1024,
+    distanceMetric: "cosine"
+  })
+})
+
+test("does not create fixed-cost network or datastore resources", () => {
+  const template = synthesize().toJSON()
+  const fixedCostResourceTypes = new Set([
+    "AWS::EC2::NatGateway",
+    "AWS::EC2::VPC",
+    "AWS::EC2::Subnet",
+    "AWS::EC2::EIP",
+    "AWS::ElasticLoadBalancingV2::LoadBalancer",
+    "AWS::RDS::DBInstance",
+    "AWS::RDS::DBCluster",
+    "AWS::OpenSearchService::Domain",
+    "AWS::Elasticsearch::Domain"
+  ])
+
+  const actualTypes = Object.values(template.Resources ?? {}).map((resource: any) => resource.Type)
+  assert.deepEqual(
+    actualTypes.filter((type) => fixedCostResourceTypes.has(type)).sort(),
+    [],
+    "The MVP stack must stay serverless and avoid NAT gateways, VPC networking, and managed database/search clusters."
+  )
+})
+
+test("matches the synthesized CloudFormation snapshot", () => {
+  const actual = `${JSON.stringify(stabilizeTemplate(synthesize().toJSON()), null, 2)}\n`
+  const snapshotPath = path.join(__dirname, "__snapshots__", "memorag-mvp-stack.snapshot.json")
+
+  if (process.env.UPDATE_SNAPSHOTS === "1") {
+    mkdirSync(path.dirname(snapshotPath), { recursive: true })
+    writeFileSync(snapshotPath, actual)
+  }
+
+  assert.equal(actual, readFileSync(snapshotPath, "utf-8"))
+  assert.equal(existsSync(snapshotPath), true)
+})
+
+function stabilizeTemplate(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stabilizeTemplate)
+  if (!value || typeof value !== "object") return stabilizeScalar(value)
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => key !== "Metadata")
+      .map(([key, nested]) => [key, stabilizeTemplate(nested)])
+  )
+}
+
+function stabilizeScalar(value: unknown): unknown {
+  if (typeof value !== "string") return value
+  return value
+    .replace(/asset\.[0-9a-f]{64}/g, "asset.<hash>")
+    .replace(/[0-9a-f]{64}\.zip/g, "<asset-hash>.zip")
+}

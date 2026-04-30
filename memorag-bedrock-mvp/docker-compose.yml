@@ -1,0 +1,33 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      PORT: 8787
+      MOCK_BEDROCK: "true"
+      USE_LOCAL_VECTOR_STORE: "true"
+      LOCAL_DATA_DIR: /data
+      DEFAULT_MODEL_ID: amazon.nova-lite-v1:0
+      DEFAULT_MEMORY_MODEL_ID: amazon.nova-lite-v1:0
+      EMBEDDING_MODEL_ID: amazon.titan-embed-text-v2:0
+      EMBEDDING_DIMENSIONS: 1024
+      MIN_RETRIEVAL_SCORE: 0.20
+    ports:
+      - "8787:8787"
+    volumes:
+      - local-data:/data
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      VITE_API_BASE_URL: http://localhost:8787
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  local-data:

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+cdk.out/
+infra/lambda-dist/
+.local-data/
+.env
+.DS_Store
+coverage/
+*.log

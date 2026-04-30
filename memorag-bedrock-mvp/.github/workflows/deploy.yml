@@ -1,0 +1,114 @@
+name: Deploy MemoRAG MVP
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub environment name used for deployment approvals and secrets.
+        required: true
+        default: dev
+      aws-region:
+        description: AWS region to deploy into.
+        required: true
+        default: ap-northeast-1
+      bootstrap:
+        description: Run cdk bootstrap before deploy. Use only for first-time setup.
+        required: true
+        type: boolean
+        default: false
+      default-model-id:
+        description: Bedrock model ID used for answer generation.
+        required: true
+        default: amazon.nova-lite-v1:0
+      embedding-model-id:
+        description: Bedrock model ID used for embeddings.
+        required: true
+        default: amazon.titan-embed-text-v2:0
+      embedding-dimensions:
+        description: Vector index dimension. Must match the embedding model output.
+        required: true
+        default: "1024"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: memorag-deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: CDK deploy
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 45
+    env:
+      AWS_REGION: ${{ inputs.aws-region }}
+      CDK_DEFAULT_REGION: ${{ inputs.aws-region }}
+      CDK_CONTEXT: >-
+        --context defaultModelId=${{ inputs.default-model-id }}
+        --context embeddingModelId=${{ inputs.embedding-model-id }}
+        --context embeddingDimensions=${{ inputs.embedding-dimensions }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Type-check all workspaces
+        run: npm run typecheck --workspaces --if-present
+
+      - name: Build all workspaces
+        run: npm run build --workspaces --if-present
+
+      - name: Run CDK assertion and snapshot tests
+        run: npm run test -w @memorag-mvp/infra
+
+      - name: CDK bootstrap
+        if: ${{ inputs.bootstrap }}
+        run: npm run cdk -w @memorag-mvp/infra -- bootstrap $CDK_CONTEXT
+
+      - name: Synthesize CloudFormation YAML
+        run: |
+          mkdir -p infra/cdk.out
+          cd infra
+          ../node_modules/.bin/cdk synth $CDK_CONTEXT > cdk.out/MemoRagMvpStack.template.yaml
+
+      - name: Upload synth artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: memorag-cdk-synth-${{ inputs.environment }}
+          path: |
+            infra/cdk.out/MemoRagMvpStack.template.yaml
+            infra/cdk.out/AwsSolutions-*-NagReport.csv
+          if-no-files-found: warn
+
+      - name: CDK deploy
+        run: >-
+          npm run cdk -w @memorag-mvp/infra --
+          deploy
+          --require-approval never
+          --outputs-file cdk-outputs.json
+          $CDK_CONTEXT
+
+      - name: Upload deployment outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: memorag-cdk-outputs-${{ inputs.environment }}
+          path: infra/cdk-outputs.json
+          if-no-files-found: error
