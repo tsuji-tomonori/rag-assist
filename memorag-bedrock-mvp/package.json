@@ -16,7 +16,8 @@
     "dev:api": "npm run dev -w @memorag-mvp/api",
     "dev:web": "npm run dev -w @memorag-mvp/web",
     "benchmark": "npm run start -w @memorag-mvp/benchmark",
-    "cdk": "npm run cdk -w @memorag-mvp/infra"
+    "cdk": "npm run cdk -w @memorag-mvp/infra",
+    "test:coverage": "npm run test:coverage -w @memorag-mvp/api && npm run test:coverage -w @memorag-mvp/web"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

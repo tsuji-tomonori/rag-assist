@@ -32,7 +32,6 @@ type IconName =
   | "check"
   | "warning"
   | "expand"
-  | "info"
   | "plus"
   | "download"
   | "share"
@@ -466,8 +465,6 @@ function getIconPath(name: IconName) {
       return <path d="M12 3 22 20H2L12 3Zm-1 6v5h2V9h-2Zm0 7v2h2v-2h-2Z" />
     case "expand":
       return <path d="M4 4h7v2H7.4l4.2 4.2-1.4 1.4L6 7.4V11H4V4Zm9 0h7v7h-2V7.4l-4.2 4.2-1.4-1.4L16.6 6H13V4ZM6 16.6l4.2-4.2 1.4 1.4L7.4 18H11v2H4v-7h2v3.6Zm7.8-4.2 4.2 4.2V13h2v7h-7v-2h3.6l-4.2-4.2 1.4-1.4Z" />
-    case "info":
-      return <path d="M11 10h2v8h-2v-8Zm0-4h2v2h-2V6Zm1-4a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z" />
     case "plus":
       return <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
     case "download":

@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "tsx watch src/local.ts",
     "start": "tsx src/local.ts",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "tsx --test src/**/*.test.ts src/**/**/*.test.ts",
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:coverage": "c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text tsx --test src/**/*.test.ts src/**/**/*.test.ts"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1024.0",
@@ -28,6 +29,7 @@
     "@types/aws-lambda": "^8.10.149",
     "@types/node": "^22.15.0",
     "tsx": "^4.19.4",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "c8": "^11.0.0"
   }
 }
