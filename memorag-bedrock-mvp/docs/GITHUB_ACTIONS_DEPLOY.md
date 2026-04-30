@@ -1,10 +1,11 @@
 # GitHub Actions Deploy
 
-このMVPはGitHub ActionsからAWS CDK deployできる。workflowは手動実行専用で、AWS認証はGitHub OIDCを使う。
+このMVPはGitHub ActionsからAWS CDK deployできる。AWS認証はGitHub OIDCを使う。
 
 ## Workflow
 
-- `.github/workflows/deploy.yml`
+- `.github/workflows/memorag-deploy.yml`
+- `main` branchへのpush、または手動実行で起動する。
 - 手動実行: `Actions` -> `Deploy MemoRAG MVP` -> `Run workflow`
 
 入力:
@@ -12,7 +13,7 @@
 | 入力 | 既定値 | 用途 |
 | --- | --- | --- |
 | `environment` | `dev` | GitHub Environment名。承認ルールや環境別secretを使う。 |
-| `aws-region` | `ap-northeast-1` | CDK deploy先リージョン。 |
+| `aws-region` | `us-east-1` | CDK deploy先リージョン。 |
 | `bootstrap` | `false` | 初回のみCDK bootstrapを同時実行する。 |
 | `default-model-id` | `amazon.nova-lite-v1:0` | 回答生成に使うBedrock model ID。 |
 | `embedding-model-id` | `amazon.titan-embed-text-v2:0` | 埋め込みに使うBedrock model ID。 |

@@ -9,7 +9,9 @@
     "benchmark"
   ],
   "scripts": {
+    "ci": "npm run typecheck --workspaces --if-present && npm test --workspaces --if-present && npm run build --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "dev:api": "npm run dev -w @memorag-mvp/api",
     "dev:web": "npm run dev -w @memorag-mvp/web",
