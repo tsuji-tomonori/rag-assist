@@ -45,6 +45,12 @@ For product requirement subtypes, use the dedicated skills because their definit
 
 Keep shared filenames, directory mapping, and template assets here. Put document-type-specific writing guidance in the dedicated skill.
 
+
+## Project-specific routing (`memorag-bedrock-mvp`)
+
+When editing `memorag-bedrock-mvp/docs`, follow `memorag-bedrock-mvp/docs/DOCS_STRUCTURE.md` first.
+If legacy flat files (e.g. `REQUIREMENTS.md`, `ARCHITECTURE.md`) must be updated, keep them aligned with SWEBOK-lite metadata and atomic requirement style to ease incremental migration.
+
 ## Naming
 
 Use:

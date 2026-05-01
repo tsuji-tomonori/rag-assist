@@ -54,3 +54,14 @@ Pull Request、PR、PR タイトル、PR 本文、PR コメント、レビュー
 - ユーザーが「レポート不要」「reports には出さないで」などと明示した場合のみ、このレポート作成を省略してよい。
 
 この skill が Codex の利用可能 skill 一覧に自動表示されていない場合でも、リポジトリローカルの明示ルールとして上記ファイルを参照してから作業する。
+
+
+## Docs Update Policy for `memorag-bedrock-mvp/docs`
+
+`memorag-bedrock-mvp/docs` を更新する依頼では、次を優先する。
+
+- `skills/docs-swebok-template-writer/SKILL.md` を参照し、SWEBOK-lite の体裁に合わせる。
+- 要求は原子性（1 要件 = 1 検証可能条件）を保つ。
+- 新規/大規模更新は `memorag-bedrock-mvp/docs/DOCS_STRUCTURE.md` の構成方針に合わせる。
+- 既存の単一ファイル（例: `REQUIREMENTS.md`, `ARCHITECTURE.md`）を更新する場合も、将来移行しやすいように種別メタ情報と要件IDを維持する。
+- 以降の docs 修正では、可能な限り REQ/ARC/DES/OPS のディレクトリに分割して追記・修正する。
