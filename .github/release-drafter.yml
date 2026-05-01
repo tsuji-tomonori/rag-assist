@@ -1,0 +1,34 @@
+name-template: 'v$RESOLVED_VERSION 🌈'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '🚀 機能追加'
+    labels:
+      - 'semver:minor'
+      - 'feature'
+  - title: '🐛 バグ修正'
+    labels:
+      - 'semver:patch'
+      - 'bug'
+  - title: '💥 破壊的変更'
+    labels:
+      - 'semver:major'
+      - 'breaking-change'
+  - title: '🧰 その他メンテナンス'
+    labels:
+      - 'chore'
+      - 'ci'
+      - 'docs'
+
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+change-title-escapes: '\\<*_&'
+
+template: |
+  ## 変更内容
+
+  $CHANGES
+
+  ## 運用メモ
+
+  - SemVer は PR ラベル（semver:major / minor / patch）を基準に決定しています。
+  - デプロイ対象のバージョンはタグ `vX.Y.Z` を参照してください。

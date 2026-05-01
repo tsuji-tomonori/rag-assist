@@ -1,0 +1,125 @@
+name: Release Management
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: '手動実行時のバージョンアップ種別'
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate-semver-label:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: semverラベルの確認
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const semverLabels = ['semver:major', 'semver:minor', 'semver:patch'];
+            const hits = semverLabels.filter(name => labels.includes(name));
+
+            if (hits.length !== 1) {
+              core.setFailed(`PRには semver:major / semver:minor / semver:patch のいずれか1つを付与してください。現在: ${hits.join(', ') || 'なし'}`);
+            } else {
+              core.info(`semver label OK: ${hits[0]}`);
+            }
+
+  release-on-main:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 現在の最新タグを取得
+        id: latest
+        run: |
+          latest_tag=$(git tag --list 'v*' --sort=-v:refname | head -n 1)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v0.0.0"
+          fi
+          echo "latest_tag=$latest_tag" >> "$GITHUB_OUTPUT"
+
+      - name: バージョン種別を決定
+        id: bump
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const manual = context.eventName === 'workflow_dispatch' ? core.getInput('bump') : null;
+            if (manual) {
+              core.setOutput('kind', manual);
+              core.info(`manual bump: ${manual}`);
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const result = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner,
+              repo,
+              commit_sha: context.sha,
+            });
+
+            const pr = result.data?.[0];
+            if (!pr) {
+              core.setOutput('kind', 'patch');
+              core.info('associated PRなしのため patch 扱い');
+              return;
+            }
+
+            const labels = pr.labels.map(l => l.name);
+            if (labels.includes('semver:major')) core.setOutput('kind', 'major');
+            else if (labels.includes('semver:minor')) core.setOutput('kind', 'minor');
+            else core.setOutput('kind', 'patch');
+
+      - name: 次バージョンを計算
+        id: next
+        run: |
+          latest='${{ steps.latest.outputs.latest_tag }}'
+          kind='${{ steps.bump.outputs.kind }}'
+          base="${latest#v}"
+          IFS='.' read -r major minor patch <<< "$base"
+
+          case "$kind" in
+            major)
+              major=$((major + 1)); minor=0; patch=0 ;;
+            minor)
+              minor=$((minor + 1)); patch=0 ;;
+            *)
+              patch=$((patch + 1)) ;;
+          esac
+
+          next="v${major}.${minor}.${patch}"
+          echo "next_tag=$next" >> "$GITHUB_OUTPUT"
+          echo "NEXT_TAG=$next" >> "$GITHUB_ENV"
+
+      - name: タグ作成
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$NEXT_TAG"
+          git push origin "$NEXT_TAG"
+
+      - name: GitHub Release作成
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.NEXT_TAG }}
+          generate_release_notes: true
