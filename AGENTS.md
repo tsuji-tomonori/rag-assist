@@ -20,6 +20,23 @@ Git commit message、コミットメッセージ、コミットコメント、gi
 
 この skill が Codex の利用可能 skill 一覧に自動表示されていない場合でも、リポジトリローカルの明示ルールとして上記ファイルを参照してから作業する。
 
+## Pull Request Title and Comment
+
+Pull Request、PR、PR タイトル、PR 本文、PR コメント、レビューコメント、`gh pr create` に関する依頼では、必ず次の skill を読む。
+
+- `skills/japanese-pr-title-comment/SKILL.md`
+
+適用ルール:
+
+- PR タイトル、PR 本文、PR コメント、レビューコメントは日本語で書く。
+- ブランチ名、ファイルパス、コマンド、API 名、型名、関数名、issue 番号は原文を維持してよい。
+- PR 本文を作成する場合は、`.github/pull_request_template.md` の見出しを優先する。
+- `git diff`、変更ファイル一覧、コミット内容、作業レポートから PR 文面を作る場合も、この skill を適用する。
+- ステージ済みまたは変更対象に `reports/working/*.md`、`reports/bugs/*.md`、または同等の作業・障害レポートが含まれる場合は、その本文を確認し、PR 本文に要点を反映する。
+- 実施していないテストや確認事項を実施済みとして書かない。
+
+この skill が Codex の利用可能 skill 一覧に自動表示されていない場合でも、リポジトリローカルの明示ルールとして上記ファイルを参照してから作業する。
+
 ## Post Task Work Report
 
 実作業を伴う依頼では、ユーザーが明示的に不要と指示しない限り、主作業の完了後かつ最終回答の前に必ず次の skill を読む。
