@@ -1,113 +1,53 @@
-# MemoRAG MVP アーキテクチャ設計
+# MemoRAG MVP アーキテクチャ索引（SWEBOK-lite）
 
 - ファイル: `memorag-bedrock-mvp/docs/ARCHITECTURE.md`
 - 種別: `ARC_VIEW`
 - 作成日: 2026-05-01
 - 状態: Draft
 
-## 何を書く場所か
+## 位置づけ
 
-MVP の実行構成、主要コンポーネント、データ配置、実行フローを定義する。
+MemoRAG MVP のアーキテクチャは、SWEBOK の Software Architecture に合わせて、ステークホルダー、関心事、コンテキスト、ビュー、品質属性、重要判断を分けて管理する。
 
-## システムコンテキスト（全体構成図）
+本ファイルは索引であり、詳細は `2_アーキテクチャ_ARC/` 配下の分割ファイルを正とする。
 
-```mermaid
-flowchart TB
-  subgraph Client[Client]
-    User[Browser User]
-    Bench[Benchmark CLI]
-  end
+## 分割ファイル
 
-  subgraph Edge[Edge]
-    CF[CloudFront]
-    APIGW[API Gateway]
-  end
-
-  subgraph App[Application]
-    Web[S3 Frontend Assets]
-    Fn[Lambda API\nHono + LangGraph]
-  end
-
-  subgraph AI[AI Services]
-    Bedrock[Amazon Bedrock]
-  end
-
-  subgraph Storage[Storage]
-    S3Doc[S3 Documents Bucket\nsource / manifests / debug-runs]
-    VMem[S3 Vectors memory-index]
-    VEv[S3 Vectors evidence-index]
-  end
-
-  User -->|UI配信| CF
-  CF --> Web
-  User -->|API呼び出し| APIGW
-  Bench -->|ベンチマーク呼び出し| APIGW
-  APIGW --> Fn
-  Fn -->|LLM/Embedding| Bedrock
-  Fn -->|文書/manifest/trace 保存| S3Doc
-  Fn -->|想起検索| VMem
-  Fn -->|根拠検索| VEv
-```
-
-### 構成図の妥当性チェック
-
-- 境界を `Client / Edge / Application / AI Services / Storage` に分離し、責務の所在を明確化した。
-- `Browser User` の API 経路を `API Gateway` 経由に統一し、実運用の経路と一致させた。
-- `Benchmark CLI` も同一 API 面を使う形に明示し、検証系トラフィックの入口を明確化した。
-- `S3 Documents` と `S3 Vectors` を用途別に分離して表記し、保存責務と検索責務の違いを図で判別可能にした。
-
-## 実行フロー（RAG）
-
-```mermaid
-flowchart LR
-  Q[Question] --> A[analyze_input]
-  A --> N[normalize_query]
-  N --> M[retrieve_memory]
-  M --> C[generate_clues]
-  C --> E[embed_queries]
-  E --> S[search_evidence]
-  S --> R[rerank_chunks]
-  R --> G[answerability_gate]
-  G -->|OK| GA[generate_answer]
-  G -->|NG| NR[finalize_refusal]
-  GA --> V[validate_citations]
-  V --> F[finalize_response]
-```
-
-## コンポーネント責務
-
-- API Gateway: `GET/POST/DELETE` エンドポイント公開
-- Lambda `ApiFunction`: API ハンドリング、RAG 実行、debug trace 永続化
-- Bedrock: clue 生成・回答生成・embedding
-- S3 Documents: source / manifest / debug-runs 保管
-- S3 Vectors: memory-index / evidence-index ベクトル検索
-- CloudFront + FrontendBucket: UI 配信
-
-## データ配置
-
-| データ | AWS | ローカル |
+| 種別 | ファイル | 内容 |
 | --- | --- | --- |
-| source | `documents/<documentId>/source.txt` | `.local-data/documents/<documentId>/source.txt` |
-| manifest | `manifests/<documentId>.json` | `.local-data/manifests/<documentId>.json` |
-| debug trace | `debug-runs/<yyyy-mm-dd>/<runId>.json` | `.local-data/debug-runs/<yyyy-mm-dd>/<runId>.json` |
-| memory vectors | `memory-index` | `.local-data/memory-vectors.json` |
-| evidence vectors | `evidence-index` | `.local-data/evidence-vectors.json` |
+| コンテキスト | `2_アーキテクチャ_ARC/01_コンテキスト_CONTEXT/ARC_CONTEXT_001.md` | システム境界、外部アクター、依存サービス、信頼境界 |
+| ビュー | `2_アーキテクチャ_ARC/11_ビュー_VIEW/ARC_VIEW_001.md` | 論理ビュー、RAG ランタイムビュー、データ配置ビュー |
+| ADR | `2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_001.md` | サーバレス RAG と guard 付き retrieval pipeline の採用判断 |
+| 品質属性 | `2_アーキテクチャ_ARC/31_品質属性_QA/ARC_QA_001.md` | 根拠性、セキュリティ、評価可能性、性能、運用性の ASR |
 
-## API サーフェス
+## アーキテクチャ概要
 
-- `GET /health`
-- `GET /openapi.json`
-- `GET /documents`
-- `POST /documents`
-- `DELETE /documents/{documentId}`
-- `POST /chat`
-- `GET /debug-runs`
-- `GET /debug-runs/{runId}`
-- `POST /benchmark/query`
+MemoRAG MVP は、文書取り込み、memory/evidence indexing、clue 生成、evidence 検索、RRF 統合、回答可能性判定、回答生成、引用検証、debug trace、benchmark を含む RAG アシスタントシステムである。
 
-## 設計上の決定
+初期構成は、React UI、Hono API on Lambda、Amazon Bedrock、S3 Documents、S3 Vectors を中心とするサーバレス構成である。
 
-1. サーバレス優先: 固定費抑制のため OpenSearch / RDS / ECS を採用しない。
-2. S3 Vectors 優先: MVP で運用負荷を抑える。
-3. no-answer 制御: retrieval guard / answerability gate / citation guard の 3 段で根拠不足回答を抑止。
-4. debug trace 永続化: `includeDebug=true` 時のみ保存し調査可能性を担保。
+## 主要ステークホルダーと関心事
+
+| ステークホルダー | 関心事 |
+| --- | --- |
+| 利用者 | 正確な回答、根拠、回答不能時の説明、応答速度 |
+| 評価担当者 | benchmark API、品質指標、再現可能な評価結果 |
+| 運用担当者 | debug trace、監視、コスト、復旧容易性 |
+| セキュリティ管理者 | 認可、情報漏えい防止、監査性 |
+| 開発者 | ローカル検証、変更容易性、設計判断の追跡 |
+
+## アーキテクチャドライバ / ASR
+
+| ASR | 関連要求 | 内容 |
+| --- | --- | --- |
+| `ASR-TRUST-001` | `FR-004`, `FR-005` | 回答は根拠文書箇所を示し、根拠不足時は回答不能を明示する。 |
+| `ASR-GUARD-001` | `FR-014`, `FR-015` | 回答前後に evidence 十分性と引用支持関係を検証する。 |
+| `ASR-RETRIEVAL-001` | `FR-016`, `FR-017`, `FR-018`, `TC-001` | 検索結果品質を評価し、許可済み action と RRF で検索制御する。 |
+| `ASR-EVAL-001` | `FR-019`, `SQ-001` | RAG 品質を継続測定できる benchmark と trace を持つ。 |
+| `ASR-SEC-001` | `NFR-010` | benchmark/debug 系 API は本番または社内検証環境で認可対象とする。 |
+
+## 要件・設計との境界
+
+- 要件は `REQUIREMENTS.md` と `1_要求_REQ/` に記述し、達成すべき条件を管理する。
+- アーキテクチャは `ARCHITECTURE.md` と `2_アーキテクチャ_ARC/` に記述し、構造、品質属性、重要判断を管理する。
+- 設計は `3_設計_DES/` に記述し、API、データ、処理手順、エラー処理を実装可能な粒度へ落とす。
