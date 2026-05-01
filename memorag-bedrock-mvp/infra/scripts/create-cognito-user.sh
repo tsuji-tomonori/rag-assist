@@ -37,6 +37,11 @@ Options:
   --profile PROFILE            AWS CLI profile.
   -h, --help                    Show this help.
 
+Environment:
+  COGNITO_USER_POOL_ID          Default value for --user-pool-id.
+  COGNITO_USER_PASSWORD         Default value for --password.
+  COGNITO_TEMPORARY_PASSWORD    Default value for --temporary-password.
+
 Examples:
   infra/scripts/create-cognito-user.sh --email alice@example.com --role SYSTEM_ADMIN
 
@@ -136,6 +141,9 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+PASSWORD="${PASSWORD:-${COGNITO_USER_PASSWORD:-}}"
+TEMPORARY_PASSWORD="${TEMPORARY_PASSWORD:-${COGNITO_TEMPORARY_PASSWORD:-}}"
 
 command -v aws >/dev/null 2>&1 || die "aws CLI is required."
 [[ -n "$EMAIL" ]] || die "--email is required."
