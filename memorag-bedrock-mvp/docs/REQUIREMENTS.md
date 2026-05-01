@@ -1,65 +1,119 @@
-# MemoRAG MVP 要求仕様（1要件1ファイル運用）
+# MemoRAG MVP 要求仕様（SWEBOK-lite 索引）
 
 - ファイル: `memorag-bedrock-mvp/docs/REQUIREMENTS.md`
 - 種別: `REQ_PRODUCT`
 - 作成日: 2026-05-01
 - 状態: Draft
 
+## 要件の位置づけ
+
+MemoRAG MVP は、登録済み文書を対象に自然言語で質問し、根拠付き回答または回答不能理由を返す RAG 支援システムである。
+
+本要求仕様は SWEBOK の Software Requirements に合わせ、要件抽出、要件分析、要件仕様、妥当性確認、要件管理を分けて扱う。
+
 ## 運用ルール
 
 - すべての要件は **1要件1ファイル** で管理する。
 - 各要件ファイルには、当該要件の **受け入れ条件** を同一ファイル内に必ず記載する。
 - 本ファイルはインデックスとして扱い、詳細要件は分割ファイルを正とする。
+- 実装手段に近い内容は `02_architecture` 相当の `2_アーキテクチャ_ARC/` または `03_design` 相当の `3_設計_DES/` に分離する。
 
-## 機能要求ファイル
+## 要件の分類
 
-- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/`
-  - REQ_FUNCTIONAL_001.md (FR-001)
-  - REQ_FUNCTIONAL_002.md (FR-002)
-  - REQ_FUNCTIONAL_003.md (FR-003)
-  - REQ_FUNCTIONAL_004.md (FR-004)
-  - REQ_FUNCTIONAL_005.md (FR-005)
-  - REQ_FUNCTIONAL_006.md (FR-006)
-  - REQ_FUNCTIONAL_007.md (FR-007)
-  - REQ_FUNCTIONAL_008.md (FR-008)
-  - REQ_FUNCTIONAL_009.md (FR-009)
-  - REQ_FUNCTIONAL_010.md (FR-010)
-  - REQ_FUNCTIONAL_011.md (FR-011)
-  - REQ_FUNCTIONAL_012.md (FR-012)
-  - REQ_FUNCTIONAL_013.md (FR-013)
-  - REQ_FUNCTIONAL_014.md (FR-014)
-  - REQ_FUNCTIONAL_015.md (FR-015)
-  - REQ_FUNCTIONAL_016.md (FR-016)
-  - REQ_FUNCTIONAL_017.md (FR-017)
-  - REQ_FUNCTIONAL_018.md (FR-018)
-  - REQ_FUNCTIONAL_019.md (FR-019)
-  - REQ_FUNCTIONAL_020.md (FR-020)
+| 分類 | 保存先 | 内容 |
+| --- | --- | --- |
+| プロジェクト要求 | `1_要求_REQ/01_プロジェクト要求_PROJECT/` | 目的、スコープ、ロードマップ、優先順位 |
+| 機能要求 | `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/` | 文書登録、質問応答、根拠提示、debug trace、benchmark |
+| 非機能要求 | `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/` | ローカル検証、運用コスト、追跡性、保持期間、認可 |
+| 技術制約 | `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/` | Lambda、TypeScript、S3 Vectors、軽量 lexical retrieval など |
+| サービス品質制約 | `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/11_サービス品質制約_SERVICE_QUALITY/` | 不回答性能、根拠性、検索再現率、権限外漏えい、レイテンシ |
+| 受入基準 | `1_要求_REQ/21_受入基準_ACCEPTANCE/` | 横断的な完了条件、BDD シナリオ、評価観点 |
+| 変更管理 | `1_要求_REQ/31_変更管理_CHANGE/` | トレーサビリティ、変更影響、要求管理手順 |
 
-## 非機能要求ファイル
+## 要件源とステークホルダー
 
-- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/`
-  - REQ_NON_FUNCTIONAL_001.md (NFR-001)
-  - REQ_NON_FUNCTIONAL_002.md (NFR-002)
-  - REQ_NON_FUNCTIONAL_003.md (NFR-003)
-  - REQ_NON_FUNCTIONAL_004.md (NFR-004)
-  - REQ_NON_FUNCTIONAL_005.md (NFR-005)
-  - REQ_NON_FUNCTIONAL_006.md (NFR-006)
-  - REQ_NON_FUNCTIONAL_007.md (NFR-007)
-  - REQ_NON_FUNCTIONAL_008.md (NFR-008)
-  - REQ_NON_FUNCTIONAL_009.md (NFR-009)
-  - REQ_NON_FUNCTIONAL_010.md (NFR-010)
+| 種別 | 主な関心事 |
+| --- | --- |
+| 利用者 | 登録文書に基づく回答、根拠確認、回答不能時の説明 |
+| 評価担当者 | benchmark API、評価データセット、品質メトリクス |
+| 運用担当者 | debug trace、監視、コスト、障害調査 |
+| セキュリティ管理者 | 認可、権限外情報の露出防止、監査性 |
+| 開発者 | ローカル検証、保守性、設計判断の追跡 |
 
-## プロジェクト要求ファイル
+要件源は、既存 MVP の実装、RAG 品質強化ロードマップ、ユーザーから提示された SWEBOK 整理方針、`memorag-bedrock-mvp/docs/DOCS_STRUCTURE.md` の構成方針である。
 
-- `memorag-bedrock-mvp/docs/1_要求_REQ/01_プロジェクト要求_PROJECT/`
-  - REQ_PROJECT_001.md (PRJ-001)
+## 要件分析
 
-## 技術制約ファイル
+| 論点 | 衝突 | 管理方法 |
+| --- | --- | --- |
+| 根拠性 vs 回答率 | 根拠不足時に答えると幻覚リスクが上がる | `FR-005`, `FR-014`, `FR-015` を ASR として扱い、拒否を許容する |
+| 検索品質 vs レイテンシ | clue 生成、RRF、再検索は品質を上げるが遅延を増やす | `SQ-001` で品質指標を継続測定し、設計で段階実行にする |
+| 実装速度 vs 検索基盤の汎用性 | OpenSearch 互換を目指すと MVP の焦点がぼやける | `TC-001` により S3 Vectors と軽量 retriever に制約する |
+| 調査性 vs 情報露出 | debug trace は便利だが文書内容を含み得る | `NFR-010` と認可設計で本番アクセスを制限する |
 
-- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/`
-  - REQ_TECHNICAL_CONSTRAINT_001.md (TC-001)
+## 要件仕様ファイル
 
-## サービス品質制約ファイル
+### プロジェクト要求
 
-- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/11_サービス品質制約_SERVICE_QUALITY/`
-  - REQ_SERVICE_QUALITY_001.md (SQ-001)
+- `1_要求_REQ/01_プロジェクト要求_PROJECT/REQ_PROJECT_001.md` (`PRJ-001`)
+
+### 機能要求
+
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_001.md` (`FR-001`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_002.md` (`FR-002`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_003.md` (`FR-003`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_004.md` (`FR-004`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_005.md` (`FR-005`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_006.md` (`FR-006`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_007.md` (`FR-007`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_008.md` (`FR-008`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_009.md` (`FR-009`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_010.md` (`FR-010`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_011.md` (`FR-011`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_012.md` (`FR-012`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_013.md` (`FR-013`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_014.md` (`FR-014`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_015.md` (`FR-015`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_016.md` (`FR-016`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_017.md` (`FR-017`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_018.md` (`FR-018`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_019.md` (`FR-019`)
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_020.md` (`FR-020`)
+
+### 非機能要求
+
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_001.md` (`NFR-001`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_002.md` (`NFR-002`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_003.md` (`NFR-003`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_004.md` (`NFR-004`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_005.md` (`NFR-005`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_006.md` (`NFR-006`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_007.md` (`NFR-007`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_008.md` (`NFR-008`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_009.md` (`NFR-009`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_010.md` (`NFR-010`)
+
+### 技術制約とサービス品質制約
+
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/REQ_TECHNICAL_CONSTRAINT_001.md` (`TC-001`)
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/11_サービス品質制約_SERVICE_QUALITY/REQ_SERVICE_QUALITY_001.md` (`SQ-001`)
+
+## 妥当性確認
+
+横断的な受入観点は `1_要求_REQ/21_受入基準_ACCEPTANCE/REQ_ACCEPTANCE_001.md` に集約する。
+
+各要件ファイルの受け入れ条件は、その要件だけを検証できる粒度を維持する。
+
+## 要件管理とトレーサビリティ
+
+要求変更手順と要求から設計までの対応は `1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md` を正とする。
+
+主な対応関係は次の通り。
+
+| 要求 | ASR | ADR | 設計 | 評価 |
+| --- | --- | --- | --- | --- |
+| `FR-003`, `FR-004`, `FR-005` | `ASR-TRUST-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001`, `DES_API_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
+| `FR-014`, `FR-015` | `ASR-GUARD-001` | `ARC_ADR_001` | `DES_DLD_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
+| `FR-016`, `FR-017`, `FR-018` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001` | `SQ-001` |
+| `FR-019`, `SQ-001` | `ASR-EVAL-001` | `ARC_ADR_001` | `DES_DATA_001`, `DES_API_001` | `REQ_ACCEPTANCE_001` |
+| `NFR-010` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001` |

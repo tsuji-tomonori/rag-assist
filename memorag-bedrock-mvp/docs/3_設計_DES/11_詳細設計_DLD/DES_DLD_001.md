@@ -1,0 +1,78 @@
+# MemoRAG MVP RAG 詳細設計
+
+- ファイル: `memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_001.md`
+- 種別: `DES_DLD`
+- 作成日: 2026-05-01
+- 状態: Draft
+
+## 何を書く場所か
+
+RAG workflow の処理手順、判定、例外処理、テスト観点を定義する。
+
+## 対象
+
+- `analyze_input`
+- `normalize_query`
+- `retrieve_memory`
+- `generate_clues`
+- `embed_queries`
+- `search_evidence`
+- `rerank_chunks`
+- `answerability_gate`
+- `generate_answer`
+- `validate_citations`
+- `finalize_response`
+- `finalize_refusal`
+
+## 入出力
+
+| 処理 | 入力 | 出力 |
+| --- | --- | --- |
+| `answerability_gate` | question、candidate evidence chunks | `ANSWERABLE` / `PARTIAL` / `UNANSWERABLE`、reason |
+| `validate_citations` | answer、citations、candidate chunks | supported claims、unsupported claims |
+| `retrieval_evaluator` | retrieved chunks、required facts、action history | next action、reason、stop condition |
+| `rank_fusion` | ranked chunk lists | fused ranked chunks、score details |
+
+## 処理手順
+
+### 回答可能性判定
+
+1. 検索済み evidence chunk から質問に必要な fact を抽出する。
+2. evidence だけで主要 fact を満たせる場合は `ANSWERABLE` とする。
+3. 一部だけ満たせる場合は `PARTIAL` とし、追加検索または限定回答を候補にする。
+4. 根拠不足の場合は `UNANSWERABLE` とし、回答生成へ進めない。
+5. 判定結果、理由、参照 chunk_id を debug trace に保存する。
+
+### 検索評価と action 選択
+
+1. 候補 chunk 数、score、重複、required fact coverage を評価する。
+2. 不足が query 表現に起因すると判断した場合は query rewrite を選ぶ。
+3. clue の偏りが大きい場合は追加 clue 検索を選ぶ。
+4. 十分な evidence がない場合は拒否を選ぶ。
+5. 選択した action は `SearchAction` として actionHistory に保存する。
+
+### Citation validation
+
+1. 回答文を主要主張単位に分割する。
+2. 各主要主張に対応する citation chunk を照合する。
+3. 支持されない主要主張がある場合は、拒否または再生成の対象にする。
+4. unsupported sentence count と対応 chunk_id を trace に保存する。
+
+## エラー処理
+
+| 事象 | 方針 |
+| --- | --- |
+| Bedrock 呼び出し失敗 | 外部モデル失敗として trace に残し、推測回答しない。 |
+| S3 Vectors 検索失敗 | 検索失敗として扱い、回答不能または API エラーを返す。 |
+| evidence なし | `UNANSWERABLE` として回答不能を返す。 |
+| citation 不支持 | unsupported claim を含む回答をそのまま返さない。 |
+| debug trace 保存失敗 | 回答処理は可能な範囲で継続し、保存失敗を metadata に含める。 |
+
+## テスト観点
+
+- 根拠がある質問で citation 付き回答が返ること。
+- 根拠が不足する質問で推測回答せず回答不能が返ること。
+- unsupported claim が検出された場合にそのまま返されないこと。
+- 複数 clue の検索結果が RRF で安定して統合されること。
+- actionHistory に検索判断と理由が保存されること。
+- benchmark 実行時に fact coverage と faithfulness が出力されること。
