@@ -19,6 +19,32 @@
 | `embedding-model-id` | `amazon.titan-embed-text-v2:0` | 埋め込みに使うBedrock model ID。 |
 | `embedding-dimensions` | `1024` | S3 Vectors index dimension。 |
 
+## Cognitoユーザー作成Workflow
+
+- `.github/workflows/memorag-create-cognito-user.yml`
+- 手動実行のみで起動する。
+- 手動実行: `Actions` -> `Create MemoRAG Cognito User` -> `Run workflow`
+- AWS認証は deploy workflow と同じ `AWS_DEPLOY_ROLE_ARN` を使う。
+- 新規ユーザーには Cognito の招待メールを送る。パスワードを GitHub Actions の入力値として扱わない。
+
+入力:
+
+| 入力 | 既定値 | 用途 |
+| --- | --- | --- |
+| `environment` | `dev` | GitHub Environment名。OIDC trust policyと承認ルールに使う。 |
+| `aws-region` | `us-east-1` | Cognito User Poolがあるリージョン。 |
+| `stack-name` | `MemoRagMvpStack` | `CognitoUserPoolId` outputを取得するCloudFormation stack名。 |
+| `user-pool-id` | 空 | 明示的なCognito User Pool ID。指定時はstack output取得を省略する。 |
+| `email` | なし | Cognito userのemail。usernameにも使う。 |
+| `display-name` | 空 | Cognito `name` 属性。 |
+| `roles` | `CHAT_USER` | 付与するCognito group。複数指定はカンマ区切り。 |
+
+事前条件:
+
+- CDK deploy済みであること。
+- `CHAT_USER` などの Cognito group が CDK stackにより作成済みであること。
+- `AWS_DEPLOY_ROLE_ARN` のIAM権限に `cloudformation:DescribeStacks` と Cognito IDP の管理操作が含まれること。
+
 ## 必要なGitHub Secret
 
 RepositoryまたはEnvironment secretに次を設定する。

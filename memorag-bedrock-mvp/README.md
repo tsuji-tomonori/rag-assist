@@ -103,8 +103,25 @@ npm run cdk -w @memorag-mvp/infra -- deploy
 Taskfileを使う場合は `task cdk:deploy` でフロントエンドbuild、Lambda bundle、CDK deployを順に実行します。
 
 GitHub Actionsでは `.github/workflows/memorag-ci.yml` がpull requestとmain branchへのpushで `npm run ci` を実行します。デプロイは `.github/workflows/memorag-deploy.yml` を使います。AWS側のOIDC RoleとGitHub secret `AWS_DEPLOY_ROLE_ARN` を設定してください。
+デプロイ後の Cognito ユーザー追加は、`.github/workflows/memorag-create-cognito-user.yml` を手動実行して行えます。
 
 デプロイ後、CDK Outputs にAPI URLとCloudFront URLが出ます。
+
+### Cognitoユーザー作成
+
+デプロイ後の Cognito User Pool にユーザーを追加するには、AWS CLI の認証情報を設定したうえで次を実行します。
+
+```bash
+infra/scripts/create-cognito-user.sh \
+  --email alice@example.com \
+  --password 'ExamplePassw0rd!' \
+  --role CHAT_USER \
+  --suppress-invite
+```
+
+`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。管理者ユーザーを作る場合は `--role SYSTEM_ADMIN` を指定してください。
+`CHAT_USER` などの Cognito group は CDK stack で作成されるため、ユーザー作成前に `npm run cdk -w @memorag-mvp/infra -- deploy` または `task cdk:deploy` を実行してください。
+GitHub Actions から作成する場合は、`Actions` -> `Create MemoRAG Cognito User` -> `Run workflow` でメールアドレスとロールを入力します。
 
 ## API実行例
 

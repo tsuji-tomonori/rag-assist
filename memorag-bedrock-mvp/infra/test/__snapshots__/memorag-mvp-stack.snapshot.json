@@ -1049,6 +1049,76 @@
         }
       }
     },
+    "CHATUSERGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: CHAT_USER",
+        "GroupName": "CHAT_USER",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "ANSWEREDITORGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: ANSWER_EDITOR",
+        "GroupName": "ANSWER_EDITOR",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "RAGGROUPMANAGERGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: RAG_GROUP_MANAGER",
+        "GroupName": "RAG_GROUP_MANAGER",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "USERADMINGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: USER_ADMIN",
+        "GroupName": "USER_ADMIN",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "ACCESSADMINGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: ACCESS_ADMIN",
+        "GroupName": "ACCESS_ADMIN",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "COSTAUDITORGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: COST_AUDITOR",
+        "GroupName": "COST_AUDITOR",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "SYSTEMADMINGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: SYSTEM_ADMIN",
+        "GroupName": "SYSTEM_ADMIN",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
     "ApiFunctionLogGroup00D1AC73": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {

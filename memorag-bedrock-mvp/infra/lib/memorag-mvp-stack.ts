@@ -22,6 +22,16 @@ export interface MemoRagMvpStackProps extends StackProps {
   readonly includeFrontendDeployment?: boolean
 }
 
+const appRoles = [
+  "CHAT_USER",
+  "ANSWER_EDITOR",
+  "RAG_GROUP_MANAGER",
+  "USER_ADMIN",
+  "ACCESS_ADMIN",
+  "COST_AUDITOR",
+  "SYSTEM_ADMIN"
+] as const
+
 export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
     super(scope, id, props)
@@ -143,6 +153,14 @@ export class MemoRagMvpStack extends Stack {
     userPool.addDomain("UserPoolDomain", {
       cognitoDomain: { domainPrefix: `memorag-${suffix}` }
     })
+
+    for (const role of appRoles) {
+      new cognito.CfnUserPoolGroup(this, `${role.replaceAll("_", "")}Group`, {
+        userPoolId: userPool.userPoolId,
+        groupName: role,
+        description: `MemoRAG role: ${role}`
+      })
+    }
 
     const apiLogGroup = new logs.LogGroup(this, "ApiFunctionLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,

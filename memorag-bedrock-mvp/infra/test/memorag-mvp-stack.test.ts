@@ -21,6 +21,7 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::S3::Bucket", 4)
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
+  template.resourceCountIs("AWS::Cognito::UserPoolGroup", 7)
   template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
@@ -72,6 +73,20 @@ test("implements the designed serverless resources", () => {
     BillingMode: "PAY_PER_REQUEST",
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
+  for (const groupName of [
+    "CHAT_USER",
+    "ANSWER_EDITOR",
+    "RAG_GROUP_MANAGER",
+    "USER_ADMIN",
+    "ACCESS_ADMIN",
+    "COST_AUDITOR",
+    "SYSTEM_ADMIN"
+  ]) {
+    template.hasResourceProperties("AWS::Cognito::UserPoolGroup", {
+      GroupName: groupName,
+      UserPoolId: Match.anyValue()
+    })
+  }
   template.hasResourceProperties("AWS::Lambda::Function", {
     Environment: Match.objectLike({
       Variables: Match.objectLike({
