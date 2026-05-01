@@ -506,6 +506,17 @@ export default function App() {
                 }}
               />
               <div className="composer-actions">
+                <div className="composer-shortcut-toggle">
+                  <label htmlFor="submit-shortcut">送信キー</label>
+                  <select
+                    id="submit-shortcut"
+                    value={submitShortcut}
+                    onChange={(event) => setSubmitShortcut(event.target.value as "enter" | "ctrlEnter")}
+                  >
+                    <option value="enter">Enterで送信</option>
+                    <option value="ctrlEnter">Ctrl+Enterで送信</option>
+                  </select>
+                </div>
                 {file && <span className="file-chip">{file.name}</span>}
                 <label className="icon-button attach-button" title="資料を添付">
                   <Icon name="paperclip" />
@@ -516,15 +527,6 @@ export default function App() {
                 </button>
               </div>
             </form>
-            <div className="composer-shortcut-toggle">
-              <label>
-                送信キー
-                <select value={submitShortcut} onChange={(event) => setSubmitShortcut(event.target.value as "enter" | "ctrlEnter")}>
-                  <option value="enter">Enterで送信</option>
-                  <option value="ctrlEnter">Ctrl+Enterで送信</option>
-                </select>
-              </label>
-            </div>
             <p className="composer-note">本サービスの回答は社内ドキュメントをもとに生成されます。内容の正確性をご確認のうえご利用ください。</p>
           </section>
 
