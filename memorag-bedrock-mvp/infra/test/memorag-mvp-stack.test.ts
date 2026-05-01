@@ -134,6 +134,30 @@ test("does not create fixed-cost network or datastore resources", () => {
   )
 })
 
+test("keeps CORS preflight routes unauthenticated", () => {
+  const template = synthesize().toJSON()
+  const routes = Object.values(template.Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::ApiGatewayV2::Route")
+    .map((resource: any) => resource.Properties)
+
+  const preflightRoutes = routes.filter((route: any) => String(route.RouteKey).startsWith("OPTIONS "))
+  assert.deepEqual(
+    preflightRoutes.map((route: any) => route.RouteKey).sort(),
+    ["OPTIONS /", "OPTIONS /{proxy+}"]
+  )
+  for (const route of preflightRoutes) {
+    assert.equal(route.AuthorizationType, "NONE")
+    assert.equal(route.AuthorizerId, undefined)
+  }
+
+  const protectedRoutes = routes.filter((route: any) => String(route.RouteKey).startsWith("ANY "))
+  assert.ok(protectedRoutes.length > 0)
+  for (const route of protectedRoutes) {
+    assert.equal(route.AuthorizationType, "JWT")
+    assert.ok(route.AuthorizerId)
+  }
+})
+
 test("matches the synthesized CloudFormation snapshot", () => {
   const actual = `${JSON.stringify(stabilizeTemplate(synthesize().toJSON()), null, 2)}\n`
   const snapshotPath = path.join(__dirname, "__snapshots__", "memorag-mvp-stack.snapshot.json")

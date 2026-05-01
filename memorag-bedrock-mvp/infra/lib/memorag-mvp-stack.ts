@@ -259,6 +259,17 @@ export class MemoRagMvpStack extends Stack {
       }
     })
 
+    httpApi.addRoutes({
+      path: "/{proxy+}",
+      methods: [apigwv2.HttpMethod.OPTIONS],
+      integration: new integrations.HttpLambdaIntegration("PreflightApiIntegration", apiFn)
+    })
+    httpApi.addRoutes({
+      path: "/",
+      methods: [apigwv2.HttpMethod.OPTIONS],
+      integration: new integrations.HttpLambdaIntegration("PreflightRootIntegration", apiFn)
+    })
+
     const protectedRoutes = httpApi.addRoutes({
       path: "/{proxy+}",
       methods: [apigwv2.HttpMethod.ANY],
