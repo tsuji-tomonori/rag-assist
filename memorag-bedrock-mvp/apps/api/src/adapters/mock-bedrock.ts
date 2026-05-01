@@ -14,7 +14,18 @@ function tokenize(text: string): string[] {
 }
 
 export class MockBedrockTextModel implements TextModel {
+  private readonly failModes: {
+    embed?: Error
+    generate?: Error
+    invalidJsonOnGenerate?: boolean
+  }
+
+  constructor(failModes: { embed?: Error; generate?: Error; invalidJsonOnGenerate?: boolean } = {}) {
+    this.failModes = failModes
+  }
+
   async embed(text: string, options: EmbedOptions = {}): Promise<number[]> {
+    if (this.failModes.embed) throw this.failModes.embed
     const dimensions = options.dimensions ?? config.embeddingDimensions
     const vector = new Array(dimensions).fill(0)
     for (const token of tokenize(text)) {
@@ -27,6 +38,8 @@ export class MockBedrockTextModel implements TextModel {
   }
 
   async generate(prompt: string, _options: GenerateOptions = {}): Promise<string> {
+    if (this.failModes.generate) throw this.failModes.generate
+    if (this.failModes.invalidJsonOnGenerate) return "not-json"
     if (prompt.includes("MEMORY_CARD_JSON")) {
       const source = extractBetween(prompt, "<document>", "</document>").slice(0, 600)
       const keywords = Array.from(new Set(tokenize(source).slice(0, 12)))
