@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { listDocuments, resetRuntimeConfigForTests } from "./api.js"
-import { getStoredAuthSession, signIn, signOut } from "./authClient.js"
+import { completeNewPasswordChallenge, getStoredAuthSession, signIn, signOut } from "./authClient.js"
 
 function response(body: unknown, ok = true) {
   return {
@@ -84,7 +84,7 @@ describe("auth client", () => {
     expect(getStoredAuthSession()).toBeNull()
   })
 
-  it("rejects incomplete Cognito configuration and challenge-only responses", async () => {
+  it("rejects incomplete Cognito configuration and returns new password challenges", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ authMode: "cognito" })))
     await expect(signIn({ email: "tester@example.com", password: "Password123!", remember: false })).rejects.toThrow("Cognito認証設定が未設定です。")
 
@@ -94,9 +94,61 @@ describe("auth client", () => {
       vi
         .fn()
         .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
-        .mockResolvedValueOnce(response({ ChallengeName: "NEW_PASSWORD_REQUIRED" }))
+        .mockResolvedValueOnce(
+          response({
+            ChallengeName: "NEW_PASSWORD_REQUIRED",
+            Session: "challenge-session",
+            ChallengeParameters: { requiredAttributes: "[\"email\"]" }
+          })
+        )
     )
-    await expect(signIn({ email: "tester@example.com", password: "Password123!", remember: false })).rejects.toThrow("NEW_PASSWORD_REQUIRED")
+    await expect(signIn({ email: "tester@example.com", password: "Password123!", remember: false })).resolves.toEqual({
+      type: "NEW_PASSWORD_REQUIRED",
+      email: "tester@example.com",
+      session: "challenge-session",
+      requiredAttributes: ["email"]
+    })
+    expect(getStoredAuthSession()).toBeNull()
+  })
+
+  it("completes the new password challenge and stores the session", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+      .mockResolvedValueOnce(
+        response({
+          AuthenticationResult: {
+            IdToken: "new-id-token",
+            AccessToken: "new-access-token",
+            RefreshToken: "new-refresh-token",
+            ExpiresIn: 3600
+          }
+        })
+      )
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(
+      completeNewPasswordChallenge({
+        challenge: {
+          type: "NEW_PASSWORD_REQUIRED",
+          email: "tester@example.com",
+          session: "challenge-session",
+          requiredAttributes: []
+        },
+        newPassword: "NewPassword123!",
+        remember: true
+      })
+    ).resolves.toMatchObject({ email: "tester@example.com", idToken: "new-id-token" })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://cognito-idp.ap-northeast-1.amazonaws.com/",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ "X-Amz-Target": "AWSCognitoIdentityProviderService.RespondToAuthChallenge" }),
+        body: expect.stringContaining("\"NEW_PASSWORD\":\"NewPassword123!\"")
+      })
+    )
+    expect(getStoredAuthSession()?.idToken).toBe("new-id-token")
   })
 
   it("rejects Cognito success responses without an ID token", async () => {
