@@ -81,6 +81,16 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
     memoryTopK,
     minScore,
     strictGrounded: input.strictGrounded !== false,
+    iteration: 0,
+    referenceQueue: [],
+    resolvedReferences: [],
+    unresolvedReferences: [],
+    visitedDocumentIds: [],
+    searchBudget: {
+      maxIterations: 3,
+      maxReferenceDepth: 2,
+      remainingCalls: 3
+    },
     memoryCards: [],
     clues: [],
     expandedQueries: [],
