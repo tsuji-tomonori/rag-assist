@@ -259,16 +259,26 @@ export class MemoRagMvpStack extends Stack {
       }
     })
 
-    httpApi.addRoutes({
+    const preflightRoutes = httpApi.addRoutes({
       path: "/{proxy+}",
       methods: [apigwv2.HttpMethod.OPTIONS],
       integration: new integrations.HttpLambdaIntegration("PreflightApiIntegration", apiFn)
     })
-    httpApi.addRoutes({
+    const preflightRootRoutes = httpApi.addRoutes({
       path: "/",
       methods: [apigwv2.HttpMethod.OPTIONS],
       integration: new integrations.HttpLambdaIntegration("PreflightRootIntegration", apiFn)
     })
+    NagSuppressions.addResourceSuppressions(
+      [...preflightRoutes, ...preflightRootRoutes],
+      [
+        {
+          id: "AwsSolutions-APIG4",
+          reason: "CORS preflight OPTIONS routes must remain unauthenticated so browsers can complete access control checks before JWT-protected API requests."
+        }
+      ],
+      true
+    )
 
     const protectedRoutes = httpApi.addRoutes({
       path: "/{proxy+}",
