@@ -1007,6 +1007,25 @@ function HistoryWorkspace({
   onDelete: (id: string) => void
   onBack: () => void
 }) {
+  const [query, setQuery] = useState("")
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "messages">("newest")
+
+  const visibleHistory = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    const filtered = normalizedQuery.length === 0
+      ? history
+      : history.filter((item) => {
+          const messageText = item.messages.map((message) => message.text).join(" ").toLowerCase()
+          return item.title.toLowerCase().includes(normalizedQuery) || messageText.includes(normalizedQuery)
+        })
+
+    return [...filtered].sort((a, b) => {
+      if (sortOrder === "messages") return b.messages.length - a.messages.length
+      const timeDiff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      return sortOrder === "newest" ? timeDiff : -timeDiff
+    })
+  }, [history, query, sortOrder])
+
   return (
     <section className="assignee-workspace" aria-label="履歴">
       <header className="assignee-header">
@@ -1018,17 +1037,35 @@ function HistoryWorkspace({
           <span>{history.length} 件の会話</span>
         </div>
       </header>
-      <div className="question-list-panel">
-        <h3>会話一覧</h3>
-        <div className="question-list">
-          {history.length === 0 ? (
-            <div className="empty-question-panel">履歴はまだありません。</div>
+      <div className="question-list-panel history-panel">
+        <div className="history-list-head">
+          <h3>会話一覧</h3>
+          <span>{visibleHistory.length} 件を表示中</span>
+        </div>
+        <div className="history-toolbar">
+          <input
+            type="search"
+            placeholder="タイトルや会話内容で検索"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="履歴を検索"
+          />
+          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest" | "messages")} aria-label="履歴の並び順">
+            <option value="newest">新しい順</option>
+            <option value="oldest">古い順</option>
+            <option value="messages">メッセージ数順</option>
+          </select>
+        </div>
+        <div className="question-list history-list">
+          {visibleHistory.length === 0 ? (
+            <div className="empty-question-panel">条件に一致する履歴はありません。</div>
           ) : (
-            history.map((item) => (
-              <div className="question-list-item" key={item.id}>
+            visibleHistory.map((item) => (
+              <div className="question-list-item history-item" key={item.id}>
                 <button type="button" onClick={() => onSelect(item)}>
                   <strong>{item.title}</strong>
-                  <span>{formatDateTime(item.updatedAt)} / {item.messages.length} メッセージ</span>
+                  <span>{formatDateTime(item.updatedAt)}</span>
+                  <small>{item.messages.length} メッセージ</small>
                 </button>
                 <button type="button" onClick={() => onDelete(item.id)}>
                   削除
