@@ -35,7 +35,8 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
       MOCK_BEDROCK: "true",
       USE_LOCAL_VECTOR_STORE: "true",
       USE_LOCAL_QUESTION_STORE: "true",
-      LOCAL_DATA_DIR: dataDir
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false"
     },
     stdio: ["ignore", "pipe", "pipe"]
   })

@@ -2,6 +2,8 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
 import { createDependencies } from "./dependencies.js"
+import { authMiddleware } from "./auth.js"
+import { requirePermission } from "./authorization.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import {
   ChatRequestSchema,
@@ -33,7 +35,11 @@ const app = new OpenAPIHono({
   }
 })
 
-app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
+app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
+app.use("/documents*", authMiddleware)
+app.use("/chat", authMiddleware)
+app.use("/questions*", authMiddleware)
+app.use("/debug-runs", authMiddleware)
 
 function looseRoute(config: any) {
   return createRoute(config) as any
@@ -62,7 +68,10 @@ app.openapi(
       500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
     }
   }),
-  async (c) => c.json({ documents: await service.listDocuments() }, 200)
+  async (c) => {
+    requirePermission(c.get("user"), "rag:doc:read")
+    return c.json({ documents: await service.listDocuments() }, 200)
+  }
 )
 
 app.openapi(
@@ -82,6 +91,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "rag:doc:write:group")
     const body = (c.req as any).valid("json") as z.infer<typeof DocumentUploadRequestSchema>
     if (!body.text && !body.contentBase64) return c.json({ error: "Either text or contentBase64 is required" }, 400)
     return c.json(await service.ingest(body), 200)
@@ -104,6 +114,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "rag:doc:delete:group")
     try {
       const { documentId } = (c.req as any).valid("param") as { documentId: string }
       return c.json(await service.deleteDocument(documentId), 200)
@@ -134,6 +145,7 @@ const chatRoute = looseRoute({
 })
 
 app.openapi(chatRoute, async (c) => {
+  requirePermission(c.get("user"), "chat:create")
   const body = (c.req as any).valid("json") as z.infer<typeof ChatRequestSchema>
   return c.json(await service.chat(body), 200)
 })
@@ -169,7 +181,10 @@ app.openapi(
       500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
     }
   }),
-  async (c) => c.json({ questions: await service.listQuestions() }, 200)
+  async (c) => {
+    requirePermission(c.get("user"), "user:read")
+    return c.json({ questions: await service.listQuestions() }, 200)
+  }
 )
 
 app.openapi(
@@ -255,7 +270,10 @@ app.openapi(
       }
     }
   }),
-  async (c) => c.json({ debugRuns: await service.listDebugRuns() }, 200)
+  async (c) => {
+    requirePermission(c.get("user"), "chat:admin:read_all")
+    return c.json({ debugRuns: await service.listDebugRuns() }, 200)
+  }
 )
 
 app.openapi(
@@ -310,6 +328,14 @@ app.doc("/openapi.json", {
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) return err.getResponse()
+  if (typeof err === "object" && err !== null && "getResponse" in err && typeof (err as { getResponse?: unknown }).getResponse === "function") {
+    return (err as { getResponse: () => Response }).getResponse()
+  }
+  if (typeof err === "object" && err !== null && "status" in err) {
+    const status = Number((err as { status?: number }).status ?? 500)
+    const message = err instanceof Error ? err.message : "Unknown error"
+    return c.json({ error: message }, status as any)
+  }
   console.error(err)
   return c.json({ error: err instanceof Error ? err.message : "Unknown error" }, 500)
 })

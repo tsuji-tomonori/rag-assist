@@ -11,6 +11,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb"
 import * as iam from "aws-cdk-lib/aws-iam"
 import * as lambda from "aws-cdk-lib/aws-lambda"
 import * as logs from "aws-cdk-lib/aws-logs"
+import * as cognito from "aws-cdk-lib/aws-cognito"
 import * as s3 from "aws-cdk-lib/aws-s3"
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment"
 import * as cr from "aws-cdk-lib/custom-resources"
@@ -108,6 +109,30 @@ export class MemoRagMvpStack extends Stack {
       }
     })
 
+
+    const userPool = new cognito.UserPool(this, "UserPool", {
+      selfSignUpEnabled: false,
+      signInAliases: { email: true },
+      mfa: cognito.Mfa.OPTIONAL,
+      mfaSecondFactor: { sms: false, otp: true },
+      passwordPolicy: { minLength: 12, requireLowercase: true, requireUppercase: true, requireDigits: true, requireSymbols: true },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
+    const userPoolClient = userPool.addClient("WebClient", {
+      authFlows: { userPassword: true, userSrp: true },
+      generateSecret: false,
+      preventUserExistenceErrors: true,
+      accessTokenValidity: Duration.hours(1),
+      idTokenValidity: Duration.hours(1),
+      refreshTokenValidity: Duration.days(30)
+    })
+
+    userPool.addDomain("UserPoolDomain", {
+      cognitoDomain: { domainPrefix: `memorag-${suffix}` }
+    })
+
     const apiLogGroup = new logs.LogGroup(this, "ApiFunctionLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY
@@ -134,7 +159,11 @@ export class MemoRagMvpStack extends Stack {
         DEFAULT_MEMORY_MODEL_ID: defaultModelId,
         EMBEDDING_MODEL_ID: embeddingModelId,
         EMBEDDING_DIMENSIONS: String(embeddingDimensions),
-        MIN_RETRIEVAL_SCORE: "0.20"
+        MIN_RETRIEVAL_SCORE: "0.20",
+        AUTH_ENABLED: "true",
+        COGNITO_REGION: cdk.Aws.REGION,
+        COGNITO_USER_POOL_ID: userPool.userPoolId,
+        COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId
       }
     })
 
@@ -187,16 +216,34 @@ export class MemoRagMvpStack extends Stack {
       }
     })
 
-    httpApi.addRoutes({
+    const jwtAuthorizer = new apigwv2.CfnAuthorizer(this, "HttpApiJwtAuthorizer", {
+      apiId: httpApi.apiId,
+      authorizerType: "JWT",
+      identitySource: ["$request.header.Authorization"],
+      name: "CognitoJwtAuthorizer",
+      jwtConfiguration: {
+        audience: [userPoolClient.userPoolClientId],
+        issuer: userPool.userPoolProviderUrl
+      }
+    })
+
+    const protectedRoutes = httpApi.addRoutes({
       path: "/{proxy+}",
       methods: [apigwv2.HttpMethod.ANY],
       integration: new integrations.HttpLambdaIntegration("ApiIntegration", apiFn)
     })
-    httpApi.addRoutes({
+    const rootRoutes = httpApi.addRoutes({
       path: "/",
       methods: [apigwv2.HttpMethod.ANY],
       integration: new integrations.HttpLambdaIntegration("RootIntegration", apiFn)
     })
+
+    for (const route of [...protectedRoutes, ...rootRoutes]) {
+      const cfnRoute = route.node.defaultChild as apigwv2.CfnRoute
+      cfnRoute.authorizationType = "JWT"
+      cfnRoute.authorizerId = jwtAuthorizer.ref
+      cfnRoute.addDependency(jwtAuthorizer)
+    }
 
     const distribution = new cloudfront.Distribution(this, "FrontendDistribution", {
       defaultRootObject: "index.html",
@@ -228,6 +275,9 @@ export class MemoRagMvpStack extends Stack {
       })
     }
 
+    new cdk.CfnOutput(this, "CognitoUserPoolId", { value: userPool.userPoolId })
+    new cdk.CfnOutput(this, "CognitoUserPoolClientId", { value: userPoolClient.userPoolClientId })
+
     NagSuppressions.addStackSuppressions(
       this,
       [
@@ -238,14 +288,6 @@ export class MemoRagMvpStack extends Stack {
         {
           id: "AwsSolutions-IAM5",
           reason: "Bedrock model ARNs, S3 object grants, CloudFront invalidation, and S3 Vectors currently require wildcard or generated-object patterns in this MVP."
-        },
-        {
-          id: "AwsSolutions-APIG4",
-          reason: "Authentication is explicitly outside this local-first MVP; production should add Cognito/OIDC authorizers."
-        },
-        {
-          id: "AwsSolutions-COG4",
-          reason: "Authentication is explicitly outside this local-first MVP; production should add Cognito/OIDC authorizers."
         },
         {
           id: "AwsSolutions-CFR2",
