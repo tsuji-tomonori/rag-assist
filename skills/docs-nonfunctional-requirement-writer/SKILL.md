@@ -36,3 +36,9 @@ Then fill the generated `REQ_NON_FUNCTIONAL_NNN.md` template.
 - Use `docs-requirement-attributes-writer` to fill requirement attributes.
 - Use `docs-requirement-validation-reviewer` every time a requirement is added or materially changed.
 - Do not leave review until the whole document is complete if the issue can be checked while writing.
+
+## Mandatory Granularity Rule
+
+- 非機能要求は **1要件1ファイル** で記述する。
+- 各 `REQ_NON_FUNCTIONAL_NNN.md` には、対象要件の **受け入れ条件** セクションを必ず含める。
+- 1ファイルに複数 NFR を混在させない。
