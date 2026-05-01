@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 concurrency:
   group: memorag-ci-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
@@ -53,7 +53,11 @@ jobs:
         continue-on-error: true
 
       - name: Comment CI result on PR
-        if: ${{ always() && github.event_name == 'pull_request' }}
+        # 検証観点:
+        # - 同一リポジトリPR: コメント投稿成功
+        # - fork PR/制限コンテキスト: このステップをスキップ
+        # - 投稿失敗時: continue-on-error により workflow 全体を failure にしない
+        if: ${{ always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
         uses: actions/github-script@v7
         continue-on-error: true
         with:
@@ -85,7 +89,7 @@ jobs:
             ].join('\n');
 
             const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
+            const issue_number = context.payload.pull_request?.number ?? context.issue.number;
             const { data: comments } = await github.rest.issues.listComments({
               owner,
               repo,
