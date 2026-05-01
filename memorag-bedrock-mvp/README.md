@@ -87,6 +87,7 @@ docker compose up --build
 - OpenAPI: http://localhost:8787/openapi.json
 
 ローカルでは `MOCK_BEDROCK=true` と `USE_LOCAL_VECTOR_STORE=true` によりAWSには接続しません。
+ローカルUIは `VITE_AUTH_MODE=local` で起動し、Cognito の代わりにローカル開発用セッションを使います。本番デプロイでは CDK が `authMode: cognito` と Cognito 設定を `config.json` に配布します。
 
 ## AWSデプロイ
 

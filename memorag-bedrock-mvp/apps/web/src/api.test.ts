@@ -41,16 +41,17 @@ describe("API client", () => {
     await expect(uploadDocument({ fileName: "b.txt", text: "body" })).resolves.toMatchObject({ documentId: "doc-2" })
     await expect(deleteDocument("doc-2")).resolves.toBeUndefined()
 
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://api.example.test/documents")
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://api.example.test/documents", { headers: {} })
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
       "http://api.example.test/documents",
       expect.objectContaining({
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileName: "b.txt", text: "body" })
       })
     )
-    expect(fetchMock).toHaveBeenNthCalledWith(4, "http://api.example.test/documents/doc-2", { method: "DELETE" })
+    expect(fetchMock).toHaveBeenNthCalledWith(4, "http://api.example.test/documents/doc-2", { method: "DELETE", headers: {} })
   })
 
   it("calls chat and debug trace endpoints", async () => {
@@ -89,7 +90,7 @@ describe("API client", () => {
     const freshApi = await import("./api.js")
     await expect(freshApi.listDocuments()).resolves.toEqual([])
 
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://localhost:8787/documents")
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://localhost:8787/documents", expect.objectContaining({ headers: {} }))
   })
 
   it("falls back to localhost when runtime config is not ok", async () => {
@@ -103,7 +104,7 @@ describe("API client", () => {
     const freshApi = await import("./api.js")
     await expect(freshApi.listQuestions()).resolves.toEqual([])
 
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://localhost:8787/questions")
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://localhost:8787/questions", expect.objectContaining({ headers: {} }))
   })
 
   it("calls human question APIs", async () => {
@@ -138,7 +139,7 @@ describe("API client", () => {
     await expect(freshApi.listDocuments()).rejects.toThrow("list failed")
     await expect(freshApi.chat({ question: "q", modelId: "m" })).rejects.toThrow("post failed")
 
-    expect(fetchMock).toHaveBeenNthCalledWith(1, "http://env-api.test/documents")
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "http://env-api.test/documents", expect.objectContaining({ headers: {} }))
     expect(fetchMock).toHaveBeenNthCalledWith(2, "http://env-api.test/chat", expect.objectContaining({ method: "POST" }))
   })
 

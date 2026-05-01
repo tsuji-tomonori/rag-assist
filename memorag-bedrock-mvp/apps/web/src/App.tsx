@@ -17,6 +17,7 @@ import {
   type DocumentManifest,
   type HumanQuestion
 } from "./api.js"
+import { getStoredAuthSession, signIn, signOut, type AuthSession } from "./authClient.js"
 import LoginPage from "./LoginPage.js"
 
 type Message = {
@@ -60,7 +61,7 @@ const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredAuthSession())
   const [documents, setDocuments] = useState<DocumentManifest[]>([])
   const [debugRuns, setDebugRuns] = useState<DebugTrace[]>([])
   const [questions, setQuestions] = useState<HumanQuestion[]>([])
@@ -106,10 +107,11 @@ export default function App() {
   const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
 
   useEffect(() => {
+    if (!authSession) return
     refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
     refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
     refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
-  }, [])
+  }, [authSession])
 
   useEffect(() => {
     const saved = window.localStorage.getItem("memorag.chat.history")
@@ -154,8 +156,15 @@ export default function App() {
     })
   }, [activeView, latestMessageCreatedAt, pendingActivity])
 
-  if (!isAuthenticated) {
-    return <LoginPage onLogin={() => setIsAuthenticated(true)} />
+  if (!authSession) {
+    return (
+      <LoginPage
+        onLogin={async (payload) => {
+          const session = await signIn(payload)
+          setAuthSession(session)
+        }}
+      />
+    )
   }
 
   async function refreshDocuments() {
@@ -164,6 +173,11 @@ export default function App() {
     if (selectedDocumentId !== "all" && !nextDocuments.some((document) => document.documentId === selectedDocumentId)) {
       setSelectedDocumentId("all")
     }
+  }
+
+  function onSignOut() {
+    signOut()
+    setAuthSession(null)
   }
 
   async function refreshDebugRuns() {
@@ -366,9 +380,9 @@ export default function App() {
             <span>管理者設定</span>
           </button>
         </nav>
-        <button className="account-button" type="button" title="山田 太郎">
-          <span className="account-avatar">山</span>
-          <span>山田 太郎</span>
+        <button className="account-button" type="button" title="サインアウト" onClick={onSignOut}>
+          <span className="account-avatar">{authSession.email.slice(0, 1).toUpperCase()}</span>
+          <span>{authSession.email}</span>
           <Icon name="chevron" />
         </button>
       </aside>
