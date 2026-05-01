@@ -635,10 +635,32 @@ button:disabled {
   font-weight: 800;
 }
 
+.answer-footer .copy-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.answer-footer .copy-action .icon {
+  width: 14px;
+  height: 14px;
+}
+
 .answer-footer .copy-action:hover {
   border-color: #8eb0ef;
   color: #1f60d9;
   background: #edf5ff;
+}
+
+.answer-footer .copy-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.answer-footer .copy-action.is-copied {
+  border-color: #78b18a;
+  color: #21683b;
+  background: #eaf8ef;
 }
 
 .copy-feedback {

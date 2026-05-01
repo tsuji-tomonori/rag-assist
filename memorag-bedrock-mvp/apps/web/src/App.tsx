@@ -43,6 +43,7 @@ type IconName =
   | "download"
   | "trash"
   | "inbox"
+  | "copy"
 
 type AppView = "chat" | "assignee" | "history"
 
@@ -587,6 +588,8 @@ function AssistantAnswer({
 }) {
   const citations = message.result?.citations ?? []
   const [copyStatus, setCopyStatus] = useState<"idle" | "prompt" | "answer" | "error">("idle")
+  const canCopyPrompt = Boolean(message.sourceQuestion?.trim())
+  const canCopyAnswer = Boolean(message.text.trim())
 
   async function copyText(value: string, type: "prompt" | "answer") {
     if (!value.trim()) return
@@ -619,11 +622,25 @@ function AssistantAnswer({
       )}
       <div className="answer-footer">
         <span>根拠: ドキュメント {citations.length}件</span>
-        <button type="button" className="copy-action" onClick={() => copyText(message.sourceQuestion ?? "", "prompt")}>
-          プロンプトをコピー
+        <button
+          type="button"
+          className={`copy-action ${copyStatus === "prompt" ? "is-copied" : ""}`}
+          onClick={() => copyText(message.sourceQuestion ?? "", "prompt")}
+          disabled={!canCopyPrompt}
+          aria-label={copyStatus === "prompt" ? "プロンプトをコピー済み" : "プロンプトをコピー"}
+        >
+          <Icon name={copyStatus === "prompt" ? "check" : "copy"} />
+          <span>{copyStatus === "prompt" ? "コピー済み" : "プロンプト"}</span>
         </button>
-        <button type="button" className="copy-action" onClick={() => copyText(message.text, "answer")}>
-          回答をコピー
+        <button
+          type="button"
+          className={`copy-action ${copyStatus === "answer" ? "is-copied" : ""}`}
+          onClick={() => copyText(message.text, "answer")}
+          disabled={!canCopyAnswer}
+          aria-label={copyStatus === "answer" ? "回答をコピー済み" : "回答をコピー"}
+        >
+          <Icon name={copyStatus === "answer" ? "check" : "copy"} />
+          <span>{copyStatus === "answer" ? "コピー済み" : "回答"}</span>
         </button>
       </div>
       {copyStatus !== "idle" && (
@@ -1142,6 +1159,8 @@ function getIconPath(name: IconName) {
       return <path d="M8 3h8l1 2h4v2H3V5h4l1-2Zm-2 6h12l-1 12H7L6 9Zm3 2 .5 8h2L11 11H9Zm4 0-.5 8h2l.5-8h-2Z" />
     case "inbox":
       return <path d="M4 4h16l2 9v7H2v-7l2-9Zm1.6 2-1.3 6h4.4l1.2 2h4.2l1.2-2h4.4l-1.3-6H5.6ZM4 14v4h16v-4h-3.5l-1.2 2H8.7l-1.2-2H4Z" />
+    case "copy":
+      return <path d="M8 2h10a2 2 0 0 1 2 2v10h-2V4H8V2Zm-4 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 2v12h10V8H4Z" />
   }
 }
 
