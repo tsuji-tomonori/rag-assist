@@ -1363,6 +1363,24 @@ button:disabled {
   background: #fff;
 }
 
+
+.answer-draft-status {
+  margin-top: 10px;
+  border: 1px solid #d7e0ea;
+  border-radius: 7px;
+  padding: 9px 11px;
+  color: #354763;
+  background: #f7faff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.answer-form-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+
 .empty-question-panel {
   color: #68758f;
   font-weight: 800;
