@@ -1,0 +1,11 @@
+{
+  "postDocuments": {
+    "fileName": "contract-test.txt",
+    "text": "MemoRAG はアップロード文書のみを根拠として回答する。"
+  },
+  "postChat": {
+    "question": "このシステムは何を根拠に回答しますか？",
+    "includeDebug": true,
+    "minScore": 0.01
+  }
+}
