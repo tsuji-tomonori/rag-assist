@@ -79,3 +79,8 @@ python3 skills/docs-swebok-template-writer/scripts/new_doc.py REQ_ACCEPTANCE --t
 ```
 
 Then fill the generated `REQ_ACCEPTANCE_NNN.md` template.
+
+## Requirement-local Acceptance Rule
+
+- 受け入れ基準は、独立した一覧ファイルだけでなく、対応する要件ファイル内にも必ず明記する。
+- レビュー時は「1要件1ファイル」「要件内受け入れ条件あり」を満たしているか確認する。

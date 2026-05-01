@@ -62,6 +62,7 @@ Pull Request、PR、PR タイトル、PR 本文、PR コメント、レビュー
 
 - `skills/docs-swebok-template-writer/SKILL.md` を参照し、SWEBOK-lite の体裁に合わせる。
 - 要求は原子性（1 要件 = 1 検証可能条件）を保つ。
+- 要件ドキュメントは「1要件 = 1ファイル」を必須とし、各要件ファイルに当該要件の受け入れ条件を同一ファイル内で明記する。
 - 新規/大規模更新は `memorag-bedrock-mvp/docs/DOCS_STRUCTURE.md` の構成方針に合わせる。
 - 既存の単一ファイル（例: `REQUIREMENTS.md`, `ARCHITECTURE.md`）を更新する場合も、将来移行しやすいように種別メタ情報と要件IDを維持する。
 - 以降の docs 修正では、可能な限り REQ/ARC/DES/OPS のディレクトリに分割して追記・修正する。

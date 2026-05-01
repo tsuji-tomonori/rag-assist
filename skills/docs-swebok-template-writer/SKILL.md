@@ -95,3 +95,9 @@ The script copies the matching template from `assets/templates/` and writes it u
 - Template assets live in `assets/templates/<CODE>.md`.
 - Keep each template focused on what a solo developer and Codex need to make decisions later.
 - Do not add heavy approval workflows unless the project actually starts needing them.
+
+## Requirement File Granularity Policy
+
+- 要件ドキュメントは **1要件1ファイル** を必須とする。
+- 各要件ファイルには、その要件専用の **受け入れ条件** を同一ファイル内に必ず記載する。
+- `memorag-bedrock-mvp/docs/REQUIREMENTS.md` はインデックス用途とし、要求本文は分割ファイルを正とする。
