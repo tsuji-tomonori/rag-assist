@@ -15,12 +15,56 @@ import { rerankChunks } from "./nodes/rerank-chunks.js"
 import { createRetrieveMemoryNode } from "./nodes/retrieve-memory.js"
 import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { validateCitations } from "./nodes/validate-citations.js"
-import { AgentState, NO_ANSWER, type QaAgentState } from "./state.js"
+import { AgentState, NO_ANSWER, type QaAgentState, type QaAgentUpdate } from "./state.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
 import { clamp, toCitation } from "./utils.js"
 
 export function createQaAgentGraph(deps: Dependencies) {
+  const embedQueries = createEmbedQueriesNode(deps)
+  const searchEvidence = createSearchEvidenceNode(deps)
+
+  async function planSearch(state: QaAgentState): Promise<QaAgentUpdate> {
+    const unresolvedReferences = state.unresolvedReferences.length > 0 ? state.unresolvedReferences : extractUnresolvedReferences(state.question, state.clues)
+    return {
+      unresolvedReferences,
+      searchDecision: "continue_search"
+    }
+  }
+
+  async function executeSearchAction(state: QaAgentState): Promise<QaAgentUpdate> {
+    const embedUpdate = await embedQueries(state)
+    const searchUpdate = await searchEvidence({ ...state, ...embedUpdate } as QaAgentState)
+    const nextRetrieved = searchUpdate.retrievedChunks ?? []
+    const previousKeys = new Set(state.retrievedChunks.map((chunk) => chunk.key))
+    const newEvidenceCount = nextRetrieved.filter((chunk) => !previousKeys.has(chunk.key)).length
+
+    return {
+      ...embedUpdate,
+      ...searchUpdate,
+      newEvidenceCount
+    }
+  }
+
+  async function evaluateSearchProgress(state: QaAgentState): Promise<QaAgentUpdate> {
+    const nextIteration = state.iteration + 1
+    const noNewEvidenceStreak = state.newEvidenceCount === 0 ? state.noNewEvidenceStreak + 1 : 0
+    const topScore = state.retrievedChunks[0]?.score ?? 0
+    const enoughEvidence = state.retrievedChunks.length >= Math.max(2, Math.min(state.topK, 4)) && topScore >= state.minScore
+    const stopByIteration = nextIteration >= state.maxIterations
+    const stopByNoEvidence = noNewEvidenceStreak >= 2
+
+    return {
+      iteration: nextIteration,
+      noNewEvidenceStreak,
+      searchDecision: enoughEvidence || stopByIteration || stopByNoEvidence ? "done" : "continue_search"
+    }
+  }
+
+  function routeAfterSearchEvaluation(state: QaAgentState) {
+    return state.searchDecision
+  }
+
   function routeAfterGate(state: QaAgentState) {
     return state.answerability.isAnswerable ? "answer" : "refuse"
   }
@@ -30,8 +74,9 @@ export function createQaAgentGraph(deps: Dependencies) {
     .addNode("normalize_query", tracedNode("normalize_query", normalizeQuery))
     .addNode("retrieve_memory", tracedNode("retrieve_memory", createRetrieveMemoryNode(deps)))
     .addNode("generate_clues", tracedNode("generate_clues", createGenerateCluesNode(deps)))
-    .addNode("embed_queries", tracedNode("embed_queries", createEmbedQueriesNode(deps)))
-    .addNode("search_evidence", tracedNode("search_evidence", createSearchEvidenceNode(deps)))
+    .addNode("plan_search", tracedNode("plan_search", planSearch))
+    .addNode("execute_search_action", tracedNode("execute_search_action", executeSearchAction))
+    .addNode("evaluate_search_progress", tracedNode("evaluate_search_progress", evaluateSearchProgress))
     .addNode("rerank_chunks", tracedNode("rerank_chunks", rerankChunks))
     .addNode("answerability_gate", tracedNode("answerability_gate", answerabilityGate))
     .addNode("generate_answer", tracedNode("generate_answer", createGenerateAnswerNode(deps)))
@@ -42,9 +87,13 @@ export function createQaAgentGraph(deps: Dependencies) {
     .addEdge("analyze_input", "normalize_query")
     .addEdge("normalize_query", "retrieve_memory")
     .addEdge("retrieve_memory", "generate_clues")
-    .addEdge("generate_clues", "embed_queries")
-    .addEdge("embed_queries", "search_evidence")
-    .addEdge("search_evidence", "rerank_chunks")
+    .addEdge("generate_clues", "plan_search")
+    .addEdge("plan_search", "execute_search_action")
+    .addEdge("execute_search_action", "evaluate_search_progress")
+    .addConditionalEdges("evaluate_search_progress", routeAfterSearchEvaluation, {
+      continue_search: "plan_search",
+      done: "rerank_chunks"
+    })
     .addEdge("rerank_chunks", "answerability_gate")
     .addConditionalEdges("answerability_gate", routeAfterGate, {
       answer: "generate_answer",
@@ -55,6 +104,12 @@ export function createQaAgentGraph(deps: Dependencies) {
     .addEdge("finalize_response", END)
     .addEdge("finalize_refusal", END)
     .compile()
+}
+
+function extractUnresolvedReferences(question: string, clues: string[]): string[] {
+  const base = [question, ...clues].join("\n")
+  const refs = base.match(/[A-Za-z0-9_-]{3,}/g) ?? []
+  return [...new Set(refs)].slice(0, 8)
 }
 
 export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<QaGraphResult> {
@@ -85,6 +140,12 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
     clues: [],
     expandedQueries: [],
     queryEmbeddings: [],
+    unresolvedReferences: [],
+    iteration: 0,
+    maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
+    newEvidenceCount: 0,
+    noNewEvidenceStreak: 0,
+    searchDecision: "continue_search",
     retrievedChunks: [],
     selectedChunks: [],
     answerability: {

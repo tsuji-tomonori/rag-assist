@@ -13,6 +13,7 @@ export type ChatInput = {
   includeDebug?: boolean
   debug?: boolean
   useMemory?: boolean
+  maxIterations?: number
 }
 
 export type QaGraphContext = {

@@ -92,6 +92,13 @@ export const AgentState = new StateSchema({
   clues: z.array(z.string()).default(() => []),
   expandedQueries: z.array(z.string()).default(() => []),
   queryEmbeddings: z.array(QueryEmbeddingSchema).default(() => []),
+  unresolvedReferences: z.array(z.string()).default(() => []),
+
+  iteration: z.number().int().min(0).default(0),
+  maxIterations: z.number().int().min(1).max(8).default(3),
+  newEvidenceCount: z.number().int().min(0).default(0),
+  noNewEvidenceStreak: z.number().int().min(0).default(0),
+  searchDecision: z.enum(["continue_search", "done"]).default("continue_search"),
 
   retrievedChunks: z.array(RetrievedChunkSchema).default(() => []),
   selectedChunks: z.array(RetrievedChunkSchema).default(() => []),
