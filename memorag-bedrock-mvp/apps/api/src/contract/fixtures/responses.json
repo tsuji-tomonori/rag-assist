@@ -1,0 +1,20 @@
+{
+  "health": {
+    "ok": true,
+    "service": "memorag-bedrock-mvp"
+  },
+  "documentsListShape": {
+    "documents": []
+  },
+  "uploadedDocumentShape": {
+    "documentId": "example-id",
+    "fileName": "contract-test.txt",
+    "chunkCount": 1,
+    "vectorKeys": ["chunk:1"]
+  },
+  "chatShape": {
+    "answer": "回答本文",
+    "citations": [],
+    "isAnswerable": true
+  }
+}
