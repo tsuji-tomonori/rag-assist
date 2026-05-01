@@ -9,7 +9,13 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "node ./scripts/run-vitest.mjs",
     "test:coverage": "node ./scripts/run-vitest.mjs --coverage",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "E2E_SCENARIO=smoke playwright test",
+    "test:e2e:all": "E2E_SCENARIO=all playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium",
+    "test:e2e:smoke:local": "npm run test:e2e:install && npm run test:e2e:smoke",
+    "test:e2e:all:local": "npm run test:e2e:install && npm run test:e2e:all"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.4.0",
@@ -26,6 +32,7 @@
     "@types/react-dom": "^19.1.0",
     "@vitest/coverage-v8": "^4.1.5",
     "jsdom": "^29.1.1",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "@playwright/test": "^1.54.2"
   }
 }
