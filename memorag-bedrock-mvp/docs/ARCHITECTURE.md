@@ -9,20 +9,52 @@
 
 MVP の実行構成、主要コンポーネント、データ配置、実行フローを定義する。
 
-## システムコンテキスト
+## システムコンテキスト（全体構成図）
 
 ```mermaid
 flowchart TB
-  User[Browser User] --> CF[CloudFront]
-  Bench[Benchmark CLI] --> Api[API Gateway]
-  CF --> Web[S3 Frontend Assets]
-  User --> Api
-  Api --> Fn[Lambda API (Hono + LangGraph)]
-  Fn --> Bedrock[Amazon Bedrock]
-  Fn --> S3Doc[S3 Documents Bucket]
-  Fn --> VMem[S3 Vectors memory-index]
-  Fn --> VEv[S3 Vectors evidence-index]
+  subgraph Client[Client]
+    User[Browser User]
+    Bench[Benchmark CLI]
+  end
+
+  subgraph Edge[Edge]
+    CF[CloudFront]
+    APIGW[API Gateway]
+  end
+
+  subgraph App[Application]
+    Web[S3 Frontend Assets]
+    Fn[Lambda API\nHono + LangGraph]
+  end
+
+  subgraph AI[AI Services]
+    Bedrock[Amazon Bedrock]
+  end
+
+  subgraph Storage[Storage]
+    S3Doc[S3 Documents Bucket\nsource / manifests / debug-runs]
+    VMem[S3 Vectors memory-index]
+    VEv[S3 Vectors evidence-index]
+  end
+
+  User -->|UI配信| CF
+  CF --> Web
+  User -->|API呼び出し| APIGW
+  Bench -->|ベンチマーク呼び出し| APIGW
+  APIGW --> Fn
+  Fn -->|LLM/Embedding| Bedrock
+  Fn -->|文書/manifest/trace 保存| S3Doc
+  Fn -->|想起検索| VMem
+  Fn -->|根拠検索| VEv
 ```
+
+### 構成図の妥当性チェック
+
+- 境界を `Client / Edge / Application / AI Services / Storage` に分離し、責務の所在を明確化した。
+- `Browser User` の API 経路を `API Gateway` 経由に統一し、実運用の経路と一致させた。
+- `Benchmark CLI` も同一 API 面を使う形に明示し、検証系トラフィックの入口を明確化した。
+- `S3 Documents` と `S3 Vectors` を用途別に分離して表記し、保存責務と検索責務の違いを図で判別可能にした。
 
 ## 実行フロー（RAG）
 
