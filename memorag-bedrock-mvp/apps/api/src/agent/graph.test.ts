@@ -34,8 +34,9 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
       "normalize_query",
       "retrieve_memory",
       "generate_clues",
-      "embed_queries",
-      "search_evidence",
+      "plan_search",
+      "execute_search_action",
+      "evaluate_search_progress",
       "rerank_chunks",
       "answerability_gate",
       "generate_answer",
@@ -104,3 +105,44 @@ async function createTestDeps(): Promise<Dependencies> {
     questionStore: new LocalQuestionStore(dataDir)
   }
 }
+
+
+test("LangGraph search cycle loops until maxIterations when retrieval score is too low", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "benefit.txt",
+    text: "在宅勤務手当は月額5,000円。"
+  })
+
+  const result = await service.chat({
+    question: "在宅勤務手当の申請期限はいつですか？",
+    includeDebug: true,
+    minScore: 0.99,
+    maxIterations: 2
+  })
+
+  assert.equal(result.isAnswerable, false)
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(labels.filter((label) => label === "plan_search").length, 2)
+  assert.equal(labels.filter((label) => label === "execute_search_action").length, 2)
+  assert.equal(labels.filter((label) => label === "evaluate_search_progress").length, 2)
+  assert.equal(labels.includes("rerank_chunks"), true)
+  assert.equal(labels.at(-1), "finalize_refusal")
+})
+
+test("LangGraph search cycle stops after two consecutive no-new-evidence iterations", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "資料にない制度の詳細を教えてください。",
+    includeDebug: true,
+    minScore: 0.01,
+    maxIterations: 5
+  })
+
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(labels.filter((label) => label === "evaluate_search_progress").length, 2)
+  assert.equal(labels.includes("rerank_chunks"), true)
+  assert.equal(labels.at(-1), "finalize_refusal")
+})
