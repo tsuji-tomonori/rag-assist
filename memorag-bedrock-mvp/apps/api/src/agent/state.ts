@@ -112,7 +112,7 @@ export const AgentState = new StateSchema({
   iteration: z.number().int().min(0).default(0),
   referenceQueue: z.array(ReferenceTargetSchema).default(() => []),
   resolvedReferences: z.array(ReferenceResolutionSchema).default(() => []),
-  unresolvedReferences: z.array(ReferenceTargetSchema).default(() => []),
+  unresolvedReferenceTargets: z.array(ReferenceTargetSchema).default(() => []),
   visitedDocumentIds: z.array(z.string()).default(() => []),
   searchBudget: SearchBudgetSchema.default({
     maxIterations: 3,
@@ -127,7 +127,6 @@ export const AgentState = new StateSchema({
   queryEmbeddings: z.array(QueryEmbeddingSchema).default(() => []),
   unresolvedReferences: z.array(z.string()).default(() => []),
 
-  iteration: z.number().int().min(0).default(0),
   maxIterations: z.number().int().min(1).max(8).default(3),
   newEvidenceCount: z.number().int().min(0).default(0),
   noNewEvidenceStreak: z.number().int().min(0).default(0),

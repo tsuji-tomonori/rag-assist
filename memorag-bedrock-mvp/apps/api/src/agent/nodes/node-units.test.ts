@@ -224,6 +224,7 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
     iteration: 0,
     referenceQueue: [],
     resolvedReferences: [],
+    unresolvedReferenceTargets: [],
     unresolvedReferences: [],
     visitedDocumentIds: [],
     searchBudget: { maxIterations: 3, maxReferenceDepth: 2, remainingCalls: 3 },

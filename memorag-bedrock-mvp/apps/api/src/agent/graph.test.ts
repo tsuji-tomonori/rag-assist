@@ -21,7 +21,8 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
   const result = await service.chat({
     question: "在宅勤務手当の申請期限はいつですか？",
     includeDebug: true,
-    minScore: 0.05
+    minScore: 0.05,
+    maxIterations: 1
   })
 
   assert.equal(result.isAnswerable, true)
