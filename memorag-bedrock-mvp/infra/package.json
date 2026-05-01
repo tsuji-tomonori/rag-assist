@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.json && npm run bundle",
     "bundle": "node scripts/bundle-lambdas.mjs",
     "synth:yaml": "mkdir -p cdk.out && cdk synth > cdk.out/MemoRagMvpStack.template.yaml",
-    "test": "node --test -r ts-node/register test/*.test.ts",
+    "test": "npm run bundle && node --test -r ts-node/register test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "cdk": "cdk"
   },
