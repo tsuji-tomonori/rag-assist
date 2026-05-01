@@ -7,8 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test": "node ./scripts/run-vitest.mjs",
+    "test:coverage": "node ./scripts/run-vitest.mjs --coverage",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
