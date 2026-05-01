@@ -746,6 +746,8 @@ function AssigneeWorkspace({
   const [references, setReferences] = useState("")
   const [internalMemo, setInternalMemo] = useState("")
   const [notifyRequester, setNotifyRequester] = useState(true)
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
 
   useEffect(() => {
     setAnswerTitle(selected ? `${selected.title}への回答` : "")
@@ -753,7 +755,18 @@ function AssigneeWorkspace({
     setReferences(selected?.references ?? "")
     setInternalMemo(selected?.internalMemo ?? "")
     setNotifyRequester(selected?.notifyRequester ?? true)
+    setDraftSavedAt(null)
+    setIsDirty(false)
   }, [selected?.questionId])
+
+  function markDirty() {
+    if (!isDirty) setIsDirty(true)
+  }
+
+  function onSaveDraft() {
+    setDraftSavedAt(new Date())
+    setIsDirty(false)
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -767,6 +780,8 @@ function AssigneeWorkspace({
       internalMemo,
       notifyRequester
     })
+    setDraftSavedAt(new Date())
+    setIsDirty(false)
   }
 
   return (
@@ -822,26 +837,29 @@ function AssigneeWorkspace({
             <h3>回答作成</h3>
             <label>
               <span>回答タイトル</span>
-              <input value={answerTitle} onChange={(event) => setAnswerTitle(event.target.value)} maxLength={120} required />
+              <input value={answerTitle} onChange={(event) => { setAnswerTitle(event.target.value); markDirty() }} maxLength={120} required />
             </label>
             <label>
               <span>回答内容</span>
-              <textarea value={answerBody} onChange={(event) => setAnswerBody(event.target.value)} maxLength={4000} required />
+              <textarea value={answerBody} onChange={(event) => { setAnswerBody(event.target.value); markDirty() }} maxLength={4000} required />
             </label>
             <label>
               <span>参照資料 / 関連リンク</span>
-              <input value={references} onChange={(event) => setReferences(event.target.value)} placeholder="資料名、URL、またはナレッジリンク" />
+              <input value={references} onChange={(event) => { setReferences(event.target.value); markDirty() }} placeholder="資料名、URL、またはナレッジリンク" />
             </label>
             <label>
               <span>内部メモ</span>
-              <textarea value={internalMemo} onChange={(event) => setInternalMemo(event.target.value)} maxLength={1000} />
+              <textarea value={internalMemo} onChange={(event) => { setInternalMemo(event.target.value); markDirty() }} maxLength={1000} />
             </label>
             <label className="notify-row">
-              <input type="checkbox" checked={notifyRequester} onChange={(event) => setNotifyRequester(event.target.checked)} />
+              <input type="checkbox" checked={notifyRequester} onChange={(event) => { setNotifyRequester(event.target.checked); markDirty() }} />
               <span>質問者へ通知する</span>
             </label>
+            <div className="answer-draft-status" role="status" aria-live="polite">
+              {isDirty ? "未保存の変更があります" : draftSavedAt ? `下書きを保存済み（${formatDateTime(draftSavedAt.toISOString())}）` : "下書きは未保存です"}
+            </div>
             <div className="answer-form-actions">
-              <button type="button" disabled={loading}>下書き保存</button>
+              <button type="button" disabled={loading || !isDirty} onClick={onSaveDraft}>下書き保存</button>
               <button type="submit" disabled={loading || !answerTitle.trim() || !answerBody.trim()}>回答を送信</button>
             </div>
           </form>
