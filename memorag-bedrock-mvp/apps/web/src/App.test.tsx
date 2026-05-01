@@ -363,6 +363,7 @@ describe("App chat and upload flow", () => {
     vi.stubGlobal("fetch", fetchMock)
     render(<App />)
 
+    await screen.findByRole("option", { name: "run-old" })
     await userEvent.selectOptions(await screen.findByLabelText("実行ID"), "run-old")
     expect(screen.getByLabelText("実行ID")).toHaveValue("run-old")
   })
@@ -506,4 +507,5 @@ describe("App chat and upload flow", () => {
     await userEvent.click(await screen.findByTitle("担当者対応"))
     expect(await screen.findByText("担当者へ送信された質問はまだありません。")).toBeInTheDocument()
   })
+
 })

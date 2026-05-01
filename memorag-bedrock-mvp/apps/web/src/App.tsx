@@ -47,7 +47,14 @@ type IconName =
   | "trash"
   | "inbox"
 
-type AppView = "chat" | "assignee"
+type AppView = "chat" | "assignee" | "history"
+
+type ConversationHistoryItem = {
+  id: string
+  title: string
+  updatedAt: string
+  messages: Message[]
+}
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -66,6 +73,8 @@ export default function App() {
   const [embeddingModelId, setEmbeddingModelId] = useState(defaultEmbeddingModelId)
   const [minScore] = useState(0.2)
   const [messages, setMessages] = useState<Message[]>([])
+  const [history, setHistory] = useState<ConversationHistoryItem[]>([])
+  const [currentConversationId, setCurrentConversationId] = useState(() => createConversationId())
   const [loading, setLoading] = useState(false)
   const [pendingActivity, setPendingActivity] = useState<string | null>(null)
   const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
@@ -99,6 +108,35 @@ export default function App() {
     refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
     refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
   }, [])
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("memorag.chat.history")
+    if (!saved) return
+    try {
+      const parsed = JSON.parse(saved) as ConversationHistoryItem[]
+      setHistory(parsed)
+    } catch (err) {
+      console.warn("Failed to parse conversation history", err)
+    }
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem("memorag.chat.history", JSON.stringify(history.slice(0, 20)))
+  }, [history])
+
+  useEffect(() => {
+    if (messages.length === 0) return
+    const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
+    setHistory((prev) => {
+      const nextItem: ConversationHistoryItem = {
+        id: currentConversationId,
+        title: summarizeTitle(titleCandidate),
+        updatedAt: new Date().toISOString(),
+        messages
+      }
+      return [nextItem, ...prev.filter((item) => item.id !== currentConversationId)].slice(0, 20)
+    })
+  }, [currentConversationId, messages])
 
   useEffect(() => {
     if (activeView !== "chat") return
@@ -215,7 +253,20 @@ export default function App() {
   }
 
   function newConversation() {
+    if (messages.length > 0) {
+      const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
+      setHistory((prev) => {
+        const nextItem: ConversationHistoryItem = {
+          id: currentConversationId,
+          title: summarizeTitle(titleCandidate),
+          updatedAt: new Date().toISOString(),
+          messages
+        }
+        return [nextItem, ...prev.filter((item) => item.id !== currentConversationId)].slice(0, 20)
+      })
+    }
     setMessages([])
+    setCurrentConversationId(createConversationId())
     setQuestion("")
     setFile(null)
     setError(null)
@@ -292,7 +343,7 @@ export default function App() {
             <Icon name="inbox" />
             <span>担当者対応</span>
           </button>
-          <button className="rail-item" type="button" title="履歴">
+          <button className={`rail-item ${activeView === "history" ? "active" : ""}`} type="button" title="履歴" onClick={() => setActiveView("history")}>
             <Icon name="clock" />
             <span>履歴</span>
           </button>
@@ -468,13 +519,28 @@ export default function App() {
             />
           )}
         </section>
-        ) : (
+        ) : activeView === "assignee" ? (
           <AssigneeWorkspace
             questions={questions}
             selectedQuestionId={selectedQuestionId}
             loading={loading}
             onSelect={setSelectedQuestionId}
             onAnswer={onAnswerQuestion}
+            onBack={() => setActiveView("chat")}
+          />
+        ) : (
+          <HistoryWorkspace
+            history={history}
+            onSelect={(item) => {
+              setCurrentConversationId(item.id)
+              setMessages(item.messages)
+              setActiveView("chat")
+              setError(null)
+              setSelectedRunId("")
+              setPendingActivity(null)
+              setPendingDebugQuestion(null)
+            }}
+            onDelete={(id) => setHistory((prev) => prev.filter((entry) => entry.id !== id))}
             onBack={() => setActiveView("chat")}
           />
         )}
@@ -853,6 +919,52 @@ function AssigneeWorkspace({
   )
 }
 
+function HistoryWorkspace({
+  history,
+  onSelect,
+  onDelete,
+  onBack
+}: {
+  history: ConversationHistoryItem[]
+  onSelect: (item: ConversationHistoryItem) => void
+  onDelete: (id: string) => void
+  onBack: () => void
+}) {
+  return (
+    <section className="assignee-workspace" aria-label="履歴">
+      <header className="assignee-header">
+        <button type="button" onClick={onBack} title="チャットへ戻る">
+          <Icon name="chevron" />
+        </button>
+        <div>
+          <h2>履歴</h2>
+          <span>{history.length} 件の会話</span>
+        </div>
+      </header>
+      <div className="question-list-panel">
+        <h3>会話一覧</h3>
+        <div className="question-list">
+          {history.length === 0 ? (
+            <div className="empty-question-panel">履歴はまだありません。</div>
+          ) : (
+            history.map((item) => (
+              <div className="question-list-item" key={item.id}>
+                <button type="button" onClick={() => onSelect(item)}>
+                  <strong>{item.title}</strong>
+                  <span>{formatDateTime(item.updatedAt)} / {item.messages.length} メッセージ</span>
+                </button>
+                <button type="button" onClick={() => onDelete(item.id)}>
+                  削除
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function DebugPanel({
   trace,
   pending = false,
@@ -1157,4 +1269,13 @@ function priorityLabel(priority: HumanQuestion["priority"]): string {
   if (priority === "urgent") return "緊急"
   if (priority === "high") return "高"
   return "通常"
+}
+
+function summarizeTitle(value: string): string {
+  const trimmed = value.replace(/\s+/g, " ").trim()
+  return trimmed.length <= 36 ? trimmed : `${trimmed.slice(0, 36)}…`
+}
+
+function createConversationId(): string {
+  return `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
