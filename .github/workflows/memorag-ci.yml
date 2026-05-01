@@ -2,22 +2,18 @@ name: MemoRAG CI
 
 on:
   pull_request:
-    paths:
-      - ".github/workflows/memorag-ci.yml"
-      - "memorag-bedrock-mvp/**"
   push:
-    branches:
+    branches-ignore:
       - main
-    paths:
-      - ".github/workflows/memorag-ci.yml"
-      - "memorag-bedrock-mvp/**"
   workflow_dispatch:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: read
 
 concurrency:
-  group: memorag-ci-${{ github.workflow }}-${{ github.ref }}
+  group: memorag-ci-${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -40,7 +36,85 @@ jobs:
           cache-dependency-path: memorag-bedrock-mvp/package-lock.json
 
       - name: Install dependencies
+        id: install
         run: npm ci
+        continue-on-error: true
 
-      - name: Run CI checks
-        run: npm run ci
+      - name: Type-check all workspaces
+        id: typecheck
+        run: npm run typecheck --workspaces --if-present
+        continue-on-error: true
+
+      - name: Test all workspaces
+        id: test
+        run: npm test --workspaces --if-present
+        continue-on-error: true
+
+      - name: Build all workspaces
+        id: build
+        run: npm run build --workspaces --if-present
+        continue-on-error: true
+
+      - name: Comment CI result on PR
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            const marker = '<!-- memorag-ci-result -->';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const results = [
+              ['Install dependencies', '${{ steps.install.outcome }}', '`npm ci`'],
+              ['Type-check', '${{ steps.typecheck.outcome }}', '`npm run typecheck --workspaces --if-present`'],
+              ['Test', '${{ steps.test.outcome }}', '`npm test --workspaces --if-present`'],
+              ['Build', '${{ steps.build.outcome }}', '`npm run build --workspaces --if-present`'],
+            ];
+            const icon = (outcome) => outcome === 'success' ? ':white_check_mark:' : ':x:';
+            const overall = results.every(([, outcome]) => outcome === 'success') ? 'success' : 'failure';
+            const rows = results
+              .map(([name, outcome, command]) => `| ${name} | ${icon(outcome)} ${outcome} | ${command} |`)
+              .join('\n');
+            const body = [
+              marker,
+              '## MemoRAG CI Result',
+              '',
+              `| Item | Result | Command |`,
+              `|---|---|---|`,
+              rows,
+              '',
+              `| Summary | Result | Link |`,
+              `|---|---|---|`,
+              `| Overall | ${icon(overall)} ${overall} | [Workflow run](${runUrl}) |`,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const previous = comments.find((comment) =>
+              comment.user.type === 'Bot' && comment.body?.includes(marker)
+            );
+
+            if (previous) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: previous.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
+      - name: Fail when CI checks failed
+        if: ${{ always() && (steps.install.outcome != 'success' || steps.typecheck.outcome != 'success' || steps.test.outcome != 'success' || steps.build.outcome != 'success') }}
+        run: exit 1

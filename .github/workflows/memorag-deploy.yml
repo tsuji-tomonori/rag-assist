@@ -76,14 +76,10 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Type-check all workspaces
-        run: npm run typecheck --workspaces --if-present
-
-      - name: Build all workspaces
-        run: npm run build --workspaces --if-present
-
-      - name: Run CDK assertion and snapshot tests
-        run: npm run test -w @memorag-mvp/infra
+      - name: Build deployment artifacts
+        run: |
+          npm run build -w @memorag-mvp/web
+          npm run build -w @memorag-mvp/infra
 
       - name: CDK bootstrap
         if: ${{ inputs.bootstrap || false }}
