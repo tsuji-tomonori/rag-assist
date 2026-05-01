@@ -129,6 +129,16 @@ export async function getDebugRun(runId: string): Promise<DebugTrace> {
   return get<DebugTrace>(`/debug-runs/${encodeURIComponent(runId)}`)
 }
 
+export type DebugDownloadResponse = {
+  url: string
+  expiresInSeconds: number
+  objectKey: string
+}
+
+export async function createDebugDownload(runId: string): Promise<DebugDownloadResponse> {
+  return post<DebugDownloadResponse>(`/debug-runs/${encodeURIComponent(runId)}/download`, {})
+}
+
 export async function deleteDocument(documentId: string): Promise<void> {
   const apiBaseUrl = await getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}/documents/${encodeURIComponent(documentId)}`, { method: "DELETE" })

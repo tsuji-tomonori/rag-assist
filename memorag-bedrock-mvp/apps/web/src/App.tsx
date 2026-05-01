@@ -3,6 +3,7 @@ import {
   answerQuestion,
   chat,
   createQuestion,
+  createDebugDownload,
   deleteDocument,
   fileToBase64,
   listQuestions,
@@ -1107,7 +1108,7 @@ function DebugPanel({
           <span>{pending ? "実行中" : `${steps.length} ステップ`}</span>
         </div>
         <div className="debug-head-actions">
-          <button type="button" onClick={() => downloadDebugTrace(trace)} disabled={!trace || pending} title="Markdownでダウンロード">
+          <button type="button" onClick={() => void downloadDebugTrace(trace)} disabled={!trace || pending} title="Markdownでダウンロード">
             <Icon name="download" />
             <span>MD DL</span>
           </button>
@@ -1203,89 +1204,17 @@ function getIconPath(name: IconName) {
   }
 }
 
-function downloadDebugTrace(trace?: DebugTrace) {
+async function downloadDebugTrace(trace?: DebugTrace) {
   if (!trace) return
 
-  const markdown = formatDebugTraceMarkdown(trace)
-  const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" })
-  const url = URL.createObjectURL(blob)
+  const signed = await createDebugDownload(trace.runId)
   const link = document.createElement("a")
-  link.href = url
+  link.href = signed.url
   link.download = `debug-trace-${sanitizeFileName(trace.runId)}.md`
+  link.rel = "noopener"
   document.body.appendChild(link)
   link.click()
   link.remove()
-  URL.revokeObjectURL(url)
-}
-
-function formatDebugTraceMarkdown(trace: DebugTrace): string {
-  const statusLabel = trace.status === "success" ? "成功" : trace.status === "warning" ? "注意" : "失敗"
-  const lines = [
-    `# Debug Trace ${trace.runId}`,
-    "",
-    "## Summary",
-    "",
-    `- Run ID: ${trace.runId}`,
-    `- Status: ${statusLabel}`,
-    `- Question: ${trace.question}`,
-    `- Answerable: ${trace.isAnswerable ? "Yes" : "No"}`,
-    `- Started At: ${trace.startedAt}`,
-    `- Completed At: ${trace.completedAt}`,
-    `- Total Latency: ${formatLatency(trace.totalLatencyMs)}`,
-    `- Model ID: ${trace.modelId}`,
-    `- Embedding Model ID: ${trace.embeddingModelId}`,
-    `- Clue Model ID: ${trace.clueModelId}`,
-    `- Top K: ${trace.topK}`,
-    `- Memory Top K: ${trace.memoryTopK}`,
-    `- Min Score: ${trace.minScore}`,
-    "",
-    "## Answer Preview",
-    "",
-    trace.answerPreview || "-",
-    "",
-    "## Steps",
-    "",
-    ...trace.steps.flatMap((step) => [
-      `### ${step.id}. ${step.label}`,
-      "",
-      `- Status: ${step.status}`,
-      `- Latency: ${formatLatency(step.latencyMs)}`,
-      step.modelId ? `- Model ID: ${step.modelId}` : undefined,
-      step.hitCount !== undefined ? `- Hit Count: ${step.hitCount}` : undefined,
-      step.tokenCount !== undefined ? `- Token Count: ${step.tokenCount}` : undefined,
-      `- Started At: ${step.startedAt}`,
-      `- Completed At: ${step.completedAt}`,
-      "",
-      step.summary,
-      "",
-      ...(step.detail ? ["```text", step.detail, "```", ""] : [])
-    ].filter((line): line is string => line !== undefined)),
-    "## Citations",
-    "",
-    ...formatCitationMarkdown(trace.citations),
-    "## Retrieved",
-    "",
-    ...formatCitationMarkdown(trace.retrieved)
-  ]
-
-  return `${lines.join("\n")}\n`
-}
-
-function formatCitationMarkdown(citations: DebugTrace["citations"]): string[] {
-  if (citations.length === 0) return ["なし", ""]
-
-  return citations.flatMap((citation, index) => [
-    `### ${index + 1}. ${citation.fileName}`,
-    "",
-    `- Document ID: ${citation.documentId}`,
-    citation.chunkId ? `- Chunk ID: ${citation.chunkId}` : undefined,
-    `- Score: ${citation.score}`,
-    "",
-    "```text",
-    citation.text,
-    "```",
-    ""
-  ].filter((line): line is string => line !== undefined))
 }
 
 function sanitizeFileName(input: string): string {

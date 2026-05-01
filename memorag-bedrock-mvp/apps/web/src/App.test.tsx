@@ -129,6 +129,7 @@ function mockAppFetch() {
     if (requestUrl.endsWith("/documents") && init?.method === "POST") {
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
     }
+    if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
     if (requestUrl.endsWith("/chat") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}")) as { includeDebug?: boolean }
       return Promise.resolve(
@@ -307,9 +308,7 @@ describe("App chat and upload flow", () => {
   })
 
   it("renders debug trace details, downloads markdown, and resets the conversation", async () => {
-    mockAppFetch()
-    const createObjectUrl = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:trace")
-    const revokeObjectUrl = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined)
+    const fetchMock = mockAppFetch()
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
     render(<App />)
 
@@ -328,12 +327,8 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("low_similarity_score")).toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("Markdownでダウンロード"))
-    expect(createObjectUrl).toHaveBeenCalled()
-    const markdown = await (createObjectUrl.mock.calls[0]?.[0] as Blob).text()
-    expect(markdown).toContain("### 3. finalize_response")
-    expect(markdown).toContain("END_OF_FINALIZE_RESPONSE")
     expect(click).toHaveBeenCalled()
-    expect(revokeObjectUrl).toHaveBeenCalledWith("blob:trace")
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes("/debug-runs/") && String(url).includes("/download") && (init as RequestInit | undefined)?.method === "POST")).toBe(true)
 
     await userEvent.click(screen.getByText("新しい会話"))
     expect(screen.queryByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")).not.toBeInTheDocument()
@@ -347,7 +342,8 @@ describe("App chat and upload flow", () => {
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
       if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [debugTrace] }))
-      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+    if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return new Promise((resolve) => {
           resolveChat = resolve
         })
@@ -455,7 +451,8 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/questions") && !init) return Promise.resolve(response({ questions: storedQuestions }))
-      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+    if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
       }
       if (requestUrl.endsWith("/questions") && init?.method === "POST") {

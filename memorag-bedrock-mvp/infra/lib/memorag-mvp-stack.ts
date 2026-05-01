@@ -53,6 +53,17 @@ export class MemoRagMvpStack extends Stack {
       autoDeleteObjects: true
     })
 
+    const debugDownloadBucket = new s3.Bucket(this, "DebugDownloadBucket", {
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      serverAccessLogsBucket: accessLogsBucket,
+      serverAccessLogsPrefix: "s3/debug-downloads/",
+      lifecycleRules: [{ expiration: Duration.days(7) }],
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true
+    })
+
     const frontendBucket = new s3.Bucket(this, "FrontendBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -134,11 +145,14 @@ export class MemoRagMvpStack extends Stack {
         DEFAULT_MEMORY_MODEL_ID: defaultModelId,
         EMBEDDING_MODEL_ID: embeddingModelId,
         EMBEDDING_DIMENSIONS: String(embeddingDimensions),
-        MIN_RETRIEVAL_SCORE: "0.20"
+        MIN_RETRIEVAL_SCORE: "0.20",
+        DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
+        DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
       }
     })
 
     docsBucket.grantReadWrite(apiFn)
+    debugDownloadBucket.grantReadWrite(apiFn)
     questionsTable.grantReadWriteData(apiFn)
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({

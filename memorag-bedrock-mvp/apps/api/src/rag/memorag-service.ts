@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto"
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
@@ -191,6 +193,28 @@ export class MemoRagService {
     return this.deps.questionStore.resolve(questionId)
   }
 
+
+
+  async createDebugTraceDownloadUrl(runId: string): Promise<{ url: string; expiresInSeconds: number; objectKey: string } | undefined> {
+    if (!config.debugDownloadBucketName) throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
+    const trace = await this.getDebugRun(runId)
+    if (!trace) return undefined
+
+    const markdown = formatDebugTraceMarkdown(trace)
+    const objectKey = `downloads/debug-trace-${trace.runId}.md`
+    const s3 = new S3Client({ region: config.region })
+    await s3.send(new PutObjectCommand({
+      Bucket: config.debugDownloadBucketName,
+      Key: objectKey,
+      Body: markdown,
+      ContentType: "text/markdown; charset=utf-8"
+    }))
+
+    const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
+    const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket: config.debugDownloadBucketName, Key: objectKey, ResponseContentType: "text/markdown; charset=utf-8" }), { expiresIn: expiresInSeconds })
+    return { url, expiresInSeconds, objectKey }
+  }
+
   private async createMemoryCards(input: { fileName: string; text: string; modelId?: string }): Promise<MemoryCard[]> {
     const raw = await this.deps.textModel.generate(buildMemoryCardPrompt(input.fileName, input.text), {
       modelId: input.modelId ?? config.defaultMemoryModelId,
@@ -214,4 +238,24 @@ export class MemoRagService {
     ].join("\n")
     return [{ ...card, text }]
   }
+}
+
+
+
+function formatDebugTraceMarkdown(trace: DebugTrace): string {
+  const statusLabel = trace.status === "success" ? "成功" : trace.status === "warning" ? "注意" : "失敗"
+  const lines = [
+    `# Debug Trace ${trace.runId}`,"", "## Summary","",
+    `- Run ID: ${trace.runId}`,`- Status: ${statusLabel}`,`- Question: ${trace.question}`,`- Answerable: ${trace.isAnswerable ? "Yes" : "No"}`,`- Started At: ${trace.startedAt}`,`- Completed At: ${trace.completedAt}`,`- Total Latency: ${trace.totalLatencyMs}ms`,`- Model ID: ${trace.modelId}`,`- Embedding Model ID: ${trace.embeddingModelId}`,`- Clue Model ID: ${trace.clueModelId}`,`- Top K: ${trace.topK}`,`- Memory Top K: ${trace.memoryTopK}`,`- Min Score: ${trace.minScore}`,"","## Answer Preview","",trace.answerPreview || "-","","## Steps","",
+    ...trace.steps.flatMap((step)=>[`### ${step.id}. ${step.label}`,"",`- Status: ${step.status}`,`- Latency: ${step.latencyMs}ms`,step.modelId ? `- Model ID: ${step.modelId}` : undefined, step.hitCount!==undefined ? `- Hit Count: ${step.hitCount}`:undefined, step.tokenCount!==undefined ? `- Token Count: ${step.tokenCount}`:undefined,`- Started At: ${step.startedAt}`,`- Completed At: ${step.completedAt}`,"",step.summary,"",...(step.detail?["```text",step.detail,"```",""]:[])].filter(Boolean) as string[]),
+    "## Citations","",...formatCitationMarkdown(trace.citations),"## Retrieved","",...formatCitationMarkdown(trace.retrieved)
+  ]
+  return `${lines.join("\n")}\n`
+}
+
+function formatCitationMarkdown(citations: Citation[]): string[] {
+  if (citations.length === 0) return ["なし", ""]
+  return citations.flatMap((citation, index) => [
+    `### ${index + 1}. ${citation.fileName}`,"",`- Document ID: ${citation.documentId}`,citation.chunkId ? `- Chunk ID: ${citation.chunkId}` : undefined,`- Score: ${citation.score}`,"","```text",citation.text,"```", ""
+  ].filter(Boolean) as string[])
 }

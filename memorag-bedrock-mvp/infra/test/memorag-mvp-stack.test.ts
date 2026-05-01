@@ -18,7 +18,7 @@ function synthesize() {
 test("implements the designed serverless resources", () => {
   const template = synthesize()
 
-  template.resourceCountIs("AWS::S3::Bucket", 3)
+  template.resourceCountIs("AWS::S3::Bucket", 4)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
       ServerSideEncryptionConfiguration: [
@@ -30,6 +30,13 @@ test("implements the designed serverless resources", () => {
       BlockPublicPolicy: true,
       IgnorePublicAcls: true,
       RestrictPublicBuckets: true
+    }
+  })
+
+  template.hasResourceProperties("AWS::S3::Bucket", {
+    LoggingConfiguration: Match.objectLike({ LogFilePrefix: "s3/debug-downloads/" }),
+    LifecycleConfiguration: {
+      Rules: Match.arrayWith([Match.objectLike({ ExpirationInDays: 7, Status: "Enabled" })])
     }
   })
   template.hasResourceProperties("AWS::Lambda::Function", {
@@ -66,7 +73,9 @@ test("implements the designed serverless resources", () => {
     Environment: Match.objectLike({
       Variables: Match.objectLike({
         QUESTION_TABLE_NAME: Match.anyValue(),
-        USE_LOCAL_QUESTION_STORE: "false"
+        USE_LOCAL_QUESTION_STORE: "false",
+        DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),
+        DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
       })
     })
   })
