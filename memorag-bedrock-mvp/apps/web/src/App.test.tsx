@@ -155,6 +155,11 @@ function mockAppFetch() {
   return fetchMock
 }
 
+
+async function selectDocument(documentId: string) {
+  await screen.findByRole("option", { name: "requirements.md" })
+  await userEvent.selectOptions(screen.getByLabelText("ドキュメント"), documentId)
+}
 describe("App document management", () => {
   it("shows copy buttons and copies prompt/answer text", async () => {
     mockAppFetch()
@@ -186,7 +191,7 @@ describe("App document management", () => {
     const deleteButton = await screen.findByTitle("削除する資料を選択")
     expect(deleteButton).toBeDisabled()
 
-    await userEvent.selectOptions(screen.getByLabelText("ドキュメント"), "doc-1")
+    await selectDocument("doc-1")
     expect(screen.getByTitle("requirements.mdを削除")).toBeEnabled()
   })
 
@@ -195,7 +200,7 @@ describe("App document management", () => {
     const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true)
     render(<App />)
 
-    await userEvent.selectOptions(await screen.findByLabelText("ドキュメント"), "doc-1")
+    await selectDocument("doc-1")
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("http://api.test/documents/doc-1", { method: "DELETE" }))
@@ -208,7 +213,8 @@ describe("App document management", () => {
     vi.spyOn(window, "confirm").mockReturnValue(false)
     render(<App />)
 
-    await userEvent.selectOptions(await screen.findByLabelText("ドキュメント"), "doc-1")
+    await screen.findByRole("option", { name: "requirements.md" })
+    await selectDocument("doc-1")
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
     expect(fetchMock).not.toHaveBeenCalledWith("http://api.test/documents/doc-1", { method: "DELETE" })
@@ -227,7 +233,7 @@ describe("App document management", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true)
     render(<App />)
 
-    await userEvent.selectOptions(await screen.findByLabelText("ドキュメント"), "doc-1")
+    await selectDocument("doc-1")
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
     expect(await screen.findByText("delete failed")).toBeInTheDocument()
@@ -251,7 +257,7 @@ describe("App document management", () => {
     vi.stubGlobal("fetch", fetchMock)
     render(<App />)
 
-    await userEvent.selectOptions(await screen.findByLabelText("ドキュメント"), "doc-1")
+    await selectDocument("doc-1")
     const input = document.querySelector<HTMLInputElement>('input[type="file"]')
     await userEvent.upload(input as HTMLInputElement, new File(["資料"], "refresh.txt", { type: "text/plain" }))
     await userEvent.click(screen.getByTitle("送信"))
