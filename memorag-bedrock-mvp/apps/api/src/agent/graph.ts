@@ -139,7 +139,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
     iteration: 0,
     referenceQueue: [],
     resolvedReferences: [],
-    unresolvedReferences: [],
+    unresolvedReferenceTargets: [],
     visitedDocumentIds: [],
     searchBudget: {
       maxIterations: 3,
@@ -151,7 +151,6 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
     expandedQueries: [],
     queryEmbeddings: [],
     unresolvedReferences: [],
-    iteration: 0,
     maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,

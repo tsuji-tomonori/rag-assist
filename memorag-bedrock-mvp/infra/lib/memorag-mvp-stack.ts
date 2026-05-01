@@ -217,7 +217,7 @@ export class MemoRagMvpStack extends Stack {
     const httpApi = new apigwv2.HttpApi(this, "HttpApi", {
       createDefaultStage: false,
       corsPreflight: {
-        allowHeaders: ["Content-Type"],
+        allowHeaders: ["Content-Type", "Authorization"],
         allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.DELETE, apigwv2.CorsHttpMethod.OPTIONS],
         allowOrigins: ["*"],
         maxAge: Duration.days(1)
@@ -299,7 +299,13 @@ export class MemoRagMvpStack extends Stack {
       new s3deploy.BucketDeployment(this, "DeployFrontend", {
         sources: [
           s3deploy.Source.asset(webDist),
-          s3deploy.Source.jsonData("config.json", { apiBaseUrl: httpStage.url })
+          s3deploy.Source.jsonData("config.json", {
+            apiBaseUrl: httpStage.url,
+            authMode: "cognito",
+            cognitoRegion: cdk.Aws.REGION,
+            cognitoUserPoolId: userPool.userPoolId,
+            cognitoUserPoolClientId: userPoolClient.userPoolClientId
+          })
         ],
         destinationBucket: frontendBucket,
         distribution,

@@ -3,6 +3,9 @@ import { expect, test } from '@playwright/test'
 test.beforeEach(async ({ page }) => {
   page.on('dialog', async (dialog) => dialog.accept())
   await page.goto('/')
+  await page.getByPlaceholder('メールアドレスを入力').fill('local@example.com')
+  await page.getByPlaceholder('パスワードを入力').fill('LocalPassword123!')
+  await page.getByRole('button', { name: 'サインイン' }).click()
 })
 
 test('資料アップロード後に一覧へ反映される @smoke', async ({ page }) => {

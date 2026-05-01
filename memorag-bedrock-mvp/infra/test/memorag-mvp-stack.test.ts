@@ -49,7 +49,10 @@ test("implements the designed serverless resources", () => {
     Architectures: ["arm64"]
   })
   template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
-    ProtocolType: "HTTP"
+    ProtocolType: "HTTP",
+    CorsConfiguration: Match.objectLike({
+      AllowHeaders: Match.arrayWith(["Authorization"])
+    })
   })
   template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
     StageName: "$default",

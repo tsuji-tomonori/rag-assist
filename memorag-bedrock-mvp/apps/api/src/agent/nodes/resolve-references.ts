@@ -3,7 +3,7 @@ import type { QaAgentState, QaAgentUpdate, ReferenceResolution, ReferenceTarget 
 export async function resolveReferences(state: QaAgentState): Promise<QaAgentUpdate> {
   const queue = [...state.referenceQueue]
   const nextQueue: ReferenceTarget[] = []
-  const unresolved = [...state.unresolvedReferences]
+  const unresolved = [...state.unresolvedReferenceTargets]
   const resolved: ReferenceResolution[] = [...state.resolvedReferences]
   const visited = new Set(state.visitedDocumentIds)
   const maxDepth = state.searchBudget.maxReferenceDepth
@@ -59,7 +59,7 @@ export async function resolveReferences(state: QaAgentState): Promise<QaAgentUpd
   return {
     referenceQueue: nextQueue,
     resolvedReferences: resolved,
-    unresolvedReferences: unresolved,
+    unresolvedReferenceTargets: unresolved,
     visitedDocumentIds: [...visited]
   }
 }

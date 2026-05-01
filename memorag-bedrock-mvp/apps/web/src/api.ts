@@ -1,23 +1,54 @@
 type RuntimeConfig = {
   apiBaseUrl?: string
+  authMode?: "cognito" | "local"
+  cognitoRegion?: string
+  cognitoUserPoolId?: string
+  cognitoUserPoolClientId?: string
 }
 
-let apiBaseUrlPromise: Promise<string> | undefined
+let runtimeConfigPromise: Promise<RuntimeConfig> | undefined
+let authTokenProvider: (() => string | undefined) | undefined
+
+export async function getRuntimeConfig(): Promise<RuntimeConfig> {
+  runtimeConfigPromise ??= fetch("/config.json")
+    .then(async (response) => (response.ok ? ((await response.json()) as RuntimeConfig) : {}))
+    .catch(() => ({}))
+
+  const fileConfig = await runtimeConfigPromise
+  return {
+    ...fileConfig,
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || fileConfig.apiBaseUrl || "http://localhost:8787",
+    authMode: (import.meta.env.VITE_AUTH_MODE as RuntimeConfig["authMode"] | undefined) || fileConfig.authMode,
+    cognitoRegion: import.meta.env.VITE_COGNITO_REGION || fileConfig.cognitoRegion,
+    cognitoUserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || fileConfig.cognitoUserPoolId,
+    cognitoUserPoolClientId: import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID || fileConfig.cognitoUserPoolClientId
+  }
+}
 
 async function getApiBaseUrl(): Promise<string> {
-  const envUrl = import.meta.env.VITE_API_BASE_URL
-  if (envUrl) return trimSlash(envUrl)
-
-  apiBaseUrlPromise ??= fetch("/config.json")
-    .then(async (response) => (response.ok ? ((await response.json()) as RuntimeConfig) : {}))
-    .then((config) => trimSlash(config.apiBaseUrl || "http://localhost:8787"))
-    .catch(() => "http://localhost:8787")
-
-  return apiBaseUrlPromise
+  if (import.meta.env.VITE_API_BASE_URL) return trimSlash(import.meta.env.VITE_API_BASE_URL)
+  const config = await getRuntimeConfig()
+  return trimSlash(config.apiBaseUrl || "http://localhost:8787")
 }
 
 function trimSlash(input: string): string {
   return input.replace(/\/+$/, "")
+}
+
+export function setAuthTokenProvider(provider?: () => string | undefined) {
+  authTokenProvider = provider
+}
+
+export function resetRuntimeConfigForTests() {
+  runtimeConfigPromise = undefined
+}
+
+function createHeaders(hasJsonBody = false): HeadersInit {
+  const headers: Record<string, string> = {}
+  if (hasJsonBody) headers["Content-Type"] = "application/json"
+  const token = authTokenProvider?.()
+  if (token) headers.Authorization = `Bearer ${token}`
+  return headers
 }
 
 export type Citation = {
@@ -141,7 +172,7 @@ export async function createDebugDownload(runId: string): Promise<DebugDownloadR
 
 export async function deleteDocument(documentId: string): Promise<void> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}/documents/${encodeURIComponent(documentId)}`, { method: "DELETE" })
+  const response = await fetch(`${apiBaseUrl}/documents/${encodeURIComponent(documentId)}`, { method: "DELETE", headers: createHeaders() })
   if (!response.ok) throw new Error(await response.text())
 }
 
@@ -198,7 +229,7 @@ export async function resolveQuestion(questionId: string): Promise<HumanQuestion
 
 async function get<T>(requestPath: string): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
-  const response = await fetch(`${apiBaseUrl}${requestPath}`)
+  const response = await fetch(`${apiBaseUrl}${requestPath}`, { headers: createHeaders() })
   if (!response.ok) throw new Error(await response.text())
   return response.json() as Promise<T>
 }
@@ -207,7 +238,7 @@ async function post<T>(requestPath: string, body: unknown): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}${requestPath}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: createHeaders(true),
     body: JSON.stringify(body)
   })
   if (!response.ok) throw new Error(await response.text())

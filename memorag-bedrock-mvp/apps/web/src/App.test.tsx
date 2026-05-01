@@ -119,12 +119,16 @@ function response(body: unknown, ok = true) {
   }
 }
 
+function isGet(init?: RequestInit) {
+  return !init?.method || init.method === "GET"
+}
+
 function mockAppFetch() {
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     const requestUrl = String(url)
     if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
-    if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
-    if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
+    if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+    if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
     if (requestUrl.endsWith("/documents/doc-1") && init?.method === "DELETE") return Promise.resolve(response({ documentId: "doc-1", deletedVectorCount: 3 }))
     if (requestUrl.endsWith("/documents") && init?.method === "POST") {
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
@@ -163,6 +167,7 @@ async function selectDocument(documentId: string) {
 }
 
 async function renderAuthenticatedApp() {
+  vi.stubEnv("VITE_AUTH_MODE", "local")
   render(<App />)
   await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
   await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "Password123!")
@@ -212,7 +217,12 @@ describe("App document management", () => {
     await selectDocument("doc-1")
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("http://api.test/documents/doc-1", { method: "DELETE" }))
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "http://api.test/documents/doc-1",
+        expect.objectContaining({ method: "DELETE", headers: { Authorization: "Bearer local-dev-token" } })
+      )
+    )
     expect(confirmMock).toHaveBeenCalledWith("「requirements.md」を削除します。元資料、manifest、検索ベクトルが削除されます。")
     await waitFor(() => expect(screen.getByLabelText("ドキュメント")).toHaveValue("all"))
   })
@@ -226,15 +236,17 @@ describe("App document management", () => {
     await selectDocument("doc-1")
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
-    expect(fetchMock).not.toHaveBeenCalledWith("http://api.test/documents/doc-1", { method: "DELETE" })
+    expect(
+      fetchMock.mock.calls.some(([url, init]) => String(url) === "http://api.test/documents/doc-1" && (init as RequestInit | undefined)?.method === "DELETE")
+    ).toBe(false)
   })
 
   it("shows API errors during deletion", async () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
-      if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
-      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/documents/doc-1") && init?.method === "DELETE") return Promise.resolve(response("delete failed", false))
       return Promise.resolve(response({}))
     })
@@ -253,11 +265,11 @@ describe("App document management", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
-      if (requestUrl.endsWith("/documents") && !init) {
+      if (requestUrl.endsWith("/documents") && isGet(init)) {
         documentListCalls += 1
         return Promise.resolve(response({ documents: documentListCalls === 1 ? documents : [documents[1]] }))
       }
-      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/documents") && init?.method === "POST") {
         return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
       }
@@ -336,7 +348,11 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(screen.getByTitle("Markdownでダウンロード"))
     expect(click).toHaveBeenCalled()
-    expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes("/debug-runs/") && String(url).includes("/download") && (init as RequestInit | undefined)?.method === "POST")).toBe(true)
+    expect(
+      fetchMock.mock.calls.some(
+        ([url, init]) => String(url).includes("/debug-runs/") && String(url).includes("/download") && (init as RequestInit | undefined)?.method === "POST"
+      )
+    ).toBe(true)
 
     await userEvent.click(screen.getByText("新しい会話"))
     expect(screen.queryByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")).not.toBeInTheDocument()
@@ -348,10 +364,10 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
-      if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
-      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [debugTrace] }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [debugTrace] }))
       if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
-    if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return new Promise((resolve) => {
           resolveChat = resolve
         })
@@ -389,8 +405,8 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
-      if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
-      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [debugTrace, olderTrace] }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [debugTrace, olderTrace] }))
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
@@ -432,12 +448,41 @@ describe("App chat and upload flow", () => {
     expect(chatCall).toBeTruthy()
   })
 
+  it("searches, sorts, opens, and deletes conversation history", async () => {
+    mockAppFetch()
+    await renderAuthenticatedApp()
+
+    await userEvent.type(screen.getByLabelText("質問"), "分類一")
+    await userEvent.click(screen.getByTitle("送信"))
+    await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+    await userEvent.click(screen.getByText("新しい会話"))
+    await userEvent.type(screen.getByLabelText("質問"), "分類二")
+    await userEvent.click(screen.getByTitle("送信"))
+    await screen.findByText("分類二")
+
+    await userEvent.click(screen.getByTitle("履歴"))
+    expect(await screen.findByText("会話一覧")).toBeInTheDocument()
+    expect(screen.getByText("2 件の会話")).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("履歴を検索"), "分類一")
+    expect(screen.getByText("1 件を表示中")).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText("履歴の並び順"), "messages")
+    await userEvent.click(screen.getByRole("button", { name: /分類一/ }))
+    expect(screen.getByLabelText("質問")).toHaveValue("")
+    expect(screen.getByText("分類一")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByTitle("履歴"))
+    await userEvent.type(screen.getByLabelText("履歴を検索"), "分類一")
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
+    expect(await screen.findByText("条件に一致する履歴はありません。")).toBeInTheDocument()
+  })
+
   it("keeps Shift+Enter as a newline and surfaces chat errors", async () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
-      if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
-      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/chat") && init?.method === "POST") return Promise.resolve(response("chat failed", false))
       return Promise.resolve(response({}))
     })
@@ -456,11 +501,11 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
-      if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
-      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
-      if (requestUrl.endsWith("/questions") && !init) return Promise.resolve(response({ questions: storedQuestions }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/questions") && isGet(init)) return Promise.resolve(response({ questions: storedQuestions }))
       if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
-    if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
       }
       if (requestUrl.endsWith("/questions") && init?.method === "POST") {
@@ -531,9 +576,9 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
-      if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents: [] }))
-      if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
-      if (requestUrl.endsWith("/questions") && !init) return Promise.resolve(response({ questions }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents: [] }))
+      if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/questions") && isGet(init)) return Promise.resolve(response({ questions }))
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
