@@ -322,6 +322,10 @@ export class MemoRagMvpStack extends Stack {
         {
           id: "AwsSolutions-L1",
           reason: "Application and CDK provider Lambdas use nodejs22.x, which is current for this stack even though this cdk-nag version still flags it."
+        },
+        {
+          id: "AwsSolutions-COG8",
+          reason: "Cognito Plus tier is intentionally not enabled to avoid additional recurring costs in this MVP; strong password policy and MFA are enabled as compensating controls."
         }
       ],
       true
