@@ -404,6 +404,23 @@ describe("App chat and upload flow", () => {
     })
   })
 
+
+  it("switches to Ctrl+Enter submission mode and keeps Enter as newline", async () => {
+    const fetchMock = mockAppFetch()
+    render(<App />)
+
+    await userEvent.selectOptions(screen.getByLabelText("送信キー"), "ctrlEnter")
+    const textarea = screen.getByLabelText("質問")
+    await userEvent.type(textarea, "分類は？{Enter}続き")
+    expect(textarea).toHaveValue("分類は？\n続き")
+
+    await userEvent.keyboard("{Control>}{Enter}{/Control}")
+
+    await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+    const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/chat") && (init as RequestInit | undefined)?.method === "POST")
+    expect(chatCall).toBeTruthy()
+  })
+
   it("keeps Shift+Enter as a newline and surfaces chat errors", async () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)

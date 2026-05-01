@@ -71,6 +71,7 @@ export default function App() {
   const [expandedStepId, setExpandedStepId] = useState<number | null>(null)
   const [allExpanded, setAllExpanded] = useState(false)
   const [conversationKey, setConversationKey] = useState(0)
+  const [submitShortcut, setSubmitShortcut] = useState<"enter" | "ctrlEnter">("enter")
   const latestMessageRef = useRef<HTMLElement | null>(null)
 
   const canAsk = useMemo(() => (question.trim().length > 0 || file !== null) && !loading, [question, file, loading])
@@ -429,11 +430,25 @@ export default function App() {
             <form className="composer" onSubmit={onAsk}>
               <textarea
                 aria-label="質問"
-                placeholder="質問を入力してください...（Enterで送信 / Shift+Enterで改行）"
+                placeholder={
+                  submitShortcut === "enter"
+                    ? "質問を入力してください...（Enterで送信 / Shift+Enterで改行）"
+                    : "質問を入力してください...（Ctrl+Enterで送信 / Enterで改行）"
+                }
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
+                  if (event.key !== "Enter") return
+
+                  if (submitShortcut === "enter") {
+                    if (!event.shiftKey) {
+                      event.preventDefault()
+                      event.currentTarget.form?.requestSubmit()
+                    }
+                    return
+                  }
+
+                  if (event.ctrlKey || event.metaKey) {
                     event.preventDefault()
                     event.currentTarget.form?.requestSubmit()
                   }
@@ -450,6 +465,15 @@ export default function App() {
                 </button>
               </div>
             </form>
+            <div className="composer-shortcut-toggle">
+              <label>
+                送信キー
+                <select value={submitShortcut} onChange={(event) => setSubmitShortcut(event.target.value as "enter" | "ctrlEnter")}>
+                  <option value="enter">Enterで送信</option>
+                  <option value="ctrlEnter">Ctrl+Enterで送信</option>
+                </select>
+              </label>
+            </div>
             <p className="composer-note">本サービスの回答は社内ドキュメントをもとに生成されます。内容の正確性をご確認のうえご利用ください。</p>
           </section>
 
