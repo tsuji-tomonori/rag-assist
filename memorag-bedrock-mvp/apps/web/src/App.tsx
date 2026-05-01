@@ -637,6 +637,7 @@ function AssistantAnswer({
           onClick={() => copyText(message.sourceQuestion ?? "", "prompt")}
           disabled={!canCopyPrompt}
           aria-label={copyStatus === "prompt" ? "プロンプトをコピー済み" : "プロンプトをコピー"}
+          title={copyStatus === "prompt" ? "プロンプトをコピー済み" : "プロンプトをコピー"}
         >
           <Icon name={copyStatus === "prompt" ? "check" : "copy"} />
           <span>{copyStatus === "prompt" ? "コピー済み" : "プロンプト"}</span>
@@ -647,6 +648,7 @@ function AssistantAnswer({
           onClick={() => copyText(message.text, "answer")}
           disabled={!canCopyAnswer}
           aria-label={copyStatus === "answer" ? "回答をコピー済み" : "回答をコピー"}
+          title={copyStatus === "answer" ? "回答をコピー済み" : "回答をコピー"}
         >
           <Icon name={copyStatus === "answer" ? "check" : "copy"} />
           <span>{copyStatus === "answer" ? "コピー済み" : "回答"}</span>
