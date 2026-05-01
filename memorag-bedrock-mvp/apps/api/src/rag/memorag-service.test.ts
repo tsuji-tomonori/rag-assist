@@ -85,13 +85,78 @@ test("service delegates human question lifecycle to the question store", async (
   assert.equal(resolved.status, "resolved")
 })
 
-async function createService(): Promise<{ service: MemoRagService; dataDir: string }> {
+test("service chat returns refusal and error debug trace when external dependencies fail", async () => {
+  const { service } = await createService({
+    textModel: new MockBedrockTextModel({ embed: new Error("Bedrock embed timeout") }),
+    evidenceQueryError: new Error("Vector query failed"),
+    objectGetErrorPrefix: "debug-runs/",
+    objectGetError: new Error("S3 get failed")
+  })
+
+  const result = await service.chat({
+    question: "仕様は？",
+    includeDebug: true
+  })
+
+  assert.equal(result.isAnswerable, false)
+  assert.equal(result.answer, "資料からは回答できません。")
+  assert.equal(result.debug?.status, "warning")
+  const errorStep = result.debug?.steps.find((step) => step.status === "error")
+  assert.ok(errorStep)
+  assert.match(errorStep?.detail ?? "", /Bedrock embed timeout|Vector query failed/)
+  await assert.rejects(() => service.listDebugRuns(), /S3 get failed/)
+})
+
+test("service ingest falls back when memory JSON parse fails and surfaces generate timeout", async () => {
+  const { service: parseFallbackService } = await createService({
+    textModel: new MockBedrockTextModel({ invalidJsonOnGenerate: true })
+  })
+  const manifest = await parseFallbackService.ingest({
+    fileName: "doc.txt",
+    text: "これは要件定義の本文です。"
+  })
+  assert.equal(manifest.memoryCardCount, 1)
+
+  const { service: timeoutService } = await createService({
+    textModel: new MockBedrockTextModel({ generate: new Error("Bedrock generate timeout") })
+  })
+  await assert.rejects(
+    () => timeoutService.ingest({ fileName: "doc.txt", text: "これは要件定義の本文です。" }),
+    /Bedrock generate timeout/
+  )
+})
+
+async function createService(options: {
+  textModel?: MockBedrockTextModel
+  evidenceQueryError?: Error
+  objectGetErrorPrefix?: string
+  objectGetError?: Error
+} = {}): Promise<{ service: MemoRagService; dataDir: string }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-service-test-"))
+  const baseObjectStore = new LocalObjectStore(dataDir)
+  const baseEvidenceStore = new LocalVectorStore(dataDir, "evidence-vectors.json")
   const deps = {
-    objectStore: new LocalObjectStore(dataDir),
+    objectStore: {
+      putText: (...args: Parameters<LocalObjectStore["putText"]>) => baseObjectStore.putText(...args),
+      getText: async (key: string) => {
+        if (options.objectGetError && options.objectGetErrorPrefix && key.startsWith(options.objectGetErrorPrefix)) {
+          throw options.objectGetError
+        }
+        return baseObjectStore.getText(key)
+      },
+      deleteObject: (...args: Parameters<LocalObjectStore["deleteObject"]>) => baseObjectStore.deleteObject(...args),
+      listKeys: (...args: Parameters<LocalObjectStore["listKeys"]>) => baseObjectStore.listKeys(...args)
+    },
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
-    evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
-    textModel: new MockBedrockTextModel(),
+    evidenceVectorStore: {
+      put: (...args: Parameters<LocalVectorStore["put"]>) => baseEvidenceStore.put(...args),
+      query: async (...args: Parameters<LocalVectorStore["query"]>) => {
+        if (options.evidenceQueryError) throw options.evidenceQueryError
+        return baseEvidenceStore.query(...args)
+      },
+      delete: (...args: Parameters<LocalVectorStore["delete"]>) => baseEvidenceStore.delete(...args)
+    },
+    textModel: options.textModel ?? new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir)
   } as unknown as Dependencies
   return { service: new MemoRagService(deps), dataDir }
