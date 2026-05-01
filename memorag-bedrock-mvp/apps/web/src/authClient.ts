@@ -8,11 +8,20 @@ export type AuthSession = {
   expiresAt: number
 }
 
+export type NewPasswordRequiredChallenge = {
+  type: "NEW_PASSWORD_REQUIRED"
+  email: string
+  session: string
+  requiredAttributes: string[]
+}
+
+export type AuthResult = AuthSession | NewPasswordRequiredChallenge
+
 const sessionKey = "memorag.auth.session"
 
 setAuthTokenProvider(() => getStoredAuthSession()?.idToken)
 
-export async function signIn(input: { email: string; password: string; remember: boolean }): Promise<AuthSession> {
+export async function signIn(input: { email: string; password: string; remember: boolean }): Promise<AuthResult> {
   const email = input.email.trim()
   if (!email || !input.password) throw new Error("メールアドレスとパスワードを入力してください。")
 
@@ -29,7 +38,7 @@ export async function signIn(input: { email: string; password: string; remember:
     throw new Error("Cognito認証設定が未設定です。")
   }
 
-  const response = await fetch(`https://cognito-idp.${config.cognitoRegion}.amazonaws.com/`, {
+  const response = await fetch(cognitoEndpoint(config.cognitoRegion), {
     method: "POST",
     headers: {
       "Content-Type": "application/x-amz-json-1.1",
@@ -45,36 +54,68 @@ export async function signIn(input: { email: string; password: string; remember:
     })
   })
 
-  const body = (await response.json().catch(() => ({}))) as {
-    AuthenticationResult?: {
-      IdToken?: string
-      AccessToken?: string
-      RefreshToken?: string
-      ExpiresIn?: number
-    }
-    ChallengeName?: string
-  }
+  const body = await readCognitoResponse(response)
 
   if (!response.ok) {
     throw new Error("メールアドレスまたはパスワードが正しくありません。")
   }
+  if (body.ChallengeName === "NEW_PASSWORD_REQUIRED") {
+    if (!body.Session) {
+      throw new Error("パスワード変更セッションを取得できませんでした。")
+    }
+    return {
+      type: "NEW_PASSWORD_REQUIRED",
+      email,
+      session: body.Session,
+      requiredAttributes: parseRequiredAttributes(body.ChallengeParameters?.requiredAttributes)
+    }
+  }
   if (body.ChallengeName) {
     throw new Error(`追加の認証操作が必要です: ${body.ChallengeName}`)
   }
-  if (!body.AuthenticationResult?.IdToken) {
-    throw new Error("Cognito認証レスポンスにIDトークンがありません。")
+
+  return storeAuthenticatedResult(email, body, input.remember)
+}
+
+export async function completeNewPasswordChallenge(input: {
+  challenge: NewPasswordRequiredChallenge
+  newPassword: string
+  remember: boolean
+}): Promise<AuthSession> {
+  const newPassword = input.newPassword.trim()
+  if (!newPassword) throw new Error("新しいパスワードを入力してください。")
+
+  const config = await getRuntimeConfig()
+  if (!config.cognitoRegion || !config.cognitoUserPoolClientId) {
+    throw new Error("Cognito認証設定が未設定です。")
   }
 
-  return storeSession(
-    {
-      email,
-      idToken: body.AuthenticationResult.IdToken,
-      accessToken: body.AuthenticationResult.AccessToken,
-      refreshToken: body.AuthenticationResult.RefreshToken,
-      expiresAt: Date.now() + (body.AuthenticationResult.ExpiresIn ?? 3600) * 1000
+  const response = await fetch(cognitoEndpoint(config.cognitoRegion), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-amz-json-1.1",
+      "X-Amz-Target": "AWSCognitoIdentityProviderService.RespondToAuthChallenge"
     },
-    input.remember
-  )
+    body: JSON.stringify({
+      ChallengeName: "NEW_PASSWORD_REQUIRED",
+      ClientId: config.cognitoUserPoolClientId,
+      Session: input.challenge.session,
+      ChallengeResponses: {
+        USERNAME: input.challenge.email,
+        NEW_PASSWORD: newPassword
+      }
+    })
+  })
+
+  const body = await readCognitoResponse(response)
+  if (!response.ok) {
+    throw new Error("新しいパスワードを設定できませんでした。条件を確認して再入力してください。")
+  }
+  if (body.ChallengeName) {
+    throw new Error(`追加の認証操作が必要です: ${body.ChallengeName}`)
+  }
+
+  return storeAuthenticatedResult(input.challenge.email, body, input.remember)
 }
 
 export function getStoredAuthSession(): AuthSession | null {
@@ -99,6 +140,56 @@ function storeSession(session: AuthSession, remember: boolean): AuthSession {
   otherStorage.removeItem(sessionKey)
   setAuthTokenProvider(() => getStoredAuthSession()?.idToken)
   return session
+}
+
+function storeAuthenticatedResult(email: string, body: CognitoResponseBody, remember: boolean): AuthSession {
+  if (!body.AuthenticationResult?.IdToken) {
+    throw new Error("Cognito認証レスポンスにIDトークンがありません。")
+  }
+
+  return storeSession(
+    {
+      email,
+      idToken: body.AuthenticationResult.IdToken,
+      accessToken: body.AuthenticationResult.AccessToken,
+      refreshToken: body.AuthenticationResult.RefreshToken,
+      expiresAt: Date.now() + (body.AuthenticationResult.ExpiresIn ?? 3600) * 1000
+    },
+    remember
+  )
+}
+
+type CognitoResponseBody = {
+  AuthenticationResult?: {
+    IdToken?: string
+    AccessToken?: string
+    RefreshToken?: string
+    ExpiresIn?: number
+  }
+  ChallengeName?: string
+  ChallengeParameters?: Record<string, string | undefined>
+  Session?: string
+}
+
+async function readCognitoResponse(response: Response): Promise<CognitoResponseBody> {
+  return (await response.json().catch(() => ({}))) as CognitoResponseBody
+}
+
+function cognitoEndpoint(region: string): string {
+  return `https://cognito-idp.${region}.amazonaws.com/`
+}
+
+function parseRequiredAttributes(value: string | undefined): string[] {
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value) as unknown
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []
+  } catch {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
 }
 
 function readSession(storage: Storage): AuthSession | null {

@@ -17,7 +17,7 @@ import {
   type DocumentManifest,
   type HumanQuestion
 } from "./api.js"
-import { getStoredAuthSession, signIn, signOut, type AuthSession } from "./authClient.js"
+import { completeNewPasswordChallenge, getStoredAuthSession, signIn, signOut, type AuthSession } from "./authClient.js"
 import LoginPage from "./LoginPage.js"
 
 type Message = {
@@ -160,8 +160,14 @@ export default function App() {
     return (
       <LoginPage
         onLogin={async (payload) => {
-          const session = await signIn(payload)
+          const result = await signIn(payload)
+          if (!("type" in result)) setAuthSession(result)
+          return result
+        }}
+        onCompleteNewPassword={async (payload) => {
+          const session = await completeNewPasswordChallenge(payload)
           setAuthSession(session)
+          return session
         }}
       />
     )
