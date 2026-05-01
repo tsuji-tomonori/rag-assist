@@ -1,9 +1,6 @@
 name: Release Management
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
-    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -23,26 +20,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  validate-semver-label:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: semverラベルの確認
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const labels = context.payload.pull_request.labels.map(l => l.name);
-            const semverLabels = ['semver:major', 'semver:minor', 'semver:patch'];
-            const hits = semverLabels.filter(name => labels.includes(name));
-
-            if (hits.length !== 1) {
-              core.setFailed(`PRには semver:major / semver:minor / semver:patch のいずれか1つを付与してください。現在: ${hits.join(', ') || 'なし'}`);
-            } else {
-              core.info(`semver label OK: ${hits[0]}`);
-            }
-
   release-on-main:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
