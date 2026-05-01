@@ -806,6 +806,102 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
+    "UserPool6BA7E5F2": {
+      "Type": "AWS::Cognito::UserPool",
+      "Properties": {
+        "AccountRecoverySetting": {
+          "RecoveryMechanisms": [
+            {
+              "Name": "verified_email",
+              "Priority": 1
+            }
+          ]
+        },
+        "AdminCreateUserConfig": {
+          "AllowAdminCreateUserOnly": true
+        },
+        "AutoVerifiedAttributes": [
+          "email"
+        ],
+        "EmailVerificationMessage": "The verification code to your new account is {####}",
+        "EmailVerificationSubject": "Verify your new account",
+        "EnabledMfas": [
+          "SOFTWARE_TOKEN_MFA"
+        ],
+        "MfaConfiguration": "OPTIONAL",
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 12,
+            "RequireLowercase": true,
+            "RequireNumbers": true,
+            "RequireSymbols": true,
+            "RequireUppercase": true
+          }
+        },
+        "SmsVerificationMessage": "The verification code to your new account is {####}",
+        "UsernameAttributes": [
+          "email"
+        ],
+        "VerificationMessageTemplate": {
+          "DefaultEmailOption": "CONFIRM_WITH_CODE",
+          "EmailMessage": "The verification code to your new account is {####}",
+          "EmailSubject": "Verify your new account",
+          "SmsMessage": "The verification code to your new account is {####}"
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "UserPoolWebClient4C9370B0": {
+      "Type": "AWS::Cognito::UserPoolClient",
+      "Properties": {
+        "AccessTokenValidity": 60,
+        "AllowedOAuthFlows": [
+          "implicit",
+          "code"
+        ],
+        "AllowedOAuthFlowsUserPoolClient": true,
+        "AllowedOAuthScopes": [
+          "profile",
+          "phone",
+          "email",
+          "openid",
+          "aws.cognito.signin.user.admin"
+        ],
+        "CallbackURLs": [
+          "https://example.com"
+        ],
+        "ExplicitAuthFlows": [
+          "ALLOW_USER_PASSWORD_AUTH",
+          "ALLOW_USER_SRP_AUTH",
+          "ALLOW_REFRESH_TOKEN_AUTH"
+        ],
+        "GenerateSecret": false,
+        "IdTokenValidity": 60,
+        "PreventUserExistenceErrors": "ENABLED",
+        "RefreshTokenValidity": 43200,
+        "SupportedIdentityProviders": [
+          "COGNITO"
+        ],
+        "TokenValidityUnits": {
+          "AccessToken": "minutes",
+          "IdToken": "minutes",
+          "RefreshToken": "minutes"
+        },
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
+    "UserPoolUserPoolDomain9F01E991": {
+      "Type": "AWS::Cognito::UserPoolDomain",
+      "Properties": {
+        "Domain": "memorag-c85f22a0",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
     "ApiFunctionLogGroup00D1AC73": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -999,7 +1095,17 @@
             "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
             "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
             "EMBEDDING_DIMENSIONS": "1024",
-            "MIN_RETRIEVAL_SCORE": "0.20"
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            }
           }
         },
         "Handler": "index.handler",
@@ -1096,7 +1202,10 @@
         "ApiId": {
           "Ref": "HttpApiF5A9A8A7"
         },
-        "AuthorizationType": "NONE",
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiJwtAuthorizer"
+        },
         "RouteKey": "ANY /{proxy+}",
         "Target": {
           "Fn::Join": [
@@ -1109,7 +1218,10 @@
             ]
           ]
         }
-      }
+      },
+      "DependsOn": [
+        "HttpApiJwtAuthorizer"
+      ]
     },
     "HttpApiANYRootIntegration2E2CB6BE": {
       "Type": "AWS::ApiGatewayV2::Integration",
@@ -1162,7 +1274,10 @@
         "ApiId": {
           "Ref": "HttpApiF5A9A8A7"
         },
-        "AuthorizationType": "NONE",
+        "AuthorizationType": "JWT",
+        "AuthorizerId": {
+          "Ref": "HttpApiJwtAuthorizer"
+        },
         "RouteKey": "ANY /",
         "Target": {
           "Fn::Join": [
@@ -1175,7 +1290,10 @@
             ]
           ]
         }
-      }
+      },
+      "DependsOn": [
+        "HttpApiJwtAuthorizer"
+      ]
     },
     "HttpApiAccessLogGroupA66C8864": {
       "Type": "AWS::Logs::LogGroup",
@@ -1202,6 +1320,32 @@
         },
         "AutoDeploy": true,
         "StageName": "$default"
+      }
+    },
+    "HttpApiJwtAuthorizer": {
+      "Type": "AWS::ApiGatewayV2::Authorizer",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApiF5A9A8A7"
+        },
+        "AuthorizerType": "JWT",
+        "IdentitySource": [
+          "$request.header.Authorization"
+        ],
+        "JwtConfiguration": {
+          "Audience": [
+            {
+              "Ref": "UserPoolWebClient4C9370B0"
+            }
+          ],
+          "Issuer": {
+            "Fn::GetAtt": [
+              "UserPool6BA7E5F2",
+              "ProviderURL"
+            ]
+          }
+        },
+        "Name": "CognitoJwtAuthorizer"
       }
     },
     "FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6": {
@@ -1275,6 +1419,16 @@
     }
   },
   "Outputs": {
+    "CognitoUserPoolId": {
+      "Value": {
+        "Ref": "UserPool6BA7E5F2"
+      }
+    },
+    "CognitoUserPoolClientId": {
+      "Value": {
+        "Ref": "UserPoolWebClient4C9370B0"
+      }
+    },
     "ApiUrl": {
       "Value": {
         "Fn::Join": [

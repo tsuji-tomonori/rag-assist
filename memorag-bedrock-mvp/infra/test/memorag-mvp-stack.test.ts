@@ -19,6 +19,9 @@ test("implements the designed serverless resources", () => {
   const template = synthesize()
 
   template.resourceCountIs("AWS::S3::Bucket", 3)
+  template.resourceCountIs("AWS::Cognito::UserPool", 1)
+  template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
+  template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
       ServerSideEncryptionConfiguration: [
@@ -66,7 +69,10 @@ test("implements the designed serverless resources", () => {
     Environment: Match.objectLike({
       Variables: Match.objectLike({
         QUESTION_TABLE_NAME: Match.anyValue(),
-        USE_LOCAL_QUESTION_STORE: "false"
+        USE_LOCAL_QUESTION_STORE: "false",
+        AUTH_ENABLED: "true",
+        COGNITO_USER_POOL_ID: Match.anyValue(),
+        COGNITO_APP_CLIENT_ID: Match.anyValue()
       })
     })
   })

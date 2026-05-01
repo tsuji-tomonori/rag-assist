@@ -16,6 +16,7 @@ import {
   type DocumentManifest,
   type HumanQuestion
 } from "./api.js"
+import LoginPage from "./LoginPage.js"
 
 type Message = {
   role: "user" | "assistant"
@@ -58,6 +59,7 @@ const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [documents, setDocuments] = useState<DocumentManifest[]>([])
   const [debugRuns, setDebugRuns] = useState<DebugTrace[]>([])
   const [questions, setQuestions] = useState<HumanQuestion[]>([])
@@ -150,6 +152,10 @@ export default function App() {
       behavior: prefersReducedMotion ? "auto" : "smooth"
     })
   }, [activeView, latestMessageCreatedAt, pendingActivity])
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={() => setIsAuthenticated(true)} />
+  }
 
   async function refreshDocuments() {
     const nextDocuments = await listDocuments()

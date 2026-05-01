@@ -1766,3 +1766,18 @@ button:disabled {
     margin-right: 0;
   }
 }
+
+.login-page { display: grid; grid-template-columns: 1.1fr 1fr; min-height: 100vh; background: #f5f8ff; }
+.login-hero { background: radial-gradient(circle at 30% 40%, #dbe8ff 0%, #f5f8ff 60%); }
+.login-panel { margin: auto; width: min(560px, 90%); background: #fff; border: 1px solid #e5e7eb; border-radius: 20px; padding: 32px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
+.login-panel h1 { margin: 0; font-size: 40px; }
+.login-panel p { margin: 8px 0 24px; color: #64748b; }
+.login-form { display: grid; gap: 12px; }
+.login-form input[type="email"], .login-form input[type="password"] { height: 48px; border: 1px solid #d1d5db; border-radius: 10px; padding: 0 12px; }
+.login-form .remember { display: flex; align-items: center; gap: 8px; color: #334155; margin-top: 8px; }
+.login-form button { height: 48px; border: none; border-radius: 10px; background: #165dff; color: #fff; font-weight: 700; cursor: pointer; }
+
+@media (max-width: 1024px) {
+  .login-page { grid-template-columns: 1fr; }
+  .login-hero { display: none; }
+}
