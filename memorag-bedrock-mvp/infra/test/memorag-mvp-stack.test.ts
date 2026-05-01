@@ -18,7 +18,7 @@ function synthesize() {
 test("implements the designed serverless resources", () => {
   const template = synthesize()
 
-  template.resourceCountIs("AWS::S3::Bucket", 3)
+  template.resourceCountIs("AWS::S3::Bucket", 4)
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
   template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
@@ -33,6 +33,13 @@ test("implements the designed serverless resources", () => {
       BlockPublicPolicy: true,
       IgnorePublicAcls: true,
       RestrictPublicBuckets: true
+    }
+  })
+
+  template.hasResourceProperties("AWS::S3::Bucket", {
+    LoggingConfiguration: Match.objectLike({ LogFilePrefix: "s3/debug-downloads/" }),
+    LifecycleConfiguration: {
+      Rules: Match.arrayWith([Match.objectLike({ ExpirationInDays: 7, Status: "Enabled" })])
     }
   })
   template.hasResourceProperties("AWS::Lambda::Function", {
@@ -72,7 +79,9 @@ test("implements the designed serverless resources", () => {
         USE_LOCAL_QUESTION_STORE: "false",
         AUTH_ENABLED: "true",
         COGNITO_USER_POOL_ID: Match.anyValue(),
-        COGNITO_APP_CLIENT_ID: Match.anyValue()
+        COGNITO_APP_CLIENT_ID: Match.anyValue(),
+        DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),
+        DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
       })
     })
   })

@@ -27,7 +27,8 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
   const fixtures = await loadFixtures()
   const port = 18000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-"))
-  const server = spawn("npx", ["tsx", "src/local.ts"], {
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
     cwd: process.cwd(),
     env: {
       ...process.env,

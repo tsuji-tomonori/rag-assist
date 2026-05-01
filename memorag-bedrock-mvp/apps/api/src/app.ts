@@ -15,6 +15,7 @@ import {
   DeleteDocumentResponseSchema,
   DebugTraceListResponseSchema,
   DebugTraceSchema,
+  DebugDownloadResponseSchema,
   DocumentListResponseSchema,
   DocumentManifestSchema,
   DocumentUploadRequestSchema,
@@ -36,10 +37,9 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-app.use("/documents*", authMiddleware)
-app.use("/chat", authMiddleware)
-app.use("/questions*", authMiddleware)
-app.use("/debug-runs", authMiddleware)
+for (const path of ["/documents", "/documents/*", "/chat", "/questions", "/questions/*", "/debug-runs", "/debug-runs/*"]) {
+  app.use(path, authMiddleware)
+}
 
 function looseRoute(config: any) {
   return createRoute(config) as any
@@ -293,6 +293,25 @@ app.openapi(
     const trace = await service.getDebugRun(runId)
     if (!trace) return c.json({ error: "Debug run not found" }, 404)
     return c.json(trace, 200)
+  }
+)
+
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/debug-runs/{runId}/download",
+    request: { params: z.object({ runId: z.string().min(1) }) },
+    responses: {
+      200: { description: "Create signed download URL for debug markdown", content: { "application/json": { schema: DebugDownloadResponseSchema } } },
+      404: { description: "Debug run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const { runId } = (c.req as any).valid("param") as { runId: string }
+    const download = await service.createDebugTraceDownloadUrl(runId)
+    if (!download) return c.json({ error: "Debug run not found" }, 404)
+    return c.json(download, 200)
   }
 )
 

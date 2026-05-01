@@ -36,5 +36,7 @@ export const config = {
   minRetrievalScore: numberEnv("MIN_RETRIEVAL_SCORE", 0.20),
   maxUploadChars: numberEnv("MAX_UPLOAD_CHARS", 500_000),
   chunkSizeChars: numberEnv("CHUNK_SIZE_CHARS", 1200),
-  chunkOverlapChars: numberEnv("CHUNK_OVERLAP_CHARS", 200)
+  chunkOverlapChars: numberEnv("CHUNK_OVERLAP_CHARS", 200),
+  debugDownloadBucketName: process.env.DEBUG_DOWNLOAD_BUCKET_NAME ?? "",
+  debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900)
 } as const

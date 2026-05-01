@@ -16,6 +16,7 @@
     "@aws-sdk/client-dynamodb": "^3.1039.0",
     "@aws-sdk/client-s3": "^3.1024.0",
     "@aws-sdk/client-s3vectors": "^3.1024.0",
+    "@aws-sdk/s3-request-presigner": "^3.1024.0",
     "@aws-sdk/util-dynamodb": "^3.996.2",
     "@hono/node-server": "^1.19.0",
     "@hono/zod-openapi": "^0.19.0",

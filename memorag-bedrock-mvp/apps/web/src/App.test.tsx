@@ -129,6 +129,7 @@ function mockAppFetch() {
     if (requestUrl.endsWith("/documents") && init?.method === "POST") {
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
     }
+    if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
     if (requestUrl.endsWith("/chat") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}")) as { includeDebug?: boolean }
       return Promise.resolve(
@@ -160,13 +161,21 @@ async function selectDocument(documentId: string) {
   await screen.findByRole("option", { name: "requirements.md" })
   await userEvent.selectOptions(screen.getByLabelText("ドキュメント"), documentId)
 }
+
+async function renderAuthenticatedApp() {
+  render(<App />)
+  await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
+  await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "Password123!")
+  await userEvent.click(screen.getByRole("button", { name: "サインイン" }))
+}
+
 describe("App document management", () => {
   it("shows copy buttons and copies prompt/answer text", async () => {
     mockAppFetch()
     const writeText = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal("navigator", { clipboard: { writeText } })
 
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await userEvent.type(screen.getByLabelText("質問"), "分類を教えて")
     await userEvent.click(screen.getByTitle("送信"))
@@ -186,7 +195,7 @@ describe("App document management", () => {
 
   it("disables delete until a concrete document is selected", async () => {
     mockAppFetch()
-    render(<App />)
+    await renderAuthenticatedApp()
 
     const deleteButton = await screen.findByTitle("削除する資料を選択")
     expect(deleteButton).toBeDisabled()
@@ -198,7 +207,7 @@ describe("App document management", () => {
   it("deletes selected document only after confirmation and refreshes the list", async () => {
     const fetchMock = mockAppFetch()
     const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await selectDocument("doc-1")
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
@@ -211,7 +220,7 @@ describe("App document management", () => {
   it("does not call DELETE when deletion is cancelled", async () => {
     const fetchMock = mockAppFetch()
     vi.spyOn(window, "confirm").mockReturnValue(false)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await screen.findByRole("option", { name: "requirements.md" })
     await selectDocument("doc-1")
@@ -231,7 +240,7 @@ describe("App document management", () => {
     })
     vi.stubGlobal("fetch", fetchMock)
     vi.spyOn(window, "confirm").mockReturnValue(true)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await selectDocument("doc-1")
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
@@ -255,7 +264,7 @@ describe("App document management", () => {
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await selectDocument("doc-1")
     const input = document.querySelector<HTMLInputElement>('input[type="file"]')
@@ -270,7 +279,7 @@ describe("App document management", () => {
 describe("App chat and upload flow", () => {
   it("starts with an empty composer and disabled send action", async () => {
     mockAppFetch()
-    render(<App />)
+    await renderAuthenticatedApp()
 
     expect(await screen.findByTitle("送信")).toBeDisabled()
     expect(screen.getByLabelText("質問")).toHaveValue("")
@@ -278,7 +287,7 @@ describe("App chat and upload flow", () => {
 
   it("uploads an attached file and answers a question from citations", async () => {
     const fetchMock = mockAppFetch()
-    render(<App />)
+    await renderAuthenticatedApp()
 
     const input = document.querySelector<HTMLInputElement>('input[type="file"]')
     expect(input).toBeTruthy()
@@ -297,7 +306,7 @@ describe("App chat and upload flow", () => {
 
   it("ingests an attached file without asking a question", async () => {
     mockAppFetch()
-    render(<App />)
+    await renderAuthenticatedApp()
 
     const input = document.querySelector<HTMLInputElement>('input[type="file"]')
     await userEvent.upload(input as HTMLInputElement, new File(["資料"], "only-upload.txt", { type: "text/plain" }))
@@ -307,11 +316,9 @@ describe("App chat and upload flow", () => {
   })
 
   it("renders debug trace details, downloads markdown, and resets the conversation", async () => {
-    mockAppFetch()
-    const createObjectUrl = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:trace")
-    const revokeObjectUrl = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined)
+    const fetchMock = mockAppFetch()
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await userEvent.click(screen.getByRole("checkbox"))
     expect(await screen.findByLabelText("デバッグパネル")).toBeInTheDocument()
@@ -328,12 +335,8 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("low_similarity_score")).toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("Markdownでダウンロード"))
-    expect(createObjectUrl).toHaveBeenCalled()
-    const markdown = await (createObjectUrl.mock.calls[0]?.[0] as Blob).text()
-    expect(markdown).toContain("### 3. finalize_response")
-    expect(markdown).toContain("END_OF_FINALIZE_RESPONSE")
     expect(click).toHaveBeenCalled()
-    expect(revokeObjectUrl).toHaveBeenCalledWith("blob:trace")
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes("/debug-runs/") && String(url).includes("/download") && (init as RequestInit | undefined)?.method === "POST")).toBe(true)
 
     await userEvent.click(screen.getByText("新しい会話"))
     expect(screen.queryByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")).not.toBeInTheDocument()
@@ -347,7 +350,8 @@ describe("App chat and upload flow", () => {
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
       if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [debugTrace] }))
-      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+    if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return new Promise((resolve) => {
           resolveChat = resolve
         })
@@ -355,7 +359,7 @@ describe("App chat and upload flow", () => {
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await userEvent.click(screen.getByRole("checkbox"))
     await userEvent.selectOptions(await screen.findByLabelText("実行ID"), debugTrace.runId)
@@ -390,7 +394,7 @@ describe("App chat and upload flow", () => {
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await screen.findByRole("option", { name: "run-old" })
     await userEvent.selectOptions(await screen.findByLabelText("実行ID"), "run-old")
@@ -399,7 +403,7 @@ describe("App chat and upload flow", () => {
 
   it("submits with Enter and sends the selected model", async () => {
     const fetchMock = mockAppFetch()
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await userEvent.selectOptions(screen.getByLabelText("モデル"), "anthropic.claude-3-haiku-20240307-v1:0")
     await userEvent.type(screen.getByLabelText("質問"), "分類は？{Enter}")
@@ -414,7 +418,7 @@ describe("App chat and upload flow", () => {
 
   it("switches to Ctrl+Enter submission mode and keeps Enter as newline", async () => {
     const fetchMock = mockAppFetch()
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await userEvent.selectOptions(screen.getByLabelText("送信キー"), "ctrlEnter")
     const textarea = screen.getByLabelText("質問")
@@ -438,7 +442,7 @@ describe("App chat and upload flow", () => {
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await userEvent.type(screen.getByLabelText("質問"), "分類は？{Shift>}{Enter}{/Shift}続き")
     expect(screen.getByLabelText("質問")).toHaveValue("分類は？\n続き")
@@ -455,7 +459,8 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/documents") && !init) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && !init) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/questions") && !init) return Promise.resolve(response({ questions: storedQuestions }))
-      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+    if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
       }
       if (requestUrl.endsWith("/questions") && init?.method === "POST") {
@@ -477,7 +482,7 @@ describe("App chat and upload flow", () => {
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await userEvent.type(screen.getByLabelText("質問"), "今日山田さんは何を食べた?")
     await userEvent.click(screen.getByTitle("送信"))
@@ -532,7 +537,7 @@ describe("App chat and upload flow", () => {
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     expect(await screen.findByText("資料を添付して開始できます")).toBeInTheDocument()
     await userEvent.click(screen.getByTitle("担当者対応"))
@@ -553,7 +558,7 @@ describe("App chat and upload flow", () => {
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
-    render(<App />)
+    await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("担当者対応"))
     expect(await screen.findByText("担当者へ送信された質問はまだありません。")).toBeInTheDocument()

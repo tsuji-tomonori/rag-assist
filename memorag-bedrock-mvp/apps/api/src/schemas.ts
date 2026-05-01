@@ -179,3 +179,10 @@ export const ErrorResponseSchema = z.object({
   error: z.string(),
   details: z.record(z.array(z.string())).optional()
 })
+
+
+export const DebugDownloadResponseSchema = z.object({
+  url: z.string().url(),
+  expiresInSeconds: z.number().int().positive(),
+  objectKey: z.string()
+})
