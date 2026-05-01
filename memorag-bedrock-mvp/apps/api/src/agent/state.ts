@@ -20,6 +20,22 @@ export const RetrievedChunkSchema = z.object({
   })
 })
 
+export const ReferenceTargetSchema = z.object({
+  sourceChunkKey: z.string(),
+  rawLabel: z.string(),
+  normalizedLabel: z.string(),
+  depth: z.number().int().min(0)
+})
+
+export const ReferenceResolutionSchema = z.object({
+  target: ReferenceTargetSchema,
+  matchedDocumentId: z.string().optional(),
+  matchedFileName: z.string().optional(),
+  matchedHeading: z.string().optional(),
+  status: z.enum(["resolved", "unresolved", "skipped_depth", "skipped_visited"]),
+  reason: z.string().optional()
+})
+
 export const CitationSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
@@ -74,6 +90,12 @@ const QueryEmbeddingSchema = z.object({
   vector: z.array(z.number())
 })
 
+const SearchBudgetSchema = z.object({
+  maxIterations: z.number().int().min(1).default(3),
+  maxReferenceDepth: z.number().int().min(0).default(2),
+  remainingCalls: z.number().int().min(0).default(3)
+})
+
 export const AgentState = new StateSchema({
   runId: z.string(),
   question: z.string(),
@@ -86,6 +108,17 @@ export const AgentState = new StateSchema({
   memoryTopK: z.number().int().min(1).max(10).default(4),
   minScore: z.number().min(-1).max(1).default(0.2),
   strictGrounded: z.boolean().default(true),
+
+  iteration: z.number().int().min(0).default(0),
+  referenceQueue: z.array(ReferenceTargetSchema).default(() => []),
+  resolvedReferences: z.array(ReferenceResolutionSchema).default(() => []),
+  unresolvedReferences: z.array(ReferenceTargetSchema).default(() => []),
+  visitedDocumentIds: z.array(z.string()).default(() => []),
+  searchBudget: SearchBudgetSchema.default({
+    maxIterations: 3,
+    maxReferenceDepth: 2,
+    remainingCalls: 3
+  }),
 
   normalizedQuery: z.string().optional(),
   memoryCards: z.array(RetrievedChunkSchema).default(() => []),
@@ -121,3 +154,5 @@ export const AgentState = new StateSchema({
 export type QaAgentState = typeof AgentState.State
 export type QaAgentUpdate = typeof AgentState.Update
 export type AnswerabilityReason = QaAgentState["answerability"]["reason"]
+export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
+export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>
