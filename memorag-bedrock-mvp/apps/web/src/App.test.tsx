@@ -156,6 +156,29 @@ function mockAppFetch() {
 }
 
 describe("App document management", () => {
+  it("shows copy buttons and copies prompt/answer text", async () => {
+    mockAppFetch()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal("navigator", { clipboard: { writeText } })
+
+    render(<App />)
+
+    await userEvent.type(screen.getByLabelText("質問"), "分類を教えて")
+    await userEvent.click(screen.getByTitle("送信"))
+
+    await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+
+    await userEvent.click(screen.getByRole("button", { name: "プロンプトをコピー" }))
+    expect(writeText).toHaveBeenCalledWith("分類を教えて")
+
+    await userEvent.click(screen.getByRole("button", { name: "回答をコピー" }))
+    expect(writeText).toHaveBeenCalledWith("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+
+    expect(screen.queryByTitle("高評価")).not.toBeInTheDocument()
+    expect(screen.queryByTitle("低評価")).not.toBeInTheDocument()
+    expect(screen.queryByTitle("共有")).not.toBeInTheDocument()
+  })
+
   it("disables delete until a concrete document is selected", async () => {
     mockAppFetch()
     render(<App />)

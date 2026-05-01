@@ -626,18 +626,26 @@ button:disabled {
 }
 
 .answer-footer button {
-  width: 28px;
-  height: 28px;
-  border: 0;
-  display: grid;
-  place-items: center;
+  border: 1px solid #cbd8eb;
+  border-radius: 999px;
+  padding: 5px 10px;
   color: #66748d;
-  background: transparent;
+  background: #f7fbff;
+  font-size: 12px;
+  font-weight: 800;
 }
 
-.answer-footer .icon {
-  width: 17px;
-  height: 17px;
+.answer-footer .copy-action:hover {
+  border-color: #8eb0ef;
+  color: #1f60d9;
+  background: #edf5ff;
+}
+
+.copy-feedback {
+  margin: 10px 0 0;
+  color: #2a5ec1;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .question-escalation-panel,

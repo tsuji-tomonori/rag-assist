@@ -41,9 +41,6 @@ type IconName =
   | "expand"
   | "plus"
   | "download"
-  | "share"
-  | "thumbUp"
-  | "thumbDown"
   | "trash"
   | "inbox"
 
@@ -499,6 +496,21 @@ function AssistantAnswer({
   onAdditionalQuestion: (value: string) => void
 }) {
   const citations = message.result?.citations ?? []
+  const [copyStatus, setCopyStatus] = useState<"idle" | "prompt" | "answer" | "error">("idle")
+
+  async function copyText(value: string, type: "prompt" | "answer") {
+    if (!value.trim()) return
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopyStatus(type)
+      window.setTimeout(() => setCopyStatus("idle"), 1800)
+    } catch (err) {
+      console.warn("Failed to copy text", err)
+      setCopyStatus("error")
+      window.setTimeout(() => setCopyStatus("idle"), 1800)
+    }
+  }
+
   return (
     <div className="answer-card">
       <p className="answer-text">{message.text || "質問すると、社内ドキュメントに基づく回答と実行トレースが表示されます。"}</p>
@@ -517,16 +529,20 @@ function AssistantAnswer({
       )}
       <div className="answer-footer">
         <span>根拠: ドキュメント {citations.length}件</span>
-        <button type="button" title="高評価">
-          <Icon name="thumbUp" />
+        <button type="button" className="copy-action" onClick={() => copyText(message.sourceQuestion ?? "", "prompt")}>
+          プロンプトをコピー
         </button>
-        <button type="button" title="低評価">
-          <Icon name="thumbDown" />
-        </button>
-        <button type="button" title="共有">
-          <Icon name="share" />
+        <button type="button" className="copy-action" onClick={() => copyText(message.text, "answer")}>
+          回答をコピー
         </button>
       </div>
+      {copyStatus !== "idle" && (
+        <p className="copy-feedback" role="status" aria-live="polite">
+          {copyStatus === "prompt" && "プロンプトをコピーしました"}
+          {copyStatus === "answer" && "回答をコピーしました"}
+          {copyStatus === "error" && "コピーに失敗しました"}
+        </p>
+      )}
       {message.result && !message.result.isAnswerable && (
         <QuestionEscalationPanel message={message} questionTicket={linkedQuestion} loading={loading} onCreateQuestion={onCreateQuestion} />
       )}
@@ -968,12 +984,6 @@ function getIconPath(name: IconName) {
       return <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
     case "download":
       return <path d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4 3.3 3.3V3Zm-6 15h14v3H5v-3Z" />
-    case "share":
-      return <path d="M18 16.1a3 3 0 0 0-2.2 1l-6.1-3.5a3.2 3.2 0 0 0 0-1.2l6-3.5A3 3 0 1 0 14.8 7l-6 3.5a3 3 0 1 0 0 5l6.1 3.6A3 3 0 1 0 18 16.1Z" />
-    case "thumbUp":
-      return <path d="M2 10h4v11H2V10Zm6 10h8.5a3 3 0 0 0 3-2.5l1.2-7A3 3 0 0 0 17.8 7H14l.6-3.2A2.3 2.3 0 0 0 12.3 1h-.5L8 8.2V20Z" />
-    case "thumbDown":
-      return <path d="M2 3h4v11H2V3Zm6 1v11.8l3.8 7.2h.5a2.3 2.3 0 0 0 2.3-2.8L14 17h3.8a3 3 0 0 0 2.9-3.5l-1.2-7a3 3 0 0 0-3-2.5H8Z" />
     case "trash":
       return <path d="M8 3h8l1 2h4v2H3V5h4l1-2Zm-2 6h12l-1 12H7L6 9Zm3 2 .5 8h2L11 11H9Zm4 0-.5 8h2l.5-8h-2Z" />
     case "inbox":
