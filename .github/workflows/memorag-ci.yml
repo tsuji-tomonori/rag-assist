@@ -53,6 +53,7 @@ jobs:
         continue-on-error: true
 
       - name: Comment CI result on PR
+        if: ${{ always() && github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork }}
         # 検証観点:
         # - 同一リポジトリPR: コメント投稿成功
         # - fork PR/制限コンテキスト: このステップをスキップ
@@ -115,6 +116,12 @@ jobs:
                 body,
               });
             }
+
+
+      - name: Note when PR comment is skipped for fork
+        if: ${{ always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
+        run: |
+          echo "CI result comment was skipped because this PR is from a fork and GITHUB_TOKEN has read-only permissions." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail when CI checks failed
         if: ${{ always() && (steps.install.outcome != 'success' || steps.typecheck.outcome != 'success' || steps.test.outcome != 'success' || steps.build.outcome != 'success') }}
