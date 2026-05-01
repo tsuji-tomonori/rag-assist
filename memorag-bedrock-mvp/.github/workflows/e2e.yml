@@ -1,0 +1,50 @@
+name: E2E tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * *'
+
+jobs:
+  smoke:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: memorag-bedrock-mvp/package-lock.json
+      - name: Install dependencies
+        working-directory: memorag-bedrock-mvp
+        run: npm ci
+      - name: Install Playwright browser
+        working-directory: memorag-bedrock-mvp/apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Run smoke E2E
+        working-directory: memorag-bedrock-mvp
+        run: npm run test:e2e:smoke -w @memorag-mvp/web
+
+  nightly:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: memorag-bedrock-mvp/package-lock.json
+      - name: Install dependencies
+        working-directory: memorag-bedrock-mvp
+        run: npm ci
+      - name: Install Playwright browser
+        working-directory: memorag-bedrock-mvp/apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Run full E2E
+        working-directory: memorag-bedrock-mvp
+        run: npm run test:e2e:all -w @memorag-mvp/web
