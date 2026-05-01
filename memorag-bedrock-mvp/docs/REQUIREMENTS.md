@@ -27,6 +27,13 @@
   - REQ_FUNCTIONAL_011.md (FR-011)
   - REQ_FUNCTIONAL_012.md (FR-012)
   - REQ_FUNCTIONAL_013.md (FR-013)
+  - REQ_FUNCTIONAL_014.md (FR-014)
+  - REQ_FUNCTIONAL_015.md (FR-015)
+  - REQ_FUNCTIONAL_016.md (FR-016)
+  - REQ_FUNCTIONAL_017.md (FR-017)
+  - REQ_FUNCTIONAL_018.md (FR-018)
+  - REQ_FUNCTIONAL_019.md (FR-019)
+  - REQ_FUNCTIONAL_020.md (FR-020)
 
 ## 非機能要求ファイル
 
@@ -40,3 +47,19 @@
   - REQ_NON_FUNCTIONAL_007.md (NFR-007)
   - REQ_NON_FUNCTIONAL_008.md (NFR-008)
   - REQ_NON_FUNCTIONAL_009.md (NFR-009)
+  - REQ_NON_FUNCTIONAL_010.md (NFR-010)
+
+## プロジェクト要求ファイル
+
+- `memorag-bedrock-mvp/docs/1_要求_REQ/01_プロジェクト要求_PROJECT/`
+  - REQ_PROJECT_001.md (PRJ-001)
+
+## 技術制約ファイル
+
+- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/`
+  - REQ_TECHNICAL_CONSTRAINT_001.md (TC-001)
+
+## サービス品質制約ファイル
+
+- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/11_サービス品質制約_SERVICE_QUALITY/`
+  - REQ_SERVICE_QUALITY_001.md (SQ-001)
