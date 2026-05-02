@@ -73,7 +73,7 @@ function pdfTextQualityScore(text: string): number {
 }
 
 function limit(text: string): string {
-  const normalized = text.replace(/\u0000/g, "").trim()
+  const normalized = text.split("\u0000").join("").trim()
   if (normalized.length > config.maxUploadChars) {
     return normalized.slice(0, config.maxUploadChars)
   }

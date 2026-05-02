@@ -6,4 +6,5 @@ infra/lambda-dist/
 .env
 .DS_Store
 coverage/
+.eslintcache*
 *.log
