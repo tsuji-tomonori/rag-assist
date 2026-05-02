@@ -78,6 +78,25 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(typeof chat.answer, typeof fixtures.responses.chatShape.answer)
     assert.equal(Array.isArray(chat.citations), true)
     validateSchema(chat, responseSchema(openapi, "/chat", "post", 200), openapi)
+
+    const postHistory = await fetch(`http://127.0.0.1:${port}/conversation-history`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        id: "conversation-1",
+        title: "分類について",
+        updatedAt: "2026-05-02T00:00:00.000Z",
+        messages: [{ role: "user", text: "分類は？", createdAt: "2026-05-02T00:00:00.000Z" }]
+      })
+    })
+    assert.equal(postHistory.status, 200)
+    const savedHistory = (await postHistory.json()) as Record<string, unknown>
+    assert.equal(savedHistory.schemaVersion, 1)
+    validateSchema(savedHistory, responseSchema(openapi, "/conversation-history", "post", 200), openapi)
+
+    const history = await getJson(`http://127.0.0.1:${port}/conversation-history`)
+    assert.equal(history.body.history[0].schemaVersion, 1)
+    validateSchema(history.body, responseSchema(openapi, "/conversation-history", "get", 200), openapi)
   } finally {
     server.kill("SIGTERM")
   }

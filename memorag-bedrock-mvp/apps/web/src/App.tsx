@@ -584,6 +584,7 @@ export default function App() {
 
 function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[]): ConversationHistoryItem {
   return {
+    schemaVersion: 1,
     id,
     title: summarizeTitle(titleCandidate),
     updatedAt: new Date().toISOString(),

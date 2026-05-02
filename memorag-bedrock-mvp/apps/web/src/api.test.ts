@@ -131,6 +131,7 @@ describe("API client", () => {
 
   it("calls conversation history APIs", async () => {
     const item = {
+      schemaVersion: 1 as const,
       id: "conversation-1",
       title: "分類について",
       updatedAt: "2026-05-02T00:00:00.000Z",
@@ -140,8 +141,12 @@ describe("API client", () => {
     const fetchMock = mockFetch({ history: [item] })
     await expect(listConversationHistory()).resolves.toEqual([item])
 
-    mockFetch(item)
+    const saveFetchMock = mockFetch(item)
     await expect(saveConversationHistory(item)).resolves.toEqual(item)
+    expect(saveFetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/conversation-history$/),
+      expect.objectContaining({ method: "POST", body: JSON.stringify(item) })
+    )
 
     mockFetch({ id: item.id })
     await expect(deleteConversationHistory(item.id)).resolves.toBeUndefined()

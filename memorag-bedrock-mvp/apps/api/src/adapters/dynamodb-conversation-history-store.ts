@@ -1,10 +1,11 @@
 import { DeleteItemCommand, DynamoDBClient, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
 import { config } from "../config.js"
-import type { ConversationHistoryItem } from "../types.js"
+import { CONVERSATION_HISTORY_SCHEMA_VERSION, type ConversationHistoryItem } from "../types.js"
 import type { ConversationHistoryStore, SaveConversationHistoryInput } from "./conversation-history-store.js"
 
-type StoredConversationHistoryItem = ConversationHistoryItem & {
+type StoredConversationHistoryItem = Omit<ConversationHistoryItem, "schemaVersion"> & {
+  schemaVersion?: typeof CONVERSATION_HISTORY_SCHEMA_VERSION
   userId: string
 }
 
@@ -18,6 +19,7 @@ export class DynamoDbConversationHistoryStore implements ConversationHistoryStor
   async save(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
     const item: StoredConversationHistoryItem = {
       ...input,
+      schemaVersion: input.schemaVersion ?? CONVERSATION_HISTORY_SCHEMA_VERSION,
       userId,
       updatedAt: input.updatedAt || new Date().toISOString(),
       messages: input.messages.slice(0, 100)
@@ -57,5 +59,8 @@ export class DynamoDbConversationHistoryStore implements ConversationHistoryStor
 
 function stripUserId(item: StoredConversationHistoryItem): ConversationHistoryItem {
   const { userId: _userId, ...conversation } = item
-  return conversation
+  return {
+    ...conversation,
+    schemaVersion: conversation.schemaVersion ?? CONVERSATION_HISTORY_SCHEMA_VERSION
+  }
 }

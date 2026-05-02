@@ -17,6 +17,7 @@
 - answerability gate
 - citation validation
 - debug trace
+- conversation history
 - benchmark evaluation
 
 ## コンポーネント
@@ -32,6 +33,7 @@
 | Answer Generator | question、supported evidence | grounded answer | `FR-003`, `FR-004` |
 | Citation Validator | answer、candidate chunks | supported/unsupported claims | `FR-015` |
 | Debug Trace Store | workflow events | run trace | `FR-010`, `NFR-005`, `NFR-006` |
+| Conversation History Store | userId、conversation item | user-scoped conversation list | `FR-010`, `NFR-005` |
 | Benchmark Runner | dataset case | result、summary、report | `FR-012`, `FR-019`, `SQ-001` |
 
 ## 責務分担
@@ -40,6 +42,7 @@
 - Retriever は検索候補の取得に集中し、回答生成や引用文の作成を行わない。
 - Answerability Gate は回答してよいかを判定し、回答文を生成しない。
 - Citation Validator は回答後の主要文が引用 chunk に支持されているかを検証する。
+- Conversation History Store は画面の会話履歴をユーザー単位で永続化し、履歴 item の schema version を保持する。
 - Benchmark Runner は UI と独立して同等の質問評価を実行する。
 
 ## 主要フロー
@@ -53,6 +56,8 @@
 7. Answer Generator は回答可能な場合だけ回答を生成する。
 8. Citation Validator は回答文と引用 chunk の支持関係を検証する。
 9. API は回答または拒否結果と trace metadata を返す。
+10. Web UI は会話履歴 item を `schemaVersion` 付きで保存 API に送信する。
+11. API は userId で会話履歴を分離し、本番環境では DynamoDB に保存する。
 
 ## アーキテクチャ判断との関係
 

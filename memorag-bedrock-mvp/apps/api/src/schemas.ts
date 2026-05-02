@@ -150,6 +150,7 @@ export const ConversationMessageSchema = z.object({
 })
 
 export const ConversationHistoryItemSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
   id: z.string().min(1),
   title: z.string().min(1).max(120),
   updatedAt: z.string(),

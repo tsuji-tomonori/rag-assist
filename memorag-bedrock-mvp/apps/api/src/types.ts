@@ -149,7 +149,10 @@ export type ConversationMessage = {
   questionTicket?: HumanQuestion
 }
 
+export const CONVERSATION_HISTORY_SCHEMA_VERSION = 1
+
 export type ConversationHistoryItem = {
+  schemaVersion: typeof CONVERSATION_HISTORY_SCHEMA_VERSION
   id: string
   title: string
   updatedAt: string

@@ -1,6 +1,7 @@
 import type { ConversationHistoryItem } from "../types.js"
 
-export type SaveConversationHistoryInput = ConversationHistoryItem
+export type SaveConversationHistoryInput =
+  Omit<ConversationHistoryItem, "schemaVersion"> & Partial<Pick<ConversationHistoryItem, "schemaVersion">>
 
 export interface ConversationHistoryStore {
   save(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem>

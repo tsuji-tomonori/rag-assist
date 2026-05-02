@@ -155,6 +155,7 @@ test("local conversation history store persists per-user conversations and delet
 
   const history = await store.list("user-1")
   assert.equal(history.length, 1)
+  assert.equal(history[0]?.schemaVersion, 1)
   assert.equal(history[0]?.title, "分類について更新")
   assert.equal(history[0]?.messages.length, 2)
 

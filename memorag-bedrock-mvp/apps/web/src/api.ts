@@ -137,6 +137,7 @@ export type ConversationMessage = {
 }
 
 export type ConversationHistoryItem = {
+  schemaVersion: 1
   id: string
   title: string
   updatedAt: string
