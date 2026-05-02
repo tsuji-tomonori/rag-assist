@@ -160,7 +160,7 @@ curl -s http://localhost:8787/chat \
 
 管理画面の「性能テスト」は `POST /benchmark-runs` で非同期 run を作成し、Step Functions が CodeBuild runner を起動します。run 状態と成果物キーは DynamoDB、dataset と `results.jsonl` / `summary.json` / `report.md` は benchmark 用 S3 bucket に保存します。管理画面は履歴表示、キャンセル、report download URL 作成だけを担当します。
 
-CodeBuild runner が本番 API を叩く場合は認証 token が必要です。CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡すと、runner は `username` / `password` から Cognito `USER_PASSWORD_AUTH` を実行します。secret に `idToken` または `token` がある場合は、その値をそのまま `Authorization: Bearer` に使います。
+CodeBuild runner が本番 API を叩くための認証 token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から自動取得します。管理者が管理画面で token を入力する必要はありません。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡します。secret は `username` / `password`、または `idToken` / `token` を持てます。
 
 ```bash
 API_BASE_URL=http://localhost:8787 \

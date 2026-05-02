@@ -15,6 +15,7 @@ import * as logs from "aws-cdk-lib/aws-logs"
 import * as cognito from "aws-cdk-lib/aws-cognito"
 import * as s3 from "aws-cdk-lib/aws-s3"
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment"
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager"
 import * as sfn from "aws-cdk-lib/aws-stepfunctions"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
@@ -46,7 +47,8 @@ export class MemoRagMvpStack extends Stack {
     const vectorBucketName = `memorag-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.REGION}-${suffix}`
     const memoryVectorIndexName = "memory-index"
     const evidenceVectorIndexName = "evidence-index"
-    const benchmarkRunnerAuthSecretId = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
+    const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
+    const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
     const benchmarkSourceOwner = String(this.node.tryGetContext("benchmarkSourceOwner") ?? "tsuji-tomonori")
     const benchmarkSourceRepo = String(this.node.tryGetContext("benchmarkSourceRepo") ?? "rag-assist")
     const benchmarkSourceBranch = String(this.node.tryGetContext("benchmarkSourceBranch") ?? "main")
@@ -245,6 +247,21 @@ export class MemoRagMvpStack extends Stack {
       })
     }
 
+    const benchmarkRunnerAuthSecret = benchmarkRunnerAuthSecretIdOverride
+      ? (benchmarkRunnerAuthSecretIdOverride.startsWith("arn:")
+          ? secretsmanager.Secret.fromSecretCompleteArn(this, "BenchmarkRunnerAuthSecret", benchmarkRunnerAuthSecretIdOverride)
+          : secretsmanager.Secret.fromSecretNameV2(this, "BenchmarkRunnerAuthSecret", benchmarkRunnerAuthSecretIdOverride))
+      : new secretsmanager.Secret(this, "BenchmarkRunnerAuthSecret", {
+          description: "MemoRAG benchmark runner Cognito service user credentials",
+          generateSecretString: {
+            secretStringTemplate: JSON.stringify({ username: benchmarkRunnerUsername }),
+            generateStringKey: "password",
+            passwordLength: 32,
+            excludeCharacters: ",`$\\\"' \n\r\t"
+          }
+        })
+    const benchmarkRunnerAuthSecretId = benchmarkRunnerAuthSecretIdOverride || benchmarkRunnerAuthSecret.secretArn
+
     const apiLogGroup = new logs.LogGroup(this, "ApiFunctionLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY
@@ -402,8 +419,10 @@ export class MemoRagMvpStack extends Stack {
         computeType: codebuild.ComputeType.SMALL,
         privileged: false,
         environmentVariables: {
+          COGNITO_USER_POOL_ID: { value: userPool.userPoolId },
           COGNITO_APP_CLIENT_ID: { value: userPoolClient.userPoolClientId },
-          BENCHMARK_AUTH_SECRET_ID: { value: benchmarkRunnerAuthSecretId }
+          BENCHMARK_AUTH_SECRET_ID: { value: benchmarkRunnerAuthSecretId },
+          BENCHMARK_RUNNER_GROUP: { value: "BENCHMARK_RUNNER" }
         }
       },
       timeout: Duration.hours(2),
@@ -430,7 +449,7 @@ export class MemoRagMvpStack extends Stack {
               "export SUMMARY=./benchmark/.runner-summary.json",
               "export REPORT=./benchmark/.runner-report.md",
               "export DATASET=./benchmark/.runner-dataset.jsonl",
-              "if [ -n \"$BENCHMARK_AUTH_SECRET_ID\" ]; then SECRET_JSON=\"$(aws secretsmanager get-secret-value --secret-id \"$BENCHMARK_AUTH_SECRET_ID\" --query SecretString --output text)\"; export API_AUTH_TOKEN=\"$(SECRET_JSON=\"$SECRET_JSON\" COGNITO_APP_CLIENT_ID=\"$COGNITO_APP_CLIENT_ID\" node -e 'const { execFileSync } = require(\"node:child_process\"); const secret = JSON.parse(process.env.SECRET_JSON || \"{}\"); if (secret.idToken || secret.token) { console.log(secret.idToken || secret.token); process.exit(0); } const output = execFileSync(\"aws\", [\"cognito-idp\", \"initiate-auth\", \"--auth-flow\", \"USER_PASSWORD_AUTH\", \"--client-id\", process.env.COGNITO_APP_CLIENT_ID, \"--auth-parameters\", `USERNAME=${secret.username},PASSWORD=${secret.password}`], { encoding: \"utf8\" }); console.log(JSON.parse(output).AuthenticationResult.IdToken);')\"; fi"
+              "export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""
             ]
           },
           build: {
@@ -452,9 +471,14 @@ export class MemoRagMvpStack extends Stack {
       })
     })
     benchmarkBucket.grantReadWrite(benchmarkProject)
+    benchmarkRunnerAuthSecret.grantRead(benchmarkProject)
     benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["secretsmanager:GetSecretValue", "cognito-idp:InitiateAuth"],
+      actions: ["cognito-idp:InitiateAuth"],
       resources: ["*"]
+    }))
+    benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["cognito-idp:AdminGetUser", "cognito-idp:AdminCreateUser", "cognito-idp:AdminSetUserPassword", "cognito-idp:AdminAddUserToGroup"],
+      resources: [userPool.userPoolArn]
     }))
 
     const markRunning = new sfn.CustomState(this, "BenchmarkMarkRunning", {
