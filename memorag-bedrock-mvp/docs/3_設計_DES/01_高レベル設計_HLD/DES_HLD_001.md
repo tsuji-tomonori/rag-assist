@@ -18,6 +18,7 @@
 - citation validation
 - debug trace
 - conversation history
+- cost estimation
 - benchmark evaluation
 
 ## コンポーネント
@@ -34,6 +35,7 @@
 | Citation Validator | answer、candidate chunks | supported/unsupported claims | `FR-015` |
 | Debug Trace Store | workflow events | run trace | `FR-010`, `NFR-005`, `NFR-006` |
 | Conversation History Store | userId、conversation item | user-scoped conversation list | `FR-010`, `NFR-005` |
+| Cost Estimator | usage meter、pricing catalog、期間 | service/component 別の概算料金 | `NFR-002`, `NFR-009` |
 | Benchmark Runner | dataset case | result、summary、report | `FR-012`, `FR-019`, `SQ-001` |
 
 ## 責務分担
@@ -43,6 +45,8 @@
 - Answerability Gate は回答してよいかを判定し、回答文を生成しない。
 - Citation Validator は回答後の主要文が引用 chunk に支持されているかを検証する。
 - Conversation History Store は画面の会話履歴をユーザー単位で永続化し、履歴 item の schema version を保持する。
+- Cost Estimator は設計上の概算責務として分離し、Bedrock token、S3 Vectors、DynamoDB、Lambda などの利用量に公式料金表の単価を掛け合わせる。
+- Cost Estimator は AWS 請求の正本ではなく、運用監視と予算逸脱検知のための概算値を扱う。
 - Benchmark Runner は UI と独立して同等の質問評価を実行する。
 
 ## 主要フロー
@@ -58,6 +62,8 @@
 9. API は回答または拒否結果と trace metadata を返す。
 10. Web UI は会話履歴 item を `schemaVersion` 付きで保存 API に送信する。
 11. API は userId で会話履歴を分離し、本番環境では DynamoDB に保存する。
+12. 利用量メーターは trace、document/vector manifest、DynamoDB item サイズ、Lambda 実行メトリクスから料金算出に必要な集計値を作る。
+13. Cost Estimator は利用量に pricing catalog の単価を適用して、期間別・service 別の概算料金を算出する。
 
 ## アーキテクチャ判断との関係
 
