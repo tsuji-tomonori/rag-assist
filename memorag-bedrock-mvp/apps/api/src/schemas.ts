@@ -62,6 +62,79 @@ export const CurrentUserResponseSchema = z.object({
   })
 })
 
+export const ManagedUserStatusSchema = z.enum(["active", "suspended", "deleted"])
+
+export const ManagedUserSchema = z.object({
+  userId: z.string(),
+  email: z.string(),
+  displayName: z.string().optional(),
+  status: ManagedUserStatusSchema,
+  groups: z.array(z.string()),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  lastLoginAt: z.string().optional()
+})
+
+export const ManagedUserListResponseSchema = z.object({
+  users: z.array(ManagedUserSchema)
+})
+
+export const AccessRoleDefinitionSchema = z.object({
+  role: z.string(),
+  permissions: z.array(z.string())
+})
+
+export const AccessRoleListResponseSchema = z.object({
+  roles: z.array(AccessRoleDefinitionSchema)
+})
+
+export const AssignUserRolesRequestSchema = z.object({
+  groups: z.array(z.string().min(1)).min(1).max(12)
+})
+
+export const UserUsageSummarySchema = z.object({
+  userId: z.string(),
+  email: z.string(),
+  displayName: z.string().optional(),
+  chatMessages: z.number().int().nonnegative(),
+  conversationCount: z.number().int().nonnegative(),
+  questionCount: z.number().int().nonnegative(),
+  documentCount: z.number().int().nonnegative(),
+  benchmarkRunCount: z.number().int().nonnegative(),
+  debugRunCount: z.number().int().nonnegative(),
+  lastActivityAt: z.string().optional()
+})
+
+export const UsageSummaryListResponseSchema = z.object({
+  users: z.array(UserUsageSummarySchema)
+})
+
+export const CostAuditItemSchema = z.object({
+  service: z.string(),
+  category: z.string(),
+  usage: z.number().nonnegative(),
+  unit: z.string(),
+  unitCostUsd: z.number().nonnegative(),
+  estimatedCostUsd: z.number().nonnegative(),
+  confidence: z.enum(["actual_usage", "estimated_usage", "manual_estimate"])
+})
+
+export const UserCostSummarySchema = z.object({
+  userId: z.string(),
+  email: z.string(),
+  estimatedCostUsd: z.number().nonnegative()
+})
+
+export const CostAuditSummarySchema = z.object({
+  periodStart: z.string(),
+  periodEnd: z.string(),
+  currency: z.literal("USD"),
+  totalEstimatedUsd: z.number().nonnegative(),
+  items: z.array(CostAuditItemSchema),
+  users: z.array(UserCostSummarySchema),
+  pricingCatalogUpdatedAt: z.string()
+})
+
 export const ChatRequestSchema = z.object({
   question: z.string().min(1).openapi({ example: "経費精算の期限は？" }),
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),

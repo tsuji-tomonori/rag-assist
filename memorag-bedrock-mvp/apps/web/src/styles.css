@@ -1770,6 +1770,208 @@ button:disabled {
   background: #f8fafc;
 }
 
+.phase2-admin-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(560px, 1.2fr) minmax(360px, 0.8fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.admin-section-panel {
+  min-width: 0;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  padding: 18px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+}
+
+.admin-section-panel h3 {
+  margin: 0;
+  color: #13223d;
+  letter-spacing: 0;
+}
+
+.document-list-head button {
+  min-height: 32px;
+  border: 1px solid #cbd9f0;
+  border-radius: 7px;
+  padding: 0 12px;
+  color: #2f4f7f;
+  background: #f8fbff;
+  font-weight: 900;
+}
+
+.user-admin-panel,
+.admin-section-panel[aria-label="利用状況一覧"] {
+  grid-column: 1 / -1;
+}
+
+.admin-data-table,
+.usage-table {
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+}
+
+.admin-user-row,
+.usage-row {
+  min-width: 920px;
+  display: grid;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e5ebf3;
+  padding: 12px 14px;
+  color: #273750;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-user-row {
+  grid-template-columns: minmax(220px, 1fr) 110px minmax(320px, 1.3fr) 168px;
+}
+
+.usage-row {
+  grid-template-columns: minmax(220px, 1fr) repeat(5, 82px) 168px;
+}
+
+.admin-user-row:last-child,
+.usage-row:last-child {
+  border-bottom: 0;
+}
+
+.admin-user-head,
+.usage-head {
+  color: #68758f;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-user-row span,
+.usage-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-user-row small {
+  display: block;
+  margin-top: 4px;
+  color: #68758f;
+  font-weight: 800;
+}
+
+.user-status {
+  display: inline-grid;
+  min-width: 64px;
+  place-items: center;
+  border: 1px solid #b9d7ca;
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #246b4c;
+  background: #f2fbf6;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.user-status.suspended {
+  border-color: #f0c8a0;
+  color: #8a4b10;
+  background: #fff7ed;
+}
+
+.role-assignment {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 58px;
+  gap: 8px;
+}
+
+.role-assignment select {
+  min-width: 0;
+}
+
+.role-assignment select,
+.role-assignment button,
+.user-row-actions button {
+  min-height: 34px;
+  border: 1px solid #cbd9f0;
+  border-radius: 7px;
+  padding: 0 10px;
+  color: #2f4f7f;
+  background: #fff;
+  font-weight: 900;
+}
+
+.user-row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.role-definition-list,
+.cost-item-list {
+  display: grid;
+  gap: 10px;
+}
+
+.role-definition-card,
+.cost-item {
+  border: 1px solid #e1e8f2;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fbfdff;
+}
+
+.role-definition-card strong,
+.cost-item strong {
+  color: #13223d;
+}
+
+.role-definition-card span,
+.role-definition-card p,
+.cost-summary-line,
+.cost-item span,
+.cost-item i {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.role-definition-card p {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+.cost-summary-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -4px 0 12px;
+}
+
+.cost-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.cost-item div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.cost-item i {
+  border: 1px solid #cbd9f0;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-style: normal;
+  background: #f8fbff;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -1901,6 +2103,10 @@ button:disabled {
   }
 
   .document-admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .phase2-admin-grid {
     grid-template-columns: 1fr;
   }
 }

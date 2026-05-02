@@ -3,10 +3,11 @@ import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { SFNClient, StartExecutionCommand, StopExecutionCommand } from "@aws-sdk/client-sfn"
 import { config } from "../config.js"
+import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Citation, type ConversationHistoryItem, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type MemoryCard, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type MemoryCard, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -48,6 +49,14 @@ type CreateBenchmarkRunInput = {
 }
 
 type BenchmarkDownloadArtifact = "report" | "summary" | "results"
+
+type AdminLedger = {
+  users: ManagedUser[]
+  usage: Record<string, Partial<Omit<UserUsageSummary, "userId" | "email" | "displayName">>>
+}
+
+const adminLedgerKey = "admin/admin-ledger.json"
+const pricingCatalogUpdatedAt = "2026-05-02T00:00:00.000Z"
 
 const benchmarkSuites: BenchmarkSuite[] = [
   {
@@ -203,6 +212,105 @@ export class MemoRagService {
     return { documentId, deletedVectorCount: manifest.vectorKeys.length }
   }
 
+  listAccessRoles(): AccessRoleDefinition[] {
+    return Object.entries(rolePermissions)
+      .map(([role, permissions]) => ({ role, permissions }))
+      .sort((a, b) => a.role.localeCompare(b.role))
+  }
+
+  async listManagedUsers(actor: AppUser): Promise<ManagedUser[]> {
+    const db = await this.loadAdminLedger(actor)
+    return db.users
+      .filter((user) => user.status !== "deleted")
+      .sort((a, b) => a.email.localeCompare(b.email))
+  }
+
+  async assignUserRoles(actor: AppUser, userId: string, groups: string[]): Promise<ManagedUser | undefined> {
+    const normalizedGroups = normalizeRoles(groups)
+    const db = await this.loadAdminLedger(actor)
+    const user = db.users.find((candidate) => candidate.userId === userId && candidate.status !== "deleted")
+    if (!user) return undefined
+    user.groups = normalizedGroups
+    user.updatedAt = new Date().toISOString()
+    await this.saveAdminLedger(db)
+    return user
+  }
+
+  async suspendManagedUser(actor: AppUser, userId: string): Promise<ManagedUser | undefined> {
+    return this.updateManagedUserStatus(actor, userId, "suspended")
+  }
+
+  async unsuspendManagedUser(actor: AppUser, userId: string): Promise<ManagedUser | undefined> {
+    return this.updateManagedUserStatus(actor, userId, "active")
+  }
+
+  async deleteManagedUser(actor: AppUser, userId: string): Promise<ManagedUser | undefined> {
+    return this.updateManagedUserStatus(actor, userId, "deleted")
+  }
+
+  async listUsageSummaries(actor: AppUser): Promise<UserUsageSummary[]> {
+    const db = await this.loadAdminLedger(actor)
+    const documents = await this.listDocuments()
+    const benchmarkRuns = await this.listBenchmarkRuns()
+    const debugRuns = await this.listDebugRuns()
+
+    return db.users
+      .filter((user) => user.status !== "deleted")
+      .map((user) => {
+        const stored = db.usage[user.userId] ?? {}
+        const userBenchmarkRuns = benchmarkRuns.filter((run) => run.createdBy === user.userId)
+        const lastActivityAt = [
+          stored.lastActivityAt,
+          ...userBenchmarkRuns.map((run) => run.updatedAt),
+          ...debugRuns.map((run) => run.completedAt)
+        ].filter(Boolean).sort().at(-1)
+        return {
+          userId: user.userId,
+          email: user.email,
+          displayName: user.displayName,
+          chatMessages: stored.chatMessages ?? 0,
+          conversationCount: stored.conversationCount ?? 0,
+          questionCount: stored.questionCount ?? 0,
+          documentCount: user.groups.includes("RAG_GROUP_MANAGER") || user.groups.includes("SYSTEM_ADMIN") ? documents.length : 0,
+          benchmarkRunCount: (stored.benchmarkRunCount ?? 0) + userBenchmarkRuns.length,
+          debugRunCount: user.groups.includes("SYSTEM_ADMIN") ? debugRuns.length : (stored.debugRunCount ?? 0),
+          lastActivityAt
+        }
+      })
+      .sort((a, b) => (b.lastActivityAt ?? "").localeCompare(a.lastActivityAt ?? ""))
+  }
+
+  async getCostAuditSummary(actor: AppUser): Promise<CostAuditSummary> {
+    const usage = await this.listUsageSummaries(actor)
+    const documents = await this.listDocuments()
+    const benchmarkRuns = await this.listBenchmarkRuns()
+    const debugRuns = await this.listDebugRuns()
+    const totalChatMessages = usage.reduce((sum, user) => sum + user.chatMessages, 0)
+    const totalBenchmarkCases = benchmarkRuns.reduce((sum, run) => sum + (run.metrics?.total ?? 0), 0)
+    const items = [
+      estimateCost("Bedrock", "chat completion", totalChatMessages, "message", 0.0008, "estimated_usage"),
+      estimateCost("S3 Vectors", "document chunks", documents.reduce((sum, document) => sum + document.chunkCount + document.memoryCardCount, 0), "vector", 0.00005, "estimated_usage"),
+      estimateCost("Benchmark", "dataset cases", totalBenchmarkCases, "case", 0.0012, totalBenchmarkCases > 0 ? "actual_usage" : "manual_estimate"),
+      estimateCost("Debug trace", "persisted traces", debugRuns.length, "trace", 0.0001, "estimated_usage")
+    ] as const
+    const userCosts = usage.map((user) => ({
+      userId: user.userId,
+      email: user.email,
+      estimatedCostUsd: roundCost(user.chatMessages * 0.0008 + user.benchmarkRunCount * 0.012 + user.debugRunCount * 0.0001)
+    }))
+    const now = new Date()
+    const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+    return {
+      periodStart,
+      periodEnd: now.toISOString(),
+      currency: "USD",
+      totalEstimatedUsd: roundCost(items.reduce((sum, item) => sum + item.estimatedCostUsd, 0)),
+      items: [...items],
+      users: userCosts.sort((a, b) => b.estimatedCostUsd - a.estimatedCostUsd),
+      pricingCatalogUpdatedAt
+    }
+  }
+
   async listDebugRuns(): Promise<DebugTrace[]> {
     const keys = await this.deps.objectStore.listKeys("debug-runs/")
     const traces = await Promise.all(
@@ -252,6 +360,61 @@ export class MemoRagService {
 
   async resolveQuestion(questionId: string): Promise<HumanQuestion> {
     return this.deps.questionStore.resolve(questionId)
+  }
+
+  private async updateManagedUserStatus(actor: AppUser, userId: string, status: ManagedUser["status"]): Promise<ManagedUser | undefined> {
+    const db = await this.loadAdminLedger(actor)
+    const user = db.users.find((candidate) => candidate.userId === userId && candidate.status !== "deleted")
+    if (!user) return undefined
+    user.status = status
+    user.updatedAt = new Date().toISOString()
+    await this.saveAdminLedger(db)
+    return user
+  }
+
+  private async loadAdminLedger(actor: AppUser): Promise<AdminLedger> {
+    let db: AdminLedger
+    try {
+      db = JSON.parse(await this.deps.objectStore.getText(adminLedgerKey)) as AdminLedger
+    } catch (err) {
+      if (!isMissingObjectError(err)) throw err
+      db = { users: [], usage: {} }
+    }
+
+    const now = new Date().toISOString()
+    const actorEmail = actor.email ?? `${actor.userId}@local`
+    const existingActor = db.users.find((user) => user.userId === actor.userId)
+    if (existingActor) {
+      existingActor.email = actorEmail
+      existingActor.groups = normalizeRoles(actor.cognitoGroups)
+      existingActor.status = existingActor.status === "deleted" ? "active" : existingActor.status
+      existingActor.lastLoginAt = now
+      existingActor.updatedAt = now
+    } else {
+      db.users.push({
+        userId: actor.userId,
+        email: actorEmail,
+        displayName: actorEmail.split("@")[0],
+        status: "active",
+        groups: normalizeRoles(actor.cognitoGroups),
+        createdAt: now,
+        updatedAt: now,
+        lastLoginAt: now
+      })
+      db.usage[actor.userId] = {
+        chatMessages: 0,
+        conversationCount: 0,
+        questionCount: 0,
+        benchmarkRunCount: 0,
+        debugRunCount: 0,
+        lastActivityAt: now
+      }
+    }
+    return db
+  }
+
+  private async saveAdminLedger(db: AdminLedger): Promise<void> {
+    await this.deps.objectStore.putText(adminLedgerKey, JSON.stringify(db, null, 2), "application/json")
   }
 
   async saveConversationHistory(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
@@ -452,6 +615,38 @@ function artifactExtension(artifact: BenchmarkDownloadArtifact): string {
   if (artifact === "report") return ".md"
   if (artifact === "summary") return ".json"
   return ".jsonl"
+}
+
+function normalizeRoles(groups: string[]): Role[] {
+  return [...new Set(groups.filter((group): group is Role => group in rolePermissions))]
+}
+
+function estimateCost(
+  service: string,
+  category: string,
+  usage: number,
+  unit: string,
+  unitCostUsd: number,
+  confidence: "actual_usage" | "estimated_usage" | "manual_estimate"
+) {
+  return {
+    service,
+    category,
+    usage,
+    unit,
+    unitCostUsd,
+    estimatedCostUsd: roundCost(usage * unitCostUsd),
+    confidence
+  }
+}
+
+function roundCost(value: number): number {
+  return Math.round(value * 1000000) / 1000000
+}
+
+function isMissingObjectError(err: unknown): boolean {
+  const candidate = err as { code?: string; name?: string; message?: string; $metadata?: { httpStatusCode?: number } }
+  return candidate.code === "ENOENT" || candidate.name === "NoSuchKey" || candidate.$metadata?.httpStatusCode === 404 || candidate.message?.includes("NoSuchKey") === true
 }
 
 

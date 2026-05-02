@@ -134,7 +134,9 @@ const rolePermissions: Record<string, Permission[]> = {
   ANSWER_EDITOR: ["answer:edit", "answer:publish"],
   RAG_GROUP_MANAGER: ["rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group", "benchmark:read", "benchmark:run"],
   BENCHMARK_RUNNER: ["benchmark:run"],
+  USER_ADMIN: ["user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
+  COST_AUDITOR: ["cost:read:all"],
   SYSTEM_ADMIN: [
     "chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "chat:admin:read_all",
     "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
@@ -157,10 +159,44 @@ function currentUserResponse(groups = ["SYSTEM_ADMIN"]) {
 
 function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
   let storedHistory: unknown[] = []
+  let managedUsers = [
+    {
+      userId: "local-dev",
+      email: "tester@example.com",
+      displayName: "tester",
+      status: "active",
+      groups,
+      createdAt: "2026-05-02T00:00:00.000Z",
+      updatedAt: "2026-05-02T00:00:00.000Z",
+      lastLoginAt: "2026-05-02T00:00:00.000Z"
+    }
+  ]
+  const roles = Object.entries(rolePermissions).map(([role, permissions]) => ({ role, permissions }))
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     const requestUrl = String(url)
     if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
     if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(groups)))
+    if (requestUrl.endsWith("/admin/users") && isGet(init)) return Promise.resolve(response({ users: managedUsers }))
+    if (requestUrl.endsWith("/admin/roles") && isGet(init)) return Promise.resolve(response({ roles }))
+    if (requestUrl.endsWith("/admin/usage") && isGet(init)) {
+      return Promise.resolve(response({ users: [{ userId: "local-dev", email: "tester@example.com", chatMessages: 12, conversationCount: 3, questionCount: 1, documentCount: 2, benchmarkRunCount: 0, debugRunCount: 0, lastActivityAt: "2026-05-02T00:00:00.000Z" }] }))
+    }
+    if (requestUrl.endsWith("/admin/costs") && isGet(init)) {
+      return Promise.resolve(response({ periodStart: "2026-05-01T00:00:00.000Z", periodEnd: "2026-05-02T00:00:00.000Z", currency: "USD", totalEstimatedUsd: 0.0123, pricingCatalogUpdatedAt: "2026-05-02T00:00:00.000Z", users: [{ userId: "local-dev", email: "tester@example.com", estimatedCostUsd: 0.0123 }], items: [{ service: "Bedrock", category: "chat completion", usage: 12, unit: "message", unitCostUsd: 0.0008, estimatedCostUsd: 0.0096, confidence: "estimated_usage" }] }))
+    }
+    if (requestUrl.endsWith("/admin/users/local-dev/roles") && init?.method === "POST") {
+      const body = JSON.parse(String(init.body ?? "{}"))
+      managedUsers = managedUsers.map((user) => (user.userId === "local-dev" ? { ...user, groups: body.groups, updatedAt: "2026-05-02T00:01:00.000Z" } : user))
+      return Promise.resolve(response(managedUsers[0]))
+    }
+    if (requestUrl.endsWith("/admin/users/local-dev/suspend") && init?.method === "POST") {
+      managedUsers = managedUsers.map((user) => (user.userId === "local-dev" ? { ...user, status: "suspended", updatedAt: "2026-05-02T00:01:00.000Z" } : user))
+      return Promise.resolve(response(managedUsers[0]))
+    }
+    if (requestUrl.endsWith("/admin/users/local-dev/unsuspend") && init?.method === "POST") {
+      managedUsers = managedUsers.map((user) => (user.userId === "local-dev" ? { ...user, status: "active", updatedAt: "2026-05-02T00:02:00.000Z" } : user))
+      return Promise.resolve(response(managedUsers[0]))
+    }
     if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
     if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
     if (requestUrl.endsWith("/benchmark-suites") && isGet(init)) return Promise.resolve(response({ suites: [{ suiteId: "standard-agent-v1", label: "Agent standard", mode: "agent", datasetS3Key: "datasets/agent/standard-v1.jsonl", preset: "standard", defaultConcurrency: 1 }] }))
@@ -742,10 +778,36 @@ describe("App chat and upload flow", () => {
     await userEvent.click(await screen.findByTitle("管理者設定"))
     expect(await screen.findByLabelText("管理者設定")).toBeInTheDocument()
     expect(screen.getByText("アクセス管理")).toBeInTheDocument()
-    expect(screen.getByText("Phase 2")).toBeInTheDocument()
+    expect(screen.getByText("ロール定義")).toBeInTheDocument()
     expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
+  })
+
+  it("renders Phase 2 user, role, usage, and cost administration", async () => {
+    const fetchMock = mockAppFetch(["SYSTEM_ADMIN"])
+    await renderAuthenticatedApp()
+
+    await userEvent.click(await screen.findByTitle("管理者設定"))
+    const adminWorkspace = await screen.findByLabelText("管理者設定")
+    expect(within(adminWorkspace).getByLabelText("ユーザー管理")).toBeInTheDocument()
+    expect(await screen.findByLabelText("ユーザー管理一覧")).toBeInTheDocument()
+    expect(screen.getByLabelText("ロール定義")).toBeInTheDocument()
+    expect(screen.getByLabelText("利用状況一覧")).toBeInTheDocument()
+    expect(screen.getByLabelText("コスト監査一覧")).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByDisplayValue("SYSTEM_ADMIN"), "COST_AUDITOR")
+    await userEvent.click(screen.getByRole("button", { name: "付与" }))
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/users/local-dev/roles") && (init as RequestInit | undefined)?.method === "POST")
+      ).toBe(true)
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "停止" }))
+    expect(await screen.findByText("停止中")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "再開" }))
+    expect(await screen.findByText("有効")).toBeInTheDocument()
   })
 
   it("connects the admin overview to Phase 1 workspaces", async () => {

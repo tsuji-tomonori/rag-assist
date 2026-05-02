@@ -193,9 +193,104 @@ export type CurrentUser = {
   permissions: Permission[]
 }
 
+export type ManagedUserStatus = "active" | "suspended" | "deleted"
+
+export type ManagedUser = {
+  userId: string
+  email: string
+  displayName?: string
+  status: ManagedUserStatus
+  groups: string[]
+  createdAt: string
+  updatedAt: string
+  lastLoginAt?: string
+}
+
+export type AccessRoleDefinition = {
+  role: string
+  permissions: Permission[]
+}
+
+export type UserUsageSummary = {
+  userId: string
+  email: string
+  displayName?: string
+  chatMessages: number
+  conversationCount: number
+  questionCount: number
+  documentCount: number
+  benchmarkRunCount: number
+  debugRunCount: number
+  lastActivityAt?: string
+}
+
+export type CostAuditItem = {
+  service: string
+  category: string
+  usage: number
+  unit: string
+  unitCostUsd: number
+  estimatedCostUsd: number
+  confidence: "actual_usage" | "estimated_usage" | "manual_estimate"
+}
+
+export type UserCostSummary = {
+  userId: string
+  email: string
+  estimatedCostUsd: number
+}
+
+export type CostAuditSummary = {
+  periodStart: string
+  periodEnd: string
+  currency: "USD"
+  totalEstimatedUsd: number
+  items: CostAuditItem[]
+  users: UserCostSummary[]
+  pricingCatalogUpdatedAt: string
+}
+
 export async function getMe(): Promise<CurrentUser> {
   const result = await get<{ user: CurrentUser }>("/me")
   return result.user
+}
+
+export async function listManagedUsers(): Promise<ManagedUser[]> {
+  const result = await get<{ users?: ManagedUser[] }>("/admin/users")
+  return result.users ?? []
+}
+
+export async function listAccessRoles(): Promise<AccessRoleDefinition[]> {
+  const result = await get<{ roles?: AccessRoleDefinition[] }>("/admin/roles")
+  return result.roles ?? []
+}
+
+export async function assignUserRoles(userId: string, groups: string[]): Promise<ManagedUser> {
+  return post<ManagedUser>(`/admin/users/${encodeURIComponent(userId)}/roles`, { groups })
+}
+
+export async function suspendManagedUser(userId: string): Promise<ManagedUser> {
+  return post<ManagedUser>(`/admin/users/${encodeURIComponent(userId)}/suspend`, {})
+}
+
+export async function unsuspendManagedUser(userId: string): Promise<ManagedUser> {
+  return post<ManagedUser>(`/admin/users/${encodeURIComponent(userId)}/unsuspend`, {})
+}
+
+export async function deleteManagedUser(userId: string): Promise<ManagedUser> {
+  const apiBaseUrl = await getApiBaseUrl()
+  const response = await fetch(`${apiBaseUrl}/admin/users/${encodeURIComponent(userId)}`, { method: "DELETE", headers: createHeaders() })
+  if (!response.ok) throw new Error(await response.text())
+  return response.json() as Promise<ManagedUser>
+}
+
+export async function listUsageSummaries(): Promise<UserUsageSummary[]> {
+  const result = await get<{ users?: UserUsageSummary[] }>("/admin/usage")
+  return result.users ?? []
+}
+
+export async function getCostAuditSummary(): Promise<CostAuditSummary> {
+  return get<CostAuditSummary>("/admin/costs")
 }
 
 export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
