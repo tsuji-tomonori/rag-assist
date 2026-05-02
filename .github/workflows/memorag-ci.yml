@@ -37,9 +37,19 @@ jobs:
         run: npm ci
         continue-on-error: true
 
-      - name: Lint
-        id: lint
-        run: npm run lint
+      - name: Lint web
+        id: web_lint
+        run: npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0
+        continue-on-error: true
+
+      - name: Lint api
+        id: api_lint
+        run: npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0
+        continue-on-error: true
+
+      - name: Lint infra
+        id: infra_lint
+        run: npm exec -- eslint infra --cache --cache-location .eslintcache-infra --max-warnings=0
         continue-on-error: true
 
       - name: Type-check infra
@@ -119,7 +129,9 @@ jobs:
                 : 'C0 statements: unknown / C1 branches: unknown';
             const results = [
               ['all', 'Install dependencies', '${{ steps.install.outcome }}', '-', '`npm ci`'],
-              ['all', 'Lint', '${{ steps.lint.outcome }}', '-', '`npm run lint`'],
+              ['web', 'Lint', '${{ steps.web_lint.outcome }}', '-', '`npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`'],
+              ['api', 'Lint', '${{ steps.api_lint.outcome }}', '-', '`npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`'],
+              ['infra', 'Lint', '${{ steps.infra_lint.outcome }}', '-', '`npm exec -- eslint infra --cache --cache-location .eslintcache-infra --max-warnings=0`'],
               ['infra', 'Type-check', '${{ steps.infra_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/infra`'],
               ['api', 'Type-check', '${{ steps.api_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/api`'],
               ['web', 'Type-check', '${{ steps.web_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/web`'],
@@ -187,5 +199,5 @@ jobs:
           echo "CI result comment was skipped because this PR is from a fork and GITHUB_TOKEN has read-only permissions." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail when CI checks failed
-        if: ${{ always() && (steps.install.outcome != 'success' || steps.lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success') }}
+        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success') }}
         run: exit 1
