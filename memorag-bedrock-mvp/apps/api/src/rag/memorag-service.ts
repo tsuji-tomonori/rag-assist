@@ -213,7 +213,7 @@ export class MemoRagService {
     const trace = await this.getDebugRun(runId)
     if (!trace) return undefined
 
-    const body = JSON.stringify(trace, null, 2)
+    const body = formatDebugTraceJson(trace)
     const downloadMetadata = createDebugTraceDownloadMetadata(trace.runId)
     const s3 = new S3Client({ region: config.region })
     await s3.send(new PutObjectCommand({
@@ -272,6 +272,10 @@ export function createDebugTraceDownloadMetadata(runId: string): {
     objectKey: `downloads/${fileName}`,
     contentDisposition: `attachment; filename="${fileName}"`
   }
+}
+
+export function formatDebugTraceJson(trace: DebugTrace): string {
+  return JSON.stringify(trace, null, 2)
 }
 
 function normalizeDebugTrace(value: unknown): DebugTrace {
