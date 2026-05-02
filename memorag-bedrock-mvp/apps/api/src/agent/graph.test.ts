@@ -46,6 +46,12 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
       "finalize_response"
     ]
   )
+  const planStep = result.debug?.steps.find((step) => step.label === "plan_search")
+  const actionStep = result.debug?.steps.find((step) => step.label === "execute_search_action")
+  assert.match(planStep?.detail ?? "", /requiredFacts:/)
+  assert.match(planStep?.detail ?? "", /actions:/)
+  assert.match(actionStep?.detail ?? "", /action=evidence_search/)
+  assert.match(actionStep?.detail ?? "", /newEvidenceCount=/)
 })
 
 test("LangGraph debug trace keeps the full finalize response detail", async () => {
@@ -132,6 +138,13 @@ test("LangGraph search cycle loops until maxIterations when retrieval score is t
   assert.equal(labels.filter((label) => label === "evaluate_search_progress").length, 2)
   assert.equal(labels.includes("rerank_chunks"), true)
   assert.equal(labels.at(-1), "finalize_refusal")
+
+  const actionSteps = result.debug?.steps.filter((step) => step.label === "execute_search_action") ?? []
+  assert.match(actionSteps[0]?.summary ?? "", /action=evidence_search, hits=1, new=1/)
+  assert.match(actionSteps[0]?.detail ?? "", /newEvidenceCount=1 topScore=/)
+  assert.match(actionSteps[1]?.summary ?? "", /action=evidence_search, hits=1, new=0/)
+  assert.match(actionSteps[1]?.detail ?? "", /newEvidenceCount=0 topScore=/)
+  assert.match(actionSteps[1]?.detail ?? "", /検索で1件取得し、新規根拠は0件でした。/)
 })
 
 test("LangGraph search cycle stops after two consecutive no-new-evidence iterations", async () => {
@@ -148,4 +161,31 @@ test("LangGraph search cycle stops after two consecutive no-new-evidence iterati
   assert.equal(labels.filter((label) => label === "evaluate_search_progress").length, 2)
   assert.equal(labels.includes("rerank_chunks"), true)
   assert.equal(labels.at(-1), "finalize_refusal")
+})
+
+test("LangGraph search plan trace records complexity, facts, actions, and stop criteria from input", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "workflow.txt",
+    text: "経費精算の申請手順は、申請システムで領収書を添付し、上長承認を受けて提出する。期限は30日以内です。"
+  })
+
+  const result = await service.chat({
+    question: "経費精算の申請手順と期限は？",
+    includeDebug: true,
+    useMemory: false,
+    minScore: 0.07,
+    topK: 3,
+    maxIterations: 2
+  })
+
+  const planStep = result.debug?.steps.find((step) => step.label === "plan_search")
+
+  assert.equal(planStep?.summary, "plan actions=1, facts=1")
+  assert.match(planStep?.detail ?? "", /complexity=procedure/)
+  assert.match(planStep?.detail ?? "", /intent=経費精算の申請手順と期限は/)
+  assert.match(planStep?.detail ?? "", /stop=maxIterations:2, minTopScore:0.07, minEvidenceCount:3, maxNoNewEvidenceStreak:2/)
+  assert.match(planStep?.detail ?? "", /- fact-1 priority=1 status=missing: 経費精算の申請手順と期限は？/)
+  assert.match(planStep?.detail ?? "", /- evidence_search query="経費精算の申請手順と期限は" topK=3/)
 })

@@ -461,7 +461,7 @@ export default function App() {
                         onAdditionalQuestion={(value) => setQuestion(value)}
                       />
                     ) : (
-                      <p className="user-bubble">{message.text}</p>
+                      <UserPromptBubble text={message.text} />
                     )}
                   </div>
                 </article>
@@ -592,6 +592,45 @@ function buildConversationHistoryItem(id: string, titleCandidate: string, messag
   }
 }
 
+function UserPromptBubble({ text }: { text: string }) {
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")
+  const canCopyPrompt = Boolean(text.trim())
+
+  async function copyPrompt() {
+    if (!canCopyPrompt) return
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopyStatus("copied")
+      window.setTimeout(() => setCopyStatus("idle"), 1800)
+    } catch (err) {
+      console.warn("Failed to copy prompt", err)
+      setCopyStatus("error")
+      window.setTimeout(() => setCopyStatus("idle"), 1800)
+    }
+  }
+
+  return (
+    <div className="user-message-line">
+      <p className="user-bubble">{text}</p>
+      <button
+        type="button"
+        className={`prompt-copy-button ${copyStatus === "copied" ? "is-copied" : ""}`}
+        onClick={copyPrompt}
+        disabled={!canCopyPrompt}
+        aria-label={copyStatus === "copied" ? "プロンプトをコピー済み" : "プロンプトをコピー"}
+        title={copyStatus === "copied" ? "プロンプトをコピー済み" : "プロンプトをコピー"}
+      >
+        <Icon name={copyStatus === "copied" ? "check" : "copy"} />
+      </button>
+      {copyStatus !== "idle" && (
+        <span className="sr-only" role="status" aria-live="polite">
+          {copyStatus === "copied" ? "プロンプトをコピーしました" : "コピーに失敗しました"}
+        </span>
+      )}
+    </div>
+  )
+}
+
 function AssistantAnswer({
   message,
   linkedQuestion,
@@ -608,15 +647,14 @@ function AssistantAnswer({
   onAdditionalQuestion: (value: string) => void
 }) {
   const citations = message.result?.citations ?? []
-  const [copyStatus, setCopyStatus] = useState<"idle" | "prompt" | "answer" | "error">("idle")
-  const canCopyPrompt = Boolean(message.sourceQuestion?.trim())
+  const [copyStatus, setCopyStatus] = useState<"idle" | "answer" | "error">("idle")
   const canCopyAnswer = Boolean(message.text.trim())
 
-  async function copyText(value: string, type: "prompt" | "answer") {
+  async function copyText(value: string) {
     if (!value.trim()) return
     try {
       await navigator.clipboard.writeText(value)
-      setCopyStatus(type)
+      setCopyStatus("answer")
       window.setTimeout(() => setCopyStatus("idle"), 1800)
     } catch (err) {
       console.warn("Failed to copy text", err)
@@ -645,19 +683,8 @@ function AssistantAnswer({
         <span>根拠: ドキュメント {citations.length}件</span>
         <button
           type="button"
-          className={`copy-action ${copyStatus === "prompt" ? "is-copied" : ""}`}
-          onClick={() => copyText(message.sourceQuestion ?? "", "prompt")}
-          disabled={!canCopyPrompt}
-          aria-label={copyStatus === "prompt" ? "プロンプトをコピー済み" : "プロンプトをコピー"}
-          title={copyStatus === "prompt" ? "プロンプトをコピー済み" : "プロンプトをコピー"}
-        >
-          <Icon name={copyStatus === "prompt" ? "check" : "copy"} />
-          <span>{copyStatus === "prompt" ? "コピー済み" : "プロンプト"}</span>
-        </button>
-        <button
-          type="button"
           className={`copy-action ${copyStatus === "answer" ? "is-copied" : ""}`}
-          onClick={() => copyText(message.text, "answer")}
+          onClick={() => copyText(message.text)}
           disabled={!canCopyAnswer}
           aria-label={copyStatus === "answer" ? "回答をコピー済み" : "回答をコピー"}
           title={copyStatus === "answer" ? "回答をコピー済み" : "回答をコピー"}
@@ -668,7 +695,6 @@ function AssistantAnswer({
       </div>
       {copyStatus !== "idle" && (
         <p className="copy-feedback" role="status" aria-live="polite">
-          {copyStatus === "prompt" && "プロンプトをコピーしました"}
           {copyStatus === "answer" && "回答をコピーしました"}
           {copyStatus === "error" && "コピーに失敗しました"}
         </p>

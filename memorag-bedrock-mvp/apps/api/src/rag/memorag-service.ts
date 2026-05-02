@@ -214,18 +214,24 @@ export class MemoRagService {
     if (!trace) return undefined
 
     const markdown = formatDebugTraceMarkdown(trace)
-    const objectKey = `downloads/debug-trace-${trace.runId}.md`
+    const downloadMetadata = createDebugTraceDownloadMetadata(trace.runId)
     const s3 = new S3Client({ region: config.region })
     await s3.send(new PutObjectCommand({
       Bucket: config.debugDownloadBucketName,
-      Key: objectKey,
+      Key: downloadMetadata.objectKey,
       Body: markdown,
-      ContentType: "text/markdown; charset=utf-8"
+      ContentType: "text/markdown; charset=utf-8",
+      ContentDisposition: downloadMetadata.contentDisposition
     }))
 
     const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
-    const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket: config.debugDownloadBucketName, Key: objectKey, ResponseContentType: "text/markdown; charset=utf-8" }), { expiresIn: expiresInSeconds })
-    return { url, expiresInSeconds, objectKey }
+    const url = await getSignedUrl(s3, new GetObjectCommand({
+      Bucket: config.debugDownloadBucketName,
+      Key: downloadMetadata.objectKey,
+      ResponseContentType: "text/markdown; charset=utf-8",
+      ResponseContentDisposition: downloadMetadata.contentDisposition
+    }), { expiresIn: expiresInSeconds })
+    return { url, expiresInSeconds, objectKey: downloadMetadata.objectKey }
   }
 
   private async createMemoryCards(input: { fileName: string; text: string; modelId?: string }): Promise<MemoryCard[]> {
@@ -271,4 +277,17 @@ function formatCitationMarkdown(citations: Citation[]): string[] {
   return citations.flatMap((citation, index) => [
     `### ${index + 1}. ${citation.fileName}`,"",`- Document ID: ${citation.documentId}`,citation.chunkId ? `- Chunk ID: ${citation.chunkId}` : undefined,`- Score: ${citation.score}`,"","```text",citation.text,"```", ""
   ].filter(Boolean) as string[])
+}
+
+export function createDebugTraceDownloadMetadata(runId: string): {
+  fileName: string
+  objectKey: string
+  contentDisposition: string
+} {
+  const fileName = `debug-trace-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}.md`
+  return {
+    fileName,
+    objectKey: `downloads/${fileName}`,
+    contentDisposition: `attachment; filename="${fileName}"`
+  }
 }

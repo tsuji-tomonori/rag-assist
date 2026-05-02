@@ -10,7 +10,7 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import { MemoRagService } from "./memorag-service.js"
+import { createDebugTraceDownloadMetadata, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
   const { service, dataDir } = await createService()
@@ -106,6 +106,16 @@ test("service chat returns refusal and error debug trace when external dependenc
   assert.ok(errorStep)
   assert.match(errorStep?.detail ?? "", /Bedrock embed timeout|Vector query failed/)
   await assert.rejects(() => service.listDebugRuns(), /S3 get failed/)
+})
+
+test("debug trace download metadata forces attachment and sanitizes the file name", () => {
+  const metadata = createDebugTraceDownloadMetadata("run/with:unsafe*chars")
+
+  assert.deepEqual(metadata, {
+    fileName: "debug-trace-run_with_unsafe_chars.md",
+    objectKey: "downloads/debug-trace-run_with_unsafe_chars.md",
+    contentDisposition: 'attachment; filename="debug-trace-run_with_unsafe_chars.md"'
+  })
 })
 
 test("service ingest falls back when memory JSON parse fails and surfaces generate timeout", async () => {
