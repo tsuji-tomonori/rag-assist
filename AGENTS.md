@@ -55,6 +55,31 @@ Pull Request、PR、PR タイトル、PR 本文、PR コメント、レビュー
 
 この skill が Codex の利用可能 skill 一覧に自動表示されていない場合でも、リポジトリローカルの明示ルールとして上記ファイルを参照してから作業する。
 
+## Implementation Docs Maintenance
+
+実装、修正、リファクタ、設定変更、API 変更、運用手順変更など、コードまたは挙動に影響する作業では、必要に応じて次の skill を読む。
+
+- `skills/implementation-docs-maintainer/SKILL.md`
+
+適用ルール:
+
+- 作業前後に、変更内容が README、`docs/`、`memorag-bedrock-mvp/docs/`、API 例、運用手順、`AGENTS.md` に影響するか確認する。
+- ドキュメント更新が必要な場合は、実装と同じ作業範囲で更新する。
+- ドキュメント更新が不要と判断した場合も、最終回答または作業レポートで理由を簡潔に示す。
+- `memorag-bedrock-mvp/docs` を更新する場合は、下記の Docs Update Policy も優先する。
+
+## Implementation Test Selection
+
+実装、修正、リファクタ、設定変更、ドキュメント変更を完了する前に、変更範囲に応じて次の skill を読む。
+
+- `skills/implementation-test-selector/SKILL.md`
+
+適用ルール:
+
+- `git diff --name-only` などで変更範囲を確認し、最小十分な lint、typecheck、test、build、smoke、docs check を選ぶ。
+- 実行できる検証は実行し、実行していない検証を PR 本文や最終回答で実施済みとして書かない。
+- 検証を省略した場合は、コマンド名と省略理由を最終回答または作業レポートに記載する。
+
 
 ## Docs Update Policy for `memorag-bedrock-mvp/docs`
 
