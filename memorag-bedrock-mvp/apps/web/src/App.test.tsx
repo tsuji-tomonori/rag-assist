@@ -624,6 +624,7 @@ describe("App chat and upload flow", () => {
 
     expect(await screen.findByText("資料を添付して開始できます")).toBeInTheDocument()
     expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
+    expect(screen.queryByTitle("管理者設定")).not.toBeInTheDocument()
 
     await userEvent.type(screen.getByLabelText("質問"), "今日山田さんは何を食べた?")
     await userEvent.click(screen.getByTitle("送信"))
@@ -631,6 +632,32 @@ describe("App chat and upload flow", () => {
     await userEvent.click(await screen.findByText("担当者へ送信"))
     expect(await screen.findByText("担当者へ送信済み")).toBeInTheDocument()
 
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
+  })
+
+  it("shows the admin settings icon only for access admins", async () => {
+    window.sessionStorage.setItem(
+      "memorag.auth.session",
+      JSON.stringify({
+        email: "access-admin@example.com",
+        idToken: jwtWithGroups(["ACCESS_ADMIN"]),
+        expiresAt: Date.now() + 3600_000
+      })
+    )
+
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      const requestUrl = String(url)
+      if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: [] }))
+      return Promise.resolve(response({}))
+    })
+    vi.stubGlobal("fetch", fetchMock)
+    render(<App />)
+
+    expect(await screen.findByTitle("管理者設定")).toBeInTheDocument()
+    expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
   })
