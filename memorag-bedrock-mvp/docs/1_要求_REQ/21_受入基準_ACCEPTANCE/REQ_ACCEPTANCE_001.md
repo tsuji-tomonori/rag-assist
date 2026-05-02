@@ -77,11 +77,29 @@ Then システムは問い合わせ ticket を作成する。
 
 And Web UI は `GET /questions` と `GET /debug-runs` を事前取得しない。
 
-Given 担当者が `ANSWER_EDITOR` group を持つ。
+### AC-SEC-003: Phase 1 RAG 運用管理 API 認可
 
-When 担当者が問い合わせ一覧、回答、解決を実行する。
+Given 本番または社内検証環境である。
 
-Then API は `answer:edit` 権限により操作を許可する。
+When 一般チャット利用者が問い合わせ一覧、問い合わせ詳細、回答登録、解決済み化、debug trace 詳細、または debug JSON download にアクセスする。
+
+Then システムは権限不足として拒否する。
+
+And 問い合わせ本文、回答本文、debug trace、JSON download URL を返さない。
+
+### AC-SEC-004: 問い合わせ対応 role の分離
+
+Given 問い合わせ対応者が `ANSWER_EDITOR` role を持つ。
+
+When 問い合わせ一覧を参照する。
+
+Then システムはユーザー管理権限を要求せずに問い合わせ一覧を返す。
+
+And ユーザー管理 API またはロール付与 API は Phase 1 の管理画面に提供しない。
+
+When 問い合わせ対応者が回答登録または解決済み化を実行する。
+
+Then API は `answer:publish` 権限により操作を許可する。
 
 ### AC-HIST-001: 会話履歴の本人分離
 

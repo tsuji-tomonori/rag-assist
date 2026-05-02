@@ -14,6 +14,7 @@ import { normalizeQuery } from "./nodes/normalize-query.js"
 import { rerankChunks } from "./nodes/rerank-chunks.js"
 import { createRetrieveMemoryNode } from "./nodes/retrieve-memory.js"
 import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
+import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
 import { AgentState, NO_ANSWER, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { tracedNode } from "./trace.js"
@@ -23,6 +24,7 @@ import { clamp, toCitation } from "./utils.js"
 export function createQaAgentGraph(deps: Dependencies) {
   const embedQueries = createEmbedQueriesNode(deps)
   const searchEvidence = createSearchEvidenceNode(deps)
+  const sufficientContextGate = createSufficientContextGateNode(deps)
 
   async function planSearch(state: QaAgentState): Promise<QaAgentUpdate> {
     const query = state.expandedQueries[0] ?? state.normalizedQuery ?? state.question
@@ -105,6 +107,10 @@ export function createQaAgentGraph(deps: Dependencies) {
   }
 
   function routeAfterGate(state: QaAgentState) {
+    return state.answerability.isAnswerable ? "judge_context" : "refuse"
+  }
+
+  function routeAfterSufficientContextGate(state: QaAgentState) {
     return state.answerability.isAnswerable ? "answer" : "refuse"
   }
 
@@ -118,6 +124,7 @@ export function createQaAgentGraph(deps: Dependencies) {
     .addNode("evaluate_search_progress", tracedNode("evaluate_search_progress", evaluateSearchProgress))
     .addNode("rerank_chunks", tracedNode("rerank_chunks", rerankChunks))
     .addNode("answerability_gate", tracedNode("answerability_gate", answerabilityGate))
+    .addNode("sufficient_context_gate", tracedNode("sufficient_context_gate", sufficientContextGate))
     .addNode("generate_answer", tracedNode("generate_answer", createGenerateAnswerNode(deps)))
     .addNode("validate_citations", tracedNode("validate_citations", validateCitations))
     .addNode("finalize_response", tracedNode("finalize_response", finalizeResponse))
@@ -135,6 +142,10 @@ export function createQaAgentGraph(deps: Dependencies) {
     })
     .addEdge("rerank_chunks", "answerability_gate")
     .addConditionalEdges("answerability_gate", routeAfterGate, {
+      judge_context: "sufficient_context_gate",
+      refuse: "finalize_refusal"
+    })
+    .addConditionalEdges("sufficient_context_gate", routeAfterSufficientContextGate, {
       answer: "generate_answer",
       refuse: "finalize_refusal"
     })
@@ -237,6 +248,16 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
       isAnswerable: false,
       reason: "not_checked",
       confidence: 0
+    },
+    sufficientContext: {
+      label: "UNANSWERABLE",
+      confidence: 0,
+      requiredFacts: [],
+      supportedFacts: [],
+      missingFacts: [],
+      conflictingFacts: [],
+      supportingChunkIds: [],
+      reason: ""
     },
     citations: []
   })) as QaAgentState

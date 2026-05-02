@@ -41,6 +41,7 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
       "evaluate_search_progress",
       "rerank_chunks",
       "answerability_gate",
+      "sufficient_context_gate",
       "generate_answer",
       "validate_citations",
       "finalize_response"
@@ -52,6 +53,9 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
   assert.match(planStep?.detail ?? "", /actions:/)
   assert.match(actionStep?.detail ?? "", /action=evidence_search/)
   assert.match(actionStep?.detail ?? "", /newEvidenceCount=/)
+  const sufficientContextStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
+  assert.match(sufficientContextStep?.detail ?? "", /label=ANSWERABLE/)
+  assert.match(sufficientContextStep?.detail ?? "", /supportingChunkIds:/)
 })
 
 test("LangGraph debug trace keeps the full finalize response detail", async () => {
@@ -101,11 +105,55 @@ test("LangGraph MemoRAG workflow refuses before answer generation when evidence 
   assert.equal(result.citations.length, 0)
   assert.ok(result.debug)
   assert.equal(result.debug.steps.some((step) => step.label === "generate_answer"), false)
+  assert.equal(result.debug.steps.some((step) => step.label === "sufficient_context_gate"), false)
   assert.equal(result.debug.steps.at(-1)?.label, "finalize_refusal")
   assert.deepEqual(result.debug.steps.at(-1)?.output, {
     answer: "資料からは回答できません。",
     citations: []
   })
+})
+
+test("LangGraph workflow refuses when sufficient context judge returns partial", async () => {
+  const deps = await createTestDeps()
+  const baseTextModel = deps.textModel
+  deps.textModel = {
+    embed: baseTextModel.embed.bind(baseTextModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.64,
+          requiredFacts: ["経費精算の期限", "例外承認者"],
+          supportedFacts: ["経費精算の期限"],
+          missingFacts: ["例外承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "例外承認者の根拠がありません。"
+        })
+      }
+      return baseTextModel.generate(prompt, options)
+    }
+  }
+  const service = new MemoRagService(deps)
+
+  await service.ingest({
+    fileName: "expense-policy.txt",
+    text: "経費精算の期限は30日以内です。申請システムから提出します。"
+  })
+
+  const result = await service.chat({
+    question: "経費精算の期限と例外承認者は？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, false)
+  assert.equal(result.answer, "資料からは回答できません。")
+  assert.equal(result.debug?.steps.some((step) => step.label === "generate_answer"), false)
+  const gateStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
+  assert.match(gateStep?.detail ?? "", /label=PARTIAL/)
+  assert.match(gateStep?.detail ?? "", /例外承認者/)
 })
 
 async function createTestDeps(): Promise<Dependencies> {
