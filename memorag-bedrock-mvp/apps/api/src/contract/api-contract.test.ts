@@ -14,6 +14,7 @@ type Fixtures = {
   requests: {
     postDocuments: { fileName: string; text: string }
     postChat: { question: string; includeDebug: boolean; minScore: number }
+    postSearch: { query: string; topK: number }
   }
   responses: {
     health: { ok: true; service: string }
@@ -78,6 +79,18 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(typeof chat.answer, typeof fixtures.responses.chatShape.answer)
     assert.equal(Array.isArray(chat.citations), true)
     validateSchema(chat, responseSchema(openapi, "/chat", "post", 200), openapi)
+
+    const postSearch = await fetch(`http://127.0.0.1:${port}/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(fixtures.requests.postSearch)
+    })
+    assert.equal(postSearch.status, 200)
+    const search = (await postSearch.json()) as Record<string, unknown>
+    assert.equal(search.query, fixtures.requests.postSearch.query)
+    assert.ok(Array.isArray(search.results))
+    assert.ok((search.results as unknown[]).length >= 1)
+    validateSchema(search, responseSchema(openapi, "/search", "post", 200), openapi)
 
     const postHistory = await fetch(`http://127.0.0.1:${port}/conversation-history`, {
       method: "POST",
@@ -264,6 +277,48 @@ test("answer editors can list questions without user administration permission",
     assert.equal(listQuestions.status, 200)
     const body = (await listQuestions.json()) as Record<string, unknown>
     assert.equal(Array.isArray(body.questions), true)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
+test("answer editors cannot create questions without chat permission", async () => {
+  const port = 23000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-question-create-rbac-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "ANSWER_EDITOR"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const createQuestion = await fetch(`http://127.0.0.1:${port}/questions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "担当者へ確認したい",
+        question: "この制度の詳細を担当者へ確認してください。",
+        requesterName: "山田 太郎",
+        requesterDepartment: "利用部門",
+        assigneeDepartment: "総務部",
+        category: "その他の質問",
+        priority: "normal"
+      })
+    })
+
+    assert.equal(createQuestion.status, 403)
   } finally {
     server.kill("SIGTERM")
   }

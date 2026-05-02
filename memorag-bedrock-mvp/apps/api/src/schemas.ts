@@ -58,6 +58,21 @@ export const ChatRequestSchema = z.object({
   useMemory: z.boolean().optional().openapi({ example: true })
 })
 
+export const SearchRequestSchema = z.object({
+  query: z.string().min(1).openapi({ example: "経費精算 承認条件" }),
+  topK: z.number().int().min(1).max(50).optional().openapi({ example: 10 }),
+  lexicalTopK: z.number().int().min(1).max(100).optional().openapi({ example: 80 }),
+  semanticTopK: z.number().int().min(1).max(100).optional().openapi({ example: 80 }),
+  embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
+  filters: z.object({
+    tenantId: z.string().optional(),
+    department: z.string().optional(),
+    source: z.string().optional(),
+    docType: z.string().optional(),
+    documentId: z.string().optional()
+  }).optional()
+})
+
 export const CitationSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
@@ -108,6 +123,36 @@ export const ChatResponseSchema = z.object({
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
   debug: DebugTraceSchema.optional()
+})
+
+export const SearchResultSchema = z.object({
+  id: z.string(),
+  documentId: z.string(),
+  fileName: z.string(),
+  chunkId: z.string().optional(),
+  text: z.string(),
+  score: z.number(),
+  rrfScore: z.number(),
+  lexicalScore: z.number().optional(),
+  semanticScore: z.number().optional(),
+  lexicalRank: z.number().optional(),
+  semanticRank: z.number().optional(),
+  matchedTerms: z.array(z.string()),
+  sources: z.array(z.enum(["lexical", "semantic"])),
+  createdAt: z.string().optional(),
+  metadata: z.record(MetadataValueSchema).optional()
+})
+
+export const SearchResponseSchema = z.object({
+  query: z.string(),
+  results: z.array(SearchResultSchema),
+  diagnostics: z.object({
+    indexVersion: z.string(),
+    lexicalCount: z.number().int(),
+    semanticCount: z.number().int(),
+    fusedCount: z.number().int(),
+    latencyMs: z.number().int()
+  })
 })
 
 export const QuestionPrioritySchema = z.enum(["normal", "high", "urgent"])
