@@ -45,6 +45,8 @@ test("BM25 alias expansion uses caller-provided alias maps only", () => {
   const noAliases = buildLexicalIndex(docs, "no-aliases")
   const withAliases = buildLexicalIndex(docs, "with-aliases", { pto: ["vacation"] })
 
+  assert.equal(noAliases.aliasVersion, "none")
+  assert.match(withAliases.aliasVersion, /^alias:[a-f0-9]{8}$/)
   assert.equal(bm25Search(noAliases, tokenizeQuery("pto"), 3).length, 0)
   assert.equal(bm25Search(withAliases, tokenizeQuery("pto"), 3)[0]?.id, "doc-vacation-chunk-0000")
 })
@@ -75,7 +77,15 @@ test("service search applies ACL and metadata filters across lexical and vector 
       tenantId: "tenant-a",
       source: "notion",
       docType: "policy",
-      aclGroup: "GROUP_A"
+      department: "hr",
+      aclGroup: "GROUP_A",
+      aclGroups: ["GROUP_A"],
+      allowedUsers: ["user-1"],
+      privateToUserId: "user-1",
+      internalProjectCode: "confidential-project-x",
+      searchAliases: {
+        pto: ["approval"]
+      }
     }
   })
   await service.ingest({
@@ -95,6 +105,21 @@ test("service search applies ACL and metadata filters across lexical and vector 
   assert.equal(groupASearch.results.length, 1)
   assert.equal(groupASearch.results[0]?.fileName, "group-a-policy.md")
   assert.deepEqual(groupASearch.results[0]?.sources.sort(), ["lexical", "semantic"])
+  assert.deepEqual(groupASearch.results[0]?.metadata, {
+    tenantId: "tenant-a",
+    source: "notion",
+    docType: "policy",
+    department: "hr"
+  })
+
+  const aliasSearch = await service.search({ query: "pto", topK: 10, filters: { tenantId: "tenant-a", source: "notion" } }, groupAUser)
+  assert.equal(aliasSearch.results[0]?.fileName, "group-a-policy.md")
+  assert.match(aliasSearch.diagnostics.indexVersion, /^lexical:[a-f0-9]{8}$/)
+  assert.match(aliasSearch.diagnostics.aliasVersion, /^alias:[a-f0-9]{8}$/)
+  const aliasPayload = JSON.stringify({ results: aliasSearch.results, diagnostics: aliasSearch.diagnostics })
+  assert.equal(aliasPayload.includes("pto"), false)
+  assert.equal(aliasPayload.includes("confidential-project-x"), false)
+  assert.equal(aliasPayload.includes("allowedUsers"), false)
 
   const groupBOnlySearch = await service.search({ query: "申請承認", topK: 10 }, user(["GROUP_B"]))
   assert.equal(groupBOnlySearch.results.some((result) => result.fileName === "group-a-policy.md"), false)

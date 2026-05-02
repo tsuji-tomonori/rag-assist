@@ -48,6 +48,25 @@ curl -s http://localhost:8787/chat \
   }' | jq
 ```
 
+## Search
+
+`POST /search` の `metadata` は通常利用者向け allowlist response であり、alias 定義、ACL group、許可 user list、内部 project code は返さない。
+
+```bash
+curl -s http://localhost:8787/search \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query":"経費精算 承認条件",
+    "topK":10,
+    "filters":{
+      "tenantId":"tenant-a",
+      "source":"notion",
+      "docType":"policy"
+    }
+  }' | jq
+```
+
 ## List debug traces
 
 ```bash
