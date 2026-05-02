@@ -269,6 +269,48 @@ test("answer editors can list questions without user administration permission",
   }
 })
 
+test("answer editors cannot create questions without chat permission", async () => {
+  const port = 23000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-question-create-rbac-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "ANSWER_EDITOR"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const createQuestion = await fetch(`http://127.0.0.1:${port}/questions`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: "担当者へ確認したい",
+        question: "この制度の詳細を担当者へ確認してください。",
+        requesterName: "山田 太郎",
+        requesterDepartment: "利用部門",
+        assigneeDepartment: "総務部",
+        category: "その他の質問",
+        priority: "normal"
+      })
+    })
+
+    assert.equal(createQuestion.status, 403)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
 function responseSchema(doc: OpenApiDoc, route: string, method: string, status: number): unknown {
   const schema = doc.paths[route]?.[method]?.responses?.[String(status)]?.content?.["application/json"]?.schema
   assert.ok(schema, `response schema missing for ${method.toUpperCase()} ${route} ${status}`)
