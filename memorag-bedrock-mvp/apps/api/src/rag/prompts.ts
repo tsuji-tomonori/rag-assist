@@ -159,6 +159,60 @@ ${context || "根拠チャンクはありません。"}
 </context>`
 }
 
+export function buildRetrievalJudgePrompt(
+  question: string,
+  requiredFacts: Array<{ id: string; description: string }>,
+  riskSignals: Array<{ type: string; factId?: string; chunkKeys: string[]; values: string[]; reason: string }>,
+  chunks: RetrievedVector[]
+): string {
+  const facts = requiredFacts.length > 0 ? requiredFacts.map((fact) => `- ${fact.id}: ${fact.description}`).join("\n") : `- fact-1: ${question}`
+  const risks = riskSignals
+    .map((signal, index) => `- risk-${index + 1}: type=${signal.type}, factId=${signal.factId ?? ""}, values=${signal.values.join(", ")}, chunks=${signal.chunkKeys.join(", ")}, reason=${signal.reason}`)
+    .join("\n")
+  const context = chunks
+    .map(
+      (chunk) => `<chunk id="${escapeXml(chunk.key)}" chunkId="${escapeXml(chunk.metadata.chunkId ?? "")}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
+${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
+</chunk>`
+    )
+    .join("\n\n")
+
+  return `RETRIEVAL_JUDGE_JSON
+あなたは社内QA用RAGの検索評価 judge です。heuristic が検出した risk signal を、<context>内の evidence chunk だけで確認してください。
+出力はJSONのみ。Markdownや説明文は禁止。
+
+判定ルール:
+- CONFLICT: 同一 fact / 同一 subject / 同一 scope で、複数の evidence が排他的な値を示している。
+- NO_CONFLICT: 値の違いが旧制度/現行制度、部署、対象条件、適用期間などの scope 違いで説明できる、または risk が誤検出である。
+- UNCLEAR: context だけでは conflict とも no conflict とも判断できない。
+- regex cue や単語だけで CONFLICT にしない。
+- memory card、一般知識、推測は根拠にしない。
+- supportingChunkIds / contradictionChunkIds には <chunk id="..."> の id だけを入れる。
+
+JSON schema:
+{
+  "label": "CONFLICT | NO_CONFLICT | UNCLEAR",
+  "confidence": 0.0,
+  "factIds": ["required fact id"],
+  "supportingChunkIds": ["retrieved chunk id from <chunk id=...>"],
+  "contradictionChunkIds": ["retrieved chunk id from <chunk id=...>"],
+  "reason": "判定理由"
+}
+
+<question>
+${question}
+</question>
+<requiredFacts>
+${escapeXml(facts)}
+</requiredFacts>
+<riskSignals>
+${escapeXml(risks || "risk signal はありません。")}
+</riskSignals>
+<context>
+${context || "根拠チャンクはありません。"}
+</context>`
+}
+
 export function selectFinalAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
   if (!isRequirementsClassificationQuestion(question)) return chunks
 

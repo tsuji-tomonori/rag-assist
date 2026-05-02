@@ -12,7 +12,7 @@ import { createGenerateAnswerNode } from "./nodes/generate-answer.js"
 import { createGenerateCluesNode } from "./nodes/generate-clues.js"
 import { normalizeQuery } from "./nodes/normalize-query.js"
 import { rerankChunks } from "./nodes/rerank-chunks.js"
-import { retrievalEvaluator } from "./nodes/retrieval-evaluator.js"
+import { createRetrievalEvaluatorNode } from "./nodes/retrieval-evaluator.js"
 import { createRetrieveMemoryNode } from "./nodes/retrieve-memory.js"
 import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
@@ -32,6 +32,7 @@ const systemAdminUser: AppUser = {
 export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdminUser) {
   const embedQueries = createEmbedQueriesNode(deps)
   const searchEvidence = createSearchEvidenceNode(deps, user)
+  const retrievalEvaluator = createRetrievalEvaluatorNode(deps)
   const sufficientContextGate = createSufficientContextGateNode(deps)
   const verifyAnswerSupport = createVerifyAnswerSupportNode(deps)
 

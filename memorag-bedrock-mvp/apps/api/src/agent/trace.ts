@@ -114,7 +114,8 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
   if (update.sufficientContext) return `sufficient_context=${update.sufficientContext.label}, missing=${update.sufficientContext.missingFacts?.length ?? 0}`
   if (update.answerSupport) return `answer_support=${update.answerSupport.supported ? "supported" : "unsupported"}, unsupported=${update.answerSupport.unsupportedSentences.length}`
   if (update.retrievalEvaluation) {
-    return `retrieval=${update.retrievalEvaluation.retrievalQuality}, missing=${update.retrievalEvaluation.missingFactIds.length}, risks=${update.retrievalEvaluation.riskSignals?.length ?? 0}, next=${update.retrievalEvaluation.nextAction.type}`
+    const judge = update.retrievalEvaluation.llmJudge ? `, judge=${update.retrievalEvaluation.llmJudge.label}` : ""
+    return `retrieval=${update.retrievalEvaluation.retrievalQuality}, missing=${update.retrievalEvaluation.missingFactIds.length}, risks=${update.retrievalEvaluation.riskSignals?.length ?? 0}${judge}, next=${update.retrievalEvaluation.nextAction.type}`
   }
   if (update.searchPlan) return `plan actions=${update.searchPlan.actions?.length ?? 0}, facts=${update.searchPlan.requiredFacts?.length ?? 0}`
   if (update.actionHistory) {
@@ -215,7 +216,10 @@ function formatRetrievalEvaluationDetail(evaluation: NonNullable<QaAgentUpdate["
     ...formatList(evaluation.conflictingFactIds ?? []),
     "",
     "riskSignals:",
-    ...formatRiskSignals(evaluation.riskSignals ?? [])
+    ...formatRiskSignals(evaluation.riskSignals ?? []),
+    "",
+    "llmJudge:",
+    ...formatRetrievalLlmJudge(evaluation.llmJudge)
   ].join("\n")
 }
 
@@ -230,6 +234,18 @@ function formatRiskSignals(signals: NonNullable<NonNullable<QaAgentUpdate["retri
     const chunks = signal.chunkKeys.length > 0 ? ` chunks=${signal.chunkKeys.join(", ")}` : ""
     return `- ${signal.type}${signal.factId ? ` fact=${signal.factId}` : ""}${values}${chunks}: ${signal.reason}`
   })
+}
+
+function formatRetrievalLlmJudge(judge: NonNullable<QaAgentUpdate["retrievalEvaluation"]>["llmJudge"]): string[] {
+  if (!judge) return ["なし"]
+  return [
+    `- label=${judge.label}`,
+    `  confidence=${judge.confidence}`,
+    `  factIds=${judge.factIds.join(", ") || "なし"}`,
+    `  supportingChunkIds=${judge.supportingChunkIds.join(", ") || "なし"}`,
+    `  contradictionChunkIds=${judge.contradictionChunkIds.join(", ") || "なし"}`,
+    `  reason=${judge.reason}`
+  ]
 }
 
 function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefined {

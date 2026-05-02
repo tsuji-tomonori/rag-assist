@@ -1,5 +1,42 @@
 import type { RetrievedVector } from "../../types.js"
-import type { QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation, RetrievalRiskSignal } from "../state.js"
+import type { Dependencies } from "../../dependencies.js"
+import { parseJsonObject } from "../../rag/json.js"
+import { buildRetrievalJudgePrompt } from "../../rag/prompts.js"
+import type { QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation, RetrievalLlmJudge, RetrievalRiskSignal } from "../state.js"
+
+type RetrievalJudgeJson = Partial<RetrievalLlmJudge>
+
+export function createRetrievalEvaluatorNode(deps: Dependencies) {
+  return async function retrievalEvaluatorWithJudge(state: QaAgentState): Promise<QaAgentUpdate> {
+    const heuristicUpdate = await retrievalEvaluator(state)
+    const riskSignals = heuristicUpdate.retrievalEvaluation?.riskSignals ?? []
+    if (riskSignals.length === 0) return heuristicUpdate
+
+    try {
+      const relevantChunks = selectJudgeChunks(state.retrievedChunks, riskSignals)
+      const raw = await deps.textModel.generate(
+        buildRetrievalJudgePrompt(state.question, state.searchPlan.requiredFacts, riskSignals, relevantChunks),
+        {
+          modelId: state.modelId,
+          temperature: 0,
+          maxTokens: 700
+        }
+      )
+      const judge = normalizeRetrievalJudge(parseJsonObject<RetrievalJudgeJson>(raw), state, riskSignals)
+      return applyRetrievalJudge(state, heuristicUpdate, judge)
+    } catch (error) {
+      const evaluation = heuristicUpdate.retrievalEvaluation
+      if (!evaluation) return heuristicUpdate
+      return {
+        ...heuristicUpdate,
+        retrievalEvaluation: {
+          ...evaluation,
+          reason: `${evaluation.reason} LLM judge は失敗したため heuristic 判定を維持します: ${error instanceof Error ? error.message : String(error)}`
+        }
+      }
+    }
+  }
+}
 
 export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUpdate> {
   const topScore = state.retrievedChunks[0]?.score ?? 0
@@ -34,6 +71,81 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
         status: conflictingFactIds.includes(fact.id) ? "conflicting" : supportedFactIds.includes(fact.id) ? "supported" : "missing",
         supportingChunkKeys: supportingChunkKeysByFact.get(fact.id) ?? fact.supportingChunkKeys
       }))
+    }
+  }
+}
+
+function selectJudgeChunks(chunks: RetrievedVector[], riskSignals: RetrievalRiskSignal[]): RetrievedVector[] {
+  const riskChunkKeys = new Set(riskSignals.flatMap((signal) => signal.chunkKeys))
+  const selected = chunks.filter((chunk) => riskChunkKeys.has(chunk.key))
+  return (selected.length > 0 ? selected : chunks).slice(0, 8)
+}
+
+function normalizeRetrievalJudge(
+  parsed: RetrievalJudgeJson | undefined,
+  state: QaAgentState,
+  riskSignals: RetrievalRiskSignal[]
+): RetrievalLlmJudge {
+  const label = parsed?.label === "CONFLICT" || parsed?.label === "NO_CONFLICT" || parsed?.label === "UNCLEAR" ? parsed.label : "UNCLEAR"
+  const confidence = clamp(parsed?.confidence ?? 0)
+  const validFactIds = new Set(state.searchPlan.requiredFacts.map((fact) => fact.id))
+  const fallbackFactIds = riskSignals.map((signal) => signal.factId).filter((id): id is string => typeof id === "string" && id.length > 0)
+  const factIds = cleanStrings(parsed?.factIds).filter((id) => validFactIds.has(id))
+  const validChunkIds = new Set(state.retrievedChunks.flatMap((chunk) => [chunk.key, chunk.metadata.chunkId].filter((id): id is string => typeof id === "string" && id.length > 0)))
+  const byChunkId = new Map(state.retrievedChunks.map((chunk) => [chunk.metadata.chunkId, chunk.key]))
+
+  return {
+    label,
+    confidence,
+    factIds: factIds.length > 0 ? factIds : [...new Set(fallbackFactIds)],
+    supportingChunkIds: validIds(cleanStrings(parsed?.supportingChunkIds), validChunkIds, byChunkId),
+    contradictionChunkIds: validIds(cleanStrings(parsed?.contradictionChunkIds), validChunkIds, byChunkId),
+    reason: typeof parsed?.reason === "string" && parsed.reason.trim() ? parsed.reason.trim().slice(0, 800) : "LLM judge では判定理由が返されませんでした。"
+  }
+}
+
+function applyRetrievalJudge(state: QaAgentState, update: QaAgentUpdate, judge: RetrievalLlmJudge): QaAgentUpdate {
+  const evaluation = update.retrievalEvaluation
+  const searchPlan = update.searchPlan
+  if (!evaluation || !searchPlan) return update
+
+  if (judge.label === "NO_CONFLICT" && judge.confidence >= 0.7) {
+    const resolvedFactIds = new Set(judge.factIds.length > 0 ? judge.factIds : evaluation.conflictingFactIds)
+    const conflictingFactIds = evaluation.conflictingFactIds.filter((factId) => !resolvedFactIds.has(factId))
+    const supportedFactIds = [...new Set([...evaluation.supportedFactIds, ...resolvedFactIds])]
+    const retrievalQuality = conflictingFactIds.length === 0 && evaluation.missingFactIds.length === 0 ? "sufficient" : "partial"
+    const nextAction =
+      retrievalQuality === "sufficient"
+        ? { type: "rerank" as const, objective: "answer_with_supported_evidence" }
+        : chooseNextAction(state, retrievalQuality, evaluation.missingFactIds, conflictingFactIds)
+
+    return {
+      ...update,
+      retrievalEvaluation: {
+        ...evaluation,
+        retrievalQuality,
+        conflictingFactIds,
+        supportedFactIds,
+        llmJudge: judge,
+        nextAction,
+        reason: `LLM judge が value mismatch を scope 差分または誤検出と判定しました: ${judge.reason}`
+      },
+      searchPlan: {
+        ...searchPlan,
+        requiredFacts: searchPlan.requiredFacts.map((fact) => ({
+          ...fact,
+          status: resolvedFactIds.has(fact.id) ? "supported" : conflictingFactIds.includes(fact.id) ? "conflicting" : fact.status
+        }))
+      }
+    }
+  }
+
+  return {
+    ...update,
+    retrievalEvaluation: {
+      ...evaluation,
+      llmJudge: judge,
+      reason: `${evaluation.reason} LLM judge=${judge.label}: ${judge.reason}`
     }
   }
 }
@@ -233,6 +345,20 @@ function splitSentences(text: string): string[] {
 
 function normalizeValue(value: string): string {
   return value.normalize("NFKC").replace(/[\s,]/g, "").toLowerCase()
+}
+
+function cleanStrings(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.map((item) => (typeof item === "string" ? item.trim() : "")).filter(Boolean)
+}
+
+function validIds(ids: string[], validIdsSet: Set<string>, byChunkId: Map<string | undefined, string>): string[] {
+  return [...new Set(ids.map((id) => byChunkId.get(id) ?? id).filter((id) => validIdsSet.has(id)))]
+}
+
+function clamp(value: number): number {
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(1, value))
 }
 
 function normalize(text: string): string {

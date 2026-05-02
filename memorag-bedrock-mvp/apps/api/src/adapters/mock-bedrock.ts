@@ -127,6 +127,22 @@ export class MockBedrockTextModel implements TextModel {
       })
     }
 
+    if (prompt.includes("RETRIEVAL_JUDGE_JSON")) {
+      const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
+      const joined = contexts.map((match) => match[2] ?? "").join("\n")
+      const factIds = [...prompt.matchAll(/- ([A-Za-z0-9_-]+):/g)].map((match) => match[1]).filter((id): id is string => typeof id === "string")
+      const chunkIds = contexts.map((match) => match[1]).filter((id): id is string => typeof id === "string" && id.length > 0)
+      const label: "NO_CONFLICT" | "UNCLEAR" = joined.includes("旧制度") && joined.includes("現行制度") ? "NO_CONFLICT" : "UNCLEAR"
+      return JSON.stringify({
+        label,
+        confidence: label === "NO_CONFLICT" ? 0.82 : 0.55,
+        factIds,
+        supportingChunkIds: label === "NO_CONFLICT" ? chunkIds : [],
+        contradictionChunkIds: [],
+        reason: label === "NO_CONFLICT" ? "モックでは旧制度と現行制度の scope 差分として扱います。" : "モックでは追加確認が必要と判定します。"
+      })
+    }
+
     return "{}"
   }
 }
