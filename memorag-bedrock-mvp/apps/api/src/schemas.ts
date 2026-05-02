@@ -44,6 +44,15 @@ export const DeleteDocumentResponseSchema = z.object({
   deletedVectorCount: z.number()
 })
 
+export const CurrentUserResponseSchema = z.object({
+  user: z.object({
+    userId: z.string(),
+    email: z.string().optional(),
+    groups: z.array(z.string()),
+    permissions: z.array(z.string())
+  })
+})
+
 export const ChatRequestSchema = z.object({
   question: z.string().min(1).openapi({ example: "経費精算の期限は？" }),
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),

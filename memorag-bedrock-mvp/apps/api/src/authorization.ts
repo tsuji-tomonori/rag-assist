@@ -29,9 +29,9 @@ export type Permission =
   | "access:role:assign"
   | "access:policy:read"
 
-type Role = "CHAT_USER" | "ANSWER_EDITOR" | "RAG_GROUP_MANAGER" | "USER_ADMIN" | "ACCESS_ADMIN" | "COST_AUDITOR" | "SYSTEM_ADMIN"
+export type Role = "CHAT_USER" | "ANSWER_EDITOR" | "RAG_GROUP_MANAGER" | "USER_ADMIN" | "ACCESS_ADMIN" | "COST_AUDITOR" | "SYSTEM_ADMIN"
 
-const rolePermissions: Record<Role, Permission[]> = {
+export const rolePermissions: Record<Role, Permission[]> = {
   CHAT_USER: ["chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "usage:read:own", "cost:read:own", "rag:doc:read"],
   ANSWER_EDITOR: ["answer:edit", "answer:publish"],
   RAG_GROUP_MANAGER: ["rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group"],
@@ -46,8 +46,17 @@ const rolePermissions: Record<Role, Permission[]> = {
   ]
 }
 
+export function getPermissionsForGroups(groups: string[]): Permission[] {
+  const permissions = new Set<Permission>()
+  for (const group of groups) {
+    for (const permission of rolePermissions[group as Role] ?? []) {
+      permissions.add(permission)
+    }
+  }
+  return [...permissions]
+}
+
 export function requirePermission(user: AppUser, permission: Permission) {
-  const groups = user.cognitoGroups as Role[]
-  const allowed = groups.some((role) => rolePermissions[role]?.includes(permission))
+  const allowed = getPermissionsForGroups(user.cognitoGroups).includes(permission)
   if (!allowed) throw new HTTPException(403, { message: `Forbidden: missing ${permission}` })
 }

@@ -15,6 +15,7 @@
 | --- | --- | --- |
 | `GET /health` | ヘルスチェック | `NFR-001` |
 | `GET /openapi.json` | API 仕様参照 | `FR-013` |
+| `GET /me` | ログインユーザーと有効 permission 取得 | `NFR-011` |
 | `GET /documents` | 登録文書一覧 | `FR-001`, `FR-007` |
 | `POST /documents` | 文書登録 | `FR-001`, `FR-002` |
 | `DELETE /documents/{documentId}` | 文書削除 | `FR-007`, `FR-008` |
@@ -190,6 +191,7 @@
 - `AUTH_ENABLED=false` の既定 local user は `SYSTEM_ADMIN` とする。
 - local RBAC 検証では `LOCAL_AUTH_GROUPS` で Cognito group 相当の role を指定できる。
 - `VITE_AUTH_MODE=local` の Web UI は local 開発用セッションとして `SYSTEM_ADMIN` 相当を扱う。
+- フロントエンドは JWT payload を独自解釈せず、`GET /me` が返す `groups` と `permissions` を表示制御の入力にする。
 - `GET /conversation-history`、`POST /conversation-history`、`DELETE /conversation-history/{id}` は認証済み userId に紐づく自分の履歴のみを対象とする。
 - 本番または社内検証環境では管理系 API を `requirePermission` による強制境界で保護する。
 - 権限外文書を回答、citation、debug trace の外部応答に含めない。
@@ -198,6 +200,7 @@
 
 | 機能 | API | 必要 permission | 主な対象 role |
 | --- | --- | --- | --- |
+| 自分の権限取得 | `GET /me` | 認証済み user | 全 role |
 | チャット実行 | `POST /chat` | `chat:create` | `CHAT_USER`, `SYSTEM_ADMIN` |
 | 文書一覧 | `GET /documents` | `rag:doc:read` | `CHAT_USER`, `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
 | 文書アップロード | `POST /documents` | `rag:doc:write:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import App from "./App.js"
-import type { HumanQuestion } from "./api.js"
+import type { HumanQuestion, Permission } from "./api.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
@@ -129,11 +129,36 @@ function jwtWithGroups(groups: string[]) {
   return `${encode({ alg: "none", typ: "JWT" })}.${encode({ sub: "user-1", email: "tester@example.com", "cognito:groups": groups })}.signature`
 }
 
-function mockAppFetch() {
+const rolePermissions: Record<string, Permission[]> = {
+  CHAT_USER: ["chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "usage:read:own", "cost:read:own", "rag:doc:read"],
+  ANSWER_EDITOR: ["answer:edit", "answer:publish"],
+  RAG_GROUP_MANAGER: ["rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group"],
+  ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
+  SYSTEM_ADMIN: [
+    "chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "chat:admin:read_all",
+    "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
+    "usage:read:own", "usage:read:all_users", "cost:read:own", "cost:read:all", "user:read", "user:suspend", "user:unsuspend", "user:delete",
+    "access:role:create", "access:role:update", "access:role:assign", "access:policy:read"
+  ]
+}
+
+function currentUserResponse(groups = ["SYSTEM_ADMIN"]) {
+  return {
+    user: {
+      userId: "local-dev",
+      email: "tester@example.com",
+      groups,
+      permissions: [...new Set(groups.flatMap((group) => rolePermissions[group] ?? []))]
+    }
+  }
+}
+
+function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
   let storedHistory: unknown[] = []
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     const requestUrl = String(url)
     if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+    if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(groups)))
     if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
     if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
     if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
@@ -263,6 +288,7 @@ describe("App document management", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/documents/doc-1") && init?.method === "DELETE") return Promise.resolve(response("delete failed", false))
@@ -283,6 +309,7 @@ describe("App document management", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) {
         documentListCalls += 1
         return Promise.resolve(response({ documents: documentListCalls === 1 ? documents : [documents[1]] }))
@@ -297,7 +324,7 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await selectDocument("doc-1")
-    const input = document.querySelector<HTMLInputElement>('input[type="file"]')
+    const input = (await screen.findByTitle("資料を添付")).querySelector<HTMLInputElement>('input[type="file"]')
     await userEvent.upload(input as HTMLInputElement, new File(["資料"], "refresh.txt", { type: "text/plain" }))
     await userEvent.click(screen.getByTitle("送信"))
 
@@ -319,7 +346,7 @@ describe("App chat and upload flow", () => {
     const fetchMock = mockAppFetch()
     await renderAuthenticatedApp()
 
-    const input = document.querySelector<HTMLInputElement>('input[type="file"]')
+    const input = (await screen.findByTitle("資料を添付")).querySelector<HTMLInputElement>('input[type="file"]')
     expect(input).toBeTruthy()
     await userEvent.upload(input as HTMLInputElement, new File(["要求分類"], "upload.txt", { type: "text/plain" }))
     await userEvent.type(screen.getByLabelText("質問"), "ソフトウェア要求の分類を洗い出して")
@@ -338,7 +365,7 @@ describe("App chat and upload flow", () => {
     mockAppFetch()
     await renderAuthenticatedApp()
 
-    const input = document.querySelector<HTMLInputElement>('input[type="file"]')
+    const input = (await screen.findByTitle("資料を添付")).querySelector<HTMLInputElement>('input[type="file"]')
     await userEvent.upload(input as HTMLInputElement, new File(["資料"], "only-upload.txt", { type: "text/plain" }))
     await userEvent.click(screen.getByTitle("送信"))
 
@@ -350,7 +377,7 @@ describe("App chat and upload flow", () => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
     await renderAuthenticatedApp()
 
-    await userEvent.click(screen.getByRole("checkbox"))
+    await userEvent.click(await screen.findByRole("checkbox"))
     expect(await screen.findByLabelText("デバッグパネル")).toBeInTheDocument()
     expect(screen.getByText("8 ステップ")).toBeInTheDocument()
 
@@ -382,6 +409,7 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [debugTrace] }))
       if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
@@ -395,7 +423,7 @@ describe("App chat and upload flow", () => {
     vi.stubGlobal("fetch", fetchMock)
     await renderAuthenticatedApp()
 
-    await userEvent.click(screen.getByRole("checkbox"))
+    await userEvent.click(await screen.findByRole("checkbox"))
     await userEvent.selectOptions(await screen.findByLabelText("実行ID"), debugTrace.runId)
     expect(await screen.findByText("answerability_gate")).toBeInTheDocument()
 
@@ -423,6 +451,7 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [debugTrace, olderTrace] }))
       return Promise.resolve(response({}))
@@ -513,6 +542,7 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/chat") && init?.method === "POST") return Promise.resolve(response("chat failed", false))
@@ -533,6 +563,7 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/questions") && isGet(init)) return Promise.resolve(response({ questions: storedQuestions }))
@@ -608,6 +639,7 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(["CHAT_USER"])))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: [] }))
       if (requestUrl.endsWith("/chat") && init?.method === "POST") {
@@ -625,6 +657,7 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("資料を添付して開始できます")).toBeInTheDocument()
     expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
     expect(screen.queryByTitle("管理者設定")).not.toBeInTheDocument()
+    expect(screen.queryByText("デバッグモード")).not.toBeInTheDocument()
 
     await userEvent.type(screen.getByLabelText("質問"), "今日山田さんは何を食べた?")
     await userEvent.click(screen.getByTitle("送信"))
@@ -649,6 +682,7 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(["ACCESS_ADMIN"])))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: [] }))
       return Promise.resolve(response({}))
@@ -675,6 +709,7 @@ describe("App chat and upload flow", () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents: [] }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/questions") && isGet(init)) return Promise.resolve(response({ questions }))
@@ -693,9 +728,10 @@ describe("App chat and upload flow", () => {
   })
 
   it("shows an empty assignee workspace when no questions exist", async () => {
-    const fetchMock = vi.fn((url: RequestInfo | URL) => {
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents")) return Promise.resolve(response({ documents: [] }))
       if (requestUrl.endsWith("/debug-runs")) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/questions")) return Promise.resolve(response({ questions: [] }))

@@ -55,6 +55,11 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(health.body.service, fixtures.responses.health.service)
     validateSchema(health.body, responseSchema(openapi, "/health", "get", 200), openapi)
 
+    const currentUser = await getJson(`http://127.0.0.1:${port}/me`)
+    assert.equal(currentUser.body.user.userId, "local-dev")
+    assert.ok(currentUser.body.user.permissions.includes("chat:admin:read_all"))
+    validateSchema(currentUser.body, responseSchema(openapi, "/me", "get", 200), openapi)
+
     const documents = await getJson(`http://127.0.0.1:${port}/documents`)
     assert.ok(Array.isArray(documents.body.documents))
     validateSchema(documents.body, responseSchema(openapi, "/documents", "get", 200), openapi)
@@ -208,6 +213,12 @@ test("question and debug management endpoints enforce Phase 1 role boundaries", 
 
   try {
     await waitUntilReady(server, port)
+
+    const currentUser = await getJson(`http://127.0.0.1:${port}/me`)
+    assert.deepEqual(currentUser.body.user.groups, ["CHAT_USER"])
+    assert.ok(currentUser.body.user.permissions.includes("chat:create"))
+    assert.equal(currentUser.body.user.permissions.includes("answer:edit"), false)
+    assert.equal(currentUser.body.user.permissions.includes("chat:admin:read_all"), false)
 
     const createQuestion = await fetch(`http://127.0.0.1:${port}/questions`, {
       method: "POST",
