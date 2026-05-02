@@ -204,6 +204,13 @@ function createDeps(): Dependencies {
       resolve: async () => {
         throw new Error("not used")
       }
+    },
+    conversationHistoryStore: {
+      save: async () => {
+        throw new Error("not used")
+      },
+      list: async () => [],
+      delete: async () => undefined
     }
   } as unknown as Dependencies
 }

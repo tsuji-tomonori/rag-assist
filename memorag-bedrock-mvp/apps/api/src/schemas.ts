@@ -140,6 +140,27 @@ export const QuestionListResponseSchema = z.object({
   questions: z.array(QuestionSchema)
 })
 
+export const ConversationMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  text: z.string(),
+  createdAt: z.string(),
+  sourceQuestion: z.string().optional(),
+  result: ChatResponseSchema.optional(),
+  questionTicket: QuestionSchema.optional()
+})
+
+export const ConversationHistoryItemSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
+  id: z.string().min(1),
+  title: z.string().min(1).max(120),
+  updatedAt: z.string(),
+  messages: z.array(ConversationMessageSchema).max(100)
+})
+
+export const ConversationHistoryListResponseSchema = z.object({
+  history: z.array(ConversationHistoryItemSchema)
+})
+
 export const CreateQuestionRequestSchema = z.object({
   title: z.string().min(1).max(120).openapi({ example: "山田さんの昼食について確認したい" }),
   question: z.string().min(1).max(2000).openapi({ example: "今日山田さんは何を食べたか、担当者に確認してください。" }),

@@ -103,6 +103,14 @@ export type DebugTrace = {
   steps: DebugStep[]
 }
 
+export type ChatResponsePayload = {
+  answer: string
+  isAnswerable: boolean
+  citations: Citation[]
+  retrieved: Citation[]
+  debug?: DebugTrace
+}
+
 export type QuestionStatus = "open" | "answered" | "resolved"
 export type QuestionPriority = "normal" | "high" | "urgent"
 
@@ -130,4 +138,23 @@ export type HumanQuestion = {
   updatedAt: string
   answeredAt?: string
   resolvedAt?: string
+}
+
+export type ConversationMessage = {
+  role: "user" | "assistant"
+  text: string
+  createdAt: string
+  sourceQuestion?: string
+  result?: ChatResponsePayload
+  questionTicket?: HumanQuestion
+}
+
+export const CONVERSATION_HISTORY_SCHEMA_VERSION = 1
+
+export type ConversationHistoryItem = {
+  schemaVersion: typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+  id: string
+  title: string
+  updatedAt: string
+  messages: ConversationMessage[]
 }

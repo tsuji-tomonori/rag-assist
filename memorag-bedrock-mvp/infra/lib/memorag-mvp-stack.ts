@@ -92,6 +92,14 @@ export class MemoRagMvpStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     })
 
+    const conversationHistoryTable = new dynamodb.Table(this, "ConversationHistoryTable", {
+      partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "id", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
     const s3VectorsProviderLogGroup = new logs.LogGroup(this, "S3VectorsProviderLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY
@@ -180,7 +188,9 @@ export class MemoRagMvpStack extends Stack {
         MOCK_BEDROCK: "false",
         DOCS_BUCKET_NAME: docsBucket.bucketName,
         QUESTION_TABLE_NAME: questionsTable.tableName,
+        CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
         USE_LOCAL_QUESTION_STORE: "false",
+        USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
         VECTOR_BUCKET_NAME: vectorBucketName,
         MEMORY_VECTOR_INDEX_NAME: memoryVectorIndexName,
         EVIDENCE_VECTOR_INDEX_NAME: evidenceVectorIndexName,
@@ -201,6 +211,7 @@ export class MemoRagMvpStack extends Stack {
     docsBucket.grantReadWrite(apiFn)
     debugDownloadBucket.grantReadWrite(apiFn)
     questionsTable.grantReadWriteData(apiFn)
+    conversationHistoryTable.grantReadWriteData(apiFn)
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],

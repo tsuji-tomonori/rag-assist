@@ -4,14 +4,18 @@ import {
   chat,
   createQuestion,
   createDebugDownload,
+  deleteConversationHistory,
   deleteDocument,
   fileToBase64,
+  listConversationHistory,
   listQuestions,
   listDebugRuns,
   listDocuments,
   resolveQuestion,
+  saveConversationHistory,
   uploadDocument,
   type ChatResponse,
+  type ConversationHistoryItem,
   type DebugStep,
   type DebugTrace,
   type DocumentManifest,
@@ -49,13 +53,6 @@ type IconName =
   | "copy"
 
 type AppView = "chat" | "assignee" | "history"
-
-type ConversationHistoryItem = {
-  id: string
-  title: string
-  updatedAt: string
-  messages: Message[]
-}
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -111,35 +108,13 @@ export default function App() {
     refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
     refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
     refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
+    refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
   }, [authSession])
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem("memorag.chat.history")
-    if (!saved) return
-    try {
-      const parsed = JSON.parse(saved) as ConversationHistoryItem[]
-      setHistory(parsed)
-    } catch (err) {
-      console.warn("Failed to parse conversation history", err)
-    }
-  }, [])
-
-  useEffect(() => {
-    window.localStorage.setItem("memorag.chat.history", JSON.stringify(history.slice(0, 20)))
-  }, [history])
 
   useEffect(() => {
     if (messages.length === 0) return
     const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
-    setHistory((prev) => {
-      const nextItem: ConversationHistoryItem = {
-        id: currentConversationId,
-        title: summarizeTitle(titleCandidate),
-        updatedAt: new Date().toISOString(),
-        messages
-      }
-      return [nextItem, ...prev.filter((item) => item.id !== currentConversationId)].slice(0, 20)
-    })
+    rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages))
   }, [currentConversationId, messages])
 
   useEffect(() => {
@@ -197,6 +172,15 @@ export default function App() {
       if (current && nextQuestions.some((questionItem) => questionItem.questionId === current)) return current
       return nextQuestions[0]?.questionId ?? ""
     })
+  }
+
+  async function refreshHistory() {
+    setHistory(await listConversationHistory())
+  }
+
+  function rememberConversation(item: ConversationHistoryItem) {
+    setHistory((prev) => [item, ...prev.filter((entry) => entry.id !== item.id)].slice(0, 20))
+    saveConversationHistory(item).catch((err) => console.warn("Failed to save conversation history", err))
   }
 
   async function onAsk(event: FormEvent) {
@@ -281,15 +265,7 @@ export default function App() {
   function newConversation() {
     if (messages.length > 0) {
       const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
-      setHistory((prev) => {
-        const nextItem: ConversationHistoryItem = {
-          id: currentConversationId,
-          title: summarizeTitle(titleCandidate),
-          updatedAt: new Date().toISOString(),
-          messages
-        }
-        return [nextItem, ...prev.filter((item) => item.id !== currentConversationId)].slice(0, 20)
-      })
+      rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages))
     }
     setMessages([])
     setCurrentConversationId(createConversationId())
@@ -591,13 +567,29 @@ export default function App() {
               setPendingActivity(null)
               setPendingDebugQuestion(null)
             }}
-            onDelete={(id) => setHistory((prev) => prev.filter((entry) => entry.id !== id))}
+            onDelete={(id) => {
+              setHistory((prev) => prev.filter((entry) => entry.id !== id))
+              deleteConversationHistory(id).catch((err) => {
+                console.warn("Failed to delete conversation history", err)
+                setError(err instanceof Error ? err.message : String(err))
+              })
+            }}
             onBack={() => setActiveView("chat")}
           />
         )}
       </section>
     </main>
   )
+}
+
+function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[]): ConversationHistoryItem {
+  return {
+    schemaVersion: 1,
+    id,
+    title: summarizeTitle(titleCandidate),
+    updatedAt: new Date().toISOString(),
+    messages
+  }
 }
 
 function UserPromptBubble({ text }: { text: string }) {

@@ -124,11 +124,23 @@ function isGet(init?: RequestInit) {
 }
 
 function mockAppFetch() {
+  let storedHistory: unknown[] = []
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     const requestUrl = String(url)
     if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
     if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
     if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
+    if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
+    if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
+      const body = JSON.parse(String(init.body ?? "{}"))
+      storedHistory = [body, ...storedHistory.filter((item) => (item as { id?: string }).id !== body.id)]
+      return Promise.resolve(response(body))
+    }
+    if (requestUrl.includes("/conversation-history/") && init?.method === "DELETE") {
+      const id = decodeURIComponent(requestUrl.split("/conversation-history/")[1] ?? "")
+      storedHistory = storedHistory.filter((item) => (item as { id?: string }).id !== id)
+      return Promise.resolve(response({ id }))
+    }
     if (requestUrl.endsWith("/documents/doc-1") && init?.method === "DELETE") return Promise.resolve(response({ documentId: "doc-1", deletedVectorCount: 3 }))
     if (requestUrl.endsWith("/documents") && init?.method === "POST") {
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
@@ -449,12 +461,19 @@ describe("App chat and upload flow", () => {
   })
 
   it("searches, sorts, opens, and deletes conversation history", async () => {
-    mockAppFetch()
+    const fetchMock = mockAppFetch()
     await renderAuthenticatedApp()
 
     await userEvent.type(screen.getByLabelText("質問"), "分類一")
     await userEvent.click(screen.getByTitle("送信"))
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+    await waitFor(() => {
+      const savedHistory = fetchMock.mock.calls.find(
+        ([url, init]) => String(url).endsWith("/conversation-history") && (init as RequestInit | undefined)?.method === "POST"
+      )
+      expect(savedHistory).toBeTruthy()
+      expect(JSON.parse(String((savedHistory?.[1] as RequestInit).body))).toMatchObject({ schemaVersion: 1 })
+    })
     await userEvent.click(screen.getByText("新しい会話"))
     await userEvent.type(screen.getByLabelText("質問"), "分類二")
     await userEvent.click(screen.getByTitle("送信"))
@@ -474,6 +493,13 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("履歴"))
     await userEvent.type(screen.getByLabelText("履歴を検索"), "分類一")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(
+          ([url, init]) => String(url).includes("/conversation-history/") && (init as RequestInit | undefined)?.method === "DELETE"
+        )
+      ).toBe(true)
+    )
     expect(await screen.findByText("条件に一致する履歴はありません。")).toBeInTheDocument()
   })
 

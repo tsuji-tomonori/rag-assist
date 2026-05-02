@@ -127,6 +127,23 @@ export type HumanQuestion = {
   resolvedAt?: string
 }
 
+export type ConversationMessage = {
+  role: "user" | "assistant"
+  text: string
+  createdAt: string
+  sourceQuestion?: string
+  result?: ChatResponse
+  questionTicket?: HumanQuestion
+}
+
+export type ConversationHistoryItem = {
+  schemaVersion: 1
+  id: string
+  title: string
+  updatedAt: string
+  messages: ConversationMessage[]
+}
+
 export type DocumentManifest = {
   documentId: string
   fileName: string
@@ -225,6 +242,21 @@ export async function answerQuestion(
 
 export async function resolveQuestion(questionId: string): Promise<HumanQuestion> {
   return post<HumanQuestion>(`/questions/${encodeURIComponent(questionId)}/resolve`, {})
+}
+
+export async function listConversationHistory(): Promise<ConversationHistoryItem[]> {
+  const result = await get<{ history?: ConversationHistoryItem[] }>("/conversation-history")
+  return result.history ?? []
+}
+
+export async function saveConversationHistory(input: ConversationHistoryItem): Promise<ConversationHistoryItem> {
+  return post<ConversationHistoryItem>("/conversation-history", input)
+}
+
+export async function deleteConversationHistory(id: string): Promise<void> {
+  const apiBaseUrl = await getApiBaseUrl()
+  const response = await fetch(`${apiBaseUrl}/conversation-history/${encodeURIComponent(id)}`, { method: "DELETE", headers: createHeaders() })
+  if (!response.ok) throw new Error(await response.text())
 }
 
 async function get<T>(requestPath: string): Promise<T> {

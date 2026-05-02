@@ -19,6 +19,9 @@
 | `POST /documents` | 文書登録 | `FR-001`, `FR-002` |
 | `DELETE /documents/{documentId}` | 文書削除 | `FR-007`, `FR-008` |
 | `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005` |
+| `GET /conversation-history` | 自分の会話履歴一覧 | `FR-010`, `NFR-005` |
+| `POST /conversation-history` | 会話履歴 item 保存 | `FR-010`, `NFR-005` |
+| `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-010`, `NFR-005` |
 | `GET /debug-runs` | debug trace 一覧 | `FR-010`, `NFR-010` |
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
 | `POST /benchmark/query` | 評価実行 | `FR-012`, `FR-019`, `NFR-010` |
@@ -57,6 +60,51 @@
 }
 ```
 
+## `POST /conversation-history`
+
+### Request
+
+```json
+{
+  "schemaVersion": 1,
+  "id": "conversation-20260502-001",
+  "title": "ソフトウェア要求の分類",
+  "updatedAt": "2026-05-02T00:00:00.000Z",
+  "messages": [
+    {
+      "role": "user",
+      "text": "ソフトウェア要求の分類を洗い出して",
+      "createdAt": "2026-05-02T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### Response
+
+```json
+{
+  "schemaVersion": 1,
+  "id": "conversation-20260502-001",
+  "title": "ソフトウェア要求の分類",
+  "updatedAt": "2026-05-02T00:00:00.000Z",
+  "messages": [
+    {
+      "role": "user",
+      "text": "ソフトウェア要求の分類を洗い出して",
+      "createdAt": "2026-05-02T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+### バージョン方針
+
+- `schemaVersion` は会話履歴 item の構造を識別する。
+- 現行の `schemaVersion` は `1` とする。
+- API は `schemaVersion` 未指定の保存要求を v1 として補完する。
+- 将来スキーマを変更する場合は、既存 item の読み取り互換性を維持するか、version ごとの変換を追加する。
+
 ## `POST /benchmark/query`
 
 ### Request
@@ -89,6 +137,7 @@
 ## 認可方針
 
 - local 開発では検証容易性を優先し、設定により認可を緩和できる。
+- `GET /conversation-history`、`POST /conversation-history`、`DELETE /conversation-history/{id}` は認証済み userId に紐づく自分の履歴のみを対象とする。
 - 本番または社内検証環境では `GET /debug-runs`、`GET /debug-runs/{runId}`、`POST /benchmark/query` を認可対象とする。
 - 権限外文書を回答、citation、debug trace の外部応答に含めない。
 
