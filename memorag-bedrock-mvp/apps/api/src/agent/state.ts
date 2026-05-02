@@ -199,6 +199,16 @@ export const RetrievalEvaluationSchema = z.object({
       })
     )
     .optional(),
+  llmJudge: z
+    .object({
+      label: z.enum(["CONFLICT", "NO_CONFLICT", "UNCLEAR"]),
+      confidence: z.number().min(0).max(1).default(0),
+      factIds: z.array(z.string()).default(() => []),
+      supportingChunkIds: z.array(z.string()).default(() => []),
+      contradictionChunkIds: z.array(z.string()).default(() => []),
+      reason: z.string().default("")
+    })
+    .optional(),
   nextAction: SearchActionSchema.default({
     type: "evidence_search",
     query: "",
@@ -313,5 +323,6 @@ export type SearchAction = z.infer<typeof SearchActionSchema>
 export type ActionObservation = z.infer<typeof ActionObservationSchema>
 export type RetrievalEvaluation = z.infer<typeof RetrievalEvaluationSchema>
 export type RetrievalRiskSignal = NonNullable<RetrievalEvaluation["riskSignals"]>[number]
+export type RetrievalLlmJudge = NonNullable<RetrievalEvaluation["llmJudge"]>
 export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
 export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>

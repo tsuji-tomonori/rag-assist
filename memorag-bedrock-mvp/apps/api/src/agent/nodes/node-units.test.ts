@@ -7,7 +7,7 @@ import { answerabilityGate } from "./answerability-gate.js"
 import { createEmbedQueriesNode } from "./embed-queries.js"
 import { finalizeResponse } from "./finalize-response.js"
 import { createGenerateCluesNode } from "./generate-clues.js"
-import { retrievalEvaluator } from "./retrieval-evaluator.js"
+import { createRetrievalEvaluatorNode, retrievalEvaluator } from "./retrieval-evaluator.js"
 import { createRetrieveMemoryNode } from "./retrieve-memory.js"
 import { rerankChunks } from "./rerank-chunks.js"
 import { createSearchEvidenceNode } from "./search-evidence.js"
@@ -459,6 +459,83 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   )
   assert.notEqual(lowScoreTermMatch.retrievalEvaluation?.retrievalQuality, "sufficient")
   assert.deepEqual(lowScoreTermMatch.retrievalEvaluation?.supportedFactIds, [])
+})
+
+test("retrieval evaluator LLM judge handles uncertain value mismatch cases", async () => {
+  const mismatchState = state({
+    question: "現行制度の申請期限は？",
+    retrievedChunks: [
+      {
+        ...chunk,
+        key: "doc-1-chunk-0001",
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "chunk-0001",
+          text: "現行制度の申請期限は翌月5営業日です。"
+        }
+      },
+      {
+        ...chunk,
+        key: "doc-1-chunk-0002",
+        score: 0.88,
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "chunk-0002",
+          text: "現行制度の申請期限は翌月10営業日です。"
+        }
+      }
+    ],
+    searchPlan: {
+      complexity: "simple",
+      intent: "現行制度の申請期限",
+      requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+      actions: [],
+      stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+    }
+  })
+
+  const noConflict = createRetrievalEvaluatorNode({
+    ...createDeps(),
+    textModel: {
+      embed: async () => [1],
+      generate: async () =>
+        JSON.stringify({
+          label: "NO_CONFLICT",
+          confidence: 0.91,
+          factIds: ["current-deadline"],
+          supportingChunkIds: ["doc-1-chunk-0001"],
+          contradictionChunkIds: [],
+          reason: "片方は補足情報であり、回答根拠には翌月5営業日を使える。"
+        })
+    }
+  })
+  const resolved = await noConflict(mismatchState)
+  assert.equal(resolved.retrievalEvaluation?.llmJudge?.label, "NO_CONFLICT")
+  assert.equal(resolved.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(resolved.retrievalEvaluation?.conflictingFactIds, [])
+  assert.equal(resolved.retrievalEvaluation?.nextAction.type, "rerank")
+  assert.equal(resolved.searchPlan?.requiredFacts[0]?.status, "supported")
+
+  const conflict = createRetrievalEvaluatorNode({
+    ...createDeps(),
+    textModel: {
+      embed: async () => [1],
+      generate: async () =>
+        JSON.stringify({
+          label: "CONFLICT",
+          confidence: 0.88,
+          factIds: ["current-deadline"],
+          supportingChunkIds: [],
+          contradictionChunkIds: ["doc-1-chunk-0001", "doc-1-chunk-0002"],
+          reason: "同一 scope で申請期限の値が排他的です。"
+        })
+    }
+  })
+  const judgedConflict = await conflict(mismatchState)
+  assert.equal(judgedConflict.retrievalEvaluation?.llmJudge?.label, "CONFLICT")
+  assert.equal(judgedConflict.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(judgedConflict.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
+  assert.equal(judgedConflict.retrievalEvaluation?.nextAction.type, "evidence_search")
 })
 
 test("traced node records success, warning, model ids, details, and thrown errors", async () => {
