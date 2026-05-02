@@ -201,26 +201,24 @@ export class MemoRagService {
     if (!trace) return undefined
 
     const markdown = formatDebugTraceMarkdown(trace)
-    const fileName = getDebugTraceDownloadFileName(trace.runId)
-    const contentDisposition = `attachment; filename="${fileName}"`
-    const objectKey = `downloads/${fileName}`
+    const downloadMetadata = createDebugTraceDownloadMetadata(trace.runId)
     const s3 = new S3Client({ region: config.region })
     await s3.send(new PutObjectCommand({
       Bucket: config.debugDownloadBucketName,
-      Key: objectKey,
+      Key: downloadMetadata.objectKey,
       Body: markdown,
       ContentType: "text/markdown; charset=utf-8",
-      ContentDisposition: contentDisposition
+      ContentDisposition: downloadMetadata.contentDisposition
     }))
 
     const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
     const url = await getSignedUrl(s3, new GetObjectCommand({
       Bucket: config.debugDownloadBucketName,
-      Key: objectKey,
+      Key: downloadMetadata.objectKey,
       ResponseContentType: "text/markdown; charset=utf-8",
-      ResponseContentDisposition: contentDisposition
+      ResponseContentDisposition: downloadMetadata.contentDisposition
     }), { expiresIn: expiresInSeconds })
-    return { url, expiresInSeconds, objectKey }
+    return { url, expiresInSeconds, objectKey: downloadMetadata.objectKey }
   }
 
   private async createMemoryCards(input: { fileName: string; text: string; modelId?: string }): Promise<MemoryCard[]> {
@@ -268,6 +266,15 @@ function formatCitationMarkdown(citations: Citation[]): string[] {
   ].filter(Boolean) as string[])
 }
 
-function getDebugTraceDownloadFileName(runId: string): string {
-  return `debug-trace-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}.md`
+export function createDebugTraceDownloadMetadata(runId: string): {
+  fileName: string
+  objectKey: string
+  contentDisposition: string
+} {
+  const fileName = `debug-trace-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}.md`
+  return {
+    fileName,
+    objectKey: `downloads/${fileName}`,
+    contentDisposition: `attachment; filename="${fileName}"`
+  }
 }
