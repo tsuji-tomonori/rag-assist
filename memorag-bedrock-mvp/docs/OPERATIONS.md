@@ -85,6 +85,8 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 
 通常利用者に `ANSWER_EDITOR` や `SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。debug trace と benchmark を確認する管理者には `SYSTEM_ADMIN` を付与する。
 
+`.github/workflows/memorag-create-cognito-user.yml` は手動実行者が GitHub Actions 経由で全権限を自己付与しないように、`SYSTEM_ADMIN` / `システム管理者` の指定を拒否する。`SYSTEM_ADMIN` の付与は、GitHub Actions の通常ユーザー作成 workflow とは分離し、AWS 管理権限を持つ運用者が対象者と必要性を確認して実施する。
+
 ## AWSデプロイ前チェック
 
 - Bedrockの利用モデルを対象リージョンで有効化する。
