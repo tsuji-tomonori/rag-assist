@@ -91,9 +91,52 @@ const QueryEmbeddingSchema = z.object({
 })
 
 const SearchBudgetSchema = z.object({
-  maxIterations: z.number().int().min(1).default(3),
   maxReferenceDepth: z.number().int().min(0).default(2),
   remainingCalls: z.number().int().min(0).default(3)
+})
+
+export const RequiredFactSchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  priority: z.number().int().min(1),
+  status: z.enum(["missing", "partially_supported", "supported", "conflicting"]).default("missing"),
+  supportingChunkKeys: z.array(z.string()).default(() => [])
+})
+
+export const SearchActionSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("evidence_search"), query: z.string(), topK: z.number().int().min(1) }),
+  z.object({ type: z.literal("query_rewrite"), strategy: z.enum(["keyword", "hyde", "entity", "section"]), input: z.string() }),
+  z.object({ type: z.literal("expand_context"), chunkKey: z.string(), window: z.number().int().min(1) }),
+  z.object({ type: z.literal("rerank"), objective: z.string() }),
+  z.object({ type: z.literal("finalize_refusal"), reason: z.string() })
+])
+
+const StopCriteriaSchema = z.object({
+  maxIterations: z.number().int().min(1).default(3),
+  minTopScore: z.number().min(-1).max(1).default(0.2),
+  minEvidenceCount: z.number().int().min(1).default(2),
+  maxNoNewEvidenceStreak: z.number().int().min(1).default(2)
+})
+
+export const SearchPlanSchema = z.object({
+  complexity: z.enum(["simple", "multi_hop", "comparison", "procedure", "ambiguous", "out_of_scope"]).default("simple"),
+  intent: z.string().default(""),
+  requiredFacts: z.array(RequiredFactSchema).default(() => []),
+  actions: z.array(SearchActionSchema).default(() => []),
+  stopCriteria: StopCriteriaSchema.default({
+    maxIterations: 3,
+    minTopScore: 0.2,
+    minEvidenceCount: 2,
+    maxNoNewEvidenceStreak: 2
+  })
+})
+
+export const ActionObservationSchema = z.object({
+  action: SearchActionSchema,
+  hitCount: z.number().int().min(0),
+  newEvidenceCount: z.number().int().min(0),
+  topScore: z.number().optional(),
+  summary: z.string()
 })
 
 export const AgentState = new StateSchema({
@@ -115,7 +158,6 @@ export const AgentState = new StateSchema({
   unresolvedReferenceTargets: z.array(ReferenceTargetSchema).default(() => []),
   visitedDocumentIds: z.array(z.string()).default(() => []),
   searchBudget: SearchBudgetSchema.default({
-    maxIterations: 3,
     maxReferenceDepth: 2,
     remainingCalls: 3
   }),
@@ -125,7 +167,19 @@ export const AgentState = new StateSchema({
   clues: z.array(z.string()).default(() => []),
   expandedQueries: z.array(z.string()).default(() => []),
   queryEmbeddings: z.array(QueryEmbeddingSchema).default(() => []),
-  unresolvedReferences: z.array(z.string()).default(() => []),
+  searchPlan: SearchPlanSchema.default({
+    complexity: "simple",
+    intent: "",
+    requiredFacts: [],
+    actions: [],
+    stopCriteria: {
+      maxIterations: 3,
+      minTopScore: 0.2,
+      minEvidenceCount: 2,
+      maxNoNewEvidenceStreak: 2
+    }
+  }),
+  actionHistory: z.array(ActionObservationSchema).default(() => []),
 
   maxIterations: z.number().int().min(1).max(8).default(3),
   newEvidenceCount: z.number().int().min(0).default(0),
@@ -153,5 +207,8 @@ export const AgentState = new StateSchema({
 export type QaAgentState = typeof AgentState.State
 export type QaAgentUpdate = typeof AgentState.Update
 export type AnswerabilityReason = QaAgentState["answerability"]["reason"]
+export type RequiredFact = z.infer<typeof RequiredFactSchema>
+export type SearchAction = z.infer<typeof SearchActionSchema>
+export type ActionObservation = z.infer<typeof ActionObservationSchema>
 export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
 export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>

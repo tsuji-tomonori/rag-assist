@@ -45,6 +45,12 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
       "finalize_response"
     ]
   )
+  const planStep = result.debug?.steps.find((step) => step.label === "plan_search")
+  const actionStep = result.debug?.steps.find((step) => step.label === "execute_search_action")
+  assert.match(planStep?.detail ?? "", /requiredFacts:/)
+  assert.match(planStep?.detail ?? "", /actions:/)
+  assert.match(actionStep?.detail ?? "", /action=evidence_search/)
+  assert.match(actionStep?.detail ?? "", /newEvidenceCount=/)
 })
 
 test("LangGraph debug trace keeps the full finalize response detail", async () => {
