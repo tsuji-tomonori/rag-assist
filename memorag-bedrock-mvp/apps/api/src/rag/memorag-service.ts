@@ -220,14 +220,14 @@ export class MemoRagService {
     return normalizeDebugTrace(JSON.parse(await this.deps.objectStore.getText(key)))
   }
 
-  async chat(input: ChatInput): Promise<{
+  async chat(input: ChatInput, user?: AppUser): Promise<{
     answer: string
     isAnswerable: boolean
     citations: Citation[]
     retrieved: Citation[]
     debug?: DebugTrace
   }> {
-    return runQaAgent(this.deps, input)
+    return runQaAgent(this.deps, input, user)
   }
 
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {

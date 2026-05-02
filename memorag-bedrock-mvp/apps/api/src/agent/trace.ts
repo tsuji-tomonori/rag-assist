@@ -233,6 +233,7 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
     "newEvidenceCount",
     "noNewEvidenceStreak",
     "searchDecision",
+    "retrievalDiagnostics",
     "answerability",
     "sufficientContext",
     "answerSupport",
@@ -321,7 +322,28 @@ function formatActionObservationDetail(actionHistory: NonNullable<QaAgentUpdate[
   const latest = actionHistory.at(-1)
   if (!latest) return "なし"
   const topScore = latest.topScore === undefined ? "" : ` topScore=${latest.topScore.toFixed(4)}`
-  return [`action=${formatSearchAction(latest.action)}`, `hitCount=${latest.hitCount}`, `newEvidenceCount=${latest.newEvidenceCount}${topScore}`, latest.summary].join("\n")
+  return [
+    `action=${formatSearchAction(latest.action)}`,
+    `hitCount=${latest.hitCount}`,
+    `newEvidenceCount=${latest.newEvidenceCount}${topScore}`,
+    latest.summary,
+    ...formatRetrievalDiagnostics(latest.retrievalDiagnostics)
+  ].join("\n")
+}
+
+function formatRetrievalDiagnostics(diagnostics: NonNullable<QaAgentUpdate["actionHistory"]>[number]["retrievalDiagnostics"]): string[] {
+  if (!diagnostics) return []
+  return [
+    "",
+    "retrievalDiagnostics:",
+    `queries=${diagnostics.queryCount}`,
+    `indexVersions=${diagnostics.indexVersions.join(",") || "none"}`,
+    `aliasVersions=${diagnostics.aliasVersions.join(",") || "none"}`,
+    `lexicalCount=${diagnostics.lexicalCount}`,
+    `semanticCount=${diagnostics.semanticCount}`,
+    `fusedCount=${diagnostics.fusedCount}`,
+    `sources=lexical:${diagnostics.sourceCounts.lexical}, semantic:${diagnostics.sourceCounts.semantic}, hybrid:${diagnostics.sourceCounts.hybrid}`
+  ]
 }
 
 function formatSearchAction(action: SearchAction): string {
