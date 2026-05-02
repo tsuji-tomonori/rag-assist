@@ -57,6 +57,13 @@ type AppView = "chat" | "assignee" | "history"
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
+type ClientPermission = "answer:edit" | "chat:admin:read_all"
+
+const clientRolePermissions: Record<string, ClientPermission[]> = {
+  ANSWER_EDITOR: ["answer:edit"],
+  SYSTEM_ADMIN: ["answer:edit", "chat:admin:read_all"]
+}
+
 export default function App() {
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredAuthSession())
   const [documents, setDocuments] = useState<DocumentManifest[]>([])
@@ -102,15 +109,21 @@ export default function App() {
   const selectedRunValue = pendingDebugQuestion ? "__processing__" : selectedTrace?.runId ?? ""
   const visibleMessages = messages
   const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
+  const canAnswerQuestions = authSession ? hasClientPermission(authSession, "answer:edit") : false
+  const canReadDebugRuns = authSession ? hasClientPermission(authSession, "chat:admin:read_all") : false
 
   useEffect(() => {
     if (!authSession) return
     refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
-    refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
-    refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
+    if (canReadDebugRuns) refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
+    if (canAnswerQuestions) refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
     refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authSession])
+  }, [authSession, canAnswerQuestions, canReadDebugRuns])
+
+  useEffect(() => {
+    if (activeView === "assignee" && !canAnswerQuestions) setActiveView("chat")
+  }, [activeView, canAnswerQuestions])
 
   useEffect(() => {
     if (messages.length === 0) return
@@ -287,11 +300,13 @@ export default function App() {
     try {
       const questionTicket = await createQuestion(input)
       setMessages((prev) => prev.map((item, index) => (index === messageIndex ? { ...item, questionTicket } : item)))
-      await refreshQuestions()
       setQuestions((prev) =>
         prev.some((questionItem) => questionItem.questionId === questionTicket.questionId) ? prev : [questionTicket, ...prev]
       )
       setSelectedQuestionId(questionTicket.questionId)
+      if (canAnswerQuestions) {
+        await refreshQuestions().catch((err) => console.warn("Failed to refresh questions after escalation", err))
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -342,10 +357,12 @@ export default function App() {
             <Icon name="chat" />
             <span>チャット</span>
           </button>
-          <button className={`rail-item ${activeView === "assignee" ? "active" : ""}`} type="button" title="担当者対応" onClick={() => setActiveView("assignee")}>
-            <Icon name="inbox" />
-            <span>担当者対応</span>
-          </button>
+          {canAnswerQuestions && (
+            <button className={`rail-item ${activeView === "assignee" ? "active" : ""}`} type="button" title="担当者対応" onClick={() => setActiveView("assignee")}>
+              <Icon name="inbox" />
+              <span>担当者対応</span>
+            </button>
+          )}
           <button className={`rail-item ${activeView === "history" ? "active" : ""}`} type="button" title="履歴" onClick={() => setActiveView("history")}>
             <Icon name="clock" />
             <span>履歴</span>
@@ -547,7 +564,7 @@ export default function App() {
             />
           )}
         </section>
-        ) : activeView === "assignee" ? (
+        ) : activeView === "assignee" && canAnswerQuestions ? (
           <AssigneeWorkspace
             questions={questions}
             selectedQuestionId={selectedQuestionId}
@@ -581,6 +598,10 @@ export default function App() {
       </section>
     </main>
   )
+}
+
+function hasClientPermission(session: AuthSession, permission: ClientPermission): boolean {
+  return (session.cognitoGroups ?? []).some((role) => clientRolePermissions[role]?.includes(permission))
 }
 
 function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[]): ConversationHistoryItem {

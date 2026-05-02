@@ -12,3 +12,9 @@ test("CHAT_USER は許可外権限で403になる", () => {
   const user = { userId: "u2", cognitoGroups: ["CHAT_USER"] }
   assert.throws(() => requirePermission(user, "access:role:assign"))
 })
+
+test("ANSWER_EDITOR は担当者質問の回答権限を通過する", () => {
+  const user = { userId: "u3", cognitoGroups: ["ANSWER_EDITOR"] }
+  assert.doesNotThrow(() => requirePermission(user, "answer:edit"))
+  assert.throws(() => requirePermission(user, "user:read"))
+})

@@ -10,8 +10,14 @@ function response(body: unknown, ok = true) {
   }
 }
 
+function jwtWithGroups(groups: string[]) {
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url")
+  return `${encode({ alg: "none", typ: "JWT" })}.${encode({ sub: "user-1", "cognito:groups": groups })}.signature`
+}
+
 describe("auth client", () => {
   it("signs in with Cognito and attaches the ID token to API requests", async () => {
+    const idToken = jwtWithGroups(["CHAT_USER", "ANSWER_EDITOR"])
     const fetchMock = vi.fn((url: RequestInfo | URL, _init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") {
@@ -28,7 +34,7 @@ describe("auth client", () => {
         return Promise.resolve(
           response({
             AuthenticationResult: {
-              IdToken: "id-token",
+              IdToken: idToken,
               AccessToken: "access-token",
               RefreshToken: "refresh-token",
               ExpiresIn: 3600
@@ -43,7 +49,8 @@ describe("auth client", () => {
 
     await expect(signIn({ email: "tester@example.com", password: "Password123!", remember: true })).resolves.toMatchObject({
       email: "tester@example.com",
-      idToken: "id-token"
+      idToken,
+      cognitoGroups: ["CHAT_USER", "ANSWER_EDITOR"]
     })
     await expect(listDocuments()).resolves.toEqual([])
 
@@ -55,8 +62,9 @@ describe("auth client", () => {
         body: expect.stringContaining("\"PASSWORD\":\"Password123!\"")
       })
     )
-    expect(fetchMock).toHaveBeenCalledWith("http://api.test/documents", { headers: { Authorization: "Bearer id-token" } })
-    expect(getStoredAuthSession()?.idToken).toBe("id-token")
+    expect(fetchMock).toHaveBeenCalledWith("http://api.test/documents", { headers: { Authorization: `Bearer ${idToken}` } })
+    expect(getStoredAuthSession()?.idToken).toBe(idToken)
+    expect(getStoredAuthSession()?.cognitoGroups).toEqual(["CHAT_USER", "ANSWER_EDITOR"])
   })
 
   it("rejects bad Cognito credentials and does not create a session", async () => {
