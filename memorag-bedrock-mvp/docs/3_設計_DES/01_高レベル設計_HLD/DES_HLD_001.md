@@ -31,7 +31,7 @@
 | Memory Builder | source text、document metadata | memory record、evidence chunk | `FR-002`, `FR-020` |
 | Query Orchestrator | question、settings、user context | answer/refusal、citations、metadata | `FR-003`, `FR-005` |
 | Retriever | query/clue、filters | candidate chunks | `FR-016`, `FR-018`, `TC-001` |
-| Retrieval Evaluator | candidates、required facts | next action、reason | `FR-016`, `FR-017` |
+| Retrieval Evaluator | candidates、required facts、action history | retrievalQuality、missingFactIds、nextAction、reason | `FR-016`, `FR-017` |
 | Answerability Gate | question、evidence | answerability label、reason | `FR-014` |
 | Answer Generator | question、supported evidence | grounded answer | `FR-003`, `FR-004` |
 | Citation Validator | answer、candidate chunks | 引用IDの妥当性、citations | `FR-004`, `FR-005` |
@@ -63,7 +63,7 @@
 2. Query Orchestrator は質問を正規化し、clue を生成する。
 3. Retriever は memory/evidence index から候補を取得する。
 4. RRF Rank Fusion は複数候補を統合する。
-5. Retrieval Evaluator は十分な候補があるかを判断し、再検索、query rewrite、拒否のいずれかを選ぶ。
+5. Retrieval Evaluator は必要事実が検索済み evidence で満たされているかを判断し、追加 evidence search、rerank、拒否のいずれかを選ぶ。
 6. Answerability Gate は evidence だけで回答可能かを判定する。
 7. Answer Generator は回答可能な場合だけ回答を生成する。
 8. Citation Validator は回答が実在する evidence chunk を引用しているかを検証する。

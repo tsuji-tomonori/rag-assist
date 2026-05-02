@@ -113,6 +113,9 @@ function inferModelId(label: string, state: QaAgentState): string | undefined {
 function summarizeUpdate(label: string, update: QaAgentUpdate): string {
   if (update.sufficientContext) return `sufficient_context=${update.sufficientContext.label}, missing=${update.sufficientContext.missingFacts?.length ?? 0}`
   if (update.answerSupport) return `answer_support=${update.answerSupport.supported ? "supported" : "unsupported"}, unsupported=${update.answerSupport.unsupportedSentences.length}`
+  if (update.retrievalEvaluation) {
+    return `retrieval=${update.retrievalEvaluation.retrievalQuality}, missing=${update.retrievalEvaluation.missingFactIds.length}, next=${update.retrievalEvaluation.nextAction.type}`
+  }
   if (update.searchPlan) return `plan actions=${update.searchPlan.actions?.length ?? 0}, facts=${update.searchPlan.requiredFacts?.length ?? 0}`
   if (update.actionHistory) {
     const latest = update.actionHistory.at(-1)
@@ -133,6 +136,7 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
 function detailUpdate(update: QaAgentUpdate): string | undefined {
   if (update.sufficientContext) return formatSufficientContextDetail(update.sufficientContext)
   if (update.answerSupport) return formatAnswerSupportDetail(update.answerSupport)
+  if (update.retrievalEvaluation) return formatRetrievalEvaluationDetail(update.retrievalEvaluation)
   if (update.searchPlan) return formatSearchPlanDetail(update.searchPlan)
   if (update.actionHistory) return formatActionObservationDetail(update.actionHistory)
   if (update.searchDecision) return `decision=${update.searchDecision}`
@@ -195,6 +199,23 @@ function formatAnswerSupportDetail(judgement: NonNullable<QaAgentUpdate["answerS
   ].join("\n")
 }
 
+function formatRetrievalEvaluationDetail(evaluation: NonNullable<QaAgentUpdate["retrievalEvaluation"]>): string {
+  return [
+    `retrievalQuality=${evaluation.retrievalQuality}`,
+    `nextAction=${formatSearchAction(evaluation.nextAction)}`,
+    `reason=${evaluation.reason}`,
+    "",
+    "supportedFactIds:",
+    ...formatList(evaluation.supportedFactIds ?? []),
+    "",
+    "missingFactIds:",
+    ...formatList(evaluation.missingFactIds ?? []),
+    "",
+    "conflictingFactIds:",
+    ...formatList(evaluation.conflictingFactIds ?? [])
+  ].join("\n")
+}
+
 function formatList(items: string[]): string[] {
   return items.length > 0 ? items.map((item) => `- ${item}`) : ["なし"]
 }
@@ -207,6 +228,7 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
     "expandedQueries",
     "searchPlan",
     "actionHistory",
+    "retrievalEvaluation",
     "iteration",
     "newEvidenceCount",
     "noNewEvidenceStreak",
