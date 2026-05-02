@@ -1,4 +1,3 @@
-import { ReducedValue, StateSchema } from "@langchain/langgraph"
 import { z } from "zod"
 
 export const NO_ANSWER = "資料からは回答できません。"
@@ -151,7 +150,7 @@ export const ActionObservationSchema = z.object({
   summary: z.string()
 })
 
-export const AgentState = new StateSchema({
+export const AgentStateSchema = z.object({
   runId: z.string(),
   question: z.string(),
   modelId: z.string(),
@@ -220,14 +219,13 @@ export const AgentState = new StateSchema({
   answer: z.string().optional(),
   citations: z.array(CitationSchema).default(() => []),
 
-  trace: new ReducedValue(z.array(DebugStepSchema).default(() => []), {
-    inputSchema: DebugStepSchema,
-    reducer: (current, next) => [...current, next]
-  })
+  trace: z.array(DebugStepSchema).default(() => [])
 })
 
-export type QaAgentState = typeof AgentState.State
-export type QaAgentUpdate = typeof AgentState.Update
+export type QaAgentState = z.infer<typeof AgentStateSchema>
+export type QaAgentUpdate = Partial<Omit<QaAgentState, "trace">> & {
+  trace?: z.infer<typeof DebugStepSchema> | Array<z.infer<typeof DebugStepSchema>>
+}
 export type AnswerabilityReason = QaAgentState["answerability"]["reason"]
 export type SufficientContextJudgement = z.infer<typeof SufficientContextJudgementSchema>
 export type RequiredFact = z.infer<typeof RequiredFactSchema>

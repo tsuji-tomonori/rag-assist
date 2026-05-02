@@ -240,13 +240,7 @@ function formatAnswerabilityDetail(answerability: NonNullable<QaAgentUpdate["ans
 }
 
 function formatSearchPlanDetail(searchPlan: NonNullable<QaAgentUpdate["searchPlan"]>): string {
-  const stopCriteria = {
-    maxIterations: 3,
-    minTopScore: 0.2,
-    minEvidenceCount: 2,
-    maxNoNewEvidenceStreak: 2,
-    ...searchPlan.stopCriteria
-  }
+  const stopCriteria = searchPlan.stopCriteria
   const requiredFacts = searchPlan.requiredFacts ?? []
   const actions = searchPlan.actions ?? []
   const lines = [

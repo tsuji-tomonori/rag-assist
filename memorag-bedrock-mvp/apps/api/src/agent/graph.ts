@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto"
-import { END, START, StateGraph } from "@langchain/langgraph"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
@@ -16,7 +15,7 @@ import { createRetrieveMemoryNode } from "./nodes/retrieve-memory.js"
 import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
-import { AgentState, NO_ANSWER, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
+import { NO_ANSWER, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
 import { clamp, toCitation } from "./utils.js"
@@ -114,46 +113,71 @@ export function createQaAgentGraph(deps: Dependencies) {
     return state.answerability.isAnswerable ? "answer" : "refuse"
   }
 
-  return new StateGraph(AgentState)
-    .addNode("analyze_input", tracedNode("analyze_input", analyzeInput))
-    .addNode("normalize_query", tracedNode("normalize_query", normalizeQuery))
-    .addNode("retrieve_memory", tracedNode("retrieve_memory", createRetrieveMemoryNode(deps)))
-    .addNode("generate_clues", tracedNode("generate_clues", createGenerateCluesNode(deps)))
-    .addNode("plan_search", tracedNode("plan_search", planSearch))
-    .addNode("execute_search_action", tracedNode("execute_search_action", executeSearchAction))
-    .addNode("evaluate_search_progress", tracedNode("evaluate_search_progress", evaluateSearchProgress))
-    .addNode("rerank_chunks", tracedNode("rerank_chunks", rerankChunks))
-    .addNode("answerability_gate", tracedNode("answerability_gate", answerabilityGate))
-    .addNode("sufficient_context_gate", tracedNode("sufficient_context_gate", sufficientContextGate))
-    .addNode("generate_answer", tracedNode("generate_answer", createGenerateAnswerNode(deps)))
-    .addNode("validate_citations", tracedNode("validate_citations", validateCitations))
-    .addNode("finalize_response", tracedNode("finalize_response", finalizeResponse))
-    .addNode("finalize_refusal", tracedNode("finalize_refusal", finalizeRefusal))
-    .addEdge(START, "analyze_input")
-    .addEdge("analyze_input", "normalize_query")
-    .addEdge("normalize_query", "retrieve_memory")
-    .addEdge("retrieve_memory", "generate_clues")
-    .addEdge("generate_clues", "plan_search")
-    .addEdge("plan_search", "execute_search_action")
-    .addEdge("execute_search_action", "evaluate_search_progress")
-    .addConditionalEdges("evaluate_search_progress", routeAfterSearchEvaluation, {
-      continue_search: "plan_search",
-      done: "rerank_chunks"
-    })
-    .addEdge("rerank_chunks", "answerability_gate")
-    .addConditionalEdges("answerability_gate", routeAfterGate, {
-      judge_context: "sufficient_context_gate",
-      refuse: "finalize_refusal"
-    })
-    .addConditionalEdges("sufficient_context_gate", routeAfterSufficientContextGate, {
-      answer: "generate_answer",
-      refuse: "finalize_refusal"
-    })
-    .addEdge("generate_answer", "validate_citations")
-    .addEdge("validate_citations", "finalize_response")
-    .addEdge("finalize_response", END)
-    .addEdge("finalize_refusal", END)
-    .compile()
+  const nodes = {
+    analyzeInput: tracedNode("analyze_input", analyzeInput),
+    normalizeQuery: tracedNode("normalize_query", normalizeQuery),
+    retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps)),
+    generateClues: tracedNode("generate_clues", createGenerateCluesNode(deps)),
+    planSearch: tracedNode("plan_search", planSearch),
+    executeSearchAction: tracedNode("execute_search_action", executeSearchAction),
+    evaluateSearchProgress: tracedNode("evaluate_search_progress", evaluateSearchProgress),
+    rerankChunks: tracedNode("rerank_chunks", rerankChunks),
+    answerabilityGate: tracedNode("answerability_gate", answerabilityGate),
+    sufficientContextGate: tracedNode("sufficient_context_gate", sufficientContextGate),
+    generateAnswer: tracedNode("generate_answer", createGenerateAnswerNode(deps)),
+    validateCitations: tracedNode("validate_citations", validateCitations),
+    finalizeResponse: tracedNode("finalize_response", finalizeResponse),
+    finalizeRefusal: tracedNode("finalize_refusal", finalizeRefusal)
+  }
+
+  return {
+    async invoke(initialState: QaAgentState): Promise<QaAgentState> {
+      let state = initialState
+
+      state = await applyNode(state, nodes.analyzeInput)
+      state = await applyNode(state, nodes.normalizeQuery)
+      state = await applyNode(state, nodes.retrieveMemory)
+      state = await applyNode(state, nodes.generateClues)
+
+      do {
+        state = await applyNode(state, nodes.planSearch)
+        state = await applyNode(state, nodes.executeSearchAction)
+        state = await applyNode(state, nodes.evaluateSearchProgress)
+      } while (routeAfterSearchEvaluation(state) === "continue_search")
+
+      state = await applyNode(state, nodes.rerankChunks)
+      state = await applyNode(state, nodes.answerabilityGate)
+
+      if (routeAfterGate(state) === "refuse") {
+        return applyNode(state, nodes.finalizeRefusal)
+      }
+
+      state = await applyNode(state, nodes.sufficientContextGate)
+      if (routeAfterSufficientContextGate(state) === "refuse") {
+        return applyNode(state, nodes.finalizeRefusal)
+      }
+
+      state = await applyNode(state, nodes.generateAnswer)
+      state = await applyNode(state, nodes.validateCitations)
+      return applyNode(state, nodes.finalizeResponse)
+    }
+  }
+}
+
+type QaAgentNode = (state: QaAgentState) => Promise<QaAgentUpdate>
+
+async function applyNode(state: QaAgentState, node: QaAgentNode): Promise<QaAgentState> {
+  return applyQaAgentUpdate(state, await node(state))
+}
+
+export function applyQaAgentUpdate(state: QaAgentState, update: QaAgentUpdate): QaAgentState {
+  const { trace, ...rest } = update
+  const traceUpdates = trace === undefined ? [] : Array.isArray(trace) ? trace : [trace]
+  return {
+    ...state,
+    ...rest,
+    trace: [...state.trace, ...traceUpdates]
+  }
 }
 
 function extractRequiredFacts(question: string, clues: string[]): RequiredFact[] {
@@ -259,7 +283,8 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
       supportingChunkIds: [],
       reason: ""
     },
-    citations: []
+    citations: [],
+    trace: []
   })) as QaAgentState
 
   const answer = state.answer ?? NO_ANSWER

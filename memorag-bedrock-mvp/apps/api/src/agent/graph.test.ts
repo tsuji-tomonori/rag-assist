@@ -10,8 +10,11 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
+import { applyQaAgentUpdate } from "./graph.js"
+import type { QaAgentState } from "./state.js"
+import type { DebugStep } from "../types.js"
 
-test("LangGraph MemoRAG workflow answers from selected evidence and records fixed trace steps", async () => {
+test("fixed MemoRAG workflow answers from selected evidence and records fixed trace steps", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   await service.ingest({
@@ -58,7 +61,107 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
   assert.match(sufficientContextStep?.detail ?? "", /supportingChunkIds:/)
 })
 
-test("LangGraph debug trace keeps the full finalize response detail", async () => {
+test("fixed workflow executes nodes in the declared order", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "remote-work-policy.txt",
+    text: "在宅勤務手当は、月10日以上在宅勤務を実施した従業員に月額5,000円を支給する。申請期限は翌月5営業日まで。"
+  })
+
+  const result = await service.chat({
+    question: "在宅勤務手当の申請期限はいつですか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.deepEqual(
+    result.debug?.steps.map((step) => step.label),
+    [
+      "analyze_input",
+      "normalize_query",
+      "retrieve_memory",
+      "generate_clues",
+      "plan_search",
+      "execute_search_action",
+      "evaluate_search_progress",
+      "rerank_chunks",
+      "answerability_gate",
+      "sufficient_context_gate",
+      "generate_answer",
+      "validate_citations",
+      "finalize_response"
+    ]
+  )
+})
+
+test("fixed workflow branches on evaluate_search_progress decisions", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "benefit.txt",
+    text: "在宅勤務手当は月額5,000円。"
+  })
+
+  const result = await service.chat({
+    question: "在宅勤務手当の申請期限はいつですか？",
+    includeDebug: true,
+    minScore: 0.99,
+    maxIterations: 2
+  })
+
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(labels.filter((label) => label === "plan_search").length, 2)
+  assert.equal(labels.filter((label) => label === "execute_search_action").length, 2)
+  assert.equal(labels.filter((label) => label === "evaluate_search_progress").length, 2)
+  assert.ok(labels.indexOf("evaluate_search_progress") < labels.indexOf("rerank_chunks"))
+  assert.equal(labels.at(-1), "finalize_refusal")
+
+  const evaluationSteps = result.debug?.steps.filter((step) => step.label === "evaluate_search_progress") ?? []
+  assert.deepEqual(evaluationSteps.map((step) => step.output?.searchDecision), ["continue_search", "done"])
+})
+
+test("fixed workflow merges node updates into state and appends trace entries", () => {
+  const initial = state({
+    normalizedQuery: "old query",
+    iteration: 1,
+    retrievedChunks: [],
+    trace: [debugStep(1, "analyze_input")]
+  })
+
+  const next = applyQaAgentUpdate(initial, {
+    normalizedQuery: "new query",
+    iteration: 2,
+    searchDecision: "done",
+    trace: debugStep(2, "normalize_query")
+  })
+
+  assert.equal(next.question, initial.question)
+  assert.equal(next.normalizedQuery, "new query")
+  assert.equal(next.iteration, 2)
+  assert.equal(next.searchDecision, "done")
+  assert.deepEqual(next.retrievedChunks, [])
+  assert.deepEqual(
+    next.trace.map((step) => step.label),
+    ["analyze_input", "normalize_query"]
+  )
+})
+
+test("fixed workflow appends multiple trace entries without replacing existing trace", () => {
+  const initial = state({ trace: [debugStep(1, "analyze_input")] })
+
+  const next = applyQaAgentUpdate(initial, {
+    trace: [debugStep(2, "normalize_query"), debugStep(3, "retrieve_memory")]
+  })
+
+  assert.deepEqual(
+    next.trace.map((step) => step.label),
+    ["analyze_input", "normalize_query", "retrieve_memory"]
+  )
+})
+
+test("fixed workflow debug trace keeps the full finalize response detail", async () => {
   const deps = await createTestDeps()
   const baseTextModel = deps.textModel
   const longAnswer = `在宅勤務手当の申請期限は翌月5営業日までです。${"詳細説明。".repeat(220)}END_OF_FINALIZE_RESPONSE`
@@ -91,7 +194,7 @@ test("LangGraph debug trace keeps the full finalize response detail", async () =
   assert.deepEqual(finalizeStep?.output, { answer: longAnswer })
 })
 
-test("LangGraph MemoRAG workflow refuses before answer generation when evidence is missing", async () => {
+test("fixed MemoRAG workflow refuses before answer generation when evidence is missing", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   const result = await service.chat({
@@ -113,7 +216,7 @@ test("LangGraph MemoRAG workflow refuses before answer generation when evidence 
   })
 })
 
-test("LangGraph workflow refuses when sufficient context judge returns partial", async () => {
+test("fixed workflow refuses when sufficient context judge returns partial", async () => {
   const deps = await createTestDeps()
   const baseTextModel = deps.textModel
   deps.textModel = {
@@ -169,7 +272,7 @@ async function createTestDeps(): Promise<Dependencies> {
 }
 
 
-test("LangGraph search cycle loops until maxIterations when retrieval score is too low", async () => {
+test("fixed workflow search cycle loops until maxIterations when retrieval score is too low", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   await service.ingest({
@@ -200,7 +303,7 @@ test("LangGraph search cycle loops until maxIterations when retrieval score is t
   assert.match(actionSteps[1]?.detail ?? "", /検索で1件取得し、新規根拠は0件でした。/)
 })
 
-test("LangGraph search cycle stops after two consecutive no-new-evidence iterations", async () => {
+test("fixed workflow search cycle stops after two consecutive no-new-evidence iterations", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   const result = await service.chat({
@@ -216,7 +319,7 @@ test("LangGraph search cycle stops after two consecutive no-new-evidence iterati
   assert.equal(labels.at(-1), "finalize_refusal")
 })
 
-test("LangGraph search plan trace records complexity, facts, actions, and stop criteria from input", async () => {
+test("fixed workflow search plan trace records complexity, facts, actions, and stop criteria from input", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   await service.ingest({
@@ -242,3 +345,81 @@ test("LangGraph search plan trace records complexity, facts, actions, and stop c
   assert.match(planStep?.detail ?? "", /- fact-1 priority=1 status=missing: 経費精算の申請手順と期限は？/)
   assert.match(planStep?.detail ?? "", /- evidence_search query="経費精算の申請手順と期限は" topK=3/)
 })
+
+function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
+  return {
+    runId: "run-test",
+    question: "question",
+    modelId: "model",
+    embeddingModelId: "embed",
+    clueModelId: "clue",
+    useMemory: true,
+    debug: true,
+    topK: 3,
+    memoryTopK: 2,
+    minScore: 0.2,
+    strictGrounded: true,
+    iteration: 0,
+    referenceQueue: [],
+    resolvedReferences: [],
+    unresolvedReferenceTargets: [],
+    visitedDocumentIds: [],
+    searchBudget: {
+      maxReferenceDepth: 2,
+      remainingCalls: 3
+    },
+    memoryCards: [],
+    clues: [],
+    expandedQueries: [],
+    queryEmbeddings: [],
+    searchPlan: {
+      complexity: "simple",
+      intent: "question",
+      requiredFacts: [],
+      actions: [],
+      stopCriteria: {
+        maxIterations: 3,
+        minTopScore: 0.2,
+        minEvidenceCount: 2,
+        maxNoNewEvidenceStreak: 2
+      }
+    },
+    actionHistory: [],
+    maxIterations: 3,
+    newEvidenceCount: 0,
+    noNewEvidenceStreak: 0,
+    searchDecision: "continue_search",
+    retrievedChunks: [],
+    selectedChunks: [],
+    answerability: {
+      isAnswerable: false,
+      reason: "not_checked",
+      confidence: 0
+    },
+    sufficientContext: {
+      label: "UNANSWERABLE",
+      confidence: 0,
+      requiredFacts: [],
+      supportedFacts: [],
+      missingFacts: [],
+      conflictingFacts: [],
+      supportingChunkIds: [],
+      reason: ""
+    },
+    citations: [],
+    trace: [],
+    ...overrides
+  }
+}
+
+function debugStep(id: number, label: string): DebugStep {
+  return {
+    id,
+    label,
+    status: "success",
+    latencyMs: 0,
+    summary: `${label} completed`,
+    startedAt: "2026-05-02T00:00:00.000Z",
+    completedAt: "2026-05-02T00:00:00.000Z"
+  }
+}
