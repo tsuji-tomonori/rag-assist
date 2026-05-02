@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import App from "./App.js"
@@ -249,14 +249,16 @@ describe("App document management", () => {
     expect(screen.queryByTitle("共有")).not.toBeInTheDocument()
   })
 
-  it("disables delete until a concrete document is selected", async () => {
+  it("routes document operations to the documents workspace", async () => {
     mockAppFetch()
     await renderAuthenticatedApp()
 
-    const deleteButton = await screen.findByTitle("削除する資料を選択")
-    expect(deleteButton).toBeDisabled()
+    await screen.findByRole("option", { name: "requirements.md" })
+    expect(screen.queryByTitle("requirements.mdを削除")).not.toBeInTheDocument()
 
-    await selectDocument("doc-1")
+    await userEvent.click(screen.getByTitle("ドキュメント"))
+    expect(await screen.findByLabelText("ドキュメント管理")).toBeInTheDocument()
+    expect(screen.getByText("登録文書")).toBeInTheDocument()
     expect(screen.getByTitle("requirements.mdを削除")).toBeEnabled()
   })
 
@@ -265,7 +267,7 @@ describe("App document management", () => {
     const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true)
     await renderAuthenticatedApp()
 
-    await selectDocument("doc-1")
+    await userEvent.click(await screen.findByTitle("ドキュメント"))
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
     await waitFor(() =>
@@ -275,7 +277,6 @@ describe("App document management", () => {
       )
     )
     expect(confirmMock).toHaveBeenCalledWith("「requirements.md」を削除します。元資料、manifest、検索ベクトルが削除されます。")
-    await waitFor(() => expect(screen.getByLabelText("ドキュメント")).toHaveValue("all"))
   })
 
   it("does not call DELETE when deletion is cancelled", async () => {
@@ -283,8 +284,7 @@ describe("App document management", () => {
     vi.spyOn(window, "confirm").mockReturnValue(false)
     await renderAuthenticatedApp()
 
-    await screen.findByRole("option", { name: "requirements.md" })
-    await selectDocument("doc-1")
+    await userEvent.click(await screen.findByTitle("ドキュメント"))
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
     expect(
@@ -306,10 +306,26 @@ describe("App document management", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true)
     await renderAuthenticatedApp()
 
-    await selectDocument("doc-1")
+    await userEvent.click(await screen.findByTitle("ドキュメント"))
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
     expect(await screen.findByText("delete failed")).toBeInTheDocument()
+  })
+
+  it("uploads documents from the documents workspace", async () => {
+    const fetchMock = mockAppFetch()
+    await renderAuthenticatedApp()
+
+    await userEvent.click(await screen.findByTitle("ドキュメント"))
+    const input = screen.getByLabelText("文書アップロード").querySelector<HTMLInputElement>('input[type="file"]')
+    await userEvent.upload(input as HTMLInputElement, new File(["管理資料"], "admin-upload.txt", { type: "text/plain" }))
+    await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/documents") && (init as RequestInit | undefined)?.method === "POST")
+      ).toBe(true)
+    )
   })
 
   it("resets a selected document when refresh no longer returns it", async () => {
@@ -723,10 +739,41 @@ describe("App chat and upload flow", () => {
     vi.stubGlobal("fetch", fetchMock)
     render(<App />)
 
-    expect(await screen.findByTitle("管理者設定")).toBeInTheDocument()
+    await userEvent.click(await screen.findByTitle("管理者設定"))
+    expect(await screen.findByLabelText("管理者設定")).toBeInTheDocument()
+    expect(screen.getByText("アクセス管理")).toBeInTheDocument()
+    expect(screen.getByText("Phase 2")).toBeInTheDocument()
     expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
+  })
+
+  it("connects the admin overview to Phase 1 workspaces", async () => {
+    mockAppFetch()
+    await renderAuthenticatedApp()
+
+    await userEvent.click(await screen.findByTitle("管理者設定"))
+    const adminWorkspace = await screen.findByLabelText("管理者設定")
+    expect(within(adminWorkspace).getByText("ドキュメント管理")).toBeInTheDocument()
+    expect(within(adminWorkspace).getByRole("button", { name: /担当者対応/ })).toBeInTheDocument()
+    expect(within(adminWorkspace).getByRole("button", { name: /デバッグ \/ 評価/ })).toBeInTheDocument()
+    expect(within(adminWorkspace).getByRole("button", { name: /性能テスト/ })).toBeInTheDocument()
+
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: /ドキュメント管理/ }))
+    expect(await screen.findByLabelText("ドキュメント管理")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByTitle("管理者設定へ戻る"))
+    await userEvent.click(within(await screen.findByLabelText("管理者設定")).getByRole("button", { name: /担当者対応/ }))
+    expect(await screen.findByLabelText("担当者対応")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByTitle("管理者設定"))
+    await userEvent.click(within(await screen.findByLabelText("管理者設定")).getByRole("button", { name: /デバッグ \/ 評価/ }))
+    expect(await screen.findByRole("checkbox")).toBeChecked()
+    expect(await screen.findByLabelText("デバッグパネル")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByTitle("管理者設定"))
+    await userEvent.click(within(await screen.findByLabelText("管理者設定")).getByRole("button", { name: /性能テスト/ }))
+    expect(await screen.findByLabelText("性能テスト")).toBeInTheDocument()
   })
 
   it("renders empty and preloaded assignee workspaces", async () => {
