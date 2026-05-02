@@ -17,6 +17,7 @@ import type { ConversationHistoryStore } from "./adapters/conversation-history-s
 import { DynamoDbBenchmarkRunStore } from "./adapters/dynamodb-benchmark-run-store.js"
 import { LocalBenchmarkRunStore } from "./adapters/local-benchmark-run-store.js"
 import type { BenchmarkRunStore } from "./adapters/benchmark-run-store.js"
+import { AliasStore } from "./adapters/alias-store.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
@@ -26,6 +27,7 @@ export type Dependencies = {
   questionStore: QuestionStore
   conversationHistoryStore: ConversationHistoryStore
   benchmarkRunStore: BenchmarkRunStore
+  aliasStore: AliasStore
 }
 
 let cached: Dependencies | undefined
@@ -55,7 +57,8 @@ export function createDependencies(): Dependencies {
   const benchmarkRunStore = config.useLocalBenchmarkRunStore
     ? new LocalBenchmarkRunStore(config.localDataDir)
     : new DynamoDbBenchmarkRunStore(config.benchmarkRunsTableName)
+  const aliasStore = new AliasStore(objectStore)
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, aliasStore }
   return cached
 }

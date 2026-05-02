@@ -335,6 +335,156 @@ test("answer editors cannot create questions without chat permission", async () 
   }
 })
 
+test("alias admin endpoints enforce manager lifecycle and OpenAPI response schemas", async () => {
+  const port = 24000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-alias-admin-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "RAG_GROUP_MANAGER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const openapiRes = await fetch(`http://127.0.0.1:${port}/openapi.json`)
+    assert.equal(openapiRes.status, 200)
+    const openapi = (await openapiRes.json()) as OpenApiDoc
+
+    const currentUser = await getJson(`http://127.0.0.1:${port}/me`)
+    assert.ok(currentUser.body.user.permissions.includes("rag:alias:write:group"))
+    assert.ok(currentUser.body.user.permissions.includes("rag:alias:review:group"))
+    assert.ok(currentUser.body.user.permissions.includes("rag:alias:disable:group"))
+
+    const createAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        from: "pto",
+        to: ["vacation", "paid time off"],
+        type: "oneWay",
+        weight: 1,
+        scope: {
+          tenantId: "tenant-a",
+          source: "notion",
+          docType: "policy",
+          aclGroups: ["HR_POLICY_READER"]
+        },
+        reason: "Employees search PTO, documents use vacation."
+      })
+    })
+    assert.equal(createAlias.status, 200)
+    const created = (await createAlias.json()) as { aliasId: string; status: string; scope: { tenantId: string } }
+    assert.equal(created.status, "draft")
+    assert.equal(created.scope.tenantId, "tenant-a")
+    validateSchema(created, responseSchema(openapi, "/admin/aliases", "post", 200), openapi)
+
+    const updateAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases/${created.aliasId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: "Reviewed HR policy alias.", weight: 1.1 })
+    })
+    assert.equal(updateAlias.status, 200)
+    const updated = (await updateAlias.json()) as { status: string; reason: string; weight: number }
+    assert.equal(updated.status, "draft")
+    assert.equal(updated.reason, "Reviewed HR policy alias.")
+    assert.equal(updated.weight, 1.1)
+    validateSchema(updated, responseSchema(openapi, "/admin/aliases/{aliasId}", "patch", 200), openapi)
+
+    const reviewAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases/${created.aliasId}/review`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ decision: "approve", reason: "Scoped alias is safe." })
+    })
+    assert.equal(reviewAlias.status, 200)
+    const reviewed = (await reviewAlias.json()) as { status: string; reviewedBy: string }
+    assert.equal(reviewed.status, "active")
+    assert.equal(reviewed.reviewedBy, "local-dev")
+    validateSchema(reviewed, responseSchema(openapi, "/admin/aliases/{aliasId}/review", "post", 200), openapi)
+
+    const disableAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases/${created.aliasId}/disable`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ reason: "Superseded." })
+    })
+    assert.equal(disableAlias.status, 200)
+    const disabled = (await disableAlias.json()) as { status: string; disabledAt?: string }
+    assert.equal(disabled.status, "disabled")
+    assert.ok(disabled.disabledAt)
+    validateSchema(disabled, responseSchema(openapi, "/admin/aliases/{aliasId}/disable", "post", 200), openapi)
+
+    const listAliases = await getJson(`http://127.0.0.1:${port}/admin/aliases`)
+    assert.equal(listAliases.status, 200)
+    assert.equal(listAliases.body.aliases.length, 1)
+    assert.equal(listAliases.body.aliases[0].aliasId, created.aliasId)
+    validateSchema(listAliases.body, responseSchema(openapi, "/admin/aliases", "get", 200), openapi)
+
+    const auditLog = await getJson(`http://127.0.0.1:${port}/admin/aliases/audit-log`)
+    assert.equal(auditLog.status, 200)
+    assert.deepEqual(
+      auditLog.body.auditLog.map((entry: { action: string }) => entry.action).sort(),
+      ["created", "disabled", "reviewed", "updated"]
+    )
+    validateSchema(auditLog.body, responseSchema(openapi, "/admin/aliases/audit-log", "get", 200), openapi)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
+test("chat users cannot access alias administration endpoints", async () => {
+  const port = 25000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-alias-rbac-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "CHAT_USER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const currentUser = await getJson(`http://127.0.0.1:${port}/me`)
+    assert.equal(currentUser.body.user.permissions.includes("rag:alias:read"), false)
+
+    const createAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        from: "pto",
+        to: ["vacation"],
+        scope: { tenantId: "tenant-a" },
+        reason: "Unauthorized attempt."
+      })
+    })
+    assert.equal(createAlias.status, 403)
+
+    const listAliases = await fetch(`http://127.0.0.1:${port}/admin/aliases`)
+    assert.equal(listAliases.status, 403)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
 function responseSchema(doc: OpenApiDoc, route: string, method: string, status: number): unknown {
   const schema = doc.paths[route]?.[method]?.responses?.[String(status)]?.content?.["application/json"]?.schema
   assert.ok(schema, `response schema missing for ${method.toUpperCase()} ${route} ${status}`)

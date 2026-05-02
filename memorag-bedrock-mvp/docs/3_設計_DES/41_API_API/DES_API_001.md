@@ -21,6 +21,12 @@
 | `DELETE /documents/{documentId}` | 文書削除 | `FR-007`, `FR-008` |
 | `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005` |
 | `POST /search` | hybrid lexical/vector search | `FR-023`, `NFR-012` |
+| `POST /admin/aliases` | draft alias 作成 | `FR-023`, `NFR-011` |
+| `GET /admin/aliases` | alias 一覧 | `FR-023`, `NFR-011` |
+| `GET /admin/aliases/audit-log` | alias audit log 一覧 | `FR-023`, `NFR-011`, `NFR-012` |
+| `PATCH /admin/aliases/{aliasId}` | draft alias 更新 | `FR-023`, `NFR-011` |
+| `POST /admin/aliases/{aliasId}/review` | draft alias の approve/reject | `FR-023`, `NFR-011` |
+| `POST /admin/aliases/{aliasId}/disable` | active alias 無効化 | `FR-023`, `NFR-011` |
 | `POST /questions` | 回答不能時の担当者問い合わせ作成 | `FR-021`, `NFR-011` |
 | `GET /questions` | 担当者向け問い合わせ一覧 | `FR-021`, `NFR-011` |
 | `GET /questions/{questionId}` | 担当者問い合わせ詳細 | `FR-021`, `NFR-011` |
@@ -129,6 +135,74 @@
 - `results[].metadata` は allowlist 方式で、現行は `tenantId`、`source`、`docType`、`department` のみ返す。
 - `aliases`、`searchAliases`、`aclGroups`、`allowedUsers`、`privateToUserId`、内部 project code は通常 response に返さない。
 - `diagnostics.indexVersion` と `diagnostics.aliasVersion` は opaque value とし、document ID や alias 本文を含めない。
+
+## `/admin/aliases`
+
+alias 管理 API は `RAG_GROUP_MANAGER` または `SYSTEM_ADMIN` 相当の権限を要求する。検索 index への反映は行わず、object store 上の alias 定義と audit log を管理する。
+
+### Permission
+
+| API | Permission |
+| --- | --- |
+| `POST /admin/aliases` | `rag:alias:write:group` |
+| `GET /admin/aliases` | `rag:alias:read` |
+| `GET /admin/aliases/audit-log` | `rag:alias:read` |
+| `PATCH /admin/aliases/{aliasId}` | `rag:alias:write:group` |
+| `POST /admin/aliases/{aliasId}/review` | `rag:alias:review:group` |
+| `POST /admin/aliases/{aliasId}/disable` | `rag:alias:disable:group` |
+
+### `POST /admin/aliases` Request
+
+```json
+{
+  "from": "pto",
+  "to": ["paid time off", "vacation"],
+  "type": "oneWay",
+  "weight": 1,
+  "scope": {
+    "tenantId": "tenant-a",
+    "source": "notion",
+    "docType": "policy",
+    "aclGroups": ["HR_POLICY_READER"]
+  },
+  "source": "manual",
+  "reason": "Employees search PTO, documents use vacation."
+}
+```
+
+### Alias response
+
+```json
+{
+  "schemaVersion": 1,
+  "aliasId": "alias-001",
+  "from": "pto",
+  "to": ["paid time off", "vacation"],
+  "type": "oneWay",
+  "weight": 1,
+  "scope": {
+    "tenantId": "tenant-a",
+    "source": "notion",
+    "docType": "policy",
+    "aclGroups": ["HR_POLICY_READER"]
+  },
+  "status": "draft",
+  "source": "manual",
+  "reason": "Employees search PTO, documents use vacation.",
+  "createdBy": "user-123",
+  "updatedBy": "user-123",
+  "version": "alias-draft-20260502-010000000Z",
+  "createdAt": "2026-05-02T01:00:00.000Z",
+  "updatedAt": "2026-05-02T01:00:00.000Z"
+}
+```
+
+### Lifecycle errors
+
+- draft 以外の alias を `PATCH` した場合は `400` を返す。
+- draft 以外の alias を review した場合は `400` を返す。
+- active 以外の alias を disable した場合は `400` を返す。
+- 存在しない `aliasId` は `404` を返す。
 
 ## `POST /conversation-history`
 

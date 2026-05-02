@@ -4,6 +4,7 @@ import path from "node:path"
 import assert from "node:assert/strict"
 import test from "node:test"
 import type { Dependencies } from "../dependencies.js"
+import { AliasStore } from "../adapters/alias-store.js"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
@@ -267,14 +268,16 @@ test("fixed workflow refuses when sufficient context judge returns partial", asy
 
 async function createTestDeps(): Promise<Dependencies> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-agent-test-"))
+  const objectStore = new LocalObjectStore(dataDir)
   return {
-    objectStore: new LocalObjectStore(dataDir),
+    objectStore,
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
     textModel: new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
-    benchmarkRunStore: new LocalBenchmarkRunStore(dataDir)
+    benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
+    aliasStore: new AliasStore(objectStore)
   }
 }
 

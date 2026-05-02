@@ -8,6 +8,9 @@ import { MemoRagService } from "./rag/memorag-service.js"
 import {
   ChatRequestSchema,
   ChatResponseSchema,
+  AliasAuditLogResponseSchema,
+  AliasDefinitionSchema,
+  AliasListResponseSchema,
   AnswerQuestionRequestSchema,
   BenchmarkRunListResponseSchema,
   BenchmarkRunSchema,
@@ -17,12 +20,14 @@ import {
   ConversationHistoryItemSchema,
   ConversationHistoryListResponseSchema,
   CreateBenchmarkRunRequestSchema,
+  CreateAliasRequestSchema,
   CreateQuestionRequestSchema,
   CurrentUserResponseSchema,
   DeleteDocumentResponseSchema,
   DebugTraceListResponseSchema,
   DebugTraceSchema,
   DebugDownloadResponseSchema,
+  DisableAliasRequestSchema,
   DocumentListResponseSchema,
   DocumentManifestSchema,
   DocumentUploadRequestSchema,
@@ -30,8 +35,10 @@ import {
   HealthResponseSchema,
   QuestionListResponseSchema,
   QuestionSchema,
+  ReviewAliasRequestSchema,
   SearchRequestSchema,
-  SearchResponseSchema
+  SearchResponseSchema,
+  UpdateAliasRequestSchema
 } from "./schemas.js"
 
 const deps = createDependencies()
@@ -45,8 +52,8 @@ const app = new OpenAPIHono({
   }
 })
 
-app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/me", "/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
+app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"] }))
+for (const path of ["/me", "/documents", "/documents/*", "/chat", "/search", "/admin/aliases", "/admin/aliases/*", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
   app.use(path, authMiddleware)
 }
 
@@ -209,6 +216,138 @@ app.openapi(
     requirePermission(user, "rag:doc:read")
     const body = (c.req as any).valid("json") as z.infer<typeof SearchRequestSchema>
     return c.json(await service.search(body, user), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: CreateAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Created draft alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:write:group")
+    const body = (c.req as any).valid("json") as z.infer<typeof CreateAliasRequestSchema>
+    return c.json(await service.createAlias(body, user), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/admin/aliases",
+    responses: {
+      200: { description: "List managed aliases", content: { "application/json": { schema: AliasListResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:alias:read")
+    return c.json({ aliases: await service.listAliases() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/admin/aliases/audit-log",
+    responses: {
+      200: { description: "Alias audit log", content: { "application/json": { schema: AliasAuditLogResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:alias:read")
+    return c.json({ auditLog: await service.listAliasAuditLog() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "patch",
+    path: "/admin/aliases/{aliasId}",
+    request: {
+      params: z.object({ aliasId: z.string().min(1) }),
+      body: {
+        required: true,
+        content: { "application/json": { schema: UpdateAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Updated draft alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      400: { description: "Validation or lifecycle error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:write:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const body = (c.req as any).valid("json") as z.infer<typeof UpdateAliasRequestSchema>
+    return handleAliasMutation(c, () => service.updateAlias(aliasId, body, user))
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/{aliasId}/review",
+    request: {
+      params: z.object({ aliasId: z.string().min(1) }),
+      body: {
+        required: true,
+        content: { "application/json": { schema: ReviewAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Reviewed alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      400: { description: "Validation or lifecycle error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:review:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const body = (c.req as any).valid("json") as z.infer<typeof ReviewAliasRequestSchema>
+    return handleAliasMutation(c, () => service.reviewAlias(aliasId, body, user))
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/{aliasId}/disable",
+    request: {
+      params: z.object({ aliasId: z.string().min(1) }),
+      body: {
+        required: false,
+        content: { "application/json": { schema: DisableAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Disabled alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      400: { description: "Validation or lifecycle error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:disable:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const body = ((c.req as any).valid("json") ?? {}) as z.infer<typeof DisableAliasRequestSchema>
+    return handleAliasMutation(c, () => service.disableAlias(aliasId, body, user))
   }
 )
 
@@ -587,6 +726,17 @@ app.openapi(
     return c.json(download, 200)
   }
 )
+
+async function handleAliasMutation(c: any, run: () => Promise<z.infer<typeof AliasDefinitionSchema>>) {
+  try {
+    return c.json(await run(), 200)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    if (message.includes("not found") || message.includes("Not found")) return c.json({ error: "Alias not found" }, 404)
+    if (message.includes("Only ")) return c.json({ error: message }, 400)
+    throw err
+  }
+}
 
 app.doc("/openapi.json", {
   openapi: "3.0.0",

@@ -17,6 +17,7 @@ const coverageByRequirement: Record<string, string[]> = {
   "FR-011": ["memorag-service.test.ts", "App.test.tsx"],
   "FR-012": ["benchmark package script", "benchmark/dataset.sample.jsonl"],
   "FR-013": ["api-contract.test.ts", "api.test.ts"],
+  "FR-023": ["alias-store.test.ts", "api-contract.test.ts", "hybrid-search.test.ts"],
   "NFR-001": ["graph.test.ts", "local-stores.test.ts", "text-processing.test.ts"],
   "NFR-002": ["infra/test/memorag-mvp-stack.test.ts", "docs/OPERATIONS.md"],
   "NFR-003": ["infra/test/memorag-mvp-stack.test.ts"],
@@ -25,7 +26,9 @@ const coverageByRequirement: Record<string, string[]> = {
   "NFR-006": ["infra/test/memorag-mvp-stack.test.ts"],
   "NFR-007": ["package scripts", "verification command"],
   "NFR-008": ["package scripts", "verification command"],
-  "NFR-009": ["docs/REQUIREMENTS.md", "docs/OPERATIONS.md"]
+  "NFR-009": ["docs/REQUIREMENTS.md", "docs/OPERATIONS.md"],
+  "NFR-011": ["access-control-policy.test.ts", "api-contract.test.ts"],
+  "NFR-012": ["hybrid-search.test.ts", "api-contract.test.ts"]
 }
 
 test("covered requirements map to existing product requirement documents", async () => {

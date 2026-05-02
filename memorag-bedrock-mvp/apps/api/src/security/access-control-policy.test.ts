@@ -16,6 +16,8 @@ const protectedMiddlewarePaths = [
   "/documents/*",
   "/chat",
   "/search",
+  "/admin/aliases",
+  "/admin/aliases/*",
   "/questions",
   "/questions/*",
   "/conversation-history",
@@ -34,6 +36,12 @@ const routePolicies: RoutePolicy[] = [
   { method: "delete", path: "/documents/{documentId}", permission: "rag:doc:delete:group" },
   { method: "post", path: "/chat", permission: "chat:create" },
   { method: "post", path: "/search", permission: "rag:doc:read" },
+  { method: "post", path: "/admin/aliases", permission: "rag:alias:write:group" },
+  { method: "get", path: "/admin/aliases", permission: "rag:alias:read" },
+  { method: "get", path: "/admin/aliases/audit-log", permission: "rag:alias:read" },
+  { method: "patch", path: "/admin/aliases/{aliasId}", permission: "rag:alias:write:group" },
+  { method: "post", path: "/admin/aliases/{aliasId}/review", permission: "rag:alias:review:group" },
+  { method: "post", path: "/admin/aliases/{aliasId}/disable", permission: "rag:alias:disable:group" },
   { method: "post", path: "/questions", permission: "chat:create" },
   { method: "get", path: "/questions", permission: "answer:edit" },
   { method: "get", path: "/questions/{questionId}", permission: "answer:edit" },
@@ -137,7 +145,7 @@ function findNamedRouteBlock(source: string, routeName: string): string {
 }
 
 function extractRoutes(source: string): Array<Pick<RoutePolicy, "method" | "path">> {
-  return [...source.matchAll(/method:\s*["'](get|post|delete)["'],\s*path:\s*["']([^"']+)["']/g)].map((match) => ({
+  return [...source.matchAll(/method:\s*["'](get|post|patch|delete)["'],\s*path:\s*["']([^"']+)["']/g)].map((match) => ({
     method: match[1] ?? "",
     path: match[2] ?? ""
   }))

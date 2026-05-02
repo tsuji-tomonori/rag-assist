@@ -67,6 +67,54 @@ curl -s http://localhost:8787/search \
   }' | jq
 ```
 
+## Create draft alias
+
+alias 管理 API は `RAG_GROUP_MANAGER` または `SYSTEM_ADMIN` 相当の権限を持つ token で実行する。管理 API は alias 定義と audit log だけを更新し、検索 index への反映は batch/publish 側の責務とする。
+
+```bash
+curl -s http://localhost:8787/admin/aliases \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "from":"pto",
+    "to":["paid time off","vacation"],
+    "type":"oneWay",
+    "weight":1,
+    "scope":{
+      "tenantId":"tenant-a",
+      "source":"notion",
+      "docType":"policy",
+      "aclGroups":["HR_POLICY_READER"]
+    },
+    "source":"manual",
+    "reason":"Employees search PTO, documents use vacation."
+  }' | jq
+```
+
+## Review alias
+
+```bash
+curl -s -X POST http://localhost:8787/admin/aliases/<aliasId>/review \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"decision":"approve","reason":"Scoped alias is safe."}' | jq
+```
+
+## Disable alias
+
+```bash
+curl -s -X POST http://localhost:8787/admin/aliases/<aliasId>/disable \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"reason":"Superseded."}' | jq
+```
+
+## List alias audit log
+
+```bash
+curl -s http://localhost:8787/admin/aliases/audit-log "${AUTH_HEADER[@]}" | jq
+```
+
 ## List debug traces
 
 ```bash

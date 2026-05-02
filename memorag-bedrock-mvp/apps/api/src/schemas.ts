@@ -174,6 +174,86 @@ export const SearchResponseSchema = z.object({
   })
 })
 
+export const AliasTypeSchema = z.enum(["oneWay", "equivalent", "typo", "placeholder"])
+export const AliasStatusSchema = z.enum(["draft", "active", "disabled", "rejected"])
+export const AliasSourceSchema = z.enum(["manual", "analytics", "llmSuggestion"])
+
+export const AliasScopeSchema = z.object({
+  tenantId: z.string().min(1).openapi({ example: "tenant-a" }),
+  source: z.string().optional().openapi({ example: "notion" }),
+  docType: z.string().optional().openapi({ example: "policy" }),
+  department: z.string().optional().openapi({ example: "hr" }),
+  aclGroups: z.array(z.string().min(1)).optional().openapi({ example: ["HR_POLICY_READER"] }),
+  allowedUsers: z.array(z.string().min(1)).optional()
+})
+
+export const AliasDefinitionSchema = z.object({
+  schemaVersion: z.literal(1),
+  aliasId: z.string(),
+  from: z.string(),
+  to: z.array(z.string()),
+  type: AliasTypeSchema,
+  weight: z.number(),
+  scope: AliasScopeSchema,
+  status: AliasStatusSchema,
+  source: AliasSourceSchema,
+  reason: z.string(),
+  createdBy: z.string(),
+  updatedBy: z.string(),
+  reviewedBy: z.string().optional(),
+  version: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  reviewedAt: z.string().optional(),
+  disabledAt: z.string().optional()
+})
+
+export const CreateAliasRequestSchema = z.object({
+  from: z.string().min(1).openapi({ example: "pto" }),
+  to: z.array(z.string().min(1)).min(1).openapi({ example: ["paid time off", "vacation"] }),
+  type: AliasTypeSchema.optional().openapi({ example: "oneWay" }),
+  weight: z.number().positive().max(10).optional().openapi({ example: 1 }),
+  scope: AliasScopeSchema,
+  source: AliasSourceSchema.optional().openapi({ example: "manual" }),
+  reason: z.string().min(1).openapi({ example: "Employees search PTO, documents use vacation." })
+})
+
+export const UpdateAliasRequestSchema = CreateAliasRequestSchema.partial().refine((value) => Object.keys(value).length > 0, {
+  message: "At least one field is required"
+})
+
+export const ReviewAliasRequestSchema = z.object({
+  decision: z.enum(["approve", "reject"]),
+  reason: z.string().optional()
+})
+
+export const DisableAliasRequestSchema = z.object({
+  reason: z.string().optional()
+})
+
+export const AliasListResponseSchema = z.object({
+  aliases: z.array(AliasDefinitionSchema)
+})
+
+export const AliasAuditLogEntrySchema = z.object({
+  schemaVersion: z.literal(1),
+  eventId: z.string(),
+  aliasId: z.string(),
+  action: z.enum(["created", "updated", "reviewed", "disabled"]),
+  actorUserId: z.string(),
+  actorEmail: z.string().optional(),
+  at: z.string(),
+  beforeStatus: AliasStatusSchema.optional(),
+  afterStatus: AliasStatusSchema,
+  reason: z.string().optional(),
+  aliasVersion: z.string(),
+  scope: AliasScopeSchema
+})
+
+export const AliasAuditLogResponseSchema = z.object({
+  auditLog: z.array(AliasAuditLogEntrySchema)
+})
+
 export const QuestionPrioritySchema = z.enum(["normal", "high", "urgent"])
 export const QuestionStatusSchema = z.enum(["open", "answered", "resolved"])
 

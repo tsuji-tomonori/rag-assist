@@ -4,6 +4,7 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
 import type { AppUser } from "../auth.js"
+import { AliasStore } from "../adapters/alias-store.js"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
@@ -139,14 +140,16 @@ function lexicalDoc(id: string, documentId: string, fileName: string, text: stri
 }
 
 function createLocalDeps(dataDir: string): Dependencies {
+  const objectStore = new LocalObjectStore(dataDir)
   return {
-    objectStore: new LocalObjectStore(dataDir),
+    objectStore,
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
     textModel: new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
-    benchmarkRunStore: new LocalBenchmarkRunStore(dataDir)
+    benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
+    aliasStore: new AliasStore(objectStore)
   }
 }
 
