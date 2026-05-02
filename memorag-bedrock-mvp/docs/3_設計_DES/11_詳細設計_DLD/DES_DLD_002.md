@@ -15,6 +15,7 @@
 - semantic search: evidence vector store、S3 Vectors metadata filter
 - fusion: Reciprocal Rank Fusion
 - guard: ACL/metadata filter、cheap rerank
+- auxiliary analytics: Athena による offline 分析、index 生成、低頻度 fallback
 
 ## アルゴリズム構成
 
@@ -38,6 +39,8 @@ query
   -> topK chunks
 ```
 
+Athena は上記の通常 online path には入れない。Athena の責務は `DES_DLD_003` に分離し、S3 chunk lake、postings、query logs の offline 分析、Lambda 用 lexical index artifact 生成、zero-hit fallback に限定する。
+
 ## 採用判断
 
 | 項目 | 判断 | 理由 | リスク・制約 |
@@ -51,6 +54,8 @@ query
 | S3 Vectors | 採用 | 意味検索は自作せず、既存 vector store 抽象経由で topK 類似検索と metadata filter を使う。 | metadata filter は保存項目とサイズ制約に依存する。 |
 | RRF | 採用 | BM25 score と vector score は尺度が異なるため、順位ベース融合で score normalization 依存を避ける。 | 重みは初期値であり、評価ログに基づく調整が必要。 |
 | cheap rerank | 採用 | phrase match、token coverage、title match、recentness の軽量補正で上位順序を安定させる。 | cross encoder rerank ほどの意味理解はない。 |
+| Athena 直検索 | 通常 path では不採用 | S3 data lake を scan する分析基盤であり、通常の低レイテンシ検索 API には向かない。 | PoC、管理者調査、zero-hit fallback では scan 量制限付きで許容する。 |
+| Athena batch | 採用候補 | term stats、query log、benchmark data を SQL で集計し、Lambda 用 lightweight index を生成できる。 | artifact schema、更新頻度、scan 量監視を別途設計する。 |
 
 ## 妥当性レビュー
 
@@ -72,6 +77,7 @@ query
 ## 実装上の制約
 
 - lexical index は ingestion 時に永続生成せず、manifest/source text から search Lambda execution environment に warm cache する。
+- 永続 lexical index を batch 生成する場合は、Athena を offline job として使い、通常 API の同期依存にはしない。
 - metadata filter は `tenantId`、`department`、`source`、`docType`、`documentId` を API 入力で受ける。
 - vector metadata には `tenantId`、`department`、`source`、`docType`、`aclGroup`、`aclGroups`、`allowedUsers` を保存できる。
 - alias expansion は manifest metadata の `searchAliases` または `aliases` から取り込んだ index-local map だけを使う。
@@ -105,6 +111,7 @@ query
 ## 将来拡張
 
 - ingestion batch で immutable lexical index を生成し、S3 Brotli object として保存する。
+- Athena で S3 chunk lake / postings / query logs を分析し、term stats、zero-hit 改善候補、index artifact を生成する。
 - tokenizer を kuromoji.js に差し替え、形態素 token と n-gram token の重みを分離する。
 - 評価ログから RRF weight、BM25 topK、semantic topK、cheap rerank 加点を調整する。
 - index size が増えた場合は SQLite FTS5 または EFS へ移行する。

@@ -28,7 +28,8 @@
 | `FR-016`, `FR-017`, `FR-018` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001`, `DES_DATA_001` | `SQ-001` |
 | `FR-019`, `FR-020` | `ASR-EVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DATA_001`, `DES_API_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
 | `NFR-010` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001` |
-| `TC-001` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001` | `SQ-001` |
+| `TC-001` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001`, `DES_DLD_002` | `SQ-001` |
+| `TC-002` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_DLD_002`, `DES_DLD_003` | `SQ-001` |
 
 ## 影響確認チェック
 
@@ -44,3 +45,4 @@
 - benchmark 合格閾値の初期値。
 - LLM judge の modelId と回答生成 modelId を分けるか。
 - debug trace の本番マスキング対象項目。
+- Athena batch で生成する lexical index artifact の形式を `lexical-index.json.br` と SQLite FTS5 のどちらに寄せるか。
