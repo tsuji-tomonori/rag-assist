@@ -12,10 +12,13 @@ type DatasetRow = {
   expectedContains?: string | string[]
   expectedRegex?: string | string[]
   answerable?: boolean
+  complexity?: "simple" | "multi_hop" | "comparison" | "procedure" | "ambiguous" | "out_of_scope"
+  unanswerableType?: "missing_fact" | "out_of_scope" | "ambiguous" | "conflicting" | string
   expectedFiles?: string[]
   expectedFileNames?: string[]
   expectedDocumentIds?: string[]
   expectedPages?: Array<number | string>
+  expectedFactSlots?: ExpectedFactSlot[]
   modelId?: string
   embeddingModelId?: string
   clueModelId?: string
@@ -24,6 +27,14 @@ type DatasetRow = {
   minScore?: number
   strictGrounded?: boolean
   useMemory?: boolean
+}
+
+type ExpectedFactSlot = {
+  id: string
+  description?: string
+  mustContain?: string | string[]
+  expectedFiles?: string[]
+  expectedDocumentIds?: string[]
 }
 
 type Citation = {
@@ -43,7 +54,11 @@ type BenchmarkResponse = {
   debug?: {
     runId?: string
     totalLatencyMs?: number
-    steps?: Array<{ label: string; latencyMs: number; status: string; summary?: string }>
+    steps?: Array<{ label: string; latencyMs: number; status: string; summary?: string; detail?: string }>
+  }
+  answerSupport?: {
+    unsupportedSentences?: Array<{ sentence?: string; reason?: string }>
+    totalSentences?: number
   }
   error?: string
 }
@@ -60,6 +75,16 @@ type RowEvaluation = {
   citationHit: boolean | null
   expectedFileHit: boolean | null
   expectedPageHit: boolean | null
+  retrievalRecallAt20: boolean | null
+  factSlotCoverage: number | null
+  supportedFactSlots: number | null
+  totalFactSlots: number
+  unsupportedSentenceRate: number | null
+  unsupportedSentenceCount: number | null
+  totalSentenceCount: number | null
+  refused: boolean
+  iterationCount: number | null
+  retrievalCallCount: number | null
   topCitationScore: number | null
   retrievedCount: number
   citationCount: number
@@ -74,6 +99,9 @@ type BenchmarkResultRow = {
   expectedContains?: string | string[]
   expectedRegex?: string | string[]
   answerable?: boolean
+  complexity?: string
+  unanswerableType?: string
+  expectedFactSlots?: ExpectedFactSlot[]
   status: number
   latencyMs: number
   evaluation: RowEvaluation
@@ -99,7 +127,14 @@ type Summary = {
     answerContainsRate: number | null
     citationHitRate: number | null
     expectedFileHitRate: number | null
+    retrievalRecallAt20: number | null
     expectedPageHitRate: number | null
+    factSlotCoverage: number | null
+    refusalPrecision: number | null
+    refusalRecall: number | null
+    unsupportedSentenceRate: number | null
+    avgIterations: number | null
+    avgRetrievalCalls: number | null
     p50LatencyMs: number | null
     p95LatencyMs: number | null
     averageLatencyMs: number | null
@@ -142,6 +177,9 @@ for await (const line of rl) {
     expectedContains: row.expectedContains,
     expectedRegex: row.expectedRegex,
     answerable: row.answerable,
+    complexity: row.complexity,
+    unanswerableType: row.unanswerableType,
+    expectedFactSlots: row.expectedFactSlots,
     status,
     latencyMs: Date.now() - startedAt,
     evaluation: evaluateRow(row, body, status),
@@ -205,6 +243,7 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
   const expectedDocumentIds = toArray(row.expectedDocumentIds)
   const expectedPages = toArray(row.expectedPages).map(String)
   const failureReasons: string[] = []
+  const refused = !actualAnswerable || isNoAnswerText(answer)
   const answerabilityCorrect = actualAnswerable === expectedAnswerable
   if (!answerabilityCorrect) failureReasons.push(expectedAnswerable ? "expected_answer_but_refused" : "expected_refusal_but_answered")
 
@@ -235,6 +274,18 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
     expectedPages.length > 0 ? hasExpectedPageHit([...citations, ...retrieved], expectedPages) : null
   if (expectedPageHit === false) failureReasons.push("expected_page_not_hit")
 
+  const retrievalRecallAt20 =
+    expectedFiles.length > 0 || expectedDocumentIds.length > 0
+      ? hasRetrievalRecallAt20([...retrieved, ...citations], expectedFiles, expectedDocumentIds)
+      : null
+  if (retrievalRecallAt20 === false) failureReasons.push("retrieval_recall_at_20_miss")
+
+  const factSlotResult = evaluateFactSlots(row.expectedFactSlots ?? [], answer, [...citations, ...retrieved], expectedAnswerable)
+  if (factSlotResult.coverage !== null && factSlotResult.coverage < 1) failureReasons.push("fact_slot_not_covered")
+
+  const supportResult = evaluateUnsupportedSentences(body)
+  if (supportResult.rate !== null && supportResult.rate > 0) failureReasons.push("unsupported_sentence_detected")
+
   if (status < 200 || status >= 300) failureReasons.push(`http_${status}`)
 
   const answerCorrect =
@@ -264,6 +315,16 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
     citationHit,
     expectedFileHit: expectedFileHit ?? expectedDocumentHit,
     expectedPageHit,
+    retrievalRecallAt20,
+    factSlotCoverage: factSlotResult.coverage,
+    supportedFactSlots: factSlotResult.supported,
+    totalFactSlots: factSlotResult.total,
+    unsupportedSentenceRate: supportResult.rate,
+    unsupportedSentenceCount: supportResult.unsupported,
+    totalSentenceCount: supportResult.total,
+    refused,
+    iterationCount: countDebugSteps(body, "evaluate_search_progress"),
+    retrievalCallCount: countDebugSteps(body, "execute_search_action"),
     topCitationScore: citations.length > 0 ? Math.max(...citations.map((citation) => citation.score ?? 0)) : null,
     retrievedCount: retrieved.length,
     citationCount: citations.length,
@@ -277,8 +338,18 @@ function summarize(results: BenchmarkResultRow[]): Summary {
   const latencies = results.map((row) => row.latencyMs).sort((a, b) => a - b)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
+  const retrievalRecallEvaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
+  const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
+  const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
+  const refusedRows = results.filter((row) => row.evaluation.refused)
+  const iterationCounts = results
+    .map((row) => row.evaluation.iterationCount)
+    .filter((value): value is number => value !== null)
+  const retrievalCallCounts = results
+    .map((row) => row.evaluation.retrievalCallCount)
+    .filter((value): value is number => value !== null)
 
   return {
     datasetPath,
@@ -314,10 +385,42 @@ function summarize(results: BenchmarkResultRow[]): Summary {
         fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length,
         fileEvaluated.length
       ),
+      retrievalRecallAt20: rate(
+        retrievalRecallEvaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length,
+        retrievalRecallEvaluated.length
+      ),
       expectedPageHitRate: rate(
         pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length,
         pageEvaluated.length
       ),
+      factSlotCoverage:
+        factSlotEvaluated.length === 0
+          ? null
+          : Number(
+              (
+                factSlotEvaluated.reduce((sum, row) => sum + (row.evaluation.factSlotCoverage ?? 0), 0) /
+                factSlotEvaluated.length
+              ).toFixed(4)
+            ),
+      refusalPrecision: rate(
+        refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length,
+        refusedRows.length
+      ),
+      refusalRecall: rate(
+        unanswerableRows.filter((row) => row.evaluation.refused).length,
+        unanswerableRows.length
+      ),
+      unsupportedSentenceRate:
+        supportEvaluated.length === 0
+          ? null
+          : Number(
+              (
+                supportEvaluated.reduce((sum, row) => sum + (row.evaluation.unsupportedSentenceRate ?? 0), 0) /
+                supportEvaluated.length
+              ).toFixed(4)
+            ),
+      avgIterations: average(iterationCounts),
+      avgRetrievalCalls: average(retrievalCallCounts),
       p50LatencyMs: percentile(latencies, 0.5),
       p95LatencyMs: percentile(latencies, 0.95),
       averageLatencyMs: results.length === 0 ? null : Math.round(results.reduce((sum, row) => sum + row.latencyMs, 0) / results.length)
@@ -341,7 +444,14 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
     ["answer_contains_rate", formatRate(summary.metrics.answerContainsRate)],
     ["citation_hit_rate", formatRate(summary.metrics.citationHitRate)],
     ["expected_file_hit_rate", formatRate(summary.metrics.expectedFileHitRate)],
+    ["retrieval_recall_at_20", formatRate(summary.metrics.retrievalRecallAt20)],
     ["expected_page_hit_rate", formatRate(summary.metrics.expectedPageHitRate)],
+    ["fact_slot_coverage", formatRate(summary.metrics.factSlotCoverage)],
+    ["refusal_precision", formatRate(summary.metrics.refusalPrecision)],
+    ["refusal_recall", formatRate(summary.metrics.refusalRecall)],
+    ["unsupported_sentence_rate", formatRate(summary.metrics.unsupportedSentenceRate)],
+    ["avg_iterations", formatNumber(summary.metrics.avgIterations)],
+    ["avg_retrieval_calls", formatNumber(summary.metrics.avgRetrievalCalls)],
     ["p50_latency_ms", formatNumber(summary.metrics.p50LatencyMs)],
     ["p95_latency_ms", formatNumber(summary.metrics.p95LatencyMs)],
     ["average_latency_ms", formatNumber(summary.metrics.averageLatencyMs)]
@@ -358,11 +468,11 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
       ].join("\n")
 
   const detailRows = [
-    "| id | expected | actual | latency_ms | citations | retrieved | result |",
-    "| --- | --- | --- | ---: | ---: | ---: | --- |",
+    "| id | expected | actual | fact_slots | iterations | retrieval_calls | latency_ms | citations | retrieved | result |",
+    "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ...results.map((row) => {
       const passed = row.evaluation.failureReasons.length === 0 ? "pass" : row.evaluation.failureReasons.join(", ")
-      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedAnswerable ? "answer" : "refuse"} | ${row.evaluation.actualAnswerable ? "answer" : "refuse"} | ${row.latencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
+      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedAnswerable ? "answer" : "refuse"} | ${row.evaluation.refused ? "refuse" : "answer"} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${row.latencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
     })
   ].join("\n")
 
@@ -436,6 +546,95 @@ function hasExpectedPageHit(citations: Citation[], expectedPages: string[]): boo
   })
 }
 
+function hasRetrievalRecallAt20(citations: Citation[], expectedFiles: string[], expectedDocumentIds: string[]): boolean {
+  const top20 = citations.slice(0, 20)
+  const fileHit = expectedFiles.length === 0 || hasExpectedFileHit(top20, expectedFiles)
+  const documentHit = expectedDocumentIds.length === 0 || hasExpectedDocumentHit(top20, expectedDocumentIds)
+  return fileHit && documentHit
+}
+
+function evaluateFactSlots(
+  slots: ExpectedFactSlot[],
+  answer: string,
+  evidence: Citation[],
+  expectedAnswerable: boolean
+): { coverage: number | null; supported: number | null; total: number } {
+  if (!expectedAnswerable || slots.length === 0) return { coverage: null, supported: null, total: slots.length }
+
+  const supported = slots.filter((slot) => hasSupportedFactSlot(slot, answer, evidence)).length
+  return {
+    coverage: rate(supported, slots.length),
+    supported,
+    total: slots.length
+  }
+}
+
+function hasSupportedFactSlot(slot: ExpectedFactSlot, answer: string, evidence: Citation[]): boolean {
+  const mustContain = toArray(slot.mustContain)
+  const answerHit = mustContain.every((expected) => normalize(answer).includes(normalize(expected)))
+  if (!answerHit) return false
+
+  const expectedFiles = toArray(slot.expectedFiles)
+  const expectedDocumentIds = toArray(slot.expectedDocumentIds)
+  if (expectedFiles.length > 0 && !hasExpectedFileHit(evidence, expectedFiles)) return false
+  if (expectedDocumentIds.length > 0 && !hasExpectedDocumentHit(evidence, expectedDocumentIds)) return false
+
+  const evidenceText = evidence.map((citation) => `${citation.fileName ?? ""}\n${citation.documentId ?? ""}\n${citation.text ?? ""}`).join("\n")
+  return evidence.length > 0 && (mustContain.length === 0 || mustContain.every((expected) => normalize(evidenceText).includes(normalize(expected))))
+}
+
+function evaluateUnsupportedSentences(body: BenchmarkResponse): {
+  rate: number | null
+  unsupported: number | null
+  total: number | null
+} {
+  const support = body.answerSupport ?? extractAnswerSupportFromDebug(body)
+  if (!support) return { rate: null, unsupported: null, total: null }
+
+  const unsupported = support.unsupportedSentences?.length ?? 0
+  const total = support.totalSentences ?? splitSentences(body.answer ?? "").length
+  return {
+    rate: total === 0 ? null : rate(unsupported, total),
+    unsupported,
+    total: total === 0 ? null : total
+  }
+}
+
+function extractAnswerSupportFromDebug(body: BenchmarkResponse): BenchmarkResponse["answerSupport"] | undefined {
+  const step = body.debug?.steps?.find((candidate) => candidate.label === "verify_answer_support")
+  if (!step?.detail) return undefined
+  const parsed = parseJsonObject(step.detail)
+  if (!parsed || typeof parsed !== "object") return undefined
+  const unsupportedSentences = Array.isArray(parsed.unsupportedSentences)
+    ? parsed.unsupportedSentences.filter((sentence): sentence is { sentence?: string; reason?: string } => typeof sentence === "object")
+    : undefined
+  const totalSentences = typeof parsed.totalSentences === "number" ? parsed.totalSentences : undefined
+  return { unsupportedSentences, totalSentences }
+}
+
+function parseJsonObject(value: string): Record<string, unknown> | undefined {
+  const start = value.indexOf("{")
+  const end = value.lastIndexOf("}")
+  if (start === -1 || end === -1 || end <= start) return undefined
+  try {
+    return JSON.parse(value.slice(start, end + 1)) as Record<string, unknown>
+  } catch {
+    return undefined
+  }
+}
+
+function countDebugSteps(body: BenchmarkResponse, label: string): number | null {
+  if (!body.debug?.steps) return null
+  return body.debug.steps.filter((step) => step.label === label).length
+}
+
+function splitSentences(value: string): string[] {
+  return value
+    .split(/(?<=[。.!?！？])\s*/u)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean)
+}
+
 function normalize(value: string): string {
   return value.normalize("NFKC").replace(/\s+/g, "").toLowerCase()
 }
@@ -448,6 +647,11 @@ function toArray<T>(value: T | T[] | undefined): T[] {
 function rate(numerator: number, denominator: number): number | null {
   if (denominator === 0) return null
   return Number((numerator / denominator).toFixed(4))
+}
+
+function average(values: number[]): number | null {
+  if (values.length === 0) return null
+  return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2))
 }
 
 function percentile(sortedValues: number[], p: number): number | null {
