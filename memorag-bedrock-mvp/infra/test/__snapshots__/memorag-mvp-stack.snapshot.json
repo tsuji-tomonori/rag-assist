@@ -537,6 +537,10 @@
           {
             "Key": "aws-cdk:cr-owned:datasets/agent:0fed553e",
             "Value": "true"
+          },
+          {
+            "Key": "aws-cdk:cr-owned:datasets/search:7c4c01e4",
+            "Value": "true"
           }
         ]
       },
@@ -1103,6 +1107,52 @@
         "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
         "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265"
       ]
+    },
+    "DeploySearchBenchmarkDatasetsAwsCliLayer63B30B23": {
+      "Type": "AWS::Lambda::LayerVersion",
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Description": "/opt/awscli/aws"
+      }
+    },
+    "DeploySearchBenchmarkDatasetsCustomResourceDFC997D1": {
+      "Type": "Custom::CDKBucketDeployment",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn"
+          ]
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "cdk-hnb659fds-assets-111111111111-ap-northeast-1"
+        ],
+        "SourceObjectKeys": [
+          "<asset-hash>.zip",
+          "<asset-hash>.zip"
+        ],
+        "SourceMarkers": [
+          {},
+          {}
+        ],
+        "SourceMarkersConfig": [
+          {},
+          {}
+        ],
+        "DestinationBucketName": {
+          "Ref": "BenchmarkBucketDD7D1D2F"
+        },
+        "DestinationBucketKeyPrefix": "datasets/search",
+        "WaitForDistributionInvalidation": true,
+        "Prune": true,
+        "OutputObjectKeys": true
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
     },
     "S3VectorsProviderLogGroupE19D8C96": {
       "Type": "AWS::Logs::LogGroup",
@@ -2523,7 +2573,7 @@
           ]
         },
         "Source": {
-          "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"runtime-versions\": {\n        \"nodejs\": 22\n      },\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"npm ci\"\n      ]\n    },\n    \"pre_build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"aws s3 cp \\\"$DATASET_S3_URI\\\" ./benchmark/.runner-dataset.jsonl\",\n        \"export OUTPUT=./benchmark/.runner-results.jsonl\",\n        \"export SUMMARY=./benchmark/.runner-summary.json\",\n        \"export REPORT=./benchmark/.runner-report.md\",\n        \"export DATASET=./benchmark/.runner-dataset.jsonl\",\n        \"if [ -n \\\"$BENCHMARK_AUTH_SECRET_ID\\\" ]; then SECRET_JSON=\\\"$(aws secretsmanager get-secret-value --secret-id \\\"$BENCHMARK_AUTH_SECRET_ID\\\" --query SecretString --output text)\\\"; export API_AUTH_TOKEN=\\\"$(SECRET_JSON=\\\"$SECRET_JSON\\\" COGNITO_APP_CLIENT_ID=\\\"$COGNITO_APP_CLIENT_ID\\\" node -e 'const { execFileSync } = require(\\\"node:child_process\\\"); const secret = JSON.parse(process.env.SECRET_JSON || \\\"{}\\\"); if (secret.idToken || secret.token) { console.log(secret.idToken || secret.token); process.exit(0); } const output = execFileSync(\\\"aws\\\", [\\\"cognito-idp\\\", \\\"initiate-auth\\\", \\\"--auth-flow\\\", \\\"USER_PASSWORD_AUTH\\\", \\\"--client-id\\\", process.env.COGNITO_APP_CLIENT_ID, \\\"--auth-parameters\\\", `USERNAME=${secret.username},PASSWORD=${secret.password}`], { encoding: \\\"utf8\\\" }); console.log(JSON.parse(output).AuthenticationResult.IdToken);')\\\"; fi\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"API_BASE_URL=\\\"$API_BASE_URL\\\" MODEL_ID=\\\"$MODEL_ID\\\" EMBEDDING_MODEL_ID=\\\"$EMBEDDING_MODEL_ID\\\" TOP_K=\\\"$TOP_K\\\" MEMORY_TOP_K=\\\"$MEMORY_TOP_K\\\" MIN_SCORE=\\\"$MIN_SCORE\\\" npm run start -w @memorag-mvp/benchmark\"\n      ]\n    },\n    \"post_build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"aws s3 cp ./benchmark/.runner-results.jsonl \\\"$OUTPUT_S3_PREFIX/results.jsonl\\\"\",\n        \"aws s3 cp ./benchmark/.runner-summary.json \\\"$OUTPUT_S3_PREFIX/summary.json\\\"\",\n        \"aws s3 cp ./benchmark/.runner-report.md \\\"$OUTPUT_S3_PREFIX/report.md\\\"\"\n      ]\n    }\n  },\n  \"artifacts\": {\n    \"files\": [\n      \"benchmark/.runner-results.jsonl\",\n      \"benchmark/.runner-summary.json\",\n      \"benchmark/.runner-report.md\"\n    ]\n  }\n}",
+          "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"runtime-versions\": {\n        \"nodejs\": 22\n      },\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"npm ci\"\n      ]\n    },\n    \"pre_build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"aws s3 cp \\\"$DATASET_S3_URI\\\" ./benchmark/.runner-dataset.jsonl\",\n        \"export OUTPUT=./benchmark/.runner-results.jsonl\",\n        \"export SUMMARY=./benchmark/.runner-summary.json\",\n        \"export REPORT=./benchmark/.runner-report.md\",\n        \"export DATASET=./benchmark/.runner-dataset.jsonl\",\n        \"if [ -n \\\"$BENCHMARK_AUTH_SECRET_ID\\\" ]; then SECRET_JSON=\\\"$(aws secretsmanager get-secret-value --secret-id \\\"$BENCHMARK_AUTH_SECRET_ID\\\" --query SecretString --output text)\\\"; export API_AUTH_TOKEN=\\\"$(SECRET_JSON=\\\"$SECRET_JSON\\\" COGNITO_APP_CLIENT_ID=\\\"$COGNITO_APP_CLIENT_ID\\\" node -e 'const { execFileSync } = require(\\\"node:child_process\\\"); const secret = JSON.parse(process.env.SECRET_JSON || \\\"{}\\\"); if (secret.idToken || secret.token) { console.log(secret.idToken || secret.token); process.exit(0); } const output = execFileSync(\\\"aws\\\", [\\\"cognito-idp\\\", \\\"initiate-auth\\\", \\\"--auth-flow\\\", \\\"USER_PASSWORD_AUTH\\\", \\\"--client-id\\\", process.env.COGNITO_APP_CLIENT_ID, \\\"--auth-parameters\\\", `USERNAME=${secret.username},PASSWORD=${secret.password}`], { encoding: \\\"utf8\\\" }); console.log(JSON.parse(output).AuthenticationResult.IdToken);')\\\"; fi\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"if [ \\\"$MODE\\\" = \\\"search\\\" ]; then API_BASE_URL=\\\"$API_BASE_URL\\\" EMBEDDING_MODEL_ID=\\\"$EMBEDDING_MODEL_ID\\\" TOP_K=\\\"$TOP_K\\\" npm run start:search -w @memorag-mvp/benchmark; else API_BASE_URL=\\\"$API_BASE_URL\\\" MODEL_ID=\\\"$MODEL_ID\\\" EMBEDDING_MODEL_ID=\\\"$EMBEDDING_MODEL_ID\\\" TOP_K=\\\"$TOP_K\\\" MEMORY_TOP_K=\\\"$MEMORY_TOP_K\\\" MIN_SCORE=\\\"$MIN_SCORE\\\" npm run start -w @memorag-mvp/benchmark; fi\"\n      ]\n    },\n    \"post_build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"aws s3 cp ./benchmark/.runner-results.jsonl \\\"$OUTPUT_S3_PREFIX/results.jsonl\\\"\",\n        \"aws s3 cp ./benchmark/.runner-summary.json \\\"$OUTPUT_S3_PREFIX/summary.json\\\"\",\n        \"aws s3 cp ./benchmark/.runner-report.md \\\"$OUTPUT_S3_PREFIX/report.md\\\"\"\n      ]\n    }\n  },\n  \"artifacts\": {\n    \"files\": [\n      \"benchmark/.runner-results.jsonl\",\n      \"benchmark/.runner-summary.json\",\n      \"benchmark/.runner-report.md\"\n    ]\n  }\n}",
           "Location": "https://github.com/tsuji-tomonori/rag-assist.git",
           "ReportBuildStatus": true,
           "Type": "GITHUB"

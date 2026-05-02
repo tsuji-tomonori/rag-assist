@@ -111,6 +111,17 @@ tasks:
     cmds:
       - npm run start -w @memorag-mvp/benchmark
 
+  benchmark:search:sample:
+    desc: Run the sample Search API qrels benchmark and generate JSONL/JSON/Markdown reports
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: 'benchmark/datasets/search.sample.jsonl'
+      OUTPUT: '.local-data/search-benchmark-results.jsonl'
+      SUMMARY: '.local-data/search-benchmark-summary.json'
+      REPORT: '.local-data/search-benchmark-report.md'
+    cmds:
+      - npm run start:search -w @memorag-mvp/benchmark
+
   smoke:api:
     desc: Smoke-test a running local API with health, ingest, chat, and OpenAPI requests
     env:

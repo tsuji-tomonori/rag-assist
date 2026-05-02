@@ -424,9 +424,10 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
+      const selectedSuite = benchmarkSuites.find((suite) => suite.suiteId === benchmarkSuiteId)
       const created = await startBenchmarkRun({
         suiteId: benchmarkSuiteId,
-        mode: "agent",
+        mode: selectedSuite?.mode ?? "agent",
         runner: "codebuild",
         modelId: benchmarkModelId,
         embeddingModelId,
