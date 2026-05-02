@@ -42,6 +42,7 @@ export type SearchResponse = {
   results: SearchResult[]
   diagnostics: {
     indexVersion: string
+    aliasVersion: string
     lexicalCount: number
     semanticCount: number
     fusedCount: number
@@ -79,6 +80,7 @@ type LexicalIndex = {
   postings: Map<string, Posting[]>
   dictionary: string[]
   aliases: AliasMap
+  aliasVersion: string
 }
 
 type LexicalHit = {
@@ -145,6 +147,7 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     results,
     diagnostics: {
       indexVersion: index.version,
+      aliasVersion: index.aliasVersion,
       lexicalCount: lexicalHits.length,
       semanticCount: semanticHits.length,
       fusedCount: fused.length,
@@ -162,6 +165,7 @@ export async function getLexicalIndex(
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
   const visible = manifests.filter((manifest) => canAccessManifest(manifest, user)).filter((manifest) => manifestMatchesFilters(manifest, filters))
   const aliases = mergeAliases(visible.map((manifest) => aliasMapFromMetadata(manifest.metadata)))
+  const aliasSignature = stableStringifyAliasMap(aliases)
   const signature = visible
     .map((manifest) => `${manifest.documentId}:${manifest.chunkCount}:${manifest.createdAt}:${stableStringifyAliasMap(aliasMapFromMetadata(manifest.metadata))}`)
     .sort()
@@ -186,12 +190,12 @@ export async function getLexicalIndex(
     }
   }
 
-  const index = buildLexicalIndex(docs, signature || "empty", aliases)
+  const index = buildLexicalIndex(docs, versionLabel("lexical", signature || "empty"), aliases, aliasVersionLabel(aliasSignature))
   cachedIndex = { signature, index }
   return index
 }
 
-export function buildLexicalIndex(inputDocs: LexicalDocument[], version: string, aliases: AliasMap = {}): LexicalIndex {
+export function buildLexicalIndex(inputDocs: LexicalDocument[], version: string, aliases: AliasMap = {}, aliasVersion?: string): LexicalIndex {
   const postings = new Map<string, Posting[]>()
   const df = new Map<string, number>()
   const dictionarySet = new Set<string>()
@@ -221,7 +225,8 @@ export function buildLexicalIndex(inputDocs: LexicalDocument[], version: string,
     df,
     postings,
     dictionary: [...dictionarySet],
-    aliases: normalizeAliasMap(aliases)
+    aliases: normalizeAliasMap(aliases),
+    aliasVersion: aliasVersion ?? aliasVersionLabel(stableStringifyAliasMap(aliases))
   }
 }
 
@@ -325,7 +330,7 @@ function toSearchResult(
     matchedTerms: lexical?.matchedTerms ?? [],
     sources: [lexical ? "lexical" : undefined, semantic ? "semantic" : undefined].filter((value): value is "lexical" | "semantic" => Boolean(value)),
     createdAt: doc?.createdAt ?? semanticMetadata?.createdAt,
-    metadata: doc?.metadata
+    metadata: sanitizeSearchMetadata(doc?.metadata ?? semanticMetadata)
   }
 }
 
@@ -512,6 +517,36 @@ function normalizeAliasMap(aliases: AliasMap): AliasMap {
 function stableStringifyAliasMap(aliases: AliasMap): string {
   const normalized = normalizeAliasMap(aliases)
   return JSON.stringify(Object.fromEntries(Object.entries(normalized).sort(([a], [b]) => a.localeCompare(b))))
+}
+
+function sanitizeSearchMetadata(metadata: Record<string, JsonValue> | VectorMetadata | undefined): Record<string, JsonValue> | undefined {
+  if (!metadata) return undefined
+  const allowedKeys = ["tenantId", "source", "docType", "department"] as const
+  const sanitized: Record<string, JsonValue> = {}
+  for (const key of allowedKeys) {
+    const value = metadata[key]
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean" || value === null) {
+      sanitized[key] = value
+    }
+  }
+  return Object.keys(sanitized).length > 0 ? sanitized : undefined
+}
+
+function aliasVersionLabel(aliasSignature: string): string {
+  return aliasSignature === "{}" ? "none" : versionLabel("alias", aliasSignature)
+}
+
+function versionLabel(prefix: string, value: string): string {
+  return `${prefix}:${hashString(value)}`
+}
+
+function hashString(value: string): string {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193)
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0")
 }
 
 function clampInt(value: number, min: number, max: number): number {

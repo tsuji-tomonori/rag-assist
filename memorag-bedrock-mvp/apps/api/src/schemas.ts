@@ -1,7 +1,16 @@
 import { z } from "@hono/zod-openapi"
+import type { JsonValue } from "./types.js"
 
-const MetadataValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()])
+const MetadataValueSchema = z.custom<JsonValue>(isJsonValue)
 const DebugStepOutputSchema = z.record(z.string(), z.unknown())
+
+function isJsonValue(value: unknown): value is JsonValue {
+  if (value === null) return true
+  if (["string", "number", "boolean"].includes(typeof value)) return true
+  if (Array.isArray(value)) return value.every(isJsonValue)
+  if (typeof value !== "object") return false
+  return Object.values(value as Record<string, unknown>).every(isJsonValue)
+}
 
 export const HealthResponseSchema = z.object({
   ok: z.boolean(),
@@ -157,6 +166,7 @@ export const SearchResponseSchema = z.object({
   results: z.array(SearchResultSchema),
   diagnostics: z.object({
     indexVersion: z.string(),
+    aliasVersion: z.string(),
     lexicalCount: z.number().int(),
     semanticCount: z.number().int(),
     fusedCount: z.number().int(),
