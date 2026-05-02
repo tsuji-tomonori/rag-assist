@@ -100,6 +100,33 @@ export class MockBedrockTextModel implements TextModel {
       return JSON.stringify({ isAnswerable: text.length > 0, answer, usedChunkIds: [chunkId] })
     }
 
+    if (prompt.includes("ANSWER_SUPPORT_JSON")) {
+      const answer = extractBetween(prompt, "<answer>", "</answer>")
+      const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
+      const joined = contexts.map((match) => match[2] ?? "").join("\n")
+      const supportingChunkIds = contexts.map((match) => match[1]).filter((id): id is string => typeof id === "string" && id.length > 0)
+      if (contexts.length === 0 || !answer.trim()) {
+        return JSON.stringify({
+          supported: false,
+          unsupportedSentences: answer.trim() ? [{ sentence: answer.trim(), reason: "根拠チャンクがありません。" }] : [],
+          supportingChunkIds: [],
+          contradictionChunkIds: [],
+          confidence: 0.2,
+          totalSentences: answer.trim() ? 1 : 0,
+          reason: "根拠チャンクがありません。"
+        })
+      }
+      return JSON.stringify({
+        supported: true,
+        unsupportedSentences: [],
+        supportingChunkIds,
+        contradictionChunkIds: [],
+        confidence: joined.trim().length > 0 ? 0.86 : 0.4,
+        totalSentences: Math.max(1, answer.split(/[。.!?！？]/).filter((sentence) => sentence.trim()).length),
+        reason: "モックでは引用済みチャンクに基づき回答文を支持済みと判定します。"
+      })
+    }
+
     return "{}"
   }
 }

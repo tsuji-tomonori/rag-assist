@@ -117,6 +117,48 @@ ${context || "根拠チャンクはありません。"}
 </context>`
 }
 
+export function buildAnswerSupportPrompt(question: string, answer: string, chunks: RetrievedVector[]): string {
+  const context = chunks
+    .map(
+      (chunk) => `<chunk id="${escapeXml(chunk.key)}" chunkId="${escapeXml(chunk.metadata.chunkId ?? "")}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
+${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
+</chunk>`
+    )
+    .join("\n\n")
+
+  return `ANSWER_SUPPORT_JSON
+あなたは社内QA用RAGの回答支持検証器です。<answer>の各文が<context>内のevidence chunkだけで明示的に支持されるかを厳密に判定してください。
+出力はJSONのみ。Markdownや説明文は禁止。
+
+判定ルール:
+- supportingChunkIds と contradictionChunkIds には <chunk id="..."> の id だけを入れる。
+- memory card、一般知識、推測、質問文そのものは根拠にしない。
+- 数値、期限、手順、条件、承認者、例外条件は特に厳しく見る。
+- 引用チャンクに書かれていない断定文、範囲外の要約、過度な一般化は unsupportedSentences に入れる。
+- すべての実質的な回答文が evidence chunk で支持される場合だけ supported=true にする。
+
+JSON schema:
+{
+  "supported": true,
+  "unsupportedSentences": [{"sentence": "根拠で支持されない回答文", "reason": "不支持理由"}],
+  "supportingChunkIds": ["retrieved chunk id from <chunk id=...>"],
+  "contradictionChunkIds": ["retrieved chunk id from <chunk id=...>"],
+  "confidence": 0.0,
+  "totalSentences": 0,
+  "reason": "判定理由"
+}
+
+<question>
+${question}
+</question>
+<answer>
+${escapeXml(answer)}
+</answer>
+<context>
+${context || "根拠チャンクはありません。"}
+</context>`
+}
+
 export function selectFinalAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
   if (!isRequirementsClassificationQuestion(question)) return chunks
 

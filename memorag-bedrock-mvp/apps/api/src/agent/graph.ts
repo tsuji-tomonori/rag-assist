@@ -15,6 +15,7 @@ import { createRetrieveMemoryNode } from "./nodes/retrieve-memory.js"
 import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
+import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
 import { NO_ANSWER, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
@@ -24,6 +25,7 @@ export function createQaAgentGraph(deps: Dependencies) {
   const embedQueries = createEmbedQueriesNode(deps)
   const searchEvidence = createSearchEvidenceNode(deps)
   const sufficientContextGate = createSufficientContextGateNode(deps)
+  const verifyAnswerSupport = createVerifyAnswerSupportNode(deps)
 
   async function planSearch(state: QaAgentState): Promise<QaAgentUpdate> {
     const query = state.expandedQueries[0] ?? state.normalizedQuery ?? state.question
@@ -126,6 +128,7 @@ export function createQaAgentGraph(deps: Dependencies) {
     sufficientContextGate: tracedNode("sufficient_context_gate", sufficientContextGate),
     generateAnswer: tracedNode("generate_answer", createGenerateAnswerNode(deps)),
     validateCitations: tracedNode("validate_citations", validateCitations),
+    verifyAnswerSupport: tracedNode("verify_answer_support", verifyAnswerSupport),
     finalizeResponse: tracedNode("finalize_response", finalizeResponse),
     finalizeRefusal: tracedNode("finalize_refusal", finalizeRefusal)
   }
@@ -159,6 +162,7 @@ export function createQaAgentGraph(deps: Dependencies) {
 
       state = await applyNode(state, nodes.generateAnswer)
       state = await applyNode(state, nodes.validateCitations)
+      state = await applyNode(state, nodes.verifyAnswerSupport)
       return applyNode(state, nodes.finalizeResponse)
     }
   }
@@ -281,6 +285,15 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
       missingFacts: [],
       conflictingFacts: [],
       supportingChunkIds: [],
+      reason: ""
+    },
+    answerSupport: {
+      supported: false,
+      unsupportedSentences: [],
+      supportingChunkIds: [],
+      contradictionChunkIds: [],
+      confidence: 0,
+      totalSentences: 0,
       reason: ""
     },
     citations: [],
