@@ -37,6 +37,9 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   })
   assert.equal(answer.isAnswerable, true)
   assert.ok(answer.debug?.runId)
+  assert.equal(answer.debug?.schemaVersion, 1)
+  assert.equal(answer.debug?.steps.at(-1)?.label, "finalize_response")
+  assert.match(String(answer.debug?.steps.at(-1)?.output?.answer ?? ""), /ソフトウェア要求/)
 
   const debugRuns = await service.listDebugRuns()
   assert.equal(debugRuns.length, 1)
@@ -112,9 +115,9 @@ test("debug trace download metadata forces attachment and sanitizes the file nam
   const metadata = createDebugTraceDownloadMetadata("run/with:unsafe*chars")
 
   assert.deepEqual(metadata, {
-    fileName: "debug-trace-run_with_unsafe_chars.md",
-    objectKey: "downloads/debug-trace-run_with_unsafe_chars.md",
-    contentDisposition: 'attachment; filename="debug-trace-run_with_unsafe_chars.md"'
+    fileName: "debug-trace-run_with_unsafe_chars.json",
+    objectKey: "downloads/debug-trace-run_with_unsafe_chars.json",
+    contentDisposition: 'attachment; filename="debug-trace-run_with_unsafe_chars.json"'
   })
 })
 

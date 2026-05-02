@@ -5,7 +5,7 @@ import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
-import type { Citation, ConversationHistoryItem, DebugTrace, DocumentManifest, HumanQuestion, JsonValue, MemoryCard, VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type Citation, type ConversationHistoryItem, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type MemoryCard, type VectorRecord } from "../types.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
 import { chunkText } from "./chunk.js"
@@ -152,7 +152,7 @@ export class MemoRagService {
     const traces = await Promise.all(
       keys
         .filter((key) => key.endsWith(".json"))
-        .map(async (key) => JSON.parse(await this.deps.objectStore.getText(key)) as DebugTrace)
+        .map(async (key) => normalizeDebugTrace(JSON.parse(await this.deps.objectStore.getText(key))))
     )
     return traces.sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, 50)
   }
@@ -161,7 +161,7 @@ export class MemoRagService {
     const keys = await this.deps.objectStore.listKeys("debug-runs/")
     const key = keys.find((candidate) => candidate.endsWith(`/${runId}.json`))
     if (!key) return undefined
-    return JSON.parse(await this.deps.objectStore.getText(key)) as DebugTrace
+    return normalizeDebugTrace(JSON.parse(await this.deps.objectStore.getText(key)))
   }
 
   async chat(input: ChatInput): Promise<{
@@ -213,14 +213,14 @@ export class MemoRagService {
     const trace = await this.getDebugRun(runId)
     if (!trace) return undefined
 
-    const markdown = formatDebugTraceMarkdown(trace)
+    const body = JSON.stringify(trace, null, 2)
     const downloadMetadata = createDebugTraceDownloadMetadata(trace.runId)
     const s3 = new S3Client({ region: config.region })
     await s3.send(new PutObjectCommand({
       Bucket: config.debugDownloadBucketName,
       Key: downloadMetadata.objectKey,
-      Body: markdown,
-      ContentType: "text/markdown; charset=utf-8",
+      Body: body,
+      ContentType: "application/json; charset=utf-8",
       ContentDisposition: downloadMetadata.contentDisposition
     }))
 
@@ -228,7 +228,7 @@ export class MemoRagService {
     const url = await getSignedUrl(s3, new GetObjectCommand({
       Bucket: config.debugDownloadBucketName,
       Key: downloadMetadata.objectKey,
-      ResponseContentType: "text/markdown; charset=utf-8",
+      ResponseContentType: "application/json; charset=utf-8",
       ResponseContentDisposition: downloadMetadata.contentDisposition
     }), { expiresIn: expiresInSeconds })
     return { url, expiresInSeconds, objectKey: downloadMetadata.objectKey }
@@ -261,33 +261,24 @@ export class MemoRagService {
 
 
 
-function formatDebugTraceMarkdown(trace: DebugTrace): string {
-  const statusLabel = trace.status === "success" ? "成功" : trace.status === "warning" ? "注意" : "失敗"
-  const lines = [
-    `# Debug Trace ${trace.runId}`,"", "## Summary","",
-    `- Run ID: ${trace.runId}`,`- Status: ${statusLabel}`,`- Question: ${trace.question}`,`- Answerable: ${trace.isAnswerable ? "Yes" : "No"}`,`- Started At: ${trace.startedAt}`,`- Completed At: ${trace.completedAt}`,`- Total Latency: ${trace.totalLatencyMs}ms`,`- Model ID: ${trace.modelId}`,`- Embedding Model ID: ${trace.embeddingModelId}`,`- Clue Model ID: ${trace.clueModelId}`,`- Top K: ${trace.topK}`,`- Memory Top K: ${trace.memoryTopK}`,`- Min Score: ${trace.minScore}`,"","## Answer Preview","",trace.answerPreview || "-","","## Steps","",
-    ...trace.steps.flatMap((step)=>[`### ${step.id}. ${step.label}`,"",`- Status: ${step.status}`,`- Latency: ${step.latencyMs}ms`,step.modelId ? `- Model ID: ${step.modelId}` : undefined, step.hitCount!==undefined ? `- Hit Count: ${step.hitCount}`:undefined, step.tokenCount!==undefined ? `- Token Count: ${step.tokenCount}`:undefined,`- Started At: ${step.startedAt}`,`- Completed At: ${step.completedAt}`,"",step.summary,"",...(step.detail?["```text",step.detail,"```",""]:[])].filter(Boolean) as string[]),
-    "## Citations","",...formatCitationMarkdown(trace.citations),"## Retrieved","",...formatCitationMarkdown(trace.retrieved)
-  ]
-  return `${lines.join("\n")}\n`
-}
-
-function formatCitationMarkdown(citations: Citation[]): string[] {
-  if (citations.length === 0) return ["なし", ""]
-  return citations.flatMap((citation, index) => [
-    `### ${index + 1}. ${citation.fileName}`,"",`- Document ID: ${citation.documentId}`,citation.chunkId ? `- Chunk ID: ${citation.chunkId}` : undefined,`- Score: ${citation.score}`,"","```text",citation.text,"```", ""
-  ].filter(Boolean) as string[])
-}
-
 export function createDebugTraceDownloadMetadata(runId: string): {
   fileName: string
   objectKey: string
   contentDisposition: string
 } {
-  const fileName = `debug-trace-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}.md`
+  const fileName = `debug-trace-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}.json`
   return {
     fileName,
     objectKey: `downloads/${fileName}`,
     contentDisposition: `attachment; filename="${fileName}"`
+  }
+}
+
+function normalizeDebugTrace(value: unknown): DebugTrace {
+  const trace = value as DebugTrace & { schemaVersion?: number }
+  const { schemaVersion: _schemaVersion, ...rest } = trace
+  return {
+    schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
+    ...rest
   }
 }
