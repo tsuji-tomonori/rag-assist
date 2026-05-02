@@ -75,7 +75,10 @@ export type DisableAliasInput = {
 }
 
 export class AliasStore {
-  constructor(private readonly objectStore: ObjectStore) {}
+  constructor(
+    private readonly objectStore: ObjectStore,
+    private readonly auditLogStore: ObjectStore = objectStore
+  ) {}
 
   async create(input: CreateAliasInput, user: AppUser): Promise<AliasDefinition> {
     const now = new Date().toISOString()
@@ -166,8 +169,8 @@ export class AliasStore {
   }
 
   async auditLog(limit = 100): Promise<AliasAuditLogEntry[]> {
-    const keys = (await this.objectStore.listKeys("aliases/audit-log/")).filter((key) => key.endsWith(".json")).sort().reverse().slice(0, limit)
-    const entries = await Promise.all(keys.map(async (key) => JSON.parse(await this.objectStore.getText(key)) as AliasAuditLogEntry))
+    const keys = (await this.auditLogStore.listKeys("aliases/audit-log/")).filter((key) => key.endsWith(".json")).sort().reverse().slice(0, limit)
+    const entries = await Promise.all(keys.map(async (key) => JSON.parse(await this.auditLogStore.getText(key)) as AliasAuditLogEntry))
     return entries.sort((a, b) => b.at.localeCompare(a.at))
   }
 
@@ -214,7 +217,7 @@ export class AliasStore {
       aliasVersion: alias.version,
       scope: alias.scope
     }
-    await this.objectStore.putText(`aliases/audit-log/${compactDate(at)}-${eventId}.json`, JSON.stringify(entry, null, 2), "application/json")
+    await this.auditLogStore.putText(`aliases/audit-log/${compactDate(at)}-${eventId}.json`, JSON.stringify(entry, null, 2), "application/json")
   }
 }
 

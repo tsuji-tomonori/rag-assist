@@ -71,6 +71,19 @@ export class MemoRagMvpStack extends Stack {
       autoDeleteObjects: true
     })
 
+    const aliasAuditLogBucket = new s3.Bucket(this, "AliasAuditLogBucket", {
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      versioned: true,
+      objectLockEnabled: true,
+      objectLockDefaultRetention: s3.ObjectLockRetention.governance(Duration.days(365)),
+      serverAccessLogsBucket: accessLogsBucket,
+      serverAccessLogsPrefix: "s3/alias-audit-log/",
+      lifecycleRules: [{ expiration: Duration.days(400) }],
+      removalPolicy: RemovalPolicy.RETAIN
+    })
+
     const debugDownloadBucket = new s3.Bucket(this, "DebugDownloadBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -224,6 +237,7 @@ export class MemoRagMvpStack extends Stack {
         USE_LOCAL_VECTOR_STORE: "false",
         MOCK_BEDROCK: "false",
         DOCS_BUCKET_NAME: docsBucket.bucketName,
+        ALIAS_AUDIT_LOG_BUCKET_NAME: aliasAuditLogBucket.bucketName,
         QUESTION_TABLE_NAME: questionsTable.tableName,
         CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
         BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
@@ -251,6 +265,8 @@ export class MemoRagMvpStack extends Stack {
     })
 
     docsBucket.grantReadWrite(apiFn)
+    aliasAuditLogBucket.grantRead(apiFn)
+    aliasAuditLogBucket.grantPut(apiFn, "aliases/audit-log/*")
     debugDownloadBucket.grantReadWrite(apiFn)
     benchmarkBucket.grantRead(apiFn)
     questionsTable.grantReadWriteData(apiFn)
@@ -273,7 +289,7 @@ export class MemoRagMvpStack extends Stack {
       createDefaultStage: false,
       corsPreflight: {
         allowHeaders: ["Content-Type", "Authorization"],
-        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.DELETE, apigwv2.CorsHttpMethod.OPTIONS],
+        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.PATCH, apigwv2.CorsHttpMethod.DELETE, apigwv2.CorsHttpMethod.OPTIONS],
         allowOrigins: ["*"],
         maxAge: Duration.days(1)
       }
@@ -602,5 +618,6 @@ export class MemoRagMvpStack extends Stack {
     new cdk.CfnOutput(this, "MemoryVectorIndexName", { value: memoryVectorIndexName })
     new cdk.CfnOutput(this, "EvidenceVectorIndexName", { value: evidenceVectorIndexName })
     new cdk.CfnOutput(this, "DocumentsBucketName", { value: docsBucket.bucketName })
+    new cdk.CfnOutput(this, "AliasAuditLogBucketName", { value: aliasAuditLogBucket.bucketName })
   }
 }

@@ -1,4 +1,5 @@
 import { config } from "./config.js"
+import path from "node:path"
 import { BedrockTextModel } from "./adapters/bedrock.js"
 import { LocalObjectStore } from "./adapters/local-object-store.js"
 import type { ObjectStore } from "./adapters/object-store.js"
@@ -38,6 +39,9 @@ export function createDependencies(): Dependencies {
   const objectStore = config.useLocalVectorStore
     ? new LocalObjectStore(config.localDataDir)
     : new S3ObjectStore(config.docsBucketName)
+  const aliasAuditLogStore = config.useLocalVectorStore
+    ? new LocalObjectStore(path.join(config.localDataDir, "alias-audit-log"))
+    : new S3ObjectStore(config.aliasAuditLogBucketName)
 
   const memoryVectorStore = config.useLocalVectorStore
     ? new LocalVectorStore(config.localDataDir, "memory-vectors.json")
@@ -57,7 +61,7 @@ export function createDependencies(): Dependencies {
   const benchmarkRunStore = config.useLocalBenchmarkRunStore
     ? new LocalBenchmarkRunStore(config.localDataDir)
     : new DynamoDbBenchmarkRunStore(config.benchmarkRunsTableName)
-  const aliasStore = new AliasStore(objectStore)
+  const aliasStore = new AliasStore(objectStore, aliasAuditLogStore)
 
   cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, aliasStore }
   return cached

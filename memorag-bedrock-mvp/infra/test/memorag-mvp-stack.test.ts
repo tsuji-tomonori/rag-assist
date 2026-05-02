@@ -18,7 +18,7 @@ function synthesize() {
 test("implements the designed serverless resources", () => {
   const template = synthesize()
 
-  template.resourceCountIs("AWS::S3::Bucket", 5)
+  template.resourceCountIs("AWS::S3::Bucket", 6)
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolGroup", 8)
@@ -52,6 +52,20 @@ test("implements the designed serverless resources", () => {
       ])
     }
   })
+  template.hasResourceProperties("AWS::S3::Bucket", {
+    LoggingConfiguration: Match.objectLike({ LogFilePrefix: "s3/alias-audit-log/" }),
+    VersioningConfiguration: { Status: "Enabled" },
+    ObjectLockEnabled: true,
+    ObjectLockConfiguration: Match.objectLike({
+      ObjectLockEnabled: "Enabled",
+      Rule: Match.objectLike({
+        DefaultRetention: Match.objectLike({ Mode: "GOVERNANCE", Days: 365 })
+      })
+    }),
+    LifecycleConfiguration: {
+      Rules: Match.arrayWith([Match.objectLike({ ExpirationInDays: 400, Status: "Enabled" })])
+    }
+  })
   template.hasResourceProperties("AWS::Lambda::Function", {
     Handler: "index.handler",
     Runtime: "nodejs22.x",
@@ -60,7 +74,8 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
     ProtocolType: "HTTP",
     CorsConfiguration: Match.objectLike({
-      AllowHeaders: Match.arrayWith(["Authorization"])
+      AllowHeaders: Match.arrayWith(["Authorization"]),
+      AllowMethods: Match.arrayWith(["PATCH"])
     })
   })
   template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
@@ -117,6 +132,7 @@ test("implements the designed serverless resources", () => {
     Environment: Match.objectLike({
       Variables: Match.objectLike({
         QUESTION_TABLE_NAME: Match.anyValue(),
+        ALIAS_AUDIT_LOG_BUCKET_NAME: Match.anyValue(),
         CONVERSATION_HISTORY_TABLE_NAME: Match.anyValue(),
         BENCHMARK_RUNS_TABLE_NAME: Match.anyValue(),
         BENCHMARK_BUCKET_NAME: Match.anyValue(),

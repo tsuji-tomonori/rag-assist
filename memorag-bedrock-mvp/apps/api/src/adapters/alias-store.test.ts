@@ -10,7 +10,8 @@ import { LocalObjectStore } from "./local-object-store.js"
 test("alias store persists scoped drafts, review lifecycle, disable, and audit log", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-alias-store-"))
   const objectStore = new LocalObjectStore(dataDir)
-  const store = new AliasStore(objectStore)
+  const auditLogStore = new LocalObjectStore(path.join(dataDir, "audit-log-bucket"))
+  const store = new AliasStore(objectStore, auditLogStore)
 
   const created = await store.create(
     {
@@ -66,6 +67,8 @@ test("alias store persists scoped drafts, review lifecycle, disable, and audit l
   assert.deepEqual(auditLog.map((entry) => entry.action).sort(), ["created", "disabled", "reviewed", "updated"])
   assert.equal(auditLog.every((entry) => entry.aliasId === created.aliasId), true)
   assert.equal(auditLog.every((entry) => entry.scope.tenantId === "tenant-a"), true)
+  assert.equal((await objectStore.listKeys("aliases/audit-log/")).length, 0)
+  assert.equal((await auditLogStore.listKeys("aliases/audit-log/")).length, 4)
 })
 
 test("alias store keeps rejected aliases immutable and inactive", async () => {

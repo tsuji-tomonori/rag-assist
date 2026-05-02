@@ -69,6 +69,7 @@ task benchmark:sample
 | `EMBEDDING_MODEL_ID` | 埋め込みモデル | `amazon.titan-embed-text-v2:0` |
 | `EMBEDDING_DIMENSIONS` | vector次元数 | `1024` |
 | `MIN_RETRIEVAL_SCORE` | no-answer判定閾値 | `0.20` |
+| `ALIAS_AUDIT_LOG_BUCKET_NAME` | alias audit log 専用S3 bucket | 未設定 |
 | `DEBUG_DOWNLOAD_BUCKET_NAME` | debug trace JSON download用S3 bucket | 未設定 |
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | debug trace download URL有効期限 | `900` |
 
@@ -80,7 +81,7 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 | --- | --- |
 | `CHAT_USER` | 通常チャット、本人の会話履歴、担当者問い合わせ登録 |
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
-| `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
+| `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、alias 管理、benchmark run 起動 |
 | `BENCHMARK_RUNNER` | CodeBuild runner から `/benchmark/query` を実行 |
 | `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証 |
 

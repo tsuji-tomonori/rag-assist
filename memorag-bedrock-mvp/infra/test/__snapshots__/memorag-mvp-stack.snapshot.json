@@ -344,6 +344,102 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
+    "AliasAuditLogBucketD2D4CA08": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "ExpirationInDays": 400,
+              "Status": "Enabled"
+            }
+          ]
+        },
+        "LoggingConfiguration": {
+          "DestinationBucketName": {
+            "Ref": "AccessLogsBucket83982689"
+          },
+          "LogFilePrefix": "s3/alias-audit-log/"
+        },
+        "ObjectLockConfiguration": {
+          "ObjectLockEnabled": "Enabled",
+          "Rule": {
+            "DefaultRetention": {
+              "Days": 365,
+              "Mode": "GOVERNANCE"
+            }
+          }
+        },
+        "ObjectLockEnabled": true,
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        }
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "AliasAuditLogBucketPolicyDD292CC1": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "AliasAuditLogBucketD2D4CA08"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AliasAuditLogBucketD2D4CA08",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AliasAuditLogBucketD2D4CA08",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      }
+    },
     "DebugDownloadBucketAB6A16BE": {
       "Type": "AWS::S3::Bucket",
       "Properties": {
@@ -1621,6 +1717,61 @@
               "Action": [
                 "s3:GetObject*",
                 "s3:GetBucket*",
+                "s3:List*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "AliasAuditLogBucketD2D4CA08",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "AliasAuditLogBucketD2D4CA08",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    {
+                      "Fn::GetAtt": [
+                        "AliasAuditLogBucketD2D4CA08",
+                        "Arn"
+                      ]
+                    },
+                    "/aliases/audit-log/*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
                 "s3:List*",
                 "s3:DeleteObject*",
                 "s3:PutObject",
@@ -1863,6 +2014,9 @@
             "DOCS_BUCKET_NAME": {
               "Ref": "DocumentsBucket9EC9DEB9"
             },
+            "ALIAS_AUDIT_LOG_BUCKET_NAME": {
+              "Ref": "AliasAuditLogBucketD2D4CA08"
+            },
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
@@ -1970,6 +2124,7 @@
           "AllowMethods": [
             "GET",
             "POST",
+            "PATCH",
             "DELETE",
             "OPTIONS"
           ],
@@ -2807,6 +2962,11 @@
     "DocumentsBucketName": {
       "Value": {
         "Ref": "DocumentsBucket9EC9DEB9"
+      }
+    },
+    "AliasAuditLogBucketName": {
+      "Value": {
+        "Ref": "AliasAuditLogBucketD2D4CA08"
       }
     }
   },
