@@ -27,6 +27,7 @@ test("implements the designed serverless resources", () => {
     AutoVerifiedAttributes: ["email"],
     LambdaConfig: Match.objectLike({ PostConfirmation: Match.anyValue() })
   })
+  template.resourceCountIs("AWS::SecretsManager::Secret", 1)
   template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
@@ -155,9 +156,30 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::CodeBuild::Project", {
     Environment: Match.objectLike({
       ComputeType: "BUILD_GENERAL1_SMALL",
-      Image: "aws/codebuild/standard:7.0"
+      Image: "aws/codebuild/standard:7.0",
+      EnvironmentVariables: Match.arrayWith([
+        Match.objectLike({ Name: "COGNITO_USER_POOL_ID" }),
+        Match.objectLike({ Name: "COGNITO_APP_CLIENT_ID" }),
+        Match.objectLike({ Name: "BENCHMARK_AUTH_SECRET_ID" }),
+        Match.objectLike({ Name: "BENCHMARK_RUNNER_GROUP", Value: "BENCHMARK_RUNNER" })
+      ])
     }),
     TimeoutInMinutes: 120
+  })
+  template.hasResourceProperties("AWS::IAM::Policy", {
+    PolicyDocument: Match.objectLike({
+      Statement: Match.arrayWith([
+        Match.objectLike({
+          Action: Match.arrayWith([
+            "cognito-idp:AdminGetUser",
+            "cognito-idp:AdminCreateUser",
+            "cognito-idp:AdminSetUserPassword",
+            "cognito-idp:AdminAddUserToGroup"
+          ]),
+          Resource: Match.anyValue()
+        })
+      ])
+    })
   })
   template.hasResourceProperties("AWS::StepFunctions::StateMachine", {
     DefinitionString: Match.anyValue()
