@@ -23,10 +23,14 @@ Options:
   --user-pool-id USER_POOL_ID   Cognito User Pool ID. Defaults to COGNITO_USER_POOL_ID.
   --stack-name STACK_NAME       CloudFormation stack name used to resolve CognitoUserPoolId.
                                 Defaults to MemoRagMvpStack.
-  --role ROLE                   Cognito group to assign. Repeatable. Defaults to CHAT_USER.
+  --role ROLE                   Cognito group or Japanese role name to assign.
+                                Repeatable. Defaults to CHAT_USER.
                                 Groups are created by the CDK stack.
-                                Valid roles: CHAT_USER, ANSWER_EDITOR, RAG_GROUP_MANAGER,
+                                Valid Cognito groups: CHAT_USER, ANSWER_EDITOR, RAG_GROUP_MANAGER,
                                 USER_ADMIN, ACCESS_ADMIN, COST_AUDITOR, SYSTEM_ADMIN.
+                                Japanese role names: 一般利用者, 回答担当者,
+                                RAGグループ管理者, ユーザー管理者, アクセス管理者,
+                                コスト監査者, システム管理者.
   --name NAME                   Optional Cognito name attribute.
   --temporary-password VALUE    Temporary password for the new user.
   --password VALUE              Set a permanent password after creating/finding the user.
@@ -43,12 +47,13 @@ Environment:
   COGNITO_TEMPORARY_PASSWORD    Default value for --temporary-password.
 
 Examples:
-  infra/scripts/create-cognito-user.sh --email alice@example.com --role SYSTEM_ADMIN
+  infra/scripts/create-cognito-user.sh --email alice@example.com --role システム管理者
 
   infra/scripts/create-cognito-user.sh \
     --email alice@example.com \
     --password 'ExamplePassw0rd!' \
-    --role CHAT_USER \
+    --role 一般利用者 \
+    --role 回答担当者 \
     --suppress-invite
 USAGE
 }
@@ -58,9 +63,15 @@ die() {
   exit 1
 }
 
-is_valid_role() {
+normalize_role() {
   case "$1" in
-    CHAT_USER | ANSWER_EDITOR | RAG_GROUP_MANAGER | USER_ADMIN | ACCESS_ADMIN | COST_AUDITOR | SYSTEM_ADMIN) return 0 ;;
+    CHAT_USER | 一般利用者) echo "CHAT_USER" ;;
+    ANSWER_EDITOR | 回答担当者) echo "ANSWER_EDITOR" ;;
+    RAG_GROUP_MANAGER | RAGグループ管理者) echo "RAG_GROUP_MANAGER" ;;
+    USER_ADMIN | ユーザー管理者) echo "USER_ADMIN" ;;
+    ACCESS_ADMIN | アクセス管理者) echo "ACCESS_ADMIN" ;;
+    COST_AUDITOR | コスト監査者) echo "COST_AUDITOR" ;;
+    SYSTEM_ADMIN | システム管理者) echo "SYSTEM_ADMIN" ;;
     *) return 1 ;;
   esac
 }
@@ -153,9 +164,14 @@ if [[ ${#ROLES[@]} -eq 0 ]]; then
   ROLES=(CHAT_USER)
 fi
 
+NORMALIZED_ROLES=()
 for role in "${ROLES[@]}"; do
-  is_valid_role "$role" || die "invalid role: $role"
+  if ! normalized_role="$(normalize_role "$role")"; then
+    die "invalid role: $role"
+  fi
+  NORMALIZED_ROLES+=("$normalized_role")
 done
+ROLES=("${NORMALIZED_ROLES[@]}")
 
 if [[ -n "$PASSWORD" && -n "$TEMPORARY_PASSWORD" ]]; then
   die "use either --password or --temporary-password, not both."
