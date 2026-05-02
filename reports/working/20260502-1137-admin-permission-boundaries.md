@@ -26,7 +26,7 @@
 - UI 表示制御は補助であり、API の `requirePermission` を唯一の強制境界にする方針を優先した。
 - `GET /questions` は問い合わせ対応業務なので、ユーザー管理の `user:read` ではなく `answer:edit` に変更した。
 - `/questions/{id}/answer` と `/questions/{id}/resolve` は回答公開・解決操作なので `answer:publish` を要求するようにした。
-- debug trace 詳細と Markdown download は一覧と同じ全社横断情報として `chat:admin:read_all` に揃えた。
+- debug trace 詳細と JSON download は一覧と同じ全社横断情報として `chat:admin:read_all` に揃えた。
 - `AUTH_ENABLED=false` のローカル実行は従来どおり既定で `SYSTEM_ADMIN` のまま維持し、`LOCAL_AUTH_GROUPS` 指定時だけテスト用ロールに切り替えられるようにした。
 
 ## 4. 実施した作業

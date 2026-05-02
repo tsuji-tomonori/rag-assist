@@ -79,6 +79,7 @@ export const DebugStepSchema = z.object({
   modelId: z.string().optional(),
   summary: z.string(),
   detail: z.string().optional(),
+  output: z.record(z.string(), z.unknown()).optional(),
   hitCount: z.number().optional(),
   tokenCount: z.number().optional(),
   startedAt: z.string(),

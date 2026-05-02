@@ -29,7 +29,7 @@
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-010`, `NFR-005` |
 | `GET /debug-runs` | debug trace 一覧 | `FR-010`, `NFR-010` |
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
-| `POST /debug-runs/{runId}/download` | debug trace Markdown download URL 作成 | `FR-010`, `NFR-010` |
+| `POST /debug-runs/{runId}/download` | debug trace JSON ダウンロード URL 生成 | `FR-010`, `NFR-010` |
 | `POST /benchmark/query` | 評価実行 | `FR-012`, `FR-019`, `NFR-010` |
 
 注: 料金算出 API は現行 MVP では未提供とする。料金算出は `DES_DATA_001` の `UsageMeter`、`PricingCatalogEntry`、`CostEstimate` を使う将来拡張として扱う。
@@ -172,7 +172,7 @@
 | 解決済み化 | `POST /questions/{questionId}/resolve` | `answer:publish` | `ANSWER_EDITOR`, `SYSTEM_ADMIN` |
 | debug trace 一覧 | `GET /debug-runs` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
 | debug trace 詳細 | `GET /debug-runs/{runId}` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
-| debug Markdown download | `POST /debug-runs/{runId}/download` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
+| debug JSON download | `POST /debug-runs/{runId}/download` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
 | benchmark query | `POST /benchmark/query` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
 
 Phase 1 ではユーザー作成、ユーザー停止、ロール付与、ロール一覧編集、アクセス policy 編集、コスト監査、全ユーザー利用状況一覧の API/UI は提供しない。
@@ -192,3 +192,4 @@ Phase 1 ではユーザー作成、ユーザー停止、ロール付与、ロー
 - `2_アーキテクチャ_ARC/01_コンテキスト_CONTEXT/ARC_CONTEXT_001.md`
 - `3_設計_DES/11_詳細設計_DLD/DES_DLD_001.md`
 - `3_設計_DES/31_データ_DATA/DES_DATA_001.md`
+- `3_設計_DES/41_API_API/DES_API_002.md`

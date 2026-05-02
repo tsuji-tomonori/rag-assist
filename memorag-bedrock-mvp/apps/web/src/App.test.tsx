@@ -12,6 +12,7 @@ const documents = [
 const longFinalizeResponse = `ソフトウェア要求は製品要求とプロジェクト要求に分類されます。${"分類根拠。".repeat(220)}END_OF_FINALIZE_RESPONSE`
 
 const debugTrace = {
+  schemaVersion: 1 as const,
   runId: "run/with:unsafe*chars",
   question: "ソフトウェア要求の分類を洗い出して",
   modelId: "amazon.nova-lite-v1:0",
@@ -123,6 +124,11 @@ function isGet(init?: RequestInit) {
   return !init?.method || init.method === "GET"
 }
 
+function jwtWithGroups(groups: string[]) {
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url")
+  return `${encode({ alg: "none", typ: "JWT" })}.${encode({ sub: "user-1", email: "tester@example.com", "cognito:groups": groups })}.signature`
+}
+
 function mockAppFetch() {
   let storedHistory: unknown[] = []
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
@@ -145,7 +151,7 @@ function mockAppFetch() {
     if (requestUrl.endsWith("/documents") && init?.method === "POST") {
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
     }
-    if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+    if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
     if (requestUrl.endsWith("/chat") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}")) as { includeDebug?: boolean }
       return Promise.resolve(
@@ -339,7 +345,7 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("資料を取り込みました。知りたいことを入力してください。")).toBeInTheDocument()
   })
 
-  it("renders debug trace details, downloads markdown, and resets the conversation", async () => {
+  it("renders debug trace details, downloads JSON, and resets the conversation", async () => {
     const fetchMock = mockAppFetch()
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
     await renderAuthenticatedApp()
@@ -358,7 +364,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByText("answerability_gate"))
     expect(await screen.findByText("low_similarity_score")).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTitle("Markdownでダウンロード"))
+    await userEvent.click(screen.getByTitle("JSONでダウンロード"))
     expect(click).toHaveBeenCalled()
     expect(
       fetchMock.mock.calls.some(
@@ -378,7 +384,7 @@ describe("App chat and upload flow", () => {
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [debugTrace] }))
-      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
       if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return new Promise((resolve) => {
           resolveChat = resolve
@@ -530,7 +536,7 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/questions") && isGet(init)) return Promise.resolve(response({ questions: storedQuestions }))
-      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
       if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
       }
@@ -587,6 +593,46 @@ describe("App chat and upload flow", () => {
     expect(screen.getByLabelText("質問")).toHaveValue("追加確認: 今日山田さんは何を食べた?について確認したい\n")
     await userEvent.click(screen.getByText("解決した"))
     expect(await screen.findByText("解決済み")).toBeInTheDocument()
+  })
+
+  it("does not fetch assignee or admin resources for chat users when escalating", async () => {
+    window.sessionStorage.setItem(
+      "memorag.auth.session",
+      JSON.stringify({
+        email: "tester@example.com",
+        idToken: jwtWithGroups(["CHAT_USER"]),
+        expiresAt: Date.now() + 3600_000
+      })
+    )
+
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      const requestUrl = String(url)
+      if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: [] }))
+      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+        return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
+      }
+      if (requestUrl.endsWith("/questions") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body ?? "{}"))
+        return Promise.resolve(response({ ...humanQuestion, ...body }))
+      }
+      return Promise.resolve(response({}))
+    })
+    vi.stubGlobal("fetch", fetchMock)
+    render(<App />)
+
+    expect(await screen.findByText("資料を添付して開始できます")).toBeInTheDocument()
+    expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("質問"), "今日山田さんは何を食べた?")
+    await userEvent.click(screen.getByTitle("送信"))
+    expect(await screen.findByText("資料からは回答できません。")).toBeInTheDocument()
+    await userEvent.click(await screen.findByText("担当者へ送信"))
+    expect(await screen.findByText("担当者へ送信済み")).toBeInTheDocument()
+
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
   })
 
   it("renders empty and preloaded assignee workspaces", async () => {

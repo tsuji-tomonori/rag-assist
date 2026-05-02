@@ -71,11 +71,11 @@ And 文書本文、引用 chunk、debug trace を返さない。
 
 Given 本番または社内検証環境である。
 
-When 一般チャット利用者が問い合わせ一覧、問い合わせ詳細、回答登録、解決済み化、debug trace 詳細、または debug Markdown download にアクセスする。
+When 一般チャット利用者が問い合わせ一覧、問い合わせ詳細、回答登録、解決済み化、debug trace 詳細、または debug JSON download にアクセスする。
 
 Then システムは権限不足として拒否する。
 
-And 問い合わせ本文、回答本文、debug trace、Markdown download URL を返さない。
+And 問い合わせ本文、回答本文、debug trace、JSON download URL を返さない。
 
 ### AC-SEC-003: 問い合わせ対応 role の分離
 

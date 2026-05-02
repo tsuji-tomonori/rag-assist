@@ -67,6 +67,7 @@ export type DebugStep = {
   modelId?: string
   summary: string
   detail?: string
+  output?: Record<string, unknown>
   hitCount?: number
   tokenCount?: number
   startedAt: string
@@ -74,6 +75,7 @@ export type DebugStep = {
 }
 
 export type DebugTrace = {
+  schemaVersion: 1
   runId: string
   question: string
   modelId: string

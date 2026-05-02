@@ -77,13 +77,17 @@ export type DebugStep = {
   modelId?: string
   summary: string
   detail?: string
+  output?: Record<string, unknown>
   hitCount?: number
   tokenCount?: number
   startedAt: string
   completedAt: string
 }
 
+export const DEBUG_TRACE_SCHEMA_VERSION = 1
+
 export type DebugTrace = {
+  schemaVersion: typeof DEBUG_TRACE_SCHEMA_VERSION
   runId: string
   question: string
   modelId: string

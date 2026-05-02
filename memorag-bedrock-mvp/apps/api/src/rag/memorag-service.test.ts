@@ -10,7 +10,8 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import { createDebugTraceDownloadMetadata, MemoRagService } from "./memorag-service.js"
+import type { DebugTrace } from "../types.js"
+import { createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
   const { service, dataDir } = await createService()
@@ -37,6 +38,9 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   })
   assert.equal(answer.isAnswerable, true)
   assert.ok(answer.debug?.runId)
+  assert.equal(answer.debug?.schemaVersion, 1)
+  assert.equal(answer.debug?.steps.at(-1)?.label, "finalize_response")
+  assert.match(String(answer.debug?.steps.at(-1)?.output?.answer ?? ""), /ソフトウェア要求/)
 
   const debugRuns = await service.listDebugRuns()
   assert.equal(debugRuns.length, 1)
@@ -112,9 +116,253 @@ test("debug trace download metadata forces attachment and sanitizes the file nam
   const metadata = createDebugTraceDownloadMetadata("run/with:unsafe*chars")
 
   assert.deepEqual(metadata, {
-    fileName: "debug-trace-run_with_unsafe_chars.md",
-    objectKey: "downloads/debug-trace-run_with_unsafe_chars.md",
-    contentDisposition: 'attachment; filename="debug-trace-run_with_unsafe_chars.md"'
+    fileName: "debug-trace-run_with_unsafe_chars.json",
+    objectKey: "downloads/debug-trace-run_with_unsafe_chars.json",
+    contentDisposition: 'attachment; filename="debug-trace-run_with_unsafe_chars.json"'
+  })
+})
+
+test("debug trace JSON for answerable runs matches the v1 schema example", () => {
+  const trace: DebugTrace = {
+    schemaVersion: 1,
+    runId: "run_answerable",
+    question: "期限はいつですか？",
+    modelId: "amazon.nova-lite-v1:0",
+    embeddingModelId: "amazon.titan-embed-text-v2:0",
+    clueModelId: "amazon.nova-lite-v1:0",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.2,
+    startedAt: "2026-05-02T00:00:00.000Z",
+    completedAt: "2026-05-02T00:00:01.000Z",
+    totalLatencyMs: 1000,
+    status: "success",
+    answerPreview: "期限は翌月5営業日までです。",
+    isAnswerable: true,
+    citations: [
+      {
+        documentId: "doc-1",
+        fileName: "policy.txt",
+        chunkId: "chunk-0001",
+        score: 0.91,
+        text: "申請期限は翌月5営業日までです。"
+      }
+    ],
+    retrieved: [
+      {
+        documentId: "doc-1",
+        fileName: "policy.txt",
+        chunkId: "chunk-0001",
+        score: 0.91,
+        text: "申請期限は翌月5営業日までです。"
+      }
+    ],
+    steps: [
+      {
+        id: 1,
+        label: "retrieve_memory",
+        status: "success",
+        latencyMs: 12,
+        modelId: "amazon.titan-embed-text-v2:0",
+        summary: "memory hits=1",
+        output: {
+          memoryCards: [
+            {
+              key: "doc-1-memory-0000",
+              score: 0.8,
+              metadata: {
+                kind: "memory",
+                documentId: "doc-1",
+                fileName: "policy.txt",
+                memoryId: "memory-0000",
+                text: "Summary: 申請期限",
+                createdAt: "2026-05-01T00:00:00.000Z"
+              }
+            }
+          ]
+        },
+        hitCount: 1,
+        startedAt: "2026-05-02T00:00:00.000Z",
+        completedAt: "2026-05-02T00:00:00.012Z"
+      },
+      {
+        id: 2,
+        label: "finalize_response",
+        status: "success",
+        latencyMs: 3,
+        summary: "finalized",
+        detail: "期限は翌月5営業日までです。",
+        output: {
+          answer: "期限は翌月5営業日までです。"
+        },
+        tokenCount: 10,
+        startedAt: "2026-05-02T00:00:00.997Z",
+        completedAt: "2026-05-02T00:00:01.000Z"
+      }
+    ]
+  }
+
+  assert.equal(formatDebugTraceJson(trace), `{
+  "schemaVersion": 1,
+  "runId": "run_answerable",
+  "question": "期限はいつですか？",
+  "modelId": "amazon.nova-lite-v1:0",
+  "embeddingModelId": "amazon.titan-embed-text-v2:0",
+  "clueModelId": "amazon.nova-lite-v1:0",
+  "topK": 6,
+  "memoryTopK": 4,
+  "minScore": 0.2,
+  "startedAt": "2026-05-02T00:00:00.000Z",
+  "completedAt": "2026-05-02T00:00:01.000Z",
+  "totalLatencyMs": 1000,
+  "status": "success",
+  "answerPreview": "期限は翌月5営業日までです。",
+  "isAnswerable": true,
+  "citations": [
+    {
+      "documentId": "doc-1",
+      "fileName": "policy.txt",
+      "chunkId": "chunk-0001",
+      "score": 0.91,
+      "text": "申請期限は翌月5営業日までです。"
+    }
+  ],
+  "retrieved": [
+    {
+      "documentId": "doc-1",
+      "fileName": "policy.txt",
+      "chunkId": "chunk-0001",
+      "score": 0.91,
+      "text": "申請期限は翌月5営業日までです。"
+    }
+  ],
+  "steps": [
+    {
+      "id": 1,
+      "label": "retrieve_memory",
+      "status": "success",
+      "latencyMs": 12,
+      "modelId": "amazon.titan-embed-text-v2:0",
+      "summary": "memory hits=1",
+      "output": {
+        "memoryCards": [
+          {
+            "key": "doc-1-memory-0000",
+            "score": 0.8,
+            "metadata": {
+              "kind": "memory",
+              "documentId": "doc-1",
+              "fileName": "policy.txt",
+              "memoryId": "memory-0000",
+              "text": "Summary: 申請期限",
+              "createdAt": "2026-05-01T00:00:00.000Z"
+            }
+          }
+        ]
+      },
+      "hitCount": 1,
+      "startedAt": "2026-05-02T00:00:00.000Z",
+      "completedAt": "2026-05-02T00:00:00.012Z"
+    },
+    {
+      "id": 2,
+      "label": "finalize_response",
+      "status": "success",
+      "latencyMs": 3,
+      "summary": "finalized",
+      "detail": "期限は翌月5営業日までです。",
+      "output": {
+        "answer": "期限は翌月5営業日までです。"
+      },
+      "tokenCount": 10,
+      "startedAt": "2026-05-02T00:00:00.997Z",
+      "completedAt": "2026-05-02T00:00:01.000Z"
+    }
+  ]
+}`)
+})
+
+test("debug trace JSON for refusal runs matches the v1 schema example", () => {
+  const trace: DebugTrace = {
+    schemaVersion: 1,
+    runId: "run_refusal",
+    question: "資料にない制度は？",
+    modelId: "amazon.nova-lite-v1:0",
+    embeddingModelId: "amazon.titan-embed-text-v2:0",
+    clueModelId: "amazon.nova-lite-v1:0",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.2,
+    startedAt: "2026-05-02T00:00:00.000Z",
+    completedAt: "2026-05-02T00:00:00.200Z",
+    totalLatencyMs: 200,
+    status: "warning",
+    answerPreview: "資料からは回答できません。",
+    isAnswerable: false,
+    citations: [],
+    retrieved: [],
+    steps: [
+      {
+        id: 1,
+        label: "answerability_gate",
+        status: "warning",
+        latencyMs: 8,
+        summary: "answerable=false, reason=no_relevant_chunks",
+        detail: "reason=no_relevant_chunks\nconfidence=0",
+        output: {
+          answerability: {
+            isAnswerable: false,
+            reason: "no_relevant_chunks",
+            confidence: 0
+          },
+          answer: "資料からは回答できません。",
+          citations: []
+        },
+        startedAt: "2026-05-02T00:00:00.100Z",
+        completedAt: "2026-05-02T00:00:00.108Z"
+      }
+    ]
+  }
+
+  assert.deepEqual(JSON.parse(formatDebugTraceJson(trace)), {
+    schemaVersion: 1,
+    runId: "run_refusal",
+    question: "資料にない制度は？",
+    modelId: "amazon.nova-lite-v1:0",
+    embeddingModelId: "amazon.titan-embed-text-v2:0",
+    clueModelId: "amazon.nova-lite-v1:0",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.2,
+    startedAt: "2026-05-02T00:00:00.000Z",
+    completedAt: "2026-05-02T00:00:00.200Z",
+    totalLatencyMs: 200,
+    status: "warning",
+    answerPreview: "資料からは回答できません。",
+    isAnswerable: false,
+    citations: [],
+    retrieved: [],
+    steps: [
+      {
+        id: 1,
+        label: "answerability_gate",
+        status: "warning",
+        latencyMs: 8,
+        summary: "answerable=false, reason=no_relevant_chunks",
+        detail: "reason=no_relevant_chunks\nconfidence=0",
+        output: {
+          answerability: {
+            isAnswerable: false,
+            reason: "no_relevant_chunks",
+            confidence: 0
+          },
+          answer: "資料からは回答できません。",
+          citations: []
+        },
+        startedAt: "2026-05-02T00:00:00.100Z",
+        completedAt: "2026-05-02T00:00:00.108Z"
+      }
+    ]
   })
 })
 
