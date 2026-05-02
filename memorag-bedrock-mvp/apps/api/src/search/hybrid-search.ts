@@ -10,6 +10,7 @@ export type SearchInput = {
   lexicalTopK?: number
   semanticTopK?: number
   embeddingModelId?: string
+  semanticVector?: number[]
   filters?: {
     tenantId?: string
     department?: string
@@ -115,16 +116,20 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     source: input.filters?.source,
     docType: input.filters?.docType
   }
-  const semanticHits = semanticTopK > 0
-    ? (await deps.evidenceVectorStore.query(
-        await deps.textModel.embed(input.query, {
-          modelId: input.embeddingModelId ?? config.embeddingModelId,
-          dimensions: config.embeddingDimensions
-        }),
-        semanticTopK,
-        vectorFilter
-      )).filter((hit) => canAccessVector(hit.metadata, user))
-    : []
+  const semanticHits =
+    semanticTopK > 0
+      ? (
+          await deps.evidenceVectorStore.query(
+            input.semanticVector ??
+              (await deps.textModel.embed(input.query, {
+                modelId: input.embeddingModelId ?? config.embeddingModelId,
+                dimensions: config.embeddingDimensions
+              })),
+            semanticTopK,
+            vectorFilter
+          )
+        ).filter((hit) => canAccessVector(hit.metadata, user))
+      : []
 
   const fused = rrfFuse(
     [

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto"
+import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
@@ -22,9 +23,15 @@ import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
 import { clamp, toCitation } from "./utils.js"
 
-export function createQaAgentGraph(deps: Dependencies) {
+const systemAdminUser: AppUser = {
+  userId: "system",
+  email: "system@example.com",
+  cognitoGroups: ["SYSTEM_ADMIN"]
+}
+
+export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdminUser) {
   const embedQueries = createEmbedQueriesNode(deps)
-  const searchEvidence = createSearchEvidenceNode(deps)
+  const searchEvidence = createSearchEvidenceNode(deps, user)
   const sufficientContextGate = createSufficientContextGateNode(deps)
   const verifyAnswerSupport = createVerifyAnswerSupportNode(deps)
 
@@ -60,6 +67,7 @@ export function createQaAgentGraph(deps: Dependencies) {
     const embedUpdate = await embedQueries(state)
     const searchUpdate = await searchEvidence({ ...state, ...embedUpdate } as QaAgentState)
     const nextRetrieved = searchUpdate.retrievedChunks ?? []
+    const retrievalDiagnostics = searchUpdate.retrievalDiagnostics
     const previousKeys = new Set(state.retrievedChunks.map((chunk) => chunk.key))
     const newEvidenceCount = nextRetrieved.filter((chunk) => !previousKeys.has(chunk.key)).length
 
@@ -78,10 +86,11 @@ export function createQaAgentGraph(deps: Dependencies) {
           hitCount: nextRetrieved.length,
           newEvidenceCount,
           topScore: nextRetrieved[0]?.score,
+          retrievalDiagnostics,
           summary:
             nextRetrieved.length === 0
               ? "検索結果はありませんでした。"
-              : `検索で${nextRetrieved.length}件取得し、新規根拠は${newEvidenceCount}件でした。`
+              : `hybrid検索で${nextRetrieved.length}件取得し、新規根拠は${newEvidenceCount}件でした。`
         }
       ]
     }
@@ -243,7 +252,7 @@ function inferSearchComplexity(question: string): QaAgentState["searchPlan"]["co
   return "simple"
 }
 
-export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<QaGraphResult> {
+export async function runQaAgent(deps: Dependencies, input: ChatInput, user: AppUser = systemAdminUser): Promise<QaGraphResult> {
   const startedAt = new Date()
   const startedMs = Date.now()
   const runId = createRunId(startedAt)
@@ -253,7 +262,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
   const modelId = input.modelId ?? config.defaultModelId
   const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
   const clueModelId = input.clueModelId ?? input.modelId ?? config.defaultMemoryModelId
-  const graph = createQaAgentGraph(deps)
+  const graph = createQaAgentGraph(deps, user)
 
   const state = (await graph.invoke({
     runId,
@@ -310,6 +319,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
     noNewEvidenceStreak: 0,
     searchDecision: "continue_search",
     retrievedChunks: [],
+    retrievalDiagnostics: undefined,
     selectedChunks: [],
     answerability: {
       isAnswerable: false,

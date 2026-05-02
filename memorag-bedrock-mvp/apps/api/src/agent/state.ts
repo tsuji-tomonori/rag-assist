@@ -165,6 +165,21 @@ export const ActionObservationSchema = z.object({
   hitCount: z.number().int().min(0),
   newEvidenceCount: z.number().int().min(0),
   topScore: z.number().optional(),
+  retrievalDiagnostics: z
+    .object({
+      queryCount: z.number().int().min(0),
+      indexVersions: z.array(z.string()).default(() => []),
+      aliasVersions: z.array(z.string()).default(() => []),
+      lexicalCount: z.number().int().min(0),
+      semanticCount: z.number().int().min(0),
+      fusedCount: z.number().int().min(0),
+      sourceCounts: z.object({
+        lexical: z.number().int().min(0),
+        semantic: z.number().int().min(0),
+        hybrid: z.number().int().min(0)
+      })
+    })
+    .optional(),
   summary: z.string()
 })
 
@@ -252,6 +267,7 @@ export const AgentStateSchema = z.object({
   searchDecision: z.enum(["continue_search", "done"]).default("continue_search"),
 
   retrievedChunks: z.array(RetrievedChunkSchema).default(() => []),
+  retrievalDiagnostics: ActionObservationSchema.shape.retrievalDiagnostics,
   selectedChunks: z.array(RetrievedChunkSchema).default(() => []),
 
   answerability: AnswerabilitySchema.default({

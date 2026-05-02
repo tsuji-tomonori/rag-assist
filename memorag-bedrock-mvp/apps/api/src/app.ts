@@ -185,7 +185,7 @@ app.openapi(chatRoute, async (c) => {
   if ((body.includeDebug ?? body.debug ?? false) === true) {
     requirePermission(user, "chat:admin:read_all")
   }
-  return c.json(await service.chat(body), 200)
+  return c.json(await service.chat(body, user), 200)
 })
 
 app.openapi(
@@ -464,7 +464,7 @@ app.openapi(
   async (c) => {
     requirePermission(c.get("user"), "benchmark:run")
     const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkQueryRequestSchema>
-    const result = await service.chat({ ...body, includeDebug: body.includeDebug ?? true })
+    const result = await service.chat({ ...body, includeDebug: body.includeDebug ?? true }, c.get("user"))
     return c.json({ id: body.id, ...result }, 200)
   }
 )

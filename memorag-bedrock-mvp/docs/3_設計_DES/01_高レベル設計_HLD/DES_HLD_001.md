@@ -14,6 +14,7 @@
 - 文書取り込み
 - memory/evidence record 生成
 - 質問応答 workflow
+- hybrid retrieval
 - answerability gate
 - citation validation
 - debug trace
@@ -31,7 +32,9 @@
 | Ingestion Handler | fileName、text、metadata | documentId、manifest | `FR-001`, `FR-002` |
 | Memory Builder | source text、document metadata | memory record、evidence chunk | `FR-002`, `FR-020` |
 | Query Orchestrator | question、settings、user context | answer/refusal、citations、metadata | `FR-003`, `FR-005` |
-| Retriever | query/clue、filters | candidate chunks | `FR-016`, `FR-018`, `TC-001` |
+| Hybrid Retriever | query/clue、embedding、filters、user context | fused candidate chunks、retrieval diagnostics | `FR-016`, `FR-018`, `FR-026`, `TC-001` |
+| Lightweight Lexical Retriever | normalized query、alias map、metadata filters | lexical candidate chunks | `FR-023`, `FR-026`, `NFR-012` |
+| Semantic Retriever | query embedding、metadata filters | semantic candidate chunks | `FR-026`, `TC-001` |
 | Retrieval Evaluator | candidates、required facts、action history | retrievalQuality、missingFactIds、nextAction、reason | `FR-016`, `FR-017` |
 | Answerability Gate | question、evidence | answerability label、reason | `FR-014` |
 | Answer Generator | question、supported evidence | grounded answer | `FR-003`, `FR-004` |
@@ -49,7 +52,9 @@
 ## 責務分担
 
 - Query Orchestrator は workflow の順序制御に集中し、検索、判定、生成、引用検証の個別ロジックを直接抱え込まない。
-- Retriever は検索候補の取得に集中し、回答生成や引用文の作成を行わない。
+- Hybrid Retriever は検索候補の取得、source 別候補の重複排除、RRF、ACL guard、retrieval diagnostics 生成に集中し、回答生成や引用文の作成を行わない。
+- Lightweight Lexical Retriever は BM25、CJK n-gram、prefix、ASCII fuzzy、alias expansion に集中し、alias 定義の作成や更新は行わない。
+- Semantic Retriever は S3 Vectors または local vector store adapter 経由の意味検索に集中し、embedding 生成済みの場合は再 embedding を避ける。
 - Answerability Gate は回答してよいかを判定し、回答文を生成しない。
 - Citation Validator は回答が実在する evidence chunk を引用しているかを検証する。
 - Answer Support Verifier は回答後の主要文が引用 chunk に支持されているかを検証し、不支持文がある場合は回答不能へ落とす。
@@ -67,8 +72,8 @@
 
 1. API は認可と入力検証を行う。
 2. Query Orchestrator は質問を正規化し、clue を生成する。
-3. Retriever は memory/evidence index から候補を取得する。
-4. RRF Rank Fusion は複数候補を統合する。
+3. Hybrid Retriever は lexical retrieval と semantic retrieval から evidence 候補を取得する。
+4. RRF Rank Fusion は source と query をまたぐ複数候補を統合する。
 5. Retrieval Evaluator は必要事実が検索済み evidence で満たされているかを判断し、追加 evidence search、rerank、拒否のいずれかを選ぶ。
 6. Answerability Gate は evidence だけで回答可能かを判定する。
 7. Answer Generator は回答可能な場合だけ回答を生成する。

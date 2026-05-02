@@ -258,8 +258,9 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   const fallbackEmbeddings = await createEmbedQueriesNode(deps)(state({ expandedQueries: [] }))
   assert.equal(fallbackEmbeddings.queryEmbeddings?.length, 1)
 
-  const search = await createSearchEvidenceNode(deps)(state({ queryEmbeddings: [{ query: "q", vector: [1, 0] }] }))
+  const search = await createSearchEvidenceNode(deps, user())(state({ queryEmbeddings: [{ query: "q", vector: [1, 0] }] }))
   assert.deepEqual(search.retrievedChunks?.map((hit) => hit.key), ["doc-1-chunk-0001"])
+  assert.equal(search.retrievalDiagnostics?.semanticCount, 2)
 })
 
 test("retrieval evaluator routes fact coverage conservatively", async () => {
@@ -532,6 +533,14 @@ function createDeps(): Dependencies {
   } as unknown as Dependencies
 }
 
+function user() {
+  return {
+    userId: "test-user",
+    email: "test-user@example.com",
+    cognitoGroups: ["SYSTEM_ADMIN"]
+  }
+}
+
 function state(overrides: Record<string, unknown> = {}): QaAgentState {
   return {
     runId: "run",
@@ -581,6 +590,7 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
     noNewEvidenceStreak: 0,
     searchDecision: "continue_search",
     retrievedChunks: [],
+    retrievalDiagnostics: undefined,
     selectedChunks: [chunk],
     answerability: { isAnswerable: false, reason: "not_checked", confidence: 0 },
     sufficientContext: {

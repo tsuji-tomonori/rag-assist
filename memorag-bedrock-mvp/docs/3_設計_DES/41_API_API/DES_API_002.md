@@ -140,7 +140,8 @@
 
 - `steps` は agent node の実行順に並べる。
 - 各 `steps[].output` は、その step が返した構造化 update を JSON object として保持する。
-- 検索系 step の `output` には `retrievedChunks`、`selectedChunks`、`actionHistory` などを含めてよい。
+- 検索系 step の `output` には `retrievedChunks`、`selectedChunks`、`actionHistory`、`retrievalDiagnostics` などを含めてよい。
+- `retrievalDiagnostics` は query 数、index/alias version、lexical/semantic/fused 件数、source 件数などの検索診断情報を保持する。
 - 回答生成後の step の `output` には `rawAnswer`、`answer`、`citations` などを含めてよい。
 - 回答不能で終了した場合も、最後の step の `output.answer` は `資料からは回答できません。` とする。
 - `detail` は UI 表示用の text summary であり、機械的な取り込みでは `output` を正とする。

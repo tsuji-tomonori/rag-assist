@@ -57,6 +57,16 @@ Then RRF または同等の順位融合結果を trace に残す。
 
 And 検索評価による next action と理由を actionHistory に残す。
 
+### AC-RAG-005: 通常チャットの hybrid evidence 検索
+
+Given 利用者が通常のチャット質問を送信する。
+
+When agent workflow が evidence を検索する。
+
+Then システムは lightweight lexical retrieval と S3 Vectors semantic search の候補を RRF または同等の方式で統合する。
+
+And 検索 step は query 数、retrieval source 別件数、index/alias version 情報を trace に残せる。
+
 ### AC-SEC-001: benchmark/debug API 認可
 
 Given 本番または社内検証環境である。
@@ -124,8 +134,8 @@ And Markdown report を生成できる。
 ## 関連要求
 
 - `FR-003`, `FR-004`, `FR-005`
-- `FR-014`, `FR-015`, `FR-016`, `FR-017`, `FR-018`, `FR-019`, `FR-021`, `FR-022`
-- `NFR-010`, `NFR-011`, `SQ-001`
+- `FR-014`, `FR-015`, `FR-016`, `FR-017`, `FR-018`, `FR-019`, `FR-021`, `FR-022`, `FR-023`, `FR-024`, `FR-025`, `FR-026`
+- `NFR-010`, `NFR-011`, `NFR-012`, `SQ-001`
 
 ## 関連設計
 

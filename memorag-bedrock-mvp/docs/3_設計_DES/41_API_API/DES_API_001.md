@@ -19,7 +19,7 @@
 | `GET /documents` | 登録文書一覧 | `FR-001`, `FR-007` |
 | `POST /documents` | 文書登録 | `FR-001`, `FR-002` |
 | `DELETE /documents/{documentId}` | 文書削除 | `FR-007`, `FR-008` |
-| `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005` |
+| `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005`, `FR-026` |
 | `POST /search` | hybrid lexical/vector search | `FR-023`, `NFR-012` |
 | `POST /questions` | 回答不能時の担当者問い合わせ作成 | `FR-021`, `NFR-011` |
 | `GET /questions` | 担当者向け問い合わせ一覧 | `FR-021`, `NFR-011` |
@@ -72,6 +72,12 @@
 - `debug.steps[].tokenCount` は UI/trace 表示用の概算であり、Bedrock 請求額の正確な算出には使わない。
 - `debug.steps[].modelId` は Bedrock 単価参照時の候補キーとして扱う。
 - 請求精度が必要な場合は、Bedrock の usage metadata、CloudWatch metrics、Cost and Usage Report などの実測系データを `UsageMeter` に取り込む。
+
+### 検索経路
+
+- `POST /chat` の agent `search_evidence` は `POST /search` と同じ hybrid retriever を使用する。
+- 検索 step の debug output には `retrievalDiagnostics` を含めてよい。
+- `retrievalDiagnostics` は件数と opaque version を扱い、alias 本文や ACL metadata は含めない。
 
 ## `POST /search`
 
