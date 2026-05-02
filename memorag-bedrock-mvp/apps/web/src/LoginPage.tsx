@@ -65,7 +65,7 @@ export default function LoginPage({ onLogin, onCompleteNewPassword }: LoginPageP
 
   return (
     <div className="login-page">
-      <div className="login-hero" aria-hidden="true">
+      <div className="login-hero" data-testid="login-hero" aria-hidden="true">
         <LoginHeroGraphic />
       </div>
       <div className="login-panel">
