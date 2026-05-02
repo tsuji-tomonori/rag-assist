@@ -187,7 +187,7 @@ describe("App document management", () => {
 
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
 
-    await userEvent.click(screen.getByRole("button", { name: "プロンプトをコピー" }))
+    await userEvent.click(screen.getByTitle("プロンプトをコピー"))
     expect(writeText).toHaveBeenCalledWith("分類を教えて")
 
     await userEvent.click(screen.getByRole("button", { name: "回答をコピー" }))
