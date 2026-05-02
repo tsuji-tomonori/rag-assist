@@ -1,7 +1,7 @@
 import * as fs from "node:fs"
 import * as path from "node:path"
 import * as cdk from "aws-cdk-lib"
-import { Duration, RemovalPolicy, Stack, StackProps } from "aws-cdk-lib"
+import { Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib"
 import * as apigw from "aws-cdk-lib/aws-apigateway"
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2"
 import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations"
@@ -16,7 +16,7 @@ import * as s3 from "aws-cdk-lib/aws-s3"
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
-import { Construct } from "constructs"
+import type { Construct } from "constructs"
 
 export interface MemoRagMvpStackProps extends StackProps {
   readonly includeFrontendDeployment?: boolean
