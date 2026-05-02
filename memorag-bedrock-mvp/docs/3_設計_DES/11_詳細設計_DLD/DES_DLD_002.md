@@ -47,6 +47,7 @@ query
 | kuromoji.js | 初期未採用 | 依存と辞書ロードを増やさず、MVP の実装速度と Lambda cold start を優先する。 | 検索品質が不足する場合は tokenizer 差し替え候補にする。 |
 | prefix | 採用 | 社内略語、品番、ファイル名、英数字識別子に効く。 | 短すぎる prefix はノイズになるため、2 文字以上に限定する。 |
 | fuzzy | 限定採用 | typo に対応するため、4 文字以上の ASCII term に限定して edit distance 1〜2 を使う。 | 日本語 fuzzy は計算量と誤一致が増えるため、n-gram/alias に寄せる。 |
+| alias expansion | 限定採用 | tenant や index の運用データとして与えられた同義語だけを query expansion に使う。 | 実装に業務語彙や製品名を hard-code しない。 |
 | S3 Vectors | 採用 | 意味検索は自作せず、既存 vector store 抽象経由で topK 類似検索と metadata filter を使う。 | metadata filter は保存項目とサイズ制約に依存する。 |
 | RRF | 採用 | BM25 score と vector score は尺度が異なるため、順位ベース融合で score normalization 依存を避ける。 | 重みは初期値であり、評価ログに基づく調整が必要。 |
 | cheap rerank | 採用 | phrase match、token coverage、title match、recentness の軽量補正で上位順序を安定させる。 | cross encoder rerank ほどの意味理解はない。 |
@@ -73,6 +74,8 @@ query
 - lexical index は ingestion 時に永続生成せず、manifest/source text から search Lambda execution environment に warm cache する。
 - metadata filter は `tenantId`、`department`、`source`、`docType`、`documentId` を API 入力で受ける。
 - vector metadata には `tenantId`、`department`、`source`、`docType`、`aclGroup`、`aclGroups`、`allowedUsers` を保存できる。
+- alias expansion は manifest metadata の `searchAliases` または `aliases` から取り込んだ index-local map だけを使う。
+- alias expansion の default は空であり、実コードに具体的な社内用語、部署名、製品名を固定値として持たせない。
 - S3 Vectors の前段 filter は scalar metadata に寄せ、複雑な ACL 判定は後段 guard で補完する。
 - エージェント workflow への接続はこの設計の対象外とし、次回の orchestrator/retriever 統合で扱う。
 
@@ -85,6 +88,7 @@ query
 | CJK n-gram match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
 | prefix match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
 | ASCII fuzzy match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
+| alias expansion | `BM25 alias expansion uses caller-provided alias maps only` |
 | RRF overlap boost | `RRF fusion rewards overlap while keeping independent lexical hits` |
 | ACL filter | `service search applies ACL and metadata filters across lexical and vector results` |
 | metadata filter | `service search applies ACL and metadata filters across lexical and vector results` |

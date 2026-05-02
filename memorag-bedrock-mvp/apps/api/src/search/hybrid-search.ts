@@ -78,6 +78,7 @@ type LexicalIndex = {
   df: Map<string, number>
   postings: Map<string, Posting[]>
   dictionary: string[]
+  aliases: AliasMap
 }
 
 type LexicalHit = {
@@ -91,11 +92,7 @@ type CachedIndex = {
   index: LexicalIndex
 }
 
-const aliases: Record<string, string[]> = {
-  "勤怠": ["勤怠管理", "attendance", "打刻"],
-  "経費": ["経費精算", "expense", "concur", "コンカー"],
-  "sfa": ["salesforce", "セールスフォース"]
-}
+type AliasMap = Record<string, string[]>
 
 let cachedIndex: CachedIndex | undefined
 
@@ -164,7 +161,11 @@ export async function getLexicalIndex(
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
   const visible = manifests.filter((manifest) => canAccessManifest(manifest, user)).filter((manifest) => manifestMatchesFilters(manifest, filters))
-  const signature = visible.map((manifest) => `${manifest.documentId}:${manifest.chunkCount}:${manifest.createdAt}`).sort().join("|")
+  const aliases = mergeAliases(visible.map((manifest) => aliasMapFromMetadata(manifest.metadata)))
+  const signature = visible
+    .map((manifest) => `${manifest.documentId}:${manifest.chunkCount}:${manifest.createdAt}:${stableStringifyAliasMap(aliasMapFromMetadata(manifest.metadata))}`)
+    .sort()
+    .join("|")
   if (cachedIndex && cachedIndex.signature === signature) return cachedIndex.index
 
   const docs: LexicalDocument[] = []
@@ -185,12 +186,12 @@ export async function getLexicalIndex(
     }
   }
 
-  const index = buildLexicalIndex(docs, signature || "empty")
+  const index = buildLexicalIndex(docs, signature || "empty", aliases)
   cachedIndex = { signature, index }
   return index
 }
 
-export function buildLexicalIndex(inputDocs: LexicalDocument[], version: string): LexicalIndex {
+export function buildLexicalIndex(inputDocs: LexicalDocument[], version: string, aliases: AliasMap = {}): LexicalIndex {
   const postings = new Map<string, Posting[]>()
   const df = new Map<string, number>()
   const dictionarySet = new Set<string>()
@@ -219,13 +220,14 @@ export function buildLexicalIndex(inputDocs: LexicalDocument[], version: string)
     docs,
     df,
     postings,
-    dictionary: [...dictionarySet]
+    dictionary: [...dictionarySet],
+    aliases: normalizeAliasMap(aliases)
   }
 }
 
 export function bm25Search(index: LexicalIndex, rawTokens: string[], topK: number): LexicalHit[] {
   if (index.nDocs === 0 || rawTokens.length === 0) return []
-  const queryTokens = expandQueryTerms(rawTokens, index.dictionary)
+  const queryTokens = expandQueryTerms(rawTokens, index.dictionary, index.aliases)
   const scores = new Map<number, number>()
   const matched = new Map<number, Set<string>>()
 
@@ -357,7 +359,7 @@ function weightedDocumentTokens(title: string, body: string): WeightedToken[] {
   ]
 }
 
-function expandQueryTerms(rawTerms: string[], dictionary: string[]): WeightedToken[] {
+function expandQueryTerms(rawTerms: string[], dictionary: string[], aliases: AliasMap): WeightedToken[] {
   const terms = new Map<string, number>()
   for (const term of rawTerms) {
     terms.set(term, Math.max(terms.get(term) ?? 0, 1))
@@ -472,6 +474,44 @@ function stringValues(value: JsonValue | undefined): string[] {
 
 function stringValue(value: JsonValue | undefined): string | undefined {
   return typeof value === "string" ? value : undefined
+}
+
+function aliasMapFromMetadata(metadata: Record<string, JsonValue> | undefined): AliasMap {
+  if (!metadata) return {}
+  const raw = metadata.searchAliases ?? metadata.aliases
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {}
+  const aliases: AliasMap = {}
+  for (const [key, value] of Object.entries(raw)) {
+    const terms = stringValues(value)
+    if (terms.length > 0) aliases[key] = terms
+  }
+  return aliases
+}
+
+function mergeAliases(maps: AliasMap[]): AliasMap {
+  const merged = new Map<string, Set<string>>()
+  for (const map of maps) {
+    for (const [rawKey, rawValues] of Object.entries(map)) {
+      const key = normalize(rawKey)
+      if (!key) continue
+      const values = merged.get(key) ?? new Set<string>()
+      for (const rawValue of rawValues) {
+        const value = normalize(rawValue)
+        if (value) values.add(value)
+      }
+      if (values.size > 0) merged.set(key, values)
+    }
+  }
+  return Object.fromEntries([...merged.entries()].map(([key, values]) => [key, [...values].sort()]))
+}
+
+function normalizeAliasMap(aliases: AliasMap): AliasMap {
+  return mergeAliases([aliases])
+}
+
+function stableStringifyAliasMap(aliases: AliasMap): string {
+  const normalized = normalizeAliasMap(aliases)
+  return JSON.stringify(Object.fromEntries(Object.entries(normalized).sort(([a], [b]) => a.localeCompare(b))))
 }
 
 function clampInt(value: number, min: number, max: number): number {
