@@ -57,11 +57,12 @@ type AppView = "chat" | "assignee" | "history"
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
-type ClientPermission = "answer:edit" | "chat:admin:read_all"
+type ClientPermission = "answer:edit" | "chat:admin:read_all" | "access:policy:read"
 
 const clientRolePermissions: Record<string, ClientPermission[]> = {
   ANSWER_EDITOR: ["answer:edit"],
-  SYSTEM_ADMIN: ["answer:edit", "chat:admin:read_all"]
+  ACCESS_ADMIN: ["access:policy:read"],
+  SYSTEM_ADMIN: ["answer:edit", "chat:admin:read_all", "access:policy:read"]
 }
 
 export default function App() {
@@ -111,6 +112,7 @@ export default function App() {
   const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
   const canAnswerQuestions = authSession ? hasClientPermission(authSession, "answer:edit") : false
   const canReadDebugRuns = authSession ? hasClientPermission(authSession, "chat:admin:read_all") : false
+  const canOpenAdminSettings = authSession ? hasClientPermission(authSession, "access:policy:read") : false
 
   useEffect(() => {
     if (!authSession) return
@@ -375,10 +377,12 @@ export default function App() {
             <Icon name="document" />
             <span>ドキュメント</span>
           </button>
-          <button className="rail-item" type="button" title="管理者設定">
-            <Icon name="settings" />
-            <span>管理者設定</span>
-          </button>
+          {canOpenAdminSettings && (
+            <button className="rail-item" type="button" title="管理者設定">
+              <Icon name="settings" />
+              <span>管理者設定</span>
+            </button>
+          )}
         </nav>
         <button className="account-button" type="button" title="サインアウト" onClick={onSignOut}>
           <span className="account-avatar">{authSession.email.slice(0, 1).toUpperCase()}</span>
