@@ -91,12 +91,13 @@ function inferStatus(update: QaAgentUpdate): DebugStep["status"] {
 
 function inferModelId(label: string, state: QaAgentState): string | undefined {
   if (label === "generate_clues") return state.clueModelId
-  if (label === "generate_answer") return state.modelId
+  if (["generate_answer", "sufficient_context_gate"].includes(label)) return state.modelId
   if (["retrieve_memory", "embed_queries", "search_evidence"].includes(label)) return state.embeddingModelId
   return undefined
 }
 
 function summarizeUpdate(label: string, update: QaAgentUpdate): string {
+  if (update.sufficientContext) return `sufficient_context=${update.sufficientContext.label}, missing=${update.sufficientContext.missingFacts?.length ?? 0}`
   if (update.searchPlan) return `plan actions=${update.searchPlan.actions?.length ?? 0}, facts=${update.searchPlan.requiredFacts?.length ?? 0}`
   if (update.actionHistory) {
     const latest = update.actionHistory.at(-1)
@@ -115,6 +116,7 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
 }
 
 function detailUpdate(update: QaAgentUpdate): string | undefined {
+  if (update.sufficientContext) return formatSufficientContextDetail(update.sufficientContext)
   if (update.searchPlan) return formatSearchPlanDetail(update.searchPlan)
   if (update.actionHistory) return formatActionObservationDetail(update.actionHistory)
   if (update.searchDecision) return `decision=${update.searchDecision}`
@@ -132,6 +134,33 @@ function detailUpdate(update: QaAgentUpdate): string | undefined {
   if (update.rawAnswer) return update.rawAnswer
   if (update.answer) return update.answer
   return undefined
+}
+
+function formatSufficientContextDetail(judgement: NonNullable<QaAgentUpdate["sufficientContext"]>): string {
+  return [
+    `label=${judgement.label}`,
+    `confidence=${judgement.confidence}`,
+    `reason=${judgement.reason}`,
+    "",
+    "requiredFacts:",
+    ...formatList(judgement.requiredFacts ?? []),
+    "",
+    "supportedFacts:",
+    ...formatList(judgement.supportedFacts ?? []),
+    "",
+    "missingFacts:",
+    ...formatList(judgement.missingFacts ?? []),
+    "",
+    "conflictingFacts:",
+    ...formatList(judgement.conflictingFacts ?? []),
+    "",
+    "supportingChunkIds:",
+    ...formatList(judgement.supportingChunkIds ?? [])
+  ].join("\n")
+}
+
+function formatList(items: string[]): string[] {
+  return items.length > 0 ? items.map((item) => `- ${item}`) : ["なし"]
 }
 
 function formatAnswerabilityDetail(answerability: NonNullable<QaAgentUpdate["answerability"]>): string {

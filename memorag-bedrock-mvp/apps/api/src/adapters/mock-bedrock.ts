@@ -56,6 +56,35 @@ export class MockBedrockTextModel implements TextModel {
       return JSON.stringify({ clues: [question, ...tokenize(prompt).slice(0, 8)] })
     }
 
+    if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+      const question = extractBetween(prompt, "<question>", "</question>")
+      const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
+      const joined = contexts.map((match) => match[2] ?? "").join("\n")
+      if (contexts.length === 0 || joined.trim().length === 0) {
+        return JSON.stringify({
+          label: "UNANSWERABLE",
+          confidence: 0.2,
+          requiredFacts: [question],
+          supportedFacts: [],
+          missingFacts: [question],
+          conflictingFacts: [],
+          supportingChunkIds: [],
+          reason: "根拠チャンクがありません。"
+        })
+      }
+      const supportingChunkIds = contexts.map((match) => match[1]).filter((id): id is string => typeof id === "string" && id.length > 0)
+      return JSON.stringify({
+        label: "ANSWERABLE",
+        confidence: 0.86,
+        requiredFacts: [question],
+        supportedFacts: [question],
+        missingFacts: [],
+        conflictingFacts: [],
+        supportingChunkIds,
+        reason: "モックでは取得済みチャンクに基づき回答可能と判定します。"
+      })
+    }
+
     if (prompt.includes("FINAL_ANSWER_JSON")) {
       const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
       if (contexts.length === 0) {

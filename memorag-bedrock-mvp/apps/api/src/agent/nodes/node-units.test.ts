@@ -10,6 +10,7 @@ import { createGenerateCluesNode } from "./generate-clues.js"
 import { createRetrieveMemoryNode } from "./retrieve-memory.js"
 import { rerankChunks } from "./rerank-chunks.js"
 import { createSearchEvidenceNode } from "./search-evidence.js"
+import { createSufficientContextGateNode } from "./sufficient-context-gate.js"
 import { validateCitations } from "./validate-citations.js"
 import { NO_ANSWER, type QaAgentState } from "../state.js"
 import { tracedNode } from "../trace.js"
@@ -82,6 +83,55 @@ test("classification answers require actual requirements classification terms", 
     ),
     ["doc-1-chunk-0009"]
   )
+})
+
+test("sufficient context gate accepts supported evidence and refuses partial evidence", async () => {
+  const answerableDeps = createDeps()
+  const answerable = await createSufficientContextGateNode(answerableDeps)(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.7 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [{ id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+
+  assert.equal(answerable.sufficientContext?.label, "ANSWERABLE")
+  assert.equal(answerable.answerability?.isAnswerable, true)
+  assert.equal(answerable.searchPlan?.requiredFacts?.[0]?.status, "supported")
+  assert.deepEqual(answerable.sufficientContext?.supportingChunkIds, ["doc-1-chunk-0001"])
+
+  const partialDeps = createDeps()
+  const baseModel = partialDeps.textModel
+  partialDeps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.62,
+          requiredFacts: ["申請期限", "例外承認者"],
+          supportedFacts: ["申請期限"],
+          missingFacts: ["例外承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "例外承認者の根拠がありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+  const partial = await createSufficientContextGateNode(partialDeps)(state({ answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.7 } }))
+
+  assert.equal(partial.sufficientContext?.label, "PARTIAL")
+  assert.equal(partial.answerability?.isAnswerable, false)
+  assert.equal(partial.answerability?.reason, "missing_required_fact")
+  assert.equal(partial.answer, NO_ANSWER)
+  assert.deepEqual(partial.sufficientContext?.supportingChunkIds, ["doc-1-chunk-0001"])
 })
 
 test("citation validation accepts used ids and rejects invalid or ungrounded answers", async () => {
@@ -254,6 +304,16 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
     retrievedChunks: [],
     selectedChunks: [chunk],
     answerability: { isAnswerable: false, reason: "not_checked", confidence: 0 },
+    sufficientContext: {
+      label: "UNANSWERABLE",
+      confidence: 0,
+      requiredFacts: [],
+      supportedFacts: [],
+      missingFacts: [],
+      conflictingFacts: [],
+      supportingChunkIds: [],
+      reason: ""
+    },
     rawAnswer: undefined,
     answer: undefined,
     citations: [],
