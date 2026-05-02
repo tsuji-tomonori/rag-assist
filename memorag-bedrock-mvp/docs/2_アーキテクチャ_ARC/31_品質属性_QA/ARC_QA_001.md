@@ -15,7 +15,7 @@
 | --- | --- | --- | --- |
 | `ASR-TRUST-001` | 利用者が登録文書に基づく質問をする | システムは回答と引用を返す | 回答に少なくとも 1 件の citation が含まれる |
 | `ASR-GUARD-001` | 検索済み evidence だけでは答えられない質問を受ける | システムは推測回答せず回答不能を返す | refusal correctness、unsupported sentence count |
-| `ASR-RETRIEVAL-001` | 複数 clue から evidence 候補が返る | システムは順位融合し、検索評価に応じて次 action を選ぶ | retrieval recall@k、rank trace completeness |
+| `ASR-RETRIEVAL-001` | 通常チャットで複数 clue または query から evidence 候補を探す | システムは lexical/semantic 候補を RRF で融合し、検索評価に応じて次 action を選ぶ | retrieval recall@k、rank trace completeness、retrievalDiagnostics completeness |
 | `ASR-EVAL-001` | benchmark dataset を実行する | システムは fact coverage、faithfulness、context relevance を出力する | benchmark summary と Markdown report |
 | `ASR-SEC-001` | 未認可利用者が debug/benchmark API にアクセスする | システムは実行または参照を拒否する | unauthorized access count が 0 |
 | `ASR-OPER-001` | 障害調査で runId を指定する | システムは該当 trace と model metadata を参照できる | trace lookup success rate |
@@ -24,7 +24,7 @@
 
 - 根拠性: 回答の主要主張が引用 chunk で支持されていること。
 - 不回答品質: 根拠不足、対象外、権限外の質問に対して回答不能を返せること。
-- 検索品質: clue 生成、memory search、evidence search、RRF の各段階が trace 可能であること。
+- 検索品質: clue 生成、memory search、lexical evidence search、semantic evidence search、RRF の各段階が trace 可能であること。
 - セキュリティ: 本番または社内検証環境で debug/benchmark 系 API が未認可公開されないこと。
 - 運用性: trace と benchmark 結果から改善対象を特定できること。
 

@@ -23,7 +23,9 @@ flowchart TB
   Api[API Server]
   Auth[Auth / Authorization]
   Orchestrator[Query Orchestrator]
-  Retriever[Retriever]
+  Retriever[Hybrid Retriever]
+  Lexical[Lightweight Lexical Retriever]
+  Semantic[S3 Vectors Semantic Retriever]
   Fusion[RRF Rank Fusion]
   Judge[Answerability Judge]
   Prompt[Prompt Builder]
@@ -44,7 +46,10 @@ flowchart TB
   Api --> Auth
   Api --> Orchestrator
   Orchestrator --> Retriever
-  Retriever --> Fusion
+  Retriever --> Lexical
+  Retriever --> Semantic
+  Lexical --> Fusion
+  Semantic --> Fusion
   Fusion --> Judge
   Judge --> Prompt
   Prompt --> Llm
@@ -57,7 +62,8 @@ flowchart TB
   Api --> Ingest
   Ingest --> Chunk
   Chunk --> Store
-  Retriever --> Store
+  Lexical --> Store
+  Semantic --> Store
 ```
 
 ## 構成要素
@@ -70,8 +76,10 @@ flowchart TB
 | API Server | API 受付、認可、RAG workflow 呼び出し、レスポンス整形を行う。 |
 | Auth / Authorization | Cognito ID token の group から API permission を判定する。 |
 | Query Orchestrator | 検索、回答可能性判定、回答生成、引用検証、trace 記録を制御する。 |
-| Retriever | memory/evidence index から候補を取得する。 |
-| RRF Rank Fusion | 複数 clue または query の evidence 検索結果を順位融合する。 |
+| Hybrid Retriever | 通常チャットの evidence 検索で lexical retrieval、semantic search、RRF、ACL guard、diagnostics 生成を束ねる。 |
+| Lightweight Lexical Retriever | BM25、CJK n-gram、prefix、ASCII fuzzy、alias expansion で語句一致候補を取得する。 |
+| S3 Vectors Semantic Retriever | query embedding と metadata filter により意味検索候補を取得する。 |
+| RRF Rank Fusion | 複数 clue、query、retrieval source の evidence 検索結果を順位融合する。 |
 | Answerability Judge | 検索済み evidence だけで回答可能かを判定する。 |
 | Prompt Builder | evidence、質問、回答制約を LLM prompt に変換する。 |
 | LLM Gateway | Bedrock model 呼び出しを集中管理する。 |
@@ -87,17 +95,21 @@ sequenceDiagram
   actor U as User
   participant API as API Server
   participant RAG as Query Orchestrator
+  participant LX as Lexical Retriever
   participant VS as S3 Vectors
   participant BR as Bedrock
   participant TR as Debug Trace
 
   U->>API: POST /chat
-  API->>RAG: question, modelId, settings
+  API->>RAG: question, modelId, settings, user context
   RAG->>BR: generate clues
   BR-->>RAG: clues
-  RAG->>VS: search memory/evidence
-  VS-->>RAG: candidate chunks
-  RAG->>RAG: RRF / retrieval evaluation
+  RAG->>LX: lexical evidence search
+  LX-->>RAG: lexical candidates
+  RAG->>VS: semantic evidence search with metadata filter
+  VS-->>RAG: semantic candidates
+  RAG->>RAG: dedupe / RRF / ACL guard / retrieval evaluation
+  RAG->>TR: retrieval diagnostics when trace enabled
   RAG->>BR: answerability judge
   BR-->>RAG: ANSWERABLE/PARTIAL/UNANSWERABLE
   alt answerable
@@ -129,5 +141,6 @@ sequenceDiagram
 - LLM judge を常時実行するとレイテンシとコストが増える。
 - debug trace に質問、文書断片、モデル出力が含まれるため認可が必要である。
 - RRF と再検索を追加すると ranking の説明責任が増えるため、actionHistory と score を trace に残す必要がある。
+- hybrid retrieval を通常チャット本線へ入れると latency と trace 情報量が増えるため、retrievalDiagnostics に query 数、source 件数、version 情報を残して評価で調整する必要がある。
 - 通常利用者の UI が担当者一覧や debug trace 一覧を事前取得すると不要な 403 と権限過多を招くため、Cognito group に応じて取得対象を分ける必要がある。
 - self sign-up を許可すると任意メールアドレスの登録試行が増えるため、Cognito 確認コードと `CHAT_USER` のみの自動付与で初期権限を抑える必要がある。
