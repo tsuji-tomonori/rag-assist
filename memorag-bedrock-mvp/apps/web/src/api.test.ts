@@ -3,13 +3,16 @@ import {
   chat,
   answerQuestion,
   createQuestion,
+  deleteConversationHistory,
   deleteDocument,
   fileToBase64,
   getDebugRun,
+  listConversationHistory,
   listDebugRuns,
   listDocuments,
   listQuestions,
   resolveQuestion,
+  saveConversationHistory,
   uploadDocument
 } from "./api.js"
 
@@ -124,6 +127,26 @@ describe("API client", () => {
       expect.stringMatching(/\/questions$/),
       expect.objectContaining({ method: "POST" })
     )
+  })
+
+  it("calls conversation history APIs", async () => {
+    const item = {
+      id: "conversation-1",
+      title: "分類について",
+      updatedAt: "2026-05-02T00:00:00.000Z",
+      messages: [{ role: "user" as const, text: "分類は？", createdAt: "2026-05-02T00:00:00.000Z" }]
+    }
+
+    const fetchMock = mockFetch({ history: [item] })
+    await expect(listConversationHistory()).resolves.toEqual([item])
+
+    mockFetch(item)
+    await expect(saveConversationHistory(item)).resolves.toEqual(item)
+
+    mockFetch({ id: item.id })
+    await expect(deleteConversationHistory(item.id)).resolves.toBeUndefined()
+
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/conversation-history$/), expect.objectContaining({ headers: {} }))
   })
 
   it("uses Vite env API base URL and raises GET/POST errors", async () => {

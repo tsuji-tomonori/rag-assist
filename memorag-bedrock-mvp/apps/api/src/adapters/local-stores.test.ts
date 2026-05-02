@@ -4,6 +4,7 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
 import { LocalObjectStore } from "./local-object-store.js"
+import { LocalConversationHistoryStore } from "./local-conversation-history-store.js"
 import { LocalQuestionStore } from "./local-question-store.js"
 import { LocalVectorStore } from "./local-vector-store.js"
 
@@ -122,4 +123,42 @@ test("local question store creates, lists, answers, resolves, and rejects missin
   assert.equal(resolved.status, "resolved")
   assert.ok(resolved.resolvedAt)
   await assert.rejects(() => store.answer("missing", { answerTitle: "x", answerBody: "y" }), /Question not found/)
+})
+
+test("local conversation history store persists per-user conversations and deletes them", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-history-test-"))
+  const store = new LocalConversationHistoryStore(dataDir)
+
+  assert.deepEqual(await store.list("user-1"), [])
+
+  await store.save("user-1", {
+    id: "conversation-1",
+    title: "分類について",
+    updatedAt: "2026-05-02T00:00:00.000Z",
+    messages: [{ role: "user", text: "分類は？", createdAt: "2026-05-02T00:00:00.000Z" }]
+  })
+  await store.save("user-2", {
+    id: "conversation-2",
+    title: "別ユーザー",
+    updatedAt: "2026-05-02T00:00:01.000Z",
+    messages: [{ role: "user", text: "見えない会話", createdAt: "2026-05-02T00:00:01.000Z" }]
+  })
+  await store.save("user-1", {
+    id: "conversation-1",
+    title: "分類について更新",
+    updatedAt: "2026-05-02T00:00:02.000Z",
+    messages: [
+      { role: "user", text: "分類は？", createdAt: "2026-05-02T00:00:00.000Z" },
+      { role: "assistant", text: "製品要求とプロジェクト要求です。", createdAt: "2026-05-02T00:00:02.000Z" }
+    ]
+  })
+
+  const history = await store.list("user-1")
+  assert.equal(history.length, 1)
+  assert.equal(history[0]?.title, "分類について更新")
+  assert.equal(history[0]?.messages.length, 2)
+
+  await store.delete("user-1", "conversation-1")
+  assert.deepEqual(await store.list("user-1"), [])
+  assert.equal((await store.list("user-2")).length, 1)
 })

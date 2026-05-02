@@ -11,6 +11,9 @@ import type { VectorStore } from "./adapters/vector-store.js"
 import { DynamoDbQuestionStore } from "./adapters/dynamodb-question-store.js"
 import { LocalQuestionStore } from "./adapters/local-question-store.js"
 import type { QuestionStore } from "./adapters/question-store.js"
+import { DynamoDbConversationHistoryStore } from "./adapters/dynamodb-conversation-history-store.js"
+import { LocalConversationHistoryStore } from "./adapters/local-conversation-history-store.js"
+import type { ConversationHistoryStore } from "./adapters/conversation-history-store.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
@@ -18,6 +21,7 @@ export type Dependencies = {
   evidenceVectorStore: VectorStore
   textModel: TextModel
   questionStore: QuestionStore
+  conversationHistoryStore: ConversationHistoryStore
 }
 
 let cached: Dependencies | undefined
@@ -41,7 +45,10 @@ export function createDependencies(): Dependencies {
   const questionStore = config.useLocalQuestionStore
     ? new LocalQuestionStore(config.localDataDir)
     : new DynamoDbQuestionStore(config.questionTableName)
+  const conversationHistoryStore = config.useLocalConversationHistoryStore
+    ? new LocalConversationHistoryStore(config.localDataDir)
+    : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore }
   return cached
 }

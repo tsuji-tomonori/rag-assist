@@ -5,8 +5,9 @@ import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
-import type { Citation, DebugTrace, DocumentManifest, HumanQuestion, JsonValue, MemoryCard, VectorRecord } from "../types.js"
+import type { Citation, ConversationHistoryItem, DebugTrace, DocumentManifest, HumanQuestion, JsonValue, MemoryCard, VectorRecord } from "../types.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
+import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
 import { chunkText } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
@@ -191,6 +192,18 @@ export class MemoRagService {
 
   async resolveQuestion(questionId: string): Promise<HumanQuestion> {
     return this.deps.questionStore.resolve(questionId)
+  }
+
+  async saveConversationHistory(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
+    return this.deps.conversationHistoryStore.save(userId, input)
+  }
+
+  async listConversationHistory(userId: string): Promise<ConversationHistoryItem[]> {
+    return this.deps.conversationHistoryStore.list(userId)
+  }
+
+  async deleteConversationHistory(userId: string, id: string): Promise<void> {
+    return this.deps.conversationHistoryStore.delete(userId, id)
   }
 
 

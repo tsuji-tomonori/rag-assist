@@ -5,6 +5,7 @@ import path from "node:path"
 import { mkdtemp } from "node:fs/promises"
 import test from "node:test"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
+import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
@@ -157,7 +158,8 @@ async function createService(options: {
       delete: (...args: Parameters<LocalVectorStore["delete"]>) => baseEvidenceStore.delete(...args)
     },
     textModel: options.textModel ?? new MockBedrockTextModel(),
-    questionStore: new LocalQuestionStore(dataDir)
+    questionStore: new LocalQuestionStore(dataDir),
+    conversationHistoryStore: new LocalConversationHistoryStore(dataDir)
   } as unknown as Dependencies
   return { service: new MemoRagService(deps), dataDir }
 }

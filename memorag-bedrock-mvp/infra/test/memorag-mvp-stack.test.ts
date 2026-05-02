@@ -76,6 +76,14 @@ test("implements the designed serverless resources", () => {
     BillingMode: "PAY_PER_REQUEST",
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
+  template.hasResourceProperties("AWS::DynamoDB::Table", {
+    KeySchema: [
+      { AttributeName: "userId", KeyType: "HASH" },
+      { AttributeName: "id", KeyType: "RANGE" }
+    ],
+    BillingMode: "PAY_PER_REQUEST",
+    PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+  })
   for (const groupName of [
     "CHAT_USER",
     "ANSWER_EDITOR",
@@ -94,7 +102,9 @@ test("implements the designed serverless resources", () => {
     Environment: Match.objectLike({
       Variables: Match.objectLike({
         QUESTION_TABLE_NAME: Match.anyValue(),
+        CONVERSATION_HISTORY_TABLE_NAME: Match.anyValue(),
         USE_LOCAL_QUESTION_STORE: "false",
+        USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
         AUTH_ENABLED: "true",
         COGNITO_USER_POOL_ID: Match.anyValue(),
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
