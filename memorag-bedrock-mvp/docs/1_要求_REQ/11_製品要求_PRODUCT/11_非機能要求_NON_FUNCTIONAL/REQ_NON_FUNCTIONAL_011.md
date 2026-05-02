@@ -21,6 +21,7 @@
 - AC-NFR011-008: 一般チャット利用者は問い合わせ管理操作を実行できないこと。
 - AC-NFR011-009: `ANSWER_EDITOR` はユーザー管理権限なしで問い合わせ一覧を参照できること。
 - AC-NFR011-010: Phase 1 ではユーザー作成、ユーザー停止、ロール付与、ロール一覧編集、アクセス policy 編集、コスト監査、全ユーザー利用状況一覧を提供しないこと。
+- AC-NFR011-011: 保護対象 API route は静的 policy test により `authMiddleware` と route-level permission の対応が検証されること。
 
 ## 要件の源泉・背景
 
@@ -44,10 +45,10 @@
 | 種類 | 非機能要求 |
 | 依存関係 | `authMiddleware`、`requirePermission`、`authorization.ts`、`DES_API_001` |
 | 衝突 | local 開発では検証容易性のため `AUTH_ENABLED=false` を維持する |
-| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-010` |
+| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-011` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-05-02 初版 |
+| 変更履歴 | 2026-05-02 初版、2026-05-02 静的 policy test の受け入れ条件を追加 |
 
 ## 妥当性確認
 
@@ -59,5 +60,5 @@
 | 一貫性 | OK | 既存 RBAC と Cognito group 方針に沿う |
 | 標準・契約適合 | OK | 社内資料保護と最小権限の方針に合う |
 | 実現可能性 | OK | `app.ts` と `authorization.ts` で実装可能 |
-| 検証可能性 | OK | authorization test と API contract test で確認可能 |
+| 検証可能性 | OK | authorization test、API contract test、access-control-policy test で確認可能 |
 | ニーズ適合 | OK | Phase 1 の RAG 運用管理範囲に対応する |

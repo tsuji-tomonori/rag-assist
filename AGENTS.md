@@ -45,6 +45,13 @@
 - `git diff --name-only` などで変更範囲を確認し、最小十分な lint、typecheck、test、build、smoke、docs check を選ぶ。
 - 実行できる検証は実行する。省略した場合は、コマンド名と理由を最終回答または作業レポートに記載する。
 
+## Security Access-Control Review
+- 対象: API route、middleware、認証・認可、RBAC、所有者境界、管理 API、外部公開設定、機微データを返す schema/store の追加・変更。
+- 必読: `skills/security-access-control-reviewer/SKILL.md`
+- 新規 route は、認証境界、route-level permission、所有者・担当者制約、返却 schema の機微フィールド、store の list/get/update/delete 範囲を確認する。
+- `memorag-bedrock-mvp/apps/api/src/app.ts` の保護対象 route を追加・変更する場合は、`memorag-bedrock-mvp/apps/api/src/security/access-control-policy.test.ts` の静的 policy も更新し、API test を実行する。
+- 意図的な public endpoint は、理由、返却データが非機微である根拠、濫用対策を PR 本文または作業レポートに明記する。
+
 ## Docs Update Policy for `memorag-bedrock-mvp/docs`
 - 更新依頼では `skills/docs-swebok-template-writer/SKILL.md` を参照し、SWEBOK-lite の体裁に合わせる。
 - 要求は原子性（1 要件 = 1 検証可能条件）を保つ。
