@@ -2037,16 +2037,69 @@ button:disabled {
   min-height: 0;
   height: 100%;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  overflow: hidden;
+  grid-template-rows: auto auto minmax(360px, 1fr) auto;
+  gap: 14px;
+  overflow: auto;
   padding: 30px 20px;
+}
+
+.benchmark-kpi-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.benchmark-kpi-card,
+.benchmark-summary-panel,
+.benchmark-contract-panel {
+  min-width: 0;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+}
+
+.benchmark-kpi-card {
+  display: grid;
+  gap: 9px;
+  min-height: 120px;
+  padding: 18px;
+}
+
+.benchmark-kpi-card span,
+.benchmark-kpi-card small {
+  color: #68758f;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.benchmark-kpi-card strong {
+  color: #111a2e;
+  font-size: 27px;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+
+.benchmark-kpi-card.succeeded strong {
+  color: #137333;
+}
+
+.benchmark-kpi-card.failed strong,
+.benchmark-kpi-card.cancelled strong {
+  color: #b32626;
+}
+
+.benchmark-kpi-card.running strong,
+.benchmark-kpi-card.queued strong {
+  color: #1f62dc;
 }
 
 .benchmark-layout {
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -2068,9 +2121,28 @@ button:disabled {
 }
 
 .benchmark-run-panel h3,
-.benchmark-history-panel h3 {
+.benchmark-history-panel h3,
+.benchmark-summary-panel h3,
+.benchmark-contract-panel h3 {
   margin: 0;
   color: #111a2e;
+}
+
+.benchmark-run-panel h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.benchmark-run-panel h3 .icon {
+  color: #1d66ee;
+}
+
+.benchmark-run-panel-note {
+  margin: -6px 0 0;
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .benchmark-run-panel label {
@@ -2078,7 +2150,8 @@ button:disabled {
   gap: 6px;
 }
 
-.benchmark-run-panel label span {
+.benchmark-run-panel label span,
+.benchmark-mode-grid span {
   color: #68758f;
   font-size: 12px;
   font-weight: 800;
@@ -2095,6 +2168,31 @@ button:disabled {
   background: #fff;
   font-size: 13px;
   font-weight: 700;
+}
+
+.benchmark-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.benchmark-mode-grid div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  border: 1px solid #e3e9f2;
+  border-radius: 7px;
+  padding: 10px;
+  background: #f8fbff;
+}
+
+.benchmark-mode-grid strong {
+  min-width: 0;
+  color: #203250;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .benchmark-actions {
@@ -2210,12 +2308,125 @@ button:disabled {
   height: 17px;
 }
 
+.benchmark-summary-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.9fr);
+  gap: 14px;
+}
+
+.benchmark-summary-panel,
+.benchmark-contract-panel {
+  padding: 18px;
+}
+
+.benchmark-trend-bars {
+  min-height: 150px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(34px, 1fr));
+  align-items: end;
+  gap: 10px;
+  border: 1px solid #e3e9f2;
+  border-radius: 8px;
+  margin-top: 14px;
+  padding: 14px;
+  background: #fbfdff;
+}
+
+.benchmark-trend-bars > span {
+  grid-column: 1 / -1;
+  align-self: center;
+  justify-self: center;
+  color: #68758f;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.benchmark-trend-bar {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.benchmark-trend-bar i {
+  width: 22px;
+  border-radius: 6px 6px 0 0;
+  background: #1d66ee;
+}
+
+.benchmark-trend-bar strong {
+  color: #68758f;
+  font-size: 12px;
+}
+
+.benchmark-quality-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.benchmark-quality-grid div {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  border: 1px solid #e3e9f2;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.benchmark-quality-grid span,
+.benchmark-contract-panel span {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.benchmark-quality-grid strong {
+  color: #1d66ee;
+  font-size: 22px;
+}
+
+.benchmark-contract-panel ul {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.benchmark-contract-panel li {
+  display: grid;
+  gap: 5px;
+  border: 1px solid #e3e9f2;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.benchmark-contract-panel code {
+  color: #1d66ee;
+  font-size: 12px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1040px) {
+  .benchmark-kpi-grid,
+  .benchmark-layout,
+  .benchmark-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
   .benchmark-workspace {
-    overflow: auto;
+    padding: 18px 14px;
   }
 
-  .benchmark-layout {
+  .benchmark-actions,
+  .benchmark-mode-grid,
+  .benchmark-quality-grid {
     grid-template-columns: 1fr;
   }
 }
