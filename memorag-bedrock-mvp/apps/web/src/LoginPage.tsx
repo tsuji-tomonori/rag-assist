@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react"
+import { type FormEvent, useState } from "react"
 import type { AuthResult, AuthSession, NewPasswordRequiredChallenge } from "./authClient.js"
 
 type LoginPageProps = {

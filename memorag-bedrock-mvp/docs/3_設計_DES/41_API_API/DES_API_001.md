@@ -26,6 +26,8 @@
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
 | `POST /benchmark/query` | 評価実行 | `FR-012`, `FR-019`, `NFR-010` |
 
+注: 料金算出 API は現行 MVP では未提供とする。料金算出は `DES_DATA_001` の `UsageMeter`、`PricingCatalogEntry`、`CostEstimate` を使う将来拡張として扱う。
+
 ## `POST /chat`
 
 ### Request
@@ -59,6 +61,12 @@
   }
 }
 ```
+
+### 料金算出との関係
+
+- `debug.steps[].tokenCount` は UI/trace 表示用の概算であり、Bedrock 請求額の正確な算出には使わない。
+- `debug.steps[].modelId` は Bedrock 単価参照時の候補キーとして扱う。
+- 請求精度が必要な場合は、Bedrock の usage metadata、CloudWatch metrics、Cost and Usage Report などの実測系データを `UsageMeter` に取り込む。
 
 ## `POST /conversation-history`
 
