@@ -11,7 +11,7 @@ import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
 
-test("LangGraph MemoRAG workflow answers from selected evidence and records fixed trace steps", async () => {
+test("fixed MemoRAG workflow answers from selected evidence and records fixed trace steps", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   await service.ingest({
@@ -58,7 +58,7 @@ test("LangGraph MemoRAG workflow answers from selected evidence and records fixe
   assert.match(sufficientContextStep?.detail ?? "", /supportingChunkIds:/)
 })
 
-test("LangGraph debug trace keeps the full finalize response detail", async () => {
+test("fixed workflow debug trace keeps the full finalize response detail", async () => {
   const deps = await createTestDeps()
   const baseTextModel = deps.textModel
   const longAnswer = `在宅勤務手当の申請期限は翌月5営業日までです。${"詳細説明。".repeat(220)}END_OF_FINALIZE_RESPONSE`
@@ -91,7 +91,7 @@ test("LangGraph debug trace keeps the full finalize response detail", async () =
   assert.deepEqual(finalizeStep?.output, { answer: longAnswer })
 })
 
-test("LangGraph MemoRAG workflow refuses before answer generation when evidence is missing", async () => {
+test("fixed MemoRAG workflow refuses before answer generation when evidence is missing", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   const result = await service.chat({
@@ -113,7 +113,7 @@ test("LangGraph MemoRAG workflow refuses before answer generation when evidence 
   })
 })
 
-test("LangGraph workflow refuses when sufficient context judge returns partial", async () => {
+test("fixed workflow refuses when sufficient context judge returns partial", async () => {
   const deps = await createTestDeps()
   const baseTextModel = deps.textModel
   deps.textModel = {
@@ -169,7 +169,7 @@ async function createTestDeps(): Promise<Dependencies> {
 }
 
 
-test("LangGraph search cycle loops until maxIterations when retrieval score is too low", async () => {
+test("fixed workflow search cycle loops until maxIterations when retrieval score is too low", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   await service.ingest({
@@ -200,7 +200,7 @@ test("LangGraph search cycle loops until maxIterations when retrieval score is t
   assert.match(actionSteps[1]?.detail ?? "", /検索で1件取得し、新規根拠は0件でした。/)
 })
 
-test("LangGraph search cycle stops after two consecutive no-new-evidence iterations", async () => {
+test("fixed workflow search cycle stops after two consecutive no-new-evidence iterations", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   const result = await service.chat({
@@ -216,7 +216,7 @@ test("LangGraph search cycle stops after two consecutive no-new-evidence iterati
   assert.equal(labels.at(-1), "finalize_refusal")
 })
 
-test("LangGraph search plan trace records complexity, facts, actions, and stop criteria from input", async () => {
+test("fixed workflow search plan trace records complexity, facts, actions, and stop criteria from input", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   await service.ingest({
