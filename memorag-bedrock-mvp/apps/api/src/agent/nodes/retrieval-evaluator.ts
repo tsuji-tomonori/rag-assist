@@ -4,7 +4,7 @@ import type { QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation } f
 export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUpdate> {
   const topScore = state.retrievedChunks[0]?.score ?? 0
   const facts = state.searchPlan.requiredFacts.length > 0 ? state.searchPlan.requiredFacts : fallbackFacts(state.question)
-  const factAssessments = facts.map((fact) => assessFact(fact, state.retrievedChunks))
+  const factAssessments = facts.map((fact) => assessFact(fact, state.retrievedChunks, state.searchPlan.stopCriteria.minTopScore))
   const supportedFactIds = factAssessments.filter((assessment) => assessment.status === "supported").map((assessment) => assessment.fact.id)
   const missingFactIds = factAssessments.filter((assessment) => assessment.status === "missing").map((assessment) => assessment.fact.id)
   const conflictingFactIds = factAssessments.filter((assessment) => assessment.status === "conflicting").map((assessment) => assessment.fact.id)
@@ -23,19 +23,8 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
     reason: buildReason(state, retrievalQuality, topScore, missingFactIds, conflictingFactIds)
   }
 
-  const answerability =
-    retrievalQuality === "conflicting"
-      ? {
-          ...state.answerability,
-          isAnswerable: false,
-          reason: "conflicting_evidence" as const,
-          confidence: 0.2
-        }
-      : undefined
-
   return {
     retrievalEvaluation,
-    ...(answerability ? { answerability } : {}),
     searchPlan: {
       ...state.searchPlan,
       requiredFacts: facts.map((fact) => ({
@@ -65,12 +54,13 @@ function fallbackFacts(question: string): RequiredFact[] {
   ]
 }
 
-function assessFact(fact: RequiredFact, chunks: RetrievedVector[]): FactAssessment {
-  const supportingChunkKeys = chunks.filter((chunk) => supportsFact(fact.description, chunk.metadata.text ?? "")).map((chunk) => chunk.key)
-  const conflicting = chunks.some((chunk) => supportsFact(fact.description, chunk.metadata.text ?? "") && hasConflictSignal(chunk.metadata.text ?? ""))
+function assessFact(fact: RequiredFact, chunks: RetrievedVector[], minFactSupportScore: number): FactAssessment {
+  const supportingChunkKeys = chunks
+    .filter((chunk) => chunk.score >= minFactSupportScore && supportsFact(fact.description, chunk.metadata.text ?? ""))
+    .map((chunk) => chunk.key)
   return {
     fact,
-    status: conflicting ? "conflicting" : supportingChunkKeys.length > 0 ? "supported" : "missing",
+    status: supportingChunkKeys.length > 0 ? "supported" : "missing",
     supportingChunkKeys
   }
 }
@@ -93,7 +83,13 @@ function chooseNextAction(
   missingFactIds: string[]
 ): RetrievalEvaluation["nextAction"] {
   if (retrievalQuality === "sufficient") return { type: "rerank", objective: "answer_with_supported_evidence" }
-  if (retrievalQuality === "conflicting") return { type: "finalize_refusal", reason: "conflicting_evidence" }
+  if (retrievalQuality === "conflicting") {
+    return {
+      type: "evidence_search",
+      query: `${state.normalizedQuery ?? state.question} 現行 最新 施行日 適用条件 旧制度`,
+      topK: state.topK
+    }
+  }
 
   const missingDescriptions = state.searchPlan.requiredFacts
     .filter((fact) => missingFactIds.includes(fact.id))
@@ -115,7 +111,7 @@ function buildReason(
   conflictingFactIds: string[]
 ): string {
   if (retrievalQuality === "sufficient") return "必要事実が検索済み evidence chunk で支持されているため、rerank に進みます。"
-  if (retrievalQuality === "conflicting") return `矛盾を示す evidence が見つかりました: ${conflictingFactIds.join(", ")}`
+  if (retrievalQuality === "conflicting") return `矛盾候補が残っているため、現行条件と適用範囲を確認する追加 evidence search を試みます: ${conflictingFactIds.join(", ")}`
   if (retrievalQuality === "irrelevant") {
     if (state.retrievedChunks.length === 0) return "検索結果がないため、追加 evidence search を試みます。"
     return `topScore=${topScore.toFixed(4)} が minTopScore=${state.searchPlan.stopCriteria.minTopScore} を下回るため、追加 evidence search を試みます。`
@@ -126,7 +122,8 @@ function buildReason(
 function supportsFact(fact: string, text: string): boolean {
   const terms = significantTerms(fact)
   const normalizedText = normalize(text)
-  if (terms.length === 0) return normalize(fact).length > 0 && normalizedText.includes(normalize(fact))
+  if (terms.length === 0 || terms.every(isGenericSingleFactTerm)) return false
+  if (requiresValueAnchor(fact) && !hasValueAnchor(text)) return false
   const matched = terms.filter((term) => normalizedText.includes(normalize(term))).length
   if (terms.length === 1) return matched === 1
   return matched === terms.length
@@ -140,11 +137,21 @@ function significantTerms(text: string): string[] {
 }
 
 function isStopTerm(term: string): boolean {
-  return ["資料", "回答", "質問", "方法", "手順", "条件", "期限"].includes(term)
+  return ["回答", "質問"].includes(term)
 }
 
-function hasConflictSignal(text: string): boolean {
-  return /矛盾|相反|食い違|廃止|無効|取り消し|取消|conflict|contradict/i.test(text)
+function isGenericSingleFactTerm(term: string): boolean {
+  return ["資料", "方法", "手順", "条件", "期限"].includes(term)
+}
+
+function requiresValueAnchor(fact: string): boolean {
+  return /期限|期日|締切|締め切り/.test(fact.normalize("NFKC"))
+}
+
+function hasValueAnchor(text: string): boolean {
+  return /(\d+\s*(?:営業日|日|週間|週|か月|ヶ月|月|年|時間|分)|翌月|当月|月末|月初|末日|以内|まで|\d{4}[-/年]\d{1,2}(?:[-/月]\d{1,2}日?)?)/u.test(
+    text.normalize("NFKC")
+  )
 }
 
 function normalize(text: string): string {
