@@ -376,6 +376,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "chat:admin:read_all")
     const { runId } = (c.req as any).valid("param") as { runId: string }
     const download = await service.createDebugTraceDownloadUrl(runId)
     if (!download) return c.json({ error: "Debug run not found" }, 404)
