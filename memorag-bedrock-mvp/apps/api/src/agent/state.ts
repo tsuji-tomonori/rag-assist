@@ -63,7 +63,8 @@ export const AnswerabilitySchema = z.object({
       "low_similarity_score",
       "missing_required_fact",
       "conflicting_evidence",
-      "citation_validation_failed"
+      "citation_validation_failed",
+      "unsupported_answer"
     ])
     .default("not_checked"),
   confidence: z.number().min(0).max(1).default(0),
@@ -78,6 +79,23 @@ export const SufficientContextJudgementSchema = z.object({
   missingFacts: z.array(z.string()).default(() => []),
   conflictingFacts: z.array(z.string()).default(() => []),
   supportingChunkIds: z.array(z.string()).default(() => []),
+  reason: z.string().default("")
+})
+
+export const AnswerSupportJudgementSchema = z.object({
+  supported: z.boolean().default(false),
+  unsupportedSentences: z
+    .array(
+      z.object({
+        sentence: z.string(),
+        reason: z.string()
+      })
+    )
+    .default(() => []),
+  supportingChunkIds: z.array(z.string()).default(() => []),
+  contradictionChunkIds: z.array(z.string()).default(() => []),
+  confidence: z.number().min(0).max(1).default(0),
+  totalSentences: z.number().int().min(0).default(0),
   reason: z.string().default("")
 })
 
@@ -217,6 +235,15 @@ export const AgentStateSchema = z.object({
   }),
   rawAnswer: z.string().optional(),
   answer: z.string().optional(),
+  answerSupport: AnswerSupportJudgementSchema.default({
+    supported: false,
+    unsupportedSentences: [],
+    supportingChunkIds: [],
+    contradictionChunkIds: [],
+    confidence: 0,
+    totalSentences: 0,
+    reason: ""
+  }),
   citations: z.array(CitationSchema).default(() => []),
 
   trace: z.array(DebugStepSchema).default(() => [])
@@ -228,6 +255,7 @@ export type QaAgentUpdate = Partial<Omit<QaAgentState, "trace">> & {
 }
 export type AnswerabilityReason = QaAgentState["answerability"]["reason"]
 export type SufficientContextJudgement = z.infer<typeof SufficientContextJudgementSchema>
+export type AnswerSupportJudgement = z.infer<typeof AnswerSupportJudgementSchema>
 export type RequiredFact = z.infer<typeof RequiredFactSchema>
 export type SearchAction = z.infer<typeof SearchActionSchema>
 export type ActionObservation = z.infer<typeof ActionObservationSchema>

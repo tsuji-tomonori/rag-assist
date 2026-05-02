@@ -12,6 +12,7 @@ import { rerankChunks } from "./rerank-chunks.js"
 import { createSearchEvidenceNode } from "./search-evidence.js"
 import { createSufficientContextGateNode } from "./sufficient-context-gate.js"
 import { validateCitations } from "./validate-citations.js"
+import { createVerifyAnswerSupportNode } from "./verify-answer-support.js"
 import { NO_ANSWER, type QaAgentState } from "../state.js"
 import { tracedNode } from "../trace.js"
 import type { DebugStep } from "../../types.js"
@@ -163,6 +164,70 @@ test("citation validation accepts used ids and rejects invalid or ungrounded ans
     ).answerability?.reason,
     "citation_validation_failed"
   )
+})
+
+test("answer support verifier accepts supported answers and rejects unsupported sentences", async () => {
+  const supported = await createVerifyAnswerSupportNode(createDeps())(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      answer: "申請期限は翌月5営業日です。",
+      citations: [
+        {
+          documentId: "doc-1",
+          fileName: "doc.txt",
+          chunkId: "chunk-0001",
+          score: 0.9,
+          text: chunk.metadata.text ?? ""
+        }
+      ]
+    })
+  )
+
+  assert.equal(supported.answerSupport?.supported, true)
+  assert.deepEqual(supported.answerSupport?.unsupportedSentences, [])
+  assert.deepEqual(supported.answerSupport?.supportingChunkIds, ["doc-1-chunk-0001"])
+
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("ANSWER_SUPPORT_JSON")) {
+        return JSON.stringify({
+          supported: false,
+          unsupportedSentences: [{ sentence: "例外時は部長承認が必要です。", reason: "根拠チャンクに例外承認者の記載がありません。" }],
+          supportingChunkIds: ["chunk-0001"],
+          contradictionChunkIds: [],
+          confidence: 0.77,
+          totalSentences: 2,
+          reason: "一部の回答文が根拠範囲を超えています。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const unsupported = await createVerifyAnswerSupportNode(deps)(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      answer: "申請期限は翌月5営業日です。例外時は部長承認が必要です。",
+      citations: [
+        {
+          documentId: "doc-1",
+          fileName: "doc.txt",
+          chunkId: "chunk-0001",
+          score: 0.9,
+          text: chunk.metadata.text ?? ""
+        }
+      ]
+    })
+  )
+
+  assert.equal(unsupported.answerSupport?.supported, false)
+  assert.equal(unsupported.answerability?.reason, "unsupported_answer")
+  assert.equal(unsupported.answer, NO_ANSWER)
+  assert.deepEqual(unsupported.citations, [])
+  assert.deepEqual(unsupported.answerSupport?.supportingChunkIds, ["doc-1-chunk-0001"])
 })
 
 test("finalize response preserves grounded answers and converts invalid final states to refusals", async () => {
@@ -319,6 +384,15 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
     },
     rawAnswer: undefined,
     answer: undefined,
+    answerSupport: {
+      supported: false,
+      unsupportedSentences: [],
+      supportingChunkIds: [],
+      contradictionChunkIds: [],
+      confidence: 0,
+      totalSentences: 0,
+      reason: ""
+    },
     citations: [],
     trace: [],
     ...overrides

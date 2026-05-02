@@ -47,6 +47,7 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
       "sufficient_context_gate",
       "generate_answer",
       "validate_citations",
+      "verify_answer_support",
       "finalize_response"
     ]
   )
@@ -59,6 +60,9 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
   const sufficientContextStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
   assert.match(sufficientContextStep?.detail ?? "", /label=ANSWERABLE/)
   assert.match(sufficientContextStep?.detail ?? "", /supportingChunkIds:/)
+  const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
+  assert.match(supportStep?.detail ?? "", /supported=true/)
+  assert.deepEqual(supportStep?.output?.answerSupport && typeof supportStep.output.answerSupport === "object" ? (supportStep.output.answerSupport as Record<string, unknown>).unsupportedSentences : undefined, [])
 })
 
 test("fixed workflow executes nodes in the declared order", async () => {
@@ -91,6 +95,7 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "sufficient_context_gate",
       "generate_answer",
       "validate_citations",
+      "verify_answer_support",
       "finalize_response"
     ]
   )
@@ -404,6 +409,15 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       missingFacts: [],
       conflictingFacts: [],
       supportingChunkIds: [],
+      reason: ""
+    },
+    answerSupport: {
+      supported: false,
+      unsupportedSentences: [],
+      supportingChunkIds: [],
+      contradictionChunkIds: [],
+      confidence: 0,
+      totalSentences: 0,
       reason: ""
     },
     citations: [],
