@@ -22,6 +22,12 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolGroup", 8)
+  template.hasResourceProperties("AWS::Cognito::UserPool", {
+    AdminCreateUserConfig: { AllowAdminCreateUserOnly: false },
+    AutoVerifiedAttributes: ["email"],
+    LambdaConfig: Match.objectLike({ PostConfirmation: Match.anyValue() })
+  })
+  template.resourceCountIs("AWS::SecretsManager::Secret", 1)
   template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
@@ -70,6 +76,13 @@ test("implements the designed serverless resources", () => {
     Handler: "index.handler",
     Runtime: "nodejs22.x",
     Architectures: ["arm64"]
+  })
+  template.hasResourceProperties("AWS::Lambda::Function", {
+    Handler: "index.handler",
+    Runtime: "nodejs22.x",
+    Environment: Match.objectLike({
+      Variables: Match.objectLike({ DEFAULT_SIGNUP_GROUP_NAME: "CHAT_USER" })
+    })
   })
   template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
     ProtocolType: "HTTP",
@@ -157,15 +170,44 @@ test("implements the designed serverless resources", () => {
     distanceMetric: "cosine"
   })
   template.hasResourceProperties("AWS::CodeBuild::Project", {
+    EncryptionKey: Match.anyValue(),
     Environment: Match.objectLike({
       ComputeType: "BUILD_GENERAL1_SMALL",
-      Image: "aws/codebuild/standard:7.0"
+      Image: "aws/codebuild/standard:7.0",
+      EnvironmentVariables: Match.arrayWith([
+        Match.objectLike({ Name: "COGNITO_USER_POOL_ID" }),
+        Match.objectLike({ Name: "COGNITO_APP_CLIENT_ID" }),
+        Match.objectLike({ Name: "BENCHMARK_AUTH_SECRET_ID" }),
+        Match.objectLike({ Name: "BENCHMARK_RUNNER_GROUP", Value: "BENCHMARK_RUNNER" })
+      ])
     }),
     TimeoutInMinutes: 120
   })
-  template.hasResourceProperties("AWS::StepFunctions::StateMachine", {
-    DefinitionString: Match.anyValue()
+  template.hasResourceProperties("AWS::IAM::Policy", {
+    PolicyDocument: Match.objectLike({
+      Statement: Match.arrayWith([
+        Match.objectLike({
+          Action: Match.arrayWith([
+            "cognito-idp:AdminGetUser",
+            "cognito-idp:AdminCreateUser",
+            "cognito-idp:AdminSetUserPassword",
+            "cognito-idp:AdminAddUserToGroup"
+          ]),
+          Resource: Match.anyValue()
+        })
+      ])
+    })
   })
+  template.hasResourceProperties("AWS::StepFunctions::StateMachine", {
+    DefinitionString: Match.anyValue(),
+    LoggingConfiguration: Match.objectLike({
+      Level: "ALL"
+    })
+  })
+  const stateMachines = Object.values(template.toJSON().Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::StepFunctions::StateMachine")
+  assert.equal(stateMachines.length, 1)
+  assert.equal((stateMachines[0] as any).Properties.TracingConfiguration, undefined)
 })
 
 test("does not create fixed-cost network or datastore resources", () => {

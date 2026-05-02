@@ -7,7 +7,7 @@
 
 ## 何を書く場所か
 
-`POST /search` が使う hybrid retriever のアルゴリズム、採用判断、制約、テスト観点を定義する。
+`POST /search` と agent の `search_evidence` が使う hybrid retriever のアルゴリズム、採用判断、制約、テスト観点を定義する。
 
 ## 対象
 
@@ -16,6 +16,7 @@
 - fusion: Reciprocal Rank Fusion
 - guard: ACL/metadata filter、cheap rerank
 - response safety: metadata allowlist、opaque `indexVersion`、opaque `aliasVersion`
+- agent integration: `search_evidence` の BM25 / S3 Vectors / RRF 統合、debug trace diagnostics
 
 ## アルゴリズム構成
 
@@ -39,6 +40,8 @@ query
   -> metadata sanitize / diagnostics versioning
   -> topK chunks
 ```
+
+`POST /chat` の agent workflow では、`embed_queries` が生成した各 query/vector を `search_evidence` に渡し、同じ hybrid retriever を query ごとに実行する。結果は chunk key で重複排除し、semantic score、lexical score、cheap rerank score の最大値を回答可能性判定向けの retrieval score に正規化する。
 
 ## 採用判断
 
@@ -83,7 +86,8 @@ query
 - search response の `metadata` は allowlist 方式とし、現行は `tenantId`、`source`、`docType`、`department` のみ返す。
 - search response の `diagnostics.indexVersion` と `diagnostics.aliasVersion` は opaque value とし、document ID、alias key、alias value を含めない。
 - S3 Vectors の前段 filter は scalar metadata に寄せ、複雑な ACL 判定は後段 guard で補完する。
-- エージェント workflow への接続はこの設計の対象外とし、次回の orchestrator/retriever 統合で扱う。
+- agent `search_evidence` は `POST /search` と同じ `searchRag` 実装を使い、chat route の `AppUser` を渡して ACL guard を維持する。
+- agent debug trace の `execute_search_action` には query 数、index / alias version、lexical / semantic / fused count、source count を記録する。
 
 ## テスト観点
 
@@ -102,6 +106,8 @@ query
 | ACL filter | `service search applies ACL and metadata filters across lexical and vector results` |
 | metadata filter | `service search applies ACL and metadata filters across lexical and vector results` |
 | API contract | `HTTP contract validates major endpoint responses against /openapi.json` |
+| agent hybrid search integration | `fixed MemoRAG workflow answers from selected evidence and records fixed trace steps`、`query nodes handle memory-disabled, fallback, generated clue, and search merge paths` |
+| agent retrieval diagnostics trace | `fixed MemoRAG workflow answers from selected evidence and records fixed trace steps` |
 
 ## 評価指標
 
@@ -111,7 +117,7 @@ query
 - `aliasNoAccessLeak`: alias、ACL、許可 user、内部 project code が通常検索結果と diagnostics に含まれないこと。
 - `aliasScopeViolation`: ACL/filter 済み manifest の外側にある alias が query expansion に使われないこと。
 - `p95 latency`: Lambda cold/warm の両方で業務利用に耐えること。
-- `Grounded answer rate`: 次段階の agent 統合後、回答が検索結果の出典に基づくこと。
+- `Grounded answer rate`: agent 統合後、回答が hybrid retrieval の出典に基づくこと。
 
 ## 将来拡張
 

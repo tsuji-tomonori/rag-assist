@@ -66,6 +66,22 @@ const benchmarkSuites: BenchmarkSuite[] = [
     datasetS3Key: config.benchmarkDefaultDatasetKey,
     preset: "standard",
     defaultConcurrency: 1
+  },
+  {
+    suiteId: "search-smoke-v1",
+    label: "Search smoke",
+    mode: "search",
+    datasetS3Key: "datasets/search/smoke-v1.jsonl",
+    preset: "smoke",
+    defaultConcurrency: 1
+  },
+  {
+    suiteId: "search-standard-v1",
+    label: "Search standard",
+    mode: "search",
+    datasetS3Key: "datasets/search/standard-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
   }
 ]
 
@@ -205,14 +221,14 @@ export class MemoRagService {
     return normalizeDebugTrace(JSON.parse(await this.deps.objectStore.getText(key)))
   }
 
-  async chat(input: ChatInput): Promise<{
+  async chat(input: ChatInput, user?: AppUser): Promise<{
     answer: string
     isAnswerable: boolean
     citations: Citation[]
     retrieved: Citation[]
     debug?: DebugTrace
   }> {
-    return runQaAgent(this.deps, input)
+    return runQaAgent(this.deps, input, user)
   }
 
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
@@ -300,7 +316,7 @@ export class MemoRagService {
       updatedAt: now,
       modelId: input.modelId ?? config.defaultModelId,
       embeddingModelId: input.embeddingModelId ?? config.embeddingModelId,
-      topK: input.topK ?? 6,
+      topK: input.topK ?? (suite.mode === "search" ? 10 : 6),
       memoryTopK: input.memoryTopK ?? 4,
       minScore: input.minScore ?? config.minRetrievalScore,
       concurrency: input.concurrency ?? suite.defaultConcurrency,

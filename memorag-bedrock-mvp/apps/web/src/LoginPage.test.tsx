@@ -1,21 +1,30 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import type { ComponentProps } from "react"
 import { describe, expect, it, vi } from "vitest"
 import LoginPage from "./LoginPage.js"
 
+function renderLoginPage(overrides: Partial<ComponentProps<typeof LoginPage>> = {}) {
+  const props = {
+    onLogin: vi.fn(),
+    onSignUp: vi.fn(),
+    onConfirmSignUp: vi.fn(),
+    onCompleteNewPassword: vi.fn(),
+    ...overrides
+  }
+  return { ...render(<LoginPage {...props} />), props }
+}
+
 describe("LoginPage", () => {
   it("renders the login hero visual", () => {
-    const onLogin = vi.fn()
-    const onCompleteNewPassword = vi.fn()
-    const { container } = render(<LoginPage onLogin={onLogin} onCompleteNewPassword={onCompleteNewPassword} />)
+    const { container } = renderLoginPage()
 
     expect(screen.getByTestId("login-hero")).toContainElement(container.querySelector(".login-hero-graphic"))
   })
 
   it("keeps the user on the login form when authentication rejects the password", async () => {
     const onLogin = vi.fn().mockRejectedValue(new Error("メールアドレスまたはパスワードが正しくありません。"))
-    const onCompleteNewPassword = vi.fn()
-    render(<LoginPage onLogin={onLogin} onCompleteNewPassword={onCompleteNewPassword} />)
+    renderLoginPage({ onLogin })
 
     await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
     await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "wrong-password")
@@ -28,8 +37,7 @@ describe("LoginPage", () => {
 
   it("passes remember=true and ignores empty submissions", async () => {
     const onLogin = vi.fn().mockResolvedValue({ email: "tester@example.com", idToken: "id-token", expiresAt: Date.now() + 3600_000 })
-    const onCompleteNewPassword = vi.fn()
-    render(<LoginPage onLogin={onLogin} onCompleteNewPassword={onCompleteNewPassword} />)
+    renderLoginPage({ onLogin })
 
     await userEvent.click(screen.getByRole("button", { name: "サインイン" }))
     expect(onLogin).not.toHaveBeenCalled()
@@ -54,7 +62,7 @@ describe("LoginPage", () => {
       idToken: "new-id-token",
       expiresAt: Date.now() + 3600_000
     })
-    render(<LoginPage onLogin={onLogin} onCompleteNewPassword={onCompleteNewPassword} />)
+    renderLoginPage({ onLogin, onCompleteNewPassword })
 
     await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
     await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "Temporary123!")
@@ -85,5 +93,35 @@ describe("LoginPage", () => {
       newPassword: "NewPassword123!",
       remember: false
     })
+  })
+
+  it("creates an account and confirms the verification code", async () => {
+    const onSignUp = vi.fn().mockResolvedValue({ email: "tester@example.com", deliveryDestination: "t***@example.com" })
+    const onConfirmSignUp = vi.fn().mockResolvedValue(undefined)
+    renderLoginPage({ onSignUp, onConfirmSignUp })
+
+    await userEvent.click(screen.getByRole("button", { name: "アカウント作成" }))
+    await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
+    await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "Password123!")
+    await userEvent.type(screen.getByPlaceholderText("パスワードを再入力"), "Mismatch123!")
+    await userEvent.click(screen.getByRole("button", { name: "アカウントを作成" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("パスワードが一致しません。")
+    expect(onSignUp).not.toHaveBeenCalled()
+
+    await userEvent.clear(screen.getByPlaceholderText("パスワードを再入力"))
+    await userEvent.type(screen.getByPlaceholderText("パスワードを再入力"), "Password123!")
+    await userEvent.click(screen.getByRole("button", { name: "アカウントを作成" }))
+
+    expect(onSignUp).toHaveBeenCalledWith({ email: "tester@example.com", password: "Password123!" })
+    expect(await screen.findByRole("status")).toHaveTextContent("確認コードを t***@example.com に送信しました。")
+    expect(screen.getByRole("button", { name: "確認する" })).toBeInTheDocument()
+
+    await userEvent.type(screen.getByPlaceholderText("確認コードを入力"), "123456")
+    await userEvent.click(screen.getByRole("button", { name: "確認する" }))
+
+    expect(onConfirmSignUp).toHaveBeenCalledWith({ email: "tester@example.com", code: "123456" })
+    expect(await screen.findByRole("status")).toHaveTextContent("アカウントを確認しました。サインインしてください。")
+    expect(screen.getByRole("button", { name: "サインイン" })).toBeInTheDocument()
   })
 })

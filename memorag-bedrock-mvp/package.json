@@ -19,6 +19,7 @@
     "dev:api": "npm run dev -w @memorag-mvp/api",
     "dev:web": "VITE_AUTH_MODE=local npm run dev -w @memorag-mvp/web",
     "benchmark": "npm run start -w @memorag-mvp/benchmark",
+    "benchmark:search": "npm run start:search -w @memorag-mvp/benchmark",
     "cdk": "npm run cdk -w @memorag-mvp/infra"
   },
   "devDependencies": {

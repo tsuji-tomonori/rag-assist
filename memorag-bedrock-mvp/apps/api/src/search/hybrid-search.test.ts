@@ -123,6 +123,16 @@ test("service search applies ACL and metadata filters across lexical and vector 
   assert.equal(aliasPayload.includes("confidential-project-x"), false)
   assert.equal(aliasPayload.includes("allowedUsers"), false)
 
+  const semanticOnlySearch = await service.search({ query: "policy approval", topK: 10, lexicalTopK: 0, filters: { tenantId: "tenant-a", source: "notion" } }, groupAUser)
+  assert.equal(semanticOnlySearch.results[0]?.fileName, "group-a-policy.md")
+  assert.equal(semanticOnlySearch.diagnostics.lexicalCount, 0)
+  assert.ok(semanticOnlySearch.diagnostics.semanticCount > 0)
+
+  const lexicalOnlySearch = await service.search({ query: "policy approval", topK: 10, semanticTopK: 0, filters: { tenantId: "tenant-a", source: "notion" } }, groupAUser)
+  assert.equal(lexicalOnlySearch.results[0]?.fileName, "group-a-policy.md")
+  assert.ok(lexicalOnlySearch.diagnostics.lexicalCount > 0)
+  assert.equal(lexicalOnlySearch.diagnostics.semanticCount, 0)
+
   const groupBOnlySearch = await service.search({ query: "申請承認", topK: 10 }, user(["GROUP_B"]))
   assert.equal(groupBOnlySearch.results.some((result) => result.fileName === "group-a-policy.md"), false)
 })

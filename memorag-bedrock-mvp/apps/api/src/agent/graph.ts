@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto"
+import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
@@ -11,6 +12,7 @@ import { createGenerateAnswerNode } from "./nodes/generate-answer.js"
 import { createGenerateCluesNode } from "./nodes/generate-clues.js"
 import { normalizeQuery } from "./nodes/normalize-query.js"
 import { rerankChunks } from "./nodes/rerank-chunks.js"
+import { retrievalEvaluator } from "./nodes/retrieval-evaluator.js"
 import { createRetrieveMemoryNode } from "./nodes/retrieve-memory.js"
 import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
@@ -21,25 +23,30 @@ import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
 import { clamp, toCitation } from "./utils.js"
 
-export function createQaAgentGraph(deps: Dependencies) {
+const systemAdminUser: AppUser = {
+  userId: "system",
+  email: "system@example.com",
+  cognitoGroups: ["SYSTEM_ADMIN"]
+}
+
+export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdminUser) {
   const embedQueries = createEmbedQueriesNode(deps)
-  const searchEvidence = createSearchEvidenceNode(deps)
+  const searchEvidence = createSearchEvidenceNode(deps, user)
   const sufficientContextGate = createSufficientContextGateNode(deps)
   const verifyAnswerSupport = createVerifyAnswerSupportNode(deps)
 
   async function planSearch(state: QaAgentState): Promise<QaAgentUpdate> {
     const query = state.expandedQueries[0] ?? state.normalizedQuery ?? state.question
+    const nextEvidenceAction = selectNextEvidenceAction(state, query)
     const requiredFacts =
       state.searchPlan.requiredFacts.length > 0 ? state.searchPlan.requiredFacts : extractRequiredFacts(state.question, state.clues)
     const actions: SearchAction[] = [
-      {
-        type: "evidence_search",
-        query,
-        topK: state.topK
-      }
+      nextEvidenceAction
     ]
 
     return {
+      expandedQueries: nextEvidenceAction.query === query ? state.expandedQueries : [nextEvidenceAction.query, ...state.expandedQueries].slice(0, 8),
+      queryEmbeddings: [],
       searchPlan: {
         complexity: inferSearchComplexity(state.question),
         intent: state.normalizedQuery ?? state.question,
@@ -60,6 +67,7 @@ export function createQaAgentGraph(deps: Dependencies) {
     const embedUpdate = await embedQueries(state)
     const searchUpdate = await searchEvidence({ ...state, ...embedUpdate } as QaAgentState)
     const nextRetrieved = searchUpdate.retrievedChunks ?? []
+    const retrievalDiagnostics = searchUpdate.retrievalDiagnostics
     const previousKeys = new Set(state.retrievedChunks.map((chunk) => chunk.key))
     const newEvidenceCount = nextRetrieved.filter((chunk) => !previousKeys.has(chunk.key)).length
 
@@ -78,10 +86,11 @@ export function createQaAgentGraph(deps: Dependencies) {
           hitCount: nextRetrieved.length,
           newEvidenceCount,
           topScore: nextRetrieved[0]?.score,
+          retrievalDiagnostics,
           summary:
             nextRetrieved.length === 0
               ? "検索結果はありませんでした。"
-              : `検索で${nextRetrieved.length}件取得し、新規根拠は${newEvidenceCount}件でした。`
+              : `hybrid検索で${nextRetrieved.length}件取得し、新規根拠は${newEvidenceCount}件でした。`
         }
       ]
     }
@@ -90,16 +99,16 @@ export function createQaAgentGraph(deps: Dependencies) {
   async function evaluateSearchProgress(state: QaAgentState): Promise<QaAgentUpdate> {
     const nextIteration = state.iteration + 1
     const noNewEvidenceStreak = state.newEvidenceCount === 0 ? state.noNewEvidenceStreak + 1 : 0
-    const topScore = state.retrievedChunks[0]?.score ?? 0
     const stopCriteria = state.searchPlan.stopCriteria
-    const enoughEvidence = state.retrievedChunks.length >= stopCriteria.minEvidenceCount && topScore >= stopCriteria.minTopScore
+    const nextActionType = state.retrievalEvaluation.nextAction.type
+    const evaluatorDone = nextActionType === "rerank" || nextActionType === "finalize_refusal"
     const stopByIteration = nextIteration >= stopCriteria.maxIterations
     const stopByNoEvidence = noNewEvidenceStreak >= stopCriteria.maxNoNewEvidenceStreak
 
     return {
       iteration: nextIteration,
       noNewEvidenceStreak,
-      searchDecision: enoughEvidence || stopByIteration || stopByNoEvidence ? "done" : "continue_search"
+      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence ? "done" : "continue_search"
     }
   }
 
@@ -122,6 +131,7 @@ export function createQaAgentGraph(deps: Dependencies) {
     generateClues: tracedNode("generate_clues", createGenerateCluesNode(deps)),
     planSearch: tracedNode("plan_search", planSearch),
     executeSearchAction: tracedNode("execute_search_action", executeSearchAction),
+    retrievalEvaluator: tracedNode("retrieval_evaluator", retrievalEvaluator),
     evaluateSearchProgress: tracedNode("evaluate_search_progress", evaluateSearchProgress),
     rerankChunks: tracedNode("rerank_chunks", rerankChunks),
     answerabilityGate: tracedNode("answerability_gate", answerabilityGate),
@@ -145,8 +155,13 @@ export function createQaAgentGraph(deps: Dependencies) {
       do {
         state = await applyNode(state, nodes.planSearch)
         state = await applyNode(state, nodes.executeSearchAction)
+        state = await applyNode(state, nodes.retrievalEvaluator)
         state = await applyNode(state, nodes.evaluateSearchProgress)
       } while (routeAfterSearchEvaluation(state) === "continue_search")
+
+      if (state.retrievalEvaluation.nextAction.type === "finalize_refusal") {
+        return applyNode(state, nodes.finalizeRefusal)
+      }
 
       state = await applyNode(state, nodes.rerankChunks)
       state = await applyNode(state, nodes.answerabilityGate)
@@ -184,10 +199,25 @@ export function applyQaAgentUpdate(state: QaAgentState, update: QaAgentUpdate): 
   }
 }
 
+function selectNextEvidenceAction(state: QaAgentState, fallbackQuery: string): Extract<SearchAction, { type: "evidence_search" }> {
+  const nextAction = state.retrievalEvaluation.nextAction
+  if (nextAction.type === "evidence_search" && nextAction.query.trim()) {
+    return nextAction
+  }
+  return {
+    type: "evidence_search",
+    query: fallbackQuery,
+    topK: state.topK
+  }
+}
+
 function extractRequiredFacts(question: string, clues: string[]): RequiredFact[] {
-  const base = [question, ...clues].join("\n")
-  const refs = base.match(/[A-Za-z0-9_-]{3,}/g) ?? []
-  const uniqueRefs = [...new Set(refs)].slice(0, 8)
+  const questionRefs = question.match(/[A-Za-z0-9_-]{3,}/g) ?? []
+  const clueRefs = /[\p{Script=Han}\p{Script=Katakana}\p{Script=Hiragana}]/u.test(question)
+    ? []
+    : clues.flatMap((clue) => clue.match(/[A-Za-z0-9_-]{3,}/g) ?? [])
+  const refs = questionRefs.length > 0 ? questionRefs : clueRefs
+  const uniqueRefs = [...new Set(refs.filter(isUsefulFactReference))].slice(0, 8)
   if (uniqueRefs.length === 0) {
     return [
       {
@@ -208,6 +238,12 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
   }))
 }
 
+function isUsefulFactReference(ref: string): boolean {
+  const normalized = ref.toLowerCase()
+  if (["clues_json", "memorag", "clue", "generator", "json", "question", "what", "when", "where", "which", "how"].includes(normalized)) return false
+  return true
+}
+
 function inferSearchComplexity(question: string): QaAgentState["searchPlan"]["complexity"] {
   if (/比較|違い|差分|どちら/.test(question)) return "comparison"
   if (/手順|方法|どうやって|申請|設定/.test(question)) return "procedure"
@@ -216,7 +252,7 @@ function inferSearchComplexity(question: string): QaAgentState["searchPlan"]["co
   return "simple"
 }
 
-export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<QaGraphResult> {
+export async function runQaAgent(deps: Dependencies, input: ChatInput, user: AppUser = systemAdminUser): Promise<QaGraphResult> {
   const startedAt = new Date()
   const startedMs = Date.now()
   const runId = createRunId(startedAt)
@@ -226,7 +262,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
   const modelId = input.modelId ?? config.defaultModelId
   const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
   const clueModelId = input.clueModelId ?? input.modelId ?? config.defaultMemoryModelId
-  const graph = createQaAgentGraph(deps)
+  const graph = createQaAgentGraph(deps, user)
 
   const state = (await graph.invoke({
     runId,
@@ -266,11 +302,24 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
       }
     },
     actionHistory: [],
+    retrievalEvaluation: {
+      retrievalQuality: "irrelevant",
+      missingFactIds: [],
+      conflictingFactIds: [],
+      supportedFactIds: [],
+      nextAction: {
+        type: "evidence_search",
+        query: "",
+        topK
+      },
+      reason: ""
+    },
     maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,
     searchDecision: "continue_search",
     retrievedChunks: [],
+    retrievalDiagnostics: undefined,
     selectedChunks: [],
     answerability: {
       isAnswerable: false,

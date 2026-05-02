@@ -633,6 +633,10 @@
           {
             "Key": "aws-cdk:cr-owned:datasets/agent:0fed553e",
             "Value": "true"
+          },
+          {
+            "Key": "aws-cdk:cr-owned:datasets/search:7c4c01e4",
+            "Value": "true"
           }
         ]
       },
@@ -1200,6 +1204,52 @@
         "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265"
       ]
     },
+    "DeploySearchBenchmarkDatasetsAwsCliLayer63B30B23": {
+      "Type": "AWS::Lambda::LayerVersion",
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Description": "/opt/awscli/aws"
+      }
+    },
+    "DeploySearchBenchmarkDatasetsCustomResourceDFC997D1": {
+      "Type": "Custom::CDKBucketDeployment",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn"
+          ]
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "cdk-hnb659fds-assets-111111111111-ap-northeast-1"
+        ],
+        "SourceObjectKeys": [
+          "<asset-hash>.zip",
+          "<asset-hash>.zip"
+        ],
+        "SourceMarkers": [
+          {},
+          {}
+        ],
+        "SourceMarkersConfig": [
+          {},
+          {}
+        ],
+        "DestinationBucketName": {
+          "Ref": "BenchmarkBucketDD7D1D2F"
+        },
+        "DestinationBucketKeyPrefix": "datasets/search",
+        "WaitForDistributionInvalidation": true,
+        "Prune": true,
+        "OutputObjectKeys": true
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
     "S3VectorsProviderLogGroupE19D8C96": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -1468,7 +1518,7 @@
           ]
         },
         "AdminCreateUserConfig": {
-          "AllowAdminCreateUserOnly": true
+          "AllowAdminCreateUserOnly": false
         },
         "AutoVerifiedAttributes": [
           "email"
@@ -1478,6 +1528,14 @@
         "EnabledMfas": [
           "SOFTWARE_TOKEN_MFA"
         ],
+        "LambdaConfig": {
+          "PostConfirmation": {
+            "Fn::GetAtt": [
+              "SignupRoleAssignmentFunction092F9D8C",
+              "Arn"
+            ]
+          }
+        },
         "MfaConfiguration": "OPTIONAL",
         "Policies": {
           "PasswordPolicy": {
@@ -1501,6 +1559,25 @@
       },
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
+    },
+    "UserPoolPostConfirmationCognito0E6001F8": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SignupRoleAssignmentFunction092F9D8C",
+            "Arn"
+          ]
+        },
+        "Principal": "cognito-idp.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "UserPool6BA7E5F2",
+            "Arn"
+          ]
+        }
+      }
     },
     "UserPoolWebClient4C9370B0": {
       "Type": "AWS::Cognito::UserPoolClient",
@@ -1551,6 +1628,112 @@
           "Ref": "UserPool6BA7E5F2"
         }
       }
+    },
+    "SignupRoleAssignmentLogGroupF900BE72": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "SignupRoleAssignmentFunctionServiceRoleC8CBA4D0": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "SignupRoleAssignmentFunctionServiceRoleDefaultPolicyCD2C33D2": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "cognito-idp:AdminAddUserToGroup",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":cognito-idp:ap-northeast-1:111111111111:userpool/*"
+                  ]
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "SignupRoleAssignmentFunctionServiceRoleDefaultPolicyCD2C33D2",
+        "Roles": [
+          {
+            "Ref": "SignupRoleAssignmentFunctionServiceRoleC8CBA4D0"
+          }
+        ]
+      }
+    },
+    "SignupRoleAssignmentFunction092F9D8C": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "DEFAULT_SIGNUP_GROUP_NAME": "CHAT_USER"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "SignupRoleAssignmentLogGroupF900BE72"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "SignupRoleAssignmentFunctionServiceRoleC8CBA4D0",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 10
+      },
+      "DependsOn": [
+        "SignupRoleAssignmentFunctionServiceRoleDefaultPolicyCD2C33D2",
+        "SignupRoleAssignmentFunctionServiceRoleC8CBA4D0"
+      ]
     },
     "CHATUSERGroup": {
       "Type": "AWS::Cognito::UserPoolGroup",
@@ -1631,6 +1814,20 @@
           "Ref": "UserPool6BA7E5F2"
         }
       }
+    },
+    "BenchmarkRunnerAuthSecret035EF8F2": {
+      "Type": "AWS::SecretsManager::Secret",
+      "Properties": {
+        "Description": "MemoRAG benchmark runner Cognito service user credentials",
+        "GenerateSecretString": {
+          "ExcludeCharacters": ",`$\\\"' \n\r\t",
+          "GenerateStringKey": "password",
+          "PasswordLength": 32,
+          "SecretStringTemplate": "{\"username\":\"benchmark-runner@memorag.local\"}"
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
     },
     "ApiFunctionLogGroup00D1AC73": {
       "Type": "AWS::Logs::LogGroup",
@@ -2466,6 +2663,38 @@
         "Name": "CognitoJwtAuthorizer"
       }
     },
+    "BenchmarkProjectKeyB840011B": {
+      "Type": "AWS::KMS::Key",
+      "Properties": {
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":iam::111111111111:root"
+                    ]
+                  ]
+                }
+              },
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
     "BenchmarkProjectLogGroup395F719E": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -2578,6 +2807,21 @@
             },
             {
               "Action": [
+                "kms:Decrypt",
+                "kms:Encrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "BenchmarkProjectKeyB840011B",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
                 "s3:GetObject*",
                 "s3:GetBucket*",
                 "s3:List*",
@@ -2616,10 +2860,32 @@
             {
               "Action": [
                 "secretsmanager:GetSecretValue",
-                "cognito-idp:InitiateAuth"
+                "secretsmanager:DescribeSecret"
               ],
               "Effect": "Allow",
+              "Resource": {
+                "Ref": "BenchmarkRunnerAuthSecret035EF8F2"
+              }
+            },
+            {
+              "Action": "cognito-idp:InitiateAuth",
+              "Effect": "Allow",
               "Resource": "*"
+            },
+            {
+              "Action": [
+                "cognito-idp:AdminGetUser",
+                "cognito-idp:AdminCreateUser",
+                "cognito-idp:AdminSetUserPassword",
+                "cognito-idp:AdminAddUserToGroup"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
             }
           ],
           "Version": "2012-10-17"
@@ -2641,10 +2907,22 @@
         "Cache": {
           "Type": "NO_CACHE"
         },
-        "EncryptionKey": "alias/aws/s3",
+        "EncryptionKey": {
+          "Fn::GetAtt": [
+            "BenchmarkProjectKeyB840011B",
+            "Arn"
+          ]
+        },
         "Environment": {
           "ComputeType": "BUILD_GENERAL1_SMALL",
           "EnvironmentVariables": [
+            {
+              "Name": "COGNITO_USER_POOL_ID",
+              "Type": "PLAINTEXT",
+              "Value": {
+                "Ref": "UserPool6BA7E5F2"
+              }
+            },
             {
               "Name": "COGNITO_APP_CLIENT_ID",
               "Type": "PLAINTEXT",
@@ -2655,7 +2933,14 @@
             {
               "Name": "BENCHMARK_AUTH_SECRET_ID",
               "Type": "PLAINTEXT",
-              "Value": ""
+              "Value": {
+                "Ref": "BenchmarkRunnerAuthSecret035EF8F2"
+              }
+            },
+            {
+              "Name": "BENCHMARK_RUNNER_GROUP",
+              "Type": "PLAINTEXT",
+              "Value": "BENCHMARK_RUNNER"
             }
           ],
           "Image": "aws/codebuild/standard:7.0",
@@ -2678,7 +2963,7 @@
           ]
         },
         "Source": {
-          "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"runtime-versions\": {\n        \"nodejs\": 22\n      },\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"npm ci\"\n      ]\n    },\n    \"pre_build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"aws s3 cp \\\"$DATASET_S3_URI\\\" ./benchmark/.runner-dataset.jsonl\",\n        \"export OUTPUT=./benchmark/.runner-results.jsonl\",\n        \"export SUMMARY=./benchmark/.runner-summary.json\",\n        \"export REPORT=./benchmark/.runner-report.md\",\n        \"export DATASET=./benchmark/.runner-dataset.jsonl\",\n        \"if [ -n \\\"$BENCHMARK_AUTH_SECRET_ID\\\" ]; then SECRET_JSON=\\\"$(aws secretsmanager get-secret-value --secret-id \\\"$BENCHMARK_AUTH_SECRET_ID\\\" --query SecretString --output text)\\\"; export API_AUTH_TOKEN=\\\"$(SECRET_JSON=\\\"$SECRET_JSON\\\" COGNITO_APP_CLIENT_ID=\\\"$COGNITO_APP_CLIENT_ID\\\" node -e 'const { execFileSync } = require(\\\"node:child_process\\\"); const secret = JSON.parse(process.env.SECRET_JSON || \\\"{}\\\"); if (secret.idToken || secret.token) { console.log(secret.idToken || secret.token); process.exit(0); } const output = execFileSync(\\\"aws\\\", [\\\"cognito-idp\\\", \\\"initiate-auth\\\", \\\"--auth-flow\\\", \\\"USER_PASSWORD_AUTH\\\", \\\"--client-id\\\", process.env.COGNITO_APP_CLIENT_ID, \\\"--auth-parameters\\\", `USERNAME=${secret.username},PASSWORD=${secret.password}`], { encoding: \\\"utf8\\\" }); console.log(JSON.parse(output).AuthenticationResult.IdToken);')\\\"; fi\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"API_BASE_URL=\\\"$API_BASE_URL\\\" MODEL_ID=\\\"$MODEL_ID\\\" EMBEDDING_MODEL_ID=\\\"$EMBEDDING_MODEL_ID\\\" TOP_K=\\\"$TOP_K\\\" MEMORY_TOP_K=\\\"$MEMORY_TOP_K\\\" MIN_SCORE=\\\"$MIN_SCORE\\\" npm run start -w @memorag-mvp/benchmark\"\n      ]\n    },\n    \"post_build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"aws s3 cp ./benchmark/.runner-results.jsonl \\\"$OUTPUT_S3_PREFIX/results.jsonl\\\"\",\n        \"aws s3 cp ./benchmark/.runner-summary.json \\\"$OUTPUT_S3_PREFIX/summary.json\\\"\",\n        \"aws s3 cp ./benchmark/.runner-report.md \\\"$OUTPUT_S3_PREFIX/report.md\\\"\"\n      ]\n    }\n  },\n  \"artifacts\": {\n    \"files\": [\n      \"benchmark/.runner-results.jsonl\",\n      \"benchmark/.runner-summary.json\",\n      \"benchmark/.runner-report.md\"\n    ]\n  }\n}",
+          "BuildSpec": "{\n  \"version\": \"0.2\",\n  \"phases\": {\n    \"install\": {\n      \"runtime-versions\": {\n        \"nodejs\": 22\n      },\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"npm ci\"\n      ]\n    },\n    \"pre_build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"aws s3 cp \\\"$DATASET_S3_URI\\\" ./benchmark/.runner-dataset.jsonl\",\n        \"export OUTPUT=./benchmark/.runner-results.jsonl\",\n        \"export SUMMARY=./benchmark/.runner-summary.json\",\n        \"export REPORT=./benchmark/.runner-report.md\",\n        \"export DATASET=./benchmark/.runner-dataset.jsonl\",\n        \"export API_AUTH_TOKEN=\\\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\\\"\"\n      ]\n    },\n    \"build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"if [ \\\"$MODE\\\" = \\\"search\\\" ]; then API_BASE_URL=\\\"$API_BASE_URL\\\" EMBEDDING_MODEL_ID=\\\"$EMBEDDING_MODEL_ID\\\" TOP_K=\\\"$TOP_K\\\" npm run start:search -w @memorag-mvp/benchmark; else API_BASE_URL=\\\"$API_BASE_URL\\\" MODEL_ID=\\\"$MODEL_ID\\\" EMBEDDING_MODEL_ID=\\\"$EMBEDDING_MODEL_ID\\\" TOP_K=\\\"$TOP_K\\\" MEMORY_TOP_K=\\\"$MEMORY_TOP_K\\\" MIN_SCORE=\\\"$MIN_SCORE\\\" npm run start -w @memorag-mvp/benchmark; fi\"\n      ]\n    },\n    \"post_build\": {\n      \"commands\": [\n        \"cd \\\"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\\\"\",\n        \"aws s3 cp ./benchmark/.runner-results.jsonl \\\"$OUTPUT_S3_PREFIX/results.jsonl\\\"\",\n        \"aws s3 cp ./benchmark/.runner-summary.json \\\"$OUTPUT_S3_PREFIX/summary.json\\\"\",\n        \"aws s3 cp ./benchmark/.runner-report.md \\\"$OUTPUT_S3_PREFIX/report.md\\\"\"\n      ]\n    }\n  },\n  \"artifacts\": {\n    \"files\": [\n      \"benchmark/.runner-results.jsonl\",\n      \"benchmark/.runner-summary.json\",\n      \"benchmark/.runner-report.md\"\n    ]\n  }\n}",
           "Location": "https://github.com/tsuji-tomonori/rag-assist.git",
           "ReportBuildStatus": true,
           "Type": "GITHUB"
@@ -2686,6 +2971,14 @@
         "SourceVersion": "main",
         "TimeoutInMinutes": 120
       }
+    },
+    "BenchmarkStateMachineLogGroup6D80BBB2": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
     },
     "BenchmarkStateMachineRole9EC7E298": {
       "Type": "AWS::IAM::Role",
@@ -2709,6 +3002,20 @@
       "Properties": {
         "PolicyDocument": {
           "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            },
             {
               "Action": [
                 "dynamodb:BatchWriteItem",
@@ -2787,6 +3094,21 @@
               "\",\"Key\":{\"runId\":{\"S.$\":\"$.runId\"}},\"UpdateExpression\":\"SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, #error = :error\",\"ExpressionAttributeNames\":{\"#status\":\"status\",\"#error\":\"error\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"failed\"},\":completedAt\":{\"S.$\":\"$$.State.EnteredTime\"},\":error\":{\"S.$\":\"States.JsonToString($.errorInfo)\"}}}}},\"TimeoutSeconds\":10800}"
             ]
           ]
+        },
+        "LoggingConfiguration": {
+          "Destinations": [
+            {
+              "CloudWatchLogsLogGroup": {
+                "LogGroupArn": {
+                  "Fn::GetAtt": [
+                    "BenchmarkStateMachineLogGroup6D80BBB2",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "Level": "ALL"
         },
         "RoleArn": {
           "Fn::GetAtt": [

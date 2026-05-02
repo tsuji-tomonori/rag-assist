@@ -10,6 +10,7 @@ export type SearchInput = {
   lexicalTopK?: number
   semanticTopK?: number
   embeddingModelId?: string
+  semanticVector?: number[]
   filters?: {
     tenantId?: string
     department?: string
@@ -101,12 +102,12 @@ let cachedIndex: CachedIndex | undefined
 export async function searchRag(deps: Dependencies, input: SearchInput, user: AppUser): Promise<SearchResponse> {
   const started = Date.now()
   const topK = clampInt(input.topK ?? 10, 1, 50)
-  const lexicalTopK = clampInt(input.lexicalTopK ?? 80, 1, 100)
-  const semanticTopK = clampInt(input.semanticTopK ?? 80, 1, 100)
+  const lexicalTopK = clampInt(input.lexicalTopK ?? 80, 0, 100)
+  const semanticTopK = clampInt(input.semanticTopK ?? 80, 0, 100)
   const index = await getLexicalIndex(deps, user, input.filters)
   const queryTokens = tokenizeQuery(input.query)
 
-  const lexicalHits = bm25Search(index, queryTokens, lexicalTopK)
+  const lexicalHits = lexicalTopK > 0 ? bm25Search(index, queryTokens, lexicalTopK) : []
   const vectorFilter = {
     kind: "chunk" as const,
     documentId: input.filters?.documentId,
@@ -115,13 +116,20 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     source: input.filters?.source,
     docType: input.filters?.docType
   }
-  const embedding = await deps.textModel.embed(input.query, {
-    modelId: input.embeddingModelId ?? config.embeddingModelId,
-    dimensions: config.embeddingDimensions
-  })
-  const semanticHits = (await deps.evidenceVectorStore.query(embedding, semanticTopK, vectorFilter)).filter((hit) =>
-    canAccessVector(hit.metadata, user)
-  )
+  const semanticHits =
+    semanticTopK > 0
+      ? (
+          await deps.evidenceVectorStore.query(
+            input.semanticVector ??
+              (await deps.textModel.embed(input.query, {
+                modelId: input.embeddingModelId ?? config.embeddingModelId,
+                dimensions: config.embeddingDimensions
+              })),
+            semanticTopK,
+            vectorFilter
+          )
+        ).filter((hit) => canAccessVector(hit.metadata, user))
+      : []
 
   const fused = rrfFuse(
     [

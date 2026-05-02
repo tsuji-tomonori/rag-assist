@@ -10,11 +10,13 @@ import * as codebuild from "aws-cdk-lib/aws-codebuild"
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins"
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb"
 import * as iam from "aws-cdk-lib/aws-iam"
+import * as kms from "aws-cdk-lib/aws-kms"
 import * as lambda from "aws-cdk-lib/aws-lambda"
 import * as logs from "aws-cdk-lib/aws-logs"
 import * as cognito from "aws-cdk-lib/aws-cognito"
 import * as s3 from "aws-cdk-lib/aws-s3"
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment"
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager"
 import * as sfn from "aws-cdk-lib/aws-stepfunctions"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
@@ -46,7 +48,8 @@ export class MemoRagMvpStack extends Stack {
     const vectorBucketName = `memorag-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.REGION}-${suffix}`
     const memoryVectorIndexName = "memory-index"
     const evidenceVectorIndexName = "evidence-index"
-    const benchmarkRunnerAuthSecretId = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
+    const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
+    const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
     const benchmarkSourceOwner = String(this.node.tryGetContext("benchmarkSourceOwner") ?? "tsuji-tomonori")
     const benchmarkSourceRepo = String(this.node.tryGetContext("benchmarkSourceRepo") ?? "rag-assist")
     const benchmarkSourceBranch = String(this.node.tryGetContext("benchmarkSourceBranch") ?? "main")
@@ -149,6 +152,14 @@ export class MemoRagMvpStack extends Stack {
       destinationBucket: benchmarkBucket,
       destinationKeyPrefix: "datasets/agent"
     })
+    new s3deploy.BucketDeployment(this, "DeploySearchBenchmarkDatasets", {
+      sources: [
+        s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/datasets/search.sample.jsonl"), "utf-8")),
+        s3deploy.Source.data("standard-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/datasets/search.sample.jsonl"), "utf-8"))
+      ],
+      destinationBucket: benchmarkBucket,
+      destinationKeyPrefix: "datasets/search"
+    })
 
     const s3VectorsProviderLogGroup = new logs.LogGroup(this, "S3VectorsProviderLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
@@ -190,14 +201,44 @@ export class MemoRagMvpStack extends Stack {
 
 
     const userPool = new cognito.UserPool(this, "UserPool", {
-      selfSignUpEnabled: false,
+      selfSignUpEnabled: true,
       signInAliases: { email: true },
+      autoVerify: { email: true },
       mfa: cognito.Mfa.OPTIONAL,
       mfaSecondFactor: { sms: false, otp: true },
       passwordPolicy: { minLength: 12, requireLowercase: true, requireUppercase: true, requireDigits: true, requireSymbols: true },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: RemovalPolicy.DESTROY
     })
+
+    const signupRoleAssignmentLogGroup = new logs.LogGroup(this, "SignupRoleAssignmentLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const signupRoleAssignmentFn = new lambda.Function(this, "SignupRoleAssignmentFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/cognito-post-confirmation")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      timeout: Duration.seconds(10),
+      logGroup: signupRoleAssignmentLogGroup,
+      environment: {
+        DEFAULT_SIGNUP_GROUP_NAME: "CHAT_USER"
+      }
+    })
+    signupRoleAssignmentFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["cognito-idp:AdminAddUserToGroup"],
+        resources: [
+          Stack.of(this).formatArn({
+            service: "cognito-idp",
+            resource: "userpool",
+            resourceName: "*"
+          })
+        ]
+      })
+    )
+    userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, signupRoleAssignmentFn)
 
     const userPoolClient = userPool.addClient("WebClient", {
       authFlows: { userPassword: true, userSrp: true },
@@ -219,6 +260,33 @@ export class MemoRagMvpStack extends Stack {
         description: `MemoRAG role: ${role}`
       })
     }
+
+    const benchmarkRunnerAuthSecret = benchmarkRunnerAuthSecretIdOverride
+      ? (benchmarkRunnerAuthSecretIdOverride.startsWith("arn:")
+          ? secretsmanager.Secret.fromSecretCompleteArn(this, "BenchmarkRunnerAuthSecret", benchmarkRunnerAuthSecretIdOverride)
+          : secretsmanager.Secret.fromSecretNameV2(this, "BenchmarkRunnerAuthSecret", benchmarkRunnerAuthSecretIdOverride))
+      : new secretsmanager.Secret(this, "BenchmarkRunnerAuthSecret", {
+          description: "MemoRAG benchmark runner Cognito service user credentials",
+          generateSecretString: {
+            secretStringTemplate: JSON.stringify({ username: benchmarkRunnerUsername }),
+            generateStringKey: "password",
+            passwordLength: 32,
+            excludeCharacters: ",`$\\\"' \n\r\t"
+          }
+        })
+    if (!benchmarkRunnerAuthSecretIdOverride) {
+      NagSuppressions.addResourceSuppressions(
+        benchmarkRunnerAuthSecret,
+        [
+          {
+            id: "AwsSolutions-SMG4",
+            reason: "The generated benchmark runner service-user secret is repaired by the CodeBuild runner and is not tied to a managed database rotation target; automatic rotation is deferred for MVP cost and operational simplicity."
+          }
+        ],
+        true
+      )
+    }
+    const benchmarkRunnerAuthSecretId = benchmarkRunnerAuthSecretIdOverride || benchmarkRunnerAuthSecret.secretArn
 
     const apiLogGroup = new logs.LogGroup(this, "ApiFunctionLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
@@ -369,19 +437,26 @@ export class MemoRagMvpStack extends Stack {
       cfnRoute.addDependency(jwtAuthorizer)
     }
 
+    const benchmarkProjectKey = new kms.Key(this, "BenchmarkProjectKey", {
+      enableKeyRotation: true,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
     const benchmarkProject = new codebuild.Project(this, "BenchmarkProject", {
       source: codebuild.Source.gitHub({
         owner: benchmarkSourceOwner,
         repo: benchmarkSourceRepo,
         branchOrRef: benchmarkSourceBranch
       }),
+      encryptionKey: benchmarkProjectKey,
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
         privileged: false,
         environmentVariables: {
+          COGNITO_USER_POOL_ID: { value: userPool.userPoolId },
           COGNITO_APP_CLIENT_ID: { value: userPoolClient.userPoolClientId },
-          BENCHMARK_AUTH_SECRET_ID: { value: benchmarkRunnerAuthSecretId }
+          BENCHMARK_AUTH_SECRET_ID: { value: benchmarkRunnerAuthSecretId },
+          BENCHMARK_RUNNER_GROUP: { value: "BENCHMARK_RUNNER" }
         }
       },
       timeout: Duration.hours(2),
@@ -408,13 +483,13 @@ export class MemoRagMvpStack extends Stack {
               "export SUMMARY=./benchmark/.runner-summary.json",
               "export REPORT=./benchmark/.runner-report.md",
               "export DATASET=./benchmark/.runner-dataset.jsonl",
-              "if [ -n \"$BENCHMARK_AUTH_SECRET_ID\" ]; then SECRET_JSON=\"$(aws secretsmanager get-secret-value --secret-id \"$BENCHMARK_AUTH_SECRET_ID\" --query SecretString --output text)\"; export API_AUTH_TOKEN=\"$(SECRET_JSON=\"$SECRET_JSON\" COGNITO_APP_CLIENT_ID=\"$COGNITO_APP_CLIENT_ID\" node -e 'const { execFileSync } = require(\"node:child_process\"); const secret = JSON.parse(process.env.SECRET_JSON || \"{}\"); if (secret.idToken || secret.token) { console.log(secret.idToken || secret.token); process.exit(0); } const output = execFileSync(\"aws\", [\"cognito-idp\", \"initiate-auth\", \"--auth-flow\", \"USER_PASSWORD_AUTH\", \"--client-id\", process.env.COGNITO_APP_CLIENT_ID, \"--auth-parameters\", `USERNAME=${secret.username},PASSWORD=${secret.password}`], { encoding: \"utf8\" }); console.log(JSON.parse(output).AuthenticationResult.IdToken);')\"; fi"
+              "export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""
             ]
           },
           build: {
             commands: [
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
-              "API_BASE_URL=\"$API_BASE_URL\" MODEL_ID=\"$MODEL_ID\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" MEMORY_TOP_K=\"$MEMORY_TOP_K\" MIN_SCORE=\"$MIN_SCORE\" npm run start -w @memorag-mvp/benchmark"
+              "if [ \"$MODE\" = \"search\" ]; then API_BASE_URL=\"$API_BASE_URL\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" npm run start:search -w @memorag-mvp/benchmark; else API_BASE_URL=\"$API_BASE_URL\" MODEL_ID=\"$MODEL_ID\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" MEMORY_TOP_K=\"$MEMORY_TOP_K\" MIN_SCORE=\"$MIN_SCORE\" npm run start -w @memorag-mvp/benchmark; fi"
             ]
           },
           post_build: {
@@ -430,9 +505,14 @@ export class MemoRagMvpStack extends Stack {
       })
     })
     benchmarkBucket.grantReadWrite(benchmarkProject)
+    benchmarkRunnerAuthSecret.grantRead(benchmarkProject)
     benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["secretsmanager:GetSecretValue", "cognito-idp:InitiateAuth"],
+      actions: ["cognito-idp:InitiateAuth"],
       resources: ["*"]
+    }))
+    benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["cognito-idp:AdminGetUser", "cognito-idp:AdminCreateUser", "cognito-idp:AdminSetUserPassword", "cognito-idp:AdminAddUserToGroup"],
+      resources: [userPool.userPoolArn]
     }))
 
     const markRunning = new sfn.CustomState(this, "BenchmarkMarkRunning", {
@@ -515,10 +595,28 @@ export class MemoRagMvpStack extends Stack {
     })
     startBenchmarkBuild.addCatch(markFailed, { resultPath: "$.errorInfo" })
 
+    const benchmarkStateMachineLogGroup = new logs.LogGroup(this, "BenchmarkStateMachineLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
     const benchmarkStateMachine = new sfn.StateMachine(this, "BenchmarkStateMachine", {
       definitionBody: sfn.DefinitionBody.fromChainable(markRunning.next(startBenchmarkBuild).next(markSucceeded)),
+      logs: {
+        destination: benchmarkStateMachineLogGroup,
+        level: sfn.LogLevel.ALL
+      },
       timeout: Duration.hours(3)
     })
+    NagSuppressions.addResourceSuppressions(
+      benchmarkStateMachine,
+      [
+        {
+          id: "AwsSolutions-SF2",
+          reason: "X-Ray tracing is intentionally disabled for the MVP benchmark runner to avoid trace-based costs; CloudWatch ALL event logging is retained for audit and troubleshooting."
+        }
+      ],
+      true
+    )
     benchmarkRunsTable.grantWriteData(benchmarkStateMachine)
     benchmarkStateMachine.addToRolePolicy(new iam.PolicyStatement({
       actions: ["codebuild:StartBuild", "codebuild:BatchGetBuilds", "codebuild:StopBuild"],

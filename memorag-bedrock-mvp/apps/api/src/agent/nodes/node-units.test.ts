@@ -7,6 +7,7 @@ import { answerabilityGate } from "./answerability-gate.js"
 import { createEmbedQueriesNode } from "./embed-queries.js"
 import { finalizeResponse } from "./finalize-response.js"
 import { createGenerateCluesNode } from "./generate-clues.js"
+import { retrievalEvaluator } from "./retrieval-evaluator.js"
 import { createRetrieveMemoryNode } from "./retrieve-memory.js"
 import { rerankChunks } from "./rerank-chunks.js"
 import { createSearchEvidenceNode } from "./search-evidence.js"
@@ -257,8 +258,207 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   const fallbackEmbeddings = await createEmbedQueriesNode(deps)(state({ expandedQueries: [] }))
   assert.equal(fallbackEmbeddings.queryEmbeddings?.length, 1)
 
-  const search = await createSearchEvidenceNode(deps)(state({ queryEmbeddings: [{ query: "q", vector: [1, 0] }] }))
+  const search = await createSearchEvidenceNode(deps, user())(state({ queryEmbeddings: [{ query: "q", vector: [1, 0] }] }))
   assert.deepEqual(search.retrievedChunks?.map((hit) => hit.key), ["doc-1-chunk-0001"])
+  assert.equal(search.retrievalDiagnostics?.semanticCount, 2)
+})
+
+test("retrieval evaluator routes fact coverage conservatively", async () => {
+  const sufficient = await retrievalEvaluator(
+    state({
+      question: "申請期限は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [{ id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(sufficient.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(sufficient.retrievalEvaluation?.supportedFactIds, ["deadline"])
+  assert.equal(sufficient.retrievalEvaluation?.nextAction.type, "rerank")
+  assert.equal(sufficient.searchPlan?.requiredFacts[0]?.status, "supported")
+
+  const partial = await retrievalEvaluator(
+    state({
+      question: "申請期限と例外承認者は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "申請期限と例外承認者",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] },
+          { id: "exception-approver", description: "例外承認者", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(partial.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(partial.retrievalEvaluation?.missingFactIds, ["exception-approver"])
+  assert.equal(partial.retrievalEvaluation?.nextAction.type, "evidence_search")
+  assert.match(partial.retrievalEvaluation?.nextAction.type === "evidence_search" ? partial.retrievalEvaluation.nextAction.query : "", /例外承認者/)
+
+  const irrelevant = await retrievalEvaluator(state({ retrievedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))
+  assert.equal(irrelevant.retrievalEvaluation?.retrievalQuality, "irrelevant")
+  assert.equal(irrelevant.retrievalEvaluation?.nextAction.type, "evidence_search")
+
+  const genericDeadline = await retrievalEvaluator(
+    state({
+      question: "期限は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "simple",
+        intent: "期限",
+        requiredFacts: [{ id: "deadline-generic", description: "期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(genericDeadline.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(genericDeadline.retrievalEvaluation?.supportedFactIds, [])
+  assert.deepEqual(genericDeadline.retrievalEvaluation?.missingFactIds, ["deadline-generic"])
+
+  const noValue = await retrievalEvaluator(
+    state({
+      question: "申請期限は？",
+      retrievedChunks: [{ ...chunk, metadata: { ...chunk.metadata, text: "申請期限については社内資料を確認してください。" } }],
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [{ id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(noValue.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(noValue.retrievalEvaluation?.supportedFactIds, [])
+  assert.deepEqual(noValue.retrievalEvaluation?.missingFactIds, ["deadline"])
+
+  const currentRuleWithStatusCue = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          metadata: {
+            ...chunk.metadata,
+            text: "旧制度は廃止され、現行制度では申請期限は翌月5営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(currentRuleWithStatusCue.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(currentRuleWithStatusCue.retrievalEvaluation?.conflictingFactIds, [])
+  assert.equal(currentRuleWithStatusCue.retrievalEvaluation?.nextAction.type, "rerank")
+
+  const valueMismatch = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0001",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0001",
+            text: "現行制度の申請期限は翌月5営業日です。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0002",
+          score: 0.88,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0002",
+            text: "現行制度の申請期限は翌月10営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(valueMismatch.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.supportedFactIds, [])
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
+  assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "value_mismatch")
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.values, ["翌月5営業日", "翌月10営業日"])
+  assert.equal(valueMismatch.retrievalEvaluation?.nextAction.type, "evidence_search")
+  assert.match(valueMismatch.retrievalEvaluation?.nextAction.type === "evidence_search" ? valueMismatch.retrievalEvaluation.nextAction.query : "", /現行 最新/)
+
+  const scopedOldAndCurrent = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0003",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0003",
+            text: "旧制度の申請期限は翌月10日でした。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0004",
+          score: 0.91,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0004",
+            text: "現行制度の申請期限は翌月5営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(scopedOldAndCurrent.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.conflictingFactIds, [])
+  assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.riskSignals, [])
+
+  const lowScoreTermMatch = await retrievalEvaluator(
+    state({
+      question: "申請期限は？",
+      retrievedChunks: [{ ...chunk, score: 0.41 }],
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [{ id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.7, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.notEqual(lowScoreTermMatch.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(lowScoreTermMatch.retrievalEvaluation?.supportedFactIds, [])
 })
 
 test("traced node records success, warning, model ids, details, and thrown errors", async () => {
@@ -333,6 +533,14 @@ function createDeps(): Dependencies {
   } as unknown as Dependencies
 }
 
+function user() {
+  return {
+    userId: "test-user",
+    email: "test-user@example.com",
+    cognitoGroups: ["SYSTEM_ADMIN"]
+  }
+}
+
 function state(overrides: Record<string, unknown> = {}): QaAgentState {
   return {
     runId: "run",
@@ -365,11 +573,24 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
       stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
     },
     actionHistory: [],
+    retrievalEvaluation: {
+      retrievalQuality: "irrelevant",
+      missingFactIds: [],
+      conflictingFactIds: [],
+      supportedFactIds: [],
+      nextAction: {
+        type: "evidence_search",
+        query: "",
+        topK: 6
+      },
+      reason: ""
+    },
     maxIterations: 3,
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,
     searchDecision: "continue_search",
     retrievedChunks: [],
+    retrievalDiagnostics: undefined,
     selectedChunks: [chunk],
     answerability: { isAnswerable: false, reason: "not_checked", confidence: 0 },
     sufficientContext: {

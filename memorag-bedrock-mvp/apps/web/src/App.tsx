@@ -31,7 +31,7 @@ import {
   type HumanQuestion,
   type Permission
 } from "./api.js"
-import { completeNewPasswordChallenge, getStoredAuthSession, signIn, signOut, type AuthSession } from "./authClient.js"
+import { completeNewPasswordChallenge, confirmSignUp, getStoredAuthSession, signIn, signOut, signUp, type AuthSession } from "./authClient.js"
 import LoginPage from "./LoginPage.js"
 
 type Message = {
@@ -64,7 +64,7 @@ type IconName =
   | "gauge"
   | "stop"
 
-type AppView = "chat" | "assignee" | "history" | "benchmark"
+type AppView = "chat" | "assignee" | "history" | "benchmark" | "admin" | "documents"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -122,10 +122,6 @@ export default function App() {
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
   const latestTrace = latestAssistant?.result?.debug
   const isProcessing = pendingActivity !== null
-  const selectedDocument = useMemo(
-    () => documents.find((document) => document.documentId === selectedDocumentId),
-    [documents, selectedDocumentId]
-  )
   const selectedTrace = useMemo(() => {
     if (pendingDebugQuestion) return undefined
     if (selectedRunId) return debugRuns.find((run) => run.runId === selectedRunId) ?? latestTrace
@@ -173,7 +169,10 @@ export default function App() {
 
   useEffect(() => {
     if (activeView === "assignee" && !canAnswerQuestions) setActiveView("chat")
-  }, [activeView, canAnswerQuestions])
+    if (activeView === "benchmark" && !canReadBenchmarkRuns) setActiveView("chat")
+    if (activeView === "documents" && !canManageDocuments) setActiveView("chat")
+    if (activeView === "admin" && !canSeeAdminSettings) setActiveView("chat")
+  }, [activeView, canAnswerQuestions, canManageDocuments, canReadBenchmarkRuns, canSeeAdminSettings])
 
   useEffect(() => {
     if (!canReadDebugRuns && debugMode) setDebugMode(false)
@@ -216,6 +215,8 @@ export default function App() {
           if (!("type" in result)) setAuthSession(result)
           return result
         }}
+        onSignUp={signUp}
+        onConfirmSignUp={confirmSignUp}
         onCompleteNewPassword={async (payload) => {
           const session = await completeNewPasswordChallenge(payload)
           setAuthSession(session)
@@ -350,6 +351,26 @@ export default function App() {
     }
   }
 
+  async function onUploadDocumentFile(uploadFile: File) {
+    if (!canWriteDocuments) return
+    setLoading(true)
+    setError(null)
+    try {
+      await uploadDocument({
+        fileName: uploadFile.name,
+        contentBase64: await fileToBase64(uploadFile),
+        mimeType: uploadFile.type || undefined,
+        memoryModelId: modelId,
+        embeddingModelId
+      })
+      await refreshDocuments()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   function newConversation() {
     if (messages.length > 0) {
       const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
@@ -424,9 +445,10 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
+      const selectedSuite = benchmarkSuites.find((suite) => suite.suiteId === benchmarkSuiteId)
       const created = await startBenchmarkRun({
         suiteId: benchmarkSuiteId,
-        mode: "agent",
+        mode: selectedSuite?.mode ?? "agent",
         runner: "codebuild",
         modelId: benchmarkModelId,
         embeddingModelId,
@@ -488,13 +510,13 @@ export default function App() {
             <span>お気に入り</span>
           </button>
           {canManageDocuments && (
-            <button className="rail-item" type="button" title="ドキュメント">
+            <button className={`rail-item ${activeView === "documents" ? "active" : ""}`} type="button" title="ドキュメント" onClick={() => setActiveView("documents")}>
               <Icon name="document" />
               <span>ドキュメント</span>
             </button>
           )}
           {canSeeAdminSettings && (
-            <button className="rail-item" type="button" title="管理者設定">
+            <button className={`rail-item ${activeView === "admin" ? "active" : ""}`} type="button" title="管理者設定" onClick={() => setActiveView("admin")}>
               <Icon name="settings" />
               <span>管理者設定</span>
             </button>
@@ -530,17 +552,6 @@ export default function App() {
                     </option>
                   ))}
                 </select>
-                {canDeleteDocuments && (
-                  <button
-                    className="delete-document-button"
-                    type="button"
-                    title={selectedDocument ? `${selectedDocument.fileName}を削除` : "削除する資料を選択"}
-                    disabled={!selectedDocument || loading}
-                    onClick={() => onDelete(selectedDocument?.documentId)}
-                  >
-                    <Icon name="trash" />
-                  </button>
-                )}
               </div>
             </div>
           )}
@@ -720,6 +731,37 @@ export default function App() {
             onStart={onStartBenchmark}
             onRefresh={() => refreshBenchmarkRuns().catch((err) => setError(err instanceof Error ? err.message : String(err)))}
             onCancel={onCancelBenchmark}
+            onBack={() => setActiveView("chat")}
+          />
+        ) : activeView === "documents" && canManageDocuments ? (
+          <DocumentWorkspace
+            documents={documents}
+            loading={loading}
+            canWrite={canWriteDocuments}
+            canDelete={canDeleteDocuments}
+            onUpload={onUploadDocumentFile}
+            onDelete={onDelete}
+            onBack={() => setActiveView("admin")}
+          />
+        ) : activeView === "admin" && canSeeAdminSettings ? (
+          <AdminWorkspace
+            user={currentUser}
+            documentsCount={documents.length}
+            openQuestionsCount={questions.filter((questionItem) => questionItem.status === "open").length}
+            debugRunsCount={debugRuns.length}
+            benchmarkRunsCount={benchmarkRuns.length}
+            canManageDocuments={canManageDocuments}
+            canAnswerQuestions={canAnswerQuestions}
+            canReadDebugRuns={canReadDebugRuns}
+            canReadBenchmarkRuns={canReadBenchmarkRuns}
+            canOpenAdminSettings={canOpenAdminSettings}
+            onOpenDocuments={() => setActiveView("documents")}
+            onOpenAssignee={() => setActiveView("assignee")}
+            onOpenDebug={() => {
+              setDebugMode(true)
+              setActiveView("chat")
+            }}
+            onOpenBenchmark={() => setActiveView("benchmark")}
             onBack={() => setActiveView("chat")}
           />
         ) : (
@@ -1246,6 +1288,7 @@ function BenchmarkWorkspace({
   onBack: () => void
 }) {
   const selectedSuite = suites.find((suite) => suite.suiteId === suiteId)
+  const summary = summarizeBenchmarkRuns(runs)
 
   return (
     <section className="benchmark-workspace" aria-label="性能テスト">
@@ -1259,9 +1302,22 @@ function BenchmarkWorkspace({
         </div>
       </header>
 
+      <div className="benchmark-kpi-grid">
+        <BenchmarkMetricCard
+          title="最新テスト結果"
+          value={summary.latestRun ? runStatusLabel(summary.latestRun.status) : "未実行"}
+          subValue={summary.latestRun ? `実行ID: ${summary.latestRun.runId}` : "ジョブ起動後に表示"}
+          tone={summary.latestRun?.status ?? "queued"}
+        />
+        <BenchmarkMetricCard title="平均応答時間" value={formatMetricLatency(summary.averageLatencyMs)} subValue="直近完了 run の平均" />
+        <BenchmarkMetricCard title="回答正答率" value={formatPercent(summary.answerableAccuracy)} subValue="answerable accuracy" />
+        <BenchmarkMetricCard title="検索再現率" value={formatPercent(summary.retrievalRecallAt20)} subValue="retrieval recall@20" />
+      </div>
+
       <div className="benchmark-layout">
         <section className="benchmark-run-panel">
-          <h3>ジョブ起動</h3>
+          <h3><Icon name="gauge" />ジョブ起動</h3>
+          <p className="benchmark-run-panel-note">ワンクリックで選択 suite を実行します。</p>
           <label>
             <span>テスト種別</span>
             <select value={suiteId} onChange={(event) => onSuiteChange(event.target.value)}>
@@ -1273,6 +1329,16 @@ function BenchmarkWorkspace({
               ))}
             </select>
           </label>
+          <div className="benchmark-mode-grid">
+            <div>
+              <span>対象</span>
+              <strong>{selectedSuite?.mode === "agent" ? "エージェント" : selectedSuite?.mode ?? "agent"}</strong>
+            </div>
+            <div>
+              <span>Runner</span>
+              <strong>CodeBuild</strong>
+            </div>
+          </div>
           <label>
             <span>データセット</span>
             <input value={selectedSuite?.datasetS3Key ?? "datasets/agent/standard-v1.jsonl"} readOnly />
@@ -1361,7 +1427,248 @@ function BenchmarkWorkspace({
           </div>
         </section>
       </div>
+
+      <div className="benchmark-summary-grid">
+        <section className="benchmark-summary-panel">
+          <div className="history-list-head">
+            <h3>結果サマリー</h3>
+            <span>{summary.completedCount} 件の完了 run</span>
+          </div>
+          <div className="benchmark-trend-bars" aria-label="p95応答時間推移">
+            {summary.trendRuns.length === 0 ? (
+              <span>完了 run の metrics が登録されると推移を表示します。</span>
+            ) : (
+              summary.trendRuns.map((run) => (
+                <div className="benchmark-trend-bar" key={run.runId}>
+                  <i style={{ height: `${Math.max(12, Math.min(108, (run.metrics?.p95LatencyMs ?? 0) / 25))}px` }} />
+                  <strong>{formatShortDate(run.completedAt ?? run.updatedAt)}</strong>
+                </div>
+              ))
+            )}
+          </div>
+          <div className="benchmark-quality-grid">
+            <div><span>成功率</span><strong>{formatPercent(summary.runSuccessRate)}</strong></div>
+            <div><span>エラー率</span><strong>{formatPercent(summary.errorRate)}</strong></div>
+            <div><span>失敗HTTP</span><strong>{summary.failedHttpCount}</strong></div>
+          </div>
+        </section>
+
+        <section className="benchmark-contract-panel">
+          <div className="history-list-head">
+            <h3>必要なAPI/データ</h3>
+            <span>main 実装を利用</span>
+          </div>
+          <ul>
+            <li><code>GET /benchmark-suites</code><span>実行可能な suite と dataset を取得</span></li>
+            <li><code>POST /benchmark-runs</code><span>性能テスト run を queue に登録</span></li>
+            <li><code>GET /benchmark-runs</code><span>履歴、status、metrics、artifact key を取得</span></li>
+            <li><code>BenchmarkRunsTable</code><span><code>runId</code> 単位で実行状態と metrics を保持</span></li>
+          </ul>
+        </section>
+      </div>
     </section>
+  )
+}
+
+function DocumentWorkspace({
+  documents,
+  loading,
+  canWrite,
+  canDelete,
+  onUpload,
+  onDelete,
+  onBack
+}: {
+  documents: DocumentManifest[]
+  loading: boolean
+  canWrite: boolean
+  canDelete: boolean
+  onUpload: (file: File) => Promise<void>
+  onDelete: (documentId: string) => Promise<void>
+  onBack: () => void
+}) {
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!uploadFile || !canWrite) return
+    await onUpload(uploadFile)
+    setUploadFile(null)
+  }
+
+  return (
+    <section className="admin-workspace" aria-label="ドキュメント管理">
+      <header className="assignee-header">
+        <button type="button" onClick={onBack} title="管理者設定へ戻る">
+          <Icon name="chevron" />
+        </button>
+        <div>
+          <h2>ドキュメント管理</h2>
+          <span>{documents.length} 件の登録文書</span>
+        </div>
+      </header>
+
+      <div className="document-admin-grid">
+        <section className="document-admin-panel" aria-label="文書アップロード">
+          <h3>アップロード</h3>
+          <form className="document-upload-form" onSubmit={onSubmit}>
+            <label className="document-upload-drop">
+              <Icon name="paperclip" />
+              <span>{uploadFile ? uploadFile.name : "ファイルを選択"}</span>
+              <input type="file" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
+            </label>
+            <button type="submit" disabled={!canWrite || !uploadFile || loading}>
+              アップロード
+            </button>
+          </form>
+        </section>
+
+        <section className="document-admin-panel document-list-panel" aria-label="登録文書一覧">
+          <div className="document-list-head">
+            <h3>登録文書</h3>
+            <span>{documents.length} 件</span>
+          </div>
+          <div className="document-table" role="table" aria-label="登録文書">
+            <div className="document-table-row document-table-head" role="row">
+              <span role="columnheader">ファイル名</span>
+              <span role="columnheader">チャンク</span>
+              <span role="columnheader">メモリ</span>
+              <span role="columnheader">登録日時</span>
+              <span role="columnheader">操作</span>
+            </div>
+            {documents.length === 0 ? (
+              <div className="empty-question-panel">登録済みドキュメントはありません。</div>
+            ) : (
+              documents.map((document) => (
+                <div className="document-table-row" role="row" key={document.documentId}>
+                  <span role="cell">{document.fileName}</span>
+                  <span role="cell">{document.chunkCount}</span>
+                  <span role="cell">{document.memoryCardCount}</span>
+                  <span role="cell">{formatDateTime(document.createdAt)}</span>
+                  <span role="cell">
+                    <button
+                      type="button"
+                      className="delete-document-button"
+                      title={`${document.fileName}を削除`}
+                      disabled={!canDelete || loading}
+                      onClick={() => onDelete(document.documentId)}
+                    >
+                      <Icon name="trash" />
+                    </button>
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+    </section>
+  )
+}
+
+function AdminWorkspace({
+  user,
+  documentsCount,
+  openQuestionsCount,
+  debugRunsCount,
+  benchmarkRunsCount,
+  canManageDocuments,
+  canAnswerQuestions,
+  canReadDebugRuns,
+  canReadBenchmarkRuns,
+  canOpenAdminSettings,
+  onOpenDocuments,
+  onOpenAssignee,
+  onOpenDebug,
+  onOpenBenchmark,
+  onBack
+}: {
+  user: CurrentUser | null
+  documentsCount: number
+  openQuestionsCount: number
+  debugRunsCount: number
+  benchmarkRunsCount: number
+  canManageDocuments: boolean
+  canAnswerQuestions: boolean
+  canReadDebugRuns: boolean
+  canReadBenchmarkRuns: boolean
+  canOpenAdminSettings: boolean
+  onOpenDocuments: () => void
+  onOpenAssignee: () => void
+  onOpenDebug: () => void
+  onOpenBenchmark: () => void
+  onBack: () => void
+}) {
+  return (
+    <section className="admin-workspace" aria-label="管理者設定">
+      <header className="assignee-header">
+        <button type="button" onClick={onBack} title="チャットへ戻る">
+          <Icon name="chevron" />
+        </button>
+        <div>
+          <h2>管理者設定</h2>
+          <span>{user?.groups.join(" / ") || "権限未取得"}</span>
+        </div>
+      </header>
+
+      <div className="admin-overview-grid">
+        {canManageDocuments && (
+          <button type="button" className="admin-overview-tile" onClick={onOpenDocuments}>
+            <Icon name="document" />
+            <strong>ドキュメント管理</strong>
+            <span>{documentsCount} 件</span>
+          </button>
+        )}
+        {canAnswerQuestions && (
+          <button type="button" className="admin-overview-tile" onClick={onOpenAssignee}>
+            <Icon name="inbox" />
+            <strong>担当者対応</strong>
+            <span>{openQuestionsCount} 件が対応待ち</span>
+          </button>
+        )}
+        {canReadDebugRuns && (
+          <button type="button" className="admin-overview-tile" onClick={onOpenDebug}>
+            <Icon name="warning" />
+            <strong>デバッグ / 評価</strong>
+            <span>{debugRunsCount} 件の実行履歴</span>
+          </button>
+        )}
+        {canReadBenchmarkRuns && (
+          <button type="button" className="admin-overview-tile" onClick={onOpenBenchmark}>
+            <Icon name="gauge" />
+            <strong>性能テスト</strong>
+            <span>{benchmarkRunsCount} 件の実行履歴</span>
+          </button>
+        )}
+        {canOpenAdminSettings && (
+          <div className="admin-overview-tile disabled-tile" aria-label="アクセス管理">
+            <Icon name="settings" />
+            <strong>アクセス管理</strong>
+            <span>Phase 2</span>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function BenchmarkMetricCard({
+  title,
+  value,
+  subValue,
+  tone = "succeeded"
+}: {
+  title: string
+  value: string
+  subValue: string
+  tone?: BenchmarkRun["status"]
+}) {
+  return (
+    <article className={`benchmark-kpi-card ${tone}`}>
+      <span>{title}</span>
+      <strong>{value}</strong>
+      <small>{subValue}</small>
+    </article>
   )
 }
 
@@ -1652,6 +1959,13 @@ function formatPercent(value?: number | null): string {
   return typeof value === "number" ? `${Math.round(value * 100)}%` : "-"
 }
 
+function formatShortDate(input?: string): string {
+  if (!input) return "-"
+  const date = new Date(input)
+  if (Number.isNaN(date.getTime())) return "-"
+  return date.toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit" })
+}
+
 function formatTime(input: string): string {
   const date = new Date(input)
   if (Number.isNaN(date.getTime())) return "--:--:--"
@@ -1701,6 +2015,45 @@ function runStatusLabel(status: BenchmarkRun["status"]): string {
   if (status === "succeeded") return "成功"
   if (status === "failed") return "失敗"
   return "取消済み"
+}
+
+function summarizeBenchmarkRuns(runs: BenchmarkRun[]): {
+  latestRun?: BenchmarkRun
+  completedCount: number
+  runSuccessRate?: number
+  averageLatencyMs?: number | null
+  answerableAccuracy?: number | null
+  retrievalRecallAt20?: number | null
+  errorRate?: number | null
+  failedHttpCount: number
+  trendRuns: BenchmarkRun[]
+} {
+  const completedRuns = runs.filter((run) => ["succeeded", "failed", "cancelled"].includes(run.status))
+  const metricRuns = completedRuns.filter((run) => run.metrics)
+  const runSuccessRate = completedRuns.length > 0
+    ? completedRuns.filter((run) => run.status === "succeeded").length / completedRuns.length
+    : undefined
+
+  return {
+    latestRun: runs[0],
+    completedCount: completedRuns.length,
+    runSuccessRate,
+    averageLatencyMs: averageNullable(metricRuns.map((run) => run.metrics?.averageLatencyMs ?? run.metrics?.p50LatencyMs)),
+    answerableAccuracy: averageNullable(metricRuns.map((run) => run.metrics?.answerableAccuracy)),
+    retrievalRecallAt20: averageNullable(metricRuns.map((run) => run.metrics?.retrievalRecallAt20)),
+    errorRate: averageNullable(metricRuns.map((run) => run.metrics?.errorRate)),
+    failedHttpCount: metricRuns.reduce((total, run) => total + (run.metrics?.failedHttp ?? 0), 0),
+    trendRuns: metricRuns
+      .filter((run) => typeof run.metrics?.p95LatencyMs === "number")
+      .sort((a, b) => (a.completedAt ?? a.updatedAt).localeCompare(b.completedAt ?? b.updatedAt))
+      .slice(-7)
+  }
+}
+
+function averageNullable(values: Array<number | null | undefined>): number | null {
+  const valid = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value))
+  if (valid.length === 0) return null
+  return valid.reduce((sum, value) => sum + value, 0) / valid.length
 }
 
 function priorityLabel(priority: HumanQuestion["priority"]): string {
