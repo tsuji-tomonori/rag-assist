@@ -83,6 +83,39 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
   }
 })
 
+test("benchmark query endpoint requires authentication when auth is enabled", async () => {
+  const port = 19000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-auth-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "true"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const res = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: "auth-check", question: "認証確認" })
+    })
+
+    assert.equal(res.status, 401)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
 function responseSchema(doc: OpenApiDoc, route: string, method: string, status: number): unknown {
   const schema = doc.paths[route]?.[method]?.responses?.[String(status)]?.content?.["application/json"]?.schema
   assert.ok(schema, `response schema missing for ${method.toUpperCase()} ${route} ${status}`)
