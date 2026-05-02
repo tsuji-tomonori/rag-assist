@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
   answerQuestion,
   chat,
@@ -72,7 +72,7 @@ export default function App() {
   const [file, setFile] = useState<File | null>(null)
   const [question, setQuestion] = useState("")
   const [modelId, setModelId] = useState(defaultModelId)
-  const [embeddingModelId, setEmbeddingModelId] = useState(defaultEmbeddingModelId)
+  const [embeddingModelId] = useState(defaultEmbeddingModelId)
   const [minScore] = useState(0.2)
   const [messages, setMessages] = useState<Message[]>([])
   const [history, setHistory] = useState<ConversationHistoryItem[]>([])
@@ -111,6 +111,7 @@ export default function App() {
     refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
     refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
     refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authSession])
 
   useEffect(() => {
@@ -911,7 +912,7 @@ function AssigneeWorkspace({
     setNotifyRequester(selected?.notifyRequester ?? true)
     setDraftSavedAt(null)
     setIsDirty(false)
-  }, [selected?.questionId])
+  }, [selected])
 
   function markDirty() {
     if (!isDirty) setIsDirty(true)

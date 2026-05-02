@@ -8,7 +8,7 @@ function normalize(vector: number[]): number[] {
 }
 
 function tokenize(text: string): string[] {
-  const ascii = text.toLowerCase().match(/[a-z0-9_\-]+/g) ?? []
+  const ascii = text.toLowerCase().match(/[a-z0-9_-]+/g) ?? []
   const japanese = Array.from(text.replace(/[\s\p{P}]/gu, "")).map((_, i, arr) => arr.slice(i, i + 2).join(""))
   return [...ascii, ...japanese].filter((t) => t.length > 0)
 }
