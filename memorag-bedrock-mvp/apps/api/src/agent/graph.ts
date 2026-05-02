@@ -167,10 +167,10 @@ export function createQaAgentGraph(deps: Dependencies) {
 type QaAgentNode = (state: QaAgentState) => Promise<QaAgentUpdate>
 
 async function applyNode(state: QaAgentState, node: QaAgentNode): Promise<QaAgentState> {
-  return applyUpdate(state, await node(state))
+  return applyQaAgentUpdate(state, await node(state))
 }
 
-function applyUpdate(state: QaAgentState, update: QaAgentUpdate): QaAgentState {
+export function applyQaAgentUpdate(state: QaAgentState, update: QaAgentUpdate): QaAgentState {
   const { trace, ...rest } = update
   const traceUpdates = trace === undefined ? [] : Array.isArray(trace) ? trace : [trace]
   return {
