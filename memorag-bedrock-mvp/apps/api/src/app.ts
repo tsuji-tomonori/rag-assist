@@ -149,8 +149,12 @@ const chatRoute = looseRoute({
 })
 
 app.openapi(chatRoute, async (c) => {
-  requirePermission(c.get("user"), "chat:create")
+  const user = c.get("user")
+  requirePermission(user, "chat:create")
   const body = (c.req as any).valid("json") as z.infer<typeof ChatRequestSchema>
+  if ((body.includeDebug ?? body.debug ?? false) === true) {
+    requirePermission(user, "chat:admin:read_all")
+  }
   return c.json(await service.chat(body), 200)
 })
 
