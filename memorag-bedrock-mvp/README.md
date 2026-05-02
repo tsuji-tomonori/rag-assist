@@ -54,9 +54,17 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `POST /documents` 資料アップロード
 - `DELETE /documents/{documentId}` 資料削除
 - `POST /chat` チャット回答
+- `POST /questions` 担当者への問い合わせ作成
+- `GET /questions` 担当者問い合わせ一覧
+- `GET /questions/{questionId}` 担当者問い合わせ詳細
+- `POST /questions/{questionId}/answer` 担当者回答登録
+- `POST /questions/{questionId}/resolve` 問い合わせ解決済み化
 - `GET /debug-runs` persisted debug trace一覧
 - `GET /debug-runs/{runId}` persisted debug trace取得
+- `POST /debug-runs/{runId}/download` persisted debug trace Markdown download URL作成
 - `POST /benchmark/query` ベンチマーク用。`/chat` と同じRAG処理をAPIから呼び出し、retrieval情報も返します。
+
+Phase 1 の管理画面は RAG 運用管理に限定し、文書管理、問い合わせ対応、debug/評価を対象にします。ユーザー作成、ロール付与、コスト監査、全ユーザー利用状況一覧は Phase 1 では提供しません。
 
 ## ドキュメント
 

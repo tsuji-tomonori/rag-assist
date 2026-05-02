@@ -15,6 +15,8 @@
 - AC-NFR010-002: benchmark 実行権限は一般チャット利用権限と分離できること。
 - AC-NFR010-003: debug trace 参照権限は管理者または検証者に限定できること。
 - AC-NFR010-004: local 開発時に認証を無効化できる既存の開発体験は維持されること。
+- AC-NFR010-005: `GET /debug-runs/{runId}` は debug trace 一覧と同じ権限境界で保護されること。
+- AC-NFR010-006: `POST /debug-runs/{runId}/download` は debug trace 一覧と同じ権限境界で保護されること。
 
 ## 要件の源泉・背景
 
@@ -38,7 +40,7 @@
 | 種類 | 非機能要求 |
 | 依存関係 | `authMiddleware`、`requirePermission`、API route 定義 |
 | 衝突 | benchmark runner の実行には token 準備が必要になる |
-| 受け入れ基準 | `AC-NFR010-001` から `AC-NFR010-004` |
+| 受け入れ基準 | `AC-NFR010-001` から `AC-NFR010-006` |
 | 優先度 | S |
 | 安定性 | High |
 | 変更履歴 | 2026-05-01 初版 |
@@ -48,10 +50,10 @@
 | 観点 | 確認結果 | メモ |
 |---|---|---|
 | 必要性 | OK | 情報露出リスクを下げる |
-| 十分性 | OK | benchmark と debug の両方を含む |
+| 十分性 | OK | benchmark と debug trace の一覧、詳細、download を含む |
 | 理解容易性 | OK | 対象 API と条件が明確 |
 | 一貫性 | OK | 既存認証方式を拡張するだけ |
 | 標準・契約適合 | OK | 社内資料保護方針に合う |
 | 実現可能性 | OK | `app.ts` と権限定義で対応可能 |
-| 検証可能性 | OK | auth on/off の API test で確認可能 |
+| 検証可能性 | OK | auth on/off と role 切り替えの API test で確認可能 |
 | ニーズ適合 | OK | 評価基盤拡張前の安全対策 |

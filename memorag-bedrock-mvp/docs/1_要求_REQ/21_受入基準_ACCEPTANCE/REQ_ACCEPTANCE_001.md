@@ -67,6 +67,26 @@ Then システムは実行または参照を拒否する。
 
 And 文書本文、引用 chunk、debug trace を返さない。
 
+### AC-SEC-002: Phase 1 RAG 運用管理 API 認可
+
+Given 本番または社内検証環境である。
+
+When 一般チャット利用者が問い合わせ一覧、問い合わせ詳細、回答登録、解決済み化、debug trace 詳細、または debug Markdown download にアクセスする。
+
+Then システムは権限不足として拒否する。
+
+And 問い合わせ本文、回答本文、debug trace、Markdown download URL を返さない。
+
+### AC-SEC-003: 問い合わせ対応 role の分離
+
+Given 問い合わせ対応者が `ANSWER_EDITOR` role を持つ。
+
+When 問い合わせ一覧を参照する。
+
+Then システムはユーザー管理権限を要求せずに問い合わせ一覧を返す。
+
+And ユーザー管理 API またはロール付与 API は Phase 1 の管理画面に提供しない。
+
 ### AC-EVAL-001: RAG 品質評価
 
 Given benchmark dataset が用意されている。
@@ -81,7 +101,7 @@ And Markdown report を生成できる。
 
 - `FR-003`, `FR-004`, `FR-005`
 - `FR-014`, `FR-015`, `FR-016`, `FR-017`, `FR-018`, `FR-019`
-- `NFR-010`, `SQ-001`
+- `NFR-010`, `NFR-011`, `SQ-001`
 
 ## 関連設計
 
