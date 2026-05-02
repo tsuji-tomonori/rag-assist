@@ -114,7 +114,7 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
   if (update.sufficientContext) return `sufficient_context=${update.sufficientContext.label}, missing=${update.sufficientContext.missingFacts?.length ?? 0}`
   if (update.answerSupport) return `answer_support=${update.answerSupport.supported ? "supported" : "unsupported"}, unsupported=${update.answerSupport.unsupportedSentences.length}`
   if (update.retrievalEvaluation) {
-    return `retrieval=${update.retrievalEvaluation.retrievalQuality}, missing=${update.retrievalEvaluation.missingFactIds.length}, next=${update.retrievalEvaluation.nextAction.type}`
+    return `retrieval=${update.retrievalEvaluation.retrievalQuality}, missing=${update.retrievalEvaluation.missingFactIds.length}, risks=${update.retrievalEvaluation.riskSignals?.length ?? 0}, next=${update.retrievalEvaluation.nextAction.type}`
   }
   if (update.searchPlan) return `plan actions=${update.searchPlan.actions?.length ?? 0}, facts=${update.searchPlan.requiredFacts?.length ?? 0}`
   if (update.actionHistory) {
@@ -212,12 +212,24 @@ function formatRetrievalEvaluationDetail(evaluation: NonNullable<QaAgentUpdate["
     ...formatList(evaluation.missingFactIds ?? []),
     "",
     "conflictingFactIds:",
-    ...formatList(evaluation.conflictingFactIds ?? [])
+    ...formatList(evaluation.conflictingFactIds ?? []),
+    "",
+    "riskSignals:",
+    ...formatRiskSignals(evaluation.riskSignals ?? [])
   ].join("\n")
 }
 
 function formatList(items: string[]): string[] {
   return items.length > 0 ? items.map((item) => `- ${item}`) : ["なし"]
+}
+
+function formatRiskSignals(signals: NonNullable<NonNullable<QaAgentUpdate["retrievalEvaluation"]>["riskSignals"]>): string[] {
+  if (signals.length === 0) return ["なし"]
+  return signals.map((signal) => {
+    const values = signal.values.length > 0 ? ` values=${signal.values.join(", ")}` : ""
+    const chunks = signal.chunkKeys.length > 0 ? ` chunks=${signal.chunkKeys.join(", ")}` : ""
+    return `- ${signal.type}${signal.factId ? ` fact=${signal.factId}` : ""}${values}${chunks}: ${signal.reason}`
+  })
 }
 
 function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefined {

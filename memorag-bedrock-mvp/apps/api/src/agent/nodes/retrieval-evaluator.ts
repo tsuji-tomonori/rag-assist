@@ -1,5 +1,5 @@
 import type { RetrievedVector } from "../../types.js"
-import type { QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation } from "../state.js"
+import type { QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation, RetrievalRiskSignal } from "../state.js"
 
 export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUpdate> {
   const topScore = state.retrievedChunks[0]?.score ?? 0
@@ -8,8 +8,9 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
   const supportedFactIds = factAssessments.filter((assessment) => assessment.status === "supported").map((assessment) => assessment.fact.id)
   const missingFactIds = factAssessments.filter((assessment) => assessment.status === "missing").map((assessment) => assessment.fact.id)
   const conflictingFactIds = factAssessments.filter((assessment) => assessment.status === "conflicting").map((assessment) => assessment.fact.id)
+  const riskSignals = factAssessments.flatMap((assessment) => assessment.riskSignals)
   const retrievalQuality = classifyRetrieval(state, topScore, missingFactIds, conflictingFactIds)
-  const nextAction = chooseNextAction(state, retrievalQuality, missingFactIds)
+  const nextAction = chooseNextAction(state, retrievalQuality, missingFactIds, conflictingFactIds)
   const supportingChunkKeysByFact = new Map(
     factAssessments.map((assessment) => [assessment.fact.id, assessment.supportingChunkKeys] as const)
   )
@@ -19,8 +20,9 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
     missingFactIds,
     conflictingFactIds,
     supportedFactIds,
+    riskSignals,
     nextAction,
-    reason: buildReason(state, retrievalQuality, topScore, missingFactIds, conflictingFactIds)
+    reason: buildReason(state, retrievalQuality, topScore, missingFactIds, conflictingFactIds, riskSignals)
   }
 
   return {
@@ -40,6 +42,7 @@ type FactAssessment = {
   fact: RequiredFact
   status: RequiredFact["status"]
   supportingChunkKeys: string[]
+  riskSignals: RetrievalRiskSignal[]
 }
 
 function fallbackFacts(question: string): RequiredFact[] {
@@ -55,13 +58,14 @@ function fallbackFacts(question: string): RequiredFact[] {
 }
 
 function assessFact(fact: RequiredFact, chunks: RetrievedVector[], minFactSupportScore: number): FactAssessment {
-  const supportingChunkKeys = chunks
-    .filter((chunk) => chunk.score >= minFactSupportScore && supportsFact(fact.description, chunk.metadata.text ?? ""))
-    .map((chunk) => chunk.key)
+  const supportingChunks = chunks.filter((chunk) => chunk.score >= minFactSupportScore && supportsFact(fact.description, chunk.metadata.text ?? ""))
+  const supportingChunkKeys = supportingChunks.map((chunk) => chunk.key)
+  const riskSignals = detectValueMismatch(fact, supportingChunks)
   return {
     fact,
-    status: supportingChunkKeys.length > 0 ? "supported" : "missing",
-    supportingChunkKeys
+    status: riskSignals.length > 0 ? "conflicting" : supportingChunkKeys.length > 0 ? "supported" : "missing",
+    supportingChunkKeys,
+    riskSignals
   }
 }
 
@@ -71,8 +75,8 @@ function classifyRetrieval(
   missingFactIds: string[],
   conflictingFactIds: string[]
 ): RetrievalEvaluation["retrievalQuality"] {
-  if (conflictingFactIds.length > 0) return "conflicting"
   if (state.retrievedChunks.length === 0 || topScore < state.searchPlan.stopCriteria.minTopScore) return "irrelevant"
+  if (conflictingFactIds.length > 0) return "partial"
   if (missingFactIds.length > 0) return "partial"
   return "sufficient"
 }
@@ -80,13 +84,18 @@ function classifyRetrieval(
 function chooseNextAction(
   state: QaAgentState,
   retrievalQuality: RetrievalEvaluation["retrievalQuality"],
-  missingFactIds: string[]
+  missingFactIds: string[],
+  conflictingFactIds: string[]
 ): RetrievalEvaluation["nextAction"] {
   if (retrievalQuality === "sufficient") return { type: "rerank", objective: "answer_with_supported_evidence" }
-  if (retrievalQuality === "conflicting") {
+  if (conflictingFactIds.length > 0 || retrievalQuality === "conflicting") {
+    const conflictingDescriptions = state.searchPlan.requiredFacts
+      .filter((fact) => conflictingFactIds.includes(fact.id))
+      .map((fact) => fact.description)
+      .slice(0, 3)
     return {
       type: "evidence_search",
-      query: `${state.normalizedQuery ?? state.question} 現行 最新 施行日 適用条件 旧制度`,
+      query: [...new Set([state.normalizedQuery ?? state.question, ...conflictingDescriptions, "現行 最新 施行日 適用条件 旧制度"])].join(" "),
       topK: state.topK
     }
   }
@@ -108,10 +117,15 @@ function buildReason(
   retrievalQuality: RetrievalEvaluation["retrievalQuality"],
   topScore: number,
   missingFactIds: string[],
-  conflictingFactIds: string[]
+  conflictingFactIds: string[],
+  riskSignals: RetrievalRiskSignal[]
 ): string {
   if (retrievalQuality === "sufficient") return "必要事実が検索済み evidence chunk で支持されているため、rerank に進みます。"
-  if (retrievalQuality === "conflicting") return `矛盾候補が残っているため、現行条件と適用範囲を確認する追加 evidence search を試みます: ${conflictingFactIds.join(", ")}`
+  if (conflictingFactIds.length > 0) {
+    const values = riskSignals.flatMap((signal) => signal.values ?? []).slice(0, 6)
+    const valueNote = values.length > 0 ? ` values=${values.join(", ")}` : ""
+    return `同一 fact の値が食い違う候補があるため、現行条件と適用範囲を確認する追加 evidence search を試みます: ${conflictingFactIds.join(", ")}${valueNote}`
+  }
   if (retrievalQuality === "irrelevant") {
     if (state.retrievedChunks.length === 0) return "検索結果がないため、追加 evidence search を試みます。"
     return `topScore=${topScore.toFixed(4)} が minTopScore=${state.searchPlan.stopCriteria.minTopScore} を下回るため、追加 evidence search を試みます。`
@@ -152,6 +166,73 @@ function hasValueAnchor(text: string): boolean {
   return /(\d+\s*(?:営業日|日|週間|週|か月|ヶ月|月|年|時間|分)|翌月|当月|月末|月初|末日|以内|まで|\d{4}[-/年]\d{1,2}(?:[-/月]\d{1,2}日?)?)/u.test(
     text.normalize("NFKC")
   )
+}
+
+function detectValueMismatch(fact: RequiredFact, chunks: RetrievedVector[]): RetrievalRiskSignal[] {
+  if (chunks.length < 2) return []
+
+  const claims = chunks.flatMap((chunk) => extractFactClaims(fact.description, chunk))
+  const values = [...new Map(claims.map((claim) => [claim.normalizedValue, claim.value] as const)).values()]
+  if (values.length < 2) return []
+
+  return [
+    {
+      type: "value_mismatch",
+      factId: fact.id,
+      chunkKeys: [...new Set(claims.map((claim) => claim.chunkKey))],
+      values,
+      reason: `同一 fact に対して複数の排他的な値候補が見つかりました: ${values.join(", ")}`
+    }
+  ]
+}
+
+type FactClaim = {
+  chunkKey: string
+  value: string
+  normalizedValue: string
+}
+
+function extractFactClaims(fact: string, chunk: RetrievedVector): FactClaim[] {
+  const kind = factValueKind(fact)
+  if (!kind) return []
+
+  const sentences = splitSentences(chunk.metadata.text ?? "")
+  return sentences.flatMap((sentence) => {
+    if (!supportsFact(fact, sentence)) return []
+    return extractValues(kind, sentence).map((value) => ({
+      chunkKey: chunk.key,
+      value,
+      normalizedValue: normalizeValue(value)
+    }))
+  })
+}
+
+function factValueKind(fact: string): "deadline" | "money" | undefined {
+  const normalized = fact.normalize("NFKC")
+  if (/期限|期日|締切|締め切り/.test(normalized)) return "deadline"
+  if (/金額|費用|料金|価格|単価|上限|下限|円/.test(normalized)) return "money"
+  return undefined
+}
+
+function extractValues(kind: "deadline" | "money", sentence: string): string[] {
+  const normalized = sentence.normalize("NFKC")
+  const matches =
+    kind === "deadline"
+      ? (normalized.match(/(?:翌月|当月|前月)?\s*\d+\s*(?:営業日|日)|\d+\s*(?:営業日|日|週間|週|か月|ヶ月|月|年|時間|分)\s*以内|月末|月初|末日|\d{4}[-/年]\d{1,2}(?:[-/月]\d{1,2}日?)?/gu) ?? [])
+      : (normalized.match(/\d[\d,]*(?:\.\d+)?\s*(?:円|万円|千円|USD|ドル)/giu) ?? [])
+  return [...new Set(matches.map((match) => match.trim()).filter(Boolean))]
+}
+
+function splitSentences(text: string): string[] {
+  return text
+    .normalize("NFKC")
+    .split(/(?<=[。！？!?])|\n+/u)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean)
+}
+
+function normalizeValue(value: string): string {
+  return value.normalize("NFKC").replace(/[\s,]/g, "").toLowerCase()
 }
 
 function normalize(text: string): string {

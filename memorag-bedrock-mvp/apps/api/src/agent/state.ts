@@ -173,6 +173,17 @@ export const RetrievalEvaluationSchema = z.object({
   missingFactIds: z.array(z.string()).default(() => []),
   conflictingFactIds: z.array(z.string()).default(() => []),
   supportedFactIds: z.array(z.string()).default(() => []),
+  riskSignals: z
+    .array(
+      z.object({
+        type: z.enum(["value_mismatch", "explicit_conflict_cue", "temporal_status_cue"]),
+        factId: z.string().optional(),
+        chunkKeys: z.array(z.string()).default(() => []),
+        values: z.array(z.string()).default(() => []),
+        reason: z.string().default("")
+      })
+    )
+    .optional(),
   nextAction: SearchActionSchema.default({
     type: "evidence_search",
     query: "",
@@ -285,5 +296,6 @@ export type RequiredFact = z.infer<typeof RequiredFactSchema>
 export type SearchAction = z.infer<typeof SearchActionSchema>
 export type ActionObservation = z.infer<typeof ActionObservationSchema>
 export type RetrievalEvaluation = z.infer<typeof RetrievalEvaluationSchema>
+export type RetrievalRiskSignal = NonNullable<RetrievalEvaluation["riskSignals"]>[number]
 export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
 export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>
