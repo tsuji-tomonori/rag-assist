@@ -72,6 +72,51 @@ ${context}
 </context>`
 }
 
+export function buildSufficientContextPrompt(question: string, requiredFacts: string[], chunks: RetrievedVector[]): string {
+  const facts = requiredFacts.length > 0 ? requiredFacts.map((fact, index) => `${index + 1}. ${fact}`).join("\n") : `1. ${question}`
+  const context = chunks
+    .map(
+      (chunk) => `<chunk id="${escapeXml(chunk.key)}" chunkId="${escapeXml(chunk.metadata.chunkId ?? "")}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
+${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
+</chunk>`
+    )
+    .join("\n\n")
+
+  return `SUFFICIENT_CONTEXT_JSON
+あなたは社内QA用RAGの回答可否判定器です。質問に対して、<context>内のevidence chunkだけで回答してよいかを厳密に判定してください。
+出力はJSONのみ。Markdownや説明文は禁止。
+
+判定ルール:
+- ANSWERABLE: 高優先度の必要事実がすべて evidence chunk で明示的に支持されている。
+- PARTIAL: 一部の必要事実は支持されるが、回答に必要な事実が不足している。
+- UNANSWERABLE: 関連チャンクがない、根拠が質問に答えていない、または矛盾がある。
+- memory card、一般知識、推測は根拠にしない。
+- 数値、期限、手順、条件、承認者は特に厳しく見る。
+- supportingChunkIds には根拠に使える <chunk id="..."> の id だけを入れる。
+
+JSON schema:
+{
+  "label": "ANSWERABLE | PARTIAL | UNANSWERABLE",
+  "confidence": 0.0,
+  "requiredFacts": ["回答に必要な事実"],
+  "supportedFacts": ["根拠付きで確認できた事実"],
+  "missingFacts": ["不足している事実"],
+  "conflictingFacts": ["矛盾している事実"],
+  "supportingChunkIds": ["retrieved chunk id from <chunk id=...>"],
+  "reason": "判定理由"
+}
+
+<question>
+${question}
+</question>
+<requiredFacts>
+${escapeXml(facts)}
+</requiredFacts>
+<context>
+${context || "根拠チャンクはありません。"}
+</context>`
+}
+
 export function selectFinalAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
   if (!isRequirementsClassificationQuestion(question)) return chunks
 

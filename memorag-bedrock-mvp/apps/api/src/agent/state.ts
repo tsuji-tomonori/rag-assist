@@ -71,6 +71,17 @@ export const AnswerabilitySchema = z.object({
   sentenceAssessments: z.array(AnswerabilitySentenceAssessmentSchema).optional()
 })
 
+export const SufficientContextJudgementSchema = z.object({
+  label: z.enum(["ANSWERABLE", "PARTIAL", "UNANSWERABLE"]).default("UNANSWERABLE"),
+  confidence: z.number().min(0).max(1).default(0),
+  requiredFacts: z.array(z.string()).default(() => []),
+  supportedFacts: z.array(z.string()).default(() => []),
+  missingFacts: z.array(z.string()).default(() => []),
+  conflictingFacts: z.array(z.string()).default(() => []),
+  supportingChunkIds: z.array(z.string()).default(() => []),
+  reason: z.string().default("")
+})
+
 export const DebugStepSchema = z.object({
   id: z.number(),
   label: z.string(),
@@ -195,6 +206,16 @@ export const AgentState = new StateSchema({
     reason: "not_checked",
     confidence: 0
   }),
+  sufficientContext: SufficientContextJudgementSchema.default({
+    label: "UNANSWERABLE",
+    confidence: 0,
+    requiredFacts: [],
+    supportedFacts: [],
+    missingFacts: [],
+    conflictingFacts: [],
+    supportingChunkIds: [],
+    reason: ""
+  }),
   rawAnswer: z.string().optional(),
   answer: z.string().optional(),
   citations: z.array(CitationSchema).default(() => []),
@@ -208,6 +229,7 @@ export const AgentState = new StateSchema({
 export type QaAgentState = typeof AgentState.State
 export type QaAgentUpdate = typeof AgentState.Update
 export type AnswerabilityReason = QaAgentState["answerability"]["reason"]
+export type SufficientContextJudgement = z.infer<typeof SufficientContextJudgementSchema>
 export type RequiredFact = z.infer<typeof RequiredFactSchema>
 export type SearchAction = z.infer<typeof SearchActionSchema>
 export type ActionObservation = z.infer<typeof ActionObservationSchema>
