@@ -12,6 +12,7 @@ const cognitoRegion = process.env.COGNITO_REGION
 const cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID
 const cognitoAppClientId = process.env.COGNITO_APP_CLIENT_ID
 const authEnabled = process.env.AUTH_ENABLED === "true"
+const localAuthGroups = process.env.LOCAL_AUTH_GROUPS?.split(",").map((group) => group.trim()).filter(Boolean)
 
 const jwks =
   cognitoRegion && cognitoUserPoolId
@@ -20,7 +21,11 @@ const jwks =
 
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
   if (!authEnabled) {
-    c.set("user", { userId: "local-dev", email: "local-dev@example.com", cognitoGroups: ["SYSTEM_ADMIN"] } as AppUser)
+    c.set("user", {
+      userId: process.env.LOCAL_AUTH_USER_ID ?? "local-dev",
+      email: process.env.LOCAL_AUTH_EMAIL ?? "local-dev@example.com",
+      cognitoGroups: localAuthGroups && localAuthGroups.length > 0 ? localAuthGroups : ["SYSTEM_ADMIN"]
+    } as AppUser)
     return next()
   }
 
