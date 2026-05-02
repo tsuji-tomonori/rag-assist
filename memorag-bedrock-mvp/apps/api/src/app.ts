@@ -369,7 +369,7 @@ app.openapi(
     path: "/debug-runs/{runId}/download",
     request: { params: z.object({ runId: z.string().min(1) }) },
     responses: {
-      200: { description: "Create signed download URL for debug markdown", content: { "application/json": { schema: DebugDownloadResponseSchema } } },
+      200: { description: "Create signed download URL for debug JSON", content: { "application/json": { schema: DebugDownloadResponseSchema } } },
       404: { description: "Debug run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
     }
   }),

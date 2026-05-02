@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto"
 import { END, START, StateGraph } from "@langchain/langgraph"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
-import type { DebugTrace } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
 import { analyzeInput } from "./nodes/analyze-input.js"
 import { answerabilityGate } from "./nodes/answerability-gate.js"
 import { createEmbedQueriesNode } from "./nodes/embed-queries.js"
@@ -318,6 +318,7 @@ async function persistDebugTrace(
 ): Promise<DebugTrace> {
   const completedAt = new Date()
   const trace: DebugTrace = {
+    schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
     runId: input.runId,
     question: input.question,
     modelId: input.modelId,

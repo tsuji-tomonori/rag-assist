@@ -1,7 +1,7 @@
 import type { QaAgentState, QaAgentUpdate, ReferenceTarget } from "../state.js"
 
 const REFERENCE_PATTERNS = [
-  /(?:詳細は|詳しくは|参照|別紙|付録|Appendix)\s*([A-Za-z0-9一-龠ぁ-んァ-ヶー\-_#\.]+)/gi,
+  /(?:詳細は|詳しくは|参照|別紙|付録|Appendix)\s*([A-Za-z0-9一-龠ぁ-んァ-ヶー_#.-]+)/gi,
   /([A-Za-z]?別紙\s*[A-Za-z0-9一二三四五六七八九十]+)/gi
 ]
 
@@ -42,5 +42,5 @@ function normalizeReferenceLabel(label: string): string {
   return label
     .toLowerCase()
     .replace(/\s+/g, "")
-    .replace(/[「」『』()（）【】［］\[\]\.]/g, "")
+    .replaceAll(/[「」『』()（）【】［］[\].]/g, "")
 }

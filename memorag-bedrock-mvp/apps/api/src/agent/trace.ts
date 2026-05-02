@@ -1,4 +1,4 @@
-import type { DebugStep } from "../types.js"
+import type { DebugStep, JsonValue } from "../types.js"
 import type { QaAgentState, QaAgentUpdate, SearchAction } from "./state.js"
 import { NO_ANSWER } from "./state.js"
 
@@ -24,6 +24,7 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
           modelId: inferModelId(label, state),
           summary: summarizeUpdate(label, update),
           detail: detailUpdate(update),
+          output: outputUpdate(update),
           hitCount: inferHitCount(update),
           tokenCount: inferTokenCount(update)
         })
@@ -46,7 +47,17 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
           completedAt,
           startedMs,
           summary: "処理中にエラーが発生したため、回答を拒否しました。",
-          detail: error instanceof Error ? error.message : String(error)
+          detail: error instanceof Error ? error.message : String(error),
+          output: {
+            answerability: {
+              isAnswerable: false,
+              reason: "citation_validation_failed",
+              confidence: 0
+            },
+            answer: NO_ANSWER,
+            citations: [],
+            error: error instanceof Error ? error.message : String(error)
+          }
         })
       }
     }
@@ -63,6 +74,7 @@ function buildStep(input: {
   modelId?: string
   summary: string
   detail?: string
+  output?: Record<string, JsonValue>
   hitCount?: number
   tokenCount?: number
 }): DebugStep {
@@ -74,6 +86,7 @@ function buildStep(input: {
     modelId: input.modelId,
     summary: input.summary,
     detail: input.detail,
+    output: input.output,
     hitCount: input.hitCount,
     tokenCount: input.tokenCount,
     startedAt: input.startedAt.toISOString(),
@@ -161,6 +174,50 @@ function formatSufficientContextDetail(judgement: NonNullable<QaAgentUpdate["suf
 
 function formatList(items: string[]): string[] {
   return items.length > 0 ? items.map((item) => `- ${item}`) : ["なし"]
+}
+
+function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefined {
+  const output: Record<string, JsonValue> = {}
+  const keys: Array<keyof QaAgentUpdate> = [
+    "normalizedQuery",
+    "memoryCards",
+    "clues",
+    "expandedQueries",
+    "queryEmbeddings",
+    "searchPlan",
+    "actionHistory",
+    "iteration",
+    "newEvidenceCount",
+    "noNewEvidenceStreak",
+    "searchDecision",
+    "retrievedChunks",
+    "selectedChunks",
+    "answerability",
+    "sufficientContext",
+    "rawAnswer",
+    "answer",
+    "citations"
+  ]
+
+  for (const key of keys) {
+    const value = update[key]
+    if (value !== undefined) output[String(key)] = toJsonValue(value)
+  }
+
+  return Object.keys(output).length > 0 ? output : undefined
+}
+
+function toJsonValue(value: unknown): JsonValue {
+  if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value
+  if (Array.isArray(value)) return value.map((item) => toJsonValue(item))
+  if (typeof value === "object") {
+    const result: Record<string, JsonValue> = {}
+    for (const [key, nested] of Object.entries(value)) {
+      if (nested !== undefined) result[key] = toJsonValue(nested)
+    }
+    return result
+  }
+  return String(value)
 }
 
 function formatAnswerabilityDetail(answerability: NonNullable<QaAgentUpdate["answerability"]>): string {

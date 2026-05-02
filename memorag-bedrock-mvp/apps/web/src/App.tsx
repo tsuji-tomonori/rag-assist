@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
   answerQuestion,
   chat,
@@ -69,7 +69,7 @@ export default function App() {
   const [file, setFile] = useState<File | null>(null)
   const [question, setQuestion] = useState("")
   const [modelId, setModelId] = useState(defaultModelId)
-  const [embeddingModelId, setEmbeddingModelId] = useState(defaultEmbeddingModelId)
+  const [embeddingModelId] = useState(defaultEmbeddingModelId)
   const [minScore] = useState(0.2)
   const [messages, setMessages] = useState<Message[]>([])
   const [history, setHistory] = useState<ConversationHistoryItem[]>([])
@@ -109,6 +109,7 @@ export default function App() {
     refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
     refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
     refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authSession])
 
   useEffect(() => {
@@ -929,7 +930,7 @@ function AssigneeWorkspace({
     setNotifyRequester(selected?.notifyRequester ?? true)
     setDraftSavedAt(null)
     setIsDirty(false)
-  }, [selected?.questionId])
+  }, [selected])
 
   function markDirty() {
     if (!isDirty) setIsDirty(true)
@@ -1154,9 +1155,9 @@ function DebugPanel({
           <span>{pending ? "実行中" : `${steps.length} ステップ`}</span>
         </div>
         <div className="debug-head-actions">
-          <button type="button" onClick={() => void downloadDebugTrace(trace)} disabled={!trace || pending} title="Markdownでダウンロード">
+          <button type="button" onClick={() => void downloadDebugTrace(trace)} disabled={!trace || pending} title="JSONでダウンロード">
             <Icon name="download" />
-            <span>MD DL</span>
+            <span>JSON DL</span>
           </button>
           <button type="button" onClick={onToggleAll}>{allExpanded ? "すべて閉じる" : "すべて展開"}</button>
           <button type="button" title="拡大表示">
@@ -1256,7 +1257,7 @@ async function downloadDebugTrace(trace?: DebugTrace) {
   const signed = await createDebugDownload(trace.runId)
   const link = document.createElement("a")
   link.href = signed.url
-  link.download = `debug-trace-${sanitizeFileName(trace.runId)}.md`
+  link.download = `debug-trace-${sanitizeFileName(trace.runId)}.json`
   link.rel = "noopener"
   document.body.appendChild(link)
   link.click()

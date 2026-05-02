@@ -203,11 +203,13 @@ test("traced node records success, warning, model ids, details, and thrown error
   assert.equal(successTrace.modelId, "embed")
   assert.equal(successTrace.hitCount, 1)
   assert.match(successTrace.detail ?? "", /doc.txt/)
+  assert.deepEqual((successTrace.output?.retrievedChunks as unknown[]).map((hit) => (hit as { key: string }).key), ["doc-1-chunk-0001"])
 
   const warning = await tracedNode("generate_answer", async () => ({ answer: NO_ANSWER }))(state({ trace: [] }))
   const warningTrace = warning.trace as unknown as DebugStep
   assert.equal(warningTrace.status, "warning")
   assert.equal(warningTrace.tokenCount, 4)
+  assert.equal(warningTrace.output?.answer, NO_ANSWER)
 
   const answerability = await tracedNode("answerability_gate", async () => answerabilityGate(state({ question: "金額はいくらですか？", selectedChunks: [chunk] })))(state({ trace: [] }))
   const answerabilityTrace = answerability.trace as unknown as DebugStep
@@ -221,6 +223,7 @@ test("traced node records success, warning, model ids, details, and thrown error
   assert.equal(error.answer, NO_ANSWER)
   assert.equal(errorTrace.status, "error")
   assert.equal(errorTrace.modelId, undefined)
+  assert.equal(errorTrace.output?.answer, NO_ANSWER)
 })
 
 function createDeps(): Dependencies {

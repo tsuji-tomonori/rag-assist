@@ -1,6 +1,7 @@
 import { z } from "@hono/zod-openapi"
 
 const MetadataValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()])
+const DebugStepOutputSchema = z.record(z.string(), z.unknown())
 
 export const HealthResponseSchema = z.object({
   ok: z.boolean(),
@@ -73,6 +74,7 @@ export const DebugStepSchema = z.object({
   modelId: z.string().optional(),
   summary: z.string(),
   detail: z.string().optional(),
+  output: DebugStepOutputSchema.optional(),
   hitCount: z.number().optional(),
   tokenCount: z.number().optional(),
   startedAt: z.string(),
@@ -80,6 +82,7 @@ export const DebugStepSchema = z.object({
 })
 
 export const DebugTraceSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
   runId: z.string(),
   question: z.string(),
   modelId: z.string(),

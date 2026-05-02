@@ -12,7 +12,7 @@ function response(body: unknown, ok = true) {
 
 describe("auth client", () => {
   it("signs in with Cognito and attaches the ID token to API requests", async () => {
-    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+    const fetchMock = vi.fn((url: RequestInfo | URL, _init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") {
         return Promise.resolve(

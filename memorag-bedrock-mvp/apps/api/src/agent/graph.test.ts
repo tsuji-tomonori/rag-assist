@@ -88,6 +88,7 @@ test("LangGraph debug trace keeps the full finalize response detail", async () =
   assert.equal(result.answer.endsWith("END_OF_FINALIZE_RESPONSE"), true)
   assert.equal(result.debug?.answerPreview, longAnswer)
   assert.equal(finalizeStep?.detail, longAnswer)
+  assert.deepEqual(finalizeStep?.output, { answer: longAnswer })
 })
 
 test("LangGraph MemoRAG workflow refuses before answer generation when evidence is missing", async () => {
@@ -106,6 +107,10 @@ test("LangGraph MemoRAG workflow refuses before answer generation when evidence 
   assert.equal(result.debug.steps.some((step) => step.label === "generate_answer"), false)
   assert.equal(result.debug.steps.some((step) => step.label === "sufficient_context_gate"), false)
   assert.equal(result.debug.steps.at(-1)?.label, "finalize_refusal")
+  assert.deepEqual(result.debug.steps.at(-1)?.output, {
+    answer: "資料からは回答できません。",
+    citations: []
+  })
 })
 
 test("LangGraph workflow refuses when sufficient context judge returns partial", async () => {
