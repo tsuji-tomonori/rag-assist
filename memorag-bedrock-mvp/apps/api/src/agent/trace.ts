@@ -180,21 +180,16 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
   const output: Record<string, JsonValue> = {}
   const keys: Array<keyof QaAgentUpdate> = [
     "normalizedQuery",
-    "memoryCards",
     "clues",
     "expandedQueries",
-    "queryEmbeddings",
     "searchPlan",
     "actionHistory",
     "iteration",
     "newEvidenceCount",
     "noNewEvidenceStreak",
     "searchDecision",
-    "retrievedChunks",
-    "selectedChunks",
     "answerability",
     "sufficientContext",
-    "rawAnswer",
     "answer",
     "citations"
   ]

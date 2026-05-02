@@ -203,7 +203,7 @@ test("traced node records success, warning, model ids, details, and thrown error
   assert.equal(successTrace.modelId, "embed")
   assert.equal(successTrace.hitCount, 1)
   assert.match(successTrace.detail ?? "", /doc.txt/)
-  assert.deepEqual((successTrace.output?.retrievedChunks as unknown[]).map((hit) => (hit as { key: string }).key), ["doc-1-chunk-0001"])
+  assert.equal(successTrace.output?.retrievedChunks, undefined)
 
   const warning = await tracedNode("generate_answer", async () => ({ answer: NO_ANSWER }))(state({ trace: [] }))
   const warningTrace = warning.trace as unknown as DebugStep
