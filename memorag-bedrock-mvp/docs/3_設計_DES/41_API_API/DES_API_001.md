@@ -19,6 +19,11 @@
 | `POST /documents` | 文書登録 | `FR-001`, `FR-002` |
 | `DELETE /documents/{documentId}` | 文書削除 | `FR-007`, `FR-008` |
 | `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005` |
+| `POST /questions` | 担当者への問い合わせ作成 | `FR-005`, `NFR-011` |
+| `GET /questions` | 担当者問い合わせ一覧 | `FR-005`, `NFR-011` |
+| `GET /questions/{questionId}` | 担当者問い合わせ詳細 | `FR-005`, `NFR-011` |
+| `POST /questions/{questionId}/answer` | 担当者回答登録 | `FR-005`, `NFR-011` |
+| `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-005`, `NFR-011` |
 | `GET /conversation-history` | 自分の会話履歴一覧 | `FR-010`, `NFR-005` |
 | `POST /conversation-history` | 会話履歴 item 保存 | `FR-010`, `NFR-005` |
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-010`, `NFR-005` |
@@ -146,9 +151,31 @@
 ## 認可方針
 
 - local 開発では検証容易性を優先し、設定により認可を緩和できる。
+- `AUTH_ENABLED=false` の既定 local user は `SYSTEM_ADMIN` とする。
+- local RBAC 検証では `LOCAL_AUTH_GROUPS` で Cognito group 相当の role を指定できる。
 - `GET /conversation-history`、`POST /conversation-history`、`DELETE /conversation-history/{id}` は認証済み userId に紐づく自分の履歴のみを対象とする。
-- 本番または社内検証環境では `GET /debug-runs`、`GET /debug-runs/{runId}`、`POST /benchmark/query` を認可対象とする。
+- 本番または社内検証環境では管理系 API を `requirePermission` による強制境界で保護する。
 - 権限外文書を回答、citation、debug trace の外部応答に含めない。
+
+### Phase 1 RAG 運用管理 API の権限境界
+
+| 機能 | API | 必要 permission | 主な対象 role |
+| --- | --- | --- | --- |
+| チャット実行 | `POST /chat` | `chat:create` | `CHAT_USER`, `SYSTEM_ADMIN` |
+| 文書一覧 | `GET /documents` | `rag:doc:read` | `CHAT_USER`, `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| 文書アップロード | `POST /documents` | `rag:doc:write:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| 文書削除 | `DELETE /documents/{documentId}` | `rag:doc:delete:group` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| 問い合わせ作成 | `POST /questions` | `chat:create` | `CHAT_USER`, `SYSTEM_ADMIN` |
+| 問い合わせ一覧 | `GET /questions` | `answer:edit` | `ANSWER_EDITOR`, `SYSTEM_ADMIN` |
+| 問い合わせ詳細 | `GET /questions/{questionId}` | `answer:edit` | `ANSWER_EDITOR`, `SYSTEM_ADMIN` |
+| 回答登録 | `POST /questions/{questionId}/answer` | `answer:publish` | `ANSWER_EDITOR`, `SYSTEM_ADMIN` |
+| 解決済み化 | `POST /questions/{questionId}/resolve` | `answer:publish` | `ANSWER_EDITOR`, `SYSTEM_ADMIN` |
+| debug trace 一覧 | `GET /debug-runs` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
+| debug trace 詳細 | `GET /debug-runs/{runId}` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
+| debug JSON download | `POST /debug-runs/{runId}/download` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
+| benchmark query | `POST /benchmark/query` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
+
+Phase 1 ではユーザー作成、ユーザー停止、ロール付与、ロール一覧編集、アクセス policy 編集、コスト監査、全ユーザー利用状況一覧の API/UI は提供しない。
 
 ## エラー方針
 

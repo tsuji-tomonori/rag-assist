@@ -169,6 +169,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "chat:create")
     const body = (c.req as any).valid("json") as z.infer<typeof CreateQuestionRequestSchema>
     return c.json(await service.createQuestion(body), 200)
   }
@@ -202,6 +203,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "answer:edit")
     const { questionId } = (c.req as any).valid("param") as { questionId: string }
     const question = await service.getQuestion(questionId)
     if (!question) return c.json({ error: "Question not found" }, 404)
@@ -227,7 +229,7 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "answer:edit")
+    requirePermission(c.get("user"), "answer:publish")
     try {
       const { questionId } = (c.req as any).valid("param") as { questionId: string }
       const body = (c.req as any).valid("json") as z.infer<typeof AnswerQuestionRequestSchema>
@@ -252,7 +254,7 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "answer:edit")
+    requirePermission(c.get("user"), "answer:publish")
     try {
       const { questionId } = (c.req as any).valid("param") as { questionId: string }
       return c.json(await service.resolveQuestion(questionId), 200)
@@ -357,6 +359,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "chat:admin:read_all")
     const { runId } = (c.req as any).valid("param") as { runId: string }
     const trace = await service.getDebugRun(runId)
     if (!trace) return c.json({ error: "Debug run not found" }, 404)
@@ -376,6 +379,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "chat:admin:read_all")
     const { runId } = (c.req as any).valid("param") as { runId: string }
     const download = await service.createDebugTraceDownloadUrl(runId)
     if (!download) return c.json({ error: "Debug run not found" }, 404)

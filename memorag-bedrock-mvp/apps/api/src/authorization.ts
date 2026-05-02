@@ -34,7 +34,7 @@ type Role = "CHAT_USER" | "ANSWER_EDITOR" | "RAG_GROUP_MANAGER" | "USER_ADMIN" |
 const rolePermissions: Record<Role, Permission[]> = {
   CHAT_USER: ["chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "usage:read:own", "cost:read:own", "rag:doc:read"],
   ANSWER_EDITOR: ["answer:edit", "answer:publish"],
-  RAG_GROUP_MANAGER: ["rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group"],
+  RAG_GROUP_MANAGER: ["rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group"],
   USER_ADMIN: ["user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   COST_AUDITOR: ["cost:read:all"],
