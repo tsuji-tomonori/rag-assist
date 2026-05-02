@@ -154,6 +154,7 @@ test("implements the designed serverless resources", () => {
     distanceMetric: "cosine"
   })
   template.hasResourceProperties("AWS::CodeBuild::Project", {
+    EncryptionKey: Match.anyValue(),
     Environment: Match.objectLike({
       ComputeType: "BUILD_GENERAL1_SMALL",
       Image: "aws/codebuild/standard:7.0",
@@ -182,8 +183,15 @@ test("implements the designed serverless resources", () => {
     })
   })
   template.hasResourceProperties("AWS::StepFunctions::StateMachine", {
-    DefinitionString: Match.anyValue()
+    DefinitionString: Match.anyValue(),
+    LoggingConfiguration: Match.objectLike({
+      Level: "ALL"
+    })
   })
+  const stateMachines = Object.values(template.toJSON().Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::StepFunctions::StateMachine")
+  assert.equal(stateMachines.length, 1)
+  assert.equal((stateMachines[0] as any).Properties.TracingConfiguration, undefined)
 })
 
 test("does not create fixed-cost network or datastore resources", () => {
