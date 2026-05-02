@@ -38,9 +38,9 @@
 | `email` | なし | Cognito userのemail。usernameにも使う。 |
 | `display-name` | 空 | Cognito `name` 属性。 |
 | `primary-role` | `一般利用者` | 最初に付与するCognito group。日本語名で選択する。 |
-| `additional-roles` | 空 | 追加で付与するCognito group。複数指定は `SYSTEM_ADMIN` 以外の日本語名またはCognito group名をカンマ区切りで入力する。 |
+| `additional-roles` | 空 | 追加で付与するCognito group。複数指定は日本語名またはCognito group名をカンマ区切りで入力する。 |
 
-ロールは複数付与できる。workflowは主ロールと追加ロールを Cognito group 名へ正規化してから `infra/scripts/create-cognito-user.sh` の `--role` に複数渡す。`SYSTEM_ADMIN` / `システム管理者` は GitHub Actions から付与できない。
+ロールは複数付与できる。workflowは主ロールと追加ロールを `infra/scripts/create-cognito-user.sh` の `--role` に複数渡し、スクリプト側で日本語名を Cognito group 名へ正規化する。GitHub Actions から `SYSTEM_ADMIN` / `システム管理者` を付与できるため、環境承認と実行権限を管理者操作の証跡として扱う。
 
 主な role:
 
@@ -52,8 +52,9 @@
 | `USER_ADMIN` | ユーザー管理の将来拡張 |
 | `ACCESS_ADMIN` | 権限管理の将来拡張 |
 | `COST_AUDITOR` | 費用監査の将来拡張 |
+| `SYSTEM_ADMIN` | debug trace、benchmark、管理者検証 |
 
-`SYSTEM_ADMIN` は全権限を持つため、この workflow では選択肢に出さず、`additional-roles` に指定された場合も拒否する。debug trace、benchmark、管理者検証に必要な場合は、GitHub Actions の手動ユーザー作成とは分離した特権管理手順で付与する。
+ログイン画面からの self sign-up はメール確認後に `CHAT_USER` のみを自動付与する。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーがこの workflow または AWS 管理手順で後から付与する。
 
 事前条件:
 

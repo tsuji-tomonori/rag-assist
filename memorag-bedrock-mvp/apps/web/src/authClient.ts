@@ -18,6 +18,11 @@ export type NewPasswordRequiredChallenge = {
 
 export type AuthResult = AuthSession | NewPasswordRequiredChallenge
 
+export type SignUpResult = {
+  email: string
+  deliveryDestination?: string
+}
+
 const sessionKey = "memorag.auth.session"
 
 setAuthTokenProvider(() => getStoredAuthSession()?.idToken)
@@ -119,6 +124,81 @@ export async function completeNewPasswordChallenge(input: {
   return storeAuthenticatedResult(input.challenge.email, body, input.remember)
 }
 
+export async function signUp(input: { email: string; password: string }): Promise<SignUpResult> {
+  const email = input.email.trim()
+  if (!email || !input.password) throw new Error("メールアドレスとパスワードを入力してください。")
+
+  if (import.meta.env.VITE_AUTH_MODE === "local") {
+    return { email }
+  }
+
+  const config = await getRuntimeConfig()
+  if (config.authMode === "local") {
+    return { email }
+  }
+
+  if (!config.cognitoRegion || !config.cognitoUserPoolClientId) {
+    throw new Error("Cognito認証設定が未設定です。")
+  }
+
+  const response = await fetch(cognitoEndpoint(config.cognitoRegion), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-amz-json-1.1",
+      "X-Amz-Target": "AWSCognitoIdentityProviderService.SignUp"
+    },
+    body: JSON.stringify({
+      ClientId: config.cognitoUserPoolClientId,
+      Username: email,
+      Password: input.password,
+      UserAttributes: [{ Name: "email", Value: email }]
+    })
+  })
+
+  const body = await readCognitoResponse(response)
+  if (!response.ok) {
+    throw new Error(readCognitoError(body) ?? "アカウントを作成できませんでした。入力内容を確認してください。")
+  }
+
+  return {
+    email,
+    deliveryDestination: body.CodeDeliveryDetails?.Destination
+  }
+}
+
+export async function confirmSignUp(input: { email: string; code: string }): Promise<void> {
+  const email = input.email.trim()
+  const code = input.code.trim()
+  if (!email || !code) throw new Error("メールアドレスと確認コードを入力してください。")
+
+  if (import.meta.env.VITE_AUTH_MODE === "local") return
+
+  const config = await getRuntimeConfig()
+  if (config.authMode === "local") return
+
+  if (!config.cognitoRegion || !config.cognitoUserPoolClientId) {
+    throw new Error("Cognito認証設定が未設定です。")
+  }
+
+  const response = await fetch(cognitoEndpoint(config.cognitoRegion), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-amz-json-1.1",
+      "X-Amz-Target": "AWSCognitoIdentityProviderService.ConfirmSignUp"
+    },
+    body: JSON.stringify({
+      ClientId: config.cognitoUserPoolClientId,
+      Username: email,
+      ConfirmationCode: code
+    })
+  })
+
+  const body = await readCognitoResponse(response)
+  if (!response.ok) {
+    throw new Error(readCognitoError(body) ?? "確認コードを検証できませんでした。")
+  }
+}
+
 export function getStoredAuthSession(): AuthSession | null {
   const session = readSession(window.sessionStorage) ?? readSession(window.localStorage)
   if (!session) return null
@@ -171,6 +251,11 @@ type CognitoResponseBody = {
   ChallengeName?: string
   ChallengeParameters?: Record<string, string | undefined>
   Session?: string
+  CodeDeliveryDetails?: {
+    Destination?: string
+  }
+  __type?: string
+  message?: string
 }
 
 async function readCognitoResponse(response: Response): Promise<CognitoResponseBody> {
@@ -192,6 +277,16 @@ function parseRequiredAttributes(value: string | undefined): string[] {
       .map((item) => item.trim())
       .filter(Boolean)
   }
+}
+
+function readCognitoError(body: CognitoResponseBody): string | undefined {
+  if (!body.__type) return body.message
+  if (body.__type.includes("UsernameExistsException")) return "このメールアドレスはすでに登録されています。"
+  if (body.__type.includes("InvalidPasswordException")) return "パスワード条件を満たしていません。"
+  if (body.__type.includes("CodeMismatchException")) return "確認コードが正しくありません。"
+  if (body.__type.includes("ExpiredCodeException")) return "確認コードの有効期限が切れています。"
+  if (body.__type.includes("LimitExceededException")) return "試行回数が多すぎます。時間をおいて再試行してください。"
+  return body.message
 }
 
 function readSession(storage: Storage): AuthSession | null {

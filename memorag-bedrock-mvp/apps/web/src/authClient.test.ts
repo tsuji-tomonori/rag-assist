@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { listDocuments, resetRuntimeConfigForTests } from "./api.js"
-import { completeNewPasswordChallenge, getStoredAuthSession, signIn, signOut } from "./authClient.js"
+import { completeNewPasswordChallenge, confirmSignUp, getStoredAuthSession, signIn, signOut, signUp } from "./authClient.js"
 
 function response(body: unknown, ok = true) {
   return {
@@ -170,6 +170,56 @@ describe("auth client", () => {
 
     await expect(signIn({ email: "tester@example.com", password: "Password123!", remember: false })).rejects.toThrow(
       "Cognito認証レスポンスにIDトークンがありません。"
+    )
+  })
+
+  it("signs up and confirms a Cognito user", async () => {
+    resetRuntimeConfigForTests()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+      .mockResolvedValueOnce(response({ CodeDeliveryDetails: { Destination: "t***@example.com" } }))
+      .mockResolvedValueOnce(response({}))
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(signUp({ email: " tester@example.com ", password: "Password123!" })).resolves.toEqual({
+      email: "tester@example.com",
+      deliveryDestination: "t***@example.com"
+    })
+    await expect(confirmSignUp({ email: "tester@example.com", code: "123456" })).resolves.toBeUndefined()
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://cognito-idp.ap-northeast-1.amazonaws.com/",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ "X-Amz-Target": "AWSCognitoIdentityProviderService.SignUp" }),
+        body: expect.stringContaining("\"UserAttributes\":[{\"Name\":\"email\",\"Value\":\"tester@example.com\"}]")
+      })
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "https://cognito-idp.ap-northeast-1.amazonaws.com/",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({ "X-Amz-Target": "AWSCognitoIdentityProviderService.ConfirmSignUp" }),
+        body: expect.stringContaining("\"ConfirmationCode\":\"123456\"")
+      })
+    )
+  })
+
+  it("maps Cognito sign-up errors to user-facing messages", async () => {
+    resetRuntimeConfigForTests()
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+        .mockResolvedValueOnce(response({ __type: "UsernameExistsException" }, false))
+    )
+
+    await expect(signUp({ email: "tester@example.com", password: "Password123!" })).rejects.toThrow(
+      "このメールアドレスはすでに登録されています。"
     )
   })
 
