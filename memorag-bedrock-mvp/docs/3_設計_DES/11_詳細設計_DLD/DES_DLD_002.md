@@ -1,0 +1,107 @@
+# RAG 検索 API アルゴリズム詳細設計
+
+- ファイル: `memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_002.md`
+- 種別: `DES_DLD`
+- 作成日: 2026-05-02
+- 状態: Draft
+
+## 何を書く場所か
+
+`POST /search` が使う hybrid retriever のアルゴリズム、採用判断、制約、テスト観点を定義する。
+
+## 対象
+
+- lexical search: BM25、field boost、CJK n-gram、prefix、ASCII fuzzy、alias expansion
+- semantic search: evidence vector store、S3 Vectors metadata filter
+- fusion: Reciprocal Rank Fusion
+- guard: ACL/metadata filter、cheap rerank
+
+## アルゴリズム構成
+
+```text
+query
+  -> normalize / tokenize
+  -> lexical search
+       - title boost
+       - body BM25
+       - CJK 2-gram / 3-gram
+       - prefix expansion
+       - ASCII fuzzy expansion
+       - alias expansion
+  -> semantic search
+       - embedding
+       - evidence vector store query
+       - metadata filter
+  -> RRF fusion
+  -> ACL guard
+  -> cheap rerank
+  -> topK chunks
+```
+
+## 採用判断
+
+| 項目 | 判断 | 理由 | リスク・制約 |
+|---|---|---|---|
+| BM25 | 採用 | キーワード一致と固有名詞検索に強く、RAG の候補生成として説明可能性が高い。 | 現行は Lambda memory 上の warm cache であり、大規模 index では専用 index 保存が必要。 |
+| CJK n-gram | 採用 | 日本語の未知語、部分一致、複合語に最低限対応できる。 | 形態素解析よりノイズが多く、語境界の精度は限定的。 |
+| kuromoji.js | 初期未採用 | 依存と辞書ロードを増やさず、MVP の実装速度と Lambda cold start を優先する。 | 検索品質が不足する場合は tokenizer 差し替え候補にする。 |
+| prefix | 採用 | 社内略語、品番、ファイル名、英数字識別子に効く。 | 短すぎる prefix はノイズになるため、2 文字以上に限定する。 |
+| fuzzy | 限定採用 | typo に対応するため、4 文字以上の ASCII term に限定して edit distance 1〜2 を使う。 | 日本語 fuzzy は計算量と誤一致が増えるため、n-gram/alias に寄せる。 |
+| S3 Vectors | 採用 | 意味検索は自作せず、既存 vector store 抽象経由で topK 類似検索と metadata filter を使う。 | metadata filter は保存項目とサイズ制約に依存する。 |
+| RRF | 採用 | BM25 score と vector score は尺度が異なるため、順位ベース融合で score normalization 依存を避ける。 | 重みは初期値であり、評価ログに基づく調整が必要。 |
+| cheap rerank | 採用 | phrase match、token coverage、title match、recentness の軽量補正で上位順序を安定させる。 | cross encoder rerank ほどの意味理解はない。 |
+
+## 妥当性レビュー
+
+現時点のアルゴリズムは、小〜中規模の社内 RAG MVP には適切である。
+
+- OpenSearch の小型互換ではなく、RAG 候補生成に必要な lexical/semantic/ACL/source 情報へ絞っている。
+- BM25 と vector search を併用しているため、正確な語句一致と意味的な言い換えの両方を拾える。
+- RRF により、score 尺度が異なる BM25 と vector distance を単純加算しない。
+- ACL は manifest 側と vector metadata 側の両方で扱い、検索後の guard も残している。
+- Lambda 上の実装としては、巨大 index を常時運用する前提を避け、warm cache の MVP としている。
+
+ただし、次の条件に達した場合は設計を見直す。
+
+- lexical index が数十 MB を超え、cold start と memory 使用量が p95 latency に影響する。
+- 日本語の複合語・表記ゆれで Recall@20 が不足する。
+- ACL group の組み合わせが複雑化し、単一 `aclGroup` filter では候補生成段階の絞り込みが不十分になる。
+- クエリ数が増え、Lambda 実行時間と S3/object load が OpenSearch または SQLite FTS5/EFS より不利になる。
+
+## 実装上の制約
+
+- lexical index は ingestion 時に永続生成せず、manifest/source text から search Lambda execution environment に warm cache する。
+- metadata filter は `tenantId`、`department`、`source`、`docType`、`documentId` を API 入力で受ける。
+- vector metadata には `tenantId`、`department`、`source`、`docType`、`aclGroup`、`aclGroups`、`allowedUsers` を保存できる。
+- S3 Vectors の前段 filter は scalar metadata に寄せ、複雑な ACL 判定は後段 guard で補完する。
+- エージェント workflow への接続はこの設計の対象外とし、次回の orchestrator/retriever 統合で扱う。
+
+## テスト観点
+
+| 観点 | 対応テスト |
+|---|---|
+| 日本語 query tokenization | `tokenizeQuery normalizes Japanese and ASCII terms with n-grams` |
+| BM25 exact match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
+| CJK n-gram match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
+| prefix match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
+| ASCII fuzzy match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
+| RRF overlap boost | `RRF fusion rewards overlap while keeping independent lexical hits` |
+| ACL filter | `service search applies ACL and metadata filters across lexical and vector results` |
+| metadata filter | `service search applies ACL and metadata filters across lexical and vector results` |
+| API contract | `HTTP contract validates major endpoint responses against /openapi.json` |
+
+## 評価指標
+
+- `Recall@20`: 正解 chunk または正解 document が上位 20 件に含まれること。
+- `MRR@10`: 正解 chunk または正解 document が上位に出ること。
+- `No-access leak`: 権限外 document が検索結果に含まれないこと。
+- `p95 latency`: Lambda cold/warm の両方で業務利用に耐えること。
+- `Grounded answer rate`: 次段階の agent 統合後、回答が検索結果の出典に基づくこと。
+
+## 将来拡張
+
+- ingestion batch で immutable lexical index を生成し、S3 Brotli object として保存する。
+- tokenizer を kuromoji.js に差し替え、形態素 token と n-gram token の重みを分離する。
+- 評価ログから RRF weight、BM25 topK、semantic topK、cheap rerank 加点を調整する。
+- index size が増えた場合は SQLite FTS5 または EFS へ移行する。
+- 検索 confidence が低い場合のみ HyDE または LLM rerank を選択的に使う。
