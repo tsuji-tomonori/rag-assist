@@ -15,7 +15,7 @@ import { rerankChunks } from "./nodes/rerank-chunks.js"
 import { createRetrieveMemoryNode } from "./nodes/retrieve-memory.js"
 import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { validateCitations } from "./nodes/validate-citations.js"
-import { AgentState, NO_ANSWER, type QaAgentState, type QaAgentUpdate } from "./state.js"
+import { AgentState, NO_ANSWER, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
 import { clamp, toCitation } from "./utils.js"
@@ -25,9 +25,30 @@ export function createQaAgentGraph(deps: Dependencies) {
   const searchEvidence = createSearchEvidenceNode(deps)
 
   async function planSearch(state: QaAgentState): Promise<QaAgentUpdate> {
-    const unresolvedReferences = state.unresolvedReferences.length > 0 ? state.unresolvedReferences : extractUnresolvedReferences(state.question, state.clues)
+    const query = state.expandedQueries[0] ?? state.normalizedQuery ?? state.question
+    const requiredFacts =
+      state.searchPlan.requiredFacts.length > 0 ? state.searchPlan.requiredFacts : extractRequiredFacts(state.question, state.clues)
+    const actions: SearchAction[] = [
+      {
+        type: "evidence_search",
+        query,
+        topK: state.topK
+      }
+    ]
+
     return {
-      unresolvedReferences,
+      searchPlan: {
+        complexity: inferSearchComplexity(state.question),
+        intent: state.normalizedQuery ?? state.question,
+        requiredFacts,
+        actions,
+        stopCriteria: {
+          maxIterations: state.maxIterations,
+          minTopScore: state.minScore,
+          minEvidenceCount: Math.max(2, Math.min(state.topK, 4)),
+          maxNoNewEvidenceStreak: 2
+        }
+      },
       searchDecision: "continue_search"
     }
   }
@@ -42,7 +63,24 @@ export function createQaAgentGraph(deps: Dependencies) {
     return {
       ...embedUpdate,
       ...searchUpdate,
-      newEvidenceCount
+      newEvidenceCount,
+      actionHistory: [
+        ...state.actionHistory,
+        {
+          action: state.searchPlan.actions[0] ?? {
+            type: "evidence_search",
+            query: state.expandedQueries[0] ?? state.normalizedQuery ?? state.question,
+            topK: state.topK
+          },
+          hitCount: nextRetrieved.length,
+          newEvidenceCount,
+          topScore: nextRetrieved[0]?.score,
+          summary:
+            nextRetrieved.length === 0
+              ? "検索結果はありませんでした。"
+              : `検索で${nextRetrieved.length}件取得し、新規根拠は${newEvidenceCount}件でした。`
+        }
+      ]
     }
   }
 
@@ -50,9 +88,10 @@ export function createQaAgentGraph(deps: Dependencies) {
     const nextIteration = state.iteration + 1
     const noNewEvidenceStreak = state.newEvidenceCount === 0 ? state.noNewEvidenceStreak + 1 : 0
     const topScore = state.retrievedChunks[0]?.score ?? 0
-    const enoughEvidence = state.retrievedChunks.length >= Math.max(2, Math.min(state.topK, 4)) && topScore >= state.minScore
-    const stopByIteration = nextIteration >= state.maxIterations
-    const stopByNoEvidence = noNewEvidenceStreak >= 2
+    const stopCriteria = state.searchPlan.stopCriteria
+    const enoughEvidence = state.retrievedChunks.length >= stopCriteria.minEvidenceCount && topScore >= stopCriteria.minTopScore
+    const stopByIteration = nextIteration >= stopCriteria.maxIterations
+    const stopByNoEvidence = noNewEvidenceStreak >= stopCriteria.maxNoNewEvidenceStreak
 
     return {
       iteration: nextIteration,
@@ -106,10 +145,36 @@ export function createQaAgentGraph(deps: Dependencies) {
     .compile()
 }
 
-function extractUnresolvedReferences(question: string, clues: string[]): string[] {
+function extractRequiredFacts(question: string, clues: string[]): RequiredFact[] {
   const base = [question, ...clues].join("\n")
   const refs = base.match(/[A-Za-z0-9_-]{3,}/g) ?? []
-  return [...new Set(refs)].slice(0, 8)
+  const uniqueRefs = [...new Set(refs)].slice(0, 8)
+  if (uniqueRefs.length === 0) {
+    return [
+      {
+        id: "fact-1",
+        description: question,
+        priority: 1,
+        status: "missing",
+        supportingChunkKeys: []
+      }
+    ]
+  }
+  return uniqueRefs.map((ref, index) => ({
+    id: `fact-${index + 1}`,
+    description: ref,
+    priority: index + 1,
+    status: "missing",
+    supportingChunkKeys: []
+  }))
+}
+
+function inferSearchComplexity(question: string): QaAgentState["searchPlan"]["complexity"] {
+  if (/比較|違い|差分|どちら/.test(question)) return "comparison"
+  if (/手順|方法|どうやって|申請|設定/.test(question)) return "procedure"
+  if (/それ|これ|上記|前述/.test(question)) return "ambiguous"
+  if (/と|および|及び|かつ/.test(question)) return "multi_hop"
+  return "simple"
 }
 
 export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<QaGraphResult> {
@@ -142,7 +207,6 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
     unresolvedReferenceTargets: [],
     visitedDocumentIds: [],
     searchBudget: {
-      maxIterations: 3,
       maxReferenceDepth: 2,
       remainingCalls: 3
     },
@@ -150,7 +214,19 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput): Promise<
     clues: [],
     expandedQueries: [],
     queryEmbeddings: [],
-    unresolvedReferences: [],
+    searchPlan: {
+      complexity: "simple",
+      intent: input.question,
+      requiredFacts: [],
+      actions: [],
+      stopCriteria: {
+        maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
+        minTopScore: minScore,
+        minEvidenceCount: Math.max(2, Math.min(topK, 4)),
+        maxNoNewEvidenceStreak: 2
+      }
+    },
+    actionHistory: [],
     maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,

@@ -37,7 +37,7 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/documents", "/documents/*", "/chat", "/questions", "/questions/*", "/debug-runs", "/debug-runs/*"]) {
+for (const path of ["/documents", "/documents/*", "/chat", "/questions", "/questions/*", "/debug-runs", "/debug-runs/*", "/benchmark/query"]) {
   app.use(path, authMiddleware)
 }
 
@@ -330,6 +330,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "chat:admin:read_all")
     const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkQueryRequestSchema>
     const result = await service.chat({ ...body, includeDebug: body.includeDebug ?? true })
     return c.json({ id: body.id, ...result }, 200)

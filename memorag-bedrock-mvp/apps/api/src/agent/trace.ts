@@ -1,5 +1,5 @@
 import type { DebugStep } from "../types.js"
-import type { QaAgentState, QaAgentUpdate } from "./state.js"
+import type { QaAgentState, QaAgentUpdate, SearchAction } from "./state.js"
 import { NO_ANSWER } from "./state.js"
 
 type NodeFn = (state: QaAgentState) => Promise<QaAgentUpdate>
@@ -97,6 +97,12 @@ function inferModelId(label: string, state: QaAgentState): string | undefined {
 }
 
 function summarizeUpdate(label: string, update: QaAgentUpdate): string {
+  if (update.searchPlan) return `plan actions=${update.searchPlan.actions?.length ?? 0}, facts=${update.searchPlan.requiredFacts?.length ?? 0}`
+  if (update.actionHistory) {
+    const latest = update.actionHistory.at(-1)
+    return latest ? `action=${latest.action.type}, hits=${latest.hitCount}, new=${latest.newEvidenceCount}` : "action observed"
+  }
+  if (update.searchDecision) return `search decision=${update.searchDecision}`
   if (update.memoryCards) return `memory hits=${update.memoryCards.length}`
   if (update.clues || update.expandedQueries) return `expanded queries=${update.expandedQueries?.length ?? update.clues?.length ?? 0}`
   if (update.queryEmbeddings) return `embedded queries=${update.queryEmbeddings.length}`
@@ -109,6 +115,9 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
 }
 
 function detailUpdate(update: QaAgentUpdate): string | undefined {
+  if (update.searchPlan) return formatSearchPlanDetail(update.searchPlan)
+  if (update.actionHistory) return formatActionObservationDetail(update.actionHistory)
+  if (update.searchDecision) return `decision=${update.searchDecision}`
   if (update.memoryCards) {
     return update.memoryCards.map((hit) => `${hit.metadata.fileName} ${hit.metadata.memoryId ?? ""} score=${hit.score.toFixed(4)}`).join("\n")
   }
@@ -147,6 +156,59 @@ function formatAnswerabilityDetail(answerability: NonNullable<QaAgentUpdate["ans
   }
 
   return lines.join("\n")
+}
+
+function formatSearchPlanDetail(searchPlan: NonNullable<QaAgentUpdate["searchPlan"]>): string {
+  const stopCriteria = {
+    maxIterations: 3,
+    minTopScore: 0.2,
+    minEvidenceCount: 2,
+    maxNoNewEvidenceStreak: 2,
+    ...searchPlan.stopCriteria
+  }
+  const requiredFacts = searchPlan.requiredFacts ?? []
+  const actions = searchPlan.actions ?? []
+  const lines = [
+    `complexity=${searchPlan.complexity}`,
+    `intent=${searchPlan.intent}`,
+    `stop=maxIterations:${stopCriteria.maxIterations}, minTopScore:${stopCriteria.minTopScore}, minEvidenceCount:${stopCriteria.minEvidenceCount}, maxNoNewEvidenceStreak:${stopCriteria.maxNoNewEvidenceStreak}`,
+    "",
+    "requiredFacts:"
+  ]
+
+  if (requiredFacts.length === 0) {
+    lines.push("なし")
+  } else {
+    for (const fact of requiredFacts) {
+      lines.push(`- ${fact.id} priority=${fact.priority} status=${fact.status}: ${fact.description}`)
+    }
+  }
+
+  lines.push("", "actions:")
+  if (actions.length === 0) {
+    lines.push("なし")
+  } else {
+    for (const action of actions) {
+      lines.push(`- ${formatSearchAction(action)}`)
+    }
+  }
+
+  return lines.join("\n")
+}
+
+function formatActionObservationDetail(actionHistory: NonNullable<QaAgentUpdate["actionHistory"]>): string {
+  const latest = actionHistory.at(-1)
+  if (!latest) return "なし"
+  const topScore = latest.topScore === undefined ? "" : ` topScore=${latest.topScore.toFixed(4)}`
+  return [`action=${formatSearchAction(latest.action)}`, `hitCount=${latest.hitCount}`, `newEvidenceCount=${latest.newEvidenceCount}${topScore}`, latest.summary].join("\n")
+}
+
+function formatSearchAction(action: SearchAction): string {
+  if (action.type === "evidence_search") return `evidence_search query="${action.query}" topK=${action.topK}`
+  if (action.type === "query_rewrite") return `query_rewrite strategy=${action.strategy} input="${action.input}"`
+  if (action.type === "expand_context") return `expand_context chunkKey=${action.chunkKey} window=${action.window}`
+  if (action.type === "rerank") return `rerank objective="${action.objective}"`
+  return `finalize_refusal reason="${action.reason}"`
 }
 
 function inferHitCount(update: QaAgentUpdate): number | undefined {
