@@ -116,6 +116,45 @@ test("benchmark query endpoint requires authentication when auth is enabled", as
   }
 })
 
+test("benchmark query endpoint remains available for local benchmark runs when auth is disabled", async () => {
+  const port = 20000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const res = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: "local-benchmark", question: "資料にない制度の詳細は？", includeDebug: false })
+    })
+
+    assert.equal(res.status, 200)
+    const body = (await res.json()) as Record<string, unknown>
+    assert.equal(body.id, "local-benchmark")
+    assert.equal(typeof body.answer, "string")
+    assert.equal(typeof body.isAnswerable, "boolean")
+    assert.equal(Array.isArray(body.citations), true)
+    assert.equal("debug" in body, false)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
 function responseSchema(doc: OpenApiDoc, route: string, method: string, status: number): unknown {
   const schema = doc.paths[route]?.[method]?.responses?.[String(status)]?.content?.["application/json"]?.schema
   assert.ok(schema, `response schema missing for ${method.toUpperCase()} ${route} ${status}`)
