@@ -28,7 +28,8 @@ const coverageByRequirement: Record<string, string[]> = {
   "NFR-008": ["package scripts", "verification command"],
   "NFR-009": ["docs/REQUIREMENTS.md", "docs/OPERATIONS.md"],
   "NFR-011": ["access-control-policy.test.ts", "api-contract.test.ts"],
-  "NFR-012": ["hybrid-search.test.ts", "api-contract.test.ts"]
+  "NFR-012": ["hybrid-search.test.ts", "api-contract.test.ts"],
+  "NFR-013": ["alias-store.test.ts", "api-contract.test.ts"]
 }
 
 test("covered requirements map to existing product requirement documents", async () => {
