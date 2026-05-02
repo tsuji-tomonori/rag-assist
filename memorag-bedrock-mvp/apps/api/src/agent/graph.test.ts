@@ -42,6 +42,7 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
       "generate_clues",
       "plan_search",
       "execute_search_action",
+      "retrieval_evaluator",
       "evaluate_search_progress",
       "rerank_chunks",
       "answerability_gate",
@@ -61,6 +62,9 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
   const sufficientContextStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
   assert.match(sufficientContextStep?.detail ?? "", /label=ANSWERABLE/)
   assert.match(sufficientContextStep?.detail ?? "", /supportingChunkIds:/)
+  const retrievalStep = result.debug?.steps.find((step) => step.label === "retrieval_evaluator")
+  assert.match(retrievalStep?.detail ?? "", /retrievalQuality=sufficient/)
+  assert.match(retrievalStep?.detail ?? "", /nextAction=rerank/)
   const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
   assert.match(supportStep?.detail ?? "", /supported=true/)
   assert.deepEqual(supportStep?.output?.answerSupport && typeof supportStep.output.answerSupport === "object" ? (supportStep.output.answerSupport as Record<string, unknown>).unsupportedSentences : undefined, [])
@@ -90,6 +94,7 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "generate_clues",
       "plan_search",
       "execute_search_action",
+      "retrieval_evaluator",
       "evaluate_search_progress",
       "rerank_chunks",
       "answerability_gate",
@@ -120,6 +125,7 @@ test("fixed workflow branches on evaluate_search_progress decisions", async () =
   const labels = result.debug?.steps.map((step) => step.label) ?? []
   assert.equal(labels.filter((label) => label === "plan_search").length, 2)
   assert.equal(labels.filter((label) => label === "execute_search_action").length, 2)
+  assert.equal(labels.filter((label) => label === "retrieval_evaluator").length, 2)
   assert.equal(labels.filter((label) => label === "evaluate_search_progress").length, 2)
   assert.ok(labels.indexOf("evaluate_search_progress") < labels.indexOf("rerank_chunks"))
   assert.equal(labels.at(-1), "finalize_refusal")
@@ -298,6 +304,7 @@ test("fixed workflow search cycle loops until maxIterations when retrieval score
   const labels = result.debug?.steps.map((step) => step.label) ?? []
   assert.equal(labels.filter((label) => label === "plan_search").length, 2)
   assert.equal(labels.filter((label) => label === "execute_search_action").length, 2)
+  assert.equal(labels.filter((label) => label === "retrieval_evaluator").length, 2)
   assert.equal(labels.filter((label) => label === "evaluate_search_progress").length, 2)
   assert.equal(labels.includes("rerank_chunks"), true)
   assert.equal(labels.at(-1), "finalize_refusal")
@@ -322,6 +329,7 @@ test("fixed workflow search cycle stops after two consecutive no-new-evidence it
 
   const labels = result.debug?.steps.map((step) => step.label) ?? []
   assert.equal(labels.filter((label) => label === "evaluate_search_progress").length, 2)
+  assert.equal(labels.filter((label) => label === "retrieval_evaluator").length, 2)
   assert.equal(labels.includes("rerank_chunks"), true)
   assert.equal(labels.at(-1), "finalize_refusal")
 })
@@ -392,6 +400,18 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       }
     },
     actionHistory: [],
+    retrievalEvaluation: {
+      retrievalQuality: "irrelevant",
+      missingFactIds: [],
+      conflictingFactIds: [],
+      supportedFactIds: [],
+      nextAction: {
+        type: "evidence_search",
+        query: "",
+        topK: 3
+      },
+      reason: ""
+    },
     maxIterations: 3,
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,

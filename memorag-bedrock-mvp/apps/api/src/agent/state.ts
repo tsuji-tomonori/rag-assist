@@ -168,6 +168,19 @@ export const ActionObservationSchema = z.object({
   summary: z.string()
 })
 
+export const RetrievalEvaluationSchema = z.object({
+  retrievalQuality: z.enum(["sufficient", "partial", "irrelevant", "conflicting"]).default("irrelevant"),
+  missingFactIds: z.array(z.string()).default(() => []),
+  conflictingFactIds: z.array(z.string()).default(() => []),
+  supportedFactIds: z.array(z.string()).default(() => []),
+  nextAction: SearchActionSchema.default({
+    type: "evidence_search",
+    query: "",
+    topK: 6
+  }),
+  reason: z.string().default("")
+})
+
 export const AgentStateSchema = z.object({
   runId: z.string(),
   question: z.string(),
@@ -209,6 +222,18 @@ export const AgentStateSchema = z.object({
     }
   }),
   actionHistory: z.array(ActionObservationSchema).default(() => []),
+  retrievalEvaluation: RetrievalEvaluationSchema.default({
+    retrievalQuality: "irrelevant",
+    missingFactIds: [],
+    conflictingFactIds: [],
+    supportedFactIds: [],
+    nextAction: {
+      type: "evidence_search",
+      query: "",
+      topK: 6
+    },
+    reason: ""
+  }),
 
   maxIterations: z.number().int().min(1).max(8).default(3),
   newEvidenceCount: z.number().int().min(0).default(0),
@@ -259,5 +284,6 @@ export type AnswerSupportJudgement = z.infer<typeof AnswerSupportJudgementSchema
 export type RequiredFact = z.infer<typeof RequiredFactSchema>
 export type SearchAction = z.infer<typeof SearchActionSchema>
 export type ActionObservation = z.infer<typeof ActionObservationSchema>
+export type RetrievalEvaluation = z.infer<typeof RetrievalEvaluationSchema>
 export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
 export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>
