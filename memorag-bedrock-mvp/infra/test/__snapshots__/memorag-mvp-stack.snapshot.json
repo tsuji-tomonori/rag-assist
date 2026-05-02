@@ -2508,6 +2508,38 @@
         "Name": "CognitoJwtAuthorizer"
       }
     },
+    "BenchmarkProjectKeyB840011B": {
+      "Type": "AWS::KMS::Key",
+      "Properties": {
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":iam::111111111111:root"
+                    ]
+                  ]
+                }
+              },
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
     "BenchmarkProjectLogGroup395F719E": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -2620,6 +2652,21 @@
             },
             {
               "Action": [
+                "kms:Decrypt",
+                "kms:Encrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "BenchmarkProjectKeyB840011B",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
                 "s3:GetObject*",
                 "s3:GetBucket*",
                 "s3:List*",
@@ -2705,7 +2752,12 @@
         "Cache": {
           "Type": "NO_CACHE"
         },
-        "EncryptionKey": "alias/aws/s3",
+        "EncryptionKey": {
+          "Fn::GetAtt": [
+            "BenchmarkProjectKeyB840011B",
+            "Arn"
+          ]
+        },
         "Environment": {
           "ComputeType": "BUILD_GENERAL1_SMALL",
           "EnvironmentVariables": [
@@ -2765,6 +2817,14 @@
         "TimeoutInMinutes": 120
       }
     },
+    "BenchmarkStateMachineLogGroup6D80BBB2": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
     "BenchmarkStateMachineRole9EC7E298": {
       "Type": "AWS::IAM::Role",
       "Properties": {
@@ -2787,6 +2847,20 @@
       "Properties": {
         "PolicyDocument": {
           "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            },
             {
               "Action": [
                 "dynamodb:BatchWriteItem",
@@ -2865,6 +2939,21 @@
               "\",\"Key\":{\"runId\":{\"S.$\":\"$.runId\"}},\"UpdateExpression\":\"SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, #error = :error\",\"ExpressionAttributeNames\":{\"#status\":\"status\",\"#error\":\"error\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"failed\"},\":completedAt\":{\"S.$\":\"$$.State.EnteredTime\"},\":error\":{\"S.$\":\"States.JsonToString($.errorInfo)\"}}}}},\"TimeoutSeconds\":10800}"
             ]
           ]
+        },
+        "LoggingConfiguration": {
+          "Destinations": [
+            {
+              "CloudWatchLogsLogGroup": {
+                "LogGroupArn": {
+                  "Fn::GetAtt": [
+                    "BenchmarkStateMachineLogGroup6D80BBB2",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "Level": "ALL"
         },
         "RoleArn": {
           "Fn::GetAtt": [

@@ -10,6 +10,7 @@ import * as codebuild from "aws-cdk-lib/aws-codebuild"
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins"
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb"
 import * as iam from "aws-cdk-lib/aws-iam"
+import * as kms from "aws-cdk-lib/aws-kms"
 import * as lambda from "aws-cdk-lib/aws-lambda"
 import * as logs from "aws-cdk-lib/aws-logs"
 import * as cognito from "aws-cdk-lib/aws-cognito"
@@ -260,6 +261,18 @@ export class MemoRagMvpStack extends Stack {
             excludeCharacters: ",`$\\\"' \n\r\t"
           }
         })
+    if (!benchmarkRunnerAuthSecretIdOverride) {
+      NagSuppressions.addResourceSuppressions(
+        benchmarkRunnerAuthSecret,
+        [
+          {
+            id: "AwsSolutions-SMG4",
+            reason: "The generated benchmark runner service-user secret is repaired by the CodeBuild runner and is not tied to a managed database rotation target; automatic rotation is deferred for MVP cost and operational simplicity."
+          }
+        ],
+        true
+      )
+    }
     const benchmarkRunnerAuthSecretId = benchmarkRunnerAuthSecretIdOverride || benchmarkRunnerAuthSecret.secretArn
 
     const apiLogGroup = new logs.LogGroup(this, "ApiFunctionLogGroup", {
@@ -408,12 +421,17 @@ export class MemoRagMvpStack extends Stack {
       cfnRoute.addDependency(jwtAuthorizer)
     }
 
+    const benchmarkProjectKey = new kms.Key(this, "BenchmarkProjectKey", {
+      enableKeyRotation: true,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
     const benchmarkProject = new codebuild.Project(this, "BenchmarkProject", {
       source: codebuild.Source.gitHub({
         owner: benchmarkSourceOwner,
         repo: benchmarkSourceRepo,
         branchOrRef: benchmarkSourceBranch
       }),
+      encryptionKey: benchmarkProjectKey,
       environment: {
         buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
         computeType: codebuild.ComputeType.SMALL,
@@ -561,10 +579,28 @@ export class MemoRagMvpStack extends Stack {
     })
     startBenchmarkBuild.addCatch(markFailed, { resultPath: "$.errorInfo" })
 
+    const benchmarkStateMachineLogGroup = new logs.LogGroup(this, "BenchmarkStateMachineLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
     const benchmarkStateMachine = new sfn.StateMachine(this, "BenchmarkStateMachine", {
       definitionBody: sfn.DefinitionBody.fromChainable(markRunning.next(startBenchmarkBuild).next(markSucceeded)),
+      logs: {
+        destination: benchmarkStateMachineLogGroup,
+        level: sfn.LogLevel.ALL
+      },
       timeout: Duration.hours(3)
     })
+    NagSuppressions.addResourceSuppressions(
+      benchmarkStateMachine,
+      [
+        {
+          id: "AwsSolutions-SF2",
+          reason: "X-Ray tracing is intentionally disabled for the MVP benchmark runner to avoid trace-based costs; CloudWatch ALL event logging is retained for audit and troubleshooting."
+        }
+      ],
+      true
+    )
     benchmarkRunsTable.grantWriteData(benchmarkStateMachine)
     benchmarkStateMachine.addToRolePolicy(new iam.PolicyStatement({
       actions: ["codebuild:StartBuild", "codebuild:BatchGetBuilds", "codebuild:StopBuild"],

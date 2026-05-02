@@ -114,6 +114,6 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 
 `task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` と fact slot 系の期待値を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、fact slot coverage、p95 latencyを確認できる。
 
-管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/` と `datasets/search/`、成果物は `runs/<runId>/` に保存する。production API を叩く runner の bearer token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から CodeBuild が自動取得する。管理画面の実行者が token を入力する必要はない。
+管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/` と `datasets/search/`、成果物は `runs/<runId>/` に保存する。CodeBuild の生成物は customer managed KMS key で暗号化し、Step Functions は CloudWatch Logs に `ALL` event を出力する。X-Ray tracing は trace 数に応じた追加コストを避けるため MVP では無効にし、必要になった時点で有効化を再検討する。production API を叩く runner の bearer token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から CodeBuild が自動取得する。管理画面の実行者が token を入力する必要はない。
 
 CodeBuild は起動時に `infra/scripts/resolve-benchmark-auth-token.mjs` を実行し、secret の `username` / `password` から service user を作成または修復し、`BENCHMARK_RUNNER` group に所属させたうえで Cognito `USER_PASSWORD_AUTH` の id token を取得する。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に secret ID または ARN を指定する。secret に `idToken` または `token` がある場合は、その値をそのまま bearer token として使う。
