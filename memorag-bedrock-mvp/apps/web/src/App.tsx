@@ -1155,9 +1155,9 @@ function DebugPanel({
           <span>{pending ? "実行中" : `${steps.length} ステップ`}</span>
         </div>
         <div className="debug-head-actions">
-          <button type="button" onClick={() => void downloadDebugTrace(trace)} disabled={!trace || pending} title="Markdownでダウンロード">
+          <button type="button" onClick={() => void downloadDebugTrace(trace)} disabled={!trace || pending} title="JSONでダウンロード">
             <Icon name="download" />
-            <span>MD DL</span>
+            <span>JSON DL</span>
           </button>
           <button type="button" onClick={onToggleAll}>{allExpanded ? "すべて閉じる" : "すべて展開"}</button>
           <button type="button" title="拡大表示">
@@ -1257,7 +1257,7 @@ async function downloadDebugTrace(trace?: DebugTrace) {
   const signed = await createDebugDownload(trace.runId)
   const link = document.createElement("a")
   link.href = signed.url
-  link.download = `debug-trace-${sanitizeFileName(trace.runId)}.md`
+  link.download = `debug-trace-${sanitizeFileName(trace.runId)}.json`
   link.rel = "noopener"
   document.body.appendChild(link)
   link.click()

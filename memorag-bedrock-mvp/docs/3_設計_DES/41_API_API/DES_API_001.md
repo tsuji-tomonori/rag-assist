@@ -24,6 +24,7 @@
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-010`, `NFR-005` |
 | `GET /debug-runs` | debug trace 一覧 | `FR-010`, `NFR-010` |
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
+| `POST /debug-runs/{runId}/download` | debug trace JSON ダウンロード URL 生成 | `FR-010`, `NFR-010` |
 | `POST /benchmark/query` | 評価実行 | `FR-012`, `FR-019`, `NFR-010` |
 
 注: 料金算出 API は現行 MVP では未提供とする。料金算出は `DES_DATA_001` の `UsageMeter`、`PricingCatalogEntry`、`CostEstimate` を使う将来拡張として扱う。
@@ -164,3 +165,4 @@
 - `2_アーキテクチャ_ARC/01_コンテキスト_CONTEXT/ARC_CONTEXT_001.md`
 - `3_設計_DES/11_詳細設計_DLD/DES_DLD_001.md`
 - `3_設計_DES/31_データ_DATA/DES_DATA_001.md`
+- `3_設計_DES/41_API_API/DES_API_002.md`

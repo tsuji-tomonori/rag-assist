@@ -12,6 +12,7 @@ const documents = [
 const longFinalizeResponse = `ソフトウェア要求は製品要求とプロジェクト要求に分類されます。${"分類根拠。".repeat(220)}END_OF_FINALIZE_RESPONSE`
 
 const debugTrace = {
+  schemaVersion: 1 as const,
   runId: "run/with:unsafe*chars",
   question: "ソフトウェア要求の分類を洗い出して",
   modelId: "amazon.nova-lite-v1:0",
@@ -145,7 +146,7 @@ function mockAppFetch() {
     if (requestUrl.endsWith("/documents") && init?.method === "POST") {
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
     }
-    if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+    if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
     if (requestUrl.endsWith("/chat") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}")) as { includeDebug?: boolean }
       return Promise.resolve(
@@ -339,7 +340,7 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("資料を取り込みました。知りたいことを入力してください。")).toBeInTheDocument()
   })
 
-  it("renders debug trace details, downloads markdown, and resets the conversation", async () => {
+  it("renders debug trace details, downloads JSON, and resets the conversation", async () => {
     const fetchMock = mockAppFetch()
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
     await renderAuthenticatedApp()
@@ -358,7 +359,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByText("answerability_gate"))
     expect(await screen.findByText("low_similarity_score")).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTitle("Markdownでダウンロード"))
+    await userEvent.click(screen.getByTitle("JSONでダウンロード"))
     expect(click).toHaveBeenCalled()
     expect(
       fetchMock.mock.calls.some(
@@ -378,7 +379,7 @@ describe("App chat and upload flow", () => {
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [debugTrace] }))
-      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
       if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return new Promise((resolve) => {
           resolveChat = resolve
@@ -530,7 +531,7 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/questions") && isGet(init)) return Promise.resolve(response({ questions: storedQuestions }))
-      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.md", expiresInSeconds: 900, objectKey: "downloads/debug.md" }))
+      if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
       if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
       }
