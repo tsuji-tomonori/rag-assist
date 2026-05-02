@@ -60,6 +60,8 @@
 
 ```text
 aliases/
+  tenantId=tenant-a/source=notion/docType=policy/definitions/{aliasId}.json
+  audit-log/{timestamp}-{eventId}.json
   tenantId=tenant-a/source=notion/docType=policy/v0001/aliases.json
   tenantId=tenant-a/source=notion/docType=policy/v0002/aliases.json
 
@@ -69,6 +71,8 @@ indexes/
 index-manifests/
   tenantId=tenant-a/source=notion/docType=policy/latest.json
 ```
+
+`definitions/{aliasId}.json` は管理 API が保存する個別 alias 定義である。`v0001/aliases.json` 以降は batch が active alias を compile して publish する versioned artifact として扱う。
 
 `latest.json` は alias だけの latest ではなく、corpus、alias、index の対応を保持する。
 
@@ -108,6 +112,7 @@ index-manifests/
   "source": "manual",
   "reason": "Employees search PTO, documents use vacation.",
   "createdBy": "user-123",
+  "updatedBy": "user-123",
   "reviewedBy": "user-456",
   "version": "alias-20260502-003",
   "createdAt": "2026-05-02T00:00:00.000Z",
@@ -144,15 +149,35 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 
 管理 API は alias 定義と監査を管理する。検索 index の直接更新は batch の責務にする。
 
-## Phase 1 実装
+## Phase 1 実装済み
 
-今回の Phase 1 では管理 API と S3 artifact は作らず、現行 metadata alias の安全化を先に行う。
+Phase 1 では管理 API と S3 artifact は作らず、現行 metadata alias の安全化を先に行った。
 
 - API metadata schema を recursive JSON にし、`searchAliases` / `aliases` の map を validation で拒否しない。
 - `POST /search` の `results[].metadata` は allowlist で `tenantId`、`source`、`docType`、`department` だけを返す。
 - `diagnostics.indexVersion` は opaque hash にし、document ID と alias 本文を含めない。
 - `diagnostics.aliasVersion` は opaque hash または `none` にし、alias 本文を含めない。
 - alias expansion は現行どおり visible manifest 由来 alias だけを merge し、ACL/filter 済み範囲外の alias を使わない。
+
+## Phase 2/3 初期実装
+
+今回の初期実装では、管理 API と object store backed alias 定義を追加した。検索 index への publish、`index-manifests/latest.json` 更新、batch benchmark は未実装である。
+
+- `POST /admin/aliases` は draft alias を `aliases/tenantId=.../source=.../docType=.../definitions/{aliasId}.json` に保存する。
+- `PATCH /admin/aliases/{aliasId}` は draft のみを更新できる。
+- `POST /admin/aliases/{aliasId}/review` は draft を `active` または `rejected` に遷移する。
+- `POST /admin/aliases/{aliasId}/disable` は active のみを `disabled` に遷移する。
+- `GET /admin/aliases/audit-log` は create/update/review/disable の audit log を返す。
+- すべての管理 API は `rag:alias:*` permission を要求し、通常利用者の `CHAT_USER` には alias 管理権限を付与しない。
+- 管理 API は alias 定義を保存するだけで、search runtime の lexical index は直接更新しない。
+
+### 監査ログ保持場所
+
+alias audit log は document metadata、lexical index、index manifest と bucket 境界で分離し、監査ログ専用 S3 bucket の `aliases/audit-log/{timestamp}-{eventId}.json` に JSON record として保持する。local 開発では `LOCAL_DATA_DIR/alias-audit-log` を root とする `LocalObjectStore` 配下、本番構成では `ALIAS_AUDIT_LOG_BUCKET_NAME` の bucket を backing store とする `S3ObjectStore` 配下に保存する。
+
+監査ログには、`eventId`、`aliasId`、`action`、`actorUserId`、`actorEmail`、`at`、`beforeStatus`、`afterStatus`、`reason`、`aliasVersion`、`scope` を保持する。通常検索 response には返さず、`GET /admin/aliases/audit-log` で `rag:alias:read` を持つ管理者だけが参照する。
+
+専用 bucket は、Block Public Access、SSE-S3、TLS 強制、server access logging、versioning、S3 Object Lock Governance retention 365日、lifecycle expiration 400日を設定する。小さい JSON record が中心で、S3 Intelligent-Tiering の自動 tiering 対象になりにくいため、初期設定では storage class transition と customer managed KMS key を使わない。これにより bucket 分離と改ざん防止を優先しつつ、KMS request cost と lifecycle transition cost を増やさない。
 
 ## 評価指標
 
@@ -167,6 +192,6 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 
 ## 将来拡張
 
-- Phase 2: S3 scoped alias artifact と index manifest の version 対応を実装する。
-- Phase 3: alias 管理 API、permission、audit log を実装する。
+- Phase 2: active alias の compile、versioned alias artifact、index manifest の version 対応を実装する。
+- Phase 3: publish endpoint、scope filter 付き一覧、管理 UI、review 補助を実装する。
 - Phase 4: no-result query、low-confidence query、user reformulation から draft alias 候補を生成する。

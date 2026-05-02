@@ -27,6 +27,7 @@ export const config = {
   useLocalBenchmarkRunStore: boolEnv("USE_LOCAL_BENCHMARK_RUN_STORE", process.env.NODE_ENV !== "production"),
   localDataDir: process.env.LOCAL_DATA_DIR ?? ".local-data",
   docsBucketName: process.env.DOCS_BUCKET_NAME ?? "",
+  aliasAuditLogBucketName: process.env.ALIAS_AUDIT_LOG_BUCKET_NAME ?? "",
   questionTableName: process.env.QUESTION_TABLE_NAME ?? "memorag-human-questions",
   conversationHistoryTableName: process.env.CONVERSATION_HISTORY_TABLE_NAME ?? "memorag-conversation-history",
   benchmarkRunsTableName: process.env.BENCHMARK_RUNS_TABLE_NAME ?? "memorag-benchmark-runs",

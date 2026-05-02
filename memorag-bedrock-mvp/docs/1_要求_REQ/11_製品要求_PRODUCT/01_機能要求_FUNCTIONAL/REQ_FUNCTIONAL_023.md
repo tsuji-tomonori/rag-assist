@@ -16,7 +16,7 @@
 - AC-FR023-003: search runtime は request 中に alias 定義を生成または更新しないこと。
 - AC-FR023-004: index manifest は `aliasVersion` と `indexVersion` の対応を保持できること。
 - AC-FR023-005: alias の可視範囲は検索対象 document の tenant、source、docType、ACL scope を超えないこと。
-- AC-FR023-006: alias 追加、review、disable、publish は audit log に記録できること。
+- AC-FR023-006: alias 追加、review、disable、publish は `NFR-013` の audit log として記録できること。
 
 ## 要件の源泉・背景
 
@@ -40,7 +40,7 @@
 | 根拠 | 検索エンジン実務では synonym/alias が管理対象 resource として扱われる |
 | 源泉 | 2026-05-02 alias 管理見直し、公式検索サービス docs、RAG security 研究 |
 | 種類 | 機能要求 |
-| 依存関係 | ingestion、batch、lexical index、index manifest、RBAC、audit log |
+| 依存関係 | ingestion、batch、lexical index、index manifest、RBAC、`NFR-013` |
 | 衝突 | 即時 runtime 反映より batch 反映を優先するため反映 latency が発生する |
 | 受け入れ基準 | `AC-FR023-001` から `AC-FR023-006` |
 | 優先度 | A |
@@ -64,3 +64,4 @@
 
 - `3_設計_DES/11_詳細設計_DLD/DES_DLD_003.md`
 - `3_設計_DES/31_データ_DATA/DES_DATA_001.md`
+- `1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_013.md`

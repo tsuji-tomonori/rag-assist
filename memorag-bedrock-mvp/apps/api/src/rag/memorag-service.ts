@@ -10,6 +10,7 @@ import { DEBUG_TRACE_SCHEMA_VERSION, type BenchmarkMode, type BenchmarkRun, type
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
+import type { AliasAuditLogEntry, AliasDefinition, CreateAliasInput, DisableAliasInput, ReviewAliasInput, UpdateAliasInput } from "../adapters/alias-store.js"
 import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
 import { chunkText } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
@@ -232,6 +233,30 @@ export class MemoRagService {
 
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
     return searchRag(this.deps, input, user)
+  }
+
+  async createAlias(input: CreateAliasInput, user: AppUser): Promise<AliasDefinition> {
+    return this.deps.aliasStore.create(input, user)
+  }
+
+  async listAliases(): Promise<AliasDefinition[]> {
+    return this.deps.aliasStore.list()
+  }
+
+  async updateAlias(aliasId: string, input: UpdateAliasInput, user: AppUser): Promise<AliasDefinition> {
+    return this.deps.aliasStore.update(aliasId, input, user)
+  }
+
+  async reviewAlias(aliasId: string, input: ReviewAliasInput, user: AppUser): Promise<AliasDefinition> {
+    return this.deps.aliasStore.review(aliasId, input, user)
+  }
+
+  async disableAlias(aliasId: string, input: DisableAliasInput, user: AppUser): Promise<AliasDefinition> {
+    return this.deps.aliasStore.disable(aliasId, input, user)
+  }
+
+  async listAliasAuditLog(): Promise<AliasAuditLogEntry[]> {
+    return this.deps.aliasStore.auditLog()
   }
 
   async createQuestion(input: CreateQuestionInput): Promise<HumanQuestion> {
