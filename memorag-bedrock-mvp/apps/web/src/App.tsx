@@ -7,6 +7,7 @@ import {
   deleteConversationHistory,
   deleteDocument,
   fileToBase64,
+  getMe,
   listConversationHistory,
   listQuestions,
   listDebugRuns,
@@ -16,10 +17,12 @@ import {
   uploadDocument,
   type ChatResponse,
   type ConversationHistoryItem,
+  type CurrentUser,
   type DebugStep,
   type DebugTrace,
   type DocumentManifest,
-  type HumanQuestion
+  type HumanQuestion,
+  type Permission
 } from "./api.js"
 import { completeNewPasswordChallenge, getStoredAuthSession, signIn, signOut, type AuthSession } from "./authClient.js"
 import LoginPage from "./LoginPage.js"
@@ -57,16 +60,9 @@ type AppView = "chat" | "assignee" | "history"
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
-type ClientPermission = "answer:edit" | "chat:admin:read_all" | "access:policy:read"
-
-const clientRolePermissions: Record<string, ClientPermission[]> = {
-  ANSWER_EDITOR: ["answer:edit"],
-  ACCESS_ADMIN: ["access:policy:read"],
-  SYSTEM_ADMIN: ["answer:edit", "chat:admin:read_all", "access:policy:read"]
-}
-
 export default function App() {
   const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredAuthSession())
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [documents, setDocuments] = useState<DocumentManifest[]>([])
   const [debugRuns, setDebugRuns] = useState<DebugTrace[]>([])
   const [questions, setQuestions] = useState<HumanQuestion[]>([])
@@ -93,7 +89,18 @@ export default function App() {
   const [submitShortcut, setSubmitShortcut] = useState<"enter" | "ctrlEnter">("enter")
   const latestMessageRef = useRef<HTMLElement | null>(null)
 
-  const canAsk = useMemo(() => (question.trim().length > 0 || file !== null) && !loading, [question, file, loading])
+  const hasPermission = (permission: Permission) => currentUser?.permissions.includes(permission) ?? false
+  const canCreateChat = hasPermission("chat:create")
+  const canReadDocuments = hasPermission("rag:doc:read")
+  const canWriteDocuments = hasPermission("rag:doc:write:group")
+  const canDeleteDocuments = hasPermission("rag:doc:delete:group")
+  const canAnswerQuestions = hasPermission("answer:edit")
+  const canReadDebugRuns = hasPermission("chat:admin:read_all")
+  const canReadHistory = hasPermission("chat:read:own")
+  const canOpenAdminSettings = hasPermission("access:policy:read")
+  const canManageDocuments = canWriteDocuments || canDeleteDocuments
+  const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns
+  const canAsk = useMemo(() => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && !loading && canCreateChat, [question, file, loading, canCreateChat, canWriteDocuments])
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
   const latestTrace = latestAssistant?.result?.debug
   const isProcessing = pendingActivity !== null
@@ -110,22 +117,46 @@ export default function App() {
   const selectedRunValue = pendingDebugQuestion ? "__processing__" : selectedTrace?.runId ?? ""
   const visibleMessages = messages
   const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
-  const canAnswerQuestions = authSession ? hasClientPermission(authSession, "answer:edit") : false
-  const canReadDebugRuns = authSession ? hasClientPermission(authSession, "chat:admin:read_all") : false
-  const canOpenAdminSettings = authSession ? hasClientPermission(authSession, "access:policy:read") : false
+  useEffect(() => {
+    if (!authSession) {
+      setCurrentUser(null)
+      return
+    }
+    let active = true
+    setCurrentUser(null)
+    getMe()
+      .then((user) => {
+        if (active) setCurrentUser(user)
+      })
+      .catch((err) => {
+        console.warn("Failed to load current user", err)
+        if (active) {
+          setCurrentUser(null)
+          setError(err instanceof Error ? err.message : String(err))
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [authSession])
 
   useEffect(() => {
-    if (!authSession) return
-    refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
+    if (!authSession || !currentUser) return
+    if (canReadDocuments) refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
     if (canReadDebugRuns) refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
     if (canAnswerQuestions) refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
-    refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
+    if (canReadHistory) refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authSession, canAnswerQuestions, canReadDebugRuns])
+  }, [authSession, currentUser])
 
   useEffect(() => {
     if (activeView === "assignee" && !canAnswerQuestions) setActiveView("chat")
   }, [activeView, canAnswerQuestions])
+
+  useEffect(() => {
+    if (!canReadDebugRuns && debugMode) setDebugMode(false)
+    if (!canWriteDocuments && file) setFile(null)
+  }, [canReadDebugRuns, canWriteDocuments, debugMode, file])
 
   useEffect(() => {
     if (messages.length === 0) return
@@ -175,6 +206,7 @@ export default function App() {
   function onSignOut() {
     signOut()
     setAuthSession(null)
+    setCurrentUser(null)
   }
 
   async function refreshDebugRuns() {
@@ -210,14 +242,14 @@ export default function App() {
     setMessages((prev) => [...prev, { role: "user", text: userQuestion, createdAt: new Date().toISOString() }])
     setLoading(true)
     setPendingActivity(hasAttachment && typedQuestion ? "資料を取り込み、回答を生成中" : typedQuestion ? "回答を生成中" : "資料を取り込み中")
-    setPendingDebugQuestion(userQuestion)
+    setPendingDebugQuestion(debugMode && canReadDebugRuns ? userQuestion : null)
     setSelectedRunId("")
     setExpandedStepId(null)
     setAllExpanded(false)
     setError(null)
 
     try {
-      if (file) {
+      if (file && canWriteDocuments) {
         await uploadDocument({
           fileName: file.name,
           contentBase64: await fileToBase64(file),
@@ -237,7 +269,7 @@ export default function App() {
           clueModelId: modelId,
           topK: 6,
           minScore,
-          includeDebug: debugMode
+          includeDebug: debugMode && canReadDebugRuns
         })
         setMessages((prev) => [...prev, { role: "assistant", text: result.answer, sourceQuestion: userQuestion, result, createdAt: new Date().toISOString() }])
         if (result.debug) {
@@ -373,11 +405,13 @@ export default function App() {
             <Icon name="star" />
             <span>お気に入り</span>
           </button>
-          <button className="rail-item" type="button" title="ドキュメント">
-            <Icon name="document" />
-            <span>ドキュメント</span>
-          </button>
-          {canOpenAdminSettings && (
+          {canManageDocuments && (
+            <button className="rail-item" type="button" title="ドキュメント">
+              <Icon name="document" />
+              <span>ドキュメント</span>
+            </button>
+          )}
+          {canSeeAdminSettings && (
             <button className="rail-item" type="button" title="管理者設定">
               <Icon name="settings" />
               <span>管理者設定</span>
@@ -402,52 +436,60 @@ export default function App() {
               <option value="anthropic.claude-3-haiku-20240307-v1:0">Claude 3 Haiku</option>
             </select>
           </label>
-          <div className="top-control document-control">
-            <label htmlFor="document-select">ドキュメント</label>
-            <div className="document-select-row">
-              <select id="document-select" value={selectedDocumentId} onChange={(event) => setSelectedDocumentId(event.target.value)}>
-                <option value="all">すべての資料</option>
-                {documents.map((document) => (
-                  <option value={document.documentId} key={document.documentId}>
-                    {document.fileName}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="delete-document-button"
-                type="button"
-                title={selectedDocument ? `${selectedDocument.fileName}を削除` : "削除する資料を選択"}
-                disabled={!selectedDocument || loading}
-                onClick={() => onDelete(selectedDocument?.documentId)}
-              >
-                <Icon name="trash" />
-              </button>
+          {canReadDocuments && (
+            <div className="top-control document-control">
+              <label htmlFor="document-select">ドキュメント</label>
+              <div className="document-select-row">
+                <select id="document-select" value={selectedDocumentId} onChange={(event) => setSelectedDocumentId(event.target.value)}>
+                  <option value="all">すべての資料</option>
+                  {documents.map((document) => (
+                    <option value={document.documentId} key={document.documentId}>
+                      {document.fileName}
+                    </option>
+                  ))}
+                </select>
+                {canDeleteDocuments && (
+                  <button
+                    className="delete-document-button"
+                    type="button"
+                    title={selectedDocument ? `${selectedDocument.fileName}を削除` : "削除する資料を選択"}
+                    disabled={!selectedDocument || loading}
+                    onClick={() => onDelete(selectedDocument?.documentId)}
+                  >
+                    <Icon name="trash" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-          <label className="top-control run-control">
-            <span>実行ID</span>
-            <select
-              value={selectedRunValue}
-              onChange={(event) => setSelectedRunId(event.target.value)}
-              disabled={pendingDebugQuestion !== null || (debugRuns.length === 0 && !latestTrace)}
-            >
-              {pendingDebugQuestion ? <option value="__processing__">処理中</option> : <option value="">未実行</option>}
-              {(latestTrace && !debugRuns.some((run) => run.runId === latestTrace.runId) ? [latestTrace, ...debugRuns] : debugRuns).map((run) => (
-                <option value={run.runId} key={run.runId}>
-                  {run.runId}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="latency-block">
-            <span>総レイテンシ</span>
-            <strong>{totalLatency}</strong>
-          </div>
-          <label className="debug-toggle">
-            <span>デバッグモード</span>
-            <input type="checkbox" checked={debugMode} onChange={(event) => setDebugMode(event.target.checked)} />
-            <i aria-hidden="true">{debugMode ? "ON" : "OFF"}</i>
-          </label>
+          )}
+          {canReadDebugRuns && (
+            <>
+              <label className="top-control run-control">
+                <span>実行ID</span>
+                <select
+                  value={selectedRunValue}
+                  onChange={(event) => setSelectedRunId(event.target.value)}
+                  disabled={pendingDebugQuestion !== null || (debugRuns.length === 0 && !latestTrace)}
+                >
+                  {pendingDebugQuestion ? <option value="__processing__">処理中</option> : <option value="">未実行</option>}
+                  {(latestTrace && !debugRuns.some((run) => run.runId === latestTrace.runId) ? [latestTrace, ...debugRuns] : debugRuns).map((run) => (
+                    <option value={run.runId} key={run.runId}>
+                      {run.runId}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="latency-block">
+                <span>総レイテンシ</span>
+                <strong>{totalLatency}</strong>
+              </div>
+              <label className="debug-toggle">
+                <span>デバッグモード</span>
+                <input type="checkbox" checked={debugMode} onChange={(event) => setDebugMode(event.target.checked)} />
+                <i aria-hidden="true">{debugMode ? "ON" : "OFF"}</i>
+              </label>
+            </>
+          )}
           <button className="new-chat-button" type="button" onClick={newConversation}>
             <Icon name="plus" />
             <span>新しい会話</span>
@@ -544,10 +586,12 @@ export default function App() {
                   </select>
                 </div>
                 {file && <span className="file-chip">{file.name}</span>}
-                <label className="icon-button attach-button" title="資料を添付">
-                  <Icon name="paperclip" />
-                  <input key={conversationKey} type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
-                </label>
+                {canWriteDocuments && (
+                  <label className="icon-button attach-button" title="資料を添付">
+                    <Icon name="paperclip" />
+                    <input key={conversationKey} type="file" onChange={(event) => setFile(event.target.files?.[0] ?? null)} />
+                  </label>
+                )}
                 <button className="send-button" disabled={!canAsk} type="submit" title="送信">
                   <Icon name="send" />
                 </button>
@@ -556,7 +600,7 @@ export default function App() {
             <p className="composer-note">本サービスの回答は社内ドキュメントをもとに生成されます。内容の正確性をご確認のうえご利用ください。</p>
           </section>
 
-          {debugMode && (
+          {debugMode && canReadDebugRuns && (
             <DebugPanel
               trace={selectedTrace}
               pending={pendingDebugQuestion !== null}
@@ -602,10 +646,6 @@ export default function App() {
       </section>
     </main>
   )
-}
-
-function hasClientPermission(session: AuthSession, permission: ClientPermission): boolean {
-  return (session.cognitoGroups ?? []).some((role) => clientRolePermissions[role]?.includes(permission))
 }
 
 function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[]): ConversationHistoryItem {

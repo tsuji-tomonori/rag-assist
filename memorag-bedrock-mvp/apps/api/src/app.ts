@@ -3,7 +3,7 @@ import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
 import { createDependencies } from "./dependencies.js"
 import { authMiddleware } from "./auth.js"
-import { requirePermission } from "./authorization.js"
+import { getPermissionsForGroups, requirePermission } from "./authorization.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import {
   ChatRequestSchema,
@@ -14,6 +14,7 @@ import {
   ConversationHistoryItemSchema,
   ConversationHistoryListResponseSchema,
   CreateQuestionRequestSchema,
+  CurrentUserResponseSchema,
   DeleteDocumentResponseSchema,
   DebugTraceListResponseSchema,
   DebugTraceSchema,
@@ -41,7 +42,7 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query"]) {
+for (const path of ["/me", "/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query"]) {
   app.use(path, authMiddleware)
 }
 
@@ -58,6 +59,31 @@ app.openapi(
     }
   }),
   (c) => c.json({ ok: true, service: "memorag-bedrock-mvp", timestamp: new Date().toISOString() }, 200)
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/me",
+    responses: {
+      200: {
+        description: "Current authenticated user and effective permissions",
+        content: { "application/json": { schema: CurrentUserResponseSchema } }
+      },
+      401: { description: "Authentication required", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  (c) => {
+    const user = c.get("user")
+    return c.json({
+      user: {
+        userId: user.userId,
+        email: user.email,
+        groups: user.cognitoGroups,
+        permissions: getPermissionsForGroups(user.cognitoGroups)
+      }
+    }, 200)
+  }
 )
 
 app.openapi(

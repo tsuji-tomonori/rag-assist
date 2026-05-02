@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { requirePermission } from "./authorization.js"
+import { getPermissionsForGroups, requirePermission } from "./authorization.js"
 
 test("SYSTEM_ADMIN は任意の権限チェックを通過する", () => {
   const user = { userId: "u1", cognitoGroups: ["SYSTEM_ADMIN"] }
@@ -32,4 +32,12 @@ test("CHAT_USER は問い合わせ管理とdebug管理権限を持たない", ()
   assert.throws(() => requirePermission(user, "answer:edit"))
   assert.throws(() => requirePermission(user, "answer:publish"))
   assert.throws(() => requirePermission(user, "chat:admin:read_all"))
+})
+
+test("role 群から重複なしの有効 permission を返す", () => {
+  const permissions = getPermissionsForGroups(["CHAT_USER", "RAG_GROUP_MANAGER", "UNKNOWN_ROLE"])
+  assert.equal(permissions.filter((permission) => permission === "rag:doc:read").length, 1)
+  assert.ok(permissions.includes("chat:create"))
+  assert.ok(permissions.includes("rag:doc:write:group"))
+  assert.equal(permissions.includes("chat:admin:read_all"), false)
 })

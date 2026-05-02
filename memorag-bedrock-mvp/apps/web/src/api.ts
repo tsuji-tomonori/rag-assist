@@ -154,6 +154,46 @@ export type DocumentManifest = {
   createdAt: string
 }
 
+export type Permission =
+  | "chat:create"
+  | "chat:read:own"
+  | "chat:read:shared"
+  | "chat:share:own"
+  | "chat:delete:own"
+  | "chat:admin:read_all"
+  | "answer:edit"
+  | "answer:publish"
+  | "rag:group:create"
+  | "rag:group:assign_manager"
+  | "rag:doc:read"
+  | "rag:doc:write:group"
+  | "rag:doc:delete:group"
+  | "rag:index:rebuild:group"
+  | "usage:read:own"
+  | "usage:read:all_users"
+  | "cost:read:own"
+  | "cost:read:all"
+  | "user:read"
+  | "user:suspend"
+  | "user:unsuspend"
+  | "user:delete"
+  | "access:role:create"
+  | "access:role:update"
+  | "access:role:assign"
+  | "access:policy:read"
+
+export type CurrentUser = {
+  userId: string
+  email?: string
+  groups: string[]
+  permissions: Permission[]
+}
+
+export async function getMe(): Promise<CurrentUser> {
+  const result = await get<{ user: CurrentUser }>("/me")
+  return result.user
+}
+
 export async function uploadDocument(input: {
   fileName: string
   text?: string
