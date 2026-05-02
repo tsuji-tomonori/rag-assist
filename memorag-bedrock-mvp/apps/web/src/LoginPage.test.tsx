@@ -4,6 +4,14 @@ import { describe, expect, it, vi } from "vitest"
 import LoginPage from "./LoginPage.js"
 
 describe("LoginPage", () => {
+  it("renders the login hero visual", () => {
+    const onLogin = vi.fn()
+    const onCompleteNewPassword = vi.fn()
+    const { container } = render(<LoginPage onLogin={onLogin} onCompleteNewPassword={onCompleteNewPassword} />)
+
+    expect(screen.getByTestId("login-hero")).toContainElement(container.querySelector(".login-hero-graphic"))
+  })
+
   it("keeps the user on the login form when authentication rejects the password", async () => {
     const onLogin = vi.fn().mockRejectedValue(new Error("メールアドレスまたはパスワードが正しくありません。"))
     const onCompleteNewPassword = vi.fn()
