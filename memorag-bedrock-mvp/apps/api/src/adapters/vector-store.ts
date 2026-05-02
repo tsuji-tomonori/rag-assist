@@ -3,6 +3,11 @@ import type { RetrievedVector, VectorKind, VectorRecord } from "../types.js"
 export type VectorFilter = {
   kind?: VectorKind
   documentId?: string
+  tenantId?: string
+  department?: string
+  source?: string
+  docType?: string
+  allowedGroups?: string[]
 }
 
 export interface VectorStore {

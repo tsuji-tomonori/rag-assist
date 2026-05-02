@@ -27,6 +27,16 @@ export class LocalVectorStore implements VectorStore {
     return db.records
       .filter((record) => (filter.kind ? record.metadata.kind === filter.kind : true))
       .filter((record) => (filter.documentId ? record.metadata.documentId === filter.documentId : true))
+      .filter((record) => (filter.tenantId ? record.metadata.tenantId === filter.tenantId : true))
+      .filter((record) => (filter.department ? record.metadata.department === filter.department : true))
+      .filter((record) => (filter.source ? record.metadata.source === filter.source : true))
+      .filter((record) => (filter.docType ? record.metadata.docType === filter.docType : true))
+      .filter((record) => {
+        if (!filter.allowedGroups || filter.allowedGroups.length === 0) return true
+        if (!record.metadata.aclGroup && !record.metadata.aclGroups) return true
+        const aclGroups = record.metadata.aclGroups ?? (record.metadata.aclGroup ? [record.metadata.aclGroup] : [])
+        return aclGroups.some((group) => filter.allowedGroups?.includes(group))
+      })
       .map((record) => ({
         key: record.key,
         score: cosineSimilarity(vector, record.vector),
