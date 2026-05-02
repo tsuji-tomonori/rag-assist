@@ -36,6 +36,7 @@
 - post-confirmation trigger で確認済み self sign-up ユーザーを `CHAT_USER` group に追加する Lambda を追加した。
 - README、GitHub Actions deploy docs、operations docs に、self sign-up は `CHAT_USER` のみ、上位権限は管理ユーザーが後から付与する運用を追記した。
 - Web と infra の unit/typecheck/snapshot test を更新した。
+- `origin/main` の `v0.14.0` 相当変更を merge し、`BENCHMARK_RUNNER` 追加後の 8 Cognito group と self sign-up assertion を両立するように infra test の競合を解消した。
 
 ## 5. 成果物
 
@@ -53,9 +54,12 @@
 
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra`: pass
-- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: pass、4 files / 45 tests
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: pass、4 files / 47 tests
 - `env UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: pass
+- `npm --prefix memorag-bedrock-mvp run lint`: pass
+- `git diff --check`: pass
 - 初回 infra test では User Pool と Lambda policy の循環依存を検出し、IAM resource scope を同一 account/region の userpool wildcard にして解消した。
+- 最新 `origin/main` merge 後、`@aws-sdk/client-sfn` が node_modules に未反映で infra bundle が一度失敗したため、`npm install` を再実行してから infra test を再実行し pass した。
 - 実 GitHub Actions 実行、実 Cognito User Pool での sign-up、確認コード受信、group 付与確認は未実施。
 
 ## 7. 指示へのfit評価

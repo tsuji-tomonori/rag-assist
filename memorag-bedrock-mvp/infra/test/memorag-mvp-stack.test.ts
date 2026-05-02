@@ -18,10 +18,10 @@ function synthesize() {
 test("implements the designed serverless resources", () => {
   const template = synthesize()
 
-  template.resourceCountIs("AWS::S3::Bucket", 4)
+  template.resourceCountIs("AWS::S3::Bucket", 5)
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
-  template.resourceCountIs("AWS::Cognito::UserPoolGroup", 7)
+  template.resourceCountIs("AWS::Cognito::UserPoolGroup", 8)
   template.hasResourceProperties("AWS::Cognito::UserPool", {
     AdminCreateUserConfig: { AllowAdminCreateUserOnly: false },
     AutoVerifiedAttributes: ["email"],
@@ -46,6 +46,15 @@ test("implements the designed serverless resources", () => {
     LoggingConfiguration: Match.objectLike({ LogFilePrefix: "s3/debug-downloads/" }),
     LifecycleConfiguration: {
       Rules: Match.arrayWith([Match.objectLike({ ExpirationInDays: 7, Status: "Enabled" })])
+    }
+  })
+  template.hasResourceProperties("AWS::S3::Bucket", {
+    LoggingConfiguration: Match.objectLike({ LogFilePrefix: "s3/benchmark/" }),
+    LifecycleConfiguration: {
+      Rules: Match.arrayWith([
+        Match.objectLike({ ExpirationInDays: 30, Prefix: "runs/", Status: "Enabled" }),
+        Match.objectLike({ ExpirationInDays: 7, Prefix: "downloads/", Status: "Enabled" })
+      ])
     }
   })
   template.hasResourceProperties("AWS::Lambda::Function", {
@@ -96,10 +105,16 @@ test("implements the designed serverless resources", () => {
     BillingMode: "PAY_PER_REQUEST",
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
+  template.hasResourceProperties("AWS::DynamoDB::Table", {
+    KeySchema: [{ AttributeName: "runId", KeyType: "HASH" }],
+    BillingMode: "PAY_PER_REQUEST",
+    PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+  })
   for (const groupName of [
     "CHAT_USER",
     "ANSWER_EDITOR",
     "RAG_GROUP_MANAGER",
+    "BENCHMARK_RUNNER",
     "USER_ADMIN",
     "ACCESS_ADMIN",
     "COST_AUDITOR",
@@ -115,8 +130,13 @@ test("implements the designed serverless resources", () => {
       Variables: Match.objectLike({
         QUESTION_TABLE_NAME: Match.anyValue(),
         CONVERSATION_HISTORY_TABLE_NAME: Match.anyValue(),
+        BENCHMARK_RUNS_TABLE_NAME: Match.anyValue(),
+        BENCHMARK_BUCKET_NAME: Match.anyValue(),
+        BENCHMARK_STATE_MACHINE_ARN: Match.anyValue(),
+        BENCHMARK_TARGET_API_BASE_URL: Match.anyValue(),
         USE_LOCAL_QUESTION_STORE: "false",
         USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
+        USE_LOCAL_BENCHMARK_RUN_STORE: "false",
         AUTH_ENABLED: "true",
         COGNITO_USER_POOL_ID: Match.anyValue(),
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
@@ -131,6 +151,16 @@ test("implements the designed serverless resources", () => {
     indexNames: ["memory-index", "evidence-index"],
     dimension: 1024,
     distanceMetric: "cosine"
+  })
+  template.hasResourceProperties("AWS::CodeBuild::Project", {
+    Environment: Match.objectLike({
+      ComputeType: "BUILD_GENERAL1_SMALL",
+      Image: "aws/codebuild/standard:7.0"
+    }),
+    TimeoutInMinutes: 120
+  })
+  template.hasResourceProperties("AWS::StepFunctions::StateMachine", {
+    DefinitionString: Match.anyValue()
   })
 })
 

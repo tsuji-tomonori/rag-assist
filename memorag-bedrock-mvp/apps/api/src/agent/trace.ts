@@ -95,6 +95,7 @@ function buildStep(input: {
 }
 
 function inferStatus(update: QaAgentUpdate): DebugStep["status"] {
+  if (update.answerSupport && !update.answerSupport.supported) return "warning"
   if (update.answerability && update.answerability.isAnswerable === false && update.answerability.reason !== "not_checked") {
     return "warning"
   }
@@ -104,13 +105,14 @@ function inferStatus(update: QaAgentUpdate): DebugStep["status"] {
 
 function inferModelId(label: string, state: QaAgentState): string | undefined {
   if (label === "generate_clues") return state.clueModelId
-  if (["generate_answer", "sufficient_context_gate"].includes(label)) return state.modelId
+  if (["generate_answer", "sufficient_context_gate", "verify_answer_support"].includes(label)) return state.modelId
   if (["retrieve_memory", "embed_queries", "search_evidence"].includes(label)) return state.embeddingModelId
   return undefined
 }
 
 function summarizeUpdate(label: string, update: QaAgentUpdate): string {
   if (update.sufficientContext) return `sufficient_context=${update.sufficientContext.label}, missing=${update.sufficientContext.missingFacts?.length ?? 0}`
+  if (update.answerSupport) return `answer_support=${update.answerSupport.supported ? "supported" : "unsupported"}, unsupported=${update.answerSupport.unsupportedSentences.length}`
   if (update.searchPlan) return `plan actions=${update.searchPlan.actions?.length ?? 0}, facts=${update.searchPlan.requiredFacts?.length ?? 0}`
   if (update.actionHistory) {
     const latest = update.actionHistory.at(-1)
@@ -130,6 +132,7 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
 
 function detailUpdate(update: QaAgentUpdate): string | undefined {
   if (update.sufficientContext) return formatSufficientContextDetail(update.sufficientContext)
+  if (update.answerSupport) return formatAnswerSupportDetail(update.answerSupport)
   if (update.searchPlan) return formatSearchPlanDetail(update.searchPlan)
   if (update.actionHistory) return formatActionObservationDetail(update.actionHistory)
   if (update.searchDecision) return `decision=${update.searchDecision}`
@@ -172,6 +175,26 @@ function formatSufficientContextDetail(judgement: NonNullable<QaAgentUpdate["suf
   ].join("\n")
 }
 
+function formatAnswerSupportDetail(judgement: NonNullable<QaAgentUpdate["answerSupport"]>): string {
+  return [
+    `supported=${judgement.supported}`,
+    `confidence=${judgement.confidence}`,
+    `totalSentences=${judgement.totalSentences}`,
+    `reason=${judgement.reason}`,
+    "",
+    "unsupportedSentences:",
+    ...(judgement.unsupportedSentences.length > 0
+      ? judgement.unsupportedSentences.flatMap((item) => [`- ${item.sentence}`, `  reason=${item.reason}`])
+      : ["なし"]),
+    "",
+    "supportingChunkIds:",
+    ...formatList(judgement.supportingChunkIds ?? []),
+    "",
+    "contradictionChunkIds:",
+    ...formatList(judgement.contradictionChunkIds ?? [])
+  ].join("\n")
+}
+
 function formatList(items: string[]): string[] {
   return items.length > 0 ? items.map((item) => `- ${item}`) : ["なし"]
 }
@@ -190,6 +213,7 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
     "searchDecision",
     "answerability",
     "sufficientContext",
+    "answerSupport",
     "answer",
     "citations"
   ]

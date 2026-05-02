@@ -15,13 +15,17 @@ const protectedMiddlewarePaths = [
   "/documents",
   "/documents/*",
   "/chat",
+  "/search",
   "/questions",
   "/questions/*",
   "/conversation-history",
   "/conversation-history/*",
   "/debug-runs",
   "/debug-runs/*",
-  "/benchmark/query"
+  "/benchmark/query",
+  "/benchmark-runs",
+  "/benchmark-runs/*",
+  "/benchmark-suites"
 ]
 
 const routePolicies: RoutePolicy[] = [
@@ -29,6 +33,7 @@ const routePolicies: RoutePolicy[] = [
   { method: "post", path: "/documents", permission: "rag:doc:write:group" },
   { method: "delete", path: "/documents/{documentId}", permission: "rag:doc:delete:group" },
   { method: "post", path: "/chat", permission: "chat:create" },
+  { method: "post", path: "/search", permission: "rag:doc:read" },
   { method: "post", path: "/questions", permission: "chat:create" },
   { method: "get", path: "/questions", permission: "answer:edit" },
   { method: "get", path: "/questions/{questionId}", permission: "answer:edit" },
@@ -40,7 +45,13 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/debug-runs", permission: "chat:admin:read_all" },
   { method: "get", path: "/debug-runs/{runId}", permission: "chat:admin:read_all" },
   { method: "post", path: "/debug-runs/{runId}/download", permission: "chat:admin:read_all" },
-  { method: "post", path: "/benchmark/query", permission: "chat:admin:read_all" }
+  { method: "post", path: "/benchmark/query", permission: "benchmark:run" },
+  { method: "get", path: "/benchmark-suites", permission: "benchmark:read" },
+  { method: "post", path: "/benchmark-runs", permission: "benchmark:run" },
+  { method: "get", path: "/benchmark-runs", permission: "benchmark:read" },
+  { method: "get", path: "/benchmark-runs/{runId}", permission: "benchmark:read" },
+  { method: "post", path: "/benchmark-runs/{runId}/cancel", permission: "benchmark:cancel" },
+  { method: "post", path: "/benchmark-runs/{runId}/download", permission: "benchmark:download" }
 ]
 
 test("protected API paths keep auth middleware coverage", async () => {

@@ -34,7 +34,8 @@
 | Retrieval Evaluator | candidates、required facts | next action、reason | `FR-016`, `FR-017` |
 | Answerability Gate | question、evidence | answerability label、reason | `FR-014` |
 | Answer Generator | question、supported evidence | grounded answer | `FR-003`, `FR-004` |
-| Citation Validator | answer、candidate chunks | supported/unsupported claims | `FR-015` |
+| Citation Validator | answer、candidate chunks | 引用IDの妥当性、citations | `FR-004`, `FR-005` |
+| Answer Support Verifier | answer、cited evidence chunks | supported/unsupported sentence、supportingChunkIds | `FR-015` |
 | Debug Trace Store | workflow events | run trace | `FR-010`, `NFR-005`, `NFR-006` |
 | Conversation History Store | userId、conversation item | user-scoped conversation list | `FR-022`, `NFR-005` |
 | Human Question Store | question ticket、answer draft、status | 担当者問い合わせと回答状態 | `FR-021`, `NFR-011` |
@@ -47,7 +48,8 @@
 - Query Orchestrator は workflow の順序制御に集中し、検索、判定、生成、引用検証の個別ロジックを直接抱え込まない。
 - Retriever は検索候補の取得に集中し、回答生成や引用文の作成を行わない。
 - Answerability Gate は回答してよいかを判定し、回答文を生成しない。
-- Citation Validator は回答後の主要文が引用 chunk に支持されているかを検証する。
+- Citation Validator は回答が実在する evidence chunk を引用しているかを検証する。
+- Answer Support Verifier は回答後の主要文が引用 chunk に支持されているかを検証し、不支持文がある場合は回答不能へ落とす。
 - Conversation History Store は画面の会話履歴をユーザー単位で永続化し、履歴 item の schema version を保持する。
 - Human Question Store は回答不能時の人手問い合わせを保存し、担当者による回答・解決状態を管理する。
 - Authorization Layer は API 側の permission 判定を正とし、Web 側の Cognito group は表示制御と不要な事前取得の抑制に使う。
@@ -64,14 +66,15 @@
 5. Retrieval Evaluator は十分な候補があるかを判断し、再検索、query rewrite、拒否のいずれかを選ぶ。
 6. Answerability Gate は evidence だけで回答可能かを判定する。
 7. Answer Generator は回答可能な場合だけ回答を生成する。
-8. Citation Validator は回答文と引用 chunk の支持関係を検証する。
-9. API は回答または拒否結果と trace metadata を返す。
-10. Web UI は会話履歴 item を `schemaVersion` 付きで保存 API に送信する。
-11. API は userId で会話履歴を分離し、本番環境では DynamoDB に保存する。
-12. 回答不能時に利用者が担当者問い合わせを作成した場合、Web UI は作成済み ticket を会話に紐づけて表示する。
-13. 担当者または管理者は問い合わせ一覧を取得し、回答または解決状態を更新する。
-14. 利用量メーターは trace、document/vector manifest、DynamoDB item サイズ、Lambda 実行メトリクスから料金算出に必要な集計値を作る。
-15. Cost Estimator は利用量に pricing catalog の単価を適用して、期間別・service 別の概算料金を算出する。
+8. Citation Validator は回答が実在する evidence chunk を引用しているかを検証する。
+9. Answer Support Verifier は回答文と引用 chunk の支持関係を検証する。
+10. API は回答または拒否結果と trace metadata を返す。
+11. Web UI は会話履歴 item を `schemaVersion` 付きで保存 API に送信する。
+12. API は userId で会話履歴を分離し、本番環境では DynamoDB に保存する。
+13. 回答不能時に利用者が担当者問い合わせを作成した場合、Web UI は作成済み ticket を会話に紐づけて表示する。
+14. 担当者または管理者は問い合わせ一覧を取得し、回答または解決状態を更新する。
+15. 利用量メーターは trace、document/vector manifest、DynamoDB item サイズ、Lambda 実行メトリクスから料金算出に必要な集計値を作る。
+16. Cost Estimator は利用量に pricing catalog の単価を適用して、期間別・service 別の概算料金を算出する。
 
 ## アーキテクチャ判断との関係
 

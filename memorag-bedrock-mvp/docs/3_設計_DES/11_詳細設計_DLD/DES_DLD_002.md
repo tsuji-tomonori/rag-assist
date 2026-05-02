@@ -15,6 +15,7 @@
 - semantic search: evidence vector store、S3 Vectors metadata filter
 - fusion: Reciprocal Rank Fusion
 - guard: ACL/metadata filter、cheap rerank
+- response safety: metadata allowlist、opaque `indexVersion`、opaque `aliasVersion`
 
 ## アルゴリズム構成
 
@@ -35,6 +36,7 @@ query
   -> RRF fusion
   -> ACL guard
   -> cheap rerank
+  -> metadata sanitize / diagnostics versioning
   -> topK chunks
 ```
 
@@ -48,6 +50,8 @@ query
 | prefix | 採用 | 社内略語、品番、ファイル名、英数字識別子に効く。 | 短すぎる prefix はノイズになるため、2 文字以上に限定する。 |
 | fuzzy | 限定採用 | typo に対応するため、4 文字以上の ASCII term に限定して edit distance 1〜2 を使う。 | 日本語 fuzzy は計算量と誤一致が増えるため、n-gram/alias に寄せる。 |
 | alias expansion | 限定採用 | tenant や index の運用データとして与えられた同義語だけを query expansion に使う。 | 実装に業務語彙や製品名を hard-code しない。 |
+| alias diagnostics | 採用 | 通常 response では alias 本文を出さず、`aliasVersion` だけを返して再現性と非漏えいを両立する。 | 管理者向け debug で詳細確認する経路は別途必要。 |
+| metadata allowlist | 採用 | `searchAliases`、`aliases`、`aclGroups`、`allowedUsers`、内部 project code を通常検索結果に返さない。 | response metadata に任意項目を出したい場合は allowlist 追加の設計判断が必要。 |
 | S3 Vectors | 採用 | 意味検索は自作せず、既存 vector store 抽象経由で topK 類似検索と metadata filter を使う。 | metadata filter は保存項目とサイズ制約に依存する。 |
 | RRF | 採用 | BM25 score と vector score は尺度が異なるため、順位ベース融合で score normalization 依存を避ける。 | 重みは初期値であり、評価ログに基づく調整が必要。 |
 | cheap rerank | 採用 | phrase match、token coverage、title match、recentness の軽量補正で上位順序を安定させる。 | cross encoder rerank ほどの意味理解はない。 |
@@ -76,6 +80,8 @@ query
 - vector metadata には `tenantId`、`department`、`source`、`docType`、`aclGroup`、`aclGroups`、`allowedUsers` を保存できる。
 - alias expansion は manifest metadata の `searchAliases` または `aliases` から取り込んだ index-local map だけを使う。
 - alias expansion の default は空であり、実コードに具体的な社内用語、部署名、製品名を固定値として持たせない。
+- search response の `metadata` は allowlist 方式とし、現行は `tenantId`、`source`、`docType`、`department` のみ返す。
+- search response の `diagnostics.indexVersion` と `diagnostics.aliasVersion` は opaque value とし、document ID、alias key、alias value を含めない。
 - S3 Vectors の前段 filter は scalar metadata に寄せ、複雑な ACL 判定は後段 guard で補完する。
 - エージェント workflow への接続はこの設計の対象外とし、次回の orchestrator/retriever 統合で扱う。
 
@@ -89,6 +95,9 @@ query
 | prefix match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
 | ASCII fuzzy match | `BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches` |
 | alias expansion | `BM25 alias expansion uses caller-provided alias maps only` |
+| alias version diagnostics | `BM25 alias expansion uses caller-provided alias maps only`、`service search applies ACL and metadata filters across lexical and vector results` |
+| search metadata sanitize | `service search applies ACL and metadata filters across lexical and vector results` |
+| recursive metadata schema | `document metadata schema accepts recursive JSON alias metadata` |
 | RRF overlap boost | `RRF fusion rewards overlap while keeping independent lexical hits` |
 | ACL filter | `service search applies ACL and metadata filters across lexical and vector results` |
 | metadata filter | `service search applies ACL and metadata filters across lexical and vector results` |
@@ -99,12 +108,15 @@ query
 - `Recall@20`: 正解 chunk または正解 document が上位 20 件に含まれること。
 - `MRR@10`: 正解 chunk または正解 document が上位に出ること。
 - `No-access leak`: 権限外 document が検索結果に含まれないこと。
+- `aliasNoAccessLeak`: alias、ACL、許可 user、内部 project code が通常検索結果と diagnostics に含まれないこと。
+- `aliasScopeViolation`: ACL/filter 済み manifest の外側にある alias が query expansion に使われないこと。
 - `p95 latency`: Lambda cold/warm の両方で業務利用に耐えること。
 - `Grounded answer rate`: 次段階の agent 統合後、回答が検索結果の出典に基づくこと。
 
 ## 将来拡張
 
 - ingestion batch で immutable lexical index を生成し、S3 Brotli object として保存する。
+- scoped / versioned alias artifact と index manifest により `aliasVersion` と `indexVersion` の対応を publish する。
 - tokenizer を kuromoji.js に差し替え、形態素 token と n-gram token の重みを分離する。
 - 評価ログから RRF weight、BM25 topK、semantic topK、cheap rerank 加点を調整する。
 - index size が増えた場合は SQLite FTS5 または EFS へ移行する。

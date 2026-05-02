@@ -7,6 +7,7 @@ import type { Dependencies } from "../dependencies.js"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
+import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
@@ -47,6 +48,7 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
       "sufficient_context_gate",
       "generate_answer",
       "validate_citations",
+      "verify_answer_support",
       "finalize_response"
     ]
   )
@@ -59,6 +61,9 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
   const sufficientContextStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
   assert.match(sufficientContextStep?.detail ?? "", /label=ANSWERABLE/)
   assert.match(sufficientContextStep?.detail ?? "", /supportingChunkIds:/)
+  const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
+  assert.match(supportStep?.detail ?? "", /supported=true/)
+  assert.deepEqual(supportStep?.output?.answerSupport && typeof supportStep.output.answerSupport === "object" ? (supportStep.output.answerSupport as Record<string, unknown>).unsupportedSentences : undefined, [])
 })
 
 test("fixed workflow executes nodes in the declared order", async () => {
@@ -91,6 +96,7 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "sufficient_context_gate",
       "generate_answer",
       "validate_citations",
+      "verify_answer_support",
       "finalize_response"
     ]
   )
@@ -267,7 +273,8 @@ async function createTestDeps(): Promise<Dependencies> {
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
     textModel: new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
-    conversationHistoryStore: new LocalConversationHistoryStore(dataDir)
+    conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    benchmarkRunStore: new LocalBenchmarkRunStore(dataDir)
   }
 }
 
@@ -404,6 +411,15 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       missingFacts: [],
       conflictingFacts: [],
       supportingChunkIds: [],
+      reason: ""
+    },
+    answerSupport: {
+      supported: false,
+      unsupportedSentences: [],
+      supportingChunkIds: [],
+      contradictionChunkIds: [],
+      confidence: 0,
+      totalSentences: 0,
       reason: ""
     },
     citations: [],

@@ -74,16 +74,17 @@ task benchmark:sample
 
 ## ロール運用
 
-CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を作成する。
+CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を作成する。
 
 | group | 運用上の用途 |
 | --- | --- |
 | `CHAT_USER` | 通常チャット、本人の会話履歴、担当者問い合わせ登録 |
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
-| `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用 |
-| `SYSTEM_ADMIN` | debug trace、benchmark、管理者検証 |
+| `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
+| `BENCHMARK_RUNNER` | CodeBuild runner から `/benchmark/query` を実行 |
+| `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証 |
 
-通常利用者に `ANSWER_EDITOR` や `SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。debug trace と benchmark を確認する管理者には `SYSTEM_ADMIN` を付与する。
+通常利用者に `ANSWER_EDITOR` や `SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。性能テストを起動する運用者には `RAG_GROUP_MANAGER`、CodeBuild runner 用 service user には `BENCHMARK_RUNNER`、debug trace と benchmark 成果物を確認する管理者には `SYSTEM_ADMIN` を付与する。
 
 ログイン画面から self sign-up したユーザーは、メール確認後に Cognito post-confirmation trigger で `CHAT_USER` のみを自動付与する。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが対象者と必要性を確認し、`.github/workflows/memorag-create-cognito-user.yml` または AWS 管理手順で後から付与する。
 
@@ -112,3 +113,5 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 ## ベンチマークレポート
 
 `task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` と fact slot 系の期待値を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、fact slot coverage、p95 latencyを確認できる。
+
+管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/`、成果物は `runs/<runId>/` に保存する。production API を叩く runner には bearer token が必要なため、CDK context `benchmarkRunnerAuthSecretId` で Secrets Manager secret を指定し、secret には `username` / `password` または `idToken` / `token` を保存する。

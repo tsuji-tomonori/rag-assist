@@ -132,11 +132,13 @@ function jwtWithGroups(groups: string[]) {
 const rolePermissions: Record<string, Permission[]> = {
   CHAT_USER: ["chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "usage:read:own", "cost:read:own", "rag:doc:read"],
   ANSWER_EDITOR: ["answer:edit", "answer:publish"],
-  RAG_GROUP_MANAGER: ["rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group"],
+  RAG_GROUP_MANAGER: ["rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group", "benchmark:read", "benchmark:run"],
+  BENCHMARK_RUNNER: ["benchmark:run"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   SYSTEM_ADMIN: [
     "chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "chat:admin:read_all",
     "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
+    "benchmark:read", "benchmark:run", "benchmark:cancel", "benchmark:download",
     "usage:read:own", "usage:read:all_users", "cost:read:own", "cost:read:all", "user:read", "user:suspend", "user:unsuspend", "user:delete",
     "access:role:create", "access:role:update", "access:role:assign", "access:policy:read"
   ]
@@ -161,6 +163,12 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
     if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(groups)))
     if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
     if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
+    if (requestUrl.endsWith("/benchmark-suites") && isGet(init)) return Promise.resolve(response({ suites: [{ suiteId: "standard-agent-v1", label: "Agent standard", mode: "agent", datasetS3Key: "datasets/agent/standard-v1.jsonl", preset: "standard", defaultConcurrency: 1 }] }))
+    if (requestUrl.endsWith("/benchmark-runs") && isGet(init)) return Promise.resolve(response({ benchmarkRuns: [] }))
+    if (requestUrl.endsWith("/benchmark-runs") && init?.method === "POST") {
+      return Promise.resolve(response({ runId: "bench-1", status: "queued", suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild", datasetS3Key: "datasets/agent/standard-v1.jsonl", createdBy: "user-1", createdAt: "2026-05-02T00:00:00.000Z", updatedAt: "2026-05-02T00:00:00.000Z", reportS3Key: "runs/bench-1/report.md" }))
+    }
+    if (requestUrl.endsWith("/benchmark-runs/bench-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/report.md", expiresInSeconds: 900, objectKey: "runs/bench-1/report.md" }))
     if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
     if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}"))
@@ -462,6 +470,31 @@ describe("App chat and upload flow", () => {
     await screen.findByRole("option", { name: "run-old" })
     await userEvent.selectOptions(await screen.findByLabelText("実行ID"), "run-old")
     expect(screen.getByLabelText("実行ID")).toHaveValue("run-old")
+  })
+
+  it("starts a benchmark run from the performance test view", async () => {
+    const fetchMock = mockAppFetch()
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
+    await renderAuthenticatedApp()
+
+    await userEvent.click(await screen.findByTitle("性能テスト"))
+    expect(await screen.findByText("ジョブ起動")).toBeInTheDocument()
+    const benchmarkModelSelect = screen.getAllByLabelText("モデル")[1]
+    expect(benchmarkModelSelect).toBeTruthy()
+    await userEvent.selectOptions(benchmarkModelSelect as HTMLElement, "anthropic.claude-3-haiku-20240307-v1:0")
+    await userEvent.click(screen.getByRole("button", { name: "性能テストを実行" }))
+
+    expect(await screen.findByText("bench-1")).toBeInTheDocument()
+    const startCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/benchmark-runs") && (init as RequestInit | undefined)?.method === "POST")
+    expect(JSON.parse(String((startCall?.[1] as RequestInit).body))).toMatchObject({
+      suiteId: "standard-agent-v1",
+      mode: "agent",
+      runner: "codebuild",
+      modelId: "anthropic.claude-3-haiku-20240307-v1:0"
+    })
+
+    await userEvent.click(screen.getByTitle("レポートをダウンロード"))
+    expect(click).toHaveBeenCalled()
   })
 
   it("submits with Enter and sends the selected model", async () => {

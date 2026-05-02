@@ -4,7 +4,7 @@
 
 ## UI方針
 
-作成するUIは **1つ** です。資料アップロード、モデルID指定、チャット、引用チャンク表示を同じ画面にまとめています。ベンチマークや自動評価はUIではなくAPIから呼び出す前提です。
+作成するUIは **1つ** です。資料アップロード、モデルID指定、チャット、引用チャンク表示、担当者対応、性能テストのジョブ起動と履歴確認を同じ画面にまとめています。ベンチマーク実行本体はUI内では処理せず、API、Step Functions、Runnerから非同期に呼び出します。
 
 ## アーキテクチャ
 
@@ -66,6 +66,12 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /debug-runs/{runId}` persisted debug trace取得
 - `POST /debug-runs/{runId}/download` persisted debug trace JSON download URL作成
 - `POST /benchmark/query` ベンチマーク用。`/chat` と同じRAG処理をAPIから呼び出し、retrieval情報も返します。
+- `GET /benchmark-suites` 非同期ベンチマークで選択できる suite 一覧
+- `POST /benchmark-runs` Step Functions + CodeBuild runner の非同期 benchmark run 起動
+- `GET /benchmark-runs` benchmark run 履歴一覧
+- `GET /benchmark-runs/{runId}` benchmark run 詳細
+- `POST /benchmark-runs/{runId}/cancel` benchmark run キャンセル
+- `POST /benchmark-runs/{runId}/download` benchmark report / summary / results の download URL 作成
 
 Phase 1 の管理画面は RAG 運用管理に限定し、文書管理、問い合わせ対応、debug/評価を対象にします。ユーザー作成、ロール付与、コスト監査、全ユーザー利用状況一覧は Phase 1 では提供しません。
 
@@ -132,8 +138,8 @@ infra/scripts/create-cognito-user.sh \
   --suppress-invite
 ```
 
-`--role` は複数回指定できます。ロールは `一般利用者`、`回答担当者`、`RAGグループ管理者`、`ユーザー管理者`、`アクセス管理者`、`コスト監査者`、`システム管理者` の日本語名、または `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の Cognito group 名で指定できます。
-`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。通常利用者は `CHAT_USER`、担当者は `ANSWER_EDITOR`、debug trace や benchmark を確認する管理者は `SYSTEM_ADMIN` または `システム管理者` を指定してください。
+`--role` は複数回指定できます。ロールは `一般利用者`、`回答担当者`、`RAGグループ管理者`、`ユーザー管理者`、`アクセス管理者`、`コスト監査者`、`システム管理者` の日本語名、または `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の Cognito group 名で指定できます。
+`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。通常利用者は `CHAT_USER`、担当者は `ANSWER_EDITOR`、性能テストを管理画面から起動する運用者は `RAG_GROUP_MANAGER`、CodeBuild runner の service user は `BENCHMARK_RUNNER`、debug trace や benchmark を管理する管理者は `SYSTEM_ADMIN` または `システム管理者` を指定してください。
 `CHAT_USER` などの Cognito group は CDK stack で作成されるため、ユーザー作成前に `npm run cdk -w @memorag-mvp/infra -- deploy` または `task cdk:deploy` を実行してください。
 ログイン画面から作成したユーザーは、メール確認後に Cognito post-confirmation trigger により `CHAT_USER` のみ自動付与されます。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが GitHub Actions または AWS 管理手順で後から付与してください。
 GitHub Actions から作成する場合は、`Actions` -> `Create MemoRAG Cognito User` -> `Run workflow` でメールアドレスと主ロールを日本語名で選択します。追加ロールが必要な場合は、`additional-roles` に日本語名または Cognito group 名をカンマ区切りで入力します。
@@ -152,8 +158,13 @@ curl -s http://localhost:8787/chat \
 
 ## ベンチマーク
 
+管理画面の「性能テスト」は `POST /benchmark-runs` で非同期 run を作成し、Step Functions が CodeBuild runner を起動します。run 状態と成果物キーは DynamoDB、dataset と `results.jsonl` / `summary.json` / `report.md` は benchmark 用 S3 bucket に保存します。管理画面は履歴表示、キャンセル、report download URL 作成だけを担当します。
+
+CodeBuild runner が本番 API を叩く場合は認証 token が必要です。CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡すと、runner は `username` / `password` から Cognito `USER_PASSWORD_AUTH` を実行します。secret に `idToken` または `token` がある場合は、その値をそのまま `Authorization: Bearer` に使います。
+
 ```bash
 API_BASE_URL=http://localhost:8787 \
+API_AUTH_TOKEN=<optional-bearer-token> \
 DATASET=benchmark/dataset.sample.jsonl \
 OUTPUT=.local-data/benchmark-results.jsonl \
 SUMMARY=.local-data/benchmark-summary.json \

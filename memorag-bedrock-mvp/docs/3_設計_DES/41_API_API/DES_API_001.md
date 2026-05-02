@@ -20,6 +20,7 @@
 | `POST /documents` | 文書登録 | `FR-001`, `FR-002` |
 | `DELETE /documents/{documentId}` | 文書削除 | `FR-007`, `FR-008` |
 | `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005` |
+| `POST /search` | hybrid lexical/vector search | `FR-023`, `NFR-012` |
 | `POST /questions` | 回答不能時の担当者問い合わせ作成 | `FR-021`, `NFR-011` |
 | `GET /questions` | 担当者向け問い合わせ一覧 | `FR-021`, `NFR-011` |
 | `GET /questions/{questionId}` | 担当者問い合わせ詳細 | `FR-021`, `NFR-011` |
@@ -71,6 +72,63 @@
 - `debug.steps[].tokenCount` は UI/trace 表示用の概算であり、Bedrock 請求額の正確な算出には使わない。
 - `debug.steps[].modelId` は Bedrock 単価参照時の候補キーとして扱う。
 - 請求精度が必要な場合は、Bedrock の usage metadata、CloudWatch metrics、Cost and Usage Report などの実測系データを `UsageMeter` に取り込む。
+
+## `POST /search`
+
+### Request
+
+```json
+{
+  "query": "PTO approval",
+  "topK": 10,
+  "filters": {
+    "tenantId": "tenant-a",
+    "source": "notion",
+    "docType": "policy"
+  }
+}
+```
+
+### Response
+
+```json
+{
+  "query": "PTO approval",
+  "results": [
+    {
+      "id": "doc-001-chunk-0000",
+      "documentId": "doc-001",
+      "fileName": "policy.md",
+      "chunkId": "chunk-0000",
+      "text": "Vacation requests require manager approval.",
+      "score": 0.12,
+      "rrfScore": 0.02,
+      "matchedTerms": ["approval"],
+      "sources": ["lexical", "semantic"],
+      "metadata": {
+        "tenantId": "tenant-a",
+        "source": "notion",
+        "docType": "policy",
+        "department": "hr"
+      }
+    }
+  ],
+  "diagnostics": {
+    "indexVersion": "lexical:5af1c001",
+    "aliasVersion": "alias:51e90a22",
+    "lexicalCount": 18,
+    "semanticCount": 20,
+    "fusedCount": 31,
+    "latencyMs": 123
+  }
+}
+```
+
+### Metadata と alias の非漏えい方針
+
+- `results[].metadata` は allowlist 方式で、現行は `tenantId`、`source`、`docType`、`department` のみ返す。
+- `aliases`、`searchAliases`、`aclGroups`、`allowedUsers`、`privateToUserId`、内部 project code は通常 response に返さない。
+- `diagnostics.indexVersion` と `diagnostics.aliasVersion` は opaque value とし、document ID や alias 本文を含めない。
 
 ## `POST /conversation-history`
 
@@ -173,6 +231,50 @@
 }
 ```
 
+## `POST /benchmark-runs`
+
+管理画面から benchmark run を非同期に起動する。API Lambda は DynamoDB に run record を作成し、Step Functions execution を開始する。実行本体は CodeBuild runner が `/benchmark/query` を呼び、S3 に `results.jsonl`、`summary.json`、`report.md` を保存する。
+
+### Request
+
+```json
+{
+  "suiteId": "standard-agent-v1",
+  "mode": "agent",
+  "runner": "codebuild",
+  "modelId": "amazon.nova-lite-v1:0",
+  "embeddingModelId": "amazon.titan-embed-text-v2:0",
+  "topK": 6,
+  "memoryTopK": 4,
+  "minScore": 0.2,
+  "concurrency": 1
+}
+```
+
+### Response
+
+```json
+{
+  "runId": "bench_20260502T000000Z_abc12345",
+  "status": "queued",
+  "mode": "agent",
+  "runner": "codebuild",
+  "suiteId": "standard-agent-v1",
+  "datasetS3Key": "datasets/agent/standard-v1.jsonl",
+  "createdBy": "user-id",
+  "createdAt": "2026-05-02T00:00:00.000Z",
+  "updatedAt": "2026-05-02T00:00:00.000Z"
+}
+```
+
+## `GET /benchmark-runs`
+
+benchmark run の履歴一覧を返す。管理画面はこの API をポーリングして `queued`、`running`、`succeeded`、`failed`、`cancelled` を表示する。
+
+## `POST /benchmark-runs/{runId}/download`
+
+`report`、`summary`、`results` のいずれかの成果物に対する S3 signed URL を返す。既定は `report`。
+
 ### Response
 
 ```json
@@ -213,7 +315,12 @@
 | debug trace 一覧 | `GET /debug-runs` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
 | debug trace 詳細 | `GET /debug-runs/{runId}` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
 | debug JSON download | `POST /debug-runs/{runId}/download` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
-| benchmark query | `POST /benchmark/query` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
+| benchmark query | `POST /benchmark/query` | `benchmark:run` | `BENCHMARK_RUNNER`, `SYSTEM_ADMIN` |
+| benchmark suite 一覧 | `GET /benchmark-suites` | `benchmark:read` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| benchmark run 起動 | `POST /benchmark-runs` | `benchmark:run` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| benchmark run 一覧/詳細 | `GET /benchmark-runs`, `GET /benchmark-runs/{runId}` | `benchmark:read` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| benchmark run cancel | `POST /benchmark-runs/{runId}/cancel` | `benchmark:cancel` | `SYSTEM_ADMIN` |
+| benchmark artifact download | `POST /benchmark-runs/{runId}/download` | `benchmark:download` | `SYSTEM_ADMIN` |
 
 Phase 1 ではユーザー作成、ユーザー停止、ロール付与、ロール一覧編集、アクセス policy 編集、コスト監査、全ユーザー利用状況一覧の API/UI は提供しない。
 

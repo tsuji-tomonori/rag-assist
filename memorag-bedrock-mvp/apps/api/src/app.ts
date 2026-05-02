@@ -9,10 +9,14 @@ import {
   ChatRequestSchema,
   ChatResponseSchema,
   AnswerQuestionRequestSchema,
+  BenchmarkRunListResponseSchema,
+  BenchmarkRunSchema,
+  BenchmarkSuiteListResponseSchema,
   BenchmarkQueryRequestSchema,
   BenchmarkQueryResponseSchema,
   ConversationHistoryItemSchema,
   ConversationHistoryListResponseSchema,
+  CreateBenchmarkRunRequestSchema,
   CreateQuestionRequestSchema,
   CurrentUserResponseSchema,
   DeleteDocumentResponseSchema,
@@ -42,7 +46,7 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/me", "/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query"]) {
+for (const path of ["/me", "/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
   app.use(path, authMiddleware)
 }
 
@@ -458,10 +462,129 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "chat:admin:read_all")
+    requirePermission(c.get("user"), "benchmark:run")
     const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkQueryRequestSchema>
     const result = await service.chat({ ...body, includeDebug: body.includeDebug ?? true })
     return c.json({ id: body.id, ...result }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/benchmark-suites",
+    responses: {
+      200: { description: "List benchmark suites available for asynchronous runs", content: { "application/json": { schema: BenchmarkSuiteListResponseSchema } } }
+    }
+  }),
+  (c) => {
+    requirePermission(c.get("user"), "benchmark:read")
+    return c.json({ suites: service.listBenchmarkSuites() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/benchmark-runs",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: CreateBenchmarkRunRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Queued benchmark run", content: { "application/json": { schema: BenchmarkRunSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "benchmark:run")
+    const body = (c.req as any).valid("json") as z.infer<typeof CreateBenchmarkRunRequestSchema>
+    return c.json(await service.createBenchmarkRun(user, body), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/benchmark-runs",
+    responses: {
+      200: { description: "List benchmark runs", content: { "application/json": { schema: BenchmarkRunListResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "benchmark:read")
+    return c.json({ benchmarkRuns: await service.listBenchmarkRuns() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/benchmark-runs/{runId}",
+    request: {
+      params: z.object({ runId: z.string().min(1) })
+    },
+    responses: {
+      200: { description: "Get benchmark run", content: { "application/json": { schema: BenchmarkRunSchema } } },
+      404: { description: "Benchmark run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "benchmark:read")
+    const { runId } = (c.req as any).valid("param") as { runId: string }
+    const run = await service.getBenchmarkRun(runId)
+    if (!run) return c.json({ error: "Benchmark run not found" }, 404)
+    return c.json(run, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/benchmark-runs/{runId}/cancel",
+    request: {
+      params: z.object({ runId: z.string().min(1) })
+    },
+    responses: {
+      200: { description: "Cancelled benchmark run", content: { "application/json": { schema: BenchmarkRunSchema } } },
+      404: { description: "Benchmark run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "benchmark:cancel")
+    const { runId } = (c.req as any).valid("param") as { runId: string }
+    const run = await service.cancelBenchmarkRun(runId)
+    if (!run) return c.json({ error: "Benchmark run not found" }, 404)
+    return c.json(run, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/benchmark-runs/{runId}/download",
+    request: {
+      params: z.object({ runId: z.string().min(1) }),
+      body: {
+        required: false,
+        content: { "application/json": { schema: z.object({ artifact: z.enum(["report", "summary", "results"]).optional() }) } }
+      }
+    },
+    responses: {
+      200: { description: "Create signed download URL for benchmark artifact", content: { "application/json": { schema: DebugDownloadResponseSchema } } },
+      404: { description: "Benchmark run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "benchmark:download")
+    const { runId } = (c.req as any).valid("param") as { runId: string }
+    const body = ((c.req as any).valid("json") ?? {}) as { artifact?: "report" | "summary" | "results" }
+    const download = await service.createBenchmarkArtifactDownloadUrl(runId, body.artifact ?? "report")
+    if (!download) return c.json({ error: "Benchmark run not found" }, 404)
+    return c.json(download, 200)
   }
 )
 
