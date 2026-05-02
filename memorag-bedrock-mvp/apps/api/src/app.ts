@@ -24,7 +24,9 @@ import {
   ErrorResponseSchema,
   HealthResponseSchema,
   QuestionListResponseSchema,
-  QuestionSchema
+  QuestionSchema,
+  SearchRequestSchema,
+  SearchResponseSchema
 } from "./schemas.js"
 
 const deps = createDependencies()
@@ -39,7 +41,7 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/documents", "/documents/*", "/chat", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query"]) {
+for (const path of ["/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query"]) {
   app.use(path, authMiddleware)
 }
 
@@ -151,6 +153,30 @@ app.openapi(chatRoute, async (c) => {
   const body = (c.req as any).valid("json") as z.infer<typeof ChatRequestSchema>
   return c.json(await service.chat(body), 200)
 })
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/search",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: SearchRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Hybrid lexical and vector search results", content: { "application/json": { schema: SearchResponseSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:doc:read")
+    const body = (c.req as any).valid("json") as z.infer<typeof SearchRequestSchema>
+    return c.json(await service.search(body, user), 200)
+  }
+)
 
 app.openapi(
   looseRoute({

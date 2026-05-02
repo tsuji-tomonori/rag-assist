@@ -77,6 +77,13 @@ function toS3Filter(filter: VectorFilter): QueryVectorsCommandInput["filter"] {
   const clauses: NonNullable<QueryVectorsCommandInput["filter"]>[] = []
   if (filter.kind) clauses.push({ kind: { $eq: filter.kind } })
   if (filter.documentId) clauses.push({ documentId: { $eq: filter.documentId } })
+  if (filter.tenantId) clauses.push({ tenantId: { $eq: filter.tenantId } } as NonNullable<QueryVectorsCommandInput["filter"]>)
+  if (filter.department) clauses.push({ department: { $eq: filter.department } } as NonNullable<QueryVectorsCommandInput["filter"]>)
+  if (filter.source) clauses.push({ source: { $eq: filter.source } } as NonNullable<QueryVectorsCommandInput["filter"]>)
+  if (filter.docType) clauses.push({ docType: { $eq: filter.docType } } as NonNullable<QueryVectorsCommandInput["filter"]>)
+  if (filter.allowedGroups && filter.allowedGroups.length > 0) {
+    clauses.push({ aclGroup: { $in: filter.allowedGroups } } as NonNullable<QueryVectorsCommandInput["filter"]>)
+  }
   if (clauses.length === 0) return undefined
   if (clauses.length === 1) return clauses[0]
   return { $and: clauses }

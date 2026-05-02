@@ -14,6 +14,7 @@ type Fixtures = {
   requests: {
     postDocuments: { fileName: string; text: string }
     postChat: { question: string; includeDebug: boolean; minScore: number }
+    postSearch: { query: string; topK: number }
   }
   responses: {
     health: { ok: true; service: string }
@@ -78,6 +79,18 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(typeof chat.answer, typeof fixtures.responses.chatShape.answer)
     assert.equal(Array.isArray(chat.citations), true)
     validateSchema(chat, responseSchema(openapi, "/chat", "post", 200), openapi)
+
+    const postSearch = await fetch(`http://127.0.0.1:${port}/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(fixtures.requests.postSearch)
+    })
+    assert.equal(postSearch.status, 200)
+    const search = (await postSearch.json()) as Record<string, unknown>
+    assert.equal(search.query, fixtures.requests.postSearch.query)
+    assert.ok(Array.isArray(search.results))
+    assert.ok((search.results as unknown[]).length >= 1)
+    validateSchema(search, responseSchema(openapi, "/search", "post", 200), openapi)
 
     const postHistory = await fetch(`http://127.0.0.1:${port}/conversation-history`, {
       method: "POST",

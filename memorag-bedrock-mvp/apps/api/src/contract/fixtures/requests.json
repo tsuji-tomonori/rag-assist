@@ -7,5 +7,9 @@
     "question": "このシステムは何を根拠に回答しますか？",
     "includeDebug": true,
     "minScore": 0.01
+  },
+  "postSearch": {
+    "query": "アップロード文書 根拠",
+    "topK": 5
   }
 }

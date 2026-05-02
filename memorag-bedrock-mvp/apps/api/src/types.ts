@@ -12,6 +12,13 @@ export type VectorMetadata = {
   objectKey?: string
   sourceUri?: string
   text?: string
+  tenantId?: string
+  department?: string
+  source?: string
+  docType?: string
+  aclGroup?: string
+  aclGroups?: string[]
+  allowedUsers?: string[]
   createdAt: string
 }
 

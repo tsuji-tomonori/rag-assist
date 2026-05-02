@@ -6,8 +6,10 @@ import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type Citation, type ConversationHistoryItem, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type MemoryCard, type VectorRecord } from "../types.js"
+import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
+import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
 import { chunkText } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
@@ -59,6 +61,7 @@ export class MemoRagService {
     const memoryVectorKeys: string[] = []
     const evidenceRecords: VectorRecord[] = []
     const memoryRecords: VectorRecord[] = []
+    const filterableMetadata = toFilterableVectorMetadata(input.metadata)
 
     for (const chunk of chunks) {
       const vector = await this.deps.textModel.embed(chunk.text, {
@@ -77,6 +80,7 @@ export class MemoRagService {
           chunkId: chunk.id,
           objectKey: sourceObjectKey,
           text: chunk.text,
+          ...filterableMetadata,
           createdAt
         }
       })
@@ -99,6 +103,7 @@ export class MemoRagService {
           memoryId: card.id,
           objectKey: sourceObjectKey,
           text: card.text,
+          ...filterableMetadata,
           createdAt
         }
       })
@@ -172,6 +177,10 @@ export class MemoRagService {
     debug?: DebugTrace
   }> {
     return runQaAgent(this.deps, input)
+  }
+
+  async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
+    return searchRag(this.deps, input, user)
   }
 
   async createQuestion(input: CreateQuestionInput): Promise<HumanQuestion> {
@@ -285,4 +294,37 @@ function normalizeDebugTrace(value: unknown): DebugTrace {
     schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
     ...rest
   }
+}
+
+function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefined): Partial<VectorRecord["metadata"]> {
+  if (!metadata) return {}
+  const aclGroups = stringArray(metadata.aclGroups ?? metadata.allowedGroups) ?? []
+  const allowedUsers = stringArray(metadata.allowedUsers ?? metadata.userIds)
+  const filterable: Partial<VectorRecord["metadata"]> = {}
+  const tenantId = stringValue(metadata.tenantId)
+  const department = stringValue(metadata.department)
+  const source = stringValue(metadata.source)
+  const docType = stringValue(metadata.docType)
+  const aclGroup = stringValue(metadata.aclGroup) ?? aclGroups[0]
+  if (tenantId) filterable.tenantId = tenantId
+  if (department) filterable.department = department
+  if (source) filterable.source = source
+  if (docType) filterable.docType = docType
+  if (aclGroup) filterable.aclGroup = aclGroup
+  if (aclGroups.length > 0) filterable.aclGroups = aclGroups
+  if (allowedUsers && allowedUsers.length > 0) filterable.allowedUsers = allowedUsers
+  return filterable
+}
+
+function stringValue(value: JsonValue | undefined): string | undefined {
+  return typeof value === "string" ? value : undefined
+}
+
+function stringArray(value: JsonValue | undefined): string[] | undefined {
+  if (typeof value === "string") return [value]
+  if (Array.isArray(value)) {
+    const values = value.filter((item): item is string => typeof item === "string")
+    return values.length > 0 ? values : undefined
+  }
+  return undefined
 }
