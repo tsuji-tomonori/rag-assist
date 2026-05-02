@@ -365,6 +365,84 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   assert.deepEqual(currentRuleWithStatusCue.retrievalEvaluation?.conflictingFactIds, [])
   assert.equal(currentRuleWithStatusCue.retrievalEvaluation?.nextAction.type, "rerank")
 
+  const valueMismatch = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0001",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0001",
+            text: "現行制度の申請期限は翌月5営業日です。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0002",
+          score: 0.88,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0002",
+            text: "現行制度の申請期限は翌月10営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(valueMismatch.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.supportedFactIds, [])
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
+  assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "value_mismatch")
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.values, ["翌月5営業日", "翌月10営業日"])
+  assert.equal(valueMismatch.retrievalEvaluation?.nextAction.type, "evidence_search")
+  assert.match(valueMismatch.retrievalEvaluation?.nextAction.type === "evidence_search" ? valueMismatch.retrievalEvaluation.nextAction.query : "", /現行 最新/)
+
+  const scopedOldAndCurrent = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0003",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0003",
+            text: "旧制度の申請期限は翌月10日でした。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0004",
+          score: 0.91,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0004",
+            text: "現行制度の申請期限は翌月5営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(scopedOldAndCurrent.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.conflictingFactIds, [])
+  assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.riskSignals, [])
+
   const lowScoreTermMatch = await retrievalEvaluator(
     state({
       question: "申請期限は？",
