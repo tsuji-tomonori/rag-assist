@@ -169,6 +169,10 @@ export type Permission =
   | "rag:doc:write:group"
   | "rag:doc:delete:group"
   | "rag:index:rebuild:group"
+  | "benchmark:read"
+  | "benchmark:run"
+  | "benchmark:cancel"
+  | "benchmark:download"
   | "usage:read:own"
   | "usage:read:all_users"
   | "cost:read:own"
@@ -192,6 +196,61 @@ export type CurrentUser = {
 export async function getMe(): Promise<CurrentUser> {
   const result = await get<{ user: CurrentUser }>("/me")
   return result.user
+}
+
+export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
+export type BenchmarkMode = "agent" | "search" | "load"
+export type BenchmarkRunner = "codebuild" | "lambda"
+
+export type BenchmarkRunMetrics = {
+  total: number
+  succeeded: number
+  failedHttp: number
+  answerableAccuracy?: number | null
+  abstentionRecall?: number | null
+  citationHitRate?: number | null
+  expectedFileHitRate?: number | null
+  retrievalRecallAt20?: number | null
+  p50LatencyMs?: number | null
+  p95LatencyMs?: number | null
+  averageLatencyMs?: number | null
+  errorRate?: number | null
+}
+
+export type BenchmarkRun = {
+  runId: string
+  status: BenchmarkRunStatus
+  mode: BenchmarkMode
+  runner: BenchmarkRunner
+  suiteId: string
+  datasetS3Key: string
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  startedAt?: string
+  completedAt?: string
+  executionArn?: string
+  codeBuildBuildId?: string
+  modelId?: string
+  embeddingModelId?: string
+  topK?: number
+  memoryTopK?: number
+  minScore?: number
+  concurrency?: number
+  summaryS3Key?: string
+  reportS3Key?: string
+  resultsS3Key?: string
+  metrics?: BenchmarkRunMetrics
+  error?: string
+}
+
+export type BenchmarkSuite = {
+  suiteId: string
+  label: string
+  mode: BenchmarkMode
+  datasetS3Key: string
+  preset: "smoke" | "standard"
+  defaultConcurrency: number
 }
 
 export async function uploadDocument(input: {
@@ -227,6 +286,38 @@ export type DebugDownloadResponse = {
 
 export async function createDebugDownload(runId: string): Promise<DebugDownloadResponse> {
   return post<DebugDownloadResponse>(`/debug-runs/${encodeURIComponent(runId)}/download`, {})
+}
+
+export async function listBenchmarkSuites(): Promise<BenchmarkSuite[]> {
+  const result = await get<{ suites?: BenchmarkSuite[] }>("/benchmark-suites")
+  return result.suites ?? []
+}
+
+export async function listBenchmarkRuns(): Promise<BenchmarkRun[]> {
+  const result = await get<{ benchmarkRuns?: BenchmarkRun[] }>("/benchmark-runs")
+  return result.benchmarkRuns ?? []
+}
+
+export async function startBenchmarkRun(input: {
+  suiteId: string
+  mode: BenchmarkMode
+  runner: BenchmarkRunner
+  modelId?: string
+  embeddingModelId?: string
+  topK?: number
+  memoryTopK?: number
+  minScore?: number
+  concurrency?: number
+}): Promise<BenchmarkRun> {
+  return post<BenchmarkRun>("/benchmark-runs", input)
+}
+
+export async function cancelBenchmarkRun(runId: string): Promise<BenchmarkRun> {
+  return post<BenchmarkRun>(`/benchmark-runs/${encodeURIComponent(runId)}/cancel`, {})
+}
+
+export async function createBenchmarkDownload(runId: string, artifact: "report" | "summary" | "results" = "report"): Promise<DebugDownloadResponse> {
+  return post<DebugDownloadResponse>(`/benchmark-runs/${encodeURIComponent(runId)}/download`, { artifact })
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {

@@ -122,6 +122,68 @@ export type ChatResponsePayload = {
   debug?: DebugTrace
 }
 
+export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
+export type BenchmarkMode = "agent" | "search" | "load"
+export type BenchmarkRunner = "codebuild" | "lambda"
+
+export type BenchmarkRunMetrics = {
+  total: number
+  succeeded: number
+  failedHttp: number
+  answerableAccuracy?: number
+  abstentionRecall?: number
+  citationHitRate?: number
+  expectedFileHitRate?: number
+  retrievalRecallAt20?: number
+  p50LatencyMs?: number
+  p95LatencyMs?: number
+  averageLatencyMs?: number
+  errorRate?: number
+}
+
+export type BenchmarkRunThresholds = {
+  answerableAccuracy?: number
+  retrievalRecallAt20?: number
+  p95LatencyMs?: number
+}
+
+export type BenchmarkRun = {
+  runId: string
+  status: BenchmarkRunStatus
+  mode: BenchmarkMode
+  runner: BenchmarkRunner
+  suiteId: string
+  datasetS3Key: string
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  startedAt?: string
+  completedAt?: string
+  executionArn?: string
+  codeBuildBuildId?: string
+  modelId?: string
+  embeddingModelId?: string
+  topK?: number
+  memoryTopK?: number
+  minScore?: number
+  concurrency?: number
+  thresholds?: BenchmarkRunThresholds
+  summaryS3Key?: string
+  reportS3Key?: string
+  resultsS3Key?: string
+  metrics?: BenchmarkRunMetrics
+  error?: string
+}
+
+export type BenchmarkSuite = {
+  suiteId: string
+  label: string
+  mode: BenchmarkMode
+  datasetS3Key: string
+  preset: "smoke" | "standard"
+  defaultConcurrency: number
+}
+
 export type QuestionStatus = "open" | "answered" | "resolved"
 export type QuestionPriority = "normal" | "high" | "urgent"
 

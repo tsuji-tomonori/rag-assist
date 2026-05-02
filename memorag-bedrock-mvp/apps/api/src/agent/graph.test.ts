@@ -7,6 +7,7 @@ import type { Dependencies } from "../dependencies.js"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
+import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
@@ -267,7 +268,8 @@ async function createTestDeps(): Promise<Dependencies> {
     evidenceVectorStore: new LocalVectorStore(dataDir, "evidence-vectors.json"),
     textModel: new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
-    conversationHistoryStore: new LocalConversationHistoryStore(dataDir)
+    conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    benchmarkRunStore: new LocalBenchmarkRunStore(dataDir)
   }
 }
 

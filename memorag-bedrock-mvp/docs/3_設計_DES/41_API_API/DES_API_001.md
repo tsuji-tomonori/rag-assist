@@ -173,6 +173,50 @@
 }
 ```
 
+## `POST /benchmark-runs`
+
+管理画面から benchmark run を非同期に起動する。API Lambda は DynamoDB に run record を作成し、Step Functions execution を開始する。実行本体は CodeBuild runner が `/benchmark/query` を呼び、S3 に `results.jsonl`、`summary.json`、`report.md` を保存する。
+
+### Request
+
+```json
+{
+  "suiteId": "standard-agent-v1",
+  "mode": "agent",
+  "runner": "codebuild",
+  "modelId": "amazon.nova-lite-v1:0",
+  "embeddingModelId": "amazon.titan-embed-text-v2:0",
+  "topK": 6,
+  "memoryTopK": 4,
+  "minScore": 0.2,
+  "concurrency": 1
+}
+```
+
+### Response
+
+```json
+{
+  "runId": "bench_20260502T000000Z_abc12345",
+  "status": "queued",
+  "mode": "agent",
+  "runner": "codebuild",
+  "suiteId": "standard-agent-v1",
+  "datasetS3Key": "datasets/agent/standard-v1.jsonl",
+  "createdBy": "user-id",
+  "createdAt": "2026-05-02T00:00:00.000Z",
+  "updatedAt": "2026-05-02T00:00:00.000Z"
+}
+```
+
+## `GET /benchmark-runs`
+
+benchmark run の履歴一覧を返す。管理画面はこの API をポーリングして `queued`、`running`、`succeeded`、`failed`、`cancelled` を表示する。
+
+## `POST /benchmark-runs/{runId}/download`
+
+`report`、`summary`、`results` のいずれかの成果物に対する S3 signed URL を返す。既定は `report`。
+
 ### Response
 
 ```json
@@ -213,7 +257,12 @@
 | debug trace 一覧 | `GET /debug-runs` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
 | debug trace 詳細 | `GET /debug-runs/{runId}` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
 | debug JSON download | `POST /debug-runs/{runId}/download` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
-| benchmark query | `POST /benchmark/query` | `chat:admin:read_all` | `SYSTEM_ADMIN` |
+| benchmark query | `POST /benchmark/query` | `benchmark:run` | `BENCHMARK_RUNNER`, `SYSTEM_ADMIN` |
+| benchmark suite 一覧 | `GET /benchmark-suites` | `benchmark:read` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| benchmark run 起動 | `POST /benchmark-runs` | `benchmark:run` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| benchmark run 一覧/詳細 | `GET /benchmark-runs`, `GET /benchmark-runs/{runId}` | `benchmark:read` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| benchmark run cancel | `POST /benchmark-runs/{runId}/cancel` | `benchmark:cancel` | `SYSTEM_ADMIN` |
+| benchmark artifact download | `POST /benchmark-runs/{runId}/download` | `benchmark:download` | `SYSTEM_ADMIN` |
 
 Phase 1 ではユーザー作成、ユーザー停止、ロール付与、ロール一覧編集、アクセス policy 編集、コスト監査、全ユーザー利用状況一覧の API/UI は提供しない。
 

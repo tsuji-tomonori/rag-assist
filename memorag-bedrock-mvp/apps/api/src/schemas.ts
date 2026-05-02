@@ -253,6 +253,89 @@ export const BenchmarkQueryResponseSchema = ChatResponseSchema.extend({
   id: z.string().optional()
 })
 
+export const BenchmarkModeSchema = z.enum(["agent", "search", "load"])
+export const BenchmarkRunnerSchema = z.enum(["codebuild", "lambda"])
+export const BenchmarkRunStatusSchema = z.enum(["queued", "running", "succeeded", "failed", "cancelled"])
+
+export const BenchmarkRunThresholdsSchema = z.object({
+  answerableAccuracy: z.number().min(0).max(1).optional().openapi({ example: 0.8 }),
+  retrievalRecallAt20: z.number().min(0).max(1).optional().openapi({ example: 0.8 }),
+  p95LatencyMs: z.number().int().positive().optional().openapi({ example: 15000 })
+})
+
+export const BenchmarkRunMetricsSchema = z.object({
+  total: z.number().int().nonnegative(),
+  succeeded: z.number().int().nonnegative(),
+  failedHttp: z.number().int().nonnegative(),
+  answerableAccuracy: z.number().nullable().optional(),
+  abstentionRecall: z.number().nullable().optional(),
+  citationHitRate: z.number().nullable().optional(),
+  expectedFileHitRate: z.number().nullable().optional(),
+  retrievalRecallAt20: z.number().nullable().optional(),
+  p50LatencyMs: z.number().nullable().optional(),
+  p95LatencyMs: z.number().nullable().optional(),
+  averageLatencyMs: z.number().nullable().optional(),
+  errorRate: z.number().nullable().optional()
+})
+
+export const BenchmarkRunSchema = z.object({
+  runId: z.string(),
+  status: BenchmarkRunStatusSchema,
+  mode: BenchmarkModeSchema,
+  runner: BenchmarkRunnerSchema,
+  suiteId: z.string(),
+  datasetS3Key: z.string(),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional(),
+  executionArn: z.string().optional(),
+  codeBuildBuildId: z.string().optional(),
+  modelId: z.string().optional(),
+  embeddingModelId: z.string().optional(),
+  topK: z.number().int().optional(),
+  memoryTopK: z.number().int().optional(),
+  minScore: z.number().optional(),
+  concurrency: z.number().int().optional(),
+  thresholds: BenchmarkRunThresholdsSchema.optional(),
+  summaryS3Key: z.string().optional(),
+  reportS3Key: z.string().optional(),
+  resultsS3Key: z.string().optional(),
+  metrics: BenchmarkRunMetricsSchema.optional(),
+  error: z.string().optional()
+})
+
+export const CreateBenchmarkRunRequestSchema = z.object({
+  suiteId: z.string().optional().openapi({ example: "standard-agent-v1" }),
+  mode: BenchmarkModeSchema.optional().openapi({ example: "agent" }),
+  runner: BenchmarkRunnerSchema.optional().openapi({ example: "codebuild" }),
+  modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
+  embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
+  topK: z.number().int().min(1).max(20).optional().openapi({ example: 6 }),
+  memoryTopK: z.number().int().min(1).max(10).optional().openapi({ example: 4 }),
+  minScore: z.number().min(-1).max(1).optional().openapi({ example: 0.2 }),
+  concurrency: z.number().int().min(1).max(20).optional().openapi({ example: 1 }),
+  thresholds: BenchmarkRunThresholdsSchema.optional()
+})
+
+export const BenchmarkRunListResponseSchema = z.object({
+  benchmarkRuns: z.array(BenchmarkRunSchema)
+})
+
+export const BenchmarkSuiteSchema = z.object({
+  suiteId: z.string(),
+  label: z.string(),
+  mode: BenchmarkModeSchema,
+  datasetS3Key: z.string(),
+  preset: z.enum(["smoke", "standard"]),
+  defaultConcurrency: z.number().int().positive()
+})
+
+export const BenchmarkSuiteListResponseSchema = z.object({
+  suites: z.array(BenchmarkSuiteSchema)
+})
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
   details: z.record(z.array(z.string())).optional()

@@ -48,11 +48,12 @@
 | --- | --- |
 | `CHAT_USER` | 通常チャット、本人の会話履歴、担当者問い合わせ登録 |
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
-| `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用 |
+| `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
+| `BENCHMARK_RUNNER` | CodeBuild runner から `/benchmark/query` を実行 |
 | `USER_ADMIN` | ユーザー管理の将来拡張 |
 | `ACCESS_ADMIN` | 権限管理の将来拡張 |
 | `COST_AUDITOR` | 費用監査の将来拡張 |
-| `SYSTEM_ADMIN` | debug trace、benchmark、管理者検証 |
+| `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証 |
 
 事前条件:
 
