@@ -12,6 +12,7 @@ type RoutePolicy = {
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
 
 const protectedMiddlewarePaths = [
+  "/admin/*",
   "/documents",
   "/documents/*",
   "/chat",
@@ -29,6 +30,14 @@ const protectedMiddlewarePaths = [
 ]
 
 const routePolicies: RoutePolicy[] = [
+  { method: "get", path: "/admin/users", permission: "user:read" },
+  { method: "post", path: "/admin/users/{userId}/roles", permission: "access:role:assign" },
+  { method: "post", path: "/admin/users/{userId}/suspend", permission: "user:suspend" },
+  { method: "post", path: "/admin/users/{userId}/unsuspend", permission: "user:unsuspend" },
+  { method: "delete", path: "/admin/users/{userId}", permission: "user:delete" },
+  { method: "get", path: "/admin/roles", permission: "access:policy:read" },
+  { method: "get", path: "/admin/usage", permission: "usage:read:all_users" },
+  { method: "get", path: "/admin/costs", permission: "cost:read:all" },
   { method: "get", path: "/documents", permission: "rag:doc:read" },
   { method: "post", path: "/documents", permission: "rag:doc:write:group" },
   { method: "delete", path: "/documents/{documentId}", permission: "rag:doc:delete:group" },

@@ -115,6 +115,32 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     const history = await getJson(`http://127.0.0.1:${port}/conversation-history`)
     assert.equal(history.body.history[0].schemaVersion, 1)
     validateSchema(history.body, responseSchema(openapi, "/conversation-history", "get", 200), openapi)
+
+    const adminUsers = await getJson(`http://127.0.0.1:${port}/admin/users`)
+    assert.equal(Array.isArray(adminUsers.body.users), true)
+    assert.equal(adminUsers.body.users[0].userId, "local-dev")
+    validateSchema(adminUsers.body, responseSchema(openapi, "/admin/users", "get", 200), openapi)
+
+    const roles = await getJson(`http://127.0.0.1:${port}/admin/roles`)
+    assert.equal(Array.isArray(roles.body.roles), true)
+    assert.ok(roles.body.roles.some((role: { role: string }) => role.role === "SYSTEM_ADMIN"))
+    validateSchema(roles.body, responseSchema(openapi, "/admin/roles", "get", 200), openapi)
+
+    const assignRoles = await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/roles`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ groups: ["SYSTEM_ADMIN", "COST_AUDITOR"] })
+    })
+    assert.equal(assignRoles.status, 200)
+    validateSchema(await assignRoles.json(), responseSchema(openapi, "/admin/users/{userId}/roles", "post", 200), openapi)
+
+    const usage = await getJson(`http://127.0.0.1:${port}/admin/usage`)
+    assert.equal(Array.isArray(usage.body.users), true)
+    validateSchema(usage.body, responseSchema(openapi, "/admin/usage", "get", 200), openapi)
+
+    const costs = await getJson(`http://127.0.0.1:${port}/admin/costs`)
+    assert.equal(costs.body.currency, "USD")
+    validateSchema(costs.body, responseSchema(openapi, "/admin/costs", "get", 200), openapi)
   } finally {
     server.kill("SIGTERM")
   }
@@ -330,6 +356,46 @@ test("answer editors cannot create questions without chat permission", async () 
     })
 
     assert.equal(createQuestion.status, 403)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
+test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions", async () => {
+  const port = 24000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-phase2-rbac-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "CHAT_USER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/users`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/roles`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/usage`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/costs`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/suspend`, { method: "POST" })).status, 403)
+    assert.equal(
+      (await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/roles`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ groups: ["CHAT_USER"] })
+      })).status,
+      403
+    )
   } finally {
     server.kill("SIGTERM")
   }

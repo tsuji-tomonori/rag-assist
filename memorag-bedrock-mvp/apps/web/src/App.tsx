@@ -1,35 +1,47 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
+  assignUserRoles,
   answerQuestion,
   cancelBenchmarkRun,
   chat,
   createBenchmarkDownload,
   createQuestion,
   createDebugDownload,
+  deleteManagedUser,
   deleteConversationHistory,
   deleteDocument,
   fileToBase64,
+  getCostAuditSummary,
   getMe,
+  listAccessRoles,
   listConversationHistory,
   listQuestions,
   listBenchmarkRuns,
   listBenchmarkSuites,
   listDebugRuns,
   listDocuments,
+  listManagedUsers,
+  listUsageSummaries,
   resolveQuestion,
   saveConversationHistory,
   startBenchmarkRun,
+  suspendManagedUser,
+  unsuspendManagedUser,
   uploadDocument,
+  type AccessRoleDefinition,
   type BenchmarkRun,
   type BenchmarkSuite,
   type ChatResponse,
   type ConversationHistoryItem,
+  type CostAuditSummary,
   type CurrentUser,
   type DebugStep,
   type DebugTrace,
   type DocumentManifest,
   type HumanQuestion,
-  type Permission
+  type ManagedUser,
+  type Permission,
+  type UserUsageSummary
 } from "./api.js"
 import { completeNewPasswordChallenge, confirmSignUp, getStoredAuthSession, signIn, signOut, signUp, type AuthSession } from "./authClient.js"
 import LoginPage from "./LoginPage.js"
@@ -77,6 +89,10 @@ export default function App() {
   const [benchmarkRuns, setBenchmarkRuns] = useState<BenchmarkRun[]>([])
   const [benchmarkSuites, setBenchmarkSuites] = useState<BenchmarkSuite[]>([])
   const [questions, setQuestions] = useState<HumanQuestion[]>([])
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([])
+  const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[]>([])
+  const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[]>([])
+  const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
   const [activeView, setActiveView] = useState<AppView>("chat")
   const [selectedDocumentId, setSelectedDocumentId] = useState("all")
   const [selectedRunId, setSelectedRunId] = useState("")
@@ -116,8 +132,17 @@ export default function App() {
   const canRunBenchmark = hasPermission("benchmark:run")
   const canCancelBenchmark = hasPermission("benchmark:cancel")
   const canDownloadBenchmark = hasPermission("benchmark:download")
+  const canReadUsers = hasPermission("user:read")
+  const canSuspendUsers = hasPermission("user:suspend")
+  const canUnsuspendUsers = hasPermission("user:unsuspend")
+  const canDeleteUsers = hasPermission("user:delete")
+  const canAssignRoles = hasPermission("access:role:assign")
+  const canReadUsage = hasPermission("usage:read:all_users")
+  const canReadCosts = hasPermission("cost:read:all")
   const canManageDocuments = canWriteDocuments || canDeleteDocuments
-  const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns || canReadBenchmarkRuns
+  const canManageUsers = canReadUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
+  const canAuditOperations = canReadUsage || canReadCosts
+  const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns || canReadBenchmarkRuns || canManageUsers || canAuditOperations
   const canAsk = useMemo(() => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && !loading && canCreateChat, [question, file, loading, canCreateChat, canWriteDocuments])
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
   const latestTrace = latestAssistant?.result?.debug
@@ -162,6 +187,10 @@ export default function App() {
       refreshBenchmarkRuns().catch((err) => console.warn("Failed to load benchmark runs", err))
       refreshBenchmarkSuites().catch((err) => console.warn("Failed to load benchmark suites", err))
     }
+    if (canReadUsers) refreshManagedUsers().catch((err) => console.warn("Failed to load managed users", err))
+    if (canOpenAdminSettings) refreshAccessRoles().catch((err) => console.warn("Failed to load access roles", err))
+    if (canReadUsage) refreshUsageSummaries().catch((err) => console.warn("Failed to load usage summaries", err))
+    if (canReadCosts) refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err))
     if (canAnswerQuestions) refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
     if (canReadHistory) refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -252,6 +281,22 @@ export default function App() {
     const suites = await listBenchmarkSuites()
     setBenchmarkSuites(suites)
     setBenchmarkSuiteId((current) => suites.find((suite) => suite.suiteId === current)?.suiteId ?? suites[0]?.suiteId ?? current)
+  }
+
+  async function refreshManagedUsers() {
+    setManagedUsers(await listManagedUsers())
+  }
+
+  async function refreshAccessRoles() {
+    setAccessRoles(await listAccessRoles())
+  }
+
+  async function refreshUsageSummaries() {
+    setUsageSummaries(await listUsageSummaries())
+  }
+
+  async function refreshCostAudit() {
+    setCostAudit(await getCostAuditSummary())
   }
 
   async function refreshQuestions() {
@@ -471,6 +516,44 @@ export default function App() {
     try {
       const cancelled = await cancelBenchmarkRun(runId)
       setBenchmarkRuns((prev) => [cancelled, ...prev.filter((run) => run.runId !== runId)])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onAssignUserRoles(userId: string, groups: string[]) {
+    setLoading(true)
+    setError(null)
+    try {
+      const updated = await assignUserRoles(userId, groups)
+      setManagedUsers((prev) => [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
+      await Promise.all([
+        canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
+        canReadCosts ? refreshCostAudit() : Promise.resolve()
+      ])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete") {
+    setLoading(true)
+    setError(null)
+    try {
+      const updated =
+        action === "suspend" ? await suspendManagedUser(userId) : action === "unsuspend" ? await unsuspendManagedUser(userId) : await deleteManagedUser(userId)
+      setManagedUsers((prev) => {
+        if (updated.status === "deleted") return prev.filter((user) => user.userId !== userId)
+        return [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
+      })
+      await Promise.all([
+        canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
+        canReadCosts ? refreshCostAudit() : Promise.resolve()
+      ])
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -750,11 +833,23 @@ export default function App() {
             openQuestionsCount={questions.filter((questionItem) => questionItem.status === "open").length}
             debugRunsCount={debugRuns.length}
             benchmarkRunsCount={benchmarkRuns.length}
+            managedUsers={managedUsers}
+            accessRoles={accessRoles}
+            usageSummaries={usageSummaries}
+            costAudit={costAudit}
+            loading={loading}
             canManageDocuments={canManageDocuments}
             canAnswerQuestions={canAnswerQuestions}
             canReadDebugRuns={canReadDebugRuns}
             canReadBenchmarkRuns={canReadBenchmarkRuns}
             canOpenAdminSettings={canOpenAdminSettings}
+            canReadUsers={canReadUsers}
+            canSuspendUsers={canSuspendUsers}
+            canUnsuspendUsers={canUnsuspendUsers}
+            canDeleteUsers={canDeleteUsers}
+            canAssignRoles={canAssignRoles}
+            canReadUsage={canReadUsage}
+            canReadCosts={canReadCosts}
             onOpenDocuments={() => setActiveView("documents")}
             onOpenAssignee={() => setActiveView("assignee")}
             onOpenDebug={() => {
@@ -762,6 +857,16 @@ export default function App() {
               setActiveView("chat")
             }}
             onOpenBenchmark={() => setActiveView("benchmark")}
+            onAssignRoles={onAssignUserRoles}
+            onSetUserStatus={onSetManagedUserStatus}
+            onRefreshAdminData={() =>
+              Promise.all([
+                canReadUsers ? refreshManagedUsers() : Promise.resolve(),
+                canOpenAdminSettings ? refreshAccessRoles() : Promise.resolve(),
+                canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
+                canReadCosts ? refreshCostAudit() : Promise.resolve()
+              ]).then(() => undefined)
+            }
             onBack={() => setActiveView("chat")}
           />
         ) : (
@@ -1572,15 +1677,30 @@ function AdminWorkspace({
   openQuestionsCount,
   debugRunsCount,
   benchmarkRunsCount,
+  managedUsers,
+  accessRoles,
+  usageSummaries,
+  costAudit,
+  loading,
   canManageDocuments,
   canAnswerQuestions,
   canReadDebugRuns,
   canReadBenchmarkRuns,
   canOpenAdminSettings,
+  canReadUsers,
+  canSuspendUsers,
+  canUnsuspendUsers,
+  canDeleteUsers,
+  canAssignRoles,
+  canReadUsage,
+  canReadCosts,
   onOpenDocuments,
   onOpenAssignee,
   onOpenDebug,
   onOpenBenchmark,
+  onAssignRoles,
+  onSetUserStatus,
+  onRefreshAdminData,
   onBack
 }: {
   user: CurrentUser | null
@@ -1588,15 +1708,30 @@ function AdminWorkspace({
   openQuestionsCount: number
   debugRunsCount: number
   benchmarkRunsCount: number
+  managedUsers: ManagedUser[]
+  accessRoles: AccessRoleDefinition[]
+  usageSummaries: UserUsageSummary[]
+  costAudit: CostAuditSummary | null
+  loading: boolean
   canManageDocuments: boolean
   canAnswerQuestions: boolean
   canReadDebugRuns: boolean
   canReadBenchmarkRuns: boolean
   canOpenAdminSettings: boolean
+  canReadUsers: boolean
+  canSuspendUsers: boolean
+  canUnsuspendUsers: boolean
+  canDeleteUsers: boolean
+  canAssignRoles: boolean
+  canReadUsage: boolean
+  canReadCosts: boolean
   onOpenDocuments: () => void
   onOpenAssignee: () => void
   onOpenDebug: () => void
   onOpenBenchmark: () => void
+  onAssignRoles: (userId: string, groups: string[]) => Promise<void>
+  onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
+  onRefreshAdminData: () => Promise<void>
   onBack: () => void
 }) {
   return (
@@ -1641,11 +1776,146 @@ function AdminWorkspace({
           </button>
         )}
         {canOpenAdminSettings && (
-          <div className="admin-overview-tile disabled-tile" aria-label="アクセス管理">
+          <div className="admin-overview-tile" aria-label="アクセス管理">
             <Icon name="settings" />
             <strong>アクセス管理</strong>
-            <span>Phase 2</span>
+            <span>{accessRoles.length} role</span>
           </div>
+        )}
+        {canReadUsers && (
+          <div className="admin-overview-tile" aria-label="ユーザー管理">
+            <Icon name="settings" />
+            <strong>ユーザー管理</strong>
+            <span>{managedUsers.length} users</span>
+          </div>
+        )}
+        {canReadUsage && (
+          <div className="admin-overview-tile" aria-label="利用状況">
+            <Icon name="gauge" />
+            <strong>利用状況</strong>
+            <span>{usageSummaries.length} users</span>
+          </div>
+        )}
+        {canReadCosts && (
+          <div className="admin-overview-tile" aria-label="コスト監査">
+            <Icon name="warning" />
+            <strong>コスト監査</strong>
+            <span>{formatCurrency(costAudit?.totalEstimatedUsd ?? 0)}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="phase2-admin-grid">
+        {canReadUsers && (
+          <section className="admin-section-panel user-admin-panel" aria-label="ユーザー管理一覧">
+            <div className="document-list-head">
+              <h3>ユーザー管理</h3>
+              <button type="button" onClick={() => void onRefreshAdminData()} disabled={loading}>更新</button>
+            </div>
+            <div className="admin-data-table" role="table" aria-label="ユーザー一覧">
+              <div className="admin-user-row admin-user-head" role="row">
+                <span role="columnheader">ユーザー</span>
+                <span role="columnheader">状態</span>
+                <span role="columnheader">ロール</span>
+                <span role="columnheader">操作</span>
+              </div>
+              {managedUsers.length === 0 ? (
+                <div className="empty-question-panel">管理対象ユーザーはありません。</div>
+              ) : (
+                managedUsers.map((managedUser) => (
+                  <ManagedUserRow
+                    key={managedUser.userId}
+                    user={managedUser}
+                    roles={accessRoles}
+                    loading={loading}
+                    canAssignRoles={canAssignRoles}
+                    canSuspend={canSuspendUsers}
+                    canUnsuspend={canUnsuspendUsers}
+                    canDelete={canDeleteUsers}
+                    onAssignRoles={onAssignRoles}
+                    onSetStatus={onSetUserStatus}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+        )}
+
+        {canOpenAdminSettings && (
+          <section className="admin-section-panel" aria-label="ロール定義">
+            <div className="document-list-head">
+              <h3>ロール定義</h3>
+              <span>{accessRoles.length} 件</span>
+            </div>
+            <div className="role-definition-list">
+              {accessRoles.map((role) => (
+                <article className="role-definition-card" key={role.role}>
+                  <strong>{role.role}</strong>
+                  <span>{role.permissions.length} permissions</span>
+                  <p>{role.permissions.join(", ")}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {canReadUsage && (
+          <section className="admin-section-panel" aria-label="利用状況一覧">
+            <div className="document-list-head">
+              <h3>利用状況</h3>
+              <span>{usageSummaries.length} users</span>
+            </div>
+            <div className="usage-table" role="table" aria-label="利用状況">
+              <div className="usage-row usage-head" role="row">
+                <span role="columnheader">ユーザー</span>
+                <span role="columnheader">chat</span>
+                <span role="columnheader">文書</span>
+                <span role="columnheader">問い合わせ</span>
+                <span role="columnheader">benchmark</span>
+                <span role="columnheader">debug</span>
+                <span role="columnheader">最終利用</span>
+              </div>
+              {usageSummaries.map((item) => (
+                <div className="usage-row" role="row" key={item.userId}>
+                  <span role="cell">{item.email}</span>
+                  <span role="cell">{item.chatMessages}</span>
+                  <span role="cell">{item.documentCount}</span>
+                  <span role="cell">{item.questionCount}</span>
+                  <span role="cell">{item.benchmarkRunCount}</span>
+                  <span role="cell">{item.debugRunCount}</span>
+                  <span role="cell">{item.lastActivityAt ? formatDateTime(item.lastActivityAt) : "-"}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {canReadCosts && costAudit && (
+          <section className="admin-section-panel" aria-label="コスト監査一覧">
+            <div className="document-list-head">
+              <h3>コスト監査</h3>
+              <span>{formatCurrency(costAudit.totalEstimatedUsd)}</span>
+            </div>
+            <div className="cost-summary-line">
+              <span>{formatDate(costAudit.periodStart)} - {formatDate(costAudit.periodEnd)}</span>
+              <span>pricing: {formatDate(costAudit.pricingCatalogUpdatedAt)}</span>
+            </div>
+            <div className="cost-item-list">
+              {costAudit.items.map((item) => (
+                <article className="cost-item" key={`${item.service}-${item.category}`}>
+                  <div>
+                    <strong>{item.service}</strong>
+                    <span>{item.category}</span>
+                  </div>
+                  <div>
+                    <span>{item.usage} {item.unit}</span>
+                    <strong>{formatCurrency(item.estimatedCostUsd)}</strong>
+                  </div>
+                  <i>{costConfidenceLabel(item.confidence)}</i>
+                </article>
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </section>
@@ -1669,6 +1939,69 @@ function BenchmarkMetricCard({
       <strong>{value}</strong>
       <small>{subValue}</small>
     </article>
+  )
+}
+
+function ManagedUserRow({
+  user,
+  roles,
+  loading,
+  canAssignRoles,
+  canSuspend,
+  canUnsuspend,
+  canDelete,
+  onAssignRoles,
+  onSetStatus
+}: {
+  user: ManagedUser
+  roles: AccessRoleDefinition[]
+  loading: boolean
+  canAssignRoles: boolean
+  canSuspend: boolean
+  canUnsuspend: boolean
+  canDelete: boolean
+  onAssignRoles: (userId: string, groups: string[]) => Promise<void>
+  onSetStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
+}) {
+  const [selectedRole, setSelectedRole] = useState(user.groups[0] ?? "CHAT_USER")
+
+  useEffect(() => {
+    setSelectedRole(user.groups[0] ?? "CHAT_USER")
+  }, [user.groups])
+
+  return (
+    <div className="admin-user-row" role="row">
+      <span role="cell">
+        <strong>{user.displayName || user.email}</strong>
+        <small>{user.email}</small>
+      </span>
+      <span role="cell">
+        <i className={`user-status ${user.status}`}>{managedUserStatusLabel(user.status)}</i>
+      </span>
+      <span role="cell">
+        <div className="role-assignment">
+          <select value={selectedRole} disabled={!canAssignRoles || loading} onChange={(event) => setSelectedRole(event.target.value)}>
+            {roles.map((role) => (
+              <option value={role.role} key={role.role}>{role.role}</option>
+            ))}
+          </select>
+          <button type="button" disabled={!canAssignRoles || loading || user.groups.includes(selectedRole)} onClick={() => void onAssignRoles(user.userId, [selectedRole])}>
+            付与
+          </button>
+        </div>
+        <small>{user.groups.join(" / ")}</small>
+      </span>
+      <span role="cell">
+        <div className="user-row-actions">
+          {user.status === "suspended" ? (
+            <button type="button" disabled={!canUnsuspend || loading} onClick={() => void onSetStatus(user.userId, "unsuspend")}>再開</button>
+          ) : (
+            <button type="button" disabled={!canSuspend || loading} onClick={() => void onSetStatus(user.userId, "suspend")}>停止</button>
+          )}
+          <button type="button" disabled={!canDelete || loading} onClick={() => void onSetStatus(user.userId, "delete")}>削除</button>
+        </div>
+      </span>
+    </div>
   )
 }
 
@@ -1964,6 +2297,28 @@ function formatShortDate(input?: string): string {
   const date = new Date(input)
   if (Number.isNaN(date.getTime())) return "-"
   return date.toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit" })
+}
+
+function formatCurrency(value: number): string {
+  return `$${value.toFixed(4)}`
+}
+
+function formatDate(input: string): string {
+  const date = new Date(input)
+  if (Number.isNaN(date.getTime())) return "-"
+  return date.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" })
+}
+
+function managedUserStatusLabel(status: ManagedUser["status"]): string {
+  if (status === "active") return "有効"
+  if (status === "suspended") return "停止中"
+  return "削除済み"
+}
+
+function costConfidenceLabel(confidence: CostAuditSummary["items"][number]["confidence"]): string {
+  if (confidence === "actual_usage") return "実測"
+  if (confidence === "estimated_usage") return "概算"
+  return "手動見積"
 }
 
 function formatTime(input: string): string {

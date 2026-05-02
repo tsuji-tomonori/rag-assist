@@ -184,6 +184,63 @@ export type BenchmarkSuite = {
   defaultConcurrency: number
 }
 
+export type ManagedUserStatus = "active" | "suspended" | "deleted"
+
+export type ManagedUser = {
+  userId: string
+  email: string
+  displayName?: string
+  status: ManagedUserStatus
+  groups: string[]
+  createdAt: string
+  updatedAt: string
+  lastLoginAt?: string
+}
+
+export type AccessRoleDefinition = {
+  role: string
+  permissions: string[]
+}
+
+export type UserUsageSummary = {
+  userId: string
+  email: string
+  displayName?: string
+  chatMessages: number
+  conversationCount: number
+  questionCount: number
+  documentCount: number
+  benchmarkRunCount: number
+  debugRunCount: number
+  lastActivityAt?: string
+}
+
+export type CostAuditItem = {
+  service: string
+  category: string
+  usage: number
+  unit: string
+  unitCostUsd: number
+  estimatedCostUsd: number
+  confidence: "actual_usage" | "estimated_usage" | "manual_estimate"
+}
+
+export type UserCostSummary = {
+  userId: string
+  email: string
+  estimatedCostUsd: number
+}
+
+export type CostAuditSummary = {
+  periodStart: string
+  periodEnd: string
+  currency: "USD"
+  totalEstimatedUsd: number
+  items: CostAuditItem[]
+  users: UserCostSummary[]
+  pricingCatalogUpdatedAt: string
+}
+
 export type QuestionStatus = "open" | "answered" | "resolved"
 export type QuestionPriority = "normal" | "high" | "urgent"
 
