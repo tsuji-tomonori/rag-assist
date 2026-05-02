@@ -6,6 +6,7 @@ export type AuthSession = {
   accessToken?: string
   refreshToken?: string
   expiresAt: number
+  cognitoGroups?: string[]
 }
 
 export type NewPasswordRequiredChallenge = {
@@ -153,7 +154,8 @@ function storeAuthenticatedResult(email: string, body: CognitoResponseBody, reme
       idToken: body.AuthenticationResult.IdToken,
       accessToken: body.AuthenticationResult.AccessToken,
       refreshToken: body.AuthenticationResult.RefreshToken,
-      expiresAt: Date.now() + (body.AuthenticationResult.ExpiresIn ?? 3600) * 1000
+      expiresAt: Date.now() + (body.AuthenticationResult.ExpiresIn ?? 3600) * 1000,
+      cognitoGroups: readCognitoGroups(body.AuthenticationResult.IdToken)
     },
     remember
   )
@@ -197,7 +199,9 @@ function readSession(storage: Storage): AuthSession | null {
   if (!value) return null
   try {
     const parsed = JSON.parse(value) as AuthSession
-    return parsed.idToken && parsed.email && parsed.expiresAt ? parsed : null
+    return parsed.idToken && parsed.email && parsed.expiresAt
+      ? { ...parsed, cognitoGroups: parsed.cognitoGroups ?? readCognitoGroups(parsed.idToken) }
+      : null
   } catch {
     storage.removeItem(sessionKey)
     return null
@@ -208,6 +212,25 @@ function createLocalSession(email: string): AuthSession {
   return {
     email,
     idToken: "local-dev-token",
-    expiresAt: Date.now() + 24 * 60 * 60 * 1000
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    cognitoGroups: ["SYSTEM_ADMIN"]
+  }
+}
+
+function readCognitoGroups(idToken: string): string[] {
+  const payload = parseJwtPayload(idToken)
+  const groups = payload?.["cognito:groups"]
+  return Array.isArray(groups) ? groups.filter((item): item is string => typeof item === "string") : []
+}
+
+function parseJwtPayload(token: string): Record<string, unknown> | undefined {
+  const payload = token.split(".")[1]
+  if (!payload) return undefined
+  try {
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/")
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=")
+    return JSON.parse(globalThis.atob(padded)) as Record<string, unknown>
+  } catch {
+    return undefined
   }
 }

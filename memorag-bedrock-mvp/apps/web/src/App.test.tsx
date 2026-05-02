@@ -123,6 +123,11 @@ function isGet(init?: RequestInit) {
   return !init?.method || init.method === "GET"
 }
 
+function jwtWithGroups(groups: string[]) {
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url")
+  return `${encode({ alg: "none", typ: "JWT" })}.${encode({ sub: "user-1", email: "tester@example.com", "cognito:groups": groups })}.signature`
+}
+
 function mockAppFetch() {
   let storedHistory: unknown[] = []
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
@@ -587,6 +592,46 @@ describe("App chat and upload flow", () => {
     expect(screen.getByLabelText("質問")).toHaveValue("追加確認: 今日山田さんは何を食べた?について確認したい\n")
     await userEvent.click(screen.getByText("解決した"))
     expect(await screen.findByText("解決済み")).toBeInTheDocument()
+  })
+
+  it("does not fetch assignee or admin resources for chat users when escalating", async () => {
+    window.sessionStorage.setItem(
+      "memorag.auth.session",
+      JSON.stringify({
+        email: "tester@example.com",
+        idToken: jwtWithGroups(["CHAT_USER"]),
+        expiresAt: Date.now() + 3600_000
+      })
+    )
+
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      const requestUrl = String(url)
+      if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: [] }))
+      if (requestUrl.endsWith("/chat") && init?.method === "POST") {
+        return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
+      }
+      if (requestUrl.endsWith("/questions") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body ?? "{}"))
+        return Promise.resolve(response({ ...humanQuestion, ...body }))
+      }
+      return Promise.resolve(response({}))
+    })
+    vi.stubGlobal("fetch", fetchMock)
+    render(<App />)
+
+    expect(await screen.findByText("資料を添付して開始できます")).toBeInTheDocument()
+    expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("質問"), "今日山田さんは何を食べた?")
+    await userEvent.click(screen.getByTitle("送信"))
+    expect(await screen.findByText("資料からは回答できません。")).toBeInTheDocument()
+    await userEvent.click(await screen.findByText("担当者へ送信"))
+    expect(await screen.findByText("担当者へ送信済み")).toBeInTheDocument()
+
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
   })
 
   it("renders empty and preloaded assignee workspaces", async () => {

@@ -184,7 +184,7 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "user:read")
+    requirePermission(c.get("user"), "answer:edit")
     return c.json({ questions: await service.listQuestions() }, 200)
   }
 )
@@ -227,6 +227,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "answer:edit")
     try {
       const { questionId } = (c.req as any).valid("param") as { questionId: string }
       const body = (c.req as any).valid("json") as z.infer<typeof AnswerQuestionRequestSchema>
@@ -251,6 +252,7 @@ app.openapi(
     }
   }),
   async (c) => {
+    requirePermission(c.get("user"), "answer:edit")
     try {
       const { questionId } = (c.req as any).valid("param") as { questionId: string }
       return c.json(await service.resolveQuestion(questionId), 200)
