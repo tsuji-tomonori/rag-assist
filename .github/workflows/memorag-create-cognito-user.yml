@@ -84,11 +84,25 @@ jobs:
           fi
 
           assigned_roles=()
+          allowed_roles=(
+            CHAT_USER
+            ANSWER_EDITOR
+            RAG_GROUP_MANAGER
+            USER_ADMIN
+            ACCESS_ADMIN
+            COST_AUDITOR
+          )
           IFS=',' read -ra requested_roles <<< "$USER_ROLES"
           for role in "${requested_roles[@]}"; do
             role="${role#"${role%%[![:space:]]*}"}"
             role="${role%"${role##*[![:space:]]}"}"
             if [[ -n "$role" ]]; then
+              if [[ ! " ${allowed_roles[*]} " =~ [[:space:]]${role}[[:space:]] ]]; then
+                echo "Unsupported role in this workflow: $role" >&2
+                echo "Allowed roles: ${allowed_roles[*]}" >&2
+                echo "SYSTEM_ADMIN must not be assigned from GitHub Actions." >&2
+                exit 1
+              fi
               args+=(--role "$role")
               assigned_roles+=("$role")
             fi
