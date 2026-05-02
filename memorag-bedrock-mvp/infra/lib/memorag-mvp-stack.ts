@@ -136,6 +136,14 @@ export class MemoRagMvpStack extends Stack {
       destinationBucket: benchmarkBucket,
       destinationKeyPrefix: "datasets/agent"
     })
+    new s3deploy.BucketDeployment(this, "DeploySearchBenchmarkDatasets", {
+      sources: [
+        s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/datasets/search.sample.jsonl"), "utf-8")),
+        s3deploy.Source.data("standard-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/datasets/search.sample.jsonl"), "utf-8"))
+      ],
+      destinationBucket: benchmarkBucket,
+      destinationKeyPrefix: "datasets/search"
+    })
 
     const s3VectorsProviderLogGroup = new logs.LogGroup(this, "S3VectorsProviderLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
@@ -428,7 +436,7 @@ export class MemoRagMvpStack extends Stack {
           build: {
             commands: [
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
-              "API_BASE_URL=\"$API_BASE_URL\" MODEL_ID=\"$MODEL_ID\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" MEMORY_TOP_K=\"$MEMORY_TOP_K\" MIN_SCORE=\"$MIN_SCORE\" npm run start -w @memorag-mvp/benchmark"
+              "if [ \"$MODE\" = \"search\" ]; then API_BASE_URL=\"$API_BASE_URL\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" npm run start:search -w @memorag-mvp/benchmark; else API_BASE_URL=\"$API_BASE_URL\" MODEL_ID=\"$MODEL_ID\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" MEMORY_TOP_K=\"$MEMORY_TOP_K\" MIN_SCORE=\"$MIN_SCORE\" npm run start -w @memorag-mvp/benchmark; fi"
             ]
           },
           post_build: {

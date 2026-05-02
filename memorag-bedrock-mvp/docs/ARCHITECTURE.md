@@ -45,7 +45,7 @@ MemoRAG MVP は、文書取り込み、memory/evidence indexing、clue 生成、
 | `ASR-RETRIEVAL-001` | `FR-016`, `FR-017`, `FR-018`, `TC-001` | 検索結果品質を評価し、許可済み action と RRF で検索制御する。 |
 | `ASR-EVAL-001` | `FR-019`, `SQ-001` | RAG 品質を継続測定できる benchmark と trace を持つ。 |
 | `ASR-SEC-001` | `NFR-010` | benchmark/debug 系 API は本番または社内検証環境で認可対象とする。 |
-| `ASR-SEC-002` | `FR-024`, `NFR-011` | 通常利用者の self sign-up は `CHAT_USER` のみに限定し、上位権限付与は管理者操作へ分離する。 |
+| `ASR-SEC-002` | `FR-025`, `NFR-011` | 通常利用者の self sign-up は `CHAT_USER` のみに限定し、上位権限付与は管理者操作へ分離する。 |
 
 ## 要件・設計との境界
 

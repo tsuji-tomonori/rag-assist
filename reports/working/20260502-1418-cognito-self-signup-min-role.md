@@ -37,7 +37,9 @@
 - README、GitHub Actions deploy docs、operations docs に、self sign-up は `CHAT_USER` のみ、上位権限は管理ユーザーが後から付与する運用を追記した。
 - Web と infra の unit/typecheck/snapshot test を更新した。
 - `origin/main` の `v0.14.0` 相当変更を merge し、`BENCHMARK_RUNNER` 追加後の 8 Cognito group と self sign-up assertion を両立するように infra test の競合を解消した。
-- 要求・設計書に `FR-024`、Cognito self sign-up 詳細設計、HLD/API/architecture view の責務と権限境界を追記した。
+- 要求・設計書に `FR-025`、Cognito self sign-up 詳細設計、HLD/API/architecture view の責務と権限境界を追記した。
+- 最新 `main` の `FR-024` 管理画面導線要件と競合したため、self sign-up 要件を `FR-025` に分離してトレーサビリティを更新した。
+- 最新 `origin/main` を再度 merge し、管理画面導線・検索 benchmark 追加との差分を取り込んだ。
 
 ## 5. 成果物
 
@@ -49,7 +51,7 @@
 | `memorag-bedrock-mvp/infra/functions/cognito-post-confirmation.ts` | Lambda | self sign-up 確認後に `CHAT_USER` のみ付与 | R3 |
 | `memorag-bedrock-mvp/infra/lib/memorag-mvp-stack.ts` | CDK | self sign-up 有効化と trigger 構成を追加 | R3 |
 | `memorag-bedrock-mvp/docs/*`, `README.md` | Markdown | 権限払い出し運用を更新 | R4 |
-| `memorag-bedrock-mvp/docs/1_要求_REQ/.../REQ_FUNCTIONAL_024.md` | Markdown | self sign-up 最小権限払い出しの機能要求 | R2, R3, R4 |
+| `memorag-bedrock-mvp/docs/1_要求_REQ/.../REQ_FUNCTIONAL_025.md` | Markdown | self sign-up 最小権限払い出しの機能要求 | R2, R3, R4 |
 | `memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_004.md` | Markdown | Cognito self sign-up と post-confirmation trigger の詳細設計 | R2, R3, R4 |
 | `*.test.ts`, CDK snapshot | Test | self sign-up と最小権限付与の回帰確認 | R5 |
 
@@ -57,7 +59,7 @@
 
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra`: pass
-- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: pass、4 files / 47 tests
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: pass、4 files / 49 tests
 - `env UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: pass
 - `npm --prefix memorag-bedrock-mvp run lint`: pass
 - `git diff --check`: pass

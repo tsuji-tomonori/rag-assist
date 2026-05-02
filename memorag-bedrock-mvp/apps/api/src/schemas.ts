@@ -79,8 +79,8 @@ export const ChatRequestSchema = z.object({
 export const SearchRequestSchema = z.object({
   query: z.string().min(1).openapi({ example: "経費精算 承認条件" }),
   topK: z.number().int().min(1).max(50).optional().openapi({ example: 10 }),
-  lexicalTopK: z.number().int().min(1).max(100).optional().openapi({ example: 80 }),
-  semanticTopK: z.number().int().min(1).max(100).optional().openapi({ example: 80 }),
+  lexicalTopK: z.number().int().min(0).max(100).optional().openapi({ example: 80 }),
+  semanticTopK: z.number().int().min(0).max(100).optional().openapi({ example: 80 }),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   filters: z.object({
     tenantId: z.string().optional(),
@@ -322,7 +322,7 @@ export const CreateBenchmarkRunRequestSchema = z.object({
   runner: BenchmarkRunnerSchema.optional().openapi({ example: "codebuild" }),
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
-  topK: z.number().int().min(1).max(20).optional().openapi({ example: 6 }),
+  topK: z.number().int().min(1).max(50).optional().openapi({ example: 6 }),
   memoryTopK: z.number().int().min(1).max(10).optional().openapi({ example: 4 }),
   minScore: z.number().min(-1).max(1).optional().openapi({ example: 0.2 }),
   concurrency: z.number().int().min(1).max(20).optional().openapi({ example: 1 }),

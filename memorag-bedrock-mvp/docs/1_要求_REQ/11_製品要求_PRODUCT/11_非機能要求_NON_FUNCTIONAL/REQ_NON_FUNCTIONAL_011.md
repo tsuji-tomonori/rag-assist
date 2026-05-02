@@ -7,7 +7,7 @@
 
 ## 要件
 
-- NFR-011: Phase 1 の RAG 運用管理 API と Web UI は、文書管理、問い合わせ対応、debug/評価の各操作を Cognito group と role 別 permission で強制的に分離できること。
+- NFR-011: Phase 1 の RAG 運用管理 API と Web UI は、文書管理、問い合わせ対応、debug/評価、性能テストの各操作を Cognito group と role 別 permission で強制的に分離できること。
 
 ## 受け入れ条件（この要件専用）
 
@@ -28,6 +28,9 @@
 - AC-NFR011-015: 保護対象 API route は静的 policy test により `authMiddleware` と route-level permission の対応が検証されること。
 - AC-NFR011-016: `GET /me` は認証済みユーザーの `groups` と role から算出した `permissions` を返すこと。
 - AC-NFR011-017: フロントエンドの Phase 1 管理導線は JWT payload を直接解釈せず、`GET /me` の `permissions` に基づいて表示されること。
+- AC-NFR011-018: `documents` view の表示は文書管理 permission に基づいて制御されること。
+- AC-NFR011-019: `admin` view の Phase 1 導線は文書管理、問い合わせ対応、debug/評価、性能テストの permission に基づいて制御されること。
+- AC-NFR011-020: チャット上部には文書削除操作を表示せず、削除は文書管理導線に集約すること。
 
 ## 要件の源泉・背景
 
@@ -38,7 +41,7 @@
 ## 要件の目的・意図
 
 - 目的: UI 表示制御だけに依存せず、API 側で誤操作と権限外情報参照を防ぐ。
-- 意図: 文書管理、問い合わせ対応、debug/評価を Phase 1 の管理対象として安全に分離する。
+- 意図: 文書管理、問い合わせ対応、debug/評価、性能テストを Phase 1 の管理対象として安全に分離する。
 - 意図: 利用者のロールに応じて必要なデータだけを読み込み、不要な権限付与と不要な 403 を避ける。
 - 意図: サーバー側認可を正とし、Web 側の機能表示制御は UX と不要リクエスト抑制に使う。
 - 区分: 非機能要求。
@@ -52,12 +55,12 @@
 | 根拠 | API を唯一の強制境界にする方針 |
 | 源泉 | Phase 1 管理画面スコープ決定、403 障害分析 |
 | 種類 | 非機能要求 |
-| 依存関係 | `authMiddleware`、`requirePermission`、`authorization.ts`、`GET /me`、`DES_API_001` |
+| 依存関係 | `authMiddleware`、`requirePermission`、`authorization.ts`、`GET /me`、`FR-024`、`FR-025`、`DES_API_001` |
 | 衝突 | local 開発では検証容易性のため `AUTH_ENABLED=false` と `VITE_AUTH_MODE=local` を維持する |
-| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-017`、`FR-024` |
+| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-020`、`FR-025` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 self sign-up は `FR-024` として分離 |
+| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 Phase 1 管理画面導線と self sign-up 最小権限を `FR-024` / `FR-025` として分離 |
 
 ## 妥当性確認
 
@@ -74,6 +77,7 @@
 
 ## 関連文書
 
-- `3_設計_DES/41_API_API/DES_API_001.md`
 - `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_024.md`
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_025.md`
+- `3_設計_DES/41_API_API/DES_API_001.md`
 - `docs/GITHUB_ACTIONS_DEPLOY.md`
