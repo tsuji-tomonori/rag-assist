@@ -124,13 +124,15 @@ GitHub Actionsでは `.github/workflows/memorag-ci.yml` がpull requestとmain b
 infra/scripts/create-cognito-user.sh \
   --email alice@example.com \
   --password 'ExamplePassw0rd!' \
-  --role CHAT_USER \
+  --role 一般利用者 \
+  --role 回答担当者 \
   --suppress-invite
 ```
 
-`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。管理者ユーザーを作る場合は `--role SYSTEM_ADMIN` を指定してください。
+`--role` は複数回指定できます。ロールは `一般利用者`、`回答担当者`、`RAGグループ管理者`、`ユーザー管理者`、`アクセス管理者`、`コスト監査者`、`システム管理者` の日本語名、または `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の Cognito group 名で指定できます。
+`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。管理者ユーザーを作る場合は `--role システム管理者` を指定してください。
 `CHAT_USER` などの Cognito group は CDK stack で作成されるため、ユーザー作成前に `npm run cdk -w @memorag-mvp/infra -- deploy` または `task cdk:deploy` を実行してください。
-GitHub Actions から作成する場合は、`Actions` -> `Create MemoRAG Cognito User` -> `Run workflow` でメールアドレスとロールを入力します。
+GitHub Actions から作成する場合は、`Actions` -> `Create MemoRAG Cognito User` -> `Run workflow` でメールアドレスと主ロールを日本語名で選択します。追加ロールが必要な場合は、`additional-roles` に日本語名または Cognito group 名をカンマ区切りで入力します。
 
 ## API実行例
 

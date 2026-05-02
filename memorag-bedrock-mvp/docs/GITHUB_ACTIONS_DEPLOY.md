@@ -37,7 +37,10 @@
 | `user-pool-id` | 空 | 明示的なCognito User Pool ID。指定時はstack output取得を省略する。 |
 | `email` | なし | Cognito userのemail。usernameにも使う。 |
 | `display-name` | 空 | Cognito `name` 属性。 |
-| `roles` | `CHAT_USER` | 付与するCognito group。複数指定はカンマ区切り。 |
+| `primary-role` | `一般利用者` | 最初に付与するCognito group。日本語名で選択する。 |
+| `additional-roles` | 空 | 追加で付与するCognito group。複数指定は日本語名またはCognito group名をカンマ区切りで入力する。 |
+
+ロールは複数付与できる。workflowは主ロールと追加ロールを `infra/scripts/create-cognito-user.sh` の `--role` に複数渡し、スクリプト側で日本語名を Cognito group 名へ正規化する。
 
 事前条件:
 

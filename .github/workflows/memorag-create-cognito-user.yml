@@ -26,10 +26,23 @@ on:
         description: Optional display name stored in the Cognito name attribute.
         required: false
         default: ""
-      roles:
-        description: Comma-separated Cognito groups to assign.
+      primary-role:
+        description: 最初に付与するロール。日本語名で選択します。
         required: true
-        default: CHAT_USER
+        type: choice
+        default: 一般利用者
+        options:
+          - 一般利用者
+          - 回答担当者
+          - RAGグループ管理者
+          - ユーザー管理者
+          - アクセス管理者
+          - コスト監査者
+          - システム管理者
+      additional-roles:
+        description: 追加ロール。複数指定する場合は日本語名またはCognito groupをカンマ区切りで入力します。
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -54,7 +67,8 @@ jobs:
       USER_POOL_ID: ${{ inputs.user-pool-id }}
       USER_EMAIL: ${{ inputs.email }}
       USER_DISPLAY_NAME: ${{ inputs.display-name }}
-      USER_ROLES: ${{ inputs.roles || 'CHAT_USER' }}
+      USER_PRIMARY_ROLE: ${{ inputs.primary-role || '一般利用者' }}
+      USER_ADDITIONAL_ROLES: ${{ inputs.additional-roles }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -84,14 +98,21 @@ jobs:
           fi
 
           assigned_roles=()
-          IFS=',' read -ra requested_roles <<< "$USER_ROLES"
-          for role in "${requested_roles[@]}"; do
+          add_role_arg() {
+            local role="$1"
             role="${role#"${role%%[![:space:]]*}"}"
             role="${role%"${role##*[![:space:]]}"}"
             if [[ -n "$role" ]]; then
               args+=(--role "$role")
               assigned_roles+=("$role")
             fi
+          }
+
+          add_role_arg "$USER_PRIMARY_ROLE"
+
+          IFS=',' read -ra requested_roles <<< "$USER_ADDITIONAL_ROLES"
+          for role in "${requested_roles[@]}"; do
+            add_role_arg "$role"
           done
 
           if [[ ${#assigned_roles[@]} -eq 0 ]]; then
@@ -109,7 +130,7 @@ jobs:
             echo "| Email | \`$USER_EMAIL\` |"
             echo "| Stack | \`$STACK_NAME\` |"
             echo "| Region | \`$AWS_REGION\` |"
-            echo "| Roles | \`${assigned_roles[*]}\` |"
+            echo "| Requested roles | \`${assigned_roles[*]}\` |"
             echo ""
             echo "Cognito invitation email is sent by default for newly created users."
           } >> "$GITHUB_STEP_SUMMARY"
