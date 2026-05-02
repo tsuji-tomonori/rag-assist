@@ -29,6 +29,8 @@ flowchart TB
   Citation[Citation Validator]
   Eval[Benchmark / Evaluation]
   Trace[Telemetry / Debug Trace]
+  Questions[Human Question Store]
+  History[Conversation History Store]
   Ingest[Ingestion Worker]
   Chunk[Chunking / Memory Builder]
   Store[(S3 Documents / S3 Vectors)]
@@ -44,6 +46,8 @@ flowchart TB
   Llm --> Citation
   Citation --> Api
   Orchestrator --> Trace
+  Api --> Questions
+  Api --> History
   Eval --> Api
   Api --> Ingest
   Ingest --> Chunk
@@ -55,8 +59,9 @@ flowchart TB
 
 | 要素 | 責務 |
 | --- | --- |
-| Web UI | 文書登録、質問、回答、引用、debug trace 参照の操作面を提供する。 |
+| Web UI | 文書登録、質問、回答、引用、担当者問い合わせ、会話履歴、debug trace 参照の操作面を提供する。 |
 | API Server | API 受付、認可、RAG workflow 呼び出し、レスポンス整形を行う。 |
+| Auth / Authorization | Cognito ID token の group から API permission を判定する。 |
 | Query Orchestrator | 検索、回答可能性判定、回答生成、引用検証、trace 記録を制御する。 |
 | Retriever | memory/evidence index から候補を取得する。 |
 | RRF Rank Fusion | 複数 clue または query の evidence 検索結果を順位融合する。 |
@@ -65,6 +70,8 @@ flowchart TB
 | LLM Gateway | Bedrock model 呼び出しを集中管理する。 |
 | Citation Validator | 回答文と引用 chunk の支持関係を検証する。 |
 | Benchmark / Evaluation | fact coverage、faithfulness、context relevance、不回答精度を測定する。 |
+| Human Question Store | RAG が回答できない質問を担当者対応 ticket として保持する。 |
+| Conversation History Store | userId 単位の会話履歴を保持する。 |
 
 ## ランタイムビュー
 
@@ -105,6 +112,8 @@ sequenceDiagram
 | source | `documents/<documentId>/source.txt` | `.local-data/documents/<documentId>/source.txt` |
 | manifest | `manifests/<documentId>.json` | `.local-data/manifests/<documentId>.json` |
 | debug trace | `debug-runs/<yyyy-mm-dd>/<runId>.json` | `.local-data/debug-runs/<yyyy-mm-dd>/<runId>.json` |
+| human question | DynamoDB question table | `.local-data/questions.json` |
+| conversation history | DynamoDB conversation history table | `.local-data/conversation-history.json` |
 | memory vectors | `memory-index` | `.local-data/memory-vectors.json` |
 | evidence vectors | `evidence-index` | `.local-data/evidence-vectors.json` |
 
@@ -113,3 +122,4 @@ sequenceDiagram
 - LLM judge を常時実行するとレイテンシとコストが増える。
 - debug trace に質問、文書断片、モデル出力が含まれるため認可が必要である。
 - RRF と再検索を追加すると ranking の説明責任が増えるため、actionHistory と score を trace に残す必要がある。
+- 通常利用者の UI が担当者一覧や debug trace 一覧を事前取得すると不要な 403 と権限過多を招くため、Cognito group に応じて取得対象を分ける必要がある。

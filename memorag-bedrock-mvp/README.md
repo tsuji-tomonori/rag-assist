@@ -54,8 +54,16 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `POST /documents` 資料アップロード
 - `DELETE /documents/{documentId}` 資料削除
 - `POST /chat` チャット回答
+- `POST /questions` 担当者問い合わせ登録
+- `GET /questions` 担当者向け問い合わせ一覧
+- `POST /questions/{questionId}/answer` 担当者回答
+- `POST /questions/{questionId}/resolve` 問い合わせ解決
+- `GET /conversation-history` 自分の会話履歴一覧
+- `POST /conversation-history` 会話履歴保存
+- `DELETE /conversation-history/{id}` 会話履歴削除
 - `GET /debug-runs` persisted debug trace一覧
 - `GET /debug-runs/{runId}` persisted debug trace取得
+- `POST /debug-runs/{runId}/download` debug trace JSON download URL生成
 - `POST /benchmark/query` ベンチマーク用。`/chat` と同じRAG処理をAPIから呼び出し、retrieval情報も返します。
 
 ## ドキュメント
@@ -120,7 +128,7 @@ infra/scripts/create-cognito-user.sh \
   --suppress-invite
 ```
 
-`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。管理者ユーザーを作る場合は `--role SYSTEM_ADMIN` を指定してください。
+`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。通常利用者は `CHAT_USER`、担当者は `ANSWER_EDITOR`、debug trace や benchmark を確認する管理者は `SYSTEM_ADMIN` を指定してください。
 `CHAT_USER` などの Cognito group は CDK stack で作成されるため、ユーザー作成前に `npm run cdk -w @memorag-mvp/infra -- deploy` または `task cdk:deploy` を実行してください。
 GitHub Actions から作成する場合は、`Actions` -> `Create MemoRAG Cognito User` -> `Run workflow` でメールアドレスとロールを入力します。
 
