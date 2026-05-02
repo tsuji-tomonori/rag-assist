@@ -20,6 +20,7 @@
 - conversation history
 - human follow-up question
 - authentication / authorization
+- identity provisioning
 - cost estimation
 - benchmark evaluation
 
@@ -41,6 +42,7 @@
 | Human Question Store | question ticket、answer draft、status | 担当者問い合わせと回答状態 | `FR-021`, `NFR-011` |
 | Web Admin Workspace | `GET /me` permissions、documents、questions、debug runs、benchmark runs | Phase 1 RAG 運用管理 view | `FR-024`, `NFR-011` |
 | Authorization Layer | Cognito group、permission | API 実行可否 | `NFR-010`, `NFR-011` |
+| Identity Provisioning | email、password、confirmation code、Cognito trigger event | self sign-up user、`CHAT_USER` group membership | `FR-025`, `NFR-011` |
 | Cost Estimator | usage meter、pricing catalog、期間 | service/component 別の概算料金 | `NFR-002`, `NFR-009` |
 | Benchmark Runner | dataset case | result、summary、report | `FR-012`, `FR-019`, `SQ-001` |
 
@@ -55,6 +57,8 @@
 - Human Question Store は回答不能時の人手問い合わせを保存し、担当者による回答・解決状態を管理する。
 - Web Admin Workspace は Phase 1 の管理導線を RAG 運用管理に限定し、文書管理、問い合わせ対応、debug/評価へ permission に応じて遷移させる。
 - Authorization Layer は API 側の permission 判定を正とし、Web 側の Cognito group は表示制御と不要な事前取得の抑制に使う。
+- Identity Provisioning は通常利用者の self sign-up とメール確認を扱い、確認済みユーザーには `CHAT_USER` のみを付与する。
+- Identity Provisioning は `SYSTEM_ADMIN` などの上位権限を付与せず、上位権限付与は管理ユーザーの GitHub Actions または AWS 管理手順へ分離する。
 - Cost Estimator は設計上の概算責務として分離し、Bedrock token、S3 Vectors、DynamoDB、Lambda などの利用量に公式料金表の単価を掛け合わせる。
 - Cost Estimator は AWS 請求の正本ではなく、運用監視と予算逸脱検知のための概算値を扱う。
 - Benchmark Runner は UI と独立して同等の質問評価を実行する。
@@ -79,6 +83,7 @@
 16. 文書管理担当者は `documents` view で登録文書の一覧、アップロード、削除を実行する。
 17. 利用量メーターは trace、document/vector manifest、DynamoDB item サイズ、Lambda 実行メトリクスから料金算出に必要な集計値を作る。
 18. Cost Estimator は利用量に pricing catalog の単価を適用して、期間別・service 別の概算料金を算出する。
+19. 未認証の通常利用者がアカウント作成を行う場合、Web UI は Cognito `SignUp` と `ConfirmSignUp` を使い、Cognito post-confirmation trigger が `CHAT_USER` のみを付与する。
 
 ## アーキテクチャ判断との関係
 

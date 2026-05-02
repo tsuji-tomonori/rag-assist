@@ -2336,7 +2336,7 @@ button:disabled {
 .login-panel h1 { margin: 0; overflow-wrap: anywhere; word-break: break-all; font-size: 40px; line-height: 1.18; }
 .login-panel p { margin: 8px 0 24px; color: #64748b; }
 .login-form { min-width: 0; display: grid; gap: 12px; }
-.login-form input[type="email"], .login-form input[type="password"] { width: 100%; min-width: 0; height: 48px; border: 1px solid #d1d5db; border-radius: 10px; padding: 0 12px; }
+.login-form input[type="email"], .login-form input[type="password"], .login-form input[type="text"] { width: 100%; min-width: 0; height: 48px; border: 1px solid #d1d5db; border-radius: 10px; padding: 0 12px; }
 .login-challenge-summary { display: grid; gap: 4px; border: 1px solid #dbeafe; background: #eff6ff; border-radius: 10px; padding: 12px; color: #1e3a8a; }
 .login-challenge-summary span { font-size: 13px; color: #475569; }
 .login-challenge-summary strong { overflow-wrap: anywhere; }
@@ -2344,6 +2344,10 @@ button:disabled {
 .login-form button { width: 100%; min-width: 0; height: 48px; border: none; border-radius: 10px; background: #165dff; color: #fff; font-weight: 700; cursor: pointer; }
 .login-form button:disabled { cursor: wait; opacity: 0.7; }
 .login-error { margin: 0; color: #b42318; font-weight: 700; }
+.login-success { margin: 0; color: #067647; font-weight: 700; }
+.login-secondary-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.login-form .login-text-button { width: auto; height: auto; min-height: 36px; padding: 4px 8px; border-radius: 6px; background: transparent; color: #165dff; font-weight: 700; }
+.login-form .login-text-button:disabled { cursor: wait; opacity: 0.7; }
 
 @media (max-width: 1024px) {
   .login-page { grid-template-columns: 1fr; }

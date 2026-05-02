@@ -1,8 +1,10 @@
 import { type FormEvent, useState } from "react"
-import type { AuthResult, AuthSession, NewPasswordRequiredChallenge } from "./authClient.js"
+import type { AuthResult, AuthSession, NewPasswordRequiredChallenge, SignUpResult } from "./authClient.js"
 
 type LoginPageProps = {
   onLogin: (payload: { email: string; password: string; remember: boolean }) => Promise<AuthResult>
+  onSignUp: (payload: { email: string; password: string }) => Promise<SignUpResult>
+  onConfirmSignUp: (payload: { email: string; code: string }) => Promise<void>
   onCompleteNewPassword: (payload: {
     challenge: NewPasswordRequiredChallenge
     newPassword: string
@@ -10,15 +12,21 @@ type LoginPageProps = {
   }) => Promise<AuthSession>
 }
 
-export default function LoginPage({ onLogin, onCompleteNewPassword }: LoginPageProps) {
+type LoginMode = "signIn" | "signUp" | "confirmSignUp"
+
+export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onCompleteNewPassword }: LoginPageProps) {
+  const [mode, setMode] = useState<LoginMode>("signIn")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [signUpPasswordConfirm, setSignUpPasswordConfirm] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [confirmationCode, setConfirmationCode] = useState("")
   const [remember, setRemember] = useState(false)
   const [challenge, setChallenge] = useState<NewPasswordRequiredChallenge | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -26,9 +34,18 @@ export default function LoginPage({ onLogin, onCompleteNewPassword }: LoginPageP
       await submitNewPassword()
       return
     }
+    if (mode === "signUp") {
+      await submitSignUp()
+      return
+    }
+    if (mode === "confirmSignUp") {
+      await submitConfirmSignUp()
+      return
+    }
     if (!email || !password) return
     setIsSubmitting(true)
     setError(null)
+    setNotice(null)
     try {
       const result = await onLogin({ email, password, remember })
       if ("type" in result && result.type === "NEW_PASSWORD_REQUIRED") {
@@ -52,6 +69,7 @@ export default function LoginPage({ onLogin, onCompleteNewPassword }: LoginPageP
     }
     setIsSubmitting(true)
     setError(null)
+    setNotice(null)
     try {
       await onCompleteNewPassword({ challenge, newPassword, remember })
     } catch (err) {
@@ -61,7 +79,76 @@ export default function LoginPage({ onLogin, onCompleteNewPassword }: LoginPageP
     }
   }
 
+  async function submitSignUp() {
+    if (!email || !password || !signUpPasswordConfirm) return
+    if (password !== signUpPasswordConfirm) {
+      setError("パスワードが一致しません。")
+      return
+    }
+    setIsSubmitting(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const result = await onSignUp({ email, password })
+      setMode("confirmSignUp")
+      setPassword("")
+      setSignUpPasswordConfirm("")
+      setConfirmationCode("")
+      setNotice(result.deliveryDestination ? `確認コードを ${result.deliveryDestination} に送信しました。` : "確認コードを送信しました。")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  async function submitConfirmSignUp() {
+    if (!email || !confirmationCode) return
+    setIsSubmitting(true)
+    setError(null)
+    setNotice(null)
+    try {
+      await onConfirmSignUp({ email, code: confirmationCode })
+      setMode("signIn")
+      setConfirmationCode("")
+      setNotice("アカウントを確認しました。サインインしてください。")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  function switchMode(nextMode: LoginMode) {
+    setMode(nextMode)
+    setChallenge(null)
+    setPassword("")
+    setSignUpPasswordConfirm("")
+    setNewPassword("")
+    setConfirmPassword("")
+    setConfirmationCode("")
+    setError(null)
+    setNotice(null)
+  }
+
   const isChangingPassword = challenge !== null
+  const title =
+    isChangingPassword ? "初回ログイン用の新しいパスワードを設定" : mode === "signUp" ? "アカウントを作成" : mode === "confirmSignUp" ? "確認コードを入力" : "Cognitoで安全にサインイン"
+  const submitLabel = isSubmitting
+    ? isChangingPassword
+      ? "設定中"
+      : mode === "signUp"
+        ? "作成中"
+        : mode === "confirmSignUp"
+          ? "確認中"
+          : "サインイン中"
+    : isChangingPassword
+      ? "パスワードを設定"
+      : mode === "signUp"
+        ? "アカウントを作成"
+        : mode === "confirmSignUp"
+          ? "確認する"
+          : "サインイン"
 
   return (
     <div className="login-page">
@@ -70,7 +157,7 @@ export default function LoginPage({ onLogin, onCompleteNewPassword }: LoginPageP
       </div>
       <div className="login-panel">
         <h1>社内QAチャットボット</h1>
-        <p>{isChangingPassword ? "初回ログイン用の新しいパスワードを設定" : "Cognitoで安全にサインイン"}</p>
+        <p>{title}</p>
         <form onSubmit={onSubmit} className="login-form">
           {isChangingPassword ? (
             <>
@@ -93,6 +180,33 @@ export default function LoginPage({ onLogin, onCompleteNewPassword }: LoginPageP
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </>
+          ) : mode === "confirmSignUp" ? (
+            <>
+              <label>メールアドレス</label>
+              <input type="email" placeholder="メールアドレスを入力" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <label>確認コード</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="確認コードを入力"
+                value={confirmationCode}
+                onChange={(e) => setConfirmationCode(e.target.value)}
+              />
+            </>
+          ) : mode === "signUp" ? (
+            <>
+              <label>メールアドレス</label>
+              <input type="email" placeholder="メールアドレスを入力" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <label>パスワード</label>
+              <input type="password" placeholder="パスワードを入力" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <label>パスワード（確認）</label>
+              <input
+                type="password"
+                placeholder="パスワードを再入力"
+                value={signUpPasswordConfirm}
+                onChange={(e) => setSignUpPasswordConfirm(e.target.value)}
+              />
+            </>
           ) : (
             <>
               <label>メールアドレス</label>
@@ -101,11 +215,26 @@ export default function LoginPage({ onLogin, onCompleteNewPassword }: LoginPageP
               <input type="password" placeholder="パスワードを入力" value={password} onChange={(e) => setPassword(e.target.value)} />
             </>
           )}
-          <label className="remember"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> ログイン状態を保持</label>
+          {!isChangingPassword && mode === "signIn" ? (
+            <label className="remember"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> ログイン状態を保持</label>
+          ) : null}
+          {notice ? <p className="login-success" role="status">{notice}</p> : null}
           {error ? <p className="login-error" role="alert">{error}</p> : null}
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (isChangingPassword ? "設定中" : "サインイン中") : isChangingPassword ? "パスワードを設定" : "サインイン"}
+            {submitLabel}
           </button>
+          {!isChangingPassword ? (
+            <div className="login-secondary-actions">
+              {mode === "signIn" ? (
+                <>
+                  <button type="button" className="login-text-button" onClick={() => switchMode("signUp")}>アカウント作成</button>
+                  <button type="button" className="login-text-button" onClick={() => switchMode("confirmSignUp")}>確認コード入力</button>
+                </>
+              ) : (
+                <button type="button" className="login-text-button" onClick={() => switchMode("signIn")}>サインインへ戻る</button>
+              )}
+            </div>
+          ) : null}
         </form>
       </div>
     </div>

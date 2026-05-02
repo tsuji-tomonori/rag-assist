@@ -22,6 +22,11 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolGroup", 8)
+  template.hasResourceProperties("AWS::Cognito::UserPool", {
+    AdminCreateUserConfig: { AllowAdminCreateUserOnly: false },
+    AutoVerifiedAttributes: ["email"],
+    LambdaConfig: Match.objectLike({ PostConfirmation: Match.anyValue() })
+  })
   template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
@@ -56,6 +61,13 @@ test("implements the designed serverless resources", () => {
     Handler: "index.handler",
     Runtime: "nodejs22.x",
     Architectures: ["arm64"]
+  })
+  template.hasResourceProperties("AWS::Lambda::Function", {
+    Handler: "index.handler",
+    Runtime: "nodejs22.x",
+    Environment: Match.objectLike({
+      Variables: Match.objectLike({ DEFAULT_SIGNUP_GROUP_NAME: "CHAT_USER" })
+    })
   })
   template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
     ProtocolType: "HTTP",

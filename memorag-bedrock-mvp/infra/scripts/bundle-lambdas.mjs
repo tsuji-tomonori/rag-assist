@@ -17,6 +17,10 @@ await Promise.all([
   bundle({
     entry: path.join(infraDir, "functions/s3-vectors-custom-resource.ts"),
     outfile: path.join(outDir, "s3-vectors-provider/index.js")
+  }),
+  bundle({
+    entry: path.join(infraDir, "functions/cognito-post-confirmation.ts"),
+    outfile: path.join(outDir, "cognito-post-confirmation/index.js")
   })
 ])
 

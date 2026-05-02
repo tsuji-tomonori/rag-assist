@@ -31,7 +31,7 @@ import {
   type HumanQuestion,
   type Permission
 } from "./api.js"
-import { completeNewPasswordChallenge, getStoredAuthSession, signIn, signOut, type AuthSession } from "./authClient.js"
+import { completeNewPasswordChallenge, confirmSignUp, getStoredAuthSession, signIn, signOut, signUp, type AuthSession } from "./authClient.js"
 import LoginPage from "./LoginPage.js"
 
 type Message = {
@@ -215,6 +215,8 @@ export default function App() {
           if (!("type" in result)) setAuthSession(result)
           return result
         }}
+        onSignUp={signUp}
+        onConfirmSignUp={confirmSignUp}
         onCompleteNewPassword={async (payload) => {
           const session = await completeNewPasswordChallenge(payload)
           setAuthSession(session)

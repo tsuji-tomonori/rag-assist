@@ -185,14 +185,44 @@ export class MemoRagMvpStack extends Stack {
 
 
     const userPool = new cognito.UserPool(this, "UserPool", {
-      selfSignUpEnabled: false,
+      selfSignUpEnabled: true,
       signInAliases: { email: true },
+      autoVerify: { email: true },
       mfa: cognito.Mfa.OPTIONAL,
       mfaSecondFactor: { sms: false, otp: true },
       passwordPolicy: { minLength: 12, requireLowercase: true, requireUppercase: true, requireDigits: true, requireSymbols: true },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: RemovalPolicy.DESTROY
     })
+
+    const signupRoleAssignmentLogGroup = new logs.LogGroup(this, "SignupRoleAssignmentLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const signupRoleAssignmentFn = new lambda.Function(this, "SignupRoleAssignmentFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/cognito-post-confirmation")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      timeout: Duration.seconds(10),
+      logGroup: signupRoleAssignmentLogGroup,
+      environment: {
+        DEFAULT_SIGNUP_GROUP_NAME: "CHAT_USER"
+      }
+    })
+    signupRoleAssignmentFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["cognito-idp:AdminAddUserToGroup"],
+        resources: [
+          Stack.of(this).formatArn({
+            service: "cognito-idp",
+            resource: "userpool",
+            resourceName: "*"
+          })
+        ]
+      })
+    )
+    userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, signupRoleAssignmentFn)
 
     const userPoolClient = userPool.addClient("WebClient", {
       authFlows: { userPassword: true, userSrp: true },

@@ -24,7 +24,7 @@
 - AC-NFR011-011: Web UI は `CHAT_USER` に対して担当者一覧と debug trace 一覧を事前取得しないこと。
 - AC-NFR011-012: local 開発では `AUTH_ENABLED=false` または `VITE_AUTH_MODE=local` により `SYSTEM_ADMIN` 相当の検証セッションを利用できること。
 - AC-NFR011-013: local RBAC 検証では `LOCAL_AUTH_GROUPS` で Cognito group 相当の role を指定できること。
-- AC-NFR011-014: Phase 1 ではユーザー作成、ユーザー停止、ロール付与、ロール一覧編集、アクセス policy 編集、コスト監査、全ユーザー利用状況一覧を提供しないこと。
+- AC-NFR011-014: Phase 1 では管理者向けのユーザー停止、Web UI/API によるロール付与、ロール一覧編集、アクセス policy 編集、コスト監査、全ユーザー利用状況一覧を提供しないこと。
 - AC-NFR011-015: 保護対象 API route は静的 policy test により `authMiddleware` と route-level permission の対応が検証されること。
 - AC-NFR011-016: `GET /me` は認証済みユーザーの `groups` と role から算出した `permissions` を返すこと。
 - AC-NFR011-017: フロントエンドの Phase 1 管理導線は JWT payload を直接解釈せず、`GET /me` の `permissions` に基づいて表示されること。
@@ -55,12 +55,12 @@
 | 根拠 | API を唯一の強制境界にする方針 |
 | 源泉 | Phase 1 管理画面スコープ決定、403 障害分析 |
 | 種類 | 非機能要求 |
-| 依存関係 | `authMiddleware`、`requirePermission`、`authorization.ts`、`GET /me`、`FR-024`、`DES_API_001` |
+| 依存関係 | `authMiddleware`、`requirePermission`、`authorization.ts`、`GET /me`、`FR-024`、`FR-025`、`DES_API_001` |
 | 衝突 | local 開発では検証容易性のため `AUTH_ENABLED=false` と `VITE_AUTH_MODE=local` を維持する |
-| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-020` |
+| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-020`、`FR-025` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合 |
+| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 Phase 1 管理画面導線と self sign-up 最小権限を `FR-024` / `FR-025` として分離 |
 
 ## 妥当性確認
 
@@ -78,5 +78,6 @@
 ## 関連文書
 
 - `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_024.md`
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_025.md`
 - `3_設計_DES/41_API_API/DES_API_001.md`
 - `docs/GITHUB_ACTIONS_DEPLOY.md`
