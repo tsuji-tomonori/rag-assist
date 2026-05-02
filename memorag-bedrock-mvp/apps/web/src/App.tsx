@@ -1,7 +1,9 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import {
   answerQuestion,
+  cancelBenchmarkRun,
   chat,
+  createBenchmarkDownload,
   createQuestion,
   createDebugDownload,
   deleteConversationHistory,
@@ -10,11 +12,16 @@ import {
   getMe,
   listConversationHistory,
   listQuestions,
+  listBenchmarkRuns,
+  listBenchmarkSuites,
   listDebugRuns,
   listDocuments,
   resolveQuestion,
   saveConversationHistory,
+  startBenchmarkRun,
   uploadDocument,
+  type BenchmarkRun,
+  type BenchmarkSuite,
   type ChatResponse,
   type ConversationHistoryItem,
   type CurrentUser,
@@ -54,8 +61,10 @@ type IconName =
   | "trash"
   | "inbox"
   | "copy"
+  | "gauge"
+  | "stop"
 
-type AppView = "chat" | "assignee" | "history"
+type AppView = "chat" | "assignee" | "history" | "benchmark"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -65,6 +74,8 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [documents, setDocuments] = useState<DocumentManifest[]>([])
   const [debugRuns, setDebugRuns] = useState<DebugTrace[]>([])
+  const [benchmarkRuns, setBenchmarkRuns] = useState<BenchmarkRun[]>([])
+  const [benchmarkSuites, setBenchmarkSuites] = useState<BenchmarkSuite[]>([])
   const [questions, setQuestions] = useState<HumanQuestion[]>([])
   const [activeView, setActiveView] = useState<AppView>("chat")
   const [selectedDocumentId, setSelectedDocumentId] = useState("all")
@@ -87,6 +98,9 @@ export default function App() {
   const [allExpanded, setAllExpanded] = useState(false)
   const [conversationKey, setConversationKey] = useState(0)
   const [submitShortcut, setSubmitShortcut] = useState<"enter" | "ctrlEnter">("enter")
+  const [benchmarkSuiteId, setBenchmarkSuiteId] = useState("standard-agent-v1")
+  const [benchmarkModelId, setBenchmarkModelId] = useState(defaultModelId)
+  const [benchmarkConcurrency, setBenchmarkConcurrency] = useState(1)
   const latestMessageRef = useRef<HTMLElement | null>(null)
 
   const hasPermission = (permission: Permission) => currentUser?.permissions.includes(permission) ?? false
@@ -98,8 +112,12 @@ export default function App() {
   const canReadDebugRuns = hasPermission("chat:admin:read_all")
   const canReadHistory = hasPermission("chat:read:own")
   const canOpenAdminSettings = hasPermission("access:policy:read")
+  const canReadBenchmarkRuns = hasPermission("benchmark:read")
+  const canRunBenchmark = hasPermission("benchmark:run")
+  const canCancelBenchmark = hasPermission("benchmark:cancel")
+  const canDownloadBenchmark = hasPermission("benchmark:download")
   const canManageDocuments = canWriteDocuments || canDeleteDocuments
-  const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns
+  const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns || canReadBenchmarkRuns
   const canAsk = useMemo(() => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && !loading && canCreateChat, [question, file, loading, canCreateChat, canWriteDocuments])
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
   const latestTrace = latestAssistant?.result?.debug
@@ -144,6 +162,10 @@ export default function App() {
     if (!authSession || !currentUser) return
     if (canReadDocuments) refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
     if (canReadDebugRuns) refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
+    if (canReadBenchmarkRuns) {
+      refreshBenchmarkRuns().catch((err) => console.warn("Failed to load benchmark runs", err))
+      refreshBenchmarkSuites().catch((err) => console.warn("Failed to load benchmark suites", err))
+    }
     if (canAnswerQuestions) refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
     if (canReadHistory) refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,6 +179,14 @@ export default function App() {
     if (!canReadDebugRuns && debugMode) setDebugMode(false)
     if (!canWriteDocuments && file) setFile(null)
   }, [canReadDebugRuns, canWriteDocuments, debugMode, file])
+
+  useEffect(() => {
+    if (activeView !== "benchmark" || !canReadBenchmarkRuns) return
+    const timer = window.setInterval(() => {
+      refreshBenchmarkRuns().catch((err) => console.warn("Failed to poll benchmark runs", err))
+    }, 15000)
+    return () => window.clearInterval(timer)
+  }, [activeView, canReadBenchmarkRuns])
 
   useEffect(() => {
     if (messages.length === 0) return
@@ -211,6 +241,16 @@ export default function App() {
 
   async function refreshDebugRuns() {
     setDebugRuns(await listDebugRuns())
+  }
+
+  async function refreshBenchmarkRuns() {
+    setBenchmarkRuns(await listBenchmarkRuns())
+  }
+
+  async function refreshBenchmarkSuites() {
+    const suites = await listBenchmarkSuites()
+    setBenchmarkSuites(suites)
+    setBenchmarkSuiteId((current) => suites.find((suite) => suite.suiteId === current)?.suiteId ?? suites[0]?.suiteId ?? current)
   }
 
   async function refreshQuestions() {
@@ -380,6 +420,42 @@ export default function App() {
     }
   }
 
+  async function onStartBenchmark() {
+    setLoading(true)
+    setError(null)
+    try {
+      const created = await startBenchmarkRun({
+        suiteId: benchmarkSuiteId,
+        mode: "agent",
+        runner: "codebuild",
+        modelId: benchmarkModelId,
+        embeddingModelId,
+        topK: 6,
+        memoryTopK: 4,
+        minScore,
+        concurrency: benchmarkConcurrency
+      })
+      setBenchmarkRuns((prev) => [created, ...prev.filter((run) => run.runId !== created.runId)])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onCancelBenchmark(runId: string) {
+    setLoading(true)
+    setError(null)
+    try {
+      const cancelled = await cancelBenchmarkRun(runId)
+      setBenchmarkRuns((prev) => [cancelled, ...prev.filter((run) => run.runId !== runId)])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <main className="app-frame">
       <aside className="rail" aria-label="主要ナビゲーション">
@@ -401,6 +477,12 @@ export default function App() {
             <Icon name="clock" />
             <span>履歴</span>
           </button>
+          {canReadBenchmarkRuns && (
+            <button className={`rail-item ${activeView === "benchmark" ? "active" : ""}`} type="button" title="性能テスト" onClick={() => setActiveView("benchmark")}>
+              <Icon name="gauge" />
+              <span>性能テスト</span>
+            </button>
+          )}
           <button className="rail-item" type="button" title="お気に入り">
             <Icon name="star" />
             <span>お気に入り</span>
@@ -619,6 +701,25 @@ export default function App() {
             loading={loading}
             onSelect={setSelectedQuestionId}
             onAnswer={onAnswerQuestion}
+            onBack={() => setActiveView("chat")}
+          />
+        ) : activeView === "benchmark" && canReadBenchmarkRuns ? (
+          <BenchmarkWorkspace
+            runs={benchmarkRuns}
+            suites={benchmarkSuites}
+            suiteId={benchmarkSuiteId}
+            modelId={benchmarkModelId}
+            concurrency={benchmarkConcurrency}
+            loading={loading}
+            canRun={canRunBenchmark}
+            canCancel={canCancelBenchmark}
+            canDownload={canDownloadBenchmark}
+            onSuiteChange={setBenchmarkSuiteId}
+            onModelChange={setBenchmarkModelId}
+            onConcurrencyChange={setBenchmarkConcurrency}
+            onStart={onStartBenchmark}
+            onRefresh={() => refreshBenchmarkRuns().catch((err) => setError(err instanceof Error ? err.message : String(err)))}
+            onCancel={onCancelBenchmark}
             onBack={() => setActiveView("chat")}
           />
         ) : (
@@ -1109,6 +1210,161 @@ function AssigneeWorkspace({
   )
 }
 
+function BenchmarkWorkspace({
+  runs,
+  suites,
+  suiteId,
+  modelId,
+  concurrency,
+  loading,
+  canRun,
+  canCancel,
+  canDownload,
+  onSuiteChange,
+  onModelChange,
+  onConcurrencyChange,
+  onStart,
+  onRefresh,
+  onCancel,
+  onBack
+}: {
+  runs: BenchmarkRun[]
+  suites: BenchmarkSuite[]
+  suiteId: string
+  modelId: string
+  concurrency: number
+  loading: boolean
+  canRun: boolean
+  canCancel: boolean
+  canDownload: boolean
+  onSuiteChange: (suiteId: string) => void
+  onModelChange: (modelId: string) => void
+  onConcurrencyChange: (concurrency: number) => void
+  onStart: () => Promise<void>
+  onRefresh: () => void
+  onCancel: (runId: string) => Promise<void>
+  onBack: () => void
+}) {
+  const selectedSuite = suites.find((suite) => suite.suiteId === suiteId)
+
+  return (
+    <section className="benchmark-workspace" aria-label="性能テスト">
+      <header className="assignee-header">
+        <button type="button" onClick={onBack} title="チャットへ戻る">
+          <Icon name="chevron" />
+        </button>
+        <div>
+          <h2>性能テスト</h2>
+          <span>{runs.length} 件の実行履歴</span>
+        </div>
+      </header>
+
+      <div className="benchmark-layout">
+        <section className="benchmark-run-panel">
+          <h3>ジョブ起動</h3>
+          <label>
+            <span>テスト種別</span>
+            <select value={suiteId} onChange={(event) => onSuiteChange(event.target.value)}>
+              {suites.length === 0 && <option value={suiteId}>standard-agent-v1</option>}
+              {suites.map((suite) => (
+                <option value={suite.suiteId} key={suite.suiteId}>
+                  {suite.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>データセット</span>
+            <input value={selectedSuite?.datasetS3Key ?? "datasets/agent/standard-v1.jsonl"} readOnly />
+          </label>
+          <label>
+            <span>モデル</span>
+            <select value={modelId} onChange={(event) => onModelChange(event.target.value)}>
+              <option value="amazon.nova-lite-v1:0">Nova Lite v1</option>
+              <option value="anthropic.claude-3-5-sonnet-20240620-v1:0">Claude 3.5 Sonnet</option>
+              <option value="anthropic.claude-3-haiku-20240307-v1:0">Claude 3 Haiku</option>
+            </select>
+          </label>
+          <label>
+            <span>並列数</span>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={concurrency}
+              onChange={(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) || 1)))}
+            />
+          </label>
+          <div className="benchmark-actions">
+            <button type="button" onClick={onStart} disabled={loading || !canRun}>
+              <Icon name="send" />
+              <span>性能テストを実行</span>
+            </button>
+            <button type="button" onClick={onRefresh} disabled={loading}>
+              <Icon name="clock" />
+              <span>更新</span>
+            </button>
+          </div>
+        </section>
+
+        <section className="benchmark-history-panel">
+          <div className="history-list-head">
+            <h3>実行履歴</h3>
+            <span>{runs.length} 件</span>
+          </div>
+          <div className="benchmark-table-wrap">
+            <table className="benchmark-table">
+              <thead>
+                <tr>
+                  <th>runId</th>
+                  <th>status</th>
+                  <th>suite</th>
+                  <th>p50</th>
+                  <th>p95</th>
+                  <th>accuracy</th>
+                  <th>recall</th>
+                  <th>startedAt</th>
+                  <th>report</th>
+                </tr>
+              </thead>
+              <tbody>
+                {runs.length === 0 ? (
+                  <tr>
+                    <td colSpan={9}>実行履歴はまだありません。</td>
+                  </tr>
+                ) : (
+                  runs.map((run) => (
+                    <tr key={run.runId}>
+                      <td><code>{run.runId}</code></td>
+                      <td><span className={`run-status ${run.status}`}>{runStatusLabel(run.status)}</span></td>
+                      <td>{run.suiteId}</td>
+                      <td>{formatMetricLatency(run.metrics?.p50LatencyMs)}</td>
+                      <td>{formatMetricLatency(run.metrics?.p95LatencyMs)}</td>
+                      <td>{formatPercent(run.metrics?.answerableAccuracy)}</td>
+                      <td>{formatPercent(run.metrics?.retrievalRecallAt20)}</td>
+                      <td>{formatDateTime(run.startedAt ?? run.createdAt)}</td>
+                      <td>
+                        <div className="benchmark-row-actions">
+                          <button type="button" title="レポートをダウンロード" disabled={!canDownload || !run.reportS3Key} onClick={() => void downloadBenchmarkArtifact(run.runId, "report")}>
+                            <Icon name="download" />
+                          </button>
+                          <button type="button" title="ジョブをキャンセル" disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>
+                            <Icon name="stop" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
+  )
+}
+
 function HistoryWorkspace({
   history,
   onSelect,
@@ -1313,6 +1569,10 @@ function getIconPath(name: IconName) {
       return <path d="M4 4h16l2 9v7H2v-7l2-9Zm1.6 2-1.3 6h4.4l1.2 2h4.2l1.2-2h4.4l-1.3-6H5.6ZM4 14v4h16v-4h-3.5l-1.2 2H8.7l-1.2-2H4Z" />
     case "copy":
       return <path d="M8 2h10a2 2 0 0 1 2 2v10h-2V4H8V2Zm-4 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 2v12h10V8H4Z" />
+    case "gauge":
+      return <path d="M12 4a10 10 0 0 1 10 10 9.8 9.8 0 0 1-2 6H4a9.8 9.8 0 0 1-2-6A10 10 0 0 1 12 4Zm0 2a8 8 0 0 0-8 8c0 1.5.4 2.9 1.2 4h13.6c.8-1.1 1.2-2.5 1.2-4a8 8 0 0 0-8-8Zm4.9 4.7-3.8 5.5a2 2 0 1 1-1.6-1.2l3.8-5.5 1.6 1.2Z" />
+    case "stop":
+      return <path d="M7 7h10v10H7V7Z" />
   }
 }
 
@@ -1323,6 +1583,17 @@ async function downloadDebugTrace(trace?: DebugTrace) {
   const link = document.createElement("a")
   link.href = signed.url
   link.download = `debug-trace-${sanitizeFileName(trace.runId)}.json`
+  link.rel = "noopener"
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+}
+
+async function downloadBenchmarkArtifact(runId: string, artifact: "report" | "summary" | "results") {
+  const signed = await createBenchmarkDownload(runId, artifact)
+  const link = document.createElement("a")
+  link.href = signed.url
+  link.download = `benchmark-${artifact}-${sanitizeFileName(runId)}`
   link.rel = "noopener"
   document.body.appendChild(link)
   link.click()
@@ -1373,6 +1644,14 @@ function formatLatency(value: number): string {
   return `${Math.round(value)} ms`
 }
 
+function formatMetricLatency(value?: number | null): string {
+  return typeof value === "number" ? formatLatency(value) : "-"
+}
+
+function formatPercent(value?: number | null): string {
+  return typeof value === "number" ? `${Math.round(value * 100)}%` : "-"
+}
+
 function formatTime(input: string): string {
   const date = new Date(input)
   if (Number.isNaN(date.getTime())) return "--:--:--"
@@ -1414,6 +1693,14 @@ function statusLabel(status: HumanQuestion["status"]): string {
   if (status === "open") return "対応中"
   if (status === "answered") return "回答済み"
   return "解決済み"
+}
+
+function runStatusLabel(status: BenchmarkRun["status"]): string {
+  if (status === "queued") return "待機中"
+  if (status === "running") return "実行中"
+  if (status === "succeeded") return "成功"
+  if (status === "failed") return "失敗"
+  return "取消済み"
 }
 
 function priorityLabel(priority: HumanQuestion["priority"]): string {

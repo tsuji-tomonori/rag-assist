@@ -2,17 +2,22 @@ import { describe, expect, it, vi } from "vitest"
 import {
   chat,
   answerQuestion,
+  cancelBenchmarkRun,
+  createBenchmarkDownload,
   createQuestion,
   deleteConversationHistory,
   deleteDocument,
   fileToBase64,
   getDebugRun,
+  listBenchmarkRuns,
+  listBenchmarkSuites,
   listConversationHistory,
   listDebugRuns,
   listDocuments,
   listQuestions,
   resolveQuestion,
   saveConversationHistory,
+  startBenchmarkRun,
   uploadDocument
 } from "./api.js"
 
@@ -75,6 +80,27 @@ describe("API client", () => {
 
     mockFetch({ runId: "run-1" })
     await expect(getDebugRun("run-1")).resolves.toEqual({ runId: "run-1" })
+  })
+
+  it("calls benchmark run management APIs", async () => {
+    mockFetch({ suites: [{ suiteId: "standard-agent-v1", label: "Agent standard" }] })
+    await expect(listBenchmarkSuites()).resolves.toEqual([{ suiteId: "standard-agent-v1", label: "Agent standard" }])
+
+    mockFetch({ benchmarkRuns: [{ runId: "bench-1", status: "queued" }] })
+    await expect(listBenchmarkRuns()).resolves.toEqual([{ runId: "bench-1", status: "queued" }])
+
+    const startFetchMock = mockFetch({ runId: "bench-2", status: "queued" })
+    await expect(startBenchmarkRun({ suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild", modelId: "model" })).resolves.toMatchObject({ runId: "bench-2" })
+    expect(startFetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/benchmark-runs$/),
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild", modelId: "model" }) })
+    )
+
+    mockFetch({ runId: "bench-2", status: "cancelled" })
+    await expect(cancelBenchmarkRun("bench-2")).resolves.toMatchObject({ status: "cancelled" })
+
+    mockFetch({ url: "https://signed.example/report.md", expiresInSeconds: 900, objectKey: "runs/bench-2/report.md" })
+    await expect(createBenchmarkDownload("bench-2", "report")).resolves.toMatchObject({ objectKey: "runs/bench-2/report.md" })
   })
 
   it("raises response text on failed requests", async () => {

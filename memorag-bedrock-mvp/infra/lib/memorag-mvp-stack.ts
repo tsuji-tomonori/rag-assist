@@ -6,6 +6,7 @@ import * as apigw from "aws-cdk-lib/aws-apigateway"
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2"
 import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations"
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront"
+import * as codebuild from "aws-cdk-lib/aws-codebuild"
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins"
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb"
 import * as iam from "aws-cdk-lib/aws-iam"
@@ -14,6 +15,7 @@ import * as logs from "aws-cdk-lib/aws-logs"
 import * as cognito from "aws-cdk-lib/aws-cognito"
 import * as s3 from "aws-cdk-lib/aws-s3"
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment"
+import * as sfn from "aws-cdk-lib/aws-stepfunctions"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
 import type { Construct } from "constructs"
@@ -26,6 +28,7 @@ const appRoles = [
   "CHAT_USER",
   "ANSWER_EDITOR",
   "RAG_GROUP_MANAGER",
+  "BENCHMARK_RUNNER",
   "USER_ADMIN",
   "ACCESS_ADMIN",
   "COST_AUDITOR",
@@ -43,6 +46,10 @@ export class MemoRagMvpStack extends Stack {
     const vectorBucketName = `memorag-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.REGION}-${suffix}`
     const memoryVectorIndexName = "memory-index"
     const evidenceVectorIndexName = "evidence-index"
+    const benchmarkRunnerAuthSecretId = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
+    const benchmarkSourceOwner = String(this.node.tryGetContext("benchmarkSourceOwner") ?? "tsuji-tomonori")
+    const benchmarkSourceRepo = String(this.node.tryGetContext("benchmarkSourceRepo") ?? "rag-assist")
+    const benchmarkSourceBranch = String(this.node.tryGetContext("benchmarkSourceBranch") ?? "main")
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -75,6 +82,20 @@ export class MemoRagMvpStack extends Stack {
       autoDeleteObjects: true
     })
 
+    const benchmarkBucket = new s3.Bucket(this, "BenchmarkBucket", {
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      serverAccessLogsBucket: accessLogsBucket,
+      serverAccessLogsPrefix: "s3/benchmark/",
+      lifecycleRules: [
+        { prefix: "runs/", expiration: Duration.days(30) },
+        { prefix: "downloads/", expiration: Duration.days(7) }
+      ],
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true
+    })
+
     const frontendBucket = new s3.Bucket(this, "FrontendBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -98,6 +119,22 @@ export class MemoRagMvpStack extends Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.DESTROY
+    })
+
+    const benchmarkRunsTable = new dynamodb.Table(this, "BenchmarkRunsTable", {
+      partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
+    new s3deploy.BucketDeployment(this, "DeployBenchmarkDatasets", {
+      sources: [
+        s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
+        s3deploy.Source.data("standard-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8"))
+      ],
+      destinationBucket: benchmarkBucket,
+      destinationKeyPrefix: "datasets/agent"
     })
 
     const s3VectorsProviderLogGroup = new logs.LogGroup(this, "S3VectorsProviderLogGroup", {
@@ -189,8 +226,13 @@ export class MemoRagMvpStack extends Stack {
         DOCS_BUCKET_NAME: docsBucket.bucketName,
         QUESTION_TABLE_NAME: questionsTable.tableName,
         CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
+        BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
+        BENCHMARK_BUCKET_NAME: benchmarkBucket.bucketName,
+        BENCHMARK_DEFAULT_DATASET_KEY: "datasets/agent/standard-v1.jsonl",
+        BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
         USE_LOCAL_QUESTION_STORE: "false",
         USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
+        USE_LOCAL_BENCHMARK_RUN_STORE: "false",
         VECTOR_BUCKET_NAME: vectorBucketName,
         MEMORY_VECTOR_INDEX_NAME: memoryVectorIndexName,
         EVIDENCE_VECTOR_INDEX_NAME: evidenceVectorIndexName,
@@ -210,8 +252,10 @@ export class MemoRagMvpStack extends Stack {
 
     docsBucket.grantReadWrite(apiFn)
     debugDownloadBucket.grantReadWrite(apiFn)
+    benchmarkBucket.grantRead(apiFn)
     questionsTable.grantReadWriteData(apiFn)
     conversationHistoryTable.grantReadWriteData(apiFn)
+    benchmarkRunsTable.grantReadWriteData(apiFn)
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
@@ -308,6 +352,170 @@ export class MemoRagMvpStack extends Stack {
       cfnRoute.authorizerId = jwtAuthorizer.ref
       cfnRoute.addDependency(jwtAuthorizer)
     }
+
+    const benchmarkProject = new codebuild.Project(this, "BenchmarkProject", {
+      source: codebuild.Source.gitHub({
+        owner: benchmarkSourceOwner,
+        repo: benchmarkSourceRepo,
+        branchOrRef: benchmarkSourceBranch
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+        computeType: codebuild.ComputeType.SMALL,
+        privileged: false,
+        environmentVariables: {
+          COGNITO_APP_CLIENT_ID: { value: userPoolClient.userPoolClientId },
+          BENCHMARK_AUTH_SECRET_ID: { value: benchmarkRunnerAuthSecretId }
+        }
+      },
+      timeout: Duration.hours(2),
+      logging: {
+        cloudWatch: {
+          logGroup: new logs.LogGroup(this, "BenchmarkProjectLogGroup", {
+            retention: logs.RetentionDays.ONE_WEEK,
+            removalPolicy: RemovalPolicy.DESTROY
+          })
+        }
+      },
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: "0.2",
+        phases: {
+          install: {
+            "runtime-versions": { nodejs: 22 },
+            commands: ["cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"", "npm ci"]
+          },
+          pre_build: {
+            commands: [
+              "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
+              "aws s3 cp \"$DATASET_S3_URI\" ./benchmark/.runner-dataset.jsonl",
+              "export OUTPUT=./benchmark/.runner-results.jsonl",
+              "export SUMMARY=./benchmark/.runner-summary.json",
+              "export REPORT=./benchmark/.runner-report.md",
+              "export DATASET=./benchmark/.runner-dataset.jsonl",
+              "if [ -n \"$BENCHMARK_AUTH_SECRET_ID\" ]; then SECRET_JSON=\"$(aws secretsmanager get-secret-value --secret-id \"$BENCHMARK_AUTH_SECRET_ID\" --query SecretString --output text)\"; export API_AUTH_TOKEN=\"$(SECRET_JSON=\"$SECRET_JSON\" COGNITO_APP_CLIENT_ID=\"$COGNITO_APP_CLIENT_ID\" node -e 'const { execFileSync } = require(\"node:child_process\"); const secret = JSON.parse(process.env.SECRET_JSON || \"{}\"); if (secret.idToken || secret.token) { console.log(secret.idToken || secret.token); process.exit(0); } const output = execFileSync(\"aws\", [\"cognito-idp\", \"initiate-auth\", \"--auth-flow\", \"USER_PASSWORD_AUTH\", \"--client-id\", process.env.COGNITO_APP_CLIENT_ID, \"--auth-parameters\", `USERNAME=${secret.username},PASSWORD=${secret.password}`], { encoding: \"utf8\" }); console.log(JSON.parse(output).AuthenticationResult.IdToken);')\"; fi"
+            ]
+          },
+          build: {
+            commands: [
+              "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
+              "API_BASE_URL=\"$API_BASE_URL\" MODEL_ID=\"$MODEL_ID\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" MEMORY_TOP_K=\"$MEMORY_TOP_K\" MIN_SCORE=\"$MIN_SCORE\" npm run start -w @memorag-mvp/benchmark"
+            ]
+          },
+          post_build: {
+            commands: [
+              "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
+              "aws s3 cp ./benchmark/.runner-results.jsonl \"$OUTPUT_S3_PREFIX/results.jsonl\"",
+              "aws s3 cp ./benchmark/.runner-summary.json \"$OUTPUT_S3_PREFIX/summary.json\"",
+              "aws s3 cp ./benchmark/.runner-report.md \"$OUTPUT_S3_PREFIX/report.md\""
+            ]
+          }
+        },
+        artifacts: { files: ["benchmark/.runner-results.jsonl", "benchmark/.runner-summary.json", "benchmark/.runner-report.md"] }
+      })
+    })
+    benchmarkBucket.grantReadWrite(benchmarkProject)
+    benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["secretsmanager:GetSecretValue", "cognito-idp:InitiateAuth"],
+      resources: ["*"]
+    }))
+
+    const markRunning = new sfn.CustomState(this, "BenchmarkMarkRunning", {
+      stateJson: {
+        Type: "Task",
+        Resource: "arn:aws:states:::dynamodb:updateItem",
+        Parameters: {
+          TableName: benchmarkRunsTable.tableName,
+          Key: { runId: { "S.$": "$.runId" } },
+          UpdateExpression: "SET #status = :status, startedAt = :startedAt, updatedAt = :startedAt",
+          ExpressionAttributeNames: { "#status": "status" },
+          ExpressionAttributeValues: {
+            ":status": { S: "running" },
+            ":startedAt": { "S.$": "$$.State.EnteredTime" }
+          }
+        },
+        ResultPath: "$.markRunning"
+      }
+    })
+    const startBenchmarkBuild = new sfn.CustomState(this, "BenchmarkStartCodeBuild", {
+      stateJson: {
+        Type: "Task",
+        Resource: "arn:aws:states:::codebuild:startBuild.sync",
+        Parameters: {
+          ProjectName: benchmarkProject.projectName,
+          EnvironmentVariablesOverride: [
+            { Name: "RUN_ID", "Value.$": "$.runId", Type: "PLAINTEXT" },
+            { Name: "MODE", "Value.$": "$.mode", Type: "PLAINTEXT" },
+            { Name: "DATASET_S3_URI", "Value.$": "$.datasetS3Uri", Type: "PLAINTEXT" },
+            { Name: "OUTPUT_S3_PREFIX", "Value.$": "$.outputS3Prefix", Type: "PLAINTEXT" },
+            { Name: "API_BASE_URL", "Value.$": "$.apiBaseUrl", Type: "PLAINTEXT" },
+            { Name: "MODEL_ID", "Value.$": "$.modelId", Type: "PLAINTEXT" },
+            { Name: "EMBEDDING_MODEL_ID", "Value.$": "$.embeddingModelId", Type: "PLAINTEXT" },
+            { Name: "TOP_K", "Value.$": "States.Format('{}', $.topK)", Type: "PLAINTEXT" },
+            { Name: "MEMORY_TOP_K", "Value.$": "States.Format('{}', $.memoryTopK)", Type: "PLAINTEXT" },
+            { Name: "MIN_SCORE", "Value.$": "States.Format('{}', $.minScore)", Type: "PLAINTEXT" }
+          ]
+        },
+        ResultPath: "$.build"
+      }
+    })
+    const markSucceeded = new sfn.CustomState(this, "BenchmarkMarkSucceeded", {
+      stateJson: {
+        Type: "Task",
+        Resource: "arn:aws:states:::dynamodb:updateItem",
+        Parameters: {
+          TableName: benchmarkRunsTable.tableName,
+          Key: { runId: { "S.$": "$.runId" } },
+          UpdateExpression: "SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, codeBuildBuildId = :codeBuildBuildId, summaryS3Key = :summaryS3Key, reportS3Key = :reportS3Key, resultsS3Key = :resultsS3Key",
+          ExpressionAttributeNames: { "#status": "status" },
+          ExpressionAttributeValues: {
+            ":status": { S: "succeeded" },
+            ":completedAt": { "S.$": "$$.State.EnteredTime" },
+            ":codeBuildBuildId": { "S.$": "$.build.Build.Id" },
+            ":summaryS3Key": { "S.$": "$.summaryS3Key" },
+            ":reportS3Key": { "S.$": "$.reportS3Key" },
+            ":resultsS3Key": { "S.$": "$.resultsS3Key" }
+          }
+        },
+        End: true
+      }
+    })
+    const markFailed = new sfn.CustomState(this, "BenchmarkMarkFailed", {
+      stateJson: {
+        Type: "Task",
+        Resource: "arn:aws:states:::dynamodb:updateItem",
+        Parameters: {
+          TableName: benchmarkRunsTable.tableName,
+          Key: { runId: { "S.$": "$.runId" } },
+          UpdateExpression: "SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, #error = :error",
+          ExpressionAttributeNames: { "#status": "status", "#error": "error" },
+          ExpressionAttributeValues: {
+            ":status": { S: "failed" },
+            ":completedAt": { "S.$": "$$.State.EnteredTime" },
+            ":error": { "S.$": "States.JsonToString($.errorInfo)" }
+          }
+        },
+        End: true
+      }
+    })
+    startBenchmarkBuild.addCatch(markFailed, { resultPath: "$.errorInfo" })
+
+    const benchmarkStateMachine = new sfn.StateMachine(this, "BenchmarkStateMachine", {
+      definitionBody: sfn.DefinitionBody.fromChainable(markRunning.next(startBenchmarkBuild).next(markSucceeded)),
+      timeout: Duration.hours(3)
+    })
+    benchmarkRunsTable.grantWriteData(benchmarkStateMachine)
+    benchmarkStateMachine.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["codebuild:StartBuild", "codebuild:BatchGetBuilds", "codebuild:StopBuild"],
+      resources: [benchmarkProject.projectArn]
+    }))
+    benchmarkStateMachine.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["events:PutTargets", "events:PutRule", "events:DescribeRule"],
+      resources: ["*"]
+    }))
+    apiFn.addEnvironment("BENCHMARK_STATE_MACHINE_ARN", benchmarkStateMachine.stateMachineArn)
+    apiFn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", httpStage.url)
+    benchmarkStateMachine.grantStartExecution(apiFn)
+    benchmarkStateMachine.grant(apiFn, "states:StopExecution", "states:DescribeExecution")
 
     const distribution = new cloudfront.Distribution(this, "FrontendDistribution", {
       defaultRootObject: "index.html",

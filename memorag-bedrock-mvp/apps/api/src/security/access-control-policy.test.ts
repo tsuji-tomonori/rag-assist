@@ -22,7 +22,10 @@ const protectedMiddlewarePaths = [
   "/conversation-history/*",
   "/debug-runs",
   "/debug-runs/*",
-  "/benchmark/query"
+  "/benchmark/query",
+  "/benchmark-runs",
+  "/benchmark-runs/*",
+  "/benchmark-suites"
 ]
 
 const routePolicies: RoutePolicy[] = [
@@ -42,7 +45,13 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/debug-runs", permission: "chat:admin:read_all" },
   { method: "get", path: "/debug-runs/{runId}", permission: "chat:admin:read_all" },
   { method: "post", path: "/debug-runs/{runId}/download", permission: "chat:admin:read_all" },
-  { method: "post", path: "/benchmark/query", permission: "chat:admin:read_all" }
+  { method: "post", path: "/benchmark/query", permission: "benchmark:run" },
+  { method: "get", path: "/benchmark-suites", permission: "benchmark:read" },
+  { method: "post", path: "/benchmark-runs", permission: "benchmark:run" },
+  { method: "get", path: "/benchmark-runs", permission: "benchmark:read" },
+  { method: "get", path: "/benchmark-runs/{runId}", permission: "benchmark:read" },
+  { method: "post", path: "/benchmark-runs/{runId}/cancel", permission: "benchmark:cancel" },
+  { method: "post", path: "/benchmark-runs/{runId}/download", permission: "benchmark:download" }
 ]
 
 test("protected API paths keep auth middleware coverage", async () => {

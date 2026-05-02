@@ -148,6 +148,7 @@ type Summary = {
 }
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
+const apiAuthToken = process.env.API_AUTH_TOKEN
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
@@ -203,7 +204,7 @@ async function runQuery(row: DatasetRow): Promise<{ status: number; body: Benchm
   try {
     const response = await fetch(`${apiBaseUrl}/benchmark/query`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: createRequestHeaders(),
       body: JSON.stringify({
         id: row.id,
         question: row.question,
@@ -228,6 +229,13 @@ async function runQuery(row: DatasetRow): Promise<{ status: number; body: Benchm
         error: error instanceof Error ? error.message : String(error)
       }
     }
+  }
+}
+
+function createRequestHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    ...(apiAuthToken ? { Authorization: `Bearer ${apiAuthToken}` } : {})
   }
 }
 

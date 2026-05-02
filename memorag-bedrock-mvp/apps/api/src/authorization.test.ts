@@ -18,6 +18,9 @@ test("RAG_GROUP_MANAGER は文書一覧と文書更新権限を持つ", () => {
   assert.doesNotThrow(() => requirePermission(user, "rag:doc:read"))
   assert.doesNotThrow(() => requirePermission(user, "rag:doc:write:group"))
   assert.doesNotThrow(() => requirePermission(user, "rag:doc:delete:group"))
+  assert.doesNotThrow(() => requirePermission(user, "benchmark:read"))
+  assert.doesNotThrow(() => requirePermission(user, "benchmark:run"))
+  assert.throws(() => requirePermission(user, "benchmark:cancel"))
 })
 
 test("問い合わせ対応ロールはユーザー管理なしで回答操作できる", () => {
@@ -31,6 +34,14 @@ test("CHAT_USER は問い合わせ管理とdebug管理権限を持たない", ()
   const user = { userId: "u5", cognitoGroups: ["CHAT_USER"] }
   assert.throws(() => requirePermission(user, "answer:edit"))
   assert.throws(() => requirePermission(user, "answer:publish"))
+  assert.throws(() => requirePermission(user, "chat:admin:read_all"))
+  assert.throws(() => requirePermission(user, "benchmark:run"))
+})
+
+test("BENCHMARK_RUNNER は benchmark query 実行だけ許可される", () => {
+  const user = { userId: "u6", cognitoGroups: ["BENCHMARK_RUNNER"] }
+  assert.doesNotThrow(() => requirePermission(user, "benchmark:run"))
+  assert.throws(() => requirePermission(user, "benchmark:read"))
   assert.throws(() => requirePermission(user, "chat:admin:read_all"))
 })
 
