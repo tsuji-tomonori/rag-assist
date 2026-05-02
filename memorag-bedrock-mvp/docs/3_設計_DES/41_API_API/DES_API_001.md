@@ -19,14 +19,14 @@
 | `POST /documents` | 文書登録 | `FR-001`, `FR-002` |
 | `DELETE /documents/{documentId}` | 文書削除 | `FR-007`, `FR-008` |
 | `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005` |
-| `POST /questions` | 担当者への問い合わせ作成 | `FR-005`, `NFR-011` |
-| `GET /questions` | 担当者問い合わせ一覧 | `FR-005`, `NFR-011` |
-| `GET /questions/{questionId}` | 担当者問い合わせ詳細 | `FR-005`, `NFR-011` |
-| `POST /questions/{questionId}/answer` | 担当者回答登録 | `FR-005`, `NFR-011` |
-| `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-005`, `NFR-011` |
-| `GET /conversation-history` | 自分の会話履歴一覧 | `FR-010`, `NFR-005` |
-| `POST /conversation-history` | 会話履歴 item 保存 | `FR-010`, `NFR-005` |
-| `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-010`, `NFR-005` |
+| `POST /questions` | 回答不能時の担当者問い合わせ作成 | `FR-021`, `NFR-011` |
+| `GET /questions` | 担当者向け問い合わせ一覧 | `FR-021`, `NFR-011` |
+| `GET /questions/{questionId}` | 担当者問い合わせ詳細 | `FR-021`, `NFR-011` |
+| `POST /questions/{questionId}/answer` | 担当者回答登録 | `FR-021`, `NFR-011` |
+| `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-021`, `NFR-011` |
+| `GET /conversation-history` | 自分の会話履歴一覧 | `FR-022`, `NFR-005` |
+| `POST /conversation-history` | 会話履歴 item 保存 | `FR-022`, `NFR-005` |
+| `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-022`, `NFR-005` |
 | `GET /debug-runs` | debug trace 一覧 | `FR-010`, `NFR-010` |
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
 | `POST /debug-runs/{runId}/download` | debug trace JSON ダウンロード URL 生成 | `FR-010`, `NFR-010` |
@@ -51,20 +51,17 @@
 ```json
 {
   "answer": "根拠に基づく回答または回答不能理由",
+  "isAnswerable": true,
   "citations": [
     {
       "documentId": "doc-001",
+      "fileName": "operations.md",
       "chunkId": "chunk-003",
-      "title": "運用手順書",
-      "section": "再インデックス"
+      "score": 0.92,
+      "text": "再インデックスは管理者が承認後に実行します。"
     }
   ],
-  "metadata": {
-    "queryId": "q-123",
-    "answerability": "ANSWERABLE",
-    "modelId": "amazon.nova-lite-v1:0",
-    "latencyMs": 3200
-  }
+  "retrieved": []
 }
 ```
 
@@ -119,16 +116,59 @@
 - API は `schemaVersion` 未指定の保存要求を v1 として補完する。
 - 将来スキーマを変更する場合は、既存 item の読み取り互換性を維持するか、version ごとの変換を追加する。
 
+## `/questions`
+
+### `POST /questions` Request
+
+```json
+{
+  "title": "山田さんの昼食について確認したい",
+  "question": "今日山田さんは何を食べたか、担当者に確認してください。",
+  "requesterName": "山田 太郎",
+  "requesterDepartment": "総務部",
+  "assigneeDepartment": "総務部",
+  "category": "その他の質問",
+  "priority": "normal",
+  "sourceQuestion": "今日山田さんは何を食べましたか?",
+  "chatAnswer": "資料からは回答できません。",
+  "chatRunId": "run_20260502_010203Z_abc123"
+}
+```
+
+### `POST /questions/{questionId}/answer` Request
+
+```json
+{
+  "answerTitle": "山田さんの昼食についての回答",
+  "answerBody": "山田さんは本日、社内食堂でカレーを食べました。",
+  "responderName": "佐藤 花子",
+  "responderDepartment": "総務部",
+  "references": "総務部への確認結果",
+  "internalMemo": "依頼者への通知前に内容確認済み",
+  "notifyRequester": true
+}
+```
+
+### 状態遷移
+
+| 操作 | 状態 |
+| --- | --- |
+| `POST /questions` | `open` |
+| `POST /questions/{questionId}/answer` | `answered` |
+| `POST /questions/{questionId}/resolve` | `resolved` |
+
+`POST /questions` は通常利用者のエスカレーション導線で使う。`GET /questions` と詳細取得は `answer:edit`、回答登録と解決済み化は `answer:publish` を要求する。
+
 ## `POST /benchmark/query`
 
 ### Request
 
 ```json
 {
-  "caseId": "case-001",
+  "id": "case-001",
   "question": "登録文書に基づく質問",
-  "expectedFacts": ["回答に含まれるべき fact"],
-  "expectedAnswerability": "ANSWERABLE"
+  "modelId": "amazon.nova-lite-v1:0",
+  "includeDebug": false
 }
 ```
 
@@ -136,15 +176,11 @@
 
 ```json
 {
-  "caseId": "case-001",
-  "queryId": "q-123",
-  "answerability": "ANSWERABLE",
-  "metrics": {
-    "factCoverage": 1,
-    "faithfulness": 1,
-    "contextRelevance": 0.9,
-    "refusalCorrectness": 1
-  }
+  "id": "case-001",
+  "answer": "根拠に基づく回答または回答不能理由",
+  "isAnswerable": true,
+  "citations": [],
+  "retrieved": []
 }
 ```
 
@@ -153,6 +189,7 @@
 - local 開発では検証容易性を優先し、設定により認可を緩和できる。
 - `AUTH_ENABLED=false` の既定 local user は `SYSTEM_ADMIN` とする。
 - local RBAC 検証では `LOCAL_AUTH_GROUPS` で Cognito group 相当の role を指定できる。
+- `VITE_AUTH_MODE=local` の Web UI は local 開発用セッションとして `SYSTEM_ADMIN` 相当を扱う。
 - `GET /conversation-history`、`POST /conversation-history`、`DELETE /conversation-history/{id}` は認証済み userId に紐づく自分の履歴のみを対象とする。
 - 本番または社内検証環境では管理系 API を `requirePermission` による強制境界で保護する。
 - 権限外文書を回答、citation、debug trace の外部応答に含めない。

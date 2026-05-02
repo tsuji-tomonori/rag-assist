@@ -59,6 +59,9 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /questions/{questionId}` 担当者問い合わせ詳細
 - `POST /questions/{questionId}/answer` 担当者回答登録
 - `POST /questions/{questionId}/resolve` 問い合わせ解決済み化
+- `GET /conversation-history` 自分の会話履歴一覧
+- `POST /conversation-history` 会話履歴保存
+- `DELETE /conversation-history/{id}` 会話履歴削除
 - `GET /debug-runs` persisted debug trace一覧
 - `GET /debug-runs/{runId}` persisted debug trace取得
 - `POST /debug-runs/{runId}/download` persisted debug trace JSON download URL作成
@@ -130,7 +133,7 @@ infra/scripts/create-cognito-user.sh \
 ```
 
 `--role` は複数回指定できます。ロールは `一般利用者`、`回答担当者`、`RAGグループ管理者`、`ユーザー管理者`、`アクセス管理者`、`コスト監査者`、`システム管理者` の日本語名、または `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の Cognito group 名で指定できます。
-`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。管理者ユーザーを作る場合は `--role システム管理者` を指定してください。
+`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。通常利用者は `CHAT_USER`、担当者は `ANSWER_EDITOR`、debug trace や benchmark を確認する管理者は `SYSTEM_ADMIN` または `システム管理者` を指定してください。
 `CHAT_USER` などの Cognito group は CDK stack で作成されるため、ユーザー作成前に `npm run cdk -w @memorag-mvp/infra -- deploy` または `task cdk:deploy` を実行してください。
 GitHub Actions から作成する場合は、`Actions` -> `Create MemoRAG Cognito User` -> `Run workflow` でメールアドレスと主ロールを日本語名で選択します。追加ロールが必要な場合は、`additional-roles` に日本語名または Cognito group 名をカンマ区切りで入力します。
 

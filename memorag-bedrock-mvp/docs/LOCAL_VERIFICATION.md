@@ -1,6 +1,6 @@
 # Local Verification
 
-このMVPはローカルではAWSへ接続しない。`MOCK_BEDROCK=true` と `USE_LOCAL_VECTOR_STORE=true` を指定し、Bedrockモックと `.local-data` のファイルstoreで検証する。
+このMVPはローカルではAWSへ接続しない。`MOCK_BEDROCK=true`、`USE_LOCAL_VECTOR_STORE=true`、`USE_LOCAL_QUESTION_STORE=true`、`USE_LOCAL_CONVERSATION_HISTORY_STORE=true` を指定し、Bedrockモックと `.local-data` のファイルstoreで検証する。
 
 ## 実行手順
 
@@ -20,7 +20,13 @@ npm run build --workspaces --if-present
 API起動:
 
 ```bash
-PORT=8787 MOCK_BEDROCK=true USE_LOCAL_VECTOR_STORE=true LOCAL_DATA_DIR=.local-data npm run start -w @memorag-mvp/api
+PORT=8787 \
+MOCK_BEDROCK=true \
+USE_LOCAL_VECTOR_STORE=true \
+USE_LOCAL_QUESTION_STORE=true \
+USE_LOCAL_CONVERSATION_HISTORY_STORE=true \
+LOCAL_DATA_DIR=.local-data \
+npm run start -w @memorag-mvp/api
 ```
 
 別ターミナルでスモークテスト:
@@ -36,6 +42,14 @@ curl -fsS http://localhost:8787/chat \
   -H 'Content-Type: application/json' \
   -d '{"question":"経費精算の期限は？","modelId":"amazon.nova-lite-v1:0","includeDebug":true}'
 
+curl -fsS http://localhost:8787/questions \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"担当者確認","question":"資料にない内容を担当者に確認してください。","requesterName":"山田 太郎","requesterDepartment":"総務部","assigneeDepartment":"総務部"}'
+
+curl -fsS http://localhost:8787/conversation-history \
+  -H 'Content-Type: application/json' \
+  -d '{"schemaVersion":1,"id":"local-history-001","title":"ローカル検証","updatedAt":"2026-05-02T00:00:00.000Z","messages":[{"role":"user","text":"経費精算の期限は？","createdAt":"2026-05-02T00:00:00.000Z"}]}'
+
 curl -fsS http://localhost:8787/openapi.json >/dev/null
 ```
 
@@ -50,10 +64,29 @@ REPORT=.local-data/benchmark-report.md \
 npm run start -w @memorag-mvp/benchmark
 ```
 
+追加データセット:
+
+```bash
+DATASET=benchmark/dataset.unanswerable.sample.jsonl \
+OUTPUT=.local-data/benchmark-unanswerable-results.jsonl \
+SUMMARY=.local-data/benchmark-unanswerable-summary.json \
+REPORT=.local-data/benchmark-unanswerable-report.md \
+npm run start -w @memorag-mvp/benchmark
+
+DATASET=benchmark/dataset.fact-slots.sample.jsonl \
+OUTPUT=.local-data/benchmark-fact-slots-results.jsonl \
+SUMMARY=.local-data/benchmark-fact-slots-summary.json \
+REPORT=.local-data/benchmark-fact-slots-report.md \
+npm run start -w @memorag-mvp/benchmark
+```
+
 ## 確認観点
 
 - `/health` が `ok: true` を返す。
 - `/documents` が `documentId`、`chunkCount`、`memoryCardCount` を返す。
 - `/chat` が回答本文と `citations`、`retrieved` を返す。
+- `/questions` が `questionId` と `status: "open"` を返す。
+- `/conversation-history` が `schemaVersion: 1` の履歴 item を保存できる。
 - `/openapi.json` がJSONとして取得できる。
 - benchmark CLIが `.local-data/benchmark-results.jsonl`、`.local-data/benchmark-summary.json`、`.local-data/benchmark-report.md` を作成する。
+- benchmark summary が回答可能問題、不回答問題、fact slot 付き問題の評価に必要な集計項目を出力する。

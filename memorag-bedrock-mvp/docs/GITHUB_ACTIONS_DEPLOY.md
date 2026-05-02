@@ -42,6 +42,18 @@
 
 ロールは複数付与できる。workflowは主ロールと追加ロールを `infra/scripts/create-cognito-user.sh` の `--role` に複数渡し、スクリプト側で日本語名を Cognito group 名へ正規化する。
 
+主な role:
+
+| role | 用途 |
+| --- | --- |
+| `CHAT_USER` | 通常チャット、本人の会話履歴、担当者問い合わせ登録 |
+| `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
+| `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用 |
+| `USER_ADMIN` | ユーザー管理の将来拡張 |
+| `ACCESS_ADMIN` | 権限管理の将来拡張 |
+| `COST_AUDITOR` | 費用監査の将来拡張 |
+| `SYSTEM_ADMIN` | debug trace、benchmark、管理者検証 |
+
 事前条件:
 
 - CDK deploy済みであること。

@@ -67,7 +67,17 @@ Then システムは実行または参照を拒否する。
 
 And 文書本文、引用 chunk、debug trace を返さない。
 
-### AC-SEC-002: Phase 1 RAG 運用管理 API 認可
+### AC-SEC-002: 担当者問い合わせの権限分離
+
+Given 通常利用者が `CHAT_USER` group のみを持つ。
+
+When 利用者が回答不能な質問を担当者へ送信する。
+
+Then システムは問い合わせ ticket を作成する。
+
+And Web UI は `GET /questions` と `GET /debug-runs` を事前取得しない。
+
+### AC-SEC-003: Phase 1 RAG 運用管理 API 認可
 
 Given 本番または社内検証環境である。
 
@@ -77,7 +87,7 @@ Then システムは権限不足として拒否する。
 
 And 問い合わせ本文、回答本文、debug trace、JSON download URL を返さない。
 
-### AC-SEC-003: 問い合わせ対応 role の分離
+### AC-SEC-004: 問い合わせ対応 role の分離
 
 Given 問い合わせ対応者が `ANSWER_EDITOR` role を持つ。
 
@@ -86,6 +96,20 @@ When 問い合わせ一覧を参照する。
 Then システムはユーザー管理権限を要求せずに問い合わせ一覧を返す。
 
 And ユーザー管理 API またはロール付与 API は Phase 1 の管理画面に提供しない。
+
+When 問い合わせ対応者が回答登録または解決済み化を実行する。
+
+Then API は `answer:publish` 権限により操作を許可する。
+
+### AC-HIST-001: 会話履歴の本人分離
+
+Given 認証済み利用者が会話を行う。
+
+When Web UI が会話履歴 item を保存する。
+
+Then API は `schemaVersion: 1` の item を userId 単位で保存する。
+
+And 別 userId の履歴として返さない。
 
 ### AC-EVAL-001: RAG 品質評価
 
@@ -100,7 +124,7 @@ And Markdown report を生成できる。
 ## 関連要求
 
 - `FR-003`, `FR-004`, `FR-005`
-- `FR-014`, `FR-015`, `FR-016`, `FR-017`, `FR-018`, `FR-019`
+- `FR-014`, `FR-015`, `FR-016`, `FR-017`, `FR-018`, `FR-019`, `FR-021`, `FR-022`
 - `NFR-010`, `NFR-011`, `SQ-001`
 
 ## 関連設計
