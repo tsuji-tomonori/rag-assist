@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import App from "./App.js"
-import type { HumanQuestion, Permission } from "./api.js"
+import type { ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
@@ -158,7 +158,7 @@ function currentUserResponse(groups = ["SYSTEM_ADMIN"]) {
 }
 
 function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
-  let storedHistory: unknown[] = []
+  let storedHistory: ConversationHistoryItem[] = []
   let managedUsers = [
     {
       userId: "local-dev",
@@ -207,13 +207,13 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
     if (requestUrl.endsWith("/benchmark-runs/bench-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/report.md", expiresInSeconds: 900, objectKey: "runs/bench-1/report.md" }))
     if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
     if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body ?? "{}"))
-      storedHistory = [body, ...storedHistory.filter((item) => (item as { id?: string }).id !== body.id)]
+      const body = JSON.parse(String(init.body ?? "{}")) as ConversationHistoryItem
+      storedHistory = [body, ...storedHistory.filter((item) => item.id !== body.id)]
       return Promise.resolve(response(body))
     }
     if (requestUrl.includes("/conversation-history/") && init?.method === "DELETE") {
       const id = decodeURIComponent(requestUrl.split("/conversation-history/")[1] ?? "")
-      storedHistory = storedHistory.filter((item) => (item as { id?: string }).id !== id)
+      storedHistory = storedHistory.filter((item) => item.id !== id)
       return Promise.resolve(response({ id }))
     }
     if (requestUrl.endsWith("/documents/doc-1") && init?.method === "DELETE") return Promise.resolve(response({ documentId: "doc-1", deletedVectorCount: 3 }))
@@ -601,12 +601,27 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(screen.getByTitle("履歴"))
     expect(await screen.findByText("会話一覧")).toBeInTheDocument()
-    expect(screen.getByText("2 件の会話")).toBeInTheDocument()
+    expect(screen.getByText(/2 件の会話/)).toBeInTheDocument()
 
     await userEvent.type(screen.getByLabelText("履歴を検索"), "分類一")
     expect(screen.getByText("1 件を表示中")).toBeInTheDocument()
+    await userEvent.click(screen.getByTitle("お気に入りに追加"))
+    await waitFor(() => {
+      const favoriteSave = fetchMock.mock.calls.find(([url, init]) => {
+        if (!String(url).endsWith("/conversation-history") || (init as RequestInit | undefined)?.method !== "POST") return false
+        return JSON.parse(String((init as RequestInit).body)).isFavorite === true
+      })
+      expect(favoriteSave).toBeTruthy()
+    })
+    expect(screen.getByText(/1 件のお気に入り/)).toBeInTheDocument()
+    await userEvent.click(screen.getByTitle("お気に入り"))
+    expect(await screen.findByRole("heading", { name: "お気に入り" })).toBeInTheDocument()
+    expect(screen.getByText("1 件を表示中")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /分類一.*メッセージ/ })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByTitle("履歴"))
     await userEvent.selectOptions(screen.getByLabelText("履歴の並び順"), "messages")
-    await userEvent.click(screen.getByRole("button", { name: /分類一/ }))
+    await userEvent.click(screen.getByRole("button", { name: /分類一.*メッセージ/ }))
     expect(screen.getByLabelText("質問")).toHaveValue("")
     expect(screen.getByText("分類一")).toBeInTheDocument()
 

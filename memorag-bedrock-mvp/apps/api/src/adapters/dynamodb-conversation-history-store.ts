@@ -22,6 +22,7 @@ export class DynamoDbConversationHistoryStore implements ConversationHistoryStor
       schemaVersion: input.schemaVersion ?? CONVERSATION_HISTORY_SCHEMA_VERSION,
       userId,
       updatedAt: input.updatedAt || new Date().toISOString(),
+      isFavorite: input.isFavorite ?? false,
       messages: input.messages.slice(0, 100)
     }
     await this.client.send(
@@ -43,7 +44,7 @@ export class DynamoDbConversationHistoryStore implements ConversationHistoryStor
     )
     return (result.Items ?? [])
       .map((item) => stripUserId(unmarshall(item) as StoredConversationHistoryItem))
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .sort(compareHistoryItems)
       .slice(0, 20)
   }
 
@@ -55,6 +56,11 @@ export class DynamoDbConversationHistoryStore implements ConversationHistoryStor
       })
     )
   }
+}
+
+function compareHistoryItems(a: ConversationHistoryItem, b: ConversationHistoryItem): number {
+  if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
+  return b.updatedAt.localeCompare(a.updatedAt)
 }
 
 function stripUserId(item: StoredConversationHistoryItem): ConversationHistoryItem {

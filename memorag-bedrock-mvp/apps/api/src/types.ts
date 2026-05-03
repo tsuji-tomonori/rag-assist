@@ -286,5 +286,6 @@ export type ConversationHistoryItem = {
   id: string
   title: string
   updatedAt: string
+  isFavorite?: boolean
   messages: ConversationMessage[]
 }

@@ -25,12 +25,13 @@ export class LocalConversationHistoryStore implements ConversationHistoryStore {
       schemaVersion: input.schemaVersion ?? CONVERSATION_HISTORY_SCHEMA_VERSION,
       userId,
       updatedAt: input.updatedAt || new Date().toISOString(),
+      isFavorite: input.isFavorite ?? false,
       messages: input.messages.slice(0, 100)
     }
     const db = await this.load()
     const otherUsers = db.conversations.filter((conversation) => conversation.userId !== userId)
     const currentUser = [item, ...db.conversations.filter((conversation) => conversation.userId === userId && conversation.id !== item.id)]
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .sort(compareHistoryItems)
       .slice(0, 20)
     db.conversations = [...currentUser, ...otherUsers]
     await this.saveFile(db)
@@ -41,7 +42,7 @@ export class LocalConversationHistoryStore implements ConversationHistoryStore {
     const db = await this.load()
     return db.conversations
       .filter((conversation) => conversation.userId === userId)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .sort(compareHistoryItems)
       .slice(0, 20)
       .map(stripUserId)
   }
@@ -65,6 +66,11 @@ export class LocalConversationHistoryStore implements ConversationHistoryStore {
     await mkdir(path.dirname(this.filePath), { recursive: true })
     await writeFile(this.filePath, JSON.stringify(db, null, 2))
   }
+}
+
+function compareHistoryItems(a: StoredConversationHistoryItem, b: StoredConversationHistoryItem): number {
+  if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
+  return b.updatedAt.localeCompare(a.updatedAt)
 }
 
 function stripUserId(item: StoredConversationHistoryItem): ConversationHistoryItem {
