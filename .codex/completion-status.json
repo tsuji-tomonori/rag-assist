@@ -6,15 +6,23 @@
     "最初に実行計画を立て、レポートを作成してタスクを分割する",
     "memorag-bedrock-mvp/apps/web のコンポーネント分割を設計/実装/テストする",
     "きりの良いタイミングでテスト確認を行って git commit + push する",
-    "すべて完了後に GitHub Apps で main 向け PR を作成する"
+    "すべて完了後に GitHub Apps で main 向け PR を作成する",
+    "全体ロードマップ完了まで作業し、phase ごとにテストして commit する"
   ],
   "completed_items": [
     "worktree .worktrees/web-component-refactor と branch codex/web-component-refactor を作成した",
     "reports/working/20260503-1205-web-component-refactor-plan.md を作成した",
     "App.tsx から shared/app/feature コンポーネントと utility を分離した",
-    "web typecheck と web test と git diff --check を実行し、すべて pass した",
+    "reports/working/20260503-1228-web-roadmap-completion-plan.md を作成した",
+    "Phase 2 で AppShell/RailNav/TopBar を分離し、検証後に commit/push した",
+    "Phase 3 で主要画面を feature components と AppRoutes へ分離し、検証後に commit/push した",
+    "Phase 4 で状態と副作用を feature hooks へ分離し、検証後に commit/push した",
+    "Phase 5 で API と CSS をドメイン単位へ分割し、検証後に commit/push した",
+    "Phase 6 で auth 画面/hook 分割と component tests 追加を行い、検証後に commit/push した",
+    "web typecheck、web test、web build、git diff --check を必要な phase で実行し、すべて pass した",
     "reports/working/20260503-1217-web-component-refactor-report.md を作成した",
-    "commit 141be74 を origin/codex/web-component-refactor に push した",
+    "reports/working/20260503-1254-web-roadmap-completion-report.md を作成した",
+    "commits 141be74, 6ed7946, 883412a, b79f13e, 4b29cc9, 285091d, dc537cf を origin/codex/web-component-refactor に push した",
     "GitHub Apps で https://github.com/tsuji-tomonori/rag-assist/pull/91 を作成した",
     "PR に semver:patch ラベルを付与した"
   ],
@@ -33,7 +41,12 @@
     {
       "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web",
       "result": "pass",
-      "note": "4 files / 50 tests"
+      "note": "Phase 6 最終時点で 7 files / 56 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web",
+      "result": "pass",
+      "note": "Phase 5 と Phase 6 で実行"
     },
     {
       "command": "git diff --check",
