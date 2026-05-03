@@ -41,7 +41,7 @@ query
   -> topK chunks
 ```
 
-`POST /chat` の agent workflow では、`embed_queries` が生成した各 query/vector を `search_evidence` に渡し、同じ hybrid retriever を query ごとに実行する。結果は chunk key で重複排除し、semantic score、lexical score、cheap rerank score の最大値を回答可能性判定向けの retrieval score に正規化する。
+`POST /chat` の agent workflow では、`embed_queries` が生成した各 query/vector を `search_evidence` に渡し、同じ hybrid retriever を query ごとに実行する。各 query 内では lexical result と semantic result を RRF で融合し、さらに複数 query / clue の result list も chunk key 単位の cross-query RRF で順位融合する。回答可能性判定向けの retrieval score は semantic score、lexical score、cheap rerank score、cross-query RRF の軽量 boost を使って正規化する。
 
 ## 採用判断
 
@@ -87,6 +87,7 @@ query
 - search response の `diagnostics.indexVersion` と `diagnostics.aliasVersion` は opaque value とし、document ID、alias key、alias value を含めない。
 - S3 Vectors の前段 filter は scalar metadata に寄せ、複雑な ACL 判定は後段 guard で補完する。
 - agent `search_evidence` は `POST /search` と同じ `searchRag` 実装を使い、chat route の `AppUser` を渡して ACL guard を維持する。
+- agent `search_evidence` は複数 query / clue の結果を最大 score だけで統合せず、cross-query RRF の順位を `crossQueryRrfScore` / `crossQueryRank` として chunk metadata に残す。
 - agent debug trace の `execute_search_action` には query 数、index / alias version、lexical / semantic / fused count、source count を記録する。
 
 ## テスト観点
@@ -107,6 +108,7 @@ query
 | metadata filter | `service search applies ACL and metadata filters across lexical and vector results` |
 | API contract | `HTTP contract validates major endpoint responses against /openapi.json` |
 | agent hybrid search integration | `fixed MemoRAG workflow answers from selected evidence and records fixed trace steps`、`query nodes handle memory-disabled, fallback, generated clue, and search merge paths` |
+| agent cross-query RRF | `query nodes handle memory-disabled, fallback, generated clue, and search merge paths` |
 | agent retrieval diagnostics trace | `fixed MemoRAG workflow answers from selected evidence and records fixed trace steps` |
 
 ## 評価指標

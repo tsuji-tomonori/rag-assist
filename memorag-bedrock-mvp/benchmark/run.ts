@@ -1,8 +1,9 @@
 import { createReadStream, createWriteStream, existsSync } from "node:fs"
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
+import { createQualityReview, type QualityReview } from "./metrics/quality.js"
 
 type DatasetRow = {
   id?: string
@@ -155,8 +156,12 @@ type Summary = {
     id?: string
     question: string
     reasons: string[]
+    expectedContains?: string | string[]
+    expectedAnswer?: string
+    expected?: string
     answerPreview: string
   }>
+  qualityReview: QualityReview
 }
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
@@ -168,6 +173,12 @@ const datasetPath = resolveExistingPath(process.env.DATASET ?? "dataset.sample.j
 const outputPath = resolveOutputPath(process.env.OUTPUT ?? ".local-data/benchmark-results.jsonl")
 const reportPath = resolveOutputPath(process.env.REPORT ?? outputPath.replace(/\.jsonl$/i, ".report.md"))
 const summaryPath = resolveOutputPath(process.env.SUMMARY ?? outputPath.replace(/\.jsonl$/i, ".summary.json"))
+const baselineSummaryPath = process.env.BASELINE_SUMMARY
+  ? resolveExistingPath(process.env.BASELINE_SUMMARY, [process.cwd(), benchmarkDir, repoRoot])
+  : undefined
+const baselineSummary = baselineSummaryPath
+  ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { metrics?: Summary["metrics"] })
+  : undefined
 
 await mkdir(path.dirname(outputPath), { recursive: true })
 await mkdir(path.dirname(reportPath), { recursive: true })
@@ -383,7 +394,7 @@ function summarize(results: BenchmarkResultRow[]): Summary {
   const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
   const llmJudgeCallCount = llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeCount ?? 0), 0)
 
-  return {
+  const summary = {
     datasetPath,
     outputPath,
     reportPath,
@@ -481,8 +492,19 @@ function summarize(results: BenchmarkResultRow[]): Summary {
         id: row.id,
         question: row.question,
         reasons: row.evaluation.failureReasons,
+        expectedContains: row.expectedContains,
+        expectedAnswer: row.expectedAnswer,
+        expected: row.expected,
         answerPreview: (row.result.answer ?? row.result.error ?? "").slice(0, 180)
       }))
+  }
+  return {
+    ...summary,
+    qualityReview: createQualityReview({
+      current: summary.metrics,
+      baseline: baselineSummary?.metrics,
+      failures: summary.failures
+    })
   }
 }
 
@@ -523,6 +545,26 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
         )
       ].join("\n")
 
+  const regressionRows = summary.qualityReview.regressions.length === 0
+    ? "\nNo benchmark metric regressions detected.\n"
+    : [
+        "| metric | baseline | current | delta | threshold |",
+        "| --- | ---: | ---: | ---: | ---: |",
+        ...summary.qualityReview.regressions.map((regression) =>
+          `| ${regression.metric} | ${regression.baseline} | ${regression.current} | ${regression.delta} | ${regression.threshold} |`
+        )
+      ].join("\n")
+
+  const aliasCandidateRows = summary.qualityReview.aliasCandidates.length === 0
+    ? "\nNo alias candidates suggested.\n"
+    : [
+        "| term | expansions | source rows | reason |",
+        "| --- | --- | --- | --- |",
+        ...summary.qualityReview.aliasCandidates.map((candidate) =>
+          `| ${escapeMarkdown(candidate.term)} | ${escapeMarkdown(candidate.expansions.join(", "))} | ${escapeMarkdown(candidate.sourceRowIds.join(", "))} | ${escapeMarkdown(candidate.reason)} |`
+        )
+      ].join("\n")
+
   const detailRows = [
     "| id | expected | actual | fact_slots | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | citations | retrieved | result |",
     "| --- | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |",
@@ -553,6 +595,19 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
 | metric | value |
 | --- | ---: |
 ${metricRows.map(([name, value]) => `| ${name} | ${value} |`).join("\n")}
+
+## Quality Review
+
+- Status: ${summary.qualityReview.status}
+- Baseline summary: ${baselineSummaryPath ?? "n/a"}
+
+### Regressions
+
+${regressionRows}
+
+### Alias Candidates
+
+${aliasCandidateRows}
 
 ## Failures
 

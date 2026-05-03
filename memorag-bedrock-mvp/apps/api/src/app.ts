@@ -12,6 +12,9 @@ import {
   AdminAuditLogResponseSchema,
   AccessRoleListResponseSchema,
   AssignUserRolesRequestSchema,
+  AliasAuditLogResponseSchema,
+  AliasDefinitionSchema,
+  AliasListResponseSchema,
   BenchmarkRunListResponseSchema,
   BenchmarkRunSchema,
   BenchmarkSuiteListResponseSchema,
@@ -20,6 +23,7 @@ import {
   ConversationHistoryItemSchema,
   ConversationHistoryListResponseSchema,
   CostAuditSummarySchema,
+  CreateAliasRequestSchema,
   CreateManagedUserRequestSchema,
   CreateBenchmarkRunRequestSchema,
   CreateQuestionRequestSchema,
@@ -35,10 +39,15 @@ import {
   HealthResponseSchema,
   ManagedUserListResponseSchema,
   ManagedUserSchema,
+  PublishAliasesResponseSchema,
   QuestionListResponseSchema,
   QuestionSchema,
+  ReindexMigrationListResponseSchema,
+  ReindexMigrationSchema,
+  ReviewAliasRequestSchema,
   SearchRequestSchema,
   SearchResponseSchema,
+  UpdateAliasRequestSchema,
   UsageSummaryListResponseSchema
 } from "./schemas.js"
 
@@ -263,6 +272,145 @@ app.openapi(
 app.openapi(
   looseRoute({
     method: "get",
+    path: "/admin/aliases",
+    responses: {
+      200: { description: "List alias definitions", content: { "application/json": { schema: AliasListResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:alias:read")
+    return c.json({ aliases: await service.listAliases() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: CreateAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Created alias draft", content: { "application/json": { schema: AliasDefinitionSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:write:group")
+    const body = (c.req as any).valid("json") as z.infer<typeof CreateAliasRequestSchema>
+    return c.json(await service.createAlias(user, body), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/{aliasId}/update",
+    request: {
+      params: z.object({ aliasId: z.string().min(1) }),
+      body: {
+        required: true,
+        content: { "application/json": { schema: UpdateAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Updated alias draft", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:write:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const body = (c.req as any).valid("json") as z.infer<typeof UpdateAliasRequestSchema>
+    const alias = await service.updateAlias(user, aliasId, body)
+    if (!alias) return c.json({ error: "Alias not found" }, 404)
+    return c.json(alias, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/{aliasId}/review",
+    request: {
+      params: z.object({ aliasId: z.string().min(1) }),
+      body: {
+        required: true,
+        content: { "application/json": { schema: ReviewAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Reviewed alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:review:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const body = (c.req as any).valid("json") as z.infer<typeof ReviewAliasRequestSchema>
+    const alias = await service.reviewAlias(user, aliasId, body)
+    if (!alias) return c.json({ error: "Alias not found" }, 404)
+    return c.json(alias, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/{aliasId}/disable",
+    request: { params: z.object({ aliasId: z.string().min(1) }) },
+    responses: {
+      200: { description: "Disabled alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:disable:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const alias = await service.disableAlias(user, aliasId)
+    if (!alias) return c.json({ error: "Alias not found" }, 404)
+    return c.json(alias, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/publish",
+    responses: {
+      200: { description: "Published approved aliases", content: { "application/json": { schema: PublishAliasesResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:publish:group")
+    return c.json(await service.publishAliases(user), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/admin/aliases/audit-log",
+    responses: {
+      200: { description: "List alias audit events", content: { "application/json": { schema: AliasAuditLogResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:alias:read")
+    return c.json({ auditLog: await service.listAliasAuditLog() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
     path: "/admin/usage",
     responses: {
       200: { description: "List all-user usage summaries", content: { "application/json": { schema: UsageSummaryListResponseSchema } } }
@@ -327,8 +475,126 @@ app.openapi(
   async (c) => {
     requirePermission(c.get("user"), "rag:doc:write:group")
     const body = (c.req as any).valid("json") as z.infer<typeof DocumentUploadRequestSchema>
-    if (!body.text && !body.contentBase64) return c.json({ error: "Either text or contentBase64 is required" }, 400)
+    if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
     return c.json(await service.ingest(body), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/{documentId}/reindex",
+    request: {
+      params: z.object({ documentId: z.string().min(1) }),
+      body: {
+        required: false,
+        content: { "application/json": { schema: z.object({ embeddingModelId: z.string().optional(), memoryModelId: z.string().optional() }) } }
+      }
+    },
+    responses: {
+      200: { description: "Reindexed document", content: { "application/json": { schema: DocumentManifestSchema } } },
+      404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:index:rebuild:group")
+    const { documentId } = (c.req as any).valid("param") as { documentId: string }
+    const body = ((c.req as any).valid("json") ?? {}) as { embeddingModelId?: string; memoryModelId?: string }
+    try {
+      return c.json(await service.reindexDocument(user, documentId, body), 200)
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/documents/reindex-migrations",
+    responses: {
+      200: { description: "List blue-green reindex migrations", content: { "application/json": { schema: ReindexMigrationListResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:index:rebuild:group")
+    return c.json({ migrations: await service.listReindexMigrations() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/{documentId}/reindex/stage",
+    request: {
+      params: z.object({ documentId: z.string().min(1) }),
+      body: {
+        required: false,
+        content: { "application/json": { schema: z.object({ embeddingModelId: z.string().optional(), memoryModelId: z.string().optional() }) } }
+      }
+    },
+    responses: {
+      200: { description: "Staged reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
+      404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:index:rebuild:group")
+    const { documentId } = (c.req as any).valid("param") as { documentId: string }
+    const body = ((c.req as any).valid("json") ?? {}) as { embeddingModelId?: string; memoryModelId?: string }
+    try {
+      return c.json(await service.stageReindexMigration(user, documentId, body), 200)
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/reindex-migrations/{migrationId}/cutover",
+    request: { params: z.object({ migrationId: z.string().min(1) }) },
+    responses: {
+      200: { description: "Cut over staged reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
+      404: { description: "Migration not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:index:rebuild:group")
+    const { migrationId } = (c.req as any).valid("param") as { migrationId: string }
+    try {
+      return c.json(await service.cutoverReindexMigration(migrationId), 200)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/reindex-migrations/{migrationId}/rollback",
+    request: { params: z.object({ migrationId: z.string().min(1) }) },
+    responses: {
+      200: { description: "Rolled back reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
+      404: { description: "Migration not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:index:rebuild:group")
+    const { migrationId } = (c.req as any).valid("param") as { migrationId: string }
+    try {
+      return c.json(await service.rollbackReindexMigration(migrationId), 200)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
+      throw err
+    }
   }
 )
 

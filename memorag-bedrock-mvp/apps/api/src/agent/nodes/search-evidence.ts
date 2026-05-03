@@ -1,6 +1,6 @@
 import type { AppUser } from "../../auth.js"
 import type { Dependencies } from "../../dependencies.js"
-import { searchRag, type SearchResult, type SearchResponse } from "../../search/hybrid-search.js"
+import { rrfFuse, searchRag, type SearchResult, type SearchResponse } from "../../search/hybrid-search.js"
 import type { RetrievedVector, VectorMetadata } from "../../types.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 
@@ -16,7 +16,8 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
             }
           ]
 
-    const retrievedByKey = new Map<string, RetrievedVector>()
+    const resultLists: SearchResult[][] = []
+    const bestResultById = new Map<string, SearchResult>()
     const diagnostics: SearchResponse["diagnostics"][] = []
 
     for (const item of queryEmbeddings) {
@@ -33,23 +34,30 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
         user
       )
       diagnostics.push(response.diagnostics)
+      resultLists.push(response.results)
 
       for (const result of response.results) {
-        const hit = toRetrievedVector(result)
-        const existing = retrievedByKey.get(hit.key)
-        if (!existing || hit.score > existing.score) retrievedByKey.set(hit.key, hit)
+        const existing = bestResultById.get(result.id)
+        if (!existing || retrievalScore(result) > retrievalScore(existing)) bestResultById.set(result.id, result)
       }
     }
 
-    const retrievedChunks = [...retrievedByKey.values()].sort((a, b) => b.score - a.score).slice(0, Math.max(state.topK, 30))
+    const fused = rrfFuse(resultLists.map((results) => results.map((result) => ({ id: result.id, score: result.score }))))
+    const retrievedChunks = fused
+      .map((hit, index) => {
+        const result = bestResultById.get(hit.id)
+        return result ? toRetrievedVector(result, hit.score, index + 1) : undefined
+      })
+      .filter((hit): hit is RetrievedVector => hit !== undefined)
+      .slice(0, Math.max(state.topK, 30))
     return { retrievedChunks, retrievalDiagnostics: summarizeDiagnostics(diagnostics, retrievedChunks) }
   }
 }
 
-function toRetrievedVector(result: SearchResult): RetrievedVector {
+function toRetrievedVector(result: SearchResult, crossQueryRrfScore: number, crossQueryRank: number): RetrievedVector {
   return {
     key: result.id,
-    score: retrievalScore(result),
+    score: combinedRetrievalScore(result, crossQueryRrfScore),
     metadata: {
       kind: "chunk",
       documentId: result.documentId,
@@ -61,7 +69,10 @@ function toRetrievedVector(result: SearchResult): RetrievedVector {
       sources: result.sources,
       rrfScore: result.rrfScore,
       lexicalRank: result.lexicalRank,
-      semanticRank: result.semanticRank
+      semanticRank: result.semanticRank,
+      crossQueryRrfScore,
+      crossQueryRank,
+      expansionSource: "hybrid"
     } as VectorMetadata
   }
 }
@@ -70,6 +81,10 @@ function retrievalScore(result: SearchResult): number {
   const semanticScore = result.semanticScore ?? 0
   const lexicalScore = result.lexicalScore === undefined ? 0 : Math.min(0.95, 0.35 + Math.log1p(result.lexicalScore) / 3)
   return Math.max(semanticScore, lexicalScore, Math.min(0.95, result.score))
+}
+
+function combinedRetrievalScore(result: SearchResult, crossQueryRrfScore: number): number {
+  return Math.min(0.99, retrievalScore(result) + Math.min(0.08, crossQueryRrfScore * 3))
 }
 
 function summarizeDiagnostics(diagnostics: SearchResponse["diagnostics"][], retrievedChunks: RetrievedVector[]) {

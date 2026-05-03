@@ -4,16 +4,21 @@ import {
   answerQuestion,
   cancelBenchmarkRun,
   chat,
+  createAlias,
   createBenchmarkDownload,
   createManagedUser,
   createQuestion,
   createDebugDownload,
+  cutoverReindexMigration,
   deleteManagedUser,
   deleteConversationHistory,
   deleteDocument,
+  disableAlias,
   fileToBase64,
   getCostAuditSummary,
   getMe,
+  listAliasAuditLog,
+  listAliases,
   listAccessRoles,
   listAdminAuditLog,
   listConversationHistory,
@@ -23,14 +28,22 @@ import {
   listDebugRuns,
   listDocuments,
   listManagedUsers,
+  listReindexMigrations,
   listUsageSummaries,
+  publishAliases,
+  reviewAlias,
+  rollbackReindexMigration,
   resolveQuestion,
   saveConversationHistory,
+  stageReindexMigration,
   startBenchmarkRun,
   suspendManagedUser,
   unsuspendManagedUser,
+  updateAlias,
   uploadDocument,
   type AccessRoleDefinition,
+  type AliasAuditLogItem,
+  type AliasDefinition,
   type BenchmarkRun,
   type BenchmarkSuite,
   type ChatResponse,
@@ -44,6 +57,7 @@ import {
   type ManagedUser,
   type ManagedUserAuditLogEntry,
   type Permission,
+  type ReindexMigration,
   type UserUsageSummary
 } from "./api.js"
 import { completeNewPasswordChallenge, confirmSignUp, getStoredAuthSession, signIn, signOut, signUp, type AuthSession } from "./authClient.js"
@@ -97,6 +111,9 @@ export default function App() {
   const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[]>([])
   const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[]>([])
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
+  const [aliases, setAliases] = useState<AliasDefinition[]>([])
+  const [aliasAuditLog, setAliasAuditLog] = useState<AliasAuditLogItem[]>([])
+  const [reindexMigrations, setReindexMigrations] = useState<ReindexMigration[]>([])
   const [activeView, setActiveView] = useState<AppView>("chat")
   const [selectedDocumentId, setSelectedDocumentId] = useState("all")
   const [selectedRunId, setSelectedRunId] = useState("")
@@ -145,11 +162,18 @@ export default function App() {
   const canAssignRoles = hasPermission("access:role:assign")
   const canReadUsage = hasPermission("usage:read:all_users")
   const canReadCosts = hasPermission("cost:read:all")
+  const canReindexDocuments = hasPermission("rag:index:rebuild:group")
+  const canReadAliases = hasPermission("rag:alias:read")
+  const canWriteAliases = hasPermission("rag:alias:write:group")
+  const canReviewAliases = hasPermission("rag:alias:review:group")
+  const canDisableAliases = hasPermission("rag:alias:disable:group")
+  const canPublishAliases = hasPermission("rag:alias:publish:group")
+  const canManageDocuments = canWriteDocuments || canDeleteDocuments || canReindexDocuments
+  const canManageAliases = canReadAliases || canWriteAliases || canReviewAliases || canDisableAliases || canPublishAliases
   const canReadAdminAuditLog = canOpenAdminSettings
-  const canManageDocuments = canWriteDocuments || canDeleteDocuments
   const canManageUsers = canReadUsers || canCreateUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
   const canAuditOperations = canReadUsage || canReadCosts
-  const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns || canReadBenchmarkRuns || canManageUsers || canAuditOperations
+  const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns || canReadBenchmarkRuns || canManageUsers || canAuditOperations || canManageAliases || canReindexDocuments
   const canAsk = useMemo(() => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && !loading && canCreateChat, [question, file, loading, canCreateChat, canWriteDocuments])
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
   const latestTrace = latestAssistant?.result?.debug
@@ -204,6 +228,8 @@ export default function App() {
     if (canReadAdminAuditLog) refreshAdminAuditLog().catch((err) => console.warn("Failed to load admin audit log", err))
     if (canReadUsage) refreshUsageSummaries().catch((err) => console.warn("Failed to load usage summaries", err))
     if (canReadCosts) refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err))
+    if (canReadAliases) refreshAliases().catch((err) => console.warn("Failed to load aliases", err))
+    if (canReindexDocuments) refreshReindexMigrations().catch((err) => console.warn("Failed to load reindex migrations", err))
     if (canAnswerQuestions) refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
     if (canReadHistory) refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -315,6 +341,16 @@ export default function App() {
 
   async function refreshCostAudit() {
     setCostAudit(await getCostAuditSummary())
+  }
+
+  async function refreshAliases() {
+    const [nextAliases, nextAuditLog] = await Promise.all([listAliases(), listAliasAuditLog()])
+    setAliases(nextAliases)
+    setAliasAuditLog(nextAuditLog)
+  }
+
+  async function refreshReindexMigrations() {
+    setReindexMigrations(await listReindexMigrations())
   }
 
   async function refreshQuestions() {
@@ -438,6 +474,118 @@ export default function App() {
         embeddingModelId
       })
       await refreshDocuments()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onStageReindex(documentId: string) {
+    if (!canReindexDocuments) return
+    setLoading(true)
+    setError(null)
+    try {
+      await stageReindexMigration(documentId)
+      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onCutoverReindex(migrationId: string) {
+    if (!canReindexDocuments) return
+    setLoading(true)
+    setError(null)
+    try {
+      await cutoverReindexMigration(migrationId)
+      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onRollbackReindex(migrationId: string) {
+    if (!canReindexDocuments) return
+    setLoading(true)
+    setError(null)
+    try {
+      await rollbackReindexMigration(migrationId)
+      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onCreateAlias(input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) {
+    if (!canWriteAliases) return
+    setLoading(true)
+    setError(null)
+    try {
+      await createAlias(input)
+      await refreshAliases()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onUpdateAlias(aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) {
+    if (!canWriteAliases) return
+    setLoading(true)
+    setError(null)
+    try {
+      await updateAlias(aliasId, input)
+      await refreshAliases()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onReviewAlias(aliasId: string, decision: "approve" | "reject", comment?: string) {
+    if (!canReviewAliases) return
+    setLoading(true)
+    setError(null)
+    try {
+      await reviewAlias(aliasId, decision, comment)
+      await refreshAliases()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onDisableAlias(aliasId: string) {
+    if (!canDisableAliases) return
+    setLoading(true)
+    setError(null)
+    try {
+      await disableAlias(aliasId)
+      await refreshAliases()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onPublishAliases() {
+    if (!canPublishAliases) return
+    setLoading(true)
+    setError(null)
+    try {
+      await publishAliases()
+      await refreshAliases()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -873,8 +1021,13 @@ export default function App() {
             loading={loading}
             canWrite={canWriteDocuments}
             canDelete={canDeleteDocuments}
+            canReindex={canReindexDocuments}
+            migrations={reindexMigrations}
             onUpload={onUploadDocumentFile}
             onDelete={onDelete}
+            onStageReindex={onStageReindex}
+            onCutoverReindex={onCutoverReindex}
+            onRollbackReindex={onRollbackReindex}
             onBack={() => setActiveView("admin")}
           />
         ) : activeView === "admin" && canSeeAdminSettings ? (
@@ -889,6 +1042,8 @@ export default function App() {
             accessRoles={accessRoles}
             usageSummaries={usageSummaries}
             costAudit={costAudit}
+            aliases={aliases}
+            aliasAuditLog={aliasAuditLog}
             loading={loading}
             canManageDocuments={canManageDocuments}
             canAnswerQuestions={canAnswerQuestions}
@@ -903,6 +1058,12 @@ export default function App() {
             canAssignRoles={canAssignRoles}
             canReadUsage={canReadUsage}
             canReadCosts={canReadCosts}
+            canManageAliases={canManageAliases}
+            canReadAliases={canReadAliases}
+            canWriteAliases={canWriteAliases}
+            canReviewAliases={canReviewAliases}
+            canDisableAliases={canDisableAliases}
+            canPublishAliases={canPublishAliases}
             canReadAdminAuditLog={canReadAdminAuditLog}
             onOpenDocuments={() => setActiveView("documents")}
             onOpenAssignee={() => setActiveView("assignee")}
@@ -920,9 +1081,15 @@ export default function App() {
                 canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
                 canOpenAdminSettings ? refreshAccessRoles() : Promise.resolve(),
                 canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
-                canReadCosts ? refreshCostAudit() : Promise.resolve()
+                canReadCosts ? refreshCostAudit() : Promise.resolve(),
+                canReadAliases ? refreshAliases() : Promise.resolve()
               ]).then(() => undefined)
             }
+            onCreateAlias={onCreateAlias}
+            onUpdateAlias={onUpdateAlias}
+            onReviewAlias={onReviewAlias}
+            onDisableAlias={onDisableAlias}
+            onPublishAliases={onPublishAliases}
             onBack={() => setActiveView("chat")}
           />
         ) : (
@@ -1644,16 +1811,26 @@ function DocumentWorkspace({
   loading,
   canWrite,
   canDelete,
+  canReindex,
+  migrations,
   onUpload,
   onDelete,
+  onStageReindex,
+  onCutoverReindex,
+  onRollbackReindex,
   onBack
 }: {
   documents: DocumentManifest[]
   loading: boolean
   canWrite: boolean
   canDelete: boolean
+  canReindex: boolean
+  migrations: ReindexMigration[]
   onUpload: (file: File) => Promise<void>
   onDelete: (documentId: string) => Promise<void>
+  onStageReindex: (documentId: string) => Promise<void>
+  onCutoverReindex: (migrationId: string) => Promise<void>
+  onRollbackReindex: (migrationId: string) => Promise<void>
   onBack: () => void
 }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -1717,6 +1894,14 @@ function DocumentWorkspace({
                   <span role="cell">
                     <button
                       type="button"
+                      title={`${document.fileName}の再インデックスをステージング`}
+                      disabled={!canReindex || loading}
+                      onClick={() => void onStageReindex(document.documentId)}
+                    >
+                      <Icon name="gauge" />
+                    </button>
+                    <button
+                      type="button"
                       className="delete-document-button"
                       title={`${document.fileName}を削除`}
                       disabled={!canDelete || loading}
@@ -1730,6 +1915,46 @@ function DocumentWorkspace({
             )}
           </div>
         </section>
+
+        {canReindex && (
+          <section className="document-admin-panel document-list-panel" aria-label="再インデックス移行一覧">
+            <div className="document-list-head">
+              <h3>Blue-green reindex</h3>
+              <span>{migrations.length} 件</span>
+            </div>
+            <div className="migration-list">
+              {migrations.length === 0 ? (
+                <div className="empty-question-panel">ステージング中の再インデックスはありません。</div>
+              ) : (
+                migrations.map((migration) => (
+                  <article className="migration-card" key={migration.migrationId}>
+                    <div>
+                      <strong>{migration.status}</strong>
+                      <span>{migration.sourceDocumentId} → {migration.stagedDocumentId}</span>
+                      <small>{formatDateTime(migration.updatedAt)}</small>
+                    </div>
+                    <div className="inline-action-group">
+                      <button
+                        type="button"
+                        disabled={loading || migration.status !== "staged"}
+                        onClick={() => void onCutoverReindex(migration.migrationId)}
+                      >
+                        切替
+                      </button>
+                      <button
+                        type="button"
+                        disabled={loading || migration.status !== "cutover"}
+                        onClick={() => void onRollbackReindex(migration.migrationId)}
+                      >
+                        戻す
+                      </button>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </section>
   )
@@ -1746,6 +1971,8 @@ function AdminWorkspace({
   accessRoles,
   usageSummaries,
   costAudit,
+  aliases,
+  aliasAuditLog,
   loading,
   canManageDocuments,
   canAnswerQuestions,
@@ -1760,6 +1987,12 @@ function AdminWorkspace({
   canAssignRoles,
   canReadUsage,
   canReadCosts,
+  canManageAliases,
+  canReadAliases,
+  canWriteAliases,
+  canReviewAliases,
+  canDisableAliases,
+  canPublishAliases,
   canReadAdminAuditLog,
   onOpenDocuments,
   onOpenAssignee,
@@ -1769,6 +2002,11 @@ function AdminWorkspace({
   onAssignRoles,
   onSetUserStatus,
   onRefreshAdminData,
+  onCreateAlias,
+  onUpdateAlias,
+  onReviewAlias,
+  onDisableAlias,
+  onPublishAliases,
   onBack
 }: {
   user: CurrentUser | null
@@ -1781,6 +2019,8 @@ function AdminWorkspace({
   accessRoles: AccessRoleDefinition[]
   usageSummaries: UserUsageSummary[]
   costAudit: CostAuditSummary | null
+  aliases: AliasDefinition[]
+  aliasAuditLog: AliasAuditLogItem[]
   loading: boolean
   canManageDocuments: boolean
   canAnswerQuestions: boolean
@@ -1795,6 +2035,12 @@ function AdminWorkspace({
   canAssignRoles: boolean
   canReadUsage: boolean
   canReadCosts: boolean
+  canManageAliases: boolean
+  canReadAliases: boolean
+  canWriteAliases: boolean
+  canReviewAliases: boolean
+  canDisableAliases: boolean
+  canPublishAliases: boolean
   canReadAdminAuditLog: boolean
   onOpenDocuments: () => void
   onOpenAssignee: () => void
@@ -1804,6 +2050,11 @@ function AdminWorkspace({
   onAssignRoles: (userId: string, groups: string[]) => Promise<void>
   onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
   onRefreshAdminData: () => Promise<void>
+  onCreateAlias: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
+  onUpdateAlias: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
+  onReviewAlias: (aliasId: string, decision: "approve" | "reject", comment?: string) => Promise<void>
+  onDisableAlias: (aliasId: string) => Promise<void>
+  onPublishAliases: () => Promise<void>
   onBack: () => void
 }) {
   return (
@@ -1875,9 +2126,33 @@ function AdminWorkspace({
             <span>{formatCurrency(costAudit?.totalEstimatedUsd ?? 0)}</span>
           </div>
         )}
+        {canManageAliases && (
+          <div className="admin-overview-tile" aria-label="Alias管理">
+            <Icon name="settings" />
+            <strong>Alias管理</strong>
+            <span>{aliases.length} aliases</span>
+          </div>
+        )}
       </div>
 
       <div className="phase2-admin-grid">
+        {canReadAliases && (
+          <AliasAdminPanel
+            aliases={aliases}
+            auditLog={aliasAuditLog}
+            loading={loading}
+            canWrite={canWriteAliases}
+            canReview={canReviewAliases}
+            canDisable={canDisableAliases}
+            canPublish={canPublishAliases}
+            onCreate={onCreateAlias}
+            onUpdate={onUpdateAlias}
+            onReview={onReviewAlias}
+            onDisable={onDisableAlias}
+            onPublish={onPublishAliases}
+          />
+        )}
+
         {canReadUsers && (
           <section className="admin-section-panel user-admin-panel" aria-label="ユーザー管理一覧">
             <div className="document-list-head">
@@ -2097,6 +2372,128 @@ function BenchmarkMetricCard({
       <strong>{value}</strong>
       <small>{subValue}</small>
     </article>
+  )
+}
+
+function AliasAdminPanel({
+  aliases,
+  auditLog,
+  loading,
+  canWrite,
+  canReview,
+  canDisable,
+  canPublish,
+  onCreate,
+  onUpdate,
+  onReview,
+  onDisable,
+  onPublish
+}: {
+  aliases: AliasDefinition[]
+  auditLog: AliasAuditLogItem[]
+  loading: boolean
+  canWrite: boolean
+  canReview: boolean
+  canDisable: boolean
+  canPublish: boolean
+  onCreate: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
+  onUpdate: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
+  onReview: (aliasId: string, decision: "approve" | "reject", comment?: string) => Promise<void>
+  onDisable: (aliasId: string) => Promise<void>
+  onPublish: () => Promise<void>
+}) {
+  const [term, setTerm] = useState("")
+  const [expansions, setExpansions] = useState("")
+  const [department, setDepartment] = useState("")
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!canWrite) return
+    const normalizedTerm = term.trim()
+    const values = parseExpansionList(expansions)
+    if (!normalizedTerm || values.length === 0) return
+    await onCreate({
+      term: normalizedTerm,
+      expansions: values,
+      scope: department.trim() ? { department: department.trim() } : undefined
+    })
+    setTerm("")
+    setExpansions("")
+    setDepartment("")
+  }
+
+  return (
+    <section className="admin-section-panel alias-admin-panel" aria-label="Alias管理一覧">
+      <div className="document-list-head">
+        <h3>Alias管理</h3>
+        <div className="inline-action-group">
+          <span>{aliases.length} 件</span>
+          <button type="button" disabled={!canPublish || loading} onClick={() => void onPublish()}>
+            公開
+          </button>
+        </div>
+      </div>
+
+      {canWrite && (
+        <form className="alias-editor-form" onSubmit={onSubmit}>
+          <label>
+            <span>用語</span>
+            <input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="pto" disabled={loading} />
+          </label>
+          <label>
+            <span>展開語</span>
+            <input value={expansions} onChange={(event) => setExpansions(event.target.value)} placeholder="有給休暇, 休暇申請" disabled={loading} />
+          </label>
+          <label>
+            <span>部署 scope</span>
+            <input value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="任意" disabled={loading} />
+          </label>
+          <button type="submit" disabled={loading || !term.trim() || parseExpansionList(expansions).length === 0}>
+            追加
+          </button>
+        </form>
+      )}
+
+      <div className="alias-list">
+        {aliases.length === 0 ? (
+          <div className="empty-question-panel">登録済み alias はありません。</div>
+        ) : (
+          aliases.map((alias) => (
+            <article className={`alias-card ${alias.status}`} key={alias.aliasId}>
+              <div>
+                <strong>{alias.term}</strong>
+                <span>{alias.expansions.join(", ")}</span>
+                <small>{alias.scope?.department ? `department: ${alias.scope.department}` : "global"} / {alias.publishedVersion ?? alias.status}</small>
+              </div>
+              <div className="inline-action-group">
+                <button type="button" disabled={!canWrite || loading || alias.status === "disabled"} onClick={() => void onUpdate(alias.aliasId, { expansions: alias.expansions })}>
+                  下書き化
+                </button>
+                <button type="button" disabled={!canReview || loading || alias.status === "disabled"} onClick={() => void onReview(alias.aliasId, "approve")}>
+                  承認
+                </button>
+                <button type="button" disabled={!canReview || loading || alias.status === "disabled"} onClick={() => void onReview(alias.aliasId, "reject", "Rejected from UI")}>
+                  差戻
+                </button>
+                <button type="button" disabled={!canDisable || loading || alias.status === "disabled"} onClick={() => void onDisable(alias.aliasId)}>
+                  無効
+                </button>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="alias-audit-list" aria-label="Alias監査ログ">
+        {auditLog.slice(0, 8).map((item) => (
+          <div key={item.auditId}>
+            <span>{formatDateTime(item.createdAt)}</span>
+            <strong>{item.action}</strong>
+            <small>{item.detail}</small>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 
@@ -2502,6 +2899,10 @@ function costConfidenceLabel(confidence: CostAuditSummary["items"][number]["conf
   if (confidence === "actual_usage") return "実測"
   if (confidence === "estimated_usage") return "概算"
   return "手動見積"
+}
+
+function parseExpansionList(value: string): string[] {
+  return [...new Set(value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean))]
 }
 
 function adminAuditActionLabel(action: ManagedUserAuditLogEntry["action"]): string {

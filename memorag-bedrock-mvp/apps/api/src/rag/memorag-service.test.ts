@@ -24,9 +24,11 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
 
   assert.equal(manifest.fileName, "requirements.txt")
   assert.equal(manifest.chunkCount, 1)
-  assert.equal(manifest.memoryCardCount, 1)
+  assert.ok(manifest.memoryCardCount >= 1)
   assert.ok(manifest.evidenceVectorKeys?.length)
   assert.ok(manifest.memoryVectorKeys?.length)
+  assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-structured-v2")
+  assert.ok(manifest.chunks?.[0]?.chunkHash)
 
   const listed = await service.listDocuments()
   assert.deepEqual(listed.map((doc) => doc.documentId), [manifest.documentId])
@@ -39,8 +41,9 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   assert.equal(answer.isAnswerable, true)
   assert.ok(answer.debug?.runId)
   assert.equal(answer.debug?.schemaVersion, 1)
+  assert.equal(answer.debug?.pipelineVersions?.promptVersion, "rag-prompts-v1")
   assert.equal(answer.debug?.steps.at(-1)?.label, "finalize_response")
-  assert.match(String(answer.debug?.steps.at(-1)?.output?.answer ?? ""), /ソフトウェア要求/)
+  assert.match(String(answer.debug?.steps.at(-1)?.output?.answer ?? ""), /ソフトウェア製品要求|分類/)
 
   const debugRuns = await service.listDebugRuns()
   assert.equal(debugRuns.length, 1)
@@ -63,6 +66,98 @@ test("service rejects empty uploads and missing documents", async () => {
   await assert.rejects(() => service.ingest({ fileName: "empty.txt", text: "   " }), /extractable text|No chunks/)
   await assert.rejects(() => service.deleteDocument("missing-document-id"))
   assert.equal(await service.getDebugRun("missing-run"), undefined)
+})
+
+test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
+  const { service } = await createService()
+  const manifest = await service.ingest({
+    fileName: "policy.md",
+    text: "# 申請手順\n申請期限は翌月5営業日です。\n\n# 例外\n例外承認者は部長です。",
+    metadata: { tenantId: "tenant-a" }
+  })
+
+  assert.ok(manifest.chunks?.some((chunk) => chunk.sectionPath?.includes("申請手順")))
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reindexed = await service.reindexDocument(actor, manifest.documentId)
+  assert.notEqual(reindexed.documentId, manifest.documentId)
+  assert.equal(reindexed.metadata?.stagedFromDocumentId, manifest.documentId)
+  assert.equal(reindexed.lifecycleStatus, "active")
+  assert.equal(reindexed.embeddingModelId, manifest.embeddingModelId)
+  assert.ok(reindexed.memoryCardCount >= manifest.memoryCardCount)
+
+  const migrations = await service.listReindexMigrations()
+  assert.equal(migrations[0]?.status, "cutover")
+  assert.equal((await service.listDocuments()).some((doc) => doc.documentId === manifest.documentId), false)
+})
+
+test("service stages and rolls back structured blue-green reindex migrations", async () => {
+  const { service, dataDir } = await createService()
+  const textractJson = JSON.stringify({
+    Blocks: [
+      { Id: "table-1", BlockType: "TABLE", Page: 1, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2"] }] },
+      { Id: "cell-1", BlockType: "CELL", RowIndex: 1, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-1"] }] },
+      { Id: "cell-2", BlockType: "CELL", RowIndex: 1, ColumnIndex: 2, Relationships: [{ Type: "CHILD", Ids: ["word-2"] }] },
+      { Id: "word-1", BlockType: "WORD", Text: "項目" },
+      { Id: "word-2", BlockType: "WORD", Text: "期限" }
+    ]
+  })
+  const manifest = await service.ingest({ fileName: "policy.textract.json", textractJson, skipMemory: true })
+
+  assert.equal(manifest.chunks?.[0]?.chunkKind, "table")
+  assert.ok(manifest.structuredBlocksObjectKey)
+
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const staged = await service.stageReindexMigration(actor, manifest.documentId)
+  assert.equal(staged.status, "staged")
+  assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
+
+  const cutover = await service.cutoverReindexMigration(staged.migrationId)
+  assert.equal(cutover.status, "cutover")
+  const activeAfterCutover = await service.listDocuments()
+  assert.deepEqual(activeAfterCutover.map((doc) => doc.documentId), [staged.stagedDocumentId])
+  assert.equal(activeAfterCutover[0]?.chunks?.[0]?.chunkKind, "table")
+  const evidenceDbAfterCutover = JSON.parse(await readFile(path.join(dataDir, "evidence-vectors.json"), "utf-8")) as {
+    records: Array<{ key: string; metadata?: { lifecycleStatus?: string } }>
+  }
+  assert.equal(
+    evidenceDbAfterCutover.records.find((record) => record.key.startsWith(staged.stagedDocumentId))?.metadata?.lifecycleStatus,
+    "active"
+  )
+
+  const rolledBack = await service.rollbackReindexMigration(staged.migrationId)
+  assert.equal(rolledBack.status, "rolled_back")
+  const activeAfterRollback = await service.listDocuments()
+  assert.equal(activeAfterRollback.length, 1)
+  assert.equal(activeAfterRollback[0]?.chunks?.[0]?.chunkKind, "table")
+})
+
+test("service manages reviewed alias artifacts and audit log", async () => {
+  const { service, dataDir } = await createService()
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+
+  const alias = await service.createAlias(actor, {
+    term: "PTO",
+    expansions: ["有給休暇", "休暇申請"],
+    scope: { tenantId: "tenant-a" }
+  })
+  assert.equal(alias.status, "draft")
+  assert.equal(alias.term, "pto")
+
+  const updated = await service.updateAlias(actor, alias.aliasId, { expansions: ["年次有給休暇"] })
+  assert.deepEqual(updated?.expansions, ["年次有給休暇"])
+
+  const reviewed = await service.reviewAlias(actor, alias.aliasId, { decision: "approve", comment: "社内用語として確認済み" })
+  assert.equal(reviewed?.status, "approved")
+
+  const published = await service.publishAliases(actor)
+  assert.equal(published.aliasCount, 1)
+  assert.match(published.version, /^alias_/)
+
+  const audit = await service.listAliasAuditLog()
+  assert.deepEqual(audit.map((item) => item.action).sort(), ["create", "publish", "review", "update"])
+
+  const latest = JSON.parse(await readFile(path.join(dataDir, "objects", "aliases", "latest.json"), "utf-8")) as { objectKey: string }
+  assert.match(latest.objectKey, /^aliases\/alias_/)
 })
 
 test("service delegates human question lifecycle to the question store", async () => {

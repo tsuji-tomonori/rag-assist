@@ -231,6 +231,65 @@ test("answer support verifier accepts supported answers and rejects unsupported 
   assert.deepEqual(unsupported.answerSupport?.supportingChunkIds, ["doc-1-chunk-0001"])
 })
 
+test("answer support verifier repairs unsupported answers once with supported-only facts", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  let supportCalls = 0
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("ANSWER_SUPPORT_JSON")) {
+        supportCalls += 1
+        if (supportCalls === 1) {
+          return JSON.stringify({
+            supported: false,
+            unsupportedSentences: [{ sentence: "例外時は部長承認が必要です。", reason: "根拠がありません。" }],
+            supportingChunkIds: ["chunk-0001"],
+            contradictionChunkIds: [],
+            confidence: 0.7,
+            totalSentences: 2,
+            reason: "一部 unsupported です。"
+          })
+        }
+        return JSON.stringify({
+          supported: true,
+          unsupportedSentences: [],
+          supportingChunkIds: ["chunk-0001"],
+          contradictionChunkIds: [],
+          confidence: 0.9,
+          totalSentences: 1,
+          reason: "修復後の回答は根拠で支持されています。"
+        })
+      }
+      if (prompt.includes("SUPPORTED_ONLY_ANSWER_JSON")) {
+        return JSON.stringify({ isAnswerable: true, answer: "申請期限は翌月5営業日です。", usedChunkIds: ["chunk-0001"] })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const repaired = await createVerifyAnswerSupportNode(deps)(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      answer: "申請期限は翌月5営業日です。例外時は部長承認が必要です。",
+      selectedChunks: [chunk],
+      citations: [
+        {
+          documentId: "doc-1",
+          fileName: "doc.txt",
+          chunkId: "chunk-0001",
+          score: 0.9,
+          text: chunk.metadata.text ?? ""
+        }
+      ]
+    })
+  )
+
+  assert.equal(repaired.answer, "申請期限は翌月5営業日です。")
+  assert.equal(repaired.answerSupport?.supported, true)
+  assert.equal(repaired.citations?.length, 1)
+})
+
 test("finalize response preserves grounded answers and converts invalid final states to refusals", async () => {
   assert.deepEqual(await finalizeResponse(state({ answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 }, answer: "  OK  " })), {
     answer: "OK"
@@ -247,7 +306,20 @@ test("finalize response preserves grounded answers and converts invalid final st
 
 test("query nodes handle memory-disabled, fallback, generated clue, and search merge paths", async () => {
   const deps = createDeps()
-  assert.deepEqual(await createRetrieveMemoryNode(deps)(state({ useMemory: false })), { memoryCards: [] })
+  assert.deepEqual(await createRetrieveMemoryNode(deps, user())(state({ useMemory: false })), { memoryCards: [] })
+
+  const guardedDeps = createDeps()
+  guardedDeps.memoryVectorStore = {
+    put: async () => undefined,
+    query: async () => [
+      { ...chunk, key: "active-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-1", aclGroup: "GROUP_A" } },
+      { ...chunk, key: "staging-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-2", lifecycleStatus: "staging", aclGroup: "GROUP_A" } },
+      { ...chunk, key: "forbidden-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-3", aclGroup: "GROUP_B" } }
+    ],
+    delete: async () => undefined
+  }
+  const guardedMemory = await createRetrieveMemoryNode(guardedDeps, { userId: "user-a", cognitoGroups: ["GROUP_A"] })(state({ memoryTopK: 3 }))
+  assert.deepEqual(guardedMemory.memoryCards?.map((hit) => hit.key), ["active-memory"])
 
   const noMemoryClues = await createGenerateCluesNode(deps)(state({ memoryCards: [] }))
   assert.deepEqual(noMemoryClues, { clues: [], expandedQueries: ["question"] })
@@ -261,6 +333,18 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   const search = await createSearchEvidenceNode(deps, user())(state({ queryEmbeddings: [{ query: "q", vector: [1, 0] }] }))
   assert.deepEqual(search.retrievedChunks?.map((hit) => hit.key), ["doc-1-chunk-0001"])
   assert.equal(search.retrievalDiagnostics?.semanticCount, 2)
+
+  const multiQuerySearch = await createSearchEvidenceNode(deps, user())(
+    state({
+      queryEmbeddings: [
+        { query: "申請期限", vector: [1, 0] },
+        { query: "提出期限", vector: [0.9, 0.1] }
+      ]
+    })
+  )
+  assert.equal(multiQuerySearch.retrievalDiagnostics?.queryCount, 2)
+  assert.equal(multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRank, 1)
+  assert.ok((multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRrfScore ?? 0) > 0)
 })
 
 test("retrieval evaluator routes fact coverage conservatively", async () => {
@@ -305,7 +389,50 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
 
   const irrelevant = await retrievalEvaluator(state({ retrievedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))
   assert.equal(irrelevant.retrievalEvaluation?.retrievalQuality, "irrelevant")
-  assert.equal(irrelevant.retrievalEvaluation?.nextAction.type, "evidence_search")
+  assert.equal(irrelevant.retrievalEvaluation?.nextAction.type, "query_rewrite")
+
+  const irrelevantAfterRewrite = await retrievalEvaluator(
+    state({
+      retrievedChunks: [{ ...chunk, score: 0.1 }],
+      minScore: 0.2,
+      actionHistory: [
+        {
+          action: { type: "query_rewrite", strategy: "keyword", input: "question" },
+          hitCount: 1,
+          newEvidenceCount: 0,
+          topScore: 0.1,
+          summary: "rewritten"
+        }
+      ]
+    })
+  )
+  assert.equal(irrelevantAfterRewrite.retrievalEvaluation?.retrievalQuality, "irrelevant")
+  assert.equal(irrelevantAfterRewrite.retrievalEvaluation?.nextAction.type, "evidence_search")
+
+  const partialWithKnownSupport = await retrievalEvaluator(
+    state({
+      question: "申請期限と例外承認者は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "申請期限と例外承認者",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", priority: 1, status: "supported", supportingChunkKeys: ["doc-1-chunk-0001"] },
+          { id: "exception-approver", description: "例外承認者", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(partialWithKnownSupport.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.equal(partialWithKnownSupport.retrievalEvaluation?.nextAction.type, "expand_context")
+  assert.equal(
+    partialWithKnownSupport.retrievalEvaluation?.nextAction.type === "expand_context"
+      ? partialWithKnownSupport.retrievalEvaluation.nextAction.chunkKey
+      : "",
+    "doc-1-chunk-0001"
+  )
 
   const genericDeadline = await retrievalEvaluator(
     state({
@@ -399,7 +526,7 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
       }
     })
   )
-  assert.equal(valueMismatch.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.equal(valueMismatch.retrievalEvaluation?.retrievalQuality, "conflicting")
   assert.deepEqual(valueMismatch.retrievalEvaluation?.supportedFactIds, [])
   assert.deepEqual(valueMismatch.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
   assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "value_mismatch")
@@ -533,7 +660,7 @@ test("retrieval evaluator LLM judge handles uncertain value mismatch cases", asy
   })
   const judgedConflict = await conflict(mismatchState)
   assert.equal(judgedConflict.retrievalEvaluation?.llmJudge?.label, "CONFLICT")
-  assert.equal(judgedConflict.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.equal(judgedConflict.retrievalEvaluation?.retrievalQuality, "conflicting")
   assert.deepEqual(judgedConflict.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
   assert.equal(judgedConflict.retrievalEvaluation?.nextAction.type, "evidence_search")
 })

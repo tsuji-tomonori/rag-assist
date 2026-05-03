@@ -2,7 +2,10 @@ import { randomUUID } from "node:crypto"
 import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
+import { loadChunksForManifest } from "../rag/manifest-chunks.js"
+import { buildPipelineVersions } from "../rag/pipeline-versions.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
+import type { DocumentManifest, RetrievedVector } from "../types.js"
 import { analyzeInput } from "./nodes/analyze-input.js"
 import { answerabilityGate } from "./nodes/answerability-gate.js"
 import { createEmbedQueriesNode } from "./nodes/embed-queries.js"
@@ -38,15 +41,18 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
 
   async function planSearch(state: QaAgentState): Promise<QaAgentUpdate> {
     const query = state.expandedQueries[0] ?? state.normalizedQuery ?? state.question
-    const nextEvidenceAction = selectNextEvidenceAction(state, query)
+    const nextAction = selectNextSearchAction(state, query)
     const requiredFacts =
       state.searchPlan.requiredFacts.length > 0 ? state.searchPlan.requiredFacts : extractRequiredFacts(state.question, state.clues)
     const actions: SearchAction[] = [
-      nextEvidenceAction
+      nextAction
     ]
+    const expandedQueries = nextAction.type === "evidence_search"
+      ? nextAction.query === query ? state.expandedQueries : [nextAction.query, ...state.expandedQueries].slice(0, 8)
+      : state.expandedQueries
 
     return {
-      expandedQueries: nextEvidenceAction.query === query ? state.expandedQueries : [nextEvidenceAction.query, ...state.expandedQueries].slice(0, 8),
+      expandedQueries,
       queryEmbeddings: [],
       searchPlan: {
         complexity: inferSearchComplexity(state.question),
@@ -65,9 +71,15 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
   }
 
   async function executeSearchAction(state: QaAgentState): Promise<QaAgentUpdate> {
-    const embedUpdate = await embedQueries(state)
-    const searchUpdate = await searchEvidence({ ...state, ...embedUpdate } as QaAgentState)
-    const nextRetrieved = searchUpdate.retrievedChunks ?? []
+    const action = state.searchPlan.actions[0] ?? {
+      type: "evidence_search" as const,
+      query: state.expandedQueries[0] ?? state.normalizedQuery ?? state.question,
+      topK: state.topK
+    }
+    const actionResult = await executePlannedAction(state, action)
+    const embedUpdate = actionResult.embedUpdate ?? {}
+    const searchUpdate = actionResult.searchUpdate
+    const nextRetrieved = searchUpdate.retrievedChunks ?? state.retrievedChunks
     const retrievalDiagnostics = searchUpdate.retrievalDiagnostics
     const previousKeys = new Set(state.retrievedChunks.map((chunk) => chunk.key))
     const newEvidenceCount = nextRetrieved.filter((chunk) => !previousKeys.has(chunk.key)).length
@@ -84,16 +96,52 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
             query: state.expandedQueries[0] ?? state.normalizedQuery ?? state.question,
             topK: state.topK
           },
-          hitCount: nextRetrieved.length,
+          hitCount: actionResult.hitCount,
           newEvidenceCount,
           topScore: nextRetrieved[0]?.score,
           retrievalDiagnostics,
-          summary:
-            nextRetrieved.length === 0
-              ? "検索結果はありませんでした。"
-              : `hybrid検索で${nextRetrieved.length}件取得し、新規根拠は${newEvidenceCount}件でした。`
+          summary: actionResult.summary(newEvidenceCount)
         }
       ]
+    }
+  }
+
+  async function executePlannedAction(
+    state: QaAgentState,
+    action: SearchAction
+  ): Promise<{
+    embedUpdate?: QaAgentUpdate
+    searchUpdate: QaAgentUpdate
+    hitCount: number
+    summary: (newEvidenceCount: number) => string
+  }> {
+    if (action.type === "expand_context") {
+      const expanded = await expandContextWindow(deps, state, action)
+      const retrievedChunks = mergeRetrievedChunks(state.retrievedChunks, expanded, Math.max(state.topK, 30))
+      return {
+        searchUpdate: { retrievedChunks },
+        hitCount: expanded.length,
+        summary: (newEvidenceCount) =>
+          expanded.length === 0
+            ? "隣接 context chunk は見つかりませんでした。"
+            : `隣接 context chunk を${expanded.length}件展開し、新規根拠は${newEvidenceCount}件でした。`
+      }
+    }
+
+    const searchState = action.type === "query_rewrite" ? withRewrittenQuery(state, action) : state
+    const embedUpdate = await embedQueries(searchState)
+    const searchUpdate = await searchEvidence({ ...searchState, ...embedUpdate } as QaAgentState)
+    const retrievedChunks = searchUpdate.retrievedChunks ?? []
+
+    return {
+      embedUpdate: action.type === "query_rewrite" ? { ...embedUpdate, expandedQueries: searchState.expandedQueries } : embedUpdate,
+      searchUpdate,
+      hitCount: retrievedChunks.length,
+      summary: (newEvidenceCount) => {
+        if (retrievedChunks.length === 0) return action.type === "query_rewrite" ? "query rewrite 後の検索結果はありませんでした。" : "検索結果はありませんでした。"
+        const prefix = action.type === "query_rewrite" ? "query rewrite 後のhybrid検索" : "hybrid検索"
+        return `${prefix}で${retrievedChunks.length}件取得し、新規根拠は${newEvidenceCount}件でした。`
+      }
     }
   }
 
@@ -105,11 +153,23 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     const evaluatorDone = nextActionType === "rerank" || nextActionType === "finalize_refusal"
     const stopByIteration = nextIteration >= stopCriteria.maxIterations
     const stopByNoEvidence = noNewEvidenceStreak >= stopCriteria.maxNoNewEvidenceStreak
+    const forcedRefusal =
+      state.retrievalEvaluation.conflictingFactIds.length > 0 &&
+      state.retrievalEvaluation.nextAction.type !== "finalize_refusal" &&
+      (stopByIteration || stopByNoEvidence)
 
     return {
       iteration: nextIteration,
       noNewEvidenceStreak,
-      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence ? "done" : "continue_search"
+      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence ? "done" : "continue_search",
+      retrievalEvaluation: forcedRefusal
+        ? {
+            ...state.retrievalEvaluation,
+            retrievalQuality: "conflicting",
+            nextAction: { type: "finalize_refusal", reason: "unresolved_conflicting_evidence" },
+            reason: `${state.retrievalEvaluation.reason} 検索 budget 内で conflicting evidence を解消できなかったため、回答生成前に拒否します。`
+          }
+        : state.retrievalEvaluation
     }
   }
 
@@ -128,7 +188,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
   const nodes = {
     analyzeInput: tracedNode("analyze_input", analyzeInput),
     normalizeQuery: tracedNode("normalize_query", normalizeQuery),
-    retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps)),
+    retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps, user)),
     generateClues: tracedNode("generate_clues", createGenerateCluesNode(deps)),
     planSearch: tracedNode("plan_search", planSearch),
     executeSearchAction: tracedNode("execute_search_action", executeSearchAction),
@@ -200,16 +260,101 @@ export function applyQaAgentUpdate(state: QaAgentState, update: QaAgentUpdate): 
   }
 }
 
-function selectNextEvidenceAction(state: QaAgentState, fallbackQuery: string): Extract<SearchAction, { type: "evidence_search" }> {
+function selectNextSearchAction(state: QaAgentState, fallbackQuery: string): SearchAction {
   const nextAction = state.retrievalEvaluation.nextAction
   if (nextAction.type === "evidence_search" && nextAction.query.trim()) {
     return nextAction
   }
+  if (nextAction.type === "query_rewrite" || nextAction.type === "expand_context") return nextAction
   return {
     type: "evidence_search",
     query: fallbackQuery,
     topK: state.topK
   }
+}
+
+function withRewrittenQuery(state: QaAgentState, action: Extract<SearchAction, { type: "query_rewrite" }>): QaAgentState {
+  const rewritten = rewriteQuery(state, action)
+  return {
+    ...state,
+    expandedQueries: [rewritten, ...state.expandedQueries.filter((query) => query !== rewritten)].slice(0, 8),
+    queryEmbeddings: []
+  }
+}
+
+function rewriteQuery(state: QaAgentState, action: Extract<SearchAction, { type: "query_rewrite" }>): string {
+  const base = action.input.trim() || state.normalizedQuery || state.question
+  const missingFacts = state.searchPlan.requiredFacts
+    .filter((fact) => state.retrievalEvaluation.missingFactIds.includes(fact.id))
+    .map((fact) => fact.description)
+    .slice(0, 4)
+  if (action.strategy === "section") return [...new Set([base, ...missingFacts, "章 見出し セクション"]).values()].join(" ")
+  if (action.strategy === "entity") return [...new Set([base, ...missingFacts, "正式名称 略称 別名"]).values()].join(" ")
+  if (action.strategy === "hyde") return `${base} ${missingFacts.join(" ")} 回答 根拠 条件 手順 期限 金額`.trim()
+  return [...new Set([base, ...missingFacts]).values()].join(" ")
+}
+
+async function expandContextWindow(
+  deps: Dependencies,
+  state: QaAgentState,
+  action: Extract<SearchAction, { type: "expand_context" }>
+): Promise<RetrievedVector[]> {
+  const source = findChunkForExpansion(state.retrievedChunks, action.chunkKey)
+  if (!source?.metadata.documentId || !source.metadata.chunkId) return []
+  const manifest = await loadManifest(deps, source.metadata.documentId)
+  if (!manifest) return []
+  const chunks = await loadChunksForManifest(deps, manifest)
+  const center = chunks.findIndex((chunk) => chunk.id === source.metadata.chunkId)
+  if (center < 0) return []
+
+  const expanded: RetrievedVector[] = []
+  const window = Math.max(1, action.window)
+  for (let index = Math.max(0, center - window); index <= Math.min(chunks.length - 1, center + window); index += 1) {
+    if (index === center) continue
+    const chunk = chunks[index]
+    if (!chunk) continue
+    const distance = Math.abs(index - center)
+    expanded.push({
+      key: `${source.metadata.documentId}-${chunk.id}`,
+      score: Math.max(0, Math.min(0.99, source.score - distance * 0.03)),
+      metadata: {
+        ...source.metadata,
+        kind: "chunk",
+        documentId: source.metadata.documentId,
+        fileName: manifest.fileName,
+        chunkId: chunk.id,
+        objectKey: manifest.sourceObjectKey,
+        text: chunk.text,
+        sources: ["context_window"],
+        expansionSource: "context_window",
+        createdAt: manifest.createdAt
+      }
+    })
+  }
+  return expanded
+}
+
+function findChunkForExpansion(chunks: RetrievedVector[], chunkKey: string): RetrievedVector | undefined {
+  return chunks.find((chunk) => chunk.key === chunkKey || chunk.metadata.chunkId === chunkKey)
+}
+
+async function loadManifest(deps: Dependencies, documentId: string): Promise<DocumentManifest | undefined> {
+  try {
+    return JSON.parse(await deps.objectStore.getText(`manifests/${documentId}.json`)) as DocumentManifest
+  } catch {
+    const keys = await deps.objectStore.listKeys("manifests/")
+    const key = keys.find((candidate) => candidate.endsWith(".json") && candidate.includes(documentId))
+    return key ? (JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest) : undefined
+  }
+}
+
+function mergeRetrievedChunks(chunks: RetrievedVector[], additions: RetrievedVector[], limit: number): RetrievedVector[] {
+  const byKey = new Map<string, RetrievedVector>()
+  for (const chunk of [...chunks, ...additions]) {
+    const existing = byKey.get(chunk.key)
+    if (!existing || chunk.score > existing.score) byKey.set(chunk.key, chunk)
+  }
+  return [...byKey.values()].sort((a, b) => b.score - a.score).slice(0, limit)
 }
 
 function extractRequiredFacts(question: string, clues: string[]): RequiredFact[] {
@@ -412,6 +557,10 @@ async function persistDebugTrace(
     modelId: input.modelId,
     embeddingModelId: input.embeddingModelId,
     clueModelId: input.clueModelId,
+    pipelineVersions: buildPipelineVersions({
+      embeddingModelId: input.embeddingModelId,
+      embeddingDimensions: config.embeddingDimensions
+    }),
     topK: input.topK,
     memoryTopK: input.memoryTopK,
     minScore: input.minScore,

@@ -1,7 +1,8 @@
 import type { Dependencies } from "../../dependencies.js"
 import { parseJsonObject } from "../../rag/json.js"
-import { buildAnswerSupportPrompt } from "../../rag/prompts.js"
+import { buildAnswerSupportPrompt, buildSupportedAnswerRepairPrompt } from "../../rag/prompts.js"
 import { NO_ANSWER, type AnswerSupportJudgement, type QaAgentState, type QaAgentUpdate } from "../state.js"
+import { toCitation } from "../utils.js"
 
 type SupportJson = Partial<AnswerSupportJudgement>
 
@@ -25,6 +26,9 @@ export function createVerifyAnswerSupportNode(deps: Dependencies) {
       return { answerSupport: judgement }
     }
 
+    const repaired = await repairUnsupportedAnswer(deps, state, judgement, evidenceChunks)
+    if (repaired) return repaired
+
     return {
       answerSupport: judgement,
       answerability: {
@@ -35,6 +39,48 @@ export function createVerifyAnswerSupportNode(deps: Dependencies) {
       },
       answer: NO_ANSWER,
       citations: []
+    }
+  }
+}
+
+type RepairJson = {
+  isAnswerable?: boolean
+  answer?: string
+  usedChunkIds?: string[]
+}
+
+async function repairUnsupportedAnswer(
+  deps: Dependencies,
+  state: QaAgentState,
+  judgement: AnswerSupportJudgement,
+  evidenceChunks: QaAgentState["selectedChunks"]
+): Promise<QaAgentUpdate | undefined> {
+  if (evidenceChunks.length === 0 || judgement.unsupportedSentences.length === 0) return undefined
+  const raw = await deps.textModel.generate(
+    buildSupportedAnswerRepairPrompt(state.question, state.answer ?? "", judgement.unsupportedSentences, evidenceChunks),
+    {
+      modelId: state.modelId,
+      temperature: 0,
+      maxTokens: 900
+    }
+  )
+  const repaired = parseJsonObject<RepairJson>(raw)
+  if (repaired?.isAnswerable !== true || !repaired.answer || repaired.answer.trim() === NO_ANSWER) return undefined
+  const repairedChunks = chunksForUsedIds(repaired.usedChunkIds ?? [], evidenceChunks)
+  if (repairedChunks.length === 0) return undefined
+  const supportRaw = await deps.textModel.generate(buildAnswerSupportPrompt(state.question, repaired.answer, repairedChunks), {
+    modelId: state.modelId,
+    temperature: 0,
+    maxTokens: 900
+  })
+  const repairedJudgement = normalizeJudgement(parseJsonObject<SupportJson>(supportRaw), { ...state, answer: repaired.answer }, repairedChunks)
+  if (!repairedJudgement.supported) return undefined
+  return {
+    answer: repaired.answer.trim(),
+    citations: repairedChunks.map(toCitation),
+    answerSupport: {
+      ...repairedJudgement,
+      reason: `unsupported sentence を除去して supported-only 再生成に成功しました。${repairedJudgement.reason}`
     }
   }
 }
@@ -100,6 +146,11 @@ function validChunkIds(ids: string[], chunks: QaAgentState["selectedChunks"]): s
   const validIds = new Set(chunks.flatMap((chunk) => [chunk.key, chunk.metadata.chunkId].filter(Boolean)))
   const byChunkId = new Map(chunks.map((chunk) => [chunk.metadata.chunkId, chunk.key]))
   return [...new Set(ids.map((id) => byChunkId.get(id) ?? id).filter((id) => validIds.has(id)))]
+}
+
+function chunksForUsedIds(ids: string[], chunks: QaAgentState["selectedChunks"]): QaAgentState["selectedChunks"] {
+  const normalized = new Set(ids.map((id) => id.trim()).filter(Boolean))
+  return chunks.filter((chunk) => normalized.has(chunk.key) || normalized.has(chunk.metadata.chunkId ?? ""))
 }
 
 function normalizeTotalSentences(value: unknown, answer: string, unsupportedCount: number): number {

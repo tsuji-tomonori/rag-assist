@@ -22,11 +22,45 @@ export const DocumentUploadRequestSchema = z.object({
   fileName: z.string().min(1).openapi({ example: "handbook.md" }),
   text: z.string().optional().openapi({ example: "経費精算は申請から30日以内に行う必要があります。" }),
   contentBase64: z.string().optional(),
+  textractJson: z.string().optional(),
   mimeType: z.string().optional().openapi({ example: "text/markdown" }),
   metadata: z.record(MetadataValueSchema).optional(),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   memoryModelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   skipMemory: z.boolean().optional()
+})
+
+export const PipelineVersionsSchema = z.object({
+  agentWorkflowVersion: z.string(),
+  chunkerVersion: z.string(),
+  sourceExtractorVersion: z.string(),
+  memoryPromptVersion: z.string(),
+  promptVersion: z.string(),
+  indexVersion: z.string(),
+  embeddingModelId: z.string(),
+  embeddingDimensions: z.number().int().positive()
+})
+
+const ChunkMetadataSchema = z.object({
+  id: z.string(),
+  startChar: z.number().int().nonnegative(),
+  endChar: z.number().int().nonnegative(),
+  sectionPath: z.array(z.string()).optional(),
+  heading: z.string().optional(),
+  parentSectionId: z.string().optional(),
+  previousChunkId: z.string().optional(),
+  nextChunkId: z.string().optional(),
+  chunkHash: z.string().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
+  chunkKind: z.enum(["text", "table", "list", "code", "figure"]).optional(),
+  sourceBlockId: z.string().optional(),
+  normalizedFrom: z.string().optional(),
+  tableColumnCount: z.number().int().positive().optional(),
+  listDepth: z.number().int().positive().optional(),
+  codeLanguage: z.string().optional(),
+  figureCaption: z.string().optional(),
+  extractionMethod: z.string().optional()
 })
 
 export const DocumentManifestSchema = z.object({
@@ -35,10 +69,23 @@ export const DocumentManifestSchema = z.object({
   mimeType: z.string().optional(),
   metadata: z.record(MetadataValueSchema).optional(),
   sourceObjectKey: z.string(),
+  structuredBlocksObjectKey: z.string().optional(),
   manifestObjectKey: z.string(),
   vectorKeys: z.array(z.string()),
   memoryVectorKeys: z.array(z.string()).optional(),
   evidenceVectorKeys: z.array(z.string()).optional(),
+  embeddingModelId: z.string().optional(),
+  embeddingDimensions: z.number().int().positive().optional(),
+  chunkerVersion: z.string().optional(),
+  sourceExtractorVersion: z.string().optional(),
+  memoryPromptVersion: z.string().optional(),
+  indexVersion: z.string().optional(),
+  pipelineVersions: PipelineVersionsSchema.optional(),
+  chunks: z.array(ChunkMetadataSchema).optional(),
+  lifecycleStatus: z.enum(["active", "staging", "superseded"]).optional(),
+  activeDocumentId: z.string().optional(),
+  stagedFromDocumentId: z.string().optional(),
+  reindexMigrationId: z.string().optional(),
   chunkCount: z.number(),
   memoryCardCount: z.number(),
   createdAt: z.string()
@@ -51,6 +98,25 @@ export const DocumentListResponseSchema = z.object({
 export const DeleteDocumentResponseSchema = z.object({
   documentId: z.string(),
   deletedVectorCount: z.number()
+})
+
+export const ReindexMigrationSchema = z.object({
+  migrationId: z.string(),
+  sourceDocumentId: z.string(),
+  stagedDocumentId: z.string(),
+  activeDocumentId: z.string().optional(),
+  status: z.enum(["staged", "cutover", "rolled_back"]),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  cutoverAt: z.string().optional(),
+  rolledBackAt: z.string().optional(),
+  previousManifestObjectKey: z.string(),
+  stagedManifestObjectKey: z.string()
+})
+
+export const ReindexMigrationListResponseSchema = z.object({
+  migrations: z.array(ReindexMigrationSchema)
 })
 
 export const CurrentUserResponseSchema = z.object({
@@ -116,6 +182,69 @@ export const AccessRoleListResponseSchema = z.object({
 
 export const AssignUserRolesRequestSchema = z.object({
   groups: z.array(z.string().min(1)).min(1).max(12)
+})
+
+export const AliasStatusSchema = z.enum(["draft", "approved", "disabled"])
+
+export const AliasScopeSchema = z.object({
+  tenantId: z.string().optional(),
+  department: z.string().optional(),
+  source: z.string().optional(),
+  docType: z.string().optional()
+})
+
+export const AliasDefinitionSchema = z.object({
+  aliasId: z.string(),
+  term: z.string(),
+  expansions: z.array(z.string()),
+  scope: AliasScopeSchema.optional(),
+  status: AliasStatusSchema,
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  reviewedBy: z.string().optional(),
+  reviewedAt: z.string().optional(),
+  reviewComment: z.string().optional(),
+  publishedVersion: z.string().optional()
+})
+
+export const CreateAliasRequestSchema = z.object({
+  term: z.string().min(1).max(120).openapi({ example: "pto" }),
+  expansions: z.array(z.string().min(1).max(120)).min(1).max(20).openapi({ example: ["有給休暇", "休暇申請"] }),
+  scope: AliasScopeSchema.optional()
+})
+
+export const UpdateAliasRequestSchema = CreateAliasRequestSchema.partial().refine(
+  (value) => value.term !== undefined || value.expansions !== undefined || value.scope !== undefined,
+  "At least one alias field must be provided"
+)
+
+export const ReviewAliasRequestSchema = z.object({
+  decision: z.enum(["approve", "reject"]),
+  comment: z.string().max(1000).optional()
+})
+
+export const AliasListResponseSchema = z.object({
+  aliases: z.array(AliasDefinitionSchema)
+})
+
+export const AliasAuditLogItemSchema = z.object({
+  auditId: z.string(),
+  aliasId: z.string().optional(),
+  action: z.enum(["create", "update", "review", "disable", "publish"]),
+  actorUserId: z.string(),
+  createdAt: z.string(),
+  detail: z.string()
+})
+
+export const AliasAuditLogResponseSchema = z.object({
+  auditLog: z.array(AliasAuditLogItemSchema)
+})
+
+export const PublishAliasesResponseSchema = z.object({
+  version: z.string(),
+  publishedAt: z.string(),
+  aliasCount: z.number().int().nonnegative()
 })
 
 export const UserUsageSummarySchema = z.object({
@@ -220,6 +349,7 @@ export const DebugTraceSchema = z.object({
   modelId: z.string(),
   embeddingModelId: z.string(),
   clueModelId: z.string(),
+  pipelineVersions: PipelineVersionsSchema.optional(),
   topK: z.number(),
   memoryTopK: z.number(),
   minScore: z.number(),

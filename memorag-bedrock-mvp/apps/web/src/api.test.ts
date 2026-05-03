@@ -4,20 +4,31 @@ import {
   answerQuestion,
   cancelBenchmarkRun,
   createBenchmarkDownload,
+  createAlias,
   createQuestion,
+  cutoverReindexMigration,
   deleteConversationHistory,
   deleteDocument,
+  disableAlias,
   fileToBase64,
   getDebugRun,
+  listAliasAuditLog,
+  listAliases,
   listBenchmarkRuns,
   listBenchmarkSuites,
   listConversationHistory,
   listDebugRuns,
   listDocuments,
   listQuestions,
+  listReindexMigrations,
+  publishAliases,
+  reviewAlias,
+  rollbackReindexMigration,
   resolveQuestion,
   saveConversationHistory,
+  stageReindexMigration,
   startBenchmarkRun,
+  updateAlias,
   uploadDocument
 } from "./api.js"
 
@@ -101,6 +112,43 @@ describe("API client", () => {
 
     mockFetch({ url: "https://signed.example/report.md", expiresInSeconds: 900, objectKey: "runs/bench-2/report.md" })
     await expect(createBenchmarkDownload("bench-2", "report")).resolves.toMatchObject({ objectKey: "runs/bench-2/report.md" })
+  })
+
+  it("calls alias management APIs", async () => {
+    mockFetch({ aliases: [{ aliasId: "alias-1", term: "pto" }] })
+    await expect(listAliases()).resolves.toEqual([{ aliasId: "alias-1", term: "pto" }])
+
+    mockFetch({ aliasId: "alias-2", term: "sl" })
+    await expect(createAlias({ term: "sl", expansions: ["病気休暇"] })).resolves.toMatchObject({ aliasId: "alias-2" })
+
+    mockFetch({ aliasId: "alias-2", term: "sick leave" })
+    await expect(updateAlias("alias-2", { term: "sick leave" })).resolves.toMatchObject({ term: "sick leave" })
+
+    mockFetch({ aliasId: "alias-2", status: "approved" })
+    await expect(reviewAlias("alias-2", "approve")).resolves.toMatchObject({ status: "approved" })
+
+    mockFetch({ aliasId: "alias-2", status: "disabled" })
+    await expect(disableAlias("alias-2")).resolves.toMatchObject({ status: "disabled" })
+
+    mockFetch({ version: "aliases-20260502T000000Z", aliasCount: 1 })
+    await expect(publishAliases()).resolves.toMatchObject({ aliasCount: 1 })
+
+    mockFetch({ auditLog: [{ auditId: "audit-1", action: "publish" }] })
+    await expect(listAliasAuditLog()).resolves.toEqual([{ auditId: "audit-1", action: "publish" }])
+  })
+
+  it("calls reindex migration APIs", async () => {
+    mockFetch({ migrations: [{ migrationId: "reindex-1", status: "staged" }] })
+    await expect(listReindexMigrations()).resolves.toEqual([{ migrationId: "reindex-1", status: "staged" }])
+
+    mockFetch({ migrationId: "reindex-1", status: "staged" })
+    await expect(stageReindexMigration("doc-1")).resolves.toMatchObject({ migrationId: "reindex-1" })
+
+    mockFetch({ migrationId: "reindex-1", status: "cutover" })
+    await expect(cutoverReindexMigration("reindex-1")).resolves.toMatchObject({ status: "cutover" })
+
+    mockFetch({ migrationId: "reindex-1", status: "rolled_back" })
+    await expect(rollbackReindexMigration("reindex-1")).resolves.toMatchObject({ status: "rolled_back" })
   })
 
   it("raises response text on failed requests", async () => {

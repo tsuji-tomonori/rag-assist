@@ -47,7 +47,7 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
   const conflictingFactIds = factAssessments.filter((assessment) => assessment.status === "conflicting").map((assessment) => assessment.fact.id)
   const riskSignals = factAssessments.flatMap((assessment) => assessment.riskSignals)
   const retrievalQuality = classifyRetrieval(state, topScore, missingFactIds, conflictingFactIds)
-  const nextAction = chooseNextAction(state, retrievalQuality, missingFactIds, conflictingFactIds)
+  const nextAction = chooseNextAction(state, retrievalQuality, supportedFactIds, missingFactIds, conflictingFactIds)
   const supportingChunkKeysByFact = new Map(
     factAssessments.map((assessment) => [assessment.fact.id, assessment.supportingChunkKeys] as const)
   )
@@ -117,7 +117,7 @@ function applyRetrievalJudge(state: QaAgentState, update: QaAgentUpdate, judge: 
     const nextAction =
       retrievalQuality === "sufficient"
         ? { type: "rerank" as const, objective: "answer_with_supported_evidence" }
-        : chooseNextAction(state, retrievalQuality, evaluation.missingFactIds, conflictingFactIds)
+        : chooseNextAction(state, retrievalQuality, evaluation.supportedFactIds, evaluation.missingFactIds, conflictingFactIds)
 
     return {
       ...update,
@@ -188,7 +188,7 @@ function classifyRetrieval(
   conflictingFactIds: string[]
 ): RetrievalEvaluation["retrievalQuality"] {
   if (state.retrievedChunks.length === 0 || topScore < state.searchPlan.stopCriteria.minTopScore) return "irrelevant"
-  if (conflictingFactIds.length > 0) return "partial"
+  if (conflictingFactIds.length > 0) return "conflicting"
   if (missingFactIds.length > 0) return "partial"
   return "sufficient"
 }
@@ -196,10 +196,18 @@ function classifyRetrieval(
 function chooseNextAction(
   state: QaAgentState,
   retrievalQuality: RetrievalEvaluation["retrievalQuality"],
+  supportedFactIds: string[],
   missingFactIds: string[],
   conflictingFactIds: string[]
 ): RetrievalEvaluation["nextAction"] {
   if (retrievalQuality === "sufficient") return { type: "rerank", objective: "answer_with_supported_evidence" }
+  if (retrievalQuality === "irrelevant" && !hasTriedAction(state, "query_rewrite")) {
+    return {
+      type: "query_rewrite",
+      strategy: state.searchPlan.complexity === "ambiguous" ? "entity" : "keyword",
+      input: state.normalizedQuery ?? state.question
+    }
+  }
   if (conflictingFactIds.length > 0 || retrievalQuality === "conflicting") {
     const conflictingDescriptions = state.searchPlan.requiredFacts
       .filter((fact) => conflictingFactIds.includes(fact.id))
@@ -209,6 +217,15 @@ function chooseNextAction(
       type: "evidence_search",
       query: [...new Set([state.normalizedQuery ?? state.question, ...conflictingDescriptions, "現行 最新 施行日 適用条件 旧制度"])].join(" "),
       topK: state.topK
+    }
+  }
+
+  const expandableChunkKey = firstExpandableChunkKey(state, supportedFactIds)
+  if (expandableChunkKey) {
+    return {
+      type: "expand_context",
+      chunkKey: expandableChunkKey,
+      window: 1
     }
   }
 
@@ -222,6 +239,24 @@ function chooseNextAction(
     query: [...new Set(queryParts)].join(" "),
     topK: state.topK
   }
+}
+
+function hasTriedAction(state: QaAgentState, type: RetrievalEvaluation["nextAction"]["type"]): boolean {
+  return state.actionHistory.some((observation) => observation.action.type === type)
+}
+
+function firstExpandableChunkKey(state: QaAgentState, supportedFactIds: string[]): string | undefined {
+  if (supportedFactIds.length === 0) return undefined
+  const expandedKeys = new Set(
+    state.actionHistory
+      .map((observation) => observation.action)
+      .filter((action): action is Extract<RetrievalEvaluation["nextAction"], { type: "expand_context" }> => action.type === "expand_context")
+      .map((action) => action.chunkKey)
+  )
+  const candidateKeys = state.searchPlan.requiredFacts
+    .filter((fact) => supportedFactIds.includes(fact.id))
+    .flatMap((fact) => fact.supportingChunkKeys)
+  return candidateKeys.find((key) => !expandedKeys.has(key))
 }
 
 function buildReason(

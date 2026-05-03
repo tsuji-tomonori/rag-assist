@@ -96,6 +96,76 @@ curl -s -X POST http://localhost:8787/debug-runs/run_20260101_120000Z_abc12345/d
 curl -s -X DELETE http://localhost:8787/documents/<documentId> "${AUTH_HEADER[@]}" | jq
 ```
 
+## Upload Textract JSON
+
+Textract の `Blocks` JSON を `textractJson` として渡すと、TABLE は Markdown table、LINE は text/list/figure chunk として正規化される。
+
+```bash
+curl -s -X POST http://localhost:8787/documents \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d @- <<'JSON' | jq
+{
+  "fileName": "policy.textract.json",
+  "textractJson": "{\"Blocks\":[{\"Id\":\"line-1\",\"BlockType\":\"LINE\",\"Text\":\"1. 申請手順\",\"Page\":1}]}",
+  "skipMemory": true
+}
+JSON
+```
+
+## Reindex document
+
+再インデックスは `RAG_GROUP_MANAGER` または `SYSTEM_ADMIN` 相当の権限を持つ token で実行する。`POST /documents/{documentId}/reindex` は互換用の即時 stage + cutover で、通常運用では blue-green endpoint で stage、確認、cutover、rollback を分ける。
+
+```bash
+curl -s -X POST http://localhost:8787/documents/<documentId>/reindex \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "embeddingModelId":"amazon.titan-embed-text-v2:0"
+}' | jq
+```
+
+```bash
+MIGRATION_ID=$(curl -s -X POST http://localhost:8787/documents/<documentId>/reindex/stage \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"embeddingModelId":"amazon.titan-embed-text-v2:0"}' | jq -r '.migrationId')
+
+curl -s http://localhost:8787/documents/reindex-migrations "${AUTH_HEADER[@]}" | jq
+
+curl -s -X POST "http://localhost:8787/documents/reindex-migrations/${MIGRATION_ID}/cutover" \
+  "${AUTH_HEADER[@]}" | jq
+
+curl -s -X POST "http://localhost:8787/documents/reindex-migrations/${MIGRATION_ID}/rollback" \
+  "${AUTH_HEADER[@]}" | jq
+```
+
+## Alias management
+
+alias 管理 API と管理 UI は `RAG_GROUP_MANAGER` または `SYSTEM_ADMIN` 相当の権限で実行する。通常の `/search` response は alias 本文や audit 情報を返さず、`diagnostics.aliasVersion` だけを返す。
+
+```bash
+ALIAS_ID=$(curl -s -X POST http://localhost:8787/admin/aliases \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "term":"pto",
+    "expansions":["年次有給休暇","休暇申請"],
+    "scope":{"tenantId":"tenant-a","docType":"policy"}
+  }' | jq -r '.aliasId')
+
+curl -s -X POST "http://localhost:8787/admin/aliases/${ALIAS_ID}/review" \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"decision":"approve","comment":"社内用語として確認済み"}' | jq
+
+curl -s -X POST http://localhost:8787/admin/aliases/publish \
+  "${AUTH_HEADER[@]}" | jq
+
+curl -s http://localhost:8787/admin/aliases/audit-log "${AUTH_HEADER[@]}" | jq
+```
+
 ## Create human follow-up question
 
 ```bash

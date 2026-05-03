@@ -2,6 +2,19 @@ export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
 export type VectorKind = "chunk" | "memory"
+export type ChunkKind = "text" | "table" | "list" | "code" | "figure"
+export type DocumentLifecycleStatus = "active" | "staging" | "superseded"
+
+export type PipelineVersions = {
+  agentWorkflowVersion: string
+  chunkerVersion: string
+  sourceExtractorVersion: string
+  memoryPromptVersion: string
+  promptVersion: string
+  indexVersion: string
+  embeddingModelId: string
+  embeddingDimensions: number
+}
 
 export type VectorMetadata = {
   kind: VectorKind
@@ -12,6 +25,23 @@ export type VectorMetadata = {
   objectKey?: string
   sourceUri?: string
   text?: string
+  sectionPath?: string[]
+  heading?: string
+  parentSectionId?: string
+  previousChunkId?: string
+  nextChunkId?: string
+  chunkHash?: string
+  pageStart?: number
+  pageEnd?: number
+  chunkKind?: ChunkKind
+  sourceBlockId?: string
+  normalizedFrom?: string
+  tableColumnCount?: number
+  listDepth?: number
+  codeLanguage?: string
+  figureCaption?: string
+  extractionMethod?: string
+  lifecycleStatus?: DocumentLifecycleStatus
   tenantId?: string
   department?: string
   source?: string
@@ -19,6 +49,13 @@ export type VectorMetadata = {
   aclGroup?: string
   aclGroups?: string[]
   allowedUsers?: string[]
+  sources?: string[]
+  rrfScore?: number
+  lexicalRank?: number
+  semanticRank?: number
+  crossQueryRrfScore?: number
+  crossQueryRank?: number
+  expansionSource?: "hybrid" | "context_window"
   createdAt: string
 }
 
@@ -41,10 +78,23 @@ export type DocumentManifest = {
   mimeType?: string
   metadata?: Record<string, JsonValue>
   sourceObjectKey: string
+  structuredBlocksObjectKey?: string
   manifestObjectKey: string
   vectorKeys: string[]
   memoryVectorKeys?: string[]
   evidenceVectorKeys?: string[]
+  embeddingModelId?: string
+  embeddingDimensions?: number
+  chunkerVersion?: string
+  sourceExtractorVersion?: string
+  memoryPromptVersion?: string
+  indexVersion?: string
+  pipelineVersions?: PipelineVersions
+  chunks?: ChunkMetadata[]
+  lifecycleStatus?: DocumentLifecycleStatus
+  activeDocumentId?: string
+  stagedFromDocumentId?: string
+  reindexMigrationId?: string
   chunkCount: number
   memoryCardCount: number
   createdAt: string
@@ -52,11 +102,14 @@ export type DocumentManifest = {
 
 export type MemoryCard = {
   id: string
+  level?: "document" | "section" | "concept"
   summary: string
   keywords: string[]
   likelyQuestions: string[]
   constraints: string[]
   text: string
+  sourceChunkIds?: string[]
+  sectionPath?: string[]
 }
 
 export type Chunk = {
@@ -64,6 +117,41 @@ export type Chunk = {
   text: string
   startChar: number
   endChar: number
+  sectionPath?: string[]
+  heading?: string
+  parentSectionId?: string
+  previousChunkId?: string
+  nextChunkId?: string
+  chunkHash?: string
+  pageStart?: number
+  pageEnd?: number
+  chunkKind?: ChunkKind
+  sourceBlockId?: string
+  normalizedFrom?: string
+  tableColumnCount?: number
+  listDepth?: number
+  codeLanguage?: string
+  figureCaption?: string
+  extractionMethod?: string
+}
+
+export type ChunkMetadata = Omit<Chunk, "text">
+
+export type StructuredBlock = {
+  id: string
+  kind: ChunkKind
+  text: string
+  pageStart?: number
+  pageEnd?: number
+  heading?: string
+  sectionPath?: string[]
+  sourceBlockId?: string
+  normalizedFrom?: string
+  tableColumnCount?: number
+  listDepth?: number
+  codeLanguage?: string
+  figureCaption?: string
+  extractionMethod?: string
 }
 
 export type Citation = {
@@ -100,6 +188,7 @@ export type DebugTrace = {
   modelId: string
   embeddingModelId: string
   clueModelId: string
+  pipelineVersions?: PipelineVersions
   topK: number
   memoryTopK: number
   minScore: number
@@ -216,6 +305,64 @@ export type ManagedUserAuditLogEntry = {
 export type AccessRoleDefinition = {
   role: string
   permissions: string[]
+}
+
+export type AliasStatus = "draft" | "approved" | "disabled"
+
+export type AliasScope = {
+  tenantId?: string
+  department?: string
+  source?: string
+  docType?: string
+}
+
+export type AliasDefinition = {
+  aliasId: string
+  term: string
+  expansions: string[]
+  scope?: AliasScope
+  status: AliasStatus
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  reviewedBy?: string
+  reviewedAt?: string
+  reviewComment?: string
+  publishedVersion?: string
+}
+
+export type AliasAuditLogItem = {
+  auditId: string
+  aliasId?: string
+  action: "create" | "update" | "review" | "disable" | "publish"
+  actorUserId: string
+  createdAt: string
+  detail: string
+}
+
+export type PublishedAliasArtifact = {
+  schemaVersion: 1
+  version: string
+  publishedBy: string
+  publishedAt: string
+  aliases: AliasDefinition[]
+}
+
+export type ReindexMigrationStatus = "staged" | "cutover" | "rolled_back"
+
+export type ReindexMigration = {
+  migrationId: string
+  sourceDocumentId: string
+  stagedDocumentId: string
+  activeDocumentId?: string
+  status: ReindexMigrationStatus
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  cutoverAt?: string
+  rolledBackAt?: string
+  previousManifestObjectKey: string
+  stagedManifestObjectKey: string
 }
 
 export type UserUsageSummary = {
