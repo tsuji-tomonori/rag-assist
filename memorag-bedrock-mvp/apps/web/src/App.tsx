@@ -5,6 +5,7 @@ import {
   cancelBenchmarkRun,
   chat,
   createBenchmarkDownload,
+  createManagedUser,
   createQuestion,
   createDebugDownload,
   deleteManagedUser,
@@ -14,6 +15,7 @@ import {
   getCostAuditSummary,
   getMe,
   listAccessRoles,
+  listAdminAuditLog,
   listConversationHistory,
   listQuestions,
   listBenchmarkRuns,
@@ -40,6 +42,7 @@ import {
   type DocumentManifest,
   type HumanQuestion,
   type ManagedUser,
+  type ManagedUserAuditLogEntry,
   type Permission,
   type UserUsageSummary
 } from "./api.js"
@@ -90,6 +93,7 @@ export default function App() {
   const [benchmarkSuites, setBenchmarkSuites] = useState<BenchmarkSuite[]>([])
   const [questions, setQuestions] = useState<HumanQuestion[]>([])
   const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([])
+  const [adminAuditLog, setAdminAuditLog] = useState<ManagedUserAuditLogEntry[]>([])
   const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[]>([])
   const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[]>([])
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
@@ -133,14 +137,16 @@ export default function App() {
   const canCancelBenchmark = hasPermission("benchmark:cancel")
   const canDownloadBenchmark = hasPermission("benchmark:download")
   const canReadUsers = hasPermission("user:read")
+  const canCreateUsers = hasPermission("user:create")
   const canSuspendUsers = hasPermission("user:suspend")
   const canUnsuspendUsers = hasPermission("user:unsuspend")
   const canDeleteUsers = hasPermission("user:delete")
   const canAssignRoles = hasPermission("access:role:assign")
   const canReadUsage = hasPermission("usage:read:all_users")
   const canReadCosts = hasPermission("cost:read:all")
+  const canReadAdminAuditLog = canOpenAdminSettings
   const canManageDocuments = canWriteDocuments || canDeleteDocuments
-  const canManageUsers = canReadUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
+  const canManageUsers = canReadUsers || canCreateUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
   const canAuditOperations = canReadUsage || canReadCosts
   const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns || canReadBenchmarkRuns || canManageUsers || canAuditOperations
   const canAsk = useMemo(() => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && !loading && canCreateChat, [question, file, loading, canCreateChat, canWriteDocuments])
@@ -189,6 +195,7 @@ export default function App() {
     }
     if (canReadUsers) refreshManagedUsers().catch((err) => console.warn("Failed to load managed users", err))
     if (canOpenAdminSettings) refreshAccessRoles().catch((err) => console.warn("Failed to load access roles", err))
+    if (canReadAdminAuditLog) refreshAdminAuditLog().catch((err) => console.warn("Failed to load admin audit log", err))
     if (canReadUsage) refreshUsageSummaries().catch((err) => console.warn("Failed to load usage summaries", err))
     if (canReadCosts) refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err))
     if (canAnswerQuestions) refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
@@ -285,6 +292,10 @@ export default function App() {
 
   async function refreshManagedUsers() {
     setManagedUsers(await listManagedUsers())
+  }
+
+  async function refreshAdminAuditLog() {
+    setAdminAuditLog(await listAdminAuditLog())
   }
 
   async function refreshAccessRoles() {
@@ -530,6 +541,25 @@ export default function App() {
       const updated = await assignUserRoles(userId, groups)
       setManagedUsers((prev) => [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
       await Promise.all([
+        canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
+        canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
+        canReadCosts ? refreshCostAudit() : Promise.resolve()
+      ])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onCreateManagedUser(input: { email: string; displayName?: string; groups?: string[] }) {
+    setLoading(true)
+    setError(null)
+    try {
+      const created = await createManagedUser(input)
+      setManagedUsers((prev) => [created, ...prev.filter((user) => user.userId !== created.userId)].sort((a, b) => a.email.localeCompare(b.email)))
+      await Promise.all([
+        canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
         canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
         canReadCosts ? refreshCostAudit() : Promise.resolve()
       ])
@@ -541,6 +571,7 @@ export default function App() {
   }
 
   async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete") {
+    if (action === "delete" && !window.confirm("このユーザーを管理台帳から削除状態にします。続行しますか？")) return
     setLoading(true)
     setError(null)
     try {
@@ -551,6 +582,7 @@ export default function App() {
         return [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
       })
       await Promise.all([
+        canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
         canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
         canReadCosts ? refreshCostAudit() : Promise.resolve()
       ])
@@ -834,6 +866,7 @@ export default function App() {
             debugRunsCount={debugRuns.length}
             benchmarkRunsCount={benchmarkRuns.length}
             managedUsers={managedUsers}
+            adminAuditLog={adminAuditLog}
             accessRoles={accessRoles}
             usageSummaries={usageSummaries}
             costAudit={costAudit}
@@ -844,12 +877,14 @@ export default function App() {
             canReadBenchmarkRuns={canReadBenchmarkRuns}
             canOpenAdminSettings={canOpenAdminSettings}
             canReadUsers={canReadUsers}
+            canCreateUsers={canCreateUsers}
             canSuspendUsers={canSuspendUsers}
             canUnsuspendUsers={canUnsuspendUsers}
             canDeleteUsers={canDeleteUsers}
             canAssignRoles={canAssignRoles}
             canReadUsage={canReadUsage}
             canReadCosts={canReadCosts}
+            canReadAdminAuditLog={canReadAdminAuditLog}
             onOpenDocuments={() => setActiveView("documents")}
             onOpenAssignee={() => setActiveView("assignee")}
             onOpenDebug={() => {
@@ -857,11 +892,13 @@ export default function App() {
               setActiveView("chat")
             }}
             onOpenBenchmark={() => setActiveView("benchmark")}
+            onCreateUser={onCreateManagedUser}
             onAssignRoles={onAssignUserRoles}
             onSetUserStatus={onSetManagedUserStatus}
             onRefreshAdminData={() =>
               Promise.all([
                 canReadUsers ? refreshManagedUsers() : Promise.resolve(),
+                canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
                 canOpenAdminSettings ? refreshAccessRoles() : Promise.resolve(),
                 canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
                 canReadCosts ? refreshCostAudit() : Promise.resolve()
@@ -1678,6 +1715,7 @@ function AdminWorkspace({
   debugRunsCount,
   benchmarkRunsCount,
   managedUsers,
+  adminAuditLog,
   accessRoles,
   usageSummaries,
   costAudit,
@@ -1688,16 +1726,19 @@ function AdminWorkspace({
   canReadBenchmarkRuns,
   canOpenAdminSettings,
   canReadUsers,
+  canCreateUsers,
   canSuspendUsers,
   canUnsuspendUsers,
   canDeleteUsers,
   canAssignRoles,
   canReadUsage,
   canReadCosts,
+  canReadAdminAuditLog,
   onOpenDocuments,
   onOpenAssignee,
   onOpenDebug,
   onOpenBenchmark,
+  onCreateUser,
   onAssignRoles,
   onSetUserStatus,
   onRefreshAdminData,
@@ -1709,6 +1750,7 @@ function AdminWorkspace({
   debugRunsCount: number
   benchmarkRunsCount: number
   managedUsers: ManagedUser[]
+  adminAuditLog: ManagedUserAuditLogEntry[]
   accessRoles: AccessRoleDefinition[]
   usageSummaries: UserUsageSummary[]
   costAudit: CostAuditSummary | null
@@ -1719,16 +1761,19 @@ function AdminWorkspace({
   canReadBenchmarkRuns: boolean
   canOpenAdminSettings: boolean
   canReadUsers: boolean
+  canCreateUsers: boolean
   canSuspendUsers: boolean
   canUnsuspendUsers: boolean
   canDeleteUsers: boolean
   canAssignRoles: boolean
   canReadUsage: boolean
   canReadCosts: boolean
+  canReadAdminAuditLog: boolean
   onOpenDocuments: () => void
   onOpenAssignee: () => void
   onOpenDebug: () => void
   onOpenBenchmark: () => void
+  onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
   onAssignRoles: (userId: string, groups: string[]) => Promise<void>
   onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
   onRefreshAdminData: () => Promise<void>
@@ -1812,6 +1857,9 @@ function AdminWorkspace({
               <h3>ユーザー管理</h3>
               <button type="button" onClick={() => void onRefreshAdminData()} disabled={loading}>更新</button>
             </div>
+            {canCreateUsers && (
+              <AdminCreateUserForm roles={accessRoles} loading={loading} onCreateUser={onCreateUser} />
+            )}
             <div className="admin-data-table" role="table" aria-label="ユーザー一覧">
               <div className="admin-user-row admin-user-head" role="row">
                 <span role="columnheader">ユーザー</span>
@@ -1917,8 +1965,91 @@ function AdminWorkspace({
             </div>
           </section>
         )}
+
+        {canReadAdminAuditLog && (
+          <section className="admin-section-panel admin-audit-panel" aria-label="管理操作履歴">
+            <div className="document-list-head">
+              <h3>管理操作履歴</h3>
+              <span>{adminAuditLog.length} 件</span>
+            </div>
+            <div className="admin-audit-list">
+              {adminAuditLog.length === 0 ? (
+                <div className="empty-question-panel">管理操作履歴はありません。</div>
+              ) : (
+                adminAuditLog.map((entry) => (
+                  <article className="admin-audit-entry" key={entry.auditId}>
+                    <div>
+                      <strong>{adminAuditActionLabel(entry.action)}</strong>
+                      <span>{entry.targetEmail}</span>
+                    </div>
+                    <div>
+                      <span>{entry.actorEmail || entry.actorUserId}</span>
+                      <time>{formatDateTime(entry.createdAt)}</time>
+                    </div>
+                    <small>{adminAuditSummary(entry)}</small>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </section>
+  )
+}
+
+function AdminCreateUserForm({
+  roles,
+  loading,
+  onCreateUser
+}: {
+  roles: AccessRoleDefinition[]
+  loading: boolean
+  onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
+}) {
+  const [email, setEmail] = useState("")
+  const [displayName, setDisplayName] = useState("")
+  const [role, setRole] = useState("CHAT_USER")
+
+  useEffect(() => {
+    if (roles.some((candidate) => candidate.role === role)) return
+    setRole(roles[0]?.role ?? "CHAT_USER")
+  }, [role, roles])
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const normalizedEmail = email.trim()
+    if (!normalizedEmail) return
+    await onCreateUser({
+      email: normalizedEmail,
+      displayName: displayName.trim() || undefined,
+      groups: [role]
+    })
+    setEmail("")
+    setDisplayName("")
+    setRole("CHAT_USER")
+  }
+
+  return (
+    <form className="admin-create-user-form" aria-label="管理対象ユーザー作成" onSubmit={(event) => void submit(event)}>
+      <label>
+        <span>メール</span>
+        <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="new-user@example.com" required />
+      </label>
+      <label>
+        <span>表示名</span>
+        <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="任意" />
+      </label>
+      <label>
+        <span>初期ロール</span>
+        <select value={role} onChange={(event) => setRole(event.target.value)}>
+          {roles.map((roleDefinition) => (
+            <option value={roleDefinition.role} key={roleDefinition.role}>{roleDefinition.role}</option>
+          ))}
+        </select>
+      </label>
+      <button type="submit" disabled={loading || email.trim().length === 0}>作成</button>
+    </form>
   )
 }
 
@@ -2319,6 +2450,25 @@ function costConfidenceLabel(confidence: CostAuditSummary["items"][number]["conf
   if (confidence === "actual_usage") return "実測"
   if (confidence === "estimated_usage") return "概算"
   return "手動見積"
+}
+
+function adminAuditActionLabel(action: ManagedUserAuditLogEntry["action"]): string {
+  if (action === "user:create") return "ユーザー作成"
+  if (action === "role:assign") return "ロール付与"
+  if (action === "user:suspend") return "停止"
+  if (action === "user:unsuspend") return "再開"
+  return "削除"
+}
+
+function adminAuditSummary(entry: ManagedUserAuditLogEntry): string {
+  if (entry.action === "role:assign" || entry.action === "user:create") {
+    const before = entry.beforeGroups.length > 0 ? entry.beforeGroups.join(" / ") : "なし"
+    const after = entry.afterGroups.length > 0 ? entry.afterGroups.join(" / ") : "なし"
+    return `${before} -> ${after}`
+  }
+  const before = entry.beforeStatus ? managedUserStatusLabel(entry.beforeStatus) : "-"
+  const after = entry.afterStatus ? managedUserStatusLabel(entry.afterStatus) : "-"
+  return `${before} -> ${after}`
 }
 
 function formatTime(input: string): string {

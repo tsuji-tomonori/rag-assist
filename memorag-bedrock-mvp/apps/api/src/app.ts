@@ -9,6 +9,7 @@ import {
   ChatRequestSchema,
   ChatResponseSchema,
   AnswerQuestionRequestSchema,
+  AdminAuditLogResponseSchema,
   AccessRoleListResponseSchema,
   AssignUserRolesRequestSchema,
   BenchmarkRunListResponseSchema,
@@ -19,6 +20,7 @@ import {
   ConversationHistoryItemSchema,
   ConversationHistoryListResponseSchema,
   CostAuditSummarySchema,
+  CreateManagedUserRequestSchema,
   CreateBenchmarkRunRequestSchema,
   CreateQuestionRequestSchema,
   CurrentUserResponseSchema,
@@ -98,6 +100,36 @@ app.openapi(
 
 app.openapi(
   looseRoute({
+    method: "post",
+    path: "/admin/users",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: CreateManagedUserRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Created managed user", content: { "application/json": { schema: ManagedUserSchema } } },
+      409: { description: "User already exists", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const actor = c.get("user")
+    requirePermission(actor, "user:create")
+    const body = (c.req as any).valid("json") as z.infer<typeof CreateManagedUserRequestSchema>
+    try {
+      return c.json(await service.createManagedUser(actor, body), 200)
+    } catch (err) {
+      if (err instanceof Error && err.message === "Managed user already exists") {
+        return c.json({ error: err.message }, 409)
+      }
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
     method: "get",
     path: "/admin/users",
     responses: {
@@ -109,6 +141,21 @@ app.openapi(
     const user = c.get("user")
     requirePermission(user, "user:read")
     return c.json({ users: await service.listManagedUsers(user) }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/admin/audit-log",
+    responses: {
+      200: { description: "List recent admin audit log entries", content: { "application/json": { schema: AdminAuditLogResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "access:policy:read")
+    return c.json({ auditLog: await service.listAdminAuditLog(user) }, 200)
   }
 )
 

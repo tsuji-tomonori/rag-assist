@@ -177,6 +177,7 @@ export type Permission =
   | "usage:read:all_users"
   | "cost:read:own"
   | "cost:read:all"
+  | "user:create"
   | "user:read"
   | "user:suspend"
   | "user:unsuspend"
@@ -204,6 +205,22 @@ export type ManagedUser = {
   createdAt: string
   updatedAt: string
   lastLoginAt?: string
+}
+
+export type ManagedUserAuditAction = "user:create" | "role:assign" | "user:suspend" | "user:unsuspend" | "user:delete"
+
+export type ManagedUserAuditLogEntry = {
+  auditId: string
+  action: ManagedUserAuditAction
+  actorUserId: string
+  actorEmail?: string
+  targetUserId: string
+  targetEmail: string
+  beforeStatus?: ManagedUserStatus
+  afterStatus?: ManagedUserStatus
+  beforeGroups: string[]
+  afterGroups: string[]
+  createdAt: string
 }
 
 export type AccessRoleDefinition = {
@@ -258,6 +275,15 @@ export async function getMe(): Promise<CurrentUser> {
 export async function listManagedUsers(): Promise<ManagedUser[]> {
   const result = await get<{ users?: ManagedUser[] }>("/admin/users")
   return result.users ?? []
+}
+
+export async function createManagedUser(input: { email: string; displayName?: string; groups?: string[] }): Promise<ManagedUser> {
+  return post<ManagedUser>("/admin/users", input)
+}
+
+export async function listAdminAuditLog(): Promise<ManagedUserAuditLogEntry[]> {
+  const result = await get<{ auditLog?: ManagedUserAuditLogEntry[] }>("/admin/audit-log")
+  return result.auditLog ?? []
 }
 
 export async function listAccessRoles(): Promise<AccessRoleDefinition[]> {

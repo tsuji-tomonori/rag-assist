@@ -82,9 +82,12 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
 | `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
 | `BENCHMARK_RUNNER` | CodeBuild runner から `/benchmark/query` を実行 |
-| `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証 |
+| `USER_ADMIN` | 管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
+| `ACCESS_ADMIN` | ロール定義参照、ロール付与、管理操作履歴参照 |
+| `COST_AUDITOR` | 概算コスト監査 |
+| `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証、Phase 2 管理操作 |
 
-通常利用者に `ANSWER_EDITOR` や `SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。性能テストを起動する運用者には `RAG_GROUP_MANAGER`、CodeBuild runner 用 service user には `BENCHMARK_RUNNER`、debug trace と benchmark 成果物を確認する管理者には `SYSTEM_ADMIN` を付与する。
+通常利用者に `ANSWER_EDITOR`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。性能テストを起動する運用者には `RAG_GROUP_MANAGER`、CodeBuild runner 用 service user には `BENCHMARK_RUNNER`、debug trace と benchmark 成果物を確認する管理者には `SYSTEM_ADMIN` を付与する。
 
 ログイン画面から self sign-up したユーザーは、メール確認後に Cognito post-confirmation trigger で `CHAT_USER` のみを自動付与する。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが対象者と必要性を確認し、`.github/workflows/memorag-create-cognito-user.yml` または AWS 管理手順で後から付与する。
 

@@ -337,16 +337,18 @@ Phase 1 では通常利用者の Cognito self sign-up UI を提供する。
 
 | 機能 | API | 必要 permission | 主な対象 role |
 | --- | --- | --- | --- |
+| 管理対象ユーザー作成 | `POST /admin/users` | `user:create` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | 管理対象ユーザー一覧 | `GET /admin/users` | `user:read` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | ユーザー停止 | `POST /admin/users/{userId}/suspend` | `user:suspend` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | ユーザー再開 | `POST /admin/users/{userId}/unsuspend` | `user:unsuspend` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | ユーザー削除 | `DELETE /admin/users/{userId}` | `user:delete` | `USER_ADMIN`, `SYSTEM_ADMIN` |
+| 管理操作履歴 | `GET /admin/audit-log` | `access:policy:read` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | ロール一覧 | `GET /admin/roles` | `access:policy:read` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | ロール付与 | `POST /admin/users/{userId}/roles` | `access:role:assign` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | 全ユーザー利用状況 | `GET /admin/usage` | `usage:read:all_users` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | コスト監査 | `GET /admin/costs` | `cost:read:all` | `COST_AUDITOR`, `SYSTEM_ADMIN` |
 
-Phase 2 初期実装のユーザー管理は管理台帳 API を正とする。Cognito Admin API への実変更、権限変更監査ログ、承認 workflow は後続 adapter/運用設計で扱う。
+Phase 2 初期実装のユーザー管理は管理台帳 API を正とする。管理台帳 API はユーザー作成、role group 付与、停止、再開、削除を管理操作履歴へ記録する。Cognito Admin API への実変更、承認 workflow、監査ログの保全設計は後続 adapter/運用設計で扱う。
 
 ## エラー方針
 
