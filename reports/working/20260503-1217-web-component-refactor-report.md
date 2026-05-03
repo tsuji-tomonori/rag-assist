@@ -17,7 +17,7 @@
 | R2 | 実行計画とタスク分割レポートを作る | 高 | 対応 |
 | R3 | `App.tsx` の God Component 化を緩和する | 高 | 対応 |
 | R4 | 変更範囲に応じたテスト/型チェックを行う | 高 | 対応 |
-| R5 | commit/push/PR 作成まで進める | 高 | commit 前の作業完了時点。後続で実施 |
+| R5 | commit/push/PR 作成まで進める | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -35,6 +35,8 @@
 - `DebugPanel`, `HistoryWorkspace`, `DocumentWorkspace`, `BenchmarkWorkspace` を feature 配下へ分離した。
 - `RailNav`, `TopBar`, `AppView` を app 配下へ分離した。
 - `App.tsx` の行数を 2,629 行から 1,775 行へ削減した。
+- `141be74` を commit/push し、GitHub Apps で PR #91 を作成した。
+- PR に `semver:patch` ラベルを付与した。
 
 ## 5. 成果物
 
@@ -46,6 +48,7 @@
 | `memorag-bedrock-mvp/apps/web/src/shared/*` | TS/TSX | 共有 Icon/formatter/download utility | shared 部品化 |
 | `reports/working/20260503-1205-web-component-refactor-plan.md` | Markdown | 初期計画と Done 条件 | 計画レポート |
 | `reports/working/20260503-1217-web-component-refactor-report.md` | Markdown | 作業完了レポート | 完了報告 |
+| `https://github.com/tsuji-tomonori/rag-assist/pull/91` | Pull Request | `main` 向け PR | PR 作成要件 |
 
 ## 6. 確認内容
 

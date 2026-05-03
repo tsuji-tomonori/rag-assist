@@ -1,6 +1,6 @@
 {
-  "complete": false,
-  "status": "implementation_verified_pending_git_and_pr",
+  "complete": true,
+  "status": "complete",
   "requested_items": [
     "worktree とブランチを作成する",
     "最初に実行計画を立て、レポートを作成してタスクを分割する",
@@ -13,13 +13,12 @@
     "reports/working/20260503-1205-web-component-refactor-plan.md を作成した",
     "App.tsx から shared/app/feature コンポーネントと utility を分離した",
     "web typecheck と web test と git diff --check を実行し、すべて pass した",
-    "reports/working/20260503-1217-web-component-refactor-report.md を作成した"
+    "reports/working/20260503-1217-web-component-refactor-report.md を作成した",
+    "commit 141be74 を origin/codex/web-component-refactor に push した",
+    "GitHub Apps で https://github.com/tsuji-tomonori/rag-assist/pull/91 を作成した",
+    "PR に semver:patch ラベルを付与した"
   ],
-  "remaining_items": [
-    "git add / commit / push",
-    "GitHub Apps による main 向け PR 作成",
-    "PR 作成後に complete を true に更新する"
-  ],
+  "remaining_items": [],
   "blocked_items": [],
   "validation": [
     {
@@ -41,6 +40,6 @@
       "result": "pass"
     }
   ],
-  "next_action": "git add / commit / push を行い、GitHub Apps で PR を作成する",
+  "next_action": "none",
   "safe_to_continue_without_user": true
 }
