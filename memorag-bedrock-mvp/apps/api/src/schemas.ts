@@ -22,6 +22,7 @@ export const DocumentUploadRequestSchema = z.object({
   fileName: z.string().min(1).openapi({ example: "handbook.md" }),
   text: z.string().optional().openapi({ example: "経費精算は申請から30日以内に行う必要があります。" }),
   contentBase64: z.string().optional(),
+  textractJson: z.string().optional(),
   mimeType: z.string().optional().openapi({ example: "text/markdown" }),
   metadata: z.record(MetadataValueSchema).optional(),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
@@ -51,7 +52,15 @@ const ChunkMetadataSchema = z.object({
   nextChunkId: z.string().optional(),
   chunkHash: z.string().optional(),
   pageStart: z.number().int().positive().optional(),
-  pageEnd: z.number().int().positive().optional()
+  pageEnd: z.number().int().positive().optional(),
+  chunkKind: z.enum(["text", "table", "list", "code", "figure"]).optional(),
+  sourceBlockId: z.string().optional(),
+  normalizedFrom: z.string().optional(),
+  tableColumnCount: z.number().int().positive().optional(),
+  listDepth: z.number().int().positive().optional(),
+  codeLanguage: z.string().optional(),
+  figureCaption: z.string().optional(),
+  extractionMethod: z.string().optional()
 })
 
 export const DocumentManifestSchema = z.object({
@@ -60,6 +69,7 @@ export const DocumentManifestSchema = z.object({
   mimeType: z.string().optional(),
   metadata: z.record(MetadataValueSchema).optional(),
   sourceObjectKey: z.string(),
+  structuredBlocksObjectKey: z.string().optional(),
   manifestObjectKey: z.string(),
   vectorKeys: z.array(z.string()),
   memoryVectorKeys: z.array(z.string()).optional(),
@@ -72,6 +82,10 @@ export const DocumentManifestSchema = z.object({
   indexVersion: z.string().optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   chunks: z.array(ChunkMetadataSchema).optional(),
+  lifecycleStatus: z.enum(["active", "staging", "superseded"]).optional(),
+  activeDocumentId: z.string().optional(),
+  stagedFromDocumentId: z.string().optional(),
+  reindexMigrationId: z.string().optional(),
   chunkCount: z.number(),
   memoryCardCount: z.number(),
   createdAt: z.string()
@@ -84,6 +98,25 @@ export const DocumentListResponseSchema = z.object({
 export const DeleteDocumentResponseSchema = z.object({
   documentId: z.string(),
   deletedVectorCount: z.number()
+})
+
+export const ReindexMigrationSchema = z.object({
+  migrationId: z.string(),
+  sourceDocumentId: z.string(),
+  stagedDocumentId: z.string(),
+  activeDocumentId: z.string().optional(),
+  status: z.enum(["staged", "cutover", "rolled_back"]),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  cutoverAt: z.string().optional(),
+  rolledBackAt: z.string().optional(),
+  previousManifestObjectKey: z.string(),
+  stagedManifestObjectKey: z.string()
+})
+
+export const ReindexMigrationListResponseSchema = z.object({
+  migrations: z.array(ReindexMigrationSchema)
 })
 
 export const CurrentUserResponseSchema = z.object({

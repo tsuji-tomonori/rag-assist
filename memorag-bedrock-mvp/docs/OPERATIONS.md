@@ -110,6 +110,10 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 - 担当者対応ビューが表示されない場合は、対象ユーザーに `ANSWER_EDITOR` group が付与され、ID token の `cognito:groups` に反映されているか確認する。
 - AWS実行時にBedrockエラーが出る場合はリージョン、モデル有効化、IAMの `bedrock:InvokeModel` と `bedrock:Converse` を確認する。
 
+## 再インデックス運用
+
+文書の chunker、extractor、embedding model、dimensions を変える場合は、`POST /documents/{documentId}/reindex/stage` で staged document を作成し、`GET /documents/reindex-migrations` で状態を確認してから `cutover` する。検索 runtime は `lifecycleStatus=active` の manifest/vector だけを対象にするため、staging 中の document は通常検索に出ない。cutover 後に問題が見つかった場合は `rollback` で旧 source と structured block ledger から active document を復元する。
+
 ## ベンチマークレポート
 
 `task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` と fact slot 系の期待値を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、fact slot coverage、p95 latencyを確認できる。

@@ -27,7 +27,7 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   assert.ok(manifest.memoryCardCount >= 1)
   assert.ok(manifest.evidenceVectorKeys?.length)
   assert.ok(manifest.memoryVectorKeys?.length)
-  assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-text-v1")
+  assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-structured-v2")
   assert.ok(manifest.chunks?.[0]?.chunkHash)
 
   const listed = await service.listDocuments()
@@ -79,9 +79,48 @@ test("service reindexes documents through embedding cache compatible pipeline ve
   assert.ok(manifest.chunks?.some((chunk) => chunk.sectionPath?.includes("申請手順")))
   const reindexed = await service.reindexDocument(manifest.documentId)
   assert.notEqual(reindexed.documentId, manifest.documentId)
-  assert.equal(reindexed.metadata?.reindexedFromDocumentId, manifest.documentId)
+  assert.equal(reindexed.metadata?.stagedFromDocumentId, manifest.documentId)
+  assert.equal(reindexed.lifecycleStatus, "active")
   assert.equal(reindexed.embeddingModelId, manifest.embeddingModelId)
   assert.ok(reindexed.memoryCardCount >= manifest.memoryCardCount)
+
+  const migrations = await service.listReindexMigrations()
+  assert.equal(migrations[0]?.status, "cutover")
+  assert.equal((await service.listDocuments()).some((doc) => doc.documentId === manifest.documentId), false)
+})
+
+test("service stages and rolls back structured blue-green reindex migrations", async () => {
+  const { service } = await createService()
+  const textractJson = JSON.stringify({
+    Blocks: [
+      { Id: "table-1", BlockType: "TABLE", Page: 1, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2"] }] },
+      { Id: "cell-1", BlockType: "CELL", RowIndex: 1, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-1"] }] },
+      { Id: "cell-2", BlockType: "CELL", RowIndex: 1, ColumnIndex: 2, Relationships: [{ Type: "CHILD", Ids: ["word-2"] }] },
+      { Id: "word-1", BlockType: "WORD", Text: "項目" },
+      { Id: "word-2", BlockType: "WORD", Text: "期限" }
+    ]
+  })
+  const manifest = await service.ingest({ fileName: "policy.textract.json", textractJson, skipMemory: true })
+
+  assert.equal(manifest.chunks?.[0]?.chunkKind, "table")
+  assert.ok(manifest.structuredBlocksObjectKey)
+
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const staged = await service.stageReindexMigration(actor, manifest.documentId)
+  assert.equal(staged.status, "staged")
+  assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
+
+  const cutover = await service.cutoverReindexMigration(staged.migrationId)
+  assert.equal(cutover.status, "cutover")
+  const activeAfterCutover = await service.listDocuments()
+  assert.deepEqual(activeAfterCutover.map((doc) => doc.documentId), [staged.stagedDocumentId])
+  assert.equal(activeAfterCutover[0]?.chunks?.[0]?.chunkKind, "table")
+
+  const rolledBack = await service.rollbackReindexMigration(staged.migrationId)
+  assert.equal(rolledBack.status, "rolled_back")
+  const activeAfterRollback = await service.listDocuments()
+  assert.equal(activeAfterRollback.length, 1)
+  assert.equal(activeAfterRollback[0]?.chunks?.[0]?.chunkKind, "table")
 })
 
 test("service manages reviewed alias artifacts and audit log", async () => {

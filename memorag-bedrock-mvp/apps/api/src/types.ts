@@ -2,6 +2,8 @@ export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
 export type VectorKind = "chunk" | "memory"
+export type ChunkKind = "text" | "table" | "list" | "code" | "figure"
+export type DocumentLifecycleStatus = "active" | "staging" | "superseded"
 
 export type PipelineVersions = {
   agentWorkflowVersion: string
@@ -31,6 +33,15 @@ export type VectorMetadata = {
   chunkHash?: string
   pageStart?: number
   pageEnd?: number
+  chunkKind?: ChunkKind
+  sourceBlockId?: string
+  normalizedFrom?: string
+  tableColumnCount?: number
+  listDepth?: number
+  codeLanguage?: string
+  figureCaption?: string
+  extractionMethod?: string
+  lifecycleStatus?: DocumentLifecycleStatus
   tenantId?: string
   department?: string
   source?: string
@@ -67,6 +78,7 @@ export type DocumentManifest = {
   mimeType?: string
   metadata?: Record<string, JsonValue>
   sourceObjectKey: string
+  structuredBlocksObjectKey?: string
   manifestObjectKey: string
   vectorKeys: string[]
   memoryVectorKeys?: string[]
@@ -79,6 +91,10 @@ export type DocumentManifest = {
   indexVersion?: string
   pipelineVersions?: PipelineVersions
   chunks?: ChunkMetadata[]
+  lifecycleStatus?: DocumentLifecycleStatus
+  activeDocumentId?: string
+  stagedFromDocumentId?: string
+  reindexMigrationId?: string
   chunkCount: number
   memoryCardCount: number
   createdAt: string
@@ -109,9 +125,34 @@ export type Chunk = {
   chunkHash?: string
   pageStart?: number
   pageEnd?: number
+  chunkKind?: ChunkKind
+  sourceBlockId?: string
+  normalizedFrom?: string
+  tableColumnCount?: number
+  listDepth?: number
+  codeLanguage?: string
+  figureCaption?: string
+  extractionMethod?: string
 }
 
 export type ChunkMetadata = Omit<Chunk, "text">
+
+export type StructuredBlock = {
+  id: string
+  kind: ChunkKind
+  text: string
+  pageStart?: number
+  pageEnd?: number
+  heading?: string
+  sectionPath?: string[]
+  sourceBlockId?: string
+  normalizedFrom?: string
+  tableColumnCount?: number
+  listDepth?: number
+  codeLanguage?: string
+  figureCaption?: string
+  extractionMethod?: string
+}
 
 export type Citation = {
   documentId: string
@@ -289,6 +330,23 @@ export type PublishedAliasArtifact = {
   publishedBy: string
   publishedAt: string
   aliases: AliasDefinition[]
+}
+
+export type ReindexMigrationStatus = "staged" | "cutover" | "rolled_back"
+
+export type ReindexMigration = {
+  migrationId: string
+  sourceDocumentId: string
+  stagedDocumentId: string
+  activeDocumentId?: string
+  status: ReindexMigrationStatus
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  cutoverAt?: string
+  rolledBackAt?: string
+  previousManifestObjectKey: string
+  stagedManifestObjectKey: string
 }
 
 export type UserUsageSummary = {

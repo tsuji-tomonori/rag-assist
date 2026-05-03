@@ -40,6 +40,8 @@ import {
   PublishAliasesResponseSchema,
   QuestionListResponseSchema,
   QuestionSchema,
+  ReindexMigrationListResponseSchema,
+  ReindexMigrationSchema,
   ReviewAliasRequestSchema,
   SearchRequestSchema,
   SearchResponseSchema,
@@ -426,7 +428,7 @@ app.openapi(
   async (c) => {
     requirePermission(c.get("user"), "rag:doc:write:group")
     const body = (c.req as any).valid("json") as z.infer<typeof DocumentUploadRequestSchema>
-    if (!body.text && !body.contentBase64) return c.json({ error: "Either text or contentBase64 is required" }, 400)
+    if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
     return c.json(await service.ingest(body), 200)
   }
 )
@@ -455,6 +457,94 @@ app.openapi(
       return c.json(await service.reindexDocument(documentId, body), 200)
     } catch (err) {
       if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/documents/reindex-migrations",
+    responses: {
+      200: { description: "List blue-green reindex migrations", content: { "application/json": { schema: ReindexMigrationListResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:index:rebuild:group")
+    return c.json({ migrations: await service.listReindexMigrations() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/{documentId}/reindex/stage",
+    request: {
+      params: z.object({ documentId: z.string().min(1) }),
+      body: {
+        required: false,
+        content: { "application/json": { schema: z.object({ embeddingModelId: z.string().optional(), memoryModelId: z.string().optional() }) } }
+      }
+    },
+    responses: {
+      200: { description: "Staged reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
+      404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:index:rebuild:group")
+    const { documentId } = (c.req as any).valid("param") as { documentId: string }
+    const body = ((c.req as any).valid("json") ?? {}) as { embeddingModelId?: string; memoryModelId?: string }
+    try {
+      return c.json(await service.stageReindexMigration(user, documentId, body), 200)
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/reindex-migrations/{migrationId}/cutover",
+    request: { params: z.object({ migrationId: z.string().min(1) }) },
+    responses: {
+      200: { description: "Cut over staged reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
+      404: { description: "Migration not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:index:rebuild:group")
+    const { migrationId } = (c.req as any).valid("param") as { migrationId: string }
+    try {
+      return c.json(await service.cutoverReindexMigration(migrationId), 200)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/reindex-migrations/{migrationId}/rollback",
+    request: { params: z.object({ migrationId: z.string().min(1) }) },
+    responses: {
+      200: { description: "Rolled back reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
+      404: { description: "Migration not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:index:rebuild:group")
+    const { migrationId } = (c.req as any).valid("param") as { migrationId: string }
+    try {
+      return c.json(await service.rollbackReindexMigration(migrationId), 200)
+    } catch (err) {
+      if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
       throw err
     }
   }

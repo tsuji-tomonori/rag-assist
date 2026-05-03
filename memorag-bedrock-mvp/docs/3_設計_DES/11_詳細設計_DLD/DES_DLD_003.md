@@ -170,5 +170,5 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 ## 将来拡張
 
 - Phase 2: alias artifact と lexical index artifact の corpus/index 対応をより細かい tenant/source/docType scope で分割する。
-- Phase 3: 管理 UI から alias review / publish / rollback を操作できるようにする。
+- Phase 3: 管理 UI から alias review / publish を操作できる。alias artifact rollback は index lifecycle と合わせて追加検討する。
 - Phase 4: no-result query、low-confidence query、user reformulation、benchmark failure から draft alias 候補を生成する。

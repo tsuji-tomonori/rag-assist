@@ -2,9 +2,9 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { buildSearchClues, clamp, compactDetail, estimateTokenCount, toCitation, unique } from "../agent/utils.js"
-import { chunkText } from "./chunk.js"
+import { chunkStructuredBlocks, chunkText } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
-import { extractTextFromUpload } from "./text-extract.js"
+import { extractDocumentFromUpload, extractTextFromUpload } from "./text-extract.js"
 
 test("chunking normalizes whitespace and respects overlap and sentence boundaries", () => {
   assert.deepEqual(chunkText(" \n\n "), [])
@@ -36,10 +36,50 @@ test("chunking records section metadata and neighboring chunk links", () => {
   assert.equal(chunks[1]?.previousChunkId, chunks[0]?.id)
 })
 
+test("chunking normalizes table, list, code, and figure blocks", () => {
+  const chunks = chunkStructuredBlocks(
+    [
+      { id: "table-1", kind: "table", text: "| 項目 | 期限 |\n| --- | --- |\n| 申請 | 翌月5営業日 |", tableColumnCount: 2, normalizedFrom: "test-table" },
+      { id: "list-1", kind: "list", text: "- 申請\n- 承認", listDepth: 1, normalizedFrom: "test-list" },
+      { id: "code-1", kind: "code", text: "```\nstatus = approved\n```", normalizedFrom: "test-code" },
+      { id: "fig-1", kind: "figure", text: "Figure: 承認フロー", figureCaption: "承認フロー", normalizedFrom: "test-figure" }
+    ],
+    1200,
+    200
+  )
+
+  assert.deepEqual(chunks.map((chunk) => chunk.chunkKind), ["table", "list", "code", "figure"])
+  assert.equal(chunks[0]?.tableColumnCount, 2)
+  assert.equal(chunks[1]?.listDepth, 1)
+  assert.equal(chunks[3]?.figureCaption, "承認フロー")
+})
+
 test("upload text extraction handles direct text, base64, limits, and missing payloads", async () => {
   assert.equal(await extractTextFromUpload({ fileName: "a.txt", text: "\u0000 body \u0000" }), "body")
   assert.equal(await extractTextFromUpload({ fileName: "a.txt", contentBase64: Buffer.from("hello").toString("base64") }), "hello")
   await assert.rejects(() => extractTextFromUpload({ fileName: "missing.txt" }), /Either text or contentBase64/)
+})
+
+test("upload extraction parses Textract JSON tables and lines into structured blocks", async () => {
+  const textractJson = JSON.stringify({
+    Blocks: [
+      { Id: "line-1", BlockType: "LINE", Text: "1. 申請手順", Page: 1 },
+      { Id: "table-1", BlockType: "TABLE", Page: 1, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2", "cell-3", "cell-4"] }] },
+      { Id: "cell-1", BlockType: "CELL", RowIndex: 1, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-1"] }] },
+      { Id: "cell-2", BlockType: "CELL", RowIndex: 1, ColumnIndex: 2, Relationships: [{ Type: "CHILD", Ids: ["word-2"] }] },
+      { Id: "cell-3", BlockType: "CELL", RowIndex: 2, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-3"] }] },
+      { Id: "cell-4", BlockType: "CELL", RowIndex: 2, ColumnIndex: 2, Relationships: [{ Type: "CHILD", Ids: ["word-4"] }] },
+      { Id: "word-1", BlockType: "WORD", Text: "項目" },
+      { Id: "word-2", BlockType: "WORD", Text: "期限" },
+      { Id: "word-3", BlockType: "WORD", Text: "申請" },
+      { Id: "word-4", BlockType: "WORD", Text: "翌月5営業日" }
+    ]
+  })
+
+  const extracted = await extractDocumentFromUpload({ fileName: "policy.pdf", textractJson })
+  assert.equal(extracted.sourceExtractorVersion, "textract-json-v1")
+  assert.ok(extracted.blocks?.some((block) => block.kind === "table" && block.text.includes("| 項目 | 期限 |")))
+  assert.ok(extracted.blocks?.some((block) => block.kind === "list" && block.text.includes("- 申請手順")))
 })
 
 test("json parser accepts raw JSON, fenced JSON, embedded JSON, and invalid inputs", () => {

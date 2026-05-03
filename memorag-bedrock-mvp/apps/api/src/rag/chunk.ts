@@ -1,4 +1,4 @@
-import type { Chunk } from "../types.js"
+import type { Chunk, StructuredBlock } from "../types.js"
 
 export function chunkText(text: string, chunkSize = 1200, overlap = 200): Chunk[] {
   const normalized = text.replace(/\r\n/g, "\n").replace(/\f+/g, "\n\f\n").trim()
@@ -41,6 +41,36 @@ export function chunkText(text: string, chunkSize = 1200, overlap = 200): Chunk[
   return chunks
 }
 
+export function chunkStructuredBlocks(blocks: StructuredBlock[], chunkSize = 1200, overlap = 200): Chunk[] {
+  const chunks: Chunk[] = []
+  let index = 0
+  let cursor = 0
+  let sectionPath: string[] = []
+
+  for (const block of blocks) {
+    const text = block.text.replace(/\r\n/g, "\n").trim()
+    if (!text) continue
+    if (block.heading) sectionPath = nextSectionPath(sectionPath, block.heading)
+    const blockSectionPath = block.sectionPath ?? (sectionPath.length > 0 ? sectionPath : undefined)
+    index = appendSegmentChunks({
+      text,
+      baseStart: cursor,
+      chunkSize: block.kind === "text" ? chunkSize : Math.max(chunkSize, text.length),
+      overlap: block.kind === "text" ? overlap : 0,
+      startIndex: index,
+      chunks,
+      sectionPath: blockSectionPath ?? [],
+      heading: block.heading ?? blockSectionPath?.at(-1),
+      page: block.pageStart ?? 1,
+      block
+    })
+    cursor += text.length + 1
+  }
+
+  linkChunks(chunks)
+  return chunks
+}
+
 function appendSegmentChunks(input: {
   text: string
   baseStart: number
@@ -51,6 +81,7 @@ function appendSegmentChunks(input: {
   sectionPath: string[]
   heading?: string
   page: number
+  block?: StructuredBlock
 }): number {
   const { text, baseStart, chunkSize, overlap, chunks } = input
   const safeOverlap = Math.min(overlap, Math.floor(chunkSize / 2))
@@ -77,8 +108,16 @@ function appendSegmentChunks(input: {
         heading: input.heading,
         parentSectionId: input.sectionPath.length > 0 ? sectionId(input.sectionPath) : undefined,
         chunkHash: hashString(chunk),
-        pageStart: input.page,
-        pageEnd: input.page
+        pageStart: input.block?.pageStart ?? input.page,
+        pageEnd: input.block?.pageEnd ?? input.block?.pageStart ?? input.page,
+        chunkKind: input.block?.kind ?? detectChunkKind(chunk),
+        sourceBlockId: input.block?.sourceBlockId ?? input.block?.id,
+        normalizedFrom: input.block?.normalizedFrom,
+        tableColumnCount: input.block?.tableColumnCount,
+        listDepth: input.block?.listDepth,
+        codeLanguage: input.block?.codeLanguage,
+        figureCaption: input.block?.figureCaption,
+        extractionMethod: input.block?.extractionMethod
       })
       index += 1
     }
@@ -87,6 +126,14 @@ function appendSegmentChunks(input: {
   }
 
   return index
+}
+
+function detectChunkKind(text: string): Chunk["chunkKind"] {
+  if (/^```/m.test(text)) return "code"
+  if (/^\|.+\|\n\|[-:|\s]+\|/m.test(text)) return "table"
+  if (/^\s*(?:[-*]|\d+[.)])\s+/m.test(text)) return "list"
+  if (/^(?:Figure|図表|図)\s*[:：]/im.test(text)) return "figure"
+  return "text"
 }
 
 function firstHeading(text: string): string | undefined {

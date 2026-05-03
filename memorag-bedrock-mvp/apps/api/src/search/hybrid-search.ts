@@ -132,7 +132,8 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     tenantId: input.filters?.tenantId,
     department: input.filters?.department,
     source: input.filters?.source,
-    docType: input.filters?.docType
+    docType: input.filters?.docType,
+    lifecycleStatus: "active" as const
   }
   const semanticHits =
     semanticTopK > 0
@@ -189,7 +190,7 @@ export async function getLexicalIndex(
 ): Promise<LexicalIndex> {
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
-  const visible = manifests.filter((manifest) => canAccessManifest(manifest, user)).filter((manifest) => manifestMatchesFilters(manifest, filters))
+  const visible = manifests.filter(isActiveManifest).filter((manifest) => canAccessManifest(manifest, user)).filter((manifest) => manifestMatchesFilters(manifest, filters))
   const publishedAliases = await loadPublishedAliasMap(deps, filters)
   const aliases = mergeAliases([publishedAliases.aliases, ...visible.map((manifest) => aliasMapFromMetadata(manifest.metadata))])
   const combinedAliasSignature = stableStringifyAliasMap(aliases)
@@ -482,7 +483,12 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser): boolean {
   return canAccessMetadata(metadata, user)
 }
 
+function isActiveManifest(manifest: DocumentManifest): boolean {
+  return (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active"
+}
+
 function canAccessVector(metadata: VectorMetadata, user: AppUser): boolean {
+  if ((metadata.lifecycleStatus ?? "active") !== "active") return false
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   return canAccessMetadata(metadata as unknown as Record<string, JsonValue>, user)
 }

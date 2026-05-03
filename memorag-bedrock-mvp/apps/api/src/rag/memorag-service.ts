@@ -7,28 +7,31 @@ import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Chunk, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type MemoryCard, type PublishedAliasArtifact, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Chunk, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
 import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
-import { chunkText } from "./chunk.js"
+import { chunkStructuredBlocks, chunkText } from "./chunk.js"
 import { embedWithCache, mapWithConcurrency } from "./embedding-cache.js"
 import { parseJsonObject } from "./json.js"
 import { buildPipelineVersions } from "./pipeline-versions.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
-import { extractTextFromUpload } from "./text-extract.js"
+import { extractDocumentFromUpload } from "./text-extract.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
 
 type IngestInput = {
   fileName: string
   text?: string
   contentBase64?: string
+  textractJson?: string
   mimeType?: string
   metadata?: Record<string, JsonValue>
   embeddingModelId?: string
   memoryModelId?: string
   skipMemory?: boolean
+  structuredBlocks?: StructuredBlock[]
+  sourceExtractorVersion?: string
 }
 
 type MemoryJson = {
@@ -82,6 +85,7 @@ type AliasLedger = {
 
 const adminLedgerKey = "admin/admin-ledger.json"
 const aliasLedgerKey = "admin/alias-ledger.json"
+const reindexMigrationLedgerKey = "admin/reindex-migrations.json"
 const pricingCatalogUpdatedAt = "2026-05-02T00:00:00.000Z"
 
 const benchmarkSuites: BenchmarkSuite[] = [
@@ -126,19 +130,33 @@ export class MemoRagService {
     const documentId = randomUUID()
     const createdAt = new Date().toISOString()
     const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
+    const extracted = input.structuredBlocks?.length
+      ? {
+          text: input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n"),
+          blocks: input.structuredBlocks,
+          sourceExtractorVersion: input.sourceExtractorVersion ?? "structured-blocks-ledger-v1"
+        }
+      : await extractDocumentFromUpload(input)
     const pipelineVersions = buildPipelineVersions({
       embeddingModelId,
-      embeddingDimensions: config.embeddingDimensions
+      embeddingDimensions: config.embeddingDimensions,
+      sourceExtractorVersion: extracted.sourceExtractorVersion
     })
-    const text = await extractTextFromUpload(input)
+    const text = extracted.text
     if (!text) throw new Error("Uploaded document did not contain extractable text")
 
-    const chunks = chunkText(text, config.chunkSizeChars, config.chunkOverlapChars)
+    const chunks = extracted.blocks?.length
+      ? chunkStructuredBlocks(extracted.blocks, config.chunkSizeChars, config.chunkOverlapChars)
+      : chunkText(text, config.chunkSizeChars, config.chunkOverlapChars)
     if (chunks.length === 0) throw new Error("No chunks were produced from the uploaded document")
 
     const sourceObjectKey = `documents/${documentId}/source.txt`
+    const structuredBlocksObjectKey = extracted.blocks?.length ? `documents/${documentId}/structured-blocks.json` : undefined
     const manifestObjectKey = `manifests/${documentId}.json`
     await this.deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")
+    if (structuredBlocksObjectKey && extracted.blocks) {
+      await this.deps.objectStore.putText(structuredBlocksObjectKey, JSON.stringify({ schemaVersion: 1, blocks: extracted.blocks }, null, 2), "application/json")
+    }
 
     const memoryCards = input.skipMemory
       ? []
@@ -181,6 +199,15 @@ export class MemoRagService {
           chunkHash: chunk.chunkHash,
           pageStart: chunk.pageStart,
           pageEnd: chunk.pageEnd,
+          chunkKind: chunk.chunkKind,
+          sourceBlockId: chunk.sourceBlockId,
+          normalizedFrom: chunk.normalizedFrom,
+          tableColumnCount: chunk.tableColumnCount,
+          listDepth: chunk.listDepth,
+          codeLanguage: chunk.codeLanguage,
+          figureCaption: chunk.figureCaption,
+          extractionMethod: chunk.extractionMethod,
+          lifecycleStatus: lifecycleStatus(input.metadata),
           ...filterableMetadata,
           createdAt
         }
@@ -207,6 +234,7 @@ export class MemoRagService {
           objectKey: sourceObjectKey,
           text: card.text,
           sectionPath: card.sectionPath,
+          lifecycleStatus: lifecycleStatus(input.metadata),
           ...filterableMetadata,
           createdAt
         }
@@ -223,6 +251,7 @@ export class MemoRagService {
       mimeType: input.mimeType,
       metadata: input.metadata,
       sourceObjectKey,
+      structuredBlocksObjectKey,
       manifestObjectKey,
       vectorKeys: [...evidenceVectorKeys, ...memoryVectorKeys],
       memoryVectorKeys,
@@ -235,6 +264,10 @@ export class MemoRagService {
       indexVersion: pipelineVersions.indexVersion,
       pipelineVersions,
       chunks: chunks.map(toChunkMetadata),
+      lifecycleStatus: lifecycleStatus(input.metadata),
+      activeDocumentId: stringValue(input.metadata?.activeDocumentId),
+      stagedFromDocumentId: stringValue(input.metadata?.stagedFromDocumentId),
+      reindexMigrationId: stringValue(input.metadata?.reindexMigrationId),
       chunkCount: chunks.length,
       memoryCardCount: memoryCards.length,
       createdAt
@@ -245,25 +278,111 @@ export class MemoRagService {
   }
 
   async reindexDocument(documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<DocumentManifest> {
+    const migration = await this.stageReindexMigration({ userId: "system", email: "system@local", cognitoGroups: ["SYSTEM_ADMIN"] }, documentId, input)
+    await this.cutoverReindexMigration(migration.migrationId)
+    return this.getManifest(migration.stagedDocumentId)
+  }
+
+  async stageReindexMigration(actor: AppUser, documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<ReindexMigration> {
     const manifestKey = `manifests/${documentId}.json`
     const manifest = JSON.parse(await this.deps.objectStore.getText(manifestKey)) as DocumentManifest
+    if ((manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") !== "active") {
+      throw new Error("Only active documents can be staged for reindex")
+    }
     const text = await this.deps.objectStore.getText(manifest.sourceObjectKey)
-    await this.deps.evidenceVectorStore.delete(manifest.evidenceVectorKeys ?? manifest.vectorKeys)
-    await this.deps.memoryVectorStore.delete(manifest.memoryVectorKeys ?? manifest.vectorKeys)
-    await this.deps.objectStore.deleteObject(manifest.manifestObjectKey)
-    const next = await this.ingest({
+    const structuredBlocks = await this.loadStructuredBlocks(manifest)
+    const now = new Date().toISOString()
+    const migrationId = `reindex_${now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}_${randomUUID().slice(0, 8)}`
+    const staged = await this.ingest({
       fileName: manifest.fileName,
       text,
+      structuredBlocks,
+      sourceExtractorVersion: manifest.sourceExtractorVersion,
       mimeType: manifest.mimeType,
       metadata: {
         ...(manifest.metadata ?? {}),
-        reindexedFromDocumentId: documentId,
+        lifecycleStatus: "staging",
+        stagedFromDocumentId: documentId,
+        reindexMigrationId: migrationId,
         previousManifestObjectKey: manifest.manifestObjectKey
       },
       embeddingModelId: input.embeddingModelId ?? manifest.embeddingModelId,
       memoryModelId: input.memoryModelId
     })
-    return next
+    const migration: ReindexMigration = {
+      migrationId,
+      sourceDocumentId: documentId,
+      stagedDocumentId: staged.documentId,
+      status: "staged",
+      createdBy: actor.userId,
+      createdAt: now,
+      updatedAt: now,
+      previousManifestObjectKey: manifest.manifestObjectKey,
+      stagedManifestObjectKey: staged.manifestObjectKey
+    }
+    const ledger = await this.loadReindexMigrationLedger()
+    ledger.push(migration)
+    await this.saveReindexMigrationLedger(ledger)
+    return migration
+  }
+
+  async cutoverReindexMigration(migrationId: string): Promise<ReindexMigration> {
+    const ledger = await this.loadReindexMigrationLedger()
+    const migration = ledger.find((candidate) => candidate.migrationId === migrationId)
+    if (!migration) throw new Error("Reindex migration not found")
+    if (migration.status !== "staged") throw new Error(`Reindex migration is ${migration.status}`)
+    const source = await this.getManifest(migration.sourceDocumentId)
+    const staged = await this.getManifest(migration.stagedDocumentId)
+    await this.markManifestLifecycle(source, "superseded")
+    await this.markManifestLifecycle(staged, "active", { activeDocumentId: staged.documentId })
+    await this.deps.evidenceVectorStore.delete(source.evidenceVectorKeys ?? source.vectorKeys)
+    await this.deps.memoryVectorStore.delete(source.memoryVectorKeys ?? source.vectorKeys)
+    const now = new Date().toISOString()
+    migration.status = "cutover"
+    migration.activeDocumentId = staged.documentId
+    migration.cutoverAt = now
+    migration.updatedAt = now
+    await this.saveReindexMigrationLedger(ledger)
+    return migration
+  }
+
+  async rollbackReindexMigration(migrationId: string): Promise<ReindexMigration> {
+    const ledger = await this.loadReindexMigrationLedger()
+    const migration = ledger.find((candidate) => candidate.migrationId === migrationId)
+    if (!migration) throw new Error("Reindex migration not found")
+    if (migration.status !== "cutover") throw new Error(`Reindex migration is ${migration.status}`)
+    const staged = await this.getManifest(migration.stagedDocumentId)
+    const previous = JSON.parse(await this.deps.objectStore.getText(migration.previousManifestObjectKey)) as DocumentManifest
+    const text = await this.deps.objectStore.getText(previous.sourceObjectKey)
+    const structuredBlocks = await this.loadStructuredBlocks(previous)
+    await this.deps.evidenceVectorStore.delete(staged.evidenceVectorKeys ?? staged.vectorKeys)
+    await this.deps.memoryVectorStore.delete(staged.memoryVectorKeys ?? staged.vectorKeys)
+    await this.markManifestLifecycle(staged, "superseded")
+    const restored = await this.ingest({
+      fileName: previous.fileName,
+      text,
+      structuredBlocks,
+      sourceExtractorVersion: previous.sourceExtractorVersion,
+      mimeType: previous.mimeType,
+      metadata: {
+        ...(previous.metadata ?? {}),
+        lifecycleStatus: "active",
+        rolledBackFromMigrationId: migrationId,
+        restoredFromDocumentId: previous.documentId
+      },
+      embeddingModelId: previous.embeddingModelId
+    })
+    const now = new Date().toISOString()
+    migration.status = "rolled_back"
+    migration.activeDocumentId = restored.documentId
+    migration.rolledBackAt = now
+    migration.updatedAt = now
+    await this.saveReindexMigrationLedger(ledger)
+    return migration
+  }
+
+  async listReindexMigrations(): Promise<ReindexMigration[]> {
+    return (await this.loadReindexMigrationLedger()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }
 
   async listDocuments(): Promise<DocumentManifest[]> {
@@ -273,7 +392,9 @@ export class MemoRagService {
         .filter((key) => key.endsWith(".json"))
         .map(async (key) => JSON.parse(await this.deps.objectStore.getText(key)) as DocumentManifest)
     )
-    return manifests.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    return manifests
+      .filter((manifest) => (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active")
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
 
   async deleteDocument(documentId: string): Promise<{ documentId: string; deletedVectorCount: number }> {
@@ -283,6 +404,7 @@ export class MemoRagService {
     await this.deps.evidenceVectorStore.delete(manifest.evidenceVectorKeys ?? manifest.vectorKeys)
     await this.deps.memoryVectorStore.delete(manifest.memoryVectorKeys ?? manifest.vectorKeys)
     await this.deps.objectStore.deleteObject(manifest.sourceObjectKey)
+    if (manifest.structuredBlocksObjectKey) await this.deps.objectStore.deleteObject(manifest.structuredBlocksObjectKey)
     await this.deps.objectStore.deleteObject(manifest.manifestObjectKey)
     return { documentId, deletedVectorCount: manifest.vectorKeys.length }
   }
@@ -603,6 +725,51 @@ export class MemoRagService {
 
   private async saveAliasLedger(ledger: AliasLedger): Promise<void> {
     await this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")
+  }
+
+  private async loadReindexMigrationLedger(): Promise<ReindexMigration[]> {
+    try {
+      const raw = JSON.parse(await this.deps.objectStore.getText(reindexMigrationLedgerKey)) as { migrations?: ReindexMigration[] }
+      return Array.isArray(raw.migrations) ? raw.migrations : []
+    } catch (err) {
+      if (!isMissingObjectError(err)) throw err
+      return []
+    }
+  }
+
+  private async saveReindexMigrationLedger(migrations: ReindexMigration[]): Promise<void> {
+    await this.deps.objectStore.putText(reindexMigrationLedgerKey, JSON.stringify({ schemaVersion: 1, migrations }, null, 2), "application/json")
+  }
+
+  private async getManifest(documentId: string): Promise<DocumentManifest> {
+    return JSON.parse(await this.deps.objectStore.getText(`manifests/${documentId}.json`)) as DocumentManifest
+  }
+
+  private async loadStructuredBlocks(manifest: DocumentManifest): Promise<StructuredBlock[] | undefined> {
+    if (!manifest.structuredBlocksObjectKey) return undefined
+    try {
+      const raw = JSON.parse(await this.deps.objectStore.getText(manifest.structuredBlocksObjectKey)) as { blocks?: StructuredBlock[] }
+      return Array.isArray(raw.blocks) ? raw.blocks : undefined
+    } catch (err) {
+      if (!isMissingObjectError(err)) throw err
+      return undefined
+    }
+  }
+
+  private async markManifestLifecycle(
+    manifest: DocumentManifest,
+    status: NonNullable<DocumentManifest["lifecycleStatus"]>,
+    extra: Record<string, JsonValue> = {}
+  ): Promise<DocumentManifest> {
+    const metadata = { ...(manifest.metadata ?? {}), ...extra, lifecycleStatus: status }
+    const next: DocumentManifest = {
+      ...manifest,
+      metadata,
+      lifecycleStatus: status,
+      activeDocumentId: typeof extra.activeDocumentId === "string" ? extra.activeDocumentId : manifest.activeDocumentId
+    }
+    await this.deps.objectStore.putText(next.manifestObjectKey, JSON.stringify(next, null, 2), "application/json")
+    return next
   }
 
   async saveConversationHistory(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
@@ -993,6 +1160,11 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (aclGroups.length > 0) filterable.aclGroups = aclGroups
   if (allowedUsers && allowedUsers.length > 0) filterable.allowedUsers = allowedUsers
   return filterable
+}
+
+function lifecycleStatus(metadata: Record<string, JsonValue> | undefined): VectorRecord["metadata"]["lifecycleStatus"] {
+  const value = stringValue(metadata?.lifecycleStatus)
+  return value === "staging" || value === "superseded" ? value : "active"
 }
 
 function stringValue(value: JsonValue | undefined): string | undefined {

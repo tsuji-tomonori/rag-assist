@@ -43,7 +43,7 @@
 | Debug Trace Store | workflow events | run trace | `FR-010`, `NFR-005`, `NFR-006` |
 | Conversation History Store | userId、conversation item | user-scoped conversation list | `FR-022`, `NFR-005` |
 | Human Question Store | question ticket、answer draft、status | 担当者問い合わせと回答状態 | `FR-021`, `NFR-011` |
-| Web Admin Workspace | `GET /me` permissions、documents、questions、debug runs、benchmark runs、admin users、roles、usage、costs | Phase 1/2 管理 view | `FR-024`, `FR-027`, `NFR-011` |
+| Web Admin Workspace | `GET /me` permissions、documents、alias、reindex migrations、questions、debug runs、benchmark runs、admin users、roles、usage、costs | 管理 view | `FR-023`, `FR-024`, `FR-027`, `NFR-011` |
 | Admin Ledger | user、group assignment、usage summary | Phase 2 管理台帳 | `FR-027`, `NFR-011` |
 | Authorization Layer | Cognito group、permission | API 実行可否 | `NFR-010`, `NFR-011` |
 | Identity Provisioning | email、password、confirmation code、Cognito trigger event | self sign-up user、`CHAT_USER` group membership | `FR-025`, `NFR-011` |
@@ -87,11 +87,12 @@
 13. 回答不能時に利用者が担当者問い合わせを作成した場合、Web UI は作成済み ticket を会話に紐づけて表示する。
 14. 担当者または管理者は問い合わせ一覧を取得し、回答または解決状態を更新する。
 15. 運用担当者は `admin` view から文書管理、問い合わせ対応、debug/評価、性能テストの各導線へ遷移する。
-16. 文書管理担当者は `documents` view で登録文書の一覧、アップロード、削除を実行する。
+16. 文書管理担当者は `documents` view で登録文書の一覧、アップロード、削除、blue-green 再インデックス stage/cutover/rollback を実行する。
 17. 管理者は `admin` view で管理対象ユーザーの一覧、停止、再開、削除、role group 付与を実行する。
-18. 管理者または監査担当者は `admin` view で全ユーザー利用状況と service/component 別の概算コストを参照する。
-19. 利用量メーターは trace、document/vector manifest、DynamoDB item サイズ、Lambda 実行メトリクスから料金算出に必要な集計値を作る。
-20. Cost Estimator は利用量に pricing catalog の単価を適用して、期間別・service 別の概算料金を算出する。
+18. RAG 管理者は `admin` view の Alias 管理で draft 作成、review、disable、publish、audit log 確認を実行する。
+19. 管理者または監査担当者は `admin` view で全ユーザー利用状況と service/component 別の概算コストを参照する。
+20. 利用量メーターは trace、document/vector manifest、DynamoDB item サイズ、Lambda 実行メトリクスから料金算出に必要な集計値を作る。
+21. Cost Estimator は利用量に pricing catalog の単価を適用して、期間別・service 別の概算料金を算出する。
 21. 未認証の通常利用者がアカウント作成を行う場合、Web UI は Cognito `SignUp` と `ConfirmSignUp` を使い、Cognito post-confirmation trigger が `CHAT_USER` のみを付与する。
 
 ## アーキテクチャ判断との関係

@@ -31,6 +31,7 @@ export class LocalVectorStore implements VectorStore {
       .filter((record) => (filter.department ? record.metadata.department === filter.department : true))
       .filter((record) => (filter.source ? record.metadata.source === filter.source : true))
       .filter((record) => (filter.docType ? record.metadata.docType === filter.docType : true))
+      .filter((record) => (filter.lifecycleStatus ? (record.metadata.lifecycleStatus ?? "active") === filter.lifecycleStatus : true))
       .filter((record) => {
         if (!filter.allowedGroups || filter.allowedGroups.length === 0) return true
         if (!record.metadata.aclGroup && !record.metadata.aclGroups) return true

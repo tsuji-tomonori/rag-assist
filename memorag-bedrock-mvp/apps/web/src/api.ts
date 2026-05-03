@@ -152,6 +152,12 @@ export type DocumentManifest = {
   chunkCount: number
   memoryCardCount: number
   createdAt: string
+  lifecycleStatus?: "active" | "staging" | "superseded"
+  activeDocumentId?: string
+  stagedFromDocumentId?: string
+  reindexMigrationId?: string
+  chunkerVersion?: string
+  sourceExtractorVersion?: string
 }
 
 export type Permission =
@@ -169,6 +175,11 @@ export type Permission =
   | "rag:doc:write:group"
   | "rag:doc:delete:group"
   | "rag:index:rebuild:group"
+  | "rag:alias:read"
+  | "rag:alias:write:group"
+  | "rag:alias:review:group"
+  | "rag:alias:disable:group"
+  | "rag:alias:publish:group"
   | "benchmark:read"
   | "benchmark:run"
   | "benchmark:cancel"
@@ -250,6 +261,50 @@ export type CostAuditSummary = {
   pricingCatalogUpdatedAt: string
 }
 
+export type AliasDefinition = {
+  aliasId: string
+  term: string
+  expansions: string[]
+  scope?: {
+    tenantId?: string
+    department?: string
+    source?: string
+    docType?: string
+  }
+  status: "draft" | "approved" | "disabled"
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  reviewedBy?: string
+  reviewedAt?: string
+  reviewComment?: string
+  publishedVersion?: string
+}
+
+export type AliasAuditLogItem = {
+  auditId: string
+  aliasId?: string
+  action: "create" | "update" | "review" | "disable" | "publish"
+  actorUserId: string
+  createdAt: string
+  detail: string
+}
+
+export type ReindexMigration = {
+  migrationId: string
+  sourceDocumentId: string
+  stagedDocumentId: string
+  activeDocumentId?: string
+  status: "staged" | "cutover" | "rolled_back"
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  cutoverAt?: string
+  rolledBackAt?: string
+  previousManifestObjectKey: string
+  stagedManifestObjectKey: string
+}
+
 export async function getMe(): Promise<CurrentUser> {
   const result = await get<{ user: CurrentUser }>("/me")
   return result.user
@@ -291,6 +346,44 @@ export async function listUsageSummaries(): Promise<UserUsageSummary[]> {
 
 export async function getCostAuditSummary(): Promise<CostAuditSummary> {
   return get<CostAuditSummary>("/admin/costs")
+}
+
+export async function listAliases(): Promise<AliasDefinition[]> {
+  const result = await get<{ aliases?: AliasDefinition[] }>("/admin/aliases")
+  return result.aliases ?? []
+}
+
+export async function createAlias(input: {
+  term: string
+  expansions: string[]
+  scope?: AliasDefinition["scope"]
+}): Promise<AliasDefinition> {
+  return post<AliasDefinition>("/admin/aliases", input)
+}
+
+export async function updateAlias(aliasId: string, input: {
+  term?: string
+  expansions?: string[]
+  scope?: AliasDefinition["scope"]
+}): Promise<AliasDefinition> {
+  return post<AliasDefinition>(`/admin/aliases/${encodeURIComponent(aliasId)}/update`, input)
+}
+
+export async function reviewAlias(aliasId: string, decision: "approve" | "reject", comment?: string): Promise<AliasDefinition> {
+  return post<AliasDefinition>(`/admin/aliases/${encodeURIComponent(aliasId)}/review`, { decision, comment })
+}
+
+export async function disableAlias(aliasId: string): Promise<AliasDefinition> {
+  return post<AliasDefinition>(`/admin/aliases/${encodeURIComponent(aliasId)}/disable`, {})
+}
+
+export async function publishAliases(): Promise<{ version: string; publishedAt: string; aliasCount: number }> {
+  return post<{ version: string; publishedAt: string; aliasCount: number }>("/admin/aliases/publish", {})
+}
+
+export async function listAliasAuditLog(): Promise<AliasAuditLogItem[]> {
+  const result = await get<{ auditLog?: AliasAuditLogItem[] }>("/admin/aliases/audit-log")
+  return result.auditLog ?? []
 }
 
 export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
@@ -352,6 +445,7 @@ export async function uploadDocument(input: {
   fileName: string
   text?: string
   contentBase64?: string
+  textractJson?: string
   mimeType?: string
   memoryModelId?: string
   embeddingModelId?: string
@@ -362,6 +456,27 @@ export async function uploadDocument(input: {
 export async function listDocuments(): Promise<DocumentManifest[]> {
   const result = await get<{ documents: DocumentManifest[] }>("/documents")
   return result.documents
+}
+
+export async function reindexDocument(documentId: string): Promise<DocumentManifest> {
+  return post<DocumentManifest>(`/documents/${encodeURIComponent(documentId)}/reindex`, {})
+}
+
+export async function stageReindexMigration(documentId: string): Promise<ReindexMigration> {
+  return post<ReindexMigration>(`/documents/${encodeURIComponent(documentId)}/reindex/stage`, {})
+}
+
+export async function cutoverReindexMigration(migrationId: string): Promise<ReindexMigration> {
+  return post<ReindexMigration>(`/documents/reindex-migrations/${encodeURIComponent(migrationId)}/cutover`, {})
+}
+
+export async function rollbackReindexMigration(migrationId: string): Promise<ReindexMigration> {
+  return post<ReindexMigration>(`/documents/reindex-migrations/${encodeURIComponent(migrationId)}/rollback`, {})
+}
+
+export async function listReindexMigrations(): Promise<ReindexMigration[]> {
+  const result = await get<{ migrations?: ReindexMigration[] }>("/documents/reindex-migrations")
+  return result.migrations ?? []
 }
 
 export async function listDebugRuns(): Promise<DebugTrace[]> {
