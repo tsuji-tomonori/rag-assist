@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { deleteConversationHistory, listConversationHistory, saveConversationHistory, type ConversationHistoryItem } from "../../../api.js"
+import { deleteConversationHistory, listConversationHistory, saveConversationHistory } from "../api/conversationHistoryApi.js"
+import type { ConversationHistoryItem } from "../types.js"
 import type { Message } from "../../chat/types.js"
 
 export function useConversationHistory({ setError }: { setError: (error: string | null) => void }) {

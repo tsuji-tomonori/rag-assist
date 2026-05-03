@@ -7,6 +7,20 @@ import { HistoryWorkspace } from "../features/history/components/HistoryWorkspac
 import { AssigneeWorkspace } from "../features/questions/components/AssigneeWorkspace.js"
 import type { AppView } from "./types.js"
 
+export type AppRoutesProps = {
+  activeView: AppView
+  canAnswerQuestions: boolean
+  canReadBenchmarkRuns: boolean
+  canManageDocuments: boolean
+  canSeeAdminSettings: boolean
+  chatProps: ComponentProps<typeof ChatView>
+  assigneeProps: ComponentProps<typeof AssigneeWorkspace>
+  benchmarkProps: ComponentProps<typeof BenchmarkWorkspace>
+  documentProps: ComponentProps<typeof DocumentWorkspace>
+  adminProps: ComponentProps<typeof AdminWorkspace>
+  historyProps: ComponentProps<typeof HistoryWorkspace>
+}
+
 export function AppRoutes({
   activeView,
   canAnswerQuestions,
@@ -19,19 +33,7 @@ export function AppRoutes({
   documentProps,
   adminProps,
   historyProps
-}: {
-  activeView: AppView
-  canAnswerQuestions: boolean
-  canReadBenchmarkRuns: boolean
-  canManageDocuments: boolean
-  canSeeAdminSettings: boolean
-  chatProps: ComponentProps<typeof ChatView>
-  assigneeProps: ComponentProps<typeof AssigneeWorkspace>
-  benchmarkProps: ComponentProps<typeof BenchmarkWorkspace>
-  documentProps: ComponentProps<typeof DocumentWorkspace>
-  adminProps: ComponentProps<typeof AdminWorkspace>
-  historyProps: ComponentProps<typeof HistoryWorkspace>
-}) {
+}: AppRoutesProps) {
   if (activeView === "chat") return <ChatView {...chatProps} />
   if (activeView === "assignee" && canAnswerQuestions) return <AssigneeWorkspace {...assigneeProps} />
   if (activeView === "benchmark" && canReadBenchmarkRuns) return <BenchmarkWorkspace {...benchmarkProps} />

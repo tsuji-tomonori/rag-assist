@@ -3,10 +3,9 @@ import {
   cancelBenchmarkRun,
   listBenchmarkRuns,
   listBenchmarkSuites,
-  startBenchmarkRun,
-  type BenchmarkRun,
-  type BenchmarkSuite
-} from "../../../api.js"
+  startBenchmarkRun
+} from "../api/benchmarkApi.js"
+import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 

@@ -1,4 +1,5 @@
-import type { CostAuditSummary, HumanQuestion, ManagedUser, ManagedUserAuditLogEntry } from "../../api.js"
+import type { CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry } from "../../features/admin/types.js"
+import type { HumanQuestion } from "../../features/questions/types.js"
 
 export function formatLatency(value: number): string {
   if (value >= 1000) return `${(value / 1000).toFixed(2)} 秒`

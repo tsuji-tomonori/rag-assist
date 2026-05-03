@@ -1,4 +1,4 @@
-import type { BenchmarkRun, BenchmarkSuite } from "../../../api.js"
+import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
 import { formatDateTime, formatMetricLatency, formatPercent, formatShortDate, runStatusLabel } from "../../../shared/utils/format.js"

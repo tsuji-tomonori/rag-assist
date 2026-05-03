@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import type { CurrentUser, Permission } from "../../api.js"
+import type { CurrentUser, Permission } from "../../shared/types/common.js"
 
 export function usePermissions(currentUser: CurrentUser | null) {
   return useMemo(() => {

@@ -1,5 +1,6 @@
-import { createBenchmarkDownload, createDebugDownload } from "../../api.js"
-import type { DebugTrace } from "../../api.js"
+import { createBenchmarkDownload } from "../../features/benchmark/api/benchmarkApi.js"
+import { createDebugDownload } from "../../features/debug/api/debugApi.js"
+import type { DebugTrace } from "../../features/debug/types.js"
 import { sanitizeFileName } from "./format.js"
 
 export async function downloadDebugTrace(trace?: DebugTrace) {

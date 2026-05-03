@@ -1,4 +1,4 @@
-import type { DebugStep, DebugTrace } from "../../../api.js"
+import type { DebugStep, DebugTrace } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { downloadDebugTrace } from "../../../shared/utils/downloads.js"
 import { formatLatency } from "../../../shared/utils/format.js"

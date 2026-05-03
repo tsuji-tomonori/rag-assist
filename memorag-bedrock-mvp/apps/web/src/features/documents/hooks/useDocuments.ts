@@ -1,5 +1,7 @@
 import { useState } from "react"
-import { deleteDocument, fileToBase64, listDocuments, uploadDocument, type DocumentManifest } from "../../../api.js"
+import { deleteDocument, listDocuments, uploadDocument } from "../api/documentsApi.js"
+import type { DocumentManifest } from "../types.js"
+import { fileToBase64 } from "../../../shared/utils/fileToBase64.js"
 
 export function useDocuments({
   modelId,

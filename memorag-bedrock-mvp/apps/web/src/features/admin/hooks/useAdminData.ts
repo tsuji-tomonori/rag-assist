@@ -1,21 +1,10 @@
 import { useState } from "react"
-import {
-  assignUserRoles,
-  createManagedUser,
-  deleteManagedUser,
-  getCostAuditSummary,
-  listAccessRoles,
-  listAdminAuditLog,
-  listManagedUsers,
-  listUsageSummaries,
-  suspendManagedUser,
-  unsuspendManagedUser,
-  type AccessRoleDefinition,
-  type CostAuditSummary,
-  type ManagedUser,
-  type ManagedUserAuditLogEntry,
-  type UserUsageSummary
-} from "../../../api.js"
+import { listAccessRoles } from "../api/accessRolesApi.js"
+import { assignUserRoles, createManagedUser, deleteManagedUser, listManagedUsers, suspendManagedUser, unsuspendManagedUser } from "../api/adminUsersApi.js"
+import { listAdminAuditLog } from "../api/auditLogApi.js"
+import { getCostAuditSummary } from "../api/costApi.js"
+import { listUsageSummaries } from "../api/usageApi.js"
+import type { AccessRoleDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
 
 export function useAdminData({
   canReadAdminAuditLog,

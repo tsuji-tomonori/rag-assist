@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import type { ConversationHistoryItem } from "../../../api.js"
+import type { ConversationHistoryItem } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 

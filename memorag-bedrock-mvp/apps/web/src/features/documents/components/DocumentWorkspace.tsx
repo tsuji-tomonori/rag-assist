@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react"
-import type { DocumentManifest } from "../../../api.js"
+import type { DocumentManifest } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 

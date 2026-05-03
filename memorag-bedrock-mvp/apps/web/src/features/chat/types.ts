@@ -1,4 +1,5 @@
-import type { ChatResponse, HumanQuestion } from "../../api.js"
+import type { ChatResponse } from "./types-api.js"
+import type { HumanQuestion } from "../questions/types.js"
 
 export type Message = {
   role: "user" | "assistant"

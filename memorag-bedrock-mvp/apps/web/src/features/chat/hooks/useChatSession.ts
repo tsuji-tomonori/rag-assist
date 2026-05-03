@@ -1,5 +1,6 @@
 import { type Dispatch, type FormEvent, type SetStateAction, useMemo, useState } from "react"
-import { chat, type DebugTrace } from "../../../api.js"
+import { chat } from "../api/chatApi.js"
+import type { DebugTrace } from "../../debug/types.js"
 import type { Message } from "../types.js"
 
 export function useChatSession({
@@ -14,6 +15,7 @@ export function useChatSession({
   minScore,
   currentConversationId,
   setCurrentConversationId,
+  loading,
   rememberMessages,
   createConversationId,
   ingestDocument,
@@ -35,6 +37,7 @@ export function useChatSession({
   minScore: number
   currentConversationId: string
   setCurrentConversationId: (conversationId: string) => void
+  loading: boolean
   rememberMessages: (id: string, titleCandidate: string, messages: Message[]) => void
   createConversationId: () => string
   ingestDocument: (file: File) => Promise<void>
@@ -51,11 +54,14 @@ export function useChatSession({
   const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
   const [conversationKey, setConversationKey] = useState(0)
   const [submitShortcut, setSubmitShortcut] = useState<"enter" | "ctrlEnter">("enter")
-  const canAsk = useMemo(() => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && canCreateChat, [question, file, canCreateChat, canWriteDocuments])
+  const canAsk = useMemo(
+    () => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && !loading && canCreateChat,
+    [question, file, loading, canCreateChat, canWriteDocuments]
+  )
 
   async function onAsk(event: FormEvent) {
     event.preventDefault()
-    if (!canAsk) return
+    if (!canAsk || loading) return
 
     const typedQuestion = question.trim()
     const userQuestion = typedQuestion || `${file?.name ?? "添付資料"}を取り込んでください`

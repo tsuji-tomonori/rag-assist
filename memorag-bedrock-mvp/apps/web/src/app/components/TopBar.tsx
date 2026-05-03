@@ -1,4 +1,5 @@
-import type { DebugTrace, DocumentManifest } from "../../api.js"
+import type { DebugTrace } from "../../features/debug/types.js"
+import type { DocumentManifest } from "../../features/documents/types.js"
 import { Icon } from "../../shared/components/Icon.js"
 
 export function TopBar({

@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react"
-import type { AccessRoleDefinition, CostAuditSummary, CurrentUser, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../../../api.js"
+import type { CurrentUser } from "../../../shared/types/common.js"
+import type { AccessRoleDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { adminAuditActionLabel, adminAuditSummary, costConfidenceLabel, formatCurrency, formatDate, formatDateTime, managedUserStatusLabel } from "../../../shared/utils/format.js"
 

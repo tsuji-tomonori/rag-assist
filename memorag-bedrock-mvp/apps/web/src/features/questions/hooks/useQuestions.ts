@@ -1,5 +1,6 @@
 import { type Dispatch, type SetStateAction, useState } from "react"
-import { answerQuestion, createQuestion, listQuestions, resolveQuestion, type HumanQuestion } from "../../../api.js"
+import { answerQuestion, createQuestion, listQuestions, resolveQuestion } from "../api/questionsApi.js"
+import type { HumanQuestion } from "../types.js"
 import type { Message } from "../../chat/types.js"
 
 export function useQuestions({

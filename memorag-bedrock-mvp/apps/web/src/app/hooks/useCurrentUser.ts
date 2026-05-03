@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { getMe, type CurrentUser } from "../../api.js"
+import { getMe } from "../../features/admin/api/currentUserApi.js"
+import type { CurrentUser } from "../../shared/types/common.js"
 import type { AuthSession } from "../../authClient.js"
 
 export function useCurrentUser(authSession: AuthSession | null) {
