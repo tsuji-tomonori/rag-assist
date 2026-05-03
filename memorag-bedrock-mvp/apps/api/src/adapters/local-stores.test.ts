@@ -152,14 +152,23 @@ test("local conversation history store persists per-user conversations and delet
       { role: "assistant", text: "製品要求とプロジェクト要求です。", createdAt: "2026-05-02T00:00:02.000Z" }
     ]
   })
+  await store.save("user-1", {
+    id: "conversation-favorite",
+    title: "お気に入り",
+    updatedAt: "2026-05-01T00:00:00.000Z",
+    isFavorite: true,
+    messages: [{ role: "user", text: "後で読む", createdAt: "2026-05-01T00:00:00.000Z" }]
+  })
 
   const history = await store.list("user-1")
-  assert.equal(history.length, 1)
+  assert.equal(history.length, 2)
   assert.equal(history[0]?.schemaVersion, 1)
-  assert.equal(history[0]?.title, "分類について更新")
-  assert.equal(history[0]?.messages.length, 2)
+  assert.equal(history[0]?.title, "お気に入り")
+  assert.equal(history[0]?.isFavorite, true)
+  assert.equal(history[1]?.title, "分類について更新")
+  assert.equal(history[1]?.messages.length, 2)
 
   await store.delete("user-1", "conversation-1")
-  assert.deepEqual(await store.list("user-1"), [])
+  assert.deepEqual((await store.list("user-1")).map((item) => item.id), ["conversation-favorite"])
   assert.equal((await store.list("user-2")).length, 1)
 })

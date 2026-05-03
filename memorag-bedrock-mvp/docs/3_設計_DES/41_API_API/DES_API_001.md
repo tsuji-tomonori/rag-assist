@@ -27,7 +27,7 @@
 | `POST /questions/{questionId}/answer` | 担当者回答登録 | `FR-021`, `NFR-011` |
 | `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-021`, `NFR-011` |
 | `GET /conversation-history` | 自分の会話履歴一覧 | `FR-022`, `NFR-005` |
-| `POST /conversation-history` | 会話履歴 item 保存 | `FR-022`, `NFR-005` |
+| `POST /conversation-history` | 会話履歴 item 保存とお気に入り状態更新 | `FR-022`, `FR-028`, `NFR-005` |
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-022`, `NFR-005` |
 | `GET /debug-runs` | debug trace 一覧 | `FR-010`, `NFR-010` |
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
@@ -146,6 +146,7 @@
   "id": "conversation-20260502-001",
   "title": "ソフトウェア要求の分類",
   "updatedAt": "2026-05-02T00:00:00.000Z",
+  "isFavorite": true,
   "messages": [
     {
       "role": "user",
@@ -164,6 +165,7 @@
   "id": "conversation-20260502-001",
   "title": "ソフトウェア要求の分類",
   "updatedAt": "2026-05-02T00:00:00.000Z",
+  "isFavorite": true,
   "messages": [
     {
       "role": "user",
@@ -177,6 +179,7 @@
 ### バージョン方針
 
 - `schemaVersion` は会話履歴 item の構造を識別する。
+- `isFavorite` は未指定時 `false` として補完される。
 - 現行の `schemaVersion` は `1` とする。
 - API は `schemaVersion` 未指定の保存要求を v1 として補完する。
 - 将来スキーマを変更する場合は、既存 item の読み取り互換性を維持するか、version ごとの変換を追加する。

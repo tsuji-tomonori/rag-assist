@@ -60,7 +60,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `POST /questions/{questionId}/answer` 担当者回答登録
 - `POST /questions/{questionId}/resolve` 問い合わせ解決済み化
 - `GET /conversation-history` 自分の会話履歴一覧
-- `POST /conversation-history` 会話履歴保存
+- `POST /conversation-history` 会話履歴保存、お気に入り状態更新
 - `DELETE /conversation-history/{id}` 会話履歴削除
 - `GET /debug-runs` persisted debug trace一覧
 - `GET /debug-runs/{runId}` persisted debug trace取得

@@ -79,7 +79,7 @@ type IconName =
   | "gauge"
   | "stop"
 
-type AppView = "chat" | "assignee" | "history" | "benchmark" | "admin" | "documents"
+type AppView = "chat" | "assignee" | "history" | "favorites" | "benchmark" | "admin" | "documents"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -122,6 +122,7 @@ export default function App() {
   const [benchmarkModelId, setBenchmarkModelId] = useState(defaultModelId)
   const [benchmarkConcurrency, setBenchmarkConcurrency] = useState(1)
   const latestMessageRef = useRef<HTMLElement | null>(null)
+  const historyRef = useRef<ConversationHistoryItem[]>([])
 
   const hasPermission = (permission: Permission) => currentUser?.permissions.includes(permission) ?? false
   const canCreateChat = hasPermission("chat:create")
@@ -162,6 +163,11 @@ export default function App() {
   const selectedRunValue = pendingDebugQuestion ? "__processing__" : selectedTrace?.runId ?? ""
   const visibleMessages = messages
   const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
+
+  useEffect(() => {
+    historyRef.current = history
+  }, [history])
+
   useEffect(() => {
     if (!authSession) {
       setCurrentUser(null)
@@ -226,7 +232,8 @@ export default function App() {
   useEffect(() => {
     if (messages.length === 0) return
     const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
-    rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages))
+    const existingFavorite = historyRef.current.find((item) => item.id === currentConversationId)?.isFavorite ?? false
+    rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages, existingFavorite))
   }, [currentConversationId, messages])
 
   useEffect(() => {
@@ -324,8 +331,19 @@ export default function App() {
   }
 
   function rememberConversation(item: ConversationHistoryItem) {
-    setHistory((prev) => [item, ...prev.filter((entry) => entry.id !== item.id)].slice(0, 20))
-    saveConversationHistory(item).catch((err) => console.warn("Failed to save conversation history", err))
+    const existing = historyRef.current.find((entry) => entry.id === item.id)
+    const nextItem = { ...item, isFavorite: item.isFavorite ?? existing?.isFavorite ?? false }
+    setHistory((prev) => [nextItem, ...prev.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20))
+    saveConversationHistory(nextItem).catch((err) => console.warn("Failed to save conversation history", err))
+  }
+
+  function toggleFavorite(item: ConversationHistoryItem) {
+    const nextItem = { ...item, isFavorite: !item.isFavorite }
+    setHistory((prev) => [nextItem, ...prev.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20))
+    saveConversationHistory(nextItem).catch((err) => {
+      console.warn("Failed to update conversation favorite", err)
+      setError(err instanceof Error ? err.message : String(err))
+    })
   }
 
   async function onAsk(event: FormEvent) {
@@ -430,7 +448,8 @@ export default function App() {
   function newConversation() {
     if (messages.length > 0) {
       const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
-      rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages))
+      const existingFavorite = historyRef.current.find((item) => item.id === currentConversationId)?.isFavorite ?? false
+      rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages, existingFavorite))
     }
     setMessages([])
     setCurrentConversationId(createConversationId())
@@ -620,7 +639,7 @@ export default function App() {
               <span>性能テスト</span>
             </button>
           )}
-          <button className="rail-item" type="button" title="お気に入り">
+          <button className={`rail-item ${activeView === "favorites" ? "active" : ""}`} type="button" title="お気に入り" onClick={() => setActiveView("favorites")}>
             <Icon name="star" />
             <span>お気に入り</span>
           </button>
@@ -909,6 +928,7 @@ export default function App() {
         ) : (
           <HistoryWorkspace
             history={history}
+            favoriteOnly={activeView === "favorites"}
             onSelect={(item) => {
               setCurrentConversationId(item.id)
               setMessages(item.messages)
@@ -925,6 +945,7 @@ export default function App() {
                 setError(err instanceof Error ? err.message : String(err))
               })
             }}
+            onToggleFavorite={toggleFavorite}
             onBack={() => setActiveView("chat")}
           />
         )}
@@ -933,14 +954,20 @@ export default function App() {
   )
 }
 
-function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[]): ConversationHistoryItem {
+function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[], isFavorite = false): ConversationHistoryItem {
   return {
     schemaVersion: 1,
     id,
     title: summarizeTitle(titleCandidate),
     updatedAt: new Date().toISOString(),
+    isFavorite,
     messages
   }
+}
+
+function compareConversationHistory(a: ConversationHistoryItem, b: ConversationHistoryItem): number {
+  if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
+  return b.updatedAt.localeCompare(a.updatedAt)
 }
 
 function UserPromptBubble({ text }: { text: string }) {
@@ -2138,33 +2165,45 @@ function ManagedUserRow({
 
 function HistoryWorkspace({
   history,
+  favoriteOnly = false,
   onSelect,
   onDelete,
+  onToggleFavorite,
   onBack
 }: {
   history: ConversationHistoryItem[]
+  favoriteOnly?: boolean
   onSelect: (item: ConversationHistoryItem) => void
   onDelete: (id: string) => void
+  onToggleFavorite: (item: ConversationHistoryItem) => void
   onBack: () => void
 }) {
   const [query, setQuery] = useState("")
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "messages">("newest")
+  const [favoritesOnly, setFavoritesOnly] = useState(favoriteOnly)
+  const favoriteCount = history.filter((item) => item.isFavorite).length
+
+  useEffect(() => {
+    setFavoritesOnly(favoriteOnly)
+  }, [favoriteOnly])
 
   const visibleHistory = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
+    const scope = favoritesOnly ? history.filter((item) => item.isFavorite) : history
     const filtered = normalizedQuery.length === 0
-      ? history
-      : history.filter((item) => {
+      ? scope
+      : scope.filter((item) => {
           const messageText = item.messages.map((message) => message.text).join(" ").toLowerCase()
           return item.title.toLowerCase().includes(normalizedQuery) || messageText.includes(normalizedQuery)
         })
 
     return [...filtered].sort((a, b) => {
+      if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
       if (sortOrder === "messages") return b.messages.length - a.messages.length
       const timeDiff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       return sortOrder === "newest" ? timeDiff : -timeDiff
     })
-  }, [history, query, sortOrder])
+  }, [favoritesOnly, history, query, sortOrder])
 
   return (
     <section className="assignee-workspace" aria-label="履歴">
@@ -2173,8 +2212,8 @@ function HistoryWorkspace({
           <Icon name="chevron" />
         </button>
         <div>
-          <h2>履歴</h2>
-          <span>{history.length} 件の会話</span>
+          <h2>{favoriteOnly ? "お気に入り" : "履歴"}</h2>
+          <span>{history.length} 件の会話 / {favoriteCount} 件のお気に入り</span>
         </div>
       </header>
       <div className="question-list-panel history-panel">
@@ -2195,6 +2234,10 @@ function HistoryWorkspace({
             <option value="oldest">古い順</option>
             <option value="messages">メッセージ数順</option>
           </select>
+          <label className="favorite-filter">
+            <input type="checkbox" checked={favoritesOnly} onChange={(event) => setFavoritesOnly(event.target.checked)} />
+            <span>お気に入りのみ</span>
+          </label>
         </div>
         <div className="question-list history-list">
           {visibleHistory.length === 0 ? (
@@ -2202,12 +2245,21 @@ function HistoryWorkspace({
           ) : (
             visibleHistory.map((item) => (
               <div className="question-list-item history-item" key={item.id}>
+                <button
+                  type="button"
+                  className={`favorite-toggle ${item.isFavorite ? "active" : ""}`}
+                  onClick={() => onToggleFavorite(item)}
+                  aria-label={item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`}
+                  title={item.isFavorite ? "お気に入りから外す" : "お気に入りに追加"}
+                >
+                  <Icon name="star" />
+                </button>
                 <button type="button" onClick={() => onSelect(item)}>
                   <strong>{item.title}</strong>
                   <span>{formatDateTime(item.updatedAt)}</span>
                   <small>{item.messages.length} メッセージ</small>
                 </button>
-                <button type="button" onClick={() => onDelete(item.id)}>
+                <button className="history-delete-button" type="button" onClick={() => onDelete(item.id)}>
                   削除
                 </button>
               </div>

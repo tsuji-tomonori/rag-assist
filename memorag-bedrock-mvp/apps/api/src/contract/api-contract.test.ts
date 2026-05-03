@@ -110,6 +110,7 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(postHistory.status, 200)
     const savedHistory = (await postHistory.json()) as Record<string, unknown>
     assert.equal(savedHistory.schemaVersion, 1)
+    assert.equal(savedHistory.isFavorite, false)
     validateSchema(savedHistory, responseSchema(openapi, "/conversation-history", "post", 200), openapi)
 
     const history = await getJson(`http://127.0.0.1:${port}/conversation-history`)

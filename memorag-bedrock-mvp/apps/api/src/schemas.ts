@@ -320,6 +320,7 @@ export const ConversationHistoryItemSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1).max(120),
   updatedAt: z.string(),
+  isFavorite: z.boolean().default(false),
   messages: z.array(ConversationMessageSchema).max(100)
 })
 

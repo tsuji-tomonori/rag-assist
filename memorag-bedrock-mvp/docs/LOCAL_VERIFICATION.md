@@ -48,7 +48,7 @@ curl -fsS http://localhost:8787/questions \
 
 curl -fsS http://localhost:8787/conversation-history \
   -H 'Content-Type: application/json' \
-  -d '{"schemaVersion":1,"id":"local-history-001","title":"ローカル検証","updatedAt":"2026-05-02T00:00:00.000Z","messages":[{"role":"user","text":"経費精算の期限は？","createdAt":"2026-05-02T00:00:00.000Z"}]}'
+  -d '{"schemaVersion":1,"id":"local-history-001","title":"ローカル検証","updatedAt":"2026-05-02T00:00:00.000Z","isFavorite":true,"messages":[{"role":"user","text":"経費精算の期限は？","createdAt":"2026-05-02T00:00:00.000Z"}]}'
 
 curl -fsS http://localhost:8787/openapi.json >/dev/null
 ```
@@ -86,7 +86,7 @@ npm run start -w @memorag-mvp/benchmark
 - `/documents` が `documentId`、`chunkCount`、`memoryCardCount` を返す。
 - `/chat` が回答本文と `citations`、`retrieved` を返す。
 - `/questions` が `questionId` と `status: "open"` を返す。
-- `/conversation-history` が `schemaVersion: 1` の履歴 item を保存できる。
+- `/conversation-history` が `schemaVersion: 1` と `isFavorite` を含む履歴 item を保存できる。
 - `/openapi.json` がJSONとして取得できる。
 - benchmark CLIが `.local-data/benchmark-results.jsonl`、`.local-data/benchmark-summary.json`、`.local-data/benchmark-report.md` を作成する。
 - benchmark summary が回答可能問題、不回答問題、fact slot 付き問題の評価に必要な集計項目を出力する。
