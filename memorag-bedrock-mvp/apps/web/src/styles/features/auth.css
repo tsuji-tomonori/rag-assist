@@ -1,0 +1,139 @@
+.login-page { display: grid; grid-template-columns: 1.08fr 1fr; min-height: 100vh; background: #f7faff; }
+.login-hero {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 52% 48%, rgba(84, 143, 237, 0.18) 0 23%, rgba(84, 143, 237, 0.08) 34%, transparent 58%),
+    radial-gradient(circle at 18% 26%, rgba(55, 134, 235, 0.14), transparent 24%),
+    linear-gradient(125deg, #eff7ff 0%, #f9fcff 54%, #eef6ff 100%);
+}
+.login-hero::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.4) 52%, #f7faff 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 58%);
+  pointer-events: none;
+  z-index: 2;
+}
+.login-hero-graphic {
+  position: absolute;
+  inset: auto auto 0 50%;
+  width: min(1080px, 118vw);
+  height: 100%;
+  min-height: 780px;
+  transform: translateX(-50%);
+}
+.hero-network path {
+  fill: none;
+  stroke: #b9d3fb;
+  stroke-linecap: round;
+  stroke-width: 1.5;
+  opacity: 0.58;
+}
+.hero-orbits circle,
+.hero-orbits path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-linecap: round;
+  stroke-width: 2;
+  opacity: 0.82;
+}
+.hero-nodes circle {
+  fill: #ffffff;
+  stroke: #cfe1ff;
+  stroke-width: 2;
+}
+.hero-badge > circle:first-child {
+  fill: rgba(255, 255, 255, 0.22);
+  stroke: #cfe1ff;
+  stroke-width: 1.4;
+}
+.hero-badge > circle:nth-child(2) {
+  fill: rgba(255, 255, 255, 0.58);
+  stroke: #e8f1ff;
+  stroke-width: 1.4;
+}
+.hero-badge path {
+  fill: none;
+  stroke: #1d6be6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 5;
+}
+.hero-user path,
+.hero-cloud path {
+  fill: url(#heroNode);
+  stroke: none;
+}
+.hero-cloud path {
+  opacity: 0.72;
+}
+.hero-shield path:first-child {
+  fill: rgba(255, 255, 255, 0.72);
+  stroke: #ffffff;
+  stroke-width: 11;
+}
+.hero-shield path:nth-child(2) {
+  fill: url(#heroShield);
+  opacity: 0.78;
+}
+.hero-shield path:nth-child(3) {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.62);
+  stroke-width: 3;
+}
+.hero-lock rect {
+  fill: url(#heroLock);
+  stroke: rgba(255, 255, 255, 0.86);
+  stroke-width: 4;
+}
+.hero-lock path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-linecap: round;
+  stroke-width: 18;
+}
+.hero-lock circle {
+  fill: #377ce4;
+}
+.hero-lock path:last-child {
+  stroke: #377ce4;
+  stroke-width: 10;
+}
+.hero-skyline path:first-child {
+  fill: rgba(99, 151, 225, 0.34);
+}
+.hero-skyline path:last-child {
+  fill: rgba(255, 255, 255, 0.48);
+}
+.login-panel { min-width: 0; margin: auto; width: min(560px, 90%); background: #fff; border: 1px solid #e5e7eb; border-radius: 20px; padding: 32px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
+.login-panel > * { min-width: 0; }
+.login-panel h1 { margin: 0; overflow-wrap: anywhere; word-break: break-all; font-size: 40px; line-height: 1.18; }
+.login-panel p { margin: 8px 0 24px; color: #64748b; }
+.login-form { min-width: 0; display: grid; gap: 12px; }
+.login-form input[type="email"], .login-form input[type="password"], .login-form input[type="text"] { width: 100%; min-width: 0; height: 48px; border: 1px solid #d1d5db; border-radius: 10px; padding: 0 12px; }
+.login-challenge-summary { display: grid; gap: 4px; border: 1px solid #dbeafe; background: #eff6ff; border-radius: 10px; padding: 12px; color: #1e3a8a; }
+.login-challenge-summary span { font-size: 13px; color: #475569; }
+.login-challenge-summary strong { overflow-wrap: anywhere; }
+.login-form .remember { display: flex; align-items: center; gap: 8px; color: #334155; margin-top: 8px; }
+.login-form button { width: 100%; min-width: 0; height: 48px; border: none; border-radius: 10px; background: #165dff; color: #fff; font-weight: 700; cursor: pointer; }
+.login-form button:disabled { cursor: wait; opacity: 0.7; }
+.login-error { margin: 0; color: #b42318; font-weight: 700; }
+.login-success { margin: 0; color: #067647; font-weight: 700; }
+.login-secondary-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.login-form .login-text-button { width: auto; height: auto; min-height: 36px; padding: 4px 8px; border-radius: 6px; background: transparent; color: #165dff; font-weight: 700; }
+.login-form .login-text-button:disabled { cursor: wait; opacity: 0.7; }
+
+@media (max-width: 1024px) {
+  .login-page { grid-template-columns: 1fr; }
+  .login-hero { display: none; }
+}
+
+@media (max-width: 720px) {
+  .login-page { display: block; width: 100%; max-width: 100vw; overflow-x: hidden; padding: 24px 0; }
+  .login-panel { width: min(520px, calc(100% - 32px)); padding: 28px; }
+  .login-panel h1 { font-size: 30px; }
+}
