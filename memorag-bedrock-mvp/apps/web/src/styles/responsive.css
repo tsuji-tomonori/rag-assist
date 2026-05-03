@@ -226,6 +226,13 @@
     grid-template-columns: 28px 1fr;
   }
 
+  .debug-node-meta,
+  .debug-run-summary dl,
+  .debug-flow-layout,
+  .debug-diagnostics-grid {
+    grid-template-columns: 1fr;
+  }
+
   .step-summary {
     grid-template-columns: 22px minmax(0, 1fr) 64px 24px;
   }

@@ -109,6 +109,8 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 
 - APIが応答しない場合は `/health`、Lambda logs、API Gateway logsの順に確認する。
 - 回答が空になる場合は `/chat` の `includeDebug=true` でmemory/chunk検索結果とscoreを確認する。
+- debug/評価ビューでは、debug trace を RAG workflow のフローチャート、ノード詳細、fact coverage、evidence、answer support として確認できる。`可視化JSON` は raw trace と graph model を含む replay 用 JSON で、API に接続できない環境でも `JSONをアップロード` から再表示できる。
+- 共有用の replay JSON は `SYSTEM_ADMIN` または `chat:admin:read_all` を持つ管理者が扱い、raw prompt、chunk text、alias/ACL の詳細が含まれる可能性を前提に社外共有しない。
 - 文書が検索されない場合はdocument manifest、vector metadata、embedding dimensionの不一致を確認する。
 - 担当者問い合わせ送信後に 403 が出る場合は、通常利用者で `GET /questions` や `GET /debug-runs` が発火していないか確認する。
 - 担当者対応ビューが表示されない場合は、対象ユーザーに `ANSWER_EDITOR` group が付与され、ID token の `cognito:groups` に反映されているか確認する。
