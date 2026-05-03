@@ -1,0 +1,131 @@
+.empty-question-panel {
+  color: #68758f;
+  font-weight: 800;
+}
+
+.document-admin-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.34fr) minmax(520px, 1fr);
+  gap: 16px;
+}
+
+.document-admin-panel {
+  min-width: 0;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  padding: 18px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+}
+
+.document-admin-panel h3,
+.document-list-head h3 {
+  margin: 0;
+  color: #13223d;
+  letter-spacing: 0;
+}
+
+.document-upload-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.document-upload-drop {
+  min-height: 132px;
+  border: 1px dashed #a9b9d0;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  padding: 18px;
+  color: #52627c;
+  background: #f8fbff;
+  font-weight: 900;
+  text-align: center;
+  cursor: pointer;
+}
+
+.document-upload-drop .icon {
+  width: 28px;
+  height: 28px;
+  color: #2f6fed;
+}
+
+.document-upload-drop input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.document-upload-form button {
+  min-height: 40px;
+  border: 1px solid #aac3f4;
+  border-radius: 7px;
+  color: #fff;
+  background: #2f6fed;
+  font-weight: 900;
+}
+
+.document-list-panel {
+  min-height: 520px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.document-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.document-list-head span {
+  border: 1px solid #cbd9f0;
+  border-radius: 999px;
+  padding: 4px 12px;
+  color: #4770ad;
+  background: #f5f9ff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.document-table {
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+}
+
+.document-table-row {
+  min-width: 760px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 90px 90px 180px 76px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e5ebf3;
+  padding: 12px 14px;
+  color: #273750;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.document-table-row:last-child {
+  border-bottom: 0;
+}
+
+.document-table-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.document-table-head {
+  color: #68758f;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 900;
+}
