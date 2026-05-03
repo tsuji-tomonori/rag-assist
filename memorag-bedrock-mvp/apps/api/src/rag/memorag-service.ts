@@ -14,6 +14,7 @@ import type { SaveConversationHistoryInput } from "../adapters/conversation-hist
 import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
 import { chunkText } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
+import { buildPipelineVersions } from "./pipeline-versions.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
 import { extractTextFromUpload } from "./text-extract.js"
 
@@ -99,6 +100,11 @@ export class MemoRagService {
   async ingest(input: IngestInput): Promise<DocumentManifest> {
     const documentId = randomUUID()
     const createdAt = new Date().toISOString()
+    const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
+    const pipelineVersions = buildPipelineVersions({
+      embeddingModelId,
+      embeddingDimensions: config.embeddingDimensions
+    })
     const text = await extractTextFromUpload(input)
     if (!text) throw new Error("Uploaded document did not contain extractable text")
 
@@ -125,7 +131,7 @@ export class MemoRagService {
 
     for (const chunk of chunks) {
       const vector = await this.deps.textModel.embed(chunk.text, {
-        modelId: input.embeddingModelId ?? config.embeddingModelId,
+        modelId: embeddingModelId,
         dimensions: config.embeddingDimensions
       })
       const key = `${documentId}-${chunk.id}`
@@ -148,7 +154,7 @@ export class MemoRagService {
 
     for (const card of memoryCards) {
       const vector = await this.deps.textModel.embed(card.text, {
-        modelId: input.embeddingModelId ?? config.embeddingModelId,
+        modelId: embeddingModelId,
         dimensions: config.embeddingDimensions
       })
       const key = `${documentId}-${card.id}`
@@ -182,6 +188,13 @@ export class MemoRagService {
       vectorKeys: [...evidenceVectorKeys, ...memoryVectorKeys],
       memoryVectorKeys,
       evidenceVectorKeys,
+      embeddingModelId,
+      embeddingDimensions: config.embeddingDimensions,
+      chunkerVersion: pipelineVersions.chunkerVersion,
+      sourceExtractorVersion: pipelineVersions.sourceExtractorVersion,
+      memoryPromptVersion: pipelineVersions.memoryPromptVersion,
+      indexVersion: pipelineVersions.indexVersion,
+      pipelineVersions,
       chunkCount: chunks.length,
       memoryCardCount: memoryCards.length,
       createdAt
@@ -673,7 +686,13 @@ function normalizeDebugTrace(value: unknown): DebugTrace {
   const { schemaVersion: _schemaVersion, ...rest } = trace
   return {
     schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
-    ...rest
+    ...rest,
+    pipelineVersions:
+      trace.pipelineVersions ??
+      buildPipelineVersions({
+        embeddingModelId: trace.embeddingModelId ?? config.embeddingModelId,
+        embeddingDimensions: config.embeddingDimensions
+      })
   }
 }
 

@@ -3,6 +3,17 @@ export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue
 
 export type VectorKind = "chunk" | "memory"
 
+export type PipelineVersions = {
+  agentWorkflowVersion: string
+  chunkerVersion: string
+  sourceExtractorVersion: string
+  memoryPromptVersion: string
+  promptVersion: string
+  indexVersion: string
+  embeddingModelId: string
+  embeddingDimensions: number
+}
+
 export type VectorMetadata = {
   kind: VectorKind
   documentId: string
@@ -19,6 +30,13 @@ export type VectorMetadata = {
   aclGroup?: string
   aclGroups?: string[]
   allowedUsers?: string[]
+  sources?: string[]
+  rrfScore?: number
+  lexicalRank?: number
+  semanticRank?: number
+  crossQueryRrfScore?: number
+  crossQueryRank?: number
+  expansionSource?: "hybrid" | "context_window"
   createdAt: string
 }
 
@@ -45,6 +63,13 @@ export type DocumentManifest = {
   vectorKeys: string[]
   memoryVectorKeys?: string[]
   evidenceVectorKeys?: string[]
+  embeddingModelId?: string
+  embeddingDimensions?: number
+  chunkerVersion?: string
+  sourceExtractorVersion?: string
+  memoryPromptVersion?: string
+  indexVersion?: string
+  pipelineVersions?: PipelineVersions
   chunkCount: number
   memoryCardCount: number
   createdAt: string
@@ -100,6 +125,7 @@ export type DebugTrace = {
   modelId: string
   embeddingModelId: string
   clueModelId: string
+  pipelineVersions?: PipelineVersions
   topK: number
   memoryTopK: number
   minScore: number

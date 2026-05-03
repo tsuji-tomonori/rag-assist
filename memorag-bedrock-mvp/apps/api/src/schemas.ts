@@ -29,6 +29,17 @@ export const DocumentUploadRequestSchema = z.object({
   skipMemory: z.boolean().optional()
 })
 
+export const PipelineVersionsSchema = z.object({
+  agentWorkflowVersion: z.string(),
+  chunkerVersion: z.string(),
+  sourceExtractorVersion: z.string(),
+  memoryPromptVersion: z.string(),
+  promptVersion: z.string(),
+  indexVersion: z.string(),
+  embeddingModelId: z.string(),
+  embeddingDimensions: z.number().int().positive()
+})
+
 export const DocumentManifestSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
@@ -39,6 +50,13 @@ export const DocumentManifestSchema = z.object({
   vectorKeys: z.array(z.string()),
   memoryVectorKeys: z.array(z.string()).optional(),
   evidenceVectorKeys: z.array(z.string()).optional(),
+  embeddingModelId: z.string().optional(),
+  embeddingDimensions: z.number().int().positive().optional(),
+  chunkerVersion: z.string().optional(),
+  sourceExtractorVersion: z.string().optional(),
+  memoryPromptVersion: z.string().optional(),
+  indexVersion: z.string().optional(),
+  pipelineVersions: PipelineVersionsSchema.optional(),
   chunkCount: z.number(),
   memoryCardCount: z.number(),
   createdAt: z.string()
@@ -194,6 +212,7 @@ export const DebugTraceSchema = z.object({
   modelId: z.string(),
   embeddingModelId: z.string(),
   clueModelId: z.string(),
+  pipelineVersions: PipelineVersionsSchema.optional(),
   topK: z.number(),
   memoryTopK: z.number(),
   minScore: z.number(),

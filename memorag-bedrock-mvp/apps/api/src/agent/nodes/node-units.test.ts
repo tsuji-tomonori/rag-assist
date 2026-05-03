@@ -261,6 +261,18 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   const search = await createSearchEvidenceNode(deps, user())(state({ queryEmbeddings: [{ query: "q", vector: [1, 0] }] }))
   assert.deepEqual(search.retrievedChunks?.map((hit) => hit.key), ["doc-1-chunk-0001"])
   assert.equal(search.retrievalDiagnostics?.semanticCount, 2)
+
+  const multiQuerySearch = await createSearchEvidenceNode(deps, user())(
+    state({
+      queryEmbeddings: [
+        { query: "申請期限", vector: [1, 0] },
+        { query: "提出期限", vector: [0.9, 0.1] }
+      ]
+    })
+  )
+  assert.equal(multiQuerySearch.retrievalDiagnostics?.queryCount, 2)
+  assert.equal(multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRank, 1)
+  assert.ok((multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRrfScore ?? 0) > 0)
 })
 
 test("retrieval evaluator routes fact coverage conservatively", async () => {
@@ -305,7 +317,50 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
 
   const irrelevant = await retrievalEvaluator(state({ retrievedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))
   assert.equal(irrelevant.retrievalEvaluation?.retrievalQuality, "irrelevant")
-  assert.equal(irrelevant.retrievalEvaluation?.nextAction.type, "evidence_search")
+  assert.equal(irrelevant.retrievalEvaluation?.nextAction.type, "query_rewrite")
+
+  const irrelevantAfterRewrite = await retrievalEvaluator(
+    state({
+      retrievedChunks: [{ ...chunk, score: 0.1 }],
+      minScore: 0.2,
+      actionHistory: [
+        {
+          action: { type: "query_rewrite", strategy: "keyword", input: "question" },
+          hitCount: 1,
+          newEvidenceCount: 0,
+          topScore: 0.1,
+          summary: "rewritten"
+        }
+      ]
+    })
+  )
+  assert.equal(irrelevantAfterRewrite.retrievalEvaluation?.retrievalQuality, "irrelevant")
+  assert.equal(irrelevantAfterRewrite.retrievalEvaluation?.nextAction.type, "evidence_search")
+
+  const partialWithKnownSupport = await retrievalEvaluator(
+    state({
+      question: "申請期限と例外承認者は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "申請期限と例外承認者",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", priority: 1, status: "supported", supportingChunkKeys: ["doc-1-chunk-0001"] },
+          { id: "exception-approver", description: "例外承認者", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(partialWithKnownSupport.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.equal(partialWithKnownSupport.retrievalEvaluation?.nextAction.type, "expand_context")
+  assert.equal(
+    partialWithKnownSupport.retrievalEvaluation?.nextAction.type === "expand_context"
+      ? partialWithKnownSupport.retrievalEvaluation.nextAction.chunkKey
+      : "",
+    "doc-1-chunk-0001"
+  )
 
   const genericDeadline = await retrievalEvaluator(
     state({

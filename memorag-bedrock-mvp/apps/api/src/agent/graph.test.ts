@@ -315,9 +315,9 @@ test("fixed workflow search cycle loops until maxIterations when retrieval score
   const actionSteps = result.debug?.steps.filter((step) => step.label === "execute_search_action") ?? []
   assert.match(actionSteps[0]?.summary ?? "", /action=evidence_search, hits=1, new=1/)
   assert.match(actionSteps[0]?.detail ?? "", /newEvidenceCount=1 topScore=/)
-  assert.match(actionSteps[1]?.summary ?? "", /action=evidence_search, hits=1, new=0/)
+  assert.match(actionSteps[1]?.summary ?? "", /action=query_rewrite, hits=1, new=0/)
   assert.match(actionSteps[1]?.detail ?? "", /newEvidenceCount=0 topScore=/)
-  assert.match(actionSteps[1]?.detail ?? "", /検索で1件取得し、新規根拠は0件でした。/)
+  assert.match(actionSteps[1]?.detail ?? "", /query rewrite 後のhybrid検索で1件取得し、新規根拠は0件でした。/)
 })
 
 test("fixed workflow search cycle stops after two consecutive no-new-evidence iterations", async () => {

@@ -15,6 +15,13 @@ export const RetrievedChunkSchema = z.object({
     objectKey: z.string().optional(),
     sourceUri: z.string().optional(),
     text: z.string().optional(),
+    sources: z.array(z.string()).optional(),
+    rrfScore: z.number().optional(),
+    lexicalRank: z.number().optional(),
+    semanticRank: z.number().optional(),
+    crossQueryRrfScore: z.number().optional(),
+    crossQueryRank: z.number().optional(),
+    expansionSource: z.enum(["hybrid", "context_window"]).optional(),
     createdAt: z.string()
   })
 })
