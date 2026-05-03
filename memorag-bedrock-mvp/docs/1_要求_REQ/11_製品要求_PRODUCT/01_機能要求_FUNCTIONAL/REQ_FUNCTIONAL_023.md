@@ -5,6 +5,16 @@
 - 状態: Draft
 - 優先度: A
 
+## 分類（L0-L3）
+
+- L0: `rag-assist / MemoRAG MVP 機能要件`
+- L1主分類: `3. RAG検索品質制御`
+- L2機能群:
+  - `3.6 検索alias管理`
+- L3要件: `FR-023`
+- 関連カテゴリ:
+  - `8. 認証・認可・管理・監査（8.7 監査）`
+
 ## 要件
 
 - FR-023: システムは検索 alias を tenant、source、docType、ACL scope を持つ versioned artifact として管理できること。

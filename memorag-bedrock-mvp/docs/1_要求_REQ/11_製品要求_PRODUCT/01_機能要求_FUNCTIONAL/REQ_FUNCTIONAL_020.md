@@ -5,6 +5,16 @@
 - 状態: Draft
 - 優先度: B
 
+## 分類（L0-L3）
+
+- L0: `rag-assist / MemoRAG MVP 機能要件`
+- L1主分類: `1. 文書・知識ベース管理`
+- L2機能群:
+  - `1.5 多抽象度メモリ生成`
+- L3要件: `FR-020`
+- 関連カテゴリ:
+  - `3. RAG検索品質制御（3.5 検索補助メモリ）`
+
 ## 要件
 
 - FR-020: ingestion は raw chunk とは別に、section、document、concept の各抽象度の memory record を生成できること。

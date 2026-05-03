@@ -4,6 +4,15 @@
 - 種別: `REQ_FUNCTIONAL`
 - 状態: Draft
 
+## 分類（L0-L3）
+
+- L0: `rag-assist / MemoRAG MVP 機能要件`
+- L1主分類: `7. 評価・debug・benchmark`
+- L2機能群:
+  - `7.1 実行履歴確認`
+- L3要件: `FR-010`
+- 関連カテゴリ: なし
+
 ## 要件
 
 - FR-010: 画面上で、過去の実行結果の詳細を確認できること。

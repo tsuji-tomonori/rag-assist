@@ -4,6 +4,15 @@
 - 種別: `REQ_FUNCTIONAL`
 - 状態: Draft
 
+## 分類（L0-L3）
+
+- L0: `rag-assist / MemoRAG MVP 機能要件`
+- L1主分類: `7. 評価・debug・benchmark`
+- L2機能群:
+  - `7.4 外部連携仕様`
+- L3要件: `FR-013`
+- 関連カテゴリ: なし
+
 ## 要件
 
 - FR-013: 外部連携向けの仕様情報を参照できること。

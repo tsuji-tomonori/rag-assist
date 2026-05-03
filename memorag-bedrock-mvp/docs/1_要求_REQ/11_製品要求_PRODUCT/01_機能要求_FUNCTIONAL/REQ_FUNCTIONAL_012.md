@@ -4,6 +4,15 @@
 - 種別: `REQ_FUNCTIONAL`
 - 状態: Draft
 
+## 分類（L0-L3）
+
+- L0: `rag-assist / MemoRAG MVP 機能要件`
+- L1主分類: `7. 評価・debug・benchmark`
+- L2機能群:
+  - `7.3 UI非依存評価`
+- L3要件: `FR-012`
+- 関連カテゴリ: なし
+
 ## 要件
 
 - FR-012: 評価担当者は画面を使わずに、同等の質問評価を実行できること。

@@ -5,6 +5,16 @@
 - 状態: Draft
 - 優先度: S
 
+## 分類（L0-L3）
+
+- L0: `rag-assist / MemoRAG MVP 機能要件`
+- L1主分類: `7. 評価・debug・benchmark`
+- L2機能群:
+  - `7.5 benchmark 指標`
+  - `7.6 評価レポート`
+- L3要件: `FR-019`
+- 関連カテゴリ: なし
+
 ## 要件
 
 - FR-019: benchmark runner は、回答可否だけでなく fact coverage、faithfulness、context relevance、不回答精度を評価できること。

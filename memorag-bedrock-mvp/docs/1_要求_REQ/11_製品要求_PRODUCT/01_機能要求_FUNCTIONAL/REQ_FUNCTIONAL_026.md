@@ -5,6 +5,15 @@
 - 状態: Draft
 - 優先度: S
 
+## 分類（L0-L3）
+
+- L0: `rag-assist / MemoRAG MVP 機能要件`
+- L1主分類: `3. RAG検索品質制御`
+- L2機能群:
+  - `3.2 検索実行`
+- L3要件: `FR-026`
+- 関連カテゴリ: なし
+
 ## 要件
 
 - FR-026: システムは通常のチャット回答経路の evidence 検索で、軽量 lexical retrieval、S3 Vectors semantic search、RRF を統合した hybrid retriever を使用すること。
