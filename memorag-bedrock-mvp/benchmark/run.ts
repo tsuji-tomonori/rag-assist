@@ -54,7 +54,7 @@ type BenchmarkResponse = {
   debug?: {
     runId?: string
     totalLatencyMs?: number
-    steps?: Array<{ label: string; latencyMs: number; status: string; summary?: string; detail?: string }>
+    steps?: Array<{ label: string; latencyMs: number; status: string; summary?: string; detail?: string; output?: Record<string, unknown> }>
   }
   answerSupport?: {
     unsupportedSentences?: Array<{ sentence?: string; reason?: string }>
@@ -85,6 +85,12 @@ type RowEvaluation = {
   refused: boolean
   iterationCount: number | null
   retrievalCallCount: number | null
+  riskSignalCount: number | null
+  llmJudgeCount: number | null
+  llmJudgeNoConflictCount: number | null
+  llmJudgeConflictCount: number | null
+  llmJudgeUnclearCount: number | null
+  llmJudgeResolved: boolean | null
   topCitationScore: number | null
   retrievedCount: number
   citationCount: number
@@ -135,6 +141,12 @@ type Summary = {
     unsupportedSentenceRate: number | null
     avgIterations: number | null
     avgRetrievalCalls: number | null
+    avgRiskSignals: number | null
+    llmJudgeInvocationRate: number | null
+    llmJudgeNoConflictRate: number | null
+    llmJudgeConflictRate: number | null
+    llmJudgeUnclearRate: number | null
+    llmJudgeResolvedRate: number | null
     p50LatencyMs: number | null
     p95LatencyMs: number | null
     averageLatencyMs: number | null
@@ -293,6 +305,7 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
 
   const supportResult = evaluateUnsupportedSentences(body)
   if (supportResult.rate !== null && supportResult.rate > 0) failureReasons.push("unsupported_sentence_detected")
+  const retrievalJudgeResult = evaluateRetrievalJudge(body)
 
   if (status < 200 || status >= 300) failureReasons.push(`http_${status}`)
 
@@ -333,6 +346,12 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
     refused,
     iterationCount: countDebugSteps(body, "evaluate_search_progress"),
     retrievalCallCount: countDebugSteps(body, "execute_search_action"),
+    riskSignalCount: retrievalJudgeResult.riskSignalCount,
+    llmJudgeCount: retrievalJudgeResult.llmJudgeCount,
+    llmJudgeNoConflictCount: retrievalJudgeResult.noConflictCount,
+    llmJudgeConflictCount: retrievalJudgeResult.conflictCount,
+    llmJudgeUnclearCount: retrievalJudgeResult.unclearCount,
+    llmJudgeResolved: retrievalJudgeResult.resolved,
     topCitationScore: citations.length > 0 ? Math.max(...citations.map((citation) => citation.score ?? 0)) : null,
     retrievedCount: retrieved.length,
     citationCount: citations.length,
@@ -358,6 +377,11 @@ function summarize(results: BenchmarkResultRow[]): Summary {
   const retrievalCallCounts = results
     .map((row) => row.evaluation.retrievalCallCount)
     .filter((value): value is number => value !== null)
+  const riskSignalCounts = results
+    .map((row) => row.evaluation.riskSignalCount)
+    .filter((value): value is number => value !== null)
+  const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
+  const llmJudgeCallCount = llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeCount ?? 0), 0)
 
   return {
     datasetPath,
@@ -429,6 +453,24 @@ function summarize(results: BenchmarkResultRow[]): Summary {
             ),
       avgIterations: average(iterationCounts),
       avgRetrievalCalls: average(retrievalCallCounts),
+      avgRiskSignals: average(riskSignalCounts),
+      llmJudgeInvocationRate: rate(llmJudgeEvaluated.length, results.length),
+      llmJudgeNoConflictRate: rate(
+        llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeNoConflictCount ?? 0), 0),
+        llmJudgeCallCount
+      ),
+      llmJudgeConflictRate: rate(
+        llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeConflictCount ?? 0), 0),
+        llmJudgeCallCount
+      ),
+      llmJudgeUnclearRate: rate(
+        llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeUnclearCount ?? 0), 0),
+        llmJudgeCallCount
+      ),
+      llmJudgeResolvedRate: rate(
+        llmJudgeEvaluated.filter((row) => row.evaluation.llmJudgeResolved === true).length,
+        llmJudgeEvaluated.length
+      ),
       p50LatencyMs: percentile(latencies, 0.5),
       p95LatencyMs: percentile(latencies, 0.95),
       averageLatencyMs: results.length === 0 ? null : Math.round(results.reduce((sum, row) => sum + row.latencyMs, 0) / results.length)
@@ -460,6 +502,12 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
     ["unsupported_sentence_rate", formatRate(summary.metrics.unsupportedSentenceRate)],
     ["avg_iterations", formatNumber(summary.metrics.avgIterations)],
     ["avg_retrieval_calls", formatNumber(summary.metrics.avgRetrievalCalls)],
+    ["avg_risk_signals", formatNumber(summary.metrics.avgRiskSignals)],
+    ["llm_judge_invocation_rate", formatRate(summary.metrics.llmJudgeInvocationRate)],
+    ["llm_judge_no_conflict_rate", formatRate(summary.metrics.llmJudgeNoConflictRate)],
+    ["llm_judge_conflict_rate", formatRate(summary.metrics.llmJudgeConflictRate)],
+    ["llm_judge_unclear_rate", formatRate(summary.metrics.llmJudgeUnclearRate)],
+    ["llm_judge_resolved_rate", formatRate(summary.metrics.llmJudgeResolvedRate)],
     ["p50_latency_ms", formatNumber(summary.metrics.p50LatencyMs)],
     ["p95_latency_ms", formatNumber(summary.metrics.p95LatencyMs)],
     ["average_latency_ms", formatNumber(summary.metrics.averageLatencyMs)]
@@ -476,11 +524,11 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
       ].join("\n")
 
   const detailRows = [
-    "| id | expected | actual | fact_slots | iterations | retrieval_calls | latency_ms | citations | retrieved | result |",
-    "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+    "| id | expected | actual | fact_slots | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | citations | retrieved | result |",
+    "| --- | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |",
     ...results.map((row) => {
       const passed = row.evaluation.failureReasons.length === 0 ? "pass" : row.evaluation.failureReasons.join(", ")
-      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedAnswerable ? "answer" : "refuse"} | ${row.evaluation.refused ? "refuse" : "answer"} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${row.latencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
+      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedAnswerable ? "answer" : "refuse"} | ${row.evaluation.refused ? "refuse" : "answer"} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${formatNumber(row.evaluation.riskSignalCount)} | ${formatLlmJudgeSummary(row.evaluation)} | ${row.latencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
     })
   ].join("\n")
 
@@ -608,6 +656,84 @@ function evaluateUnsupportedSentences(body: BenchmarkResponse): {
   }
 }
 
+function evaluateRetrievalJudge(body: BenchmarkResponse): {
+  riskSignalCount: number | null
+  llmJudgeCount: number | null
+  noConflictCount: number | null
+  conflictCount: number | null
+  unclearCount: number | null
+  resolved: boolean | null
+} {
+  const evaluations = extractRetrievalEvaluationsFromDebug(body)
+  if (evaluations.length === 0) {
+    return {
+      riskSignalCount: null,
+      llmJudgeCount: null,
+      noConflictCount: null,
+      conflictCount: null,
+      unclearCount: null,
+      resolved: null
+    }
+  }
+
+  const labels = evaluations.map((evaluation) => evaluation.llmJudge?.label).filter((label): label is RetrievalJudgeLabel => Boolean(label))
+  const noConflictCount = labels.filter((label) => label === "NO_CONFLICT").length
+  const conflictCount = labels.filter((label) => label === "CONFLICT").length
+  const unclearCount = labels.filter((label) => label === "UNCLEAR").length
+  const resolved =
+    labels.length === 0
+      ? null
+      : evaluations.some(
+          (evaluation) =>
+            evaluation.llmJudge?.label === "NO_CONFLICT" &&
+            evaluation.conflictingFactIds.length === 0 &&
+            evaluation.retrievalQuality === "sufficient"
+        )
+
+  return {
+    riskSignalCount: evaluations.reduce((sum, evaluation) => sum + evaluation.riskSignalCount, 0),
+    llmJudgeCount: labels.length,
+    noConflictCount,
+    conflictCount,
+    unclearCount,
+    resolved
+  }
+}
+
+type RetrievalJudgeLabel = "CONFLICT" | "NO_CONFLICT" | "UNCLEAR"
+
+type RetrievalEvaluationDebug = {
+  retrievalQuality?: string
+  conflictingFactIds: string[]
+  riskSignalCount: number
+  llmJudge?: {
+    label: RetrievalJudgeLabel
+  }
+}
+
+function extractRetrievalEvaluationsFromDebug(body: BenchmarkResponse): RetrievalEvaluationDebug[] {
+  const steps = body.debug?.steps?.filter((step) => step.label === "retrieval_evaluator") ?? []
+  return steps.flatMap((step) => {
+    const output = step.output?.retrievalEvaluation
+    if (!isRecord(output)) return []
+    return [parseRetrievalEvaluation(output)]
+  })
+}
+
+function parseRetrievalEvaluation(value: Record<string, unknown>): RetrievalEvaluationDebug {
+  const riskSignals = Array.isArray(value.riskSignals) ? value.riskSignals : []
+  const conflictingFactIds = Array.isArray(value.conflictingFactIds)
+    ? value.conflictingFactIds.filter((id): id is string => typeof id === "string")
+    : []
+  const llmJudge = isRecord(value.llmJudge) && isRetrievalJudgeLabel(value.llmJudge.label) ? { label: value.llmJudge.label } : undefined
+  return {
+    retrievalQuality: typeof value.retrievalQuality === "string" ? value.retrievalQuality : undefined,
+    conflictingFactIds,
+    riskSignalCount: riskSignals.length,
+    llmJudge
+  }
+}
+
 function extractAnswerSupportFromDebug(body: BenchmarkResponse): BenchmarkResponse["answerSupport"] | undefined {
   const step = body.debug?.steps?.find((candidate) => candidate.label === "verify_answer_support")
   if (!step?.detail) return undefined
@@ -618,6 +744,14 @@ function extractAnswerSupportFromDebug(body: BenchmarkResponse): BenchmarkRespon
     : undefined
   const totalSentences = typeof parsed.totalSentences === "number" ? parsed.totalSentences : undefined
   return { unsupportedSentences, totalSentences }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function isRetrievalJudgeLabel(value: unknown): value is RetrievalJudgeLabel {
+  return value === "CONFLICT" || value === "NO_CONFLICT" || value === "UNCLEAR"
 }
 
 function parseJsonObject(value: string): Record<string, unknown> | undefined {
@@ -675,6 +809,18 @@ function formatRate(value: number | null): string {
 
 function formatNumber(value: number | null): string {
   return value === null ? "n/a" : String(value)
+}
+
+function formatLlmJudgeSummary(evaluation: RowEvaluation): string {
+  if ((evaluation.llmJudgeCount ?? 0) === 0) return "n/a"
+  const parts = [
+    `calls=${evaluation.llmJudgeCount}`,
+    `no_conflict=${evaluation.llmJudgeNoConflictCount ?? 0}`,
+    `conflict=${evaluation.llmJudgeConflictCount ?? 0}`,
+    `unclear=${evaluation.llmJudgeUnclearCount ?? 0}`,
+    `resolved=${evaluation.llmJudgeResolved === null ? "n/a" : evaluation.llmJudgeResolved ? "yes" : "no"}`
+  ]
+  return escapeMarkdown(parts.join(", "))
 }
 
 function escapeMarkdown(value: string): string {
