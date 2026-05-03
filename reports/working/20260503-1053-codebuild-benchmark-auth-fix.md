@@ -19,7 +19,7 @@
 | R3 | Cognito auth parameter の特殊文字問題を修正する | 高 | 対応 |
 | R4 | token 解決失敗を CodeBuild 失敗として扱う | 高 | 対応 |
 | R5 | 変更範囲に応じたテストを実行する | 高 | 対応 |
-| R6 | commit/push と PR 作成を行う | 高 | commit/push/PR は後続工程で実施 |
+| R6 | commit/push と PR 作成を行う | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -36,6 +36,7 @@
 - infra テストに buildspec の失敗伝播検証と Cognito auth parameter の JSON 化検証を追加した。
 - `README.md` と `docs/OPERATIONS.md` に token 解決失敗時の runner 失敗と password 記号対応を追記した。
 - CDK snapshot を更新した。
+- `git commit` / `git push` を行い、GitHub Apps で `main` 向け PR #87 を作成した。
 
 ## 5. 成果物
 
@@ -47,6 +48,7 @@
 | `memorag-bedrock-mvp/infra/test/resolve-benchmark-auth-token.test.ts` | Test | password 記号を含む JSON parameter を検証 | R5 |
 | `memorag-bedrock-mvp/README.md` / `memorag-bedrock-mvp/docs/OPERATIONS.md` | Markdown | 運用仕様の追記 | R2, R4 |
 | `reports/working/20260503-1047-codebuild-auth-failure-plan.md` | Markdown | 初期計画とタスク分割 | R1 |
+| <https://github.com/tsuji-tomonori/rag-assist/pull/87> | Pull Request | `main` 向け PR | R6 |
 
 ## 6. 検証結果
 
@@ -62,16 +64,16 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.5 | 実装と検証は完了。commit/push/PR はこのレポート後の工程で実施する。 |
+| 指示網羅性 | 5.0 | 実装、検証、commit、push、PR 作成まで完了した。 |
 | 制約遵守 | 5.0 | worktree、ローカル skill、未実施検証の明記方針に従った。 |
 | 成果物品質 | 4.5 | 実 AWS 実行は未検証だが、失敗経路を CDK と単体テストで固定した。 |
 | 説明責任 | 5.0 | 原因、判断、検証、制約を記録した。 |
 | 検収容易性 | 5.0 | 変更ファイル、コマンド、結果を明示した。 |
 
-総合fit: 4.8 / 5.0（約96%）
-理由: 主要要件は満たしており、残る commit/push/PR 作成を後続工程として実施するため。
+総合fit: 4.9 / 5.0（約98%）
+理由: 主要要件は満たした。実 AWS CodeBuild 実行のみローカル環境の制約により未実施。
 
 ## 8. 未対応・制約・リスク
 
 - 実 AWS CodeBuild / Cognito / Secrets Manager での本番実行は未実施。
-- PR 作成は commit/push 後に GitHub Apps で実施予定。
+- PR #87 は作成済み。実環境の CodeBuild 再実行確認は PR 後の運用確認として残る。
