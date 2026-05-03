@@ -240,6 +240,25 @@ test("keeps CORS preflight routes unauthenticated", () => {
   }
 })
 
+test("fails the benchmark CodeBuild runner when auth token resolution fails", () => {
+  const template = synthesize().toJSON()
+  const codeBuildProjects = Object.values(template.Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::CodeBuild::Project")
+
+  assert.equal(codeBuildProjects.length, 1)
+  const buildSpec = JSON.parse((codeBuildProjects[0] as any).Properties.Source.BuildSpec)
+
+  for (const phase of ["install", "pre_build", "build", "post_build"]) {
+    assert.equal(buildSpec.phases[phase].commands[0], "set -euo pipefail")
+  }
+  assert.ok(buildSpec.phases.pre_build.commands.includes("API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""))
+  assert.ok(buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN"))
+  assert.equal(
+    buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""),
+    false
+  )
+})
+
 test("matches the synthesized CloudFormation snapshot", () => {
   const actual = `${JSON.stringify(stabilizeTemplate(synthesize().toJSON()), null, 2)}\n`
   const snapshotPath = path.join(__dirname, "__snapshots__", "memorag-mvp-stack.snapshot.json")
