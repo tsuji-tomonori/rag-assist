@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import {
   cancelBenchmarkRun,
   listBenchmarkRuns,
@@ -27,15 +27,15 @@ export function useBenchmarkRuns({
   const [benchmarkModelId, setBenchmarkModelId] = useState(defaultModelId)
   const [benchmarkConcurrency, setBenchmarkConcurrency] = useState(1)
 
-  async function refreshBenchmarkRuns() {
+  const refreshBenchmarkRuns = useCallback(async () => {
     setBenchmarkRuns(await listBenchmarkRuns())
-  }
+  }, [])
 
-  async function refreshBenchmarkSuites() {
+  const refreshBenchmarkSuites = useCallback(async () => {
     const suites = await listBenchmarkSuites()
     setBenchmarkSuites(suites)
     setBenchmarkSuiteId((current) => suites.find((suite) => suite.suiteId === current)?.suiteId ?? suites[0]?.suiteId ?? current)
-  }
+  }, [])
 
   async function onStartBenchmark() {
     setLoading(true)

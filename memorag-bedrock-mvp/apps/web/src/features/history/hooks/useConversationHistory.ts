@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { deleteConversationHistory, listConversationHistory, saveConversationHistory, type ConversationHistoryItem } from "../../../api.js"
 import type { Message } from "../../chat/types.js"
 
@@ -11,38 +11,38 @@ export function useConversationHistory({ setError }: { setError: (error: string 
     historyRef.current = history
   }, [history])
 
-  async function refreshHistory() {
+  const refreshHistory = useCallback(async () => {
     setHistory(await listConversationHistory())
-  }
+  }, [])
 
-  function rememberConversation(item: ConversationHistoryItem) {
+  const rememberConversation = useCallback((item: ConversationHistoryItem) => {
     const existing = historyRef.current.find((entry) => entry.id === item.id)
     const nextItem = { ...item, isFavorite: item.isFavorite ?? existing?.isFavorite ?? false }
     setHistory((prev) => [nextItem, ...prev.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20))
     saveConversationHistory(nextItem).catch((err) => console.warn("Failed to save conversation history", err))
-  }
+  }, [])
 
-  function rememberMessages(id: string, titleCandidate: string, messages: Message[]) {
+  const rememberMessages = useCallback((id: string, titleCandidate: string, messages: Message[]) => {
     const existingFavorite = historyRef.current.find((item) => item.id === id)?.isFavorite ?? false
     rememberConversation(buildConversationHistoryItem(id, titleCandidate, messages, existingFavorite))
-  }
+  }, [rememberConversation])
 
-  function toggleFavorite(item: ConversationHistoryItem) {
+  const toggleFavorite = useCallback((item: ConversationHistoryItem) => {
     const nextItem = { ...item, isFavorite: !item.isFavorite }
     setHistory((prev) => [nextItem, ...prev.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20))
     saveConversationHistory(nextItem).catch((err) => {
       console.warn("Failed to update conversation favorite", err)
       setError(err instanceof Error ? err.message : String(err))
     })
-  }
+  }, [setError])
 
-  function deleteHistoryItem(id: string) {
+  const deleteHistoryItem = useCallback((id: string) => {
     setHistory((prev) => prev.filter((entry) => entry.id !== id))
     deleteConversationHistory(id).catch((err) => {
       console.warn("Failed to delete conversation history", err)
       setError(err instanceof Error ? err.message : String(err))
     })
-  }
+  }, [setError])
 
   return {
     history,

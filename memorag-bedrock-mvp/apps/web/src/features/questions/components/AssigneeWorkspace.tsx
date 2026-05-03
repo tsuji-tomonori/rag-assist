@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react"
-import { answerQuestion, type HumanQuestion } from "../../../api.js"
+import type { answerQuestion, HumanQuestion } from "../../../api.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime, priorityLabel, statusLabel } from "../../../shared/utils/format.js"
 

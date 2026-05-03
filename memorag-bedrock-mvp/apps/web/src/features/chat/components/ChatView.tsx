@@ -1,5 +1,5 @@
 import { type FormEvent, type RefObject, useState } from "react"
-import { createQuestion, type DebugTrace, type HumanQuestion } from "../../../api.js"
+import type { createQuestion, DebugTrace, HumanQuestion } from "../../../api.js"
 import { DebugPanel } from "../../debug/components/DebugPanel.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime, formatTime } from "../../../shared/utils/format.js"

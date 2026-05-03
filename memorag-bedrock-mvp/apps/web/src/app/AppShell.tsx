@@ -1,10 +1,4 @@
 import { useEffect, useRef, useState } from "react"
-import {
-  type CurrentUser,
-  type DebugTrace,
-  type HumanQuestion,
-  type UserUsageSummary
-} from "../api.js"
 import type { AuthSession } from "../authClient.js"
 import { AppRoutes } from "./AppRoutes.js"
 import { RailNav } from "./components/RailNav.js"
@@ -19,8 +13,6 @@ import { useDocuments } from "../features/documents/hooks/useDocuments.js"
 import { useChatSession } from "../features/chat/hooks/useChatSession.js"
 import { useConversationHistory } from "../features/history/hooks/useConversationHistory.js"
 import { useQuestions } from "../features/questions/hooks/useQuestions.js"
-
-import type { Message } from "../features/chat/types.js"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -99,7 +91,6 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
   })
   const {
     history,
-    setHistory,
     currentConversationId,
     setCurrentConversationId,
     refreshHistory,
@@ -111,7 +102,6 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
   const {
     debugRuns,
     setDebugRuns,
-    selectedRunId,
     setSelectedRunId,
     expandedStepId,
     setExpandedStepId,
@@ -162,7 +152,6 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
   const {
     questions,
     selectedQuestionId,
-    setQuestions,
     setSelectedQuestionId,
     refreshQuestions,
     onCreateQuestion,
@@ -236,7 +225,7 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
   useEffect(() => {
     if (!canReadDebugRuns && debugMode) setDebugMode(false)
     if (!canWriteDocuments && file) setFile(null)
-  }, [canReadDebugRuns, canWriteDocuments, debugMode, file])
+  }, [canReadDebugRuns, canWriteDocuments, debugMode, file, setFile])
 
   useEffect(() => {
     if (activeView !== "benchmark" || !canReadBenchmarkRuns) return
@@ -244,13 +233,13 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
       refreshBenchmarkRuns().catch((err) => console.warn("Failed to poll benchmark runs", err))
     }, 15000)
     return () => window.clearInterval(timer)
-  }, [activeView, canReadBenchmarkRuns])
+  }, [activeView, canReadBenchmarkRuns, refreshBenchmarkRuns])
 
   useEffect(() => {
     if (messages.length === 0) return
     const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
     rememberMessages(currentConversationId, titleCandidate, messages)
-  }, [currentConversationId, messages])
+  }, [currentConversationId, messages, rememberMessages])
 
   useEffect(() => {
     if (activeView !== "chat") return
@@ -359,7 +348,9 @@ export function AppShell({ authSession, onSignOut }: { authSession: AuthSession;
             onModelChange: setBenchmarkModelId,
             onConcurrencyChange: setBenchmarkConcurrency,
             onStart: onStartBenchmark,
-            onRefresh: () => refreshBenchmarkRuns().catch((err) => setError(err instanceof Error ? err.message : String(err))),
+            onRefresh: () => {
+              void refreshBenchmarkRuns().catch((err) => setError(err instanceof Error ? err.message : String(err)))
+            },
             onCancel: onCancelBenchmark,
             onBack: () => setActiveView("chat")
           }}
