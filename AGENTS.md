@@ -8,6 +8,20 @@
 - `reports/working/*.md`、`reports/bugs/*.md`、同等の作業・障害レポートが関係する場合は本文を確認し、commit message / PR 本文に要点を反映する。
 - 実施していないテスト、確認、検証を実施済みとして書かない。
 
+## Completion Discipline
+- 常時適用: 完了条件を満たすまで「完了」と報告しない。
+- 実作業前にチェックリストと Done 条件（deliverables + validations）を明示する。
+- 計画のみ依頼でない限り、計画作成で止まらず実装・検証まで進める。
+- 検証失敗時は修正して再実行し、未解決失敗を残したまま完了扱いしない。
+- ブロック時は「完了」ではなく「blocked / partially complete」として報告する。
+- 不可逆操作（送金、注文、予約確定、破壊的削除など）は最終実行前に確認を要求する。
+- 長時間・複雑タスクでは以下 skills の併用を推奨する。
+  - `.agents/skills/task-completion-guardian/SKILL.md`
+  - `.agents/skills/verification-repair-loop/SKILL.md`
+  - `.agents/skills/milestone-exec-runner/SKILL.md`
+  - `.agents/skills/blocker-recovery/SKILL.md`
+  - `.agents/skills/completion-status-reporter/SKILL.md`
+
 ## Git Commit Message
 - 対象: Git commit message、コミットメッセージ、コミットコメント、git comment、`git commit`。ユーザーの「コメント」も Git 文脈では commit message と扱う。
 - 必読: `skills/japanese-git-commit-gitmoji/SKILL.md`
