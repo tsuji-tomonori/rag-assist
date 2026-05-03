@@ -8,7 +8,8 @@
     "きりの良いタイミングでテスト確認を行って git commit + push する",
     "すべて完了後に GitHub Apps で main 向け PR を作成する",
     "全体ロードマップ完了まで作業し、phase ごとにテストして commit する",
-    "PR #91 のレビュー指摘を後続でもよい項目まで含めて修正する"
+    "PR #91 のレビュー指摘を後続でもよい項目まで含めて修正する",
+    "web リファクタ後の同一性保証としてテストをすべて追加・修正する"
   ],
   "completed_items": [
     "worktree .worktrees/web-component-refactor と branch codex/web-component-refactor を作成した",
@@ -28,7 +29,11 @@
     "review follow-up として loading guard、debug selection、feature direct imports、AppShell state hook、ChatView component split、authClient feature 移動を実施した",
     "reports/working/20260503-1414-web-review-followups-report.md を作成した",
     "GitHub Apps で https://github.com/tsuji-tomonori/rag-assist/pull/91 を作成した",
-    "PR に semver:patch ラベルを付与した"
+    "PR に semver:patch ラベルを付与した",
+    "App 統合 contract test と legacy API re-export test を追加した",
+    "Playwright visual regression と screenshot baseline を追加した",
+    "既存 E2E smoke の local data 隔離と削除導線を修正した",
+    "reports/working/20260503-1454-web-test-contract-coverage-report.md を作成した"
   ],
   "remaining_items": [],
   "blocked_items": [],
@@ -45,7 +50,7 @@
     {
       "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web",
       "result": "pass",
-      "note": "review follow-up 最終時点で 9 files / 58 tests"
+      "note": "test follow-up 最終時点で 9 files / 68 tests"
     },
     {
       "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web",
@@ -59,6 +64,21 @@
     {
       "command": "git diff --check",
       "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run test:coverage -w @memorag-mvp/web",
+      "result": "pass",
+      "note": "C0 statements 85.9%, C1 branches 79.46%"
+    },
+    {
+      "command": "npm exec -w @memorag-mvp/web -- playwright test --grep @visual",
+      "result": "pass",
+      "note": "6 visual regression tests"
+    },
+    {
+      "command": "npm exec -w @memorag-mvp/web -- playwright test",
+      "result": "pass",
+      "note": "10 e2e tests"
     }
   ],
   "next_action": "none",

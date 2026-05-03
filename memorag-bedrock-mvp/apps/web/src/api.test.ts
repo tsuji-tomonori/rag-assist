@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 import {
   chat,
   answerQuestion,
+  assignUserRoles,
   cancelBenchmarkRun,
   createBenchmarkDownload,
   createQuestion,
@@ -9,6 +10,8 @@ import {
   deleteDocument,
   fileToBase64,
   getDebugRun,
+  getMe,
+  getRuntimeConfig,
   listBenchmarkRuns,
   listBenchmarkSuites,
   listConversationHistory,
@@ -17,9 +20,11 @@ import {
   listQuestions,
   resolveQuestion,
   saveConversationHistory,
+  setAuthTokenProvider,
   startBenchmarkRun,
   uploadDocument
 } from "./api.js"
+import * as api from "./api.js"
 
 function mockFetch(response: unknown, ok = true) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -32,6 +37,36 @@ function mockFetch(response: unknown, ok = true) {
 }
 
 describe("API client", () => {
+  it("keeps legacy api.ts value exports available", () => {
+    const expectedFunctions = [
+      api.getRuntimeConfig,
+      api.setAuthTokenProvider,
+      api.fileToBase64,
+      api.getMe,
+      api.listDocuments,
+      api.uploadDocument,
+      api.deleteDocument,
+      api.chat,
+      api.createQuestion,
+      api.listQuestions,
+      api.listConversationHistory,
+      api.saveConversationHistory,
+      api.listBenchmarkRuns,
+      api.startBenchmarkRun,
+      api.listManagedUsers,
+      api.assignUserRoles
+    ]
+
+    for (const exported of expectedFunctions) {
+      expect(exported).toBeTypeOf("function")
+    }
+
+    expect(getRuntimeConfig).toBe(api.getRuntimeConfig)
+    expect(setAuthTokenProvider).toBe(api.setAuthTokenProvider)
+    expect(getMe).toBe(api.getMe)
+    expect(assignUserRoles).toBe(api.assignUserRoles)
+  })
+
   it("loads runtime config once and calls document APIs", async () => {
     const fetchMock = vi
       .fn()

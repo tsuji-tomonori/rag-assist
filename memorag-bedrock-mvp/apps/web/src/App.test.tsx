@@ -288,6 +288,24 @@ async function renderAuthenticatedApp() {
   await userEvent.click(screen.getByRole("button", { name: "サインイン" }))
 }
 
+function findRequest(fetchMock: ReturnType<typeof vi.fn>, suffix: string, method = "GET") {
+  return fetchMock.mock.calls.find(([url, init]) => {
+    const requestMethod = (init as RequestInit | undefined)?.method ?? "GET"
+    return String(url).endsWith(suffix) && requestMethod === method
+  })
+}
+
+function requestBodies(fetchMock: ReturnType<typeof vi.fn>, suffix: string, method = "POST") {
+  return fetchMock.mock.calls
+    .filter(([url, init]) => String(url).endsWith(suffix) && ((init as RequestInit | undefined)?.method ?? "GET") === method)
+    .map(([, init]) => JSON.parse(String((init as RequestInit).body)))
+}
+
+function requestBody(call: unknown[] | undefined) {
+  expect(call).toBeTruthy()
+  return JSON.parse(String((call?.[1] as RequestInit).body))
+}
+
 describe("App document management", () => {
   it("shows copy buttons and copies prompt/answer text", async () => {
     mockAppFetch()
@@ -429,6 +447,39 @@ describe("App chat and upload flow", () => {
     expect(screen.getByLabelText("質問")).toHaveValue("")
   })
 
+  it("keeps the chat request payload unchanged", async () => {
+    const fetchMock = mockAppFetch()
+    await renderAuthenticatedApp()
+
+    await userEvent.type(screen.getByLabelText("質問"), "ソフトウェア要求の分類を洗い出して")
+    await userEvent.click(screen.getByTitle("送信"))
+
+    await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+
+    expect(requestBody(findRequest(fetchMock, "/chat", "POST"))).toEqual({
+      question: "ソフトウェア要求の分類を洗い出して",
+      modelId: "amazon.nova-lite-v1:0",
+      embeddingModelId: "amazon.titan-embed-text-v2:0",
+      clueModelId: "amazon.nova-lite-v1:0",
+      topK: 6,
+      minScore: 0.2,
+      includeDebug: false
+    })
+  })
+
+  it("adds includeDebug to the chat request only when debug mode is enabled", async () => {
+    const fetchMock = mockAppFetch()
+    await renderAuthenticatedApp()
+
+    await userEvent.click(await screen.findByRole("checkbox"))
+    await userEvent.type(screen.getByLabelText("質問"), "分類を教えて")
+    await userEvent.click(screen.getByTitle("送信"))
+
+    await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+
+    expect(requestBody(findRequest(fetchMock, "/chat", "POST"))).toMatchObject({ includeDebug: true })
+  })
+
   it("uploads an attached file and answers a question from citations", async () => {
     const fetchMock = mockAppFetch()
     await renderAuthenticatedApp()
@@ -446,10 +497,21 @@ describe("App chat and upload flow", () => {
     const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/chat") && (init as RequestInit | undefined)?.method === "POST")
     expect(uploadCall).toBeTruthy()
     expect(chatCall).toBeTruthy()
+
+    const writeCalls = fetchMock.mock.calls
+      .map(([url, init]) => ({
+        url: String(url),
+        method: (init as RequestInit | undefined)?.method ?? "GET"
+      }))
+      .filter((call) => call.method === "POST" && (call.url === "http://api.test/documents" || call.url === "http://api.test/chat"))
+    expect(writeCalls).toEqual([
+      { url: "http://api.test/documents", method: "POST" },
+      { url: "http://api.test/chat", method: "POST" }
+    ])
   })
 
   it("ingests an attached file without asking a question", async () => {
-    mockAppFetch()
+    const fetchMock = mockAppFetch()
     await renderAuthenticatedApp()
 
     const input = (await screen.findByTitle("資料を添付")).querySelector<HTMLInputElement>('input[type="file"]')
@@ -457,6 +519,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("送信"))
 
     expect(await screen.findByText("資料を取り込みました。知りたいことを入力してください。")).toBeInTheDocument()
+    expect(findRequest(fetchMock, "/chat", "POST")).toBeUndefined()
   })
 
   it("renders debug trace details, downloads JSON, and resets the conversation", async () => {
@@ -519,6 +582,10 @@ describe("App chat and upload flow", () => {
 
     expect(await screen.findByText("処理中の表示を確認したい")).toBeInTheDocument()
     expect(screen.getByTitle("送信")).toBeDisabled()
+    await userEvent.click(screen.getByTitle("送信"))
+    expect(requestBodies(fetchMock, "/chat")).toHaveLength(1)
+    await waitFor(() => expect(screen.getAllByText("処理中").length).toBeGreaterThanOrEqual(1))
+    expect(screen.getByLabelText("デバッグパネル")).toHaveAttribute("aria-busy", "true")
 
     resolveChat?.(
       response({
@@ -531,6 +598,7 @@ describe("App chat and upload flow", () => {
     )
     expect(await screen.findByText("処理中表示を確認しました。")).toBeInTheDocument()
     expect(screen.getByLabelText("実行ID")).toHaveValue("run-processing")
+    expect(screen.getAllByText("1.25 秒").length).toBeGreaterThanOrEqual(1)
   })
 
   it("selects a persisted debug run from history", async () => {
@@ -665,6 +733,37 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("条件に一致する履歴はありません。")).toBeInTheDocument()
   })
 
+  it("saves conversation history with the same message payload shape", async () => {
+    const fetchMock = mockAppFetch()
+    await renderAuthenticatedApp()
+
+    await userEvent.type(screen.getByLabelText("質問"), "分類を教えて")
+    await userEvent.click(screen.getByTitle("送信"))
+
+    await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+
+    await waitFor(() => {
+      const savedHistory = requestBodies(fetchMock, "/conversation-history").find((body) => body.messages?.length === 2)
+      expect(savedHistory).toMatchObject({
+        schemaVersion: 1,
+        title: "分類を教えて",
+        isFavorite: false,
+        messages: [
+          { role: "user", text: "分類を教えて" },
+          {
+            role: "assistant",
+            text: "ソフトウェア要求は製品要求とプロジェクト要求に分類されます。",
+            sourceQuestion: "分類を教えて"
+          }
+        ]
+      })
+      expect(savedHistory?.messages[1].result).toMatchObject({
+        answer: "ソフトウェア要求は製品要求とプロジェクト要求に分類されます。",
+        isAnswerable: true
+      })
+    })
+  })
+
   it("keeps Shift+Enter as a newline and surfaces chat errors", async () => {
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
@@ -730,6 +829,19 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByText("担当者へ送信"))
 
     await screen.findByText("担当者へ送信済み")
+    const questionPayload = requestBodies(fetchMock, "/questions").find((body) => body.sourceQuestion === "今日山田さんは何を食べた?")
+    expect(questionPayload).toMatchObject({
+      title: "今日山田さんは何を食べた?について確認したい",
+      question: "今日山田さんは何を食べた?\n\n資料を確認しましたが、該当する情報が見つかりませんでした。ご教示いただけますでしょうか。",
+      requesterName: "山田 太郎",
+      requesterDepartment: "利用部門",
+      assigneeDepartment: "人事部",
+      category: "手続き",
+      priority: "high",
+      sourceQuestion: "今日山田さんは何を食べた?",
+      chatAnswer: "資料からは回答できません。"
+    })
+
     await userEvent.click(screen.getByTitle("担当者対応"))
     expect(await screen.findByText("問い合わせ概要")).toBeInTheDocument()
     expect(screen.getByText(/件が対応待ち/)).toBeInTheDocument()
@@ -794,6 +906,79 @@ describe("App chat and upload flow", () => {
 
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
+  })
+
+  it.each([
+    {
+      groups: ["CHAT_USER"],
+      visible: ["チャット", "履歴", "お気に入り"],
+      hidden: ["担当者対応", "性能テスト", "ドキュメント", "管理者設定"],
+      expectedGetSuffixes: ["/me", "/documents", "/conversation-history"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+    },
+    {
+      groups: ["ANSWER_EDITOR"],
+      visible: ["チャット", "担当者対応", "履歴", "お気に入り", "管理者設定"],
+      hidden: ["性能テスト", "ドキュメント"],
+      expectedGetSuffixes: ["/me", "/questions"],
+      forbiddenGetSuffixes: ["/documents", "/debug-runs", "/benchmark-runs", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+    },
+    {
+      groups: ["RAG_GROUP_MANAGER"],
+      visible: ["チャット", "履歴", "性能テスト", "お気に入り", "ドキュメント", "管理者設定"],
+      hidden: ["担当者対応"],
+      expectedGetSuffixes: ["/me", "/documents", "/benchmark-runs", "/benchmark-suites"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+    },
+    {
+      groups: ["USER_ADMIN"],
+      visible: ["チャット", "履歴", "お気に入り", "管理者設定"],
+      hidden: ["担当者対応", "性能テスト", "ドキュメント"],
+      expectedGetSuffixes: ["/me", "/admin/users", "/admin/usage"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/roles", "/admin/costs"]
+    },
+    {
+      groups: ["ACCESS_ADMIN"],
+      visible: ["チャット", "履歴", "お気に入り", "管理者設定"],
+      hidden: ["担当者対応", "性能テスト", "ドキュメント"],
+      expectedGetSuffixes: ["/me", "/admin/roles", "/admin/audit-log"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/users", "/admin/usage", "/admin/costs"]
+    },
+    {
+      groups: ["COST_AUDITOR"],
+      visible: ["チャット", "履歴", "お気に入り", "管理者設定"],
+      hidden: ["担当者対応", "性能テスト", "ドキュメント"],
+      expectedGetSuffixes: ["/me", "/admin/costs"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/users", "/admin/roles", "/admin/usage"]
+    }
+  ])("keeps role based navigation and initial API loading unchanged for $groups", async ({ groups, visible, hidden, expectedGetSuffixes, forbiddenGetSuffixes }) => {
+    window.sessionStorage.setItem(
+      "memorag.auth.session",
+      JSON.stringify({
+        email: "tester@example.com",
+        idToken: jwtWithGroups(groups),
+        expiresAt: Date.now() + 3600_000
+      })
+    )
+    const fetchMock = mockAppFetch(groups)
+    render(<App />)
+
+    await screen.findByTitle("チャット")
+
+    for (const title of visible) {
+      expect(screen.getByTitle(title)).toBeInTheDocument()
+    }
+    for (const title of hidden) {
+      expect(screen.queryByTitle(title)).not.toBeInTheDocument()
+    }
+    await waitFor(() => {
+      for (const suffix of expectedGetSuffixes) {
+        expect(findRequest(fetchMock, suffix)).toBeTruthy()
+      }
+    })
+    for (const suffix of forbiddenGetSuffixes) {
+      expect(findRequest(fetchMock, suffix)).toBeUndefined()
+    }
   })
 
   it("shows the admin settings icon only for access admins", async () => {
