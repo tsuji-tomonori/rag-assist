@@ -1,37 +1,20 @@
-import { useState } from "react"
 import { AppShell } from "./app/AppShell.js"
-import { completeNewPasswordChallenge, confirmSignUp, getStoredAuthSession, signIn, signOut, signUp, type AuthSession } from "./authClient.js"
+import { useAuthSession } from "./features/auth/hooks/useAuthSession.js"
 import LoginPage from "./LoginPage.js"
 
 export default function App() {
-  const [authSession, setAuthSession] = useState<AuthSession | null>(() => getStoredAuthSession())
+  const { authSession, login, signUp, confirmSignUp, completeNewPassword, logout } = useAuthSession()
 
   if (!authSession) {
     return (
       <LoginPage
-        onLogin={async (payload) => {
-          const result = await signIn(payload)
-          if (!("type" in result)) setAuthSession(result)
-          return result
-        }}
+        onLogin={login}
         onSignUp={signUp}
         onConfirmSignUp={confirmSignUp}
-        onCompleteNewPassword={async (payload) => {
-          const session = await completeNewPasswordChallenge(payload)
-          setAuthSession(session)
-          return session
-        }}
+        onCompleteNewPassword={completeNewPassword}
       />
     )
   }
 
-  return (
-    <AppShell
-      authSession={authSession}
-      onSignOut={() => {
-        signOut()
-        setAuthSession(null)
-      }}
-    />
-  )
+  return <AppShell authSession={authSession} onSignOut={logout} />
 }
