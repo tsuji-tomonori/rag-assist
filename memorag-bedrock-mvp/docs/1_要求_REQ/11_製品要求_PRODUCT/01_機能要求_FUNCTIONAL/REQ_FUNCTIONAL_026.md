@@ -13,6 +13,7 @@
 
 - AC-FR026-001: `search_evidence` は vector store への直接検索ではなく、`POST /search` と同等の hybrid retriever 実装を呼び出すこと。
 - AC-FR026-002: evidence 候補は lexical result と semantic result を chunk key で重複排除し、RRF または同等の順位融合で統合されること。
+- AC-FR026-005: 複数 clue / query から得た evidence 候補は最大 score だけで統合せず、順位融合または同等の方法で統合されること。
 - AC-FR026-003: チャット回答経路の retrieval は `AppUser` または同等の利用者 context を受け取り、ACL guard を適用すること。
 - AC-FR026-004: debug trace の検索 step は query 数、index/alias version 情報、lexical/semantic/fused 件数、source 件数を含む retrieval diagnostics を記録できること。
 
@@ -40,10 +41,10 @@
 | 種類 | 機能要求 |
 | 依存関係 | `FR-016`, `FR-017`, `FR-018`, `FR-023`, `NFR-012`, `TC-001`, `SQ-001` |
 | 衝突 | hybrid retrieval により latency と trace 情報量が増える |
-| 受け入れ基準 | `AC-FR026-001` から `AC-FR026-004` |
+| 受け入れ基準 | `AC-FR026-001` から `AC-FR026-005` |
 | 優先度 | S |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-02 初版 |
+| 変更履歴 | 2026-05-02 初版 / 2026-05-03 複数 clue の順位融合条件を追加 |
 
 ## 妥当性確認
 

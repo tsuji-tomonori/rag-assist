@@ -137,6 +137,29 @@ test("fixed workflow branches on evaluate_search_progress decisions", async () =
   assert.deepEqual(evaluationSteps.map((step) => step.output?.searchDecision), ["continue_search", "done"])
 })
 
+test("fixed workflow refuses unresolved conflicting evidence when search budget ends", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({ fileName: "deadline-a.txt", text: "申請期限は翌月5営業日です。", skipMemory: true })
+  await service.ingest({ fileName: "deadline-b.txt", text: "申請期限は月末です。", skipMemory: true })
+
+  const result = await service.chat({
+    question: "申請期限はいつですか？",
+    includeDebug: true,
+    minScore: 0.01,
+    maxIterations: 1
+  })
+
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(result.isAnswerable, false)
+  assert.equal(result.answer, "資料からは回答できません。")
+  assert.equal(labels.includes("generate_answer"), false)
+  const evaluateStep = result.debug?.steps.find((step) => step.label === "evaluate_search_progress")
+  const evaluation = evaluateStep?.output?.retrievalEvaluation as Record<string, unknown> | undefined
+  assert.equal(evaluation?.retrievalQuality, "conflicting")
+  assert.equal(result.debug?.steps.at(-1)?.label, "finalize_refusal")
+})
+
 test("fixed workflow merges node updates into state and appends trace entries", () => {
   const initial = state({
     normalizedQuery: "old query",
@@ -315,9 +338,9 @@ test("fixed workflow search cycle loops until maxIterations when retrieval score
   const actionSteps = result.debug?.steps.filter((step) => step.label === "execute_search_action") ?? []
   assert.match(actionSteps[0]?.summary ?? "", /action=evidence_search, hits=1, new=1/)
   assert.match(actionSteps[0]?.detail ?? "", /newEvidenceCount=1 topScore=/)
-  assert.match(actionSteps[1]?.summary ?? "", /action=evidence_search, hits=1, new=0/)
+  assert.match(actionSteps[1]?.summary ?? "", /action=query_rewrite, hits=1, new=0/)
   assert.match(actionSteps[1]?.detail ?? "", /newEvidenceCount=0 topScore=/)
-  assert.match(actionSteps[1]?.detail ?? "", /検索で1件取得し、新規根拠は0件でした。/)
+  assert.match(actionSteps[1]?.detail ?? "", /query rewrite 後のhybrid検索で1件取得し、新規根拠は0件でした。/)
 })
 
 test("fixed workflow search cycle stops after two consecutive no-new-evidence iterations", async () => {

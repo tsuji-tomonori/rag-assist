@@ -7,6 +7,7 @@ export type VectorFilter = {
   department?: string
   source?: string
   docType?: string
+  lifecycleStatus?: "active" | "staging" | "superseded"
   allowedGroups?: string[]
 }
 

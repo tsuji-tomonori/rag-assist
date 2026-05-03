@@ -15,6 +15,7 @@
 - AC-FR017-002: `SearchAction` は whitelisted action のみを表現し、自由な外部 tool call を許可しないこと。
 - AC-FR017-003: 実行済み action と observation が debug trace から確認できること。
 - AC-FR017-004: required fact の `supported`、`partially_supported`、`missing`、`conflicting` 状態を更新できること。
+- AC-FR017-005: `evidence_search`、`query_rewrite`、`expand_context` は action executor から実行され、`rerank` と `finalize_refusal` は検索 loop の停止 action として扱われること。
 
 ## 要件の源泉・背景
 
@@ -38,10 +39,10 @@
 | 種類 | 機能要求 |
 | 依存関係 | `state.ts`、`graph.ts`、`trace.ts` |
 | 衝突 | state 複雑化による保守負荷 |
-| 受け入れ基準 | `AC-FR017-001` から `AC-FR017-004` |
+| 受け入れ基準 | `AC-FR017-001` から `AC-FR017-005` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-01 初版 |
+| 変更履歴 | 2026-05-01 初版 / 2026-05-03 action executor 条件を追加 |
 
 ## 妥当性確認
 

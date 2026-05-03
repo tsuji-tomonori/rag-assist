@@ -1719,7 +1719,7 @@ button:disabled {
 .document-table-row {
   min-width: 760px;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 90px 90px 180px 76px;
+  grid-template-columns: minmax(220px, 1fr) 90px 90px 180px 116px;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid #e5ebf3;
@@ -1742,6 +1742,78 @@ button:disabled {
   color: #68758f;
   background: #f8fafc;
   font-size: 12px;
+  font-weight: 900;
+}
+
+.document-table-row [role="cell"]:last-child {
+  display: flex;
+  gap: 8px;
+}
+
+.migration-list,
+.alias-list,
+.alias-audit-list {
+  display: grid;
+  gap: 10px;
+}
+
+.migration-card,
+.alias-card,
+.alias-audit-list div {
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  color: #273750;
+  background: #fbfdff;
+}
+
+.migration-card,
+.alias-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.migration-card div,
+.alias-card div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.migration-card span,
+.alias-card span,
+.alias-audit-list small {
+  min-width: 0;
+  color: #52627c;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.migration-card small,
+.alias-card small,
+.alias-audit-list span {
+  color: #68758f;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.inline-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.inline-action-group button {
+  min-height: 32px;
+  border: 1px solid #cbd9f0;
+  border-radius: 7px;
+  padding: 0 10px;
+  color: #2f4f7f;
+  background: #f8fbff;
   font-weight: 900;
 }
 
@@ -1832,6 +1904,7 @@ button:disabled {
 }
 
 .user-admin-panel,
+.alias-admin-panel,
 .admin-section-panel[aria-label="利用状況一覧"],
 .admin-audit-panel {
   grid-column: 1 / -1;
@@ -1859,6 +1932,53 @@ button:disabled {
   color: #68758f;
   font-size: 12px;
   font-weight: 900;
+}
+
+.alias-editor-form {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.8fr) minmax(220px, 1.4fr) minmax(140px, 0.8fr) auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.alias-editor-form label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  color: #52627c;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.alias-editor-form input {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid #cfd8e6;
+  border-radius: 7px;
+  padding: 0 10px;
+  color: #182842;
+  background: #fff;
+  font-weight: 800;
+}
+
+.alias-editor-form button {
+  align-self: end;
+  min-height: 38px;
+  border: 1px solid #aac3f4;
+  border-radius: 7px;
+  padding: 0 14px;
+  color: #fff;
+  background: #2f6fed;
+  font-weight: 900;
+}
+
+.alias-card.approved {
+  border-color: #9ed4b7;
+}
+
+.alias-card.disabled {
+  color: #68758f;
+  background: #f4f6f9;
 }
 
 .admin-create-user-form input,

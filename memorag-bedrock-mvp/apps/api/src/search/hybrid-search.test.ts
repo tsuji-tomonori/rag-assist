@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { mkdtemp } from "node:fs/promises"
+import { mkdtemp, readFile, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
@@ -100,6 +100,7 @@ test("service search applies ACL and metadata filters across lexical and vector 
       aclGroup: "GROUP_B"
     }
   })
+  await removeLifecycleStatusFromLocalVectors(dataDir)
 
   const groupAUser = user(["GROUP_A"])
   const groupASearch = await service.search({ query: "policy approval", topK: 10, filters: { tenantId: "tenant-a", source: "notion" } }, groupAUser)
@@ -136,6 +137,63 @@ test("service search applies ACL and metadata filters across lexical and vector 
   assert.equal(groupBOnlySearch.results.some((result) => result.fileName === "group-a-policy.md"), false)
 })
 
+test("service search publishes and reuses immutable lexical index artifacts", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-lexical-artifact-"))
+  const objectStore = new LocalObjectStore(dataDir)
+  const service = new MemoRagService({ ...createLocalDeps(dataDir), objectStore })
+
+  await service.ingest({
+    fileName: "policy.md",
+    text: "申請承認ワークフローの確認条件は責任者承認です。approval policy.",
+    skipMemory: true,
+    metadata: { tenantId: "tenant-a", aclGroup: "GROUP_A" }
+  })
+
+  const first = await service.search({ query: "approval", topK: 10 }, user(["GROUP_A"]))
+  assert.ok(first.results.length >= 1)
+  assert.match(first.diagnostics.indexVersion, /^lexical:[a-f0-9]{8}$/)
+
+  const keys = await objectStore.listKeys("lexical-index/")
+  assert.ok(keys.includes("lexical-index/latest.json"))
+  assert.ok(keys.some((key) => /^lexical-index\/lexical_[a-f0-9]{8}\.json$/.test(key)))
+  const latest = JSON.parse(await objectStore.getText("lexical-index/latest.json")) as { indexVersion?: string }
+  assert.equal(latest.indexVersion, first.diagnostics.indexVersion)
+
+  const second = await service.search({ query: "申請承認", topK: 10 }, user(["GROUP_A"]))
+  assert.equal(second.diagnostics.indexVersion, first.diagnostics.indexVersion)
+})
+
+test("service search expands published reviewed aliases without returning alias details", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-published-alias-"))
+  const service = new MemoRagService(createLocalDeps(dataDir))
+  const manager = user(["RAG_GROUP_MANAGER"])
+
+  await service.ingest({
+    fileName: "vacation.md",
+    text: "年次有給休暇の申請期限は取得日の3営業日前です。",
+    skipMemory: true,
+    metadata: { tenantId: "tenant-a", aclGroup: "GROUP_A" }
+  })
+  const alias = await service.createAlias(manager, {
+    term: "pto",
+    expansions: ["年次有給休暇"],
+    scope: { tenantId: "tenant-a" }
+  })
+  await service.reviewAlias(manager, alias.aliasId, { decision: "approve" })
+  await service.publishAliases(manager)
+
+  const result = await service.search({ query: "pto", topK: 10, filters: { tenantId: "tenant-a" } }, user(["GROUP_A"]))
+  assert.equal(result.results[0]?.fileName, "vacation.md")
+  assert.match(result.diagnostics.aliasVersion, /^alias:[a-f0-9]{8}$/)
+  const unfilteredResult = await service.search({ query: "pto", topK: 10 }, user(["GROUP_A"]))
+  assert.equal(unfilteredResult.results[0]?.fileName, "vacation.md")
+  const payload = JSON.stringify(result)
+  assert.equal(payload.includes("pto"), true)
+  assert.equal(payload.includes("年次有給休暇"), true)
+  assert.equal(payload.includes("aliasId"), false)
+  assert.equal(payload.includes("manager-1"), false)
+})
+
 function lexicalDoc(id: string, documentId: string, fileName: string, text: string) {
   return {
     id,
@@ -166,4 +224,13 @@ function user(cognitoGroups: string[]): AppUser {
     email: "user-1@example.com",
     cognitoGroups
   }
+}
+
+async function removeLifecycleStatusFromLocalVectors(dataDir: string): Promise<void> {
+  const vectorPath = path.join(dataDir, "evidence-vectors.json")
+  const raw = JSON.parse(await readFile(vectorPath, "utf-8")) as { records: Array<{ metadata?: { lifecycleStatus?: string } }> }
+  for (const record of raw.records) {
+    if (record.metadata) delete record.metadata.lifecycleStatus
+  }
+  await writeFile(vectorPath, JSON.stringify(raw, null, 2))
 }

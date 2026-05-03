@@ -69,6 +69,7 @@ task benchmark:sample
 | `EMBEDDING_MODEL_ID` | 埋め込みモデル | `amazon.titan-embed-text-v2:0` |
 | `EMBEDDING_DIMENSIONS` | vector次元数 | `1024` |
 | `MIN_RETRIEVAL_SCORE` | no-answer判定閾値 | `0.20` |
+| `PUBLISH_LEXICAL_INDEX_ON_SEARCH` | 検索 path で lexical index artifact を生成するか。production では read-only 既定 | production以外は`true` |
 | `DEBUG_DOWNLOAD_BUCKET_NAME` | debug trace JSON download用S3 bucket | 未設定 |
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | debug trace download URL有効期限 | `900` |
 
@@ -113,9 +114,15 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 - 担当者対応ビューが表示されない場合は、対象ユーザーに `ANSWER_EDITOR` group が付与され、ID token の `cognito:groups` に反映されているか確認する。
 - AWS実行時にBedrockエラーが出る場合はリージョン、モデル有効化、IAMの `bedrock:InvokeModel` と `bedrock:Converse` を確認する。
 
+## 再インデックス運用
+
+文書の chunker、extractor、embedding model、dimensions を変える場合は、`POST /documents/{documentId}/reindex/stage` で staged document を作成し、`GET /documents/reindex-migrations` で状態を確認してから `cutover` する。検索 runtime は `lifecycleStatus=active` の manifest/vector だけを対象にするため、staging 中の document は通常検索に出ない。cutover 後に問題が見つかった場合は `rollback` で旧 source と structured block ledger から active document を復元する。
+
 ## ベンチマークレポート
 
 `task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` と fact slot 系の期待値を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、fact slot coverage、p95 latencyを確認できる。`includeDebug=true` の benchmark response から `retrieval_evaluator` の `riskSignals` と `llmJudge` も集計し、judge 発火率、`NO_CONFLICT` / `CONFLICT` / `UNCLEAR` の内訳、解消率を report に出力する。
+
+benchmark runner は summary と report に quality review を出力する。`BASELINE_SUMMARY=<過去のsummary.json>` を指定すると、`answerableAccuracy`、`retrievalRecallAt20`、`refusalPrecision`、`unsupportedSentenceRate`、`p95LatencyMs` などの劣化を閾値で検知する。検索 miss や期待語不足の failure から alias candidate も出力するため、`/admin/aliases` の draft 作成候補としてレビューできる。
 
 管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/` と `datasets/search/`、成果物は `runs/<runId>/` に保存する。CodeBuild の生成物は customer managed KMS key で暗号化し、Step Functions は CloudWatch Logs に `ALL` event を出力する。X-Ray tracing は trace 数に応じた追加コストを避けるため MVP では無効にし、必要になった時点で有効化を再検討する。production API を叩く runner の bearer token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から CodeBuild が自動取得する。管理画面の実行者が token を入力する必要はない。
 
