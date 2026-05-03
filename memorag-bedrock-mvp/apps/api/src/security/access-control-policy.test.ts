@@ -40,6 +40,7 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/admin/costs", permission: "cost:read:all" },
   { method: "get", path: "/documents", permission: "rag:doc:read" },
   { method: "post", path: "/documents", permission: "rag:doc:write:group" },
+  { method: "post", path: "/documents/{documentId}/reindex", permission: "rag:index:rebuild:group" },
   { method: "delete", path: "/documents/{documentId}", permission: "rag:doc:delete:group" },
   { method: "post", path: "/chat", permission: "chat:create" },
   { method: "post", path: "/search", permission: "rag:doc:read" },

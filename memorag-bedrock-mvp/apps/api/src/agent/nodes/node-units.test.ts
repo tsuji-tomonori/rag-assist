@@ -231,6 +231,65 @@ test("answer support verifier accepts supported answers and rejects unsupported 
   assert.deepEqual(unsupported.answerSupport?.supportingChunkIds, ["doc-1-chunk-0001"])
 })
 
+test("answer support verifier repairs unsupported answers once with supported-only facts", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  let supportCalls = 0
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("ANSWER_SUPPORT_JSON")) {
+        supportCalls += 1
+        if (supportCalls === 1) {
+          return JSON.stringify({
+            supported: false,
+            unsupportedSentences: [{ sentence: "例外時は部長承認が必要です。", reason: "根拠がありません。" }],
+            supportingChunkIds: ["chunk-0001"],
+            contradictionChunkIds: [],
+            confidence: 0.7,
+            totalSentences: 2,
+            reason: "一部 unsupported です。"
+          })
+        }
+        return JSON.stringify({
+          supported: true,
+          unsupportedSentences: [],
+          supportingChunkIds: ["chunk-0001"],
+          contradictionChunkIds: [],
+          confidence: 0.9,
+          totalSentences: 1,
+          reason: "修復後の回答は根拠で支持されています。"
+        })
+      }
+      if (prompt.includes("SUPPORTED_ONLY_ANSWER_JSON")) {
+        return JSON.stringify({ isAnswerable: true, answer: "申請期限は翌月5営業日です。", usedChunkIds: ["chunk-0001"] })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const repaired = await createVerifyAnswerSupportNode(deps)(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      answer: "申請期限は翌月5営業日です。例外時は部長承認が必要です。",
+      selectedChunks: [chunk],
+      citations: [
+        {
+          documentId: "doc-1",
+          fileName: "doc.txt",
+          chunkId: "chunk-0001",
+          score: 0.9,
+          text: chunk.metadata.text ?? ""
+        }
+      ]
+    })
+  )
+
+  assert.equal(repaired.answer, "申請期限は翌月5営業日です。")
+  assert.equal(repaired.answerSupport?.supported, true)
+  assert.equal(repaired.citations?.length, 1)
+})
+
 test("finalize response preserves grounded answers and converts invalid final states to refusals", async () => {
   assert.deepEqual(await finalizeResponse(state({ answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 }, answer: "  OK  " })), {
     answer: "OK"

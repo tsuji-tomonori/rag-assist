@@ -46,6 +46,7 @@ export const config = {
   maxUploadChars: numberEnv("MAX_UPLOAD_CHARS", 500_000),
   chunkSizeChars: numberEnv("CHUNK_SIZE_CHARS", 1200),
   chunkOverlapChars: numberEnv("CHUNK_OVERLAP_CHARS", 200),
+  embeddingConcurrency: numberEnv("EMBEDDING_CONCURRENCY", 3),
   debugDownloadBucketName: process.env.DEBUG_DOWNLOAD_BUCKET_NAME ?? "",
   debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900)
 } as const

@@ -23,6 +23,14 @@ export type VectorMetadata = {
   objectKey?: string
   sourceUri?: string
   text?: string
+  sectionPath?: string[]
+  heading?: string
+  parentSectionId?: string
+  previousChunkId?: string
+  nextChunkId?: string
+  chunkHash?: string
+  pageStart?: number
+  pageEnd?: number
   tenantId?: string
   department?: string
   source?: string
@@ -70,6 +78,7 @@ export type DocumentManifest = {
   memoryPromptVersion?: string
   indexVersion?: string
   pipelineVersions?: PipelineVersions
+  chunks?: ChunkMetadata[]
   chunkCount: number
   memoryCardCount: number
   createdAt: string
@@ -77,11 +86,14 @@ export type DocumentManifest = {
 
 export type MemoryCard = {
   id: string
+  level?: "document" | "section" | "concept"
   summary: string
   keywords: string[]
   likelyQuestions: string[]
   constraints: string[]
   text: string
+  sourceChunkIds?: string[]
+  sectionPath?: string[]
 }
 
 export type Chunk = {
@@ -89,7 +101,17 @@ export type Chunk = {
   text: string
   startChar: number
   endChar: number
+  sectionPath?: string[]
+  heading?: string
+  parentSectionId?: string
+  previousChunkId?: string
+  nextChunkId?: string
+  chunkHash?: string
+  pageStart?: number
+  pageEnd?: number
 }
+
+export type ChunkMetadata = Omit<Chunk, "text">
 
 export type Citation = {
   documentId: string

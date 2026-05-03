@@ -287,6 +287,35 @@ app.openapi(
 
 app.openapi(
   looseRoute({
+    method: "post",
+    path: "/documents/{documentId}/reindex",
+    request: {
+      params: z.object({ documentId: z.string().min(1) }),
+      body: {
+        required: false,
+        content: { "application/json": { schema: z.object({ embeddingModelId: z.string().optional(), memoryModelId: z.string().optional() }) } }
+      }
+    },
+    responses: {
+      200: { description: "Reindexed document", content: { "application/json": { schema: DocumentManifestSchema } } },
+      404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:index:rebuild:group")
+    const { documentId } = (c.req as any).valid("param") as { documentId: string }
+    const body = ((c.req as any).valid("json") ?? {}) as { embeddingModelId?: string; memoryModelId?: string }
+    try {
+      return c.json(await service.reindexDocument(documentId, body), 200)
+    } catch (err) {
+      if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+      throw err
+    }
+  }
+)
+
+app.openapi(
+  looseRoute({
     method: "delete",
     path: "/documents/{documentId}",
     request: {

@@ -7,12 +7,13 @@ import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type MemoryCard, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Chunk, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type MemoryCard, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
 import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
 import { chunkText } from "./chunk.js"
+import { embedWithCache, mapWithConcurrency } from "./embedding-cache.js"
 import { parseJsonObject } from "./json.js"
 import { buildPipelineVersions } from "./pipeline-versions.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
@@ -120,6 +121,7 @@ export class MemoRagService {
       : await this.createMemoryCards({
           fileName: input.fileName,
           text,
+          chunks,
           modelId: input.memoryModelId
         })
 
@@ -129,14 +131,15 @@ export class MemoRagService {
     const memoryRecords: VectorRecord[] = []
     const filterableMetadata = toFilterableVectorMetadata(input.metadata)
 
-    for (const chunk of chunks) {
-      const vector = await this.deps.textModel.embed(chunk.text, {
+    const evidenceRows = await mapWithConcurrency(chunks, config.embeddingConcurrency, async (chunk) => {
+      const vector = await embedWithCache(this.deps, {
+        text: chunk.text,
         modelId: embeddingModelId,
         dimensions: config.embeddingDimensions
       })
       const key = `${documentId}-${chunk.id}`
       evidenceVectorKeys.push(key)
-      evidenceRecords.push({
+      return {
         key,
         vector,
         metadata: {
@@ -146,20 +149,30 @@ export class MemoRagService {
           chunkId: chunk.id,
           objectKey: sourceObjectKey,
           text: chunk.text,
+          sectionPath: chunk.sectionPath,
+          heading: chunk.heading,
+          parentSectionId: chunk.parentSectionId,
+          previousChunkId: chunk.previousChunkId,
+          nextChunkId: chunk.nextChunkId,
+          chunkHash: chunk.chunkHash,
+          pageStart: chunk.pageStart,
+          pageEnd: chunk.pageEnd,
           ...filterableMetadata,
           createdAt
         }
-      })
-    }
+      } satisfies VectorRecord
+    })
+    evidenceRecords.push(...evidenceRows)
 
-    for (const card of memoryCards) {
-      const vector = await this.deps.textModel.embed(card.text, {
+    const memoryRows = await mapWithConcurrency(memoryCards, config.embeddingConcurrency, async (card) => {
+      const vector = await embedWithCache(this.deps, {
+        text: card.text,
         modelId: embeddingModelId,
         dimensions: config.embeddingDimensions
       })
       const key = `${documentId}-${card.id}`
       memoryVectorKeys.push(key)
-      memoryRecords.push({
+      return {
         key,
         vector,
         metadata: {
@@ -169,11 +182,13 @@ export class MemoRagService {
           memoryId: card.id,
           objectKey: sourceObjectKey,
           text: card.text,
+          sectionPath: card.sectionPath,
           ...filterableMetadata,
           createdAt
         }
-      })
-    }
+      } satisfies VectorRecord
+    })
+    memoryRecords.push(...memoryRows)
 
     await this.deps.evidenceVectorStore.put(evidenceRecords)
     await this.deps.memoryVectorStore.put(memoryRecords)
@@ -195,6 +210,7 @@ export class MemoRagService {
       memoryPromptVersion: pipelineVersions.memoryPromptVersion,
       indexVersion: pipelineVersions.indexVersion,
       pipelineVersions,
+      chunks: chunks.map(toChunkMetadata),
       chunkCount: chunks.length,
       memoryCardCount: memoryCards.length,
       createdAt
@@ -202,6 +218,28 @@ export class MemoRagService {
 
     await this.deps.objectStore.putText(manifestObjectKey, JSON.stringify(manifest, null, 2), "application/json")
     return manifest
+  }
+
+  async reindexDocument(documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<DocumentManifest> {
+    const manifestKey = `manifests/${documentId}.json`
+    const manifest = JSON.parse(await this.deps.objectStore.getText(manifestKey)) as DocumentManifest
+    const text = await this.deps.objectStore.getText(manifest.sourceObjectKey)
+    await this.deps.evidenceVectorStore.delete(manifest.evidenceVectorKeys ?? manifest.vectorKeys)
+    await this.deps.memoryVectorStore.delete(manifest.memoryVectorKeys ?? manifest.vectorKeys)
+    await this.deps.objectStore.deleteObject(manifest.manifestObjectKey)
+    const next = await this.ingest({
+      fileName: manifest.fileName,
+      text,
+      mimeType: manifest.mimeType,
+      metadata: {
+        ...(manifest.metadata ?? {}),
+        reindexedFromDocumentId: documentId,
+        previousManifestObjectKey: manifest.manifestObjectKey
+      },
+      embeddingModelId: input.embeddingModelId ?? manifest.embeddingModelId,
+      memoryModelId: input.memoryModelId
+    })
+    return next
   }
 
   async listDocuments(): Promise<DocumentManifest[]> {
@@ -594,7 +632,7 @@ export class MemoRagService {
     return { url, expiresInSeconds, objectKey: downloadMetadata.objectKey }
   }
 
-  private async createMemoryCards(input: { fileName: string; text: string; modelId?: string }): Promise<MemoryCard[]> {
+  private async createMemoryCards(input: { fileName: string; text: string; chunks: Chunk[]; modelId?: string }): Promise<MemoryCard[]> {
     const raw = await this.deps.textModel.generate(buildMemoryCardPrompt(input.fileName, input.text), {
       modelId: input.modelId ?? config.defaultMemoryModelId,
       temperature: 0,
@@ -602,12 +640,15 @@ export class MemoRagService {
     })
     const parsed = parseJsonObject<MemoryJson>(raw)
     const fallbackSummary = input.text.replace(/\s+/g, " ").slice(0, 500)
-    const card = {
+    const card: MemoryCard = {
       id: "memory-0000",
+      level: "document",
       summary: parsed?.summary ?? fallbackSummary,
       keywords: parsed?.keywords?.slice(0, 30) ?? [],
       likelyQuestions: parsed?.likelyQuestions?.slice(0, 20) ?? [],
-      constraints: parsed?.constraints?.slice(0, 20) ?? []
+      constraints: parsed?.constraints?.slice(0, 20) ?? [],
+      sourceChunkIds: input.chunks.map((chunk) => chunk.id),
+      text: ""
     }
     const text = [
       `Summary: ${card.summary}`,
@@ -615,13 +656,75 @@ export class MemoRagService {
       `Likely questions: ${card.likelyQuestions.join(" / ")}`,
       `Constraints: ${card.constraints.join(" / ")}`
     ].join("\n")
-    return [{ ...card, text }]
+    const sectionCards = createSectionMemoryCards(input.chunks)
+    const conceptCards = createConceptMemoryCards(input.chunks, card.keywords)
+    return [{ ...card, text }, ...sectionCards, ...conceptCards]
   }
+}
+
+function createSectionMemoryCards(chunks: Chunk[]): MemoryCard[] {
+  const bySection = new Map<string, Chunk[]>()
+  for (const chunk of chunks) {
+    const section = chunk.sectionPath?.join(" > ")
+    if (!section) continue
+    bySection.set(section, [...(bySection.get(section) ?? []), chunk])
+  }
+  return [...bySection.entries()].slice(0, 12).map(([section, sectionChunks], index) => {
+    const summary = sectionChunks.map((chunk) => chunk.text).join(" ").replace(/\s+/g, " ").slice(0, 500)
+    const card: MemoryCard = {
+      id: `memory-section-${String(index).padStart(4, "0")}`,
+      level: "section",
+      summary,
+      keywords: section.split(/\s+|>|、|,/).map((item) => item.trim()).filter(Boolean).slice(0, 20),
+      likelyQuestions: [`${section}について教えてください。`],
+      constraints: [],
+      sourceChunkIds: sectionChunks.map((chunk) => chunk.id),
+      sectionPath: sectionChunks[0]?.sectionPath,
+      text: ""
+    }
+    card.text = [
+      `Level: section`,
+      `Section: ${section}`,
+      `Summary: ${card.summary}`,
+      `Keywords: ${card.keywords.join(", ")}`,
+      `Source chunks: ${card.sourceChunkIds?.join(", ")}`
+    ].join("\n")
+    return card
+  })
+}
+
+function createConceptMemoryCards(chunks: Chunk[], keywords: string[]): MemoryCard[] {
+  const terms = [...new Set([...keywords, ...chunks.flatMap((chunk) => chunk.heading ? [chunk.heading] : [])].map((term) => term.trim()).filter(Boolean))].slice(0, 8)
+  return terms.map((term, index) => {
+    const sourceChunks = chunks.filter((chunk) => (chunk.text.includes(term) || chunk.heading === term)).slice(0, 8)
+    const card: MemoryCard = {
+      id: `memory-concept-${String(index).padStart(4, "0")}`,
+      level: "concept",
+      summary: `${term} に関連する記述を検索補助するための概念メモリです。`,
+      keywords: [term],
+      likelyQuestions: [`${term}とは？`, `${term}の条件は？`],
+      constraints: ["最終回答の引用は raw evidence chunk に限定する。"],
+      sourceChunkIds: sourceChunks.map((chunk) => chunk.id),
+      text: ""
+    }
+    card.text = [
+      `Level: concept`,
+      `Concept: ${term}`,
+      `Summary: ${card.summary}`,
+      `Source chunks: ${card.sourceChunkIds?.join(", ")}`
+    ].join("\n")
+    return card
+  })
 }
 
 function createBenchmarkRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `bench_${compact}_${randomUUID().slice(0, 8)}`
+}
+
+function toChunkMetadata(chunk: Chunk): NonNullable<DocumentManifest["chunks"]>[number] {
+  const { text: _text, ...metadata } = chunk
+  return metadata
 }
 
 function artifactExtension(artifact: BenchmarkDownloadArtifact): string {

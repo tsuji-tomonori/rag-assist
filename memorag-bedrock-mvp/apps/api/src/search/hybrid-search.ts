@@ -84,6 +84,23 @@ type LexicalIndex = {
   aliasVersion: string
 }
 
+type SerializedLexicalIndex = {
+  schemaVersion: 1
+  signature: string
+  index: {
+    version: string
+    nDocs: number
+    avgDocLen: number
+    docs: LexicalDocument[]
+    df: Array<[string, number]>
+    postings: Array<[string, Posting[]]>
+    dictionary: string[]
+    aliases: AliasMap
+    aliasVersion: string
+  }
+  createdAt: string
+}
+
 type LexicalHit = {
   id: string
   score: number
@@ -179,6 +196,11 @@ export async function getLexicalIndex(
     .sort()
     .join("|")
   if (cachedIndex && cachedIndex.signature === signature) return cachedIndex.index
+  const artifact = await loadLexicalIndexArtifact(deps, signature)
+  if (artifact) {
+    cachedIndex = { signature, index: artifact }
+    return artifact
+  }
 
   const docs: LexicalDocument[] = []
   for (const manifest of visible) {
@@ -199,6 +221,7 @@ export async function getLexicalIndex(
   }
 
   const index = buildLexicalIndex(docs, versionLabel("lexical", signature || "empty"), aliases, aliasVersionLabel(aliasSignature))
+  await publishLexicalIndexArtifact(deps, signature, index)
   cachedIndex = { signature, index }
   return index
 }
@@ -542,6 +565,48 @@ function sanitizeSearchMetadata(metadata: Record<string, JsonValue> | VectorMeta
 
 function aliasVersionLabel(aliasSignature: string): string {
   return aliasSignature === "{}" ? "none" : versionLabel("alias", aliasSignature)
+}
+
+async function loadLexicalIndexArtifact(deps: Pick<Dependencies, "objectStore">, signature: string): Promise<LexicalIndex | undefined> {
+  if (!signature) return undefined
+  try {
+    const latest = JSON.parse(await deps.objectStore.getText("lexical-index/latest.json")) as { signature?: string; objectKey?: string }
+    if (latest.signature !== signature || !latest.objectKey) return undefined
+    const artifact = JSON.parse(await deps.objectStore.getText(latest.objectKey)) as SerializedLexicalIndex
+    if (artifact.schemaVersion !== 1 || artifact.signature !== signature) return undefined
+    return deserializeLexicalIndex(artifact.index)
+  } catch {
+    return undefined
+  }
+}
+
+async function publishLexicalIndexArtifact(deps: Pick<Dependencies, "objectStore">, signature: string, index: LexicalIndex): Promise<void> {
+  if (!signature) return
+  const objectKey = `lexical-index/${index.version.replace(/[^a-zA-Z0-9._-]/g, "_")}.json`
+  const artifact: SerializedLexicalIndex = {
+    schemaVersion: 1,
+    signature,
+    index: serializeLexicalIndex(index),
+    createdAt: new Date().toISOString()
+  }
+  await deps.objectStore.putText(objectKey, JSON.stringify(artifact), "application/json")
+  await deps.objectStore.putText("lexical-index/latest.json", JSON.stringify({ signature, objectKey, indexVersion: index.version, aliasVersion: index.aliasVersion }, null, 2), "application/json")
+}
+
+function serializeLexicalIndex(index: LexicalIndex): SerializedLexicalIndex["index"] {
+  return {
+    ...index,
+    df: [...index.df.entries()],
+    postings: [...index.postings.entries()]
+  }
+}
+
+function deserializeLexicalIndex(input: SerializedLexicalIndex["index"]): LexicalIndex {
+  return {
+    ...input,
+    df: new Map(input.df),
+    postings: new Map(input.postings)
+  }
 }
 
 function versionLabel(prefix: string, value: string): string {

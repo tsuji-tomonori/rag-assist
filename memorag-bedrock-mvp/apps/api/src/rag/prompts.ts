@@ -1,4 +1,5 @@
 import type { RetrievedVector } from "../types.js"
+import { assembleContext, formatContextXml } from "./context-assembler.js"
 
 export function buildMemoryCardPrompt(fileName: string, text: string): string {
   return `MEMORY_CARD_JSON
@@ -36,13 +37,8 @@ ${memoryContext || "メモリは見つかりませんでした。"}
 }
 
 export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector[]): string {
-  const context = chunks
-    .map(
-      (chunk) => `<chunk id="${escapeXml(chunk.key)}" chunkId="${escapeXml(chunk.metadata.chunkId ?? "")}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
-${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
-</chunk>`
-    )
-    .join("\n\n")
+  const assembly = assembleContext({ question, chunks, tokenBudget: 3000 })
+  const context = formatContextXml(assembly)
 
   return `FINAL_ANSWER_JSON
 あなたは社内資料QAボットです。必ず以下のルールを守ってください。
@@ -74,13 +70,8 @@ ${context}
 
 export function buildSufficientContextPrompt(question: string, requiredFacts: string[], chunks: RetrievedVector[]): string {
   const facts = requiredFacts.length > 0 ? requiredFacts.map((fact, index) => `${index + 1}. ${fact}`).join("\n") : `1. ${question}`
-  const context = chunks
-    .map(
-      (chunk) => `<chunk id="${escapeXml(chunk.key)}" chunkId="${escapeXml(chunk.metadata.chunkId ?? "")}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
-${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
-</chunk>`
-    )
-    .join("\n\n")
+  const assembly = assembleContext({ question, chunks, requiredFacts, tokenBudget: 3000 })
+  const context = formatContextXml(assembly)
 
   return `SUFFICIENT_CONTEXT_JSON
 あなたは社内QA用RAGの回答可否判定器です。質問に対して、<context>内のevidence chunkだけで回答してよいかを厳密に判定してください。
@@ -118,13 +109,8 @@ ${context || "根拠チャンクはありません。"}
 }
 
 export function buildAnswerSupportPrompt(question: string, answer: string, chunks: RetrievedVector[]): string {
-  const context = chunks
-    .map(
-      (chunk) => `<chunk id="${escapeXml(chunk.key)}" chunkId="${escapeXml(chunk.metadata.chunkId ?? "")}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
-${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
-</chunk>`
-    )
-    .join("\n\n")
+  const assembly = assembleContext({ question, chunks, tokenBudget: 2400 })
+  const context = formatContextXml(assembly)
 
   return `ANSWER_SUPPORT_JSON
 あなたは社内QA用RAGの回答支持検証器です。<answer>の各文が<context>内のevidence chunkだけで明示的に支持されるかを厳密に判定してください。
@@ -159,6 +145,47 @@ ${context || "根拠チャンクはありません。"}
 </context>`
 }
 
+export function buildSupportedAnswerRepairPrompt(
+  question: string,
+  answer: string,
+  unsupportedSentences: Array<{ sentence: string; reason: string }>,
+  chunks: RetrievedVector[]
+): string {
+  const assembly = assembleContext({ question, chunks, tokenBudget: 2400 })
+  const context = formatContextXml(assembly)
+  const unsupported = unsupportedSentences.map((item) => `- ${item.sentence}\n  reason=${item.reason}`).join("\n")
+
+  return `SUPPORTED_ONLY_ANSWER_JSON
+あなたは社内資料QAボットの回答修復器です。<answer>から、<context>内の evidence chunk で明示的に支持されない文を除去し、支持される事実だけで短く再回答してください。
+出力はJSONのみ。Markdownや説明文は禁止。
+
+ルール:
+- <unsupportedSentences> の文や同等の主張は残さない。
+- <context>に明示された事実だけを使う。
+- 修復後に回答できる事実が残らない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
+- usedChunkIds には根拠に使った <chunk id="..."> の id だけを入れる。
+
+JSON schema:
+{
+  "isAnswerable": true,
+  "answer": "支持された事実だけの回答",
+  "usedChunkIds": ["retrieved chunk id from <chunk id=...>"]
+}
+
+<question>
+${question}
+</question>
+<answer>
+${escapeXml(answer)}
+</answer>
+<unsupportedSentences>
+${escapeXml(unsupported || "なし")}
+</unsupportedSentences>
+<context>
+${context || "根拠チャンクはありません。"}
+</context>`
+}
+
 export function buildRetrievalJudgePrompt(
   question: string,
   requiredFacts: Array<{ id: string; description: string }>,
@@ -170,12 +197,8 @@ export function buildRetrievalJudgePrompt(
     .map((signal, index) => `- risk-${index + 1}: type=${signal.type}, factId=${signal.factId ?? ""}, values=${signal.values.join(", ")}, chunks=${signal.chunkKeys.join(", ")}, reason=${signal.reason}`)
     .join("\n")
   const context = chunks
-    .map(
-      (chunk) => `<chunk id="${escapeXml(chunk.key)}" chunkId="${escapeXml(chunk.metadata.chunkId ?? "")}" score="${chunk.score.toFixed(4)}" file="${escapeXml(chunk.metadata.fileName)}">
-${escapeXml(buildRelevantSnippet(question, chunk.metadata.text ?? ""))}
-</chunk>`
-    )
-    .join("\n\n")
+    ? formatContextXml(assembleContext({ question, chunks, requiredFacts: requiredFacts.map((fact) => fact.description), tokenBudget: 2400 }))
+    : ""
 
   return `RETRIEVAL_JUDGE_JSON
 あなたは社内QA用RAGの検索評価 judge です。heuristic が検出した risk signal を、<context>内の evidence chunk だけで確認してください。

@@ -24,6 +24,18 @@ test("chunking keeps PDF page-break segments from being merged", () => {
   )
 })
 
+test("chunking records section metadata and neighboring chunk links", () => {
+  const chunks = chunkText("# 申請手順\n申請はシステムから行います。期限は翌月5営業日です。\n\n追加説明です。", 24, 4)
+
+  assert.ok(chunks.length > 1)
+  assert.deepEqual(chunks[0]?.sectionPath, ["申請手順"])
+  assert.equal(chunks[0]?.heading, "申請手順")
+  assert.ok(chunks[0]?.parentSectionId?.startsWith("section:"))
+  assert.ok(chunks[0]?.chunkHash)
+  assert.equal(chunks[0]?.nextChunkId, chunks[1]?.id)
+  assert.equal(chunks[1]?.previousChunkId, chunks[0]?.id)
+})
+
 test("upload text extraction handles direct text, base64, limits, and missing payloads", async () => {
   assert.equal(await extractTextFromUpload({ fileName: "a.txt", text: "\u0000 body \u0000" }), "body")
   assert.equal(await extractTextFromUpload({ fileName: "a.txt", contentBase64: Buffer.from("hello").toString("base64") }), "hello")

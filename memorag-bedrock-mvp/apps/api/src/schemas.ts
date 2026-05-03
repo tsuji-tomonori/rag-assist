@@ -40,6 +40,20 @@ export const PipelineVersionsSchema = z.object({
   embeddingDimensions: z.number().int().positive()
 })
 
+const ChunkMetadataSchema = z.object({
+  id: z.string(),
+  startChar: z.number().int().nonnegative(),
+  endChar: z.number().int().nonnegative(),
+  sectionPath: z.array(z.string()).optional(),
+  heading: z.string().optional(),
+  parentSectionId: z.string().optional(),
+  previousChunkId: z.string().optional(),
+  nextChunkId: z.string().optional(),
+  chunkHash: z.string().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional()
+})
+
 export const DocumentManifestSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
@@ -57,6 +71,7 @@ export const DocumentManifestSchema = z.object({
   memoryPromptVersion: z.string().optional(),
   indexVersion: z.string().optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
+  chunks: z.array(ChunkMetadataSchema).optional(),
   chunkCount: z.number(),
   memoryCardCount: z.number(),
   createdAt: z.string()

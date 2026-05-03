@@ -24,9 +24,11 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
 
   assert.equal(manifest.fileName, "requirements.txt")
   assert.equal(manifest.chunkCount, 1)
-  assert.equal(manifest.memoryCardCount, 1)
+  assert.ok(manifest.memoryCardCount >= 1)
   assert.ok(manifest.evidenceVectorKeys?.length)
   assert.ok(manifest.memoryVectorKeys?.length)
+  assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-text-v1")
+  assert.ok(manifest.chunks?.[0]?.chunkHash)
 
   const listed = await service.listDocuments()
   assert.deepEqual(listed.map((doc) => doc.documentId), [manifest.documentId])
@@ -39,8 +41,9 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   assert.equal(answer.isAnswerable, true)
   assert.ok(answer.debug?.runId)
   assert.equal(answer.debug?.schemaVersion, 1)
+  assert.equal(answer.debug?.pipelineVersions?.promptVersion, "rag-prompts-v1")
   assert.equal(answer.debug?.steps.at(-1)?.label, "finalize_response")
-  assert.match(String(answer.debug?.steps.at(-1)?.output?.answer ?? ""), /ソフトウェア要求/)
+  assert.match(String(answer.debug?.steps.at(-1)?.output?.answer ?? ""), /ソフトウェア製品要求|分類/)
 
   const debugRuns = await service.listDebugRuns()
   assert.equal(debugRuns.length, 1)
@@ -63,6 +66,22 @@ test("service rejects empty uploads and missing documents", async () => {
   await assert.rejects(() => service.ingest({ fileName: "empty.txt", text: "   " }), /extractable text|No chunks/)
   await assert.rejects(() => service.deleteDocument("missing-document-id"))
   assert.equal(await service.getDebugRun("missing-run"), undefined)
+})
+
+test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
+  const { service } = await createService()
+  const manifest = await service.ingest({
+    fileName: "policy.md",
+    text: "# 申請手順\n申請期限は翌月5営業日です。\n\n# 例外\n例外承認者は部長です。",
+    metadata: { tenantId: "tenant-a" }
+  })
+
+  assert.ok(manifest.chunks?.some((chunk) => chunk.sectionPath?.includes("申請手順")))
+  const reindexed = await service.reindexDocument(manifest.documentId)
+  assert.notEqual(reindexed.documentId, manifest.documentId)
+  assert.equal(reindexed.metadata?.reindexedFromDocumentId, manifest.documentId)
+  assert.equal(reindexed.embeddingModelId, manifest.embeddingModelId)
+  assert.ok(reindexed.memoryCardCount >= manifest.memoryCardCount)
 })
 
 test("service delegates human question lifecycle to the question store", async () => {

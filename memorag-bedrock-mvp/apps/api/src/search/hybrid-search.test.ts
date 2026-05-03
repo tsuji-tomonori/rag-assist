@@ -136,6 +136,32 @@ test("service search applies ACL and metadata filters across lexical and vector 
   assert.equal(groupBOnlySearch.results.some((result) => result.fileName === "group-a-policy.md"), false)
 })
 
+test("service search publishes and reuses immutable lexical index artifacts", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-lexical-artifact-"))
+  const objectStore = new LocalObjectStore(dataDir)
+  const service = new MemoRagService({ ...createLocalDeps(dataDir), objectStore })
+
+  await service.ingest({
+    fileName: "policy.md",
+    text: "申請承認ワークフローの確認条件は責任者承認です。approval policy.",
+    skipMemory: true,
+    metadata: { tenantId: "tenant-a", aclGroup: "GROUP_A" }
+  })
+
+  const first = await service.search({ query: "approval", topK: 10 }, user(["GROUP_A"]))
+  assert.ok(first.results.length >= 1)
+  assert.match(first.diagnostics.indexVersion, /^lexical:[a-f0-9]{8}$/)
+
+  const keys = await objectStore.listKeys("lexical-index/")
+  assert.ok(keys.includes("lexical-index/latest.json"))
+  assert.ok(keys.some((key) => /^lexical-index\/lexical_[a-f0-9]{8}\.json$/.test(key)))
+  const latest = JSON.parse(await objectStore.getText("lexical-index/latest.json")) as { indexVersion?: string }
+  assert.equal(latest.indexVersion, first.diagnostics.indexVersion)
+
+  const second = await service.search({ query: "申請承認", topK: 10 }, user(["GROUP_A"]))
+  assert.equal(second.diagnostics.indexVersion, first.diagnostics.indexVersion)
+})
+
 function lexicalDoc(id: string, documentId: string, fileName: string, text: string) {
   return {
     id,
