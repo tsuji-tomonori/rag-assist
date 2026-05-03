@@ -33,6 +33,12 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canReadDocuments,
     canWriteDocuments,
     canDeleteDocuments,
+    canReindexDocuments,
+    canReadAliases,
+    canWriteAliases,
+    canReviewAliases,
+    canDisableAliases,
+    canPublishAliases,
     canAnswerQuestions,
     canReadDebugRuns,
     canReadHistory,
@@ -50,24 +56,31 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canReadUsage,
     canReadCosts,
     canReadAdminAuditLog,
+    canManageAliases,
     canManageDocuments,
     canSeeAdminSettings
   } = usePermissions(currentUser)
 
   const {
     documents,
+    reindexMigrations,
     selectedDocumentId,
     file,
     setFile,
     setSelectedDocumentId,
     refreshDocuments,
+    refreshReindexMigrations,
     ingestDocument,
     onDelete,
-    onUploadDocumentFile
+    onUploadDocumentFile,
+    onStageReindex,
+    onCutoverReindex,
+    onRollbackReindex
   } = useDocuments({
     modelId,
     embeddingModelId,
     canWriteDocuments,
+    canReindexDocuments,
     setLoading,
     setError
   })
@@ -175,21 +188,34 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     accessRoles,
     usageSummaries,
     costAudit,
+    aliases,
+    aliasAuditLog,
     refreshManagedUsers,
     refreshAdminAuditLog,
     refreshAccessRoles,
     refreshUsageSummaries,
     refreshCostAudit,
+    refreshAliases,
     refreshAdminData,
     onAssignUserRoles,
     onCreateManagedUser,
-    onSetManagedUserStatus
+    onSetManagedUserStatus,
+    onCreateAlias,
+    onUpdateAlias,
+    onReviewAlias,
+    onDisableAlias,
+    onPublishAliases
   } = useAdminData({
     canReadAdminAuditLog,
     canReadUsage,
     canReadCosts,
     canReadUsers,
     canOpenAdminSettings,
+    canReadAliases,
+    canWriteAliases,
+    canReviewAliases,
+    canDisableAliases,
+    canPublishAliases,
     setLoading,
     setError
   })
@@ -213,6 +239,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   useEffect(() => {
     if (!authSession || !currentUser) return
     if (canReadDocuments) refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
+    if (canReindexDocuments) refreshReindexMigrations().catch((err) => console.warn("Failed to load reindex migrations", err))
     if (canReadDebugRuns) refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
     if (canReadBenchmarkRuns) {
       refreshBenchmarkRuns().catch((err) => console.warn("Failed to load benchmark runs", err))
@@ -223,6 +250,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     if (canReadAdminAuditLog) refreshAdminAuditLog().catch((err) => console.warn("Failed to load admin audit log", err))
     if (canReadUsage) refreshUsageSummaries().catch((err) => console.warn("Failed to load usage summaries", err))
     if (canReadCosts) refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err))
+    if (canReadAliases) refreshAliases().catch((err) => console.warn("Failed to load aliases", err))
     if (canAnswerQuestions) refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
     if (canReadHistory) refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -366,8 +394,13 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       loading,
       canWrite: canWriteDocuments,
       canDelete: canDeleteDocuments,
+      canReindex: canReindexDocuments,
+      migrations: reindexMigrations,
       onUpload: onUploadDocumentFile,
       onDelete,
+      onStageReindex,
+      onCutoverReindex,
+      onRollbackReindex,
       onBack: () => setActiveView("admin")
     },
     adminProps: {
@@ -381,6 +414,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       accessRoles,
       usageSummaries,
       costAudit,
+      aliases,
+      aliasAuditLog,
       loading,
       canManageDocuments,
       canAnswerQuestions,
@@ -396,6 +431,12 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       canReadUsage,
       canReadCosts,
       canReadAdminAuditLog,
+      canManageAliases,
+      canReadAliases,
+      canWriteAliases,
+      canReviewAliases,
+      canDisableAliases,
+      canPublishAliases,
       onOpenDocuments: () => setActiveView("documents"),
       onOpenAssignee: () => setActiveView("assignee"),
       onOpenDebug: () => {
@@ -406,7 +447,18 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onCreateUser: onCreateManagedUser,
       onAssignRoles: onAssignUserRoles,
       onSetUserStatus: onSetManagedUserStatus,
-      onRefreshAdminData: refreshAdminData,
+      onRefreshAdminData: async () => {
+        await Promise.all([
+          refreshAdminData(),
+          canReindexDocuments ? refreshReindexMigrations() : Promise.resolve(),
+          canReadAliases ? refreshAliases() : Promise.resolve()
+        ])
+      },
+      onCreateAlias,
+      onUpdateAlias,
+      onReviewAlias,
+      onDisableAlias,
+      onPublishAliases,
       onBack: () => setActiveView("chat")
     },
     historyProps: {

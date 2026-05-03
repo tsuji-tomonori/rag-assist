@@ -135,6 +135,35 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.ok(roles.body.roles.some((role: { role: string }) => role.role === "SYSTEM_ADMIN"))
     validateSchema(roles.body, responseSchema(openapi, "/admin/roles", "get", 200), openapi)
 
+    const createAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ term: "pto", expansions: ["年次有給休暇"], scope: { tenantId: "tenant-a" } })
+    })
+    assert.equal(createAlias.status, 200)
+    const alias = (await createAlias.json()) as { aliasId: string }
+    validateSchema(alias, responseSchema(openapi, "/admin/aliases", "post", 200), openapi)
+
+    const reviewAlias = await fetch(`http://127.0.0.1:${port}/admin/aliases/${alias.aliasId}/review`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ decision: "approve", comment: "contract" })
+    })
+    assert.equal(reviewAlias.status, 200)
+    validateSchema(await reviewAlias.json(), responseSchema(openapi, "/admin/aliases/{aliasId}/review", "post", 200), openapi)
+
+    const publishAliases = await fetch(`http://127.0.0.1:${port}/admin/aliases/publish`, { method: "POST" })
+    assert.equal(publishAliases.status, 200)
+    validateSchema(await publishAliases.json(), responseSchema(openapi, "/admin/aliases/publish", "post", 200), openapi)
+
+    const aliases = await getJson(`http://127.0.0.1:${port}/admin/aliases`)
+    assert.equal(Array.isArray(aliases.body.aliases), true)
+    validateSchema(aliases.body, responseSchema(openapi, "/admin/aliases", "get", 200), openapi)
+
+    const aliasAudit = await getJson(`http://127.0.0.1:${port}/admin/aliases/audit-log`)
+    assert.equal(Array.isArray(aliasAudit.body.auditLog), true)
+    validateSchema(aliasAudit.body, responseSchema(openapi, "/admin/aliases/audit-log", "get", 200), openapi)
+
     const assignRoles = await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/roles`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -405,6 +434,8 @@ test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions"
     })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/audit-log`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/roles`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/aliases`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/aliases/publish`, { method: "POST" })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/usage`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/costs`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/suspend`, { method: "POST" })).status, 403)

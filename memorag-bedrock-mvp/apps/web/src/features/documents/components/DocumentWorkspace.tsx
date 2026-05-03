@@ -1,5 +1,5 @@
 import { type FormEvent, useState } from "react"
-import type { DocumentManifest } from "../types.js"
+import type { DocumentManifest, ReindexMigration } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 
@@ -8,16 +8,26 @@ export function DocumentWorkspace({
   loading,
   canWrite,
   canDelete,
+  canReindex,
+  migrations,
   onUpload,
   onDelete,
+  onStageReindex,
+  onCutoverReindex,
+  onRollbackReindex,
   onBack
 }: {
   documents: DocumentManifest[]
   loading: boolean
   canWrite: boolean
   canDelete: boolean
+  canReindex: boolean
+  migrations: ReindexMigration[]
   onUpload: (file: File) => Promise<void>
   onDelete: (documentId: string) => Promise<void>
+  onStageReindex: (documentId: string) => Promise<void>
+  onCutoverReindex: (migrationId: string) => Promise<void>
+  onRollbackReindex: (migrationId: string) => Promise<void>
   onBack: () => void
 }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -81,6 +91,14 @@ export function DocumentWorkspace({
                   <span role="cell">
                     <button
                       type="button"
+                      title={`${document.fileName}の再インデックスをステージング`}
+                      disabled={!canReindex || loading}
+                      onClick={() => void onStageReindex(document.documentId)}
+                    >
+                      <Icon name="gauge" />
+                    </button>
+                    <button
+                      type="button"
                       className="delete-document-button"
                       title={`${document.fileName}を削除`}
                       disabled={!canDelete || loading}
@@ -94,6 +112,46 @@ export function DocumentWorkspace({
             )}
           </div>
         </section>
+
+        {canReindex && (
+          <section className="document-admin-panel document-list-panel" aria-label="再インデックス移行一覧">
+            <div className="document-list-head">
+              <h3>Blue-green reindex</h3>
+              <span>{migrations.length} 件</span>
+            </div>
+            <div className="migration-list">
+              {migrations.length === 0 ? (
+                <div className="empty-question-panel">ステージング中の再インデックスはありません。</div>
+              ) : (
+                migrations.map((migration) => (
+                  <article className="migration-card" key={migration.migrationId}>
+                    <div>
+                      <strong>{migration.status}</strong>
+                      <span>{migration.sourceDocumentId} → {migration.stagedDocumentId}</span>
+                      <small>{formatDateTime(migration.updatedAt)}</small>
+                    </div>
+                    <div className="inline-action-group">
+                      <button
+                        type="button"
+                        disabled={loading || migration.status !== "staged"}
+                        onClick={() => void onCutoverReindex(migration.migrationId)}
+                      >
+                        切替
+                      </button>
+                      <button
+                        type="button"
+                        disabled={loading || migration.status !== "cutover"}
+                        onClick={() => void onRollbackReindex(migration.migrationId)}
+                      >
+                        戻す
+                      </button>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </section>
   )

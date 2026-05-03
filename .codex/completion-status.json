@@ -9,7 +9,8 @@
     "すべて完了後に GitHub Apps で main 向け PR を作成する",
     "全体ロードマップ完了まで作業し、phase ごとにテストして commit する",
     "PR #91 のレビュー指摘を後続でもよい項目まで含めて修正する",
-    "web リファクタ後の同一性保証としてテストをすべて追加・修正する"
+    "web リファクタ後の同一性保証としてテストをすべて追加・修正する",
+    "main に取り込まれた PR #88 を確認し、現 feature 構成へデグレなく統合する"
   ],
   "completed_items": [
     "worktree .worktrees/web-component-refactor と branch codex/web-component-refactor を作成した",
@@ -33,7 +34,11 @@
     "App 統合 contract test と legacy API re-export test を追加した",
     "Playwright visual regression と screenshot baseline を追加した",
     "既存 E2E smoke の local data 隔離と削除導線を修正した",
-    "reports/working/20260503-1454-web-test-contract-coverage-report.md を作成した"
+    "reports/working/20260503-1454-web-test-contract-coverage-report.md を作成した",
+    "PR #88 merge commit 20f4e25 が origin/main に取り込まれていることを確認した",
+    "origin/main を codex/web-component-refactor に merge し、App.tsx/api.ts/styles.css/api.test.ts の衝突を feature-based 構成で解消した",
+    "Alias 管理 API/UI と blue-green reindex UI/API を現在の app/features/shared 構成へ接続した",
+    "Alias/reindex の component/hook tests を追加し、web coverage 閾値を回復した"
   ],
   "remaining_items": [],
   "blocked_items": [],
@@ -79,6 +84,97 @@
       "command": "npm exec -w @memorag-mvp/web -- playwright test",
       "result": "pass",
       "note": "10 e2e tests"
+    },
+    {
+      "command": "npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0",
+      "result": "pass",
+      "note": "PR #88 merge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web",
+      "result": "pass",
+      "note": "PR #88 merge 後"
+    },
+    {
+      "command": "npm exec -w @memorag-mvp/web -- vitest run --coverage",
+      "result": "pass",
+      "note": "12 files / 78 tests, statements 86.19%, branches 78.86%, functions 84.54%, lines 90.76%"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web",
+      "result": "pass",
+      "note": "PR #88 merge 後"
+    },
+    {
+      "command": "npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api",
+      "result": "pass",
+      "note": "72 tests"
+    },
+    {
+      "command": "npm exec -w @memorag-mvp/api -- c8 --all --include src --exclude 'src/**/*.test.ts' --exclude 'src/server.ts' --reporter=text --reporter=lcov tsx --test src/**/*.test.ts src/**/**/*.test.ts",
+      "result": "pass",
+      "note": "79 tests。sandbox の tsx IPC pipe 制限回避のため権限付きで再実行"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/api",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/benchmark",
+      "result": "pass",
+      "note": "5 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/benchmark",
+      "result": "pass"
+    },
+    {
+      "command": "npm exec -- eslint infra --cache --cache-location .eslintcache-infra --max-warnings=0",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra",
+      "result": "pass",
+      "note": "6 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/infra",
+      "result": "pass"
+    },
+    {
+      "command": "task memorag:verify",
+      "result": "pass"
+    },
+    {
+      "command": "task docs:check:changed",
+      "result": "not run",
+      "note": "この worktree の Taskfile に task が存在しないため。代替として task memorag:verify と git diff --check を実行"
+    },
+    {
+      "command": "rg \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .codex --glob '!reports/**'",
+      "result": "pass",
+      "note": "検出なし"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass",
+      "note": "PR #88 merge 後"
     }
   ],
   "next_action": "none",

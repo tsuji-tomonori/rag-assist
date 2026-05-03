@@ -22,7 +22,7 @@
 
 - 源泉: 2026-05-02 の alias 管理見直し指示、現行 `POST /search` 実装、Elasticsearch Synonyms API、Solr Managed Synonym Graph Filter、Algolia Synonyms、OpenSearch custom dictionary package、S3 Vectors metadata filtering、Weaviate/Pinecone multitenancy docs。
 - 背景: alias は検索品質だけでなく、tenant 分離、ACL、監査、index 再現性、rollback に影響する検索データである。
-- 背景: 現行 MVP は manifest metadata 由来 alias を検索時 index に取り込めるが、専用 artifact、管理 API、batch lifecycle は未実装である。
+- 背景: 現行 MVP は manifest metadata 由来 alias に加え、専用 artifact、管理 API、review、audit log、publish、管理 UI からの操作を備える。
 
 ## 要件の目的・意図
 
@@ -45,7 +45,7 @@
 | 受け入れ基準 | `AC-FR023-001` から `AC-FR023-006` |
 | 優先度 | A |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-02 初版 |
+| 変更履歴 | 2026-05-02 初版、2026-05-03 alias 管理 API/UI 実装状況を反映 |
 
 ## 妥当性確認
 

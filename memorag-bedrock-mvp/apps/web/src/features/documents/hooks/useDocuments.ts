@@ -1,22 +1,25 @@
 import { useState } from "react"
-import { deleteDocument, listDocuments, uploadDocument } from "../api/documentsApi.js"
-import type { DocumentManifest } from "../types.js"
+import { cutoverReindexMigration, deleteDocument, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, uploadDocument } from "../api/documentsApi.js"
+import type { DocumentManifest, ReindexMigration } from "../types.js"
 import { fileToBase64 } from "../../../shared/utils/fileToBase64.js"
 
 export function useDocuments({
   modelId,
   embeddingModelId,
   canWriteDocuments,
+  canReindexDocuments,
   setLoading,
   setError
 }: {
   modelId: string
   embeddingModelId: string
   canWriteDocuments: boolean
+  canReindexDocuments: boolean
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
 }) {
   const [documents, setDocuments] = useState<DocumentManifest[]>([])
+  const [reindexMigrations, setReindexMigrations] = useState<ReindexMigration[]>([])
   const [selectedDocumentId, setSelectedDocumentId] = useState("all")
   const [file, setFile] = useState<File | null>(null)
 
@@ -37,6 +40,10 @@ export function useDocuments({
       embeddingModelId
     })
     await refreshDocuments()
+  }
+
+  async function refreshReindexMigrations() {
+    setReindexMigrations(await listReindexMigrations())
   }
 
   async function onDelete(documentId?: string) {
@@ -71,15 +78,62 @@ export function useDocuments({
     }
   }
 
+  async function onStageReindex(documentId: string) {
+    if (!canReindexDocuments) return
+    setLoading(true)
+    setError(null)
+    try {
+      await stageReindexMigration(documentId)
+      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onCutoverReindex(migrationId: string) {
+    if (!canReindexDocuments) return
+    setLoading(true)
+    setError(null)
+    try {
+      await cutoverReindexMigration(migrationId)
+      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onRollbackReindex(migrationId: string) {
+    if (!canReindexDocuments) return
+    setLoading(true)
+    setError(null)
+    try {
+      await rollbackReindexMigration(migrationId)
+      await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return {
     documents,
+    reindexMigrations,
     selectedDocumentId,
     file,
     setFile,
     setSelectedDocumentId,
     refreshDocuments,
+    refreshReindexMigrations,
     ingestDocument,
     onDelete,
-    onUploadDocumentFile
+    onUploadDocumentFile,
+    onStageReindex,
+    onCutoverReindex,
+    onRollbackReindex
   }
 }

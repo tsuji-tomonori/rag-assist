@@ -72,3 +72,32 @@ export type CostAuditSummary = {
   users: UserCostSummary[]
   pricingCatalogUpdatedAt: string
 }
+
+export type AliasDefinition = {
+  aliasId: string
+  term: string
+  expansions: string[]
+  scope?: {
+    tenantId?: string
+    department?: string
+    source?: string
+    docType?: string
+  }
+  status: "draft" | "approved" | "disabled"
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  reviewedBy?: string
+  reviewedAt?: string
+  reviewComment?: string
+  publishedVersion?: string
+}
+
+export type AliasAuditLogItem = {
+  auditId: string
+  aliasId?: string
+  action: "create" | "update" | "review" | "disable" | "publish"
+  actorUserId: string
+  createdAt: string
+  detail: string
+}

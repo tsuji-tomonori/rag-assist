@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react"
 import type { CurrentUser } from "../../../shared/types/common.js"
-import type { AccessRoleDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
+import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { adminAuditActionLabel, adminAuditSummary, costConfidenceLabel, formatCurrency, formatDate, formatDateTime, managedUserStatusLabel } from "../../../shared/utils/format.js"
 
@@ -15,6 +15,8 @@ export function AdminWorkspace({
   accessRoles,
   usageSummaries,
   costAudit,
+  aliases,
+  aliasAuditLog,
   loading,
   canManageDocuments,
   canAnswerQuestions,
@@ -30,6 +32,12 @@ export function AdminWorkspace({
   canReadUsage,
   canReadCosts,
   canReadAdminAuditLog,
+  canManageAliases,
+  canReadAliases,
+  canWriteAliases,
+  canReviewAliases,
+  canDisableAliases,
+  canPublishAliases,
   onOpenDocuments,
   onOpenAssignee,
   onOpenDebug,
@@ -38,6 +46,11 @@ export function AdminWorkspace({
   onAssignRoles,
   onSetUserStatus,
   onRefreshAdminData,
+  onCreateAlias,
+  onUpdateAlias,
+  onReviewAlias,
+  onDisableAlias,
+  onPublishAliases,
   onBack
 }: {
   user: CurrentUser | null
@@ -50,6 +63,8 @@ export function AdminWorkspace({
   accessRoles: AccessRoleDefinition[]
   usageSummaries: UserUsageSummary[]
   costAudit: CostAuditSummary | null
+  aliases: AliasDefinition[]
+  aliasAuditLog: AliasAuditLogItem[]
   loading: boolean
   canManageDocuments: boolean
   canAnswerQuestions: boolean
@@ -65,6 +80,12 @@ export function AdminWorkspace({
   canReadUsage: boolean
   canReadCosts: boolean
   canReadAdminAuditLog: boolean
+  canManageAliases: boolean
+  canReadAliases: boolean
+  canWriteAliases: boolean
+  canReviewAliases: boolean
+  canDisableAliases: boolean
+  canPublishAliases: boolean
   onOpenDocuments: () => void
   onOpenAssignee: () => void
   onOpenDebug: () => void
@@ -73,6 +94,11 @@ export function AdminWorkspace({
   onAssignRoles: (userId: string, groups: string[]) => Promise<void>
   onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
   onRefreshAdminData: () => Promise<void>
+  onCreateAlias: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
+  onUpdateAlias: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
+  onReviewAlias: (aliasId: string, decision: "approve" | "reject", comment?: string) => Promise<void>
+  onDisableAlias: (aliasId: string) => Promise<void>
+  onPublishAliases: () => Promise<void>
   onBack: () => void
 }) {
   return (
@@ -144,9 +170,33 @@ export function AdminWorkspace({
             <span>{formatCurrency(costAudit?.totalEstimatedUsd ?? 0)}</span>
           </div>
         )}
+        {canManageAliases && (
+          <div className="admin-overview-tile" aria-label="Alias管理">
+            <Icon name="settings" />
+            <strong>Alias管理</strong>
+            <span>{aliases.length} aliases</span>
+          </div>
+        )}
       </div>
 
       <div className="phase2-admin-grid">
+        {canReadAliases && (
+          <AliasAdminPanel
+            aliases={aliases}
+            auditLog={aliasAuditLog}
+            loading={loading}
+            canWrite={canWriteAliases}
+            canReview={canReviewAliases}
+            canDisable={canDisableAliases}
+            canPublish={canPublishAliases}
+            onCreate={onCreateAlias}
+            onUpdate={onUpdateAlias}
+            onReview={onReviewAlias}
+            onDisable={onDisableAlias}
+            onPublish={onPublishAliases}
+          />
+        )}
+
         {canReadUsers && (
           <section className="admin-section-panel user-admin-panel" aria-label="ユーザー管理一覧">
             <div className="document-list-head">
@@ -294,6 +344,128 @@ export function AdminWorkspace({
   )
 }
 
+function AliasAdminPanel({
+  aliases,
+  auditLog,
+  loading,
+  canWrite,
+  canReview,
+  canDisable,
+  canPublish,
+  onCreate,
+  onUpdate,
+  onReview,
+  onDisable,
+  onPublish
+}: {
+  aliases: AliasDefinition[]
+  auditLog: AliasAuditLogItem[]
+  loading: boolean
+  canWrite: boolean
+  canReview: boolean
+  canDisable: boolean
+  canPublish: boolean
+  onCreate: (input: { term: string; expansions: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
+  onUpdate: (aliasId: string, input: { term?: string; expansions?: string[]; scope?: AliasDefinition["scope"] }) => Promise<void>
+  onReview: (aliasId: string, decision: "approve" | "reject", comment?: string) => Promise<void>
+  onDisable: (aliasId: string) => Promise<void>
+  onPublish: () => Promise<void>
+}) {
+  const [term, setTerm] = useState("")
+  const [expansions, setExpansions] = useState("")
+  const [department, setDepartment] = useState("")
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!canWrite) return
+    const normalizedTerm = term.trim()
+    const values = parseExpansionList(expansions)
+    if (!normalizedTerm || values.length === 0) return
+    await onCreate({
+      term: normalizedTerm,
+      expansions: values,
+      scope: department.trim() ? { department: department.trim() } : undefined
+    })
+    setTerm("")
+    setExpansions("")
+    setDepartment("")
+  }
+
+  return (
+    <section className="admin-section-panel alias-admin-panel" aria-label="Alias管理一覧">
+      <div className="document-list-head">
+        <h3>Alias管理</h3>
+        <div className="inline-action-group">
+          <span>{aliases.length} 件</span>
+          <button type="button" disabled={!canPublish || loading} onClick={() => void onPublish()}>
+            公開
+          </button>
+        </div>
+      </div>
+
+      {canWrite && (
+        <form className="alias-editor-form" onSubmit={(event) => void onSubmit(event)}>
+          <label>
+            <span>用語</span>
+            <input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="pto" disabled={loading} />
+          </label>
+          <label>
+            <span>展開語</span>
+            <input value={expansions} onChange={(event) => setExpansions(event.target.value)} placeholder="有給休暇, 休暇申請" disabled={loading} />
+          </label>
+          <label>
+            <span>部署 scope</span>
+            <input value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="任意" disabled={loading} />
+          </label>
+          <button type="submit" disabled={loading || !term.trim() || parseExpansionList(expansions).length === 0}>
+            追加
+          </button>
+        </form>
+      )}
+
+      <div className="alias-list">
+        {aliases.length === 0 ? (
+          <div className="empty-question-panel">登録済み alias はありません。</div>
+        ) : (
+          aliases.map((alias) => (
+            <article className={`alias-card ${alias.status}`} key={alias.aliasId}>
+              <div>
+                <strong>{alias.term}</strong>
+                <span>{alias.expansions.join(", ")}</span>
+                <small>{alias.scope?.department ? `department: ${alias.scope.department}` : "global"} / {alias.publishedVersion ?? alias.status}</small>
+              </div>
+              <div className="inline-action-group">
+                <button type="button" disabled={!canWrite || loading || alias.status === "disabled"} onClick={() => void onUpdate(alias.aliasId, { expansions: alias.expansions })}>
+                  下書き化
+                </button>
+                <button type="button" disabled={!canReview || loading || alias.status === "disabled"} onClick={() => void onReview(alias.aliasId, "approve")}>
+                  承認
+                </button>
+                <button type="button" disabled={!canReview || loading || alias.status === "disabled"} onClick={() => void onReview(alias.aliasId, "reject", "Rejected from UI")}>
+                  差戻
+                </button>
+                <button type="button" disabled={!canDisable || loading || alias.status === "disabled"} onClick={() => void onDisable(alias.aliasId)}>
+                  無効
+                </button>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="alias-audit-list" aria-label="Alias監査ログ">
+        {auditLog.slice(0, 8).map((item) => (
+          <div key={item.auditId}>
+            <span>{formatDateTime(item.createdAt)}</span>
+            <strong>{item.action}</strong>
+            <small>{item.detail}</small>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function AdminCreateUserForm({
   roles,
   loading,
@@ -410,4 +582,8 @@ function ManagedUserRow({
       </span>
     </div>
   )
+}
+
+function parseExpansionList(value: string): string[] {
+  return [...new Set(value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean))]
 }

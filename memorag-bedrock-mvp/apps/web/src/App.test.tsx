@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import App from "./App.js"
-import type { ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
+import type { AliasAuditLogItem, AliasDefinition, ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
@@ -124,6 +124,10 @@ function isGet(init?: RequestInit) {
   return !init?.method || init.method === "GET"
 }
 
+function assertElement(value: Element | undefined): asserts value is Element {
+  if (!value) throw new Error("Expected element")
+}
+
 function jwtWithGroups(groups: string[]) {
   const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url")
   return `${encode({ alg: "none", typ: "JWT" })}.${encode({ sub: "user-1", email: "tester@example.com", "cognito:groups": groups })}.signature`
@@ -132,7 +136,11 @@ function jwtWithGroups(groups: string[]) {
 const rolePermissions: Record<string, Permission[]> = {
   CHAT_USER: ["chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "usage:read:own", "cost:read:own", "rag:doc:read"],
   ANSWER_EDITOR: ["answer:edit", "answer:publish"],
-  RAG_GROUP_MANAGER: ["rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group", "benchmark:read", "benchmark:run"],
+  RAG_GROUP_MANAGER: [
+    "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
+    "rag:alias:read", "rag:alias:write:group", "rag:alias:review:group", "rag:alias:disable:group", "rag:alias:publish:group",
+    "benchmark:read", "benchmark:run"
+  ],
   BENCHMARK_RUNNER: ["benchmark:run"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
@@ -140,6 +148,7 @@ const rolePermissions: Record<string, Permission[]> = {
   SYSTEM_ADMIN: [
     "chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "chat:admin:read_all",
     "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
+    "rag:alias:read", "rag:alias:write:group", "rag:alias:review:group", "rag:alias:disable:group", "rag:alias:publish:group",
     "benchmark:read", "benchmark:run", "benchmark:cancel", "benchmark:download",
     "usage:read:own", "usage:read:all_users", "cost:read:own", "cost:read:all", "user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete",
     "access:role:create", "access:role:update", "access:role:assign", "access:policy:read"
@@ -171,6 +180,28 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
       lastLoginAt: "2026-05-02T00:00:00.000Z"
     }
   ]
+  let aliases: AliasDefinition[] = [
+    {
+      aliasId: "alias-1",
+      term: "pto",
+      expansions: ["有給休暇"],
+      status: "draft" as const,
+      createdBy: "local-dev",
+      createdAt: "2026-05-02T00:00:00.000Z",
+      updatedAt: "2026-05-02T00:00:00.000Z"
+    }
+  ]
+  let aliasAuditLog: AliasAuditLogItem[] = [
+    {
+      auditId: "audit-1",
+      aliasId: "alias-1",
+      action: "create" as const,
+      actorUserId: "local-dev",
+      createdAt: "2026-05-02T00:00:00.000Z",
+      detail: "created pto"
+    }
+  ]
+  let reindexMigrations: unknown[] = []
   let adminAuditLog: unknown[] = []
   const roles = Object.entries(rolePermissions).map(([role, permissions]) => ({ role, permissions }))
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
@@ -185,6 +216,23 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
     }
     if (requestUrl.endsWith("/admin/costs") && isGet(init)) {
       return Promise.resolve(response({ periodStart: "2026-05-01T00:00:00.000Z", periodEnd: "2026-05-02T00:00:00.000Z", currency: "USD", totalEstimatedUsd: 0.0123, pricingCatalogUpdatedAt: "2026-05-02T00:00:00.000Z", users: [{ userId: "local-dev", email: "tester@example.com", estimatedCostUsd: 0.0123 }], items: [{ service: "Bedrock", category: "chat completion", usage: 12, unit: "message", unitCostUsd: 0.0008, estimatedCostUsd: 0.0096, confidence: "estimated_usage" }] }))
+    }
+    if (requestUrl.endsWith("/admin/aliases") && isGet(init)) return Promise.resolve(response({ aliases }))
+    if (requestUrl.endsWith("/admin/aliases/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: aliasAuditLog }))
+    if (requestUrl.endsWith("/admin/aliases") && init?.method === "POST") {
+      const body = JSON.parse(String(init.body ?? "{}"))
+      const alias: AliasDefinition = { aliasId: "alias-2", ...body, status: "draft", createdBy: "local-dev", createdAt: "2026-05-02T00:01:00.000Z", updatedAt: "2026-05-02T00:01:00.000Z" }
+      aliases = [alias, ...aliases]
+      return Promise.resolve(response(alias))
+    }
+    if (requestUrl.endsWith("/admin/aliases/alias-1/review") && init?.method === "POST") {
+      aliases = aliases.map((alias) => (alias.aliasId === "alias-1" ? { ...alias, status: "approved", reviewedBy: "local-dev", reviewedAt: "2026-05-02T00:02:00.000Z", updatedAt: "2026-05-02T00:02:00.000Z" } : alias))
+      return Promise.resolve(response(aliases[0]))
+    }
+    if (requestUrl.endsWith("/admin/aliases/publish") && init?.method === "POST") {
+      aliases = aliases.map((alias) => (alias.status === "approved" ? { ...alias, publishedVersion: "aliases-20260502T000300Z" } : alias))
+      aliasAuditLog = [{ auditId: "audit-2", action: "publish", actorUserId: "local-dev", createdAt: "2026-05-02T00:03:00.000Z", detail: "published 1 aliases" }, ...aliasAuditLog]
+      return Promise.resolve(response({ version: "aliases-20260502T000300Z", publishedAt: "2026-05-02T00:03:00.000Z", aliasCount: 1 }))
     }
     if (requestUrl.endsWith("/admin/users") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}"))
@@ -225,6 +273,26 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
       return Promise.resolve(response(deleted))
     }
     if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+    if (requestUrl.endsWith("/documents/reindex-migrations") && isGet(init)) return Promise.resolve(response({ migrations: reindexMigrations }))
+    if (requestUrl.endsWith("/documents/doc-1/reindex/stage") && init?.method === "POST") {
+      const migration = {
+        migrationId: "reindex-1",
+        sourceDocumentId: "doc-1",
+        stagedDocumentId: "doc-stage-1",
+        status: "staged",
+        createdBy: "local-dev",
+        createdAt: "2026-05-02T00:04:00.000Z",
+        updatedAt: "2026-05-02T00:04:00.000Z",
+        previousManifestObjectKey: "manifests/doc-1.json",
+        stagedManifestObjectKey: "manifests/doc-stage-1.json"
+      }
+      reindexMigrations = [migration]
+      return Promise.resolve(response(migration))
+    }
+    if (requestUrl.endsWith("/documents/reindex-migrations/reindex-1/cutover") && init?.method === "POST") {
+      reindexMigrations = reindexMigrations.map((migration) => ({ ...(migration as Record<string, unknown>), status: "cutover", activeDocumentId: "doc-stage-1", updatedAt: "2026-05-02T00:05:00.000Z" }))
+      return Promise.resolve(response(reindexMigrations[0]))
+    }
     if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
     if (requestUrl.endsWith("/benchmark-suites") && isGet(init)) return Promise.resolve(response({ suites: [{ suiteId: "standard-agent-v1", label: "Agent standard", mode: "agent", datasetS3Key: "datasets/agent/standard-v1.jsonl", preset: "standard", defaultConcurrency: 1 }] }))
     if (requestUrl.endsWith("/benchmark-runs") && isGet(init)) return Promise.resolve(response({ benchmarkRuns: [] }))
@@ -1023,6 +1091,7 @@ describe("App chat and upload flow", () => {
     expect(screen.getByLabelText("ロール定義")).toBeInTheDocument()
     expect(screen.getByLabelText("利用状況一覧")).toBeInTheDocument()
     expect(screen.getByLabelText("コスト監査一覧")).toBeInTheDocument()
+    expect(screen.getByLabelText("Alias管理一覧")).toBeInTheDocument()
     expect(screen.getByLabelText("管理操作履歴")).toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByDisplayValue("SYSTEM_ADMIN"), "COST_AUDITOR")
@@ -1039,6 +1108,18 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("停止中")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "再開" }))
     expect(await screen.findByText("有効")).toBeInTheDocument()
+
+    await userEvent.type(within(screen.getByLabelText("Alias管理一覧")).getByPlaceholderText("pto"), "sl")
+    await userEvent.type(screen.getByPlaceholderText("有給休暇, 休暇申請"), "病気休暇, sick leave")
+    await userEvent.click(screen.getByRole("button", { name: "追加" }))
+    expect(await screen.findByText("sl")).toBeInTheDocument()
+    const approveButton = within(screen.getByLabelText("Alias管理一覧")).getAllByRole("button", { name: "承認" }).at(0)
+    assertElement(approveButton)
+    await userEvent.click(approveButton)
+    await userEvent.click(screen.getByRole("button", { name: "公開" }))
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/aliases/publish") && (init as RequestInit | undefined)?.method === "POST")).toBe(true)
+    )
 
     const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true)
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
@@ -1070,6 +1151,10 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: /ドキュメント管理/ }))
     expect(await screen.findByLabelText("ドキュメント管理")).toBeInTheDocument()
+    await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
+    expect(await screen.findByLabelText("再インデックス移行一覧")).toHaveTextContent("staged")
+    await userEvent.click(screen.getByRole("button", { name: "切替" }))
+    expect(await screen.findByLabelText("再インデックス移行一覧")).toHaveTextContent("cutover")
 
     await userEvent.click(screen.getByTitle("管理者設定へ戻る"))
     await userEvent.click(within(await screen.findByLabelText("管理者設定")).getByRole("button", { name: /担当者対応/ }))

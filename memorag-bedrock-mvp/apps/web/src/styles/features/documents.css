@@ -104,7 +104,7 @@
 .document-table-row {
   min-width: 760px;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 90px 90px 180px 76px;
+  grid-template-columns: minmax(220px, 1fr) 90px 90px 180px 160px;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid #e5ebf3;
@@ -127,5 +127,64 @@
   color: #68758f;
   background: #f8fafc;
   font-size: 12px;
+  font-weight: 900;
+}
+
+.document-table-row [role="cell"]:last-child {
+  display: flex;
+  gap: 8px;
+}
+
+.migration-list {
+  display: grid;
+  gap: 10px;
+}
+
+.migration-card {
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  color: #273750;
+  background: #fbfdff;
+}
+
+.migration-card div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.migration-card span {
+  min-width: 0;
+  color: #52627c;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.migration-card small {
+  color: #68758f;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.inline-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.inline-action-group button {
+  min-height: 32px;
+  border: 1px solid #cbd9f0;
+  border-radius: 7px;
+  padding: 0 10px;
+  color: #2f4f7f;
+  background: #f8fbff;
   font-weight: 900;
 }
