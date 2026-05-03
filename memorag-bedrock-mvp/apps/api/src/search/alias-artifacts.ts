@@ -1,5 +1,5 @@
 import type { Dependencies } from "../dependencies.js"
-import type { AliasDefinition, AliasScope, PublishedAliasArtifact } from "../types.js"
+import type { AliasDefinition, AliasScope, JsonValue, PublishedAliasArtifact } from "../types.js"
 
 export type AliasMap = Record<string, string[]>
 
@@ -21,12 +21,15 @@ export async function loadPublishedAliasArtifact(
 
 export async function loadPublishedAliasMap(
   deps: Pick<Dependencies, "objectStore">,
-  filters?: AliasScope
+  filters?: AliasScope,
+  visibleMetadata: Array<Record<string, JsonValue> | undefined> = []
 ): Promise<{ aliases: AliasMap; version: string }> {
   const artifact = await loadPublishedAliasArtifact(deps)
   if (!artifact) return { aliases: {}, version: "none" }
   return {
-    aliases: aliasMapFromDefinitions(artifact.aliases.filter((alias) => alias.status === "approved" && scopeMatches(alias.scope, filters))),
+    aliases: aliasMapFromDefinitions(
+      artifact.aliases.filter((alias) => alias.status === "approved" && scopeMatches(alias.scope, filters, visibleMetadata))
+    ),
     version: artifact.version
   }
 }
@@ -46,12 +49,38 @@ export function aliasMapFromDefinitions(definitions: AliasDefinition[]): AliasMa
   return Object.fromEntries([...merged.entries()].map(([term, values]) => [term, [...values].sort()]))
 }
 
-export function scopeMatches(scope: AliasScope | undefined, filters?: AliasScope): boolean {
+export function scopeMatches(
+  scope: AliasScope | undefined,
+  filters?: AliasScope,
+  visibleMetadata: Array<Record<string, JsonValue> | undefined> = []
+): boolean {
   if (!scope) return true
+  if (matchesScope(scope, filters)) return true
+  if (!filters) {
+    return visibleMetadata.some((metadata) => matchesScope(scope, metadataToScope(metadata)))
+  }
+  return false
+}
+
+function matchesScope(scope: AliasScope, candidate?: AliasScope): boolean {
   for (const key of ["tenantId", "department", "source", "docType"] as const) {
-    if (scope[key] && scope[key] !== filters?.[key]) return false
+    if (scope[key] && scope[key] !== candidate?.[key]) return false
   }
   return true
+}
+
+function metadataToScope(metadata: Record<string, JsonValue> | undefined): AliasScope | undefined {
+  if (!metadata) return undefined
+  return {
+    tenantId: stringValue(metadata.tenantId),
+    department: stringValue(metadata.department),
+    source: stringValue(metadata.source),
+    docType: stringValue(metadata.docType)
+  }
+}
+
+function stringValue(value: JsonValue | undefined): string | undefined {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined
 }
 
 function normalizeAliasTerm(value: string): string {

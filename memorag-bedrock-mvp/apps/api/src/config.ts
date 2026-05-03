@@ -47,6 +47,7 @@ export const config = {
   chunkSizeChars: numberEnv("CHUNK_SIZE_CHARS", 1200),
   chunkOverlapChars: numberEnv("CHUNK_OVERLAP_CHARS", 200),
   embeddingConcurrency: numberEnv("EMBEDDING_CONCURRENCY", 3),
+  publishLexicalIndexOnSearch: boolEnv("PUBLISH_LEXICAL_INDEX_ON_SEARCH", process.env.NODE_ENV !== "production"),
   debugDownloadBucketName: process.env.DEBUG_DOWNLOAD_BUCKET_NAME ?? "",
   debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900)
 } as const

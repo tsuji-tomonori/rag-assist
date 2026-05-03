@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { mkdtemp } from "node:fs/promises"
+import { mkdtemp, readFile, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
@@ -100,6 +100,7 @@ test("service search applies ACL and metadata filters across lexical and vector 
       aclGroup: "GROUP_B"
     }
   })
+  await removeLifecycleStatusFromLocalVectors(dataDir)
 
   const groupAUser = user(["GROUP_A"])
   const groupASearch = await service.search({ query: "policy approval", topK: 10, filters: { tenantId: "tenant-a", source: "notion" } }, groupAUser)
@@ -184,6 +185,8 @@ test("service search expands published reviewed aliases without returning alias 
   const result = await service.search({ query: "pto", topK: 10, filters: { tenantId: "tenant-a" } }, user(["GROUP_A"]))
   assert.equal(result.results[0]?.fileName, "vacation.md")
   assert.match(result.diagnostics.aliasVersion, /^alias:[a-f0-9]{8}$/)
+  const unfilteredResult = await service.search({ query: "pto", topK: 10 }, user(["GROUP_A"]))
+  assert.equal(unfilteredResult.results[0]?.fileName, "vacation.md")
   const payload = JSON.stringify(result)
   assert.equal(payload.includes("pto"), true)
   assert.equal(payload.includes("年次有給休暇"), true)
@@ -221,4 +224,13 @@ function user(cognitoGroups: string[]): AppUser {
     email: "user-1@example.com",
     cognitoGroups
   }
+}
+
+async function removeLifecycleStatusFromLocalVectors(dataDir: string): Promise<void> {
+  const vectorPath = path.join(dataDir, "evidence-vectors.json")
+  const raw = JSON.parse(await readFile(vectorPath, "utf-8")) as { records: Array<{ metadata?: { lifecycleStatus?: string } }> }
+  for (const record of raw.records) {
+    if (record.metadata) delete record.metadata.lifecycleStatus
+  }
+  await writeFile(vectorPath, JSON.stringify(raw, null, 2))
 }

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto"
 import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
-import { chunkText } from "../rag/chunk.js"
+import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { buildPipelineVersions } from "../rag/pipeline-versions.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
 import type { DocumentManifest, RetrievedVector } from "../types.js"
@@ -153,11 +153,23 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     const evaluatorDone = nextActionType === "rerank" || nextActionType === "finalize_refusal"
     const stopByIteration = nextIteration >= stopCriteria.maxIterations
     const stopByNoEvidence = noNewEvidenceStreak >= stopCriteria.maxNoNewEvidenceStreak
+    const forcedRefusal =
+      state.retrievalEvaluation.conflictingFactIds.length > 0 &&
+      state.retrievalEvaluation.nextAction.type !== "finalize_refusal" &&
+      (stopByIteration || stopByNoEvidence)
 
     return {
       iteration: nextIteration,
       noNewEvidenceStreak,
-      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence ? "done" : "continue_search"
+      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence ? "done" : "continue_search",
+      retrievalEvaluation: forcedRefusal
+        ? {
+            ...state.retrievalEvaluation,
+            retrievalQuality: "conflicting",
+            nextAction: { type: "finalize_refusal", reason: "unresolved_conflicting_evidence" },
+            reason: `${state.retrievalEvaluation.reason} 検索 budget 内で conflicting evidence を解消できなかったため、回答生成前に拒否します。`
+          }
+        : state.retrievalEvaluation
     }
   }
 
@@ -176,7 +188,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
   const nodes = {
     analyzeInput: tracedNode("analyze_input", analyzeInput),
     normalizeQuery: tracedNode("normalize_query", normalizeQuery),
-    retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps)),
+    retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps, user)),
     generateClues: tracedNode("generate_clues", createGenerateCluesNode(deps)),
     planSearch: tracedNode("plan_search", planSearch),
     executeSearchAction: tracedNode("execute_search_action", executeSearchAction),
@@ -291,8 +303,7 @@ async function expandContextWindow(
   if (!source?.metadata.documentId || !source.metadata.chunkId) return []
   const manifest = await loadManifest(deps, source.metadata.documentId)
   if (!manifest) return []
-  const sourceText = await deps.objectStore.getText(manifest.sourceObjectKey)
-  const chunks = chunkText(sourceText, config.chunkSizeChars, config.chunkOverlapChars)
+  const chunks = await loadChunksForManifest(deps, manifest)
   const center = chunks.findIndex((chunk) => chunk.id === source.metadata.chunkId)
   if (center < 0) return []
 

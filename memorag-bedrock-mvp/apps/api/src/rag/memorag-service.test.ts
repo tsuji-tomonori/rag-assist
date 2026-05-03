@@ -77,7 +77,8 @@ test("service reindexes documents through embedding cache compatible pipeline ve
   })
 
   assert.ok(manifest.chunks?.some((chunk) => chunk.sectionPath?.includes("申請手順")))
-  const reindexed = await service.reindexDocument(manifest.documentId)
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reindexed = await service.reindexDocument(actor, manifest.documentId)
   assert.notEqual(reindexed.documentId, manifest.documentId)
   assert.equal(reindexed.metadata?.stagedFromDocumentId, manifest.documentId)
   assert.equal(reindexed.lifecycleStatus, "active")
@@ -90,7 +91,7 @@ test("service reindexes documents through embedding cache compatible pipeline ve
 })
 
 test("service stages and rolls back structured blue-green reindex migrations", async () => {
-  const { service } = await createService()
+  const { service, dataDir } = await createService()
   const textractJson = JSON.stringify({
     Blocks: [
       { Id: "table-1", BlockType: "TABLE", Page: 1, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2"] }] },
@@ -115,6 +116,13 @@ test("service stages and rolls back structured blue-green reindex migrations", a
   const activeAfterCutover = await service.listDocuments()
   assert.deepEqual(activeAfterCutover.map((doc) => doc.documentId), [staged.stagedDocumentId])
   assert.equal(activeAfterCutover[0]?.chunks?.[0]?.chunkKind, "table")
+  const evidenceDbAfterCutover = JSON.parse(await readFile(path.join(dataDir, "evidence-vectors.json"), "utf-8")) as {
+    records: Array<{ key: string; metadata?: { lifecycleStatus?: string } }>
+  }
+  assert.equal(
+    evidenceDbAfterCutover.records.find((record) => record.key.startsWith(staged.stagedDocumentId))?.metadata?.lifecycleStatus,
+    "active"
+  )
 
   const rolledBack = await service.rollbackReindexMigration(staged.migrationId)
   assert.equal(rolledBack.status, "rolled_back")

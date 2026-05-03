@@ -306,7 +306,20 @@ test("finalize response preserves grounded answers and converts invalid final st
 
 test("query nodes handle memory-disabled, fallback, generated clue, and search merge paths", async () => {
   const deps = createDeps()
-  assert.deepEqual(await createRetrieveMemoryNode(deps)(state({ useMemory: false })), { memoryCards: [] })
+  assert.deepEqual(await createRetrieveMemoryNode(deps, user())(state({ useMemory: false })), { memoryCards: [] })
+
+  const guardedDeps = createDeps()
+  guardedDeps.memoryVectorStore = {
+    put: async () => undefined,
+    query: async () => [
+      { ...chunk, key: "active-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-1", aclGroup: "GROUP_A" } },
+      { ...chunk, key: "staging-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-2", lifecycleStatus: "staging", aclGroup: "GROUP_A" } },
+      { ...chunk, key: "forbidden-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-3", aclGroup: "GROUP_B" } }
+    ],
+    delete: async () => undefined
+  }
+  const guardedMemory = await createRetrieveMemoryNode(guardedDeps, { userId: "user-a", cognitoGroups: ["GROUP_A"] })(state({ memoryTopK: 3 }))
+  assert.deepEqual(guardedMemory.memoryCards?.map((hit) => hit.key), ["active-memory"])
 
   const noMemoryClues = await createGenerateCluesNode(deps)(state({ memoryCards: [] }))
   assert.deepEqual(noMemoryClues, { clues: [], expandedQueries: ["question"] })
@@ -513,7 +526,7 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
       }
     })
   )
-  assert.equal(valueMismatch.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.equal(valueMismatch.retrievalEvaluation?.retrievalQuality, "conflicting")
   assert.deepEqual(valueMismatch.retrievalEvaluation?.supportedFactIds, [])
   assert.deepEqual(valueMismatch.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
   assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "value_mismatch")
@@ -647,7 +660,7 @@ test("retrieval evaluator LLM judge handles uncertain value mismatch cases", asy
   })
   const judgedConflict = await conflict(mismatchState)
   assert.equal(judgedConflict.retrievalEvaluation?.llmJudge?.label, "CONFLICT")
-  assert.equal(judgedConflict.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.equal(judgedConflict.retrievalEvaluation?.retrievalQuality, "conflicting")
   assert.deepEqual(judgedConflict.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
   assert.equal(judgedConflict.retrievalEvaluation?.nextAction.type, "evidence_search")
 })

@@ -137,6 +137,29 @@ test("fixed workflow branches on evaluate_search_progress decisions", async () =
   assert.deepEqual(evaluationSteps.map((step) => step.output?.searchDecision), ["continue_search", "done"])
 })
 
+test("fixed workflow refuses unresolved conflicting evidence when search budget ends", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({ fileName: "deadline-a.txt", text: "申請期限は翌月5営業日です。", skipMemory: true })
+  await service.ingest({ fileName: "deadline-b.txt", text: "申請期限は月末です。", skipMemory: true })
+
+  const result = await service.chat({
+    question: "申請期限はいつですか？",
+    includeDebug: true,
+    minScore: 0.01,
+    maxIterations: 1
+  })
+
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(result.isAnswerable, false)
+  assert.equal(result.answer, "資料からは回答できません。")
+  assert.equal(labels.includes("generate_answer"), false)
+  const evaluateStep = result.debug?.steps.find((step) => step.label === "evaluate_search_progress")
+  const evaluation = evaluateStep?.output?.retrievalEvaluation as Record<string, unknown> | undefined
+  assert.equal(evaluation?.retrievalQuality, "conflicting")
+  assert.equal(result.debug?.steps.at(-1)?.label, "finalize_refusal")
+})
+
 test("fixed workflow merges node updates into state and appends trace entries", () => {
   const initial = state({
     normalizedQuery: "old query",

@@ -69,6 +69,7 @@ task benchmark:sample
 | `EMBEDDING_MODEL_ID` | 埋め込みモデル | `amazon.titan-embed-text-v2:0` |
 | `EMBEDDING_DIMENSIONS` | vector次元数 | `1024` |
 | `MIN_RETRIEVAL_SCORE` | no-answer判定閾値 | `0.20` |
+| `PUBLISH_LEXICAL_INDEX_ON_SEARCH` | 検索 path で lexical index artifact を生成するか。production では read-only 既定 | production以外は`true` |
 | `DEBUG_DOWNLOAD_BUCKET_NAME` | debug trace JSON download用S3 bucket | 未設定 |
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | debug trace download URL有効期限 | `900` |
 

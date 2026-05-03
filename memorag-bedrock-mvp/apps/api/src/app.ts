@@ -497,11 +497,12 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "rag:index:rebuild:group")
+    const user = c.get("user")
+    requirePermission(user, "rag:index:rebuild:group")
     const { documentId } = (c.req as any).valid("param") as { documentId: string }
     const body = ((c.req as any).valid("json") ?? {}) as { embeddingModelId?: string; memoryModelId?: string }
     try {
-      return c.json(await service.reindexDocument(documentId, body), 200)
+      return c.json(await service.reindexDocument(user, documentId, body), 200)
     } catch (err) {
       if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
       throw err

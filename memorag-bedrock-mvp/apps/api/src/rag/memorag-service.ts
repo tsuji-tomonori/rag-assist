@@ -15,6 +15,7 @@ import { searchRag, type SearchInput, type SearchResponse } from "../search/hybr
 import { chunkStructuredBlocks, chunkText } from "./chunk.js"
 import { embedWithCache, mapWithConcurrency } from "./embedding-cache.js"
 import { parseJsonObject } from "./json.js"
+import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./manifest-chunks.js"
 import { buildPipelineVersions } from "./pipeline-versions.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
 import { extractDocumentFromUpload } from "./text-extract.js"
@@ -284,8 +285,8 @@ export class MemoRagService {
     return manifest
   }
 
-  async reindexDocument(documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<DocumentManifest> {
-    const migration = await this.stageReindexMigration({ userId: "system", email: "system@local", cognitoGroups: ["SYSTEM_ADMIN"] }, documentId, input)
+  async reindexDocument(actor: AppUser, documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<DocumentManifest> {
+    const migration = await this.stageReindexMigration(actor, documentId, input)
     await this.cutoverReindexMigration(migration.migrationId)
     return this.getManifest(migration.stagedDocumentId)
   }
@@ -340,6 +341,7 @@ export class MemoRagService {
     if (migration.status !== "staged") throw new Error(`Reindex migration is ${migration.status}`)
     const source = await this.getManifest(migration.sourceDocumentId)
     const staged = await this.getManifest(migration.stagedDocumentId)
+    await this.reputDocumentVectorsWithLifecycle(staged, "active")
     await this.markManifestLifecycle(source, "superseded")
     await this.markManifestLifecycle(staged, "active", { activeDocumentId: staged.documentId })
     await this.deps.evidenceVectorStore.delete(source.evidenceVectorKeys ?? source.vectorKeys)
@@ -790,14 +792,85 @@ export class MemoRagService {
   }
 
   private async loadStructuredBlocks(manifest: DocumentManifest): Promise<StructuredBlock[] | undefined> {
-    if (!manifest.structuredBlocksObjectKey) return undefined
-    try {
-      const raw = JSON.parse(await this.deps.objectStore.getText(manifest.structuredBlocksObjectKey)) as { blocks?: StructuredBlock[] }
-      return Array.isArray(raw.blocks) ? raw.blocks : undefined
-    } catch (err) {
-      if (!isMissingObjectError(err)) throw err
-      return undefined
-    }
+    return loadStructuredBlocksForManifest(this.deps, manifest)
+  }
+
+  private async reputDocumentVectorsWithLifecycle(
+    manifest: DocumentManifest,
+    status: NonNullable<DocumentManifest["lifecycleStatus"]>
+  ): Promise<void> {
+    const chunks = await loadChunksForManifest(this.deps, manifest)
+    const sourceText = await this.deps.objectStore.getText(manifest.sourceObjectKey)
+    const memoryCards = manifest.memoryVectorKeys?.length
+      ? await this.createMemoryCards({
+          fileName: manifest.fileName,
+          text: sourceText,
+          chunks
+        })
+      : []
+    const metadata = { ...(manifest.metadata ?? {}), lifecycleStatus: status }
+    const filterableMetadata = toFilterableVectorMetadata(metadata)
+    const embeddingModelId = manifest.embeddingModelId ?? config.embeddingModelId
+
+    const evidenceRecords = await mapWithConcurrency(chunks, config.embeddingConcurrency, async (chunk): Promise<VectorRecord> => ({
+      key: `${manifest.documentId}-${chunk.id}`,
+      vector: await embedWithCache(this.deps, {
+        text: chunk.text,
+        modelId: embeddingModelId,
+        dimensions: manifest.embeddingDimensions ?? config.embeddingDimensions
+      }),
+      metadata: {
+        kind: "chunk",
+        documentId: manifest.documentId,
+        fileName: manifest.fileName,
+        chunkId: chunk.id,
+        objectKey: manifest.sourceObjectKey,
+        text: chunk.text,
+        sectionPath: chunk.sectionPath,
+        heading: chunk.heading,
+        parentSectionId: chunk.parentSectionId,
+        previousChunkId: chunk.previousChunkId,
+        nextChunkId: chunk.nextChunkId,
+        chunkHash: chunk.chunkHash,
+        pageStart: chunk.pageStart,
+        pageEnd: chunk.pageEnd,
+        chunkKind: chunk.chunkKind,
+        sourceBlockId: chunk.sourceBlockId,
+        normalizedFrom: chunk.normalizedFrom,
+        tableColumnCount: chunk.tableColumnCount,
+        listDepth: chunk.listDepth,
+        codeLanguage: chunk.codeLanguage,
+        figureCaption: chunk.figureCaption,
+        extractionMethod: chunk.extractionMethod,
+        lifecycleStatus: status,
+        ...filterableMetadata,
+        createdAt: manifest.createdAt
+      }
+    }))
+
+    const memoryRecords = await mapWithConcurrency(memoryCards, config.embeddingConcurrency, async (card): Promise<VectorRecord> => ({
+      key: `${manifest.documentId}-${card.id}`,
+      vector: await embedWithCache(this.deps, {
+        text: card.text,
+        modelId: embeddingModelId,
+        dimensions: manifest.embeddingDimensions ?? config.embeddingDimensions
+      }),
+      metadata: {
+        kind: "memory",
+        documentId: manifest.documentId,
+        fileName: manifest.fileName,
+        memoryId: card.id,
+        objectKey: manifest.sourceObjectKey,
+        text: card.text,
+        sectionPath: card.sectionPath,
+        lifecycleStatus: status,
+        ...filterableMetadata,
+        createdAt: manifest.createdAt
+      }
+    }))
+
+    await this.deps.evidenceVectorStore.put(evidenceRecords)
+    await this.deps.memoryVectorStore.put(memoryRecords)
   }
 
   private async markManifestLifecycle(

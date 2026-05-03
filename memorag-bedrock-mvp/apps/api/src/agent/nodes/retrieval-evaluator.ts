@@ -188,7 +188,7 @@ function classifyRetrieval(
   conflictingFactIds: string[]
 ): RetrievalEvaluation["retrievalQuality"] {
   if (state.retrievedChunks.length === 0 || topScore < state.searchPlan.stopCriteria.minTopScore) return "irrelevant"
-  if (conflictingFactIds.length > 0) return "partial"
+  if (conflictingFactIds.length > 0) return "conflicting"
   if (missingFactIds.length > 0) return "partial"
   return "sufficient"
 }

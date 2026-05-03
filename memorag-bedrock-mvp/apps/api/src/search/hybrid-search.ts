@@ -1,7 +1,7 @@
 import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
-import { chunkText } from "../rag/chunk.js"
+import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { loadPublishedAliasMap } from "./alias-artifacts.js"
 import type { DocumentManifest, JsonValue, RetrievedVector, VectorMetadata } from "../types.js"
 
@@ -132,9 +132,9 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     tenantId: input.filters?.tenantId,
     department: input.filters?.department,
     source: input.filters?.source,
-    docType: input.filters?.docType,
-    lifecycleStatus: "active" as const
+    docType: input.filters?.docType
   }
+  const semanticQueryTopK = Math.min(100, Math.max(semanticTopK, semanticTopK * 3))
   const semanticHits =
     semanticTopK > 0
       ? (
@@ -144,10 +144,10 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
                 modelId: input.embeddingModelId ?? config.embeddingModelId,
                 dimensions: config.embeddingDimensions
               })),
-            semanticTopK,
+            semanticQueryTopK,
             vectorFilter
           )
-        ).filter((hit) => canAccessVector(hit.metadata, user))
+        ).filter((hit) => canAccessVector(hit.metadata, user)).slice(0, semanticTopK)
       : []
 
   const fused = rrfFuse(
@@ -191,7 +191,7 @@ export async function getLexicalIndex(
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
   const visible = manifests.filter(isActiveManifest).filter((manifest) => canAccessManifest(manifest, user)).filter((manifest) => manifestMatchesFilters(manifest, filters))
-  const publishedAliases = await loadPublishedAliasMap(deps, filters)
+  const publishedAliases = await loadPublishedAliasMap(deps, filters, visible.map((manifest) => manifest.metadata))
   const aliases = mergeAliases([publishedAliases.aliases, ...visible.map((manifest) => aliasMapFromMetadata(manifest.metadata))])
   const combinedAliasSignature = stableStringifyAliasMap(aliases)
   const aliasSignature = publishedAliases.version === "none" ? combinedAliasSignature : `${publishedAliases.version}:${combinedAliasSignature}`
@@ -209,8 +209,7 @@ export async function getLexicalIndex(
 
   const docs: LexicalDocument[] = []
   for (const manifest of visible) {
-    const source = await deps.objectStore.getText(manifest.sourceObjectKey)
-    const chunks = chunkText(source, config.chunkSizeChars, config.chunkOverlapChars)
+    const chunks = await loadChunksForManifest(deps, manifest)
     for (const chunk of chunks) {
       docs.push({
         id: `${manifest.documentId}-${chunk.id}`,
@@ -226,7 +225,7 @@ export async function getLexicalIndex(
   }
 
   const index = buildLexicalIndex(docs, versionLabel("lexical", signature || "empty"), aliases, aliasVersionLabel(aliasSignature))
-  await publishLexicalIndexArtifact(deps, signature, index)
+  if (config.publishLexicalIndexOnSearch) await publishLexicalIndexArtifact(deps, signature, index)
   cachedIndex = { signature, index }
   return index
 }
