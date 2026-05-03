@@ -219,6 +219,7 @@ curl -s http://localhost:8787/conversation-history \
     "id":"conversation-20260502-001",
     "title":"経費精算の確認",
     "updatedAt":"2026-05-02T00:00:00.000Z",
+    "isFavorite":true,
     "messages":[
       {
         "role":"user",

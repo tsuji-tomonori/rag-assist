@@ -457,27 +457,31 @@ export class MemoRagMvpStack extends Stack {
         phases: {
           install: {
             "runtime-versions": { nodejs: 22 },
-            commands: ["cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"", "npm ci"]
+            commands: ["set -euo pipefail", "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"", "npm ci"]
           },
           pre_build: {
             commands: [
+              "set -euo pipefail",
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
               "aws s3 cp \"$DATASET_S3_URI\" ./benchmark/.runner-dataset.jsonl",
               "export OUTPUT=./benchmark/.runner-results.jsonl",
               "export SUMMARY=./benchmark/.runner-summary.json",
               "export REPORT=./benchmark/.runner-report.md",
               "export DATASET=./benchmark/.runner-dataset.jsonl",
-              "export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""
+              "API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\"",
+              "export API_AUTH_TOKEN"
             ]
           },
           build: {
             commands: [
+              "set -euo pipefail",
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
               "if [ \"$MODE\" = \"search\" ]; then API_BASE_URL=\"$API_BASE_URL\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" npm run start:search -w @memorag-mvp/benchmark; else API_BASE_URL=\"$API_BASE_URL\" MODEL_ID=\"$MODEL_ID\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" MEMORY_TOP_K=\"$MEMORY_TOP_K\" MIN_SCORE=\"$MIN_SCORE\" npm run start -w @memorag-mvp/benchmark; fi"
             ]
           },
           post_build: {
             commands: [
+              "set -euo pipefail",
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
               "aws s3 cp ./benchmark/.runner-results.jsonl \"$OUTPUT_S3_PREFIX/results.jsonl\"",
               "aws s3 cp ./benchmark/.runner-summary.json \"$OUTPUT_S3_PREFIX/summary.json\"",

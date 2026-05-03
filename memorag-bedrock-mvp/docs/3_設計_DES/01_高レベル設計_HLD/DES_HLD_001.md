@@ -43,8 +43,8 @@
 | Debug Trace Store | workflow events | run trace | `FR-010`, `NFR-005`, `NFR-006` |
 | Conversation History Store | userId、conversation item | user-scoped conversation list | `FR-022`, `NFR-005` |
 | Human Question Store | question ticket、answer draft、status | 担当者問い合わせと回答状態 | `FR-021`, `NFR-011` |
-| Web Admin Workspace | `GET /me` permissions、documents、alias、reindex migrations、questions、debug runs、benchmark runs、admin users、roles、usage、costs | 管理 view | `FR-023`, `FR-024`, `FR-027`, `NFR-011` |
-| Admin Ledger | user、group assignment、usage summary | Phase 2 管理台帳 | `FR-027`, `NFR-011` |
+| Web Admin Workspace | `GET /me` permissions、documents、alias、reindex migrations、questions、debug runs、benchmark runs、admin users、roles、admin audit log、usage、costs | 管理 view | `FR-023`, `FR-024`, `FR-027`, `NFR-011` |
+| Admin Ledger | user、group assignment、admin audit log、usage summary | Phase 2 管理台帳 | `FR-027`, `NFR-011` |
 | Authorization Layer | Cognito group、permission | API 実行可否 | `NFR-010`, `NFR-011` |
 | Identity Provisioning | email、password、confirmation code、Cognito trigger event | self sign-up user、`CHAT_USER` group membership | `FR-025`, `NFR-011` |
 | Cost Estimator | usage meter、pricing catalog、期間 | service/component 別の概算料金 | `NFR-002`, `NFR-009` |
@@ -61,8 +61,8 @@
 - Answer Support Verifier は回答後の主要文が引用 chunk に支持されているかを検証し、不支持文がある場合は回答不能へ落とす。
 - Conversation History Store は画面の会話履歴をユーザー単位で永続化し、履歴 item の schema version を保持する。
 - Human Question Store は回答不能時の人手問い合わせを保存し、担当者による回答・解決状態を管理する。
-- Web Admin Workspace は Phase 1 の RAG 運用管理導線に加え、Phase 2 のユーザー管理、ロール付与、利用状況、コスト監査を permission に応じて表示する。
-- Admin Ledger は Phase 2 初期実装の管理対象ユーザー、role group、利用状況、概算コストの API contract を提供し、Cognito Admin API 連携は後続 adapter に分離する。
+- Web Admin Workspace は Phase 1 の RAG 運用管理導線に加え、Phase 2 のユーザー作成、ユーザー管理、ロール付与、管理操作履歴、利用状況、コスト監査を permission に応じて表示する。
+- Admin Ledger は Phase 2 初期実装の管理対象ユーザー、role group、管理操作履歴、利用状況、概算コストの API contract を提供し、Cognito Admin API 連携は後続 adapter に分離する。
 - Authorization Layer は API 側の permission 判定を正とし、Web 側の Cognito group は表示制御と不要な事前取得の抑制に使う。
 - Identity Provisioning は通常利用者の self sign-up とメール確認を扱い、確認済みユーザーには `CHAT_USER` のみを付与する。
 - Identity Provisioning は `SYSTEM_ADMIN` などの上位権限を付与せず、上位権限付与は管理ユーザーの GitHub Actions または AWS 管理手順へ分離する。
@@ -88,12 +88,13 @@
 14. 担当者または管理者は問い合わせ一覧を取得し、回答または解決状態を更新する。
 15. 運用担当者は `admin` view から文書管理、問い合わせ対応、debug/評価、性能テストの各導線へ遷移する。
 16. 文書管理担当者は `documents` view で登録文書の一覧、アップロード、削除、blue-green 再インデックス stage/cutover/rollback を実行する。
-17. 管理者は `admin` view で管理対象ユーザーの一覧、停止、再開、削除、role group 付与を実行する。
-18. RAG 管理者は `admin` view の Alias 管理で draft 作成、review、disable、publish、audit log 確認を実行する。
-19. 管理者または監査担当者は `admin` view で全ユーザー利用状況と service/component 別の概算コストを参照する。
-20. 利用量メーターは trace、document/vector manifest、DynamoDB item サイズ、Lambda 実行メトリクスから料金算出に必要な集計値を作る。
-21. Cost Estimator は利用量に pricing catalog の単価を適用して、期間別・service 別の概算料金を算出する。
-21. 未認証の通常利用者がアカウント作成を行う場合、Web UI は Cognito `SignUp` と `ConfirmSignUp` を使い、Cognito post-confirmation trigger が `CHAT_USER` のみを付与する。
+17. 管理者は `admin` view で管理対象ユーザーの作成、一覧、停止、再開、削除、role group 付与を実行する。
+18. アクセス管理者は `admin` view で管理操作履歴を参照する。
+19. RAG 管理者は `admin` view の Alias 管理で draft 作成、review、disable、publish、audit log 確認を実行する。
+20. 管理者または監査担当者は `admin` view で全ユーザー利用状況と service/component 別の概算コストを参照する。
+21. 利用量メーターは trace、document/vector manifest、DynamoDB item サイズ、Lambda 実行メトリクスから料金算出に必要な集計値を作る。
+22. Cost Estimator は利用量に pricing catalog の単価を適用して、期間別・service 別の概算料金を算出する。
+23. 未認証の通常利用者がアカウント作成を行う場合、Web UI は Cognito `SignUp` と `ConfirmSignUp` を使い、Cognito post-confirmation trigger が `CHAT_USER` のみを付与する。
 
 ## アーキテクチャ判断との関係
 

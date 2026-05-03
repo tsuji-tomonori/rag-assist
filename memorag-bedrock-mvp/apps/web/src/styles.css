@@ -1457,7 +1457,7 @@ button:disabled {
 
 .history-toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 180px;
+  grid-template-columns: minmax(220px, 1fr) 180px auto;
   gap: 10px;
 }
 
@@ -1473,17 +1473,28 @@ button:disabled {
   font-weight: 700;
 }
 
+.favorite-filter {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #17233f;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 .history-list {
   margin-top: 0;
 }
 
 .history-item {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
 }
 
-.history-item > button:first-child {
+.history-item > button:not(.favorite-toggle):not(.history-delete-button) {
   min-width: 0;
   border: 0;
   display: grid;
@@ -1494,13 +1505,30 @@ button:disabled {
   text-align: left;
 }
 
-.history-item > button:first-child small {
+.history-item > button:not(.favorite-toggle):not(.history-delete-button) small {
   color: #2363d9;
   font-size: 12px;
   font-weight: 800;
 }
 
-.history-item > button:last-child {
+.favorite-toggle {
+  width: 38px;
+  height: 38px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #cbd6e5;
+  border-radius: 7px;
+  color: #6d7890;
+  background: #fff;
+}
+
+.favorite-toggle.active {
+  border-color: #f2c44d;
+  color: #b47b00;
+  background: #fff7db;
+}
+
+.history-delete-button {
   min-height: 34px;
   border: 1px solid #f1c0c0;
   border-radius: 7px;
@@ -1877,8 +1905,33 @@ button:disabled {
 
 .user-admin-panel,
 .alias-admin-panel,
-.admin-section-panel[aria-label="利用状況一覧"] {
+.admin-section-panel[aria-label="利用状況一覧"],
+.admin-audit-panel {
   grid-column: 1 / -1;
+}
+
+.admin-create-user-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.8fr) minmax(180px, 0.7fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.admin-create-user-form label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.admin-create-user-form label span {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .alias-editor-form {
@@ -1926,6 +1979,19 @@ button:disabled {
 .alias-card.disabled {
   color: #68758f;
   background: #f4f6f9;
+}
+
+.admin-create-user-form input,
+.admin-create-user-form select,
+.admin-create-user-form button {
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid #cbd9f0;
+  border-radius: 7px;
+  padding: 0 10px;
+  color: #2f4f7f;
+  background: #fff;
+  font-weight: 900;
 }
 
 .admin-data-table,
@@ -2092,6 +2158,42 @@ button:disabled {
   background: #f8fbff;
 }
 
+.admin-audit-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-audit-entry {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.8fr) minmax(180px, 0.7fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e1e8f2;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fbfdff;
+}
+
+.admin-audit-entry div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.admin-audit-entry strong {
+  color: #13223d;
+}
+
+.admin-audit-entry span,
+.admin-audit-entry time,
+.admin-audit-entry small {
+  min-width: 0;
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -2229,6 +2331,11 @@ button:disabled {
   .phase2-admin-grid {
     grid-template-columns: 1fr;
   }
+
+  .admin-create-user-form,
+  .admin-audit-entry {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 720px) {
@@ -2342,6 +2449,10 @@ button:disabled {
   .question-form-grid,
   .assignee-grid,
   .admin-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .history-toolbar {
     grid-template-columns: 1fr;
   }
 

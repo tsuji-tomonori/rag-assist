@@ -6,6 +6,7 @@ import {
   chat,
   createAlias,
   createBenchmarkDownload,
+  createManagedUser,
   createQuestion,
   createDebugDownload,
   cutoverReindexMigration,
@@ -19,6 +20,7 @@ import {
   listAliasAuditLog,
   listAliases,
   listAccessRoles,
+  listAdminAuditLog,
   listConversationHistory,
   listQuestions,
   listBenchmarkRuns,
@@ -53,6 +55,7 @@ import {
   type DocumentManifest,
   type HumanQuestion,
   type ManagedUser,
+  type ManagedUserAuditLogEntry,
   type Permission,
   type ReindexMigration,
   type UserUsageSummary
@@ -90,7 +93,7 @@ type IconName =
   | "gauge"
   | "stop"
 
-type AppView = "chat" | "assignee" | "history" | "benchmark" | "admin" | "documents"
+type AppView = "chat" | "assignee" | "history" | "favorites" | "benchmark" | "admin" | "documents"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -104,6 +107,7 @@ export default function App() {
   const [benchmarkSuites, setBenchmarkSuites] = useState<BenchmarkSuite[]>([])
   const [questions, setQuestions] = useState<HumanQuestion[]>([])
   const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([])
+  const [adminAuditLog, setAdminAuditLog] = useState<ManagedUserAuditLogEntry[]>([])
   const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[]>([])
   const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[]>([])
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
@@ -135,6 +139,7 @@ export default function App() {
   const [benchmarkModelId, setBenchmarkModelId] = useState(defaultModelId)
   const [benchmarkConcurrency, setBenchmarkConcurrency] = useState(1)
   const latestMessageRef = useRef<HTMLElement | null>(null)
+  const historyRef = useRef<ConversationHistoryItem[]>([])
 
   const hasPermission = (permission: Permission) => currentUser?.permissions.includes(permission) ?? false
   const canCreateChat = hasPermission("chat:create")
@@ -150,6 +155,7 @@ export default function App() {
   const canCancelBenchmark = hasPermission("benchmark:cancel")
   const canDownloadBenchmark = hasPermission("benchmark:download")
   const canReadUsers = hasPermission("user:read")
+  const canCreateUsers = hasPermission("user:create")
   const canSuspendUsers = hasPermission("user:suspend")
   const canUnsuspendUsers = hasPermission("user:unsuspend")
   const canDeleteUsers = hasPermission("user:delete")
@@ -164,7 +170,8 @@ export default function App() {
   const canPublishAliases = hasPermission("rag:alias:publish:group")
   const canManageDocuments = canWriteDocuments || canDeleteDocuments || canReindexDocuments
   const canManageAliases = canReadAliases || canWriteAliases || canReviewAliases || canDisableAliases || canPublishAliases
-  const canManageUsers = canReadUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
+  const canReadAdminAuditLog = canOpenAdminSettings
+  const canManageUsers = canReadUsers || canCreateUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
   const canAuditOperations = canReadUsage || canReadCosts
   const canSeeAdminSettings = canOpenAdminSettings || canAnswerQuestions || canManageDocuments || canReadDebugRuns || canReadBenchmarkRuns || canManageUsers || canAuditOperations || canManageAliases || canReindexDocuments
   const canAsk = useMemo(() => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && !loading && canCreateChat, [question, file, loading, canCreateChat, canWriteDocuments])
@@ -180,6 +187,11 @@ export default function App() {
   const selectedRunValue = pendingDebugQuestion ? "__processing__" : selectedTrace?.runId ?? ""
   const visibleMessages = messages
   const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
+
+  useEffect(() => {
+    historyRef.current = history
+  }, [history])
+
   useEffect(() => {
     if (!authSession) {
       setCurrentUser(null)
@@ -213,6 +225,7 @@ export default function App() {
     }
     if (canReadUsers) refreshManagedUsers().catch((err) => console.warn("Failed to load managed users", err))
     if (canOpenAdminSettings) refreshAccessRoles().catch((err) => console.warn("Failed to load access roles", err))
+    if (canReadAdminAuditLog) refreshAdminAuditLog().catch((err) => console.warn("Failed to load admin audit log", err))
     if (canReadUsage) refreshUsageSummaries().catch((err) => console.warn("Failed to load usage summaries", err))
     if (canReadCosts) refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err))
     if (canReadAliases) refreshAliases().catch((err) => console.warn("Failed to load aliases", err))
@@ -245,7 +258,8 @@ export default function App() {
   useEffect(() => {
     if (messages.length === 0) return
     const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
-    rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages))
+    const existingFavorite = historyRef.current.find((item) => item.id === currentConversationId)?.isFavorite ?? false
+    rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages, existingFavorite))
   }, [currentConversationId, messages])
 
   useEffect(() => {
@@ -313,6 +327,10 @@ export default function App() {
     setManagedUsers(await listManagedUsers())
   }
 
+  async function refreshAdminAuditLog() {
+    setAdminAuditLog(await listAdminAuditLog())
+  }
+
   async function refreshAccessRoles() {
     setAccessRoles(await listAccessRoles())
   }
@@ -349,8 +367,19 @@ export default function App() {
   }
 
   function rememberConversation(item: ConversationHistoryItem) {
-    setHistory((prev) => [item, ...prev.filter((entry) => entry.id !== item.id)].slice(0, 20))
-    saveConversationHistory(item).catch((err) => console.warn("Failed to save conversation history", err))
+    const existing = historyRef.current.find((entry) => entry.id === item.id)
+    const nextItem = { ...item, isFavorite: item.isFavorite ?? existing?.isFavorite ?? false }
+    setHistory((prev) => [nextItem, ...prev.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20))
+    saveConversationHistory(nextItem).catch((err) => console.warn("Failed to save conversation history", err))
+  }
+
+  function toggleFavorite(item: ConversationHistoryItem) {
+    const nextItem = { ...item, isFavorite: !item.isFavorite }
+    setHistory((prev) => [nextItem, ...prev.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20))
+    saveConversationHistory(nextItem).catch((err) => {
+      console.warn("Failed to update conversation favorite", err)
+      setError(err instanceof Error ? err.message : String(err))
+    })
   }
 
   async function onAsk(event: FormEvent) {
@@ -567,7 +596,8 @@ export default function App() {
   function newConversation() {
     if (messages.length > 0) {
       const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
-      rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages))
+      const existingFavorite = historyRef.current.find((item) => item.id === currentConversationId)?.isFavorite ?? false
+      rememberConversation(buildConversationHistoryItem(currentConversationId, titleCandidate, messages, existingFavorite))
     }
     setMessages([])
     setCurrentConversationId(createConversationId())
@@ -678,6 +708,25 @@ export default function App() {
       const updated = await assignUserRoles(userId, groups)
       setManagedUsers((prev) => [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
       await Promise.all([
+        canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
+        canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
+        canReadCosts ? refreshCostAudit() : Promise.resolve()
+      ])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onCreateManagedUser(input: { email: string; displayName?: string; groups?: string[] }) {
+    setLoading(true)
+    setError(null)
+    try {
+      const created = await createManagedUser(input)
+      setManagedUsers((prev) => [created, ...prev.filter((user) => user.userId !== created.userId)].sort((a, b) => a.email.localeCompare(b.email)))
+      await Promise.all([
+        canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
         canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
         canReadCosts ? refreshCostAudit() : Promise.resolve()
       ])
@@ -689,6 +738,7 @@ export default function App() {
   }
 
   async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete") {
+    if (action === "delete" && !window.confirm("このユーザーを管理台帳から削除状態にします。続行しますか？")) return
     setLoading(true)
     setError(null)
     try {
@@ -699,6 +749,7 @@ export default function App() {
         return [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
       })
       await Promise.all([
+        canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
         canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
         canReadCosts ? refreshCostAudit() : Promise.resolve()
       ])
@@ -736,7 +787,7 @@ export default function App() {
               <span>性能テスト</span>
             </button>
           )}
-          <button className="rail-item" type="button" title="お気に入り">
+          <button className={`rail-item ${activeView === "favorites" ? "active" : ""}`} type="button" title="お気に入り" onClick={() => setActiveView("favorites")}>
             <Icon name="star" />
             <span>お気に入り</span>
           </button>
@@ -987,6 +1038,7 @@ export default function App() {
             debugRunsCount={debugRuns.length}
             benchmarkRunsCount={benchmarkRuns.length}
             managedUsers={managedUsers}
+            adminAuditLog={adminAuditLog}
             accessRoles={accessRoles}
             usageSummaries={usageSummaries}
             costAudit={costAudit}
@@ -999,6 +1051,7 @@ export default function App() {
             canReadBenchmarkRuns={canReadBenchmarkRuns}
             canOpenAdminSettings={canOpenAdminSettings}
             canReadUsers={canReadUsers}
+            canCreateUsers={canCreateUsers}
             canSuspendUsers={canSuspendUsers}
             canUnsuspendUsers={canUnsuspendUsers}
             canDeleteUsers={canDeleteUsers}
@@ -1011,6 +1064,7 @@ export default function App() {
             canReviewAliases={canReviewAliases}
             canDisableAliases={canDisableAliases}
             canPublishAliases={canPublishAliases}
+            canReadAdminAuditLog={canReadAdminAuditLog}
             onOpenDocuments={() => setActiveView("documents")}
             onOpenAssignee={() => setActiveView("assignee")}
             onOpenDebug={() => {
@@ -1018,11 +1072,13 @@ export default function App() {
               setActiveView("chat")
             }}
             onOpenBenchmark={() => setActiveView("benchmark")}
+            onCreateUser={onCreateManagedUser}
             onAssignRoles={onAssignUserRoles}
             onSetUserStatus={onSetManagedUserStatus}
             onRefreshAdminData={() =>
               Promise.all([
                 canReadUsers ? refreshManagedUsers() : Promise.resolve(),
+                canReadAdminAuditLog ? refreshAdminAuditLog() : Promise.resolve(),
                 canOpenAdminSettings ? refreshAccessRoles() : Promise.resolve(),
                 canReadUsage ? refreshUsageSummaries() : Promise.resolve(),
                 canReadCosts ? refreshCostAudit() : Promise.resolve(),
@@ -1039,6 +1095,7 @@ export default function App() {
         ) : (
           <HistoryWorkspace
             history={history}
+            favoriteOnly={activeView === "favorites"}
             onSelect={(item) => {
               setCurrentConversationId(item.id)
               setMessages(item.messages)
@@ -1055,6 +1112,7 @@ export default function App() {
                 setError(err instanceof Error ? err.message : String(err))
               })
             }}
+            onToggleFavorite={toggleFavorite}
             onBack={() => setActiveView("chat")}
           />
         )}
@@ -1063,14 +1121,20 @@ export default function App() {
   )
 }
 
-function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[]): ConversationHistoryItem {
+function buildConversationHistoryItem(id: string, titleCandidate: string, messages: Message[], isFavorite = false): ConversationHistoryItem {
   return {
     schemaVersion: 1,
     id,
     title: summarizeTitle(titleCandidate),
     updatedAt: new Date().toISOString(),
+    isFavorite,
     messages
   }
+}
+
+function compareConversationHistory(a: ConversationHistoryItem, b: ConversationHistoryItem): number {
+  if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
+  return b.updatedAt.localeCompare(a.updatedAt)
 }
 
 function UserPromptBubble({ text }: { text: string }) {
@@ -1903,6 +1967,7 @@ function AdminWorkspace({
   debugRunsCount,
   benchmarkRunsCount,
   managedUsers,
+  adminAuditLog,
   accessRoles,
   usageSummaries,
   costAudit,
@@ -1915,6 +1980,7 @@ function AdminWorkspace({
   canReadBenchmarkRuns,
   canOpenAdminSettings,
   canReadUsers,
+  canCreateUsers,
   canSuspendUsers,
   canUnsuspendUsers,
   canDeleteUsers,
@@ -1927,10 +1993,12 @@ function AdminWorkspace({
   canReviewAliases,
   canDisableAliases,
   canPublishAliases,
+  canReadAdminAuditLog,
   onOpenDocuments,
   onOpenAssignee,
   onOpenDebug,
   onOpenBenchmark,
+  onCreateUser,
   onAssignRoles,
   onSetUserStatus,
   onRefreshAdminData,
@@ -1947,6 +2015,7 @@ function AdminWorkspace({
   debugRunsCount: number
   benchmarkRunsCount: number
   managedUsers: ManagedUser[]
+  adminAuditLog: ManagedUserAuditLogEntry[]
   accessRoles: AccessRoleDefinition[]
   usageSummaries: UserUsageSummary[]
   costAudit: CostAuditSummary | null
@@ -1959,6 +2028,7 @@ function AdminWorkspace({
   canReadBenchmarkRuns: boolean
   canOpenAdminSettings: boolean
   canReadUsers: boolean
+  canCreateUsers: boolean
   canSuspendUsers: boolean
   canUnsuspendUsers: boolean
   canDeleteUsers: boolean
@@ -1971,10 +2041,12 @@ function AdminWorkspace({
   canReviewAliases: boolean
   canDisableAliases: boolean
   canPublishAliases: boolean
+  canReadAdminAuditLog: boolean
   onOpenDocuments: () => void
   onOpenAssignee: () => void
   onOpenDebug: () => void
   onOpenBenchmark: () => void
+  onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
   onAssignRoles: (userId: string, groups: string[]) => Promise<void>
   onSetUserStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
   onRefreshAdminData: () => Promise<void>
@@ -2087,6 +2159,9 @@ function AdminWorkspace({
               <h3>ユーザー管理</h3>
               <button type="button" onClick={() => void onRefreshAdminData()} disabled={loading}>更新</button>
             </div>
+            {canCreateUsers && (
+              <AdminCreateUserForm roles={accessRoles} loading={loading} onCreateUser={onCreateUser} />
+            )}
             <div className="admin-data-table" role="table" aria-label="ユーザー一覧">
               <div className="admin-user-row admin-user-head" role="row">
                 <span role="columnheader">ユーザー</span>
@@ -2192,8 +2267,91 @@ function AdminWorkspace({
             </div>
           </section>
         )}
+
+        {canReadAdminAuditLog && (
+          <section className="admin-section-panel admin-audit-panel" aria-label="管理操作履歴">
+            <div className="document-list-head">
+              <h3>管理操作履歴</h3>
+              <span>{adminAuditLog.length} 件</span>
+            </div>
+            <div className="admin-audit-list">
+              {adminAuditLog.length === 0 ? (
+                <div className="empty-question-panel">管理操作履歴はありません。</div>
+              ) : (
+                adminAuditLog.map((entry) => (
+                  <article className="admin-audit-entry" key={entry.auditId}>
+                    <div>
+                      <strong>{adminAuditActionLabel(entry.action)}</strong>
+                      <span>{entry.targetEmail}</span>
+                    </div>
+                    <div>
+                      <span>{entry.actorEmail || entry.actorUserId}</span>
+                      <time>{formatDateTime(entry.createdAt)}</time>
+                    </div>
+                    <small>{adminAuditSummary(entry)}</small>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </section>
+  )
+}
+
+function AdminCreateUserForm({
+  roles,
+  loading,
+  onCreateUser
+}: {
+  roles: AccessRoleDefinition[]
+  loading: boolean
+  onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
+}) {
+  const [email, setEmail] = useState("")
+  const [displayName, setDisplayName] = useState("")
+  const [role, setRole] = useState("CHAT_USER")
+
+  useEffect(() => {
+    if (roles.some((candidate) => candidate.role === role)) return
+    setRole(roles[0]?.role ?? "CHAT_USER")
+  }, [role, roles])
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const normalizedEmail = email.trim()
+    if (!normalizedEmail) return
+    await onCreateUser({
+      email: normalizedEmail,
+      displayName: displayName.trim() || undefined,
+      groups: [role]
+    })
+    setEmail("")
+    setDisplayName("")
+    setRole("CHAT_USER")
+  }
+
+  return (
+    <form className="admin-create-user-form" aria-label="管理対象ユーザー作成" onSubmit={(event) => void submit(event)}>
+      <label>
+        <span>メール</span>
+        <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="new-user@example.com" required />
+      </label>
+      <label>
+        <span>表示名</span>
+        <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="任意" />
+      </label>
+      <label>
+        <span>初期ロール</span>
+        <select value={role} onChange={(event) => setRole(event.target.value)}>
+          {roles.map((roleDefinition) => (
+            <option value={roleDefinition.role} key={roleDefinition.role}>{roleDefinition.role}</option>
+          ))}
+        </select>
+      </label>
+      <button type="submit" disabled={loading || email.trim().length === 0}>作成</button>
+    </form>
   )
 }
 
@@ -2404,33 +2562,45 @@ function ManagedUserRow({
 
 function HistoryWorkspace({
   history,
+  favoriteOnly = false,
   onSelect,
   onDelete,
+  onToggleFavorite,
   onBack
 }: {
   history: ConversationHistoryItem[]
+  favoriteOnly?: boolean
   onSelect: (item: ConversationHistoryItem) => void
   onDelete: (id: string) => void
+  onToggleFavorite: (item: ConversationHistoryItem) => void
   onBack: () => void
 }) {
   const [query, setQuery] = useState("")
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "messages">("newest")
+  const [favoritesOnly, setFavoritesOnly] = useState(favoriteOnly)
+  const favoriteCount = history.filter((item) => item.isFavorite).length
+
+  useEffect(() => {
+    setFavoritesOnly(favoriteOnly)
+  }, [favoriteOnly])
 
   const visibleHistory = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
+    const scope = favoritesOnly ? history.filter((item) => item.isFavorite) : history
     const filtered = normalizedQuery.length === 0
-      ? history
-      : history.filter((item) => {
+      ? scope
+      : scope.filter((item) => {
           const messageText = item.messages.map((message) => message.text).join(" ").toLowerCase()
           return item.title.toLowerCase().includes(normalizedQuery) || messageText.includes(normalizedQuery)
         })
 
     return [...filtered].sort((a, b) => {
+      if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
       if (sortOrder === "messages") return b.messages.length - a.messages.length
       const timeDiff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       return sortOrder === "newest" ? timeDiff : -timeDiff
     })
-  }, [history, query, sortOrder])
+  }, [favoritesOnly, history, query, sortOrder])
 
   return (
     <section className="assignee-workspace" aria-label="履歴">
@@ -2439,8 +2609,8 @@ function HistoryWorkspace({
           <Icon name="chevron" />
         </button>
         <div>
-          <h2>履歴</h2>
-          <span>{history.length} 件の会話</span>
+          <h2>{favoriteOnly ? "お気に入り" : "履歴"}</h2>
+          <span>{history.length} 件の会話 / {favoriteCount} 件のお気に入り</span>
         </div>
       </header>
       <div className="question-list-panel history-panel">
@@ -2461,6 +2631,10 @@ function HistoryWorkspace({
             <option value="oldest">古い順</option>
             <option value="messages">メッセージ数順</option>
           </select>
+          <label className="favorite-filter">
+            <input type="checkbox" checked={favoritesOnly} onChange={(event) => setFavoritesOnly(event.target.checked)} />
+            <span>お気に入りのみ</span>
+          </label>
         </div>
         <div className="question-list history-list">
           {visibleHistory.length === 0 ? (
@@ -2468,12 +2642,21 @@ function HistoryWorkspace({
           ) : (
             visibleHistory.map((item) => (
               <div className="question-list-item history-item" key={item.id}>
+                <button
+                  type="button"
+                  className={`favorite-toggle ${item.isFavorite ? "active" : ""}`}
+                  onClick={() => onToggleFavorite(item)}
+                  aria-label={item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`}
+                  title={item.isFavorite ? "お気に入りから外す" : "お気に入りに追加"}
+                >
+                  <Icon name="star" />
+                </button>
                 <button type="button" onClick={() => onSelect(item)}>
                   <strong>{item.title}</strong>
                   <span>{formatDateTime(item.updatedAt)}</span>
                   <small>{item.messages.length} メッセージ</small>
                 </button>
-                <button type="button" onClick={() => onDelete(item.id)}>
+                <button className="history-delete-button" type="button" onClick={() => onDelete(item.id)}>
                   削除
                 </button>
               </div>
@@ -2720,6 +2903,25 @@ function costConfidenceLabel(confidence: CostAuditSummary["items"][number]["conf
 
 function parseExpansionList(value: string): string[] {
   return [...new Set(value.split(/[,\n]/).map((item) => item.trim()).filter(Boolean))]
+}
+
+function adminAuditActionLabel(action: ManagedUserAuditLogEntry["action"]): string {
+  if (action === "user:create") return "ユーザー作成"
+  if (action === "role:assign") return "ロール付与"
+  if (action === "user:suspend") return "停止"
+  if (action === "user:unsuspend") return "再開"
+  return "削除"
+}
+
+function adminAuditSummary(entry: ManagedUserAuditLogEntry): string {
+  if (entry.action === "role:assign" || entry.action === "user:create") {
+    const before = entry.beforeGroups.length > 0 ? entry.beforeGroups.join(" / ") : "なし"
+    const after = entry.afterGroups.length > 0 ? entry.afterGroups.join(" / ") : "なし"
+    return `${before} -> ${after}`
+  }
+  const before = entry.beforeStatus ? managedUserStatusLabel(entry.beforeStatus) : "-"
+  const after = entry.afterStatus ? managedUserStatusLabel(entry.afterStatus) : "-"
+  return `${before} -> ${after}`
 }
 
 function formatTime(input: string): string {

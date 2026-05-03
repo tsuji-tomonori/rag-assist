@@ -286,6 +286,22 @@ export type ManagedUser = {
   lastLoginAt?: string
 }
 
+export type ManagedUserAuditAction = "user:create" | "role:assign" | "user:suspend" | "user:unsuspend" | "user:delete"
+
+export type ManagedUserAuditLogEntry = {
+  auditId: string
+  action: ManagedUserAuditAction
+  actorUserId: string
+  actorEmail?: string
+  targetUserId: string
+  targetEmail: string
+  beforeStatus?: ManagedUserStatus
+  afterStatus?: ManagedUserStatus
+  beforeGroups: string[]
+  afterGroups: string[]
+  createdAt: string
+}
+
 export type AccessRoleDefinition = {
   role: string
   permissions: string[]
@@ -433,5 +449,6 @@ export type ConversationHistoryItem = {
   id: string
   title: string
   updatedAt: string
+  isFavorite?: boolean
   messages: ConversationMessage[]
 }

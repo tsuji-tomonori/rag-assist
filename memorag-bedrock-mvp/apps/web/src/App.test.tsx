@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import App from "./App.js"
-import type { AliasAuditLogItem, AliasDefinition, HumanQuestion, Permission } from "./api.js"
+import type { AliasAuditLogItem, AliasDefinition, ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
@@ -142,7 +142,7 @@ const rolePermissions: Record<string, Permission[]> = {
     "benchmark:read", "benchmark:run"
   ],
   BENCHMARK_RUNNER: ["benchmark:run"],
-  USER_ADMIN: ["user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
+  USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   COST_AUDITOR: ["cost:read:all"],
   SYSTEM_ADMIN: [
@@ -150,7 +150,7 @@ const rolePermissions: Record<string, Permission[]> = {
     "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
     "rag:alias:read", "rag:alias:write:group", "rag:alias:review:group", "rag:alias:disable:group", "rag:alias:publish:group",
     "benchmark:read", "benchmark:run", "benchmark:cancel", "benchmark:download",
-    "usage:read:own", "usage:read:all_users", "cost:read:own", "cost:read:all", "user:read", "user:suspend", "user:unsuspend", "user:delete",
+    "usage:read:own", "usage:read:all_users", "cost:read:own", "cost:read:all", "user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete",
     "access:role:create", "access:role:update", "access:role:assign", "access:policy:read"
   ]
 }
@@ -167,7 +167,7 @@ function currentUserResponse(groups = ["SYSTEM_ADMIN"]) {
 }
 
 function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
-  let storedHistory: unknown[] = []
+  let storedHistory: ConversationHistoryItem[] = []
   let managedUsers = [
     {
       userId: "local-dev",
@@ -202,12 +202,14 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
     }
   ]
   let reindexMigrations: unknown[] = []
+  let adminAuditLog: unknown[] = []
   const roles = Object.entries(rolePermissions).map(([role, permissions]) => ({ role, permissions }))
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     const requestUrl = String(url)
     if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
     if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(groups)))
     if (requestUrl.endsWith("/admin/users") && isGet(init)) return Promise.resolve(response({ users: managedUsers }))
+    if (requestUrl.endsWith("/admin/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: adminAuditLog }))
     if (requestUrl.endsWith("/admin/roles") && isGet(init)) return Promise.resolve(response({ roles }))
     if (requestUrl.endsWith("/admin/usage") && isGet(init)) {
       return Promise.resolve(response({ users: [{ userId: "local-dev", email: "tester@example.com", chatMessages: 12, conversationCount: 3, questionCount: 1, documentCount: 2, benchmarkRunCount: 0, debugRunCount: 0, lastActivityAt: "2026-05-02T00:00:00.000Z" }] }))
@@ -232,18 +234,43 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
       aliasAuditLog = [{ auditId: "audit-2", action: "publish", actorUserId: "local-dev", createdAt: "2026-05-02T00:03:00.000Z", detail: "published 1 aliases" }, ...aliasAuditLog]
       return Promise.resolve(response({ version: "aliases-20260502T000300Z", publishedAt: "2026-05-02T00:03:00.000Z", aliasCount: 1 }))
     }
+    if (requestUrl.endsWith("/admin/users") && init?.method === "POST") {
+      const body = JSON.parse(String(init.body ?? "{}"))
+      const created = {
+        userId: String(body.email).replace(/[^a-z0-9._-]/gi, "-").toLowerCase(),
+        email: body.email,
+        displayName: body.displayName || String(body.email).split("@")[0],
+        status: "active",
+        groups: body.groups ?? ["CHAT_USER"],
+        createdAt: "2026-05-02T00:03:00.000Z",
+        updatedAt: "2026-05-02T00:03:00.000Z",
+        lastLoginAt: "2026-05-02T00:03:00.000Z"
+      }
+      managedUsers = [...managedUsers, created].sort((a, b) => a.email.localeCompare(b.email))
+      adminAuditLog = [{ auditId: "audit-create", action: "user:create", actorUserId: "local-dev", actorEmail: "tester@example.com", targetUserId: created.userId, targetEmail: created.email, beforeGroups: [], afterGroups: created.groups, afterStatus: "active", createdAt: "2026-05-02T00:03:00.000Z" }, ...adminAuditLog]
+      return Promise.resolve(response(created))
+    }
     if (requestUrl.endsWith("/admin/users/local-dev/roles") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}"))
       managedUsers = managedUsers.map((user) => (user.userId === "local-dev" ? { ...user, groups: body.groups, updatedAt: "2026-05-02T00:01:00.000Z" } : user))
+      adminAuditLog = [{ auditId: "audit-role", action: "role:assign", actorUserId: "local-dev", actorEmail: "tester@example.com", targetUserId: "local-dev", targetEmail: "tester@example.com", beforeGroups: groups, afterGroups: body.groups, createdAt: "2026-05-02T00:01:00.000Z" }, ...adminAuditLog]
       return Promise.resolve(response(managedUsers[0]))
     }
     if (requestUrl.endsWith("/admin/users/local-dev/suspend") && init?.method === "POST") {
       managedUsers = managedUsers.map((user) => (user.userId === "local-dev" ? { ...user, status: "suspended", updatedAt: "2026-05-02T00:01:00.000Z" } : user))
+      adminAuditLog = [{ auditId: "audit-suspend", action: "user:suspend", actorUserId: "local-dev", actorEmail: "tester@example.com", targetUserId: "local-dev", targetEmail: "tester@example.com", beforeStatus: "active", afterStatus: "suspended", beforeGroups: groups, afterGroups: groups, createdAt: "2026-05-02T00:01:00.000Z" }, ...adminAuditLog]
       return Promise.resolve(response(managedUsers[0]))
     }
     if (requestUrl.endsWith("/admin/users/local-dev/unsuspend") && init?.method === "POST") {
       managedUsers = managedUsers.map((user) => (user.userId === "local-dev" ? { ...user, status: "active", updatedAt: "2026-05-02T00:02:00.000Z" } : user))
+      adminAuditLog = [{ auditId: "audit-unsuspend", action: "user:unsuspend", actorUserId: "local-dev", actorEmail: "tester@example.com", targetUserId: "local-dev", targetEmail: "tester@example.com", beforeStatus: "suspended", afterStatus: "active", beforeGroups: groups, afterGroups: groups, createdAt: "2026-05-02T00:02:00.000Z" }, ...adminAuditLog]
       return Promise.resolve(response(managedUsers[0]))
+    }
+    if (requestUrl.endsWith("/admin/users/local-dev") && init?.method === "DELETE") {
+      const deleted = { ...managedUsers.find((user) => user.userId === "local-dev")!, status: "deleted", updatedAt: "2026-05-02T00:04:00.000Z" }
+      managedUsers = managedUsers.filter((user) => user.userId !== "local-dev")
+      adminAuditLog = [{ auditId: "audit-delete", action: "user:delete", actorUserId: "local-dev", actorEmail: "tester@example.com", targetUserId: "local-dev", targetEmail: "tester@example.com", beforeStatus: "active", afterStatus: "deleted", beforeGroups: groups, afterGroups: groups, createdAt: "2026-05-02T00:04:00.000Z" }, ...adminAuditLog]
+      return Promise.resolve(response(deleted))
     }
     if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
     if (requestUrl.endsWith("/documents/reindex-migrations") && isGet(init)) return Promise.resolve(response({ migrations: reindexMigrations }))
@@ -275,13 +302,13 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
     if (requestUrl.endsWith("/benchmark-runs/bench-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/report.md", expiresInSeconds: 900, objectKey: "runs/bench-1/report.md" }))
     if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
     if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body ?? "{}"))
-      storedHistory = [body, ...storedHistory.filter((item) => (item as { id?: string }).id !== body.id)]
+      const body = JSON.parse(String(init.body ?? "{}")) as ConversationHistoryItem
+      storedHistory = [body, ...storedHistory.filter((item) => item.id !== body.id)]
       return Promise.resolve(response(body))
     }
     if (requestUrl.includes("/conversation-history/") && init?.method === "DELETE") {
       const id = decodeURIComponent(requestUrl.split("/conversation-history/")[1] ?? "")
-      storedHistory = storedHistory.filter((item) => (item as { id?: string }).id !== id)
+      storedHistory = storedHistory.filter((item) => item.id !== id)
       return Promise.resolve(response({ id }))
     }
     if (requestUrl.endsWith("/documents/doc-1") && init?.method === "DELETE") return Promise.resolve(response({ documentId: "doc-1", deletedVectorCount: 3 }))
@@ -669,12 +696,27 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(screen.getByTitle("履歴"))
     expect(await screen.findByText("会話一覧")).toBeInTheDocument()
-    expect(screen.getByText("2 件の会話")).toBeInTheDocument()
+    expect(screen.getByText(/2 件の会話/)).toBeInTheDocument()
 
     await userEvent.type(screen.getByLabelText("履歴を検索"), "分類一")
     expect(screen.getByText("1 件を表示中")).toBeInTheDocument()
+    await userEvent.click(screen.getByTitle("お気に入りに追加"))
+    await waitFor(() => {
+      const favoriteSave = fetchMock.mock.calls.find(([url, init]) => {
+        if (!String(url).endsWith("/conversation-history") || (init as RequestInit | undefined)?.method !== "POST") return false
+        return JSON.parse(String((init as RequestInit).body)).isFavorite === true
+      })
+      expect(favoriteSave).toBeTruthy()
+    })
+    expect(screen.getByText(/1 件のお気に入り/)).toBeInTheDocument()
+    await userEvent.click(screen.getByTitle("お気に入り"))
+    expect(await screen.findByRole("heading", { name: "お気に入り" })).toBeInTheDocument()
+    expect(screen.getByText("1 件を表示中")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /分類一.*メッセージ/ })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByTitle("履歴"))
     await userEvent.selectOptions(screen.getByLabelText("履歴の並び順"), "messages")
-    await userEvent.click(screen.getByRole("button", { name: /分類一/ }))
+    await userEvent.click(screen.getByRole("button", { name: /分類一.*メッセージ/ }))
     expect(screen.getByLabelText("質問")).toHaveValue("")
     expect(screen.getByText("分類一")).toBeInTheDocument()
 
@@ -860,13 +902,17 @@ describe("App chat and upload flow", () => {
     const adminWorkspace = await screen.findByLabelText("管理者設定")
     expect(within(adminWorkspace).getByLabelText("ユーザー管理")).toBeInTheDocument()
     expect(await screen.findByLabelText("ユーザー管理一覧")).toBeInTheDocument()
+    expect(screen.getByLabelText("管理対象ユーザー作成")).toBeInTheDocument()
     expect(screen.getByLabelText("ロール定義")).toBeInTheDocument()
     expect(screen.getByLabelText("利用状況一覧")).toBeInTheDocument()
     expect(screen.getByLabelText("コスト監査一覧")).toBeInTheDocument()
     expect(screen.getByLabelText("Alias管理一覧")).toBeInTheDocument()
+    expect(screen.getByLabelText("管理操作履歴")).toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByDisplayValue("SYSTEM_ADMIN"), "COST_AUDITOR")
-    await userEvent.click(screen.getByRole("button", { name: "付与" }))
+    const assignButton = screen.getAllByRole("button", { name: "付与" }).find((button) => !button.hasAttribute("disabled"))
+    expect(assignButton).toBeDefined()
+    await userEvent.click(assignButton!)
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/users/local-dev/roles") && (init as RequestInit | undefined)?.method === "POST")
@@ -889,6 +935,22 @@ describe("App chat and upload flow", () => {
     await waitFor(() =>
       expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/aliases/publish") && (init as RequestInit | undefined)?.method === "POST")).toBe(true)
     )
+
+    const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true)
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
+    expect(confirmMock).toHaveBeenCalled()
+    await waitFor(() =>
+      expect(
+        fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/users/local-dev") && (init as RequestInit | undefined)?.method === "DELETE")
+      ).toBe(true)
+    )
+
+    await userEvent.type(within(adminWorkspace).getByLabelText("メール"), "new-user@example.com")
+    await userEvent.type(within(adminWorkspace).getByLabelText("表示名"), "新規 利用者")
+    await userEvent.selectOptions(within(adminWorkspace).getByLabelText("初期ロール"), "CHAT_USER")
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "作成" }))
+    expect((await screen.findAllByText("new-user@example.com")).length).toBeGreaterThan(0)
+    expect(await screen.findByText("ユーザー作成")).toBeInTheDocument()
   })
 
   it("connects the admin overview to Phase 1 workspaces", async () => {

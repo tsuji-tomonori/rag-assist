@@ -32,7 +32,7 @@
 | `POST /questions/{questionId}/answer` | 担当者回答登録 | `FR-021`, `NFR-011` |
 | `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-021`, `NFR-011` |
 | `GET /conversation-history` | 自分の会話履歴一覧 | `FR-022`, `NFR-005` |
-| `POST /conversation-history` | 会話履歴 item 保存 | `FR-022`, `NFR-005` |
+| `POST /conversation-history` | 会話履歴 item 保存とお気に入り状態更新 | `FR-022`, `FR-028`, `NFR-005` |
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-022`, `NFR-005` |
 | `GET /debug-runs` | debug trace 一覧 | `FR-010`, `NFR-010` |
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
@@ -151,6 +151,7 @@
   "id": "conversation-20260502-001",
   "title": "ソフトウェア要求の分類",
   "updatedAt": "2026-05-02T00:00:00.000Z",
+  "isFavorite": true,
   "messages": [
     {
       "role": "user",
@@ -169,6 +170,7 @@
   "id": "conversation-20260502-001",
   "title": "ソフトウェア要求の分類",
   "updatedAt": "2026-05-02T00:00:00.000Z",
+  "isFavorite": true,
   "messages": [
     {
       "role": "user",
@@ -182,6 +184,7 @@
 ### バージョン方針
 
 - `schemaVersion` は会話履歴 item の構造を識別する。
+- `isFavorite` は未指定時 `false` として補完される。
 - 現行の `schemaVersion` は `1` とする。
 - API は `schemaVersion` 未指定の保存要求を v1 として補完する。
 - 将来スキーマを変更する場合は、既存 item の読み取り互換性を維持するか、version ごとの変換を追加する。
@@ -347,10 +350,12 @@ Phase 1 では通常利用者の Cognito self sign-up UI を提供する。
 
 | 機能 | API | 必要 permission | 主な対象 role |
 | --- | --- | --- | --- |
+| 管理対象ユーザー作成 | `POST /admin/users` | `user:create` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | 管理対象ユーザー一覧 | `GET /admin/users` | `user:read` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | ユーザー停止 | `POST /admin/users/{userId}/suspend` | `user:suspend` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | ユーザー再開 | `POST /admin/users/{userId}/unsuspend` | `user:unsuspend` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | ユーザー削除 | `DELETE /admin/users/{userId}` | `user:delete` | `USER_ADMIN`, `SYSTEM_ADMIN` |
+| 管理操作履歴 | `GET /admin/audit-log` | `access:policy:read` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | ロール一覧 | `GET /admin/roles` | `access:policy:read` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | ロール付与 | `POST /admin/users/{userId}/roles` | `access:role:assign` | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
 | alias 一覧 | `GET /admin/aliases` | `rag:alias:read` | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
@@ -363,7 +368,7 @@ Phase 1 では通常利用者の Cognito self sign-up UI を提供する。
 | 全ユーザー利用状況 | `GET /admin/usage` | `usage:read:all_users` | `USER_ADMIN`, `SYSTEM_ADMIN` |
 | コスト監査 | `GET /admin/costs` | `cost:read:all` | `COST_AUDITOR`, `SYSTEM_ADMIN` |
 
-Phase 2 初期実装のユーザー管理は管理台帳 API を正とする。Cognito Admin API への実変更、権限変更監査ログ、承認 workflow は後続 adapter/運用設計で扱う。
+Phase 2 初期実装のユーザー管理は管理台帳 API を正とする。管理台帳 API はユーザー作成、role group 付与、停止、再開、削除を管理操作履歴へ記録する。Cognito Admin API への実変更、承認 workflow、監査ログの保全設計は後続 adapter/運用設計で扱う。
 
 ## エラー方針
 

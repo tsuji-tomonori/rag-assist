@@ -15,6 +15,7 @@
 - AC-FR019-002: summary は `fact_slot_coverage`、`faithfulness`、`context_relevance`、`refusal_precision`、`refusal_recall` を出力できること。
 - AC-FR019-003: 未実施の LLM judge 評価は実施済みとして表示しないこと。
 - AC-FR019-004: benchmark report は既存の answerable、citation、expected file 指標を維持すること。
+- AC-FR019-005: retrieval evaluator が LLM judge を実行した場合、benchmark summary は judge 発火率、判定 label 内訳、解消率を出力できること。
 
 ## 要件の源泉・背景
 
@@ -38,10 +39,10 @@
 | 種類 | 機能要求 |
 | 依存関係 | `/benchmark/query`、debug trace、dataset format |
 | 衝突 | 評価項目が増えると dataset 作成負荷が増える |
-| 受け入れ基準 | `AC-FR019-001` から `AC-FR019-004` |
+| 受け入れ基準 | `AC-FR019-001` から `AC-FR019-005` |
 | 優先度 | S |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-01 初版 |
+| 変更履歴 | 2026-05-01 初版 / 2026-05-02 LLM judge 指標を追加 |
 
 ## 妥当性確認
 
