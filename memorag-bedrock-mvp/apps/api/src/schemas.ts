@@ -70,6 +70,7 @@ export const DocumentManifestSchema = z.object({
   metadata: z.record(MetadataValueSchema).optional(),
   sourceObjectKey: z.string(),
   structuredBlocksObjectKey: z.string().optional(),
+  memoryCardsObjectKey: z.string().optional(),
   manifestObjectKey: z.string(),
   vectorKeys: z.array(z.string()),
   memoryVectorKeys: z.array(z.string()).optional(),

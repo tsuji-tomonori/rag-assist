@@ -699,9 +699,26 @@ function createDeps(): Dependencies {
   return {
     objectStore: {
       putText: async () => undefined,
-      getText: async () => "",
+      getText: async (key: string) => {
+        if (key === "manifests/doc-1.json") {
+          return JSON.stringify({
+            documentId: "doc-1",
+            fileName: "doc.txt",
+            sourceObjectKey: "documents/doc-1/source.txt",
+            manifestObjectKey: "manifests/doc-1.json",
+            vectorKeys: ["doc-1-chunk-0001", "doc-1-memory-1"],
+            lifecycleStatus: "active",
+            metadata: { aclGroup: "GROUP_A" },
+            chunkCount: 1,
+            memoryCardCount: 1,
+            createdAt: "2026-05-03T00:00:00.000Z"
+          })
+        }
+        if (key === "documents/doc-1/source.txt") return chunk.metadata.text ?? ""
+        return ""
+      },
       deleteObject: async () => undefined,
-      listKeys: async () => []
+      listKeys: async (prefix: string) => prefix === "manifests/" ? ["manifests/doc-1.json"] : []
     },
     memoryVectorStore: {
       put: async () => undefined,

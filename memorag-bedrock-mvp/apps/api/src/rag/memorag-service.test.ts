@@ -25,6 +25,7 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   assert.equal(manifest.fileName, "requirements.txt")
   assert.equal(manifest.chunkCount, 1)
   assert.ok(manifest.memoryCardCount >= 1)
+  assert.ok(manifest.memoryCardsObjectKey)
   assert.ok(manifest.evidenceVectorKeys?.length)
   assert.ok(manifest.memoryVectorKeys?.length)
   assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-structured-v2")
@@ -129,6 +130,37 @@ test("service stages and rolls back structured blue-green reindex migrations", a
   const activeAfterRollback = await service.listDocuments()
   assert.equal(activeAfterRollback.length, 1)
   assert.equal(activeAfterRollback[0]?.chunks?.[0]?.chunkKind, "table")
+})
+
+test("service restores staging state when cutover vector activation fails after partial write", async () => {
+  let failActivePut = false
+  let stagedDocumentId = ""
+  const { service, dataDir } = await createService({
+    evidencePutErrorAfterWriteWhen: (records) =>
+      failActivePut && records.some((record) => record.key.startsWith(stagedDocumentId) && record.metadata.lifecycleStatus === "active")
+  })
+  const manifest = await service.ingest({
+    fileName: "policy.md",
+    text: "申請期限は翌月5営業日です。",
+    skipMemory: true
+  })
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const staged = await service.stageReindexMigration(actor, manifest.documentId)
+  stagedDocumentId = staged.stagedDocumentId
+
+  failActivePut = true
+  await assert.rejects(() => service.cutoverReindexMigration(staged.migrationId), /simulated partial active put failure/)
+
+  assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
+  const stagedManifest = JSON.parse(await readFile(path.join(dataDir, `objects/manifests/${staged.stagedDocumentId}.json`), "utf-8")) as { lifecycleStatus?: string }
+  assert.equal(stagedManifest.lifecycleStatus, "staging")
+  const evidenceDb = JSON.parse(await readFile(path.join(dataDir, "evidence-vectors.json"), "utf-8")) as {
+    records: Array<{ key: string; metadata?: { lifecycleStatus?: string } }>
+  }
+  assert.equal(
+    evidenceDb.records.find((record) => record.key.startsWith(staged.stagedDocumentId))?.metadata?.lifecycleStatus,
+    "staging"
+  )
 })
 
 test("service manages reviewed alias artifacts and audit log", async () => {
@@ -483,6 +515,7 @@ test("service ingest falls back when memory JSON parse fails and surfaces genera
 async function createService(options: {
   textModel?: MockBedrockTextModel
   evidenceQueryError?: Error
+  evidencePutErrorAfterWriteWhen?: (records: Parameters<LocalVectorStore["put"]>[0]) => boolean
   objectGetErrorPrefix?: string
   objectGetError?: Error
 } = {}): Promise<{ service: MemoRagService; dataDir: string }> {
@@ -503,7 +536,10 @@ async function createService(options: {
     },
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
     evidenceVectorStore: {
-      put: (...args: Parameters<LocalVectorStore["put"]>) => baseEvidenceStore.put(...args),
+      put: async (...args: Parameters<LocalVectorStore["put"]>) => {
+        await baseEvidenceStore.put(...args)
+        if (options.evidencePutErrorAfterWriteWhen?.(args[0])) throw new Error("simulated partial active put failure")
+      },
       query: async (...args: Parameters<LocalVectorStore["query"]>) => {
         if (options.evidenceQueryError) throw options.evidenceQueryError
         return baseEvidenceStore.query(...args)

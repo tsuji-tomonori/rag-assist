@@ -138,16 +138,20 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
   const semanticHits =
     semanticTopK > 0
       ? (
-          await deps.evidenceVectorStore.query(
-            input.semanticVector ??
-              (await deps.textModel.embed(input.query, {
-                modelId: input.embeddingModelId ?? config.embeddingModelId,
-                dimensions: config.embeddingDimensions
-              })),
-            semanticQueryTopK,
-            vectorFilter
+          await filterAccessibleVectorHits(
+            deps,
+            await deps.evidenceVectorStore.query(
+              input.semanticVector ??
+                (await deps.textModel.embed(input.query, {
+                  modelId: input.embeddingModelId ?? config.embeddingModelId,
+                  dimensions: config.embeddingDimensions
+                })),
+              semanticQueryTopK,
+              vectorFilter
+            ),
+            user
           )
-        ).filter((hit) => canAccessVector(hit.metadata, user)).slice(0, semanticTopK)
+        ).slice(0, semanticTopK)
       : []
 
   const fused = rrfFuse(
@@ -486,7 +490,39 @@ function isActiveManifest(manifest: DocumentManifest): boolean {
   return (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active"
 }
 
-function canAccessVector(metadata: VectorMetadata, user: AppUser): boolean {
+async function filterAccessibleVectorHits(
+  deps: Pick<Dependencies, "objectStore">,
+  hits: RetrievedVector[],
+  user: AppUser
+): Promise<RetrievedVector[]> {
+  const manifestCache = new Map<string, DocumentManifest | undefined>()
+  const result: RetrievedVector[] = []
+  for (const hit of hits) {
+    if (!canAccessVectorMetadata(hit.metadata, user)) continue
+    const manifest = await getCachedManifest(deps, manifestCache, hit.metadata.documentId)
+    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user)) continue
+    result.push(hit)
+  }
+  return result
+}
+
+async function getCachedManifest(
+  deps: Pick<Dependencies, "objectStore">,
+  cache: Map<string, DocumentManifest | undefined>,
+  documentId: string
+): Promise<DocumentManifest | undefined> {
+  if (cache.has(documentId)) return cache.get(documentId)
+  try {
+    const manifest = JSON.parse(await deps.objectStore.getText(`manifests/${documentId}.json`)) as DocumentManifest
+    cache.set(documentId, manifest)
+    return manifest
+  } catch {
+    cache.set(documentId, undefined)
+    return undefined
+  }
+}
+
+function canAccessVectorMetadata(metadata: VectorMetadata, user: AppUser): boolean {
   if ((metadata.lifecycleStatus ?? "active") !== "active") return false
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   return canAccessMetadata(metadata as unknown as Record<string, JsonValue>, user)

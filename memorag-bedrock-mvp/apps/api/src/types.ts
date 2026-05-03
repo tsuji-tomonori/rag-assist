@@ -79,6 +79,7 @@ export type DocumentManifest = {
   metadata?: Record<string, JsonValue>
   sourceObjectKey: string
   structuredBlocksObjectKey?: string
+  memoryCardsObjectKey?: string
   manifestObjectKey: string
   vectorKeys: string[]
   memoryVectorKeys?: string[]

@@ -160,6 +160,7 @@ export class MemoRagService {
 
     const sourceObjectKey = `documents/${documentId}/source.txt`
     const structuredBlocksObjectKey = extracted.blocks?.length ? `documents/${documentId}/structured-blocks.json` : undefined
+    const memoryCardsObjectKey = input.skipMemory ? undefined : `documents/${documentId}/memory-cards.json`
     const manifestObjectKey = `manifests/${documentId}.json`
     await this.deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")
     if (structuredBlocksObjectKey && extracted.blocks) {
@@ -174,6 +175,9 @@ export class MemoRagService {
           chunks,
           modelId: input.memoryModelId
         })
+    if (memoryCardsObjectKey) {
+      await this.deps.objectStore.putText(memoryCardsObjectKey, JSON.stringify({ schemaVersion: 1, memoryCards }, null, 2), "application/json")
+    }
 
     const evidenceVectorKeys: string[] = []
     const memoryVectorKeys: string[] = []
@@ -260,6 +264,7 @@ export class MemoRagService {
       metadata: input.metadata,
       sourceObjectKey,
       structuredBlocksObjectKey,
+      memoryCardsObjectKey,
       manifestObjectKey,
       vectorKeys: [...evidenceVectorKeys, ...memoryVectorKeys],
       memoryVectorKeys,
@@ -341,11 +346,15 @@ export class MemoRagService {
     if (migration.status !== "staged") throw new Error(`Reindex migration is ${migration.status}`)
     const source = await this.getManifest(migration.sourceDocumentId)
     const staged = await this.getManifest(migration.stagedDocumentId)
-    await this.reputDocumentVectorsWithLifecycle(staged, "active")
-    await this.markManifestLifecycle(source, "superseded")
-    await this.markManifestLifecycle(staged, "active", { activeDocumentId: staged.documentId })
-    await this.deps.evidenceVectorStore.delete(source.evidenceVectorKeys ?? source.vectorKeys)
-    await this.deps.memoryVectorStore.delete(source.memoryVectorKeys ?? source.vectorKeys)
+    try {
+      await this.reputDocumentVectorsWithLifecycle(staged, "active")
+      await this.markManifestLifecycle(staged, "active", { activeDocumentId: staged.documentId })
+      await this.markManifestLifecycle(source, "superseded")
+    } catch (error) {
+      await this.restoreFailedCutoverState(source, staged)
+      throw error
+    }
+    await this.deleteDocumentVectors(source)
     const now = new Date().toISOString()
     migration.status = "cutover"
     migration.activeDocumentId = staged.documentId
@@ -414,6 +423,7 @@ export class MemoRagService {
     await this.deps.memoryVectorStore.delete(manifest.memoryVectorKeys ?? manifest.vectorKeys)
     await this.deps.objectStore.deleteObject(manifest.sourceObjectKey)
     if (manifest.structuredBlocksObjectKey) await this.deps.objectStore.deleteObject(manifest.structuredBlocksObjectKey)
+    if (manifest.memoryCardsObjectKey) await this.deps.objectStore.deleteObject(manifest.memoryCardsObjectKey)
     await this.deps.objectStore.deleteObject(manifest.manifestObjectKey)
     return { documentId, deletedVectorCount: manifest.vectorKeys.length }
   }
@@ -795,14 +805,27 @@ export class MemoRagService {
     return loadStructuredBlocksForManifest(this.deps, manifest)
   }
 
+  private async loadMemoryCards(manifest: DocumentManifest): Promise<MemoryCard[] | undefined> {
+    if (!manifest.memoryCardsObjectKey) return undefined
+    try {
+      const raw = JSON.parse(await this.deps.objectStore.getText(manifest.memoryCardsObjectKey)) as { memoryCards?: MemoryCard[] }
+      return Array.isArray(raw.memoryCards) ? raw.memoryCards : undefined
+    } catch (err) {
+      if (!isMissingObjectError(err)) throw err
+      return undefined
+    }
+  }
+
   private async reputDocumentVectorsWithLifecycle(
     manifest: DocumentManifest,
     status: NonNullable<DocumentManifest["lifecycleStatus"]>
   ): Promise<void> {
     const chunks = await loadChunksForManifest(this.deps, manifest)
     const sourceText = await this.deps.objectStore.getText(manifest.sourceObjectKey)
+    const storedMemoryCards = await this.loadMemoryCards(manifest)
     const memoryCards = manifest.memoryVectorKeys?.length
-      ? await this.createMemoryCards({
+      ? storedMemoryCards ??
+        await this.createMemoryCards({
           fileName: manifest.fileName,
           text: sourceText,
           chunks
@@ -871,6 +894,31 @@ export class MemoRagService {
 
     await this.deps.evidenceVectorStore.put(evidenceRecords)
     await this.deps.memoryVectorStore.put(memoryRecords)
+  }
+
+  private async restoreFailedCutoverState(source: DocumentManifest, staged: DocumentManifest): Promise<void> {
+    try {
+      await this.reputDocumentVectorsWithLifecycle(staged, "staging")
+    } catch {
+      // Retrieval also checks manifest lifecycle, so restoration failures are best-effort here.
+    }
+    try {
+      await this.markManifestLifecycle(staged, "staging")
+    } catch {
+      // Preserve the original cutover error.
+    }
+    try {
+      await this.markManifestLifecycle(source, "active")
+    } catch {
+      // Preserve the original cutover error.
+    }
+  }
+
+  private async deleteDocumentVectors(manifest: DocumentManifest): Promise<void> {
+    await Promise.allSettled([
+      this.deps.evidenceVectorStore.delete(manifest.evidenceVectorKeys ?? manifest.vectorKeys),
+      this.deps.memoryVectorStore.delete(manifest.memoryVectorKeys ?? manifest.vectorKeys)
+    ])
   }
 
   private async markManifestLifecycle(
