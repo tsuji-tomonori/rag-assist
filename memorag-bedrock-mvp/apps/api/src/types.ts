@@ -212,6 +212,48 @@ export type ChatResponsePayload = {
   debug?: DebugTrace
 }
 
+export type ChatRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
+
+export type ChatRun = {
+  runId: string
+  status: ChatRunStatus
+  createdBy: string
+  userEmail?: string
+  userGroups?: string[]
+  question: string
+  modelId: string
+  embeddingModelId?: string
+  clueModelId?: string
+  topK?: number
+  memoryTopK?: number
+  minScore?: number
+  includeDebug?: boolean
+  answer?: string
+  isAnswerable?: boolean
+  citations?: Citation[]
+  retrieved?: Citation[]
+  debug?: DebugTrace
+  error?: string
+  createdAt: string
+  updatedAt: string
+  startedAt?: string
+  completedAt?: string
+  ttl?: number
+}
+
+export type ChatRunEventType = "status" | "heartbeat" | "final" | "error"
+
+export type ChatRunEvent = {
+  runId: string
+  seq: number
+  type: ChatRunEventType
+  stage?: string
+  message?: string
+  data?: JsonValue
+  createdAt: string
+  ttl?: number
+}
+
 export type BenchmarkRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
 export type BenchmarkMode = "agent" | "search" | "load"
 export type BenchmarkRunner = "codebuild" | "lambda"

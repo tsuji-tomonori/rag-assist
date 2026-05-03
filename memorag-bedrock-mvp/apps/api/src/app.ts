@@ -7,6 +7,7 @@ import { getPermissionsForGroups, requirePermission } from "./authorization.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import {
   ChatRequestSchema,
+  ChatRunStartResponseSchema,
   ChatResponseSchema,
   AnswerQuestionRequestSchema,
   AdminAuditLogResponseSchema,
@@ -63,7 +64,7 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
+for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/chat-runs", "/chat-runs/*", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
   app.use(path, authMiddleware)
 }
 
@@ -653,6 +654,33 @@ app.openapi(chatRoute, async (c) => {
   }
   return c.json(await service.chat(body, user), 200)
 })
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/chat-runs",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: ChatRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Started asynchronous chat run", content: { "application/json": { schema: ChatRunStartResponseSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "chat:create")
+    const body = (c.req as any).valid("json") as z.infer<typeof ChatRequestSchema>
+    if ((body.includeDebug ?? body.debug ?? false) === true) {
+      requirePermission(user, "chat:admin:read_all")
+    }
+    return c.json(await service.startChatRun(body, user), 200)
+  }
+)
 
 app.openapi(
   looseRoute({

@@ -299,6 +299,7 @@ export const ChatRequestSchema = z.object({
   topK: z.number().int().min(1).max(20).optional().openapi({ example: 6 }),
   memoryTopK: z.number().int().min(1).max(10).optional().openapi({ example: 4 }),
   minScore: z.number().min(-1).max(1).optional().openapi({ example: 0.20 }),
+  maxIterations: z.number().int().min(1).max(8).optional().openapi({ example: 3 }),
   strictGrounded: z.boolean().optional().openapi({ example: true }),
   includeDebug: z.boolean().optional().openapi({ example: false }),
   debug: z.boolean().optional().openapi({ example: false }),
@@ -371,6 +372,38 @@ export const ChatResponseSchema = z.object({
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
   debug: DebugTraceSchema.optional()
+})
+
+export const ChatRunSchema = z.object({
+  runId: z.string(),
+  status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
+  createdBy: z.string(),
+  userEmail: z.string().optional(),
+  userGroups: z.array(z.string()).optional(),
+  question: z.string(),
+  modelId: z.string(),
+  embeddingModelId: z.string().optional(),
+  clueModelId: z.string().optional(),
+  topK: z.number().int().positive().optional(),
+  memoryTopK: z.number().int().positive().optional(),
+  minScore: z.number().optional(),
+  includeDebug: z.boolean().optional(),
+  answer: z.string().optional(),
+  isAnswerable: z.boolean().optional(),
+  citations: z.array(CitationSchema).optional(),
+  retrieved: z.array(CitationSchema).optional(),
+  debug: DebugTraceSchema.optional(),
+  error: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional()
+})
+
+export const ChatRunStartResponseSchema = z.object({
+  runId: z.string(),
+  status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
+  eventsPath: z.string()
 })
 
 export const SearchResultSchema = z.object({

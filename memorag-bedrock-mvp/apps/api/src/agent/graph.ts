@@ -32,7 +32,16 @@ const systemAdminUser: AppUser = {
   cognitoGroups: ["SYSTEM_ADMIN"]
 }
 
-export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdminUser) {
+export type ProgressSink = {
+  emit: (event: {
+    type: "status" | "final" | "error"
+    stage?: string
+    message?: string
+    data?: unknown
+  }) => Promise<void>
+}
+
+export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdminUser, progress?: ProgressSink) {
   const embedQueries = createEmbedQueriesNode(deps)
   const searchEvidence = createSearchEvidenceNode(deps, user)
   const retrievalEvaluator = createRetrievalEvaluatorNode(deps)
@@ -208,46 +217,59 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     async invoke(initialState: QaAgentState): Promise<QaAgentState> {
       let state = initialState
 
-      state = await applyNode(state, nodes.analyzeInput)
-      state = await applyNode(state, nodes.normalizeQuery)
-      state = await applyNode(state, nodes.retrieveMemory)
-      state = await applyNode(state, nodes.generateClues)
+      state = await applyNode(state, "analyze_input", nodes.analyzeInput, progress)
+      state = await applyNode(state, "normalize_query", nodes.normalizeQuery, progress)
+      state = await applyNode(state, "retrieve_memory", nodes.retrieveMemory, progress)
+      state = await applyNode(state, "generate_clues", nodes.generateClues, progress)
 
       do {
-        state = await applyNode(state, nodes.planSearch)
-        state = await applyNode(state, nodes.executeSearchAction)
-        state = await applyNode(state, nodes.retrievalEvaluator)
-        state = await applyNode(state, nodes.evaluateSearchProgress)
+        state = await applyNode(state, "plan_search", nodes.planSearch, progress)
+        state = await applyNode(state, "execute_search_action", nodes.executeSearchAction, progress)
+        state = await applyNode(state, "retrieval_evaluator", nodes.retrievalEvaluator, progress)
+        state = await applyNode(state, "evaluate_search_progress", nodes.evaluateSearchProgress, progress)
       } while (routeAfterSearchEvaluation(state) === "continue_search")
 
       if (state.retrievalEvaluation.nextAction.type === "finalize_refusal") {
-        return applyNode(state, nodes.finalizeRefusal)
+        return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
       }
 
-      state = await applyNode(state, nodes.rerankChunks)
-      state = await applyNode(state, nodes.answerabilityGate)
+      state = await applyNode(state, "rerank_chunks", nodes.rerankChunks, progress)
+      state = await applyNode(state, "answerability_gate", nodes.answerabilityGate, progress)
 
       if (routeAfterGate(state) === "refuse") {
-        return applyNode(state, nodes.finalizeRefusal)
+        return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
       }
 
-      state = await applyNode(state, nodes.sufficientContextGate)
+      state = await applyNode(state, "sufficient_context_gate", nodes.sufficientContextGate, progress)
       if (routeAfterSufficientContextGate(state) === "refuse") {
-        return applyNode(state, nodes.finalizeRefusal)
+        return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
       }
 
-      state = await applyNode(state, nodes.generateAnswer)
-      state = await applyNode(state, nodes.validateCitations)
-      state = await applyNode(state, nodes.verifyAnswerSupport)
-      return applyNode(state, nodes.finalizeResponse)
+      state = await applyNode(state, "generate_answer", nodes.generateAnswer, progress)
+      state = await applyNode(state, "validate_citations", nodes.validateCitations, progress)
+      state = await applyNode(state, "verify_answer_support", nodes.verifyAnswerSupport, progress)
+      return applyNode(state, "finalize_response", nodes.finalizeResponse, progress)
     }
   }
 }
 
 type QaAgentNode = (state: QaAgentState) => Promise<QaAgentUpdate>
 
-async function applyNode(state: QaAgentState, node: QaAgentNode): Promise<QaAgentState> {
-  return applyQaAgentUpdate(state, await node(state))
+async function applyNode(state: QaAgentState, nodeName: string, node: QaAgentNode, progress?: ProgressSink): Promise<QaAgentState> {
+  await progress?.emit({
+    type: "status",
+    stage: nodeName,
+    message: `${nodeName} を実行中`
+  })
+  const started = Date.now()
+  const next = applyQaAgentUpdate(state, await node(state))
+  await progress?.emit({
+    type: "status",
+    stage: nodeName,
+    message: `${nodeName} が完了`,
+    data: { latencyMs: Date.now() - started }
+  })
+  return next
 }
 
 export function applyQaAgentUpdate(state: QaAgentState, update: QaAgentUpdate): QaAgentState {
@@ -398,7 +420,7 @@ function inferSearchComplexity(question: string): QaAgentState["searchPlan"]["co
   return "simple"
 }
 
-export async function runQaAgent(deps: Dependencies, input: ChatInput, user: AppUser = systemAdminUser): Promise<QaGraphResult> {
+export async function runQaAgent(deps: Dependencies, input: ChatInput, user: AppUser = systemAdminUser, progress?: ProgressSink): Promise<QaGraphResult> {
   const startedAt = new Date()
   const startedMs = Date.now()
   const runId = createRunId(startedAt)
@@ -408,7 +430,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
   const modelId = input.modelId ?? config.defaultModelId
   const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
   const clueModelId = input.clueModelId ?? input.modelId ?? config.defaultMemoryModelId
-  const graph = createQaAgentGraph(deps, user)
+  const graph = createQaAgentGraph(deps, user, progress)
 
   const state = (await graph.invoke({
     runId,

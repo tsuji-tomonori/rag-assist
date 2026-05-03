@@ -157,6 +157,8 @@ curl -s http://localhost:8787/documents \
 curl -s http://localhost:8787/chat \
   -H 'Content-Type: application/json' \
   -d '{"question":"経費精算の期限は？","modelId":"amazon.nova-lite-v1:0"}' | jq
+
+新しい UI は `POST /chat-runs` で非同期 run を作成し、`GET /chat-runs/{runId}/events` を `fetch` stream で読みます。既存 `POST /chat` は後方互換の同期 JSON API として残します。
 ```
 
 ## ベンチマーク

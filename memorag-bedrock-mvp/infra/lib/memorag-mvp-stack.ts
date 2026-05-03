@@ -3,8 +3,6 @@ import * as path from "node:path"
 import * as cdk from "aws-cdk-lib"
 import { Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib"
 import * as apigw from "aws-cdk-lib/aws-apigateway"
-import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2"
-import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations"
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront"
 import * as codebuild from "aws-cdk-lib/aws-codebuild"
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins"
@@ -127,6 +125,23 @@ export class MemoRagMvpStack extends Stack {
     const benchmarkRunsTable = new dynamodb.Table(this, "BenchmarkRunsTable", {
       partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
+    const chatRunsTable = new dynamodb.Table(this, "ChatRunsTable", {
+      partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "ttl",
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
+    const chatRunEventsTable = new dynamodb.Table(this, "ChatRunEventsTable", {
+      partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "seq", type: dynamodb.AttributeType.NUMBER },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "ttl",
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.DESTROY
     })
@@ -279,85 +294,121 @@ export class MemoRagMvpStack extends Stack {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY
     })
+    const apiEnvironment = {
+      NODE_ENV: "production",
+      USE_LOCAL_VECTOR_STORE: "false",
+      MOCK_BEDROCK: "false",
+      DOCS_BUCKET_NAME: docsBucket.bucketName,
+      QUESTION_TABLE_NAME: questionsTable.tableName,
+      CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
+      BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
+      CHAT_RUNS_TABLE_NAME: chatRunsTable.tableName,
+      CHAT_RUN_EVENTS_TABLE_NAME: chatRunEventsTable.tableName,
+      BENCHMARK_BUCKET_NAME: benchmarkBucket.bucketName,
+      BENCHMARK_DEFAULT_DATASET_KEY: "datasets/agent/standard-v1.jsonl",
+      BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
+      USE_LOCAL_QUESTION_STORE: "false",
+      USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
+      USE_LOCAL_BENCHMARK_RUN_STORE: "false",
+      USE_LOCAL_CHAT_RUN_STORE: "false",
+      VECTOR_BUCKET_NAME: vectorBucketName,
+      MEMORY_VECTOR_INDEX_NAME: memoryVectorIndexName,
+      EVIDENCE_VECTOR_INDEX_NAME: evidenceVectorIndexName,
+      DEFAULT_MODEL_ID: defaultModelId,
+      DEFAULT_MEMORY_MODEL_ID: defaultModelId,
+      EMBEDDING_MODEL_ID: embeddingModelId,
+      EMBEDDING_DIMENSIONS: String(embeddingDimensions),
+      MIN_RETRIEVAL_SCORE: "0.20",
+      AUTH_ENABLED: "true",
+      COGNITO_REGION: cdk.Aws.REGION,
+      COGNITO_USER_POOL_ID: userPool.userPoolId,
+      COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId,
+      DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
+      DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
+    }
     const apiFn = new lambda.Function(this, "ApiFunction", {
       code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/api")),
       handler: "index.handler",
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       memorySize: 1024,
-      timeout: Duration.seconds(60),
+      timeout: Duration.seconds(29),
       logGroup: apiLogGroup,
-      environment: {
-        NODE_ENV: "production",
-        USE_LOCAL_VECTOR_STORE: "false",
-        MOCK_BEDROCK: "false",
-        DOCS_BUCKET_NAME: docsBucket.bucketName,
-        QUESTION_TABLE_NAME: questionsTable.tableName,
-        CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
-        BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
-        BENCHMARK_BUCKET_NAME: benchmarkBucket.bucketName,
-        BENCHMARK_DEFAULT_DATASET_KEY: "datasets/agent/standard-v1.jsonl",
-        BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
-        USE_LOCAL_QUESTION_STORE: "false",
-        USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
-        USE_LOCAL_BENCHMARK_RUN_STORE: "false",
-        VECTOR_BUCKET_NAME: vectorBucketName,
-        MEMORY_VECTOR_INDEX_NAME: memoryVectorIndexName,
-        EVIDENCE_VECTOR_INDEX_NAME: evidenceVectorIndexName,
-        DEFAULT_MODEL_ID: defaultModelId,
-        DEFAULT_MEMORY_MODEL_ID: defaultModelId,
-        EMBEDDING_MODEL_ID: embeddingModelId,
-        EMBEDDING_DIMENSIONS: String(embeddingDimensions),
-        MIN_RETRIEVAL_SCORE: "0.20",
-        AUTH_ENABLED: "true",
-        COGNITO_REGION: cdk.Aws.REGION,
-        COGNITO_USER_POOL_ID: userPool.userPoolId,
-        COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId,
-        DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
-        DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
-      }
+      environment: apiEnvironment
+    })
+
+    const chatRunWorkerLogGroup = new logs.LogGroup(this, "ChatRunWorkerLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const chatRunWorkerFn = new lambda.Function(this, "ChatRunWorkerFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/chat-run-worker")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 1024,
+      timeout: Duration.minutes(15),
+      logGroup: chatRunWorkerLogGroup,
+      environment: apiEnvironment
+    })
+
+    const chatRunEventsLogGroup = new logs.LogGroup(this, "ChatRunEventsStreamLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const chatRunEventsFn = new lambda.Function(this, "ChatRunEventsStreamFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/chat-run-events-stream")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: Duration.minutes(15),
+      logGroup: chatRunEventsLogGroup,
+      environment: apiEnvironment
     })
 
     docsBucket.grantReadWrite(apiFn)
+    docsBucket.grantReadWrite(chatRunWorkerFn)
     debugDownloadBucket.grantReadWrite(apiFn)
+    debugDownloadBucket.grantReadWrite(chatRunWorkerFn)
     benchmarkBucket.grantRead(apiFn)
     questionsTable.grantReadWriteData(apiFn)
     conversationHistoryTable.grantReadWriteData(apiFn)
     benchmarkRunsTable.grantReadWriteData(apiFn)
-    apiFn.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
-        resources: ["*"]
-      })
-    )
-    apiFn.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["s3vectors:PutVectors", "s3vectors:QueryVectors", "s3vectors:GetVectors", "s3vectors:DeleteVectors", "s3vectors:ListVectors"],
-        resources: ["*"]
-      })
-    )
+    chatRunsTable.grantReadWriteData(apiFn)
+    chatRunsTable.grantReadWriteData(chatRunWorkerFn)
+    chatRunsTable.grantReadData(chatRunEventsFn)
+    chatRunEventsTable.grantReadWriteData(apiFn)
+    chatRunEventsTable.grantReadWriteData(chatRunWorkerFn)
+    chatRunEventsTable.grantReadData(chatRunEventsFn)
+    for (const fn of [apiFn, chatRunWorkerFn]) {
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+          resources: ["*"]
+        })
+      )
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ["s3vectors:PutVectors", "s3vectors:QueryVectors", "s3vectors:GetVectors", "s3vectors:DeleteVectors", "s3vectors:ListVectors"],
+          resources: ["*"]
+        })
+      )
+    }
 
-    const httpApi = new apigwv2.HttpApi(this, "HttpApi", {
-      createDefaultStage: false,
-      corsPreflight: {
-        allowHeaders: ["Content-Type", "Authorization"],
-        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.DELETE, apigwv2.CorsHttpMethod.OPTIONS],
-        allowOrigins: ["*"],
-        maxAge: Duration.days(1)
-      }
-    })
-
-    const apiAccessLogGroup = new logs.LogGroup(this, "HttpApiAccessLogGroup", {
+    const apiAccessLogGroup = new logs.LogGroup(this, "RestApiAccessLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY
     })
-    const httpStage = new apigwv2.HttpStage(this, "HttpApiDefaultStage", {
-      httpApi,
-      stageName: "$default",
-      autoDeploy: true,
-      accessLogSettings: {
-        destination: new apigwv2.LogGroupLogDestination(apiAccessLogGroup),
-        format: apigw.AccessLogFormat.jsonWithStandardFields({
+    const restApi = new apigw.RestApi(this, "RestApi", {
+      endpointTypes: [apigw.EndpointType.REGIONAL],
+      deployOptions: {
+        stageName: "prod",
+        loggingLevel: apigw.MethodLoggingLevel.INFO,
+        dataTraceEnabled: false,
+        metricsEnabled: true,
+        accessLogDestination: new apigw.LogGroupLogDestination(apiAccessLogGroup),
+        accessLogFormat: apigw.AccessLogFormat.jsonWithStandardFields({
           caller: false,
           httpMethod: true,
           ip: true,
@@ -368,58 +419,83 @@ export class MemoRagMvpStack extends Stack {
           status: true,
           user: true
         })
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigw.Cors.ALL_ORIGINS,
+        allowMethods: ["GET", "POST", "DELETE", "OPTIONS"],
+        allowHeaders: ["Content-Type", "Authorization", "Last-Event-ID"],
+        maxAge: Duration.days(1)
       }
     })
+    const restApiBaseUrl = `https://${restApi.restApiId}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}/prod/`
 
-    const jwtAuthorizer = new apigwv2.CfnAuthorizer(this, "HttpApiJwtAuthorizer", {
-      apiId: httpApi.apiId,
-      authorizerType: "JWT",
-      identitySource: ["$request.header.Authorization"],
-      name: "CognitoJwtAuthorizer",
-      jwtConfiguration: {
-        audience: [userPoolClient.userPoolClientId],
-        issuer: userPool.userPoolProviderUrl
+    const restAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "RestApiCognitoAuthorizer", {
+      cognitoUserPools: [userPool]
+    })
+    const apiMethodOptions: apigw.MethodOptions = {
+      authorizationType: apigw.AuthorizationType.COGNITO,
+      authorizer: restAuthorizer
+    }
+    const apiIntegration = new apigw.LambdaIntegration(apiFn, {
+      proxy: true,
+      timeout: Duration.seconds(29)
+    })
+    restApi.root.addMethod("ANY", apiIntegration, apiMethodOptions)
+    const proxy = restApi.root.addResource("{proxy+}")
+    proxy.addMethod("ANY", apiIntegration, apiMethodOptions)
+
+    const chatRuns = restApi.root.addResource("chat-runs")
+    chatRuns.addMethod("POST", apiIntegration, apiMethodOptions)
+    const chatRun = chatRuns.addResource("{runId}")
+    const chatRunEvents = chatRun.addResource("events")
+    chatRunEvents.addMethod(
+      "GET",
+      new apigw.LambdaIntegration(chatRunEventsFn, {
+        proxy: true,
+        responseTransferMode: apigw.ResponseTransferMode.STREAM,
+        timeout: Duration.minutes(15)
+      }),
+      apiMethodOptions
+    )
+
+    const chatRunWorkerTask = new sfn.CustomState(this, "ChatRunWorkerTask", {
+      stateJson: {
+        Type: "Task",
+        Resource: "arn:aws:states:::lambda:invoke",
+        Parameters: {
+          FunctionName: chatRunWorkerFn.functionName,
+          Payload: {
+            "runId.$": "$.runId"
+          }
+        },
+        End: true
       }
     })
-
-    const preflightRoutes = httpApi.addRoutes({
-      path: "/{proxy+}",
-      methods: [apigwv2.HttpMethod.OPTIONS],
-      integration: new integrations.HttpLambdaIntegration("PreflightApiIntegration", apiFn)
+    const chatRunStateMachineLogGroup = new logs.LogGroup(this, "ChatRunStateMachineLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
     })
-    const preflightRootRoutes = httpApi.addRoutes({
-      path: "/",
-      methods: [apigwv2.HttpMethod.OPTIONS],
-      integration: new integrations.HttpLambdaIntegration("PreflightRootIntegration", apiFn)
+    const chatRunStateMachine = new sfn.StateMachine(this, "ChatRunStateMachine", {
+      definitionBody: sfn.DefinitionBody.fromChainable(chatRunWorkerTask),
+      logs: {
+        destination: chatRunStateMachineLogGroup,
+        level: sfn.LogLevel.ALL
+      },
+      timeout: Duration.minutes(16)
     })
+    chatRunWorkerFn.grantInvoke(chatRunStateMachine)
+    chatRunStateMachine.grantStartExecution(apiFn)
+    apiFn.addEnvironment("CHAT_RUN_STATE_MACHINE_ARN", chatRunStateMachine.stateMachineArn)
     NagSuppressions.addResourceSuppressions(
-      [...preflightRoutes, ...preflightRootRoutes],
+      chatRunStateMachine,
       [
         {
-          id: "AwsSolutions-APIG4",
-          reason: "CORS preflight OPTIONS routes must remain unauthenticated so browsers can complete access control checks before JWT-protected API requests."
+          id: "AwsSolutions-SF2",
+          reason: "X-Ray tracing is intentionally disabled for the MVP chat worker; CloudWatch ALL event logging is retained for troubleshooting."
         }
       ],
       true
     )
-
-    const protectedRoutes = httpApi.addRoutes({
-      path: "/{proxy+}",
-      methods: [apigwv2.HttpMethod.ANY],
-      integration: new integrations.HttpLambdaIntegration("ApiIntegration", apiFn)
-    })
-    const rootRoutes = httpApi.addRoutes({
-      path: "/",
-      methods: [apigwv2.HttpMethod.ANY],
-      integration: new integrations.HttpLambdaIntegration("RootIntegration", apiFn)
-    })
-
-    for (const route of [...protectedRoutes, ...rootRoutes]) {
-      const cfnRoute = route.node.defaultChild as apigwv2.CfnRoute
-      cfnRoute.authorizationType = "JWT"
-      cfnRoute.authorizerId = jwtAuthorizer.ref
-      cfnRoute.addDependency(jwtAuthorizer)
-    }
 
     const benchmarkProjectKey = new kms.Key(this, "BenchmarkProjectKey", {
       enableKeyRotation: true,
@@ -615,7 +691,7 @@ export class MemoRagMvpStack extends Stack {
       resources: ["*"]
     }))
     apiFn.addEnvironment("BENCHMARK_STATE_MACHINE_ARN", benchmarkStateMachine.stateMachineArn)
-    apiFn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", httpStage.url)
+    apiFn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", restApiBaseUrl)
     benchmarkStateMachine.grantStartExecution(apiFn)
     benchmarkStateMachine.grant(apiFn, "states:StopExecution", "states:DescribeExecution")
 
@@ -642,7 +718,7 @@ export class MemoRagMvpStack extends Stack {
         sources: [
           s3deploy.Source.asset(webDist),
           s3deploy.Source.jsonData("config.json", {
-            apiBaseUrl: httpStage.url,
+            apiBaseUrl: restApiBaseUrl,
             authMode: "cognito",
             cognitoRegion: cdk.Aws.REGION,
             cognitoUserPoolId: userPool.userPoolId,
@@ -697,8 +773,8 @@ export class MemoRagMvpStack extends Stack {
       true
     )
 
-    new cdk.CfnOutput(this, "ApiUrl", { value: httpStage.url })
-    new cdk.CfnOutput(this, "OpenApiUrl", { value: `${httpStage.url}openapi.json` })
+    new cdk.CfnOutput(this, "ApiUrl", { value: restApiBaseUrl })
+    new cdk.CfnOutput(this, "OpenApiUrl", { value: `${restApiBaseUrl}openapi.json` })
     new cdk.CfnOutput(this, "FrontendUrl", { value: `https://${distribution.distributionDomainName}` })
     new cdk.CfnOutput(this, "VectorBucketName", { value: vectorBucketName })
     new cdk.CfnOutput(this, "MemoryVectorIndexName", { value: memoryVectorIndexName })

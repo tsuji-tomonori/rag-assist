@@ -3,7 +3,6 @@ import {
   assignUserRoles,
   answerQuestion,
   cancelBenchmarkRun,
-  chat,
   createAlias,
   createBenchmarkDownload,
   createManagedUser,
@@ -37,6 +36,8 @@ import {
   saveConversationHistory,
   stageReindexMigration,
   startBenchmarkRun,
+  startChatRun,
+  streamChatRunEvents,
   suspendManagedUser,
   unsuspendManagedUser,
   updateAlias,
@@ -425,7 +426,7 @@ export default function App() {
       }
 
       if (typedQuestion.length > 0) {
-        const result = await chat({
+        const started = await startChatRun({
           question: userQuestion,
           modelId,
           embeddingModelId,
@@ -434,10 +435,33 @@ export default function App() {
           minScore,
           includeDebug: debugMode && canReadDebugRuns
         })
-        setMessages((prev) => [...prev, { role: "assistant", text: result.answer, sourceQuestion: userQuestion, result, createdAt: new Date().toISOString() }])
-        if (result.debug) {
-          setSelectedRunId(result.debug.runId)
-          setDebugRuns((prev) => [result.debug as DebugTrace, ...prev.filter((run) => run.runId !== result.debug?.runId)])
+        let result: ChatResponse | undefined
+        await streamChatRunEvents(started.runId, (event) => {
+          if (event.type === "status") {
+            const message = typeof event.data.message === "string" ? event.data.message : typeof event.data.stage === "string" ? event.data.stage : "回答を生成中"
+            setPendingActivity(message)
+          }
+          if (event.type === "error") {
+            const message = typeof event.data.message === "string" ? event.data.message : "chat run failed"
+            throw new Error(message)
+          }
+          if (event.type === "final") {
+            result = {
+              answer: typeof event.data.answer === "string" ? event.data.answer : "",
+              isAnswerable: event.data.isAnswerable === true,
+              citations: Array.isArray(event.data.citations) ? event.data.citations as ChatResponse["citations"] : [],
+              retrieved: Array.isArray(event.data.retrieved) ? event.data.retrieved as ChatResponse["retrieved"] : [],
+              debug: event.data.debug && typeof event.data.debug === "object" ? event.data.debug as DebugTrace : undefined
+            }
+          }
+        })
+        if (!result) throw new Error("chat run completed without final event")
+        const finalResult = result
+        setMessages((prev) => [...prev, { role: "assistant", text: finalResult.answer, sourceQuestion: userQuestion, result: finalResult, createdAt: new Date().toISOString() }])
+        if (finalResult.debug) {
+          const debug = finalResult.debug
+          setSelectedRunId(debug.runId)
+          setDebugRuns((prev) => [debug, ...prev.filter((run) => run.runId !== debug.runId)])
         }
       } else {
         setMessages((prev) => [

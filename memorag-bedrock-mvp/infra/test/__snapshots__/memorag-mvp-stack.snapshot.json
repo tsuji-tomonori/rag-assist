@@ -912,6 +912,68 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
+    "ChatRunsTable8446CD95": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "runId",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "runId",
+            "KeyType": "HASH"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "TimeToLiveSpecification": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "ChatRunEventsTable7455A50E": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "runId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "seq",
+            "AttributeType": "N"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "runId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "seq",
+            "KeyType": "RANGE"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "TimeToLiveSpecification": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
     "DeployBenchmarkDatasetsAwsCliLayer634804B4": {
       "Type": "AWS::Lambda::LayerVersion",
       "Properties": {
@@ -1997,6 +2059,82 @@
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
                 "bedrock:InvokeModel",
                 "bedrock:InvokeModelWithResponseStream"
               ],
@@ -2013,6 +2151,13 @@
               ],
               "Effect": "Allow",
               "Resource": "*"
+            },
+            {
+              "Action": "states:StartExecution",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "ChatRunStateMachine52CAF7BA"
+              }
             },
             {
               "Action": "states:StartExecution",
@@ -2069,6 +2214,12 @@
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
             },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
             "BENCHMARK_BUCKET_NAME": {
               "Ref": "BenchmarkBucketDD7D1D2F"
             },
@@ -2077,6 +2228,7 @@
             "USE_LOCAL_QUESTION_STORE": "false",
             "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
             "VECTOR_BUCKET_NAME": {
               "Fn::Join": [
                 "",
@@ -2114,6 +2266,9 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "CHAT_RUN_STATE_MACHINE_ARN": {
+              "Ref": "ChatRunStateMachine52CAF7BA"
+            },
             "BENCHMARK_STATE_MACHINE_ARN": {
               "Ref": "BenchmarkStateMachine8C582B8A"
             },
@@ -2123,13 +2278,17 @@
                 [
                   "https://",
                   {
-                    "Ref": "HttpApiF5A9A8A7"
+                    "Ref": "RestApi0C43BF4B"
                   },
-                  ".execute-api.ap-northeast-1.",
+                  ".execute-api.",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  ".",
                   {
                     "Ref": "AWS::URLSuffix"
                   },
-                  "/"
+                  "/prod/"
                 ]
               ]
             }
@@ -2149,313 +2308,14 @@
           ]
         },
         "Runtime": "nodejs22.x",
-        "Timeout": 60
+        "Timeout": 29
       },
       "DependsOn": [
         "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
         "ApiFunctionServiceRole52B9747B"
       ]
     },
-    "HttpApiF5A9A8A7": {
-      "Type": "AWS::ApiGatewayV2::Api",
-      "Properties": {
-        "CorsConfiguration": {
-          "AllowHeaders": [
-            "Content-Type",
-            "Authorization"
-          ],
-          "AllowMethods": [
-            "GET",
-            "POST",
-            "DELETE",
-            "OPTIONS"
-          ],
-          "AllowOrigins": [
-            "*"
-          ],
-          "MaxAge": 86400
-        },
-        "Name": "HttpApi",
-        "ProtocolType": "HTTP"
-      }
-    },
-    "HttpApiOPTIONSproxyPreflightApiIntegrationC77A7ED8": {
-      "Type": "AWS::ApiGatewayV2::Integration",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "IntegrationType": "AWS_PROXY",
-        "IntegrationUri": {
-          "Fn::GetAtt": [
-            "ApiFunctionCE271BD4",
-            "Arn"
-          ]
-        },
-        "PayloadFormatVersion": "2.0"
-      }
-    },
-    "HttpApiOPTIONSproxyPreflightApiIntegrationPermission8FD74EFA": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ApiFunctionCE271BD4",
-            "Arn"
-          ]
-        },
-        "Principal": "apigateway.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition"
-              },
-              ":execute-api:ap-northeast-1:111111111111:",
-              {
-                "Ref": "HttpApiF5A9A8A7"
-              },
-              "/*/*/{proxy+}"
-            ]
-          ]
-        }
-      }
-    },
-    "HttpApiOPTIONSproxy49C71BEB": {
-      "Type": "AWS::ApiGatewayV2::Route",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "AuthorizationType": "NONE",
-        "RouteKey": "OPTIONS /{proxy+}",
-        "Target": {
-          "Fn::Join": [
-            "",
-            [
-              "integrations/",
-              {
-                "Ref": "HttpApiOPTIONSproxyPreflightApiIntegrationC77A7ED8"
-              }
-            ]
-          ]
-        }
-      }
-    },
-    "HttpApiOPTIONSPreflightRootIntegration77E67C10": {
-      "Type": "AWS::ApiGatewayV2::Integration",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "IntegrationType": "AWS_PROXY",
-        "IntegrationUri": {
-          "Fn::GetAtt": [
-            "ApiFunctionCE271BD4",
-            "Arn"
-          ]
-        },
-        "PayloadFormatVersion": "2.0"
-      }
-    },
-    "HttpApiOPTIONSPreflightRootIntegrationPermissionC53164E8": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ApiFunctionCE271BD4",
-            "Arn"
-          ]
-        },
-        "Principal": "apigateway.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition"
-              },
-              ":execute-api:ap-northeast-1:111111111111:",
-              {
-                "Ref": "HttpApiF5A9A8A7"
-              },
-              "/*/*/"
-            ]
-          ]
-        }
-      }
-    },
-    "HttpApiOPTIONS8F62ED8E": {
-      "Type": "AWS::ApiGatewayV2::Route",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "AuthorizationType": "NONE",
-        "RouteKey": "OPTIONS /",
-        "Target": {
-          "Fn::Join": [
-            "",
-            [
-              "integrations/",
-              {
-                "Ref": "HttpApiOPTIONSPreflightRootIntegration77E67C10"
-              }
-            ]
-          ]
-        }
-      }
-    },
-    "HttpApiANYproxyApiIntegration8E99356C": {
-      "Type": "AWS::ApiGatewayV2::Integration",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "IntegrationType": "AWS_PROXY",
-        "IntegrationUri": {
-          "Fn::GetAtt": [
-            "ApiFunctionCE271BD4",
-            "Arn"
-          ]
-        },
-        "PayloadFormatVersion": "2.0"
-      }
-    },
-    "HttpApiANYproxyApiIntegrationPermissionCB2DDF98": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ApiFunctionCE271BD4",
-            "Arn"
-          ]
-        },
-        "Principal": "apigateway.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition"
-              },
-              ":execute-api:ap-northeast-1:111111111111:",
-              {
-                "Ref": "HttpApiF5A9A8A7"
-              },
-              "/*/*/{proxy+}"
-            ]
-          ]
-        }
-      }
-    },
-    "HttpApiANYproxy435A1FB9": {
-      "Type": "AWS::ApiGatewayV2::Route",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "AuthorizationType": "JWT",
-        "AuthorizerId": {
-          "Ref": "HttpApiJwtAuthorizer"
-        },
-        "RouteKey": "ANY /{proxy+}",
-        "Target": {
-          "Fn::Join": [
-            "",
-            [
-              "integrations/",
-              {
-                "Ref": "HttpApiANYproxyApiIntegration8E99356C"
-              }
-            ]
-          ]
-        }
-      },
-      "DependsOn": [
-        "HttpApiJwtAuthorizer"
-      ]
-    },
-    "HttpApiANYRootIntegration2E2CB6BE": {
-      "Type": "AWS::ApiGatewayV2::Integration",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "IntegrationType": "AWS_PROXY",
-        "IntegrationUri": {
-          "Fn::GetAtt": [
-            "ApiFunctionCE271BD4",
-            "Arn"
-          ]
-        },
-        "PayloadFormatVersion": "2.0"
-      }
-    },
-    "HttpApiANYRootIntegrationPermissionF70146AE": {
-      "Type": "AWS::Lambda::Permission",
-      "Properties": {
-        "Action": "lambda:InvokeFunction",
-        "FunctionName": {
-          "Fn::GetAtt": [
-            "ApiFunctionCE271BD4",
-            "Arn"
-          ]
-        },
-        "Principal": "apigateway.amazonaws.com",
-        "SourceArn": {
-          "Fn::Join": [
-            "",
-            [
-              "arn:",
-              {
-                "Ref": "AWS::Partition"
-              },
-              ":execute-api:ap-northeast-1:111111111111:",
-              {
-                "Ref": "HttpApiF5A9A8A7"
-              },
-              "/*/*/"
-            ]
-          ]
-        }
-      }
-    },
-    "HttpApiANY7B3CD14C": {
-      "Type": "AWS::ApiGatewayV2::Route",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "AuthorizationType": "JWT",
-        "AuthorizerId": {
-          "Ref": "HttpApiJwtAuthorizer"
-        },
-        "RouteKey": "ANY /",
-        "Target": {
-          "Fn::Join": [
-            "",
-            [
-              "integrations/",
-              {
-                "Ref": "HttpApiANYRootIntegration2E2CB6BE"
-              }
-            ]
-          ]
-        }
-      },
-      "DependsOn": [
-        "HttpApiJwtAuthorizer"
-      ]
-    },
-    "HttpApiAccessLogGroupA66C8864": {
+    "ChatRunWorkerLogGroup5ACB3363": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
         "RetentionInDays": 7
@@ -2463,50 +2323,1496 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
-    "HttpApiDefaultStage439BF176": {
-      "Type": "AWS::ApiGatewayV2::Stage",
+    "ChatRunWorkerFunctionServiceRoleBED42CDB": {
+      "Type": "AWS::IAM::Role",
       "Properties": {
-        "AccessLogSettings": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentsBucket9EC9DEB9",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentsBucket9EC9DEB9",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "s3:GetObject*",
+                "s3:GetBucket*",
+                "s3:List*",
+                "s3:DeleteObject*",
+                "s3:PutObject",
+                "s3:PutObjectLegalHold",
+                "s3:PutObjectRetention",
+                "s3:PutObjectTagging",
+                "s3:PutObjectVersionTagging",
+                "s3:Abort*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DebugDownloadBucketAB6A16BE",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DebugDownloadBucketAB6A16BE",
+                          "Arn"
+                        ]
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "bedrock:InvokeModel",
+                "bedrock:InvokeModelWithResponseStream"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            },
+            {
+              "Action": [
+                "s3vectors:PutVectors",
+                "s3vectors:QueryVectors",
+                "s3vectors:GetVectors",
+                "s3vectors:DeleteVectors",
+                "s3vectors:ListVectors"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3",
+        "Roles": [
+          {
+            "Ref": "ChatRunWorkerFunctionServiceRoleBED42CDB"
+          }
+        ]
+      }
+    },
+    "ChatRunWorkerFunction3C85A553": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_QUESTION_STORE": "false",
+            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ChatRunWorkerLogGroup5ACB3363"
+          }
+        },
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "ChatRunWorkerFunctionServiceRoleBED42CDB",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900
+      },
+      "DependsOn": [
+        "ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3",
+        "ChatRunWorkerFunctionServiceRoleBED42CDB"
+      ]
+    },
+    "ChatRunEventsStreamLogGroupDB3F86F0": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "ChatRunEventsStreamFunctionServiceRole41BBFB5A": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2",
+        "Roles": [
+          {
+            "Ref": "ChatRunEventsStreamFunctionServiceRole41BBFB5A"
+          }
+        ]
+      }
+    },
+    "ChatRunEventsStreamFunctionA12E11AC": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_QUESTION_STORE": "false",
+            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ChatRunEventsStreamLogGroupDB3F86F0"
+          }
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "ChatRunEventsStreamFunctionServiceRole41BBFB5A",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 900
+      },
+      "DependsOn": [
+        "ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2",
+        "ChatRunEventsStreamFunctionServiceRole41BBFB5A"
+      ]
+    },
+    "RestApiAccessLogGroup246D1CE0": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "RestApi0C43BF4B": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "EndpointConfiguration": {
+          "Types": [
+            "REGIONAL"
+          ]
+        },
+        "Name": "RestApi"
+      }
+    },
+    "RestApiCloudWatchRoleE3ED6605": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+              ]
+            ]
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "RestApiAccount7C83CF5A": {
+      "Type": "AWS::ApiGateway::Account",
+      "Properties": {
+        "CloudWatchRoleArn": {
+          "Fn::GetAtt": [
+            "RestApiCloudWatchRoleE3ED6605",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "RestApi0C43BF4B"
+      ],
+      "UpdateReplacePolicy": "Retain",
+      "DeletionPolicy": "Retain"
+    },
+    "RestApiDeployment180EC5034951061e4f9102e1781fba52e81f1602": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "Description": "Automatically created by the RestApi construct",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      },
+      "DependsOn": [
+        "RestApiproxyANY1786B242",
+        "RestApiproxyOPTIONS32C4B154",
+        "RestApiproxyC95856DD",
+        "RestApiANYA7C1DC94",
+        "RestApichatrunsrunIdeventsGETA659C870",
+        "RestApichatrunsrunIdeventsOPTIONSC49B5D8A",
+        "RestApichatrunsrunIdevents5BAC3B9E",
+        "RestApichatrunsrunIdOPTIONS3E839889",
+        "RestApichatrunsrunId67B06C02",
+        "RestApichatrunsOPTIONS7EE1D56A",
+        "RestApichatrunsPOST78780797",
+        "RestApichatruns60F0DD77",
+        "RestApiOPTIONS6AA64D2D"
+      ]
+    },
+    "RestApiDeploymentStageprod3855DE66": {
+      "Type": "AWS::ApiGateway::Stage",
+      "Properties": {
+        "AccessLogSetting": {
           "DestinationArn": {
             "Fn::GetAtt": [
-              "HttpApiAccessLogGroupA66C8864",
+              "RestApiAccessLogGroup246D1CE0",
               "Arn"
             ]
           },
           "Format": "{\"requestId\":\"$context.requestId\",\"ip\":\"$context.identity.sourceIp\",\"user\":\"$context.identity.user\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"protocol\":\"$context.protocol\",\"responseLength\":\"$context.responseLength\"}"
         },
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
+        "DeploymentId": {
+          "Ref": "RestApiDeployment180EC5034951061e4f9102e1781fba52e81f1602"
         },
-        "AutoDeploy": true,
-        "StageName": "$default"
-      }
-    },
-    "HttpApiJwtAuthorizer": {
-      "Type": "AWS::ApiGatewayV2::Authorizer",
-      "Properties": {
-        "ApiId": {
-          "Ref": "HttpApiF5A9A8A7"
-        },
-        "AuthorizerType": "JWT",
-        "IdentitySource": [
-          "$request.header.Authorization"
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": false,
+            "HttpMethod": "*",
+            "LoggingLevel": "INFO",
+            "MetricsEnabled": true,
+            "ResourcePath": "/*"
+          }
         ],
-        "JwtConfiguration": {
-          "Audience": [
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        },
+        "StageName": "prod"
+      },
+      "DependsOn": [
+        "RestApiAccount7C83CF5A"
+      ]
+    },
+    "RestApiOPTIONS6AA64D2D": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
             {
-              "Ref": "UserPoolWebClient4C9370B0"
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
+                "method.response.header.Access-Control-Max-Age": "'86400'"
+              },
+              "StatusCode": "204"
             }
           ],
-          "Issuer": {
-            "Fn::GetAtt": [
-              "UserPool6BA7E5F2",
-              "ProviderURL"
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }"
+          },
+          "Type": "MOCK"
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Max-Age": true
+            },
+            "StatusCode": "204"
+          }
+        ],
+        "ResourceId": {
+          "Fn::GetAtt": [
+            "RestApi0C43BF4B",
+            "RootResourceId"
+          ]
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApiANYApiPermissionMemoRagMvpStackTestRestApi748483EDANYD291338E": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiFunctionCE271BD4",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "RestApi0C43BF4B"
+              },
+              "/",
+              {
+                "Ref": "RestApiDeploymentStageprod3855DE66"
+              },
+              "/*/"
+            ]
+          ]
+        }
+      }
+    },
+    "RestApiANYApiPermissionTestMemoRagMvpStackTestRestApi748483EDANY129460B9": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiFunctionCE271BD4",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "RestApi0C43BF4B"
+              },
+              "/test-invoke-stage/*/"
+            ]
+          ]
+        }
+      }
+    },
+    "RestApiANYA7C1DC94": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId": {
+          "Ref": "RestApiCognitoAuthorizerF1518B6A"
+        },
+        "HttpMethod": "ANY",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "TimeoutInMillis": 29000,
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ApiFunctionCE271BD4",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
             ]
           }
         },
-        "Name": "CognitoJwtAuthorizer"
+        "ResourceId": {
+          "Fn::GetAtt": [
+            "RestApi0C43BF4B",
+            "RootResourceId"
+          ]
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
       }
+    },
+    "RestApiproxyC95856DD": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "RestApi0C43BF4B",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "{proxy+}",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApiproxyOPTIONS32C4B154": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
+                "method.response.header.Access-Control-Max-Age": "'86400'"
+              },
+              "StatusCode": "204"
+            }
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }"
+          },
+          "Type": "MOCK"
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Max-Age": true
+            },
+            "StatusCode": "204"
+          }
+        ],
+        "ResourceId": {
+          "Ref": "RestApiproxyC95856DD"
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApiproxyANYApiPermissionMemoRagMvpStackTestRestApi748483EDANYproxyB80C7411": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiFunctionCE271BD4",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "RestApi0C43BF4B"
+              },
+              "/",
+              {
+                "Ref": "RestApiDeploymentStageprod3855DE66"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "RestApiproxyANYApiPermissionTestMemoRagMvpStackTestRestApi748483EDANYproxy5381E3FA": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiFunctionCE271BD4",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "RestApi0C43BF4B"
+              },
+              "/test-invoke-stage/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "RestApiproxyANY1786B242": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId": {
+          "Ref": "RestApiCognitoAuthorizerF1518B6A"
+        },
+        "HttpMethod": "ANY",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "TimeoutInMillis": 29000,
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ApiFunctionCE271BD4",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "ResourceId": {
+          "Ref": "RestApiproxyC95856DD"
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApichatruns60F0DD77": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "RestApi0C43BF4B",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "chat-runs",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApichatrunsOPTIONS7EE1D56A": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
+                "method.response.header.Access-Control-Max-Age": "'86400'"
+              },
+              "StatusCode": "204"
+            }
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }"
+          },
+          "Type": "MOCK"
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Max-Age": true
+            },
+            "StatusCode": "204"
+          }
+        ],
+        "ResourceId": {
+          "Ref": "RestApichatruns60F0DD77"
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApichatrunsPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTchatrunsECE2E619": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiFunctionCE271BD4",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "RestApi0C43BF4B"
+              },
+              "/",
+              {
+                "Ref": "RestApiDeploymentStageprod3855DE66"
+              },
+              "/POST/chat-runs"
+            ]
+          ]
+        }
+      }
+    },
+    "RestApichatrunsPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTchatruns735A9349": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiFunctionCE271BD4",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "RestApi0C43BF4B"
+              },
+              "/test-invoke-stage/POST/chat-runs"
+            ]
+          ]
+        }
+      }
+    },
+    "RestApichatrunsPOST78780797": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId": {
+          "Ref": "RestApiCognitoAuthorizerF1518B6A"
+        },
+        "HttpMethod": "POST",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "TimeoutInMillis": 29000,
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ApiFunctionCE271BD4",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "ResourceId": {
+          "Ref": "RestApichatruns60F0DD77"
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApichatrunsrunId67B06C02": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "RestApichatruns60F0DD77"
+        },
+        "PathPart": "{runId}",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApichatrunsrunIdOPTIONS3E839889": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
+                "method.response.header.Access-Control-Max-Age": "'86400'"
+              },
+              "StatusCode": "204"
+            }
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }"
+          },
+          "Type": "MOCK"
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Max-Age": true
+            },
+            "StatusCode": "204"
+          }
+        ],
+        "ResourceId": {
+          "Ref": "RestApichatrunsrunId67B06C02"
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApichatrunsrunIdevents5BAC3B9E": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "RestApichatrunsrunId67B06C02"
+        },
+        "PathPart": "events",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApichatrunsrunIdeventsOPTIONSC49B5D8A": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,Authorization,Last-Event-ID'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,POST,DELETE,OPTIONS'",
+                "method.response.header.Access-Control-Max-Age": "'86400'"
+              },
+              "StatusCode": "204"
+            }
+          ],
+          "RequestTemplates": {
+            "application/json": "{ statusCode: 200 }"
+          },
+          "Type": "MOCK"
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Max-Age": true
+            },
+            "StatusCode": "204"
+          }
+        ],
+        "ResourceId": {
+          "Ref": "RestApichatrunsrunIdevents5BAC3B9E"
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApichatrunsrunIdeventsGETApiPermissionMemoRagMvpStackTestRestApi748483EDGETchatrunsrunIdevents894E577B": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ChatRunEventsStreamFunctionA12E11AC",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "RestApi0C43BF4B"
+              },
+              "/",
+              {
+                "Ref": "RestApiDeploymentStageprod3855DE66"
+              },
+              "/GET/chat-runs/*/events"
+            ]
+          ]
+        }
+      }
+    },
+    "RestApichatrunsrunIdeventsGETApiPermissionTestMemoRagMvpStackTestRestApi748483EDGETchatrunsrunIdeventsE2525C91": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ChatRunEventsStreamFunctionA12E11AC",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:ap-northeast-1:111111111111:",
+              {
+                "Ref": "RestApi0C43BF4B"
+              },
+              "/test-invoke-stage/GET/chat-runs/*/events"
+            ]
+          ]
+        }
+      }
+    },
+    "RestApichatrunsrunIdeventsGETA659C870": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "COGNITO_USER_POOLS",
+        "AuthorizerId": {
+          "Ref": "RestApiCognitoAuthorizerF1518B6A"
+        },
+        "HttpMethod": "GET",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "ResponseTransferMode": "STREAM",
+          "TimeoutInMillis": 900000,
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:ap-northeast-1:lambda:path/2021-11-15/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsStreamFunctionA12E11AC",
+                    "Arn"
+                  ]
+                },
+                "/response-streaming-invocations"
+              ]
+            ]
+          }
+        },
+        "ResourceId": {
+          "Ref": "RestApichatrunsrunIdevents5BAC3B9E"
+        },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApiCognitoAuthorizerF1518B6A": {
+      "Type": "AWS::ApiGateway::Authorizer",
+      "Properties": {
+        "IdentitySource": "method.request.header.Authorization",
+        "Name": "MemoRagMvpStackTestRestApiCognitoAuthorizer2CDE4DBB",
+        "ProviderARNs": [
+          {
+            "Fn::GetAtt": [
+              "UserPool6BA7E5F2",
+              "Arn"
+            ]
+          }
+        ],
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        },
+        "Type": "COGNITO_USER_POOLS"
+      }
+    },
+    "ChatRunStateMachineLogGroup6AD4AA67": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "ChatRunStateMachineRoleE7E4F7A4": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "states.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      }
+    },
+    "ChatRunStateMachineRoleDefaultPolicyC3BFD137": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunWorkerFunction3C85A553",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunWorkerFunction3C85A553",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "ChatRunStateMachineRoleDefaultPolicyC3BFD137",
+        "Roles": [
+          {
+            "Ref": "ChatRunStateMachineRoleE7E4F7A4"
+          }
+        ]
+      }
+    },
+    "ChatRunStateMachine52CAF7BA": {
+      "Type": "AWS::StepFunctions::StateMachine",
+      "Properties": {
+        "DefinitionString": {
+          "Fn::Join": [
+            "",
+            [
+              "{\"StartAt\":\"ChatRunWorkerTask\",\"States\":{\"ChatRunWorkerTask\":{\"End\":true,\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+              {
+                "Ref": "ChatRunWorkerFunction3C85A553"
+              },
+              "\",\"Payload\":{\"runId.$\":\"$.runId\"}}}},\"TimeoutSeconds\":960}"
+            ]
+          ]
+        },
+        "LoggingConfiguration": {
+          "Destinations": [
+            {
+              "CloudWatchLogsLogGroup": {
+                "LogGroupArn": {
+                  "Fn::GetAtt": [
+                    "ChatRunStateMachineLogGroup6AD4AA67",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "Level": "ALL"
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "ChatRunStateMachineRoleE7E4F7A4",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "ChatRunStateMachineRoleDefaultPolicyC3BFD137",
+        "ChatRunStateMachineRoleE7E4F7A4"
+      ],
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
     },
     "BenchmarkProjectKeyB840011B": {
       "Type": "AWS::KMS::Key",
@@ -3040,6 +4346,28 @@
     }
   },
   "Outputs": {
+    "RestApiEndpoint0551178A": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "RestApi0C43BF4B"
+            },
+            ".execute-api.ap-northeast-1.",
+            {
+              "Ref": "AWS::URLSuffix"
+            },
+            "/",
+            {
+              "Ref": "RestApiDeploymentStageprod3855DE66"
+            },
+            "/"
+          ]
+        ]
+      }
+    },
     "CognitoUserPoolId": {
       "Value": {
         "Ref": "UserPool6BA7E5F2"
@@ -3057,13 +4385,17 @@
           [
             "https://",
             {
-              "Ref": "HttpApiF5A9A8A7"
+              "Ref": "RestApi0C43BF4B"
             },
-            ".execute-api.ap-northeast-1.",
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".",
             {
               "Ref": "AWS::URLSuffix"
             },
-            "/"
+            "/prod/"
           ]
         ]
       }
@@ -3075,13 +4407,17 @@
           [
             "https://",
             {
-              "Ref": "HttpApiF5A9A8A7"
+              "Ref": "RestApi0C43BF4B"
             },
-            ".execute-api.ap-northeast-1.",
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".",
             {
               "Ref": "AWS::URLSuffix"
             },
-            "/openapi.json"
+            "/prod/openapi.json"
           ]
         ]
       }

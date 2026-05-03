@@ -35,6 +35,28 @@ curl -s http://localhost:8787/documents \
 
 ## Chat
 
+非同期 streaming chat は `POST /chat-runs` で run を開始し、返却された `eventsPath` を SSE として読みます。
+
+```bash
+RUN_ID="$(
+  curl -s http://localhost:8787/chat-runs \
+    "${AUTH_HEADER[@]}" \
+    -H 'Content-Type: application/json' \
+    -d '{
+      "question":"経費精算の期限は？",
+      "modelId":"amazon.nova-lite-v1:0",
+      "topK":6,
+      "minScore":0.20,
+      "includeDebug":true
+    }' | jq -r '.runId'
+)"
+
+curl -N "http://localhost:8787/chat-runs/${RUN_ID}/events" \
+  "${AUTH_HEADER[@]}"
+```
+
+`POST /chat` は後方互換用の同期 JSON API として利用できます。
+
 ```bash
 curl -s http://localhost:8787/chat \
   "${AUTH_HEADER[@]}" \
