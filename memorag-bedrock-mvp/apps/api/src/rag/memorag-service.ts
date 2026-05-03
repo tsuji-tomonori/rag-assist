@@ -7,7 +7,7 @@ import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type MemoryCard, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -53,6 +53,13 @@ type BenchmarkDownloadArtifact = "report" | "summary" | "results"
 type AdminLedger = {
   users: ManagedUser[]
   usage: Record<string, Partial<Omit<UserUsageSummary, "userId" | "email" | "displayName">>>
+  auditLog?: ManagedUserAuditLogEntry[]
+}
+
+type CreateManagedUserInput = {
+  email: string
+  displayName?: string
+  groups?: string[]
 }
 
 const adminLedgerKey = "admin/admin-ledger.json"
@@ -225,13 +232,45 @@ export class MemoRagService {
       .sort((a, b) => a.email.localeCompare(b.email))
   }
 
+  async createManagedUser(actor: AppUser, input: CreateManagedUserInput): Promise<ManagedUser> {
+    const now = new Date().toISOString()
+    const email = input.email.trim().toLowerCase()
+    const db = await this.loadAdminLedger(actor)
+    const userId = createManagedUserId(email)
+    const existing = db.users.find((user) => user.userId === userId || user.email.toLowerCase() === email)
+    if (existing) throw new Error("Managed user already exists")
+
+    const user: ManagedUser = {
+      userId,
+      email,
+      displayName: input.displayName?.trim() || email.split("@")[0],
+      status: "active",
+      groups: normalizeRoles(input.groups ?? ["CHAT_USER"]),
+      createdAt: now,
+      updatedAt: now
+    }
+    if (user.groups.length === 0) user.groups = ["CHAT_USER"]
+    db.users.push(user)
+    this.appendAdminAuditLog(db, actor, user, "user:create", undefined, user.status, [], user.groups, now)
+    await this.saveAdminLedger(db)
+    return user
+  }
+
+  async listAdminAuditLog(actor: AppUser): Promise<ManagedUserAuditLogEntry[]> {
+    const db = await this.loadAdminLedger(actor)
+    return [...(db.auditLog ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 100)
+  }
+
   async assignUserRoles(actor: AppUser, userId: string, groups: string[]): Promise<ManagedUser | undefined> {
     const normalizedGroups = normalizeRoles(groups)
     const db = await this.loadAdminLedger(actor)
     const user = db.users.find((candidate) => candidate.userId === userId && candidate.status !== "deleted")
     if (!user) return undefined
+    const beforeGroups = [...user.groups]
     user.groups = normalizedGroups
+    if (user.groups.length === 0) user.groups = ["CHAT_USER"]
     user.updatedAt = new Date().toISOString()
+    this.appendAdminAuditLog(db, actor, user, "role:assign", user.status, user.status, beforeGroups, user.groups, user.updatedAt)
     await this.saveAdminLedger(db)
     return user
   }
@@ -366,8 +405,12 @@ export class MemoRagService {
     const db = await this.loadAdminLedger(actor)
     const user = db.users.find((candidate) => candidate.userId === userId && candidate.status !== "deleted")
     if (!user) return undefined
+    const beforeStatus = user.status
+    const beforeGroups = [...user.groups]
     user.status = status
     user.updatedAt = new Date().toISOString()
+    const action: ManagedUserAuditAction = status === "suspended" ? "user:suspend" : status === "active" ? "user:unsuspend" : "user:delete"
+    this.appendAdminAuditLog(db, actor, user, action, beforeStatus, user.status, beforeGroups, user.groups, user.updatedAt)
     await this.saveAdminLedger(db)
     return user
   }
@@ -380,6 +423,7 @@ export class MemoRagService {
       if (!isMissingObjectError(err)) throw err
       db = { users: [], usage: {} }
     }
+    db.auditLog ??= []
 
     const now = new Date().toISOString()
     const actorEmail = actor.email ?? `${actor.userId}@local`
@@ -415,6 +459,34 @@ export class MemoRagService {
 
   private async saveAdminLedger(db: AdminLedger): Promise<void> {
     await this.deps.objectStore.putText(adminLedgerKey, JSON.stringify(db, null, 2), "application/json")
+  }
+
+  private appendAdminAuditLog(
+    db: AdminLedger,
+    actor: AppUser,
+    target: ManagedUser,
+    action: ManagedUserAuditAction,
+    beforeStatus: ManagedUser["status"] | undefined,
+    afterStatus: ManagedUser["status"] | undefined,
+    beforeGroups: string[],
+    afterGroups: string[],
+    createdAt: string
+  ) {
+    db.auditLog ??= []
+    db.auditLog.unshift({
+      auditId: randomUUID(),
+      action,
+      actorUserId: actor.userId,
+      actorEmail: actor.email,
+      targetUserId: target.userId,
+      targetEmail: target.email,
+      beforeStatus,
+      afterStatus,
+      beforeGroups,
+      afterGroups,
+      createdAt
+    })
+    db.auditLog = db.auditLog.slice(0, 200)
   }
 
   async saveConversationHistory(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
@@ -619,6 +691,10 @@ function artifactExtension(artifact: BenchmarkDownloadArtifact): string {
 
 function normalizeRoles(groups: string[]): Role[] {
   return [...new Set(groups.filter((group): group is Role => group in rolePermissions))]
+}
+
+function createManagedUserId(email: string): string {
+  return email.toLowerCase().replace(/[^a-z0-9._-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "")
 }
 
 function estimateCost(

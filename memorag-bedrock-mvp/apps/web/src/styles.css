@@ -1804,8 +1804,46 @@ button:disabled {
 }
 
 .user-admin-panel,
-.admin-section-panel[aria-label="利用状況一覧"] {
+.admin-section-panel[aria-label="利用状況一覧"],
+.admin-audit-panel {
   grid-column: 1 / -1;
+}
+
+.admin-create-user-form {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.8fr) minmax(180px, 0.7fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.admin-create-user-form label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.admin-create-user-form label span {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.admin-create-user-form input,
+.admin-create-user-form select,
+.admin-create-user-form button {
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid #cbd9f0;
+  border-radius: 7px;
+  padding: 0 10px;
+  color: #2f4f7f;
+  background: #fff;
+  font-weight: 900;
 }
 
 .admin-data-table,
@@ -1972,6 +2010,42 @@ button:disabled {
   background: #f8fbff;
 }
 
+.admin-audit-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-audit-entry {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.8fr) minmax(180px, 0.7fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e1e8f2;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fbfdff;
+}
+
+.admin-audit-entry div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.admin-audit-entry strong {
+  color: #13223d;
+}
+
+.admin-audit-entry span,
+.admin-audit-entry time,
+.admin-audit-entry small {
+  min-width: 0;
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -2107,6 +2181,11 @@ button:disabled {
   }
 
   .phase2-admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-create-user-form,
+  .admin-audit-entry {
     grid-template-columns: 1fr;
   }
 }

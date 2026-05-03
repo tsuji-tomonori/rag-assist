@@ -31,11 +31,13 @@
 - AC-NFR011-018: `documents` view の表示は文書管理 permission に基づいて制御されること。
 - AC-NFR011-019: `admin` view の Phase 1 導線は文書管理、問い合わせ対応、debug/評価、性能テストの permission に基づいて制御されること。
 - AC-NFR011-020: チャット上部には文書削除操作を表示せず、削除は文書管理導線に集約すること。
-- AC-NFR011-021: `/admin/users` は `user:read` を要求すること。
-- AC-NFR011-022: `/admin/users/{userId}/roles` は `access:role:assign` を要求すること。
-- AC-NFR011-023: `/admin/usage` は `usage:read:all_users` を要求すること。
-- AC-NFR011-024: `/admin/costs` は `cost:read:all` を要求すること。
-- AC-NFR011-025: `admin` view の Phase 2 導線はユーザー管理、ロール、利用状況、コスト監査の permission に基づいて制御されること。
+- AC-NFR011-021: `POST /admin/users` は `user:create` を要求すること。
+- AC-NFR011-022: `GET /admin/users` は `user:read` を要求すること。
+- AC-NFR011-023: `GET /admin/audit-log` は `access:policy:read` を要求すること。
+- AC-NFR011-024: `/admin/users/{userId}/roles` は `access:role:assign` を要求すること。
+- AC-NFR011-025: `/admin/usage` は `usage:read:all_users` を要求すること。
+- AC-NFR011-026: `/admin/costs` は `cost:read:all` を要求すること。
+- AC-NFR011-027: `admin` view の Phase 2 導線はユーザー作成、ユーザー管理、ロール、管理操作履歴、利用状況、コスト監査の permission に基づいて制御されること。
 
 ## 要件の源泉・背景
 
@@ -62,10 +64,10 @@
 | 種類 | 非機能要求 |
 | 依存関係 | `authMiddleware`、`requirePermission`、`authorization.ts`、`GET /me`、`FR-024`、`FR-025`、`FR-027`、`DES_API_001` |
 | 衝突 | local 開発では検証容易性のため `AUTH_ENABLED=false` と `VITE_AUTH_MODE=local` を維持する |
-| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-025` |
+| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-027` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 Phase 1 管理画面導線と self sign-up 最小権限を `FR-024` / `FR-025` として分離 |
+| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 Phase 1 管理画面導線と self sign-up 最小権限を `FR-024` / `FR-025` として分離、2026-05-03 Phase 2 のユーザー作成と管理操作履歴を追加 |
 
 ## 妥当性確認
 

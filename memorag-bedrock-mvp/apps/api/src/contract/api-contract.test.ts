@@ -116,9 +116,17 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(history.body.history[0].schemaVersion, 1)
     validateSchema(history.body, responseSchema(openapi, "/conversation-history", "get", 200), openapi)
 
+    const createAdminUser = await fetch(`http://127.0.0.1:${port}/admin/users`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "new-user@example.com", displayName: "新規 利用者", groups: ["CHAT_USER"] })
+    })
+    assert.equal(createAdminUser.status, 200)
+    validateSchema(await createAdminUser.json(), responseSchema(openapi, "/admin/users", "post", 200), openapi)
+
     const adminUsers = await getJson(`http://127.0.0.1:${port}/admin/users`)
     assert.equal(Array.isArray(adminUsers.body.users), true)
-    assert.equal(adminUsers.body.users[0].userId, "local-dev")
+    assert.ok(adminUsers.body.users.some((user: { userId: string }) => user.userId === "local-dev"))
     validateSchema(adminUsers.body, responseSchema(openapi, "/admin/users", "get", 200), openapi)
 
     const roles = await getJson(`http://127.0.0.1:${port}/admin/roles`)
@@ -133,6 +141,11 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     })
     assert.equal(assignRoles.status, 200)
     validateSchema(await assignRoles.json(), responseSchema(openapi, "/admin/users/{userId}/roles", "post", 200), openapi)
+
+    const adminAuditLog = await getJson(`http://127.0.0.1:${port}/admin/audit-log`)
+    assert.equal(Array.isArray(adminAuditLog.body.auditLog), true)
+    assert.ok(adminAuditLog.body.auditLog.some((entry: { action: string }) => entry.action === "user:create"))
+    validateSchema(adminAuditLog.body, responseSchema(openapi, "/admin/audit-log", "get", 200), openapi)
 
     const usage = await getJson(`http://127.0.0.1:${port}/admin/usage`)
     assert.equal(Array.isArray(usage.body.users), true)
@@ -384,6 +397,12 @@ test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions"
     await waitUntilReady(server, port)
 
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/users`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/users`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email: "blocked@example.com" })
+    })).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/audit-log`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/roles`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/usage`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/costs`)).status, 403)

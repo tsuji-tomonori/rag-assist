@@ -79,6 +79,32 @@ export const ManagedUserListResponseSchema = z.object({
   users: z.array(ManagedUserSchema)
 })
 
+export const CreateManagedUserRequestSchema = z.object({
+  email: z.string().email().openapi({ example: "new-user@example.com" }),
+  displayName: z.string().min(1).max(120).optional().openapi({ example: "新規 利用者" }),
+  groups: z.array(z.string().min(1)).min(1).max(12).optional().openapi({ example: ["CHAT_USER"] })
+})
+
+export const ManagedUserAuditActionSchema = z.enum(["user:create", "role:assign", "user:suspend", "user:unsuspend", "user:delete"])
+
+export const ManagedUserAuditLogEntrySchema = z.object({
+  auditId: z.string(),
+  action: ManagedUserAuditActionSchema,
+  actorUserId: z.string(),
+  actorEmail: z.string().optional(),
+  targetUserId: z.string(),
+  targetEmail: z.string(),
+  beforeStatus: ManagedUserStatusSchema.optional(),
+  afterStatus: ManagedUserStatusSchema.optional(),
+  beforeGroups: z.array(z.string()),
+  afterGroups: z.array(z.string()),
+  createdAt: z.string()
+})
+
+export const AdminAuditLogResponseSchema = z.object({
+  auditLog: z.array(ManagedUserAuditLogEntrySchema)
+})
+
 export const AccessRoleDefinitionSchema = z.object({
   role: z.string(),
   permissions: z.array(z.string())

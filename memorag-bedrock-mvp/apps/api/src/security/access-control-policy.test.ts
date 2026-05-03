@@ -30,7 +30,9 @@ const protectedMiddlewarePaths = [
 ]
 
 const routePolicies: RoutePolicy[] = [
+  { method: "post", path: "/admin/users", permission: "user:create" },
   { method: "get", path: "/admin/users", permission: "user:read" },
+  { method: "get", path: "/admin/audit-log", permission: "access:policy:read" },
   { method: "post", path: "/admin/users/{userId}/roles", permission: "access:role:assign" },
   { method: "post", path: "/admin/users/{userId}/suspend", permission: "user:suspend" },
   { method: "post", path: "/admin/users/{userId}/unsuspend", permission: "user:unsuspend" },

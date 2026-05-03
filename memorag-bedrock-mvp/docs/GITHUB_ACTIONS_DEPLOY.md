@@ -50,10 +50,10 @@
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
 | `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
 | `BENCHMARK_RUNNER` | CodeBuild runner から `/benchmark/query` を実行 |
-| `USER_ADMIN` | ユーザー管理の将来拡張 |
-| `ACCESS_ADMIN` | 権限管理の将来拡張 |
-| `COST_AUDITOR` | 費用監査の将来拡張 |
-| `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証 |
+| `USER_ADMIN` | 管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
+| `ACCESS_ADMIN` | ロール定義参照、ロール付与、管理操作履歴参照 |
+| `COST_AUDITOR` | 概算コスト監査 |
+| `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証、Phase 2 管理操作 |
 
 ログイン画面からの self sign-up はメール確認後に `CHAT_USER` のみを自動付与する。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーがこの workflow または AWS 管理手順で後から付与する。
 
