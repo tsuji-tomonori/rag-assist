@@ -56,6 +56,12 @@ const debugTrace = {
       latencyMs: 1225,
       summary: "根拠不足です。",
       detail: "low_similarity_score",
+      output: {
+        answerability: {
+          reason: "low_similarity_score",
+          confidence: 0.42
+        }
+      },
       tokenCount: 12,
       startedAt: "2026-04-30T00:00:00.025Z",
       completedAt: "2026-04-30T00:00:01.250Z"
@@ -541,12 +547,11 @@ describe("App chat and upload flow", () => {
 
     expect(await screen.findByText("answerability_gate")).toBeInTheDocument()
     expect(screen.getAllByText("1.25 秒").length).toBeGreaterThanOrEqual(2)
-    await userEvent.click(screen.getByText("すべて展開"))
-    expect(screen.getByText("すべて閉じる")).toBeInTheDocument()
-    await userEvent.click(screen.getByText("answerability_gate"))
-    expect(await screen.findByText("low_similarity_score")).toBeInTheDocument()
+    expect(screen.getByLabelText("RAG実行フローチャート")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: /answerability_gate/ }))
+    expect(await screen.findByText(/low_similarity_score/)).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTitle("JSONでダウンロード"))
+    await userEvent.click(screen.getByTitle("保存済みJSONをダウンロード"))
     expect(click).toHaveBeenCalled()
     expect(
       fetchMock.mock.calls.some(
@@ -554,9 +559,28 @@ describe("App chat and upload flow", () => {
       )
     ).toBe(true)
 
+    await userEvent.click(screen.getByTitle("可視化JSONをダウンロード"))
+    expect(click).toHaveBeenCalledTimes(2)
+
     await userEvent.click(screen.getByText("新しい会話"))
     expect(screen.queryByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")).not.toBeInTheDocument()
     expect(screen.getByLabelText("質問")).toHaveValue("")
+  })
+
+  it("uploads a debug JSON trace and replays it without calling the API", async () => {
+    const fetchMock = mockAppFetch()
+    await renderAuthenticatedApp()
+
+    await userEvent.click(await screen.findByRole("checkbox"))
+    const input = screen.getByTitle("JSONをアップロード").querySelector<HTMLInputElement>('input[type="file"]')
+    await userEvent.upload(input as HTMLInputElement, new File([JSON.stringify(answerableDebugTrace)], "trace.json", { type: "application/json" }))
+
+    expect(await screen.findByText("ローカルJSON")).toBeInTheDocument()
+    expect(screen.getByText(answerableDebugTrace.runId)).toBeInTheDocument()
+    expect(screen.getByLabelText("RAG実行フローチャート")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: /finalize_response/ }))
+    expect(await screen.findByText(/END_OF_FINALIZE_RESPONSE/)).toBeInTheDocument()
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/download"))).toBe(false)
   })
 
   it("disables submission while a question is pending and selects the returned debug run", async () => {
