@@ -4,10 +4,8 @@ import {
   answerQuestion,
   cancelBenchmarkRun,
   chat,
-  createBenchmarkDownload,
   createManagedUser,
   createQuestion,
-  createDebugDownload,
   deleteManagedUser,
   deleteConversationHistory,
   deleteDocument,
@@ -37,7 +35,6 @@ import {
   type ConversationHistoryItem,
   type CostAuditSummary,
   type CurrentUser,
-  type DebugStep,
   type DebugTrace,
   type DocumentManifest,
   type HumanQuestion,
@@ -47,7 +44,28 @@ import {
   type UserUsageSummary
 } from "./api.js"
 import { completeNewPasswordChallenge, confirmSignUp, getStoredAuthSession, signIn, signOut, signUp, type AuthSession } from "./authClient.js"
+import { RailNav } from "./app/components/RailNav.js"
+import { TopBar } from "./app/components/TopBar.js"
+import type { AppView } from "./app/types.js"
+import { BenchmarkWorkspace } from "./features/benchmark/components/BenchmarkWorkspace.js"
+import { DebugPanel } from "./features/debug/components/DebugPanel.js"
+import { DocumentWorkspace } from "./features/documents/components/DocumentWorkspace.js"
+import { HistoryWorkspace } from "./features/history/components/HistoryWorkspace.js"
 import LoginPage from "./LoginPage.js"
+import { Icon } from "./shared/components/Icon.js"
+import {
+  adminAuditActionLabel,
+  adminAuditSummary,
+  costConfidenceLabel,
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+  formatLatency,
+  formatTime,
+  managedUserStatusLabel,
+  priorityLabel,
+  statusLabel
+} from "./shared/utils/format.js"
 
 type Message = {
   role: "user" | "assistant"
@@ -57,29 +75,6 @@ type Message = {
   result?: ChatResponse
   questionTicket?: HumanQuestion
 }
-
-type IconName =
-  | "logo"
-  | "chat"
-  | "clock"
-  | "star"
-  | "document"
-  | "settings"
-  | "paperclip"
-  | "send"
-  | "chevron"
-  | "check"
-  | "warning"
-  | "expand"
-  | "plus"
-  | "download"
-  | "trash"
-  | "inbox"
-  | "copy"
-  | "gauge"
-  | "stop"
-
-type AppView = "chat" | "assignee" | "history" | "favorites" | "benchmark" | "admin" | "documents"
 
 const defaultModelId = "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
@@ -614,114 +609,36 @@ export default function App() {
 
   return (
     <main className="app-frame">
-      <aside className="rail" aria-label="主要ナビゲーション">
-        <a className="rail-logo" href="/" aria-label="ホーム">
-          <Icon name="logo" />
-        </a>
-        <nav className="rail-nav">
-          <button className={`rail-item ${activeView === "chat" ? "active" : ""}`} type="button" title="チャット" onClick={() => setActiveView("chat")}>
-            <Icon name="chat" />
-            <span>チャット</span>
-          </button>
-          {canAnswerQuestions && (
-            <button className={`rail-item ${activeView === "assignee" ? "active" : ""}`} type="button" title="担当者対応" onClick={() => setActiveView("assignee")}>
-              <Icon name="inbox" />
-              <span>担当者対応</span>
-            </button>
-          )}
-          <button className={`rail-item ${activeView === "history" ? "active" : ""}`} type="button" title="履歴" onClick={() => setActiveView("history")}>
-            <Icon name="clock" />
-            <span>履歴</span>
-          </button>
-          {canReadBenchmarkRuns && (
-            <button className={`rail-item ${activeView === "benchmark" ? "active" : ""}`} type="button" title="性能テスト" onClick={() => setActiveView("benchmark")}>
-              <Icon name="gauge" />
-              <span>性能テスト</span>
-            </button>
-          )}
-          <button className={`rail-item ${activeView === "favorites" ? "active" : ""}`} type="button" title="お気に入り" onClick={() => setActiveView("favorites")}>
-            <Icon name="star" />
-            <span>お気に入り</span>
-          </button>
-          {canManageDocuments && (
-            <button className={`rail-item ${activeView === "documents" ? "active" : ""}`} type="button" title="ドキュメント" onClick={() => setActiveView("documents")}>
-              <Icon name="document" />
-              <span>ドキュメント</span>
-            </button>
-          )}
-          {canSeeAdminSettings && (
-            <button className={`rail-item ${activeView === "admin" ? "active" : ""}`} type="button" title="管理者設定" onClick={() => setActiveView("admin")}>
-              <Icon name="settings" />
-              <span>管理者設定</span>
-            </button>
-          )}
-        </nav>
-        <button className="account-button" type="button" title="サインアウト" onClick={onSignOut}>
-          <span className="account-avatar">{authSession.email.slice(0, 1).toUpperCase()}</span>
-          <span>{authSession.email}</span>
-          <Icon name="chevron" />
-        </button>
-      </aside>
+      <RailNav
+        activeView={activeView}
+        authSession={authSession}
+        canAnswerQuestions={canAnswerQuestions}
+        canReadBenchmarkRuns={canReadBenchmarkRuns}
+        canManageDocuments={canManageDocuments}
+        canSeeAdminSettings={canSeeAdminSettings}
+        onChangeView={setActiveView}
+        onSignOut={onSignOut}
+      />
 
       <section className="main-area">
-        <header className="topbar">
-          <h1>社内QAチャットボットエージェント</h1>
-          <label className="top-control">
-            <span>モデル</span>
-            <select value={modelId} onChange={(event) => setModelId(event.target.value)}>
-              <option value="amazon.nova-lite-v1:0">Nova Lite v1</option>
-              <option value="anthropic.claude-3-5-sonnet-20240620-v1:0">Claude 3.5 Sonnet</option>
-              <option value="anthropic.claude-3-haiku-20240307-v1:0">Claude 3 Haiku</option>
-            </select>
-          </label>
-          {canReadDocuments && (
-            <div className="top-control document-control">
-              <label htmlFor="document-select">ドキュメント</label>
-              <div className="document-select-row">
-                <select id="document-select" value={selectedDocumentId} onChange={(event) => setSelectedDocumentId(event.target.value)}>
-                  <option value="all">すべての資料</option>
-                  {documents.map((document) => (
-                    <option value={document.documentId} key={document.documentId}>
-                      {document.fileName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-          {canReadDebugRuns && (
-            <>
-              <label className="top-control run-control">
-                <span>実行ID</span>
-                <select
-                  value={selectedRunValue}
-                  onChange={(event) => setSelectedRunId(event.target.value)}
-                  disabled={pendingDebugQuestion !== null || (debugRuns.length === 0 && !latestTrace)}
-                >
-                  {pendingDebugQuestion ? <option value="__processing__">処理中</option> : <option value="">未実行</option>}
-                  {(latestTrace && !debugRuns.some((run) => run.runId === latestTrace.runId) ? [latestTrace, ...debugRuns] : debugRuns).map((run) => (
-                    <option value={run.runId} key={run.runId}>
-                      {run.runId}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="latency-block">
-                <span>総レイテンシ</span>
-                <strong>{totalLatency}</strong>
-              </div>
-              <label className="debug-toggle">
-                <span>デバッグモード</span>
-                <input type="checkbox" checked={debugMode} onChange={(event) => setDebugMode(event.target.checked)} />
-                <i aria-hidden="true">{debugMode ? "ON" : "OFF"}</i>
-              </label>
-            </>
-          )}
-          <button className="new-chat-button" type="button" onClick={newConversation}>
-            <Icon name="plus" />
-            <span>新しい会話</span>
-          </button>
-        </header>
+        <TopBar
+          modelId={modelId}
+          documents={documents}
+          selectedDocumentId={selectedDocumentId}
+          debugRuns={debugRuns}
+          latestTrace={latestTrace}
+          selectedRunValue={selectedRunValue}
+          totalLatency={totalLatency}
+          debugMode={debugMode}
+          canReadDocuments={canReadDocuments}
+          canReadDebugRuns={canReadDebugRuns}
+          pendingDebugQuestion={pendingDebugQuestion}
+          onModelChange={setModelId}
+          onDocumentChange={setSelectedDocumentId}
+          onRunChange={setSelectedRunId}
+          onDebugModeChange={setDebugMode}
+          onNewConversation={newConversation}
+        />
 
         {error && <div className="error-banner">{error}</div>}
 
@@ -1421,320 +1338,6 @@ function AssigneeWorkspace({
   )
 }
 
-function BenchmarkWorkspace({
-  runs,
-  suites,
-  suiteId,
-  modelId,
-  concurrency,
-  loading,
-  canRun,
-  canCancel,
-  canDownload,
-  onSuiteChange,
-  onModelChange,
-  onConcurrencyChange,
-  onStart,
-  onRefresh,
-  onCancel,
-  onBack
-}: {
-  runs: BenchmarkRun[]
-  suites: BenchmarkSuite[]
-  suiteId: string
-  modelId: string
-  concurrency: number
-  loading: boolean
-  canRun: boolean
-  canCancel: boolean
-  canDownload: boolean
-  onSuiteChange: (suiteId: string) => void
-  onModelChange: (modelId: string) => void
-  onConcurrencyChange: (concurrency: number) => void
-  onStart: () => Promise<void>
-  onRefresh: () => void
-  onCancel: (runId: string) => Promise<void>
-  onBack: () => void
-}) {
-  const selectedSuite = suites.find((suite) => suite.suiteId === suiteId)
-  const summary = summarizeBenchmarkRuns(runs)
-
-  return (
-    <section className="benchmark-workspace" aria-label="性能テスト">
-      <header className="assignee-header">
-        <button type="button" onClick={onBack} title="チャットへ戻る">
-          <Icon name="chevron" />
-        </button>
-        <div>
-          <h2>性能テスト</h2>
-          <span>{runs.length} 件の実行履歴</span>
-        </div>
-      </header>
-
-      <div className="benchmark-kpi-grid">
-        <BenchmarkMetricCard
-          title="最新テスト結果"
-          value={summary.latestRun ? runStatusLabel(summary.latestRun.status) : "未実行"}
-          subValue={summary.latestRun ? `実行ID: ${summary.latestRun.runId}` : "ジョブ起動後に表示"}
-          tone={summary.latestRun?.status ?? "queued"}
-        />
-        <BenchmarkMetricCard title="平均応答時間" value={formatMetricLatency(summary.averageLatencyMs)} subValue="直近完了 run の平均" />
-        <BenchmarkMetricCard title="回答正答率" value={formatPercent(summary.answerableAccuracy)} subValue="answerable accuracy" />
-        <BenchmarkMetricCard title="検索再現率" value={formatPercent(summary.retrievalRecallAt20)} subValue="retrieval recall@20" />
-      </div>
-
-      <div className="benchmark-layout">
-        <section className="benchmark-run-panel">
-          <h3><Icon name="gauge" />ジョブ起動</h3>
-          <p className="benchmark-run-panel-note">ワンクリックで選択 suite を実行します。</p>
-          <label>
-            <span>テスト種別</span>
-            <select value={suiteId} onChange={(event) => onSuiteChange(event.target.value)}>
-              {suites.length === 0 && <option value={suiteId}>standard-agent-v1</option>}
-              {suites.map((suite) => (
-                <option value={suite.suiteId} key={suite.suiteId}>
-                  {suite.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="benchmark-mode-grid">
-            <div>
-              <span>対象</span>
-              <strong>{selectedSuite?.mode === "agent" ? "エージェント" : selectedSuite?.mode ?? "agent"}</strong>
-            </div>
-            <div>
-              <span>Runner</span>
-              <strong>CodeBuild</strong>
-            </div>
-          </div>
-          <label>
-            <span>データセット</span>
-            <input value={selectedSuite?.datasetS3Key ?? "datasets/agent/standard-v1.jsonl"} readOnly />
-          </label>
-          <label>
-            <span>モデル</span>
-            <select value={modelId} onChange={(event) => onModelChange(event.target.value)}>
-              <option value="amazon.nova-lite-v1:0">Nova Lite v1</option>
-              <option value="anthropic.claude-3-5-sonnet-20240620-v1:0">Claude 3.5 Sonnet</option>
-              <option value="anthropic.claude-3-haiku-20240307-v1:0">Claude 3 Haiku</option>
-            </select>
-          </label>
-          <label>
-            <span>並列数</span>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={concurrency}
-              onChange={(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) || 1)))}
-            />
-          </label>
-          <div className="benchmark-actions">
-            <button type="button" onClick={onStart} disabled={loading || !canRun}>
-              <Icon name="send" />
-              <span>性能テストを実行</span>
-            </button>
-            <button type="button" onClick={onRefresh} disabled={loading}>
-              <Icon name="clock" />
-              <span>更新</span>
-            </button>
-          </div>
-        </section>
-
-        <section className="benchmark-history-panel">
-          <div className="history-list-head">
-            <h3>実行履歴</h3>
-            <span>{runs.length} 件</span>
-          </div>
-          <div className="benchmark-table-wrap">
-            <table className="benchmark-table">
-              <thead>
-                <tr>
-                  <th>runId</th>
-                  <th>status</th>
-                  <th>suite</th>
-                  <th>p50</th>
-                  <th>p95</th>
-                  <th>accuracy</th>
-                  <th>recall</th>
-                  <th>startedAt</th>
-                  <th>report</th>
-                </tr>
-              </thead>
-              <tbody>
-                {runs.length === 0 ? (
-                  <tr>
-                    <td colSpan={9}>実行履歴はまだありません。</td>
-                  </tr>
-                ) : (
-                  runs.map((run) => (
-                    <tr key={run.runId}>
-                      <td><code>{run.runId}</code></td>
-                      <td><span className={`run-status ${run.status}`}>{runStatusLabel(run.status)}</span></td>
-                      <td>{run.suiteId}</td>
-                      <td>{formatMetricLatency(run.metrics?.p50LatencyMs)}</td>
-                      <td>{formatMetricLatency(run.metrics?.p95LatencyMs)}</td>
-                      <td>{formatPercent(run.metrics?.answerableAccuracy)}</td>
-                      <td>{formatPercent(run.metrics?.retrievalRecallAt20)}</td>
-                      <td>{formatDateTime(run.startedAt ?? run.createdAt)}</td>
-                      <td>
-                        <div className="benchmark-row-actions">
-                          <button type="button" title="レポートをダウンロード" disabled={!canDownload || !run.reportS3Key} onClick={() => void downloadBenchmarkArtifact(run.runId, "report")}>
-                            <Icon name="download" />
-                          </button>
-                          <button type="button" title="ジョブをキャンセル" disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>
-                            <Icon name="stop" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-
-      <div className="benchmark-summary-grid">
-        <section className="benchmark-summary-panel">
-          <div className="history-list-head">
-            <h3>結果サマリー</h3>
-            <span>{summary.completedCount} 件の完了 run</span>
-          </div>
-          <div className="benchmark-trend-bars" aria-label="p95応答時間推移">
-            {summary.trendRuns.length === 0 ? (
-              <span>完了 run の metrics が登録されると推移を表示します。</span>
-            ) : (
-              summary.trendRuns.map((run) => (
-                <div className="benchmark-trend-bar" key={run.runId}>
-                  <i style={{ height: `${Math.max(12, Math.min(108, (run.metrics?.p95LatencyMs ?? 0) / 25))}px` }} />
-                  <strong>{formatShortDate(run.completedAt ?? run.updatedAt)}</strong>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="benchmark-quality-grid">
-            <div><span>成功率</span><strong>{formatPercent(summary.runSuccessRate)}</strong></div>
-            <div><span>エラー率</span><strong>{formatPercent(summary.errorRate)}</strong></div>
-            <div><span>失敗HTTP</span><strong>{summary.failedHttpCount}</strong></div>
-          </div>
-        </section>
-
-        <section className="benchmark-contract-panel">
-          <div className="history-list-head">
-            <h3>必要なAPI/データ</h3>
-            <span>main 実装を利用</span>
-          </div>
-          <ul>
-            <li><code>GET /benchmark-suites</code><span>実行可能な suite と dataset を取得</span></li>
-            <li><code>POST /benchmark-runs</code><span>性能テスト run を queue に登録</span></li>
-            <li><code>GET /benchmark-runs</code><span>履歴、status、metrics、artifact key を取得</span></li>
-            <li><code>BenchmarkRunsTable</code><span><code>runId</code> 単位で実行状態と metrics を保持</span></li>
-          </ul>
-        </section>
-      </div>
-    </section>
-  )
-}
-
-function DocumentWorkspace({
-  documents,
-  loading,
-  canWrite,
-  canDelete,
-  onUpload,
-  onDelete,
-  onBack
-}: {
-  documents: DocumentManifest[]
-  loading: boolean
-  canWrite: boolean
-  canDelete: boolean
-  onUpload: (file: File) => Promise<void>
-  onDelete: (documentId: string) => Promise<void>
-  onBack: () => void
-}) {
-  const [uploadFile, setUploadFile] = useState<File | null>(null)
-
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault()
-    if (!uploadFile || !canWrite) return
-    await onUpload(uploadFile)
-    setUploadFile(null)
-  }
-
-  return (
-    <section className="admin-workspace" aria-label="ドキュメント管理">
-      <header className="assignee-header">
-        <button type="button" onClick={onBack} title="管理者設定へ戻る">
-          <Icon name="chevron" />
-        </button>
-        <div>
-          <h2>ドキュメント管理</h2>
-          <span>{documents.length} 件の登録文書</span>
-        </div>
-      </header>
-
-      <div className="document-admin-grid">
-        <section className="document-admin-panel" aria-label="文書アップロード">
-          <h3>アップロード</h3>
-          <form className="document-upload-form" onSubmit={onSubmit}>
-            <label className="document-upload-drop">
-              <Icon name="paperclip" />
-              <span>{uploadFile ? uploadFile.name : "ファイルを選択"}</span>
-              <input type="file" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
-            </label>
-            <button type="submit" disabled={!canWrite || !uploadFile || loading}>
-              アップロード
-            </button>
-          </form>
-        </section>
-
-        <section className="document-admin-panel document-list-panel" aria-label="登録文書一覧">
-          <div className="document-list-head">
-            <h3>登録文書</h3>
-            <span>{documents.length} 件</span>
-          </div>
-          <div className="document-table" role="table" aria-label="登録文書">
-            <div className="document-table-row document-table-head" role="row">
-              <span role="columnheader">ファイル名</span>
-              <span role="columnheader">チャンク</span>
-              <span role="columnheader">メモリ</span>
-              <span role="columnheader">登録日時</span>
-              <span role="columnheader">操作</span>
-            </div>
-            {documents.length === 0 ? (
-              <div className="empty-question-panel">登録済みドキュメントはありません。</div>
-            ) : (
-              documents.map((document) => (
-                <div className="document-table-row" role="row" key={document.documentId}>
-                  <span role="cell">{document.fileName}</span>
-                  <span role="cell">{document.chunkCount}</span>
-                  <span role="cell">{document.memoryCardCount}</span>
-                  <span role="cell">{formatDateTime(document.createdAt)}</span>
-                  <span role="cell">
-                    <button
-                      type="button"
-                      className="delete-document-button"
-                      title={`${document.fileName}を削除`}
-                      disabled={!canDelete || loading}
-                      onClick={() => onDelete(document.documentId)}
-                    >
-                      <Icon name="trash" />
-                    </button>
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
-    </section>
-  )
-}
-
 function AdminWorkspace({
   user,
   documentsCount,
@@ -2080,26 +1683,6 @@ function AdminCreateUserForm({
   )
 }
 
-function BenchmarkMetricCard({
-  title,
-  value,
-  subValue,
-  tone = "succeeded"
-}: {
-  title: string
-  value: string
-  subValue: string
-  tone?: BenchmarkRun["status"]
-}) {
-  return (
-    <article className={`benchmark-kpi-card ${tone}`}>
-      <span>{title}</span>
-      <strong>{value}</strong>
-      <small>{subValue}</small>
-    </article>
-  )
-}
-
 function ManagedUserRow({
   user,
   roles,
@@ -2163,384 +1746,6 @@ function ManagedUserRow({
   )
 }
 
-function HistoryWorkspace({
-  history,
-  favoriteOnly = false,
-  onSelect,
-  onDelete,
-  onToggleFavorite,
-  onBack
-}: {
-  history: ConversationHistoryItem[]
-  favoriteOnly?: boolean
-  onSelect: (item: ConversationHistoryItem) => void
-  onDelete: (id: string) => void
-  onToggleFavorite: (item: ConversationHistoryItem) => void
-  onBack: () => void
-}) {
-  const [query, setQuery] = useState("")
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "messages">("newest")
-  const [favoritesOnly, setFavoritesOnly] = useState(favoriteOnly)
-  const favoriteCount = history.filter((item) => item.isFavorite).length
-
-  useEffect(() => {
-    setFavoritesOnly(favoriteOnly)
-  }, [favoriteOnly])
-
-  const visibleHistory = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    const scope = favoritesOnly ? history.filter((item) => item.isFavorite) : history
-    const filtered = normalizedQuery.length === 0
-      ? scope
-      : scope.filter((item) => {
-          const messageText = item.messages.map((message) => message.text).join(" ").toLowerCase()
-          return item.title.toLowerCase().includes(normalizedQuery) || messageText.includes(normalizedQuery)
-        })
-
-    return [...filtered].sort((a, b) => {
-      if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
-      if (sortOrder === "messages") return b.messages.length - a.messages.length
-      const timeDiff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      return sortOrder === "newest" ? timeDiff : -timeDiff
-    })
-  }, [favoritesOnly, history, query, sortOrder])
-
-  return (
-    <section className="assignee-workspace" aria-label="履歴">
-      <header className="assignee-header">
-        <button type="button" onClick={onBack} title="チャットへ戻る">
-          <Icon name="chevron" />
-        </button>
-        <div>
-          <h2>{favoriteOnly ? "お気に入り" : "履歴"}</h2>
-          <span>{history.length} 件の会話 / {favoriteCount} 件のお気に入り</span>
-        </div>
-      </header>
-      <div className="question-list-panel history-panel">
-        <div className="history-list-head">
-          <h3>会話一覧</h3>
-          <span>{visibleHistory.length} 件を表示中</span>
-        </div>
-        <div className="history-toolbar">
-          <input
-            type="search"
-            placeholder="タイトルや会話内容で検索"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            aria-label="履歴を検索"
-          />
-          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value as "newest" | "oldest" | "messages")} aria-label="履歴の並び順">
-            <option value="newest">新しい順</option>
-            <option value="oldest">古い順</option>
-            <option value="messages">メッセージ数順</option>
-          </select>
-          <label className="favorite-filter">
-            <input type="checkbox" checked={favoritesOnly} onChange={(event) => setFavoritesOnly(event.target.checked)} />
-            <span>お気に入りのみ</span>
-          </label>
-        </div>
-        <div className="question-list history-list">
-          {visibleHistory.length === 0 ? (
-            <div className="empty-question-panel">条件に一致する履歴はありません。</div>
-          ) : (
-            visibleHistory.map((item) => (
-              <div className="question-list-item history-item" key={item.id}>
-                <button
-                  type="button"
-                  className={`favorite-toggle ${item.isFavorite ? "active" : ""}`}
-                  onClick={() => onToggleFavorite(item)}
-                  aria-label={item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`}
-                  title={item.isFavorite ? "お気に入りから外す" : "お気に入りに追加"}
-                >
-                  <Icon name="star" />
-                </button>
-                <button type="button" onClick={() => onSelect(item)}>
-                  <strong>{item.title}</strong>
-                  <span>{formatDateTime(item.updatedAt)}</span>
-                  <small>{item.messages.length} メッセージ</small>
-                </button>
-                <button className="history-delete-button" type="button" onClick={() => onDelete(item.id)}>
-                  削除
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function DebugPanel({
-  trace,
-  pending = false,
-  pendingQuestion,
-  allExpanded,
-  expandedStepId,
-  onToggleAll,
-  onToggleStep
-}: {
-  trace?: DebugTrace
-  pending?: boolean
-  pendingQuestion?: string
-  allExpanded: boolean
-  expandedStepId: number | null
-  onToggleAll: () => void
-  onToggleStep: (stepId: number) => void
-}) {
-  const steps = pending ? getProcessingSteps(pendingQuestion) : trace?.steps ?? getPlaceholderSteps()
-  const statusLabel = pending ? "処理中" : trace ? (trace.status === "success" ? "成功" : trace.status === "warning" ? "注意" : "失敗") : "未実行"
-
-  return (
-    <aside className={`debug-card ${pending ? "processing" : ""}`} aria-label="デバッグパネル" aria-busy={pending}>
-      <header className="debug-head">
-        <div>
-          <h2>デバッグパネル</h2>
-          <span>{pending ? "実行中" : `${steps.length} ステップ`}</span>
-        </div>
-        <div className="debug-head-actions">
-          <button type="button" onClick={() => void downloadDebugTrace(trace)} disabled={!trace || pending} title="JSONでダウンロード">
-            <Icon name="download" />
-            <span>JSON DL</span>
-          </button>
-          <button type="button" onClick={onToggleAll}>{allExpanded ? "すべて閉じる" : "すべて展開"}</button>
-          <button type="button" title="拡大表示">
-            <Icon name="expand" />
-          </button>
-        </div>
-      </header>
-
-      <div className="debug-steps">
-        {steps.map((step) => {
-          const expanded = allExpanded || expandedStepId === step.id
-          return (
-            <article className={`debug-step ${step.status} ${pending ? "processing" : ""}`} key={step.id}>
-              <div className="step-index">{step.id}</div>
-              <div className="step-body">
-                <button className="step-summary" type="button" onClick={() => onToggleStep(step.id)}>
-                  <span className="step-state">
-                    {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={step.status === "warning" ? "warning" : "check"} />}
-                  </span>
-                  <strong>{step.label}</strong>
-                  <span className="step-latency">{formatLatency(step.latencyMs)}</span>
-                  {step.modelId && <span className="model-chip">{step.modelId}</span>}
-                  {step.hitCount !== undefined && <span className="sub-chip">ヒット数: {step.hitCount}件</span>}
-                  {step.tokenCount !== undefined && <span className="sub-chip">トークン: {step.tokenCount}</span>}
-                  <span className="step-description">{step.summary}</span>
-                  <Icon name="chevron" />
-                </button>
-                {expanded && step.detail && <pre className="step-detail">{step.detail}</pre>}
-              </div>
-            </article>
-          )
-        })}
-      </div>
-
-      <footer className={`debug-footer ${pending ? "processing" : trace?.status ?? "idle"}`}>
-        <span className="footer-status">
-          {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={trace?.status === "warning" ? "warning" : "check"} />}
-          <strong>{statusLabel}</strong>
-        </span>
-        <span>{pending ? "検索と回答生成を実行しています" : trace ? (trace.isAnswerable ? "正常に完了しました" : "回答拒否として完了しました") : "質問すると実行トレースを保存します"}</span>
-        <span className="footer-latency">合計レイテンシ <strong>{pending ? "計測中" : trace ? formatLatency(trace.totalLatencyMs) : "-"}</strong></span>
-      </footer>
-    </aside>
-  )
-}
-
-function Icon({ name }: { name: IconName }) {
-  return (
-    <svg className={`icon icon-${name}`} viewBox="0 0 24 24" aria-hidden="true">
-      {getIconPath(name)}
-    </svg>
-  )
-}
-
-function getIconPath(name: IconName) {
-  switch (name) {
-    case "logo":
-      return <path d="M5 4h9a5 5 0 0 1 5 5v6.5a4.5 4.5 0 0 1-4.5 4.5H10l-5 3v-3.2A5 5 0 0 1 1 15V8a4 4 0 0 1 4-4Zm2 6h7v2H7v-2Zm0 4h5v2H7v-2Zm10 3.2 3 1.8v-2.2a4 4 0 0 0 3-3.8V8.5a3.5 3.5 0 0 0-3.5-3.5h-.9A6.8 6.8 0 0 1 21 10v5a3 3 0 0 1-4 2.8v-.6Z" />
-    case "chat":
-      return <path d="M4 5h16v11H8l-4 3V5Zm4 4v2h8V9H8Zm0 4v2h5v-2H8Z" />
-    case "clock":
-      return <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm1 4v4.4l3.2 1.9-1 1.7-4.2-2.5V7h2Z" />
-    case "star":
-      return <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" />
-    case "document":
-      return <path d="M6 3h8l4 4v14H6V3Zm7 2.5V8h2.5L13 5.5ZM8 11h8v2H8v-2Zm0 4h8v2H8v-2Z" />
-    case "settings":
-      return <path d="m13.3 3 .6 2a7.8 7.8 0 0 1 1.7.7l1.9-1 2 2-1 1.9c.3.5.5 1.1.7 1.7l2 .6v2.8l-2 .6a7.8 7.8 0 0 1-.7 1.7l1 1.9-2 2-1.9-1c-.5.3-1.1.5-1.7.7l-.6 2h-2.8l-.6-2a7.8 7.8 0 0 1-1.7-.7l-1.9 1-2-2 1-1.9a7.8 7.8 0 0 1-.7-1.7l-2-.6v-2.8l2-.6c.2-.6.4-1.2.7-1.7l-1-1.9 2-2 1.9 1c.5-.3 1.1-.5 1.7-.7l.6-2h2.8ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
-    case "paperclip":
-      return <path d="m7.4 13.6 7-7a3.3 3.3 0 0 1 4.7 4.7l-8 8a5 5 0 0 1-7.1-7.1l8.4-8.4 1.4 1.4-8.4 8.4a3 3 0 0 0 4.3 4.3l8-8a1.3 1.3 0 1 0-1.9-1.9l-7 7a.9.9 0 0 0 1.3 1.3l5.9-5.9 1.4 1.4-5.9 5.9a2.9 2.9 0 0 1-4.1-4.1Z" />
-    case "send":
-      return <path d="M3 20 21 12 3 4v6l10 2-10 2v6Z" />
-    case "chevron":
-      return <path d="m7 9 5 5 5-5 1.4 1.4L12 16.8l-6.4-6.4L7 9Z" />
-    case "check":
-      return <path d="M9.5 16.6 4.8 12l1.4-1.4 3.3 3.2 8.3-8.4 1.4 1.4-9.7 9.8Z" />
-    case "warning":
-      return <path d="M12 3 22 20H2L12 3Zm-1 6v5h2V9h-2Zm0 7v2h2v-2h-2Z" />
-    case "expand":
-      return <path d="M4 4h7v2H7.4l4.2 4.2-1.4 1.4L6 7.4V11H4V4Zm9 0h7v7h-2V7.4l-4.2 4.2-1.4-1.4L16.6 6H13V4ZM6 16.6l4.2-4.2 1.4 1.4L7.4 18H11v2H4v-7h2v3.6Zm7.8-4.2 4.2 4.2V13h2v7h-7v-2h3.6l-4.2-4.2 1.4-1.4Z" />
-    case "plus":
-      return <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
-    case "download":
-      return <path d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4 3.3 3.3V3Zm-6 15h14v3H5v-3Z" />
-    case "trash":
-      return <path d="M8 3h8l1 2h4v2H3V5h4l1-2Zm-2 6h12l-1 12H7L6 9Zm3 2 .5 8h2L11 11H9Zm4 0-.5 8h2l.5-8h-2Z" />
-    case "inbox":
-      return <path d="M4 4h16l2 9v7H2v-7l2-9Zm1.6 2-1.3 6h4.4l1.2 2h4.2l1.2-2h4.4l-1.3-6H5.6ZM4 14v4h16v-4h-3.5l-1.2 2H8.7l-1.2-2H4Z" />
-    case "copy":
-      return <path d="M8 2h10a2 2 0 0 1 2 2v10h-2V4H8V2Zm-4 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Zm0 2v12h10V8H4Z" />
-    case "gauge":
-      return <path d="M12 4a10 10 0 0 1 10 10 9.8 9.8 0 0 1-2 6H4a9.8 9.8 0 0 1-2-6A10 10 0 0 1 12 4Zm0 2a8 8 0 0 0-8 8c0 1.5.4 2.9 1.2 4h13.6c.8-1.1 1.2-2.5 1.2-4a8 8 0 0 0-8-8Zm4.9 4.7-3.8 5.5a2 2 0 1 1-1.6-1.2l3.8-5.5 1.6 1.2Z" />
-    case "stop":
-      return <path d="M7 7h10v10H7V7Z" />
-  }
-}
-
-async function downloadDebugTrace(trace?: DebugTrace) {
-  if (!trace) return
-
-  const signed = await createDebugDownload(trace.runId)
-  const link = document.createElement("a")
-  link.href = signed.url
-  link.download = `debug-trace-${sanitizeFileName(trace.runId)}.json`
-  link.rel = "noopener"
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-}
-
-async function downloadBenchmarkArtifact(runId: string, artifact: "report" | "summary" | "results") {
-  const signed = await createBenchmarkDownload(runId, artifact)
-  const link = document.createElement("a")
-  link.href = signed.url
-  link.download = `benchmark-${artifact}-${sanitizeFileName(runId)}`
-  link.rel = "noopener"
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-}
-
-function sanitizeFileName(input: string): string {
-  return input.replace(/[^a-zA-Z0-9._-]/g, "_")
-}
-
-function getPlaceholderSteps(): DebugStep[] {
-  const now = new Date().toISOString()
-  return ["入力解析", "クエリ正規化", "MemoRAGメモリ検索", "ベクトル検索", "再ランキング", "根拠チェック", "Bedrock推論", "最終回答"].map((label, index) => ({
-    id: index + 1,
-    label,
-    status: "success" as const,
-    latencyMs: 0,
-    summary: "質問を送信すると、このステップの実行内容が表示されます。",
-    startedAt: now,
-    completedAt: now
-  }))
-}
-
-function getProcessingSteps(question?: string): DebugStep[] {
-  const now = new Date().toISOString()
-  const compactQuestion = question?.replace(/\s+/g, " ").trim()
-  const summaries = [
-    compactQuestion ? `質問を受け付けました: ${compactQuestion.slice(0, 72)}` : "質問を受け付けました。",
-    "検索しやすい形に整えています。",
-    "関連するメモリとドキュメントを探しています。",
-    "候補の根拠を確認しています。",
-    "回答を生成しています。"
-  ]
-
-  return ["入力受付", "クエリ準備", "根拠検索", "根拠チェック", "回答生成"].map((label, index) => ({
-    id: index + 1,
-    label,
-    status: "success" as const,
-    latencyMs: 0,
-    summary: summaries[index] ?? "処理しています。",
-    startedAt: now,
-    completedAt: now
-  }))
-}
-
-function formatLatency(value: number): string {
-  if (value >= 1000) return `${(value / 1000).toFixed(2)} 秒`
-  return `${Math.round(value)} ms`
-}
-
-function formatMetricLatency(value?: number | null): string {
-  return typeof value === "number" ? formatLatency(value) : "-"
-}
-
-function formatPercent(value?: number | null): string {
-  return typeof value === "number" ? `${Math.round(value * 100)}%` : "-"
-}
-
-function formatShortDate(input?: string): string {
-  if (!input) return "-"
-  const date = new Date(input)
-  if (Number.isNaN(date.getTime())) return "-"
-  return date.toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit" })
-}
-
-function formatCurrency(value: number): string {
-  return `$${value.toFixed(4)}`
-}
-
-function formatDate(input: string): string {
-  const date = new Date(input)
-  if (Number.isNaN(date.getTime())) return "-"
-  return date.toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" })
-}
-
-function managedUserStatusLabel(status: ManagedUser["status"]): string {
-  if (status === "active") return "有効"
-  if (status === "suspended") return "停止中"
-  return "削除済み"
-}
-
-function costConfidenceLabel(confidence: CostAuditSummary["items"][number]["confidence"]): string {
-  if (confidence === "actual_usage") return "実測"
-  if (confidence === "estimated_usage") return "概算"
-  return "手動見積"
-}
-
-function adminAuditActionLabel(action: ManagedUserAuditLogEntry["action"]): string {
-  if (action === "user:create") return "ユーザー作成"
-  if (action === "role:assign") return "ロール付与"
-  if (action === "user:suspend") return "停止"
-  if (action === "user:unsuspend") return "再開"
-  return "削除"
-}
-
-function adminAuditSummary(entry: ManagedUserAuditLogEntry): string {
-  if (entry.action === "role:assign" || entry.action === "user:create") {
-    const before = entry.beforeGroups.length > 0 ? entry.beforeGroups.join(" / ") : "なし"
-    const after = entry.afterGroups.length > 0 ? entry.afterGroups.join(" / ") : "なし"
-    return `${before} -> ${after}`
-  }
-  const before = entry.beforeStatus ? managedUserStatusLabel(entry.beforeStatus) : "-"
-  const after = entry.afterStatus ? managedUserStatusLabel(entry.afterStatus) : "-"
-  return `${before} -> ${after}`
-}
-
-function formatTime(input: string): string {
-  const date = new Date(input)
-  if (Number.isNaN(date.getTime())) return "--:--:--"
-  return date.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-}
-
-function formatDateTime(input: string): string {
-  const date = new Date(input)
-  if (Number.isNaN(date.getTime())) return "-"
-  return date.toLocaleString("ja-JP", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  })
-}
-
 function defaultQuestionTitle(sourceQuestion: string): string {
   const compact = sourceQuestion.replace(/\s+/g, " ").trim()
   return compact ? `${compact.slice(0, 42)}について確認したい` : "資料外の内容について確認したい"
@@ -2558,65 +1763,6 @@ function getLinkedQuestion(message: Message, questions: HumanQuestion[]): HumanQ
     return questions.find((question) => question.questionId === message.questionTicket?.questionId) ?? message.questionTicket
   }
   return questions.find((question) => question.sourceQuestion && question.sourceQuestion === message.sourceQuestion)
-}
-
-function statusLabel(status: HumanQuestion["status"]): string {
-  if (status === "open") return "対応中"
-  if (status === "answered") return "回答済み"
-  return "解決済み"
-}
-
-function runStatusLabel(status: BenchmarkRun["status"]): string {
-  if (status === "queued") return "待機中"
-  if (status === "running") return "実行中"
-  if (status === "succeeded") return "成功"
-  if (status === "failed") return "失敗"
-  return "取消済み"
-}
-
-function summarizeBenchmarkRuns(runs: BenchmarkRun[]): {
-  latestRun?: BenchmarkRun
-  completedCount: number
-  runSuccessRate?: number
-  averageLatencyMs?: number | null
-  answerableAccuracy?: number | null
-  retrievalRecallAt20?: number | null
-  errorRate?: number | null
-  failedHttpCount: number
-  trendRuns: BenchmarkRun[]
-} {
-  const completedRuns = runs.filter((run) => ["succeeded", "failed", "cancelled"].includes(run.status))
-  const metricRuns = completedRuns.filter((run) => run.metrics)
-  const runSuccessRate = completedRuns.length > 0
-    ? completedRuns.filter((run) => run.status === "succeeded").length / completedRuns.length
-    : undefined
-
-  return {
-    latestRun: runs[0],
-    completedCount: completedRuns.length,
-    runSuccessRate,
-    averageLatencyMs: averageNullable(metricRuns.map((run) => run.metrics?.averageLatencyMs ?? run.metrics?.p50LatencyMs)),
-    answerableAccuracy: averageNullable(metricRuns.map((run) => run.metrics?.answerableAccuracy)),
-    retrievalRecallAt20: averageNullable(metricRuns.map((run) => run.metrics?.retrievalRecallAt20)),
-    errorRate: averageNullable(metricRuns.map((run) => run.metrics?.errorRate)),
-    failedHttpCount: metricRuns.reduce((total, run) => total + (run.metrics?.failedHttp ?? 0), 0),
-    trendRuns: metricRuns
-      .filter((run) => typeof run.metrics?.p95LatencyMs === "number")
-      .sort((a, b) => (a.completedAt ?? a.updatedAt).localeCompare(b.completedAt ?? b.updatedAt))
-      .slice(-7)
-  }
-}
-
-function averageNullable(values: Array<number | null | undefined>): number | null {
-  const valid = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value))
-  if (valid.length === 0) return null
-  return valid.reduce((sum, value) => sum + value, 0) / valid.length
-}
-
-function priorityLabel(priority: HumanQuestion["priority"]): string {
-  if (priority === "urgent") return "緊急"
-  if (priority === "high") return "高"
-  return "通常"
 }
 
 function summarizeTitle(value: string): string {
