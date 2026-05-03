@@ -125,6 +125,69 @@ export const AssignUserRolesRequestSchema = z.object({
   groups: z.array(z.string().min(1)).min(1).max(12)
 })
 
+export const AliasStatusSchema = z.enum(["draft", "approved", "disabled"])
+
+export const AliasScopeSchema = z.object({
+  tenantId: z.string().optional(),
+  department: z.string().optional(),
+  source: z.string().optional(),
+  docType: z.string().optional()
+})
+
+export const AliasDefinitionSchema = z.object({
+  aliasId: z.string(),
+  term: z.string(),
+  expansions: z.array(z.string()),
+  scope: AliasScopeSchema.optional(),
+  status: AliasStatusSchema,
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  reviewedBy: z.string().optional(),
+  reviewedAt: z.string().optional(),
+  reviewComment: z.string().optional(),
+  publishedVersion: z.string().optional()
+})
+
+export const CreateAliasRequestSchema = z.object({
+  term: z.string().min(1).max(120).openapi({ example: "pto" }),
+  expansions: z.array(z.string().min(1).max(120)).min(1).max(20).openapi({ example: ["有給休暇", "休暇申請"] }),
+  scope: AliasScopeSchema.optional()
+})
+
+export const UpdateAliasRequestSchema = CreateAliasRequestSchema.partial().refine(
+  (value) => value.term !== undefined || value.expansions !== undefined || value.scope !== undefined,
+  "At least one alias field must be provided"
+)
+
+export const ReviewAliasRequestSchema = z.object({
+  decision: z.enum(["approve", "reject"]),
+  comment: z.string().max(1000).optional()
+})
+
+export const AliasListResponseSchema = z.object({
+  aliases: z.array(AliasDefinitionSchema)
+})
+
+export const AliasAuditLogItemSchema = z.object({
+  auditId: z.string(),
+  aliasId: z.string().optional(),
+  action: z.enum(["create", "update", "review", "disable", "publish"]),
+  actorUserId: z.string(),
+  createdAt: z.string(),
+  detail: z.string()
+})
+
+export const AliasAuditLogResponseSchema = z.object({
+  auditLog: z.array(AliasAuditLogItemSchema)
+})
+
+export const PublishAliasesResponseSchema = z.object({
+  version: z.string(),
+  publishedAt: z.string(),
+  aliasCount: z.number().int().nonnegative()
+})
+
 export const UserUsageSummarySchema = z.object({
   userId: z.string(),
   email: z.string(),

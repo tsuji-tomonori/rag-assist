@@ -84,6 +84,35 @@ test("service reindexes documents through embedding cache compatible pipeline ve
   assert.ok(reindexed.memoryCardCount >= manifest.memoryCardCount)
 })
 
+test("service manages reviewed alias artifacts and audit log", async () => {
+  const { service, dataDir } = await createService()
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+
+  const alias = await service.createAlias(actor, {
+    term: "PTO",
+    expansions: ["有給休暇", "休暇申請"],
+    scope: { tenantId: "tenant-a" }
+  })
+  assert.equal(alias.status, "draft")
+  assert.equal(alias.term, "pto")
+
+  const updated = await service.updateAlias(actor, alias.aliasId, { expansions: ["年次有給休暇"] })
+  assert.deepEqual(updated?.expansions, ["年次有給休暇"])
+
+  const reviewed = await service.reviewAlias(actor, alias.aliasId, { decision: "approve", comment: "社内用語として確認済み" })
+  assert.equal(reviewed?.status, "approved")
+
+  const published = await service.publishAliases(actor)
+  assert.equal(published.aliasCount, 1)
+  assert.match(published.version, /^alias_/)
+
+  const audit = await service.listAliasAuditLog()
+  assert.deepEqual(audit.map((item) => item.action).sort(), ["create", "publish", "review", "update"])
+
+  const latest = JSON.parse(await readFile(path.join(dataDir, "objects", "aliases", "latest.json"), "utf-8")) as { objectKey: string }
+  assert.match(latest.objectKey, /^aliases\/alias_/)
+})
+
 test("service delegates human question lifecycle to the question store", async () => {
   const { service } = await createService()
 

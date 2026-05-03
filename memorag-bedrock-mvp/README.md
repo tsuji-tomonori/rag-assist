@@ -52,6 +52,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /openapi.json`
 - `GET /documents`
 - `POST /documents` 資料アップロード
+- `POST /documents/{documentId}/reindex` 資料再インデックス
 - `DELETE /documents/{documentId}` 資料削除
 - `POST /chat` チャット回答
 - `POST /questions` 担当者への問い合わせ作成
@@ -72,6 +73,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /benchmark-runs/{runId}` benchmark run 詳細
 - `POST /benchmark-runs/{runId}/cancel` benchmark run キャンセル
 - `POST /benchmark-runs/{runId}/download` benchmark report / summary / results の download URL 作成
+- `GET/POST /admin/aliases`、`POST /admin/aliases/{aliasId}/review`、`POST /admin/aliases/publish` alias 管理、review、versioned artifact publish
 
 Phase 1 の管理画面は RAG 運用管理に限定し、文書管理、問い合わせ対応、debug/評価を対象にします。ユーザー作成、ロール付与、コスト監査、全ユーザー利用状況一覧は Phase 1 では提供しません。
 

@@ -162,6 +162,35 @@ test("service search publishes and reuses immutable lexical index artifacts", as
   assert.equal(second.diagnostics.indexVersion, first.diagnostics.indexVersion)
 })
 
+test("service search expands published reviewed aliases without returning alias details", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-published-alias-"))
+  const service = new MemoRagService(createLocalDeps(dataDir))
+  const manager = user(["RAG_GROUP_MANAGER"])
+
+  await service.ingest({
+    fileName: "vacation.md",
+    text: "年次有給休暇の申請期限は取得日の3営業日前です。",
+    skipMemory: true,
+    metadata: { tenantId: "tenant-a", aclGroup: "GROUP_A" }
+  })
+  const alias = await service.createAlias(manager, {
+    term: "pto",
+    expansions: ["年次有給休暇"],
+    scope: { tenantId: "tenant-a" }
+  })
+  await service.reviewAlias(manager, alias.aliasId, { decision: "approve" })
+  await service.publishAliases(manager)
+
+  const result = await service.search({ query: "pto", topK: 10, filters: { tenantId: "tenant-a" } }, user(["GROUP_A"]))
+  assert.equal(result.results[0]?.fileName, "vacation.md")
+  assert.match(result.diagnostics.aliasVersion, /^alias:[a-f0-9]{8}$/)
+  const payload = JSON.stringify(result)
+  assert.equal(payload.includes("pto"), true)
+  assert.equal(payload.includes("年次有給休暇"), true)
+  assert.equal(payload.includes("aliasId"), false)
+  assert.equal(payload.includes("manager-1"), false)
+})
+
 function lexicalDoc(id: string, documentId: string, fileName: string, text: string) {
   return {
     id,

@@ -2,6 +2,7 @@ import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { chunkText } from "../rag/chunk.js"
+import { loadPublishedAliasMap } from "./alias-artifacts.js"
 import type { DocumentManifest, JsonValue, RetrievedVector, VectorMetadata } from "../types.js"
 
 export type SearchInput = {
@@ -189,11 +190,14 @@ export async function getLexicalIndex(
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
   const visible = manifests.filter((manifest) => canAccessManifest(manifest, user)).filter((manifest) => manifestMatchesFilters(manifest, filters))
-  const aliases = mergeAliases(visible.map((manifest) => aliasMapFromMetadata(manifest.metadata)))
-  const aliasSignature = stableStringifyAliasMap(aliases)
+  const publishedAliases = await loadPublishedAliasMap(deps, filters)
+  const aliases = mergeAliases([publishedAliases.aliases, ...visible.map((manifest) => aliasMapFromMetadata(manifest.metadata))])
+  const combinedAliasSignature = stableStringifyAliasMap(aliases)
+  const aliasSignature = publishedAliases.version === "none" ? combinedAliasSignature : `${publishedAliases.version}:${combinedAliasSignature}`
   const signature = visible
     .map((manifest) => `${manifest.documentId}:${manifest.chunkCount}:${manifest.createdAt}:${stableStringifyAliasMap(aliasMapFromMetadata(manifest.metadata))}`)
     .sort()
+    .concat(`aliases:${publishedAliases.version}:${stableStringifyAliasMap(publishedAliases.aliases)}`)
     .join("|")
   if (cachedIndex && cachedIndex.signature === signature) return cachedIndex.index
   const artifact = await loadLexicalIndexArtifact(deps, signature)

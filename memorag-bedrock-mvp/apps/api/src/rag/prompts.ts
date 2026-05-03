@@ -262,36 +262,6 @@ function escapeXml(input: string): string {
   return input.replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" }[char] ?? char))
 }
 
-function buildRelevantSnippet(question: string, text: string, maxChars = 1800): string {
-  const index = findBestNeedleIndex(question, text)
-  if (text.length <= maxChars && !(isRequirementsClassificationQuestion(question) && index >= 0)) return text
-  if (index < 0) return text.slice(0, maxChars)
-
-  const prefix = isRequirementsClassificationQuestion(question) ? 0 : 160
-  const start = Math.max(0, index - prefix)
-  const end = Math.min(text.length, start + maxChars)
-  return text.slice(start, end)
-}
-
-function findBestNeedleIndex(question: string, text: string): number {
-  const normalizedQuestion = question.replace(/[?？。.!！\s]/g, "")
-  const priorityCandidates = intentAnchors(question)
-  const fallbackCandidates = unique([
-    normalizedQuestion,
-    normalizedQuestion.replace(/とは$/, ""),
-    normalizedQuestion.replace(/について$/, ""),
-    ...Array.from(normalizedQuestion.matchAll(/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー]{2,}/gu)).map((match) => match[0]),
-    ...Array.from(question.matchAll(/[A-Za-z][A-Za-z0-9_-]{1,}/g)).map((match) => match[0])
-  ]).sort((a, b) => b.length - a.length)
-
-  for (const candidate of [...priorityCandidates, ...fallbackCandidates]) {
-    if (candidate.length < 2) continue
-    const index = text.toLowerCase().indexOf(candidate.toLowerCase())
-    if (index >= 0) return index
-  }
-  return -1
-}
-
 function intentAnchors(question: string): string[] {
   const anchors: string[] = []
   if (isRequirementsClassificationQuestion(question)) {
@@ -359,8 +329,4 @@ function isTableOfContentsLike(text: string): boolean {
   const dotLeaderCount = text.match(/\. \. \./g)?.length ?? 0
   const headingWithPageCount = text.match(/^\s*\d+(?:\.\d+)?\s+.+\s+\d+\s*$/gm)?.length ?? 0
   return dotLeaderCount >= 4 || (text.includes("目次") && headingWithPageCount >= 4)
-}
-
-function unique(items: string[]): string[] {
-  return [...new Set(items.map((item) => item.trim()).filter(Boolean))]
 }

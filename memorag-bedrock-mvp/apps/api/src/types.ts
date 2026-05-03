@@ -250,6 +250,47 @@ export type AccessRoleDefinition = {
   permissions: string[]
 }
 
+export type AliasStatus = "draft" | "approved" | "disabled"
+
+export type AliasScope = {
+  tenantId?: string
+  department?: string
+  source?: string
+  docType?: string
+}
+
+export type AliasDefinition = {
+  aliasId: string
+  term: string
+  expansions: string[]
+  scope?: AliasScope
+  status: AliasStatus
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+  reviewedBy?: string
+  reviewedAt?: string
+  reviewComment?: string
+  publishedVersion?: string
+}
+
+export type AliasAuditLogItem = {
+  auditId: string
+  aliasId?: string
+  action: "create" | "update" | "review" | "disable" | "publish"
+  actorUserId: string
+  createdAt: string
+  detail: string
+}
+
+export type PublishedAliasArtifact = {
+  schemaVersion: 1
+  version: string
+  publishedBy: string
+  publishedAt: string
+  aliases: AliasDefinition[]
+}
+
 export type UserUsageSummary = {
   userId: string
   email: string

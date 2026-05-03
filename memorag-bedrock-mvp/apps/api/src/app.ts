@@ -11,6 +11,9 @@ import {
   AnswerQuestionRequestSchema,
   AccessRoleListResponseSchema,
   AssignUserRolesRequestSchema,
+  AliasAuditLogResponseSchema,
+  AliasDefinitionSchema,
+  AliasListResponseSchema,
   BenchmarkRunListResponseSchema,
   BenchmarkRunSchema,
   BenchmarkSuiteListResponseSchema,
@@ -19,6 +22,7 @@ import {
   ConversationHistoryItemSchema,
   ConversationHistoryListResponseSchema,
   CostAuditSummarySchema,
+  CreateAliasRequestSchema,
   CreateBenchmarkRunRequestSchema,
   CreateQuestionRequestSchema,
   CurrentUserResponseSchema,
@@ -33,10 +37,13 @@ import {
   HealthResponseSchema,
   ManagedUserListResponseSchema,
   ManagedUserSchema,
+  PublishAliasesResponseSchema,
   QuestionListResponseSchema,
   QuestionSchema,
+  ReviewAliasRequestSchema,
   SearchRequestSchema,
   SearchResponseSchema,
+  UpdateAliasRequestSchema,
   UsageSummaryListResponseSchema
 } from "./schemas.js"
 
@@ -210,6 +217,145 @@ app.openapi(
   (c) => {
     requirePermission(c.get("user"), "access:policy:read")
     return c.json({ roles: service.listAccessRoles() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/admin/aliases",
+    responses: {
+      200: { description: "List alias definitions", content: { "application/json": { schema: AliasListResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:alias:read")
+    return c.json({ aliases: await service.listAliases() }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: CreateAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Created alias draft", content: { "application/json": { schema: AliasDefinitionSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:write:group")
+    const body = (c.req as any).valid("json") as z.infer<typeof CreateAliasRequestSchema>
+    return c.json(await service.createAlias(user, body), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/{aliasId}/update",
+    request: {
+      params: z.object({ aliasId: z.string().min(1) }),
+      body: {
+        required: true,
+        content: { "application/json": { schema: UpdateAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Updated alias draft", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:write:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const body = (c.req as any).valid("json") as z.infer<typeof UpdateAliasRequestSchema>
+    const alias = await service.updateAlias(user, aliasId, body)
+    if (!alias) return c.json({ error: "Alias not found" }, 404)
+    return c.json(alias, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/{aliasId}/review",
+    request: {
+      params: z.object({ aliasId: z.string().min(1) }),
+      body: {
+        required: true,
+        content: { "application/json": { schema: ReviewAliasRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Reviewed alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:review:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const body = (c.req as any).valid("json") as z.infer<typeof ReviewAliasRequestSchema>
+    const alias = await service.reviewAlias(user, aliasId, body)
+    if (!alias) return c.json({ error: "Alias not found" }, 404)
+    return c.json(alias, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/{aliasId}/disable",
+    request: { params: z.object({ aliasId: z.string().min(1) }) },
+    responses: {
+      200: { description: "Disabled alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
+      404: { description: "Alias not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:disable:group")
+    const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+    const alias = await service.disableAlias(user, aliasId)
+    if (!alias) return c.json({ error: "Alias not found" }, 404)
+    return c.json(alias, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/admin/aliases/publish",
+    responses: {
+      200: { description: "Published approved aliases", content: { "application/json": { schema: PublishAliasesResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "rag:alias:publish:group")
+    return c.json(await service.publishAliases(user), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/admin/aliases/audit-log",
+    responses: {
+      200: { description: "List alias audit events", content: { "application/json": { schema: AliasAuditLogResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    requirePermission(c.get("user"), "rag:alias:read")
+    return c.json({ auditLog: await service.listAliasAuditLog() }, 200)
   }
 )
 

@@ -96,6 +96,44 @@ curl -s -X POST http://localhost:8787/debug-runs/run_20260101_120000Z_abc12345/d
 curl -s -X DELETE http://localhost:8787/documents/<documentId> "${AUTH_HEADER[@]}" | jq
 ```
 
+## Reindex document
+
+再インデックスは `RAG_GROUP_MANAGER` または `SYSTEM_ADMIN` 相当の権限を持つ token で実行する。既存 manifest の source text を読み直し、embedding cache と pipeline version を使って新しい document manifest を作る。
+
+```bash
+curl -s -X POST http://localhost:8787/documents/<documentId>/reindex \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "embeddingModelId":"amazon.titan-embed-text-v2:0"
+  }' | jq
+```
+
+## Alias management
+
+alias 管理 API は `RAG_GROUP_MANAGER` または `SYSTEM_ADMIN` 相当の権限で実行する。通常の `/search` response は alias 本文や audit 情報を返さず、`diagnostics.aliasVersion` だけを返す。
+
+```bash
+ALIAS_ID=$(curl -s http://localhost:8787/admin/aliases \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "term":"pto",
+    "expansions":["年次有給休暇","休暇申請"],
+    "scope":{"tenantId":"tenant-a","docType":"policy"}
+  }' | jq -r '.aliasId')
+
+curl -s -X POST "http://localhost:8787/admin/aliases/${ALIAS_ID}/review" \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"decision":"approve","comment":"社内用語として確認済み"}' | jq
+
+curl -s -X POST http://localhost:8787/admin/aliases/publish \
+  "${AUTH_HEADER[@]}" | jq
+
+curl -s http://localhost:8787/admin/aliases/audit-log "${AUTH_HEADER[@]}" | jq
+```
+
 ## Create human follow-up question
 
 ```bash

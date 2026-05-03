@@ -136,7 +136,7 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 |---|---|---|---|
 | `POST` | `/admin/aliases` | `rag:alias:write:group` | draft alias を作成する |
 | `GET` | `/admin/aliases` | `rag:alias:read` | scope 内 alias を一覧する |
-| `PATCH` | `/admin/aliases/{aliasId}` | `rag:alias:write:group` | draft alias を修正する |
+| `POST` | `/admin/aliases/{aliasId}/update` | `rag:alias:write:group` | draft alias を修正する |
 | `POST` | `/admin/aliases/{aliasId}/review` | `rag:alias:review:group` | draft を approve/reject する |
 | `POST` | `/admin/aliases/{aliasId}/disable` | `rag:alias:disable:group` | active alias を無効化する |
 | `POST` | `/admin/aliases/publish` | `rag:alias:publish:group` | batch publish を要求する |
@@ -144,15 +144,17 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 
 管理 API は alias 定義と監査を管理する。検索 index の直接更新は batch の責務にする。
 
-## Phase 1 実装
+## 実装状態
 
-今回の Phase 1 では管理 API と S3 artifact は作らず、現行 metadata alias の安全化を先に行う。
+現在の MVP 実装では、metadata alias の安全化に加えて、alias 管理 API、review、audit log、versioned artifact publish を実装する。
 
 - API metadata schema を recursive JSON にし、`searchAliases` / `aliases` の map を validation で拒否しない。
 - `POST /search` の `results[].metadata` は allowlist で `tenantId`、`source`、`docType`、`department` だけを返す。
 - `diagnostics.indexVersion` は opaque hash にし、document ID と alias 本文を含めない。
 - `diagnostics.aliasVersion` は opaque hash または `none` にし、alias 本文を含めない。
-- alias expansion は現行どおり visible manifest 由来 alias だけを merge し、ACL/filter 済み範囲外の alias を使わない。
+- alias expansion は visible manifest 由来 alias と publish 済み alias artifact を merge し、scope/filter 外 alias を使わない。
+- alias ledger は `admin/alias-ledger.json` に draft / approved / disabled と audit log を保持する。
+- publish は `aliases/<version>/aliases.json` と `aliases/latest.json` を保存し、search runtime は request 中に alias を変更しない。
 
 ## 評価指標
 
@@ -167,6 +169,6 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 
 ## 将来拡張
 
-- Phase 2: S3 scoped alias artifact と index manifest の version 対応を実装する。
-- Phase 3: alias 管理 API、permission、audit log を実装する。
-- Phase 4: no-result query、low-confidence query、user reformulation から draft alias 候補を生成する。
+- Phase 2: alias artifact と lexical index artifact の corpus/index 対応をより細かい tenant/source/docType scope で分割する。
+- Phase 3: 管理 UI から alias review / publish / rollback を操作できるようにする。
+- Phase 4: no-result query、low-confidence query、user reformulation、benchmark failure から draft alias 候補を生成する。

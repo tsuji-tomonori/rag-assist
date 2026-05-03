@@ -7,7 +7,7 @@ import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput } from "../agent/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Chunk, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type MemoryCard, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Chunk, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type MemoryCard, type PublishedAliasArtifact, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -18,6 +18,7 @@ import { parseJsonObject } from "./json.js"
 import { buildPipelineVersions } from "./pipeline-versions.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
 import { extractTextFromUpload } from "./text-extract.js"
+import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
 
 type IngestInput = {
   fileName: string
@@ -57,7 +58,30 @@ type AdminLedger = {
   usage: Record<string, Partial<Omit<UserUsageSummary, "userId" | "email" | "displayName">>>
 }
 
+type AliasInput = {
+  term?: string
+  expansions?: string[]
+  scope?: {
+    tenantId?: string
+    department?: string
+    source?: string
+    docType?: string
+  }
+}
+
+type AliasReviewInput = {
+  decision: "approve" | "reject"
+  comment?: string
+}
+
+type AliasLedger = {
+  schemaVersion: 1
+  aliases: AliasDefinition[]
+  auditLog: AliasAuditLogItem[]
+}
+
 const adminLedgerKey = "admin/admin-ledger.json"
+const aliasLedgerKey = "admin/alias-ledger.json"
 const pricingCatalogUpdatedAt = "2026-05-02T00:00:00.000Z"
 
 const benchmarkSuites: BenchmarkSuite[] = [
@@ -269,6 +293,101 @@ export class MemoRagService {
       .sort((a, b) => a.role.localeCompare(b.role))
   }
 
+  async listAliases(): Promise<AliasDefinition[]> {
+    const ledger = await this.loadAliasLedger()
+    return ledger.aliases.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  }
+
+  async createAlias(actor: AppUser, input: Required<Pick<AliasInput, "term" | "expansions">> & Pick<AliasInput, "scope">): Promise<AliasDefinition> {
+    const ledger = await this.loadAliasLedger()
+    const now = new Date().toISOString()
+    const alias: AliasDefinition = {
+      aliasId: `alias_${randomUUID().slice(0, 12)}`,
+      term: normalizeAliasTerm(input.term),
+      expansions: normalizeAliasExpansions(input.expansions),
+      scope: normalizeAliasScope(input.scope),
+      status: "draft",
+      createdBy: actor.userId,
+      createdAt: now,
+      updatedAt: now
+    }
+    ledger.aliases.push(alias)
+    appendAliasAudit(ledger, actor, "create", alias.aliasId, `created ${alias.term}`)
+    await this.saveAliasLedger(ledger)
+    return alias
+  }
+
+  async updateAlias(actor: AppUser, aliasId: string, input: AliasInput): Promise<AliasDefinition | undefined> {
+    const ledger = await this.loadAliasLedger()
+    const alias = ledger.aliases.find((candidate) => candidate.aliasId === aliasId)
+    if (!alias) return undefined
+    if (input.term !== undefined) alias.term = normalizeAliasTerm(input.term)
+    if (input.expansions !== undefined) alias.expansions = normalizeAliasExpansions(input.expansions)
+    if (input.scope !== undefined) alias.scope = normalizeAliasScope(input.scope)
+    alias.status = alias.status === "disabled" ? "disabled" : "draft"
+    alias.updatedAt = new Date().toISOString()
+    delete alias.reviewedBy
+    delete alias.reviewedAt
+    delete alias.reviewComment
+    delete alias.publishedVersion
+    appendAliasAudit(ledger, actor, "update", alias.aliasId, `updated ${alias.term}`)
+    await this.saveAliasLedger(ledger)
+    return alias
+  }
+
+  async reviewAlias(actor: AppUser, aliasId: string, input: AliasReviewInput): Promise<AliasDefinition | undefined> {
+    const ledger = await this.loadAliasLedger()
+    const alias = ledger.aliases.find((candidate) => candidate.aliasId === aliasId)
+    if (!alias) return undefined
+    alias.status = input.decision === "approve" ? "approved" : "draft"
+    alias.reviewedBy = actor.userId
+    alias.reviewedAt = new Date().toISOString()
+    alias.reviewComment = input.comment
+    alias.updatedAt = alias.reviewedAt
+    appendAliasAudit(ledger, actor, "review", alias.aliasId, `${input.decision} ${alias.term}`)
+    await this.saveAliasLedger(ledger)
+    return alias
+  }
+
+  async disableAlias(actor: AppUser, aliasId: string): Promise<AliasDefinition | undefined> {
+    const ledger = await this.loadAliasLedger()
+    const alias = ledger.aliases.find((candidate) => candidate.aliasId === aliasId)
+    if (!alias) return undefined
+    alias.status = "disabled"
+    alias.updatedAt = new Date().toISOString()
+    appendAliasAudit(ledger, actor, "disable", alias.aliasId, `disabled ${alias.term}`)
+    await this.saveAliasLedger(ledger)
+    return alias
+  }
+
+  async publishAliases(actor: AppUser): Promise<{ version: string; publishedAt: string; aliasCount: number }> {
+    const ledger = await this.loadAliasLedger()
+    const publishedAt = new Date().toISOString()
+    const version = createAliasVersion(publishedAt)
+    const aliases = ledger.aliases.filter((alias) => alias.status === "approved").map((alias) => ({ ...alias, publishedVersion: version }))
+    for (const alias of ledger.aliases) {
+      if (alias.status === "approved") alias.publishedVersion = version
+    }
+    const objectKey = `aliases/${version}/aliases.json`
+    const artifact: PublishedAliasArtifact = {
+      schemaVersion: 1,
+      version,
+      publishedBy: actor.userId,
+      publishedAt,
+      aliases
+    }
+    await this.deps.objectStore.putText(objectKey, JSON.stringify(artifact, null, 2), "application/json")
+    await this.deps.objectStore.putText(aliasArtifactLatestKey, JSON.stringify({ version, objectKey, publishedAt, aliasCount: aliases.length }, null, 2), "application/json")
+    appendAliasAudit(ledger, actor, "publish", undefined, `published ${aliases.length} aliases as ${version}`)
+    await this.saveAliasLedger(ledger)
+    return { version, publishedAt, aliasCount: aliases.length }
+  }
+
+  async listAliasAuditLog(): Promise<AliasAuditLogItem[]> {
+    const ledger = await this.loadAliasLedger()
+    return ledger.auditLog.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 200)
+  }
+
   async listManagedUsers(actor: AppUser): Promise<ManagedUser[]> {
     const db = await this.loadAdminLedger(actor)
     return db.users
@@ -466,6 +585,24 @@ export class MemoRagService {
 
   private async saveAdminLedger(db: AdminLedger): Promise<void> {
     await this.deps.objectStore.putText(adminLedgerKey, JSON.stringify(db, null, 2), "application/json")
+  }
+
+  private async loadAliasLedger(): Promise<AliasLedger> {
+    try {
+      const raw = JSON.parse(await this.deps.objectStore.getText(aliasLedgerKey)) as AliasLedger
+      return {
+        schemaVersion: 1,
+        aliases: Array.isArray(raw.aliases) ? raw.aliases : [],
+        auditLog: Array.isArray(raw.auditLog) ? raw.auditLog : []
+      }
+    } catch (err) {
+      if (!isMissingObjectError(err)) throw err
+      return { schemaVersion: 1, aliases: [], auditLog: [] }
+    }
+  }
+
+  private async saveAliasLedger(ledger: AliasLedger): Promise<void> {
+    await this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")
   }
 
   async saveConversationHistory(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
@@ -735,6 +872,45 @@ function artifactExtension(artifact: BenchmarkDownloadArtifact): string {
 
 function normalizeRoles(groups: string[]): Role[] {
   return [...new Set(groups.filter((group): group is Role => group in rolePermissions))]
+}
+
+function normalizeAliasTerm(term: string): string {
+  return term.trim().toLowerCase()
+}
+
+function normalizeAliasExpansions(expansions: string[]): string[] {
+  return [...new Set(expansions.map((value) => value.trim()).filter(Boolean))].slice(0, 20)
+}
+
+function normalizeAliasScope(scope: AliasInput["scope"]): AliasDefinition["scope"] | undefined {
+  if (!scope) return undefined
+  const normalized = Object.fromEntries(
+    Object.entries(scope)
+      .map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+      .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0)
+  ) as AliasDefinition["scope"]
+  return normalized && Object.keys(normalized).length > 0 ? normalized : undefined
+}
+
+function appendAliasAudit(
+  ledger: AliasLedger,
+  actor: AppUser,
+  action: AliasAuditLogItem["action"],
+  aliasId: string | undefined,
+  detail: string
+): void {
+  ledger.auditLog.push({
+    auditId: `audit_${randomUUID().slice(0, 12)}`,
+    aliasId,
+    action,
+    actorUserId: actor.userId,
+    createdAt: new Date().toISOString(),
+    detail
+  })
+}
+
+function createAliasVersion(now: string): string {
+  return `alias_${now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}_${randomUUID().slice(0, 8)}`
 }
 
 function estimateCost(
