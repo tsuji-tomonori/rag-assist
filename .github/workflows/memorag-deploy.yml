@@ -56,6 +56,7 @@ jobs:
         --context defaultModelId=${{ inputs.default-model-id || 'amazon.nova-lite-v1:0' }}
         --context embeddingModelId=${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}
         --context embeddingDimensions=${{ inputs.embedding-dimensions || '1024' }}
+        --context deploymentEnvironment=${{ inputs.environment || 'dev' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
