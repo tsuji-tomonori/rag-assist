@@ -55,15 +55,23 @@ export function detectToolIntent(question: string): ToolIntent {
   const asksCurrentDate = /(今日|本日|現在).*(日付|何日)|日付.*(教えて|確認|いつ)/.test(normalized)
   const asksTaskList = /(全部|一覧|全件|洗い出し|列挙).*(期限|締切|タスク)|(期限|締切).*(全部|一覧|全件|洗い出し|列挙)/.test(normalized)
   const asksBusinessDayCalculation = isBusinessDayCalculationRequest(normalized)
+  const asksDocumentVerification = isDocumentVerificationQuestion(normalized)
+  const asksDateComputation = dateCandidates.length > 0 && isDateComputationRequest(normalized)
   const asksTemporal =
     asksCurrentDate ||
     asksTaskList ||
-    dateCandidates.length > 0 && /(あと何日|残り何日|何日|期限切れ|期限|締切|超過|まで)/.test(normalized) ||
+    asksDateComputation ||
     /(申請から|提出から|起算).*([0-9０-９]+)日以内/.test(normalized) ||
     asksBusinessDayCalculation
   const asksArithmetic = /([0-9０-９][0-9０-９,，]*)円/.test(normalized) && /(いくら|合計|総額|計算|かかる)/.test(normalized)
   const asksAggregation = /(平均|最大|最小|件数|合計).*(全部|全件|部署|一覧)/.test(normalized)
-  const canAnswerTemporal = asksCurrentDate || asksTaskList || asksBusinessDayCalculation || canAnswerTemporalFromQuestion(question)
+  const canAnswerTemporal =
+    asksCurrentDate ||
+    asksTaskList ||
+    asksBusinessDayCalculation ||
+    asksDateComputation ||
+    parseRelativeDeadline(normalized) !== undefined ||
+    (!asksDocumentVerification && canAnswerTemporalFromQuestion(normalized))
   const canAnswerArithmetic = asksArithmetic && hasArithmeticInputs(normalized)
 
   if (asksTaskList) {
@@ -311,12 +319,20 @@ function inferTemporalOperation(question: string): ToolIntent["temporalOperation
 
 function canAnswerTemporalFromQuestion(question: string): boolean {
   if (parseRelativeDeadline(question)) return true
-  return extractDueDate(question) !== undefined
+  return extractDueDate(question) !== undefined && isDateComputationRequest(question)
 }
 
 function isBusinessDayCalculationRequest(question: string): boolean {
   return /営業日/.test(question) &&
     /([0-9０-９]+営業日以内|[0-9０-９]+営業日後|何営業日後|翌営業日|営業日.*(計算|加算|起算)|あと何営業日|残り何営業日|期限切れ|超過)/.test(question)
+}
+
+function isDateComputationRequest(question: string): boolean {
+  return /(あと何日|残り何日|まで何日|何日後|何日前|日数|残日数|期限切れ|超過|本日期限|過ぎている|過ぎています|過ぎた|過ぎました)/.test(question)
+}
+
+function isDocumentVerificationQuestion(question: string): boolean {
+  return /(ですか|でしょうか|合っていますか|正しいですか|記載|資料|規程|規定|文書|マニュアル|ポリシー|されていますか|されてますか|書かれていますか|書いてありますか)/.test(question)
 }
 
 function hasArithmeticInputs(question: string): boolean {
