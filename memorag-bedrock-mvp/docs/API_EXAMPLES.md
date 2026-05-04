@@ -291,7 +291,7 @@ curl -s http://localhost:8787/conversation-history "${AUTH_HEADER[@]}" | jq
 
 ## Benchmark query
 
-`POST /benchmark/query` は CodeBuild runner など `benchmark:query` 権限を持つ service token で実行する。管理画面からの非同期実行は `benchmark:run` 権限で `POST /benchmark-runs` を使う。
+`POST /benchmark/query` は CodeBuild runner など `benchmark:query` 権限を持つ service token で実行する。管理画面からの非同期実行は `benchmark:run` 権限で `POST /benchmark-runs` を使う。既存の外部運用 token が `RAG_GROUP_MANAGER` で `/benchmark/query` を直接呼んでいる場合は、`BENCHMARK_RUNNER` service user へ移行する。
 
 ```bash
 curl -s http://localhost:8787/benchmark/query \
