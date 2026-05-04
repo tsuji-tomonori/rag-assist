@@ -85,6 +85,26 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(Array.isArray(chat.citations), true)
     validateSchema(chat, responseSchema(openapi, "/chat", "post", 200), openapi)
 
+    const postChatRun = await fetch(`http://127.0.0.1:${port}/chat-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(fixtures.requests.postChat)
+    })
+    assert.equal(postChatRun.status, 200)
+    const chatRun = (await postChatRun.json()) as { runId: string; eventsPath: string }
+    validateSchema(chatRun, responseSchema(openapi, "/chat-runs", "post", 200), openapi)
+    assert.match(chatRun.eventsPath, new RegExp(`/chat-runs/${chatRun.runId}/events$`))
+
+    const chatRunEvents = await fetch(`http://127.0.0.1:${port}${chatRun.eventsPath}`, {
+      headers: { accept: "text/event-stream" },
+      signal: AbortSignal.timeout(20_000)
+    })
+    assert.equal(chatRunEvents.status, 200)
+    assert.match(chatRunEvents.headers.get("content-type") ?? "", /text\/event-stream/)
+    const eventStreamText = await chatRunEvents.text()
+    assert.match(eventStreamText, /event: status/)
+    assert.match(eventStreamText, /event: final|event: error/)
+
     const postSearch = await fetch(`http://127.0.0.1:${port}/search`, {
       method: "POST",
       headers: { "content-type": "application/json" },

@@ -35,6 +35,30 @@ curl -s http://localhost:8787/documents \
 
 ## Chat
 
+非同期 streaming chat は `POST /chat-runs` で run を開始し、返却された `eventsPath` を SSE として読みます。
+
+```bash
+RUN_ID="$(
+  curl -s http://localhost:8787/chat-runs \
+    "${AUTH_HEADER[@]}" \
+    -H 'Content-Type: application/json' \
+    -d '{
+      "question":"経費精算の期限は？",
+      "modelId":"amazon.nova-lite-v1:0",
+      "topK":6,
+      "minScore":0.20,
+      "includeDebug":true
+    }' | jq -r '.runId'
+)"
+
+curl -N "http://localhost:8787/chat-runs/${RUN_ID}/events" \
+  "${AUTH_HEADER[@]}"
+```
+
+`includeDebug=true` の SSE `final` event は full debug trace ではなく `debugRunId` を返します。trace 本体は `GET /debug-runs/{runId}` で取得します。
+
+`POST /chat` は後方互換用の同期 JSON API として利用できます。
+
 `POST /chat` は通常回答、回答不能、確認質問を `responseType` で区別する。確認質問は登録済み文書、memory card、検索候補に grounding を持つ option だけを返し、option 選択後は `resolvedQuery` を次の `/chat` の `question` として送る。
 
 ```bash
