@@ -28,6 +28,7 @@ test("implements the designed serverless resources", () => {
     LambdaConfig: Match.objectLike({ PostConfirmation: Match.anyValue() })
   })
   template.resourceCountIs("AWS::SecretsManager::Secret", 1)
+  template.resourceCountIs("AWS::KMS::Key", 1)
   template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
