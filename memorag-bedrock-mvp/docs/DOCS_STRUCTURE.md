@@ -48,6 +48,8 @@ memorag-bedrock-mvp/docs/
   2_アーキテクチャ_ARC/
     01_コンテキスト_CONTEXT/
       ARC_CONTEXT_001.md
+    05_能力マップ_CAPABILITY/
+      ARC_CAPABILITY_001.md
     11_ビュー_VIEW/
       ARC_VIEW_001.md
     21_重要決定_ADR/
