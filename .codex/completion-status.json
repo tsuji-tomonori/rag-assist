@@ -2,241 +2,437 @@
   "complete": true,
   "status": "complete",
   "requested_items": [
-    "worktree とブランチを作成する",
-    "最初に実行計画を立て、レポートを作成してタスクを分割する",
-    "memorag-bedrock-mvp/apps/web のコンポーネント分割を設計/実装/テストする",
-    "きりの良いタイミングでテスト確認を行って git commit + push する",
-    "すべて完了後に GitHub Apps で main 向け PR を作成する",
-    "全体ロードマップ完了まで作業し、phase ごとにテストして commit する",
-    "PR #91 のレビュー指摘を後続でもよい項目まで含めて修正する",
-    "web リファクタ後の同一性保証としてテストをすべて追加・修正する",
-    "main に取り込まれた PR #88 を確認し、現 feature 構成へデグレなく統合する",
-    "main ブランチの最新内容を取り込んで競合解決する"
+    "PR #94 の最新レビュー指摘を修正する",
+    "local dev の新チャット UI が /chat-runs/{runId}/events で 404 にならないようにする",
+    "debug trace の DynamoDB item size リスクを下げる",
+    "network disconnect 時の retry を強化する",
+    "StartExecution 失敗時に queued run を failed/error にする",
+    "API Gateway authorizer 由来 401/403 CORS を安定させる",
+    "検証、作業レポート、commit、push、PR 更新を行う",
+    "最新 origin/main を取り込み、再発した競合を解消する",
+    "origin/main 935fc98 を再度取り込み、再発した競合を解消する",
+    "origin/main 0e5725e を再度取り込み、corpus-grounded clarification との競合を解消する",
+    "debug trace 取得失敗時に回答表示を阻害しないようにする",
+    "origin/main 442d58d を再度取り込み、infra tag strategy との snapshot 競合を解消する",
+    "origin/main ef74131 を再度取り込み、copy feedback / cost anomaly 変更との競合を解消する",
+    "ChatRun type/schema に残っている full debug trace field を削除する"
   ],
   "completed_items": [
-    "worktree .worktrees/web-component-refactor と branch codex/web-component-refactor を作成した",
-    "reports/working/20260503-1205-web-component-refactor-plan.md を作成した",
-    "App.tsx から shared/app/feature コンポーネントと utility を分離した",
-    "reports/working/20260503-1228-web-roadmap-completion-plan.md を作成した",
-    "Phase 2 で AppShell/RailNav/TopBar を分離し、検証後に commit/push した",
-    "Phase 3 で主要画面を feature components と AppRoutes へ分離し、検証後に commit/push した",
-    "Phase 4 で状態と副作用を feature hooks へ分離し、検証後に commit/push した",
-    "Phase 5 で API と CSS をドメイン単位へ分割し、検証後に commit/push した",
-    "Phase 6 で auth 画面/hook 分割と component tests 追加を行い、検証後に commit/push した",
-    "web typecheck、web test、web build、git diff --check を必要な phase で実行し、すべて pass した",
-    "reports/working/20260503-1217-web-component-refactor-report.md を作成した",
-    "reports/working/20260503-1254-web-roadmap-completion-report.md を作成した",
-    "commits 141be74, 6ed7946, 883412a, b79f13e, 4b29cc9, 285091d, dc537cf を origin/codex/web-component-refactor に push した",
-    "commit 454bd58 で web lint CI failure を修正し、origin/codex/web-component-refactor に push した",
-    "review follow-up として loading guard、debug selection、feature direct imports、AppShell state hook、ChatView component split、authClient feature 移動を実施した",
-    "reports/working/20260503-1414-web-review-followups-report.md を作成した",
-    "GitHub Apps で https://github.com/tsuji-tomonori/rag-assist/pull/91 を作成した",
-    "PR に semver:patch ラベルを付与した",
-    "App 統合 contract test と legacy API re-export test を追加した",
-    "Playwright visual regression と screenshot baseline を追加した",
-    "既存 E2E smoke の local data 隔離と削除導線を修正した",
-    "reports/working/20260503-1454-web-test-contract-coverage-report.md を作成した",
-    "PR #88 merge commit 20f4e25 が origin/main に取り込まれていることを確認した",
-    "origin/main を codex/web-component-refactor に merge し、App.tsx/api.ts/styles.css/api.test.ts の衝突を feature-based 構成で解消した",
-    "Alias 管理 API/UI と blue-green reindex UI/API を現在の app/features/shared 構成へ接続した",
-    "Alias/reindex の component/hook tests を追加し、web coverage 閾値を回復した",
-    "origin/main の merge commit 1867905 を取り込み、PR #92 の debug trace flow replay を features/debug 構成へ統合した",
-    "App.tsx/api.ts/styles.css の競合を解消し、薄い App、re-export hub、CSS import hub を維持した",
-    "debugTraceReplay を features/debug/utils へ配置し、DebugPanel と feature CSS に接続した",
-    "debug trace replay util の characterization test を追加し、web coverage 閾値を回復した"
+    "Hono app に GET /chat-runs/{runId}/events の local SSE route を追加した",
+    "SSE route を authMiddleware 配下に置き、chat:read:own と run owner または chat:admin:read_all で保護した",
+    "local SSE route で Last-Event-ID、heartbeat、timeout、final/error close を実装した",
+    "Web useChatSession で timeout だけでなく stream/network error 時も Last-Event-ID 付き retry を行うようにした",
+    "ChatRun/Event には full debug trace ではなく debugRunId を保存・送信し、UI が必要時に GET /debug-runs/{runId} を読むようにした",
+    "Step Functions StartExecution 失敗時に markChatRunFailed() を呼び queued run を failed/error に進めるようにした",
+    "REST API DEFAULT_4XX / DEFAULT_5XX GatewayResponse に CORS header を追加した",
+    "API/Web/Infra tests、access-control static test、contract test、CDK snapshot、docs/examples、作業レポートを更新した",
+    "origin/main f217f94 を merge し、app.ts の helper conflict を解消した",
+    "origin/main 935fc98 を merge し、dependencies/service test/infra の conflict を解消した",
+    "ChatRun store/event store と Cognito user directory の依存を統合した",
+    "ChatRun worker/stream handler 権限と Cognito user list 権限を両立した",
+    "CloudFormation snapshot を最新 synth 結果に更新した",
+    "origin/main 0e5725e を merge し、agent graph / service / API docs の conflict を解消した",
+    "PR #94 の async ChatRun streaming と main 側の clarification response を統合した",
+    "SSE final event で responseType / needsClarification / clarification を UI に渡すようにした",
+    "debugRunId からの debug trace 取得失敗時は warning に留め、final answer の表示を継続するようにした",
+    "debug trace 取得失敗時の回答表示継続テストを追加した",
+    "origin/main 442d58d を merge し、infra tag strategy と PR #94 streaming infra の snapshot 競合を解消した",
+    "origin/main ef74131 を merge し、REST API authorizer assertion と KMS key assertion を統合した",
+    "ChatRun type/schema から debug field を削除し、debugRunId-only の永続化方針に型を合わせた",
+    "asynchronous chat run stores debug trace by reference のテストを型変更後も runtime debug field 不在を検証する形に更新した"
   ],
   "remaining_items": [],
   "blocked_items": [],
   "validation": [
     {
-      "command": "npm install",
-      "result": "pass",
-      "note": "memorag-bedrock-mvp で workspace 依存を展開"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run typecheck",
       "result": "pass"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run test",
       "result": "pass",
-      "note": "test follow-up 最終時点で 9 files / 68 tests"
+      "note": "76 tests"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web",
-      "result": "pass",
-      "note": "Phase 5 と Phase 6 で実行"
-    },
-    {
-      "command": "npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run build",
       "result": "pass"
     },
     {
-      "command": "git diff --check",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
       "result": "pass"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run test:coverage -w @memorag-mvp/web",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
       "result": "pass",
-      "note": "C0 statements 85.9%, C1 branches 79.46%"
+      "note": "13 files / 87 tests"
     },
     {
-      "command": "npm exec -w @memorag-mvp/web -- playwright test --grep @visual",
-      "result": "pass",
-      "note": "6 visual regression tests"
-    },
-    {
-      "command": "npm exec -w @memorag-mvp/web -- playwright test",
-      "result": "pass",
-      "note": "10 e2e tests"
-    },
-    {
-      "command": "npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0",
-      "result": "pass",
-      "note": "PR #88 merge 後"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web",
-      "result": "pass",
-      "note": "PR #88 merge 後"
-    },
-    {
-      "command": "npm exec -w @memorag-mvp/web -- vitest run --coverage",
-      "result": "pass",
-      "note": "12 files / 78 tests, statements 86.19%, branches 78.86%, functions 84.54%, lines 90.76%"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web",
-      "result": "pass",
-      "note": "PR #88 merge 後"
-    },
-    {
-      "command": "npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run build",
       "result": "pass"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api",
+      "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
       "result": "pass"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api",
+      "command": "env UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp/infra test",
       "result": "pass",
-      "note": "72 tests"
+      "note": "snapshot 更新"
     },
     {
-      "command": "npm exec -w @memorag-mvp/api -- c8 --all --include src --exclude 'src/**/*.test.ts' --exclude 'src/server.ts' --reporter=text --reporter=lcov tsx --test src/**/*.test.ts src/**/**/*.test.ts",
-      "result": "pass",
-      "note": "79 tests。sandbox の tsx IPC pipe 制限回避のため権限付きで再実行"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/api",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/benchmark",
-      "result": "pass",
-      "note": "5 tests"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/benchmark",
-      "result": "pass"
-    },
-    {
-      "command": "npm exec -- eslint infra --cache --cache-location .eslintcache-infra --max-warnings=0",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra",
-      "result": "pass"
-    },
-    {
-      "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra",
+      "command": "npm --prefix memorag-bedrock-mvp/infra test",
       "result": "pass",
       "note": "6 tests"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/infra",
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
       "result": "pass"
-    },
-    {
-      "command": "task memorag:verify",
-      "result": "pass"
-    },
-    {
-      "command": "task docs:check:changed",
-      "result": "not run",
-      "note": "この worktree の Taskfile に task が存在しないため。代替として task memorag:verify と git diff --check を実行"
-    },
-    {
-      "command": "rg \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .codex --glob '!reports/**'",
-      "result": "pass",
-      "note": "検出なし"
     },
     {
       "command": "git diff --check",
+      "result": "pass"
+    },
+    {
+      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .github skills --glob '!reports/**'",
       "result": "pass",
-      "note": "PR #88 merge 後"
+      "note": "競合マーカー検出なし"
+    },
+    {
+      "command": "task docs:check:changed",
+      "result": "not_run",
+      "note": "この worktree の Taskfile に task が存在しないため未実行"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run typecheck",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run test",
+      "result": "pass",
+      "note": "origin/main remerge 後、76 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
+      "result": "pass",
+      "note": "origin/main remerge 後、13 files / 88 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "origin/main remerge 後、6 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run build",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run build",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "origin/main remerge 後"
     },
     {
       "command": "git fetch origin main",
       "result": "pass",
-      "note": "origin/main 1867905 を取得。sandbox の FETCH_HEAD 制限により権限付きで再実行"
+      "note": "origin/main 935fc98 を取得"
     },
     {
       "command": "git merge origin/main",
       "result": "pass",
-      "note": "App.tsx/api.ts/styles.css の conflict を解消"
+      "note": "dependencies.ts、memorag-service.test.ts、memorag-mvp-stack.ts の競合を解消"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run typecheck",
       "result": "pass",
-      "note": "12 files / 79 tests"
+      "note": "origin/main 935fc98 remerge 後"
     },
     {
-      "command": "npm exec -w @memorag-mvp/web -- vitest run src/features/debug/utils/debugTraceReplay.test.ts",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
       "result": "pass",
-      "note": "debug trace replay util 4 tests"
+      "note": "origin/main 935fc98 remerge 後"
     },
     {
-      "command": "npm exec -w @memorag-mvp/web -- vitest run --coverage",
+      "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
       "result": "pass",
-      "note": "13 files / 83 tests, statements 86.44%, branches 78.65%, functions 84.84%, lines 90.78%"
+      "note": "origin/main 935fc98 remerge 後"
     },
     {
-      "command": "npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run test",
       "result": "pass",
-      "note": "PR #92 merge 後"
+      "note": "origin/main 935fc98 remerge 後、80 tests"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
       "result": "pass",
-      "note": "PR #92 merge 後"
+      "note": "origin/main 935fc98 remerge 後、13 files / 88 tests"
     },
     {
-      "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run build",
       "result": "pass",
-      "note": "PR #92 merge 後"
+      "note": "origin/main 935fc98 remerge 後"
     },
     {
-      "command": "task memorag:verify",
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run build",
       "result": "pass",
-      "note": "PR #92 merge 後"
+      "note": "origin/main 935fc98 remerge 後"
     },
     {
-      "command": "rg \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp --glob '!reports/**'",
+      "command": "env UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp/infra test",
       "result": "pass",
-      "note": "検出なし"
+      "note": "origin/main 935fc98 remerge 後、snapshot 更新"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "origin/main 935fc98 remerge 後、6 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "origin/main 935fc98 remerge 後"
     },
     {
       "command": "git diff --check",
       "result": "pass",
-      "note": "PR #92 merge 後"
+      "note": "origin/main 935fc98 remerge 後"
+    },
+    {
+      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .github skills --glob '!reports/**'",
+      "result": "pass",
+      "note": "origin/main 935fc98 remerge 後、競合マーカーなし"
+    },
+    {
+      "command": "jq . .codex/completion-status.json",
+      "result": "pass",
+      "note": "origin/main 935fc98 remerge 後"
+    },
+    {
+      "command": "git merge origin/main",
+      "result": "pass",
+      "note": "origin/main 0e5725e を取り込み、graph/service/API docs の競合を解消"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run typecheck",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run test",
+      "result": "fail",
+      "note": "並列実行時に contract server readiness timeout"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run test",
+      "result": "pass",
+      "note": "単独再実行、83 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
+      "result": "fail",
+      "note": "並列実行時に user-event 系 test timeout"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
+      "result": "pass",
+      "note": "単独再実行、13 files / 88 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後、6 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run build",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run build",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後"
+    },
+    {
+      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .github skills --glob '!reports/**'",
+      "result": "pass",
+      "note": "origin/main 0e5725e remerge 後、競合マーカーなし"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test -- src/features/chat/hooks/useChatSession.test.ts",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後、5 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後、13 files / 89 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後"
+    },
+    {
+      "command": "git fetch origin main",
+      "result": "pass",
+      "note": "origin/main 442d58d を取得"
+    },
+    {
+      "command": "git merge origin/main",
+      "result": "pass",
+      "note": "snapshot conflict を解消"
+    },
+    {
+      "command": "env UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "origin/main 442d58d remerge 後、snapshot 更新、9 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
+      "result": "pass",
+      "note": "origin/main 442d58d remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "origin/main 442d58d remerge 後、9 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "origin/main 442d58d remerge 後"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass",
+      "note": "origin/main 442d58d remerge 後"
+    },
+    {
+      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .github skills --glob '!reports/**'",
+      "result": "pass",
+      "note": "origin/main 442d58d remerge 後、競合マーカーなし"
+    },
+    {
+      "command": "git fetch origin main",
+      "result": "pass",
+      "note": "origin/main ef74131 を取得"
+    },
+    {
+      "command": "git merge origin/main",
+      "result": "pass",
+      "note": "memorag-mvp-stack.test.ts の conflict を解消"
+    },
+    {
+      "command": "env UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "origin/main ef74131 remerge 後、9 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
+      "result": "pass",
+      "note": "origin/main ef74131 remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "origin/main ef74131 remerge 後、9 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
+      "result": "pass",
+      "note": "origin/main ef74131 remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
+      "result": "pass",
+      "note": "origin/main ef74131 remerge 後、14 files / 95 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "origin/main ef74131 remerge 後"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass",
+      "note": "origin/main ef74131 remerge 後"
+    },
+    {
+      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .github skills --glob '!reports/**'",
+      "result": "pass",
+      "note": "origin/main ef74131 remerge 後、競合マーカーなし"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run typecheck",
+      "result": "pass",
+      "note": "ChatRun debug field 削除後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run test -- src/rag/memorag-service.test.ts src/contract/schemas.test.ts",
+      "result": "pass",
+      "note": "ChatRun debug field 削除後、実行 script により API 全 83 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "ChatRun debug field 削除後"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass",
+      "note": "ChatRun debug field 削除後"
+    },
+    {
+      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .github skills --glob '!reports/**'",
+      "result": "pass",
+      "note": "ChatRun debug field 削除後、競合マーカーなし"
     }
   ],
-  "next_action": "none",
+  "next_action": "ChatRun debug field 削除の commit、push、PR #94 更新",
   "safe_to_continue_without_user": true
 }

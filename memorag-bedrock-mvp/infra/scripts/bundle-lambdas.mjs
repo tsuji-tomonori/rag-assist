@@ -1,4 +1,4 @@
-import { rm } from "node:fs/promises"
+import { mkdir, rm } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { build } from "esbuild"
@@ -8,11 +8,24 @@ const repoRoot = path.resolve(infraDir, "..")
 const outDir = path.join(infraDir, "lambda-dist")
 
 await rm(outDir, { recursive: true, force: true })
+await mkdir(outDir, { recursive: true })
 
 await Promise.all([
   bundle({
     entry: path.join(repoRoot, "apps/api/src/index.ts"),
     outfile: path.join(outDir, "api/index.js")
+  }),
+  bundle({
+    entry: path.join(repoRoot, "apps/api/src/chat-run-worker.ts"),
+    outfile: path.join(outDir, "chat-run-worker/index.js")
+  }),
+  bundle({
+    entry: path.join(repoRoot, "apps/api/src/chat-run-mark-failed.ts"),
+    outfile: path.join(outDir, "chat-run-mark-failed/index.js")
+  }),
+  bundle({
+    entry: path.join(repoRoot, "apps/api/src/chat-run-events-stream.ts"),
+    outfile: path.join(outDir, "chat-run-events-stream/index.js")
   }),
   bundle({
     entry: path.join(infraDir, "functions/s3-vectors-custom-resource.ts"),

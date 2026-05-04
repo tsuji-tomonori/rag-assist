@@ -1,20 +1,43 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 
 export function UserPromptBubble({ text }: { text: string }) {
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle")
+  const resetTimerRef = useRef<number | null>(null)
+  const mountedRef = useRef(true)
   const canCopyPrompt = Boolean(text.trim())
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      if (resetTimerRef.current !== null) {
+        window.clearTimeout(resetTimerRef.current)
+        resetTimerRef.current = null
+      }
+    }
+  }, [])
+
+  function scheduleCopyStatusReset() {
+    if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
+    resetTimerRef.current = window.setTimeout(() => {
+      setCopyStatus("idle")
+      resetTimerRef.current = null
+    }, 1800)
+  }
 
   async function copyPrompt() {
     if (!canCopyPrompt) return
     try {
       await navigator.clipboard.writeText(text)
+      if (!mountedRef.current) return
       setCopyStatus("copied")
-      window.setTimeout(() => setCopyStatus("idle"), 1800)
+      scheduleCopyStatusReset()
     } catch (err) {
+      if (!mountedRef.current) return
       console.warn("Failed to copy prompt", err)
       setCopyStatus("error")
-      window.setTimeout(() => setCopyStatus("idle"), 1800)
+      scheduleCopyStatusReset()
     }
   }
 

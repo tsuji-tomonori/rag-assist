@@ -6,8 +6,8 @@ import * as cdk from "aws-cdk-lib"
 import { Match, Template } from "aws-cdk-lib/assertions"
 import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
 
-function synthesize() {
-  const app = new cdk.App()
+function synthesize(context?: Record<string, string>) {
+  const app = new cdk.App({ context })
   const stack = new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
     env: { account: "111111111111", region: "ap-northeast-1" },
     includeFrontendDeployment: false
@@ -28,7 +28,11 @@ test("implements the designed serverless resources", () => {
     LambdaConfig: Match.objectLike({ PostConfirmation: Match.anyValue() })
   })
   template.resourceCountIs("AWS::SecretsManager::Secret", 1)
-  template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
+  template.resourceCountIs("AWS::KMS::Key", 1)
+  template.hasResourceProperties("AWS::KMS::Key", {
+    EnableKeyRotation: true
+  })
+  template.resourceCountIs("AWS::ApiGateway::Authorizer", 1)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
       ServerSideEncryptionConfiguration: [
@@ -70,18 +74,43 @@ test("implements the designed serverless resources", () => {
       Variables: Match.objectLike({ DEFAULT_SIGNUP_GROUP_NAME: "CHAT_USER" })
     })
   })
-  template.hasResourceProperties("AWS::ApiGatewayV2::Api", {
-    ProtocolType: "HTTP",
-    CorsConfiguration: Match.objectLike({
-      AllowHeaders: Match.arrayWith(["Authorization"])
+  template.hasResourceProperties("AWS::ApiGateway::RestApi", {
+    EndpointConfiguration: Match.objectLike({
+      Types: ["REGIONAL"]
     })
   })
-  template.hasResourceProperties("AWS::ApiGatewayV2::Stage", {
-    StageName: "$default",
-    AutoDeploy: true,
-    AccessLogSettings: Match.objectLike({
-      DestinationArn: Match.anyValue(),
-      Format: Match.serializedJson(Match.objectLike({ requestId: "$context.requestId" }))
+  template.hasResourceProperties("AWS::ApiGateway::Stage", {
+    StageName: "prod",
+    AccessLogSetting: Match.objectLike({
+      DestinationArn: Match.anyValue()
+    }),
+    MethodSettings: Match.arrayWith([
+      Match.objectLike({
+        LoggingLevel: "INFO",
+        MetricsEnabled: true
+      })
+    ])
+  })
+  template.hasResourceProperties("AWS::ApiGateway::Method", {
+    HttpMethod: "GET",
+    AuthorizationType: "COGNITO_USER_POOLS",
+    Integration: Match.objectLike({
+      ResponseTransferMode: "STREAM",
+      TimeoutInMillis: 900000
+    })
+  })
+  template.hasResourceProperties("AWS::ApiGateway::GatewayResponse", {
+    ResponseType: "DEFAULT_4XX",
+    ResponseParameters: Match.objectLike({
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+      "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
+      "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
+    })
+  })
+  template.hasResourceProperties("AWS::ApiGateway::GatewayResponse", {
+    ResponseType: "DEFAULT_5XX",
+    ResponseParameters: Match.objectLike({
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
     })
   })
   template.hasResourceProperties("AWS::CloudFront::Distribution", {
@@ -111,6 +140,15 @@ test("implements the designed serverless resources", () => {
     BillingMode: "PAY_PER_REQUEST",
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
+  template.hasResourceProperties("AWS::DynamoDB::Table", {
+    KeySchema: [
+      { AttributeName: "runId", KeyType: "HASH" },
+      { AttributeName: "seq", KeyType: "RANGE" }
+    ],
+    BillingMode: "PAY_PER_REQUEST",
+    TimeToLiveSpecification: { AttributeName: "ttl", Enabled: true },
+    PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+  })
   for (const groupName of [
     "CHAT_USER",
     "ANSWER_EDITOR",
@@ -132,12 +170,16 @@ test("implements the designed serverless resources", () => {
         QUESTION_TABLE_NAME: Match.anyValue(),
         CONVERSATION_HISTORY_TABLE_NAME: Match.anyValue(),
         BENCHMARK_RUNS_TABLE_NAME: Match.anyValue(),
+        CHAT_RUNS_TABLE_NAME: Match.anyValue(),
+        CHAT_RUN_EVENTS_TABLE_NAME: Match.anyValue(),
         BENCHMARK_BUCKET_NAME: Match.anyValue(),
         BENCHMARK_STATE_MACHINE_ARN: Match.anyValue(),
         BENCHMARK_TARGET_API_BASE_URL: Match.anyValue(),
+        CHAT_RUN_STATE_MACHINE_ARN: Match.anyValue(),
         USE_LOCAL_QUESTION_STORE: "false",
         USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
         USE_LOCAL_BENCHMARK_RUN_STORE: "false",
+        USE_LOCAL_CHAT_RUN_STORE: "false",
         AUTH_ENABLED: "true",
         COGNITO_USER_POOL_ID: Match.anyValue(),
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
@@ -154,7 +196,7 @@ test("implements the designed serverless resources", () => {
     distanceMetric: "cosine"
   })
   template.hasResourceProperties("AWS::CodeBuild::Project", {
-    EncryptionKey: Match.anyValue(),
+    EncryptionKey: { "Fn::GetAtt": [Match.stringLikeRegexp("BenchmarkProjectKey"), "Arn"] },
     Environment: Match.objectLike({
       ComputeType: "BUILD_GENERAL1_SMALL",
       Image: "aws/codebuild/standard:7.0",
@@ -203,8 +245,73 @@ test("implements the designed serverless resources", () => {
   })
   const stateMachines = Object.values(template.toJSON().Resources ?? {})
     .filter((resource: any) => resource.Type === "AWS::StepFunctions::StateMachine")
-  assert.equal(stateMachines.length, 1)
-  assert.equal((stateMachines[0] as any).Properties.TracingConfiguration, undefined)
+  assert.equal(stateMachines.length, 2)
+  const chatRunStateMachine = stateMachines.find((stateMachine: any) => JSON.stringify(stateMachine.Properties.DefinitionString).includes("ChatRunWorkerTask"))
+  assert.ok(chatRunStateMachine)
+  const chatRunDefinition = JSON.stringify((chatRunStateMachine as any).Properties.DefinitionString)
+  assert.match(chatRunDefinition, /ChatRunMarkFailedTask/)
+  assert.match(chatRunDefinition, /States\.ALL/)
+  for (const stateMachine of stateMachines) {
+    assert.equal((stateMachine as any).Properties.TracingConfiguration, undefined)
+  }
+})
+
+test("applies mandatory ownership and cost allocation tags", () => {
+  const template = synthesize().toJSON()
+  const taggableResourceTypes = new Set([
+    "AWS::CloudFront::Distribution",
+    "AWS::CodeBuild::Project",
+    "AWS::Cognito::UserPool",
+    "AWS::DynamoDB::Table",
+    "AWS::IAM::Role",
+    "AWS::KMS::Key",
+    "AWS::Lambda::Function",
+    "AWS::Logs::LogGroup",
+    "AWS::S3::Bucket",
+    "AWS::SecretsManager::Secret",
+    "AWS::StepFunctions::StateMachine"
+  ])
+  const expectedTags = {
+    Project: "memorag-bedrock-mvp",
+    Application: "MemoRAG",
+    Environment: "dev",
+    ManagedBy: "aws-cdk",
+    Repository: "tsuji-tomonori/rag-assist",
+    CostCenter: "memorag-mvp"
+  }
+
+  let checkedResources = 0
+  for (const [logicalId, resource] of Object.entries(template.Resources ?? {})) {
+    if (logicalId.startsWith("CustomS3AutoDeleteObjectsCustomResourceProvider")) continue
+    if (!taggableResourceTypes.has((resource as any).Type)) continue
+    assertResourceTags(logicalId, resource, expectedTags)
+    checkedResources += 1
+  }
+
+  assert.ok(checkedResources > 20, "The stack should tag the main application resources.")
+})
+
+test("allows deployment environment and cost center tag overrides", () => {
+  const template = synthesize({ deploymentEnvironment: "staging", costCenter: "rag-platform" }).toJSON()
+  const firstBucket = Object.entries(template.Resources ?? {})
+    .find(([, resource]) => (resource as any).Type === "AWS::S3::Bucket")
+
+  assert.ok(firstBucket)
+  assertResourceTags(firstBucket[0], firstBucket[1], {
+    Environment: "staging",
+    CostCenter: "rag-platform"
+  })
+})
+
+test("keeps bootstrap IAM resources aligned with the tag strategy", () => {
+  const bootstrapTemplate = readFileSync(path.join(__dirname, "../bootstrap/github-actions-oidc-role.yaml"), "utf-8")
+
+  for (const tagKey of ["Project", "Application", "Environment", "ManagedBy", "Repository", "CostCenter"]) {
+    assert.ok(
+      bootstrapTemplate.includes(`Key: ${tagKey}`),
+      `bootstrap template should include ${tagKey} tag`
+    )
+  }
 })
 
 test("does not create fixed-cost network or datastore resources", () => {
@@ -231,25 +338,22 @@ test("does not create fixed-cost network or datastore resources", () => {
 
 test("keeps CORS preflight routes unauthenticated", () => {
   const template = synthesize().toJSON()
-  const routes = Object.values(template.Resources ?? {})
-    .filter((resource: any) => resource.Type === "AWS::ApiGatewayV2::Route")
+  const methods = Object.values(template.Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::ApiGateway::Method")
     .map((resource: any) => resource.Properties)
 
-  const preflightRoutes = routes.filter((route: any) => String(route.RouteKey).startsWith("OPTIONS "))
-  assert.deepEqual(
-    preflightRoutes.map((route: any) => route.RouteKey).sort(),
-    ["OPTIONS /", "OPTIONS /{proxy+}"]
-  )
-  for (const route of preflightRoutes) {
-    assert.equal(route.AuthorizationType, "NONE")
-    assert.equal(route.AuthorizerId, undefined)
+  const preflightMethods = methods.filter((method: any) => method.HttpMethod === "OPTIONS")
+  assert.ok(preflightMethods.length >= 2)
+  for (const method of preflightMethods) {
+    assert.equal(method.AuthorizationType, "NONE")
+    assert.equal(method.AuthorizerId, undefined)
   }
 
-  const protectedRoutes = routes.filter((route: any) => String(route.RouteKey).startsWith("ANY "))
-  assert.ok(protectedRoutes.length > 0)
-  for (const route of protectedRoutes) {
-    assert.equal(route.AuthorizationType, "JWT")
-    assert.ok(route.AuthorizerId)
+  const protectedMethods = methods.filter((method: any) => method.HttpMethod !== "OPTIONS")
+  assert.ok(protectedMethods.length > 0)
+  for (const method of protectedMethods) {
+    assert.equal(method.AuthorizationType, "COGNITO_USER_POOLS")
+    assert.ok(method.AuthorizerId)
   }
 })
 
@@ -302,4 +406,24 @@ function stabilizeScalar(value: unknown): unknown {
   return value
     .replace(/asset\.[0-9a-f]{64}/g, "asset.<hash>")
     .replace(/[0-9a-f]{64}\.zip/g, "<asset-hash>.zip")
+}
+
+function assertResourceTags(logicalId: string, resource: unknown, expectedTags: Record<string, string>) {
+  const properties = (resource as any).Properties ?? {}
+  const tags = (properties.Tags ?? properties.UserPoolTags ?? []) as unknown
+  const tagMap = new Map<string, unknown>()
+
+  if (Array.isArray(tags)) {
+    for (const tag of tags) {
+      tagMap.set(String((tag as any).Key), (tag as any).Value)
+    }
+  } else if (tags && typeof tags === "object") {
+    for (const [key, value] of Object.entries(tags)) {
+      tagMap.set(key, value)
+    }
+  }
+
+  for (const [key, expectedValue] of Object.entries(expectedTags)) {
+    assert.equal(tagMap.get(key), expectedValue, `${logicalId} should have ${key}=${expectedValue}`)
+  }
 }
