@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto"
 import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
+import { hasUsableComputedFact } from "./computation.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { buildPipelineVersions } from "../rag/pipeline-versions.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
@@ -218,16 +219,18 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       state = await applyNode(state, nodes.buildTemporalContext)
       state = await applyNode(state, nodes.detectToolIntent)
 
-      if (state.toolIntent && !state.toolIntent.needsSearch) {
+      if (state.toolIntent?.canAnswerFromQuestionOnly) {
         state = await applyNode(state, nodes.executeComputationTools)
-        state = await applyNode(state, nodes.answerabilityGate)
-        if (routeAfterGate(state) === "refuse") {
-          return applyNode(state, nodes.finalizeRefusal)
+        if (hasUsableComputedFact(state.computedFacts)) {
+          state = await applyNode(state, nodes.answerabilityGate)
+          if (routeAfterGate(state) === "refuse") {
+            return applyNode(state, nodes.finalizeRefusal)
+          }
+          state = await applyNode(state, nodes.generateAnswer)
+          state = await applyNode(state, nodes.validateCitations)
+          state = await applyNode(state, nodes.verifyAnswerSupport)
+          return applyNode(state, nodes.finalizeResponse)
         }
-        state = await applyNode(state, nodes.generateAnswer)
-        state = await applyNode(state, nodes.validateCitations)
-        state = await applyNode(state, nodes.verifyAnswerSupport)
-        return applyNode(state, nodes.finalizeResponse)
       }
 
       state = await applyNode(state, nodes.normalizeQuery)
@@ -485,6 +488,8 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       reason: ""
     },
     temporalContext: undefined,
+    asOfDate: input.asOfDate,
+    asOfDateSource: input.asOfDateSource,
     toolIntent: undefined,
     computedFacts: [],
     usedComputedFactIds: [],

@@ -47,7 +47,8 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
 あなたは社内資料QAボットです。必ず以下のルールを守ってください。
 
 ルール:
-- 回答は<context>内のチャンクに明示された内容だけに基づける。
+ - 回答は<context>内のチャンク、または<computedFacts>に明示された内容だけに基づける。
+ - 文書由来の事実は<context>を根拠にし、計算由来の事実は<computedFacts>を根拠にする。
 - 日付計算、期限切れ判定、残日数、超過日数は<computedFacts>の値をそのまま使用する。
 - 金額、割合、合計、差分は<computedFacts>の値をそのまま使用する。
 - 自分で日数計算や数値計算を再実行してはいけない。

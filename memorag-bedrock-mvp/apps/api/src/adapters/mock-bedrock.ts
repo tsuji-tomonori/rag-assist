@@ -195,6 +195,7 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
     return `${fact.today}時点では、${fact.dueDate}の期限から${fact.overdueDays}日超過しています。`
   }
   if (fact.kind === "days_until") return `${fact.today}から${fact.dueDate}まではあと${fact.daysRemaining}日です。`
+  if (fact.kind === "current_date") return `今日の日付は${fact.today}です。`
   if (fact.kind === "add_days") return `期限は${fact.resultDate}です。`
   if (fact.kind === "arithmetic") return `計算結果は${fact.result}${fact.unit ?? ""}です。`
   if (fact.kind === "task_deadline_query_unavailable") return "期限切れタスクの完全な一覧は、構造化インデックスが未実装のため取得できません。"

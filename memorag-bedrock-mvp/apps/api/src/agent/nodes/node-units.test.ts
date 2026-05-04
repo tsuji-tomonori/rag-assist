@@ -165,6 +165,28 @@ test("citation validation accepts used ids and rejects invalid or ungrounded ans
     ).answerability?.reason,
     "citation_validation_failed"
   )
+
+  assert.equal(
+    (
+      await validateCitations(
+        state({
+          selectedChunks: [],
+          computedFacts: [
+            {
+              id: "date-001",
+              kind: "current_date",
+              inputFactIds: [],
+              today: "2026-05-03",
+              timezone: "Asia/Tokyo",
+              explanation: "Asia/Tokyo の基準日は 2026-05-03 です。"
+            }
+          ],
+          rawAnswer: JSON.stringify({ isAnswerable: true, answer: "今日の日付は2026-05-03です。", usedChunkIds: [], usedComputedFactIds: ["missing"] })
+        })
+      )
+    ).answerability?.reason,
+    "citation_validation_failed"
+  )
 })
 
 test("answer support verifier accepts supported answers and rejects unsupported sentences", async () => {
@@ -807,6 +829,8 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
       reason: ""
     },
     temporalContext: undefined,
+    asOfDate: undefined,
+    asOfDateSource: undefined,
     toolIntent: undefined,
     computedFacts: [],
     usedComputedFactIds: [],

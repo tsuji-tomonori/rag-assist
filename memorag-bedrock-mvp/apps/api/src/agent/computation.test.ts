@@ -35,9 +35,19 @@ test("temporal context uses question date when the question explicitly declares 
   assert.equal(context.source, "question")
 })
 
+test("temporal context uses injected asOfDate when the question does not override it", () => {
+  const context = buildTemporalContext("2026-05-10まであと何日？", new Date("2026-05-04T12:00:00.000Z"), "Asia/Tokyo", {
+    date: "2026-05-03",
+    source: "test"
+  })
+  assert.equal(context.today, "2026-05-03")
+  assert.equal(context.source, "test")
+})
+
 test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline questions without RAG topK", () => {
   assert.deepEqual(detectToolIntent("2026-05-10まであと何日？").needsTemporalCalculation, true)
   assert.equal(detectToolIntent("1,200円を15人で12か月使うといくら？").needsArithmeticCalculation, true)
+  assert.equal(detectToolIntent("今日の日付は？").canAnswerFromQuestionOnly, true)
 
   const taskList = detectToolIntent("期限切れのタスクを全部出して")
   assert.equal(taskList.needsTaskDeadlineIndex, true)
@@ -57,6 +67,22 @@ test("computation layer executes MVP temporal and arithmetic tools deterministic
   const arithmetic = executeComputationTools("1,200円を15人で12か月使うといくら？", fixedTemporalContext, detectToolIntent("1,200円を15人で12か月使うといくら？"))
   assert.equal(arithmetic[0]?.kind, "arithmetic")
   assert.equal(arithmetic[0]?.kind === "arithmetic" ? arithmetic[0].result : undefined, "216000")
+
+  const currentDate = executeComputationTools("今日の日付は？", fixedTemporalContext, detectToolIntent("今日の日付は？"))
+  assert.equal(currentDate[0]?.kind, "current_date")
+  assert.equal(currentDate[0]?.kind === "current_date" ? currentDate[0].today : undefined, "2026-05-03")
+})
+
+test("days_until past date reports overdue instead of negative remaining days", () => {
+  const result = executeComputationTools("2026年5月3日時点で、2026-05-01まであと何日？", fixedTemporalContext, detectToolIntent("2026年5月3日時点で、2026-05-01まであと何日？"))
+  assert.equal(result[0]?.kind, "deadline_status")
+  assert.equal(result[0]?.kind === "deadline_status" ? result[0].overdueDays : undefined, 2)
+})
+
+test("arithmetic extraction treats calendar year and month separately from duration", () => {
+  const result = executeComputationTools("2026年5月に、1,200円を15人で使うといくら？", fixedTemporalContext, detectToolIntent("2026年5月に、1,200円を15人で使うといくら？"))
+  assert.equal(result[0]?.kind, "arithmetic")
+  assert.equal(result[0]?.kind === "arithmetic" ? result[0].result : undefined, "18000")
 })
 
 test("computation layer reports explicit unavailable cases instead of guessing", () => {

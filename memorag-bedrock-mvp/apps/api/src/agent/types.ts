@@ -14,6 +14,8 @@ export type ChatInput = {
   debug?: boolean
   useMemory?: boolean
   maxIterations?: number
+  asOfDate?: string
+  asOfDateSource?: "benchmark" | "test"
 }
 
 export type QaGraphContext = {

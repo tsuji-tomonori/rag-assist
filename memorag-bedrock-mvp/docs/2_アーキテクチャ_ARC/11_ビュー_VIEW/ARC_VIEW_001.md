@@ -89,7 +89,7 @@ flowchart TB
 | Auth / Authorization | Cognito ID token の group から API permission を判定する。 |
 | Query Orchestrator | 検索、tool intent、deterministic computation、回答可能性判定、回答生成、引用検証、trace 記録を制御する。 |
 | Temporal Context Provider | API サーバー時刻または質問文の明示基準日から `today`、timezone、source を決定する。 |
-| Tool Intent Detector | 検索、日付計算、数値計算、全件列挙の要否を intent として判定する。 |
+| Tool Intent Detector | 検索、日付計算、数値計算、全件列挙の要否と、質問文だけで回答可能かを intent として判定する。 |
 | Hybrid Retriever | 通常チャットの evidence 検索で lexical retrieval、semantic search、RRF、ACL guard、diagnostics 生成を束ねる。 |
 | Lightweight Lexical Retriever | BM25、CJK n-gram、prefix、ASCII fuzzy、alias expansion で語句一致候補を取得する。 |
 | S3 Vectors Semantic Retriever | query embedding と metadata filter により意味検索候補を取得する。 |
@@ -124,6 +124,9 @@ sequenceDiagram
   RAG->>RAG: detect tool intent
   alt explicit computation without search
     RAG->>RAG: execute DateCalculator / Calculator
+    opt no usable computedFacts
+      RAG->>RAG: fall back to normal RAG retrieval
+    end
     RAG->>BR: generate answer with computedFacts
     BR-->>RAG: answer
     RAG->>RAG: validate computed fact support
@@ -171,6 +174,7 @@ sequenceDiagram
 - RRF と再検索を追加すると ranking の説明責任が増えるため、actionHistory と score を trace に残す必要がある。
 - hybrid retrieval を通常チャット本線へ入れると latency と trace 情報量が増えるため、retrievalDiagnostics に query 数、source 件数、version 情報を残して評価で調整する必要がある。
 - 日付・数値計算を LLM の暗算に任せると誤答や support verifier の誤判定につながるため、計算結果は `computedFacts` として回答生成前に確定し、document evidence と区別して検証する必要がある。
+- tool intent の誤判定で検索を失わないよう、compute-only path は usable `computedFacts` が得られた場合に限定し、それ以外は通常の RAG retrieval へ戻す必要がある。
 - 「全部出して」「一覧にして」の期限タスク質問を RAG topK で処理すると漏れが出るため、構造化インデックス未実装の間は完全一覧不可を明示する必要がある。
 - 通常利用者の UI が担当者一覧や debug trace 一覧を事前取得すると不要な 403 と権限過多を招くため、Cognito group に応じて取得対象を分ける必要がある。
 - self sign-up を許可すると任意メールアドレスの登録試行が増えるため、Cognito 確認コードと `CHAT_USER` のみの自動付与で初期権限を抑える必要がある。

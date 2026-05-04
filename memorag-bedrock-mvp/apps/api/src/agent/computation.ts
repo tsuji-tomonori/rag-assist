@@ -11,7 +11,12 @@ type DateCandidate = {
   isAsOf: boolean
 }
 
-export function buildTemporalContext(question: string, now = new Date(), timezone = DEFAULT_TIMEZONE): TemporalContext {
+type TemporalContextOverride = {
+  date: string
+  source: "benchmark" | "test"
+}
+
+export function buildTemporalContext(question: string, now = new Date(), timezone = DEFAULT_TIMEZONE, override?: TemporalContextOverride): TemporalContext {
   const asOf = extractDateCandidates(question).find((candidate) => candidate.isAsOf)
   if (asOf) {
     return {
@@ -19,6 +24,17 @@ export function buildTemporalContext(question: string, now = new Date(), timezon
       today: asOf.date,
       timezone,
       source: "question"
+    }
+  }
+
+  const overrideDate = override?.date ? normalizeDateText(override.date) : undefined
+  const overrideSource = override?.source
+  if (overrideDate && overrideSource) {
+    return {
+      nowIso: `${overrideDate}T00:00:00.000+09:00`,
+      today: overrideDate,
+      timezone,
+      source: overrideSource
     }
   }
 
@@ -33,18 +49,23 @@ export function buildTemporalContext(question: string, now = new Date(), timezon
 export function detectToolIntent(question: string): ToolIntent {
   const normalized = question.replace(/\s+/g, "")
   const dateCandidates = extractDateCandidates(question)
+  const asksCurrentDate = /(今日|本日|現在).*(日付|何日)|日付.*(教えて|確認|いつ)/.test(normalized)
   const asksTaskList = /(全部|一覧|全件|洗い出し|列挙).*(期限|締切|タスク)|(期限|締切).*(全部|一覧|全件|洗い出し|列挙)/.test(normalized)
   const asksTemporal =
+    asksCurrentDate ||
     asksTaskList ||
     dateCandidates.length > 0 && /(あと何日|残り何日|何日|期限切れ|期限|締切|超過|まで)/.test(normalized) ||
     /(申請から|提出から|起算).*([0-9０-９]+)日以内/.test(normalized) ||
     /営業日/.test(normalized)
   const asksArithmetic = /([0-9０-９][0-9０-９,，]*)円/.test(normalized) && /(いくら|合計|総額|計算|かかる)/.test(normalized)
   const asksAggregation = /(平均|最大|最小|件数|合計).*(全部|全件|部署|一覧)/.test(normalized)
+  const canAnswerTemporal = asksCurrentDate || asksTaskList || /営業日/.test(normalized) || canAnswerTemporalFromQuestion(question)
+  const canAnswerArithmetic = asksArithmetic && hasArithmeticInputs(normalized)
 
   if (asksTaskList) {
     return {
       needsSearch: false,
+      canAnswerFromQuestionOnly: true,
       needsArithmeticCalculation: false,
       needsAggregation: false,
       needsTemporalCalculation: true,
@@ -57,7 +78,8 @@ export function detectToolIntent(question: string): ToolIntent {
   }
 
   return {
-    needsSearch: !(asksTemporal || asksArithmetic),
+    needsSearch: !(canAnswerTemporal || canAnswerArithmetic),
+    canAnswerFromQuestionOnly: canAnswerTemporal || canAnswerArithmetic,
     needsArithmeticCalculation: asksArithmetic,
     needsAggregation: asksAggregation,
     needsTemporalCalculation: asksTemporal,
@@ -98,6 +120,14 @@ export function executeComputationTools(question: string, temporalContext: Tempo
   return facts
 }
 
+export function hasUsableComputedFact(facts: ComputedFact[]): boolean {
+  return facts.length > 0
+}
+
+export function hasUnavailableComputedFact(facts: ComputedFact[]): boolean {
+  return facts.some((fact) => fact.kind === "calculation_unavailable" || fact.kind === "task_deadline_query_unavailable")
+}
+
 export function calculateDeadlineStatus(
   dueDate: string,
   temporalContext: TemporalContext,
@@ -133,6 +163,19 @@ export function calculateDeadlineStatus(
 }
 
 function executeTemporalCalculation(question: string, temporalContext: TemporalContext, toolIntent: ToolIntent): ComputedFact[] {
+  if (toolIntent.temporalOperation === "current_date") {
+    return [
+      {
+        id: "date-current-001",
+        kind: "current_date",
+        inputFactIds: [],
+        today: temporalContext.today,
+        timezone: temporalContext.timezone,
+        explanation: `${temporalContext.timezone} の基準日は ${temporalContext.today} です。`
+      }
+    ]
+  }
+
   if (/営業日/.test(question)) {
     return [
       {
@@ -196,6 +239,7 @@ function executeTemporalCalculation(question: string, temporalContext: TemporalC
 
   if (toolIntent.temporalOperation === "days_until") {
     const daysRemaining = diffCalendarDays(temporalContext.today, dueDate)
+    if (daysRemaining < 0) return [calculateDeadlineStatus(dueDate, temporalContext)]
     return [
       {
         id: "date-001",
@@ -223,11 +267,22 @@ function executeArithmeticCalculation(question: string): ComputedFact | undefine
   if (!yen?.[1]) return undefined
   const amount = parseNumber(yen[1])
   const people = matchNumberBefore(normalized, /人/)
-  const months = matchNumberBefore(normalized, /(か月|ヶ月|月)/)
-  const years = matchNumberBefore(normalized, /年/)
+  const months = matchNumberBefore(normalized, /(か月|ヶ月|カ月)/)
+  const years = matchNumberBefore(normalized, /(年間|年契約|年利用|年分)/)
   const multipliers = [amount, people, months, years === undefined ? undefined : years * 12].filter((value): value is number => value !== undefined)
   if (multipliers.length < 2) return undefined
   const result = multipliers.reduce((product, value) => product * value, 1)
+  if (!Number.isSafeInteger(result)) {
+    return {
+      id: "calc-unavailable-001",
+      kind: "calculation_unavailable",
+      inputFactIds: [],
+      computationType: "arithmetic",
+      reason: "safe integer range を超えるため計算できません。",
+      missingInputs: [],
+      unsupportedCapabilities: ["unsafe_integer"]
+    }
+  }
   const expression = multipliers.map((value) => String(value)).join(" * ")
 
   return {
@@ -242,10 +297,24 @@ function executeArithmeticCalculation(question: string): ComputedFact | undefine
 }
 
 function inferTemporalOperation(question: string): ToolIntent["temporalOperation"] {
+  if (/(今日|本日|現在).*(日付|何日)|日付.*(教えて|確認|いつ)/.test(question)) return "current_date"
   if (/(あと何日|残り何日|まで何日|何日)/.test(question)) return "days_until"
   if (/(申請から|提出から|起算).*日以内/.test(question)) return "add_days"
   if (/(期限切れ|期限|締切|超過)/.test(question)) return "deadline_status"
   return undefined
+}
+
+function canAnswerTemporalFromQuestion(question: string): boolean {
+  if (/営業日/.test(question)) return true
+  if (parseRelativeDeadline(question)) return true
+  return extractDueDate(question) !== undefined
+}
+
+function hasArithmeticInputs(question: string): boolean {
+  if (!/([0-9０-９][0-9０-９,，]*)円/.test(question)) return false
+  return matchNumberBefore(question, /人/) !== undefined ||
+    matchNumberBefore(question, /(か月|ヶ月|カ月)/) !== undefined ||
+    matchNumberBefore(question, /(年間|年契約|年利用|年分)/) !== undefined
 }
 
 function inferTaskDeadlineCondition(question: string): Extract<ComputedFact, { kind: "task_deadline_query_unavailable" }>["condition"] {

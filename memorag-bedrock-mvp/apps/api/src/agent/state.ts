@@ -87,6 +87,8 @@ export const AnswerabilitySchema = z.object({
       "low_similarity_score",
       "missing_required_fact",
       "conflicting_evidence",
+      "calculation_unavailable",
+      "structured_index_unavailable",
       "citation_validation_failed",
       "unsupported_answer"
     ])
@@ -251,12 +253,13 @@ export const TemporalContextSchema = z.object({
 
 export const ToolIntentSchema = z.object({
   needsSearch: z.boolean().default(true),
+  canAnswerFromQuestionOnly: z.boolean().default(false),
   needsArithmeticCalculation: z.boolean().default(false),
   needsAggregation: z.boolean().default(false),
   needsTemporalCalculation: z.boolean().default(false),
   needsTaskDeadlineIndex: z.boolean().default(false),
   needsExhaustiveEnumeration: z.boolean().default(false),
-  temporalOperation: z.enum(["days_until", "deadline_status", "add_days", "recurring_deadline"]).optional(),
+  temporalOperation: z.enum(["current_date", "days_until", "deadline_status", "add_days", "recurring_deadline"]).optional(),
   arithmeticOperation: z.enum(["sum", "difference", "percentage", "price", "average"]).optional(),
   confidence: z.number().min(0).max(1).default(0),
   reason: z.string().default("")
@@ -310,6 +313,12 @@ export const ComputedFactSchema = z.discriminatedUnion("kind", [
     amount: z.number().int(),
     unit: z.enum(["calendar_day", "business_day"]),
     resultDate: z.string(),
+    explanation: z.string()
+  }),
+  ComputedFactBaseSchema.extend({
+    kind: z.literal("current_date"),
+    today: z.string(),
+    timezone: z.string(),
     explanation: z.string()
   }),
   ComputedFactBaseSchema.extend({
@@ -383,6 +392,8 @@ export const AgentStateSchema = z.object({
   }),
 
   temporalContext: TemporalContextSchema.optional(),
+  asOfDate: z.string().optional(),
+  asOfDateSource: z.enum(["benchmark", "test"]).optional(),
   toolIntent: ToolIntentSchema.optional(),
   computedFacts: z.array(ComputedFactSchema).default(() => []),
   usedComputedFactIds: z.array(z.string()).default(() => []),

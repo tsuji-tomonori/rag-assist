@@ -149,6 +149,62 @@ test("fixed workflow answers explicit temporal calculations from computed facts 
   assert.deepEqual(answerSupport?.supportingComputedFactIds, ["date-001"])
 })
 
+test("fixed workflow uses injected asOfDate for test and benchmark temporal contexts", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "2026-05-10まであと何日？",
+    asOfDate: "2026-05-03",
+    asOfDateSource: "test",
+    includeDebug: true
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /7日/)
+  const temporalStep = result.debug?.steps.find((step) => step.label === "build_temporal_context")
+  const temporalContext = temporalStep?.output?.temporalContext as Record<string, unknown> | undefined
+  assert.equal(temporalContext?.today, "2026-05-03")
+  assert.equal(temporalContext?.source, "test")
+})
+
+test("fixed workflow answers current date from temporal context", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "今日の日付は？",
+    asOfDate: "2026-05-03",
+    asOfDateSource: "test",
+    includeDebug: true
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /2026-05-03/)
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "current_date")
+})
+
+test("fixed workflow falls back to RAG when arithmetic intent has no usable computation", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "benefit.txt",
+    text: "在宅勤務手当は月額5,000円です。"
+  })
+
+  const result = await service.chat({
+    question: "5,000円の在宅勤務手当はいくらですか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /5,000円/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+})
+
 test("fixed workflow branches on evaluate_search_progress decisions", async () => {
   const service = new MemoRagService(await createTestDeps())
 
@@ -478,6 +534,8 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       reason: ""
     },
     temporalContext: undefined,
+    asOfDate: undefined,
+    asOfDateSource: undefined,
     toolIntent: undefined,
     computedFacts: [],
     usedComputedFactIds: [],
