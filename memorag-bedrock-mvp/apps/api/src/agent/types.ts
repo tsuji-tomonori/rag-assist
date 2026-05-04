@@ -32,6 +32,7 @@ export type AnswerJson = {
   isAnswerable?: boolean
   answer?: string
   usedChunkIds?: string[]
+  usedComputedFactIds?: string[]
 }
 
 export type ClueJson = {

@@ -806,6 +806,10 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
       },
       reason: ""
     },
+    temporalContext: undefined,
+    toolIntent: undefined,
+    computedFacts: [],
+    usedComputedFactIds: [],
     maxIterations: 3,
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,
@@ -830,6 +834,7 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
       supported: false,
       unsupportedSentences: [],
       supportingChunkIds: [],
+      supportingComputedFactIds: [],
       contradictionChunkIds: [],
       confidence: 0,
       totalSentences: 0,

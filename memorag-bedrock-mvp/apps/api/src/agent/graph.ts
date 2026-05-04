@@ -8,7 +8,10 @@ import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
 import type { DocumentManifest, RetrievedVector } from "../types.js"
 import { analyzeInput } from "./nodes/analyze-input.js"
 import { answerabilityGate } from "./nodes/answerability-gate.js"
+import { buildTemporalContext } from "./nodes/build-temporal-context.js"
+import { detectToolIntent } from "./nodes/detect-tool-intent.js"
 import { createEmbedQueriesNode } from "./nodes/embed-queries.js"
+import { executeComputationTools } from "./nodes/execute-computation-tools.js"
 import { finalizeRefusal } from "./nodes/finalize-refusal.js"
 import { finalizeResponse } from "./nodes/finalize-response.js"
 import { createGenerateAnswerNode } from "./nodes/generate-answer.js"
@@ -187,6 +190,8 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
 
   const nodes = {
     analyzeInput: tracedNode("analyze_input", analyzeInput),
+    buildTemporalContext: tracedNode("build_temporal_context", buildTemporalContext),
+    detectToolIntent: tracedNode("detect_tool_intent", detectToolIntent),
     normalizeQuery: tracedNode("normalize_query", normalizeQuery),
     retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps, user)),
     generateClues: tracedNode("generate_clues", createGenerateCluesNode(deps)),
@@ -195,6 +200,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     retrievalEvaluator: tracedNode("retrieval_evaluator", retrievalEvaluator),
     evaluateSearchProgress: tracedNode("evaluate_search_progress", evaluateSearchProgress),
     rerankChunks: tracedNode("rerank_chunks", rerankChunks),
+    executeComputationTools: tracedNode("execute_computation_tools", executeComputationTools),
     answerabilityGate: tracedNode("answerability_gate", answerabilityGate),
     sufficientContextGate: tracedNode("sufficient_context_gate", sufficientContextGate),
     generateAnswer: tracedNode("generate_answer", createGenerateAnswerNode(deps)),
@@ -209,6 +215,21 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       let state = initialState
 
       state = await applyNode(state, nodes.analyzeInput)
+      state = await applyNode(state, nodes.buildTemporalContext)
+      state = await applyNode(state, nodes.detectToolIntent)
+
+      if (state.toolIntent && !state.toolIntent.needsSearch) {
+        state = await applyNode(state, nodes.executeComputationTools)
+        state = await applyNode(state, nodes.answerabilityGate)
+        if (routeAfterGate(state) === "refuse") {
+          return applyNode(state, nodes.finalizeRefusal)
+        }
+        state = await applyNode(state, nodes.generateAnswer)
+        state = await applyNode(state, nodes.validateCitations)
+        state = await applyNode(state, nodes.verifyAnswerSupport)
+        return applyNode(state, nodes.finalizeResponse)
+      }
+
       state = await applyNode(state, nodes.normalizeQuery)
       state = await applyNode(state, nodes.retrieveMemory)
       state = await applyNode(state, nodes.generateClues)
@@ -225,6 +246,9 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       }
 
       state = await applyNode(state, nodes.rerankChunks)
+      if (state.toolIntent && (state.toolIntent.needsArithmeticCalculation || state.toolIntent.needsTemporalCalculation || state.toolIntent.needsAggregation || state.toolIntent.needsTaskDeadlineIndex)) {
+        state = await applyNode(state, nodes.executeComputationTools)
+      }
       state = await applyNode(state, nodes.answerabilityGate)
 
       if (routeAfterGate(state) === "refuse") {
@@ -460,6 +484,10 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       },
       reason: ""
     },
+    temporalContext: undefined,
+    toolIntent: undefined,
+    computedFacts: [],
+    usedComputedFactIds: [],
     maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,
@@ -486,6 +514,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       supported: false,
       unsupportedSentences: [],
       supportingChunkIds: [],
+      supportingComputedFactIds: [],
       contradictionChunkIds: [],
       confidence: 0,
       totalSentences: 0,

@@ -117,6 +117,7 @@ export const AnswerSupportJudgementSchema = z.object({
     )
     .default(() => []),
   supportingChunkIds: z.array(z.string()).default(() => []),
+  supportingComputedFactIds: z.array(z.string()).default(() => []),
   contradictionChunkIds: z.array(z.string()).default(() => []),
   confidence: z.number().min(0).max(1).default(0),
   totalSentences: z.number().int().min(0).default(0),
@@ -215,7 +216,7 @@ export const RetrievalEvaluationSchema = z.object({
   riskSignals: z
     .array(
       z.object({
-        type: z.enum(["value_mismatch", "explicit_conflict_cue", "temporal_status_cue"]),
+        type: z.enum(["value_mismatch", "date_mismatch", "explicit_conflict_cue", "temporal_status_cue"]),
         factId: z.string().optional(),
         chunkKeys: z.array(z.string()).default(() => []),
         values: z.array(z.string()).default(() => []),
@@ -240,6 +241,92 @@ export const RetrievalEvaluationSchema = z.object({
   }),
   reason: z.string().default("")
 })
+
+export const TemporalContextSchema = z.object({
+  nowIso: z.string(),
+  today: z.string(),
+  timezone: z.string(),
+  source: z.enum(["server", "question", "benchmark", "test"]).default("server")
+})
+
+export const ToolIntentSchema = z.object({
+  needsSearch: z.boolean().default(true),
+  needsArithmeticCalculation: z.boolean().default(false),
+  needsAggregation: z.boolean().default(false),
+  needsTemporalCalculation: z.boolean().default(false),
+  needsTaskDeadlineIndex: z.boolean().default(false),
+  needsExhaustiveEnumeration: z.boolean().default(false),
+  temporalOperation: z.enum(["days_until", "deadline_status", "add_days", "recurring_deadline"]).optional(),
+  arithmeticOperation: z.enum(["sum", "difference", "percentage", "price", "average"]).optional(),
+  confidence: z.number().min(0).max(1).default(0),
+  reason: z.string().default("")
+})
+
+const ComputedFactBaseSchema = z.object({
+  id: z.string(),
+  inputFactIds: z.array(z.string()).default(() => []),
+  sourceChunkId: z.string().optional()
+})
+
+export const ComputedFactSchema = z.discriminatedUnion("kind", [
+  ComputedFactBaseSchema.extend({
+    kind: z.literal("arithmetic"),
+    expression: z.string(),
+    result: z.string(),
+    unit: z.string().optional(),
+    explanation: z.string()
+  }),
+  ComputedFactBaseSchema.extend({
+    kind: z.literal("deadline_status"),
+    today: z.string(),
+    timezone: z.string(),
+    dueDate: z.string(),
+    daysRemaining: z.number().int().nonnegative(),
+    overdueDays: z.number().int().nonnegative(),
+    status: z.enum(["not_due", "due_today", "overdue"]),
+    rule: z.object({
+      dueTodayIsOverdue: z.boolean(),
+      unit: z.enum(["calendar_day", "business_day"])
+    }),
+    explanation: z.string()
+  }),
+  ComputedFactBaseSchema.extend({
+    kind: z.literal("days_until"),
+    today: z.string(),
+    timezone: z.string(),
+    dueDate: z.string(),
+    daysRemaining: z.number().int(),
+    rule: z.object({
+      inclusive: z.boolean(),
+      unit: z.enum(["calendar_day", "business_day"])
+    }),
+    explanation: z.string()
+  }),
+  ComputedFactBaseSchema.extend({
+    kind: z.literal("add_days"),
+    today: z.string(),
+    timezone: z.string(),
+    baseDate: z.string(),
+    amount: z.number().int(),
+    unit: z.enum(["calendar_day", "business_day"]),
+    resultDate: z.string(),
+    explanation: z.string()
+  }),
+  ComputedFactBaseSchema.extend({
+    kind: z.literal("calculation_unavailable"),
+    computationType: z.enum(["arithmetic", "temporal", "aggregation"]),
+    reason: z.string(),
+    missingInputs: z.array(z.string()).default(() => []),
+    unsupportedCapabilities: z.array(z.string()).default(() => [])
+  }),
+  ComputedFactBaseSchema.extend({
+    kind: z.literal("task_deadline_query_unavailable"),
+    today: z.string(),
+    timezone: z.string(),
+    condition: z.enum(["overdue", "due_today", "due_this_week", "unknown"]),
+    reason: z.string()
+  })
+])
 
 export const AgentStateSchema = z.object({
   runId: z.string(),
@@ -295,6 +382,11 @@ export const AgentStateSchema = z.object({
     reason: ""
   }),
 
+  temporalContext: TemporalContextSchema.optional(),
+  toolIntent: ToolIntentSchema.optional(),
+  computedFacts: z.array(ComputedFactSchema).default(() => []),
+  usedComputedFactIds: z.array(z.string()).default(() => []),
+
   maxIterations: z.number().int().min(1).max(8).default(3),
   newEvidenceCount: z.number().int().min(0).default(0),
   noNewEvidenceStreak: z.number().int().min(0).default(0),
@@ -325,6 +417,7 @@ export const AgentStateSchema = z.object({
     supported: false,
     unsupportedSentences: [],
     supportingChunkIds: [],
+    supportingComputedFactIds: [],
     contradictionChunkIds: [],
     confidence: 0,
     totalSentences: 0,
@@ -350,3 +443,6 @@ export type RetrievalRiskSignal = NonNullable<RetrievalEvaluation["riskSignals"]
 export type RetrievalLlmJudge = NonNullable<RetrievalEvaluation["llmJudge"]>
 export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
 export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>
+export type TemporalContext = z.infer<typeof TemporalContextSchema>
+export type ToolIntent = z.infer<typeof ToolIntentSchema>
+export type ComputedFact = z.infer<typeof ComputedFactSchema>

@@ -37,6 +37,8 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
     result.debug?.steps.map((step) => step.label),
     [
       "analyze_input",
+      "build_temporal_context",
+      "detect_tool_intent",
       "normalize_query",
       "retrieve_memory",
       "generate_clues",
@@ -92,6 +94,8 @@ test("fixed workflow executes nodes in the declared order", async () => {
     result.debug?.steps.map((step) => step.label),
     [
       "analyze_input",
+      "build_temporal_context",
+      "detect_tool_intent",
       "normalize_query",
       "retrieve_memory",
       "generate_clues",
@@ -108,6 +112,41 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "finalize_response"
     ]
   )
+})
+
+test("fixed workflow answers explicit temporal calculations from computed facts without retrieval", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "2026年5月3日時点で、2026-05-10まであと何日？",
+    includeDebug: true,
+    minScore: 0.05
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /あと7日|7日/)
+  assert.deepEqual(result.citations, [])
+  assert.deepEqual(
+    result.debug?.steps.map((step) => step.label),
+    [
+      "analyze_input",
+      "build_temporal_context",
+      "detect_tool_intent",
+      "execute_computation_tools",
+      "answerability_gate",
+      "generate_answer",
+      "validate_citations",
+      "verify_answer_support",
+      "finalize_response"
+    ]
+  )
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "days_until")
+  assert.equal(computedFacts?.[0]?.daysRemaining, 7)
+  const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
+  const answerSupport = supportStep?.output?.answerSupport as Record<string, unknown> | undefined
+  assert.deepEqual(answerSupport?.supportingComputedFactIds, ["date-001"])
 })
 
 test("fixed workflow branches on evaluate_search_progress decisions", async () => {
@@ -438,6 +477,10 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       },
       reason: ""
     },
+    temporalContext: undefined,
+    toolIntent: undefined,
+    computedFacts: [],
+    usedComputedFactIds: [],
     maxIterations: 3,
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,
@@ -463,6 +506,7 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       supported: false,
       unsupportedSentences: [],
       supportingChunkIds: [],
+      supportingComputedFactIds: [],
       contradictionChunkIds: [],
       confidence: 0,
       totalSentences: 0,

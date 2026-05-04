@@ -1,4 +1,5 @@
 import type { RetrievedVector } from "../types.js"
+import type { ComputedFact, TemporalContext } from "../agent/state.js"
 import { assembleContext, formatContextXml } from "./context-assembler.js"
 
 export function buildMemoryCardPrompt(fileName: string, text: string): string {
@@ -36,33 +37,48 @@ ${memoryContext || "メモリは見つかりませんでした。"}
 </memory>`
 }
 
-export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector[]): string {
+export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector[], computedFacts: ComputedFact[] = [], temporalContext?: TemporalContext): string {
   const assembly = assembleContext({ question, chunks, tokenBudget: 3000 })
   const context = formatContextXml(assembly)
+  const computedFactsJson = JSON.stringify(computedFacts, null, 2)
+  const temporalContextJson = JSON.stringify(temporalContext ?? null, null, 2)
 
   return `FINAL_ANSWER_JSON
 あなたは社内資料QAボットです。必ず以下のルールを守ってください。
 
 ルール:
 - 回答は<context>内のチャンクに明示された内容だけに基づける。
+- 日付計算、期限切れ判定、残日数、超過日数は<computedFacts>の値をそのまま使用する。
+- 金額、割合、合計、差分は<computedFacts>の値をそのまま使用する。
+- 自分で日数計算や数値計算を再実行してはいけない。
+- computedFacts に必要な値がない場合は、推測で補完せず、計算できない理由を説明する。
+- computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
-- 資料から判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
+- <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
 - 回答できる場合は isAnswerable=true とし、簡潔に日本語で回答する。
 - 質問が分類、一覧、洗い出しを求める場合は、<context>内に明示された分類項目を漏れなく列挙し、目次、章名、活動名、参考文献名を分類項目として混ぜない。
 - 要求獲得、要求分析、要求妥当性確認、要求管理、文書化、優先順位付け、追跡可能性、変更管理は要求活動や実務上の考慮であり、<context>に分類として明示されていない限り分類項目にしない。
 - usedChunkIds には根拠に使ったchunk idを入れる。
+- usedComputedFactIds には根拠に使った computed fact id を入れる。
 - 出力はJSONのみ。Markdownやコードフェンスは禁止。
 
 JSON schema:
 {
   "isAnswerable": true,
   "answer": "資料だけに基づく回答",
-  "usedChunkIds": ["retrieved chunk id from <chunk id=...>"]
+  "usedChunkIds": ["retrieved chunk id from <chunk id=...>"],
+  "usedComputedFactIds": ["computed fact id from <computedFacts>"]
 }
 
 <question>
 ${question}
 </question>
+<temporalContext>
+${escapeXml(temporalContextJson)}
+</temporalContext>
+<computedFacts>
+${escapeXml(computedFactsJson)}
+</computedFacts>
 <context>
 ${context}
 </context>`
@@ -108,26 +124,30 @@ ${context || "根拠チャンクはありません。"}
 </context>`
 }
 
-export function buildAnswerSupportPrompt(question: string, answer: string, chunks: RetrievedVector[]): string {
+export function buildAnswerSupportPrompt(question: string, answer: string, chunks: RetrievedVector[], computedFacts: ComputedFact[] = []): string {
   const assembly = assembleContext({ question, chunks, tokenBudget: 2400 })
   const context = formatContextXml(assembly)
+  const computedFactsJson = JSON.stringify(computedFacts, null, 2)
 
   return `ANSWER_SUPPORT_JSON
-あなたは社内QA用RAGの回答支持検証器です。<answer>の各文が<context>内のevidence chunkだけで明示的に支持されるかを厳密に判定してください。
+あなたは社内QA用RAGの回答支持検証器です。<answer>の各文が<context>内のevidence chunkまたは<computedFacts>で明示的に支持されるかを厳密に判定してください。
 出力はJSONのみ。Markdownや説明文は禁止。
 
 判定ルール:
 - supportingChunkIds と contradictionChunkIds には <chunk id="..."> の id だけを入れる。
+- supportingComputedFactIds には <computedFacts> の id だけを入れる。
 - memory card、一般知識、推測、質問文そのものは根拠にしない。
-- 数値、期限、手順、条件、承認者、例外条件は特に厳しく見る。
+- 数値、期限、残日数、超過日数、手順、条件、承認者、例外条件は特に厳しく見る。
+- 計算結果の主張は、文書チャンクではなく computedFacts に対応する値がある場合に支持されたものとして扱う。
 - 引用チャンクに書かれていない断定文、範囲外の要約、過度な一般化は unsupportedSentences に入れる。
-- すべての実質的な回答文が evidence chunk で支持される場合だけ supported=true にする。
+- すべての実質的な回答文が evidence chunk または computedFacts で支持される場合だけ supported=true にする。
 
 JSON schema:
 {
   "supported": true,
   "unsupportedSentences": [{"sentence": "根拠で支持されない回答文", "reason": "不支持理由"}],
   "supportingChunkIds": ["retrieved chunk id from <chunk id=...>"],
+  "supportingComputedFactIds": ["computed fact id from <computedFacts>"],
   "contradictionChunkIds": ["retrieved chunk id from <chunk id=...>"],
   "confidence": 0.0,
   "totalSentences": 0,
@@ -140,6 +160,9 @@ ${question}
 <answer>
 ${escapeXml(answer)}
 </answer>
+<computedFacts>
+${escapeXml(computedFactsJson)}
+</computedFacts>
 <context>
 ${context || "根拠チャンクはありません。"}
 </context>`
