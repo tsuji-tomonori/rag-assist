@@ -262,6 +262,27 @@ test("fixed workflow falls back to RAG when arithmetic intent has no usable comp
   assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
 })
 
+test("fixed workflow sends document-source arithmetic verification questions to RAG", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "pricing-note.txt",
+    text: "この資料では、1,200円を15人で12か月使う場合の総額は記載していません。"
+  })
+
+  const result = await service.chat({
+    question: "この資料では1,200円を15人で12か月使うと総額いくらと記載されていますか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
 test("fixed workflow sends business-day document questions to RAG instead of compute-only unavailable", async () => {
   const service = new MemoRagService(await createTestDeps())
 

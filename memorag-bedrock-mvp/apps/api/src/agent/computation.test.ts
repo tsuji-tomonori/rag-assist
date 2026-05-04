@@ -57,6 +57,10 @@ test("temporal context rejects invalid injected asOfDate instead of silently fal
 test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline questions without RAG topK", () => {
   assert.deepEqual(detectToolIntent("2026-05-10まであと何日？").needsTemporalCalculation, true)
   assert.equal(detectToolIntent("1,200円を15人で12か月使うといくら？").needsArithmeticCalculation, true)
+  assert.equal(detectToolIntent("1,200円を15人で12か月使うといくら？").canAnswerFromQuestionOnly, true)
+  assert.equal(detectToolIntent("この資料では1,200円を15人で12か月使うと総額いくらと記載されていますか？").canAnswerFromQuestionOnly, false)
+  assert.equal(detectToolIntent("この資料では1,200円を15人で12か月使うと総額いくらと記載されていますか？").needsSearch, true)
+  assert.equal(detectToolIntent("この契約書では1,200円を15人で12か月使うと216,000円で合っていますか？").needsSearch, true)
   assert.equal(detectToolIntent("今日の日付は？").canAnswerFromQuestionOnly, true)
   assert.equal(detectToolIntent("今日の日付は何日ですか？").canAnswerFromQuestionOnly, true)
   assert.equal(detectToolIntent("今日の日付は何日ですか？").needsTemporalCalculation, true)

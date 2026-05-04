@@ -65,7 +65,9 @@ export function detectToolIntent(question: string): ToolIntent {
     asksDateComputation ||
     asksRelativeDeadlineCalculation ||
     asksBusinessDayCalculation
-  const asksArithmetic = /([0-9０-９][0-9０-９,，]*)円/.test(normalized) && /(いくら|合計|総額|計算|かかる)/.test(normalized)
+  const asksArithmetic = !asksDocumentVerification &&
+    /([0-9０-９][0-9０-９,，]*)円/.test(normalized) &&
+    /(いくら|合計|総額|計算|かかる)/.test(normalized)
   const asksAggregation = /(平均|最大|最小|件数|合計).*(全部|全件|部署|一覧)/.test(normalized)
   const canAnswerTemporal =
     asksCurrentDate ||
