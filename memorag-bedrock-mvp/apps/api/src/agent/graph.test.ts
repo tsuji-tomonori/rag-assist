@@ -326,6 +326,27 @@ test("fixed workflow sends document date verification questions to RAG instead o
   assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
 })
 
+test("fixed workflow sends document-source deadline status questions to RAG", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "policy.txt",
+    text: "この資料では、2026年5月1日の期限切れ判定は記載していません。"
+  })
+
+  const result = await service.chat({
+    question: "この資料では2026-05-01期限切れと記載されていますか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
 test("fixed workflow branches on evaluate_search_progress decisions", async () => {
   const service = new MemoRagService(await createTestDeps())
 

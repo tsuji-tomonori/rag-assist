@@ -55,8 +55,8 @@ export function detectToolIntent(question: string): ToolIntent {
   const asksDocumentVerification = isDocumentVerificationQuestion(normalized)
   const asksCurrentDate = isCurrentDateRequest(normalized)
   const asksTaskList = /(全部|一覧|全件|洗い出し|列挙).*(期限|締切|タスク)|(期限|締切).*(全部|一覧|全件|洗い出し|列挙)/.test(normalized)
-  const asksBusinessDayCalculation = isBusinessDayCalculationRequest(normalized)
-  const asksDateComputation = dateCandidates.length > 0 && isDateComputationRequest(normalized)
+  const asksBusinessDayCalculation = !asksDocumentVerification && isBusinessDayCalculationRequest(normalized)
+  const asksDateComputation = !asksDocumentVerification && dateCandidates.length > 0 && isDateComputationRequest(normalized)
   const relativeDeadline = parseRelativeDeadline(normalized)
   const asksRelativeDeadlineCalculation = relativeDeadline !== undefined && !asksDocumentVerification && isRelativeDeadlineCalculationRequest(normalized)
   const asksTemporal =
