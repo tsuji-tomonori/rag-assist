@@ -62,6 +62,8 @@ test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline 
   assert.equal(detectToolIntent("在宅勤務手当の申請期限は何営業日ですか？").needsSearch, true)
   assert.equal(detectToolIntent("経費精算の期限は2026-05-10ですか？").canAnswerFromQuestionOnly, false)
   assert.equal(detectToolIntent("経費精算の期限は2026-05-10ですか？").needsSearch, true)
+  assert.equal(detectToolIntent("経費精算の期限は申請から30日以内ですか？").canAnswerFromQuestionOnly, false)
+  assert.equal(detectToolIntent("経費精算の期限は申請から30日以内ですか？").needsSearch, true)
   assert.equal(detectToolIntent("2026-05-01期限は期限切れですか？").canAnswerFromQuestionOnly, true)
 
   const taskList = detectToolIntent("期限切れのタスクを全部出して")
