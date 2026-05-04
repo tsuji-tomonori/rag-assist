@@ -167,6 +167,34 @@ test("fixed workflow uses injected asOfDate for test and benchmark temporal cont
   assert.equal(temporalContext?.source, "test")
 })
 
+test("fixed workflow fails fast for invalid injected asOfDate before retrieval", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "remote-work-policy.txt",
+    text: "在宅勤務手当の申請期限は翌月5営業日までです。"
+  })
+
+  const result = await service.chat({
+    question: "在宅勤務手当の申請期限はいつですか？",
+    asOfDate: "2026-99-99",
+    asOfDateSource: "test",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, false)
+  assert.equal(result.answer, "資料からは回答できません。")
+  assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_search_action"), false)
+  const temporalStep = result.debug?.steps.find((step) => step.label === "build_temporal_context")
+  assert.equal(temporalStep?.status, "error")
+  assert.match(temporalStep?.detail ?? "", /Invalid asOfDate/)
+  const answerability = temporalStep?.output?.answerability as Record<string, unknown> | undefined
+  assert.equal(answerability?.reason, "invalid_temporal_context")
+})
+
 test("fixed workflow answers current date from temporal context", async () => {
   const service = new MemoRagService(await createTestDeps())
 

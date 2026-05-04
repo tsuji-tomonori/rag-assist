@@ -217,6 +217,9 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
 
       state = await applyNode(state, nodes.analyzeInput)
       state = await applyNode(state, nodes.buildTemporalContext)
+      if (state.answerability.reason === "invalid_temporal_context") {
+        return applyNode(state, nodes.finalizeRefusal)
+      }
       state = await applyNode(state, nodes.detectToolIntent)
 
       if (state.toolIntent?.canAnswerFromQuestionOnly) {

@@ -31,10 +31,11 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
       }
     } catch (error) {
       const completedAt = new Date()
+      const reason = inferErrorAnswerabilityReason(label)
       return {
         answerability: {
           isAnswerable: false,
-          reason: "citation_validation_failed",
+          reason,
           confidence: 0
         },
         answer: NO_ANSWER,
@@ -51,7 +52,7 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
           output: {
             answerability: {
               isAnswerable: false,
-              reason: "citation_validation_failed",
+              reason,
               confidence: 0
             },
             answer: NO_ANSWER,
@@ -62,6 +63,11 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
       }
     }
   }
+}
+
+function inferErrorAnswerabilityReason(label: string): "invalid_temporal_context" | "citation_validation_failed" {
+  if (label === "build_temporal_context") return "invalid_temporal_context"
+  return "citation_validation_failed"
 }
 
 function buildStep(input: {

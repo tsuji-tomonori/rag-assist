@@ -89,6 +89,7 @@ export const AnswerabilitySchema = z.object({
       "conflicting_evidence",
       "calculation_unavailable",
       "structured_index_unavailable",
+      "invalid_temporal_context",
       "citation_validation_failed",
       "unsupported_answer"
     ])
