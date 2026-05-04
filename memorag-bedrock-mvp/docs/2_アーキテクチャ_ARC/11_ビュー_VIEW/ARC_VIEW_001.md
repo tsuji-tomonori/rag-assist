@@ -204,6 +204,7 @@ sequenceDiagram
 | S3 Benchmark Artifacts | benchmark dataset、results、summary、report の保存 |
 | DynamoDB | human question、conversation history、benchmark run、監査、利用状況 |
 | Step Functions / CodeBuild | 非同期 benchmark run orchestration と runner 実行 |
+| AWS KMS | CodeBuild project artifact 暗号化設定用の customer managed key |
 | Secrets Manager | benchmark runner service user credential の管理 |
 | CloudWatch Logs | API、runner、Lambda の運用ログ |
 

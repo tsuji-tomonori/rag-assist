@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
@@ -28,18 +28,41 @@ export function AssistantAnswer({
   const clarification = message.result?.clarification
   const isClarification = message.result?.responseType === "clarification" || message.result?.needsClarification === true
   const [copyStatus, setCopyStatus] = useState<"idle" | "answer" | "error">("idle")
+  const resetTimerRef = useRef<number | null>(null)
+  const mountedRef = useRef(true)
   const canCopyAnswer = Boolean(message.text.trim())
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+      if (resetTimerRef.current !== null) {
+        window.clearTimeout(resetTimerRef.current)
+        resetTimerRef.current = null
+      }
+    }
+  }, [])
+
+  function scheduleCopyStatusReset() {
+    if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
+    resetTimerRef.current = window.setTimeout(() => {
+      setCopyStatus("idle")
+      resetTimerRef.current = null
+    }, 1800)
+  }
 
   async function copyText(value: string) {
     if (!value.trim()) return
     try {
       await navigator.clipboard.writeText(value)
+      if (!mountedRef.current) return
       setCopyStatus("answer")
-      window.setTimeout(() => setCopyStatus("idle"), 1800)
+      scheduleCopyStatusReset()
     } catch (err) {
+      if (!mountedRef.current) return
       console.warn("Failed to copy text", err)
       setCopyStatus("error")
-      window.setTimeout(() => setCopyStatus("idle"), 1800)
+      scheduleCopyStatusReset()
     }
   }
 

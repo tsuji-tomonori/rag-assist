@@ -96,6 +96,7 @@ flowchart TB
 | S3 Benchmark Artifacts | dataset、results、summary、report 保存 | benchmark 成果物の保存または取得失敗として扱う |
 | Step Functions | 非同期 benchmark run orchestration | benchmark run を失敗または保留として扱う |
 | CodeBuild | benchmark runner 実行 | runner 実行失敗として run status と logs に残す |
+| AWS KMS | CodeBuild project artifact 暗号化設定用の customer managed key | 暗号化設定不備として扱い、CodeBuild project の artifact 暗号化設定を再評価する |
 | Secrets Manager | benchmark runner service user credential | benchmark runner 起動を拒否し、credential をログへ出さない |
 | CloudWatch Logs | API、runner、Lambda の運用ログ | 調査性低下として扱い、API 応答の根拠には使わない |
 | API Gateway | API 公開 | 呼び出し失敗としてクライアントへ返す |

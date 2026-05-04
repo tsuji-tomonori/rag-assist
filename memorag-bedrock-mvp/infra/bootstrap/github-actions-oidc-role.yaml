@@ -43,6 +43,17 @@ Resources:
           Value: github-actions-oidc
         - Key: Project
           Value: memorag-bedrock-mvp
+        - Key: Application
+          Value: MemoRAG
+        - Key: Environment
+          Value:
+            Ref: GitHubEnvironment
+        - Key: ManagedBy
+          Value: cloudformation
+        - Key: Repository
+          Value: tsuji-tomonori/rag-assist
+        - Key: CostCenter
+          Value: memorag-mvp
 
   GitHubActionsDeployRole:
     Type: AWS::IAM::Role
@@ -72,10 +83,22 @@ Resources:
                 token.actions.githubusercontent.com:sub:
                   Fn::Sub: repo:tsuji-tomonori/rag-assist:environment:${GitHubEnvironment}
       Tags:
+        - Key: Name
+          Value:
+            Ref: DeployRoleName
         - Key: Project
           Value: memorag-bedrock-mvp
+        - Key: Application
+          Value: MemoRAG
+        - Key: Environment
+          Value:
+            Ref: GitHubEnvironment
         - Key: ManagedBy
           Value: cloudformation
+        - Key: Repository
+          Value: tsuji-tomonori/rag-assist
+        - Key: CostCenter
+          Value: memorag-mvp
 
 Outputs:
   GitHubOidcProviderArn:
