@@ -16,6 +16,7 @@ type DatasetRow = {
   expectedClarification?: boolean
   expectedMissingSlots?: string[]
   expectedOptionsAnyOf?: string[]
+  followUp?: FollowUpExpectation
   answerable?: boolean
   complexity?: "simple" | "multi_hop" | "comparison" | "procedure" | "ambiguous" | "out_of_scope"
   unanswerableType?: "missing_fact" | "out_of_scope" | "ambiguous" | "conflicting" | string
@@ -32,6 +33,19 @@ type DatasetRow = {
   minScore?: number
   strictGrounded?: boolean
   useMemory?: boolean
+}
+
+type FollowUpExpectation = {
+  selectedOptionId?: string
+  selectedOptionLabel?: string
+  selectedResolvedQuery?: string
+  expectedResponseType?: "answer" | "refusal"
+  expectedContains?: string | string[]
+  expectedRegex?: string | string[]
+  answerable?: boolean
+  expectedFiles?: string[]
+  expectedFileNames?: string[]
+  expectedDocumentIds?: string[]
 }
 
 type ExpectedFactSlot = {
@@ -61,6 +75,7 @@ type BenchmarkResponse = {
     reason?: string
     question?: string
     options?: Array<{
+      id?: string
       label?: string
       resolvedQuery?: string
       source?: string
@@ -84,6 +99,8 @@ type BenchmarkResponse = {
   error?: string
 }
 
+type ClarificationResponseOption = NonNullable<NonNullable<BenchmarkResponse["clarification"]>["options"]>[number]
+
 type RowEvaluation = {
   expectedAnswerable: boolean
   actualAnswerable: boolean
@@ -93,6 +110,7 @@ type RowEvaluation = {
   responseTypeCorrect: boolean
   clarificationNeededCorrect: boolean | null
   optionHit: boolean | null
+  missingSlotHit: boolean | null
   corpusGroundedOptions: boolean | null
   postClarificationAnswerCorrect: boolean | null
   answerContainsExpected: boolean | null
@@ -136,6 +154,14 @@ type BenchmarkResultRow = {
   complexity?: string
   unanswerableType?: string
   expectedFactSlots?: ExpectedFactSlot[]
+  followUp?: {
+    status: number
+    latencyMs: number
+    selectedOptionId?: string
+    selectedOptionLabel?: string
+    selectedResolvedQuery?: string
+    result: BenchmarkResponse
+  }
   status: number
   latencyMs: number
   evaluation: RowEvaluation
@@ -160,6 +186,7 @@ type Summary = {
     clarificationNeedRecall: number | null
     clarificationNeedF1: number | null
     optionHitRate: number | null
+    missingSlotHitRate: number | null
     corpusGroundedOptionRate: number | null
     postClarificationAccuracy: number | null
     overClarificationRate: number | null
@@ -228,6 +255,7 @@ for await (const line of rl) {
   const row = JSON.parse(line) as DatasetRow
   const startedAt = Date.now()
   const { status, body } = await runQuery(row)
+  const followUp = await runFollowUp(row, body)
   const result: BenchmarkResultRow = {
     id: row.id,
     question: row.question,
@@ -239,9 +267,10 @@ for await (const line of rl) {
     complexity: row.complexity,
     unanswerableType: row.unanswerableType,
     expectedFactSlots: row.expectedFactSlots,
+    followUp,
     status,
     latencyMs: Date.now() - startedAt,
-    evaluation: evaluateRow(row, body, status),
+    evaluation: evaluateRow(row, body, status, followUp),
     result: body
   }
   out.write(`${JSON.stringify(result)}\n`)
@@ -259,21 +288,91 @@ console.log(`Wrote benchmark summary to ${summaryPath}`)
 console.log(`Wrote benchmark report to ${reportPath}`)
 
 async function runQuery(row: DatasetRow): Promise<{ status: number; body: BenchmarkResponse }> {
+  return runQueryRequest({
+    id: row.id,
+    question: row.question,
+    modelId: row.modelId ?? defaultModelId,
+    embeddingModelId: row.embeddingModelId,
+    clueModelId: row.clueModelId,
+    topK: row.topK,
+    memoryTopK: row.memoryTopK,
+    minScore: row.minScore,
+    strictGrounded: row.strictGrounded,
+    useMemory: row.useMemory
+  })
+}
+
+async function runFollowUp(
+  row: DatasetRow,
+  body: BenchmarkResponse
+): Promise<BenchmarkResultRow["followUp"] | undefined> {
+  if (!row.followUp || inferActualResponseType(body) !== "clarification") return undefined
+  const option = selectFollowUpOption(body, row.followUp)
+  const question = row.followUp.selectedResolvedQuery ?? option?.resolvedQuery
+  if (!question?.trim()) return undefined
+
+  const startedAt = Date.now()
+  const { status, body: followUpBody } = await runQueryRequest({
+    id: row.id ? `${row.id}:follow-up` : undefined,
+    question,
+    modelId: row.modelId ?? defaultModelId,
+    embeddingModelId: row.embeddingModelId,
+    clueModelId: row.clueModelId,
+    topK: row.topK,
+    memoryTopK: row.memoryTopK,
+    minScore: row.minScore,
+    strictGrounded: row.strictGrounded,
+    useMemory: row.useMemory,
+    clarificationContext: {
+      originalQuestion: row.question,
+      selectedOptionId: option?.id ?? row.followUp.selectedOptionId,
+      selectedValue: option?.label ?? row.followUp.selectedOptionLabel
+    }
+  })
+
+  return {
+    status,
+    latencyMs: Date.now() - startedAt,
+    selectedOptionId: option?.id ?? row.followUp.selectedOptionId,
+    selectedOptionLabel: option?.label ?? row.followUp.selectedOptionLabel,
+    selectedResolvedQuery: question,
+    result: followUpBody
+  }
+}
+
+async function runQueryRequest(input: {
+  id?: string
+  question: string
+  modelId?: string
+  embeddingModelId?: string
+  clueModelId?: string
+  topK?: number
+  memoryTopK?: number
+  minScore?: number
+  strictGrounded?: boolean
+  useMemory?: boolean
+  clarificationContext?: {
+    originalQuestion?: string
+    selectedOptionId?: string
+    selectedValue?: string
+  }
+}): Promise<{ status: number; body: BenchmarkResponse }> {
   try {
     const response = await fetch(`${apiBaseUrl}/benchmark/query`, {
       method: "POST",
       headers: createRequestHeaders(),
       body: JSON.stringify({
-        id: row.id,
-        question: row.question,
-        modelId: row.modelId ?? defaultModelId,
-        embeddingModelId: row.embeddingModelId,
-        clueModelId: row.clueModelId,
-        topK: row.topK,
-        memoryTopK: row.memoryTopK,
-        minScore: row.minScore,
-        strictGrounded: row.strictGrounded,
-        useMemory: row.useMemory,
+        id: input.id,
+        question: input.question,
+        clarificationContext: input.clarificationContext,
+        modelId: input.modelId ?? defaultModelId,
+        embeddingModelId: input.embeddingModelId,
+        clueModelId: input.clueModelId,
+        topK: input.topK,
+        memoryTopK: input.memoryTopK,
+        minScore: input.minScore,
+        strictGrounded: input.strictGrounded,
+        useMemory: input.useMemory,
         includeDebug: true
       })
     })
@@ -290,6 +389,19 @@ async function runQuery(row: DatasetRow): Promise<{ status: number; body: Benchm
   }
 }
 
+function selectFollowUpOption(
+  body: BenchmarkResponse,
+  followUp: FollowUpExpectation
+): ClarificationResponseOption | undefined {
+  const options = body.clarification?.options ?? []
+  if (followUp.selectedOptionId) return options.find((option) => option.id === followUp.selectedOptionId)
+  if (followUp.selectedOptionLabel) {
+    const expected = normalize(followUp.selectedOptionLabel)
+    return options.find((option) => normalize(option.label ?? "").includes(expected))
+  }
+  return options[0]
+}
+
 function createRequestHeaders(): Record<string, string> {
   return {
     "Content-Type": "application/json",
@@ -297,7 +409,12 @@ function createRequestHeaders(): Record<string, string> {
   }
 }
 
-function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): RowEvaluation {
+function evaluateRow(
+  row: DatasetRow,
+  body: BenchmarkResponse,
+  status: number,
+  followUp: BenchmarkResultRow["followUp"]
+): RowEvaluation {
   const expectedAnswerable = inferExpectedAnswerable(row)
   const actualAnswerable = Boolean(body.isAnswerable)
   const expectedResponseType = inferExpectedResponseType(row, expectedAnswerable)
@@ -330,16 +447,22 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
       : null
   if (optionHit === false) failureReasons.push("clarification_option_miss")
 
+  const actualMissingSlots = body.clarification?.missingSlots ?? []
+  const missingSlotHit =
+    row.expectedMissingSlots && row.expectedMissingSlots.length > 0
+      ? row.expectedMissingSlots.every((expected) =>
+          actualMissingSlots.some((actual) => normalize(actual).includes(normalize(expected)))
+        )
+      : null
+  if (missingSlotHit === false) failureReasons.push("clarification_missing_slot_miss")
+
   const corpusGroundedOptions =
     actualClarification && (body.clarification?.options?.length ?? 0) > 0
       ? body.clarification?.options?.every((option) => (option.grounding?.length ?? 0) > 0 && ["memory", "evidence", "aspect", "history"].includes(option.source ?? "")) ?? false
       : null
   if (corpusGroundedOptions === false) failureReasons.push("clarification_option_not_grounded")
 
-  const postClarificationAnswerCorrect =
-    row.expectedResponseType === "answer" && row.complexity === "ambiguous"
-      ? answerabilityCorrect && actualAnswerable && status >= 200 && status < 300
-      : null
+  const postClarificationAnswerCorrect = evaluateFollowUp(row.followUp, followUp, failureReasons)
 
   const answerContainsExpected =
     expectedAnswerable && expectedContains.length > 0
@@ -407,6 +530,7 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
     responseTypeCorrect,
     clarificationNeededCorrect,
     optionHit,
+    missingSlotHit,
     corpusGroundedOptions,
     postClarificationAnswerCorrect,
     answerContainsExpected,
@@ -440,6 +564,53 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
   }
 }
 
+function evaluateFollowUp(
+  expected: FollowUpExpectation | undefined,
+  followUp: BenchmarkResultRow["followUp"],
+  failureReasons: string[]
+): boolean | null {
+  if (!expected) return null
+  if (!followUp) {
+    failureReasons.push("post_clarification_follow_up_not_run")
+    return false
+  }
+
+  const body = followUp.result
+  const expectedAnswerable = expected.answerable ?? expected.expectedResponseType !== "refusal"
+  const actualResponseType = inferActualResponseType(body)
+  const expectedResponseType = expected.expectedResponseType ?? (expectedAnswerable ? "answer" : "refusal")
+  const responseTypeCorrect = actualResponseType === expectedResponseType
+  const answer = body.answer ?? ""
+  const expectedContains = toArray(expected.expectedContains)
+  const expectedRegex = toArray(expected.expectedRegex)
+  const expectedFiles = toArray(expected.expectedFiles ?? expected.expectedFileNames)
+  const expectedDocumentIds = toArray(expected.expectedDocumentIds)
+  const citations = body.citations ?? []
+  const retrieved = body.retrieved ?? []
+  const containsCorrect =
+    expectedAnswerable && expectedContains.length > 0
+      ? expectedContains.every((item) => normalize(answer).includes(normalize(item)))
+      : true
+  const regexCorrect =
+    expectedAnswerable && expectedRegex.length > 0
+      ? expectedRegex.every((pattern) => safeRegexTest(pattern, answer))
+      : true
+  const fileHit =
+    expectedFiles.length > 0 || expectedDocumentIds.length > 0
+      ? hasRetrievalRecallAt20([...citations, ...retrieved], expectedFiles, expectedDocumentIds)
+      : true
+  const httpOk = followUp.status >= 200 && followUp.status < 300
+  const passed = httpOk && responseTypeCorrect && containsCorrect && regexCorrect && fileHit
+
+  if (!httpOk) failureReasons.push(`post_clarification_http_${followUp.status}`)
+  if (!responseTypeCorrect) failureReasons.push(`post_clarification_expected_${expectedResponseType}_but_${actualResponseType}`)
+  if (!containsCorrect) failureReasons.push("post_clarification_answer_missing_expected_text")
+  if (!regexCorrect) failureReasons.push("post_clarification_answer_regex_mismatch")
+  if (!fileHit) failureReasons.push("post_clarification_expected_file_not_hit")
+
+  return passed
+}
+
 function summarize(results: BenchmarkResultRow[]): Summary {
   const answerableRows = results.filter((row) => row.evaluation.expectedAnswerable)
   const unanswerableRows = results.filter((row) => !row.evaluation.expectedAnswerable)
@@ -447,6 +618,7 @@ function summarize(results: BenchmarkResultRow[]): Summary {
   const clarificationActualRows = results.filter((row) => row.evaluation.actualResponseType === "clarification")
   const clearAnswerRows = results.filter((row) => row.evaluation.expectedResponseType === "answer")
   const optionHitRows = results.filter((row) => row.evaluation.optionHit !== null)
+  const missingSlotRows = results.filter((row) => row.evaluation.missingSlotHit !== null)
   const groundedOptionRows = results.filter((row) => row.evaluation.corpusGroundedOptions !== null)
   const postClarificationRows = results.filter((row) => row.evaluation.postClarificationAnswerCorrect !== null)
   const latencies = results.map((row) => row.latencyMs).sort((a, b) => a - b)
@@ -503,6 +675,10 @@ function summarize(results: BenchmarkResultRow[]): Summary {
         )
       ),
       optionHitRate: rate(optionHitRows.filter((row) => row.evaluation.optionHit === true).length, optionHitRows.length),
+      missingSlotHitRate: rate(
+        missingSlotRows.filter((row) => row.evaluation.missingSlotHit === true).length,
+        missingSlotRows.length
+      ),
       corpusGroundedOptionRate: rate(
         groundedOptionRows.filter((row) => row.evaluation.corpusGroundedOptions === true).length,
         groundedOptionRows.length
@@ -623,6 +799,7 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
     ["clarification_need_recall", formatRate(summary.metrics.clarificationNeedRecall)],
     ["clarification_need_f1", formatRate(summary.metrics.clarificationNeedF1)],
     ["option_hit_rate", formatRate(summary.metrics.optionHitRate)],
+    ["missing_slot_hit_rate", formatRate(summary.metrics.missingSlotHitRate)],
     ["corpus_grounded_option_rate", formatRate(summary.metrics.corpusGroundedOptionRate)],
     ["post_clarification_accuracy", formatRate(summary.metrics.postClarificationAccuracy)],
     ["over_clarification_rate", formatRate(summary.metrics.overClarificationRate)],
@@ -1013,6 +1190,7 @@ function formatClarificationSummary(evaluation: RowEvaluation): string {
     [
       `need=${evaluation.clarificationNeededCorrect === null ? "n/a" : evaluation.clarificationNeededCorrect ? "ok" : "ng"}`,
       `option=${evaluation.optionHit === null ? "n/a" : evaluation.optionHit ? "hit" : "miss"}`,
+      `slot=${evaluation.missingSlotHit === null ? "n/a" : evaluation.missingSlotHit ? "hit" : "miss"}`,
       `grounded=${evaluation.corpusGroundedOptions === null ? "n/a" : evaluation.corpusGroundedOptions ? "yes" : "no"}`
     ].join(", ")
   )

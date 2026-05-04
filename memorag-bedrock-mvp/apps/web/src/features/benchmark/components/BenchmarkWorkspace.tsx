@@ -62,6 +62,7 @@ export function BenchmarkWorkspace({
         />
         <BenchmarkMetricCard title="平均応答時間" value={formatMetricLatency(summary.averageLatencyMs)} subValue="直近完了 run の平均" />
         <BenchmarkMetricCard title="回答正答率" value={formatPercent(summary.answerableAccuracy)} subValue="answerable accuracy" />
+        <BenchmarkMetricCard title="検索再現率" value={formatPercent(summary.retrievalRecallAt20)} subValue="retrieval recall@20" />
         <BenchmarkMetricCard title="確認質問F1" value={formatPercent(summary.clarificationNeedF1)} subValue="clarification need F1" />
       </div>
 

@@ -195,6 +195,12 @@ export type Clarification = {
   rejectedOptions?: string[]
 }
 
+export type ClarificationContext = {
+  originalQuestion?: string
+  selectedOptionId?: string
+  selectedValue?: string
+}
+
 export type DebugStepStatus = "success" | "warning" | "error"
 
 export type DebugStep = {
@@ -221,6 +227,7 @@ export type DebugTrace = {
   modelId: string
   embeddingModelId: string
   clueModelId: string
+  clarificationContext?: ClarificationContext
   pipelineVersions?: PipelineVersions
   topK: number
   memoryTopK: number
@@ -260,6 +267,7 @@ export type BenchmarkRunMetrics = {
   clarificationNeedRecall?: number
   clarificationNeedF1?: number
   optionHitRate?: number
+  missingSlotHitRate?: number
   corpusGroundedOptionRate?: number
   postClarificationAccuracy?: number
   overClarificationRate?: number

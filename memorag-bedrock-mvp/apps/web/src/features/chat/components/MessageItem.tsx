@@ -4,6 +4,7 @@ import type { HumanQuestion } from "../../questions/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatTime } from "../../../shared/utils/format.js"
 import type { Message } from "../types.js"
+import type { ClarificationOption } from "../types-api.js"
 import { AssistantAnswer } from "./AssistantAnswer.js"
 import { UserPromptBubble } from "./UserPromptBubble.js"
 
@@ -26,7 +27,7 @@ export function MessageItem({
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
   onAdditionalQuestion: (value: string) => void
-  onSubmitClarificationOption: (value: string) => Promise<void>
+  onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
 }) {
   return (
     <article className={`message-row ${message.role}`} key={`${message.role}-${message.createdAt}-${messageIndex}`} ref={latestMessageRef}>

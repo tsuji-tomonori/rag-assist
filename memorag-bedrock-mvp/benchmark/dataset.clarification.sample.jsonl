@@ -1,3 +1,3 @@
-{"id":"amb-001","question":"申請期限は？","expectedResponseType":"clarification","expectedClarification":true,"expectedMissingSlots":["申請種別"],"expectedOptionsAnyOf":["経費精算","休暇申請","アカウント申請"],"answerable":false,"complexity":"ambiguous"}
+{"id":"amb-001","question":"申請期限は？","expectedResponseType":"clarification","expectedClarification":true,"expectedMissingSlots":["申請種別"],"expectedOptionsAnyOf":["経費精算","休暇申請","アカウント申請"],"answerable":false,"complexity":"ambiguous","followUp":{"selectedOptionLabel":"経費精算","expectedResponseType":"answer","expectedContains":["30日以内"]}}
 {"id":"clear-001","question":"経費精算の申請期限は？","expectedResponseType":"answer","answerable":true,"expectedContains":["30日以内"],"complexity":"simple"}
 {"id":"noanswer-001","question":"社長の昨日の昼食は？","expectedResponseType":"refusal","expectedClarification":false,"answerable":false,"unanswerableType":"out_of_scope"}

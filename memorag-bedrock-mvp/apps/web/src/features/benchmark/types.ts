@@ -11,6 +11,7 @@ export type BenchmarkRunMetrics = {
   clarificationNeedRecall?: number | null
   clarificationNeedF1?: number | null
   optionHitRate?: number | null
+  missingSlotHitRate?: number | null
   corpusGroundedOptionRate?: number | null
   postClarificationAccuracy?: number | null
   overClarificationRate?: number | null

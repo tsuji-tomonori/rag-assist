@@ -422,6 +422,11 @@
   background: #eef5ff;
 }
 
+.clarification-options button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .clarification-options .clarification-freeform {
   color: #4c5b72;
   border-color: #ccd7e5;

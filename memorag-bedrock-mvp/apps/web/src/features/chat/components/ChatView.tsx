@@ -57,7 +57,7 @@ export function ChatView({
   allExpanded: boolean
   expandedStepId: number | null
   onAsk: (event: FormEvent) => Promise<void>
-  onSubmitClarificationOption: (value: string) => Promise<void>
+  onSubmitClarificationOption: Parameters<typeof MessageList>[0]["onSubmitClarificationOption"]
   onSetQuestion: (value: string) => void
   onSetFile: (file: File | null) => void
   onSetSubmitShortcut: (value: "enter" | "ctrlEnter") => void

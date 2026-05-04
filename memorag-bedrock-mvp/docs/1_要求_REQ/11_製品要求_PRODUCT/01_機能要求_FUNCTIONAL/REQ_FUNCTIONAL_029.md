@@ -17,7 +17,8 @@
 - AC-FR029-004: corpus に候補を作れる根拠がない質問では、確認質問ではなく `responseType=refusal` を返すこと。
 - AC-FR029-005: 確認質問の option は最大5件で、各 option が `memory`、`evidence`、`aspect`、`history` のいずれかの source と grounding を持つこと。
 - AC-FR029-006: `includeDebug=true` の場合、`clarification_gate` trace に `ambiguityScore`、`reason`、`groundedOptionCount`、`rejectedOptions` を残すこと。
-- AC-FR029-007: benchmark は `clarificationNeedF1`、`overClarificationRate`、`optionHitRate`、`postClarificationAccuracy` を summary metrics として出力できること。
+- AC-FR029-007: benchmark は `clarificationNeedF1`、`overClarificationRate`、`optionHitRate`、`missingSlotHitRate`、`postClarificationAccuracy` を summary metrics として出力できること。
+- AC-FR029-008: `postClarificationAccuracy` は確認質問 response の option を選び、`resolvedQuery` で follow-up query を実行した結果だけを対象に算出すること。
 
 ## 要件の源泉・背景
 

@@ -3,6 +3,7 @@ import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import type { Message } from "../types.js"
+import type { ClarificationOption } from "../types-api.js"
 import { QuestionAnswerPanel } from "./QuestionAnswerPanel.js"
 import { QuestionEscalationPanel } from "./QuestionEscalationPanel.js"
 
@@ -21,7 +22,7 @@ export function AssistantAnswer({
   onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
   onAdditionalQuestion: (value: string) => void
-  onSubmitClarificationOption: (value: string) => Promise<void>
+  onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
 }) {
   const citations = message.result?.citations ?? []
   const clarification = message.result?.clarification
@@ -84,13 +85,19 @@ export function AssistantAnswer({
             <button
               type="button"
               key={option.id}
-              onClick={() => void onSubmitClarificationOption(option.resolvedQuery)}
+              disabled={loading}
+              onClick={() => void onSubmitClarificationOption(option, message.sourceQuestion ?? message.text)}
               title={option.reason ?? "この候補で質問する"}
             >
               {option.label}
             </button>
           ))}
-          <button type="button" className="clarification-freeform" onClick={() => onAdditionalQuestion("")}>
+          <button
+            type="button"
+            className="clarification-freeform"
+            disabled={loading}
+            onClick={() => onAdditionalQuestion("確認したい対象を入力してください")}
+          >
             自分で入力
           </button>
         </div>

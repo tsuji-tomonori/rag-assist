@@ -312,6 +312,12 @@ export const ChatRequestSchema = z.object({
   useMemory: z.boolean().optional().openapi({ example: true })
 })
 
+const ClarificationContextSchema = z.object({
+  originalQuestion: z.string().optional(),
+  selectedOptionId: z.string().optional(),
+  selectedValue: z.string().optional()
+})
+
 export const SearchRequestSchema = z.object({
   query: z.string().min(1).openapi({ example: "経費精算 承認条件" }),
   topK: z.number().int().min(1).max(50).optional().openapi({ example: 10 }),
@@ -390,6 +396,7 @@ export const DebugTraceSchema = z.object({
   modelId: z.string(),
   embeddingModelId: z.string(),
   clueModelId: z.string(),
+  clarificationContext: ClarificationContextSchema.optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   topK: z.number(),
   memoryTopK: z.number(),
@@ -556,6 +563,7 @@ export const BenchmarkRunMetricsSchema = z.object({
   clarificationNeedRecall: z.number().nullable().optional(),
   clarificationNeedF1: z.number().nullable().optional(),
   optionHitRate: z.number().nullable().optional(),
+  missingSlotHitRate: z.number().nullable().optional(),
   corpusGroundedOptionRate: z.number().nullable().optional(),
   postClarificationAccuracy: z.number().nullable().optional(),
   overClarificationRate: z.number().nullable().optional(),

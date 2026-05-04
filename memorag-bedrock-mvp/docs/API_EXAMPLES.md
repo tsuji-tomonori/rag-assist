@@ -80,6 +80,19 @@ curl -s http://localhost:8787/chat \
 }
 ```
 
+選択肢を選んだ後は、選択した `resolvedQuery` を次の `question` として送り、追跡用に `clarificationContext` を付与できる。
+
+```json
+{
+  "question": "経費精算の申請期限は？",
+  "clarificationContext": {
+    "originalQuestion": "申請期限は？",
+    "selectedOptionId": "opt-1",
+    "selectedValue": "経費精算"
+  }
+}
+```
+
 ## Search
 
 `POST /search` の `metadata` は通常利用者向け allowlist response であり、alias 定義、ACL group、許可 user list、内部 project code は返さない。

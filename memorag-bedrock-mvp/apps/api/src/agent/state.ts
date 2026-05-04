@@ -162,6 +162,12 @@ export const ClarificationSchema = z.object({
   rejectedOptions: z.array(z.string()).default(() => [])
 })
 
+export const ClarificationContextSchema = z.object({
+  originalQuestion: z.string().optional(),
+  selectedOptionId: z.string().optional(),
+  selectedValue: z.string().optional()
+})
+
 export const DebugStepSchema = z.object({
   id: z.number(),
   label: z.string(),
@@ -292,6 +298,7 @@ export const AgentStateSchema = z.object({
   memoryTopK: z.number().int().min(1).max(10).default(4),
   minScore: z.number().min(-1).max(1).default(0.2),
   strictGrounded: z.boolean().default(true),
+  clarificationContext: ClarificationContextSchema.optional(),
 
   iteration: z.number().int().min(0).default(0),
   referenceQueue: z.array(ReferenceTargetSchema).default(() => []),
@@ -401,3 +408,4 @@ export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
 export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>
 export type Clarification = z.infer<typeof ClarificationSchema>
 export type ClarificationOption = z.infer<typeof ClarificationOptionSchema>
+export type ClarificationContext = z.infer<typeof ClarificationContextSchema>

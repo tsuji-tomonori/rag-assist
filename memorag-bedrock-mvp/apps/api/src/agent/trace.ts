@@ -257,6 +257,7 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
   const output: Record<string, JsonValue> = {}
   const keys: Array<keyof QaAgentUpdate> = [
     "normalizedQuery",
+    "clarificationContext",
     "clues",
     "expandedQueries",
     "searchPlan",
