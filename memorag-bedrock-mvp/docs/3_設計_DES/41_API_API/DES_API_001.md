@@ -296,6 +296,8 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 
 `POST /search` と同じ hybrid search contract を使う search benchmark runner 専用 API。通常利用者向けの `rag:doc:read` ではなく `benchmark:query` を要求し、CodeBuild runner の `BENCHMARK_RUNNER` service user から search mode dataset を評価する。
 
+request body は通常 search request に加えて任意の `user` を受け取れる。`user.userId` と `user.groups` は search benchmark dataset の評価 subject として使い、ACL 付き文書の positive / negative case を dataset 行ごとの利用者文脈で評価する。`user` override は `BENCHMARK_RUNNER` service user からの呼び出し時だけ許可する。`SYSTEM_ADMIN`、`RAG_GROUP_MANAGER`、`BENCHMARK_RUNNER`、`ANSWER_EDITOR`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR` は dataset user の group として受け付けない。これは benchmark payload から特権 group を指定して ACL を bypass しないためである。
+
 ## `POST /benchmark-runs`
 
 管理画面から benchmark run を非同期に起動する。API Lambda は DynamoDB に run record を作成し、Step Functions execution を開始する。実行本体は CodeBuild runner が agent mode では `/benchmark/query`、search mode では `/benchmark/search` を呼び、S3 に `results.jsonl`、`summary.json`、`report.md` を保存する。

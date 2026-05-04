@@ -69,7 +69,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /debug-runs/{runId}` persisted debug trace取得
 - `POST /debug-runs/{runId}/download` persisted debug trace JSON download URL作成
 - `POST /benchmark/query` ベンチマーク用。`/chat` と同じRAG処理をAPIから呼び出し、retrieval情報も返します。
-- `POST /benchmark/search` search benchmark runner 用。`/search` と同じ hybrid search 処理を runner 権限で呼び出します。
+- `POST /benchmark/search` search benchmark runner 用。`/search` と同じ hybrid search 処理を runner 権限で呼び出し、dataset 行の `user` を ACL 評価用の利用者文脈として扱います。
 - `GET /benchmark-suites` 非同期ベンチマークで選択できる suite 一覧
 - `POST /benchmark-runs` Step Functions + CodeBuild runner の非同期 benchmark run 起動
 - `GET /benchmark-runs` benchmark run 履歴一覧

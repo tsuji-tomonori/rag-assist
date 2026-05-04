@@ -3,7 +3,7 @@ import { cors } from "hono/cors"
 import { streamSSE } from "hono/streaming"
 import { HTTPException } from "hono/http-exception"
 import { createDependencies } from "./dependencies.js"
-import { authMiddleware } from "./auth.js"
+import { authMiddleware, type AppUser } from "./auth.js"
 import { getPermissionsForGroups, hasPermission, requirePermission } from "./authorization.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import { eventPayload } from "./chat-run-events-stream.js"
@@ -23,6 +23,7 @@ import {
   BenchmarkSuiteListResponseSchema,
   BenchmarkQueryRequestSchema,
   BenchmarkQueryResponseSchema,
+  BenchmarkSearchRequestSchema,
   ConversationHistoryItemSchema,
   ConversationHistoryListResponseSchema,
   CostAuditSummarySchema,
@@ -82,6 +83,17 @@ function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.i
   const visibleQuestion = { ...question }
   delete visibleQuestion.internalMemo
   return visibleQuestion
+}
+
+function benchmarkSearchUser(runnerUser: AppUser, requestUser: z.infer<typeof BenchmarkSearchRequestSchema>["user"]): AppUser {
+  if (!requestUser) return runnerUser
+  if (!runnerUser.cognitoGroups.includes("BENCHMARK_RUNNER")) {
+    throw new HTTPException(403, { message: "Forbidden: benchmark search user override requires BENCHMARK_RUNNER" })
+  }
+  return {
+    userId: requestUser.userId ?? "benchmark-search-user",
+    cognitoGroups: requestUser.groups ?? []
+  }
 }
 
 app.openapi(
@@ -1057,7 +1069,7 @@ app.openapi(
     request: {
       body: {
         required: true,
-        content: { "application/json": { schema: SearchRequestSchema } }
+        content: { "application/json": { schema: BenchmarkSearchRequestSchema } }
       }
     },
     responses: {
@@ -1069,8 +1081,9 @@ app.openapi(
   async (c) => {
     const user = c.get("user")
     requirePermission(user, "benchmark:query")
-    const body = (c.req as any).valid("json") as z.infer<typeof SearchRequestSchema>
-    return c.json(await service.search(body, user), 200)
+    const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkSearchRequestSchema>
+    const { user: requestUser, ...searchInput } = body
+    return c.json(await service.search(searchInput, benchmarkSearchUser(user, requestUser)), 200)
   }
 )
 

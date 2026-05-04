@@ -41,6 +41,7 @@
 - AC-NFR011-028: `GET /me` は静的 policy test で認証必須かつ追加 role permission なしの route として検証されること。
 - AC-NFR011-029: `POST /benchmark/query` は `benchmark:query` を要求し、`RAG_GROUP_MANAGER` による管理画面の benchmark run 起動権限 `benchmark:run` と分離されること。
 - AC-NFR011-030: `POST /benchmark/search` は `benchmark:query` を要求し、`BENCHMARK_RUNNER` が通常利用者向け `POST /search` を直接実行できないことを contract test で検証すること。
+- AC-NFR011-031: `POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り search benchmark dataset の `user.groups` を ACL 評価用の利用者文脈として扱い、dataset payload から `SYSTEM_ADMIN` などの特権 group を指定できないこと。
 
 ## 要件の源泉・背景
 
@@ -67,10 +68,10 @@
 | 種類 | 非機能要求 |
 | 依存関係 | `authMiddleware`、`requirePermission`、`authorization.ts`、`GET /me`、`FR-024`、`FR-025`、`FR-027`、`DES_API_001` |
 | 衝突 | local 開発では検証容易性のため `AUTH_ENABLED=false` と `VITE_AUTH_MODE=local` を維持する |
-| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-030` |
+| 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-031` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 Phase 1 管理画面導線と self sign-up 最小権限を `FR-024` / `FR-025` として分離、2026-05-03 Phase 2 のユーザー作成と管理操作履歴を追加、2026-05-04 問い合わせ作成者本人の詳細取得と解決済み化を追加、同日 `/me` 静的保護確認と benchmark query 権限分離を追加、同日 search benchmark runner の通常検索境界分離を追加 |
+| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 Phase 1 管理画面導線と self sign-up 最小権限を `FR-024` / `FR-025` として分離、2026-05-03 Phase 2 のユーザー作成と管理操作履歴を追加、2026-05-04 問い合わせ作成者本人の詳細取得と解決済み化を追加、同日 `/me` 静的保護確認と benchmark query 権限分離を追加、同日 search benchmark runner の通常検索境界分離を追加、2026-05-05 search benchmark dataset user による ACL 評価を追加 |
 
 ## 妥当性確認
 

@@ -381,6 +381,114 @@ test("benchmark runner can call query endpoint without benchmark run administrat
   }
 })
 
+test("benchmark search uses dataset user groups for ACL evaluation", async () => {
+  const setupPort = 20800 + Math.floor(Math.random() * 1000)
+  const runnerPort = 21800 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-search-acl-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const setupServer = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(setupPort),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "SYSTEM_ADMIN"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(setupServer, setupPort)
+    const upload = await fetch(`http://127.0.0.1:${setupPort}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "group-a-secret.md",
+        text: "Alpha launch approval policy is visible only to group A.",
+        skipMemory: true,
+        metadata: { tenantId: "tenant-a", aclGroups: ["GROUP_A"] }
+      })
+    })
+    assert.equal(upload.status, 200)
+
+    const systemAdminOverride = await fetch(`http://127.0.0.1:${setupPort}/benchmark/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: "alpha launch approval",
+        user: { userId: "dataset-user-a", groups: ["GROUP_A"] }
+      })
+    })
+    assert.equal(systemAdminOverride.status, 403)
+  } finally {
+    await stopServer(setupServer)
+  }
+
+  const runnerServer = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(runnerPort),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "BENCHMARK_RUNNER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(runnerServer, runnerPort)
+    const groupA = await fetch(`http://127.0.0.1:${runnerPort}/benchmark/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: "alpha launch approval",
+        topK: 10,
+        lexicalTopK: 20,
+        semanticTopK: 0,
+        user: { userId: "dataset-user-a", groups: ["GROUP_A"] }
+      })
+    })
+    assert.equal(groupA.status, 200)
+    const groupABody = (await groupA.json()) as { results: Array<{ fileName: string }> }
+    assert.ok(groupABody.results.some((result) => result.fileName === "group-a-secret.md"))
+
+    const groupB = await fetch(`http://127.0.0.1:${runnerPort}/benchmark/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: "alpha launch approval",
+        topK: 10,
+        lexicalTopK: 20,
+        semanticTopK: 0,
+        user: { userId: "dataset-user-b", groups: ["GROUP_B"] }
+      })
+    })
+    assert.equal(groupB.status, 200)
+    const groupBBody = (await groupB.json()) as { results: Array<{ fileName: string }> }
+    assert.equal(groupBBody.results.some((result) => result.fileName === "group-a-secret.md"), false)
+
+    const privilegedSubject = await fetch(`http://127.0.0.1:${runnerPort}/benchmark/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: "alpha launch approval",
+        user: { userId: "dataset-admin", groups: ["SYSTEM_ADMIN"] }
+      })
+    })
+    assert.equal(privilegedSubject.status, 400)
+  } finally {
+    await stopServer(runnerServer)
+  }
+})
+
 test("question and debug management endpoints enforce Phase 1 role boundaries", async () => {
   const port = 21000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-rbac-"))
@@ -658,6 +766,13 @@ async function waitUntilReady(server: ReturnType<typeof spawn>, port: number): P
     await new Promise((resolve) => setTimeout(resolve, 300))
   }
   throw new Error(`server did not become ready: ${stderr}`)
+}
+
+async function stopServer(server: ReturnType<typeof spawn>): Promise<void> {
+  if (server.exitCode !== null) return
+  const closed = new Promise<void>((resolve) => server.once("close", () => resolve()))
+  server.kill("SIGTERM")
+  await Promise.race([closed, new Promise((resolve) => setTimeout(resolve, 1000))])
 }
 
 async function getJson(url: string): Promise<{ ok: boolean; status: number; body: any }> {
