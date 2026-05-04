@@ -685,8 +685,8 @@ export class MemoRagService {
     return searchRag(this.deps, input, user)
   }
 
-  async createQuestion(input: CreateQuestionInput): Promise<HumanQuestion> {
-    return this.deps.questionStore.create(input)
+  async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
+    return this.deps.questionStore.create({ ...input, requesterUserId: user?.userId })
   }
 
   async listQuestions(): Promise<HumanQuestion[]> {

@@ -74,6 +74,9 @@ export function getPermissionsForGroups(groups: string[]): Permission[] {
 }
 
 export function requirePermission(user: AppUser, permission: Permission) {
-  const allowed = getPermissionsForGroups(user.cognitoGroups).includes(permission)
-  if (!allowed) throw new HTTPException(403, { message: `Forbidden: missing ${permission}` })
+  if (!hasPermission(user, permission)) throw new HTTPException(403, { message: `Forbidden: missing ${permission}` })
+}
+
+export function hasPermission(user: AppUser, permission: Permission) {
+  return getPermissionsForGroups(user.cognitoGroups).includes(permission)
 }
