@@ -281,7 +281,6 @@ export type ChatRun = {
   citations?: Citation[]
   retrieved?: Citation[]
   debugRunId?: string
-  debug?: DebugTrace
   error?: string
   createdAt: string
   updatedAt: string

@@ -285,7 +285,7 @@ test("asynchronous chat run stores debug trace by reference", async () => {
 
   const completed = await service.executeChatRun("run-debug-reference")
   assert.equal(completed.status, "succeeded")
-  assert.equal(completed.debug, undefined)
+  assert.equal((completed as unknown as Record<string, unknown>).debug, undefined)
   assert.ok(completed.debugRunId)
 
   const events = await deps.chatRunEventStore.listAfter("run-debug-reference", 0)
