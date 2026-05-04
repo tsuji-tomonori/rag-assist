@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import type { ConversationHistoryItem } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
+import { searchConversationHistory, type ConversationHistorySearchResult } from "../utils/conversationHistorySearch.js"
 
 export function HistoryWorkspace({
   history,
@@ -28,19 +29,17 @@ export function HistoryWorkspace({
   }, [favoriteOnly])
 
   const visibleHistory = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
+    const hasQuery = query.trim().length > 0
     const scope = favoritesOnly ? history.filter((item) => item.isFavorite) : history
-    const filtered = normalizedQuery.length === 0
-      ? scope
-      : scope.filter((item) => {
-          const messageText = item.messages.map((message) => message.text).join(" ").toLowerCase()
-          return item.title.toLowerCase().includes(normalizedQuery) || messageText.includes(normalizedQuery)
-        })
+    const results = hasQuery
+      ? searchConversationHistory(scope, query)
+      : scope.map((item) => ({ item, score: 0, matchedTerms: [] }))
 
-    return [...filtered].sort((a, b) => {
-      if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
-      if (sortOrder === "messages") return b.messages.length - a.messages.length
-      const timeDiff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    return [...results].sort((a, b) => {
+      if (hasQuery && Math.abs(b.score - a.score) > 0.001) return b.score - a.score
+      if (Boolean(a.item.isFavorite) !== Boolean(b.item.isFavorite)) return a.item.isFavorite ? -1 : 1
+      if (sortOrder === "messages") return b.item.messages.length - a.item.messages.length
+      const timeDiff = new Date(b.item.updatedAt).getTime() - new Date(a.item.updatedAt).getTime()
       return sortOrder === "newest" ? timeDiff : -timeDiff
     })
   }, [favoritesOnly, history, query, sortOrder])
@@ -83,7 +82,8 @@ export function HistoryWorkspace({
           {visibleHistory.length === 0 ? (
             <div className="empty-question-panel">条件に一致する履歴はありません。</div>
           ) : (
-            visibleHistory.map((item) => {
+            visibleHistory.map((result) => {
+              const item = result.item
               const questionStatus = summarizeQuestionStatus(item)
               return (
                 <div className={`question-list-item history-item ${questionStatus?.tone ?? ""}`} key={item.id}>
@@ -102,7 +102,7 @@ export function HistoryWorkspace({
                       {questionStatus && <span className="history-question-badge">{questionStatus.label}</span>}
                     </span>
                     <span>{formatDateTime(item.updatedAt)}</span>
-                    <small>{item.messages.length} メッセージ</small>
+                    <HistorySearchSummary result={result} />
                   </button>
                   <button className="history-delete-button" type="button" onClick={() => onDelete(item.id)}>
                     削除
@@ -114,6 +114,16 @@ export function HistoryWorkspace({
         </div>
       </div>
     </section>
+  )
+}
+
+function HistorySearchSummary({ result }: { result: ConversationHistorySearchResult }) {
+  if (!result.snippet) return <small>{result.item.messages.length} メッセージ</small>
+  return (
+    <>
+      <small>{result.item.messages.length} メッセージ</small>
+      <small className="history-search-snippet">{result.snippet.text}</small>
+    </>
   )
 }
 
