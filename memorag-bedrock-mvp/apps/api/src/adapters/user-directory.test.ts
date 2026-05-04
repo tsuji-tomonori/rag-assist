@@ -61,7 +61,14 @@ test("Cognito user directory paginates users and groups while tolerating per-use
     assert.deepEqual(users.map((user) => user.userId), ["sub-1", "sub-2"])
     assert.deepEqual(users[0]?.groups, ["CHAT_USER", "ANSWER_EDITOR"])
     assert.deepEqual(users[1]?.groups, [])
-    assert.equal(warnings.length, 1)
+    assert.equal(warnings.length, 2)
+    assert.equal(JSON.parse(String(warnings[0]?.[0])).event, "cognito_user_directory_group_lookup_failed")
+    const metricLog = JSON.parse(String(warnings[1]?.[0]))
+    assert.equal(metricLog.event, "cognito_user_directory_group_lookup_failure_summary")
+    assert.equal(metricLog.CognitoGroupLookupFailureCount, 1)
+    assert.equal(metricLog.CognitoGroupLookupFailureRate, 50)
+    assert.deepEqual(metricLog.failedUsernames, ["user-2"])
+    assert.equal(metricLog._aws.CloudWatchMetrics[0].Namespace, "MemoRAG/Admin")
   } finally {
     console.warn = warn
   }
