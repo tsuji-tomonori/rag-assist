@@ -61,8 +61,12 @@ DATASET=benchmark/dataset.sample.jsonl \
 OUTPUT=.local-data/benchmark-results.jsonl \
 SUMMARY=.local-data/benchmark-summary.json \
 REPORT=.local-data/benchmark-report.md \
+BENCHMARK_SUITE_ID=standard-agent-v1 \
+BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1 \
 npm run start -w @memorag-mvp/benchmark
 ```
+
+`task benchmark:sample` は上記の標準 corpus 指定を含む。`standard-agent-v1` では `handbook.md` を `/documents` に seed し、active chunk が作成されてから評価 query を実行する。
 
 追加データセット:
 

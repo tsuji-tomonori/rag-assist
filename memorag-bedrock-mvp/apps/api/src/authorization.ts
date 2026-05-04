@@ -49,7 +49,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
     "benchmark:read","benchmark:run"
   ],
-  BENCHMARK_RUNNER: ["benchmark:run"],
+  BENCHMARK_RUNNER: ["benchmark:run", "rag:doc:read", "rag:doc:write:group"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   COST_AUDITOR: ["cost:read:all"],

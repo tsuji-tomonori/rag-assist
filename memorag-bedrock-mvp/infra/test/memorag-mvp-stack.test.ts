@@ -254,6 +254,8 @@ test("fails the benchmark CodeBuild runner when auth token resolution fails", ()
   }
   assert.ok(buildSpec.phases.pre_build.commands.includes("API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""))
   assert.ok(buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN"))
+  assert.ok(buildSpec.phases.pre_build.commands.includes("export BENCHMARK_SUITE_ID=\"$SUITE_ID\""))
+  assert.ok(buildSpec.phases.pre_build.commands.includes("if [ \"$MODE\" = \"agent\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; fi"))
   assert.equal(
     buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""),
     false

@@ -165,6 +165,8 @@ curl -s http://localhost:8787/chat \
 
 CodeBuild runner が本番 API を叩くための認証 token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から自動取得します。管理者が管理画面で token を入力する必要はありません。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡します。secret は `username` / `password`、または `idToken` / `token` を持てます。`username` / `password` 認証で token 解決に失敗した場合、CodeBuild runner は benchmark を継続せず失敗します。
 
+`standard-agent-v1` の runner は、実行前に `benchmark/corpus/standard-agent-v1/handbook.md` を `/documents` へ seed し、active chunk が作成されたことを確認してから `/benchmark/query` を実行します。同じ hash の seed 済み資料が active な場合は再アップロードを省略します。任意の corpus を使う場合は `BENCHMARK_CORPUS_DIR` を指定してください。
+
 ```bash
 API_BASE_URL=http://localhost:8787 \
 API_AUTH_TOKEN=<optional-bearer-token> \
@@ -172,6 +174,8 @@ DATASET=benchmark/dataset.sample.jsonl \
 OUTPUT=.local-data/benchmark-results.jsonl \
 SUMMARY=.local-data/benchmark-summary.json \
 REPORT=.local-data/benchmark-report.md \
+BENCHMARK_SUITE_ID=standard-agent-v1 \
+BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1 \
 npm run start -w @memorag-mvp/benchmark
 ```
 

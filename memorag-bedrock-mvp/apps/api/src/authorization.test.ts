@@ -38,11 +38,14 @@ test("CHAT_USER は問い合わせ管理とdebug管理権限を持たない", ()
   assert.throws(() => requirePermission(user, "benchmark:run"))
 })
 
-test("BENCHMARK_RUNNER は benchmark query 実行だけ許可される", () => {
+test("BENCHMARK_RUNNER は benchmark query と前提資料seedだけ許可される", () => {
   const user = { userId: "u6", cognitoGroups: ["BENCHMARK_RUNNER"] }
   assert.doesNotThrow(() => requirePermission(user, "benchmark:run"))
+  assert.doesNotThrow(() => requirePermission(user, "rag:doc:read"))
+  assert.doesNotThrow(() => requirePermission(user, "rag:doc:write:group"))
   assert.throws(() => requirePermission(user, "benchmark:read"))
   assert.throws(() => requirePermission(user, "chat:admin:read_all"))
+  assert.throws(() => requirePermission(user, "rag:doc:delete:group"))
 })
 
 test("role 群から重複なしの有効 permission を返す", () => {

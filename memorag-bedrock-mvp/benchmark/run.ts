@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
+import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus } from "./corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
 
 type DatasetRow = {
@@ -167,6 +168,7 @@ type Summary = {
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
+const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "standard-agent-v1"
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const datasetPath = resolveExistingPath(process.env.DATASET ?? "dataset.sample.jsonl", [process.cwd(), benchmarkDir, repoRoot])
@@ -179,6 +181,19 @@ const baselineSummaryPath = process.env.BASELINE_SUMMARY
 const baselineSummary = baselineSummaryPath
   ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { metrics?: Summary["metrics"] })
   : undefined
+const benchmarkCorpusDir = benchmarkCorpusDirFromEnv(process.env)
+const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
+  ? resolveExistingPath(benchmarkCorpusDir, [process.cwd(), benchmarkDir, repoRoot])
+  : undefined
+
+await seedBenchmarkCorpus({
+  apiBaseUrl,
+  authToken: apiAuthToken,
+  corpusDir: resolvedBenchmarkCorpusDir,
+  suiteId: benchmarkSuiteId,
+  skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
+  log: (message) => console.log(message)
+})
 
 await mkdir(path.dirname(outputPath), { recursive: true })
 await mkdir(path.dirname(reportPath), { recursive: true })
