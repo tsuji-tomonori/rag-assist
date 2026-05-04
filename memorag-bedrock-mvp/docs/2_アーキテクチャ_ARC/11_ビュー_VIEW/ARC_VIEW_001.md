@@ -201,6 +201,7 @@ sequenceDiagram
 | Amazon Bedrock | embedding、clue 生成、judge、回答生成 |
 | S3 Documents | 文書、manifest、debug trace object の保存 |
 | S3 Vectors | memory/evidence vector の保存と検索 |
+| S3 Benchmark Artifacts | benchmark dataset、results、summary、report の保存 |
 | DynamoDB | human question、conversation history、benchmark run、監査、利用状況 |
 | Step Functions / CodeBuild | 非同期 benchmark run orchestration と runner 実行 |
 | Secrets Manager | benchmark runner service user credential の管理 |
