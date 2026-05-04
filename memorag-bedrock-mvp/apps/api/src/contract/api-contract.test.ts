@@ -281,6 +281,67 @@ test("benchmark query endpoint remains available for local benchmark runs when a
   }
 })
 
+test("benchmark runner can only upload isolated benchmark seed documents", async () => {
+  const port = 25000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-seed-rbac-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "BENCHMARK_RUNNER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const generalUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "general.md", text: "通常文書です。", mimeType: "text/markdown" })
+    })
+    assert.equal(generalUpload.status, 403)
+
+    const seedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "handbook.md",
+        text: "# Handbook\n\n経費精算は30日以内です。",
+        mimeType: "text/markdown",
+        skipMemory: true,
+        metadata: {
+          benchmarkSeed: true,
+          benchmarkSuiteId: "smoke-agent-v1",
+          benchmarkSourceHash: "hash",
+          benchmarkIngestSignature: "signature",
+          benchmarkCorpusSkipMemory: true,
+          benchmarkEmbeddingModelId: "api-default",
+          aclGroups: ["BENCHMARK_RUNNER"],
+          docType: "benchmark-corpus",
+          lifecycleStatus: "active",
+          source: "benchmark-runner"
+        }
+      })
+    })
+    assert.equal(seedUpload.status, 200)
+    const manifest = (await seedUpload.json()) as { metadata?: { aclGroups?: string[]; docType?: string; source?: string } }
+    assert.deepEqual(manifest.metadata?.aclGroups, ["BENCHMARK_RUNNER"])
+    assert.equal(manifest.metadata?.docType, "benchmark-corpus")
+    assert.equal(manifest.metadata?.source, "benchmark-runner")
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
 test("question and debug management endpoints enforce Phase 1 role boundaries", async () => {
   const port = 21000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-rbac-"))

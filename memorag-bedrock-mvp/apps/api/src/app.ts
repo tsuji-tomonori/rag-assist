@@ -3,7 +3,7 @@ import { cors } from "hono/cors"
 import { streamSSE } from "hono/streaming"
 import { HTTPException } from "hono/http-exception"
 import { createDependencies } from "./dependencies.js"
-import { authMiddleware } from "./auth.js"
+import { authMiddleware, type AppUser } from "./auth.js"
 import { getPermissionsForGroups, hasPermission, requirePermission } from "./authorization.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import { eventPayload } from "./chat-run-events-stream.js"
@@ -82,6 +82,45 @@ function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.i
   const visibleQuestion = { ...question }
   delete visibleQuestion.internalMemo
   return visibleQuestion
+}
+
+const benchmarkSeedSuites = new Set(["smoke-agent-v1", "standard-agent-v1", "clarification-smoke-v1"])
+const benchmarkSeedMetadataKeys = new Set([
+  "benchmarkSeed",
+  "benchmarkSuiteId",
+  "benchmarkSourceHash",
+  "benchmarkIngestSignature",
+  "benchmarkCorpusSkipMemory",
+  "benchmarkEmbeddingModelId",
+  "aclGroups",
+  "docType",
+  "lifecycleStatus",
+  "source"
+])
+
+function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof DocumentUploadRequestSchema>) {
+  if (hasPermission(user, "rag:doc:write:group")) return
+  if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUpload(body)) return
+  throw new HTTPException(403, { message: "Forbidden: benchmark seed upload requires isolated benchmark metadata" })
+}
+
+function isBenchmarkSeedUpload(body: z.infer<typeof DocumentUploadRequestSchema>): boolean {
+  const metadata = body.metadata
+  if (!metadata) return false
+  if (!Object.keys(metadata).every((key) => benchmarkSeedMetadataKeys.has(key))) return false
+  if (metadata.benchmarkSeed !== true) return false
+  if (typeof metadata.benchmarkSuiteId !== "string" || !benchmarkSeedSuites.has(metadata.benchmarkSuiteId)) return false
+  if (typeof metadata.benchmarkSourceHash !== "string" || metadata.benchmarkSourceHash.length === 0) return false
+  if (typeof metadata.benchmarkIngestSignature !== "string" || metadata.benchmarkIngestSignature.length === 0) return false
+  if (typeof metadata.benchmarkCorpusSkipMemory !== "boolean") return false
+  if (typeof metadata.benchmarkEmbeddingModelId !== "string" || metadata.benchmarkEmbeddingModelId.length === 0) return false
+  if (metadata.source !== "benchmark-runner") return false
+  if (metadata.docType !== "benchmark-corpus") return false
+  if (metadata.lifecycleStatus !== "active") return false
+  if (!Array.isArray(metadata.aclGroups) || metadata.aclGroups.length !== 1 || metadata.aclGroups[0] !== "BENCHMARK_RUNNER") return false
+  if (!body.text || body.text.length > 1_000_000 || body.contentBase64 || body.textractJson) return false
+  if (!/\.(md|txt)$/i.test(body.fileName) || body.fileName.includes("/") || body.fileName.includes("\\")) return false
+  return !body.mimeType || body.mimeType === "text/markdown" || body.mimeType === "text/plain"
 }
 
 app.openapi(
@@ -465,7 +504,7 @@ app.openapi(
   }),
   async (c) => {
     requirePermission(c.get("user"), "rag:doc:read")
-    return c.json({ documents: await service.listDocuments() }, 200)
+    return c.json({ documents: await service.listDocuments(c.get("user")) }, 200)
   }
 )
 
@@ -486,8 +525,12 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "rag:doc:write:group")
     const body = (c.req as any).valid("json") as z.infer<typeof DocumentUploadRequestSchema>
+    const user = c.get("user")
+    if (!hasPermission(user, "rag:doc:write:group") && !hasPermission(user, "benchmark:seed_corpus")) {
+      throw new HTTPException(403, { message: "Forbidden: missing document upload permission" })
+    }
+    authorizeDocumentUpload(user, body)
     if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
     return c.json(await service.ingest(body), 200)
   }

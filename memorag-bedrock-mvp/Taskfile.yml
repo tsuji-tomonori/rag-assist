@@ -108,6 +108,8 @@ tasks:
       OUTPUT: '.local-data/benchmark-results.jsonl'
       SUMMARY: '.local-data/benchmark-summary.json'
       REPORT: '.local-data/benchmark-report.md'
+      BENCHMARK_SUITE_ID: 'standard-agent-v1'
+      BENCHMARK_CORPUS_DIR: 'benchmark/corpus/standard-agent-v1'
     cmds:
       - npm run start -w @memorag-mvp/benchmark
 

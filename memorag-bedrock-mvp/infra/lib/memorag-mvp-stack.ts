@@ -610,6 +610,8 @@ export class MemoRagMvpStack extends Stack {
               "export SUMMARY=./benchmark/.runner-summary.json",
               "export REPORT=./benchmark/.runner-report.md",
               "export DATASET=./benchmark/.runner-dataset.jsonl",
+              "export BENCHMARK_SUITE_ID=\"$SUITE_ID\"",
+              "if [ \"$SUITE_ID\" = \"standard-agent-v1\" ] || [ \"$SUITE_ID\" = \"smoke-agent-v1\" ] || [ \"$SUITE_ID\" = \"clarification-smoke-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; export BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1; fi",
               "API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\"",
               "export API_AUTH_TOKEN"
             ]
@@ -671,6 +673,7 @@ export class MemoRagMvpStack extends Stack {
           EnvironmentVariablesOverride: [
             { Name: "RUN_ID", "Value.$": "$.runId", Type: "PLAINTEXT" },
             { Name: "MODE", "Value.$": "$.mode", Type: "PLAINTEXT" },
+            { Name: "SUITE_ID", "Value.$": "$.suiteId", Type: "PLAINTEXT" },
             { Name: "DATASET_S3_URI", "Value.$": "$.datasetS3Uri", Type: "PLAINTEXT" },
             { Name: "OUTPUT_S3_PREFIX", "Value.$": "$.outputS3Prefix", Type: "PLAINTEXT" },
             { Name: "API_BASE_URL", "Value.$": "$.apiBaseUrl", Type: "PLAINTEXT" },

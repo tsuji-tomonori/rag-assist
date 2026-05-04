@@ -6,5 +6,5 @@
     "outDir": "dist",
     "types": ["node"]
   },
-  "include": ["run.ts", "search-run.ts", "metrics/**/*.ts"]
+  "include": ["*.ts", "metrics/**/*.ts"]
 }
