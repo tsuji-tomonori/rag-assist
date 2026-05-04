@@ -33,9 +33,13 @@ export function AssistantAnswer({
   const canCopyAnswer = Boolean(message.text.trim())
 
   useEffect(() => {
+    mountedRef.current = true
     return () => {
       mountedRef.current = false
-      if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
+      if (resetTimerRef.current !== null) {
+        window.clearTimeout(resetTimerRef.current)
+        resetTimerRef.current = null
+      }
     }
   }, [])
 

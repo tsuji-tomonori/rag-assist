@@ -7,6 +7,7 @@
 - 主な依頼: worktree を作成し、プロンプトや回答のコピーアイコン押下後に一時的にチェックアイコンへ変わるようにする。
 - 追加依頼: レビュー結果を受け、連続コピー時のタイマー再スケジュール挙動を fake timer で直接検証し、clipboard Promise 完了前アンマウント時の state update を避け、既存テストを `findBy...` へ寄せる。
 - 追加依頼: Request changes を受け、最新 `origin/main` の `AssistantAnswer` 必須 prop に合わせて `CopyFeedback.test.tsx` を修正し、Web typecheck / targeted test / full test / build を再実行する。
+- 追加依頼: StrictMode の effect 再実行で `mountedRef` が `false` のまま残らないよう修正し、StrictMode 配下のコピー成功表示をテストする。
 - 成果物: 実装変更、検証、git commit、main 向け PR。
 - 形式・条件: commit message と PR 本文は日本語ルールに従う。PR 作成は GitHub Apps を利用する。
 
@@ -23,6 +24,8 @@
 | R7 | clipboard Promise 完了前アンマウント時の state update を避ける | 中 | 対応 |
 | R8 | `AssistantAnswer` の `onSubmitClarificationOption` 必須 prop をテスト render に追加する | 高 | 対応 |
 | R9 | Web typecheck / targeted test / full test / build を再実行する | 高 | 対応 |
+| R10 | StrictMode の effect 再実行後も `mountedRef` を `true` に戻す | 高 | 対応 |
+| R11 | StrictMode 配下でもコピー成功時にチェック表示が出ることを検証する | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -31,6 +34,7 @@
 - UI 表示文言、API、権限境界、永続データには影響しない変更のため、README や `memorag-bedrock-mvp/docs/` の恒久更新は不要と判断した。
 - レビュー指摘のうち、merge blocker ではない改善も今回の PR 価値を守る内容のため、追補 commit として取り込む判断にした。
 - CI は merge ref で失敗していたため、`origin/main` を PR branch に取り込んで同じ型前提で修正・検証した。
+- root が `React.StrictMode` 配下であるため、effect cleanup 後の setup で `mountedRef.current = true` を明示的に戻す必要があると判断した。
 
 ## 4. 実施した作業
 
@@ -47,6 +51,8 @@
 - `origin/main` を merge し、`CopyFeedback.test.tsx` の `AssistantAnswer` render に `onSubmitClarificationOption` を追加した。
 - `vi.stubGlobal("navigator", ...)` の後始末として `vi.unstubAllGlobals()` を `finally` に追加した。
 - Request changes 対応後に Web typecheck / targeted test / full test / build を再実行した。
+- `UserPromptBubble` と `AssistantAnswer` の effect setup で `mountedRef.current = true` を設定し、cleanup 時に reset timer を `null` へ戻すようにした。
+- `CopyFeedback.test.tsx` に StrictMode 配下のプロンプト/回答コピー成功表示テストを追加した。
 
 ## 5. 成果物
 
@@ -55,7 +61,7 @@
 | `memorag-bedrock-mvp/apps/web/src/features/chat/components/UserPromptBubble.tsx` | TypeScript React | プロンプトコピー後の一時チェック表示タイマーを安全化 | R2 |
 | `memorag-bedrock-mvp/apps/web/src/features/chat/components/AssistantAnswer.tsx` | TypeScript React | 回答コピー後の一時チェック表示タイマーを安全化 | R3 |
 | `memorag-bedrock-mvp/apps/web/src/App.test.tsx` | Vitest | コピー後のチェックアイコン表示を検証 | R4 |
-| `memorag-bedrock-mvp/apps/web/src/features/chat/components/CopyFeedback.test.tsx` | Vitest | 連続コピーとアンマウント時のコピー状態管理を検証 | R6/R7 |
+| `memorag-bedrock-mvp/apps/web/src/features/chat/components/CopyFeedback.test.tsx` | Vitest | 連続コピー、アンマウント時、StrictMode 配下のコピー状態管理を検証 | R6/R7/R11 |
 | `reports/working/20260504-1345-copy-feedback-icon.md` | Markdown | 作業完了レポート | リポジトリルール |
 
 ## 6. 指示へのfit評価
@@ -72,8 +78,8 @@
 
 ## 7. 検証
 
-- `npm --prefix memorag-bedrock-mvp/apps/web run test -- src/features/chat/components/CopyFeedback.test.tsx`: pass（1 file / 4 tests）
-- `npm --prefix memorag-bedrock-mvp/apps/web run test`: pass（14 files / 88 tests）
+- `npm --prefix memorag-bedrock-mvp/apps/web run test -- src/features/chat/components/CopyFeedback.test.tsx`: pass（1 file / 6 tests）
+- `npm --prefix memorag-bedrock-mvp/apps/web run test`: pass（14 files / 90 tests）
 - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web run build`: pass
 - `git diff --check`: pass

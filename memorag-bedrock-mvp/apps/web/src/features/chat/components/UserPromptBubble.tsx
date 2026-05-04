@@ -8,9 +8,13 @@ export function UserPromptBubble({ text }: { text: string }) {
   const canCopyPrompt = Boolean(text.trim())
 
   useEffect(() => {
+    mountedRef.current = true
     return () => {
       mountedRef.current = false
-      if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
+      if (resetTimerRef.current !== null) {
+        window.clearTimeout(resetTimerRef.current)
+        resetTimerRef.current = null
+      }
     }
   }, [])
 

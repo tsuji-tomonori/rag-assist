@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
+import { StrictMode } from "react"
 import { describe, expect, it, vi } from "vitest"
 import type { Message } from "../types.js"
 import { AssistantAnswer } from "./AssistantAnswer.js"
@@ -8,6 +9,7 @@ type CopyScenario = {
   copiedName: string
   idleName: string
   renderComponent: () => ReturnType<typeof render>
+  renderStrictComponent: () => ReturnType<typeof render>
 }
 
 const assistantMessage: Message = {
@@ -26,7 +28,13 @@ const copyScenarios: CopyScenario[] = [
   {
     idleName: "プロンプトをコピー",
     copiedName: "プロンプトをコピー済み",
-    renderComponent: () => render(<UserPromptBubble text="分類を教えて" />)
+    renderComponent: () => render(<UserPromptBubble text="分類を教えて" />),
+    renderStrictComponent: () =>
+      render(
+        <StrictMode>
+          <UserPromptBubble text="分類を教えて" />
+        </StrictMode>
+      )
   },
   {
     idleName: "回答をコピー",
@@ -41,6 +49,19 @@ const copyScenarios: CopyScenario[] = [
           onAdditionalQuestion={() => undefined}
           onSubmitClarificationOption={async () => undefined}
         />
+      ),
+    renderStrictComponent: () =>
+      render(
+        <StrictMode>
+          <AssistantAnswer
+            message={assistantMessage}
+            loading={false}
+            onCreateQuestion={async () => undefined}
+            onResolveQuestion={async () => undefined}
+            onAdditionalQuestion={() => undefined}
+            onSubmitClarificationOption={async () => undefined}
+          />
+        </StrictMode>
       )
   }
 ]
@@ -79,6 +100,19 @@ describe("chat copy feedback", () => {
       expect(screen.getByRole("button", { name: idleName }).querySelector(".icon-copy")).toBeInTheDocument()
     } finally {
       vi.useRealTimers()
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it.each(copyScenarios)("$copiedName shows copied feedback under StrictMode", async ({ copiedName, idleName, renderStrictComponent }) => {
+    try {
+      vi.stubGlobal("navigator", { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
+      renderStrictComponent()
+
+      await clickAndFlush(screen.getByRole("button", { name: idleName }))
+
+      expect(screen.getByRole("button", { name: copiedName }).querySelector(".icon-check")).toBeInTheDocument()
+    } finally {
       vi.unstubAllGlobals()
     }
   })
