@@ -2005,6 +2005,19 @@
             },
             {
               "Action": [
+                "cognito-idp:ListUsers",
+                "cognito-idp:AdminListGroupsForUser"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
                 "s3vectors:PutVectors",
                 "s3vectors:QueryVectors",
                 "s3vectors:GetVectors",
