@@ -199,11 +199,11 @@ test("fixed workflow fails fast for invalid injected asOfDate before retrieval",
   assert.equal(answerability?.reason, "invalid_temporal_context")
 })
 
-test("fixed workflow answers current date from temporal context", async () => {
+test("fixed workflow answers polite current date questions from temporal context", async () => {
   const service = new MemoRagService(await createTestDeps())
 
   const result = await service.chat({
-    question: "今日の日付は？",
+    question: "今日の日付は何日ですか？",
     asOfDate: "2026-05-03",
     asOfDateSource: "test",
     includeDebug: true
@@ -214,6 +214,7 @@ test("fixed workflow answers current date from temporal context", async () => {
   const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
   const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
   assert.equal(computedFacts?.[0]?.kind, "current_date")
+  assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
 })
 
 test("fixed workflow falls back to RAG when arithmetic intent has no usable computation", async () => {

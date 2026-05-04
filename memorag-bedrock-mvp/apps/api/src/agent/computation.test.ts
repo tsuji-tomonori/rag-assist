@@ -58,14 +58,19 @@ test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline 
   assert.deepEqual(detectToolIntent("2026-05-10まであと何日？").needsTemporalCalculation, true)
   assert.equal(detectToolIntent("1,200円を15人で12か月使うといくら？").needsArithmeticCalculation, true)
   assert.equal(detectToolIntent("今日の日付は？").canAnswerFromQuestionOnly, true)
+  assert.equal(detectToolIntent("今日の日付は何日ですか？").canAnswerFromQuestionOnly, true)
+  assert.equal(detectToolIntent("今日の日付は何日ですか？").needsTemporalCalculation, true)
   assert.equal(detectToolIntent("この資料の日付を確認してください").canAnswerFromQuestionOnly, false)
   assert.equal(detectToolIntent("この資料の日付を確認してください").needsSearch, true)
+  assert.equal(detectToolIntent("契約書の日付を教えて").canAnswerFromQuestionOnly, false)
+  assert.equal(detectToolIntent("契約書の日付を教えて").needsSearch, true)
   assert.equal(detectToolIntent("在宅勤務手当の申請期限は何営業日ですか？").canAnswerFromQuestionOnly, false)
   assert.equal(detectToolIntent("在宅勤務手当の申請期限は何営業日ですか？").needsSearch, true)
   assert.equal(detectToolIntent("経費精算の期限は2026-05-10ですか？").canAnswerFromQuestionOnly, false)
   assert.equal(detectToolIntent("経費精算の期限は2026-05-10ですか？").needsSearch, true)
   assert.equal(detectToolIntent("経費精算の期限は申請から30日以内ですか？").canAnswerFromQuestionOnly, false)
   assert.equal(detectToolIntent("経費精算の期限は申請から30日以内ですか？").needsSearch, true)
+  assert.equal(detectToolIntent("申請日は2026-04-15で、申請から30日以内の期限はいつですか？").canAnswerFromQuestionOnly, true)
   assert.equal(detectToolIntent("2026-05-01期限は期限切れですか？").canAnswerFromQuestionOnly, true)
 
   const taskList = detectToolIntent("期限切れのタスクを全部出して")
@@ -90,6 +95,14 @@ test("computation layer executes MVP temporal and arithmetic tools deterministic
   const currentDate = executeComputationTools("今日の日付は？", fixedTemporalContext, detectToolIntent("今日の日付は？"))
   assert.equal(currentDate[0]?.kind, "current_date")
   assert.equal(currentDate[0]?.kind === "current_date" ? currentDate[0].today : undefined, "2026-05-03")
+
+  const politeRelative = executeComputationTools(
+    "申請日は2026-04-15で、申請から30日以内の期限はいつですか？",
+    fixedTemporalContext,
+    detectToolIntent("申請日は2026-04-15で、申請から30日以内の期限はいつですか？")
+  )
+  assert.equal(politeRelative[0]?.kind, "add_days")
+  assert.equal(politeRelative[0]?.kind === "add_days" ? politeRelative[0].resultDate : undefined, "2026-05-15")
 })
 
 test("days_until past date reports overdue instead of negative remaining days", () => {
