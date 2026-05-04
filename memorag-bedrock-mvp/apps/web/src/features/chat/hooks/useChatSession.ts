@@ -4,6 +4,7 @@ import { getDebugRun } from "../../debug/api/debugApi.js"
 import type { DebugTrace } from "../../debug/types.js"
 import type { ChatResponse } from "../types-api.js"
 import type { Message } from "../types.js"
+import type { ClarificationOption } from "../types-api.js"
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -72,6 +73,29 @@ export function useChatSession({
     const typedQuestion = question.trim()
     const userQuestion = typedQuestion || `${file?.name ?? "添付資料"}を取り込んでください`
     const hasAttachment = file !== null
+    await submitQuestion(userQuestion, typedQuestion, hasAttachment)
+  }
+
+  async function submitClarificationOption(option: ClarificationOption, originalQuestion: string) {
+    const userQuestion = option.resolvedQuery.trim()
+    if (!userQuestion || loading || !canCreateChat) return
+    await submitQuestion(userQuestion, userQuestion, false, {
+      originalQuestion,
+      selectedOptionId: option.id,
+      selectedValue: option.label
+    })
+  }
+
+  async function submitQuestion(
+    userQuestion: string,
+    typedQuestion: string,
+    hasAttachment: boolean,
+    clarificationContext?: {
+      originalQuestion?: string
+      selectedOptionId?: string
+      selectedValue?: string
+    }
+  ) {
     setQuestion("")
     setMessages((prev) => [...prev, { role: "user", text: userQuestion, createdAt: new Date().toISOString() }])
     setLoading(true)
@@ -83,7 +107,7 @@ export function useChatSession({
     setError(null)
 
     try {
-      if (file && canWriteDocuments) {
+      if (hasAttachment && file && canWriteDocuments) {
         await ingestDocument(file)
         setFile(null)
       }
@@ -91,6 +115,7 @@ export function useChatSession({
       if (typedQuestion.length > 0) {
         const started = await startChatRun({
           question: userQuestion,
+          clarificationContext,
           modelId,
           embeddingModelId,
           clueModelId: modelId,
@@ -124,8 +149,14 @@ export function useChatSession({
               if (event.type === "final") {
                 debugRunId = typeof event.data.debugRunId === "string" ? event.data.debugRunId : undefined
                 result = {
+                  responseType:
+                    event.data.responseType === "answer" || event.data.responseType === "refusal" || event.data.responseType === "clarification"
+                      ? event.data.responseType
+                      : undefined,
                   answer: typeof event.data.answer === "string" ? event.data.answer : "",
                   isAnswerable: event.data.isAnswerable === true,
+                  needsClarification: event.data.needsClarification === true,
+                  clarification: event.data.clarification && typeof event.data.clarification === "object" ? (event.data.clarification as ChatResponse["clarification"]) : undefined,
                   citations: Array.isArray(event.data.citations) ? (event.data.citations as ChatResponse["citations"]) : [],
                   retrieved: Array.isArray(event.data.retrieved) ? (event.data.retrieved as ChatResponse["retrieved"]) : [],
                   debug: event.data.debug && typeof event.data.debug === "object" ? (event.data.debug as DebugTrace) : undefined
@@ -198,6 +229,7 @@ export function useChatSession({
     setSubmitShortcut,
     canAsk,
     onAsk,
+    submitClarificationOption,
     newConversation
   }
 }

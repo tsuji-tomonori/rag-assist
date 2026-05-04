@@ -995,17 +995,21 @@
         },
         "SourceBucketNames": [
           "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
           "cdk-hnb659fds-assets-111111111111-ap-northeast-1"
         ],
         "SourceObjectKeys": [
+          "<asset-hash>.zip",
           "<asset-hash>.zip",
           "<asset-hash>.zip"
         ],
         "SourceMarkers": [
           {},
+          {},
           {}
         ],
         "SourceMarkersConfig": [
+          {},
           {},
           {}
         ],

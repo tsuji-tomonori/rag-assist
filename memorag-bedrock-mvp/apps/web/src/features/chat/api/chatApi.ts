@@ -4,6 +4,11 @@ import type { ChatResponse, ChatRunEvent, ChatRunStartResponse } from "../types-
 
 export async function chat(input: {
   question: string
+  clarificationContext?: {
+    originalQuestion?: string
+    selectedOptionId?: string
+    selectedValue?: string
+  }
   modelId: string
   embeddingModelId?: string
   clueModelId?: string
@@ -19,6 +24,11 @@ export async function chat(input: {
 
 export async function startChatRun(input: {
   question: string
+  clarificationContext?: {
+    originalQuestion?: string
+    selectedOptionId?: string
+    selectedValue?: string
+  }
   modelId: string
   embeddingModelId?: string
   clueModelId?: string
