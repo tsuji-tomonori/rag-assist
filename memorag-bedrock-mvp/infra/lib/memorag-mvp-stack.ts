@@ -454,6 +454,7 @@ export class MemoRagMvpStack extends Stack {
       },
       buildSpec: codebuild.BuildSpec.fromObject({
         version: "0.2",
+        env: { shell: "bash" },
         phases: {
           install: {
             "runtime-versions": { nodejs: 22 },
