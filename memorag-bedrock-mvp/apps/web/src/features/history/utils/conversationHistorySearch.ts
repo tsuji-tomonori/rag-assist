@@ -74,11 +74,23 @@ function scoreConversation(
     score = 0
   }
 
-  if (query.primaryTerms.length > 0) {
-    const covered = query.primaryTerms.filter((term) => matchedTerms.has(term)).length
-    score += (covered / query.primaryTerms.length) * 1.2
+  const coveredPrimaryTerms = query.primaryTerms.filter((term) => matchedTerms.has(term))
+  if (isOnlyShortAsciiCoverage(query.primaryTerms, coveredPrimaryTerms)) {
+    score = 0
   }
-  if (item.isFavorite) score += 0.05
+
+  if (score <= 0) {
+    return {
+      item,
+      score: 0,
+      matchedTerms: [],
+      snippet: undefined
+    }
+  }
+
+  if (query.primaryTerms.length > 0) {
+    score += (coveredPrimaryTerms.length / query.primaryTerms.length) * 1.2
+  }
 
   return {
     item,
@@ -174,10 +186,7 @@ function buildSearchFields(item: ConversationHistoryItem): SearchField[] {
 }
 
 function citationFileNames(message: ConversationMessage): string[] {
-  const fileNames = [
-    ...(message.result?.citations ?? []).map((citation) => citation.fileName),
-    ...(message.result?.retrieved ?? []).map((citation) => citation.fileName)
-  ]
+  const fileNames = (message.result?.citations ?? []).map((citation) => citation.fileName)
   return [...new Set(fileNames.filter(Boolean))]
 }
 
@@ -203,6 +212,11 @@ function primaryQueryTerms(text: string): string[] {
 
 function hasLongJapaneseTerm(terms: string[]): boolean {
   return terms.some((term) => term.length >= 3 && /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー]/u.test(term))
+}
+
+function isOnlyShortAsciiCoverage(primaryTerms: string[], coveredTerms: string[]): boolean {
+  if (primaryTerms.length <= 1 || coveredTerms.length === 0) return false
+  return coveredTerms.every((term) => isAsciiToken(term) && term.length < 4)
 }
 
 function tokenizeQuery(text: string): string[] {

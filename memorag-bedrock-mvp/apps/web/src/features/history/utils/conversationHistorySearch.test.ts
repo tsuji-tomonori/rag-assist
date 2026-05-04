@@ -70,6 +70,16 @@ describe("searchConversationHistory", () => {
     expect(searchConversationHistory(history, "approval").map((result) => result.item.id)).toEqual(["favorite", "new", "old"])
   })
 
+  it("does not return unmatched favorites", () => {
+    const history = [
+      item("favorite", "休暇", "PTO の申請方法", { isFavorite: true }),
+      item("hit", "経費", "経費精算の期限")
+    ]
+
+    expect(searchConversationHistory(history, "存在しない")).toEqual([])
+    expect(searchConversationHistory(history, "経費").map((result) => result.item.id)).toEqual(["hit"])
+  })
+
   it("searches allowed conversation fields but not retrieved full text or private ticket metadata", () => {
     const history: ConversationHistoryItem[] = [
       item("ticket", "担当者確認", "確認を依頼", {
@@ -96,6 +106,7 @@ describe("searchConversationHistory", () => {
 
     expect(searchConversationHistory(history, "締切").map((result) => result.item.id)).toEqual(["ticket"])
     expect(searchConversationHistory(history, "approval-guide").map((result) => result.item.id)).toEqual(["file"])
+    expect(searchConversationHistory(history, "retrieved.pdf")).toEqual([])
     expect(searchConversationHistory(history, "retrieved-secret")).toEqual([])
     expect(searchConversationHistory(history, "internal-secret")).toEqual([])
   })
