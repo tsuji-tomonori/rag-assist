@@ -331,7 +331,9 @@ function isBusinessDayCalculationRequest(question: string): boolean {
 
 function isCurrentDateRequest(question: string): boolean {
   if (hasDocumentSourceCue(question)) return false
-  return /(今日|本日|現在|今).*(日付|何日)/.test(question)
+  return /(今日|本日).*(日付|何日)/.test(question) ||
+    /現在(の日付|は何日)/.test(question) ||
+    /今(の日付|は何日)/.test(question)
 }
 
 function isDateComputationRequest(question: string): boolean {

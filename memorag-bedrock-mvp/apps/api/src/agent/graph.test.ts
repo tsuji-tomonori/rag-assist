@@ -217,6 +217,30 @@ test("fixed workflow answers polite current date questions from temporal context
   assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
 })
 
+test("fixed workflow sends current-month deadline questions to RAG instead of current-date computation", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "deadline.txt",
+    text: "今月の締切は20日です。"
+  })
+
+  const result = await service.chat({
+    question: "今月の締切は何日ですか？",
+    asOfDate: "2026-05-03",
+    asOfDateSource: "test",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /20日/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
 test("fixed workflow falls back to RAG when arithmetic intent has no usable computation", async () => {
   const service = new MemoRagService(await createTestDeps())
 
