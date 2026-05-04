@@ -1,8 +1,13 @@
 import { type Dispatch, type FormEvent, type SetStateAction, useMemo, useState } from "react"
 import { startChatRun, streamChatRunEvents } from "../api/chatApi.js"
+import { getDebugRun } from "../../debug/api/debugApi.js"
 import type { DebugTrace } from "../../debug/types.js"
 import type { ChatResponse } from "../types-api.js"
 import type { Message } from "../types.js"
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 export function useChatSession({
   canCreateChat,
@@ -97,34 +102,46 @@ export function useChatSession({
         let lastEventId: number | undefined
         let done = false
         let terminalError: Error | undefined
+        let debugRunId: string | undefined
 
         for (let attempt = 0; attempt < 3 && !done; attempt += 1) {
-          await streamChatRunEvents(started.runId, (event) => {
-            if (event.id !== undefined) lastEventId = event.id
-            if (event.type === "timeout") {
-              setPendingActivity("処理が続いています。再接続しています")
-              return
-            }
-            if (event.type === "status") {
-              const message = typeof event.data.message === "string" ? event.data.message : typeof event.data.stage === "string" ? event.data.stage : "回答を生成中"
-              setPendingActivity(message)
-            }
-            if (event.type === "error") {
-              const message = typeof event.data.message === "string" ? event.data.message : "chat run failed"
-              terminalError = new Error(message)
-              done = true
-            }
-            if (event.type === "final") {
-              result = {
-                answer: typeof event.data.answer === "string" ? event.data.answer : "",
-                isAnswerable: event.data.isAnswerable === true,
-                citations: Array.isArray(event.data.citations) ? (event.data.citations as ChatResponse["citations"]) : [],
-                retrieved: Array.isArray(event.data.retrieved) ? (event.data.retrieved as ChatResponse["retrieved"]) : [],
-                debug: event.data.debug && typeof event.data.debug === "object" ? (event.data.debug as DebugTrace) : undefined
+          try {
+            await streamChatRunEvents(started.runId, (event) => {
+              if (event.id !== undefined) lastEventId = event.id
+              if (event.type === "timeout") {
+                setPendingActivity("処理が続いています。再接続しています")
+                return
               }
-              done = true
-            }
-          }, lastEventId)
+              if (event.type === "status") {
+                const message = typeof event.data.message === "string" ? event.data.message : typeof event.data.stage === "string" ? event.data.stage : "回答を生成中"
+                setPendingActivity(message)
+              }
+              if (event.type === "error") {
+                const message = typeof event.data.message === "string" ? event.data.message : "chat run failed"
+                terminalError = new Error(message)
+                done = true
+              }
+              if (event.type === "final") {
+                debugRunId = typeof event.data.debugRunId === "string" ? event.data.debugRunId : undefined
+                result = {
+                  answer: typeof event.data.answer === "string" ? event.data.answer : "",
+                  isAnswerable: event.data.isAnswerable === true,
+                  citations: Array.isArray(event.data.citations) ? (event.data.citations as ChatResponse["citations"]) : [],
+                  retrieved: Array.isArray(event.data.retrieved) ? (event.data.retrieved as ChatResponse["retrieved"]) : [],
+                  debug: event.data.debug && typeof event.data.debug === "object" ? (event.data.debug as DebugTrace) : undefined
+                }
+                done = true
+              }
+            }, lastEventId)
+          } catch (err) {
+            if (done || terminalError) break
+            if (attempt >= 2) throw err
+            setPendingActivity("接続が切れました。再接続しています")
+            await sleep(1000 * (attempt + 1))
+          }
+        }
+        if (result && !result.debug && debugRunId && canReadDebugRuns) {
+          result = { ...result, debug: await getDebugRun(debugRunId) }
         }
         if (terminalError) throw terminalError
         if (!result) throw new Error("chat run completed without final event")

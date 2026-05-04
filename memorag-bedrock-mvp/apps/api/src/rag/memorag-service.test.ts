@@ -258,6 +258,43 @@ test("service preserves asynchronous chat run options and can mark worker failur
   assert.equal(errorEvents.at(-1)?.message, "States.Timeout: worker timed out")
 })
 
+test("asynchronous chat run stores debug trace by reference", async () => {
+  const { service, deps } = await createService()
+  await service.ingest({
+    fileName: "debug.txt",
+    text: "debug trace は object store に保存し、非同期 run には参照 ID だけを残します。"
+  })
+
+  await deps.chatRunStore.create({
+    runId: "run-debug-reference",
+    status: "queued",
+    createdBy: "user-1",
+    userEmail: "user@example.com",
+    userGroups: ["SYSTEM_ADMIN"],
+    question: "debug trace の保存先は？",
+    modelId: "model-a",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.01,
+    includeDebug: true,
+    createdAt: "2026-05-04T00:00:00.000Z",
+    updatedAt: "2026-05-04T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+
+  const completed = await service.executeChatRun("run-debug-reference")
+  assert.equal(completed.status, "succeeded")
+  assert.equal(completed.debug, undefined)
+  assert.ok(completed.debugRunId)
+
+  const events = await deps.chatRunEventStore.listAfter("run-debug-reference", 0)
+  const final = events.find((event) => event.type === "final")
+  assert.ok(final)
+  assert.equal(typeof (final.data as Record<string, unknown>).debugRunId, "string")
+  assert.equal((final.data as Record<string, unknown>).debug, undefined)
+  assert.ok(await service.getDebugRun(completed.debugRunId ?? ""))
+})
+
 test("service chat returns refusal and error debug trace when external dependencies fail", async () => {
   const { service } = await createService({
     textModel: new MockBedrockTextModel({ embed: new Error("Bedrock embed timeout") }),

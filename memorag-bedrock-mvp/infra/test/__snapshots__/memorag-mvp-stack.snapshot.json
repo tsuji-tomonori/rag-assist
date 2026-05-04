@@ -3167,7 +3167,7 @@
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
     },
-    "RestApiDeployment180EC5034951061e4f9102e1781fba52e81f1602": {
+    "RestApiDeployment180EC50335924d9ade7023c27087499259360901": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "Description": "Automatically created by the RestApi construct",
@@ -3188,7 +3188,9 @@
         "RestApichatrunsOPTIONS7EE1D56A",
         "RestApichatrunsPOST78780797",
         "RestApichatruns60F0DD77",
-        "RestApiOPTIONS6AA64D2D"
+        "RestApiOPTIONS6AA64D2D",
+        "RestApiDefault4xxGatewayResponse52322928",
+        "RestApiDefault5xxGatewayResponse8E1119C1"
       ]
     },
     "RestApiDeploymentStageprod3855DE66": {
@@ -3204,7 +3206,7 @@
           "Format": "{\"requestId\":\"$context.requestId\",\"ip\":\"$context.identity.sourceIp\",\"user\":\"$context.identity.user\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"protocol\":\"$context.protocol\",\"responseLength\":\"$context.responseLength\"}"
         },
         "DeploymentId": {
-          "Ref": "RestApiDeployment180EC5034951061e4f9102e1781fba52e81f1602"
+          "Ref": "RestApiDeployment180EC50335924d9ade7023c27087499259360901"
         },
         "MethodSettings": [
           {
@@ -3898,6 +3900,34 @@
         "ResourceId": {
           "Ref": "RestApichatrunsrunIdevents5BAC3B9E"
         },
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApiDefault4xxGatewayResponse52322928": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+          "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
+          "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
+        },
+        "ResponseType": "DEFAULT_4XX",
+        "RestApiId": {
+          "Ref": "RestApi0C43BF4B"
+        }
+      }
+    },
+    "RestApiDefault5xxGatewayResponse8E1119C1": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+          "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
+          "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
+        },
+        "ResponseType": "DEFAULT_5XX",
         "RestApiId": {
           "Ref": "RestApi0C43BF4B"
         }

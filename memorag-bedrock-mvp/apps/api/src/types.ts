@@ -235,6 +235,7 @@ export type ChatRun = {
   isAnswerable?: boolean
   citations?: Citation[]
   retrieved?: Citation[]
+  debugRunId?: string
   debug?: DebugTrace
   error?: string
   createdAt: string

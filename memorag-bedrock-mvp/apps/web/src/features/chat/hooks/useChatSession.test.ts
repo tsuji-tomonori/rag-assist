@@ -5,8 +5,12 @@ const chatApiMock = vi.hoisted(() => ({
   startChatRun: vi.fn(),
   streamChatRunEvents: vi.fn()
 }))
+const debugApiMock = vi.hoisted(() => ({
+  getDebugRun: vi.fn()
+}))
 
 vi.mock("../api/chatApi.js", () => chatApiMock)
+vi.mock("../../debug/api/debugApi.js", () => debugApiMock)
 
 import { useChatSession } from "./useChatSession.js"
 
@@ -41,6 +45,7 @@ describe("useChatSession", () => {
   beforeEach(() => {
     chatApiMock.startChatRun.mockReset()
     chatApiMock.streamChatRunEvents.mockReset()
+    debugApiMock.getDebugRun.mockReset()
   })
 
   it("loading 中は canAsk を false にする", () => {
@@ -89,5 +94,88 @@ describe("useChatSession", () => {
       role: "assistant",
       text: "再接続後の回答です。"
     })
+  })
+
+  it("stream 切断後に Last-Event-ID で再接続する", async () => {
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    chatApiMock.streamChatRunEvents
+      .mockImplementationOnce(async (_runId, onEvent) => {
+        onEvent({ id: 2, type: "status", data: { message: "検索中" } })
+        throw new Error("network disconnected")
+      })
+      .mockImplementationOnce(async (_runId, onEvent) => {
+        onEvent({
+          id: 3,
+          type: "final",
+          data: {
+            answer: "再接続できました。",
+            isAnswerable: true,
+            citations: [],
+            retrieved: []
+          }
+        })
+      })
+    const props = createProps()
+    const { result } = renderHook(() => useChatSession(props))
+
+    act(() => result.current.setQuestion("途中切断を確認して"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(chatApiMock.streamChatRunEvents).toHaveBeenNthCalledWith(2, "chat-run-1", expect.any(Function), 2)
+    expect(result.current.messages.at(-1)).toMatchObject({
+      role: "assistant",
+      text: "再接続できました。"
+    })
+  })
+
+  it("final event の debugRunId から debug trace を取得する", async () => {
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    debugApiMock.getDebugRun.mockResolvedValue({
+      schemaVersion: 1,
+      runId: "debug-run-1",
+      question: "debug を確認して",
+      modelId: "model",
+      embeddingModelId: "embed",
+      clueModelId: "clue",
+      topK: 6,
+      memoryTopK: 4,
+      minScore: 0.2,
+      startedAt: "2026-05-04T00:00:00.000Z",
+      completedAt: "2026-05-04T00:00:01.000Z",
+      totalLatencyMs: 1000,
+      status: "success",
+      answerPreview: "回答",
+      isAnswerable: true,
+      citations: [],
+      retrieved: [],
+      steps: []
+    })
+    chatApiMock.streamChatRunEvents.mockImplementationOnce(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "回答",
+          isAnswerable: true,
+          citations: [],
+          retrieved: [],
+          debugRunId: "debug-run-1"
+        }
+      })
+    })
+    const setDebugRuns = vi.fn()
+    const setSelectedRunId = vi.fn()
+    const { result } = renderHook(() => useChatSession(createProps({ debugMode: true, setDebugRuns, setSelectedRunId })))
+
+    act(() => result.current.setQuestion("debug を確認して"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(debugApiMock.getDebugRun).toHaveBeenCalledWith("debug-run-1")
+    expect(setSelectedRunId).toHaveBeenCalledWith("debug-run-1")
+    expect(setDebugRuns).toHaveBeenCalled()
   })
 })

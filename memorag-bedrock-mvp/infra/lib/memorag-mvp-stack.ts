@@ -446,6 +446,19 @@ export class MemoRagMvpStack extends Stack {
       }
     })
     const restApiBaseUrl = `https://${restApi.restApiId}.execute-api.${cdk.Aws.REGION}.${cdk.Aws.URL_SUFFIX}/prod/`
+    const restApiCorsGatewayResponseHeaders = {
+      "Access-Control-Allow-Origin": "'*'",
+      "Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
+      "Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
+    }
+    restApi.addGatewayResponse("Default4xxGatewayResponse", {
+      type: apigw.ResponseType.DEFAULT_4XX,
+      responseHeaders: restApiCorsGatewayResponseHeaders
+    })
+    restApi.addGatewayResponse("Default5xxGatewayResponse", {
+      type: apigw.ResponseType.DEFAULT_5XX,
+      responseHeaders: restApiCorsGatewayResponseHeaders
+    })
 
     const restAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "RestApiCognitoAuthorizer", {
       cognitoUserPools: [userPool]

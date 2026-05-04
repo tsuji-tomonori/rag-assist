@@ -1,10 +1,12 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
+import { streamSSE } from "hono/streaming"
 import { HTTPException } from "hono/http-exception"
 import { createDependencies } from "./dependencies.js"
 import { authMiddleware } from "./auth.js"
 import { getPermissionsForGroups, requirePermission } from "./authorization.js"
 import { MemoRagService } from "./rag/memorag-service.js"
+import { eventPayload } from "./chat-run-events-stream.js"
 import {
   ChatRequestSchema,
   ChatRunStartResponseSchema,
@@ -63,13 +65,17 @@ const app = new OpenAPIHono({
   }
 })
 
-app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
+app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization", "Last-Event-ID"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
 for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/chat-runs", "/chat-runs/*", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
   app.use(path, authMiddleware)
 }
 
 function looseRoute(config: any) {
   return createRoute(config) as any
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 app.openapi(
@@ -679,6 +685,70 @@ app.openapi(
       requirePermission(user, "chat:admin:read_all")
     }
     return c.json(await service.startChatRun(body, user), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/chat-runs/{runId}/events",
+    request: {
+      params: z.object({ runId: z.string().min(1) })
+    },
+    responses: {
+      200: { description: "Asynchronous chat run events", content: { "text/event-stream": { schema: z.string() } } },
+      403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+      404: { description: "Chat run not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "chat:read:own")
+    const runId = c.req.param("runId") ?? ""
+    const run = await deps.chatRunStore.get(runId)
+    if (!run) return c.json({ error: "Chat run not found" }, 404)
+
+    const canReadAll = getPermissionsForGroups(user.cognitoGroups).includes("chat:admin:read_all")
+    if (run.createdBy !== user.userId && !canReadAll) return c.json({ error: "Forbidden" }, 403)
+
+    return streamSSE(c, async (stream) => {
+      const lastEventId = Number(c.req.header("Last-Event-ID") ?? 0)
+      let afterSeq = Number.isFinite(lastEventId) ? lastEventId : 0
+      const deadline = Date.now() + 14 * 60 * 1000
+      let lastHeartbeat = 0
+
+      while (Date.now() < deadline) {
+        const events = await deps.chatRunEventStore.listAfter(runId, afterSeq)
+        for (const item of events) {
+          await stream.writeSSE({
+            id: String(item.seq),
+            event: item.type,
+            data: JSON.stringify(eventPayload(item))
+          })
+          afterSeq = item.seq
+          if (item.type === "final" || item.type === "error") return
+        }
+
+        if (Date.now() - lastHeartbeat > 15_000) {
+          await stream.writeSSE({
+            event: "heartbeat",
+            data: JSON.stringify({ ts: new Date().toISOString(), nextSeq: afterSeq + 1 })
+          })
+          lastHeartbeat = Date.now()
+        }
+
+        await sleep(1000)
+      }
+
+      await stream.writeSSE({
+        event: "timeout",
+        data: JSON.stringify({
+          message: "stream timeout. reconnect with Last-Event-ID.",
+          nextSeq: afterSeq + 1
+        })
+      })
+    })
   }
 )
 

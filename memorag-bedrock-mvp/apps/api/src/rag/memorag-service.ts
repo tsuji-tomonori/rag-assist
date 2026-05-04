@@ -718,7 +718,13 @@ export class MemoRagService {
     })
 
     if (config.chatRunStateMachineArn) {
-      await this.startChatRunExecution(runId)
+      try {
+        await this.startChatRunExecution(runId)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        await this.markChatRunFailed(runId, `StartExecution failed: ${message}`)
+        throw err
+      }
     } else {
       void this.executeChatRun(runId).catch(() => undefined)
     }
@@ -772,18 +778,19 @@ export class MemoRagService {
         }
       )
       const completedAt = new Date().toISOString()
+      const finalEventData: Record<string, JsonValue> = {
+        answer: result.answer,
+        isAnswerable: result.isAnswerable,
+        citations: result.citations as unknown as JsonValue,
+        retrieved: result.retrieved as unknown as JsonValue
+      }
+      if (result.debug?.runId) finalEventData.debugRunId = result.debug.runId
       await this.deps.chatRunEventStore.append({
         runId,
         type: "final",
         stage: "done",
         message: "回答生成が完了しました",
-        data: {
-          answer: result.answer,
-          isAnswerable: result.isAnswerable,
-          citations: result.citations as unknown as JsonValue,
-          retrieved: result.retrieved as unknown as JsonValue,
-          debug: result.debug as unknown as JsonValue
-        },
+        data: finalEventData,
         ttl
       })
       return this.deps.chatRunStore.update(runId, {
@@ -792,7 +799,7 @@ export class MemoRagService {
         isAnswerable: result.isAnswerable,
         citations: result.citations,
         retrieved: result.retrieved,
-        debug: result.debug,
+        debugRunId: result.debug?.runId,
         completedAt,
         updatedAt: completedAt
       })

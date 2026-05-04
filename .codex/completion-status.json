@@ -2,23 +2,23 @@
   "complete": true,
   "status": "complete",
   "requested_items": [
-    "レビュー指摘の blocking 2 件を修正する",
-    "streaming endpoint の CORS header 不足を修正する",
-    "worker timeout/crash 時に run が failed/error へ進むよう修正する",
-    "status event の stage/message 欠落を修正する",
-    "/chat-runs が ChatInput option を同期 /chat と揃えて扱うよう修正する",
-    "stream timeout 後の UI 再接続を追加する",
-    "テスト、docs、作業レポート、commit、push、PR 更新を行う"
+    "PR #94 の最新レビュー指摘を修正する",
+    "local dev の新チャット UI が /chat-runs/{runId}/events で 404 にならないようにする",
+    "debug trace の DynamoDB item size リスクを下げる",
+    "network disconnect 時の retry を強化する",
+    "StartExecution 失敗時に queued run を failed/error にする",
+    "API Gateway authorizer 由来 401/403 CORS を安定させる",
+    "検証、作業レポート、commit、push、PR 更新を行う"
   ],
   "completed_items": [
-    "stream handler の 200/400/403/404/500 応答 header に CORS header を追加した",
-    "stream handler の event payload が stage/message を data と併合するよう修正した",
-    "ChatRun に strictGrounded/useMemory/maxIterations を追加し、start/execute の保存・実行へ渡した",
-    "Step Functions worker task に Catch を追加し、ChatRunMarkFailedFunction で failed run と error event を永続化するようにした",
-    "Web の useChatSession に timeout event 後の Last-Event-ID 再接続を追加した",
-    "API stream CORS/payload test、service failure marker test、web reconnect test、infra state machine test を追加・更新した",
-    "DES_API_001 に CORS、reconnect、failure marker、ChatInput option の設計を追記した",
-    "reports/working/20260504-1123-pr94-review-fixes.md を作成した"
+    "Hono app に GET /chat-runs/{runId}/events の local SSE route を追加した",
+    "SSE route を authMiddleware 配下に置き、chat:read:own と run owner または chat:admin:read_all で保護した",
+    "local SSE route で Last-Event-ID、heartbeat、timeout、final/error close を実装した",
+    "Web useChatSession で timeout だけでなく stream/network error 時も Last-Event-ID 付き retry を行うようにした",
+    "ChatRun/Event には full debug trace ではなく debugRunId を保存・送信し、UI が必要時に GET /debug-runs/{runId} を読むようにした",
+    "Step Functions StartExecution 失敗時に markChatRunFailed() を呼び queued run を failed/error に進めるようにした",
+    "REST API DEFAULT_4XX / DEFAULT_5XX GatewayResponse に CORS header を追加した",
+    "API/Web/Infra tests、access-control static test、contract test、CDK snapshot、docs/examples、作業レポートを更新した"
   ],
   "remaining_items": [],
   "blocked_items": [],
@@ -30,7 +30,11 @@
     {
       "command": "npm --prefix memorag-bedrock-mvp/apps/api run test",
       "result": "pass",
-      "note": "75 tests"
+      "note": "76 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run build",
+      "result": "pass"
     },
     {
       "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
@@ -39,7 +43,11 @@
     {
       "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
       "result": "pass",
-      "note": "13 files / 85 tests"
+      "note": "13 files / 87 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run build",
+      "result": "pass"
     },
     {
       "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
@@ -56,15 +64,24 @@
       "note": "6 tests"
     },
     {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass"
+    },
+    {
       "command": "git diff --check",
       "result": "pass"
     },
     {
-      "command": "rg -n '^<{7}|^={7}|^>{7}' memorag-bedrock-mvp .codex --glob '!reports/**'",
+      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .github skills --glob '!reports/**'",
       "result": "pass",
       "note": "競合マーカー検出なし"
+    },
+    {
+      "command": "task docs:check:changed",
+      "result": "not_run",
+      "note": "この worktree の Taskfile に task が存在しないため未実行"
     }
   ],
-  "next_action": "PR #94 のレビュー再確認と merge 判断",
+  "next_action": "commit、push、PR #94 更新",
   "safe_to_continue_without_user": true
 }

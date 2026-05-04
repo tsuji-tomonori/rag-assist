@@ -95,6 +95,20 @@ test("implements the designed serverless resources", () => {
       TimeoutInMillis: 900000
     })
   })
+  template.hasResourceProperties("AWS::ApiGateway::GatewayResponse", {
+    ResponseType: "DEFAULT_4XX",
+    ResponseParameters: Match.objectLike({
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+      "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
+      "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
+    })
+  })
+  template.hasResourceProperties("AWS::ApiGateway::GatewayResponse", {
+    ResponseType: "DEFAULT_5XX",
+    ResponseParameters: Match.objectLike({
+      "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+    })
+  })
   template.hasResourceProperties("AWS::CloudFront::Distribution", {
     DistributionConfig: Match.objectLike({
       DefaultRootObject: "index.html",

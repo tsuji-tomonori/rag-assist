@@ -395,6 +395,7 @@ export const ChatRunSchema = z.object({
   isAnswerable: z.boolean().optional(),
   citations: z.array(CitationSchema).optional(),
   retrieved: z.array(CitationSchema).optional(),
+  debugRunId: z.string().optional(),
   debug: DebugTraceSchema.optional(),
   error: z.string().optional(),
   createdAt: z.string(),

@@ -59,6 +59,7 @@ const routePolicies: RoutePolicy[] = [
   { method: "delete", path: "/documents/{documentId}", permission: "rag:doc:delete:group" },
   { method: "post", path: "/chat", permission: "chat:create" },
   { method: "post", path: "/chat-runs", permission: "chat:create" },
+  { method: "get", path: "/chat-runs/{runId}/events", permission: "chat:read:own" },
   { method: "post", path: "/search", permission: "rag:doc:read" },
   { method: "post", path: "/questions", permission: "chat:create" },
   { method: "get", path: "/questions", permission: "answer:edit" },

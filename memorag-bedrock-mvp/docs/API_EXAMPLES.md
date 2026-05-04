@@ -55,6 +55,8 @@ curl -N "http://localhost:8787/chat-runs/${RUN_ID}/events" \
   "${AUTH_HEADER[@]}"
 ```
 
+`includeDebug=true` の SSE `final` event は full debug trace ではなく `debugRunId` を返します。trace 本体は `GET /debug-runs/{runId}` で取得します。
+
 `POST /chat` は後方互換用の同期 JSON API として利用できます。
 
 ```bash
