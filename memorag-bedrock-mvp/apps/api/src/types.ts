@@ -192,7 +192,6 @@ export type Clarification = {
   confidence: number
   ambiguityScore?: number
   groundedOptionCount?: number
-  rejectedOptions?: string[]
 }
 
 export type ClarificationContext = {

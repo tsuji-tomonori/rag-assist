@@ -17,7 +17,7 @@ const slotByTerm = new Map([
   ["権限", "対象ロール"]
 ])
 const privateAsciiLabelPattern = /\b(acl|tenant|tenantid|allowed[-_\s]?users|internal[-_\s]?alias)\b/i
-const privateJapaneseLabelPattern = /(内部alias|内部|非公開|機密)/i
+const privateJapaneseLabelPattern = /(内部alias|内部エイリアス|非公開|機密)/i
 
 export async function clarificationGate(state: QaAgentState): Promise<QaAgentUpdate> {
   const query = (state.normalizedQuery ?? state.question).trim()

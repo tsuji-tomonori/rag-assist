@@ -2,6 +2,8 @@ import type { Dependencies } from "../dependencies.js"
 import type { Citation, DebugTrace } from "../types.js"
 import type { Clarification } from "./state.js"
 
+export type PublicClarification = Omit<Clarification, "rejectedOptions">
+
 export type ChatInput = {
   question: string
   clarificationContext?: {
@@ -31,7 +33,7 @@ export type QaGraphResult = {
   answer: string
   isAnswerable: boolean
   needsClarification?: boolean
-  clarification?: Clarification
+  clarification?: PublicClarification
   citations: Citation[]
   retrieved: Citation[]
   debug?: DebugTrace

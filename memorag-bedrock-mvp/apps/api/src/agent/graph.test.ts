@@ -184,6 +184,7 @@ test("fixed workflow returns corpus-grounded clarification before answer generat
   assert.ok((result.clarification?.options.length ?? 0) >= 2)
   assert.ok((result.clarification?.options.length ?? 0) <= 5)
   assert.ok(result.clarification?.options.every((option) => option.grounding.length > 0))
+  assert.equal(Object.hasOwn(result.clarification ?? {}, "rejectedOptions"), false)
   assert.deepEqual(result.citations, [])
   assert.deepEqual(result.retrieved, [])
   const labels = result.debug?.steps.map((step) => step.label) ?? []

@@ -6,9 +6,8 @@ import { config } from "../config.js"
 import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
-import type { ChatInput } from "../agent/types.js"
-import type { Clarification } from "../agent/state.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Chunk, type Citation, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import type { ChatInput, QaGraphResult } from "../agent/types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -680,16 +679,7 @@ export class MemoRagService {
     return normalizeDebugTrace(JSON.parse(await this.deps.objectStore.getText(key)))
   }
 
-  async chat(input: ChatInput, user?: AppUser): Promise<{
-    responseType: "answer" | "refusal" | "clarification"
-    answer: string
-    isAnswerable: boolean
-    needsClarification?: boolean
-    clarification?: Clarification
-    citations: Citation[]
-    retrieved: Citation[]
-    debug?: DebugTrace
-  }> {
+  async chat(input: ChatInput, user?: AppUser): Promise<QaGraphResult> {
     return runQaAgent(this.deps, input, user)
   }
 

@@ -649,6 +649,27 @@ test("clarification gate asks only with grounded options and leaves clear querie
     normalizedQuery: "社長の昨日の昼食"
   }))
   assert.equal(noCandidate.clarification?.needsClarification, false)
+
+  const internalControl = await clarificationGate(state({
+    question: "申請期限は？",
+    normalizedQuery: "申請期限",
+    memoryCards: [
+      {
+        ...chunk,
+        key: "internal-control-memory",
+        score: 0.92,
+        metadata: {
+          ...chunk.metadata,
+          kind: "memory" as const,
+          memoryId: "memory-internal-control",
+          text: "内部統制申請の期限は四半期末です。"
+        }
+      },
+      expense
+    ]
+  }))
+  assert.equal(internalControl.clarification?.needsClarification, true)
+  assert.ok(internalControl.clarification?.options.some((option) => option.label.includes("内部統制")))
 })
 
 test("retrieval evaluator LLM judge handles uncertain value mismatch cases", async () => {

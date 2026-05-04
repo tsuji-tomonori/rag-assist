@@ -364,8 +364,7 @@ export const ClarificationSchema = z.object({
   missingSlots: z.array(z.string()).default(() => []),
   confidence: z.number().min(0).max(1),
   ambiguityScore: z.number().min(0).max(1).optional(),
-  groundedOptionCount: z.number().int().nonnegative().optional(),
-  rejectedOptions: z.array(z.string()).optional()
+  groundedOptionCount: z.number().int().nonnegative().optional()
 })
 
 export const DebugStepSchema = z.object({

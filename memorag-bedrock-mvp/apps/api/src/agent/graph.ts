@@ -23,7 +23,7 @@ import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
-import { NO_ANSWER, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
+import { NO_ANSWER, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
 import { clamp, toCitation } from "./utils.js"
@@ -549,11 +549,16 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
     answer,
     isAnswerable,
     needsClarification: isClarification,
-    clarification: isClarification ? state.clarification : undefined,
+    clarification: isClarification ? toPublicClarification(state.clarification) : undefined,
     citations,
     retrieved,
     debug
   }
+}
+
+function toPublicClarification(clarification: Clarification): Omit<Clarification, "rejectedOptions"> {
+  const { rejectedOptions: _rejectedOptions, ...publicClarification } = clarification
+  return publicClarification
 }
 
 async function persistDebugTrace(
