@@ -250,8 +250,51 @@ test("service lists all Cognito directory users in the managed user ledger", asy
 
   assert.deepEqual(users.map((user) => user.email), ["admin@example.com", "member@example.com"])
   assert.equal(users.find((user) => user.userId === "member-sub")?.groups[0], "CHAT_USER")
+
   const updated = await service.assignUserRoles(actor, "member-sub", ["ANSWER_EDITOR"])
   assert.deepEqual(updated?.groups, ["ANSWER_EDITOR"])
+  assert.deepEqual((await service.listManagedUsers(actor)).find((user) => user.userId === "member-sub")?.groups, ["ANSWER_EDITOR"])
+
+  const suspended = await service.suspendManagedUser(actor, "member-sub")
+  assert.equal(suspended?.status, "suspended")
+  assert.equal((await service.listManagedUsers(actor)).find((user) => user.userId === "member-sub")?.status, "suspended")
+
+  await service.deleteManagedUser(actor, "member-sub")
+  assert.equal((await service.listManagedUsers(actor)).some((user) => user.userId === "member-sub"), false)
+})
+
+test("service merges Cognito directory users with existing ledger users by email", async () => {
+  let directoryUsers: ManagedUser[] = []
+  const { service } = await createService({
+    userDirectory: {
+      listUsers: async () => directoryUsers
+    }
+  })
+  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+
+  await service.createManagedUser(actor, {
+    email: "dup@example.com",
+    displayName: "Ledger User",
+    groups: ["ANSWER_EDITOR"]
+  })
+  directoryUsers = [
+    {
+      userId: "dup-sub",
+      email: "dup@example.com",
+      displayName: "Cognito User",
+      status: "active",
+      groups: ["CHAT_USER"],
+      createdAt: "2026-05-01T00:00:00.000Z",
+      updatedAt: "2026-05-02T00:00:00.000Z"
+    }
+  ]
+
+  const users = await service.listManagedUsers(actor)
+  const matchingUsers = users.filter((user) => user.email === "dup@example.com")
+
+  assert.equal(matchingUsers.length, 1)
+  assert.equal(matchingUsers[0]?.userId, "dup-sub")
+  assert.deepEqual(matchingUsers[0]?.groups, ["ANSWER_EDITOR"])
 })
 
 test("service chat returns refusal and error debug trace when external dependencies fail", async () => {

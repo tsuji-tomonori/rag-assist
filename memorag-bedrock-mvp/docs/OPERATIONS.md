@@ -92,7 +92,7 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 
 ログイン画面から self sign-up したユーザーは、メール確認後に Cognito post-confirmation trigger で `CHAT_USER` のみを自動付与する。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが対象者と必要性を確認し、`.github/workflows/memorag-create-cognito-user.yml` または AWS 管理手順で後から付与する。
 
-管理者設定のユーザー管理一覧は `GET /admin/users` で Cognito User Pool の全ユーザーを読み取り、email または Cognito `sub` で管理台帳とマージして表示する。API Lambda には `cognito-idp:ListUsers` と `cognito-idp:AdminListGroupsForUser` を User Pool ARN に限定して付与する。
+管理者設定のユーザー管理一覧は `GET /admin/users` で Cognito User Pool の全ユーザーを読み取り、email または Cognito `sub` で管理台帳とマージして表示する。Cognito はユーザー発見用 directory として扱い、管理画面上のロール、停止、再開、削除状態は管理台帳を source of truth とする。Cognito に存在しても管理台帳で `deleted` のユーザーは一覧に戻さない。実際の API 認可は Cognito group を含む JWT で判定するため、上位権限の実効付与は GitHub Actions または AWS 管理手順で Cognito group を更新する。API Lambda には `cognito-idp:ListUsers` と `cognito-idp:AdminListGroupsForUser` を User Pool ARN に限定して付与する。
 
 ## AWSデプロイ前チェック
 

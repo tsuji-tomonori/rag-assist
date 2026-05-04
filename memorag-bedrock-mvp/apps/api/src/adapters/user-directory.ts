@@ -7,18 +7,20 @@ import {
 import { config } from "../config.js"
 import type { ManagedUser } from "../types.js"
 
+type CognitoDirectoryClient = Pick<CognitoIdentityProviderClient, "send">
+
 export interface UserDirectory {
   listUsers(): Promise<ManagedUser[]>
 }
 
 export class CognitoUserDirectory implements UserDirectory {
-  private readonly client: CognitoIdentityProviderClient
+  private readonly client: CognitoDirectoryClient
 
   constructor(
     private readonly userPoolId = config.cognitoUserPoolId,
-    client?: CognitoIdentityProviderClient
+    client?: CognitoDirectoryClient
   ) {
-    this.client = client ?? new CognitoIdentityProviderClient({ region: config.region })
+    this.client = client ?? new CognitoIdentityProviderClient({ region: config.cognitoRegion })
   }
 
   async listUsers(): Promise<ManagedUser[]> {
@@ -35,7 +37,7 @@ export class CognitoUserDirectory implements UserDirectory {
       paginationToken = result.PaginationToken
     } while (paginationToken)
 
-    return Promise.all(users.map((user) => this.toManagedUser(user)))
+    return mapWithConcurrency(users, 5, (user) => this.toManagedUser(user))
   }
 
   private async toManagedUser(user: UserType): Promise<ManagedUser> {
@@ -44,7 +46,7 @@ export class CognitoUserDirectory implements UserDirectory {
     for (const attribute of user.Attributes ?? []) {
       if (attribute.Name) attributes[attribute.Name] = attribute.Value ?? ""
     }
-    const groups = await this.listGroups(username)
+    const groups = await this.safeListGroups(username)
     const email = attributes.email || username || attributes.sub || "unknown@example.local"
     const createdAt = user.UserCreateDate?.toISOString() ?? new Date(0).toISOString()
     const updatedAt = user.UserLastModifiedDate?.toISOString() ?? createdAt
@@ -57,6 +59,15 @@ export class CognitoUserDirectory implements UserDirectory {
       groups,
       createdAt,
       updatedAt
+    }
+  }
+
+  private async safeListGroups(username: string): Promise<string[]> {
+    try {
+      return await this.listGroups(username)
+    } catch (err) {
+      console.warn(`Failed to list Cognito groups for ${username || "unknown user"}`, err)
+      return []
     }
   }
 
@@ -77,4 +88,19 @@ export class CognitoUserDirectory implements UserDirectory {
 
     return groups
   }
+}
+
+async function mapWithConcurrency<T, R>(items: T[], concurrency: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const results: R[] = []
+  let nextIndex = 0
+  const workers = Array.from({ length: Math.max(1, Math.min(concurrency, items.length || 1)) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex
+      nextIndex += 1
+      const item = items[index]
+      if (item !== undefined) results[index] = await fn(item, index)
+    }
+  })
+  await Promise.all(workers)
+  return results
 }
