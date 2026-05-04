@@ -46,7 +46,7 @@
 | 根拠 | 検索と回答許可の改善には測定基盤が必要 |
 | 源泉 | ユーザー提示方針、現行コード調査 |
 | 種類 | 機能要求 |
-| 依存関係 | `/benchmark/query`、debug trace、dataset format |
+| 依存関係 | `/benchmark/query`、`/benchmark/search`、debug trace、dataset format |
 | 衝突 | 評価項目が増えると dataset 作成負荷が増える |
 | 受け入れ基準 | `AC-FR019-001` から `AC-FR019-005` |
 | 優先度 | S |

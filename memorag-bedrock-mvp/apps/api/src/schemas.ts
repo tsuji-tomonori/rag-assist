@@ -328,6 +328,33 @@ export const SearchRequestSchema = z.object({
   }).optional()
 })
 
+const BenchmarkSearchForbiddenUserGroups = new Set([
+  "SYSTEM_ADMIN",
+  "RAG_GROUP_MANAGER",
+  "BENCHMARK_RUNNER",
+  "ANSWER_EDITOR",
+  "USER_ADMIN",
+  "ACCESS_ADMIN",
+  "COST_AUDITOR"
+])
+
+export const BenchmarkSearchRequestSchema = SearchRequestSchema.extend({
+  user: z.object({
+    userId: z.string().min(1).max(160).optional().openapi({ example: "benchmark-user-1" }),
+    groups: z.array(z.string().min(1).max(160)).max(20).optional().openapi({ example: ["GROUP_A"] })
+  }).optional()
+}).superRefine((value, ctx) => {
+  for (const group of value.user?.groups ?? []) {
+    if (BenchmarkSearchForbiddenUserGroups.has(group)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["user", "groups"],
+        message: `Benchmark search user cannot include privileged group ${group}`
+      })
+    }
+  }
+})
+
 export const CitationSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),

@@ -313,9 +313,11 @@ curl -s http://localhost:8787/conversation-history \
 curl -s http://localhost:8787/conversation-history "${AUTH_HEADER[@]}" | jq
 ```
 
-## Benchmark query
+## Benchmark query/search
 
-`POST /benchmark/query` は `benchmark:run` 権限を持つ token で実行する。管理画面からの非同期実行は `POST /benchmark-runs` を使う。
+`POST /benchmark/query` と `POST /benchmark/search` は CodeBuild runner など `benchmark:query` 権限を持つ service token で実行する。管理画面からの非同期実行は `benchmark:run` 権限で `POST /benchmark-runs` を使う。既存の外部運用 token が `RAG_GROUP_MANAGER` で `/benchmark/query` または `/benchmark/search` を直接呼んでいる場合は、`BENCHMARK_RUNNER` service user へ移行する。
+
+`POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り search benchmark dataset の `user` を任意で受け取り、ACL 評価用の利用者文脈として `user.userId` と `user.groups` を使う。通常利用者向け `/search` は request body の `user` を受け付けず、認証 token の本人だけで検索する。
 
 ```bash
 curl -s http://localhost:8787/benchmark/query \
@@ -326,6 +328,20 @@ curl -s http://localhost:8787/benchmark/query \
     "question":"経費精算の期限は？",
     "modelId":"amazon.nova-lite-v1:0",
     "includeDebug":true
+  }' | jq
+```
+
+```bash
+curl -s http://localhost:8787/benchmark/search \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query":"経費精算の期限は？",
+    "topK":10,
+    "user":{
+      "userId":"benchmark-user-1",
+      "groups":["GROUP_A"]
+    }
   }' | jq
 ```
 

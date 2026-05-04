@@ -22,6 +22,7 @@ export type Permission =
   | "rag:alias:disable:group"
   | "rag:alias:publish:group"
   | "benchmark:read"
+  | "benchmark:query"
   | "benchmark:run"
   | "benchmark:seed_corpus"
   | "benchmark:cancel"
@@ -50,7 +51,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
     "benchmark:read","benchmark:run"
   ],
-  BENCHMARK_RUNNER: ["benchmark:run", "benchmark:seed_corpus", "rag:doc:read"],
+  BENCHMARK_RUNNER: ["benchmark:query", "benchmark:seed_corpus"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   COST_AUDITOR: ["cost:read:all"],
@@ -58,7 +59,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "chat:create","chat:read:own","chat:read:shared","chat:share:own","chat:delete:own","chat:admin:read_all",
     "answer:edit","answer:publish","rag:group:create","rag:group:assign_manager","rag:doc:read","rag:doc:write:group","rag:doc:delete:group","rag:index:rebuild:group",
     "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
-    "benchmark:read","benchmark:run","benchmark:seed_corpus","benchmark:cancel","benchmark:download",
+    "benchmark:read","benchmark:query","benchmark:run","benchmark:seed_corpus","benchmark:cancel","benchmark:download",
     "usage:read:own","usage:read:all_users","cost:read:own","cost:read:all","user:create","user:read","user:suspend","user:unsuspend","user:delete",
     "access:role:create","access:role:update","access:role:assign","access:policy:read"
   ]

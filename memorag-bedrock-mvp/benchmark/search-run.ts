@@ -131,7 +131,7 @@ async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body:
   if (process.env.API_AUTH_TOKEN) headers.Authorization = `Bearer ${process.env.API_AUTH_TOKEN}`
 
   try {
-    const response = await fetch(`${apiBaseUrl}/search`, {
+    const response = await fetch(`${apiBaseUrl}/benchmark/search`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -140,7 +140,8 @@ async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body:
         lexicalTopK: row.lexicalTopK ?? envInt("LEXICAL_TOP_K"),
         semanticTopK: row.semanticTopK ?? envInt("SEMANTIC_TOP_K"),
         embeddingModelId: row.embeddingModelId ?? process.env.EMBEDDING_MODEL_ID,
-        filters: row.filters
+        filters: row.filters,
+        user: row.user
       })
     })
     const text = await response.text()

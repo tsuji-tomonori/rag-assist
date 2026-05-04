@@ -23,6 +23,7 @@ import {
   BenchmarkSuiteListResponseSchema,
   BenchmarkQueryRequestSchema,
   BenchmarkQueryResponseSchema,
+  BenchmarkSearchRequestSchema,
   ConversationHistoryItemSchema,
   ConversationHistoryListResponseSchema,
   CostAuditSummarySchema,
@@ -66,7 +67,7 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization", "Last-Event-ID"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/chat-runs", "/chat-runs/*", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
+for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/chat-runs", "/chat-runs/*", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark/search", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
   app.use(path, authMiddleware)
 }
 
@@ -82,6 +83,17 @@ function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.i
   const visibleQuestion = { ...question }
   delete visibleQuestion.internalMemo
   return visibleQuestion
+}
+
+function benchmarkSearchUser(runnerUser: AppUser, requestUser: z.infer<typeof BenchmarkSearchRequestSchema>["user"]): AppUser {
+  if (!requestUser) return runnerUser
+  if (!runnerUser.cognitoGroups.includes("BENCHMARK_RUNNER")) {
+    throw new HTTPException(403, { message: "Forbidden: benchmark search user override requires BENCHMARK_RUNNER" })
+  }
+  return {
+    userId: requestUser.userId ?? "benchmark-search-user",
+    cognitoGroups: requestUser.groups ?? []
+  }
 }
 
 const benchmarkSeedSuites = new Set(["smoke-agent-v1", "standard-agent-v1", "clarification-smoke-v1"])
@@ -503,8 +515,11 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "rag:doc:read")
-    return c.json({ documents: await service.listDocuments(c.get("user")) }, 200)
+    const user = c.get("user")
+    if (!hasPermission(user, "rag:doc:read") && !hasPermission(user, "benchmark:seed_corpus")) {
+      throw new HTTPException(403, { message: "Forbidden: missing document list permission" })
+    }
+    return c.json({ documents: await service.listDocuments(user) }, 200)
   }
 )
 
@@ -1086,10 +1101,35 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "benchmark:run")
+    requirePermission(c.get("user"), "benchmark:query")
     const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkQueryRequestSchema>
     const result = await service.chat({ ...body, includeDebug: body.includeDebug ?? true }, c.get("user"))
     return c.json({ id: body.id, ...result }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/benchmark/search",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: BenchmarkSearchRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Benchmark search result", content: { "application/json": { schema: SearchResponseSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "benchmark:query")
+    const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkSearchRequestSchema>
+    const { user: requestUser, ...searchInput } = body
+    return c.json(await service.search(searchInput, benchmarkSearchUser(user, requestUser)), 200)
   }
 )
 

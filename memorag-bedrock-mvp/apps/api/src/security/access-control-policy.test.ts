@@ -6,13 +6,14 @@ import test from "node:test"
 type RoutePolicy = {
   method: string
   path: string
-  permission: string
-  mode?: "required" | "requesterOrPermission" | "benchmarkSeedOrPermission"
+  permission?: string
+  mode?: "authenticated" | "required" | "requesterOrPermission" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission"
 }
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
 
 const protectedMiddlewarePaths = [
+  "/me",
   "/admin/*",
   "/documents",
   "/documents/*",
@@ -27,12 +28,14 @@ const protectedMiddlewarePaths = [
   "/debug-runs",
   "/debug-runs/*",
   "/benchmark/query",
+  "/benchmark/search",
   "/benchmark-runs",
   "/benchmark-runs/*",
   "/benchmark-suites"
 ]
 
 const routePolicies: RoutePolicy[] = [
+  { method: "get", path: "/me", mode: "authenticated" },
   { method: "post", path: "/admin/users", permission: "user:create" },
   { method: "get", path: "/admin/users", permission: "user:read" },
   { method: "get", path: "/admin/audit-log", permission: "access:policy:read" },
@@ -50,7 +53,7 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/admin/aliases/audit-log", permission: "rag:alias:read" },
   { method: "get", path: "/admin/usage", permission: "usage:read:all_users" },
   { method: "get", path: "/admin/costs", permission: "cost:read:all" },
-  { method: "get", path: "/documents", permission: "rag:doc:read" },
+  { method: "get", path: "/documents", permission: "rag:doc:read", mode: "benchmarkSeedListOrPermission" },
   { method: "post", path: "/documents", permission: "rag:doc:write:group", mode: "benchmarkSeedOrPermission" },
   { method: "post", path: "/documents/{documentId}/reindex", permission: "rag:index:rebuild:group" },
   { method: "get", path: "/documents/reindex-migrations", permission: "rag:index:rebuild:group" },
@@ -73,7 +76,8 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/debug-runs", permission: "chat:admin:read_all" },
   { method: "get", path: "/debug-runs/{runId}", permission: "chat:admin:read_all" },
   { method: "post", path: "/debug-runs/{runId}/download", permission: "chat:admin:read_all" },
-  { method: "post", path: "/benchmark/query", permission: "benchmark:run" },
+  { method: "post", path: "/benchmark/query", permission: "benchmark:query" },
+  { method: "post", path: "/benchmark/search", permission: "benchmark:query" },
   { method: "get", path: "/benchmark-suites", permission: "benchmark:read" },
   { method: "post", path: "/benchmark-runs", permission: "benchmark:run" },
   { method: "get", path: "/benchmark-runs", permission: "benchmark:read" },
@@ -100,6 +104,15 @@ test("protected API routes keep route-level permission checks", async () => {
 
   for (const policy of routePolicies) {
     const block = findRouteBlock(source, policy)
+    if (policy.mode === "authenticated") {
+      assert.doesNotMatch(
+        block,
+        /requirePermission|hasPermission/,
+        `${policy.method.toUpperCase()} ${policy.path} must remain authenticated-only without extra role checks`
+      )
+      continue
+    }
+    assert.ok(policy.permission, `${policy.method.toUpperCase()} ${policy.path} must declare a permission`)
     if (policy.mode === "requesterOrPermission") {
       assert.match(
         block,
@@ -121,6 +134,17 @@ test("protected API routes keep route-level permission checks", async () => {
         block,
         /benchmark:seed_corpus[\s\S]*?authorizeDocumentUpload/,
         `${policy.method.toUpperCase()} ${policy.path} must restrict benchmark seed uploads`
+      )
+    } else if (policy.mode === "benchmarkSeedListOrPermission") {
+      assert.match(
+        block,
+        new RegExp(`hasPermission\\([\\s\\S]*?["']${escapeRegex(policy.permission)}["']\\)`),
+        `${policy.method.toUpperCase()} ${policy.path} must allow ${policy.permission}`
+      )
+      assert.match(
+        block,
+        /benchmark:seed_corpus[\s\S]*?listDocuments/,
+        `${policy.method.toUpperCase()} ${policy.path} must only allow benchmark seed document listing`
       )
     } else {
       assert.match(
