@@ -14,7 +14,7 @@ export function QuestionAnswerPanel({
   onAdditionalQuestion: (value: string) => void
 }) {
   return (
-    <section className="question-answer-panel" aria-label="担当者からの回答">
+    <section className="question-answer-panel" aria-label="担当者からの回答" role="status" aria-live="polite">
       <header>
         <span className="status-dot"><Icon name="check" /></span>
         <div>

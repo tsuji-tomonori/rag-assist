@@ -3,6 +3,7 @@ import type { HumanQuestion } from "../types.js"
 export type CreateQuestionInput = {
   title: string
   question: string
+  requesterUserId?: string
   requesterName?: string
   requesterDepartment?: string
   assigneeDepartment?: string

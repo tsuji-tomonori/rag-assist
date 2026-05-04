@@ -58,7 +58,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `POST /chat` チャット回答
 - `POST /questions` 担当者への問い合わせ作成
 - `GET /questions` 担当者問い合わせ一覧
-- `GET /questions/{questionId}` 担当者問い合わせ詳細
+- `GET /questions/{questionId}` 担当者問い合わせ詳細、または作成者本人向け回答確認
 - `POST /questions/{questionId}/answer` 担当者回答登録
 - `POST /questions/{questionId}/resolve` 問い合わせ解決済み化
 - `GET /conversation-history` 自分の会話履歴一覧

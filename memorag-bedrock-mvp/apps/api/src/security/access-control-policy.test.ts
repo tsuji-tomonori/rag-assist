@@ -7,6 +7,7 @@ type RoutePolicy = {
   method: string
   path: string
   permission: string
+  mode?: "required" | "requesterOrPermission"
 }
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
@@ -59,9 +60,9 @@ const routePolicies: RoutePolicy[] = [
   { method: "post", path: "/search", permission: "rag:doc:read" },
   { method: "post", path: "/questions", permission: "chat:create" },
   { method: "get", path: "/questions", permission: "answer:edit" },
-  { method: "get", path: "/questions/{questionId}", permission: "answer:edit" },
+  { method: "get", path: "/questions/{questionId}", permission: "answer:edit", mode: "requesterOrPermission" },
   { method: "post", path: "/questions/{questionId}/answer", permission: "answer:publish" },
-  { method: "post", path: "/questions/{questionId}/resolve", permission: "answer:publish" },
+  { method: "post", path: "/questions/{questionId}/resolve", permission: "answer:publish", mode: "requesterOrPermission" },
   { method: "get", path: "/conversation-history", permission: "chat:read:own" },
   { method: "post", path: "/conversation-history", permission: "chat:create" },
   { method: "delete", path: "/conversation-history/{id}", permission: "chat:delete:own" },
@@ -95,11 +96,24 @@ test("protected API routes keep route-level permission checks", async () => {
 
   for (const policy of routePolicies) {
     const block = findRouteBlock(source, policy)
-    assert.match(
-      block,
-      new RegExp(`requirePermission\\([\\s\\S]*?["']${escapeRegex(policy.permission)}["']\\)`),
-      `${policy.method.toUpperCase()} ${policy.path} must require ${policy.permission}`
-    )
+    if (policy.mode === "requesterOrPermission") {
+      assert.match(
+        block,
+        new RegExp(`hasPermission\\([\\s\\S]*?["']${escapeRegex(policy.permission)}["']\\)`),
+        `${policy.method.toUpperCase()} ${policy.path} must allow ${policy.permission}`
+      )
+      assert.match(
+        block,
+        /requesterUserId[\s\S]*?user\.userId/,
+        `${policy.method.toUpperCase()} ${policy.path} must check requester ownership`
+      )
+    } else {
+      assert.match(
+        block,
+        new RegExp(`requirePermission\\([\\s\\S]*?["']${escapeRegex(policy.permission)}["']\\)`),
+        `${policy.method.toUpperCase()} ${policy.path} must require ${policy.permission}`
+      )
+    }
   }
 })
 

@@ -83,30 +83,44 @@ export function HistoryWorkspace({
           {visibleHistory.length === 0 ? (
             <div className="empty-question-panel">条件に一致する履歴はありません。</div>
           ) : (
-            visibleHistory.map((item) => (
-              <div className="question-list-item history-item" key={item.id}>
-                <button
-                  type="button"
-                  className={`favorite-toggle ${item.isFavorite ? "active" : ""}`}
-                  onClick={() => onToggleFavorite(item)}
-                  aria-label={item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`}
-                  title={item.isFavorite ? "お気に入りから外す" : "お気に入りに追加"}
-                >
-                  <Icon name="star" />
-                </button>
-                <button type="button" onClick={() => onSelect(item)}>
-                  <strong>{item.title}</strong>
-                  <span>{formatDateTime(item.updatedAt)}</span>
-                  <small>{item.messages.length} メッセージ</small>
-                </button>
-                <button className="history-delete-button" type="button" onClick={() => onDelete(item.id)}>
-                  削除
-                </button>
-              </div>
-            ))
+            visibleHistory.map((item) => {
+              const questionStatus = summarizeQuestionStatus(item)
+              return (
+                <div className={`question-list-item history-item ${questionStatus?.tone ?? ""}`} key={item.id}>
+                  <button
+                    type="button"
+                    className={`favorite-toggle ${item.isFavorite ? "active" : ""}`}
+                    onClick={() => onToggleFavorite(item)}
+                    aria-label={item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`}
+                    title={item.isFavorite ? "お気に入りから外す" : "お気に入りに追加"}
+                  >
+                    <Icon name="star" />
+                  </button>
+                  <button type="button" onClick={() => onSelect(item)}>
+                    <span className="history-title-line">
+                      <strong>{item.title}</strong>
+                      {questionStatus && <span className="history-question-badge">{questionStatus.label}</span>}
+                    </span>
+                    <span>{formatDateTime(item.updatedAt)}</span>
+                    <small>{item.messages.length} メッセージ</small>
+                  </button>
+                  <button className="history-delete-button" type="button" onClick={() => onDelete(item.id)}>
+                    削除
+                  </button>
+                </div>
+              )
+            })
           )}
         </div>
       </div>
     </section>
   )
+}
+
+function summarizeQuestionStatus(item: ConversationHistoryItem): { label: string; tone: string } | undefined {
+  const tickets = item.messages.map((message) => message.questionTicket).filter(Boolean)
+  if (tickets.some((ticket) => ticket?.status === "answered")) return { label: "返答あり", tone: "has-answer" }
+  if (tickets.some((ticket) => ticket?.status === "open")) return { label: "確認待ち", tone: "is-waiting" }
+  if (tickets.some((ticket) => ticket?.status === "resolved")) return { label: "解決済み", tone: "is-resolved" }
+  return undefined
 }
