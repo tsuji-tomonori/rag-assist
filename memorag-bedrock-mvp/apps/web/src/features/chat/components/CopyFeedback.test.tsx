@@ -39,6 +39,7 @@ const copyScenarios: CopyScenario[] = [
           onCreateQuestion={async () => undefined}
           onResolveQuestion={async () => undefined}
           onAdditionalQuestion={() => undefined}
+          onSubmitClarificationOption={async () => undefined}
         />
       )
   }
@@ -78,6 +79,7 @@ describe("chat copy feedback", () => {
       expect(screen.getByRole("button", { name: idleName }).querySelector(".icon-copy")).toBeInTheDocument()
     } finally {
       vi.useRealTimers()
+      vi.unstubAllGlobals()
     }
   })
 
@@ -108,6 +110,7 @@ describe("chat copy feedback", () => {
       expect(vi.getTimerCount()).toBe(0)
     } finally {
       vi.useRealTimers()
+      vi.unstubAllGlobals()
     }
   })
 })

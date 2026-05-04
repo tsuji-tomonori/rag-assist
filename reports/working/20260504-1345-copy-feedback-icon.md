@@ -6,6 +6,7 @@
 
 - 主な依頼: worktree を作成し、プロンプトや回答のコピーアイコン押下後に一時的にチェックアイコンへ変わるようにする。
 - 追加依頼: レビュー結果を受け、連続コピー時のタイマー再スケジュール挙動を fake timer で直接検証し、clipboard Promise 完了前アンマウント時の state update を避け、既存テストを `findBy...` へ寄せる。
+- 追加依頼: Request changes を受け、最新 `origin/main` の `AssistantAnswer` 必須 prop に合わせて `CopyFeedback.test.tsx` を修正し、Web typecheck / targeted test / full test / build を再実行する。
 - 成果物: 実装変更、検証、git commit、main 向け PR。
 - 形式・条件: commit message と PR 本文は日本語ルールに従う。PR 作成は GitHub Apps を利用する。
 
@@ -20,6 +21,8 @@
 | R5 | commit と main 向け PR を作成する | 高 | 対応 |
 | R6 | 連続コピー時に古い timer が後続表示を早戻ししないことを検証する | 中 | 対応 |
 | R7 | clipboard Promise 完了前アンマウント時の state update を避ける | 中 | 対応 |
+| R8 | `AssistantAnswer` の `onSubmitClarificationOption` 必須 prop をテスト render に追加する | 高 | 対応 |
+| R9 | Web typecheck / targeted test / full test / build を再実行する | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -27,6 +30,7 @@
 - 連続クリック時に古い `setTimeout` が残ると、後続のコピー成功表示が早く `idle` に戻る可能性があるため、リセットタイマーを `useRef` で保持して再スケジュール時とアンマウント時に解除するようにした。
 - UI 表示文言、API、権限境界、永続データには影響しない変更のため、README や `memorag-bedrock-mvp/docs/` の恒久更新は不要と判断した。
 - レビュー指摘のうち、merge blocker ではない改善も今回の PR 価値を守る内容のため、追補 commit として取り込む判断にした。
+- CI は merge ref で失敗していたため、`origin/main` を PR branch に取り込んで同じ型前提で修正・検証した。
 
 ## 4. 実施した作業
 
@@ -40,6 +44,9 @@
 - レビュー対応として、`mountedRef` によるアンマウント済みガードをプロンプト/回答コピーに追加した。
 - `App.test.tsx` のコピー済みボタン取得を `findBy...` に変更した。
 - `CopyFeedback.test.tsx` を追加し、連続コピー時の 1800ms 表示保持とアンマウント後に reset timer がスケジュールされないことを検証した。
+- `origin/main` を merge し、`CopyFeedback.test.tsx` の `AssistantAnswer` render に `onSubmitClarificationOption` を追加した。
+- `vi.stubGlobal("navigator", ...)` の後始末として `vi.unstubAllGlobals()` を `finally` に追加した。
+- Request changes 対応後に Web typecheck / targeted test / full test / build を再実行した。
 
 ## 5. 成果物
 
@@ -68,6 +75,7 @@
 - `npm --prefix memorag-bedrock-mvp/apps/web run test -- src/features/chat/components/CopyFeedback.test.tsx`: pass（1 file / 4 tests）
 - `npm --prefix memorag-bedrock-mvp/apps/web run test`: pass（14 files / 88 tests）
 - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
+- `npm --prefix memorag-bedrock-mvp/apps/web run build`: pass
 - `git diff --check`: pass
 - GitHub Apps `_create_pull_request`: pass（PR #103: https://github.com/tsuji-tomonori/rag-assist/pull/103）
 - GitHub Apps `_update_issue`: pass（`semver:patch` ラベル付与）
