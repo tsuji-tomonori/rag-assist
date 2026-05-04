@@ -212,7 +212,7 @@ sequenceDiagram
 | 項目 | 関心事 |
 | --- | --- |
 | debug trace | retrieval diagnostics、model metadata、judge 結果、citation validation の調査 |
-| benchmark query / run | UI 非依存評価、非同期実行、run status 管理 |
+| benchmark query / search / run | UI 非依存評価、非同期実行、run status 管理 |
 | CodeBuild runner | dataset 実行と成果物生成 |
 | report download | results、summary、Markdown report の取得 |
 | CloudWatch Logs | 障害調査、runner 失敗、API エラー確認 |

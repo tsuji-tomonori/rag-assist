@@ -26,6 +26,7 @@ const protectedMiddlewarePaths = [
   "/debug-runs",
   "/debug-runs/*",
   "/benchmark/query",
+  "/benchmark/search",
   "/benchmark-runs",
   "/benchmark-runs/*",
   "/benchmark-suites"
@@ -72,6 +73,7 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/debug-runs/{runId}", permission: "chat:admin:read_all" },
   { method: "post", path: "/debug-runs/{runId}/download", permission: "chat:admin:read_all" },
   { method: "post", path: "/benchmark/query", permission: "benchmark:query" },
+  { method: "post", path: "/benchmark/search", permission: "benchmark:query" },
   { method: "get", path: "/benchmark-suites", permission: "benchmark:read" },
   { method: "post", path: "/benchmark-runs", permission: "benchmark:run" },
   { method: "get", path: "/benchmark-runs", permission: "benchmark:read" },

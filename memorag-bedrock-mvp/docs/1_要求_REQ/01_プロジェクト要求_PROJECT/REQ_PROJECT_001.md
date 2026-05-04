@@ -31,7 +31,7 @@
 - 回答文が引用チャンクで支持されるかを検証する。
 - 検索品質に応じて再検索、query rewrite、拒否を選べる retrieval evaluator を導入する。
 - benchmark runner を不回答、根拠性、fact coverage を測れる形へ拡張する。
-- `/benchmark/query` を本番系で未認証公開しない。
+- `/benchmark/query` と `/benchmark/search` を本番系で未認証公開しない。
 
 ### Should
 
@@ -61,7 +61,7 @@
 
 | ID | タスク | 優先度 | 完了条件 |
 |---|---|---:|---|
-| T-001 | `/benchmark/query` の認可方針を決め、管理者権限配下に置く | S | 本番設定で未認証アクセスできない |
+| T-001 | `/benchmark/query` と `/benchmark/search` の認可方針を決め、管理者権限配下に置く | S | 本番設定で未認証アクセスできない |
 | T-002 | `sufficient-context-gate.ts` を追加する | S | `ANSWERABLE/PARTIAL/UNANSWERABLE` が state と trace に残る |
 | T-003 | `verify-answer-support.ts` を追加する | S | unsupported sentence がある回答は拒否または再生成される |
 | T-004 | `retrieval-evaluator.ts` を追加する | S | 検索品質に応じた next action が記録される |

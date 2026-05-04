@@ -333,6 +333,23 @@ test("benchmark runner can call query endpoint without benchmark run administrat
     assert.equal(body.id, "runner-check")
     assert.equal("debug" in body, false)
 
+    const benchmarkSearch = await fetch(`http://127.0.0.1:${port}/benchmark/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: "権限確認", topK: 3 })
+    })
+    assert.equal(benchmarkSearch.status, 200)
+    const searchBody = (await benchmarkSearch.json()) as Record<string, unknown>
+    assert.equal(searchBody.query, "権限確認")
+    assert.equal(Array.isArray(searchBody.results), true)
+
+    const publicSearch = await fetch(`http://127.0.0.1:${port}/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: "権限確認", topK: 3 })
+    })
+    assert.equal(publicSearch.status, 403)
+
     const runs = await fetch(`http://127.0.0.1:${port}/benchmark-runs`, {
       method: "POST",
       headers: { "content-type": "application/json" },

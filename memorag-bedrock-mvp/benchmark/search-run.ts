@@ -131,7 +131,7 @@ async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body:
   if (process.env.API_AUTH_TOKEN) headers.Authorization = `Bearer ${process.env.API_AUTH_TOKEN}`
 
   try {
-    const response = await fetch(`${apiBaseUrl}/search`, {
+    const response = await fetch(`${apiBaseUrl}/benchmark/search`, {
       method: "POST",
       headers,
       body: JSON.stringify({

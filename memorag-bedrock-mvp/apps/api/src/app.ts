@@ -63,7 +63,7 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
+for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark/search", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
   app.use(path, authMiddleware)
 }
 
@@ -949,6 +949,30 @@ app.openapi(
     const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkQueryRequestSchema>
     const result = await service.chat({ ...body, includeDebug: body.includeDebug ?? true }, c.get("user"))
     return c.json({ id: body.id, ...result }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/benchmark/search",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: SearchRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Benchmark search result", content: { "application/json": { schema: SearchResponseSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "benchmark:query")
+    const body = (c.req as any).valid("json") as z.infer<typeof SearchRequestSchema>
+    return c.json(await service.search(body, user), 200)
   }
 )
 

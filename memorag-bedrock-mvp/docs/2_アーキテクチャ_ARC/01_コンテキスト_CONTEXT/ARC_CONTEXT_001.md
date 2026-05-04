@@ -80,7 +80,7 @@ flowchart TB
 | 運用担当者 | debug trace、benchmark 履歴、文書管理、alias 管理 | 1, 3, 7, 8 | 調査性、コスト、復旧容易性 |
 | システム管理者 | ユーザー、ロール、監査、利用状況、コスト確認 | 8 | 管理 API の最小権限、監査可能性 |
 | セキュリティ管理者 | 認可方針、ACL、監査確認 | 8 | 権限外露出防止、監査可能性 |
-| Benchmark runner service user | `/benchmark/query` 実行、成果物保存 | 7 | UI 非依存評価、credential 管理 |
+| Benchmark runner service user | `/benchmark/query` と `/benchmark/search` 実行、成果物保存 | 7 | UI 非依存評価、credential 管理 |
 | Cognito self sign-up 利用者 | アカウント作成、メール確認、初回 sign-in | 8 | `CHAT_USER` のみの初期権限 |
 | 開発者 | ローカル検証、機能改修、設計更新 | 横断 | 変更容易性、テスト容易性 |
 

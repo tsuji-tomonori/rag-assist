@@ -69,6 +69,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /debug-runs/{runId}` persisted debug trace取得
 - `POST /debug-runs/{runId}/download` persisted debug trace JSON download URL作成
 - `POST /benchmark/query` ベンチマーク用。`/chat` と同じRAG処理をAPIから呼び出し、retrieval情報も返します。
+- `POST /benchmark/search` search benchmark runner 用。`/search` と同じ hybrid search 処理を runner 権限で呼び出します。
 - `GET /benchmark-suites` 非同期ベンチマークで選択できる suite 一覧
 - `POST /benchmark-runs` Step Functions + CodeBuild runner の非同期 benchmark run 起動
 - `GET /benchmark-runs` benchmark run 履歴一覧
@@ -143,7 +144,7 @@ infra/scripts/create-cognito-user.sh \
 ```
 
 `--role` は複数回指定できます。ロールは `一般利用者`、`回答担当者`、`RAGグループ管理者`、`ユーザー管理者`、`アクセス管理者`、`コスト監査者`、`システム管理者` の日本語名、または `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の Cognito group 名で指定できます。
-`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。通常利用者は `CHAT_USER`、担当者は `ANSWER_EDITOR`、性能テストを管理画面から起動する運用者は `RAG_GROUP_MANAGER`、CodeBuild runner の service user は `BENCHMARK_RUNNER`、debug trace や benchmark を管理する管理者は `SYSTEM_ADMIN` または `システム管理者` を指定してください。作成済みユーザーは、初回ログイン前でも管理者設定のユーザー管理一覧に表示されます。
+`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。通常利用者は `CHAT_USER`、担当者は `ANSWER_EDITOR`、性能テストを管理画面から起動する運用者は `RAG_GROUP_MANAGER`、CodeBuild runner の service user は `BENCHMARK_RUNNER`、debug trace や benchmark を管理する管理者は `SYSTEM_ADMIN` または `システム管理者` を指定してください。`BENCHMARK_RUNNER` は `/benchmark/query` と `/benchmark/search` 用であり、管理画面から run を起動する権限ではありません。作成済みユーザーは、初回ログイン前でも管理者設定のユーザー管理一覧に表示されます。
 `CHAT_USER` などの Cognito group は CDK stack で作成されるため、ユーザー作成前に `npm run cdk -w @memorag-mvp/infra -- deploy` または `task cdk:deploy` を実行してください。
 ログイン画面から作成したユーザーは、メール確認後に Cognito post-confirmation trigger により `CHAT_USER` のみ自動付与されます。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが GitHub Actions または AWS 管理手順で後から付与してください。
 GitHub Actions から作成する場合は、`Actions` -> `Create MemoRAG Cognito User` -> `Run workflow` でメールアドレスと主ロールを日本語名で選択します。追加ロールが必要な場合は、`additional-roles` に日本語名または Cognito group 名をカンマ区切りで入力します。
@@ -164,7 +165,7 @@ curl -s http://localhost:8787/chat \
 
 管理画面の「性能テスト」は `POST /benchmark-runs` で非同期 run を作成し、Step Functions が CodeBuild runner を起動します。run 状態と成果物キーは DynamoDB、dataset と `results.jsonl` / `summary.json` / `report.md` は benchmark 用 S3 bucket に保存します。管理画面は履歴表示、キャンセル、report download URL 作成だけを担当します。
 
-CodeBuild runner が本番 API を叩くための認証 token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から自動取得します。管理者が管理画面で token を入力する必要はありません。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡します。secret は `username` / `password`、または `idToken` / `token` を持てます。`username` / `password` 認証で token 解決に失敗した場合、CodeBuild runner は benchmark を継続せず失敗します。
+CodeBuild runner が本番 API を叩くための認証 token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から自動取得します。管理者が管理画面で token を入力する必要はありません。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡します。secret は `username` / `password`、または `idToken` / `token` を持てます。`username` / `password` 認証で token 解決に失敗した場合、CodeBuild runner は benchmark を継続せず失敗します。agent mode は `/benchmark/query`、search mode は `/benchmark/search` を呼びます。
 
 CDK deploy 時に benchmark 用 S3 bucket へ `datasets/agent/smoke-v1.jsonl`、`datasets/agent/standard-v1.jsonl`、`datasets/agent/clarification-smoke-v1.jsonl`、`datasets/search/smoke-v1.jsonl`、`datasets/search/standard-v1.jsonl` を配置します。管理画面の `clarification-smoke-v1` suite は `benchmark/dataset.clarification.sample.jsonl` を元にした `datasets/agent/clarification-smoke-v1.jsonl` を使います。
 
