@@ -411,7 +411,7 @@ export class MemoRagService {
     return (await this.loadReindexMigrationLedger()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }
 
-  async listDocuments(): Promise<DocumentManifest[]> {
+  async listDocuments(user?: AppUser): Promise<DocumentManifest[]> {
     const keys = await this.deps.objectStore.listKeys("manifests/")
     const manifests = await Promise.all(
       keys
@@ -420,6 +420,7 @@ export class MemoRagService {
     )
     return manifests
       .filter((manifest) => (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active")
+      .filter((manifest) => !user || canAccessManifest(manifest, user))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
 
@@ -1407,6 +1408,17 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
 function lifecycleStatus(metadata: Record<string, JsonValue> | undefined): VectorRecord["metadata"]["lifecycleStatus"] {
   const value = stringValue(metadata?.lifecycleStatus)
   return value === "staging" || value === "superseded" ? value : "active"
+}
+
+function canAccessManifest(manifest: DocumentManifest, user: AppUser): boolean {
+  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
+  const metadata = manifest.metadata ?? {}
+  const groups = new Set(user.cognitoGroups)
+  const aclGroups = stringArray(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group) ?? []
+  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
+  const allowedUsers = stringArray(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId) ?? []
+  if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
+  return true
 }
 
 function stringValue(value: JsonValue | undefined): string | undefined {

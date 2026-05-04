@@ -70,6 +70,33 @@ test("service rejects empty uploads and missing documents", async () => {
   assert.equal(await service.getDebugRun("missing-run"), undefined)
 })
 
+test("service listDocuments filters manifests by ACL for callers", async () => {
+  const { service } = await createService()
+  const general = await service.ingest({
+    fileName: "general.md",
+    text: "通常利用者向けの資料です。",
+    skipMemory: true
+  })
+  const benchmark = await service.ingest({
+    fileName: "handbook.md",
+    text: "経費精算は30日以内です。",
+    skipMemory: true,
+    metadata: {
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      source: "benchmark-runner",
+      lifecycleStatus: "active"
+    }
+  })
+  const chatUser = { userId: "chat-1", email: "chat@example.com", cognitoGroups: ["CHAT_USER"] }
+  const benchmarkRunner = { userId: "runner-1", email: "runner@example.com", cognitoGroups: ["BENCHMARK_RUNNER"] }
+  const systemAdmin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+
+  assert.deepEqual((await service.listDocuments(chatUser)).map((doc) => doc.documentId), [general.documentId])
+  assert.deepEqual((await service.listDocuments(benchmarkRunner)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
+  assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
+})
+
 test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
   const { service } = await createService()
   const manifest = await service.ingest({

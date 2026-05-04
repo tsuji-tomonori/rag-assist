@@ -77,7 +77,7 @@ function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.i
   return visibleQuestion
 }
 
-const benchmarkSeedSuites = new Set(["smoke-agent-v1", "standard-agent-v1"])
+const benchmarkSeedSuites = new Set(["smoke-agent-v1", "standard-agent-v1", "clarification-smoke-v1"])
 const benchmarkSeedMetadataKeys = new Set([
   "benchmarkSeed",
   "benchmarkSuiteId",
@@ -497,7 +497,7 @@ app.openapi(
   }),
   async (c) => {
     requirePermission(c.get("user"), "rag:doc:read")
-    return c.json({ documents: await service.listDocuments() }, 200)
+    return c.json({ documents: await service.listDocuments(c.get("user")) }, 200)
   }
 )
 

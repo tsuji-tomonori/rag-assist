@@ -233,6 +233,7 @@ type Summary = {
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
+const defaultEmbeddingModelId = process.env.EMBEDDING_MODEL_ID?.trim() || undefined
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "standard-agent-v1"
 const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? benchmarkSuiteId
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
@@ -258,7 +259,7 @@ const corpusSeed = await seedBenchmarkCorpus({
   corpusDir: resolvedBenchmarkCorpusDir,
   suiteId: benchmarkCorpusSuiteId,
   skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
-  embeddingModelId: process.env.EMBEDDING_MODEL_ID,
+  embeddingModelId: defaultEmbeddingModelId,
   log: (message) => console.log(message)
 })
 
@@ -314,7 +315,7 @@ async function runQuery(row: DatasetRow): Promise<{ status: number; body: Benchm
     id: row.id,
     question: row.question,
     modelId: row.modelId ?? defaultModelId,
-    embeddingModelId: row.embeddingModelId,
+    embeddingModelId: row.embeddingModelId ?? defaultEmbeddingModelId,
     clueModelId: row.clueModelId,
     topK: row.topK,
     memoryTopK: row.memoryTopK,
@@ -338,7 +339,7 @@ async function runFollowUp(
     id: row.id ? `${row.id}:follow-up` : undefined,
     question,
     modelId: row.modelId ?? defaultModelId,
-    embeddingModelId: row.embeddingModelId,
+    embeddingModelId: row.embeddingModelId ?? defaultEmbeddingModelId,
     clueModelId: row.clueModelId,
     topK: row.topK,
     memoryTopK: row.memoryTopK,
