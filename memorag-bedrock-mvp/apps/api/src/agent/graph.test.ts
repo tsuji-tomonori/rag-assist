@@ -205,6 +205,28 @@ test("fixed workflow falls back to RAG when arithmetic intent has no usable comp
   assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
 })
 
+test("fixed workflow sends business-day document questions to RAG instead of compute-only unavailable", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "remote-work-policy.txt",
+    text: "在宅勤務手当の申請期限は翌月5営業日までです。"
+  })
+
+  const result = await service.chat({
+    question: "在宅勤務手当の申請期限は何営業日ですか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /5営業日/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
 test("fixed workflow branches on evaluate_search_progress decisions", async () => {
   const service = new MemoRagService(await createTestDeps())
 

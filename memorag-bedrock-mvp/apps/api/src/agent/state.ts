@@ -259,7 +259,7 @@ export const ToolIntentSchema = z.object({
   needsTemporalCalculation: z.boolean().default(false),
   needsTaskDeadlineIndex: z.boolean().default(false),
   needsExhaustiveEnumeration: z.boolean().default(false),
-  temporalOperation: z.enum(["current_date", "days_until", "deadline_status", "add_days", "recurring_deadline"]).optional(),
+  temporalOperation: z.enum(["current_date", "days_until", "deadline_status", "add_days", "recurring_deadline", "business_day_calculation"]).optional(),
   arithmeticOperation: z.enum(["sum", "difference", "percentage", "price", "average"]).optional(),
   confidence: z.number().min(0).max(1).default(0),
   reason: z.string().default("")

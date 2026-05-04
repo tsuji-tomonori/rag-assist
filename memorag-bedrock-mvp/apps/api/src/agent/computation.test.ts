@@ -44,10 +44,22 @@ test("temporal context uses injected asOfDate when the question does not overrid
   assert.equal(context.source, "test")
 })
 
+test("temporal context rejects invalid injected asOfDate instead of silently falling back", () => {
+  assert.throws(
+    () => buildTemporalContext("2026-05-10まであと何日？", new Date("2026-05-04T12:00:00.000Z"), "Asia/Tokyo", {
+      date: "2026-99-99",
+      source: "test"
+    }),
+    /Invalid asOfDate/
+  )
+})
+
 test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline questions without RAG topK", () => {
   assert.deepEqual(detectToolIntent("2026-05-10まであと何日？").needsTemporalCalculation, true)
   assert.equal(detectToolIntent("1,200円を15人で12か月使うといくら？").needsArithmeticCalculation, true)
   assert.equal(detectToolIntent("今日の日付は？").canAnswerFromQuestionOnly, true)
+  assert.equal(detectToolIntent("在宅勤務手当の申請期限は何営業日ですか？").canAnswerFromQuestionOnly, false)
+  assert.equal(detectToolIntent("在宅勤務手当の申請期限は何営業日ですか？").needsSearch, true)
 
   const taskList = detectToolIntent("期限切れのタスクを全部出して")
   assert.equal(taskList.needsTaskDeadlineIndex, true)

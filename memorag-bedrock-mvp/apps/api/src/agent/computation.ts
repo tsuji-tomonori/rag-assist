@@ -29,6 +29,9 @@ export function buildTemporalContext(question: string, now = new Date(), timezon
 
   const overrideDate = override?.date ? normalizeDateText(override.date) : undefined
   const overrideSource = override?.source
+  if (override?.date && !overrideDate) {
+    throw new Error(`Invalid asOfDate: ${override.date}`)
+  }
   if (overrideDate && overrideSource) {
     return {
       nowIso: `${overrideDate}T00:00:00.000+09:00`,
@@ -51,15 +54,16 @@ export function detectToolIntent(question: string): ToolIntent {
   const dateCandidates = extractDateCandidates(question)
   const asksCurrentDate = /(今日|本日|現在).*(日付|何日)|日付.*(教えて|確認|いつ)/.test(normalized)
   const asksTaskList = /(全部|一覧|全件|洗い出し|列挙).*(期限|締切|タスク)|(期限|締切).*(全部|一覧|全件|洗い出し|列挙)/.test(normalized)
+  const asksBusinessDayCalculation = isBusinessDayCalculationRequest(normalized)
   const asksTemporal =
     asksCurrentDate ||
     asksTaskList ||
     dateCandidates.length > 0 && /(あと何日|残り何日|何日|期限切れ|期限|締切|超過|まで)/.test(normalized) ||
     /(申請から|提出から|起算).*([0-9０-９]+)日以内/.test(normalized) ||
-    /営業日/.test(normalized)
+    asksBusinessDayCalculation
   const asksArithmetic = /([0-9０-９][0-9０-９,，]*)円/.test(normalized) && /(いくら|合計|総額|計算|かかる)/.test(normalized)
   const asksAggregation = /(平均|最大|最小|件数|合計).*(全部|全件|部署|一覧)/.test(normalized)
-  const canAnswerTemporal = asksCurrentDate || asksTaskList || /営業日/.test(normalized) || canAnswerTemporalFromQuestion(question)
+  const canAnswerTemporal = asksCurrentDate || asksTaskList || asksBusinessDayCalculation || canAnswerTemporalFromQuestion(question)
   const canAnswerArithmetic = asksArithmetic && hasArithmeticInputs(normalized)
 
   if (asksTaskList) {
@@ -176,7 +180,7 @@ function executeTemporalCalculation(question: string, temporalContext: TemporalC
     ]
   }
 
-  if (/営業日/.test(question)) {
+  if (toolIntent.temporalOperation === "business_day_calculation") {
     return [
       {
         id: "date-unavailable-001",
@@ -298,6 +302,7 @@ function executeArithmeticCalculation(question: string): ComputedFact | undefine
 
 function inferTemporalOperation(question: string): ToolIntent["temporalOperation"] {
   if (/(今日|本日|現在).*(日付|何日)|日付.*(教えて|確認|いつ)/.test(question)) return "current_date"
+  if (isBusinessDayCalculationRequest(question)) return "business_day_calculation"
   if (/(あと何日|残り何日|まで何日|何日)/.test(question)) return "days_until"
   if (/(申請から|提出から|起算).*日以内/.test(question)) return "add_days"
   if (/(期限切れ|期限|締切|超過)/.test(question)) return "deadline_status"
@@ -305,9 +310,13 @@ function inferTemporalOperation(question: string): ToolIntent["temporalOperation
 }
 
 function canAnswerTemporalFromQuestion(question: string): boolean {
-  if (/営業日/.test(question)) return true
   if (parseRelativeDeadline(question)) return true
   return extractDueDate(question) !== undefined
+}
+
+function isBusinessDayCalculationRequest(question: string): boolean {
+  return /営業日/.test(question) &&
+    /([0-9０-９]+営業日以内|[0-9０-９]+営業日後|何営業日後|翌営業日|営業日.*(計算|加算|起算)|あと何営業日|残り何営業日|期限切れ|超過)/.test(question)
 }
 
 function hasArithmeticInputs(question: string): boolean {
