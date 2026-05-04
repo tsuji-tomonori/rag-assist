@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from "vitest"
 import {
   chat,
   answerQuestion,
+  assignUserRoles,
   cancelBenchmarkRun,
-  createBenchmarkDownload,
   createAlias,
+  createBenchmarkDownload,
   createQuestion,
   cutoverReindexMigration,
   deleteConversationHistory,
@@ -12,6 +13,8 @@ import {
   disableAlias,
   fileToBase64,
   getDebugRun,
+  getMe,
+  getRuntimeConfig,
   listAliasAuditLog,
   listAliases,
   listBenchmarkRuns,
@@ -26,11 +29,15 @@ import {
   rollbackReindexMigration,
   resolveQuestion,
   saveConversationHistory,
+  setAuthTokenProvider,
   stageReindexMigration,
   startBenchmarkRun,
+  startChatRun,
+  streamChatRunEvents,
   updateAlias,
   uploadDocument
 } from "./api.js"
+import * as api from "./api.js"
 
 function mockFetch(response: unknown, ok = true) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -43,6 +50,46 @@ function mockFetch(response: unknown, ok = true) {
 }
 
 describe("API client", () => {
+  it("keeps legacy api.ts value exports available", () => {
+    const expectedFunctions = [
+      api.getRuntimeConfig,
+      api.setAuthTokenProvider,
+      api.fileToBase64,
+      api.getMe,
+      api.listDocuments,
+      api.uploadDocument,
+      api.deleteDocument,
+      api.reindexDocument,
+      api.stageReindexMigration,
+      api.cutoverReindexMigration,
+      api.rollbackReindexMigration,
+      api.listReindexMigrations,
+      api.chat,
+      api.createQuestion,
+      api.listQuestions,
+      api.listConversationHistory,
+      api.saveConversationHistory,
+      api.listBenchmarkRuns,
+      api.startBenchmarkRun,
+      api.startChatRun,
+      api.streamChatRunEvents,
+      api.listManagedUsers,
+      api.assignUserRoles,
+      api.listAliases,
+      api.createAlias,
+      api.publishAliases
+    ]
+
+    for (const exported of expectedFunctions) {
+      expect(exported).toBeTypeOf("function")
+    }
+
+    expect(getRuntimeConfig).toBe(api.getRuntimeConfig)
+    expect(setAuthTokenProvider).toBe(api.setAuthTokenProvider)
+    expect(getMe).toBe(api.getMe)
+    expect(assignUserRoles).toBe(api.assignUserRoles)
+  })
+
   it("loads runtime config once and calls document APIs", async () => {
     const fetchMock = vi
       .fn()
@@ -91,6 +138,39 @@ describe("API client", () => {
 
     mockFetch({ runId: "run-1" })
     await expect(getDebugRun("run-1")).resolves.toEqual({ runId: "run-1" })
+  })
+
+  it("starts chat runs and streams SSE events", async () => {
+    const startFetchMock = mockFetch({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    await expect(startChatRun({ question: "期限は？", modelId: "model", includeDebug: true })).resolves.toMatchObject({ runId: "chat-run-1" })
+    expect(startFetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/chat-runs$/),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ question: "期限は？", modelId: "model", includeDebug: true })
+      })
+    )
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue('id: 7\nevent: final\ndata: {"answer":"ok","isAnswerable":true,"citations":[],"retrieved":[]}\n\n')
+    })
+    vi.stubGlobal("fetch", fetchMock)
+
+    const events: unknown[] = []
+    await streamChatRunEvents("chat-run-1", (event) => events.push(event), 6)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/chat-runs\/chat-run-1\/events$/),
+      expect.objectContaining({ method: "GET", headers: { "Last-Event-ID": "6" } })
+    )
+    expect(events).toEqual([
+      {
+        id: 7,
+        type: "final",
+        data: { answer: "ok", isAnswerable: true, citations: [], retrieved: [] }
+      }
+    ])
   })
 
   it("calls benchmark run management APIs", async () => {

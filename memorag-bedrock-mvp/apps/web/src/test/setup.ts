@@ -1,7 +1,8 @@
 import "@testing-library/jest-dom/vitest"
 import { cleanup } from "@testing-library/react"
 import { afterEach, vi } from "vitest"
-import { resetRuntimeConfigForTests, setAuthTokenProvider } from "../api.js"
+import { setAuthTokenProvider } from "../shared/api/http.js"
+import { resetRuntimeConfigForTests } from "../shared/api/runtimeConfig.js"
 
 afterEach(() => {
   cleanup()

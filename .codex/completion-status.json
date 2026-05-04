@@ -1,0 +1,44 @@
+{
+  "complete": true,
+  "status": "complete",
+  "requested_items": [
+    "worktree を作成して作業する",
+    "PR #94 の main 競合を解決する",
+    "git commit する",
+    "main 向け PR を GitHub Apps で扱う",
+    "作業レポートと検証結果を残す"
+  ],
+  "completed_items": [
+    "PR #94 の既存 worktree /home/t-tsuji/project/rag-assist-rest-stream を使用した",
+    "GitHub Apps で PR #94 の base=head 情報と mergeable=false を確認した",
+    "origin/main を codex/rest-api-streaming-chat に merge した",
+    "App.tsx と api.ts の競合を main の app/features/shared 分割構成に合わせて解消した",
+    "PR #94 の streaming chat client を features/chat/api, types-api, hooks に移して統合した",
+    "App/API tests を POST /chat-runs と SSE stream 前提に更新した",
+    "reports/working/20260504-1049-pr94-conflict-resolution.md を作成した"
+  ],
+  "remaining_items": [],
+  "blocked_items": [],
+  "validation": [
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
+      "result": "pass",
+      "note": "13 files / 84 tests。初回は sandbox の node_modules/.vite-temp 書き込み EROFS で失敗し、権限付き再実行で pass"
+    },
+    {
+      "command": "git diff --cached --check",
+      "result": "pass"
+    },
+    {
+      "command": "rg -n '^<{7}|^={7}|^>{7}' memorag-bedrock-mvp .codex --glob '!reports/**'",
+      "result": "pass",
+      "note": "競合マーカー検出なし"
+    }
+  ],
+  "next_action": "PR #94 の head branch を push 済みの状態でレビュー/merge する",
+  "safe_to_continue_without_user": true
+}

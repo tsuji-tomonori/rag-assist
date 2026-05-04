@@ -1,4 +1,5 @@
-import type { Citation, DebugStep, DebugTrace } from "./api.js"
+import type { Citation } from "../../../shared/types/common.js"
+import type { DebugStep, DebugTrace } from "../types.js"
 
 export type DebugGraphNodeStatus = "success" | "warning" | "error"
 export type DebugGraphNodeType = "step" | "retrieval" | "decision" | "answer" | "refusal" | "repair"
