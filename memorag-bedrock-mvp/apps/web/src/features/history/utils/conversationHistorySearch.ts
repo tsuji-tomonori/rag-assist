@@ -216,6 +216,7 @@ function hasLongJapaneseTerm(terms: string[]): boolean {
 
 function isOnlyShortAsciiCoverage(primaryTerms: string[], coveredTerms: string[]): boolean {
   if (primaryTerms.length <= 1 || coveredTerms.length === 0) return false
+  if (coveredTerms.length === primaryTerms.length) return false
   return coveredTerms.every((term) => isAsciiToken(term) && term.length < 4)
 }
 

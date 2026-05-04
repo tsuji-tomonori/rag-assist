@@ -80,6 +80,15 @@ describe("searchConversationHistory", () => {
     expect(searchConversationHistory(history, "経費").map((result) => result.item.id)).toEqual(["hit"])
   })
 
+  it("matches exact multi-token short ASCII queries", () => {
+    const history = [
+      item("qa-ui", "QA UI", "QA UI の改善について"),
+      item("other", "経費", "経費精算")
+    ]
+
+    expect(searchConversationHistory(history, "QA UI").map((result) => result.item.id)).toEqual(["qa-ui"])
+  })
+
   it("searches allowed conversation fields but not retrieved full text or private ticket metadata", () => {
     const history: ConversationHistoryItem[] = [
       item("ticket", "担当者確認", "確認を依頼", {
