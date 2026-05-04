@@ -36,14 +36,20 @@ flowchart TB
   Api[API Server]
   Auth[Auth / Authorization]
   Orchestrator[Query Orchestrator]
+  Temporal[Temporal Context Provider]
+  ToolIntent[Tool Intent Detector]
   Retriever[Hybrid Retriever]
   Lexical[Lightweight Lexical Retriever]
   Semantic[S3 Vectors Semantic Retriever]
   Fusion[RRF Rank Fusion]
+  Compute[Computation Layer]
+  DateCalc[DateCalculator]
+  Calculator[Calculator]
   Judge[Answerability Judge]
   Prompt[Prompt Builder]
   Llm[LLM Gateway]
   Citation[Citation Validator]
+  Support[Answer Support Verifier]
   Eval[Benchmark / Evaluation]
   Trace[Telemetry / Debug Trace]
   Questions[Human Question Store]
@@ -63,15 +69,21 @@ flowchart TB
   SignupRole --> Cognito
   Api --> Auth
   Api --> Orchestrator
+  Orchestrator --> Temporal
+  Orchestrator --> ToolIntent
   Orchestrator --> Retriever
   Retriever --> Lexical
   Retriever --> Semantic
   Lexical --> Fusion
   Semantic --> Fusion
   Fusion --> Judge
+  Orchestrator --> Compute
+  Compute --> DateCalc
+  Compute --> Calculator
   Judge --> Prompt
   Prompt --> Llm
   Llm --> Citation
+  Citation --> Support
   Citation --> Api
   Orchestrator --> Trace
   Api --> Questions
@@ -98,15 +110,21 @@ flowchart TB
 | Post-confirmation Role Assignment | self sign-up 確認済みユーザーへ `CHAT_USER` のみを付与する。 |
 | API Server | API 受付、認可、RAG workflow 呼び出し、レスポンス整形を行う。 |
 | Auth / Authorization | Cognito ID token の group から API permission を判定する。 |
-| Query Orchestrator | 検索、回答可能性判定、回答生成、引用検証、trace 記録を制御する。 |
+| Query Orchestrator | 検索、tool intent、deterministic computation、回答可能性判定、回答生成、引用検証、trace 記録を制御する。 |
+| Temporal Context Provider | API サーバー時刻または質問文の明示基準日から `today`、timezone、source を決定する。 |
+| Tool Intent Detector | 検索、日付計算、数値計算、全件列挙の要否と、質問文だけで回答可能かを intent として判定する。 |
 | Hybrid Retriever | 通常チャットの evidence 検索で lexical retrieval、semantic search、RRF、ACL guard、diagnostics 生成を束ねる。 |
 | Lightweight Lexical Retriever | BM25、CJK n-gram、prefix、ASCII fuzzy、alias expansion で語句一致候補を取得する。 |
 | S3 Vectors Semantic Retriever | query embedding と metadata filter により意味検索候補を取得する。 |
 | RRF Rank Fusion | 複数 clue、query、retrieval source の evidence 検索結果を順位融合する。 |
+| Computation Layer | `computedFacts` を生成し、LLM に計算を再実行させず回答生成前に計算結果を確定する。 |
+| DateCalculator | 残日数、期限切れ、本日期限、超過日数、calendar day 加算を deterministic に計算する。 |
+| Calculator | 明示的な金額・人数・期間の MVP 数値計算を deterministic に実行する。 |
 | Answerability Judge | 検索済み evidence だけで回答可能かを判定する。 |
-| Prompt Builder | evidence、質問、回答制約を LLM prompt に変換する。 |
+| Prompt Builder | document evidence、computed facts、質問、回答制約を LLM prompt に変換する。 |
 | LLM Gateway | Bedrock model 呼び出しを集中管理する。 |
-| Citation Validator | 回答文と引用 chunk の支持関係を検証する。 |
+| Citation Validator | 回答文の document citation と `usedComputedFactIds` の妥当性を検証する。 |
+| Answer Support Verifier | 回答中の文書由来主張と計算由来主張が、それぞれ document evidence または computed fact で支持されるか検証する。 |
 | Benchmark / Evaluation | fact coverage、faithfulness、context relevance、不回答精度を測定する。 |
 | Human Question Store | RAG が回答できない質問を担当者対応 ticket として保持する。 |
 | Conversation History Store | userId 単位の会話履歴を保持する。 |
@@ -133,6 +151,17 @@ sequenceDiagram
 
   U->>API: POST /chat
   API->>RAG: question, modelId, settings, user context
+  RAG->>RAG: build temporal context
+  RAG->>RAG: detect tool intent
+  alt explicit computation without search
+    RAG->>RAG: execute DateCalculator / Calculator
+    opt no usable computedFacts
+      RAG->>RAG: fall back to normal RAG retrieval
+    end
+    RAG->>BR: generate answer with computedFacts
+    BR-->>RAG: answer
+    RAG->>RAG: validate computed fact support
+  else search required
   RAG->>RAG: normalize query / load conversation context
   RAG->>BR: generate clues
   BR-->>RAG: clues
@@ -145,11 +174,13 @@ sequenceDiagram
   RAG->>BR: answerability judge
   BR-->>RAG: ANSWERABLE/PARTIAL/UNANSWERABLE
   alt answerable
+    RAG->>RAG: execute computation tools when intent requires
     RAG->>BR: generate grounded answer
     BR-->>RAG: answer
     RAG->>RAG: validate citation support
   else not answerable
     RAG->>RAG: finalize refusal
+  end
   end
   RAG->>TR: persist trace when enabled
   RAG-->>API: answer/refusal, citations, metadata
@@ -226,5 +257,8 @@ sequenceDiagram
 - debug trace に質問、文書断片、モデル出力が含まれるため認可が必要である。
 - RRF と再検索を追加すると ranking の説明責任が増えるため、actionHistory と score を trace に残す必要がある。
 - hybrid retrieval を通常チャット本線へ入れると latency と trace 情報量が増えるため、retrievalDiagnostics に query 数、source 件数、version 情報を残して評価で調整する必要がある。
+- 日付・数値計算を LLM の暗算に任せると誤答や support verifier の誤判定につながるため、計算結果は `computedFacts` として回答生成前に確定し、document evidence と区別して検証する必要がある。
+- tool intent の誤判定で検索を失わないよう、compute-only path は usable `computedFacts` が得られた場合に限定し、それ以外は通常の RAG retrieval へ戻す必要がある。
+- 「全部出して」「一覧にして」の期限タスク質問を RAG topK で処理すると漏れが出るため、構造化インデックス未実装の間は完全一覧不可を明示する必要がある。
 - 通常利用者の UI が担当者一覧や debug trace 一覧を事前取得すると不要な 403 と権限過多を招くため、Cognito group に応じて取得対象を分ける必要がある。
 - self sign-up を許可すると任意メールアドレスの登録試行が増えるため、Cognito 確認コードと `CHAT_USER` のみの自動付与で初期権限を抑える必要がある。

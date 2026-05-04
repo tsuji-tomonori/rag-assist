@@ -1,5 +1,6 @@
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 import { NO_ANSWER } from "../state.js"
+import { hasUnavailableComputedFact, hasUsableComputedFact } from "../computation.js"
 import { hasUsableRequirementsClassificationEvidence, isRequirementsClassificationQuestion } from "../../rag/prompts.js"
 
 type SelectedChunk = QaAgentState["selectedChunks"][number]
@@ -11,6 +12,23 @@ export async function answerabilityGate(state: QaAgentState): Promise<QaAgentUpd
   const topScore = chunks[0]?.score ?? 0
 
   if (chunks.length < 1) {
+    if (hasUsableComputedFact(state.computedFacts)) {
+      return {
+        answerability: {
+          isAnswerable: true,
+          reason: computedFactAnswerabilityReason(state),
+          confidence: 0.86,
+          sentenceAssessments: [
+            {
+              status: "ok",
+              sentence: state.computedFacts.map(formatComputedFactAssessment).join(" / "),
+              checks: state.computedFacts.some((fact) => fact.kind === "arithmetic") ? ["amount"] : ["date"],
+              reason: "deterministic computation layer の computedFacts で回答できます。"
+            }
+          ]
+        }
+      }
+    }
     return refusal("no_relevant_chunks", 0)
   }
 
@@ -31,6 +49,22 @@ export async function answerabilityGate(state: QaAgentState): Promise<QaAgentUpd
       sentenceAssessments: coverage.sentenceAssessments
     }
   }
+}
+
+function computedFactAnswerabilityReason(state: QaAgentState): QaAgentState["answerability"]["reason"] {
+  if (!hasUnavailableComputedFact(state.computedFacts)) return "sufficient_evidence"
+  if (state.computedFacts.some((fact) => fact.kind === "task_deadline_query_unavailable")) return "structured_index_unavailable"
+  return "calculation_unavailable"
+}
+
+function formatComputedFactAssessment(fact: QaAgentState["computedFacts"][number]): string {
+  if (fact.kind === "arithmetic") return `${fact.expression}=${fact.result}${fact.unit ?? ""}`
+  if (fact.kind === "deadline_status") return `${fact.dueDate}: ${fact.status}, remaining=${fact.daysRemaining}, overdue=${fact.overdueDays}`
+  if (fact.kind === "days_until") return `${fact.today}から${fact.dueDate}まで${fact.daysRemaining}日`
+  if (fact.kind === "current_date") return fact.explanation
+  if (fact.kind === "add_days") return `${fact.baseDate}+${fact.amount}日=${fact.resultDate}`
+  if (fact.kind === "task_deadline_query_unavailable") return fact.reason
+  return fact.reason
 }
 
 function refusal(

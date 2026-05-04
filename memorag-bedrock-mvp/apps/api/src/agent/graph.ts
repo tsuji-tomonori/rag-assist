@@ -2,14 +2,18 @@ import { randomUUID } from "node:crypto"
 import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
+import { hasUsableComputedFact } from "./computation.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { buildPipelineVersions } from "../rag/pipeline-versions.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
 import type { DocumentManifest, RetrievedVector } from "../types.js"
 import { analyzeInput } from "./nodes/analyze-input.js"
 import { answerabilityGate } from "./nodes/answerability-gate.js"
+import { buildTemporalContext } from "./nodes/build-temporal-context.js"
 import { clarificationGate } from "./nodes/clarification-gate.js"
+import { detectToolIntent } from "./nodes/detect-tool-intent.js"
 import { createEmbedQueriesNode } from "./nodes/embed-queries.js"
+import { executeComputationTools } from "./nodes/execute-computation-tools.js"
 import { finalizeClarification } from "./nodes/finalize-clarification.js"
 import { finalizeRefusal } from "./nodes/finalize-refusal.js"
 import { finalizeResponse } from "./nodes/finalize-response.js"
@@ -198,6 +202,8 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
 
   const nodes = {
     analyzeInput: tracedNode("analyze_input", analyzeInput),
+    buildTemporalContext: tracedNode("build_temporal_context", buildTemporalContext),
+    detectToolIntent: tracedNode("detect_tool_intent", detectToolIntent),
     normalizeQuery: tracedNode("normalize_query", normalizeQuery),
     retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps, user)),
     generateClues: tracedNode("generate_clues", createGenerateCluesNode(deps)),
@@ -208,6 +214,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     retrievalEvaluator: tracedNode("retrieval_evaluator", retrievalEvaluator),
     evaluateSearchProgress: tracedNode("evaluate_search_progress", evaluateSearchProgress),
     rerankChunks: tracedNode("rerank_chunks", rerankChunks),
+    executeComputationTools: tracedNode("execute_computation_tools", executeComputationTools),
     answerabilityGate: tracedNode("answerability_gate", answerabilityGate),
     sufficientContextGate: tracedNode("sufficient_context_gate", sufficientContextGate),
     generateAnswer: tracedNode("generate_answer", createGenerateAnswerNode(deps)),
@@ -222,6 +229,26 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       let state = initialState
 
       state = await applyNode(state, "analyze_input", nodes.analyzeInput, progress)
+      state = await applyNode(state, "build_temporal_context", nodes.buildTemporalContext, progress)
+      if (state.answerability.reason === "invalid_temporal_context") {
+        return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
+      }
+      state = await applyNode(state, "detect_tool_intent", nodes.detectToolIntent, progress)
+
+      if (state.toolIntent?.canAnswerFromQuestionOnly) {
+        state = await applyNode(state, "execute_computation_tools", nodes.executeComputationTools, progress)
+        if (hasUsableComputedFact(state.computedFacts)) {
+          state = await applyNode(state, "answerability_gate", nodes.answerabilityGate, progress)
+          if (routeAfterGate(state) === "refuse") {
+            return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
+          }
+          state = await applyNode(state, "generate_answer", nodes.generateAnswer, progress)
+          state = await applyNode(state, "validate_citations", nodes.validateCitations, progress)
+          state = await applyNode(state, "verify_answer_support", nodes.verifyAnswerSupport, progress)
+          return applyNode(state, "finalize_response", nodes.finalizeResponse, progress)
+        }
+      }
+
       state = await applyNode(state, "normalize_query", nodes.normalizeQuery, progress)
       state = await applyNode(state, "retrieve_memory", nodes.retrieveMemory, progress)
       state = await applyNode(state, "generate_clues", nodes.generateClues, progress)
@@ -246,6 +273,9 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       }
 
       state = await applyNode(state, "rerank_chunks", nodes.rerankChunks, progress)
+      if (state.toolIntent && (state.toolIntent.needsArithmeticCalculation || state.toolIntent.needsTemporalCalculation || state.toolIntent.needsAggregation || state.toolIntent.needsTaskDeadlineIndex)) {
+        state = await applyNode(state, "execute_computation_tools", nodes.executeComputationTools, progress)
+      }
       state = await applyNode(state, "answerability_gate", nodes.answerabilityGate, progress)
 
       if (routeAfterGate(state) === "refuse") {
@@ -495,6 +525,12 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       },
       reason: ""
     },
+    temporalContext: undefined,
+    asOfDate: input.asOfDate,
+    asOfDateSource: input.asOfDateSource,
+    toolIntent: undefined,
+    computedFacts: [],
+    usedComputedFactIds: [],
     maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,
@@ -521,6 +557,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       supported: false,
       unsupportedSentences: [],
       supportingChunkIds: [],
+      supportingComputedFactIds: [],
       contradictionChunkIds: [],
       confidence: 0,
       totalSentences: 0,

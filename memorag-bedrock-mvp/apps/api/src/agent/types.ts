@@ -22,6 +22,8 @@ export type ChatInput = {
   debug?: boolean
   useMemory?: boolean
   maxIterations?: number
+  asOfDate?: string
+  asOfDateSource?: "benchmark" | "test"
 }
 
 export type QaGraphContext = {
@@ -43,6 +45,7 @@ export type AnswerJson = {
   isAnswerable?: boolean
   answer?: string
   usedChunkIds?: string[]
+  usedComputedFactIds?: string[]
 }
 
 export type ClueJson = {
