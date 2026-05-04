@@ -62,7 +62,7 @@ export function BenchmarkWorkspace({
         />
         <BenchmarkMetricCard title="平均応答時間" value={formatMetricLatency(summary.averageLatencyMs)} subValue="直近完了 run の平均" />
         <BenchmarkMetricCard title="回答正答率" value={formatPercent(summary.answerableAccuracy)} subValue="answerable accuracy" />
-        <BenchmarkMetricCard title="検索再現率" value={formatPercent(summary.retrievalRecallAt20)} subValue="retrieval recall@20" />
+        <BenchmarkMetricCard title="確認質問F1" value={formatPercent(summary.clarificationNeedF1)} subValue="clarification need F1" />
       </div>
 
       <div className="benchmark-layout">
@@ -247,6 +247,7 @@ function summarizeBenchmarkRuns(runs: BenchmarkRun[]): {
   runSuccessRate?: number
   averageLatencyMs?: number | null
   answerableAccuracy?: number | null
+  clarificationNeedF1?: number | null
   retrievalRecallAt20?: number | null
   errorRate?: number | null
   failedHttpCount: number
@@ -264,6 +265,7 @@ function summarizeBenchmarkRuns(runs: BenchmarkRun[]): {
     runSuccessRate,
     averageLatencyMs: averageNullable(metricRuns.map((run) => run.metrics?.averageLatencyMs ?? run.metrics?.p50LatencyMs)),
     answerableAccuracy: averageNullable(metricRuns.map((run) => run.metrics?.answerableAccuracy)),
+    clarificationNeedF1: averageNullable(metricRuns.map((run) => run.metrics?.clarificationNeedF1)),
     retrievalRecallAt20: averageNullable(metricRuns.map((run) => run.metrics?.retrievalRecallAt20)),
     errorRate: averageNullable(metricRuns.map((run) => run.metrics?.errorRate)),
     failedHttpCount: metricRuns.reduce((total, run) => total + (run.metrics?.failedHttp ?? 0), 0),

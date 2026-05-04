@@ -8,7 +8,9 @@ import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
 import type { DocumentManifest, RetrievedVector } from "../types.js"
 import { analyzeInput } from "./nodes/analyze-input.js"
 import { answerabilityGate } from "./nodes/answerability-gate.js"
+import { clarificationGate } from "./nodes/clarification-gate.js"
 import { createEmbedQueriesNode } from "./nodes/embed-queries.js"
+import { finalizeClarification } from "./nodes/finalize-clarification.js"
 import { finalizeRefusal } from "./nodes/finalize-refusal.js"
 import { finalizeResponse } from "./nodes/finalize-response.js"
 import { createGenerateAnswerNode } from "./nodes/generate-answer.js"
@@ -190,6 +192,8 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     normalizeQuery: tracedNode("normalize_query", normalizeQuery),
     retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps, user)),
     generateClues: tracedNode("generate_clues", createGenerateCluesNode(deps)),
+    clarificationGate: tracedNode("clarification_gate", clarificationGate),
+    finalizeClarification: tracedNode("finalize_clarification", finalizeClarification),
     planSearch: tracedNode("plan_search", planSearch),
     executeSearchAction: tracedNode("execute_search_action", executeSearchAction),
     retrievalEvaluator: tracedNode("retrieval_evaluator", retrievalEvaluator),
@@ -212,11 +216,19 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       state = await applyNode(state, nodes.normalizeQuery)
       state = await applyNode(state, nodes.retrieveMemory)
       state = await applyNode(state, nodes.generateClues)
+      state = await applyNode(state, nodes.clarificationGate)
+      if (state.clarification.needsClarification) {
+        return applyNode(state, nodes.finalizeClarification)
+      }
 
       do {
         state = await applyNode(state, nodes.planSearch)
         state = await applyNode(state, nodes.executeSearchAction)
         state = await applyNode(state, nodes.retrievalEvaluator)
+        state = await applyNode(state, nodes.clarificationGate)
+        if (state.clarification.needsClarification) {
+          return applyNode(state, nodes.finalizeClarification)
+        }
         state = await applyNode(state, nodes.evaluateSearchProgress)
       } while (routeAfterSearchEvaluation(state) === "continue_search")
 
@@ -491,14 +503,25 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       totalSentences: 0,
       reason: ""
     },
+    clarification: {
+      needsClarification: false,
+      reason: "not_needed",
+      question: "",
+      options: [],
+      missingSlots: [],
+      confidence: 0,
+      groundedOptionCount: 0,
+      rejectedOptions: []
+    },
     citations: [],
     trace: []
   })) as QaAgentState
 
   const answer = state.answer ?? NO_ANSWER
-  const isAnswerable = state.answerability.isAnswerable && answer !== NO_ANSWER
+  const isClarification = state.clarification.needsClarification
+  const isAnswerable = !isClarification && state.answerability.isAnswerable && answer !== NO_ANSWER
   const citations = isAnswerable ? state.citations : []
-  const retrieved = state.retrievedChunks.map(toCitation)
+  const retrieved = isClarification ? [] : state.retrievedChunks.map(toCitation)
   const shouldIncludeDebug = input.includeDebug ?? input.debug ?? false
   const debug = shouldIncludeDebug
     ? await persistDebugTrace(deps, {
@@ -521,8 +544,11 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
     : undefined
 
   return {
+    responseType: isClarification ? "clarification" : isAnswerable ? "answer" : "refusal",
     answer,
     isAnswerable,
+    needsClarification: isClarification,
+    clarification: isClarification ? state.clarification : undefined,
     citations,
     retrieved,
     debug

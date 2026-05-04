@@ -142,6 +142,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     setSubmitShortcut,
     canAsk,
     onAsk,
+    submitClarificationOption,
     newConversation
   } = useChatSession({
     canCreateChat,
@@ -353,6 +354,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       allExpanded,
       expandedStepId,
       onAsk,
+      onSubmitClarificationOption: submitClarificationOption,
       onSetQuestion: setQuestion,
       onSetFile: setFile,
       onSetSubmitShortcut: setSubmitShortcut,

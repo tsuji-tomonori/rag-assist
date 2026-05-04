@@ -1,8 +1,14 @@
 import type { Dependencies } from "../dependencies.js"
 import type { Citation, DebugTrace } from "../types.js"
+import type { Clarification } from "./state.js"
 
 export type ChatInput = {
   question: string
+  clarificationContext?: {
+    originalQuestion?: string
+    selectedOptionId?: string
+    selectedValue?: string
+  }
   modelId?: string
   embeddingModelId?: string
   clueModelId?: string
@@ -21,8 +27,11 @@ export type QaGraphContext = {
 }
 
 export type QaGraphResult = {
+  responseType: "answer" | "refusal" | "clarification"
   answer: string
   isAnswerable: boolean
+  needsClarification?: boolean
+  clarification?: Clarification
   citations: Citation[]
   retrieved: Citation[]
   debug?: DebugTrace

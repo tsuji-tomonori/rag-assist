@@ -17,7 +17,8 @@ export function MessageList({
   loading,
   onSelectPrompt,
   onCreateQuestion,
-  onResolveQuestion
+  onResolveQuestion,
+  onSubmitClarificationOption
 }: {
   messages: Message[]
   questions: HumanQuestion[]
@@ -29,6 +30,7 @@ export function MessageList({
   onSelectPrompt: (value: string) => void
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
+  onSubmitClarificationOption: (value: string) => Promise<void>
 }) {
   return (
     <div className="message-list">
@@ -44,6 +46,7 @@ export function MessageList({
           onCreateQuestion={onCreateQuestion}
           onResolveQuestion={onResolveQuestion}
           onAdditionalQuestion={onSelectPrompt}
+          onSubmitClarificationOption={onSubmitClarificationOption}
         />
       ))}
       {pendingActivity && (

@@ -66,6 +66,16 @@ export function useChatSession({
     const typedQuestion = question.trim()
     const userQuestion = typedQuestion || `${file?.name ?? "添付資料"}を取り込んでください`
     const hasAttachment = file !== null
+    await submitQuestion(userQuestion, typedQuestion, hasAttachment)
+  }
+
+  async function submitClarificationOption(resolvedQuery: string) {
+    const userQuestion = resolvedQuery.trim()
+    if (!userQuestion || loading || !canCreateChat) return
+    await submitQuestion(userQuestion, userQuestion, false)
+  }
+
+  async function submitQuestion(userQuestion: string, typedQuestion: string, hasAttachment: boolean) {
     setQuestion("")
     setMessages((prev) => [...prev, { role: "user", text: userQuestion, createdAt: new Date().toISOString() }])
     setLoading(true)
@@ -77,7 +87,7 @@ export function useChatSession({
     setError(null)
 
     try {
-      if (file && canWriteDocuments) {
+      if (hasAttachment && file && canWriteDocuments) {
         await ingestDocument(file)
         setFile(null)
       }
@@ -144,6 +154,7 @@ export function useChatSession({
     setSubmitShortcut,
     canAsk,
     onAsk,
+    submitClarificationOption,
     newConversation
   }
 }

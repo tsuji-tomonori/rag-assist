@@ -123,6 +123,45 @@ export const AnswerSupportJudgementSchema = z.object({
   reason: z.string().default("")
 })
 
+export const ClarificationOptionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  resolvedQuery: z.string(),
+  reason: z.string().optional(),
+  source: z.enum(["memory", "evidence", "aspect", "history"]),
+  grounding: z
+    .array(
+      z.object({
+        documentId: z.string().optional(),
+        fileName: z.string().optional(),
+        chunkId: z.string().optional(),
+        heading: z.string().optional()
+      })
+    )
+    .default(() => [])
+})
+
+export const ClarificationSchema = z.object({
+  needsClarification: z.boolean().default(false),
+  reason: z
+    .enum([
+      "ambiguous_target",
+      "missing_scope",
+      "unresolved_reference",
+      "multiple_candidate_intents",
+      "conflicting_scope",
+      "not_needed"
+    ])
+    .default("not_needed"),
+  question: z.string().default(""),
+  options: z.array(ClarificationOptionSchema).max(5).default(() => []),
+  missingSlots: z.array(z.string()).default(() => []),
+  confidence: z.number().min(0).max(1).default(0),
+  ambiguityScore: z.number().min(0).max(1).optional(),
+  groundedOptionCount: z.number().int().min(0).default(0),
+  rejectedOptions: z.array(z.string()).default(() => [])
+})
+
 export const DebugStepSchema = z.object({
   id: z.number(),
   label: z.string(),
@@ -330,6 +369,16 @@ export const AgentStateSchema = z.object({
     totalSentences: 0,
     reason: ""
   }),
+  clarification: ClarificationSchema.default({
+    needsClarification: false,
+    reason: "not_needed",
+    question: "",
+    options: [],
+    missingSlots: [],
+    confidence: 0,
+    groundedOptionCount: 0,
+    rejectedOptions: []
+  }),
   citations: z.array(CitationSchema).default(() => []),
 
   trace: z.array(DebugStepSchema).default(() => [])
@@ -350,3 +399,5 @@ export type RetrievalRiskSignal = NonNullable<RetrievalEvaluation["riskSignals"]
 export type RetrievalLlmJudge = NonNullable<RetrievalEvaluation["llmJudge"]>
 export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
 export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>
+export type Clarification = z.infer<typeof ClarificationSchema>
+export type ClarificationOption = z.infer<typeof ClarificationOptionSchema>

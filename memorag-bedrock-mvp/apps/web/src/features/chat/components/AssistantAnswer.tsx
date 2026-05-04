@@ -12,7 +12,8 @@ export function AssistantAnswer({
   loading,
   onCreateQuestion,
   onResolveQuestion,
-  onAdditionalQuestion
+  onAdditionalQuestion,
+  onSubmitClarificationOption
 }: {
   message: Message
   linkedQuestion?: HumanQuestion
@@ -20,8 +21,11 @@ export function AssistantAnswer({
   onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
   onAdditionalQuestion: (value: string) => void
+  onSubmitClarificationOption: (value: string) => Promise<void>
 }) {
   const citations = message.result?.citations ?? []
+  const clarification = message.result?.clarification
+  const isClarification = message.result?.responseType === "clarification" || message.result?.needsClarification === true
   const [copyStatus, setCopyStatus] = useState<"idle" | "answer" | "error">("idle")
   const canCopyAnswer = Boolean(message.text.trim())
 
@@ -74,7 +78,24 @@ export function AssistantAnswer({
           {copyStatus === "error" && "コピーに失敗しました"}
         </p>
       )}
-      {message.result && !message.result.isAnswerable && (
+      {isClarification && clarification && (
+        <div className="clarification-options" aria-label="確認質問の選択肢">
+          {clarification.options.map((option) => (
+            <button
+              type="button"
+              key={option.id}
+              onClick={() => void onSubmitClarificationOption(option.resolvedQuery)}
+              title={option.reason ?? "この候補で質問する"}
+            >
+              {option.label}
+            </button>
+          ))}
+          <button type="button" className="clarification-freeform" onClick={() => onAdditionalQuestion("")}>
+            自分で入力
+          </button>
+        </div>
+      )}
+      {message.result && !message.result.isAnswerable && !isClarification && (
         <QuestionEscalationPanel message={message} questionTicket={linkedQuestion} loading={loading} onCreateQuestion={onCreateQuestion} />
       )}
       {linkedQuestion?.status === "answered" || linkedQuestion?.status === "resolved" ? (

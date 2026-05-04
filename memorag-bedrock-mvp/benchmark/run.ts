@@ -12,6 +12,10 @@ type DatasetRow = {
   expectedAnswer?: string
   expectedContains?: string | string[]
   expectedRegex?: string | string[]
+  expectedResponseType?: "answer" | "refusal" | "clarification"
+  expectedClarification?: boolean
+  expectedMissingSlots?: string[]
+  expectedOptionsAnyOf?: string[]
   answerable?: boolean
   complexity?: "simple" | "multi_hop" | "comparison" | "procedure" | "ambiguous" | "out_of_scope"
   unanswerableType?: "missing_fact" | "out_of_scope" | "ambiguous" | "conflicting" | string
@@ -48,8 +52,24 @@ type Citation = {
 
 type BenchmarkResponse = {
   id?: string
+  responseType?: "answer" | "refusal" | "clarification"
   answer?: string
   isAnswerable?: boolean
+  needsClarification?: boolean
+  clarification?: {
+    needsClarification?: boolean
+    reason?: string
+    question?: string
+    options?: Array<{
+      label?: string
+      resolvedQuery?: string
+      source?: string
+      grounding?: Array<{ documentId?: string; fileName?: string; chunkId?: string; heading?: string }>
+    }>
+    missingSlots?: string[]
+    confidence?: number
+    ambiguityScore?: number
+  }
   citations?: Citation[]
   retrieved?: Citation[]
   debug?: {
@@ -68,6 +88,13 @@ type RowEvaluation = {
   expectedAnswerable: boolean
   actualAnswerable: boolean
   answerabilityCorrect: boolean
+  expectedResponseType: "answer" | "refusal" | "clarification"
+  actualResponseType: "answer" | "refusal" | "clarification"
+  responseTypeCorrect: boolean
+  clarificationNeededCorrect: boolean | null
+  optionHit: boolean | null
+  corpusGroundedOptions: boolean | null
+  postClarificationAnswerCorrect: boolean | null
   answerContainsExpected: boolean | null
   regexMatched: boolean | null
   answerCorrect: boolean
@@ -129,6 +156,14 @@ type Summary = {
   unanswerableTotal: number
   metrics: {
     answerableAccuracy: number | null
+    clarificationNeedPrecision: number | null
+    clarificationNeedRecall: number | null
+    clarificationNeedF1: number | null
+    optionHitRate: number | null
+    corpusGroundedOptionRate: number | null
+    postClarificationAccuracy: number | null
+    overClarificationRate: number | null
+    clarificationLatencyOverheadMs: number | null
     abstentionRecall: number | null
     unsupportedAnswerRate: number | null
     answerContainsRate: number | null
@@ -265,6 +300,8 @@ function createRequestHeaders(): Record<string, string> {
 function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): RowEvaluation {
   const expectedAnswerable = inferExpectedAnswerable(row)
   const actualAnswerable = Boolean(body.isAnswerable)
+  const expectedResponseType = inferExpectedResponseType(row, expectedAnswerable)
+  const actualResponseType = inferActualResponseType(body)
   const answer = body.answer ?? ""
   const citations = body.citations ?? []
   const retrieved = body.retrieved ?? []
@@ -277,6 +314,32 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
   const refused = !actualAnswerable || isNoAnswerText(answer)
   const answerabilityCorrect = actualAnswerable === expectedAnswerable
   if (!answerabilityCorrect) failureReasons.push(expectedAnswerable ? "expected_answer_but_refused" : "expected_refusal_but_answered")
+  const responseTypeCorrect = actualResponseType === expectedResponseType
+  if (!responseTypeCorrect) failureReasons.push(`expected_${expectedResponseType}_but_${actualResponseType}`)
+
+  const expectedClarification = row.expectedClarification ?? expectedResponseType === "clarification"
+  const actualClarification = actualResponseType === "clarification" || body.needsClarification === true || body.clarification?.needsClarification === true
+  const clarificationNeededCorrect =
+    row.expectedClarification === undefined && row.expectedResponseType === undefined ? null : actualClarification === expectedClarification
+  if (clarificationNeededCorrect === false) failureReasons.push(expectedClarification ? "expected_clarification" : "over_clarification")
+
+  const optionLabels = body.clarification?.options?.map((option) => option.label ?? "").filter(Boolean) ?? []
+  const optionHit =
+    row.expectedOptionsAnyOf && row.expectedOptionsAnyOf.length > 0
+      ? row.expectedOptionsAnyOf.some((expected) => optionLabels.some((label) => normalize(label).includes(normalize(expected))))
+      : null
+  if (optionHit === false) failureReasons.push("clarification_option_miss")
+
+  const corpusGroundedOptions =
+    actualClarification && (body.clarification?.options?.length ?? 0) > 0
+      ? body.clarification?.options?.every((option) => (option.grounding?.length ?? 0) > 0 && ["memory", "evidence", "aspect", "history"].includes(option.source ?? "")) ?? false
+      : null
+  if (corpusGroundedOptions === false) failureReasons.push("clarification_option_not_grounded")
+
+  const postClarificationAnswerCorrect =
+    row.expectedResponseType === "answer" && row.complexity === "ambiguous"
+      ? answerabilityCorrect && actualAnswerable && status >= 200 && status < 300
+      : null
 
   const answerContainsExpected =
     expectedAnswerable && expectedContains.length > 0
@@ -339,6 +402,13 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
     expectedAnswerable,
     actualAnswerable,
     answerabilityCorrect,
+    expectedResponseType,
+    actualResponseType,
+    responseTypeCorrect,
+    clarificationNeededCorrect,
+    optionHit,
+    corpusGroundedOptions,
+    postClarificationAnswerCorrect,
     answerContainsExpected,
     regexMatched,
     answerCorrect,
@@ -373,6 +443,12 @@ function evaluateRow(row: DatasetRow, body: BenchmarkResponse, status: number): 
 function summarize(results: BenchmarkResultRow[]): Summary {
   const answerableRows = results.filter((row) => row.evaluation.expectedAnswerable)
   const unanswerableRows = results.filter((row) => !row.evaluation.expectedAnswerable)
+  const clarificationExpectedRows = results.filter((row) => row.evaluation.expectedResponseType === "clarification")
+  const clarificationActualRows = results.filter((row) => row.evaluation.actualResponseType === "clarification")
+  const clearAnswerRows = results.filter((row) => row.evaluation.expectedResponseType === "answer")
+  const optionHitRows = results.filter((row) => row.evaluation.optionHit !== null)
+  const groundedOptionRows = results.filter((row) => row.evaluation.corpusGroundedOptions !== null)
+  const postClarificationRows = results.filter((row) => row.evaluation.postClarificationAnswerCorrect !== null)
   const latencies = results.map((row) => row.latencyMs).sort((a, b) => a - b)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
@@ -408,6 +484,38 @@ function summarize(results: BenchmarkResultRow[]): Summary {
     unanswerableTotal: unanswerableRows.length,
     metrics: {
       answerableAccuracy: rate(answerableRows.filter((row) => row.evaluation.answerCorrect).length, answerableRows.length),
+      clarificationNeedPrecision: rate(
+        clarificationActualRows.filter((row) => row.evaluation.expectedResponseType === "clarification").length,
+        clarificationActualRows.length
+      ),
+      clarificationNeedRecall: rate(
+        clarificationExpectedRows.filter((row) => row.evaluation.actualResponseType === "clarification").length,
+        clarificationExpectedRows.length
+      ),
+      clarificationNeedF1: f1(
+        rate(
+          clarificationActualRows.filter((row) => row.evaluation.expectedResponseType === "clarification").length,
+          clarificationActualRows.length
+        ),
+        rate(
+          clarificationExpectedRows.filter((row) => row.evaluation.actualResponseType === "clarification").length,
+          clarificationExpectedRows.length
+        )
+      ),
+      optionHitRate: rate(optionHitRows.filter((row) => row.evaluation.optionHit === true).length, optionHitRows.length),
+      corpusGroundedOptionRate: rate(
+        groundedOptionRows.filter((row) => row.evaluation.corpusGroundedOptions === true).length,
+        groundedOptionRows.length
+      ),
+      postClarificationAccuracy: rate(
+        postClarificationRows.filter((row) => row.evaluation.postClarificationAnswerCorrect === true).length,
+        postClarificationRows.length
+      ),
+      overClarificationRate: rate(
+        clearAnswerRows.filter((row) => row.evaluation.actualResponseType === "clarification").length,
+        clearAnswerRows.length
+      ),
+      clarificationLatencyOverheadMs: latencyDelta(clarificationActualRows, results.filter((row) => row.evaluation.actualResponseType !== "clarification")),
       abstentionRecall: rate(
         unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length,
         unanswerableRows.length
@@ -511,6 +619,14 @@ function summarize(results: BenchmarkResultRow[]): Summary {
 function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): string {
   const metricRows = [
     ["answerable_accuracy", formatRate(summary.metrics.answerableAccuracy)],
+    ["clarification_need_precision", formatRate(summary.metrics.clarificationNeedPrecision)],
+    ["clarification_need_recall", formatRate(summary.metrics.clarificationNeedRecall)],
+    ["clarification_need_f1", formatRate(summary.metrics.clarificationNeedF1)],
+    ["option_hit_rate", formatRate(summary.metrics.optionHitRate)],
+    ["corpus_grounded_option_rate", formatRate(summary.metrics.corpusGroundedOptionRate)],
+    ["post_clarification_accuracy", formatRate(summary.metrics.postClarificationAccuracy)],
+    ["over_clarification_rate", formatRate(summary.metrics.overClarificationRate)],
+    ["clarification_latency_overhead_ms", formatNumber(summary.metrics.clarificationLatencyOverheadMs)],
     ["abstention_recall", formatRate(summary.metrics.abstentionRecall)],
     ["unsupported_answer_rate", formatRate(summary.metrics.unsupportedAnswerRate)],
     ["answer_contains_rate", formatRate(summary.metrics.answerContainsRate)],
@@ -566,11 +682,11 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
       ].join("\n")
 
   const detailRows = [
-    "| id | expected | actual | fact_slots | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | citations | retrieved | result |",
-    "| --- | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |",
+    "| id | expected | actual | fact_slots | clarification | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | citations | retrieved | result |",
+    "| --- | --- | --- | ---: | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |",
     ...results.map((row) => {
       const passed = row.evaluation.failureReasons.length === 0 ? "pass" : row.evaluation.failureReasons.join(", ")
-      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedAnswerable ? "answer" : "refuse"} | ${row.evaluation.refused ? "refuse" : "answer"} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${formatNumber(row.evaluation.riskSignalCount)} | ${formatLlmJudgeSummary(row.evaluation)} | ${row.latencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
+      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedResponseType} | ${row.evaluation.actualResponseType} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatClarificationSummary(row.evaluation)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${formatNumber(row.evaluation.riskSignalCount)} | ${formatLlmJudgeSummary(row.evaluation)} | ${row.latencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
     })
   ].join("\n")
 
@@ -620,10 +736,25 @@ ${detailRows}
 }
 
 function inferExpectedAnswerable(row: DatasetRow): boolean {
+  if (row.expectedResponseType === "clarification" || row.expectedClarification === true) return false
+  if (row.expectedResponseType === "refusal") return false
+  if (row.expectedResponseType === "answer") return true
   if (typeof row.answerable === "boolean") return row.answerable
   const expected = normalize(row.expected ?? row.expectedAnswer ?? "")
   if (!expected) return true
   return !isNoAnswerText(expected)
+}
+
+function inferExpectedResponseType(row: DatasetRow, expectedAnswerable: boolean): RowEvaluation["expectedResponseType"] {
+  if (row.expectedResponseType) return row.expectedResponseType
+  if (row.expectedClarification === true) return "clarification"
+  return expectedAnswerable ? "answer" : "refusal"
+}
+
+function inferActualResponseType(body: BenchmarkResponse): RowEvaluation["actualResponseType"] {
+  if (body.responseType === "answer" || body.responseType === "refusal" || body.responseType === "clarification") return body.responseType
+  if (body.needsClarification === true || body.clarification?.needsClarification === true) return "clarification"
+  return body.isAnswerable ? "answer" : "refusal"
 }
 
 function isNoAnswerText(value: string): boolean {
@@ -846,6 +977,16 @@ function rate(numerator: number, denominator: number): number | null {
   return Number((numerator / denominator).toFixed(4))
 }
 
+function f1(precision: number | null, recall: number | null): number | null {
+  if (precision === null || recall === null || precision + recall === 0) return null
+  return Number(((2 * precision * recall) / (precision + recall)).toFixed(4))
+}
+
+function latencyDelta(current: BenchmarkResultRow[], baseline: BenchmarkResultRow[]): number | null {
+  if (current.length === 0 || baseline.length === 0) return null
+  return Math.round((current.reduce((sum, row) => sum + row.latencyMs, 0) / current.length) - (baseline.reduce((sum, row) => sum + row.latencyMs, 0) / baseline.length))
+}
+
 function average(values: number[]): number | null {
   if (values.length === 0) return null
   return Number((values.reduce((sum, value) => sum + value, 0) / values.length).toFixed(2))
@@ -864,6 +1005,17 @@ function formatRate(value: number | null): string {
 
 function formatNumber(value: number | null): string {
   return value === null ? "n/a" : String(value)
+}
+
+function formatClarificationSummary(evaluation: RowEvaluation): string {
+  if (evaluation.expectedResponseType !== "clarification" && evaluation.actualResponseType !== "clarification") return "n/a"
+  return escapeMarkdown(
+    [
+      `need=${evaluation.clarificationNeededCorrect === null ? "n/a" : evaluation.clarificationNeededCorrect ? "ok" : "ng"}`,
+      `option=${evaluation.optionHit === null ? "n/a" : evaluation.optionHit ? "hit" : "miss"}`,
+      `grounded=${evaluation.corpusGroundedOptions === null ? "n/a" : evaluation.corpusGroundedOptions ? "yes" : "no"}`
+    ].join(", ")
+  )
 }
 
 function formatLlmJudgeSummary(evaluation: RowEvaluation): string {
