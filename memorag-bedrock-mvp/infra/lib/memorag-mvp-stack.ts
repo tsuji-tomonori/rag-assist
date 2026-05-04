@@ -36,9 +36,27 @@ const appRoles = [
   "SYSTEM_ADMIN"
 ] as const
 
+const defaultResourceTags = {
+  Project: "memorag-bedrock-mvp",
+  Application: "MemoRAG",
+  ManagedBy: "aws-cdk",
+  Repository: "tsuji-tomonori/rag-assist"
+} as const
+
 export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
     super(scope, id, props)
+
+    const deploymentEnvironment = String(this.node.tryGetContext("deploymentEnvironment") ?? "dev")
+    const costCenter = String(this.node.tryGetContext("costCenter") ?? "memorag-mvp")
+    const commonResourceTags = {
+      ...defaultResourceTags,
+      Environment: deploymentEnvironment,
+      CostCenter: costCenter
+    }
+    for (const [key, value] of Object.entries(commonResourceTags)) {
+      cdk.Tags.of(this).add(key, value)
+    }
 
     const embeddingDimensions = Number(this.node.tryGetContext("embeddingDimensions") ?? 1024)
     const defaultModelId = String(this.node.tryGetContext("defaultModelId") ?? "amazon.nova-lite-v1:0")
@@ -214,6 +232,8 @@ export class MemoRagMvpStack extends Stack {
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: RemovalPolicy.DESTROY
     })
+    const userPoolResource = userPool.node.defaultChild as cognito.CfnUserPool
+    userPoolResource.addPropertyOverride("UserPoolTags", commonResourceTags)
 
     const signupRoleAssignmentLogGroup = new logs.LogGroup(this, "SignupRoleAssignmentLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
