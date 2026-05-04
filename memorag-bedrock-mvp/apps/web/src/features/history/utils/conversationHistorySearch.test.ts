@@ -89,6 +89,18 @@ describe("searchConversationHistory", () => {
     expect(searchConversationHistory(history, "QA UI").map((result) => result.item.id)).toEqual(["qa-ui"])
   })
 
+  it("does not match short ASCII query terms inside unrelated words", () => {
+    const history = [
+      item("approval", "承認", "approval workflow"),
+      item("guide", "ガイド", "user guide"),
+      item("pr", "PR 104", "PR 104 のレビュー"),
+      item("ui", "UI", "UI の改善")
+    ]
+
+    expect(searchConversationHistory(history, "PR").map((result) => result.item.id)).toEqual(["pr"])
+    expect(searchConversationHistory(history, "UI").map((result) => result.item.id)).toEqual(["ui"])
+  })
+
   it("searches allowed conversation fields but not retrieved full text or private ticket metadata", () => {
     const history: ConversationHistoryItem[] = [
       item("ticket", "担当者確認", "確認を依頼", {

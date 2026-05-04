@@ -106,6 +106,7 @@ function scoreField(
     normalizedQuery: string
     compactQuery: string
     queryTerms: string[]
+    primaryTerms: string[]
   }
 ): FieldMatch {
   const normalizedText = normalizeSearchText(field.text)
@@ -115,19 +116,41 @@ function scoreField(
   const fieldTokens = tokenizeQuery(normalizedText)
   const fieldTokenSet = new Set(fieldTokens)
   const asciiFieldTokens = fieldTokens.filter(isAsciiToken)
+  const asciiFieldSubtokens = new Set(asciiFieldTokens.flatMap((token) => token.split(/[-_]+/).filter(Boolean)))
+  const asciiDictionary = [...new Set([...asciiFieldTokens, ...asciiFieldSubtokens])]
+  const isShortAsciiQuery = isShortAsciiSingleTermQuery(query.normalizedQuery, query.primaryTerms)
   const matchedTerms = new Set<string>()
   let score = 0
 
-  if (normalizedText.includes(query.normalizedQuery)) {
+  if (!isShortAsciiQuery && normalizedText.includes(query.normalizedQuery)) {
     score += field.weight * 3
     matchedTerms.add(query.normalizedQuery)
-  } else if (query.compactQuery.length >= 2 && compactText.includes(query.compactQuery)) {
+  } else if (!isShortAsciiQuery && query.compactQuery.length >= 2 && compactText.includes(query.compactQuery)) {
     score += field.weight * 2
     matchedTerms.add(query.normalizedQuery)
   }
 
   for (const term of query.queryTerms) {
     const compactTerm = compactForPartialMatch(term)
+
+    if (isAsciiToken(term)) {
+      if (fieldTokenSet.has(term) || asciiFieldSubtokens.has(term)) {
+        score += field.weight
+        matchedTerms.add(term)
+        continue
+      }
+      if (term.length >= 3 && prefixCandidates(term, asciiDictionary).length > 0) {
+        score += field.weight * 0.45
+        matchedTerms.add(term)
+        continue
+      }
+      if (shouldFuzzy(term) && fuzzyCandidates(term, asciiDictionary).length > 0) {
+        score += field.weight * 0.25
+        matchedTerms.add(term)
+      }
+      continue
+    }
+
     if (fieldTokenSet.has(term) || normalizedText.includes(term)) {
       score += field.weight
       matchedTerms.add(term)
@@ -137,15 +160,6 @@ function scoreField(
       score += field.weight * 0.7
       matchedTerms.add(term)
       continue
-    }
-    if (isAsciiToken(term) && prefixCandidates(term, asciiFieldTokens).length > 0) {
-      score += field.weight * 0.45
-      matchedTerms.add(term)
-      continue
-    }
-    if (shouldFuzzy(term) && fuzzyCandidates(term, asciiFieldTokens).length > 0) {
-      score += field.weight * 0.25
-      matchedTerms.add(term)
     }
   }
 
@@ -218,6 +232,10 @@ function isOnlyShortAsciiCoverage(primaryTerms: string[], coveredTerms: string[]
   if (primaryTerms.length <= 1 || coveredTerms.length === 0) return false
   if (coveredTerms.length === primaryTerms.length) return false
   return coveredTerms.every((term) => isAsciiToken(term) && term.length < 4)
+}
+
+function isShortAsciiSingleTermQuery(normalizedQuery: string, primaryTerms: string[]): boolean {
+  return primaryTerms.length === 1 && primaryTerms[0] === normalizedQuery && isAsciiToken(normalizedQuery) && normalizedQuery.length < 4
 }
 
 function tokenizeQuery(text: string): string[] {
