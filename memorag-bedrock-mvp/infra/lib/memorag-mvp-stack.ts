@@ -413,6 +413,12 @@ export class MemoRagMvpStack extends Stack {
         })
       )
     }
+    apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser"],
+        resources: [userPool.userPoolArn]
+      })
+    )
 
     const apiAccessLogGroup = new logs.LogGroup(this, "RestApiAccessLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,

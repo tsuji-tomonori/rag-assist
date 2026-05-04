@@ -4,6 +4,8 @@ import { config as loadDotEnv } from "dotenv"
 loadDotEnv({ path: path.resolve(process.cwd(), ".env") })
 loadDotEnv({ path: path.resolve(process.cwd(), "../../.env"), override: false })
 
+const region = process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? "ap-northeast-1"
+
 function boolEnv(name: string, defaultValue = false): boolean {
   const value = process.env[name]
   if (value === undefined) return defaultValue
@@ -18,8 +20,9 @@ function numberEnv(name: string, defaultValue: number): number {
 }
 
 export const config = {
-  region: process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? "ap-northeast-1",
+  region,
   port: numberEnv("PORT", 8787),
+  authEnabled: boolEnv("AUTH_ENABLED", false),
   mockBedrock: boolEnv("MOCK_BEDROCK", false),
   useLocalVectorStore: boolEnv("USE_LOCAL_VECTOR_STORE", process.env.NODE_ENV !== "production"),
   useLocalQuestionStore: boolEnv("USE_LOCAL_QUESTION_STORE", process.env.NODE_ENV !== "production"),
@@ -53,5 +56,8 @@ export const config = {
   embeddingConcurrency: numberEnv("EMBEDDING_CONCURRENCY", 3),
   publishLexicalIndexOnSearch: boolEnv("PUBLISH_LEXICAL_INDEX_ON_SEARCH", process.env.NODE_ENV !== "production"),
   debugDownloadBucketName: process.env.DEBUG_DOWNLOAD_BUCKET_NAME ?? "",
-  debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900)
+  debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900),
+  cognitoRegion: process.env.COGNITO_REGION ?? region,
+  cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID ?? "",
+  cognitoAppClientId: process.env.COGNITO_APP_CLIENT_ID ?? ""
 } as const

@@ -50,7 +50,7 @@
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
 | `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
 | `BENCHMARK_RUNNER` | CodeBuild runner から `/benchmark/query` を実行 |
-| `USER_ADMIN` | 管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
+| `USER_ADMIN` | Cognito User Pool の全ユーザー参照、管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
 | `ACCESS_ADMIN` | ロール定義参照、ロール付与、管理操作履歴参照 |
 | `COST_AUDITOR` | 概算コスト監査 |
 | `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証、Phase 2 管理操作 |

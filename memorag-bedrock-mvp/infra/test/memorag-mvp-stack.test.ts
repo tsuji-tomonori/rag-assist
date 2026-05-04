@@ -210,6 +210,19 @@ test("implements the designed serverless resources", () => {
       Statement: Match.arrayWith([
         Match.objectLike({
           Action: Match.arrayWith([
+            "cognito-idp:ListUsers",
+            "cognito-idp:AdminListGroupsForUser"
+          ]),
+          Resource: Match.anyValue()
+        })
+      ])
+    })
+  })
+  template.hasResourceProperties("AWS::IAM::Policy", {
+    PolicyDocument: Match.objectLike({
+      Statement: Match.arrayWith([
+        Match.objectLike({
+          Action: Match.arrayWith([
             "cognito-idp:AdminGetUser",
             "cognito-idp:AdminCreateUser",
             "cognito-idp:AdminSetUserPassword",

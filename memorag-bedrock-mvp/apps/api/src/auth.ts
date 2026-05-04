@@ -1,6 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from "jose"
 import type { MiddlewareHandler } from "hono"
 import { HTTPException } from "hono/http-exception"
+import { config } from "./config.js"
 
 export type AppUser = {
   userId: string
@@ -8,10 +9,9 @@ export type AppUser = {
   cognitoGroups: string[]
 }
 
-const cognitoRegion = process.env.COGNITO_REGION
-const cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID
-const cognitoAppClientId = process.env.COGNITO_APP_CLIENT_ID
-const authEnabled = process.env.AUTH_ENABLED === "true"
+const cognitoRegion = config.cognitoRegion
+const cognitoUserPoolId = config.cognitoUserPoolId
+const cognitoAppClientId = config.cognitoAppClientId
 const localAuthGroups = process.env.LOCAL_AUTH_GROUPS?.split(",").map((group) => group.trim()).filter(Boolean)
 
 const jwks =
@@ -20,7 +20,7 @@ const jwks =
     : null
 
 export const authMiddleware: MiddlewareHandler = async (c, next) => {
-  if (!authEnabled) {
+  if (!config.authEnabled) {
     c.set("user", {
       userId: process.env.LOCAL_AUTH_USER_ID ?? "local-dev",
       email: process.env.LOCAL_AUTH_EMAIL ?? "local-dev@example.com",

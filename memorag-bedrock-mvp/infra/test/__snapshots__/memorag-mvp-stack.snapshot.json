@@ -2153,6 +2153,19 @@
               "Resource": "*"
             },
             {
+              "Action": [
+                "cognito-idp:ListUsers",
+                "cognito-idp:AdminListGroupsForUser"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "UserPool6BA7E5F2",
+                  "Arn"
+                ]
+              }
+            },
+            {
               "Action": "states:StartExecution",
               "Effect": "Allow",
               "Resource": {

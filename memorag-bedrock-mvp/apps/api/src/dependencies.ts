@@ -23,6 +23,7 @@ import type { ChatRunStore } from "./adapters/chat-run-store.js"
 import { DynamoDbChatRunEventStore } from "./adapters/dynamodb-chat-run-event-store.js"
 import { LocalChatRunEventStore } from "./adapters/local-chat-run-event-store.js"
 import type { ChatRunEventStore } from "./adapters/chat-run-event-store.js"
+import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
@@ -34,6 +35,7 @@ export type Dependencies = {
   benchmarkRunStore: BenchmarkRunStore
   chatRunStore: ChatRunStore
   chatRunEventStore: ChatRunEventStore
+  userDirectory?: UserDirectory
 }
 
 let cached: Dependencies | undefined
@@ -69,7 +71,8 @@ export function createDependencies(): Dependencies {
   const chatRunEventStore = config.useLocalChatRunStore
     ? new LocalChatRunEventStore(config.localDataDir)
     : new DynamoDbChatRunEventStore(config.chatRunEventsTableName)
+  const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, userDirectory }
   return cached
 }
