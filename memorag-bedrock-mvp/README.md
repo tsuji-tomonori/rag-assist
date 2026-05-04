@@ -166,6 +166,8 @@ curl -s http://localhost:8787/chat \
 
 CodeBuild runner が本番 API を叩くための認証 token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から自動取得します。管理者が管理画面で token を入力する必要はありません。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡します。secret は `username` / `password`、または `idToken` / `token` を持てます。`username` / `password` 認証で token 解決に失敗した場合、CodeBuild runner は benchmark を継続せず失敗します。
 
+CDK deploy 時に benchmark 用 S3 bucket へ `datasets/agent/smoke-v1.jsonl`、`datasets/agent/standard-v1.jsonl`、`datasets/agent/clarification-smoke-v1.jsonl`、`datasets/search/smoke-v1.jsonl`、`datasets/search/standard-v1.jsonl` を配置します。管理画面の `clarification-smoke-v1` suite は `benchmark/dataset.clarification.sample.jsonl` を元にした `datasets/agent/clarification-smoke-v1.jsonl` を使います。
+
 ```bash
 API_BASE_URL=http://localhost:8787 \
 API_AUTH_TOKEN=<optional-bearer-token> \

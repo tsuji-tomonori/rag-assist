@@ -164,6 +164,7 @@ type BenchmarkResultRow = {
   }
   status: number
   latencyMs: number
+  taskLatencyMs: number
   evaluation: RowEvaluation
   result: BenchmarkResponse
 }
@@ -191,6 +192,7 @@ type Summary = {
     postClarificationAccuracy: number | null
     overClarificationRate: number | null
     clarificationLatencyOverheadMs: number | null
+    postClarificationTaskLatencyMs: number | null
     abstentionRecall: number | null
     unsupportedAnswerRate: number | null
     answerContainsRate: number | null
@@ -253,8 +255,9 @@ const results: BenchmarkResultRow[] = []
 for await (const line of rl) {
   if (!line.trim()) continue
   const row = JSON.parse(line) as DatasetRow
-  const startedAt = Date.now()
+  const firstStartedAt = Date.now()
   const { status, body } = await runQuery(row)
+  const initialLatencyMs = Date.now() - firstStartedAt
   const followUp = await runFollowUp(row, body)
   const result: BenchmarkResultRow = {
     id: row.id,
@@ -269,7 +272,8 @@ for await (const line of rl) {
     expectedFactSlots: row.expectedFactSlots,
     followUp,
     status,
-    latencyMs: Date.now() - startedAt,
+    latencyMs: initialLatencyMs,
+    taskLatencyMs: initialLatencyMs + (followUp?.latencyMs ?? 0),
     evaluation: evaluateRow(row, body, status, followUp),
     result: body
   }
@@ -621,6 +625,9 @@ function summarize(results: BenchmarkResultRow[]): Summary {
   const missingSlotRows = results.filter((row) => row.evaluation.missingSlotHit !== null)
   const groundedOptionRows = results.filter((row) => row.evaluation.corpusGroundedOptions !== null)
   const postClarificationRows = results.filter((row) => row.evaluation.postClarificationAnswerCorrect !== null)
+  const postClarificationTaskLatencies = postClarificationRows
+    .filter((row) => row.followUp)
+    .map((row) => row.taskLatencyMs)
   const latencies = results.map((row) => row.latencyMs).sort((a, b) => a - b)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
@@ -692,6 +699,10 @@ function summarize(results: BenchmarkResultRow[]): Summary {
         clearAnswerRows.length
       ),
       clarificationLatencyOverheadMs: latencyDelta(clarificationActualRows, results.filter((row) => row.evaluation.actualResponseType !== "clarification")),
+      postClarificationTaskLatencyMs:
+        postClarificationTaskLatencies.length === 0
+          ? null
+          : Math.round(postClarificationTaskLatencies.reduce((sum, value) => sum + value, 0) / postClarificationTaskLatencies.length),
       abstentionRecall: rate(
         unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length,
         unanswerableRows.length
@@ -804,6 +815,7 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
     ["post_clarification_accuracy", formatRate(summary.metrics.postClarificationAccuracy)],
     ["over_clarification_rate", formatRate(summary.metrics.overClarificationRate)],
     ["clarification_latency_overhead_ms", formatNumber(summary.metrics.clarificationLatencyOverheadMs)],
+    ["post_clarification_task_latency_ms", formatNumber(summary.metrics.postClarificationTaskLatencyMs)],
     ["abstention_recall", formatRate(summary.metrics.abstentionRecall)],
     ["unsupported_answer_rate", formatRate(summary.metrics.unsupportedAnswerRate)],
     ["answer_contains_rate", formatRate(summary.metrics.answerContainsRate)],
@@ -859,11 +871,11 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
       ].join("\n")
 
   const detailRows = [
-    "| id | expected | actual | fact_slots | clarification | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | citations | retrieved | result |",
-    "| --- | --- | --- | ---: | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | --- |",
+    "| id | expected | actual | fact_slots | clarification | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | task_latency_ms | citations | retrieved | result |",
+    "| --- | --- | --- | ---: | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |",
     ...results.map((row) => {
       const passed = row.evaluation.failureReasons.length === 0 ? "pass" : row.evaluation.failureReasons.join(", ")
-      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedResponseType} | ${row.evaluation.actualResponseType} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatClarificationSummary(row.evaluation)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${formatNumber(row.evaluation.riskSignalCount)} | ${formatLlmJudgeSummary(row.evaluation)} | ${row.latencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
+      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedResponseType} | ${row.evaluation.actualResponseType} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatClarificationSummary(row.evaluation)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${formatNumber(row.evaluation.riskSignalCount)} | ${formatLlmJudgeSummary(row.evaluation)} | ${row.latencyMs} | ${row.taskLatencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
     })
   ].join("\n")
 

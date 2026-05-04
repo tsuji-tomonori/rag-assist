@@ -96,7 +96,7 @@ export function AssistantAnswer({
             type="button"
             className="clarification-freeform"
             disabled={loading}
-            onClick={() => onAdditionalQuestion("確認したい対象を入力してください")}
+            onClick={() => onAdditionalQuestion("例: 経費精算の申請期限は？")}
           >
             自分で入力
           </button>

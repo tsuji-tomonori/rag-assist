@@ -16,7 +16,8 @@ const slotByTerm = new Map([
   ["費用", "対象サービス"],
   ["権限", "対象ロール"]
 ])
-const privateLabelPattern = /\b(acl|tenant|tenantid|allowedusers|internal alias|内部alias|非公開|機密)\b/i
+const privateAsciiLabelPattern = /\b(acl|tenant|tenantid|allowed[-_\s]?users|internal[-_\s]?alias)\b/i
+const privateJapaneseLabelPattern = /(内部alias|内部|非公開|機密)/i
 
 export async function clarificationGate(state: QaAgentState): Promise<QaAgentUpdate> {
   const query = (state.normalizedQuery ?? state.question).trim()
@@ -136,12 +137,17 @@ function selectPublicLabel(hit: RetrievedVector, query: string): string | undefi
   ]
     .filter(Boolean)
     .join("\n")
-  const terms = significantTerms(text).filter((term) => !genericTerms.includes(term) && !privateLabelPattern.test(term))
+  if (isPrivateLabel(text)) return undefined
+  const terms = significantTerms(text).filter((term) => !genericTerms.includes(term) && !isPrivateLabel(term))
   const queryTerms = significantTerms(query)
   const scoped = terms.find((term) => queryTerms.some((queryTerm) => text.includes(`${term}${queryTerm}`) || text.includes(`${term}の${queryTerm}`)))
   const label = scoped ?? terms[0]
-  if (!label || privateLabelPattern.test(label)) return undefined
+  if (!label || isPrivateLabel(label)) return undefined
   return label.slice(0, 40)
+}
+
+function isPrivateLabel(value: string): boolean {
+  return privateAsciiLabelPattern.test(value) || privateJapaneseLabelPattern.test(value)
 }
 
 function buildResolvedQuery(query: string, label: string): string {

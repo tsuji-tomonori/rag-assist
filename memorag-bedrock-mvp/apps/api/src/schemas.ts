@@ -291,15 +291,15 @@ export const CostAuditSummarySchema = z.object({
   pricingCatalogUpdatedAt: z.string()
 })
 
+const ClarificationContextSchema = z.object({
+  originalQuestion: z.string().optional(),
+  selectedOptionId: z.string().optional(),
+  selectedValue: z.string().optional()
+})
+
 export const ChatRequestSchema = z.object({
   question: z.string().min(1).openapi({ example: "経費精算の期限は？" }),
-  clarificationContext: z
-    .object({
-      originalQuestion: z.string().optional(),
-      selectedOptionId: z.string().optional(),
-      selectedValue: z.string().optional()
-    })
-    .optional(),
+  clarificationContext: ClarificationContextSchema.optional(),
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   clueModelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
@@ -310,12 +310,6 @@ export const ChatRequestSchema = z.object({
   includeDebug: z.boolean().optional().openapi({ example: false }),
   debug: z.boolean().optional().openapi({ example: false }),
   useMemory: z.boolean().optional().openapi({ example: true })
-})
-
-const ClarificationContextSchema = z.object({
-  originalQuestion: z.string().optional(),
-  selectedOptionId: z.string().optional(),
-  selectedValue: z.string().optional()
 })
 
 export const SearchRequestSchema = z.object({
@@ -568,6 +562,7 @@ export const BenchmarkRunMetricsSchema = z.object({
   postClarificationAccuracy: z.number().nullable().optional(),
   overClarificationRate: z.number().nullable().optional(),
   clarificationLatencyOverheadMs: z.number().nullable().optional(),
+  postClarificationTaskLatencyMs: z.number().nullable().optional(),
   abstentionRecall: z.number().nullable().optional(),
   citationHitRate: z.number().nullable().optional(),
   expectedFileHitRate: z.number().nullable().optional(),

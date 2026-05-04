@@ -612,11 +612,22 @@ test("clarification gate asks only with grounded options and leaves clear querie
       text: "休暇申請の申請期限は前日までです。"
     }
   }
+  const privateLabel = {
+    ...chunk,
+    key: "private-memory",
+    score: 0.89,
+    metadata: {
+      ...chunk.metadata,
+      kind: "memory" as const,
+      memoryId: "memory-private",
+      text: "非公開の機密申請は内部aliasだけで管理します。"
+    }
+  }
 
   const ambiguous = await clarificationGate(state({
     question: "申請期限は？",
     normalizedQuery: "申請期限",
-    memoryCards: [expense, vacation]
+    memoryCards: [privateLabel, expense, vacation]
   }))
 
   assert.equal(ambiguous.clarification?.needsClarification, true)
@@ -624,6 +635,7 @@ test("clarification gate asks only with grounded options and leaves clear querie
   assert.deepEqual(ambiguous.clarification?.missingSlots, ["申請種別"])
   assert.deepEqual(ambiguous.clarification?.options.map((option) => option.label), ["経費精算", "休暇申請"])
   assert.ok(ambiguous.clarification?.options.every((option) => option.grounding.length > 0))
+  assert.ok(ambiguous.clarification?.options.every((option) => !/(非公開|機密|内部alias)/.test(option.label)))
 
   const clear = await clarificationGate(state({
     question: "経費精算の申請期限は？",

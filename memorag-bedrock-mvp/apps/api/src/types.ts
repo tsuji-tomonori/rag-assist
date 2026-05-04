@@ -272,6 +272,7 @@ export type BenchmarkRunMetrics = {
   postClarificationAccuracy?: number
   overClarificationRate?: number
   clarificationLatencyOverheadMs?: number
+  postClarificationTaskLatencyMs?: number
   abstentionRecall?: number
   citationHitRate?: number
   expectedFileHitRate?: number
