@@ -1,8 +1,14 @@
 import { type Dispatch, type FormEvent, type SetStateAction, useMemo, useState } from "react"
-import { chat } from "../api/chatApi.js"
+import { startChatRun, streamChatRunEvents } from "../api/chatApi.js"
+import { getDebugRun } from "../../debug/api/debugApi.js"
 import type { DebugTrace } from "../../debug/types.js"
+import type { ChatResponse } from "../types-api.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 export function useChatSession({
   canCreateChat,
@@ -107,7 +113,7 @@ export function useChatSession({
       }
 
       if (typedQuestion.length > 0) {
-        const result = await chat({
+        const started = await startChatRun({
           question: userQuestion,
           clarificationContext,
           modelId,
@@ -117,10 +123,68 @@ export function useChatSession({
           minScore,
           includeDebug: debugMode && canReadDebugRuns
         })
-        setMessages((prev) => [...prev, { role: "assistant", text: result.answer, sourceQuestion: userQuestion, result, createdAt: new Date().toISOString() }])
-        if (result.debug) {
-          setSelectedRunId(result.debug.runId)
-          setDebugRuns((prev) => [result.debug as DebugTrace, ...prev.filter((run) => run.runId !== result.debug?.runId)])
+        let result: ChatResponse | undefined
+        let lastEventId: number | undefined
+        let done = false
+        let terminalError: Error | undefined
+        let debugRunId: string | undefined
+
+        for (let attempt = 0; attempt < 3 && !done; attempt += 1) {
+          try {
+            await streamChatRunEvents(started.runId, (event) => {
+              if (event.id !== undefined) lastEventId = event.id
+              if (event.type === "timeout") {
+                setPendingActivity("処理が続いています。再接続しています")
+                return
+              }
+              if (event.type === "status") {
+                const message = typeof event.data.message === "string" ? event.data.message : typeof event.data.stage === "string" ? event.data.stage : "回答を生成中"
+                setPendingActivity(message)
+              }
+              if (event.type === "error") {
+                const message = typeof event.data.message === "string" ? event.data.message : "chat run failed"
+                terminalError = new Error(message)
+                done = true
+              }
+              if (event.type === "final") {
+                debugRunId = typeof event.data.debugRunId === "string" ? event.data.debugRunId : undefined
+                result = {
+                  responseType:
+                    event.data.responseType === "answer" || event.data.responseType === "refusal" || event.data.responseType === "clarification"
+                      ? event.data.responseType
+                      : undefined,
+                  answer: typeof event.data.answer === "string" ? event.data.answer : "",
+                  isAnswerable: event.data.isAnswerable === true,
+                  needsClarification: event.data.needsClarification === true,
+                  clarification: event.data.clarification && typeof event.data.clarification === "object" ? (event.data.clarification as ChatResponse["clarification"]) : undefined,
+                  citations: Array.isArray(event.data.citations) ? (event.data.citations as ChatResponse["citations"]) : [],
+                  retrieved: Array.isArray(event.data.retrieved) ? (event.data.retrieved as ChatResponse["retrieved"]) : [],
+                  debug: event.data.debug && typeof event.data.debug === "object" ? (event.data.debug as DebugTrace) : undefined
+                }
+                done = true
+              }
+            }, lastEventId)
+          } catch (err) {
+            if (done || terminalError) break
+            if (attempt >= 2) throw err
+            setPendingActivity("接続が切れました。再接続しています")
+            await sleep(1000 * (attempt + 1))
+          }
+        }
+        if (result && !result.debug && debugRunId && canReadDebugRuns) {
+          try {
+            result = { ...result, debug: await getDebugRun(debugRunId) }
+          } catch (err) {
+            console.warn("Failed to load debug trace", err)
+          }
+        }
+        if (terminalError) throw terminalError
+        if (!result) throw new Error("chat run completed without final event")
+        const finalResult = result
+        setMessages((prev) => [...prev, { role: "assistant", text: finalResult.answer, sourceQuestion: userQuestion, result: finalResult, createdAt: new Date().toISOString() }])
+        if (finalResult.debug) {
+          setSelectedRunId(finalResult.debug.runId)
+          setDebugRuns((prev) => [finalResult.debug as DebugTrace, ...prev.filter((run) => run.runId !== finalResult.debug?.runId)])
         }
       } else {
         setMessages((prev) => [

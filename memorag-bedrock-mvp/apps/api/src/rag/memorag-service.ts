@@ -7,7 +7,7 @@ import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import type { ChatInput, QaGraphResult } from "../agent/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -684,6 +684,178 @@ export class MemoRagService {
     return runQaAgent(this.deps, input, user)
   }
 
+  async startChatRun(input: ChatInput, user: AppUser): Promise<{ runId: string; status: ChatRun["status"]; eventsPath: string }> {
+    const now = new Date().toISOString()
+    const runId = createChatRunId(now)
+    const ttl = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
+    const run: ChatRun = {
+      runId,
+      status: "queued",
+      createdBy: user.userId,
+      userEmail: user.email,
+      userGroups: user.cognitoGroups,
+      question: input.question,
+      clarificationContext: input.clarificationContext,
+      modelId: input.modelId ?? config.defaultModelId,
+      embeddingModelId: input.embeddingModelId ?? config.embeddingModelId,
+      clueModelId: input.clueModelId ?? input.modelId ?? config.defaultMemoryModelId,
+      topK: input.topK ?? 6,
+      memoryTopK: input.memoryTopK ?? 4,
+      minScore: input.minScore ?? config.minRetrievalScore,
+      strictGrounded: input.strictGrounded,
+      useMemory: input.useMemory,
+      maxIterations: input.maxIterations,
+      includeDebug: input.includeDebug ?? input.debug ?? false,
+      createdAt: now,
+      updatedAt: now,
+      ttl
+    }
+
+    await this.deps.chatRunStore.create(run)
+    await this.deps.chatRunEventStore.append({
+      runId,
+      type: "status",
+      stage: "queued",
+      message: "リクエストを受け付けました",
+      data: { status: "queued" },
+      ttl
+    })
+
+    if (config.chatRunStateMachineArn) {
+      try {
+        await this.startChatRunExecution(runId)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        await this.markChatRunFailed(runId, `StartExecution failed: ${message}`)
+        throw err
+      }
+    } else {
+      void this.executeChatRun(runId).catch(() => undefined)
+    }
+
+    return { runId, status: run.status, eventsPath: `/chat-runs/${encodeURIComponent(runId)}/events` }
+  }
+
+  async executeChatRun(runId: string): Promise<ChatRun> {
+    const run = await this.deps.chatRunStore.get(runId)
+    if (!run) throw new Error(`Chat run not found: ${runId}`)
+    const ttl = run.ttl
+    const startedAt = new Date().toISOString()
+    await this.deps.chatRunStore.update(runId, { status: "running", startedAt, updatedAt: startedAt })
+    await this.deps.chatRunEventStore.append({
+      runId,
+      type: "status",
+      stage: "running",
+      message: "回答生成を開始しました",
+      data: { status: "running" },
+      ttl
+    })
+
+    try {
+      const result = await runQaAgent(
+        this.deps,
+        {
+          question: run.question,
+          clarificationContext: run.clarificationContext,
+          modelId: run.modelId,
+          embeddingModelId: run.embeddingModelId,
+          clueModelId: run.clueModelId,
+          topK: run.topK,
+          memoryTopK: run.memoryTopK,
+          minScore: run.minScore,
+          strictGrounded: run.strictGrounded,
+          useMemory: run.useMemory,
+          maxIterations: run.maxIterations,
+          includeDebug: run.includeDebug
+        },
+        { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["CHAT_USER"] },
+        {
+          emit: async (event) => {
+            await this.deps.chatRunEventStore.append({
+              runId,
+              type: event.type,
+              stage: event.stage,
+              message: event.message,
+              data: toJsonValue(event.data),
+              ttl
+            })
+          }
+        }
+      )
+      const completedAt = new Date().toISOString()
+      const finalEventData: Record<string, JsonValue> = {
+        responseType: result.responseType,
+        answer: result.answer,
+        isAnswerable: result.isAnswerable,
+        citations: result.citations as unknown as JsonValue,
+        retrieved: result.retrieved as unknown as JsonValue
+      }
+      if (result.needsClarification !== undefined) finalEventData.needsClarification = result.needsClarification
+      if (result.clarification) finalEventData.clarification = result.clarification as unknown as JsonValue
+      if (result.debug?.runId) finalEventData.debugRunId = result.debug.runId
+      await this.deps.chatRunEventStore.append({
+        runId,
+        type: "final",
+        stage: "done",
+        message: "回答生成が完了しました",
+        data: finalEventData,
+        ttl
+      })
+      return this.deps.chatRunStore.update(runId, {
+        status: "succeeded",
+        responseType: result.responseType,
+        answer: result.answer,
+        isAnswerable: result.isAnswerable,
+        needsClarification: result.needsClarification,
+        clarification: result.clarification,
+        citations: result.citations,
+        retrieved: result.retrieved,
+        debugRunId: result.debug?.runId,
+        completedAt,
+        updatedAt: completedAt
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      const completedAt = new Date().toISOString()
+      await this.deps.chatRunEventStore.append({
+        runId,
+        type: "error",
+        stage: "failed",
+        message,
+        data: { message },
+        ttl
+      })
+      return this.deps.chatRunStore.update(runId, {
+        status: "failed",
+        error: message,
+        completedAt,
+        updatedAt: completedAt
+      })
+    }
+  }
+
+  async markChatRunFailed(runId: string, reason: string): Promise<ChatRun> {
+    const run = await this.deps.chatRunStore.get(runId)
+    if (!run) throw new Error(`Chat run not found: ${runId}`)
+    if (run.status === "succeeded" || run.status === "failed" || run.status === "cancelled") return run
+
+    const completedAt = new Date().toISOString()
+    await this.deps.chatRunEventStore.append({
+      runId,
+      type: "error",
+      stage: "failed",
+      message: reason,
+      data: { message: reason },
+      ttl: run.ttl
+    })
+    return this.deps.chatRunStore.update(runId, {
+      status: "failed",
+      error: reason,
+      completedAt,
+      updatedAt: completedAt
+    })
+  }
+
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
     return searchRag(this.deps, input, user)
   }
@@ -1147,6 +1319,19 @@ export class MemoRagService {
     return response.executionArn
   }
 
+  private async startChatRunExecution(runId: string): Promise<string> {
+    const states = new SFNClient({ region: config.region })
+    const response = await states.send(
+      new StartExecutionCommand({
+        stateMachineArn: config.chatRunStateMachineArn,
+        name: runId,
+        input: JSON.stringify({ runId })
+      })
+    )
+    if (!response.executionArn) throw new Error("Step Functions executionArn was not returned")
+    return response.executionArn
+  }
+
 
 
   async createDebugTraceDownloadUrl(runId: string): Promise<{ url: string; expiresInSeconds: number; objectKey: string } | undefined> {
@@ -1263,6 +1448,16 @@ function createConceptMemoryCards(chunks: Chunk[], keywords: string[]): MemoryCa
 function createBenchmarkRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `bench_${compact}_${randomUUID().slice(0, 8)}`
+}
+
+function createChatRunId(now: string): string {
+  const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
+  return `chat_${compact}_${randomUUID().slice(0, 8)}`
+}
+
+function toJsonValue(value: unknown): JsonValue | undefined {
+  if (value === undefined) return undefined
+  return JSON.parse(JSON.stringify(value)) as JsonValue
 }
 
 function toChunkMetadata(chunk: Chunk): NonNullable<DocumentManifest["chunks"]>[number] {
