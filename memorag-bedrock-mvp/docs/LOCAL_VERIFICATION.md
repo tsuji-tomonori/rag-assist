@@ -78,6 +78,12 @@ OUTPUT=.local-data/benchmark-fact-slots-results.jsonl \
 SUMMARY=.local-data/benchmark-fact-slots-summary.json \
 REPORT=.local-data/benchmark-fact-slots-report.md \
 npm run start -w @memorag-mvp/benchmark
+
+DATASET=benchmark/dataset.clarification.sample.jsonl \
+OUTPUT=.local-data/benchmark-clarification-results.jsonl \
+SUMMARY=.local-data/benchmark-clarification-summary.json \
+REPORT=.local-data/benchmark-clarification-report.md \
+npm run start -w @memorag-mvp/benchmark
 ```
 
 ## 確認観点
@@ -89,4 +95,4 @@ npm run start -w @memorag-mvp/benchmark
 - `/conversation-history` が `schemaVersion: 1` と `isFavorite` を含む履歴 item を保存できる。
 - `/openapi.json` がJSONとして取得できる。
 - benchmark CLIが `.local-data/benchmark-results.jsonl`、`.local-data/benchmark-summary.json`、`.local-data/benchmark-report.md` を作成する。
-- benchmark summary が回答可能問題、不回答問題、fact slot 付き問題の評価に必要な集計項目を出力する。
+- benchmark summary が回答可能問題、不回答問題、fact slot 付き問題、確認質問問題の評価に必要な集計項目を出力する。

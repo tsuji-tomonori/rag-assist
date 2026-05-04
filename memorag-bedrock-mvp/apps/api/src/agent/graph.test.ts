@@ -40,9 +40,11 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
       "normalize_query",
       "retrieve_memory",
       "generate_clues",
+      "clarification_gate",
       "plan_search",
       "execute_search_action",
       "retrieval_evaluator",
+      "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
       "answerability_gate",
@@ -95,9 +97,11 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "normalize_query",
       "retrieve_memory",
       "generate_clues",
+      "clarification_gate",
       "plan_search",
       "execute_search_action",
       "retrieval_evaluator",
+      "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
       "answerability_gate",
@@ -158,6 +162,38 @@ test("fixed workflow refuses unresolved conflicting evidence when search budget 
   const evaluation = evaluateStep?.output?.retrievalEvaluation as Record<string, unknown> | undefined
   assert.equal(evaluation?.retrievalQuality, "conflicting")
   assert.equal(result.debug?.steps.at(-1)?.label, "finalize_refusal")
+})
+
+test("fixed workflow returns corpus-grounded clarification before answer generation", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({ fileName: "expense-deadline.txt", text: "経費精算の申請期限は30日以内です。" })
+  await service.ingest({ fileName: "vacation-deadline.txt", text: "休暇申請の申請期限は前日までです。" })
+
+  const result = await service.chat({
+    question: "申請期限は？",
+    includeDebug: true,
+    minScore: 0.01,
+    maxIterations: 1
+  })
+
+  assert.equal(result.responseType, "clarification")
+  assert.equal(result.isAnswerable, false)
+  assert.equal(result.needsClarification, true)
+  assert.match(result.answer, /どの申請種別の期限/)
+  assert.ok((result.clarification?.options.length ?? 0) >= 2)
+  assert.ok((result.clarification?.options.length ?? 0) <= 5)
+  assert.ok(result.clarification?.options.every((option) => option.grounding.length > 0))
+  assert.equal(Object.hasOwn(result.clarification ?? {}, "rejectedOptions"), false)
+  assert.deepEqual(result.citations, [])
+  assert.deepEqual(result.retrieved, [])
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(labels.includes("generate_answer"), false)
+  assert.equal(labels.at(-1), "finalize_clarification")
+  const clarificationStep = result.debug?.steps.find((step) => step.label === "clarification_gate" && step.output?.clarification)
+  assert.match(clarificationStep?.detail ?? "", /ambiguityScore=/)
+  assert.match(clarificationStep?.detail ?? "", /groundedOptionCount=/)
+  assert.match(clarificationStep?.detail ?? "", /rejectedOptions:/)
 })
 
 test("fixed workflow merges node updates into state and appends trace entries", () => {
@@ -467,6 +503,16 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       confidence: 0,
       totalSentences: 0,
       reason: ""
+    },
+    clarification: {
+      needsClarification: false,
+      reason: "not_needed",
+      question: "",
+      options: [],
+      missingSlots: [],
+      confidence: 0,
+      groundedOptionCount: 0,
+      rejectedOptions: []
     },
     citations: [],
     trace: [],
