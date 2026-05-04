@@ -17,7 +17,7 @@ type DocumentListResponse = {
   documents?: DocumentManifest[]
 }
 
-type SeededDocument = {
+export type SeededDocument = {
   fileName: string
   status: "skipped" | "uploaded"
   chunkCount: number
@@ -37,6 +37,9 @@ type SeedCorpusOptions = {
 }
 
 const benchmarkIngestSignatureVersion = "benchmark-corpus-seed-v2"
+const benchmarkCorpusAclGroups = ["BENCHMARK_RUNNER"]
+const benchmarkCorpusDocType = "benchmark-corpus"
+const benchmarkCorpusSource = "benchmark-runner"
 const supportedExtensions = new Set([".md", ".txt"])
 
 export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<SeededDocument[]> {
@@ -166,8 +169,10 @@ async function uploadDocument(input: {
         benchmarkIngestSignature: input.ingestSignature,
         benchmarkCorpusSkipMemory: input.skipMemory,
         benchmarkEmbeddingModelId: input.embeddingModelId ?? "api-default",
+        aclGroups: benchmarkCorpusAclGroups,
+        docType: benchmarkCorpusDocType,
         lifecycleStatus: "active",
-        source: "benchmark-runner"
+        source: benchmarkCorpusSource
       }
     })
   })
@@ -196,7 +201,16 @@ function isMatchingSeedDocument(
     && document.metadata?.benchmarkSourceHash === sourceHash
     && document.metadata?.benchmarkIngestSignature === ingestSignature
     && document.metadata?.benchmarkCorpusSkipMemory === options.skipMemory
+    && document.metadata?.source === benchmarkCorpusSource
+    && document.metadata?.docType === benchmarkCorpusDocType
+    && hasBenchmarkCorpusAcl(document.metadata?.aclGroups)
     && (!options.embeddingModelId || documentEmbeddingModelId === options.embeddingModelId)
+}
+
+function hasBenchmarkCorpusAcl(value: unknown): boolean {
+  return Array.isArray(value)
+    && value.length === benchmarkCorpusAclGroups.length
+    && benchmarkCorpusAclGroups.every((group) => value.includes(group))
 }
 
 function createHeaders(authToken: string | undefined): Record<string, string> {

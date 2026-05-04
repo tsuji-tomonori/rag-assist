@@ -38,7 +38,10 @@ test("seedBenchmarkCorpus skips an already active matching seed document", async
           benchmarkSourceHash: sourceHash,
           benchmarkIngestSignature: ingestSignature,
           benchmarkCorpusSkipMemory: true,
-          benchmarkEmbeddingModelId: "api-default"
+          benchmarkEmbeddingModelId: "api-default",
+          aclGroups: ["BENCHMARK_RUNNER"],
+          docType: "benchmark-corpus",
+          source: "benchmark-runner"
         }
       }]
     }), { status: 200, headers: { "Content-Type": "application/json" } })
@@ -137,5 +140,8 @@ test("seedBenchmarkCorpus uploads markdown files with benchmark metadata", async
   assert.equal((upload?.body as { metadata?: { benchmarkSuiteId?: string } }).metadata?.benchmarkSuiteId, "standard-agent-v1")
   assert.equal((upload?.body as { metadata?: { benchmarkCorpusSkipMemory?: boolean } }).metadata?.benchmarkCorpusSkipMemory, true)
   assert.equal((upload?.body as { metadata?: { benchmarkEmbeddingModelId?: string } }).metadata?.benchmarkEmbeddingModelId, "embed-model")
+  assert.deepEqual((upload?.body as { metadata?: { aclGroups?: string[] } }).metadata?.aclGroups, ["BENCHMARK_RUNNER"])
+  assert.equal((upload?.body as { metadata?: { docType?: string } }).metadata?.docType, "benchmark-corpus")
+  assert.equal((upload?.body as { metadata?: { source?: string } }).metadata?.source, "benchmark-runner")
   assert.equal(typeof (upload?.body as { metadata?: { benchmarkIngestSignature?: string } }).metadata?.benchmarkIngestSignature, "string")
 })

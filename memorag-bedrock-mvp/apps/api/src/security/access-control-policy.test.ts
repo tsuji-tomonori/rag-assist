@@ -7,7 +7,7 @@ type RoutePolicy = {
   method: string
   path: string
   permission: string
-  mode?: "required" | "requesterOrPermission"
+  mode?: "required" | "requesterOrPermission" | "benchmarkSeedOrPermission"
 }
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
@@ -49,7 +49,7 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/admin/usage", permission: "usage:read:all_users" },
   { method: "get", path: "/admin/costs", permission: "cost:read:all" },
   { method: "get", path: "/documents", permission: "rag:doc:read" },
-  { method: "post", path: "/documents", permission: "rag:doc:write:group" },
+  { method: "post", path: "/documents", permission: "rag:doc:write:group", mode: "benchmarkSeedOrPermission" },
   { method: "post", path: "/documents/{documentId}/reindex", permission: "rag:index:rebuild:group" },
   { method: "get", path: "/documents/reindex-migrations", permission: "rag:index:rebuild:group" },
   { method: "post", path: "/documents/{documentId}/reindex/stage", permission: "rag:index:rebuild:group" },
@@ -106,6 +106,17 @@ test("protected API routes keep route-level permission checks", async () => {
         block,
         /requesterUserId[\s\S]*?user\.userId/,
         `${policy.method.toUpperCase()} ${policy.path} must check requester ownership`
+      )
+    } else if (policy.mode === "benchmarkSeedOrPermission") {
+      assert.match(
+        block,
+        new RegExp(`hasPermission\\([\\s\\S]*?["']${escapeRegex(policy.permission)}["']\\)`),
+        `${policy.method.toUpperCase()} ${policy.path} must allow ${policy.permission}`
+      )
+      assert.match(
+        block,
+        /benchmark:seed_corpus[\s\S]*?authorizeDocumentUpload/,
+        `${policy.method.toUpperCase()} ${policy.path} must restrict benchmark seed uploads`
       )
     } else {
       assert.match(

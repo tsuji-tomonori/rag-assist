@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
-import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus } from "./corpus.js"
+import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
 
 type DatasetRow = {
@@ -176,6 +176,7 @@ type Summary = {
   reportPath: string
   summaryPath: string
   apiBaseUrl: string
+  corpusSeed: SeededDocument[]
   generatedAt: string
   total: number
   succeeded: number
@@ -233,6 +234,7 @@ const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "standard-agent-v1"
+const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? benchmarkSuiteId
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const datasetPath = resolveExistingPath(process.env.DATASET ?? "dataset.sample.jsonl", [process.cwd(), benchmarkDir, repoRoot])
@@ -250,11 +252,11 @@ const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
   ? resolveExistingPath(benchmarkCorpusDir, [process.cwd(), benchmarkDir, repoRoot])
   : undefined
 
-await seedBenchmarkCorpus({
+const corpusSeed = await seedBenchmarkCorpus({
   apiBaseUrl,
   authToken: apiAuthToken,
   corpusDir: resolvedBenchmarkCorpusDir,
-  suiteId: benchmarkSuiteId,
+  suiteId: benchmarkCorpusSuiteId,
   skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
   embeddingModelId: process.env.EMBEDDING_MODEL_ID,
   log: (message) => console.log(message)
@@ -299,7 +301,7 @@ for await (const line of rl) {
 }
 
 await closeStream(out)
-const summary = summarize(results)
+const summary = summarize(results, corpusSeed)
 await writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf-8")
 await writeFile(reportPath, renderMarkdownReport(summary, results), "utf-8")
 
@@ -631,7 +633,7 @@ function evaluateFollowUp(
   return passed
 }
 
-function summarize(results: BenchmarkResultRow[]): Summary {
+function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]): Summary {
   const answerableRows = results.filter((row) => row.evaluation.expectedAnswerable)
   const unanswerableRows = results.filter((row) => !row.evaluation.expectedAnswerable)
   const clarificationExpectedRows = results.filter((row) => row.evaluation.expectedResponseType === "clarification")
@@ -671,6 +673,7 @@ function summarize(results: BenchmarkResultRow[]): Summary {
     reportPath,
     summaryPath,
     apiBaseUrl,
+    corpusSeed,
     generatedAt: new Date().toISOString(),
     total: results.length,
     succeeded: results.filter((row) => row.status >= 200 && row.status < 300).length,
@@ -856,6 +859,16 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
     ["average_latency_ms", formatNumber(summary.metrics.averageLatencyMs)]
   ]
 
+  const corpusSeedRows = summary.corpusSeed.length === 0
+    ? "\nNo benchmark corpus seed configured.\n"
+    : [
+        "| file | status | chunks | source hash | ingest signature |",
+        "| --- | --- | ---: | --- | --- |",
+        ...summary.corpusSeed.map((seed) =>
+          `| ${escapeMarkdown(seed.fileName)} | ${seed.status} | ${seed.chunkCount} | ${seed.sourceHash.slice(0, 12)} | ${seed.ingestSignature.slice(0, 12)} |`
+        )
+      ].join("\n")
+
   const failureRows = summary.failures.length === 0
     ? "\nNo failed benchmark rows.\n"
     : [
@@ -916,6 +929,10 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
 | metric | value |
 | --- | ---: |
 ${metricRows.map(([name, value]) => `| ${name} | ${value} |`).join("\n")}
+
+## Corpus Seed
+
+${corpusSeedRows}
 
 ## Quality Review
 
