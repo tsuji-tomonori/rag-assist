@@ -261,6 +261,46 @@ test("benchmark query endpoint remains available for local benchmark runs when a
   }
 })
 
+test("benchmark query endpoint is limited to benchmark runner permission", async () => {
+  const port = 20500 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-query-rbac-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "RAG_GROUP_MANAGER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const query = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: "rbac-check", question: "権限確認" })
+    })
+    assert.equal(query.status, 403)
+
+    const runs = await fetch(`http://127.0.0.1:${port}/benchmark-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild" })
+    })
+    assert.equal(runs.status, 200)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
 test("question and debug management endpoints enforce Phase 1 role boundaries", async () => {
   const port = 21000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-rbac-"))

@@ -27,6 +27,7 @@ export type Permission =
   | "rag:alias:disable:group"
   | "rag:alias:publish:group"
   | "benchmark:read"
+  | "benchmark:query"
   | "benchmark:run"
   | "benchmark:cancel"
   | "benchmark:download"

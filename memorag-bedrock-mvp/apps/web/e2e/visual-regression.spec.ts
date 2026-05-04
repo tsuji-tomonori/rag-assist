@@ -14,6 +14,7 @@ const permissions = [
   'rag:doc:delete:group',
   'rag:index:rebuild:group',
   'benchmark:read',
+  'benchmark:query',
   'benchmark:run',
   'benchmark:cancel',
   'benchmark:download',

@@ -945,7 +945,7 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "benchmark:run")
+    requirePermission(c.get("user"), "benchmark:query")
     const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkQueryRequestSchema>
     const result = await service.chat({ ...body, includeDebug: body.includeDebug ?? true }, c.get("user"))
     return c.json({ id: body.id, ...result }, 200)

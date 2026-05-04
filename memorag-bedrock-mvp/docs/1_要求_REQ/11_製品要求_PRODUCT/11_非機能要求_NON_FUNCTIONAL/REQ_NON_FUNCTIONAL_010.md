@@ -17,6 +17,7 @@
 - AC-NFR010-004: local 開発時に認証を無効化できる既存の開発体験は維持されること。
 - AC-NFR010-005: `GET /debug-runs/{runId}` は debug trace 一覧と同じ権限境界で保護されること。
 - AC-NFR010-006: `POST /debug-runs/{runId}/download` は debug trace 一覧と同じ権限境界で保護されること。
+- AC-NFR010-007: `POST /benchmark/query` は `benchmark:query` を要求し、管理画面の非同期 benchmark run 起動権限 `benchmark:run` と分離すること。
 
 ## 要件の源泉・背景
 
@@ -40,10 +41,10 @@
 | 種類 | 非機能要求 |
 | 依存関係 | `authMiddleware`、`requirePermission`、API route 定義 |
 | 衝突 | benchmark runner の実行には token 準備が必要になる |
-| 受け入れ基準 | `AC-NFR010-001` から `AC-NFR010-006` |
+| 受け入れ基準 | `AC-NFR010-001` から `AC-NFR010-007` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-05-01 初版 |
+| 変更履歴 | 2026-05-01 初版、2026-05-04 benchmark query と benchmark run 起動の permission 分離を追加 |
 
 ## 妥当性確認
 

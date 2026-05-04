@@ -6,13 +6,14 @@ import test from "node:test"
 type RoutePolicy = {
   method: string
   path: string
-  permission: string
-  mode?: "required" | "requesterOrPermission"
+  permission?: string
+  mode?: "authenticated" | "required" | "requesterOrPermission"
 }
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
 
 const protectedMiddlewarePaths = [
+  "/me",
   "/admin/*",
   "/documents",
   "/documents/*",
@@ -31,6 +32,7 @@ const protectedMiddlewarePaths = [
 ]
 
 const routePolicies: RoutePolicy[] = [
+  { method: "get", path: "/me", mode: "authenticated" },
   { method: "post", path: "/admin/users", permission: "user:create" },
   { method: "get", path: "/admin/users", permission: "user:read" },
   { method: "get", path: "/admin/audit-log", permission: "access:policy:read" },
@@ -69,7 +71,7 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/debug-runs", permission: "chat:admin:read_all" },
   { method: "get", path: "/debug-runs/{runId}", permission: "chat:admin:read_all" },
   { method: "post", path: "/debug-runs/{runId}/download", permission: "chat:admin:read_all" },
-  { method: "post", path: "/benchmark/query", permission: "benchmark:run" },
+  { method: "post", path: "/benchmark/query", permission: "benchmark:query" },
   { method: "get", path: "/benchmark-suites", permission: "benchmark:read" },
   { method: "post", path: "/benchmark-runs", permission: "benchmark:run" },
   { method: "get", path: "/benchmark-runs", permission: "benchmark:read" },
@@ -96,6 +98,15 @@ test("protected API routes keep route-level permission checks", async () => {
 
   for (const policy of routePolicies) {
     const block = findRouteBlock(source, policy)
+    if (policy.mode === "authenticated") {
+      assert.doesNotMatch(
+        block,
+        /requirePermission|hasPermission/,
+        `${policy.method.toUpperCase()} ${policy.path} must remain authenticated-only without extra role checks`
+      )
+      continue
+    }
+    assert.ok(policy.permission, `${policy.method.toUpperCase()} ${policy.path} must declare a permission`)
     if (policy.mode === "requesterOrPermission") {
       assert.match(
         block,
