@@ -177,8 +177,23 @@ function currentUserResponse(groups = ["SYSTEM_ADMIN"]) {
   }
 }
 
-function mockAppFetch(groups = ["SYSTEM_ADMIN"]) {
-  let storedHistory: ConversationHistoryItem[] = []
+function historyItem(id: string, title: string, text: string, updatedAt: string, isFavorite = false, messageCount = 1): ConversationHistoryItem {
+  return {
+    schemaVersion: 1,
+    id,
+    title,
+    updatedAt,
+    isFavorite,
+    messages: Array.from({ length: messageCount }, (_, index) => ({
+      role: index % 2 === 0 ? "user" : "assistant",
+      text: index === 0 ? text : `補足 ${index}`,
+      createdAt: updatedAt
+    }))
+  }
+}
+
+function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHistoryItem[] = []) {
+  let storedHistory: ConversationHistoryItem[] = initialHistory
   let managedUsers = [
     {
       userId: "local-dev",
@@ -838,6 +853,25 @@ describe("App chat and upload flow", () => {
       ).toBe(true)
     )
     expect(await screen.findByText("条件に一致する履歴はありません。")).toBeInTheDocument()
+  })
+
+  it("uses favorite and updatedAt tie-breaks while searching regardless of selected sort order", async () => {
+    mockAppFetch(["SYSTEM_ADMIN"], [
+      historyItem("old-long", "古い会話", "共通 topic", "2026-05-01T00:00:00.000Z", false, 3),
+      historyItem("new-short", "新しい会話", "共通 topic", "2026-05-03T00:00:00.000Z", false, 1),
+      historyItem("favorite", "お気に入り会話", "共通 topic", "2026-05-02T00:00:00.000Z", true, 1)
+    ])
+    await renderAuthenticatedApp()
+
+    await userEvent.click(screen.getByTitle("履歴"))
+    expect(await screen.findByText("会話一覧")).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText("履歴の並び順"), "messages")
+    await userEvent.type(screen.getByLabelText("履歴を検索"), "共通")
+
+    const visibleButtons = screen.getAllByRole("button", { name: /共通 topic/ }).map((button) => button.textContent ?? "")
+    expect(visibleButtons[0]).toContain("お気に入り会話")
+    expect(visibleButtons[1]).toContain("新しい会話")
+    expect(visibleButtons[2]).toContain("古い会話")
   })
 
   it("saves conversation history with the same message payload shape", async () => {

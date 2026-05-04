@@ -38,8 +38,9 @@ export function HistoryWorkspace({
     return [...results].sort((a, b) => {
       if (hasQuery && Math.abs(b.score - a.score) > 0.001) return b.score - a.score
       if (Boolean(a.item.isFavorite) !== Boolean(b.item.isFavorite)) return a.item.isFavorite ? -1 : 1
-      if (sortOrder === "messages") return b.item.messages.length - a.item.messages.length
       const timeDiff = new Date(b.item.updatedAt).getTime() - new Date(a.item.updatedAt).getTime()
+      if (hasQuery) return timeDiff
+      if (sortOrder === "messages") return b.item.messages.length - a.item.messages.length
       return sortOrder === "newest" ? timeDiff : -timeDiff
     })
   }, [favoritesOnly, history, query, sortOrder])
