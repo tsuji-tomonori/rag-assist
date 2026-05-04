@@ -332,6 +332,12 @@ export class MemoRagMvpStack extends Stack {
     )
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
+        actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser"],
+        resources: [userPool.userPoolArn]
+      })
+    )
+    apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
         actions: ["s3vectors:PutVectors", "s3vectors:QueryVectors", "s3vectors:GetVectors", "s3vectors:DeleteVectors", "s3vectors:ListVectors"],
         resources: ["*"]
       })

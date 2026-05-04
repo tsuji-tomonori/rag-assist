@@ -20,6 +20,7 @@ function numberEnv(name: string, defaultValue: number): number {
 export const config = {
   region: process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? "ap-northeast-1",
   port: numberEnv("PORT", 8787),
+  authEnabled: boolEnv("AUTH_ENABLED", false),
   mockBedrock: boolEnv("MOCK_BEDROCK", false),
   useLocalVectorStore: boolEnv("USE_LOCAL_VECTOR_STORE", process.env.NODE_ENV !== "production"),
   useLocalQuestionStore: boolEnv("USE_LOCAL_QUESTION_STORE", process.env.NODE_ENV !== "production"),
@@ -49,5 +50,6 @@ export const config = {
   embeddingConcurrency: numberEnv("EMBEDDING_CONCURRENCY", 3),
   publishLexicalIndexOnSearch: boolEnv("PUBLISH_LEXICAL_INDEX_ON_SEARCH", process.env.NODE_ENV !== "production"),
   debugDownloadBucketName: process.env.DEBUG_DOWNLOAD_BUCKET_NAME ?? "",
-  debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900)
+  debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900),
+  cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID ?? ""
 } as const
