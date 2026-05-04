@@ -283,6 +283,22 @@ test("fixed workflow sends document-source arithmetic verification questions to 
   assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
 })
 
+test("fixed workflow answers self-contained arithmetic verification from computed facts", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "1,200円を15人で12か月使うと216,000円で合っていますか？",
+    includeDebug: true
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /216,000円|216000円/)
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "arithmetic")
+  assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
+})
+
 test("fixed workflow sends business-day document questions to RAG instead of compute-only unavailable", async () => {
   const service = new MemoRagService(await createTestDeps())
 

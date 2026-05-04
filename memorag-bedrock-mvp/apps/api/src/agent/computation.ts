@@ -67,7 +67,7 @@ export function detectToolIntent(question: string): ToolIntent {
     asksBusinessDayCalculation
   const asksArithmetic = !asksDocumentVerification &&
     /([0-9０-９][0-9０-９,，]*)円/.test(normalized) &&
-    /(いくら|合計|総額|計算|かかる)/.test(normalized)
+    /(いくら|合計|総額|計算|かかる|合っていますか|正しいですか)/.test(normalized)
   const asksAggregation = /(平均|最大|最小|件数|合計).*(全部|全件|部署|一覧)/.test(normalized)
   const canAnswerTemporal =
     asksCurrentDate ||
@@ -348,7 +348,6 @@ function isRelativeDeadlineCalculationRequest(question: string): boolean {
 
 function isDocumentVerificationQuestion(question: string): boolean {
   return hasDocumentSourceCue(question) ||
-    /(合っていますか|正しいですか)/.test(question) ||
     isDeadlineFactConfirmation(question)
 }
 
@@ -359,7 +358,7 @@ function hasDocumentSourceCue(question: string): boolean {
 function isDeadlineFactConfirmation(question: string): boolean {
   return /(期限|締切)/.test(question) &&
     /(\d{4}-\d{1,2}-\d{1,2}|\d{4}年\d{1,2}月\d{1,2}日|(申請|提出|起算)から[0-9０-９]+日以内)/.test(question) &&
-    /(ですか|でしょうか)/.test(question) &&
+    /(ですか|でしょうか|合っていますか|正しいですか)/.test(question) &&
     !isDateComputationRequest(question) &&
     !isRelativeDeadlineCalculationRequest(question)
 }
