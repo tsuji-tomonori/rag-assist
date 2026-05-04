@@ -47,9 +47,10 @@ flowchart TB
   Answerer --> Web
   Web --> Api
   SysAdmin --> Web
+  Operator --> Web
+  Operator --> Api
   Evaluator --> Api
   Runner --> Api
-  Operator --> Trace
   Web --> Cognito
   Api --> Rag
   Api --> Auth
