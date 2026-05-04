@@ -172,6 +172,19 @@ test("implements the designed serverless resources", () => {
       Statement: Match.arrayWith([
         Match.objectLike({
           Action: Match.arrayWith([
+            "cognito-idp:ListUsers",
+            "cognito-idp:AdminListGroupsForUser"
+          ]),
+          Resource: Match.anyValue()
+        })
+      ])
+    })
+  })
+  template.hasResourceProperties("AWS::IAM::Policy", {
+    PolicyDocument: Match.objectLike({
+      Statement: Match.arrayWith([
+        Match.objectLike({
+          Action: Match.arrayWith([
             "cognito-idp:AdminGetUser",
             "cognito-idp:AdminCreateUser",
             "cognito-idp:AdminSetUserPassword",
@@ -248,6 +261,7 @@ test("fails the benchmark CodeBuild runner when auth token resolution fails", ()
   assert.equal(codeBuildProjects.length, 1)
   const buildSpec = JSON.parse((codeBuildProjects[0] as any).Properties.Source.BuildSpec)
 
+  assert.equal(buildSpec.env.shell, "bash")
   for (const phase of ["install", "pre_build", "build", "post_build"]) {
     assert.equal(buildSpec.phases[phase].commands[0], "set -euo pipefail")
   }

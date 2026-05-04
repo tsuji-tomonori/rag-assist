@@ -4,6 +4,7 @@ import type { Dependencies } from "../../dependencies.js"
 import type { RetrievedVector } from "../../types.js"
 import { MockBedrockTextModel } from "../../adapters/mock-bedrock.js"
 import { answerabilityGate } from "./answerability-gate.js"
+import { clarificationGate } from "./clarification-gate.js"
 import { createEmbedQueriesNode } from "./embed-queries.js"
 import { finalizeResponse } from "./finalize-response.js"
 import { createGenerateCluesNode } from "./generate-clues.js"
@@ -610,6 +611,89 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   assert.deepEqual(lowScoreTermMatch.retrievalEvaluation?.supportedFactIds, [])
 })
 
+test("clarification gate asks only with grounded options and leaves clear queries alone", async () => {
+  const expense = {
+    ...chunk,
+    key: "expense-memory",
+    score: 0.91,
+    metadata: {
+      ...chunk.metadata,
+      kind: "memory" as const,
+      memoryId: "memory-expense",
+      text: "経費精算の申請期限は30日以内です。"
+    }
+  }
+  const vacation = {
+    ...chunk,
+    key: "vacation-memory",
+    score: 0.9,
+    metadata: {
+      ...chunk.metadata,
+      kind: "memory" as const,
+      memoryId: "memory-vacation",
+      text: "休暇申請の申請期限は前日までです。"
+    }
+  }
+  const privateLabel = {
+    ...chunk,
+    key: "private-memory",
+    score: 0.89,
+    metadata: {
+      ...chunk.metadata,
+      kind: "memory" as const,
+      memoryId: "memory-private",
+      text: "非公開の機密申請は内部aliasだけで管理します。"
+    }
+  }
+
+  const ambiguous = await clarificationGate(state({
+    question: "申請期限は？",
+    normalizedQuery: "申請期限",
+    memoryCards: [privateLabel, expense, vacation]
+  }))
+
+  assert.equal(ambiguous.clarification?.needsClarification, true)
+  assert.equal(ambiguous.clarification?.reason, "multiple_candidate_intents")
+  assert.deepEqual(ambiguous.clarification?.missingSlots, ["申請種別"])
+  assert.deepEqual(ambiguous.clarification?.options.map((option) => option.label), ["経費精算", "休暇申請"])
+  assert.ok(ambiguous.clarification?.options.every((option) => option.grounding.length > 0))
+  assert.ok(ambiguous.clarification?.options.every((option) => !/(非公開|機密|内部alias)/.test(option.label)))
+
+  const clear = await clarificationGate(state({
+    question: "経費精算の申請期限は？",
+    normalizedQuery: "経費精算の申請期限",
+    memoryCards: [expense, vacation]
+  }))
+  assert.equal(clear.clarification?.needsClarification, false)
+
+  const noCandidate = await clarificationGate(state({
+    question: "社長の昨日の昼食は？",
+    normalizedQuery: "社長の昨日の昼食"
+  }))
+  assert.equal(noCandidate.clarification?.needsClarification, false)
+
+  const internalControl = await clarificationGate(state({
+    question: "申請期限は？",
+    normalizedQuery: "申請期限",
+    memoryCards: [
+      {
+        ...chunk,
+        key: "internal-control-memory",
+        score: 0.92,
+        metadata: {
+          ...chunk.metadata,
+          kind: "memory" as const,
+          memoryId: "memory-internal-control",
+          text: "内部統制申請の期限は四半期末です。"
+        }
+      },
+      expense
+    ]
+  }))
+  assert.equal(internalControl.clarification?.needsClarification, true)
+  assert.ok(internalControl.clarification?.options.some((option) => option.label.includes("内部統制")))
+})
+
 test("retrieval evaluator LLM judge handles uncertain value mismatch cases", async () => {
   const mismatchState = state({
     question: "現行制度の申請期限は？",
@@ -863,6 +947,16 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
       confidence: 0,
       totalSentences: 0,
       reason: ""
+    },
+    clarification: {
+      needsClarification: false,
+      reason: "not_needed",
+      question: "",
+      options: [],
+      missingSlots: [],
+      confidence: 0,
+      groundedOptionCount: 0,
+      rejectedOptions: []
     },
     citations: [],
     trace: [],

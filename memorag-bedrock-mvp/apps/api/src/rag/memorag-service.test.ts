@@ -10,7 +10,8 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import type { DebugTrace } from "../types.js"
+import type { DebugTrace, ManagedUser } from "../types.js"
+import type { UserDirectory } from "../adapters/user-directory.js"
 import { createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
@@ -215,6 +216,85 @@ test("service delegates human question lifecycle to the question store", async (
 
   const resolved = await service.resolveQuestion(question.questionId)
   assert.equal(resolved.status, "resolved")
+})
+
+test("service lists all Cognito directory users in the managed user ledger", async () => {
+  const directoryUsers: ManagedUser[] = [
+    {
+      userId: "admin-sub",
+      email: "admin@example.com",
+      displayName: "Admin",
+      status: "active",
+      groups: ["SYSTEM_ADMIN"],
+      createdAt: "2026-05-01T00:00:00.000Z",
+      updatedAt: "2026-05-01T00:00:00.000Z"
+    },
+    {
+      userId: "member-sub",
+      email: "member@example.com",
+      displayName: "Member",
+      status: "active",
+      groups: ["CHAT_USER"],
+      createdAt: "2026-05-01T00:00:00.000Z",
+      updatedAt: "2026-05-01T00:00:00.000Z"
+    }
+  ]
+  const { service } = await createService({
+    userDirectory: {
+      listUsers: async () => directoryUsers
+    }
+  })
+  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+
+  const users = await service.listManagedUsers(actor)
+
+  assert.deepEqual(users.map((user) => user.email), ["admin@example.com", "member@example.com"])
+  assert.equal(users.find((user) => user.userId === "member-sub")?.groups[0], "CHAT_USER")
+
+  const updated = await service.assignUserRoles(actor, "member-sub", ["ANSWER_EDITOR"])
+  assert.deepEqual(updated?.groups, ["ANSWER_EDITOR"])
+  assert.deepEqual((await service.listManagedUsers(actor)).find((user) => user.userId === "member-sub")?.groups, ["ANSWER_EDITOR"])
+
+  const suspended = await service.suspendManagedUser(actor, "member-sub")
+  assert.equal(suspended?.status, "suspended")
+  assert.equal((await service.listManagedUsers(actor)).find((user) => user.userId === "member-sub")?.status, "suspended")
+
+  await service.deleteManagedUser(actor, "member-sub")
+  assert.equal((await service.listManagedUsers(actor)).some((user) => user.userId === "member-sub"), false)
+})
+
+test("service merges Cognito directory users with existing ledger users by email", async () => {
+  let directoryUsers: ManagedUser[] = []
+  const { service } = await createService({
+    userDirectory: {
+      listUsers: async () => directoryUsers
+    }
+  })
+  const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+
+  await service.createManagedUser(actor, {
+    email: "dup@example.com",
+    displayName: "Ledger User",
+    groups: ["ANSWER_EDITOR"]
+  })
+  directoryUsers = [
+    {
+      userId: "dup-sub",
+      email: "dup@example.com",
+      displayName: "Cognito User",
+      status: "active",
+      groups: ["CHAT_USER"],
+      createdAt: "2026-05-01T00:00:00.000Z",
+      updatedAt: "2026-05-02T00:00:00.000Z"
+    }
+  ]
+
+  const users = await service.listManagedUsers(actor)
+  const matchingUsers = users.filter((user) => user.email === "dup@example.com")
+
+  assert.equal(matchingUsers.length, 1)
+  assert.equal(matchingUsers[0]?.userId, "dup-sub")
+  assert.deepEqual(matchingUsers[0]?.groups, ["ANSWER_EDITOR"])
 })
 
 test("service chat returns refusal and error debug trace when external dependencies fail", async () => {
@@ -518,6 +598,7 @@ async function createService(options: {
   evidencePutErrorAfterWriteWhen?: (records: Parameters<LocalVectorStore["put"]>[0]) => boolean
   objectGetErrorPrefix?: string
   objectGetError?: Error
+  userDirectory?: UserDirectory
 } = {}): Promise<{ service: MemoRagService; dataDir: string }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-service-test-"))
   const baseObjectStore = new LocalObjectStore(dataDir)
@@ -548,7 +629,8 @@ async function createService(options: {
     },
     textModel: options.textModel ?? new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
-    conversationHistoryStore: new LocalConversationHistoryStore(dataDir)
+    conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    userDirectory: options.userDirectory
   } as unknown as Dependencies
   return { service: new MemoRagService(deps), dataDir }
 }

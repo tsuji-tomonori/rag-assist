@@ -83,7 +83,7 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
 | `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
 | `BENCHMARK_RUNNER` | CodeBuild runner から `/benchmark/query` を実行 |
-| `USER_ADMIN` | 管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
+| `USER_ADMIN` | Cognito User Pool の全ユーザー参照、管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
 | `ACCESS_ADMIN` | ロール定義参照、ロール付与、管理操作履歴参照 |
 | `COST_AUDITOR` | 概算コスト監査 |
 | `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証、Phase 2 管理操作 |
@@ -91,6 +91,12 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 通常利用者に `ANSWER_EDITOR`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。性能テストを起動する運用者には `RAG_GROUP_MANAGER`、CodeBuild runner 用 service user には `BENCHMARK_RUNNER`、debug trace と benchmark 成果物を確認する管理者には `SYSTEM_ADMIN` を付与する。
 
 ログイン画面から self sign-up したユーザーは、メール確認後に Cognito post-confirmation trigger で `CHAT_USER` のみを自動付与する。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが対象者と必要性を確認し、`.github/workflows/memorag-create-cognito-user.yml` または AWS 管理手順で後から付与する。
+
+管理者設定のユーザー管理一覧は `GET /admin/users` で Cognito User Pool の全ユーザーを読み取り、email または Cognito `sub` で管理台帳とマージして表示する。Cognito はユーザー発見用 directory として扱い、管理画面上のロール、停止、再開、削除状態は管理台帳を source of truth とする。Cognito に存在しても管理台帳で `deleted` のユーザーは一覧に戻さない。実際の API 認可は Cognito group を含む JWT で判定するため、上位権限の実効付与は GitHub Actions または AWS 管理手順で Cognito group を更新する。API Lambda には `cognito-idp:ListUsers` と `cognito-idp:AdminListGroupsForUser` を User Pool ARN に限定して付与する。
+
+Cognito group 取得が一部ユーザーで失敗した場合、一覧取得は継続し、該当ユーザーの Cognito group は空配列として扱う。API は CloudWatch Logs に `cognito_user_directory_group_lookup_failed` と `cognito_user_directory_group_lookup_failure_summary` を JSON で出力し、summary は Embedded Metric Format の `MemoRAG/Admin` namespace に `CognitoGroupLookupFailureCount` と `CognitoGroupLookupFailureRate` を記録する。これらが 0 以外の場合は IAM、User Pool ID、Cognito region、対象ユーザー状態を確認する。
+
+デプロイ後の smoke test では、管理者 token で `GET /admin/users` を実行し、初回ログイン前の Cognito ユーザーが表示されること、Cognito group lookup 失敗 metric が 0 であること、管理台帳で `deleted` にしたユーザーが再表示されないこと、管理画面上のロールと実効 Cognito group の運用差分が利用者に説明されていることを確認する。
 
 ## AWSデプロイ前チェック
 
@@ -122,10 +128,10 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 
 ## ベンチマークレポート
 
-`task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` と fact slot 系の期待値を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、fact slot coverage、p95 latencyを確認できる。`includeDebug=true` の benchmark response から `retrieval_evaluator` の `riskSignals` と `llmJudge` も集計し、judge 発火率、`NO_CONFLICT` / `CONFLICT` / `UNCLEAR` の内訳、解消率を report に出力する。
+`task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` と fact slot 系の期待値を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、fact slot coverage、p95 latencyを確認できる。確認質問 dataset では `followUp` を指定すると option の `resolvedQuery` で二段目の問い合わせを行い、`latencyMs` は初回 API call、`taskLatencyMs` と `postClarificationTaskLatencyMs` は確認質問から follow-up 完了までの task latency として出力する。`includeDebug=true` の benchmark response から `retrieval_evaluator` の `riskSignals` と `llmJudge` も集計し、judge 発火率、`NO_CONFLICT` / `CONFLICT` / `UNCLEAR` の内訳、解消率を report に出力する。
 
 benchmark runner は summary と report に quality review を出力する。`BASELINE_SUMMARY=<過去のsummary.json>` を指定すると、`answerableAccuracy`、`retrievalRecallAt20`、`refusalPrecision`、`unsupportedSentenceRate`、`p95LatencyMs` などの劣化を閾値で検知する。検索 miss や期待語不足の failure から alias candidate も出力するため、`/admin/aliases` の draft 作成候補としてレビューできる。
 
-管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/` と `datasets/search/`、成果物は `runs/<runId>/` に保存する。CodeBuild の生成物は customer managed KMS key で暗号化し、Step Functions は CloudWatch Logs に `ALL` event を出力する。X-Ray tracing は trace 数に応じた追加コストを避けるため MVP では無効にし、必要になった時点で有効化を再検討する。production API を叩く runner の bearer token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から CodeBuild が自動取得する。管理画面の実行者が token を入力する必要はない。
+管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/` と `datasets/search/`、成果物は `runs/<runId>/` に保存する。CDK は agent 用の `smoke-v1.jsonl`、`standard-v1.jsonl`、`clarification-smoke-v1.jsonl` と search 用の `smoke-v1.jsonl`、`standard-v1.jsonl` を deploy 時に配置する。CodeBuild の生成物は customer managed KMS key で暗号化し、Step Functions は CloudWatch Logs に `ALL` event を出力する。X-Ray tracing は trace 数に応じた追加コストを避けるため MVP では無効にし、必要になった時点で有効化を再検討する。production API を叩く runner の bearer token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から CodeBuild が自動取得する。管理画面の実行者が token を入力する必要はない。
 
-CodeBuild は起動時に `infra/scripts/resolve-benchmark-auth-token.mjs` を実行し、secret の `username` / `password` から service user を作成または修復し、`BENCHMARK_RUNNER` group に所属させたうえで Cognito `USER_PASSWORD_AUTH` の id token を取得する。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に secret ID または ARN を指定する。secret に `idToken` または `token` がある場合は、その値をそのまま bearer token として使う。`password` は AWS CLI の shorthand ではなく JSON で Cognito に渡すため、記号を含められる。token 解決に失敗した場合、CodeBuild runner は失敗し、Step Functions の benchmark run は `failed` に遷移する。
+CodeBuild は起動時に `infra/scripts/resolve-benchmark-auth-token.mjs` を実行し、secret の `username` / `password` から service user を作成または修復し、`BENCHMARK_RUNNER` group に所属させたうえで Cognito `USER_PASSWORD_AUTH` の id token を取得する。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に secret ID または ARN を指定する。secret に `idToken` または `token` がある場合は、その値をそのまま bearer token として使う。`password` は AWS CLI の shorthand ではなく JSON で Cognito に渡すため、記号を含められる。token 解決に失敗した場合、CodeBuild runner は失敗し、Step Functions の benchmark run は `failed` に遷移する。buildspec は `set -euo pipefail` を使うため shell を `bash` に固定し、`/bin/sh` 実行環境で `pipefail` が未対応になることを防ぐ。

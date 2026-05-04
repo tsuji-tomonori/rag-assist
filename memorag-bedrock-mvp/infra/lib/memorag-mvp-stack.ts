@@ -134,7 +134,8 @@ export class MemoRagMvpStack extends Stack {
     new s3deploy.BucketDeployment(this, "DeployBenchmarkDatasets", {
       sources: [
         s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
-        s3deploy.Source.data("standard-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8"))
+        s3deploy.Source.data("standard-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
+        s3deploy.Source.data("clarification-smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.clarification.sample.jsonl"), "utf-8"))
       ],
       destinationBucket: benchmarkBucket,
       destinationKeyPrefix: "datasets/agent"
@@ -332,6 +333,12 @@ export class MemoRagMvpStack extends Stack {
     )
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
+        actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser"],
+        resources: [userPool.userPoolArn]
+      })
+    )
+    apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
         actions: ["s3vectors:PutVectors", "s3vectors:QueryVectors", "s3vectors:GetVectors", "s3vectors:DeleteVectors", "s3vectors:ListVectors"],
         resources: ["*"]
       })
@@ -454,6 +461,7 @@ export class MemoRagMvpStack extends Stack {
       },
       buildSpec: codebuild.BuildSpec.fromObject({
         version: "0.2",
+        env: { shell: "bash" },
         phases: {
           install: {
             "runtime-versions": { nodejs: 22 },

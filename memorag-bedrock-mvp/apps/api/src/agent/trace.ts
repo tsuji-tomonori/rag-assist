@@ -101,6 +101,7 @@ function buildStep(input: {
 }
 
 function inferStatus(update: QaAgentUpdate): DebugStep["status"] {
+  if (update.clarification?.needsClarification) return "warning"
   if (update.answerSupport && !update.answerSupport.supported) return "warning"
   if (update.answerability && update.answerability.isAnswerable === false && update.answerability.reason !== "not_checked") {
     return "warning"
@@ -117,6 +118,9 @@ function inferModelId(label: string, state: QaAgentState): string | undefined {
 }
 
 function summarizeUpdate(label: string, update: QaAgentUpdate): string {
+  if (update.clarification) {
+    return `clarification=${update.clarification.needsClarification}, reason=${update.clarification.reason}, groundedOptions=${update.clarification.groundedOptionCount}`
+  }
   if (update.sufficientContext) return `sufficient_context=${update.sufficientContext.label}, missing=${update.sufficientContext.missingFacts?.length ?? 0}`
   if (update.computedFacts) return `computed_facts=${update.computedFacts.length}`
   if (update.toolIntent) return `tool_intent search=${update.toolIntent.needsSearch}, temporal=${update.toolIntent.needsTemporalCalculation}, arithmetic=${update.toolIntent.needsArithmeticCalculation}`
@@ -144,6 +148,7 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
 }
 
 function detailUpdate(update: QaAgentUpdate): string | undefined {
+  if (update.clarification) return formatClarificationDetail(update.clarification)
   if (update.sufficientContext) return formatSufficientContextDetail(update.sufficientContext)
   if (update.computedFacts) return update.computedFacts.map((fact) => `${fact.id} ${fact.kind}: ${"explanation" in fact ? fact.explanation : "reason" in fact ? fact.reason : ""}`).join("\n")
   if (update.toolIntent) return JSON.stringify(update.toolIntent, null, 2)
@@ -267,6 +272,7 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
   const output: Record<string, JsonValue> = {}
   const keys: Array<keyof QaAgentUpdate> = [
     "normalizedQuery",
+    "clarificationContext",
     "clues",
     "expandedQueries",
     "searchPlan",
@@ -281,6 +287,7 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
     "toolIntent",
     "computedFacts",
     "usedComputedFactIds",
+    "clarification",
     "answerability",
     "sufficientContext",
     "answerSupport",
@@ -294,6 +301,30 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
   }
 
   return Object.keys(output).length > 0 ? output : undefined
+}
+
+function formatClarificationDetail(clarification: NonNullable<QaAgentUpdate["clarification"]>): string {
+  return [
+    `needsClarification=${clarification.needsClarification}`,
+    `reason=${clarification.reason}`,
+    `ambiguityScore=${clarification.ambiguityScore ?? 0}`,
+    `groundedOptionCount=${clarification.groundedOptionCount}`,
+    `confidence=${clarification.confidence}`,
+    "",
+    "question:",
+    clarification.question || "なし",
+    "",
+    "missingSlots:",
+    ...formatList(clarification.missingSlots ?? []),
+    "",
+    "options:",
+    ...(clarification.options.length > 0
+      ? clarification.options.map((option) => `- ${option.id} ${option.label} source=${option.source} grounding=${option.grounding.length}`)
+      : ["なし"]),
+    "",
+    "rejectedOptions:",
+    ...formatList(clarification.rejectedOptions ?? [])
+  ].join("\n")
 }
 
 function toJsonValue(value: unknown): JsonValue {

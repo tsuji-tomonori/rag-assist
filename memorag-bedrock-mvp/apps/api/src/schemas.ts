@@ -291,8 +291,15 @@ export const CostAuditSummarySchema = z.object({
   pricingCatalogUpdatedAt: z.string()
 })
 
+const ClarificationContextSchema = z.object({
+  originalQuestion: z.string().optional(),
+  selectedOptionId: z.string().optional(),
+  selectedValue: z.string().optional()
+})
+
 export const ChatRequestSchema = z.object({
   question: z.string().min(1).openapi({ example: "経費精算の期限は？" }),
+  clarificationContext: ClarificationContextSchema.optional(),
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   clueModelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
@@ -328,6 +335,38 @@ export const CitationSchema = z.object({
   text: z.string()
 })
 
+export const ClarificationOptionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  resolvedQuery: z.string(),
+  reason: z.string().optional(),
+  source: z.enum(["memory", "evidence", "aspect", "history"]),
+  grounding: z.array(z.object({
+    documentId: z.string().optional(),
+    fileName: z.string().optional(),
+    chunkId: z.string().optional(),
+    heading: z.string().optional()
+  })).default(() => [])
+})
+
+export const ClarificationSchema = z.object({
+  needsClarification: z.boolean(),
+  reason: z.enum([
+    "ambiguous_target",
+    "missing_scope",
+    "unresolved_reference",
+    "multiple_candidate_intents",
+    "conflicting_scope",
+    "not_needed"
+  ]),
+  question: z.string(),
+  options: z.array(ClarificationOptionSchema).max(5),
+  missingSlots: z.array(z.string()).default(() => []),
+  confidence: z.number().min(0).max(1),
+  ambiguityScore: z.number().min(0).max(1).optional(),
+  groundedOptionCount: z.number().int().nonnegative().optional()
+})
+
 export const DebugStepSchema = z.object({
   id: z.number(),
   label: z.string(),
@@ -350,6 +389,7 @@ export const DebugTraceSchema = z.object({
   modelId: z.string(),
   embeddingModelId: z.string(),
   clueModelId: z.string(),
+  clarificationContext: ClarificationContextSchema.optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   topK: z.number(),
   memoryTopK: z.number(),
@@ -366,8 +406,11 @@ export const DebugTraceSchema = z.object({
 })
 
 export const ChatResponseSchema = z.object({
+  responseType: z.enum(["answer", "refusal", "clarification"]).optional(),
   answer: z.string(),
   isAnswerable: z.boolean(),
+  needsClarification: z.boolean().optional(),
+  clarification: ClarificationSchema.optional(),
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
   debug: DebugTraceSchema.optional()
@@ -412,6 +455,7 @@ export const QuestionSchema = z.object({
   title: z.string(),
   question: z.string(),
   requesterName: z.string(),
+  requesterUserId: z.string().optional(),
   requesterDepartment: z.string(),
   assigneeDepartment: z.string(),
   category: z.string(),
@@ -509,6 +553,16 @@ export const BenchmarkRunMetricsSchema = z.object({
   succeeded: z.number().int().nonnegative(),
   failedHttp: z.number().int().nonnegative(),
   answerableAccuracy: z.number().nullable().optional(),
+  clarificationNeedPrecision: z.number().nullable().optional(),
+  clarificationNeedRecall: z.number().nullable().optional(),
+  clarificationNeedF1: z.number().nullable().optional(),
+  optionHitRate: z.number().nullable().optional(),
+  missingSlotHitRate: z.number().nullable().optional(),
+  corpusGroundedOptionRate: z.number().nullable().optional(),
+  postClarificationAccuracy: z.number().nullable().optional(),
+  overClarificationRate: z.number().nullable().optional(),
+  clarificationLatencyOverheadMs: z.number().nullable().optional(),
+  postClarificationTaskLatencyMs: z.number().nullable().optional(),
   abstentionRecall: z.number().nullable().optional(),
   citationHitRate: z.number().nullable().optional(),
   expectedFileHitRate: z.number().nullable().optional(),

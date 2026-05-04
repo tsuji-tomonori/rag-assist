@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react"
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react"
 import type { AuthSession } from "../../authClient.js"
 import type { AppRoutesProps } from "../AppRoutes.js"
 import type { RailNav } from "../components/RailNav.js"
@@ -113,6 +113,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     rememberMessages,
     toggleFavorite,
     deleteHistoryItem,
+    updateHistoryQuestionTickets,
     createConversationId
   } = useConversationHistory({ setError })
 
@@ -142,6 +143,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     setSubmitShortcut,
     canAsk,
     onAsk,
+    submitClarificationOption,
     newConversation
   } = useChatSession({
     canCreateChat,
@@ -172,6 +174,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     selectedQuestionId,
     setSelectedQuestionId,
     refreshQuestions,
+    refreshQuestionTickets,
+    refreshLinkedQuestions,
     onCreateQuestion,
     onAnswerQuestion,
     onResolveQuestion
@@ -231,6 +235,17 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const isProcessing = pendingActivity !== null
   const visibleMessages = messages
   const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
+  const linkedQuestionRefreshKey = visibleMessages
+    .map((message) => message.questionTicket)
+    .filter((questionTicket) => questionTicket && questionTicket.status !== "resolved")
+    .map((questionTicket) => `${questionTicket?.questionId}:${questionTicket?.status}:${questionTicket?.updatedAt}`)
+    .join("|")
+  const historyQuestionIds = useMemo(() => [...new Set(history
+    .flatMap((item) => item.messages.map((message) => message.questionTicket))
+    .filter((questionTicket) => questionTicket && questionTicket.status !== "resolved")
+    .map((questionTicket) => questionTicket?.questionId ?? "")
+    .filter(Boolean))], [history])
+  const historyQuestionRefreshKey = historyQuestionIds.join("|")
 
   useEffect(() => {
     if (currentUserError) setError(currentUserError)
@@ -281,6 +296,29 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
     rememberMessages(currentConversationId, titleCandidate, messages)
   }, [currentConversationId, messages, rememberMessages])
+
+  useEffect(() => {
+    if (!linkedQuestionRefreshKey) return
+    refreshLinkedQuestions(messages).catch((err) => console.warn("Failed to refresh linked questions", err))
+    const timer = window.setInterval(() => {
+      refreshLinkedQuestions(messages).catch((err) => console.warn("Failed to poll linked questions", err))
+    }, 20000)
+    return () => window.clearInterval(timer)
+  }, [linkedQuestionRefreshKey, messages, refreshLinkedQuestions])
+
+  useEffect(() => {
+    if (!historyQuestionRefreshKey || (activeView !== "history" && activeView !== "favorites")) return
+
+    const refreshHistoryQuestions = () => {
+      refreshQuestionTickets(historyQuestionIds)
+        .then(updateHistoryQuestionTickets)
+        .catch((err) => console.warn("Failed to refresh history question tickets", err))
+    }
+
+    refreshHistoryQuestions()
+    const timer = window.setInterval(refreshHistoryQuestions, 20000)
+    return () => window.clearInterval(timer)
+  }, [activeView, historyQuestionIds, historyQuestionRefreshKey, refreshQuestionTickets, updateHistoryQuestionTickets])
 
   useEffect(() => {
     if (activeView !== "chat") return
@@ -353,6 +391,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       allExpanded,
       expandedStepId,
       onAsk,
+      onSubmitClarificationOption: submitClarificationOption,
       onSetQuestion: setQuestion,
       onSetFile: setFile,
       onSetSubmitShortcut: setSubmitShortcut,
