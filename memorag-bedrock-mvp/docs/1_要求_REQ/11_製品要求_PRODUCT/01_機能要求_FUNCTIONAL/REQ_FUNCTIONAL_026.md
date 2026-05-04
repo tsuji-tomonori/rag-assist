@@ -9,10 +9,10 @@
 
 - L0: `rag-assist / MemoRAG MVP 機能要件`
 - L1主分類: `3. RAG検索品質制御`
-- L2機能群:
-  - `3.2 検索実行`
+- L2主機能群: `3.2 Hybrid retrieval`
 - L3要件: `FR-026`
 - 関連カテゴリ: なし
+
 
 ## 要件
 

@@ -9,11 +9,10 @@
 
 - L0: `rag-assist / MemoRAG MVP 機能要件`
 - L1主分類: `7. 評価・debug・benchmark`
-- L2機能群:
-  - `7.5 benchmark 指標`
-  - `7.6 評価レポート`
+- L2主機能群: `7.5 benchmark 指標`
 - L3要件: `FR-019`
 - 関連カテゴリ: なし
+
 
 ## 要件
 

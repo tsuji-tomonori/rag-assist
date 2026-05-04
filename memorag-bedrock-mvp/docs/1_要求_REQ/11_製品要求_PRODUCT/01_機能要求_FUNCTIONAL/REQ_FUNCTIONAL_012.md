@@ -8,8 +8,7 @@
 
 - L0: `rag-assist / MemoRAG MVP 機能要件`
 - L1主分類: `7. 評価・debug・benchmark`
-- L2機能群:
-  - `7.3 UI非依存評価`
+- L2主機能群: `7.3 UI非依存評価`
 - L3要件: `FR-012`
 - 関連カテゴリ: なし
 
