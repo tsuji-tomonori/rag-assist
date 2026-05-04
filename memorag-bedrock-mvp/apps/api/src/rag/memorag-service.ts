@@ -530,7 +530,7 @@ export class MemoRagService {
   }
 
   async listManagedUsers(actor: AppUser): Promise<ManagedUser[]> {
-    const db = await this.loadAdminLedger(actor)
+    const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
     return db.users
       .filter((user) => user.status !== "deleted")
       .sort((a, b) => a.email.localeCompare(b.email))
@@ -539,7 +539,7 @@ export class MemoRagService {
   async createManagedUser(actor: AppUser, input: CreateManagedUserInput): Promise<ManagedUser> {
     const now = new Date().toISOString()
     const email = input.email.trim().toLowerCase()
-    const db = await this.loadAdminLedger(actor)
+    const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
     const userId = createManagedUserId(email)
     const existing = db.users.find((user) => user.userId === userId || user.email.toLowerCase() === email)
     if (existing) throw new Error("Managed user already exists")
@@ -567,7 +567,7 @@ export class MemoRagService {
 
   async assignUserRoles(actor: AppUser, userId: string, groups: string[]): Promise<ManagedUser | undefined> {
     const normalizedGroups = normalizeRoles(groups)
-    const db = await this.loadAdminLedger(actor)
+    const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
     const user = db.users.find((candidate) => candidate.userId === userId && candidate.status !== "deleted")
     if (!user) return undefined
     const beforeGroups = [...user.groups]
@@ -592,7 +592,7 @@ export class MemoRagService {
   }
 
   async listUsageSummaries(actor: AppUser): Promise<UserUsageSummary[]> {
-    const db = await this.loadAdminLedger(actor)
+    const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
     const documents = await this.listDocuments()
     const benchmarkRuns = await this.listBenchmarkRuns()
     const debugRuns = await this.listDebugRuns()
@@ -706,7 +706,7 @@ export class MemoRagService {
   }
 
   private async updateManagedUserStatus(actor: AppUser, userId: string, status: ManagedUser["status"]): Promise<ManagedUser | undefined> {
-    const db = await this.loadAdminLedger(actor)
+    const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
     const user = db.users.find((candidate) => candidate.userId === userId && candidate.status !== "deleted")
     if (!user) return undefined
     const beforeStatus = user.status
@@ -719,7 +719,7 @@ export class MemoRagService {
     return user
   }
 
-  private async loadAdminLedger(actor: AppUser): Promise<AdminLedger> {
+  private async loadAdminLedger(actor: AppUser, options: { syncUserDirectory?: boolean } = {}): Promise<AdminLedger> {
     let db: AdminLedger
     try {
       db = JSON.parse(await this.deps.objectStore.getText(adminLedgerKey)) as AdminLedger
@@ -731,8 +731,13 @@ export class MemoRagService {
 
     const now = new Date().toISOString()
     const actorEmail = actor.email ?? `${actor.userId}@local`
-    const existingActor = db.users.find((user) => user.userId === actor.userId)
+    const existingActor = db.users.find((user) => user.userId === actor.userId || user.email.toLowerCase() === actorEmail.toLowerCase())
     if (existingActor) {
+      if (existingActor.userId !== actor.userId) {
+        db.usage[actor.userId] ??= db.usage[existingActor.userId] ?? {}
+        delete db.usage[existingActor.userId]
+        existingActor.userId = actor.userId
+      }
       existingActor.email = actorEmail
       existingActor.groups = normalizeRoles(actor.cognitoGroups)
       existingActor.status = existingActor.status === "deleted" ? "active" : existingActor.status
@@ -758,7 +763,45 @@ export class MemoRagService {
         lastActivityAt: now
       }
     }
+    if (options.syncUserDirectory) await this.syncUserDirectory(db)
     return db
+  }
+
+  private async syncUserDirectory(db: AdminLedger): Promise<void> {
+    if (!this.deps.userDirectory) return
+
+    const directoryUsers = await this.deps.userDirectory.listUsers()
+    for (const directoryUser of directoryUsers) {
+      const email = directoryUser.email.toLowerCase()
+      const existing = db.users.find((user) => user.userId === directoryUser.userId || user.email.toLowerCase() === email)
+      const groups = normalizeRoles(directoryUser.groups)
+
+      if (existing) {
+        if (existing.userId !== directoryUser.userId) {
+          db.usage[directoryUser.userId] ??= db.usage[existing.userId] ?? {}
+          delete db.usage[existing.userId]
+          existing.userId = directoryUser.userId
+        }
+        existing.email = directoryUser.email
+        existing.displayName = directoryUser.displayName
+        if (existing.groups.length === 0) existing.groups = groups
+        existing.createdAt = existing.createdAt || directoryUser.createdAt
+        existing.updatedAt = directoryUser.updatedAt
+        continue
+      }
+
+      db.users.push({
+        ...directoryUser,
+        groups
+      })
+      db.usage[directoryUser.userId] ??= {
+        chatMessages: 0,
+        conversationCount: 0,
+        questionCount: 0,
+        benchmarkRunCount: 0,
+        debugRunCount: 0
+      }
+    }
   }
 
   private async saveAdminLedger(db: AdminLedger): Promise<void> {

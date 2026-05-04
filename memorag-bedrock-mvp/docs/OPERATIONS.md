@@ -83,7 +83,7 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
 | `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
 | `BENCHMARK_RUNNER` | CodeBuild runner から benchmark corpus を seed し、`/benchmark/query` を実行 |
-| `USER_ADMIN` | 管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
+| `USER_ADMIN` | Cognito User Pool の全ユーザー参照、管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
 | `ACCESS_ADMIN` | ロール定義参照、ロール付与、管理操作履歴参照 |
 | `COST_AUDITOR` | 概算コスト監査 |
 | `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証、Phase 2 管理操作 |
@@ -91,6 +91,12 @@ CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP
 通常利用者に `ANSWER_EDITOR`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。性能テストを起動する運用者には `RAG_GROUP_MANAGER`、CodeBuild runner 用 service user には `BENCHMARK_RUNNER`、debug trace と benchmark 成果物を確認する管理者には `SYSTEM_ADMIN` を付与する。
 
 ログイン画面から self sign-up したユーザーは、メール確認後に Cognito post-confirmation trigger で `CHAT_USER` のみを自動付与する。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが対象者と必要性を確認し、`.github/workflows/memorag-create-cognito-user.yml` または AWS 管理手順で後から付与する。
+
+管理者設定のユーザー管理一覧は `GET /admin/users` で Cognito User Pool の全ユーザーを読み取り、email または Cognito `sub` で管理台帳とマージして表示する。Cognito はユーザー発見用 directory として扱い、管理画面上のロール、停止、再開、削除状態は管理台帳を source of truth とする。Cognito に存在しても管理台帳で `deleted` のユーザーは一覧に戻さない。実際の API 認可は Cognito group を含む JWT で判定するため、上位権限の実効付与は GitHub Actions または AWS 管理手順で Cognito group を更新する。API Lambda には `cognito-idp:ListUsers` と `cognito-idp:AdminListGroupsForUser` を User Pool ARN に限定して付与する。
+
+Cognito group 取得が一部ユーザーで失敗した場合、一覧取得は継続し、該当ユーザーの Cognito group は空配列として扱う。API は CloudWatch Logs に `cognito_user_directory_group_lookup_failed` と `cognito_user_directory_group_lookup_failure_summary` を JSON で出力し、summary は Embedded Metric Format の `MemoRAG/Admin` namespace に `CognitoGroupLookupFailureCount` と `CognitoGroupLookupFailureRate` を記録する。これらが 0 以外の場合は IAM、User Pool ID、Cognito region、対象ユーザー状態を確認する。
+
+デプロイ後の smoke test では、管理者 token で `GET /admin/users` を実行し、初回ログイン前の Cognito ユーザーが表示されること、Cognito group lookup 失敗 metric が 0 であること、管理台帳で `deleted` にしたユーザーが再表示されないこと、管理画面上のロールと実効 Cognito group の運用差分が利用者に説明されていることを確認する。
 
 ## AWSデプロイ前チェック
 
