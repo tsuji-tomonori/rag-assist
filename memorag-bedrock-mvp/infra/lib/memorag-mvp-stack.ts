@@ -134,7 +134,8 @@ export class MemoRagMvpStack extends Stack {
     new s3deploy.BucketDeployment(this, "DeployBenchmarkDatasets", {
       sources: [
         s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
-        s3deploy.Source.data("standard-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8"))
+        s3deploy.Source.data("standard-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
+        s3deploy.Source.data("clarification-smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.clarification.sample.jsonl"), "utf-8"))
       ],
       destinationBucket: benchmarkBucket,
       destinationKeyPrefix: "datasets/agent"

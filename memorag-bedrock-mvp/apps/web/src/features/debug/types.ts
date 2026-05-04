@@ -22,6 +22,11 @@ export type DebugTrace = {
   modelId: string
   embeddingModelId: string
   clueModelId: string
+  clarificationContext?: {
+    originalQuestion?: string
+    selectedOptionId?: string
+    selectedValue?: string
+  }
   pipelineVersions?: Record<string, unknown>
   topK: number
   memoryTopK: number

@@ -2,6 +2,7 @@ import { type Dispatch, type FormEvent, type SetStateAction, useMemo, useState }
 import { chat } from "../api/chatApi.js"
 import type { DebugTrace } from "../../debug/types.js"
 import type { Message } from "../types.js"
+import type { ClarificationOption } from "../types-api.js"
 
 export function useChatSession({
   canCreateChat,
@@ -66,6 +67,29 @@ export function useChatSession({
     const typedQuestion = question.trim()
     const userQuestion = typedQuestion || `${file?.name ?? "添付資料"}を取り込んでください`
     const hasAttachment = file !== null
+    await submitQuestion(userQuestion, typedQuestion, hasAttachment)
+  }
+
+  async function submitClarificationOption(option: ClarificationOption, originalQuestion: string) {
+    const userQuestion = option.resolvedQuery.trim()
+    if (!userQuestion || loading || !canCreateChat) return
+    await submitQuestion(userQuestion, userQuestion, false, {
+      originalQuestion,
+      selectedOptionId: option.id,
+      selectedValue: option.label
+    })
+  }
+
+  async function submitQuestion(
+    userQuestion: string,
+    typedQuestion: string,
+    hasAttachment: boolean,
+    clarificationContext?: {
+      originalQuestion?: string
+      selectedOptionId?: string
+      selectedValue?: string
+    }
+  ) {
     setQuestion("")
     setMessages((prev) => [...prev, { role: "user", text: userQuestion, createdAt: new Date().toISOString() }])
     setLoading(true)
@@ -77,7 +101,7 @@ export function useChatSession({
     setError(null)
 
     try {
-      if (file && canWriteDocuments) {
+      if (hasAttachment && file && canWriteDocuments) {
         await ingestDocument(file)
         setFile(null)
       }
@@ -85,6 +109,7 @@ export function useChatSession({
       if (typedQuestion.length > 0) {
         const result = await chat({
           question: userQuestion,
+          clarificationContext,
           modelId,
           embeddingModelId,
           clueModelId: modelId,
@@ -144,6 +169,7 @@ export function useChatSession({
     setSubmitShortcut,
     canAsk,
     onAsk,
+    submitClarificationOption,
     newConversation
   }
 }

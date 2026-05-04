@@ -2,6 +2,7 @@ import type { RefObject } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import type { Message } from "../types.js"
+import type { ClarificationOption } from "../types-api.js"
 import { getLinkedQuestion } from "../utils/getLinkedQuestion.js"
 import { ChatEmptyState } from "./ChatEmptyState.js"
 import { MessageItem } from "./MessageItem.js"
@@ -17,7 +18,8 @@ export function MessageList({
   loading,
   onSelectPrompt,
   onCreateQuestion,
-  onResolveQuestion
+  onResolveQuestion,
+  onSubmitClarificationOption
 }: {
   messages: Message[]
   questions: HumanQuestion[]
@@ -29,6 +31,7 @@ export function MessageList({
   onSelectPrompt: (value: string) => void
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
+  onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
 }) {
   return (
     <div className="message-list">
@@ -44,6 +47,7 @@ export function MessageList({
           onCreateQuestion={onCreateQuestion}
           onResolveQuestion={onResolveQuestion}
           onAdditionalQuestion={onSelectPrompt}
+          onSubmitClarificationOption={onSubmitClarificationOption}
         />
       ))}
       {pendingActivity && (
