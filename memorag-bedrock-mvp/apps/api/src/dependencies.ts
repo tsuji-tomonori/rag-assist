@@ -17,6 +17,12 @@ import type { ConversationHistoryStore } from "./adapters/conversation-history-s
 import { DynamoDbBenchmarkRunStore } from "./adapters/dynamodb-benchmark-run-store.js"
 import { LocalBenchmarkRunStore } from "./adapters/local-benchmark-run-store.js"
 import type { BenchmarkRunStore } from "./adapters/benchmark-run-store.js"
+import { DynamoDbChatRunStore } from "./adapters/dynamodb-chat-run-store.js"
+import { LocalChatRunStore } from "./adapters/local-chat-run-store.js"
+import type { ChatRunStore } from "./adapters/chat-run-store.js"
+import { DynamoDbChatRunEventStore } from "./adapters/dynamodb-chat-run-event-store.js"
+import { LocalChatRunEventStore } from "./adapters/local-chat-run-event-store.js"
+import type { ChatRunEventStore } from "./adapters/chat-run-event-store.js"
 import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
 
 export type Dependencies = {
@@ -27,6 +33,8 @@ export type Dependencies = {
   questionStore: QuestionStore
   conversationHistoryStore: ConversationHistoryStore
   benchmarkRunStore: BenchmarkRunStore
+  chatRunStore: ChatRunStore
+  chatRunEventStore: ChatRunEventStore
   userDirectory?: UserDirectory
 }
 
@@ -57,8 +65,14 @@ export function createDependencies(): Dependencies {
   const benchmarkRunStore = config.useLocalBenchmarkRunStore
     ? new LocalBenchmarkRunStore(config.localDataDir)
     : new DynamoDbBenchmarkRunStore(config.benchmarkRunsTableName)
+  const chatRunStore = config.useLocalChatRunStore
+    ? new LocalChatRunStore(config.localDataDir)
+    : new DynamoDbChatRunStore(config.chatRunsTableName)
+  const chatRunEventStore = config.useLocalChatRunStore
+    ? new LocalChatRunEventStore(config.localDataDir)
+    : new DynamoDbChatRunEventStore(config.chatRunEventsTableName)
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, userDirectory }
   return cached
 }
