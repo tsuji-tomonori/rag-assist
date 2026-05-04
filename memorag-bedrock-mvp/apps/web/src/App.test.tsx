@@ -396,12 +396,12 @@ describe("App document management", () => {
 
     await userEvent.click(screen.getByTitle("プロンプトをコピー"))
     expect(writeText).toHaveBeenCalledWith("分類を教えて")
-    const copiedPromptButton = screen.getByTitle("プロンプトをコピー済み")
+    const copiedPromptButton = await screen.findByTitle("プロンプトをコピー済み")
     expect(copiedPromptButton.querySelector(".icon-check")).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("button", { name: "回答をコピー" }))
     expect(writeText).toHaveBeenCalledWith("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
-    const copiedAnswerButton = screen.getByRole("button", { name: "回答をコピー済み" })
+    const copiedAnswerButton = await screen.findByRole("button", { name: "回答をコピー済み" })
     expect(copiedAnswerButton.querySelector(".icon-check")).toBeInTheDocument()
 
     expect(screen.queryByTitle("高評価")).not.toBeInTheDocument()

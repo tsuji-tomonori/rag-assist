@@ -24,10 +24,12 @@ export function AssistantAnswer({
   const citations = message.result?.citations ?? []
   const [copyStatus, setCopyStatus] = useState<"idle" | "answer" | "error">("idle")
   const resetTimerRef = useRef<number | null>(null)
+  const mountedRef = useRef(true)
   const canCopyAnswer = Boolean(message.text.trim())
 
   useEffect(() => {
     return () => {
+      mountedRef.current = false
       if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
     }
   }, [])
@@ -44,9 +46,11 @@ export function AssistantAnswer({
     if (!value.trim()) return
     try {
       await navigator.clipboard.writeText(value)
+      if (!mountedRef.current) return
       setCopyStatus("answer")
       scheduleCopyStatusReset()
     } catch (err) {
+      if (!mountedRef.current) return
       console.warn("Failed to copy text", err)
       setCopyStatus("error")
       scheduleCopyStatusReset()
