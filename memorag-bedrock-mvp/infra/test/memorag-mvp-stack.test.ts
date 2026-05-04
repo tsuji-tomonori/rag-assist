@@ -28,6 +28,10 @@ test("implements the designed serverless resources", () => {
     LambdaConfig: Match.objectLike({ PostConfirmation: Match.anyValue() })
   })
   template.resourceCountIs("AWS::SecretsManager::Secret", 1)
+  template.resourceCountIs("AWS::KMS::Key", 1)
+  template.hasResourceProperties("AWS::KMS::Key", {
+    EnableKeyRotation: true
+  })
   template.resourceCountIs("AWS::ApiGatewayV2::Authorizer", 1)
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
@@ -154,7 +158,7 @@ test("implements the designed serverless resources", () => {
     distanceMetric: "cosine"
   })
   template.hasResourceProperties("AWS::CodeBuild::Project", {
-    EncryptionKey: Match.anyValue(),
+    EncryptionKey: { "Fn::GetAtt": [Match.stringLikeRegexp("BenchmarkProjectKey"), "Arn"] },
     Environment: Match.objectLike({
       ComputeType: "BUILD_GENERAL1_SMALL",
       Image: "aws/codebuild/standard:7.0",
