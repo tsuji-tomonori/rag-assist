@@ -35,6 +35,8 @@ curl -s http://localhost:8787/documents \
 
 ## Chat
 
+`POST /chat` は通常回答、回答不能、確認質問を `responseType` で区別する。確認質問は登録済み文書、memory card、検索候補に grounding を持つ option だけを返し、option 選択後は `resolvedQuery` を次の `/chat` の `question` として送る。
+
 ```bash
 curl -s http://localhost:8787/chat \
   "${AUTH_HEADER[@]}" \
@@ -46,6 +48,49 @@ curl -s http://localhost:8787/chat \
     "minScore":0.20,
     "includeDebug":true
   }' | jq
+```
+
+確認質問の response 例:
+
+```json
+{
+  "responseType": "clarification",
+  "answer": "どの申請種別の期限を確認しますか？",
+  "isAnswerable": false,
+  "needsClarification": true,
+  "clarification": {
+    "needsClarification": true,
+    "reason": "multiple_candidate_intents",
+    "question": "どの申請種別の期限を確認しますか？",
+    "options": [
+      {
+        "id": "opt-1",
+        "label": "経費精算",
+        "resolvedQuery": "経費精算の申請期限は？",
+        "source": "memory",
+        "grounding": [{ "documentId": "doc-1", "fileName": "expense-policy.txt" }]
+      }
+    ],
+    "missingSlots": ["申請種別"],
+    "confidence": 0.82,
+    "ambiguityScore": 0.78
+  },
+  "citations": [],
+  "retrieved": []
+}
+```
+
+選択肢を選んだ後は、選択した `resolvedQuery` を次の `question` として送り、追跡用に `clarificationContext` を付与できる。
+
+```json
+{
+  "question": "経費精算の申請期限は？",
+  "clarificationContext": {
+    "originalQuestion": "申請期限は？",
+    "selectedOptionId": "opt-1",
+    "selectedValue": "経費精算"
+  }
+}
 ```
 
 ## Search
