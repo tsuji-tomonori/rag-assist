@@ -31,10 +31,11 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
       }
     } catch (error) {
       const completedAt = new Date()
+      const reason = inferErrorAnswerabilityReason(label)
       return {
         answerability: {
           isAnswerable: false,
-          reason: "citation_validation_failed",
+          reason,
           confidence: 0
         },
         answer: NO_ANSWER,
@@ -51,7 +52,7 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
           output: {
             answerability: {
               isAnswerable: false,
-              reason: "citation_validation_failed",
+              reason,
               confidence: 0
             },
             answer: NO_ANSWER,
@@ -62,6 +63,11 @@ export function tracedNode(label: string, fn: NodeFn): NodeFn {
       }
     }
   }
+}
+
+function inferErrorAnswerabilityReason(label: string): "invalid_temporal_context" | "citation_validation_failed" {
+  if (label === "build_temporal_context") return "invalid_temporal_context"
+  return "citation_validation_failed"
 }
 
 function buildStep(input: {
@@ -116,6 +122,9 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
     return `clarification=${update.clarification.needsClarification}, reason=${update.clarification.reason}, groundedOptions=${update.clarification.groundedOptionCount}`
   }
   if (update.sufficientContext) return `sufficient_context=${update.sufficientContext.label}, missing=${update.sufficientContext.missingFacts?.length ?? 0}`
+  if (update.computedFacts) return `computed_facts=${update.computedFacts.length}`
+  if (update.toolIntent) return `tool_intent search=${update.toolIntent.needsSearch}, temporal=${update.toolIntent.needsTemporalCalculation}, arithmetic=${update.toolIntent.needsArithmeticCalculation}`
+  if (update.temporalContext) return `today=${update.temporalContext.today}, source=${update.temporalContext.source}`
   if (update.answerSupport) return `answer_support=${update.answerSupport.supported ? "supported" : "unsupported"}, unsupported=${update.answerSupport.unsupportedSentences.length}`
   if (update.retrievalEvaluation) {
     const judge = update.retrievalEvaluation.llmJudge ? `, judge=${update.retrievalEvaluation.llmJudge.label}` : ""
@@ -141,6 +150,9 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
 function detailUpdate(update: QaAgentUpdate): string | undefined {
   if (update.clarification) return formatClarificationDetail(update.clarification)
   if (update.sufficientContext) return formatSufficientContextDetail(update.sufficientContext)
+  if (update.computedFacts) return update.computedFacts.map((fact) => `${fact.id} ${fact.kind}: ${"explanation" in fact ? fact.explanation : "reason" in fact ? fact.reason : ""}`).join("\n")
+  if (update.toolIntent) return JSON.stringify(update.toolIntent, null, 2)
+  if (update.temporalContext) return JSON.stringify(update.temporalContext, null, 2)
   if (update.answerSupport) return formatAnswerSupportDetail(update.answerSupport)
   if (update.retrievalEvaluation) return formatRetrievalEvaluationDetail(update.retrievalEvaluation)
   if (update.searchPlan) return formatSearchPlanDetail(update.searchPlan)
@@ -199,6 +211,9 @@ function formatAnswerSupportDetail(judgement: NonNullable<QaAgentUpdate["answerS
     "",
     "supportingChunkIds:",
     ...formatList(judgement.supportingChunkIds ?? []),
+    "",
+    "supportingComputedFactIds:",
+    ...formatList(judgement.supportingComputedFactIds ?? []),
     "",
     "contradictionChunkIds:",
     ...formatList(judgement.contradictionChunkIds ?? [])
@@ -268,6 +283,10 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
     "noNewEvidenceStreak",
     "searchDecision",
     "retrievalDiagnostics",
+    "temporalContext",
+    "toolIntent",
+    "computedFacts",
+    "usedComputedFactIds",
     "clarification",
     "answerability",
     "sufficientContext",

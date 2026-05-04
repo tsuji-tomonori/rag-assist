@@ -39,6 +39,8 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
     result.debug?.steps.map((step) => step.label),
     [
       "analyze_input",
+      "build_temporal_context",
+      "detect_tool_intent",
       "normalize_query",
       "retrieve_memory",
       "generate_clues",
@@ -96,6 +98,8 @@ test("fixed workflow executes nodes in the declared order", async () => {
     result.debug?.steps.map((step) => step.label),
     [
       "analyze_input",
+      "build_temporal_context",
+      "detect_tool_intent",
       "normalize_query",
       "retrieve_memory",
       "generate_clues",
@@ -114,6 +118,296 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "finalize_response"
     ]
   )
+})
+
+test("fixed workflow answers explicit temporal calculations from computed facts without retrieval", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "2026年5月3日時点で、2026-05-10まであと何日？",
+    includeDebug: true,
+    minScore: 0.05
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /あと7日|7日/)
+  assert.deepEqual(result.citations, [])
+  assert.deepEqual(
+    result.debug?.steps.map((step) => step.label),
+    [
+      "analyze_input",
+      "build_temporal_context",
+      "detect_tool_intent",
+      "execute_computation_tools",
+      "answerability_gate",
+      "generate_answer",
+      "validate_citations",
+      "verify_answer_support",
+      "finalize_response"
+    ]
+  )
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "days_until")
+  assert.equal(computedFacts?.[0]?.daysRemaining, 7)
+  const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
+  const answerSupport = supportStep?.output?.answerSupport as Record<string, unknown> | undefined
+  assert.deepEqual(answerSupport?.supportingComputedFactIds, ["date-001"])
+})
+
+test("fixed workflow uses injected asOfDate for test and benchmark temporal contexts", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "2026-05-10まであと何日？",
+    asOfDate: "2026-05-03",
+    asOfDateSource: "test",
+    includeDebug: true
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /7日/)
+  const temporalStep = result.debug?.steps.find((step) => step.label === "build_temporal_context")
+  const temporalContext = temporalStep?.output?.temporalContext as Record<string, unknown> | undefined
+  assert.equal(temporalContext?.today, "2026-05-03")
+  assert.equal(temporalContext?.source, "test")
+})
+
+test("fixed workflow fails fast for invalid injected asOfDate before retrieval", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "remote-work-policy.txt",
+    text: "在宅勤務手当の申請期限は翌月5営業日までです。"
+  })
+
+  const result = await service.chat({
+    question: "在宅勤務手当の申請期限はいつですか？",
+    asOfDate: "2026-99-99",
+    asOfDateSource: "test",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, false)
+  assert.equal(result.answer, "資料からは回答できません。")
+  assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_search_action"), false)
+  const temporalStep = result.debug?.steps.find((step) => step.label === "build_temporal_context")
+  assert.equal(temporalStep?.status, "error")
+  assert.match(temporalStep?.detail ?? "", /Invalid asOfDate/)
+  const answerability = temporalStep?.output?.answerability as Record<string, unknown> | undefined
+  assert.equal(answerability?.reason, "invalid_temporal_context")
+})
+
+test("fixed workflow answers polite current date questions from temporal context", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "今日の日付は何日ですか？",
+    asOfDate: "2026-05-03",
+    asOfDateSource: "test",
+    includeDebug: true
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /2026-05-03/)
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "current_date")
+  assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
+})
+
+test("fixed workflow sends current-month deadline questions to RAG instead of current-date computation", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "deadline.txt",
+    text: "今月の締切は20日です。"
+  })
+
+  const result = await service.chat({
+    question: "今月の締切は何日ですか？",
+    asOfDate: "2026-05-03",
+    asOfDateSource: "test",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /20日/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
+test("fixed workflow falls back to RAG when arithmetic intent has no usable computation", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "benefit.txt",
+    text: "在宅勤務手当は月額5,000円です。"
+  })
+
+  const result = await service.chat({
+    question: "5,000円の在宅勤務手当はいくらですか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /5,000円/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+})
+
+test("fixed workflow sends document-source arithmetic verification questions to RAG", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "pricing-note.txt",
+    text: "この資料では、1,200円を15人で12か月使う場合の総額は記載していません。"
+  })
+
+  const result = await service.chat({
+    question: "この資料では1,200円を15人で12か月使うと総額いくらと記載されていますか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
+test("fixed workflow answers self-contained arithmetic verification from computed facts", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  const result = await service.chat({
+    question: "1,200円を15人で12か月使うと216,000円で合っていますか？",
+    includeDebug: true
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /216,000円|216000円/)
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "arithmetic")
+  assert.equal(result.debug?.steps.some((step) => step.label === "retrieve_memory"), false)
+})
+
+test("fixed workflow sends business-day document questions to RAG instead of compute-only unavailable", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "remote-work-policy.txt",
+    text: "在宅勤務手当の申請期限は翌月5営業日までです。"
+  })
+
+  const result = await service.chat({
+    question: "在宅勤務手当の申請期限は何営業日ですか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /5営業日/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
+test("fixed workflow sends explicit-date document verification questions to RAG", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "expense-policy.txt",
+    text: "経費精算の提出期限は2026年5月15日です。"
+  })
+
+  const result = await service.chat({
+    question: "経費精算の期限は2026-05-10ですか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /2026年5月15日|2026-05-15/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
+test("fixed workflow sends relative-deadline document verification questions to RAG", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "expense-policy.txt",
+    text: "経費精算の提出期限は申請から30日以内です。"
+  })
+
+  const result = await service.chat({
+    question: "経費精算の期限は申請から30日以内ですか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /申請から30日以内/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
+test("fixed workflow sends document date verification questions to RAG instead of current-date computation", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "policy.txt",
+    text: "この規程の発行日は2026年5月10日です。"
+  })
+
+  const result = await service.chat({
+    question: "この資料の日付を確認してください",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /2026年5月10日|2026-05-10/)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
+test("fixed workflow sends document-source deadline status questions to RAG", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "policy.txt",
+    text: "この資料では、2026年5月1日の期限切れ判定は記載していません。"
+  })
+
+  const result = await service.chat({
+    question: "この資料では2026-05-01期限切れと記載されていますか？",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
+  assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
+  assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
 })
 
 test("fixed workflow branches on evaluate_search_progress decisions", async () => {
@@ -478,6 +772,12 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       },
       reason: ""
     },
+    temporalContext: undefined,
+    asOfDate: undefined,
+    asOfDateSource: undefined,
+    toolIntent: undefined,
+    computedFacts: [],
+    usedComputedFactIds: [],
     maxIterations: 3,
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,
@@ -503,6 +803,7 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
       supported: false,
       unsupportedSentences: [],
       supportingChunkIds: [],
+      supportingComputedFactIds: [],
       contradictionChunkIds: [],
       confidence: 0,
       totalSentences: 0,

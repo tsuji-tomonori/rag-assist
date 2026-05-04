@@ -95,13 +95,9 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     validateSchema(chatRun, responseSchema(openapi, "/chat-runs", "post", 200), openapi)
     assert.match(chatRun.eventsPath, new RegExp(`/chat-runs/${chatRun.runId}/events$`))
 
-    const chatRunEvents = await fetch(`http://127.0.0.1:${port}${chatRun.eventsPath}`, {
-      headers: { accept: "text/event-stream" },
-      signal: AbortSignal.timeout(20_000)
-    })
-    assert.equal(chatRunEvents.status, 200)
-    assert.match(chatRunEvents.headers.get("content-type") ?? "", /text\/event-stream/)
-    const eventStreamText = await chatRunEvents.text()
+    const chatRunEvents = await readChatRunEvents(`http://127.0.0.1:${port}${chatRun.eventsPath}`)
+    assert.match(chatRunEvents.contentType, /text\/event-stream/)
+    const eventStreamText = chatRunEvents.text
     assert.match(eventStreamText, /event: status/)
     assert.match(eventStreamText, /event: final|event: error/)
 
@@ -489,6 +485,70 @@ test("benchmark search uses dataset user groups for ACL evaluation", async () =>
   }
 })
 
+test("benchmark runner can list and upload only isolated benchmark seed documents", async () => {
+  const port = 25000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-seed-rbac-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "BENCHMARK_RUNNER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const documentsBeforeSeed = await fetch(`http://127.0.0.1:${port}/documents`)
+    assert.equal(documentsBeforeSeed.status, 200)
+
+    const generalUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "general.md", text: "通常文書です。", mimeType: "text/markdown" })
+    })
+    assert.equal(generalUpload.status, 403)
+
+    const seedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "handbook.md",
+        text: "# Handbook\n\n経費精算は30日以内です。",
+        mimeType: "text/markdown",
+        skipMemory: true,
+        metadata: {
+          benchmarkSeed: true,
+          benchmarkSuiteId: "smoke-agent-v1",
+          benchmarkSourceHash: "hash",
+          benchmarkIngestSignature: "signature",
+          benchmarkCorpusSkipMemory: true,
+          benchmarkEmbeddingModelId: "api-default",
+          aclGroups: ["BENCHMARK_RUNNER"],
+          docType: "benchmark-corpus",
+          lifecycleStatus: "active",
+          source: "benchmark-runner"
+        }
+      })
+    })
+    assert.equal(seedUpload.status, 200)
+    const manifest = (await seedUpload.json()) as { metadata?: { aclGroups?: string[]; docType?: string; source?: string } }
+    assert.deepEqual(manifest.metadata?.aclGroups, ["BENCHMARK_RUNNER"])
+    assert.equal(manifest.metadata?.docType, "benchmark-corpus")
+    assert.equal(manifest.metadata?.source, "benchmark-runner")
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
 test("question and debug management endpoints enforce Phase 1 role boundaries", async () => {
   const port = 21000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-rbac-"))
@@ -687,6 +747,40 @@ function responseSchema(doc: OpenApiDoc, route: string, method: string, status: 
   const schema = doc.paths[route]?.[method]?.responses?.[String(status)]?.content?.["application/json"]?.schema
   assert.ok(schema, `response schema missing for ${method.toUpperCase()} ${route} ${status}`)
   return schema
+}
+
+async function readChatRunEvents(url: string): Promise<{ contentType: string; text: string }> {
+  let lastStatus = 0
+  let lastContentType = ""
+  let lastText = ""
+  let lastError: unknown
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        headers: { accept: "text/event-stream" },
+        signal: AbortSignal.timeout(20_000)
+      })
+      lastStatus = response.status
+      lastContentType = response.headers.get("content-type") ?? ""
+      lastText = await response.text()
+      if (
+        response.status === 200 &&
+        /text\/event-stream/.test(lastContentType) &&
+        /event: status/.test(lastText) &&
+        /event: final|event: error/.test(lastText)
+      ) {
+        return { contentType: lastContentType, text: lastText }
+      }
+    } catch (error) {
+      lastError = error
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+
+  throw new Error(
+    `chat run event stream was not ready: status=${lastStatus} contentType=${lastContentType} body=${lastText.slice(0, 200)} error=${String(lastError ?? "")}`
+  )
 }
 
 function validateSchema(value: unknown, schema: unknown, doc: OpenApiDoc, at = "$"): void {

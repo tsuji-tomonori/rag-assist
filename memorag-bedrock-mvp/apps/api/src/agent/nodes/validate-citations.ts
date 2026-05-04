@@ -17,8 +17,9 @@ export async function validateCitations(state: QaAgentState): Promise<QaAgentUpd
     .filter((hit) => used.size === 0 || used.has(hit.key) || used.has(hit.metadata.chunkId ?? ""))
     .map(toCitation)
     .slice(0, 5)
+  const usedComputedFactIds = validComputedFactIds(answerJson.usedComputedFactIds ?? [], state)
 
-  if (state.strictGrounded && citations.length === 0) {
+  if (state.strictGrounded && citations.length === 0 && usedComputedFactIds.length === 0) {
     return citationFailure(state.rawAnswer)
   }
 
@@ -28,8 +29,14 @@ export async function validateCitations(state: QaAgentState): Promise<QaAgentUpd
 
   return {
     answer: answerJson.answer.trim(),
-    citations
+    citations,
+    usedComputedFactIds
   }
+}
+
+function validComputedFactIds(ids: string[], state: QaAgentState): string[] {
+  const validIds = new Set(state.computedFacts.map((fact) => fact.id))
+  return [...new Set(ids.map((id) => id.trim()).filter((id) => validIds.has(id)))]
 }
 
 function citationFailure(rawAnswer?: string): QaAgentUpdate {

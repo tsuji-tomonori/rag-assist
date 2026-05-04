@@ -164,6 +164,15 @@
   font-weight: 800;
 }
 
+.history-search-snippet {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: #4d5c73 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .history-title-line {
   min-width: 0;
   display: flex;

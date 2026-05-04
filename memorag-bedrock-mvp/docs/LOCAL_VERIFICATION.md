@@ -61,8 +61,13 @@ DATASET=benchmark/dataset.sample.jsonl \
 OUTPUT=.local-data/benchmark-results.jsonl \
 SUMMARY=.local-data/benchmark-summary.json \
 REPORT=.local-data/benchmark-report.md \
+BENCHMARK_SUITE_ID=standard-agent-v1 \
+BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1 \
+BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1 \
 npm run start -w @memorag-mvp/benchmark
 ```
+
+`task benchmark:sample` は上記の標準 corpus 指定を含む。`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1` では `handbook.md` を `/documents` に seed し、active chunk が作成されてから評価 query を実行する。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]` と `docType: "benchmark-corpus"` で隔離し、通常利用者の文書一覧にも表示しない。同じ corpus を複数 suite で共有する場合は `BENCHMARK_CORPUS_SUITE_ID` で seed 判定用の corpus identity を固定する。
 
 追加データセット:
 

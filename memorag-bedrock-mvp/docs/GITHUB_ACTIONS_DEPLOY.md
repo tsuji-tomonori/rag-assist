@@ -49,7 +49,7 @@
 | `CHAT_USER` | 通常チャット、本人の会話履歴、担当者問い合わせ登録 |
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
 | `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
-| `BENCHMARK_RUNNER` | CodeBuild runner から `/benchmark/query` と `/benchmark/search` を実行 |
+| `BENCHMARK_RUNNER` | CodeBuild runner から隔離された benchmark corpus を seed し、`/benchmark/query` と `/benchmark/search` を実行 |
 | `USER_ADMIN` | Cognito User Pool の全ユーザー参照、管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
 | `ACCESS_ADMIN` | ロール定義参照、ロール付与、管理操作履歴参照 |
 | `COST_AUDITOR` | 概算コスト監査 |

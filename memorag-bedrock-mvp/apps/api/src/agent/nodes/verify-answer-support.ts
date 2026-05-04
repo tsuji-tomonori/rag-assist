@@ -15,7 +15,7 @@ export function createVerifyAnswerSupportNode(deps: Dependencies) {
     }
 
     const evidenceChunks = selectCitedChunks(state)
-    const raw = await deps.textModel.generate(buildAnswerSupportPrompt(state.question, state.answer, evidenceChunks), {
+    const raw = await deps.textModel.generate(buildAnswerSupportPrompt(state.question, state.answer, evidenceChunks, selectedComputedFacts(state)), {
       modelId: state.modelId,
       temperature: 0,
       maxTokens: 900
@@ -68,7 +68,7 @@ async function repairUnsupportedAnswer(
   if (repaired?.isAnswerable !== true || !repaired.answer || repaired.answer.trim() === NO_ANSWER) return undefined
   const repairedChunks = chunksForUsedIds(repaired.usedChunkIds ?? [], evidenceChunks)
   if (repairedChunks.length === 0) return undefined
-  const supportRaw = await deps.textModel.generate(buildAnswerSupportPrompt(state.question, repaired.answer, repairedChunks), {
+  const supportRaw = await deps.textModel.generate(buildAnswerSupportPrompt(state.question, repaired.answer, repairedChunks, selectedComputedFacts(state)), {
     modelId: state.modelId,
     temperature: 0,
     maxTokens: 900
@@ -97,14 +97,16 @@ function selectCitedChunks(state: QaAgentState): QaAgentState["selectedChunks"] 
 function normalizeJudgement(parsed: SupportJson | undefined, state: QaAgentState, evidenceChunks: QaAgentState["selectedChunks"]): AnswerSupportJudgement {
   const unsupportedSentences = normalizeUnsupportedSentences(parsed?.unsupportedSentences).slice(0, 20)
   const supportingChunkIds = validChunkIds(cleanStrings(parsed?.supportingChunkIds), evidenceChunks)
+  const supportingComputedFactIds = validComputedFactIds(cleanStrings(parsed?.supportingComputedFactIds), state)
   const contradictionChunkIds = validChunkIds(cleanStrings(parsed?.contradictionChunkIds), evidenceChunks)
   const totalSentences = normalizeTotalSentences(parsed?.totalSentences, state.answer ?? "", unsupportedSentences.length)
-  const supported = parsed?.supported === true && unsupportedSentences.length === 0 && contradictionChunkIds.length === 0 && evidenceChunks.length > 0
+  const supported = parsed?.supported === true && unsupportedSentences.length === 0 && contradictionChunkIds.length === 0 && (evidenceChunks.length > 0 || supportingComputedFactIds.length > 0)
 
   return {
     supported,
     unsupportedSentences: supported ? [] : unsupportedSentences.length > 0 ? unsupportedSentences : [{ sentence: state.answer ?? "", reason: "回答文を支持する根拠チャンクを確認できませんでした。" }],
     supportingChunkIds: supported && supportingChunkIds.length === 0 ? evidenceChunks.slice(0, 5).map((chunk) => chunk.key) : supportingChunkIds,
+    supportingComputedFactIds,
     contradictionChunkIds,
     confidence: clamp(parsed?.confidence ?? (supported ? 0.7 : 0.3)),
     totalSentences,
@@ -117,11 +119,18 @@ function unsupported(reason: string, state: QaAgentState): AnswerSupportJudgemen
     supported: false,
     unsupportedSentences: state.answer && state.answer !== NO_ANSWER ? [{ sentence: state.answer, reason }] : [],
     supportingChunkIds: [],
+    supportingComputedFactIds: [],
     contradictionChunkIds: [],
     confidence: 0,
     totalSentences: state.answer ? splitSentences(state.answer).length : 0,
     reason
   }
+}
+
+function selectedComputedFacts(state: QaAgentState): QaAgentState["computedFacts"] {
+  if (state.usedComputedFactIds.length === 0) return state.computedFacts
+  const ids = new Set(state.usedComputedFactIds)
+  return state.computedFacts.filter((fact) => ids.has(fact.id))
 }
 
 function normalizeUnsupportedSentences(value: unknown): AnswerSupportJudgement["unsupportedSentences"] {
@@ -146,6 +155,11 @@ function validChunkIds(ids: string[], chunks: QaAgentState["selectedChunks"]): s
   const validIds = new Set(chunks.flatMap((chunk) => [chunk.key, chunk.metadata.chunkId].filter(Boolean)))
   const byChunkId = new Map(chunks.map((chunk) => [chunk.metadata.chunkId, chunk.key]))
   return [...new Set(ids.map((id) => byChunkId.get(id) ?? id).filter((id) => validIds.has(id)))]
+}
+
+function validComputedFactIds(ids: string[], state: QaAgentState): string[] {
+  const validIds = new Set(state.computedFacts.map((fact) => fact.id))
+  return [...new Set(ids.filter((id) => validIds.has(id)))]
 }
 
 function chunksForUsedIds(ids: string[], chunks: QaAgentState["selectedChunks"]): QaAgentState["selectedChunks"] {
