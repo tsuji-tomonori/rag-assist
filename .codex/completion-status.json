@@ -11,7 +11,8 @@
     "検証、作業レポート、commit、push、PR 更新を行う",
     "最新 origin/main を取り込み、再発した競合を解消する",
     "origin/main 935fc98 を再度取り込み、再発した競合を解消する",
-    "origin/main 0e5725e を再度取り込み、corpus-grounded clarification との競合を解消する"
+    "origin/main 0e5725e を再度取り込み、corpus-grounded clarification との競合を解消する",
+    "debug trace 取得失敗時に回答表示を阻害しないようにする"
   ],
   "completed_items": [
     "Hono app に GET /chat-runs/{runId}/events の local SSE route を追加した",
@@ -29,7 +30,9 @@
     "CloudFormation snapshot を最新 synth 結果に更新した",
     "origin/main 0e5725e を merge し、agent graph / service / API docs の conflict を解消した",
     "PR #94 の async ChatRun streaming と main 側の clarification response を統合した",
-    "SSE final event で responseType / needsClarification / clarification を UI に渡すようにした"
+    "SSE final event で responseType / needsClarification / clarification を UI に渡すようにした",
+    "debugRunId からの debug trace 取得失敗時は warning に留め、final answer の表示を継続するようにした",
+    "debug trace 取得失敗時の回答表示継続テストを追加した"
   ],
   "remaining_items": [],
   "blocked_items": [],
@@ -281,6 +284,31 @@
       "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .github skills --glob '!reports/**'",
       "result": "pass",
       "note": "origin/main 0e5725e remerge 後、競合マーカーなし"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test -- src/features/chat/hooks/useChatSession.test.ts",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後、5 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後、13 files / 89 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass",
+      "note": "debug trace graceful handling 追加後"
     }
   ],
   "next_action": "merge commit、push、PR #94 更新",

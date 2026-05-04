@@ -172,7 +172,11 @@ export function useChatSession({
           }
         }
         if (result && !result.debug && debugRunId && canReadDebugRuns) {
-          result = { ...result, debug: await getDebugRun(debugRunId) }
+          try {
+            result = { ...result, debug: await getDebugRun(debugRunId) }
+          } catch (err) {
+            console.warn("Failed to load debug trace", err)
+          }
         }
         if (terminalError) throw terminalError
         if (!result) throw new Error("chat run completed without final event")

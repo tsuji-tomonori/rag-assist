@@ -178,4 +178,42 @@ describe("useChatSession", () => {
     expect(setSelectedRunId).toHaveBeenCalledWith("debug-run-1")
     expect(setDebugRuns).toHaveBeenCalled()
   })
+
+  it("debug trace 取得に失敗しても final answer を表示する", async () => {
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    debugApiMock.getDebugRun.mockRejectedValue(new Error("debug trace unavailable"))
+    chatApiMock.streamChatRunEvents.mockImplementationOnce(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "回答は表示します。",
+          isAnswerable: true,
+          citations: [],
+          retrieved: [],
+          debugRunId: "debug-run-1"
+        }
+      })
+    })
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined)
+    const setDebugRuns = vi.fn()
+    const setSelectedRunId = vi.fn()
+    const { result } = renderHook(() => useChatSession(createProps({ debugMode: true, setDebugRuns, setSelectedRunId })))
+
+    act(() => result.current.setQuestion("debug 取得失敗時の回答表示を確認して"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(debugApiMock.getDebugRun).toHaveBeenCalledWith("debug-run-1")
+    expect(result.current.messages.at(-1)).toMatchObject({
+      role: "assistant",
+      text: "回答は表示します。"
+    })
+    expect(result.current.messages.at(-1)?.result?.debug).toBeUndefined()
+    expect(setSelectedRunId).not.toHaveBeenCalledWith("debug-run-1")
+    expect(setDebugRuns).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledWith("Failed to load debug trace", expect.any(Error))
+    warn.mockRestore()
+  })
 })
