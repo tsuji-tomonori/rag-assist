@@ -476,7 +476,7 @@ export class MemoRagMvpStack extends Stack {
               "export REPORT=./benchmark/.runner-report.md",
               "export DATASET=./benchmark/.runner-dataset.jsonl",
               "export BENCHMARK_SUITE_ID=\"$SUITE_ID\"",
-              "if [ \"$MODE\" = \"agent\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; fi",
+              "if [ \"$SUITE_ID\" = \"standard-agent-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; fi",
               "API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\"",
               "export API_AUTH_TOKEN"
             ]

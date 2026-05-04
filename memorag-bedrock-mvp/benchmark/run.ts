@@ -192,6 +192,7 @@ await seedBenchmarkCorpus({
   corpusDir: resolvedBenchmarkCorpusDir,
   suiteId: benchmarkSuiteId,
   skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
+  embeddingModelId: process.env.EMBEDDING_MODEL_ID,
   log: (message) => console.log(message)
 })
 

@@ -6,6 +6,10 @@ type DocumentManifest = {
   fileName?: string
   chunkCount?: number
   lifecycleStatus?: string
+  embeddingModelId?: string
+  pipelineVersions?: {
+    embeddingModelId?: string
+  }
   metadata?: Record<string, unknown>
 }
 
@@ -18,6 +22,7 @@ type SeededDocument = {
   status: "skipped" | "uploaded"
   chunkCount: number
   sourceHash: string
+  ingestSignature: string
 }
 
 type SeedCorpusOptions = {
@@ -26,10 +31,12 @@ type SeedCorpusOptions = {
   corpusDir?: string
   suiteId: string
   skipMemory: boolean
+  embeddingModelId?: string
   fetchImpl?: typeof fetch
   log?: (message: string) => void
 }
 
+const benchmarkIngestSignatureVersion = "benchmark-corpus-seed-v2"
 const supportedExtensions = new Set([".md", ".txt"])
 
 export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<SeededDocument[]> {
@@ -46,9 +53,17 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
     const fileName = path.basename(filePath)
     const text = await readFile(filePath, "utf-8")
     const sourceHash = sha256(text)
-    const existing = existingDocuments.find((document) => isMatchingSeedDocument(document, fileName, options.suiteId, sourceHash))
+    const ingestSignature = createBenchmarkIngestSignature({
+      sourceHash,
+      suiteId: options.suiteId,
+      skipMemory: options.skipMemory,
+      embeddingModelId: options.embeddingModelId
+    })
+    const existing = existingDocuments.find((document) =>
+      isMatchingSeedDocument(document, fileName, options.suiteId, sourceHash, ingestSignature, options)
+    )
     if (existing) {
-      seeded.push({ fileName, status: "skipped", chunkCount: existing.chunkCount ?? 0, sourceHash })
+      seeded.push({ fileName, status: "skipped", chunkCount: existing.chunkCount ?? 0, sourceHash, ingestSignature })
       options.log?.(`Benchmark corpus already active: ${fileName}`)
       continue
     }
@@ -62,9 +77,11 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
       mimeType: mimeTypeFor(fileName),
       suiteId: options.suiteId,
       sourceHash,
-      skipMemory: options.skipMemory
+      ingestSignature,
+      skipMemory: options.skipMemory,
+      embeddingModelId: options.embeddingModelId
     })
-    seeded.push({ fileName, status: "uploaded", chunkCount: uploaded.chunkCount ?? 0, sourceHash })
+    seeded.push({ fileName, status: "uploaded", chunkCount: uploaded.chunkCount ?? 0, sourceHash, ingestSignature })
     options.log?.(`Benchmark corpus uploaded: ${fileName} (${uploaded.chunkCount ?? 0} chunks)`)
   }
 
@@ -79,6 +96,21 @@ export function benchmarkCorpusDirFromEnv(env: NodeJS.ProcessEnv, fallback?: str
 
 export function benchmarkCorpusSkipMemoryFromEnv(env: NodeJS.ProcessEnv): boolean {
   return env.BENCHMARK_CORPUS_SKIP_MEMORY?.toLowerCase() !== "false"
+}
+
+export function createBenchmarkIngestSignature(input: {
+  sourceHash: string
+  suiteId: string
+  skipMemory: boolean
+  embeddingModelId?: string
+}): string {
+  return sha256(JSON.stringify({
+    version: benchmarkIngestSignatureVersion,
+    sourceHash: input.sourceHash,
+    suiteId: input.suiteId,
+    skipMemory: input.skipMemory,
+    embeddingModelId: input.embeddingModelId ?? "api-default"
+  }))
 }
 
 async function listCorpusFiles(corpusDir: string): Promise<string[]> {
@@ -114,7 +146,9 @@ async function uploadDocument(input: {
   mimeType: string
   suiteId: string
   sourceHash: string
+  ingestSignature: string
   skipMemory: boolean
+  embeddingModelId?: string
 }): Promise<DocumentManifest> {
   const response = await input.fetcher(`${input.apiBaseUrl}/documents`, {
     method: "POST",
@@ -123,11 +157,15 @@ async function uploadDocument(input: {
       fileName: input.fileName,
       text: input.text,
       mimeType: input.mimeType,
+      embeddingModelId: input.embeddingModelId,
       skipMemory: input.skipMemory,
       metadata: {
         benchmarkSeed: true,
         benchmarkSuiteId: input.suiteId,
         benchmarkSourceHash: input.sourceHash,
+        benchmarkIngestSignature: input.ingestSignature,
+        benchmarkCorpusSkipMemory: input.skipMemory,
+        benchmarkEmbeddingModelId: input.embeddingModelId ?? "api-default",
         lifecycleStatus: "active",
         source: "benchmark-runner"
       }
@@ -141,13 +179,24 @@ async function uploadDocument(input: {
   return manifest
 }
 
-function isMatchingSeedDocument(document: DocumentManifest, fileName: string, suiteId: string, sourceHash: string): boolean {
+function isMatchingSeedDocument(
+  document: DocumentManifest,
+  fileName: string,
+  suiteId: string,
+  sourceHash: string,
+  ingestSignature: string,
+  options: SeedCorpusOptions
+): boolean {
+  const documentEmbeddingModelId = document.embeddingModelId ?? document.pipelineVersions?.embeddingModelId ?? document.metadata?.benchmarkEmbeddingModelId
   return document.fileName === fileName
     && (document.lifecycleStatus ?? "active") === "active"
     && (document.chunkCount ?? 0) > 0
     && document.metadata?.benchmarkSeed === true
     && document.metadata?.benchmarkSuiteId === suiteId
     && document.metadata?.benchmarkSourceHash === sourceHash
+    && document.metadata?.benchmarkIngestSignature === ingestSignature
+    && document.metadata?.benchmarkCorpusSkipMemory === options.skipMemory
+    && (!options.embeddingModelId || documentEmbeddingModelId === options.embeddingModelId)
 }
 
 function createHeaders(authToken: string | undefined): Record<string, string> {
