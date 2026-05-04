@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
@@ -23,18 +23,33 @@ export function AssistantAnswer({
 }) {
   const citations = message.result?.citations ?? []
   const [copyStatus, setCopyStatus] = useState<"idle" | "answer" | "error">("idle")
+  const resetTimerRef = useRef<number | null>(null)
   const canCopyAnswer = Boolean(message.text.trim())
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
+    }
+  }, [])
+
+  function scheduleCopyStatusReset() {
+    if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
+    resetTimerRef.current = window.setTimeout(() => {
+      setCopyStatus("idle")
+      resetTimerRef.current = null
+    }, 1800)
+  }
 
   async function copyText(value: string) {
     if (!value.trim()) return
     try {
       await navigator.clipboard.writeText(value)
       setCopyStatus("answer")
-      window.setTimeout(() => setCopyStatus("idle"), 1800)
+      scheduleCopyStatusReset()
     } catch (err) {
       console.warn("Failed to copy text", err)
       setCopyStatus("error")
-      window.setTimeout(() => setCopyStatus("idle"), 1800)
+      scheduleCopyStatusReset()
     }
   }
 
