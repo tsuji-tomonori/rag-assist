@@ -7,6 +7,16 @@ export type BenchmarkRunMetrics = {
   succeeded: number
   failedHttp: number
   answerableAccuracy?: number | null
+  clarificationNeedPrecision?: number | null
+  clarificationNeedRecall?: number | null
+  clarificationNeedF1?: number | null
+  optionHitRate?: number | null
+  missingSlotHitRate?: number | null
+  corpusGroundedOptionRate?: number | null
+  postClarificationAccuracy?: number | null
+  overClarificationRate?: number | null
+  clarificationLatencyOverheadMs?: number | null
+  postClarificationTaskLatencyMs?: number | null
   abstentionRecall?: number | null
   citationHitRate?: number | null
   expectedFileHitRate?: number | null

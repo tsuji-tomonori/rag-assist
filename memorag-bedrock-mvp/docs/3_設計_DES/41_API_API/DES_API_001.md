@@ -24,7 +24,7 @@
 | `POST /documents/reindex-migrations/{migrationId}/cutover` | staged document への切替 | `FR-001`, `FR-002` |
 | `POST /documents/reindex-migrations/{migrationId}/rollback` | cutover 後の active document 復元 | `FR-001`, `FR-002` |
 | `DELETE /documents/{documentId}` | 文書削除 | `FR-007`, `FR-008` |
-| `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005`, `FR-026` |
+| `POST /chat` | 質問応答 | `FR-003`, `FR-004`, `FR-005`, `FR-026`, `FR-029` |
 | `POST /search` | hybrid lexical/vector search | `FR-023`, `NFR-012` |
 | `POST /questions` | 回答不能時の担当者問い合わせ作成 | `FR-021`, `NFR-011` |
 | `GET /questions` | 担当者向け問い合わせ一覧 | `FR-021`, `NFR-011` |
@@ -57,6 +57,7 @@
 
 ```json
 {
+  "responseType": "answer",
   "answer": "根拠に基づく回答または回答不能理由",
   "isAnswerable": true,
   "citations": [
@@ -71,6 +72,8 @@
   "retrieved": []
 }
 ```
+
+`responseType` は後方互換のため optional field として扱う。通常回答は `answer`、資料から回答できない場合は `refusal`、回答前に対象確認が必要な場合は `clarification` を返す。`clarification` の場合は `isAnswerable=false`、`needsClarification=true`、`clarification.options[].grounding` に文書または memory/evidence 由来の根拠を入れ、`citations` と `retrieved` は空配列にする。
 
 ### 料金算出との関係
 

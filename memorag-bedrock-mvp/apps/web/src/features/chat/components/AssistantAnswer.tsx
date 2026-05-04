@@ -3,6 +3,7 @@ import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import type { Message } from "../types.js"
+import type { ClarificationOption } from "../types-api.js"
 import { QuestionAnswerPanel } from "./QuestionAnswerPanel.js"
 import { QuestionEscalationPanel } from "./QuestionEscalationPanel.js"
 
@@ -12,7 +13,8 @@ export function AssistantAnswer({
   loading,
   onCreateQuestion,
   onResolveQuestion,
-  onAdditionalQuestion
+  onAdditionalQuestion,
+  onSubmitClarificationOption
 }: {
   message: Message
   linkedQuestion?: HumanQuestion
@@ -20,8 +22,11 @@ export function AssistantAnswer({
   onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
   onAdditionalQuestion: (value: string) => void
+  onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
 }) {
   const citations = message.result?.citations ?? []
+  const clarification = message.result?.clarification
+  const isClarification = message.result?.responseType === "clarification" || message.result?.needsClarification === true
   const [copyStatus, setCopyStatus] = useState<"idle" | "answer" | "error">("idle")
   const resetTimerRef = useRef<number | null>(null)
   const mountedRef = useRef(true)
@@ -93,7 +98,30 @@ export function AssistantAnswer({
           {copyStatus === "error" && "コピーに失敗しました"}
         </p>
       )}
-      {message.result && !message.result.isAnswerable && (
+      {isClarification && clarification && (
+        <div className="clarification-options" aria-label="確認質問の選択肢">
+          {clarification.options.map((option) => (
+            <button
+              type="button"
+              key={option.id}
+              disabled={loading}
+              onClick={() => void onSubmitClarificationOption(option, message.sourceQuestion ?? message.text)}
+              title={option.reason ?? "この候補で質問する"}
+            >
+              {option.label}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="clarification-freeform"
+            disabled={loading}
+            onClick={() => onAdditionalQuestion("例: 経費精算の申請期限は？")}
+          >
+            自分で入力
+          </button>
+        </div>
+      )}
+      {message.result && !message.result.isAnswerable && !isClarification && (
         <QuestionEscalationPanel message={message} questionTicket={linkedQuestion} loading={loading} onCreateQuestion={onCreateQuestion} />
       )}
       {linkedQuestion?.status === "answered" || linkedQuestion?.status === "resolved" ? (
