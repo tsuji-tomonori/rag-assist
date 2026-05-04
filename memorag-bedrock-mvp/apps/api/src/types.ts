@@ -227,6 +227,9 @@ export type ChatRun = {
   topK?: number
   memoryTopK?: number
   minScore?: number
+  strictGrounded?: boolean
+  useMemory?: boolean
+  maxIterations?: number
   includeDebug?: boolean
   answer?: string
   isAnswerable?: boolean

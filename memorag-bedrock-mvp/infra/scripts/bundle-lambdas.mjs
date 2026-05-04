@@ -20,6 +20,10 @@ await Promise.all([
     outfile: path.join(outDir, "chat-run-worker/index.js")
   }),
   bundle({
+    entry: path.join(repoRoot, "apps/api/src/chat-run-mark-failed.ts"),
+    outfile: path.join(outDir, "chat-run-mark-failed/index.js")
+  }),
+  bundle({
     entry: path.join(repoRoot, "apps/api/src/chat-run-events-stream.ts"),
     outfile: path.join(outDir, "chat-run-events-stream/index.js")
   }),

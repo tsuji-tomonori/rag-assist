@@ -6,6 +6,8 @@ import { mkdtemp } from "node:fs/promises"
 import test from "node:test"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
+import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
+import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
@@ -215,6 +217,45 @@ test("service delegates human question lifecycle to the question store", async (
 
   const resolved = await service.resolveQuestion(question.questionId)
   assert.equal(resolved.status, "resolved")
+})
+
+test("service preserves asynchronous chat run options and can mark worker failures", async () => {
+  const { service, deps } = await createService()
+  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  const started = await service.startChatRun({
+    question: "検索設定を確認して",
+    modelId: "model-a",
+    embeddingModelId: "embed-a",
+    clueModelId: "clue-a",
+    topK: 5,
+    memoryTopK: 2,
+    minScore: 0.33,
+    strictGrounded: false,
+    useMemory: false,
+    maxIterations: 1
+  }, user)
+  const stored = await deps.chatRunStore.get(started.runId)
+  assert.equal(stored?.strictGrounded, false)
+  assert.equal(stored?.useMemory, false)
+  assert.equal(stored?.maxIterations, 1)
+
+  await deps.chatRunStore.create({
+    runId: "run-worker-timeout",
+    status: "running",
+    createdBy: "user-1",
+    question: "timeout",
+    modelId: "model-a",
+    createdAt: "2026-05-04T00:00:00.000Z",
+    updatedAt: "2026-05-04T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+  const failed = await service.markChatRunFailed("run-worker-timeout", "States.Timeout: worker timed out")
+  assert.equal(failed.status, "failed")
+  assert.equal(failed.error, "States.Timeout: worker timed out")
+  const errorEvents = await deps.chatRunEventStore.listAfter("run-worker-timeout", 0)
+  assert.equal(errorEvents.at(-1)?.type, "error")
+  assert.equal(errorEvents.at(-1)?.message, "States.Timeout: worker timed out")
 })
 
 test("service chat returns refusal and error debug trace when external dependencies fail", async () => {
@@ -518,7 +559,7 @@ async function createService(options: {
   evidencePutErrorAfterWriteWhen?: (records: Parameters<LocalVectorStore["put"]>[0]) => boolean
   objectGetErrorPrefix?: string
   objectGetError?: Error
-} = {}): Promise<{ service: MemoRagService; dataDir: string }> {
+} = {}): Promise<{ service: MemoRagService; dataDir: string; deps: Dependencies }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-service-test-"))
   const baseObjectStore = new LocalObjectStore(dataDir)
   const baseEvidenceStore = new LocalVectorStore(dataDir, "evidence-vectors.json")
@@ -548,7 +589,9 @@ async function createService(options: {
     },
     textModel: options.textModel ?? new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
-    conversationHistoryStore: new LocalConversationHistoryStore(dataDir)
+    conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    chatRunStore: new LocalChatRunStore(dataDir),
+    chatRunEventStore: new LocalChatRunEventStore(dataDir)
   } as unknown as Dependencies
-  return { service: new MemoRagService(deps), dataDir }
+  return { service: new MemoRagService(deps), dataDir, deps }
 }

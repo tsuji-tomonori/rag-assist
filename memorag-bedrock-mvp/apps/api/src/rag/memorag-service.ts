@@ -698,6 +698,9 @@ export class MemoRagService {
       topK: input.topK ?? 6,
       memoryTopK: input.memoryTopK ?? 4,
       minScore: input.minScore ?? config.minRetrievalScore,
+      strictGrounded: input.strictGrounded,
+      useMemory: input.useMemory,
+      maxIterations: input.maxIterations,
       includeDebug: input.includeDebug ?? input.debug ?? false,
       createdAt: now,
       updatedAt: now,
@@ -749,6 +752,9 @@ export class MemoRagService {
           topK: run.topK,
           memoryTopK: run.memoryTopK,
           minScore: run.minScore,
+          strictGrounded: run.strictGrounded,
+          useMemory: run.useMemory,
+          maxIterations: run.maxIterations,
           includeDebug: run.includeDebug
         },
         { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["CHAT_USER"] },
@@ -808,6 +814,28 @@ export class MemoRagService {
         updatedAt: completedAt
       })
     }
+  }
+
+  async markChatRunFailed(runId: string, reason: string): Promise<ChatRun> {
+    const run = await this.deps.chatRunStore.get(runId)
+    if (!run) throw new Error(`Chat run not found: ${runId}`)
+    if (run.status === "succeeded" || run.status === "failed" || run.status === "cancelled") return run
+
+    const completedAt = new Date().toISOString()
+    await this.deps.chatRunEventStore.append({
+      runId,
+      type: "error",
+      stage: "failed",
+      message: reason,
+      data: { message: reason },
+      ttl: run.ttl
+    })
+    return this.deps.chatRunStore.update(runId, {
+      status: "failed",
+      error: reason,
+      completedAt,
+      updatedAt: completedAt
+    })
   }
 
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {

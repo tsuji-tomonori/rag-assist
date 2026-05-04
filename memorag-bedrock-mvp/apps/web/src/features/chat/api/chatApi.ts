@@ -9,6 +9,9 @@ export async function chat(input: {
   clueModelId?: string
   topK?: number
   minScore?: number
+  strictGrounded?: boolean
+  useMemory?: boolean
+  maxIterations?: number
   includeDebug?: boolean
 }): Promise<ChatResponse> {
   return post<ChatResponse>("/chat", input)
@@ -21,6 +24,9 @@ export async function startChatRun(input: {
   clueModelId?: string
   topK?: number
   minScore?: number
+  strictGrounded?: boolean
+  useMemory?: boolean
+  maxIterations?: number
   includeDebug?: boolean
 }): Promise<ChatRunStartResponse> {
   return post<ChatRunStartResponse>("/chat-runs", input)

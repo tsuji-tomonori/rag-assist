@@ -2,24 +2,36 @@
   "complete": true,
   "status": "complete",
   "requested_items": [
-    "worktree を作成して作業する",
-    "PR #94 の main 競合を解決する",
-    "git commit する",
-    "main 向け PR を GitHub Apps で扱う",
-    "作業レポートと検証結果を残す"
+    "レビュー指摘の blocking 2 件を修正する",
+    "streaming endpoint の CORS header 不足を修正する",
+    "worker timeout/crash 時に run が failed/error へ進むよう修正する",
+    "status event の stage/message 欠落を修正する",
+    "/chat-runs が ChatInput option を同期 /chat と揃えて扱うよう修正する",
+    "stream timeout 後の UI 再接続を追加する",
+    "テスト、docs、作業レポート、commit、push、PR 更新を行う"
   ],
   "completed_items": [
-    "PR #94 の既存 worktree /home/t-tsuji/project/rag-assist-rest-stream を使用した",
-    "GitHub Apps で PR #94 の base=head 情報と mergeable=false を確認した",
-    "origin/main を codex/rest-api-streaming-chat に merge した",
-    "App.tsx と api.ts の競合を main の app/features/shared 分割構成に合わせて解消した",
-    "PR #94 の streaming chat client を features/chat/api, types-api, hooks に移して統合した",
-    "App/API tests を POST /chat-runs と SSE stream 前提に更新した",
-    "reports/working/20260504-1049-pr94-conflict-resolution.md を作成した"
+    "stream handler の 200/400/403/404/500 応答 header に CORS header を追加した",
+    "stream handler の event payload が stage/message を data と併合するよう修正した",
+    "ChatRun に strictGrounded/useMemory/maxIterations を追加し、start/execute の保存・実行へ渡した",
+    "Step Functions worker task に Catch を追加し、ChatRunMarkFailedFunction で failed run と error event を永続化するようにした",
+    "Web の useChatSession に timeout event 後の Last-Event-ID 再接続を追加した",
+    "API stream CORS/payload test、service failure marker test、web reconnect test、infra state machine test を追加・更新した",
+    "DES_API_001 に CORS、reconnect、failure marker、ChatInput option の設計を追記した",
+    "reports/working/20260504-1123-pr94-review-fixes.md を作成した"
   ],
   "remaining_items": [],
   "blocked_items": [],
   "validation": [
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run test",
+      "result": "pass",
+      "note": "75 tests"
+    },
     {
       "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
       "result": "pass"
@@ -27,10 +39,24 @@
     {
       "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
       "result": "pass",
-      "note": "13 files / 84 tests。初回は sandbox の node_modules/.vite-temp 書き込み EROFS で失敗し、権限付き再実行で pass"
+      "note": "13 files / 85 tests"
     },
     {
-      "command": "git diff --cached --check",
+      "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
+      "result": "pass"
+    },
+    {
+      "command": "env UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "snapshot 更新"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "6 tests"
+    },
+    {
+      "command": "git diff --check",
       "result": "pass"
     },
     {
@@ -39,6 +65,6 @@
       "note": "競合マーカー検出なし"
     }
   ],
-  "next_action": "PR #94 の head branch を push 済みの状態でレビュー/merge する",
+  "next_action": "PR #94 のレビュー再確認と merge 判断",
   "safe_to_continue_without_user": true
 }

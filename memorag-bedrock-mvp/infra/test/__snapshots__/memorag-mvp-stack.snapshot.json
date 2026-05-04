@@ -2641,6 +2641,239 @@
         "ChatRunWorkerFunctionServiceRoleBED42CDB"
       ]
     },
+    "ChatRunMarkFailedLogGroup7848AD59": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 7
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "ChatRunMarkFailedFunctionServiceRoleAAD50CA8": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617",
+        "Roles": [
+          {
+            "Ref": "ChatRunMarkFailedFunctionServiceRoleAAD50CA8"
+          }
+        ]
+      }
+    },
+    "ChatRunMarkFailedFunction23223E28": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "arm64"
+        ],
+        "Code": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_ENV": "production",
+            "USE_LOCAL_VECTOR_STORE": "false",
+            "MOCK_BEDROCK": "false",
+            "DOCS_BUCKET_NAME": {
+              "Ref": "DocumentsBucket9EC9DEB9"
+            },
+            "QUESTION_TABLE_NAME": {
+              "Ref": "HumanQuestionsTable5DA9688B"
+            },
+            "CONVERSATION_HISTORY_TABLE_NAME": {
+              "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "BENCHMARK_RUNS_TABLE_NAME": {
+              "Ref": "BenchmarkRunsTableD0841636"
+            },
+            "CHAT_RUNS_TABLE_NAME": {
+              "Ref": "ChatRunsTable8446CD95"
+            },
+            "CHAT_RUN_EVENTS_TABLE_NAME": {
+              "Ref": "ChatRunEventsTable7455A50E"
+            },
+            "BENCHMARK_BUCKET_NAME": {
+              "Ref": "BenchmarkBucketDD7D1D2F"
+            },
+            "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+            "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "USE_LOCAL_QUESTION_STORE": "false",
+            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+            "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+            "USE_LOCAL_CHAT_RUN_STORE": "false",
+            "VECTOR_BUCKET_NAME": {
+              "Fn::Join": [
+                "",
+                [
+                  "memorag-",
+                  {
+                    "Ref": "AWS::AccountId"
+                  },
+                  "-",
+                  {
+                    "Ref": "AWS::Region"
+                  },
+                  "-c85f22a0"
+                ]
+              ]
+            },
+            "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+            "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+            "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+            "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+            "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+            "EMBEDDING_DIMENSIONS": "1024",
+            "MIN_RETRIEVAL_SCORE": "0.20",
+            "AUTH_ENABLED": "true",
+            "COGNITO_REGION": {
+              "Ref": "AWS::Region"
+            },
+            "COGNITO_USER_POOL_ID": {
+              "Ref": "UserPool6BA7E5F2"
+            },
+            "COGNITO_APP_CLIENT_ID": {
+              "Ref": "UserPoolWebClient4C9370B0"
+            },
+            "DEBUG_DOWNLOAD_BUCKET_NAME": {
+              "Ref": "DebugDownloadBucketAB6A16BE"
+            },
+            "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900"
+          }
+        },
+        "Handler": "index.handler",
+        "LoggingConfig": {
+          "LogGroup": {
+            "Ref": "ChatRunMarkFailedLogGroup7848AD59"
+          }
+        },
+        "MemorySize": 512,
+        "Role": {
+          "Fn::GetAtt": [
+            "ChatRunMarkFailedFunctionServiceRoleAAD50CA8",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs22.x",
+        "Timeout": 29
+      },
+      "DependsOn": [
+        "ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617",
+        "ChatRunMarkFailedFunctionServiceRoleAAD50CA8"
+      ]
+    },
     "ChatRunEventsStreamLogGroupDB3F86F0": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -3720,20 +3953,6 @@
         "PolicyDocument": {
           "Statement": [
             {
-              "Action": [
-                "logs:CreateLogDelivery",
-                "logs:GetLogDelivery",
-                "logs:UpdateLogDelivery",
-                "logs:DeleteLogDelivery",
-                "logs:ListLogDeliveries",
-                "logs:PutResourcePolicy",
-                "logs:DescribeResourcePolicies",
-                "logs:DescribeLogGroups"
-              ],
-              "Effect": "Allow",
-              "Resource": "*"
-            },
-            {
               "Action": "lambda:InvokeFunction",
               "Effect": "Allow",
               "Resource": [
@@ -3758,6 +3977,46 @@
                   ]
                 }
               ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunMarkFailedFunction23223E28",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "ChatRunMarkFailedFunction23223E28",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "logs:CreateLogDelivery",
+                "logs:GetLogDelivery",
+                "logs:UpdateLogDelivery",
+                "logs:DeleteLogDelivery",
+                "logs:ListLogDeliveries",
+                "logs:PutResourcePolicy",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
             }
           ],
           "Version": "2012-10-17"
@@ -3777,11 +4036,29 @@
           "Fn::Join": [
             "",
             [
-              "{\"StartAt\":\"ChatRunWorkerTask\",\"States\":{\"ChatRunWorkerTask\":{\"End\":true,\"Type\":\"Task\",\"Resource\":\"arn:aws:states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+              "{\"StartAt\":\"ChatRunWorkerTask\",\"States\":{\"ChatRunWorkerTask\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Catch\":[{\"ErrorEquals\":[\"States.ALL\"],\"ResultPath\":\"$.errorInfo\",\"Next\":\"ChatRunMarkFailedTask\"}],\"Type\":\"Task\",\"ResultPath\":\"$.worker\",\"Resource\":\"arn:",
               {
-                "Ref": "ChatRunWorkerFunction3C85A553"
+                "Ref": "AWS::Partition"
               },
-              "\",\"Payload\":{\"runId.$\":\"$.runId\"}}}},\"TimeoutSeconds\":960}"
+              ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+              {
+                "Fn::GetAtt": [
+                  "ChatRunWorkerFunction3C85A553",
+                  "Arn"
+                ]
+              },
+              "\",\"Payload\":{\"runId.$\":\"$.runId\"}}},\"ChatRunMarkFailedTask\":{\"End\":true,\"Retry\":[{\"ErrorEquals\":[\"Lambda.ClientExecutionTimeoutException\",\"Lambda.ServiceException\",\"Lambda.AWSLambdaException\",\"Lambda.SdkClientException\"],\"IntervalSeconds\":2,\"MaxAttempts\":6,\"BackoffRate\":2}],\"Type\":\"Task\",\"ResultPath\":\"$.markFailed\",\"Resource\":\"arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":states:::lambda:invoke\",\"Parameters\":{\"FunctionName\":\"",
+              {
+                "Fn::GetAtt": [
+                  "ChatRunMarkFailedFunction23223E28",
+                  "Arn"
+                ]
+              },
+              "\",\"Payload\":{\"runId.$\":\"$.runId\",\"errorInfo.$\":\"$.errorInfo\"}}}},\"TimeoutSeconds\":960}"
             ]
           ]
         },

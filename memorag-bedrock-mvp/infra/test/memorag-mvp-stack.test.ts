@@ -215,6 +215,11 @@ test("implements the designed serverless resources", () => {
   const stateMachines = Object.values(template.toJSON().Resources ?? {})
     .filter((resource: any) => resource.Type === "AWS::StepFunctions::StateMachine")
   assert.equal(stateMachines.length, 2)
+  const chatRunStateMachine = stateMachines.find((stateMachine: any) => JSON.stringify(stateMachine.Properties.DefinitionString).includes("ChatRunWorkerTask"))
+  assert.ok(chatRunStateMachine)
+  const chatRunDefinition = JSON.stringify((chatRunStateMachine as any).Properties.DefinitionString)
+  assert.match(chatRunDefinition, /ChatRunMarkFailedTask/)
+  assert.match(chatRunDefinition, /States\.ALL/)
   for (const stateMachine of stateMachines) {
     assert.equal((stateMachine as any).Properties.TracingConfiguration, undefined)
   }

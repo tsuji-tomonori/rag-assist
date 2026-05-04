@@ -1,7 +1,7 @@
 import type { APIGatewayProxyEvent } from "aws-lambda"
 import { createDependencies } from "./dependencies.js"
 import { getPermissionsForGroups } from "./authorization.js"
-import type { JsonValue } from "./types.js"
+import type { ChatRunEvent, JsonValue } from "./types.js"
 
 declare const awslambda: {
   streamifyResponse: (handler: (event: APIGatewayProxyEvent, responseStream: NodeJS.WritableStream) => Promise<void>) => unknown
@@ -15,76 +15,119 @@ declare const awslambda: {
 
 const deps = createDependencies()
 
-export const handler = awslambda.streamifyResponse(async (event, responseStream) => {
-  let stream: NodeJS.WritableStream | undefined
-  try {
-    const runId = event.pathParameters?.runId
-    if (!runId) {
-      writePlainResponse(responseStream, 400, "runId is required")
-      return
-    }
+export const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, Last-Event-ID",
+  "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS"
+}
 
-    const run = await deps.chatRunStore.get(runId)
-    if (!run) {
-      writePlainResponse(responseStream, 404, "Chat run not found")
-      return
-    }
+export const streamResponseHeaders = {
+  ...corsHeaders,
+  "Content-Type": "text/event-stream; charset=utf-8",
+  "Cache-Control": "no-cache, no-transform",
+  "Connection": "keep-alive"
+}
 
-    const claims = (event.requestContext.authorizer as { claims?: Record<string, unknown> } | undefined)?.claims ?? {}
-    const userId = claims.sub ? String(claims.sub) : ""
-    const groups = parseGroups(claims["cognito:groups"])
-    const canReadAll = getPermissionsForGroups(groups).includes("chat:admin:read_all")
-    if (run.createdBy !== userId && !canReadAll) {
-      writePlainResponse(responseStream, 403, "Forbidden")
-      return
-    }
+export const plainResponseHeaders = {
+  ...corsHeaders,
+  "Content-Type": "text/plain; charset=utf-8",
+  "Cache-Control": "no-cache"
+}
 
-    stream = awslambda.HttpResponseStream.from(responseStream, {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache, no-transform",
-        "Connection": "keep-alive"
-      }
-    })
+type ChatRunEventsStreamDependencies = Pick<typeof deps, "chatRunStore" | "chatRunEventStore">
+type LambdaStreamingRuntime = typeof awslambda
 
-    const lastEventId = Number(event.headers?.["Last-Event-ID"] ?? event.headers?.["last-event-id"] ?? 0)
-    let afterSeq = Number.isFinite(lastEventId) ? lastEventId : 0
-    const deadline = Date.now() + 14 * 60 * 1000
-    let lastHeartbeat = 0
-
-    while (Date.now() < deadline) {
-      const events = await deps.chatRunEventStore.listAfter(runId, afterSeq)
-      for (const item of events) {
-        send(stream, item.type, item.seq, item.data ?? { stage: item.stage, message: item.message })
-        afterSeq = item.seq
-        if (item.type === "final" || item.type === "error") return
+export function createChatRunEventsStreamHandler(runtime: LambdaStreamingRuntime, streamDeps: ChatRunEventsStreamDependencies) {
+  return runtime.streamifyResponse(async (event, responseStream) => {
+    let stream: NodeJS.WritableStream | undefined
+    try {
+      const runId = event.pathParameters?.runId
+      if (!runId) {
+        writePlainResponse(runtime, responseStream, 400, "runId is required")
+        return
       }
 
-      if (Date.now() - lastHeartbeat > 15_000) {
-        send(stream, "heartbeat", undefined, { ts: new Date().toISOString(), nextSeq: afterSeq + 1 })
-        lastHeartbeat = Date.now()
+      const run = await streamDeps.chatRunStore.get(runId)
+      if (!run) {
+        writePlainResponse(runtime, responseStream, 404, "Chat run not found")
+        return
       }
 
-      await sleep(1000)
-    }
+      const claims = (event.requestContext.authorizer as { claims?: Record<string, unknown> } | undefined)?.claims ?? {}
+      const userId = claims.sub ? String(claims.sub) : ""
+      const groups = parseGroups(claims["cognito:groups"])
+      const canReadAll = getPermissionsForGroups(groups).includes("chat:admin:read_all")
+      if (run.createdBy !== userId && !canReadAll) {
+        writePlainResponse(runtime, responseStream, 403, "Forbidden")
+        return
+      }
 
-    send(stream, "timeout", undefined, {
-      message: "stream timeout. reconnect with Last-Event-ID.",
-      nextSeq: afterSeq + 1
-    })
-  } catch (err) {
-    if (stream) {
-      send(stream, "error", undefined, {
-        message: err instanceof Error ? err.message : String(err)
+      stream = runtime.HttpResponseStream.from(responseStream, {
+        statusCode: 200,
+        headers: streamResponseHeaders
       })
-    } else {
-      writePlainResponse(responseStream, 500, err instanceof Error ? err.message : String(err))
+
+      const lastEventId = Number(event.headers?.["Last-Event-ID"] ?? event.headers?.["last-event-id"] ?? 0)
+      let afterSeq = Number.isFinite(lastEventId) ? lastEventId : 0
+      const deadline = Date.now() + 14 * 60 * 1000
+      let lastHeartbeat = 0
+
+      while (Date.now() < deadline) {
+        const events = await streamDeps.chatRunEventStore.listAfter(runId, afterSeq)
+        for (const item of events) {
+          send(stream, item.type, item.seq, eventPayload(item))
+          afterSeq = item.seq
+          if (item.type === "final" || item.type === "error") return
+        }
+
+        if (Date.now() - lastHeartbeat > 15_000) {
+          send(stream, "heartbeat", undefined, { ts: new Date().toISOString(), nextSeq: afterSeq + 1 })
+          lastHeartbeat = Date.now()
+        }
+
+        await sleep(1000)
+      }
+
+      send(stream, "timeout", undefined, {
+        message: "stream timeout. reconnect with Last-Event-ID.",
+        nextSeq: afterSeq + 1
+      })
+    } catch (err) {
+      if (stream) {
+        send(stream, "error", undefined, {
+          message: err instanceof Error ? err.message : String(err)
+        })
+      } else {
+        writePlainResponse(runtime, responseStream, 500, err instanceof Error ? err.message : String(err))
+      }
+    } finally {
+      stream?.end()
     }
-  } finally {
-    stream?.end()
+  })
+}
+
+const lambdaRuntime =
+  typeof awslambda !== "undefined" &&
+  typeof awslambda.streamifyResponse === "function" &&
+  typeof awslambda.HttpResponseStream?.from === "function"
+    ? awslambda
+    : undefined
+
+export const handler = lambdaRuntime ? createChatRunEventsStreamHandler(lambdaRuntime, deps) : undefined
+
+export function eventPayload(item: ChatRunEvent): JsonValue {
+  const base: Record<string, JsonValue> = {}
+  if (item.stage !== undefined) base.stage = item.stage
+  if (item.message !== undefined) base.message = item.message
+
+  if (item.data && typeof item.data === "object" && !Array.isArray(item.data)) {
+    return { ...base, ...item.data } as JsonValue
   }
-})
+
+  return item.data === undefined
+    ? base
+    : { ...base, data: item.data } as JsonValue
+}
 
 function send(stream: NodeJS.WritableStream, eventName: string, id: number | undefined, data: JsonValue | Record<string, unknown>) {
   if (id !== undefined) stream.write(`id: ${id}\n`)
@@ -98,13 +141,10 @@ function parseGroups(value: unknown): string[] {
   return []
 }
 
-function writePlainResponse(responseStream: NodeJS.WritableStream, statusCode: number, message: string) {
-  const stream = awslambda.HttpResponseStream.from(responseStream, {
+function writePlainResponse(runtime: LambdaStreamingRuntime, responseStream: NodeJS.WritableStream, statusCode: number, message: string) {
+  const stream = runtime.HttpResponseStream.from(responseStream, {
     statusCode,
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-cache"
-    }
+    headers: plainResponseHeaders
   })
   stream.write(message)
   stream.end()

@@ -16,6 +16,7 @@ import * as s3 from "aws-cdk-lib/aws-s3"
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment"
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager"
 import * as sfn from "aws-cdk-lib/aws-stepfunctions"
+import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
 import type { Construct } from "constructs"
@@ -352,6 +353,21 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
 
+    const chatRunMarkFailedLogGroup = new logs.LogGroup(this, "ChatRunMarkFailedLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const chatRunMarkFailedFn = new lambda.Function(this, "ChatRunMarkFailedFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/chat-run-mark-failed")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: Duration.seconds(29),
+      logGroup: chatRunMarkFailedLogGroup,
+      environment: apiEnvironment
+    })
+
     const chatRunEventsLogGroup = new logs.LogGroup(this, "ChatRunEventsStreamLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: RemovalPolicy.DESTROY
@@ -377,9 +393,11 @@ export class MemoRagMvpStack extends Stack {
     benchmarkRunsTable.grantReadWriteData(apiFn)
     chatRunsTable.grantReadWriteData(apiFn)
     chatRunsTable.grantReadWriteData(chatRunWorkerFn)
+    chatRunsTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunsTable.grantReadData(chatRunEventsFn)
     chatRunEventsTable.grantReadWriteData(apiFn)
     chatRunEventsTable.grantReadWriteData(chatRunWorkerFn)
+    chatRunEventsTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunEventsTable.grantReadData(chatRunEventsFn)
     for (const fn of [apiFn, chatRunWorkerFn]) {
       fn.addToRolePolicy(
@@ -458,18 +476,24 @@ export class MemoRagMvpStack extends Stack {
       apiMethodOptions
     )
 
-    const chatRunWorkerTask = new sfn.CustomState(this, "ChatRunWorkerTask", {
-      stateJson: {
-        Type: "Task",
-        Resource: "arn:aws:states:::lambda:invoke",
-        Parameters: {
-          FunctionName: chatRunWorkerFn.functionName,
-          Payload: {
-            "runId.$": "$.runId"
-          }
-        },
-        End: true
-      }
+    const chatRunWorkerTask = new tasks.LambdaInvoke(this, "ChatRunWorkerTask", {
+      lambdaFunction: chatRunWorkerFn,
+      payload: sfn.TaskInput.fromObject({
+        runId: sfn.JsonPath.stringAt("$.runId")
+      }),
+      resultPath: "$.worker"
+    })
+    const chatRunMarkFailedTask = new tasks.LambdaInvoke(this, "ChatRunMarkFailedTask", {
+      lambdaFunction: chatRunMarkFailedFn,
+      payload: sfn.TaskInput.fromObject({
+        runId: sfn.JsonPath.stringAt("$.runId"),
+        errorInfo: sfn.JsonPath.objectAt("$.errorInfo")
+      }),
+      resultPath: "$.markFailed"
+    })
+    chatRunWorkerTask.addCatch(chatRunMarkFailedTask, {
+      errors: ["States.ALL"],
+      resultPath: "$.errorInfo"
     })
     const chatRunStateMachineLogGroup = new logs.LogGroup(this, "ChatRunStateMachineLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
@@ -484,6 +508,7 @@ export class MemoRagMvpStack extends Stack {
       timeout: Duration.minutes(16)
     })
     chatRunWorkerFn.grantInvoke(chatRunStateMachine)
+    chatRunMarkFailedFn.grantInvoke(chatRunStateMachine)
     chatRunStateMachine.grantStartExecution(apiFn)
     apiFn.addEnvironment("CHAT_RUN_STATE_MACHINE_ARN", chatRunStateMachine.stateMachineArn)
     NagSuppressions.addResourceSuppressions(

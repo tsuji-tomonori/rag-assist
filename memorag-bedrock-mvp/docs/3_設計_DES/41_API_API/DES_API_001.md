@@ -80,7 +80,7 @@
 
 ### Request
 
-`POST /chat` と同じ request body を受け付ける。`includeDebug=true` の場合は `chat:admin:read_all` も必要。
+`POST /chat` と同じ request body を受け付ける。`strictGrounded`、`useMemory`、`maxIterations` も同期 API と同じ意味で保存し、worker 実行時に `runQaAgent()` へ渡す。`includeDebug=true` の場合は `chat:admin:read_all` も必要。
 
 ### Response
 
@@ -109,6 +109,9 @@ data: {"answer":"...", "isAnswerable":true, "citations":[]}
 ```
 
 接続が長時間無通信にならないよう `heartbeat` event を送る。`final` または `error` event で stream を終了する。
+すべての実レスポンスには CORS header を含める。認可エラーや未検出エラーでもブラウザ側が status/body を読めるよう、plain text の 400/403/404/500 応答にも同じ CORS header を付与する。
+stream handler の deadline に達した場合は `timeout` event を送って stream を閉じる。クライアントは最後に受け取った `id` を `Last-Event-ID` として再接続し、`final` または `error` を受け取るまで購読を継続する。
+worker Lambda や Step Functions task が timeout/failure になった場合は failure marker が `ChatRunsTable` を `failed` に更新し、`ChatRunEventsTable` に `error` event を追加する。
 
 ### 料金算出との関係
 
