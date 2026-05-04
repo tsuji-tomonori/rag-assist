@@ -3,7 +3,7 @@ import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
 import { createDependencies } from "./dependencies.js"
 import { authMiddleware } from "./auth.js"
-import { getPermissionsForGroups, requirePermission } from "./authorization.js"
+import { getPermissionsForGroups, hasPermission, requirePermission } from "./authorization.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import {
   ChatRequestSchema,
@@ -69,6 +69,12 @@ for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/
 
 function looseRoute(config: any) {
   return createRoute(config) as any
+}
+
+function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.infer<typeof QuestionSchema> {
+  const visibleQuestion = { ...question }
+  delete visibleQuestion.internalMemo
+  return visibleQuestion
 }
 
 app.openapi(
@@ -695,9 +701,10 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "chat:create")
+    const user = c.get("user")
+    requirePermission(user, "chat:create")
     const body = (c.req as any).valid("json") as z.infer<typeof CreateQuestionRequestSchema>
-    return c.json(await service.createQuestion(body), 200)
+    return c.json(await service.createQuestion(body, user), 200)
   }
 )
 
@@ -729,10 +736,13 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "answer:edit")
+    const user = c.get("user")
     const { questionId } = (c.req as any).valid("param") as { questionId: string }
     const question = await service.getQuestion(questionId)
     if (!question) return c.json({ error: "Question not found" }, 404)
+    if (hasPermission(user, "answer:edit")) return c.json(question, 200)
+    if (question.requesterUserId && question.requesterUserId === user.userId) return c.json(requesterVisibleQuestion(question), 200)
+    requirePermission(user, "answer:edit")
     return c.json(question, 200)
   }
 )
@@ -780,9 +790,16 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "answer:publish")
     try {
+      const user = c.get("user")
       const { questionId } = (c.req as any).valid("param") as { questionId: string }
+      const question = await service.getQuestion(questionId)
+      if (!question) return c.json({ error: "Question not found" }, 404)
+      if (hasPermission(user, "answer:publish")) return c.json(await service.resolveQuestion(questionId), 200)
+      if (question.requesterUserId && question.requesterUserId === user.userId) {
+        return c.json(requesterVisibleQuestion(await service.resolveQuestion(questionId)), 200)
+      }
+      requirePermission(user, "answer:publish")
       return c.json(await service.resolveQuestion(questionId), 200)
     } catch (err) {
       if (err instanceof Error && err.message.includes("Question not found")) return c.json({ error: "Question not found" }, 404)

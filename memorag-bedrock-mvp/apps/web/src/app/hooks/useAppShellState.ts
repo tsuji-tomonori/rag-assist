@@ -113,6 +113,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     rememberMessages,
     toggleFavorite,
     deleteHistoryItem,
+    updateHistoryQuestionTickets,
     createConversationId
   } = useConversationHistory({ setError })
 
@@ -172,6 +173,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     selectedQuestionId,
     setSelectedQuestionId,
     refreshQuestions,
+    refreshQuestionTickets,
+    refreshLinkedQuestions,
     onCreateQuestion,
     onAnswerQuestion,
     onResolveQuestion
@@ -231,6 +234,16 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const isProcessing = pendingActivity !== null
   const visibleMessages = messages
   const latestMessageCreatedAt = visibleMessages[visibleMessages.length - 1]?.createdAt ?? ""
+  const linkedQuestionRefreshKey = visibleMessages
+    .map((message) => message.questionTicket)
+    .filter((questionTicket) => questionTicket && questionTicket.status !== "resolved")
+    .map((questionTicket) => `${questionTicket?.questionId}:${questionTicket?.status}:${questionTicket?.updatedAt}`)
+    .join("|")
+  const historyQuestionRefreshKey = history
+    .flatMap((item) => item.messages.map((message) => message.questionTicket))
+    .filter((questionTicket) => questionTicket && questionTicket.status !== "resolved")
+    .map((questionTicket) => `${questionTicket?.questionId}:${questionTicket?.status}:${questionTicket?.updatedAt}`)
+    .join("|")
 
   useEffect(() => {
     if (currentUserError) setError(currentUserError)
@@ -281,6 +294,27 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     const titleCandidate = messages.find((item) => item.role === "user")?.text || "新しい会話"
     rememberMessages(currentConversationId, titleCandidate, messages)
   }, [currentConversationId, messages, rememberMessages])
+
+  useEffect(() => {
+    if (!linkedQuestionRefreshKey) return
+    refreshLinkedQuestions(messages).catch((err) => console.warn("Failed to refresh linked questions", err))
+    const timer = window.setInterval(() => {
+      refreshLinkedQuestions(messages).catch((err) => console.warn("Failed to poll linked questions", err))
+    }, 20000)
+    return () => window.clearInterval(timer)
+  }, [linkedQuestionRefreshKey, messages, refreshLinkedQuestions])
+
+  useEffect(() => {
+    if (!historyQuestionRefreshKey) return
+    const questionIds = history
+      .flatMap((item) => item.messages.map((message) => message.questionTicket))
+      .filter((questionTicket) => questionTicket && questionTicket.status !== "resolved")
+      .map((questionTicket) => questionTicket?.questionId ?? "")
+
+    refreshQuestionTickets(questionIds)
+      .then(updateHistoryQuestionTickets)
+      .catch((err) => console.warn("Failed to refresh history question tickets", err))
+  }, [history, historyQuestionRefreshKey, refreshQuestionTickets, updateHistoryQuestionTickets])
 
   useEffect(() => {
     if (activeView !== "chat") return

@@ -92,6 +92,7 @@ test("local question store creates, lists, answers, resolves, and rejects missin
     title: "資料外の確認",
     question: "担当者へ確認してください。",
     requesterName: "  ",
+    requesterUserId: "user-1",
     requesterDepartment: "  ",
     assigneeDepartment: "  ",
     category: "  ",
@@ -101,6 +102,7 @@ test("local question store creates, lists, answers, resolves, and rejects missin
 
   assert.equal(question.status, "open")
   assert.equal(question.requesterName, "山田 太郎")
+  assert.equal(question.requesterUserId, "user-1")
   assert.equal(question.assigneeDepartment, "総務部")
   assert.equal((await store.get(question.questionId))?.questionId, question.questionId)
   assert.deepEqual((await store.list()).map((item) => item.questionId), [question.questionId])

@@ -95,6 +95,7 @@ const humanQuestion: HumanQuestion = {
   title: "山田さんの昼食について確認したい",
   question: "今日山田さんは何を食べたか、担当者に確認してください。",
   requesterName: "山田 太郎",
+  requesterUserId: "user-1",
   requesterDepartment: "利用部門",
   assigneeDepartment: "総務部",
   category: "その他の質問",
@@ -885,6 +886,7 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/questions") && isGet(init)) return Promise.resolve(response({ questions: storedQuestions }))
+      if (requestUrl.endsWith("/questions/question-1") && isGet(init)) return Promise.resolve(response(storedQuestions[0] ?? humanQuestion))
       if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
       if (requestUrl.endsWith("/chat") && init?.method === "POST") {
         return Promise.resolve(response({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] }))
@@ -967,6 +969,7 @@ describe("App chat and upload flow", () => {
       })
     )
 
+    let storedQuestion: HumanQuestion | undefined
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
@@ -978,8 +981,10 @@ describe("App chat and upload flow", () => {
       }
       if (requestUrl.endsWith("/questions") && init?.method === "POST") {
         const body = JSON.parse(String(init.body ?? "{}"))
-        return Promise.resolve(response({ ...humanQuestion, ...body }))
+        storedQuestion = { ...humanQuestion, ...body }
+        return Promise.resolve(response(storedQuestion))
       }
+      if (requestUrl.endsWith("/questions/question-1") && isGet(init)) return Promise.resolve(response(storedQuestion ?? humanQuestion))
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
@@ -997,7 +1002,63 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("担当者へ送信済み")).toBeInTheDocument()
 
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions/question-1") && isGet(init as RequestInit | undefined))).toBe(true)
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
+  })
+
+  it("shows answered question notifications in history for chat users", async () => {
+    window.sessionStorage.setItem(
+      "memorag.auth.session",
+      JSON.stringify({
+        email: "tester@example.com",
+        idToken: jwtWithGroups(["CHAT_USER"]),
+        expiresAt: Date.now() + 3600_000
+      })
+    )
+
+    let storedHistory: ConversationHistoryItem[] = [
+      {
+        schemaVersion: 1,
+        id: "conversation-question-1",
+        title: "山田さんの昼食",
+        updatedAt: "2026-04-30T00:01:00.000Z",
+        isFavorite: false,
+        messages: [
+          { role: "user", text: "今日山田さんは何を食べた?", createdAt: "2026-04-30T00:00:00.000Z" },
+          {
+            role: "assistant",
+            text: "資料からは回答できません。",
+            createdAt: "2026-04-30T00:00:01.000Z",
+            sourceQuestion: "今日山田さんは何を食べた?",
+            questionTicket: humanQuestion
+          }
+        ]
+      }
+    ]
+
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      const requestUrl = String(url)
+      if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
+      if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(["CHAT_USER"])))
+      if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
+      if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
+        const body = JSON.parse(String(init.body ?? "{}")) as ConversationHistoryItem
+        storedHistory = [body, ...storedHistory.filter((item) => item.id !== body.id)]
+        return Promise.resolve(response(body))
+      }
+      if (requestUrl.endsWith("/questions/question-1") && isGet(init)) return Promise.resolve(response(answeredHumanQuestion))
+      return Promise.resolve(response({}))
+    })
+    vi.stubGlobal("fetch", fetchMock)
+    render(<App />)
+
+    await waitFor(() => expect(findRequest(fetchMock, "/questions/question-1")).toBeTruthy())
+    await userEvent.click(await screen.findByTitle("履歴"))
+
+    expect(await screen.findByText("返答あり")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /山田さんの昼食.*返答あり/ })).toBeInTheDocument()
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
   })
 
   it.each([

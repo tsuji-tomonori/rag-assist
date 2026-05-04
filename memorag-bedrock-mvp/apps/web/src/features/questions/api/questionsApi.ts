@@ -21,6 +21,10 @@ export async function listQuestions(): Promise<HumanQuestion[]> {
   return result.questions ?? []
 }
 
+export async function getQuestion(questionId: string): Promise<HumanQuestion> {
+  return get<HumanQuestion>(`/questions/${encodeURIComponent(questionId)}`)
+}
+
 export async function answerQuestion(
   questionId: string,
   input: {
