@@ -30,6 +30,9 @@ test("question requester can read answers and resolve only their own ticket", as
     const requesterList = await fetch(url(requester, "/questions"))
     assert.equal(requesterList.status, 403)
 
+    const openResolve = await fetch(url(requester, `/questions/${created.questionId}/resolve`), { method: "POST" })
+    assert.equal(openResolve.status, 409)
+
     await postJson(admin, `/questions/${created.questionId}/answer`, {
       answerTitle: "回答",
       answerBody: "担当者の確認結果です。",
@@ -43,7 +46,10 @@ test("question requester can read answers and resolve only their own ticket", as
     assert.equal(Object.hasOwn(visibleToRequester, "internalMemo"), false)
 
     const forbiddenToOther = await fetch(url(otherRequester, `/questions/${created.questionId}`))
-    assert.equal(forbiddenToOther.status, 403)
+    assert.equal(forbiddenToOther.status, 404)
+
+    const forbiddenResolveToOther = await fetch(url(otherRequester, `/questions/${created.questionId}/resolve`), { method: "POST" })
+    assert.equal(forbiddenResolveToOther.status, 404)
 
     const resolvedByRequester = await postJson<Record<string, unknown>>(requester, `/questions/${created.questionId}/resolve`, {})
     assert.equal(resolvedByRequester.status, "resolved")

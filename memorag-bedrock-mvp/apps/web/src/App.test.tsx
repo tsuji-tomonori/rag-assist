@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import App from "./App.js"
@@ -1006,7 +1006,7 @@ describe("App chat and upload flow", () => {
     expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/debug-runs") && isGet(init as RequestInit | undefined))).toBe(false)
   })
 
-  it("shows answered question notifications in history for chat users", async () => {
+  it("polls history question tickets and shows answered notifications for chat users", async () => {
     window.sessionStorage.setItem(
       "memorag.auth.session",
       JSON.stringify({
@@ -1036,6 +1036,7 @@ describe("App chat and upload flow", () => {
       }
     ]
 
+    let questionGetCount = 0
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
@@ -1047,18 +1048,39 @@ describe("App chat and upload flow", () => {
         storedHistory = [body, ...storedHistory.filter((item) => item.id !== body.id)]
         return Promise.resolve(response(body))
       }
-      if (requestUrl.endsWith("/questions/question-1") && isGet(init)) return Promise.resolve(response(answeredHumanQuestion))
+      if (requestUrl.endsWith("/questions/question-1") && isGet(init)) {
+        questionGetCount += 1
+        return Promise.resolve(response(questionGetCount === 1 ? humanQuestion : answeredHumanQuestion))
+      }
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
     render(<App />)
 
-    await waitFor(() => expect(findRequest(fetchMock, "/questions/question-1")).toBeTruthy())
-    await userEvent.click(await screen.findByTitle("履歴"))
+    await screen.findByTitle("履歴")
+    vi.useFakeTimers()
+    try {
+      act(() => {
+        fireEvent.click(screen.getByTitle("履歴"))
+      })
 
-    expect(await screen.findByText("返答あり")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /山田さんの昼食.*返答あり/ })).toBeInTheDocument()
-    expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
+      await act(async () => {
+        await Promise.resolve()
+      })
+      expect(findRequest(fetchMock, "/questions/question-1")).toBeTruthy()
+      expect(screen.getByText("確認待ち")).toBeInTheDocument()
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(20000)
+      })
+
+      expect(screen.getByText("返答あり")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /山田さんの昼食.*返答あり/ })).toBeInTheDocument()
+      expect(questionGetCount).toBeGreaterThanOrEqual(2)
+      expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/questions") && isGet(init as RequestInit | undefined))).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it.each([

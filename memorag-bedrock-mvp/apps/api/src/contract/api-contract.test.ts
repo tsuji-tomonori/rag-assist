@@ -322,7 +322,7 @@ test("question and debug management endpoints enforce Phase 1 role boundaries", 
     assert.equal(answerQuestion.status, 403)
 
     const resolveQuestion = await fetch(`http://127.0.0.1:${port}/questions/${question.questionId}/resolve`, { method: "POST" })
-    assert.equal(resolveQuestion.status, 200)
+    assert.equal(resolveQuestion.status, 409)
 
     const getDebugRun = await fetch(`http://127.0.0.1:${port}/debug-runs/unknown-run`)
     assert.equal(getDebugRun.status, 403)

@@ -742,8 +742,7 @@ app.openapi(
     if (!question) return c.json({ error: "Question not found" }, 404)
     if (hasPermission(user, "answer:edit")) return c.json(question, 200)
     if (question.requesterUserId && question.requesterUserId === user.userId) return c.json(requesterVisibleQuestion(question), 200)
-    requirePermission(user, "answer:edit")
-    return c.json(question, 200)
+    return c.json({ error: "Question not found" }, 404)
   }
 )
 
@@ -786,6 +785,7 @@ app.openapi(
     },
     responses: {
       200: { description: "Resolved human follow-up question", content: { "application/json": { schema: QuestionSchema } } },
+      409: { description: "Question is not answered yet", content: { "application/json": { schema: ErrorResponseSchema } } },
       404: { description: "Question not found", content: { "application/json": { schema: ErrorResponseSchema } } }
     }
   }),
@@ -797,10 +797,10 @@ app.openapi(
       if (!question) return c.json({ error: "Question not found" }, 404)
       if (hasPermission(user, "answer:publish")) return c.json(await service.resolveQuestion(questionId), 200)
       if (question.requesterUserId && question.requesterUserId === user.userId) {
+        if (question.status !== "answered") return c.json({ error: "Question is not answered yet" }, 409)
         return c.json(requesterVisibleQuestion(await service.resolveQuestion(questionId)), 200)
       }
-      requirePermission(user, "answer:publish")
-      return c.json(await service.resolveQuestion(questionId), 200)
+      return c.json({ error: "Question not found" }, 404)
     } catch (err) {
       if (err instanceof Error && err.message.includes("Question not found")) return c.json({ error: "Question not found" }, 404)
       throw err

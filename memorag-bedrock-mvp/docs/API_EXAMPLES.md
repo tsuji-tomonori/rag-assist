@@ -195,7 +195,7 @@ curl -s http://localhost:8787/questions "${AUTH_HEADER[@]}" | jq
 
 ## Get own follow-up question answer
 
-`GET /questions/<questionId>` は `ANSWER_EDITOR` に加え、問い合わせ作成者本人も実行できる。本人向けレスポンスには担当者向けの `internalMemo` を含めない。
+`GET /questions/<questionId>` は `ANSWER_EDITOR` に加え、問い合わせ作成者本人も実行できる。本人向けレスポンスには担当者向けの `internalMemo` を含めない。非担当者・非作成者には既存 ticket でも `404` を返す。
 
 ```bash
 curl -s http://localhost:8787/questions/<questionId> "${AUTH_HEADER[@]}" | jq

@@ -50,22 +50,23 @@ export function useConversationHistory({ setError }: { setError: (error: string 
     if (updatedQuestions.length === 0) return
     const byId = new Map(updatedQuestions.map((questionItem) => [questionItem.questionId, questionItem]))
     const changedItems: ConversationHistoryItem[] = []
-    setHistory((prev) =>
-      prev.map((item) => {
-        let changed = false
-        const messages = item.messages.map((message) => {
-          const questionId = message.questionTicket?.questionId
-          const updated = questionId ? byId.get(questionId) : undefined
-          if (!updated || message.questionTicket?.updatedAt === updated.updatedAt) return message
-          changed = true
-          return { ...message, questionTicket: updated }
-        })
-        if (!changed) return item
-        const nextItem = { ...item, messages }
-        changedItems.push(nextItem)
-        return nextItem
+    const nextHistory = historyRef.current.map((item) => {
+      let changed = false
+      const messages = item.messages.map((message) => {
+        const questionId = message.questionTicket?.questionId
+        const updated = questionId ? byId.get(questionId) : undefined
+        if (!updated || message.questionTicket?.updatedAt === updated.updatedAt) return message
+        changed = true
+        return { ...message, questionTicket: updated }
       })
-    )
+      if (!changed) return item
+      const nextItem = { ...item, messages }
+      changedItems.push(nextItem)
+      return nextItem
+    })
+    if (changedItems.length === 0) return
+    historyRef.current = nextHistory
+    setHistory(nextHistory)
     for (const item of changedItems) {
       saveConversationHistory(item).catch((err) => console.warn("Failed to save refreshed conversation history", err))
     }

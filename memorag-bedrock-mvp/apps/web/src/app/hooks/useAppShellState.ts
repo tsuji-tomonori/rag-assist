@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentProps } from "react"
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react"
 import type { AuthSession } from "../../authClient.js"
 import type { AppRoutesProps } from "../AppRoutes.js"
 import type { RailNav } from "../components/RailNav.js"
@@ -239,11 +239,12 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     .filter((questionTicket) => questionTicket && questionTicket.status !== "resolved")
     .map((questionTicket) => `${questionTicket?.questionId}:${questionTicket?.status}:${questionTicket?.updatedAt}`)
     .join("|")
-  const historyQuestionRefreshKey = history
+  const historyQuestionIds = useMemo(() => [...new Set(history
     .flatMap((item) => item.messages.map((message) => message.questionTicket))
     .filter((questionTicket) => questionTicket && questionTicket.status !== "resolved")
-    .map((questionTicket) => `${questionTicket?.questionId}:${questionTicket?.status}:${questionTicket?.updatedAt}`)
-    .join("|")
+    .map((questionTicket) => questionTicket?.questionId ?? "")
+    .filter(Boolean))], [history])
+  const historyQuestionRefreshKey = historyQuestionIds.join("|")
 
   useEffect(() => {
     if (currentUserError) setError(currentUserError)
@@ -305,16 +306,18 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   }, [linkedQuestionRefreshKey, messages, refreshLinkedQuestions])
 
   useEffect(() => {
-    if (!historyQuestionRefreshKey) return
-    const questionIds = history
-      .flatMap((item) => item.messages.map((message) => message.questionTicket))
-      .filter((questionTicket) => questionTicket && questionTicket.status !== "resolved")
-      .map((questionTicket) => questionTicket?.questionId ?? "")
+    if (!historyQuestionRefreshKey || (activeView !== "history" && activeView !== "favorites")) return
 
-    refreshQuestionTickets(questionIds)
-      .then(updateHistoryQuestionTickets)
-      .catch((err) => console.warn("Failed to refresh history question tickets", err))
-  }, [history, historyQuestionRefreshKey, refreshQuestionTickets, updateHistoryQuestionTickets])
+    const refreshHistoryQuestions = () => {
+      refreshQuestionTickets(historyQuestionIds)
+        .then(updateHistoryQuestionTickets)
+        .catch((err) => console.warn("Failed to refresh history question tickets", err))
+    }
+
+    refreshHistoryQuestions()
+    const timer = window.setInterval(refreshHistoryQuestions, 20000)
+    return () => window.clearInterval(timer)
+  }, [activeView, historyQuestionIds, historyQuestionRefreshKey, refreshQuestionTickets, updateHistoryQuestionTickets])
 
   useEffect(() => {
     if (activeView !== "chat") return

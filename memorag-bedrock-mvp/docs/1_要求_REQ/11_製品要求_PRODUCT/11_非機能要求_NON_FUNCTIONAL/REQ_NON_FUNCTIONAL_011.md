@@ -16,9 +16,9 @@
 - AC-NFR011-003: `RAG_GROUP_MANAGER` は `rag:doc:read` を持つこと。
 - AC-NFR011-004: `POST /questions` は `chat:create` を要求すること。
 - AC-NFR011-005: `GET /questions` は `answer:edit` を要求すること。
-- AC-NFR011-006: `GET /questions/{questionId}` は `answer:edit` を要求し、問い合わせ作成者本人の場合のみ内部メモを除いた詳細取得を許可すること。
+- AC-NFR011-006: `GET /questions/{questionId}` は `answer:edit` を要求し、問い合わせ作成者本人の場合のみ内部メモを除いた詳細取得を許可し、非担当者・非作成者には ticket 存在有無を識別させないこと。
 - AC-NFR011-007: `POST /questions/{questionId}/answer` は `answer:publish` を要求すること。
-- AC-NFR011-008: `POST /questions/{questionId}/resolve` は `answer:publish` を要求し、問い合わせ作成者本人の場合のみ自身の ticket の解決済み化を許可すること。
+- AC-NFR011-008: `POST /questions/{questionId}/resolve` は `answer:publish` を要求し、問い合わせ作成者本人の場合のみ回答済みの自身の ticket の解決済み化を許可し、非担当者・非作成者には ticket 存在有無を識別させないこと。
 - AC-NFR011-009: 一般チャット利用者は問い合わせ管理操作を実行できないこと。
 - AC-NFR011-010: `ANSWER_EDITOR` はユーザー管理権限なしで問い合わせ一覧を参照できること。
 - AC-NFR011-011: Web UI は `CHAT_USER` に対して担当者一覧と debug trace 一覧を事前取得しないこと。
