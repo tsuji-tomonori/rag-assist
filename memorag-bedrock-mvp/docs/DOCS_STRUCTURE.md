@@ -26,7 +26,15 @@ memorag-bedrock-mvp/docs/
     11_製品要求_PRODUCT/
       REQ_PRODUCT_001.md
       01_機能要求_FUNCTIONAL/
-        REQ_FUNCTIONAL_001.md
+        README.md
+        01_文書・知識ベース管理/
+          01_文書登録/
+            REQ_FUNCTIONAL_001.md
+          02_文書のQA利用可能化/
+            REQ_FUNCTIONAL_002.md
+        02_チャットQA・根拠提示・回答不能制御/
+          01_質問入力・回答取得/
+            REQ_FUNCTIONAL_003.md
       11_非機能要求_NON_FUNCTIONAL/
         REQ_NON_FUNCTIONAL_001.md
         01_技術制約_TECHNICAL_CONSTRAINT/
@@ -74,6 +82,7 @@ memorag-bedrock-mvp/docs/
 - 既存ファイルは更新機会に合わせて段階移管する
 - `REQUIREMENTS.md` / `ARCHITECTURE.md` は本文の正ではなく索引として扱う
 - 要件、アーキテクチャ、設計の対応は `REQ_CHANGE_001.md` のトレーサビリティで管理する
+- 機能要求は `01_機能要求_FUNCTIONAL/README.md` を索引とし、L1 主分類 / L2 主機能群のディレクトリ配下へ個別 `REQ_FUNCTIONAL_*` を配置する
 
 ## 運用ルール（今後）
 

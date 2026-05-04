@@ -290,6 +290,7 @@ test("fails the benchmark CodeBuild runner when auth token resolution fails", ()
   assert.equal(codeBuildProjects.length, 1)
   const buildSpec = JSON.parse((codeBuildProjects[0] as any).Properties.Source.BuildSpec)
 
+  assert.equal(buildSpec.env.shell, "bash")
   for (const phase of ["install", "pre_build", "build", "post_build"]) {
     assert.equal(buildSpec.phases[phase].commands[0], "set -euo pipefail")
   }

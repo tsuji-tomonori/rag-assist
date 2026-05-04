@@ -22,6 +22,7 @@ export class LocalQuestionStore implements QuestionStore {
       title: input.title,
       question: input.question,
       requesterName: input.requesterName?.trim() || "山田 太郎",
+      requesterUserId: input.requesterUserId,
       requesterDepartment: input.requesterDepartment?.trim() || "利用部門",
       assigneeDepartment: input.assigneeDepartment?.trim() || "総務部",
       category: input.category?.trim() || "その他の質問",

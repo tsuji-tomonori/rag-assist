@@ -8,7 +8,8 @@
     "network disconnect 時の retry を強化する",
     "StartExecution 失敗時に queued run を failed/error にする",
     "API Gateway authorizer 由来 401/403 CORS を安定させる",
-    "検証、作業レポート、commit、push、PR 更新を行う"
+    "検証、作業レポート、commit、push、PR 更新を行う",
+    "最新 origin/main を取り込み、再発した競合を解消する"
   ],
   "completed_items": [
     "Hono app に GET /chat-runs/{runId}/events の local SSE route を追加した",
@@ -18,7 +19,8 @@
     "ChatRun/Event には full debug trace ではなく debugRunId を保存・送信し、UI が必要時に GET /debug-runs/{runId} を読むようにした",
     "Step Functions StartExecution 失敗時に markChatRunFailed() を呼び queued run を failed/error に進めるようにした",
     "REST API DEFAULT_4XX / DEFAULT_5XX GatewayResponse に CORS header を追加した",
-    "API/Web/Infra tests、access-control static test、contract test、CDK snapshot、docs/examples、作業レポートを更新した"
+    "API/Web/Infra tests、access-control static test、contract test、CDK snapshot、docs/examples、作業レポートを更新した",
+    "origin/main f217f94 を merge し、app.ts の helper conflict を解消した"
   ],
   "remaining_items": [],
   "blocked_items": [],
@@ -80,8 +82,53 @@
       "command": "task docs:check:changed",
       "result": "not_run",
       "note": "この worktree の Taskfile に task が存在しないため未実行"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run typecheck",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run typecheck",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra run typecheck",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run test",
+      "result": "pass",
+      "note": "origin/main remerge 後、76 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run test",
+      "result": "pass",
+      "note": "origin/main remerge 後、13 files / 88 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/infra test",
+      "result": "pass",
+      "note": "origin/main remerge 後、6 tests"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/api run build",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp/apps/web run build",
+      "result": "pass",
+      "note": "origin/main remerge 後"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run lint",
+      "result": "pass",
+      "note": "origin/main remerge 後"
     }
   ],
-  "next_action": "commit、push、PR #94 更新",
+  "next_action": "merge commit、push、PR #94 更新",
   "safe_to_continue_without_user": true
 }

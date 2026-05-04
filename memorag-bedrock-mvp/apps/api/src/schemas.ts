@@ -449,6 +449,7 @@ export const QuestionSchema = z.object({
   title: z.string(),
   question: z.string(),
   requesterName: z.string(),
+  requesterUserId: z.string().optional(),
   requesterDepartment: z.string(),
   assigneeDepartment: z.string(),
   category: z.string(),

@@ -14,6 +14,7 @@ import {
   fileToBase64,
   getDebugRun,
   getMe,
+  getQuestion,
   getRuntimeConfig,
   listAliasAuditLog,
   listAliases,
@@ -67,6 +68,7 @@ describe("API client", () => {
       api.chat,
       api.createQuestion,
       api.listQuestions,
+      api.getQuestion,
       api.listConversationHistory,
       api.saveConversationHistory,
       api.listBenchmarkRuns,
@@ -270,6 +272,9 @@ describe("API client", () => {
 
     mockFetch({ questions: [{ questionId: "question-1" }] })
     await expect(listQuestions()).resolves.toEqual([{ questionId: "question-1" }])
+
+    mockFetch({ questionId: "question-1", status: "answered" })
+    await expect(getQuestion("question-1")).resolves.toMatchObject({ status: "answered" })
 
     mockFetch({ questionId: "question-1", status: "answered" })
     await expect(answerQuestion("question-1", { answerTitle: "回答", answerBody: "本文" })).resolves.toMatchObject({ status: "answered" })

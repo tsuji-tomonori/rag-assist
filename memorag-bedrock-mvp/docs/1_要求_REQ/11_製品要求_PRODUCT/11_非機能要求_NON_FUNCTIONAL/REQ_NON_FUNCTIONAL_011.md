@@ -16,9 +16,9 @@
 - AC-NFR011-003: `RAG_GROUP_MANAGER` は `rag:doc:read` を持つこと。
 - AC-NFR011-004: `POST /questions` は `chat:create` を要求すること。
 - AC-NFR011-005: `GET /questions` は `answer:edit` を要求すること。
-- AC-NFR011-006: `GET /questions/{questionId}` は `answer:edit` を要求すること。
+- AC-NFR011-006: `GET /questions/{questionId}` は `answer:edit` を要求し、問い合わせ作成者本人の場合のみ内部メモを除いた詳細取得を許可し、非担当者・非作成者には ticket 存在有無を識別させないこと。
 - AC-NFR011-007: `POST /questions/{questionId}/answer` は `answer:publish` を要求すること。
-- AC-NFR011-008: `POST /questions/{questionId}/resolve` は `answer:publish` を要求すること。
+- AC-NFR011-008: `POST /questions/{questionId}/resolve` は `answer:publish` を要求し、問い合わせ作成者本人の場合のみ回答済みの自身の ticket の解決済み化を許可し、非担当者・非作成者には ticket 存在有無を識別させないこと。
 - AC-NFR011-009: 一般チャット利用者は問い合わせ管理操作を実行できないこと。
 - AC-NFR011-010: `ANSWER_EDITOR` はユーザー管理権限なしで問い合わせ一覧を参照できること。
 - AC-NFR011-011: Web UI は `CHAT_USER` に対して担当者一覧と debug trace 一覧を事前取得しないこと。
@@ -67,7 +67,7 @@
 | 受け入れ基準 | `AC-NFR011-001` から `AC-NFR011-027` |
 | 優先度 | S |
 | 安定性 | High |
-| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 Phase 1 管理画面導線と self sign-up 最小権限を `FR-024` / `FR-025` として分離、2026-05-03 Phase 2 のユーザー作成と管理操作履歴を追加 |
+| 変更履歴 | 2026-05-02 初版、同日 conflict 解決で権限境界、UI 事前取得抑制、静的 policy test を統合、同日 Phase 1 管理画面導線と self sign-up 最小権限を `FR-024` / `FR-025` として分離、2026-05-03 Phase 2 のユーザー作成と管理操作履歴を追加、2026-05-04 問い合わせ作成者本人の詳細取得と解決済み化を追加 |
 
 ## 妥当性確認
 
@@ -84,8 +84,8 @@
 
 ## 関連文書
 
-- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_024.md`
-- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_025.md`
-- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/REQ_FUNCTIONAL_027.md`
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/08_認証・認可・管理・監査/02_Phase_1_RAG運用管理/REQ_FUNCTIONAL_024.md`
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/08_認証・認可・管理・監査/01_通常利用者セルフサインアップ/REQ_FUNCTIONAL_025.md`
+- `1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/08_認証・認可・管理・監査/03_Phase_2_管理・監査/REQ_FUNCTIONAL_027.md`
 - `3_設計_DES/41_API_API/DES_API_001.md`
 - `docs/GITHUB_ACTIONS_DEPLOY.md`

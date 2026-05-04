@@ -459,6 +459,7 @@ export type HumanQuestion = {
   title: string
   question: string
   requesterName: string
+  requesterUserId?: string
   requesterDepartment: string
   assigneeDepartment: string
   category: string

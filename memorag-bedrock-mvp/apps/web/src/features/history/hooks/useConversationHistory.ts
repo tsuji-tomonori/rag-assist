@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { deleteConversationHistory, listConversationHistory, saveConversationHistory } from "../api/conversationHistoryApi.js"
 import type { ConversationHistoryItem } from "../types.js"
 import type { Message } from "../../chat/types.js"
+import type { HumanQuestion } from "../../questions/types.js"
 
 export function useConversationHistory({ setError }: { setError: (error: string | null) => void }) {
   const [history, setHistory] = useState<ConversationHistoryItem[]>([])
@@ -45,6 +46,32 @@ export function useConversationHistory({ setError }: { setError: (error: string 
     })
   }, [setError])
 
+  const updateHistoryQuestionTickets = useCallback((updatedQuestions: HumanQuestion[]) => {
+    if (updatedQuestions.length === 0) return
+    const byId = new Map(updatedQuestions.map((questionItem) => [questionItem.questionId, questionItem]))
+    const changedItems: ConversationHistoryItem[] = []
+    const nextHistory = historyRef.current.map((item) => {
+      let changed = false
+      const messages = item.messages.map((message) => {
+        const questionId = message.questionTicket?.questionId
+        const updated = questionId ? byId.get(questionId) : undefined
+        if (!updated || message.questionTicket?.updatedAt === updated.updatedAt) return message
+        changed = true
+        return { ...message, questionTicket: updated }
+      })
+      if (!changed) return item
+      const nextItem = { ...item, messages }
+      changedItems.push(nextItem)
+      return nextItem
+    })
+    if (changedItems.length === 0) return
+    historyRef.current = nextHistory
+    setHistory(nextHistory)
+    for (const item of changedItems) {
+      saveConversationHistory(item).catch((err) => console.warn("Failed to save refreshed conversation history", err))
+    }
+  }, [])
+
   return {
     history,
     setHistory,
@@ -55,6 +82,7 @@ export function useConversationHistory({ setError }: { setError: (error: string 
     rememberMessages,
     toggleFavorite,
     deleteHistoryItem,
+    updateHistoryQuestionTickets,
     createConversationId
   }
 }

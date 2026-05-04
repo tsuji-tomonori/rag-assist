@@ -329,7 +329,10 @@ test("question and debug management endpoints enforce Phase 1 role boundaries", 
     assert.equal(listQuestions.status, 403)
 
     const getQuestion = await fetch(`http://127.0.0.1:${port}/questions/${question.questionId}`)
-    assert.equal(getQuestion.status, 403)
+    assert.equal(getQuestion.status, 200)
+    const visibleQuestion = (await getQuestion.json()) as Record<string, unknown>
+    assert.equal(visibleQuestion.questionId, question.questionId)
+    assert.equal(Object.hasOwn(visibleQuestion, "internalMemo"), false)
 
     const answerQuestion = await fetch(`http://127.0.0.1:${port}/questions/${question.questionId}/answer`, {
       method: "POST",
@@ -339,7 +342,7 @@ test("question and debug management endpoints enforce Phase 1 role boundaries", 
     assert.equal(answerQuestion.status, 403)
 
     const resolveQuestion = await fetch(`http://127.0.0.1:${port}/questions/${question.questionId}/resolve`, { method: "POST" })
-    assert.equal(resolveQuestion.status, 403)
+    assert.equal(resolveQuestion.status, 409)
 
     const getDebugRun = await fetch(`http://127.0.0.1:${port}/debug-runs/unknown-run`)
     assert.equal(getDebugRun.status, 403)
