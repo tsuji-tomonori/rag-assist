@@ -17,7 +17,7 @@
 | R3 | 本番運用で環境変数から調整できるようにする | 高 | 対応 |
 | R4 | 関連ドキュメントに運用・設計方針を反映する | 中 | 対応 |
 | R5 | 最小十分な検証を実行する | 高 | 対応 |
-| R6 | commit と PR 作成を行う | 高 | 最終手順で実施 |
+| R6 | commit と PR 作成を行う | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -33,6 +33,7 @@
 - `agent/runtime-policy.ts` を追加し、RAG / LLM 判定値を集約した。
 - 検索計画、retrieval evaluator、answerability gate、sufficient context gate、answer support verifier、clue / answer / memory card 生成、citation / clarification 上限を policy 参照へ変更した。
 - README、運用ドキュメント、RAG 詳細設計に runtime policy と運用変数を追記した。
+- commit を作成し、GitHub Apps で PR #116 を作成した。
 
 ## 5. 成果物
 
@@ -42,6 +43,7 @@
 | `memorag-bedrock-mvp/apps/api/src/config.ts` | TypeScript | `RAG_*` 環境変数の読み取り | R3 |
 | RAG / LLM 関連 node の更新 | TypeScript | 直書き値を policy 参照へ変更 | R2 |
 | `memorag-bedrock-mvp/README.md`、`docs/OPERATIONS.md`、`DES_DLD_001.md` | Markdown | 運用・設計方針の反映 | R4 |
+| PR #116 | GitHub Pull Request | main 向け PR | R6 |
 
 ## 6. 指示へのfit評価
 
@@ -65,6 +67,7 @@
 - `pre-commit run --files <changed-files>`: pass
 - `git diff --check`: pass
 - `task docs:check:changed`: not run。この Taskfile には存在しないため、`git diff --check` と pre-commit で代替確認した。
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/116
 
 ## 8. 未対応・制約・リスク
 

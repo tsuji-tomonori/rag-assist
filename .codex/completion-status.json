@@ -1,6 +1,6 @@
 {
-  "complete": false,
-  "status": "implementation_verified_commit_and_pr_pending",
+  "complete": true,
+  "status": "complete",
   "requested_items": [
     "worktree を作成する",
     "RAG および LLM 判定周りの固定値を撤廃する",
@@ -13,12 +13,11 @@
     "RAG / LLM runtime policy を追加し、主要な直書き値を環境変数駆動にした",
     "README、OPERATIONS、RAG 詳細設計を更新した",
     "lint、typecheck、API test、API build、pre-commit、diff check を実行した",
-    "作業完了レポートを reports/working に作成した"
+    "作業完了レポートを reports/working に作成した",
+    "git commit を作成した",
+    "GitHub Apps で main 向け PR #116 を作成した"
   ],
-  "remaining_items": [
-    "git commit",
-    "GitHub Apps による PR 作成"
-  ],
+  "remaining_items": [],
   "blocked_items": [],
   "validation": [
     {
@@ -54,6 +53,6 @@
       "result": "not_run_task_missing"
     }
   ],
-  "next_action": "commit changes and create PR with GitHub Apps",
+  "next_action": "none",
   "safe_to_continue_without_user": true
 }
