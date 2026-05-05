@@ -8,6 +8,6 @@ export async function executeComputationTools(state: QaAgentState): Promise<QaAg
   }
 
   return {
-    computedFacts: executeTools(state.question, state.temporalContext, state.toolIntent)
+    computedFacts: executeTools(state.question, state.temporalContext, state.toolIntent, state.selectedChunks)
   }
 }

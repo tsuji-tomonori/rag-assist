@@ -50,9 +50,10 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
  - 回答は<context>内のチャンク、または<computedFacts>に明示された内容だけに基づける。
  - 文書由来の事実は<context>を根拠にし、計算由来の事実は<computedFacts>を根拠にする。
 - 日付計算、期限切れ判定、残日数、超過日数は<computedFacts>の値をそのまま使用する。
-- 金額、割合、合計、差分は<computedFacts>の値をそのまま使用する。
+- 金額、割合、合計、差分、閾値条件への該当可否は<computedFacts>の値をそのまま使用する。
 - 自分で日数計算や数値計算を再実行してはいけない。
 - computedFacts に必要な値がない場合は、推測で補完せず、計算できない理由を説明する。
+- threshold_comparison がある場合は、satisfiesCondition と explanation に基づいて、質問された金額が資料内条件に該当するかを答える。
 - computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
@@ -85,21 +86,23 @@ ${context}
 </context>`
 }
 
-export function buildSufficientContextPrompt(question: string, requiredFacts: string[], chunks: RetrievedVector[]): string {
+export function buildSufficientContextPrompt(question: string, requiredFacts: string[], chunks: RetrievedVector[], computedFacts: ComputedFact[] = []): string {
   const facts = requiredFacts.length > 0 ? requiredFacts.map((fact, index) => `${index + 1}. ${fact}`).join("\n") : `1. ${question}`
   const assembly = assembleContext({ question, chunks, requiredFacts, tokenBudget: 3000 })
   const context = formatContextXml(assembly)
+  const computedFactsJson = JSON.stringify(computedFacts, null, 2)
 
   return `SUFFICIENT_CONTEXT_JSON
-あなたは社内QA用RAGの回答可否判定器です。質問に対して、<context>内のevidence chunkだけで回答してよいかを厳密に判定してください。
+あなたは社内QA用RAGの回答可否判定器です。質問に対して、<context>内のevidence chunkと<computedFacts>だけで回答してよいかを厳密に判定してください。
 出力はJSONのみ。Markdownや説明文は禁止。
 
 判定ルール:
-- ANSWERABLE: 高優先度の必要事実がすべて evidence chunk で明示的に支持されている。
+- ANSWERABLE: 高優先度の必要事実がすべて evidence chunk または computedFacts で明示的に支持されている。
 - PARTIAL: 一部の必要事実は支持されるが、回答に必要な事実が不足している。
 - UNANSWERABLE: 関連チャンクがない、根拠が質問に答えていない、または矛盾がある。
 - memory card、一般知識、推測は根拠にしない。
 - 数値、期限、手順、条件、承認者は特に厳しく見る。
+- threshold_comparison は system-derived evidence として扱い、質問金額が資料内閾値条件に該当するかを支持できる。
 - supportingChunkIds には根拠に使える <chunk id="..."> の id だけを入れる。
 
 JSON schema:
@@ -120,6 +123,9 @@ ${question}
 <requiredFacts>
 ${escapeXml(facts)}
 </requiredFacts>
+<computedFacts>
+${escapeXml(computedFactsJson)}
+</computedFacts>
 <context>
 ${context || "根拠チャンクはありません。"}
 </context>`
@@ -139,7 +145,7 @@ export function buildAnswerSupportPrompt(question: string, answer: string, chunk
 - supportingComputedFactIds には <computedFacts> の id だけを入れる。
 - memory card、一般知識、推測、質問文そのものは根拠にしない。
 - 数値、期限、残日数、超過日数、手順、条件、承認者、例外条件は特に厳しく見る。
-- 計算結果の主張は、文書チャンクではなく computedFacts に対応する値がある場合に支持されたものとして扱う。
+- 計算結果や閾値条件への該当可否の主張は、文書チャンクではなく computedFacts に対応する値がある場合に支持されたものとして扱う。
 - 引用チャンクに書かれていない断定文、範囲外の要約、過度な一般化は unsupportedSentences に入れる。
 - すべての実質的な回答文が evidence chunk または computedFacts で支持される場合だけ supported=true にする。
 

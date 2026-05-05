@@ -89,6 +89,9 @@ test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline 
   assert.equal(detectToolIntent("この資料では2026-05-01期限切れと記載されていますか？").needsSearch, true)
   assert.equal(detectToolIntent("この資料では5営業日以内と記載されていますか？").canAnswerFromQuestionOnly, false)
   assert.equal(detectToolIntent("この資料では5営業日以内と記載されていますか？").needsSearch, true)
+  assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").needsArithmeticCalculation, true)
+  assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").needsSearch, true)
+  assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").canAnswerFromQuestionOnly, false)
 
   const taskList = detectToolIntent("期限切れのタスクを全部出して")
   assert.equal(taskList.needsTaskDeadlineIndex, true)
@@ -120,6 +123,30 @@ test("computation layer executes MVP temporal and arithmetic tools deterministic
   )
   assert.equal(politeRelative[0]?.kind, "add_days")
   assert.equal(politeRelative[0]?.kind === "add_days" ? politeRelative[0].resultDate : undefined, "2026-05-15")
+
+  const threshold = executeComputationTools(
+    "5200円の経費精算では領収書いる?",
+    fixedTemporalContext,
+    detectToolIntent("5200円の経費精算では領収書いる?"),
+    [
+      {
+        key: "doc-1-chunk-0001",
+        score: 0.9,
+        metadata: {
+          kind: "chunk",
+          documentId: "doc-1",
+          fileName: "handbook.md",
+          chunkId: "chunk-0001",
+          text: "1万円以上の経費精算では領収書の添付が必要です。",
+          createdAt: "2026-05-01T00:00:00.000Z"
+        }
+      }
+    ]
+  )
+  assert.equal(threshold[0]?.kind, "threshold_comparison")
+  assert.equal(threshold[0]?.kind === "threshold_comparison" ? threshold[0].questionAmount : undefined, 5200)
+  assert.equal(threshold[0]?.kind === "threshold_comparison" ? threshold[0].thresholdAmount : undefined, 10000)
+  assert.equal(threshold[0]?.kind === "threshold_comparison" ? threshold[0].satisfiesCondition : undefined, false)
 })
 
 test("days_until past date reports overdue instead of negative remaining days", () => {

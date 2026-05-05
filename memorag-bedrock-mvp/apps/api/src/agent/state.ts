@@ -326,6 +326,17 @@ export const ComputedFactSchema = z.discriminatedUnion("kind", [
     explanation: z.string()
   }),
   ComputedFactBaseSchema.extend({
+    kind: z.literal("threshold_comparison"),
+    questionAmount: z.number(),
+    thresholdAmount: z.number(),
+    operator: z.enum(["gte", "gt", "lte", "lt"]),
+    satisfiesCondition: z.boolean(),
+    subject: z.string(),
+    requirement: z.string(),
+    sourceText: z.string(),
+    explanation: z.string()
+  }),
+  ComputedFactBaseSchema.extend({
     kind: z.literal("deadline_status"),
     today: z.string(),
     timezone: z.string(),

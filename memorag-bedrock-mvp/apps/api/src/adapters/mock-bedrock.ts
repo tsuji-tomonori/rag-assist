@@ -106,6 +106,17 @@ export class MockBedrockTextModel implements TextModel {
       if (!first) {
         return JSON.stringify({ isAnswerable: false, answer: "資料からは回答できません。", usedChunkIds: [] })
       }
+      const thresholdFact = computedFacts.find((fact) => fact.kind === "threshold_comparison")
+      if (thresholdFact) {
+        const selected = selectAnswerEvidence(question, contexts)
+        const chunkId = selected.chunkId ?? first[1] ?? "chunk-unknown"
+        return JSON.stringify({
+          isAnswerable: true,
+          answer: answerFromComputedFact(thresholdFact),
+          usedChunkIds: [chunkId],
+          usedComputedFactIds: typeof thresholdFact.id === "string" ? [thresholdFact.id] : []
+        })
+      }
       const selected = selectAnswerEvidence(question, contexts)
       const chunkId = selected.chunkId ?? first[1] ?? "chunk-unknown"
       const text = selected.text || first[2]?.trim() || ""
@@ -256,6 +267,11 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
   if (fact.kind === "current_date") return `今日の日付は${fact.today}です。`
   if (fact.kind === "add_days") return `期限は${fact.resultDate}です。`
   if (fact.kind === "arithmetic") return `計算結果は${fact.result}${fact.unit ?? ""}です。`
+  if (fact.kind === "threshold_comparison") {
+    const explanation = typeof fact.explanation === "string" ? fact.explanation : ""
+    if (fact.satisfiesCondition === true) return `必要です。${explanation}`
+    if (fact.satisfiesCondition === false) return `資料上、この金額では必要条件に該当しません。${explanation}`
+  }
   if (fact.kind === "task_deadline_query_unavailable") return "期限切れタスクの完全な一覧は、構造化インデックスが未実装のため取得できません。"
   if (fact.kind === "calculation_unavailable") return typeof fact.reason === "string" ? fact.reason : "計算できません。"
   return "資料からは回答できません。"

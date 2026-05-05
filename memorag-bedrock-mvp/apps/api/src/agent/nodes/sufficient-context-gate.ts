@@ -8,7 +8,7 @@ type JudgeJson = Partial<SufficientContextJudgement>
 export function createSufficientContextGateNode(deps: Dependencies) {
   return async function sufficientContextGate(state: QaAgentState): Promise<QaAgentUpdate> {
     const requiredFacts = state.searchPlan.requiredFacts.map((fact) => fact.description).filter(Boolean)
-    const raw = await deps.textModel.generate(buildSufficientContextPrompt(state.question, requiredFacts, state.selectedChunks), {
+    const raw = await deps.textModel.generate(buildSufficientContextPrompt(state.question, requiredFacts, state.selectedChunks, state.computedFacts), {
       modelId: state.modelId,
       temperature: 0,
       maxTokens: 900

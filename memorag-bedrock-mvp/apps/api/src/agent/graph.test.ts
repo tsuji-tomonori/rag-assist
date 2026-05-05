@@ -285,6 +285,36 @@ test("fixed workflow sends document-source arithmetic verification questions to 
   assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
 })
 
+test("fixed workflow answers document-grounded threshold comparison questions", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "handbook.md",
+    text: "経費精算は申請から30日以内に行う必要があります。1万円以上の経費精算では領収書の添付が必要です。",
+    skipMemory: true
+  })
+
+  const result = await service.chat({
+    question: "5200円の経費精算では領収書いる?",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /該当しません|必要条件に該当しません/)
+  assert.ok(result.citations.length > 0)
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
+  assert.equal(computedFacts?.[0]?.questionAmount, 5200)
+  assert.equal(computedFacts?.[0]?.thresholdAmount, 10000)
+  assert.equal(computedFacts?.[0]?.satisfiesCondition, false)
+  const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
+  const answerSupport = supportStep?.output?.answerSupport as Record<string, unknown> | undefined
+  assert.deepEqual(answerSupport?.supportingComputedFactIds, ["threshold-001"])
+})
+
 test("fixed workflow answers self-contained arithmetic verification from computed facts", async () => {
   const service = new MemoRagService(await createTestDeps())
 
