@@ -17,7 +17,7 @@
 | R2 | API Gateway REST API に基本 request validation を有効化する | 高 | 対応 |
 | R3 | CDK assertion と snapshot を更新する | 高 | 対応 |
 | R4 | APIG2 が消えることを CDK synth で確認する | 高 | 対応 |
-| R5 | commit と PR 作成を行う | 高 | これから対応 |
+| R5 | commit と PR 作成を行う | 高 | 対応 |
 | R6 | 作業レポートを残す | 高 | 対応 |
 
 ## 3. 検討・判断したこと
@@ -36,6 +36,8 @@
 - CDK assertion と snapshot を更新し、request validator の存在と protected/preflight method の境界を検証するようにした。
 - `node_modules` がない worktree だったため `npm install` を実行した。
 - `task cdk:synth:yaml` と `task cdk:test` で検証した。
+- `🦺 fix(infra): API Gateway の基本 request validation を有効化` として commit した。
+- GitHub Apps で main 向け PR #108 を作成し、`semver:patch` ラベルを付与した。
 
 ## 5. 成果物
 
@@ -45,6 +47,7 @@
 | `memorag-bedrock-mvp/infra/test/memorag-mvp-stack.test.ts` | TypeScript test | validator と method 境界の assertion 追加 | 回帰防止 |
 | `memorag-bedrock-mvp/infra/test/__snapshots__/memorag-mvp-stack.snapshot.json` | JSON snapshot | CDK 合成結果の更新 | テスト整合 |
 | `reports/working/20260505-1327-apig2-request-validation.md` | Markdown | 作業完了レポート | レポート要件 |
+| `https://github.com/tsuji-tomonori/rag-assist/pull/108` | Pull Request | main 向け PR | PR 作成要件 |
 
 ## 6. 確認内容
 
@@ -60,7 +63,7 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---|---|
-| 指示網羅性 | 5 | worktree 作成、APIG2 修正、検証、レポート、commit/PR 準備を実施 |
+| 指示網羅性 | 5 | worktree 作成、APIG2 修正、検証、レポート、commit/PR 作成を実施 |
 | 制約遵守 | 5 | Git/PR 文面ルールと未実施検証の不記載を遵守 |
 | 成果物品質 | 5 | CDK 実装、assertion、snapshot をそろえて回帰を防止 |
 | 説明責任 | 5 | 検証結果と残存 warning、docs 更新不要理由を記載 |
