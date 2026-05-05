@@ -6,7 +6,7 @@ import { config } from "../config.js"
 import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
-import { llmOptions, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
+import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
 import type { ChatInput, QaGraphResult } from "../agent/types.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
@@ -705,7 +705,7 @@ export class MemoRagService {
       minScore: normalizeMinScore(input.minScore),
       strictGrounded: input.strictGrounded,
       useMemory: input.useMemory,
-      maxIterations: input.maxIterations,
+      maxIterations: normalizeMaxIterations(input.maxIterations),
       includeDebug: input.includeDebug ?? input.debug ?? false,
       createdAt: now,
       updatedAt: now,

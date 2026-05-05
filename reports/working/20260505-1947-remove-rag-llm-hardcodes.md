@@ -19,6 +19,7 @@
 | R5 | 最小十分な検証を実行する | 高 | 対応 |
 | R6 | commit と PR 作成を行う | 高 | 対応 |
 | R7 | レビュー指摘の runtime policy clamp 漏れ、件数上限、clarification schema、score cap の意味ずれを修正する | 高 | 対応 |
+| R8 | async ChatRun の `maxIterations` 保存値と search topK 運用説明を runtime policy と整合させる | 中 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -27,6 +28,7 @@
 - 既存 API / route / permission は変更せず、RAG runtime 内部の検索件数、LLM options、confidence、件数上限、score 正規化を対象にした。
 - docs は恒久的な運用・設計情報として `README.md`、`docs/OPERATIONS.md`、`DES_DLD_001.md` に最小限追記した。
 - レビュー指摘を受け、`minScore`、`/search` 実装上限、clarification confidence、通常 retrieval score cap を runtime policy の正規化経路へ統一した。
+- 追加レビュー指摘を受け、async ChatRun に保存する `maxIterations` も実効値に揃え、`/search` default topK と agent/search cap の関係を運用ドキュメントに明記した。
 
 ## 4. 実施した作業
 
@@ -38,6 +40,8 @@
 - commit を作成し、GitHub Apps で PR #116 を作成した。
 - PR レビュー指摘への対応として、`normalizeMinScore()`、`normalizeSearchTopK()`、search 実装上限 policy、clarification schema / gate policy、`RAG_RETRIEVAL_COMBINED_MAX_SCORE` を追加・適用した。
 - `minScore=2` が workflow / chat run / benchmark run に流れず `1` に clamp される回帰テストと、search cap の policy テストを追加した。
+- `startChatRun()` の `maxIterations` 保存値を `normalizeMaxIterations()` 経由に変更し、`maxIterations=999` が policy 上限に clamp されるテストを追加した。
+- `RAG_DEFAULT_SEARCH_BENCHMARK_TOP_K` が `/search` default にも効くこと、agent 実取得数が `RAG_SEARCH_RAG_MAX_TOP_K` にも制約されることを OPERATIONS に追記した。
 
 ## 5. 成果物
 

@@ -72,7 +72,7 @@ task benchmark:sample
 | `RAG_DEFAULT_TOP_K` / `RAG_MAX_TOP_K` | 通常チャットの evidence 件数既定値と上限 | `6` / `20` |
 | `RAG_DEFAULT_MEMORY_TOP_K` / `RAG_MAX_MEMORY_TOP_K` | memory card 検索件数既定値と上限 | `4` / `10` |
 | `RAG_DEFAULT_MAX_ITERATIONS` / `RAG_MAX_ITERATIONS` | retrieval loop の既定反復数と上限 | `3` / `8` |
-| `RAG_DEFAULT_SEARCH_BENCHMARK_TOP_K` | search benchmark suite の既定 topK。`RAG_MAX_TOP_K` と `RAG_SEARCH_RAG_MAX_TOP_K` の小さい方で clamp される | `10` |
+| `RAG_DEFAULT_SEARCH_BENCHMARK_TOP_K` | `/search` と search benchmark suite の既定 topK。`RAG_MAX_TOP_K` と `RAG_SEARCH_RAG_MAX_TOP_K` の小さい方で clamp される | `10` |
 | `RAG_SEARCH_CANDIDATE_MIN_TOP_K` | RRF・context expansion 用に内部保持する最小候補数。`RAG_SEARCH_RAG_MAX_TOP_K` で clamp される | `30` |
 | `RAG_SEARCH_LEXICAL_TOP_K` / `RAG_SEARCH_SEMANTIC_TOP_K` | hybrid retrieval の lexical / semantic 候補取得件数。`RAG_SEARCH_RAG_MAX_SOURCE_TOP_K` で clamp される | `80` / `80` |
 | `RAG_SEARCH_RAG_MAX_TOP_K` / `RAG_SEARCH_RAG_MAX_SOURCE_TOP_K` | `/search` 実装の最終返却件数上限と lexical / semantic source 候補の上限 | `50` / `100` |
@@ -98,6 +98,8 @@ task benchmark:sample
 | `PUBLISH_LEXICAL_INDEX_ON_SEARCH` | 検索 path で lexical index artifact を生成するか。production では read-only 既定 | production以外は`true` |
 | `DEBUG_DOWNLOAD_BUCKET_NAME` | debug trace JSON download用S3 bucket | 未設定 |
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | debug trace download URL有効期限 | `900` |
+
+`RAG_MAX_TOP_K` は chat / agent state が受け付ける evidence 件数上限、`RAG_SEARCH_RAG_MAX_TOP_K` は `/search` 実装の取得上限である。agent の evidence 実取得数は両方の制約を受けるため、`RAG_MAX_TOP_K` を `RAG_SEARCH_RAG_MAX_TOP_K` より大きくしても search cap を超える chunk は取得されない。
 
 ## ロール運用
 

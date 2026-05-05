@@ -15,6 +15,7 @@ import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
 import type { DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
+import { ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
@@ -262,12 +263,12 @@ test("service preserves asynchronous chat run options and can mark worker failur
     minScore: 2,
     strictGrounded: false,
     useMemory: false,
-    maxIterations: 1
+    maxIterations: 999
   }, user)
   const stored = await deps.chatRunStore.get(started.runId)
   assert.equal(stored?.strictGrounded, false)
   assert.equal(stored?.useMemory, false)
-  assert.equal(stored?.maxIterations, 1)
+  assert.equal(stored?.maxIterations, ragRuntimePolicy.retrieval.maxIterations)
   assert.equal(stored?.minScore, 1)
 
   const benchmarkRun = await service.createBenchmarkRun(user, { minScore: 2 })

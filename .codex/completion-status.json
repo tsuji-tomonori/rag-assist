@@ -13,6 +13,8 @@
     "RAG / LLM runtime policy を追加し、主要な直書き値を環境変数駆動にした",
     "レビュー指摘に対応し、minScore、search cap、clarification schema / gate、retrieval score cap を runtime policy 経由に統一した",
     "runtime policy clamp と minScore 正規化漏れの回帰テストを追加した",
+    "追加レビュー指摘に対応し、async ChatRun の maxIterations 保存値を runtime policy clamp 経由にした",
+    "OPERATIONS に /search default topK と agent/search cap の優先関係を明記した",
     "README、OPERATIONS、RAG 詳細設計を更新した",
     "lint、typecheck、API test、API build、pre-commit、diff check を実行した",
     "作業完了レポートを reports/working に作成した",
