@@ -1,0 +1,170 @@
+import { z } from "zod"
+import type { RetrievedVector } from "../types.js"
+import type { ComputedFact } from "./state.js"
+
+const CONFIDENCE_THRESHOLD = 0.75
+
+const EffectSchema = z.enum(["required", "not_required", "allowed", "not_allowed", "eligible", "not_eligible", "unknown"])
+
+export const PolicyComputationExtractionSchema = z.object({
+  canExtract: z.boolean(),
+  reason: z.string().default(""),
+  questionTarget: z
+    .object({
+      amountText: z.string().optional(),
+      amountValue: z.number().optional(),
+      currency: z.literal("JPY").optional(),
+      subject: z.string().optional(),
+      requestedEffect: z.string().optional(),
+      requestedObligation: z.string().optional()
+    })
+    .optional(),
+  candidates: z
+    .array(
+      z.object({
+        sourceChunkId: z.string(),
+        quote: z.string(),
+        condition: z.object({
+          subject: z.string(),
+          leftQuantity: z.string(),
+          comparator: z.enum(["gte", "gt", "lte", "lt", "eq"]),
+          thresholdText: z.string().optional(),
+          thresholdValue: z.number().optional(),
+          currency: z.literal("JPY")
+        }),
+        consequence: z.object({
+          target: z.string(),
+          effect: EffectSchema,
+          naturalLanguage: z.string()
+        }),
+        matchesQuestion: z.boolean(),
+        confidence: z.number().min(0).max(1),
+        ambiguity: z.array(z.string()).default(() => [])
+      })
+    )
+    .default(() => [])
+})
+
+export type PolicyComputationExtraction = z.infer<typeof PolicyComputationExtractionSchema>
+type ThresholdFact = Extract<ComputedFact, { kind: "threshold_comparison" }>
+type ConcreteEffect = Exclude<z.infer<typeof EffectSchema>, "unknown">
+
+export function policyExtractionToComputedFacts(
+  extraction: PolicyComputationExtraction,
+  chunks: RetrievedVector[],
+  confidenceThreshold = CONFIDENCE_THRESHOLD
+): ComputedFact[] {
+  if (!extraction.canExtract) return []
+  const questionAmount = normalizeJpyAmount(extraction.questionTarget?.amountText, extraction.questionTarget?.amountValue)
+  if (questionAmount === undefined || extraction.questionTarget?.currency !== "JPY") return []
+
+  const facts = extraction.candidates.flatMap((candidate): ThresholdFact[] => {
+    if (!candidate.matchesQuestion || candidate.confidence < confidenceThreshold || candidate.ambiguity.length > 0) return []
+    if (candidate.consequence.effect === "unknown") return []
+
+    const chunk = findChunk(candidate.sourceChunkId, chunks)
+    if (!chunk || !quoteExistsInChunk(candidate.quote, chunk)) return []
+
+    const thresholdAmount = normalizeJpyAmount(candidate.condition.thresholdText, candidate.condition.thresholdValue)
+    if (thresholdAmount === undefined || candidate.condition.currency !== "JPY") return []
+
+    const satisfiesCondition = compare(questionAmount, candidate.condition.comparator, thresholdAmount)
+    const effect = candidate.consequence.effect
+    return [
+      {
+        id: "threshold-000",
+        kind: "threshold_comparison",
+        source: "llm_policy_extraction",
+        inputFactIds: [],
+        sourceChunkId: chunk.metadata.chunkId ?? chunk.key,
+        questionAmount,
+        thresholdAmount,
+        operator: candidate.condition.comparator,
+        satisfiesCondition,
+        effect,
+        polarity: polarityFromEffect(effect),
+        subject: candidate.condition.subject || extraction.questionTarget?.subject || "金額条件",
+        requirement: candidate.consequence.target || extraction.questionTarget?.requestedObligation || "条件",
+        sourceText: candidate.quote,
+        extractionConfidence: candidate.confidence,
+        explanation: `${formatYen(questionAmount)}は${formatThreshold(candidate.condition.comparator, thresholdAmount)}${satisfiesCondition ? "に該当します" : "に該当しません"}。${formatEffect(effect, satisfiesCondition)}。根拠: ${candidate.quote}`
+      }
+    ]
+  })
+
+  return facts
+    .sort((a, b) => Number(b.satisfiesCondition) - Number(a.satisfiesCondition) || b.extractionConfidence - a.extractionConfidence)
+    .map((fact, index) => ({
+      ...fact,
+      id: `threshold-${String(index + 1).padStart(3, "0")}`
+    }))
+    .slice(0, 5)
+}
+
+export function parseJpyAmountText(text: string): number | undefined {
+  const normalized = text.normalize("NFKC").replace(/，/g, ",").trim()
+  const match = normalized.match(/^([0-9][0-9,]*(?:\.\d+)?)\s*(万円|千円|円)$/)
+  if (!match?.[1] || !match[2]) return undefined
+  const numeric = Number(match[1].replace(/,/g, ""))
+  const multiplier = match[2] === "万円" ? 10_000 : match[2] === "千円" ? 1_000 : 1
+  const value = numeric * multiplier
+  return Number.isFinite(value) ? value : undefined
+}
+
+function normalizeJpyAmount(text: string | undefined, value: number | undefined): number | undefined {
+  const parsedText = text ? parseJpyAmountText(text) : undefined
+  const numericValue = value !== undefined && Number.isFinite(value) ? value : undefined
+  if (parsedText !== undefined && numericValue !== undefined && Math.abs(parsedText - numericValue) > 0.0001) return undefined
+  return parsedText ?? numericValue
+}
+
+function findChunk(sourceChunkId: string, chunks: RetrievedVector[]): RetrievedVector | undefined {
+  return chunks.find((chunk) => chunk.key === sourceChunkId || chunk.metadata.chunkId === sourceChunkId)
+}
+
+function quoteExistsInChunk(quote: string, chunk: RetrievedVector): boolean {
+  const text = chunk.metadata.text ?? ""
+  if (text.includes(quote)) return true
+  return text.normalize("NFKC").includes(quote.normalize("NFKC"))
+}
+
+function compare(amount: number, operator: ThresholdFact["operator"], threshold: number): boolean {
+  switch (operator) {
+    case "gte":
+      return amount >= threshold
+    case "gt":
+      return amount > threshold
+    case "lte":
+      return amount <= threshold
+    case "lt":
+      return amount < threshold
+    case "eq":
+      return amount === threshold
+  }
+}
+
+function polarityFromEffect(effect: ConcreteEffect): ThresholdFact["polarity"] {
+  if (effect === "required" || effect === "not_required") return effect
+  return undefined
+}
+
+function formatYen(amount: number): string {
+  return `${amount.toLocaleString("ja-JP")}円`
+}
+
+function formatThreshold(operator: ThresholdFact["operator"], amount: number): string {
+  const suffix = operator === "gte" ? "以上" : operator === "gt" ? "超" : operator === "lte" ? "以下" : operator === "lt" ? "未満" : "と等しい"
+  return `${formatYen(amount)}${suffix}`
+}
+
+function formatEffect(effect: ConcreteEffect, satisfiesCondition: boolean): string {
+  const label = {
+    required: "必要",
+    not_required: "不要",
+    allowed: "可能",
+    not_allowed: "不可",
+    eligible: "対象",
+    not_eligible: "対象外"
+  }[effect]
+  return satisfiesCondition ? `資料上は${label}条件に該当します` : `資料上は${label}条件に該当しません`
+}

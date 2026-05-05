@@ -1,4 +1,3 @@
-import type { RetrievedVector } from "../types.js"
 import type { ComputedFact, TemporalContext, ToolIntent } from "./state.js"
 
 const DEFAULT_TIMEZONE = "Asia/Tokyo"
@@ -70,7 +69,6 @@ export function detectToolIntent(question: string): ToolIntent {
     /([0-9０-９][0-9０-９,，]*)円/.test(normalized) &&
     /(いくら|合計|総額|計算|かかる|合っていますか|正しいですか)/.test(normalized)
   const asksAggregation = /(平均|最大|最小|件数|合計).*(全部|全件|部署|一覧)/.test(normalized)
-  const asksThresholdComparison = isDocumentThresholdComparisonRequest(normalized)
   const canAnswerTemporal =
     asksCurrentDate ||
     asksTaskList ||
@@ -98,23 +96,21 @@ export function detectToolIntent(question: string): ToolIntent {
   return {
     needsSearch: !(canAnswerTemporal || canAnswerArithmetic),
     canAnswerFromQuestionOnly: canAnswerTemporal || canAnswerArithmetic,
-    needsArithmeticCalculation: asksArithmetic || asksThresholdComparison,
+    needsArithmeticCalculation: asksArithmetic,
     needsAggregation: asksAggregation,
     needsTemporalCalculation: asksTemporal,
     needsTaskDeadlineIndex: false,
     needsExhaustiveEnumeration: false,
     temporalOperation: inferTemporalOperation(normalized),
-    arithmeticOperation: asksArithmetic || asksThresholdComparison ? "price" : undefined,
-    confidence: asksTemporal || asksArithmetic || asksThresholdComparison ? 0.88 : 0.55,
+    arithmeticOperation: asksArithmetic ? "price" : undefined,
+    confidence: asksTemporal || asksArithmetic ? 0.88 : 0.55,
     reason: asksTemporal || asksArithmetic
       ? "質問文だけで明示的な計算対象を検出しました。"
-      : asksThresholdComparison
-        ? "資料内条件との金額閾値比較が必要なRAG検索質問として扱います。"
-        : "通常のRAG検索質問として扱います。"
+      : "通常のRAG検索質問として扱います。"
   }
 }
 
-export function executeComputationTools(question: string, temporalContext: TemporalContext, toolIntent: ToolIntent, evidenceChunks: RetrievedVector[] = []): ComputedFact[] {
+export function executeComputationTools(question: string, temporalContext: TemporalContext, toolIntent: ToolIntent): ComputedFact[] {
   const facts: ComputedFact[] = []
 
   if (toolIntent.needsTaskDeadlineIndex) {
@@ -137,7 +133,6 @@ export function executeComputationTools(question: string, temporalContext: Tempo
   if (toolIntent.needsArithmeticCalculation) {
     const arithmetic = executeArithmeticCalculation(question)
     if (arithmetic) facts.push(arithmetic)
-    facts.push(...executeDocumentThresholdComparisons(question, evidenceChunks))
   }
 
   return facts
@@ -317,186 +312,6 @@ function executeArithmeticCalculation(question: string): ComputedFact | undefine
     unit: "円",
     explanation: `${expression} = ${result}円です。`
   }
-}
-
-function executeDocumentThresholdComparisons(question: string, evidenceChunks: RetrievedVector[]): ComputedFact[] {
-  if (!isDocumentThresholdComparisonRequest(question)) return []
-  const questionAmount = extractQuestionYenAmount(question)
-  if (questionAmount === undefined) return []
-
-  const facts: ComputedFact[] = []
-  for (const chunk of evidenceChunks) {
-    const sentences = splitPolicySentences(chunk.metadata.text ?? "")
-    for (const sentence of sentences) {
-      const conditions = extractRequiredThresholdConditions(question, sentence)
-      for (const condition of conditions) {
-        const satisfiesCondition = compare(questionAmount, condition.operator, condition.thresholdAmount)
-        facts.push({
-          id: `threshold-${String(facts.length + 1).padStart(3, "0")}`,
-          kind: "threshold_comparison",
-          inputFactIds: [],
-          sourceChunkId: chunk.metadata.chunkId ?? chunk.key,
-          questionAmount,
-          thresholdAmount: condition.thresholdAmount,
-          operator: condition.operator,
-          satisfiesCondition,
-          polarity: condition.polarity,
-          subject: condition.subject,
-          requirement: condition.requirement,
-          sourceText: condition.sourceText,
-          explanation: `${formatYen(questionAmount)}は${formatThreshold(condition.operator, condition.thresholdAmount)}${satisfiesCondition ? "に該当します" : "に該当しません"}。${formatPolarity(condition.polarity, satisfiesCondition)}。根拠: ${condition.sourceText}`
-        })
-      }
-    }
-  }
-
-  return facts
-    .sort((a, b) => Number(b.kind === "threshold_comparison" && b.satisfiesCondition) - Number(a.kind === "threshold_comparison" && a.satisfiesCondition))
-    .map((fact, index) => ({
-      ...fact,
-      id: `threshold-${String(index + 1).padStart(3, "0")}`
-    }))
-    .slice(0, 5)
-}
-
-function isDocumentThresholdComparisonRequest(question: string): boolean {
-  const normalized = question.normalize("NFKC")
-  return /[0-9][0-9,]*(?:\.\d+)?\s*(?:円|万円|千円)/.test(normalized) &&
-    /(領収書|添付|証跡|申請|必要|いる|要る|該当|対象|条件)/.test(normalized) &&
-    /(必要|いる|要る|該当|対象|条件|できますか|ですか|\?)/.test(normalized)
-}
-
-function extractQuestionYenAmount(question: string): number | undefined {
-  const normalized = question.normalize("NFKC")
-  const matches = [...normalized.matchAll(/([0-9][0-9,]*(?:\.\d+)?)\s*(万円|千円|円)/g)]
-    .map((match) => ({
-      rawValue: match[1],
-      unit: match[2],
-      index: match.index ?? 0,
-      after: normalized.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 24)
-    }))
-    .filter((match): match is { rawValue: string; unit: string; index: number; after: string } => Boolean(match.rawValue && match.unit))
-  const selected = matches
-    .map((match, order) => ({ ...match, order, score: scoreQuestionAmountCandidate(match.after, order) }))
-    .sort((a, b) => b.score - a.score || b.index - a.index)[0]
-  return selected ? parseYenAmount(selected.rawValue, selected.unit) : undefined
-}
-
-function extractRequiredThresholdConditions(question: string, sentence: string): Array<{
-  thresholdAmount: number
-  operator: Extract<ComputedFact, { kind: "threshold_comparison" }>["operator"]
-  polarity: Extract<ComputedFact, { kind: "threshold_comparison" }>["polarity"]
-  subject: string
-  requirement: string
-  sourceText: string
-}> {
-  const normalizedSentence = sentence.normalize("NFKC")
-  const questionTerms = extractRequirementTerms(question)
-  if (questionTerms.length === 0) return []
-  if (!questionTerms.some((term) => normalizedSentence.includes(term))) return []
-
-  return splitPolicyClauses(normalizedSentence).flatMap((clause) => {
-    const polarity = requirementPolarity(clause)
-    if (!polarity) return []
-    const thresholds = [...clause.matchAll(/([0-9][0-9,]*(?:\.\d+)?)\s*(万円|千円|円)\s*(以上|超|より多い|以下|未満|より少ない)/g)]
-    return thresholds.flatMap((threshold) => {
-      if (!threshold[1] || !threshold[2] || !threshold[3]) return []
-      const thresholdAmount = parseYenAmount(threshold[1], threshold[2])
-      if (!Number.isFinite(thresholdAmount)) return []
-      return [
-        {
-          thresholdAmount,
-          operator: operatorFromText(threshold[3]),
-          polarity,
-          subject: extractSubject(question, normalizedSentence),
-          requirement: questionTerms[0] ?? "必要条件",
-          sourceText: clause
-        }
-      ]
-    })
-  })
-}
-
-function scoreQuestionAmountCandidate(after: string, order: number): number {
-  let score = order * 0.01
-  if (/^\s*(?:では|で|の場合|の(?:経費精算|交通費|申請|備品|稟議))/.test(after)) score += 12
-  if (/^\s*(?:なら|だったら)/.test(after)) score += 4
-  if (/^\s*(?:以上|超|以下|未満|より多い|より少ない)/.test(after)) score -= 8
-  if (/必要(?:と|だと)?(?:ある|書|記載|いう)|不要(?:と|だと)?(?:ある|書|記載|いう)/.test(after)) score -= 4
-  return score
-}
-
-function requirementPolarity(sentence: string): Extract<ComputedFact, { kind: "threshold_comparison" }>["polarity"] | undefined {
-  if (/(不要|必要(?:ありません|ない|なし)|要しない|求めない|添付不要|免除)/.test(sentence)) return "not_required"
-  if (/(必要|必須|要する|求められる)/.test(sentence)) return "required"
-  return undefined
-}
-
-function parseYenAmount(value: string, unit: string): number {
-  const numeric = Number(value.replace(/,/g, ""))
-  const multiplier = unit === "万円" ? 10_000 : unit === "千円" ? 1_000 : 1
-  return numeric * multiplier
-}
-
-function operatorFromText(text: string): Extract<ComputedFact, { kind: "threshold_comparison" }>["operator"] {
-  if (text === "以上") return "gte"
-  if (text === "超" || text === "より多い") return "gt"
-  if (text === "以下") return "lte"
-  return "lt"
-}
-
-function compare(amount: number, operator: Extract<ComputedFact, { kind: "threshold_comparison" }>["operator"], threshold: number): boolean {
-  switch (operator) {
-    case "gte":
-      return amount >= threshold
-    case "gt":
-      return amount > threshold
-    case "lte":
-      return amount <= threshold
-    case "lt":
-      return amount < threshold
-  }
-}
-
-function extractRequirementTerms(question: string): string[] {
-  const terms = ["領収書", "添付", "証跡", "承認", "申請", "備品", "稟議"].filter((term) => question.includes(term))
-  return [...new Set(terms)]
-}
-
-function extractSubject(question: string, sentence: string): string {
-  const questionSubjects = ["経費精算", "交通費", "社内備品", "備品", "稟議"].filter((term) => question.includes(term))
-  const sentenceSubjects = ["経費精算", "交通費", "社内備品", "備品", "稟議"].filter((term) => sentence.includes(term))
-  return questionSubjects[0] ?? sentenceSubjects[0] ?? "金額条件"
-}
-
-function splitPolicySentences(text: string): string[] {
-  return text
-    .normalize("NFKC")
-    .replace(/\r\n?/g, "\n")
-    .split(/(?<=[。！？!?])\s*|\n+/u)
-    .map((sentence) => sentence.trim().replace(/^[-*]\s*/, ""))
-    .filter(Boolean)
-}
-
-function splitPolicyClauses(text: string): string[] {
-  return text
-    .split(/[、，；;]/u)
-    .map((clause) => clause.trim().replace(/^[-*]\s*/, ""))
-    .filter(Boolean)
-}
-
-function formatYen(amount: number): string {
-  return `${amount.toLocaleString("ja-JP")}円`
-}
-
-function formatThreshold(operator: Extract<ComputedFact, { kind: "threshold_comparison" }>["operator"], amount: number): string {
-  const suffix = operator === "gte" ? "以上" : operator === "gt" ? "超" : operator === "lte" ? "以下" : "未満"
-  return `${formatYen(amount)}${suffix}`
-}
-
-function formatPolarity(polarity: Extract<ComputedFact, { kind: "threshold_comparison" }>["polarity"], satisfiesCondition: boolean): string {
-  if (polarity === "required") return satisfiesCondition ? "資料上は必要条件に該当します" : "資料上は必要条件に該当しません"
-  return satisfiesCondition ? "資料上は不要条件に該当します" : "資料上は不要条件に該当しません"
 }
 
 function inferTemporalOperation(question: string): ToolIntent["temporalOperation"] {

@@ -112,7 +112,7 @@ function inferStatus(update: QaAgentUpdate): DebugStep["status"] {
 
 function inferModelId(label: string, state: QaAgentState): string | undefined {
   if (label === "generate_clues") return state.clueModelId
-  if (["generate_answer", "sufficient_context_gate", "verify_answer_support"].includes(label)) return state.modelId
+  if (["extract_policy_computations", "generate_answer", "sufficient_context_gate", "verify_answer_support"].includes(label)) return state.modelId
   if (["retrieve_memory", "embed_queries", "search_evidence"].includes(label)) return state.embeddingModelId
   return undefined
 }

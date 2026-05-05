@@ -327,14 +327,17 @@ export const ComputedFactSchema = z.discriminatedUnion("kind", [
   }),
   ComputedFactBaseSchema.extend({
     kind: z.literal("threshold_comparison"),
+    source: z.literal("llm_policy_extraction"),
     questionAmount: z.number(),
     thresholdAmount: z.number(),
-    operator: z.enum(["gte", "gt", "lte", "lt"]),
+    operator: z.enum(["gte", "gt", "lte", "lt", "eq"]),
     satisfiesCondition: z.boolean(),
-    polarity: z.enum(["required", "not_required"]),
+    effect: z.enum(["required", "not_required", "allowed", "not_allowed", "eligible", "not_eligible"]),
+    polarity: z.enum(["required", "not_required"]).optional(),
     subject: z.string(),
     requirement: z.string(),
     sourceText: z.string(),
+    extractionConfidence: z.number().min(0).max(1),
     explanation: z.string()
   }),
   ComputedFactBaseSchema.extend({

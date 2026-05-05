@@ -51,6 +51,7 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
       "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
+      "extract_policy_computations",
       "answerability_gate",
       "sufficient_context_gate",
       "generate_answer",
@@ -110,6 +111,7 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
+      "extract_policy_computations",
       "answerability_gate",
       "sufficient_context_gate",
       "generate_answer",
@@ -304,9 +306,10 @@ test("fixed workflow answers document-grounded threshold comparison questions", 
   assert.equal(result.isAnswerable, true)
   assert.match(result.answer, /該当しません|必要条件に該当しません/)
   assert.ok(result.citations.length > 0)
-  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
-  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
+  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
   assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
+  assert.equal(computedFacts?.[0]?.source, "llm_policy_extraction")
   assert.equal(computedFacts?.[0]?.questionAmount, 5200)
   assert.equal(computedFacts?.[0]?.thresholdAmount, 10000)
   assert.equal(computedFacts?.[0]?.satisfiesCondition, false)
@@ -334,10 +337,10 @@ test("fixed workflow keeps not-required threshold rules from becoming required a
   assert.equal(result.isAnswerable, true)
   assert.match(result.answer, /不要/)
   assert.doesNotMatch(result.answer, /^必要です。/)
-  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
-  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
+  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
   assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
-  assert.equal(computedFacts?.[0]?.polarity, "not_required")
+  assert.equal(computedFacts?.[0]?.effect, "not_required")
   assert.equal(computedFacts?.[0]?.satisfiesCondition, true)
 })
 
@@ -360,10 +363,10 @@ test("fixed workflow binds threshold polarity at clause level", async () => {
   assert.equal(result.isAnswerable, true)
   assert.match(result.answer, /必要/)
   assert.doesNotMatch(result.answer, /^不要です。/)
-  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
-  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
+  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
   assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
-  assert.equal(computedFacts?.[0]?.polarity, "required")
+  assert.equal(computedFacts?.[0]?.effect, "required")
   assert.equal(computedFacts?.[0]?.satisfiesCondition, true)
 })
 

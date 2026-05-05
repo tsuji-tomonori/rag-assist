@@ -85,6 +85,10 @@ export class MockBedrockTextModel implements TextModel {
       })
     }
 
+    if (prompt.includes("POLICY_COMPUTATION_EXTRACTION_JSON")) {
+      return JSON.stringify(mockPolicyComputationExtraction(prompt))
+    }
+
     if (prompt.includes("FINAL_ANSWER_JSON")) {
       const question = extractBetween(prompt, "<question>", "</question>")
       const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
@@ -269,14 +273,87 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
   if (fact.kind === "arithmetic") return `計算結果は${fact.result}${fact.unit ?? ""}です。`
   if (fact.kind === "threshold_comparison") {
     const explanation = typeof fact.explanation === "string" ? fact.explanation : ""
-    if (fact.polarity === "required" && fact.satisfiesCondition === true) return `必要です。${explanation}`
-    if (fact.polarity === "required" && fact.satisfiesCondition === false) return `資料上、この金額では必要条件に該当しません。${explanation}`
-    if (fact.polarity === "not_required" && fact.satisfiesCondition === true) return `不要です。${explanation}`
-    if (fact.polarity === "not_required" && fact.satisfiesCondition === false) return `資料上、この金額では不要条件に該当しません。${explanation}`
+    if (fact.effect === "required" && fact.satisfiesCondition === true) return `必要です。${explanation}`
+    if (fact.effect === "required" && fact.satisfiesCondition === false) return `資料上、この金額では必要条件に該当しません。${explanation}`
+    if (fact.effect === "not_required" && fact.satisfiesCondition === true) return `不要です。${explanation}`
+    if (fact.effect === "not_required" && fact.satisfiesCondition === false) return `資料上、この金額では不要条件に該当しません。${explanation}`
+    if (fact.effect === "allowed" && fact.satisfiesCondition === true) return `可能です。${explanation}`
+    if (fact.effect === "not_allowed" && fact.satisfiesCondition === true) return `不可です。${explanation}`
+    if (fact.effect === "eligible" && fact.satisfiesCondition === true) return `対象です。${explanation}`
+    if (fact.effect === "not_eligible" && fact.satisfiesCondition === true) return `対象外です。${explanation}`
   }
   if (fact.kind === "task_deadline_query_unavailable") return "期限切れタスクの完全な一覧は、構造化インデックスが未実装のため取得できません。"
   if (fact.kind === "calculation_unavailable") return typeof fact.reason === "string" ? fact.reason : "計算できません。"
   return "資料からは回答できません。"
+}
+
+function mockPolicyComputationExtraction(prompt: string): Record<string, unknown> {
+  const question = extractBetween(prompt, "<question>", "</question>")
+  const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
+  if (!/領収書|添付/.test(question) || !/[0-9０-９][0-9０-９,，]*(?:円|万円|千円)/.test(question)) {
+    return {
+      canExtract: false,
+      reason: "モックでは金額閾値ポリシー抽出対象ではありません。",
+      candidates: []
+    }
+  }
+
+  const amount = question.match(/([0-9０-９][0-9０-９,，]*)\s*円/)?.[0] ?? "5200円"
+  const candidates = contexts.flatMap((match) => {
+    const sourceChunkId = match[1] ?? "chunk-unknown"
+    const text = match[2] ?? ""
+    const items: Array<Record<string, unknown>> = []
+    if (text.includes("1万円以上") && text.includes("領収書") && text.includes("必要")) {
+      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円以上", "必要"), "gte", "1万円", "required", "領収書の添付が必要"))
+    }
+    if (text.includes("1万円未満") && text.includes("領収書") && text.includes("不要")) {
+      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円未満", "不要"), "lt", "1万円", "not_required", "領収書の添付は不要"))
+    }
+    return items
+  })
+
+  return {
+    canExtract: candidates.length > 0,
+    reason: candidates.length > 0 ? "モックでは領収書添付の金額閾値条件を抽出しました。" : "比較可能な条件はありません。",
+    questionTarget: {
+      amountText: amount,
+      amountValue: Number(amount.replace(/[^0-9]/g, "")),
+      currency: "JPY",
+      subject: "経費精算",
+      requestedEffect: "required",
+      requestedObligation: "領収書の添付"
+    },
+    candidates
+  }
+}
+
+function policyCandidate(sourceChunkId: string, quote: string, comparator: string, thresholdText: string, effect: string, naturalLanguage: string): Record<string, unknown> {
+  return {
+    sourceChunkId,
+    quote,
+    condition: {
+      subject: "経費精算",
+      leftQuantity: "経費精算の金額",
+      comparator,
+      thresholdText,
+      thresholdValue: 10000,
+      currency: "JPY"
+    },
+    consequence: {
+      target: "領収書の添付",
+      effect,
+      naturalLanguage
+    },
+    matchesQuestion: true,
+    confidence: 0.95,
+    ambiguity: []
+  }
+}
+
+function quoteFor(text: string, marker: string, effectMarker: string): string {
+  const sentence = splitSentences(text).find((item) => item.includes(marker) && item.includes(effectMarker)) ?? text
+  const clause = sentence.split(/[、，；;]/u).find((item) => item.includes(marker) && item.includes(effectMarker))
+  return (clause ?? sentence).trim()
 }
 
 function unescapeXml(input: string): string {

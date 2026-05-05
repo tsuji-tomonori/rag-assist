@@ -53,7 +53,8 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
 - 金額、割合、合計、差分、閾値条件への該当可否は<computedFacts>の値をそのまま使用する。
 - 自分で日数計算や数値計算を再実行してはいけない。
 - computedFacts に必要な値がない場合は、推測で補完せず、計算できない理由を説明する。
-- threshold_comparison がある場合は、polarity、satisfiesCondition、explanation に基づいて、質問された金額が資料内条件に該当するかを答える。polarity=not_required かつ satisfiesCondition=true の場合は「不要」として扱い、「必要」と言い換えない。
+- threshold_comparison がある場合は、effect、satisfiesCondition、explanation に基づいて、質問された金額が資料内条件に該当するかを答える。
+- effect=required かつ satisfiesCondition=true は「必要」、effect=not_required かつ satisfiesCondition=true は「不要」、effect=allowed は「可能」、effect=not_allowed は「不可」、effect=eligible は「対象」、effect=not_eligible は「対象外」として扱う。
 - computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
@@ -102,7 +103,7 @@ export function buildSufficientContextPrompt(question: string, requiredFacts: st
 - UNANSWERABLE: 関連チャンクがない、根拠が質問に答えていない、または矛盾がある。
 - memory card、一般知識、推測は根拠にしない。
 - 数値、期限、手順、条件、承認者は特に厳しく見る。
-- threshold_comparison は system-derived evidence として扱い、polarity と satisfiesCondition の組み合わせで、質問金額が資料内の必要条件または不要条件に該当するかを支持できる。
+- threshold_comparison は system-derived evidence として扱い、effect と satisfiesCondition の組み合わせで、質問金額が資料内の条件に該当するかを支持できる。
 - supportingChunkIds には根拠に使える <chunk id="..."> の id だけを入れる。
 
 JSON schema:
@@ -146,6 +147,8 @@ export function buildAnswerSupportPrompt(question: string, answer: string, chunk
 - memory card、一般知識、推測、質問文そのものは根拠にしない。
 - 数値、期限、残日数、超過日数、手順、条件、承認者、例外条件は特に厳しく見る。
 - 計算結果や閾値条件への該当可否の主張は、文書チャンクではなく computedFacts に対応する値がある場合に支持されたものとして扱う。
+- 「必要 / 不要 / 可能 / 不可 / 対象 / 対象外」の主張は threshold_comparison.effect と satisfiesCondition に一致している場合だけ支持する。
+- threshold_comparison.sourceText は元チャンク内の quote として扱い、computedFacts にない例外条件を回答が追加していないか確認する。
 - 引用チャンクに書かれていない断定文、範囲外の要約、過度な一般化は unsupportedSentences に入れる。
 - すべての実質的な回答文が evidence chunk または computedFacts で支持される場合だけ supported=true にする。
 
@@ -170,6 +173,83 @@ ${escapeXml(answer)}
 <computedFacts>
 ${escapeXml(computedFactsJson)}
 </computedFacts>
+<context>
+${context || "根拠チャンクはありません。"}
+</context>`
+}
+
+export function buildPolicyComputationExtractionPrompt(question: string, chunks: RetrievedVector[]): string {
+  const context = formatContextXml(assembleContext({ question, chunks, tokenBudget: 3200 }))
+
+  return `POLICY_COMPUTATION_EXTRACTION_JSON
+あなたは社内QA用RAGの policy condition extractor です。質問と evidence chunks だけを使い、質問に答えるために必要な「資料中の条件」と「質問中の具体値」を構造化してください。
+
+重要:
+- 回答文は生成しない。
+- 一般知識を使わない。
+- 条件に関係する原文を quote としてそのまま抜き出す。
+- quote に含まれない条件・効果・対象を補完しない。
+- 質問と同じ要件を扱っている条件だけ matchesQuestion=true にする。
+- 複数条件がある場合は candidates にすべて出す。
+- 曖昧、矛盾、比較不能なら canExtract=false または ambiguity に理由を書く。
+- 数値比較の最終判定は行わない。条件式だけ抽出する。
+- 出力はJSONのみ。Markdownやコードフェンスは禁止。
+
+JSON schema:
+{
+  "canExtract": true,
+  "reason": "抽出可否の理由",
+  "questionTarget": {
+    "amountText": "5200円",
+    "amountValue": 5200,
+    "currency": "JPY",
+    "subject": "経費精算",
+    "requestedEffect": "required",
+    "requestedObligation": "領収書の添付"
+  },
+  "candidates": [
+    {
+      "sourceChunkId": "chunk-0001",
+      "quote": "1万円以上の経費精算では領収書の添付が必要です。",
+      "condition": {
+        "subject": "経費精算",
+        "leftQuantity": "経費精算の金額",
+        "comparator": "gte",
+        "thresholdText": "1万円",
+        "thresholdValue": 10000,
+        "currency": "JPY"
+      },
+      "consequence": {
+        "target": "領収書の添付",
+        "effect": "required",
+        "naturalLanguage": "領収書の添付が必要"
+      },
+      "matchesQuestion": true,
+      "confidence": 0.95,
+      "ambiguity": []
+    }
+  ]
+}
+
+effect enum:
+- required
+- not_required
+- allowed
+- not_allowed
+- eligible
+- not_eligible
+- unknown
+
+comparator enum:
+- gte
+- gt
+- lte
+- lt
+- eq
+
+<question>
+${question}
+</question>
 <context>
 ${context || "根拠チャンクはありません。"}
 </context>`

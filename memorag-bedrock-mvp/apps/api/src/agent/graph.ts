@@ -14,6 +14,7 @@ import { clarificationGate } from "./nodes/clarification-gate.js"
 import { detectToolIntent } from "./nodes/detect-tool-intent.js"
 import { createEmbedQueriesNode } from "./nodes/embed-queries.js"
 import { executeComputationTools } from "./nodes/execute-computation-tools.js"
+import { createExtractPolicyComputationsNode } from "./nodes/extract-policy-computations.js"
 import { finalizeClarification } from "./nodes/finalize-clarification.js"
 import { finalizeRefusal } from "./nodes/finalize-refusal.js"
 import { finalizeResponse } from "./nodes/finalize-response.js"
@@ -51,6 +52,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
   const embedQueries = createEmbedQueriesNode(deps)
   const searchEvidence = createSearchEvidenceNode(deps, user)
   const retrievalEvaluator = createRetrievalEvaluatorNode(deps)
+  const extractPolicyComputations = createExtractPolicyComputationsNode(deps)
   const sufficientContextGate = createSufficientContextGateNode(deps)
   const verifyAnswerSupport = createVerifyAnswerSupportNode(deps)
 
@@ -214,6 +216,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     retrievalEvaluator: tracedNode("retrieval_evaluator", retrievalEvaluator),
     evaluateSearchProgress: tracedNode("evaluate_search_progress", evaluateSearchProgress),
     rerankChunks: tracedNode("rerank_chunks", rerankChunks),
+    extractPolicyComputations: tracedNode("extract_policy_computations", extractPolicyComputations),
     executeComputationTools: tracedNode("execute_computation_tools", executeComputationTools),
     answerabilityGate: tracedNode("answerability_gate", answerabilityGate),
     sufficientContextGate: tracedNode("sufficient_context_gate", sufficientContextGate),
@@ -273,6 +276,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       }
 
       state = await applyNode(state, "rerank_chunks", nodes.rerankChunks, progress)
+      state = await applyNode(state, "extract_policy_computations", nodes.extractPolicyComputations, progress)
       if (state.toolIntent && (state.toolIntent.needsArithmeticCalculation || state.toolIntent.needsTemporalCalculation || state.toolIntent.needsAggregation || state.toolIntent.needsTaskDeadlineIndex)) {
         state = await applyNode(state, "execute_computation_tools", nodes.executeComputationTools, progress)
       }

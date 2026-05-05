@@ -22,7 +22,7 @@ export async function answerabilityGate(state: QaAgentState): Promise<QaAgentUpd
             {
               status: "ok",
               sentence: state.computedFacts.map(formatComputedFactAssessment).join(" / "),
-              checks: state.computedFacts.some((fact) => fact.kind === "arithmetic") ? ["amount"] : ["date"],
+              checks: state.computedFacts.some((fact) => fact.kind === "arithmetic" || fact.kind === "threshold_comparison") ? ["amount"] : ["date"],
               reason: "deterministic computation layer の computedFacts で回答できます。"
             }
           ]
