@@ -296,7 +296,7 @@ function resolveExistingPath(input: string, bases: string[]): string {
 }
 
 function resolveOutputPath(input: string): string {
-  return path.isAbsolute(input) ? input : path.resolve(process.cwd(), input)
+  return path.isAbsolute(input) ? input : path.resolve(repoRoot, input)
 }
 
 function envInt(name: string): number | undefined {
