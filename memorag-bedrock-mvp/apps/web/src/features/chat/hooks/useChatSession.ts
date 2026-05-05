@@ -11,6 +11,21 @@ type PendingClarificationFreeform = {
   seedText: string
 }
 
+const genericFreeformContextTerms = new Set([
+  "申請",
+  "期限",
+  "締切",
+  "必要",
+  "方法",
+  "手順",
+  "条件",
+  "対象",
+  "場合",
+  "質問",
+  "申請期限",
+  "提出期限"
+])
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -34,8 +49,12 @@ function sharesMeaningfulToken(source: string, target: string): boolean {
 }
 
 function meaningfulTokens(value: string): Set<string> {
-  return new Set([...value.replace(/\s+/g, "")]
-    .filter((char) => /[\p{Script=Han}\p{Script=Katakana}A-Za-z0-9]/u.test(char)))
+  const normalized = value.normalize("NFKC")
+  const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
+  const ascii = normalized.toLowerCase().match(/[a-z0-9][a-z0-9_-]{2,}/g) ?? []
+  return new Set([...japanese, ...ascii]
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !genericFreeformContextTerms.has(token)))
 }
 
 export function useChatSession({

@@ -239,6 +239,34 @@ describe("useChatSession", () => {
     }))
   })
 
+  it("自由入力開始後でも generic term だけを共有する新規質問では clarificationContext を送らない", async () => {
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    chatApiMock.streamChatRunEvents.mockImplementationOnce(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "経費精算の回答です。",
+          isAnswerable: true,
+          citations: [],
+          retrieved: []
+        }
+      })
+    })
+    const { result } = renderHook(() => useChatSession(createProps()))
+
+    act(() => result.current.startClarificationFreeform("8/1から育休を取る場合、いつまでに申請する必要がある?", ""))
+    act(() => result.current.setQuestion("経費精算の申請期限は？"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(chatApiMock.startChatRun).toHaveBeenCalledWith(expect.objectContaining({
+      question: "経費精算の申請期限は？",
+      clarificationContext: undefined
+    }))
+  })
+
   it("debug trace 取得に失敗しても final answer を表示する", async () => {
     chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
     debugApiMock.getDebugRun.mockRejectedValue(new Error("debug trace unavailable"))

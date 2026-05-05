@@ -110,6 +110,18 @@ test("tool intent consistently detects relative policy deadline wording variants
   }
 })
 
+test("tool intent keeps document verification questions out of relative policy deadline calculation", () => {
+  for (const question of [
+    "資料に、8/1から育休を取る場合の申請期限は書かれていますか？",
+    "規程には、8/1開始の場合の申請期限が記載されていますか？"
+  ]) {
+    const intent = detectToolIntent(question)
+    assert.equal(intent.needsTemporalCalculation, false)
+    assert.notEqual(intent.temporalOperation, "relative_policy_deadline")
+    assert.equal(intent.needsSearch, true)
+  }
+})
+
 test("computation layer executes MVP temporal and arithmetic tools deterministically", () => {
   const days = executeComputationTools("2026-05-10まであと何日？", fixedTemporalContext, detectToolIntent("2026-05-10まであと何日？"))
   assert.equal(days[0]?.kind, "days_until")
