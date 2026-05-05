@@ -60,21 +60,15 @@ export function createSufficientContextGateNode(deps: Dependencies) {
 }
 
 function canProceedWithGroundedPartialEvidence(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
+  if (judgement.label !== "PARTIAL") return false
   if (!state.answerability.isAnswerable) return false
   if (state.selectedChunks.length === 0) return false
+  if (judgement.supportedFacts.length === 0 && judgement.supportingChunkIds.length === 0) return false
+  if (judgement.missingFacts.length > 0) return false
   if (judgement.conflictingFacts.length > 0) return false
   if (state.retrievalEvaluation.retrievalQuality === "irrelevant" || state.retrievalEvaluation.retrievalQuality === "conflicting") return false
   if (state.selectedChunks[0]?.score !== undefined && state.selectedChunks[0].score < state.minScore) return false
-  if (hasUnsupportedSpecificMissingFact(judgement, state.selectedChunks)) return false
   return hasDirectAnswerCue(state.question, state.selectedChunks)
-}
-
-function hasUnsupportedSpecificMissingFact(judgement: SufficientContextJudgement, chunks: QaAgentState["selectedChunks"]): boolean {
-  const joined = normalize(chunks.map((chunk) => chunk.metadata.text ?? "").join("\n"))
-  return judgement.missingFacts.some((fact) => {
-    const terms = significantTerms(fact).filter((term) => !isGenericTerm(term))
-    return terms.length > 0 && !terms.some((term) => joined.includes(normalize(term)) || expandedTermVariants(term).some((variant) => joined.includes(normalize(variant))))
-  })
 }
 
 function hasDirectAnswerCue(question: string, chunks: QaAgentState["selectedChunks"]): boolean {
@@ -83,7 +77,7 @@ function hasDirectAnswerCue(question: string, chunks: QaAgentState["selectedChun
   const subjectTerms = significantTerms(question)
     .flatMap((term) => [term, ...expandedTermVariants(term)])
     .filter((term) => !isGenericTerm(term))
-  const subjectMatched = subjectTerms.length === 0 || subjectTerms.some((term) => normalizedJoined.includes(normalize(term)))
+  const subjectMatched = subjectTerms.length > 0 && subjectTerms.some((term) => normalizedJoined.includes(normalize(term)))
   return subjectMatched && matchesAnswerCue(question, joined)
 }
 
