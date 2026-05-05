@@ -269,8 +269,10 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
   if (fact.kind === "arithmetic") return `計算結果は${fact.result}${fact.unit ?? ""}です。`
   if (fact.kind === "threshold_comparison") {
     const explanation = typeof fact.explanation === "string" ? fact.explanation : ""
-    if (fact.satisfiesCondition === true) return `必要です。${explanation}`
-    if (fact.satisfiesCondition === false) return `資料上、この金額では必要条件に該当しません。${explanation}`
+    if (fact.polarity === "required" && fact.satisfiesCondition === true) return `必要です。${explanation}`
+    if (fact.polarity === "required" && fact.satisfiesCondition === false) return `資料上、この金額では必要条件に該当しません。${explanation}`
+    if (fact.polarity === "not_required" && fact.satisfiesCondition === true) return `不要です。${explanation}`
+    if (fact.polarity === "not_required" && fact.satisfiesCondition === false) return `資料上、この金額では不要条件に該当しません。${explanation}`
   }
   if (fact.kind === "task_deadline_query_unavailable") return "期限切れタスクの完全な一覧は、構造化インデックスが未実装のため取得できません。"
   if (fact.kind === "calculation_unavailable") return typeof fact.reason === "string" ? fact.reason : "計算できません。"

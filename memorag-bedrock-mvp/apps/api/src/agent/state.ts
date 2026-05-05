@@ -331,6 +331,7 @@ export const ComputedFactSchema = z.discriminatedUnion("kind", [
     thresholdAmount: z.number(),
     operator: z.enum(["gte", "gt", "lte", "lt"]),
     satisfiesCondition: z.boolean(),
+    polarity: z.enum(["required", "not_required"]),
     subject: z.string(),
     requirement: z.string(),
     sourceText: z.string(),

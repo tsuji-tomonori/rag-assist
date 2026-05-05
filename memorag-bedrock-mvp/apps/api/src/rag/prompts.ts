@@ -53,7 +53,7 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
 - 金額、割合、合計、差分、閾値条件への該当可否は<computedFacts>の値をそのまま使用する。
 - 自分で日数計算や数値計算を再実行してはいけない。
 - computedFacts に必要な値がない場合は、推測で補完せず、計算できない理由を説明する。
-- threshold_comparison がある場合は、satisfiesCondition と explanation に基づいて、質問された金額が資料内条件に該当するかを答える。
+- threshold_comparison がある場合は、polarity、satisfiesCondition、explanation に基づいて、質問された金額が資料内条件に該当するかを答える。polarity=not_required かつ satisfiesCondition=true の場合は「不要」として扱い、「必要」と言い換えない。
 - computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
@@ -102,7 +102,7 @@ export function buildSufficientContextPrompt(question: string, requiredFacts: st
 - UNANSWERABLE: 関連チャンクがない、根拠が質問に答えていない、または矛盾がある。
 - memory card、一般知識、推測は根拠にしない。
 - 数値、期限、手順、条件、承認者は特に厳しく見る。
-- threshold_comparison は system-derived evidence として扱い、質問金額が資料内閾値条件に該当するかを支持できる。
+- threshold_comparison は system-derived evidence として扱い、polarity と satisfiesCondition の組み合わせで、質問金額が資料内の必要条件または不要条件に該当するかを支持できる。
 - supportingChunkIds には根拠に使える <chunk id="..."> の id だけを入れる。
 
 JSON schema:
