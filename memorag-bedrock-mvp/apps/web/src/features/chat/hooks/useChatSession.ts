@@ -44,8 +44,37 @@ function looksLikeStandaloneQuestion(value: string): boolean {
 }
 
 function sharesMeaningfulToken(source: string, target: string): boolean {
-  const sourceTokens = meaningfulTokens(source)
-  return [...meaningfulTokens(target)].some((token) => sourceTokens.has(token))
+  const sourceTokens = [...meaningfulTokens(source)]
+  const targetTokens = [...meaningfulTokens(target)]
+  return targetTokens.some((targetToken) => sourceTokens.some((sourceToken) => termsMatch(sourceToken, targetToken)))
+}
+
+function termsMatch(a: string, b: string): boolean {
+  if (a === b || a.includes(b) || b.includes(a)) return true
+  return (isCjkAbbreviationTerm(a) && isCjkAbbreviationExpansion(a, b)) ||
+    (isCjkAbbreviationTerm(b) && isCjkAbbreviationExpansion(b, a))
+}
+
+function isCjkAbbreviationTerm(term: string): boolean {
+  return term.length >= 2 && term.length <= 6 && isCjkText(term)
+}
+
+function isCjkText(value: string): boolean {
+  return /^[\p{Script=Han}\p{Script=Katakana}ー]+$/u.test(value)
+}
+
+function isCjkAbbreviationExpansion(short: string, long: string): boolean {
+  return isCjkText(long) && long[0] === short[0] && !long.includes(short) && isOrderedSubsequence(short, long)
+}
+
+function isOrderedSubsequence(short: string, long: string): boolean {
+  let index = 0
+  for (const char of short) {
+    index = long.indexOf(char, index)
+    if (index < 0) return false
+    index += char.length
+  }
+  return true
 }
 
 function meaningfulTokens(value: string): Set<string> {
