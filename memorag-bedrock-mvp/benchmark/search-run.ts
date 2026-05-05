@@ -70,6 +70,31 @@ type SearchResultRow = {
   results: SearchResult[]
 }
 
+type SearchMetrics = {
+  recallAt1: number | null
+  recallAt3: number | null
+  recallAt5: number | null
+  recallAt10: number | null
+  recallAt20: number | null
+  mrrAt10: number | null
+  ndcgAt10: number | null
+  precisionAt5: number | null
+  precisionAt10: number | null
+  expectedFileHitRate: number | null
+  expectedDocumentHitRate: number | null
+  expectedChunkHitRate: number | null
+  noAccessLeakCount: number
+  noAccessLeakRate: number | null
+  p50LatencyMs: number | null
+  p95LatencyMs: number | null
+  p99LatencyMs: number | null
+  averageLatencyMs: number | null
+  errorRate: number | null
+  lexicalCountAvg: number | null
+  semanticCountAvg: number | null
+  fusedCountAvg: number | null
+}
+
 type SearchSummary = {
   mode: "search"
   datasetPath: string
@@ -81,7 +106,7 @@ type SearchSummary = {
   total: number
   succeeded: number
   failedHttp: number
-  metrics: Record<string, number | null>
+  metrics: SearchMetrics
   failures: Array<{
     id: string
     query: string
@@ -228,7 +253,7 @@ function summarize(rows: SearchResultRow[]): SearchSummary {
 }
 
 function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): string {
-  const metricRows = Object.entries(summary.metrics)
+  const metricRows = (Object.entries(summary.metrics) as Array<[keyof SearchMetrics, number | null]>)
     .map(([name, value]) => `| ${name} | ${formatNumber(value)} | ${metricDescription(name)} |`)
     .join("\n")
   const failureRows = summary.failures.length === 0
@@ -278,7 +303,7 @@ ${detailRows}
 `
 }
 
-const metricDescriptions: Record<string, string> = {
+const metricDescriptions = {
   recallAt1: "最上位 1 件に期待する relevant item が含まれた割合。",
   recallAt3: "上位 3 件に期待する relevant item が含まれた割合。",
   recallAt5: "上位 5 件に期待する relevant item が含まれた割合。",
@@ -301,10 +326,10 @@ const metricDescriptions: Record<string, string> = {
   lexicalCountAvg: "lexical 検索候補数の平均。",
   semanticCountAvg: "semantic 検索候補数の平均。",
   fusedCountAvg: "lexical と semantic を統合した後の候補数の平均。"
-}
+} satisfies Record<keyof SearchMetrics, string>
 
-function metricDescription(metric: string): string {
-  return metricDescriptions[metric] ?? "この search benchmark summary に含まれる集計指標。"
+function metricDescription(metric: keyof SearchMetrics): string {
+  return metricDescriptions[metric]
 }
 
 function averageMetric(rows: SearchResultRow[], metric: keyof RetrievalMetrics): number | null {

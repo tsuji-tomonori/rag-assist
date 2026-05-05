@@ -823,8 +823,43 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
   }
 }
 
+type BenchmarkReportMetricName =
+  | "answerable_accuracy"
+  | "clarification_need_precision"
+  | "clarification_need_recall"
+  | "clarification_need_f1"
+  | "option_hit_rate"
+  | "missing_slot_hit_rate"
+  | "corpus_grounded_option_rate"
+  | "post_clarification_accuracy"
+  | "over_clarification_rate"
+  | "clarification_latency_overhead_ms"
+  | "post_clarification_task_latency_ms"
+  | "abstention_recall"
+  | "unsupported_answer_rate"
+  | "answer_contains_rate"
+  | "citation_hit_rate"
+  | "expected_file_hit_rate"
+  | "retrieval_recall_at_20"
+  | "expected_page_hit_rate"
+  | "fact_slot_coverage"
+  | "refusal_precision"
+  | "refusal_recall"
+  | "unsupported_sentence_rate"
+  | "avg_iterations"
+  | "avg_retrieval_calls"
+  | "avg_risk_signals"
+  | "llm_judge_invocation_rate"
+  | "llm_judge_no_conflict_rate"
+  | "llm_judge_conflict_rate"
+  | "llm_judge_unclear_rate"
+  | "llm_judge_resolved_rate"
+  | "p50_latency_ms"
+  | "p95_latency_ms"
+  | "average_latency_ms"
+
 function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): string {
-  const metricRows: Array<[string, string]> = [
+  const metricRows: Array<[BenchmarkReportMetricName, string]> = [
     ["answerable_accuracy", formatRate(summary.metrics.answerableAccuracy)],
     ["clarification_need_precision", formatRate(summary.metrics.clarificationNeedPrecision)],
     ["clarification_need_recall", formatRate(summary.metrics.clarificationNeedRecall)],
@@ -958,7 +993,7 @@ ${detailRows}
 `
 }
 
-const metricDescriptions: Record<string, string> = {
+const metricDescriptions = {
   answerable_accuracy: "回答可能な行で、期待語句・正規表現・引用・期待資料などの判定をすべて満たした割合。",
   clarification_need_precision: "実際に確認質問を返した行のうち、dataset でも確認質問を期待していた割合。",
   clarification_need_recall: "確認質問が必要な行のうち、実際に確認質問を返せた割合。",
@@ -992,10 +1027,10 @@ const metricDescriptions: Record<string, string> = {
   p50_latency_ms: "初回 API call latency の中央値。",
   p95_latency_ms: "初回 API call latency の 95 パーセンタイル。遅い tail latency を見る。",
   average_latency_ms: "初回 API call latency の平均。"
-}
+} satisfies Record<BenchmarkReportMetricName, string>
 
-function metricDescription(metric: string): string {
-  return metricDescriptions[metric] ?? "この benchmark summary に含まれる集計指標。"
+function metricDescription(metric: BenchmarkReportMetricName): string {
+  return metricDescriptions[metric]
 }
 
 function inferExpectedAnswerable(row: DatasetRow): boolean {
