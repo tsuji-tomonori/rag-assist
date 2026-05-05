@@ -25,10 +25,15 @@ export async function clarificationGate(state: QaAgentState): Promise<QaAgentUpd
   const score = scoreAmbiguity(state, query, candidates.options.length)
   const reason = inferReason(state, query, candidates.options.length)
   const notClearlyUnanswerable = hasCandidateEvidence(state)
+  const hasSearchedEvidence = state.actionHistory.length > 0 || state.retrievedChunks.length > 0
+  const canAskBeforeSearch = reason === "unresolved_reference"
   const needsClarification =
     score >= 0.65 &&
     candidates.options.length >= 2 &&
     notClearlyUnanswerable &&
+    (hasSearchedEvidence || canAskBeforeSearch) &&
+    !hasSufficientSupportedEvidence(state, query) &&
+    !hasExplicitQuestionScope(query, state) &&
     reason !== "not_needed"
 
   const clarification: Clarification = {
@@ -177,6 +182,35 @@ function hasCandidateEvidence(state: QaAgentState): boolean {
   return state.memoryCards.length + state.retrievedChunks.length > 0
 }
 
+function hasSufficientSupportedEvidence(state: QaAgentState, query: string): boolean {
+  return (
+    hasSpecificSubjectCue(query) &&
+    state.retrievalEvaluation.retrievalQuality === "sufficient" &&
+    state.retrievalEvaluation.missingFactIds.length === 0 &&
+    state.retrievalEvaluation.conflictingFactIds.length === 0 &&
+    state.retrievalEvaluation.supportedFactIds.length > 0
+  )
+}
+
+function hasSpecificSubjectCue(query: string): boolean {
+  return significantTerms(query)
+    .filter((term) => !genericTerms.includes(term) && !isQuestionIntentTerm(term) && !isGenericCompoundTerm(term))
+    .some((term) => term.length >= 2)
+}
+
+function hasExplicitQuestionScope(query: string, state: QaAgentState): boolean {
+  if (!hasGenericScopeNeed(query) || referencePattern.test(query)) return false
+  const queryTerms = significantTerms(query).filter((term) => !genericTerms.includes(term) && !isQuestionIntentTerm(term))
+  if (queryTerms.length === 0) return false
+
+  const labels = [...state.memoryCards, ...state.retrievedChunks]
+    .map((hit) => selectPublicLabel(hit, query))
+    .filter((label): label is string => Boolean(label))
+
+  if (labels.some((label) => query.includes(label))) return true
+  return queryTerms.some((term) => labels.some((label) => label.includes(term) || term.includes(label)))
+}
+
 function hasGenericScopeNeed(query: string): boolean {
   return genericTerms.some((term) => query.includes(term)) || referencePattern.test(query)
 }
@@ -207,6 +241,14 @@ function significantTerms(text: string): string[] {
 
 function isStopTerm(term: string): boolean {
   return ["こと", "もの", "ため", "場合", "資料", "文書", "社内", "確認", "回答", "情報"].includes(term)
+}
+
+function isQuestionIntentTerm(term: string): boolean {
+  return ["何日", "何日前", "いつ", "どこ", "誰", "部署", "必要", "対象", "条件", "期限", "方法", "手順"].includes(term)
+}
+
+function isGenericCompoundTerm(term: string): boolean {
+  return /^(申請期限|提出期限|取得期限|キャンセル期限|対象家族|適用範囲|申請種別)$/.test(term)
 }
 
 function clamp(value: number): number {

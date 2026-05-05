@@ -86,6 +86,7 @@ export class MockBedrockTextModel implements TextModel {
     }
 
     if (prompt.includes("FINAL_ANSWER_JSON")) {
+      const question = extractBetween(prompt, "<question>", "</question>")
       const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
       const computedFacts = parseComputedFacts(prompt)
       if (contexts.length === 0 && computedFacts.length > 0) {
@@ -105,8 +106,9 @@ export class MockBedrockTextModel implements TextModel {
       if (!first) {
         return JSON.stringify({ isAnswerable: false, answer: "資料からは回答できません。", usedChunkIds: [] })
       }
-      const chunkId = first[1] ?? "chunk-unknown"
-      const text = first[2]?.trim() ?? ""
+      const selected = selectAnswerEvidence(question, contexts)
+      const chunkId = selected.chunkId ?? first[1] ?? "chunk-unknown"
+      const text = selected.text || first[2]?.trim() || ""
       const answer = text.length > 0 ? `資料では次のように記載されています。${text.slice(0, 260)}` : "資料からは回答できません。"
       return JSON.stringify({ isAnswerable: text.length > 0, answer, usedChunkIds: [chunkId], usedComputedFactIds: [] })
     }
@@ -167,6 +169,62 @@ function extractBetween(text: string, start: string, end: string): string {
   const e = text.indexOf(end)
   if (s < 0 || e < 0 || e <= s) return ""
   return text.slice(s + start.length, e).trim()
+}
+
+function selectAnswerEvidence(question: string, contexts: RegExpMatchArray[]): { chunkId?: string; text: string } {
+  const queryTokens = new Set(tokenize(question))
+  const candidates = contexts.flatMap((match, contextIndex) => {
+    const chunkId = match[1]
+    const text = match[2]?.trim() ?? ""
+    return splitSentences(text).map((sentence, sentenceIndex) => ({
+      chunkId,
+      text: sentence,
+      score: scoreAnswerSentence(question, sentence, queryTokens, contextIndex, sentenceIndex)
+    }))
+  })
+  const selected = candidates.sort((a, b) => b.score - a.score)[0]
+  if (selected && selected.score > 0) return { chunkId: selected.chunkId, text: selected.text }
+  const first = contexts[0]
+  return { chunkId: first?.[1], text: first?.[2]?.trim() ?? "" }
+}
+
+function scoreAnswerSentence(question: string, sentence: string, queryTokens: Set<string>, contextIndex: number, sentenceIndex: number): number {
+  const sentenceTokens = new Set(tokenize(sentence))
+  let overlap = 0
+  for (const token of queryTokens) {
+    if (sentenceTokens.has(token)) overlap += token.length > 1 ? 2 : 1
+  }
+  const subjectBonus = exactSubjectTerms(question).some((term) => sentence.includes(term)) ? 12 : 0
+  const intentBonus = matchesQuestionIntent(question, sentence) ? 24 : 0
+  const valueBonus = /[0-9０-９]+|上長|責任者|産業医|法務部|総務部|人事部|ヘルプデスク|前営業日|直ちに|半日単位|競業|承認|診断書|指定ストレージ|ドキュメント管理チャンネル/.test(
+    sentence
+  )
+    ? 4
+    : 0
+  return overlap + subjectBonus + intentBonus + valueBonus - contextIndex * 0.1 - sentenceIndex * 0.01
+}
+
+function matchesQuestionIntent(question: string, sentence: string): boolean {
+  if (/期限|いつ|何日前|何営業日|締切|キャンセル/.test(question)) return /期限|まで|以内|前日|前営業日|翌月|毎月|開始/.test(sentence)
+  if (/金額|費用|いくら|日当|上限|基準/.test(question)) return /[0-9０-９,]+(?:円|万円|千円)|上限|基準|支給額|日当/.test(sentence)
+  if (/どこ|部署|依頼先|窓口|保管場所/.test(question)) return /部|窓口|チャンネル|ストレージ|システム/.test(sentence)
+  if (/誰|報告先|判定/.test(question)) return /上長|責任者|産業医|者|部|窓口/.test(sentence)
+  if (/条件|対象|必要|何がありますか|何を記録/.test(question)) return /対象|必要|あります|記録|条件|単位|競業|書類/.test(sentence)
+  if (/頻度|何回/.test(question)) return /[0-9０-９]+日ごと|年[0-9０-９]+回|毎年/.test(sentence)
+  return false
+}
+
+function exactSubjectTerms(question: string): string[] {
+  const terms = question.normalize("NFKC").match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
+  return terms.filter((term) => !/^(申請期限|提出期限|取得期限|期限|条件|対象|必要|方法|手順|部署|書類|誰|何日|何回|いつ)$/.test(term))
+}
+
+function splitSentences(text: string): string[] {
+  return text
+    .replace(/\r\n?/g, "\n")
+    .split(/(?<=[。！？!?])\s*|\n+/u)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean)
 }
 
 function parseComputedFacts(prompt: string): Array<Record<string, unknown>> {

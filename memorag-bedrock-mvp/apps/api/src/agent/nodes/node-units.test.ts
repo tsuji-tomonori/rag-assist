@@ -137,6 +137,134 @@ test("sufficient context gate accepts supported evidence and refuses partial evi
   assert.deepEqual(partial.sufficientContext?.supportingChunkIds, ["doc-1-chunk-0001"])
 })
 
+test("sufficient context gate does not override unanswerable judgement", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "UNANSWERABLE",
+          confidence: 0.74,
+          requiredFacts: ["社内カフェの新メニュー価格"],
+          supportedFacts: [],
+          missingFacts: ["社内カフェの新メニュー価格"],
+          conflictingFacts: [],
+          supportingChunkIds: [],
+          reason: "根拠チャンクは質問に答えていません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "社内カフェの新メニュー価格は？",
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      retrievalEvaluation: {
+        retrievalQuality: "sufficient",
+        missingFactIds: [],
+        conflictingFactIds: [],
+        supportedFactIds: ["fact-1"],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "heuristic supported"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "UNANSWERABLE")
+  assert.equal(result.answerability?.isAnswerable, false)
+  assert.equal(result.answer, NO_ANSWER)
+  assert.deepEqual(result.citations, [])
+})
+
+test("sufficient context gate keeps generic partial questions refused without a subject cue", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.69,
+          requiredFacts: ["いつ"],
+          supportedFacts: ["申請期限"],
+          missingFacts: [],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "日付らしき根拠はありますが、質問対象がありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "いつですか？",
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      retrievalEvaluation: {
+        retrievalQuality: "sufficient",
+        missingFactIds: [],
+        conflictingFactIds: [],
+        supportedFactIds: ["fact-1"],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "heuristic supported"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "PARTIAL")
+  assert.equal(result.answerability?.isAnswerable, false)
+  assert.equal(result.answer, NO_ANSWER)
+})
+
+test("sufficient context gate refuses partial evidence with missing specific facts", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.7,
+          requiredFacts: ["申請期限", "例外承認者"],
+          supportedFacts: ["申請期限"],
+          missingFacts: ["例外承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "例外承認者の根拠がありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "申請期限と例外承認者は？",
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      retrievalEvaluation: {
+        retrievalQuality: "partial",
+        missingFactIds: ["exception-approver"],
+        conflictingFactIds: [],
+        supportedFactIds: ["deadline"],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "partial evidence"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "PARTIAL")
+  assert.equal(result.answerability?.isAnswerable, false)
+  assert.equal(result.answerability?.reason, "missing_required_fact")
+  assert.equal(result.answer, NO_ANSWER)
+})
+
 test("citation validation accepts used ids and rejects invalid or ungrounded answers", async () => {
   const ok = await validateCitations(
     state({
@@ -649,7 +777,8 @@ test("clarification gate asks only with grounded options and leaves clear querie
   const ambiguous = await clarificationGate(state({
     question: "申請期限は？",
     normalizedQuery: "申請期限",
-    memoryCards: [privateLabel, expense, vacation]
+    memoryCards: [privateLabel, expense, vacation],
+    actionHistory: [{ action: { type: "evidence_search", query: "申請期限", topK: 3 }, hitCount: 2, newEvidenceCount: 2, summary: "searched" }]
   }))
 
   assert.equal(ambiguous.clarification?.needsClarification, true)
@@ -675,6 +804,7 @@ test("clarification gate asks only with grounded options and leaves clear querie
   const internalControl = await clarificationGate(state({
     question: "申請期限は？",
     normalizedQuery: "申請期限",
+    actionHistory: [{ action: { type: "evidence_search", query: "申請期限", topK: 3 }, hitCount: 2, newEvidenceCount: 2, summary: "searched" }],
     memoryCards: [
       {
         ...chunk,
