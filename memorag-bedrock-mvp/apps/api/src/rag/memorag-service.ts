@@ -1286,11 +1286,11 @@ export class MemoRagService {
 
     const expiresInSeconds = Math.max(60, config.benchmarkDownloadExpiresInSeconds)
     const s3 = new S3Client({ region: config.region })
-    const fileName = `benchmark-${artifact}-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}${artifactExtension(artifact)}`
+    const downloadMetadata = createBenchmarkArtifactDownloadMetadata(runId, artifact, objectKey)
     const url = await getSignedUrl(s3, new GetObjectCommand({
       Bucket: config.benchmarkBucketName,
-      Key: objectKey,
-      ResponseContentDisposition: `attachment; filename="${fileName}"`
+      Key: downloadMetadata.objectKey,
+      ResponseContentDisposition: downloadMetadata.contentDisposition
     }), { expiresIn: expiresInSeconds })
     return { url, expiresInSeconds, objectKey }
   }
@@ -1481,6 +1481,19 @@ function artifactExtension(artifact: BenchmarkDownloadArtifact): string {
   if (artifact === "report") return ".md"
   if (artifact === "summary") return ".json"
   return ".jsonl"
+}
+
+export function createBenchmarkArtifactDownloadMetadata(
+  runId: string,
+  artifact: "report" | "summary" | "results",
+  objectKey: string
+): { fileName: string; objectKey: string; contentDisposition: string } {
+  const fileName = `benchmark-${artifact}-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}${artifactExtension(artifact)}`
+  return {
+    fileName,
+    objectKey,
+    contentDisposition: `attachment; filename="${fileName}"`
+  }
 }
 
 function normalizeRoles(groups: string[]): Role[] {

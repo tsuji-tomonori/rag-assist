@@ -16,6 +16,7 @@
     "追加レビュー指摘に対応し、async ChatRun の maxIterations 保存値を runtime policy clamp 経由にした",
     "OPERATIONS に /search default topK と agent/search cap の優先関係を明記した",
     "README、OPERATIONS、RAG 詳細設計を更新した",
+    "origin/main を merge し、memorag-service.test.ts の import conflict を解消した",
     "lint、typecheck、API test、API build、pre-commit、diff check を実行した",
     "作業完了レポートを reports/working に作成した",
     "git commit を作成した",
@@ -38,7 +39,7 @@
     },
     {
       "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api",
-      "result": "pass_117_tests"
+      "result": "pass_118_tests"
     },
     {
       "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/api",
@@ -57,6 +58,6 @@
       "result": "not_run_task_missing"
     }
   ],
-  "next_action": "none",
+  "next_action": "push conflict-resolution merge commit",
   "safe_to_continue_without_user": true
 }

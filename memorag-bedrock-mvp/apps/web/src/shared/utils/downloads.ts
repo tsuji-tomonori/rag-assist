@@ -18,9 +18,10 @@ export async function downloadDebugTrace(trace?: DebugTrace) {
 
 export async function downloadBenchmarkArtifact(runId: string, artifact: "report" | "summary" | "results") {
   const signed = await createBenchmarkDownload(runId, artifact)
+  const extension = artifact === "report" ? ".md" : artifact === "summary" ? ".json" : ".jsonl"
   const link = document.createElement("a")
   link.href = signed.url
-  link.download = `benchmark-${artifact}-${sanitizeFileName(runId)}`
+  link.download = `benchmark-${artifact}-${sanitizeFileName(runId)}${extension}`
   link.rel = "noopener"
   document.body.appendChild(link)
   link.click()

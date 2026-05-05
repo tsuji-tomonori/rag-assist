@@ -16,7 +16,7 @@ import type { Dependencies } from "../dependencies.js"
 import type { DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import { ragRuntimePolicy } from "../agent/runtime-policy.js"
-import { createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
+import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
   const { service, dataDir } = await createService()
@@ -437,6 +437,24 @@ test("debug trace download metadata forces attachment and sanitizes the file nam
     fileName: "debug-trace-run_with_unsafe_chars.json",
     objectKey: "downloads/debug-trace-run_with_unsafe_chars.json",
     contentDisposition: 'attachment; filename="debug-trace-run_with_unsafe_chars.json"'
+  })
+})
+
+test("benchmark artifact download metadata forces attachment and artifact extensions", () => {
+  assert.deepEqual(createBenchmarkArtifactDownloadMetadata("bench/with:unsafe*chars", "report", "runs/bench/report.md"), {
+    fileName: "benchmark-report-bench_with_unsafe_chars.md",
+    objectKey: "runs/bench/report.md",
+    contentDisposition: 'attachment; filename="benchmark-report-bench_with_unsafe_chars.md"'
+  })
+  assert.deepEqual(createBenchmarkArtifactDownloadMetadata("bench-1", "summary", "runs/bench-1/summary.json"), {
+    fileName: "benchmark-summary-bench-1.json",
+    objectKey: "runs/bench-1/summary.json",
+    contentDisposition: 'attachment; filename="benchmark-summary-bench-1.json"'
+  })
+  assert.deepEqual(createBenchmarkArtifactDownloadMetadata("bench-1", "results", "runs/bench-1/results.jsonl"), {
+    fileName: "benchmark-results-bench-1.jsonl",
+    objectKey: "runs/bench-1/results.jsonl",
+    contentDisposition: 'attachment; filename="benchmark-results-bench-1.jsonl"'
   })
 })
 

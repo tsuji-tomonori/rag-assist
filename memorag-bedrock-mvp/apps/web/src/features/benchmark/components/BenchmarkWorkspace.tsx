@@ -142,7 +142,7 @@ export function BenchmarkWorkspace({
                   <th>accuracy</th>
                   <th>recall</th>
                   <th>startedAt</th>
-                  <th>report</th>
+                  <th>artifacts</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,6 +164,12 @@ export function BenchmarkWorkspace({
                       <td>
                         <div className="benchmark-row-actions">
                           <button type="button" title="レポートをダウンロード" disabled={!canDownload || !run.reportS3Key} onClick={() => void downloadBenchmarkArtifact(run.runId, "report")}>
+                            <Icon name="download" />
+                          </button>
+                          <button type="button" title="サマリJSONをダウンロード" disabled={!canDownload || !run.summaryS3Key} onClick={() => void downloadBenchmarkArtifact(run.runId, "summary")}>
+                            <Icon name="download" />
+                          </button>
+                          <button type="button" title="Raw resultsをダウンロード" disabled={!canDownload || !run.resultsS3Key} onClick={() => void downloadBenchmarkArtifact(run.runId, "results")}>
                             <Icon name="download" />
                           </button>
                           <button type="button" title="ジョブをキャンセル" disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>

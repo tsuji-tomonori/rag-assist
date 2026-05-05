@@ -101,3 +101,5 @@ npm run start -w @memorag-mvp/benchmark
 - `/openapi.json` がJSONとして取得できる。
 - benchmark CLIが `.local-data/benchmark-results.jsonl`、`.local-data/benchmark-summary.json`、`.local-data/benchmark-report.md` を作成する。
 - benchmark summary が回答可能問題、不回答問題、fact slot 付き問題、確認質問問題の評価に必要な集計項目を出力する。
+- benchmark Markdown report の `Dataset Coverage` で dataset 内の期待値分母を確認でき、`Metrics` の `status=not_applicable` と評価済みの `0.0%` / `0` を区別できる。
+- 回答可能な通常QAだけの dataset では、clarification / refusal / post-clarification / fact slot / page / LLM judge label-rate 系が `not_applicable` になり、通常QAの主要指標は `answerable_accuracy`、`over_clarification_rate`、retrieval / citation / latency 系として読める。
