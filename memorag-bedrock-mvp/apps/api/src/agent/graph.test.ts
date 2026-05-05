@@ -484,12 +484,35 @@ test("fixed workflow returns corpus-grounded clarification before answer generat
   assert.deepEqual(result.citations, [])
   assert.deepEqual(result.retrieved, [])
   const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.ok(labels.includes("execute_search_action"))
   assert.equal(labels.includes("generate_answer"), false)
   assert.equal(labels.at(-1), "finalize_clarification")
   const clarificationStep = result.debug?.steps.find((step) => step.label === "clarification_gate" && step.output?.clarification)
   assert.match(clarificationStep?.detail ?? "", /ambiguityScore=/)
   assert.match(clarificationStep?.detail ?? "", /groundedOptionCount=/)
   assert.match(clarificationStep?.detail ?? "", /rejectedOptions:/)
+})
+
+test("fixed workflow answers explicit scoped questions instead of clarifying from memory candidates", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({ fileName: "expense-deadline.txt", text: "経費精算の申請期限は30日以内です。" })
+  await service.ingest({ fileName: "vacation-deadline.txt", text: "休暇申請の申請期限は前営業日までです。" })
+
+  const result = await service.chat({
+    question: "経費精算の申請期限は？",
+    includeDebug: true,
+    minScore: 0.01,
+    maxIterations: 1
+  })
+
+  assert.equal(result.responseType, "answer")
+  assert.equal(result.isAnswerable, true)
+  assert.equal(result.needsClarification, false)
+  assert.match(result.answer, /30日以内/)
+  assert.ok(result.retrieved.length > 0)
+  const firstClarification = result.debug?.steps.find((step) => step.label === "clarification_gate")
+  assert.match(firstClarification?.detail ?? "", /needsClarification=false/)
 })
 
 test("fixed workflow merges node updates into state and appends trace entries", () => {

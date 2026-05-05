@@ -649,7 +649,8 @@ test("clarification gate asks only with grounded options and leaves clear querie
   const ambiguous = await clarificationGate(state({
     question: "申請期限は？",
     normalizedQuery: "申請期限",
-    memoryCards: [privateLabel, expense, vacation]
+    memoryCards: [privateLabel, expense, vacation],
+    actionHistory: [{ action: { type: "evidence_search", query: "申請期限", topK: 3 }, hitCount: 2, newEvidenceCount: 2, summary: "searched" }]
   }))
 
   assert.equal(ambiguous.clarification?.needsClarification, true)
@@ -675,6 +676,7 @@ test("clarification gate asks only with grounded options and leaves clear querie
   const internalControl = await clarificationGate(state({
     question: "申請期限は？",
     normalizedQuery: "申請期限",
+    actionHistory: [{ action: { type: "evidence_search", query: "申請期限", topK: 3 }, hitCount: 2, newEvidenceCount: 2, summary: "searched" }],
     memoryCards: [
       {
         ...chunk,
