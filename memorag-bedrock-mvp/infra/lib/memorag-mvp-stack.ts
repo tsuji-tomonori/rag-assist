@@ -486,13 +486,19 @@ export class MemoRagMvpStack extends Stack {
       type: apigw.ResponseType.DEFAULT_5XX,
       responseHeaders: restApiCorsGatewayResponseHeaders
     })
+    const restApiRequestValidator = restApi.addRequestValidator("RequestValidator", {
+      requestValidatorName: "basic-request-validator",
+      validateRequestBody: true,
+      validateRequestParameters: true
+    })
 
     const restAuthorizer = new apigw.CognitoUserPoolsAuthorizer(this, "RestApiCognitoAuthorizer", {
       cognitoUserPools: [userPool]
     })
     const apiMethodOptions: apigw.MethodOptions = {
       authorizationType: apigw.AuthorizationType.COGNITO,
-      authorizer: restAuthorizer
+      authorizer: restAuthorizer,
+      requestValidator: restApiRequestValidator
     }
     const apiIntegration = new apigw.LambdaIntegration(apiFn, {
       proxy: true,

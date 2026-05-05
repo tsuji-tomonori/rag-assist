@@ -33,6 +33,12 @@ test("implements the designed serverless resources", () => {
     EnableKeyRotation: true
   })
   template.resourceCountIs("AWS::ApiGateway::Authorizer", 1)
+  template.resourceCountIs("AWS::ApiGateway::RequestValidator", 1)
+  template.hasResourceProperties("AWS::ApiGateway::RequestValidator", {
+    Name: "basic-request-validator",
+    ValidateRequestBody: true,
+    ValidateRequestParameters: true
+  })
   template.hasResourceProperties("AWS::S3::Bucket", {
     BucketEncryption: {
       ServerSideEncryptionConfiguration: [
@@ -347,6 +353,7 @@ test("keeps CORS preflight routes unauthenticated", () => {
   for (const method of preflightMethods) {
     assert.equal(method.AuthorizationType, "NONE")
     assert.equal(method.AuthorizerId, undefined)
+    assert.equal(method.RequestValidatorId, undefined)
   }
 
   const protectedMethods = methods.filter((method: any) => method.HttpMethod !== "OPTIONS")
@@ -354,6 +361,7 @@ test("keeps CORS preflight routes unauthenticated", () => {
   for (const method of protectedMethods) {
     assert.equal(method.AuthorizationType, "COGNITO_USER_POOLS")
     assert.ok(method.AuthorizerId)
+    assert.ok(method.RequestValidatorId)
   }
 })
 
