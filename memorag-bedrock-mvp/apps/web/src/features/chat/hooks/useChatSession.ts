@@ -6,8 +6,36 @@ import type { ChatResponse } from "../types-api.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
 
+type PendingClarificationFreeform = {
+  originalQuestion: string
+  seedText: string
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function shouldClearFreeformContext(pending: PendingClarificationFreeform, nextQuestion: string): boolean {
+  const trimmed = nextQuestion.trim()
+  if (!trimmed) return false
+  if (pending.seedText.trim() && trimmed.startsWith(pending.seedText.trim())) return false
+  return looksLikeStandaloneQuestion(trimmed) && !sharesMeaningfulToken(pending.originalQuestion, trimmed) && !sharesMeaningfulToken(pending.seedText, trimmed)
+}
+
+function looksLikeStandaloneQuestion(value: string): boolean {
+  const normalized = value.replace(/\s+/g, "")
+  return /[?？]$/.test(normalized) ||
+    /(何|いつ|どこ|誰|だれ|なぜ|理由|方法|手順|期限|締切|教えて|ですか|ますか|できますか|質問)/.test(normalized)
+}
+
+function sharesMeaningfulToken(source: string, target: string): boolean {
+  const sourceTokens = meaningfulTokens(source)
+  return [...meaningfulTokens(target)].some((token) => sourceTokens.has(token))
+}
+
+function meaningfulTokens(value: string): Set<string> {
+  return new Set([...value.replace(/\s+/g, "")]
+    .filter((char) => /[\p{Script=Han}\p{Script=Katakana}A-Za-z0-9]/u.test(char)))
 }
 
 export function useChatSession({
@@ -59,7 +87,7 @@ export function useChatSession({
   const [messages, setMessages] = useState<Message[]>([])
   const [pendingActivity, setPendingActivity] = useState<string | null>(null)
   const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
-  const [pendingClarificationFreeform, setPendingClarificationFreeform] = useState<{ originalQuestion: string } | null>(null)
+  const [pendingClarificationFreeform, setPendingClarificationFreeform] = useState<PendingClarificationFreeform | null>(null)
   const [conversationKey, setConversationKey] = useState(0)
   const [submitShortcut, setSubmitShortcut] = useState<"enter" | "ctrlEnter">("enter")
   const canAsk = useMemo(
@@ -74,7 +102,7 @@ export function useChatSession({
     const typedQuestion = question.trim()
     const userQuestion = typedQuestion || `${file?.name ?? "添付資料"}を取り込んでください`
     const hasAttachment = file !== null
-    const freeformContext = pendingClarificationFreeform && typedQuestion.length > 0
+    const freeformContext = pendingClarificationFreeform && typedQuestion.length > 0 && !hasAttachment && !shouldClearFreeformContext(pendingClarificationFreeform, typedQuestion)
       ? {
           originalQuestion: pendingClarificationFreeform.originalQuestion,
           selectedValue: typedQuestion
@@ -94,8 +122,13 @@ export function useChatSession({
   }
 
   function startClarificationFreeform(originalQuestion: string, seedText: string) {
-    setPendingClarificationFreeform({ originalQuestion })
+    setPendingClarificationFreeform({ originalQuestion, seedText })
     setQuestion(seedText)
+  }
+
+  function setChatQuestion(value: string) {
+    setQuestion(value)
+    setPendingClarificationFreeform((pending) => pending && shouldClearFreeformContext(pending, value) ? null : pending)
   }
 
   async function submitQuestion(
@@ -235,7 +268,7 @@ export function useChatSession({
 
   return {
     question,
-    setQuestion,
+    setQuestion: setChatQuestion,
     messages,
     setMessages,
     pendingActivity,

@@ -2,7 +2,7 @@ import { executeComputationTools as executeTools } from "../computation.js"
 import type { ComputedFact, QaAgentState, QaAgentUpdate } from "../state.js"
 
 const slashMonthDayPattern = /(?<!\d)(\d{1,2})\/(\d{1,2})(?!\d)/
-const relativeMonthDeadlinePattern = /申請期限は開始日の([0-9０-９]+)か月前/
+const relativeMonthDeadlinePattern = /(?:(?:申請期限|提出期限|締切)\s*は\s*開始日\s*の\s*([0-9０-９]+)\s*(?:か月|ヶ月|カ月)前|開始日\s*の\s*([0-9０-９]+)\s*(?:か月|ヶ月|カ月)前\s*までに\s*(?:申請|提出))/
 
 export async function executeComputationTools(state: QaAgentState): Promise<QaAgentUpdate> {
   if (!state.temporalContext || !state.toolIntent) return { computedFacts: [] }
@@ -11,9 +11,8 @@ export async function executeComputationTools(state: QaAgentState): Promise<QaAg
   }
 
   const computedFacts = state.toolIntent.temporalOperation === "relative_policy_deadline"
-    ? []
+    ? deriveRelativePolicyDeadlineFacts(state)
     : executeTools(state.question, state.temporalContext, state.toolIntent)
-  computedFacts.push(...deriveRelativePolicyDeadlineFacts(state))
 
   return {
     computedFacts
@@ -28,8 +27,10 @@ function deriveRelativePolicyDeadlineFacts(state: QaAgentState): ComputedFact[] 
   for (const chunk of state.selectedChunks.length > 0 ? state.selectedChunks : state.retrievedChunks) {
     const text = chunk.metadata.text ?? ""
     const rule = relativeMonthDeadlinePattern.exec(text)
-    if (!rule?.[1]) continue
-    const amount = parseNumber(rule[1])
+    if (!rule) continue
+    const amountText = rule[1] ?? rule[2]
+    if (!amountText) continue
+    const amount = parseNumber(amountText)
     const resultDate = addMonths(startDate, -amount)
     const ruleText = rule[0]
     return [
@@ -67,13 +68,17 @@ function extractStartDate(question: string, today: string): string | undefined {
   return `${year}-${candidateMonthDay}`
 }
 
-function addMonths(date: string, amount: number): string {
+export function addMonths(date: string, amount: number): string {
   const [yearText, monthText, dayText] = date.split("-")
   const year = Number(yearText)
   const month = Number(monthText)
   const day = Number(dayText)
-  const value = new Date(Date.UTC(year, month - 1 + amount, day))
-  return value.toISOString().slice(0, 10)
+  const targetFirst = new Date(Date.UTC(year, month - 1 + amount, 1))
+  const targetYear = targetFirst.getUTCFullYear()
+  const targetMonth = targetFirst.getUTCMonth()
+  const lastDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate()
+  const clampedDay = Math.min(day, lastDay)
+  return new Date(Date.UTC(targetYear, targetMonth, clampedDay)).toISOString().slice(0, 10)
 }
 
 function parseNumber(text: string): number {

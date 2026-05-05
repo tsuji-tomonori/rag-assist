@@ -543,6 +543,36 @@ test("fixed workflow answers parental leave deadline questions with abbreviation
   assert.equal(computedFacts?.[0]?.resultDate, "2026-07-01")
 })
 
+test("fixed workflow derives relative policy deadlines for deadline wording variants without unavailable facts", async () => {
+  const service = new MemoRagService(await createTestDeps())
+  const handbook = await readFile(new URL("../../../../benchmark/corpus/standard-agent-v1/handbook.md", import.meta.url), "utf-8")
+
+  await service.ingest({ fileName: "handbook.md", text: handbook })
+
+  for (const question of [
+    "8/1から育休を取る場合、申請期限は？",
+    "8/1から育休を取る場合、提出期限は？",
+    "8/1から育休を取る場合、締切は？"
+  ]) {
+    const result = await service.chat({
+      question,
+      includeDebug: true,
+      minScore: 0.01,
+      maxIterations: 1,
+      asOfDate: "2026-05-05",
+      asOfDateSource: "test"
+    })
+
+    assert.equal(result.responseType, "answer")
+    assert.equal(result.needsClarification, false)
+    assert.match(result.answer, /2026-07-01|7月1日|7\/1/)
+    const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+    const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+    assert.deepEqual(computedFacts?.map((fact) => fact.kind), ["relative_policy_deadline"])
+    assert.equal(computedFacts?.[0]?.resultDate, "2026-07-01")
+  }
+})
+
 test("fixed workflow merges node updates into state and appends trace entries", () => {
   const initial = state({
     normalizedQuery: "old query",
