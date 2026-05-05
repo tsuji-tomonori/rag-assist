@@ -92,7 +92,7 @@ function retrievalScore(result: SearchResult): number {
 
 function combinedRetrievalScore(result: SearchResult, crossQueryRrfScore: number): number {
   return Math.min(
-    ragRuntimePolicy.retrieval.contextWindowMaxScore,
+    ragRuntimePolicy.retrieval.combinedMaxScore,
     retrievalScore(result) +
       Math.min(ragRuntimePolicy.retrieval.crossQueryRrfBoostCap, crossQueryRrfScore * ragRuntimePolicy.retrieval.crossQueryRrfBoostMultiplier)
   )

@@ -11,6 +11,8 @@
   "completed_items": [
     "origin/main から .worktrees/remove-rag-llm-hardcodes を作成した",
     "RAG / LLM runtime policy を追加し、主要な直書き値を環境変数駆動にした",
+    "レビュー指摘に対応し、minScore、search cap、clarification schema / gate、retrieval score cap を runtime policy 経由に統一した",
+    "runtime policy clamp と minScore 正規化漏れの回帰テストを追加した",
     "README、OPERATIONS、RAG 詳細設計を更新した",
     "lint、typecheck、API test、API build、pre-commit、diff check を実行した",
     "作業完了レポートを reports/working に作成した",
@@ -34,7 +36,7 @@
     },
     {
       "command": "npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api",
-      "result": "pass"
+      "result": "pass_117_tests"
     },
     {
       "command": "npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/api",

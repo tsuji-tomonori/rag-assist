@@ -27,7 +27,7 @@ import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
-import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeTopK, ragRuntimePolicy } from "./runtime-policy.js"
+import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeTopK, ragRuntimePolicy } from "./runtime-policy.js"
 import { NO_ANSWER, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
@@ -472,7 +472,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
   const runId = createRunId(startedAt)
   const topK = normalizeTopK(input.topK)
   const memoryTopK = normalizeMemoryTopK(input.memoryTopK)
-  const minScore = input.minScore ?? config.minRetrievalScore
+  const minScore = normalizeMinScore(input.minScore)
   const maxIterations = normalizeMaxIterations(input.maxIterations)
   const modelId = input.modelId ?? config.defaultModelId
   const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId

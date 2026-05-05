@@ -26,6 +26,8 @@ const minEvidenceCountMin = Math.max(1, config.ragMinEvidenceCountMin)
 const minEvidenceCountMax = Math.max(minEvidenceCountMin, config.ragMinEvidenceCountMax)
 const sourceScoreMax = clampNumber(config.ragRetrievalMaxSourceScore, 0, 1)
 const crossQueryRrfBoostCap = clampNumber(config.ragCrossQueryRrfBoostCap, 0, 1)
+const searchRagMaxTopK = Math.max(1, config.ragSearchRagMaxTopK)
+const searchRagMaxSourceTopK = Math.max(1, config.ragSearchRagMaxSourceTopK)
 
 export const ragRuntimePolicy = {
   retrieval: {
@@ -36,10 +38,13 @@ export const ragRuntimePolicy = {
     defaultMinScore: clampNumber(config.minRetrievalScore, -1, 1),
     defaultMaxIterations: clampInt(config.ragDefaultMaxIterations, 1, maxIterations),
     maxIterations,
-    searchCandidateMinTopK: Math.max(1, config.ragSearchCandidateMinTopK),
-    defaultSearchBenchmarkTopK: Math.max(1, config.ragDefaultSearchBenchmarkTopK),
-    lexicalTopK: Math.max(1, config.ragSearchLexicalTopK),
-    semanticTopK: Math.max(1, config.ragSearchSemanticTopK),
+    searchCandidateMinTopK: clampInt(config.ragSearchCandidateMinTopK, 1, searchRagMaxTopK),
+    defaultSearchBenchmarkTopK: clampInt(config.ragDefaultSearchBenchmarkTopK, 1, Math.min(maxTopK, searchRagMaxTopK)),
+    lexicalTopK: clampInt(config.ragSearchLexicalTopK, 0, searchRagMaxSourceTopK),
+    semanticTopK: clampInt(config.ragSearchSemanticTopK, 0, searchRagMaxSourceTopK),
+    searchRagMaxTopK,
+    searchRagMaxSourceTopK,
+    searchSemanticPrefetchMultiplier: Math.max(1, config.ragSearchSemanticPrefetchMultiplier),
     memoryPrefetchMultiplier: Math.max(1, config.ragMemoryPrefetchMultiplier),
     memoryPrefetchMaxTopK: Math.max(1, config.ragMemoryPrefetchMaxTopK),
     minEvidenceCountMin,
@@ -49,6 +54,7 @@ export const ragRuntimePolicy = {
     searchBudgetCalls: Math.max(0, config.ragSearchBudgetCalls),
     contextWindowDecay: clampNumber(config.ragContextWindowDecay, 0, 1),
     contextWindowMaxScore: clampNumber(config.ragContextWindowMaxScore, 0, 1),
+    combinedMaxScore: clampNumber(config.ragRetrievalCombinedMaxScore, 0, 1),
     lexicalBaseScore: clampNumber(config.ragRetrievalLexicalBaseScore, 0, sourceScoreMax),
     lexicalLogDivisor: Math.max(Number.EPSILON, config.ragRetrievalLexicalLogDivisor),
     sourceScoreMax,
@@ -79,7 +85,11 @@ export const ragRuntimePolicy = {
     partialEvidenceFallback: clampNumber(config.ragPartialEvidenceFallbackConfidence, 0, 1),
     llmJudgeNoConflictMin: clampNumber(config.ragLlmJudgeNoConflictMinConfidence, 0, 1),
     answerSupportSupportedFallback: clampNumber(config.ragSupportSupportedFallbackConfidence, 0, 1),
-    answerSupportUnsupportedFallback: clampNumber(config.ragSupportUnsupportedFallbackConfidence, 0, 1)
+    answerSupportUnsupportedFallback: clampNumber(config.ragSupportUnsupportedFallbackConfidence, 0, 1),
+    clarificationMinAmbiguityScore: clampNumber(config.ragClarificationMinAmbiguityScore, 0, 1),
+    clarificationConfidenceCap: clampNumber(config.ragClarificationConfidenceCap, 0, 1),
+    clarificationConfidenceFloor: clampNumber(config.ragClarificationConfidenceFloor, 0, 1),
+    clarificationNotNeededConfidenceCap: clampNumber(config.ragClarificationNotNeededConfidenceCap, 0, 1)
   },
   limits: {
     judgeChunkLimit: Math.max(1, config.ragJudgeChunkLimit),
@@ -119,6 +129,14 @@ export function normalizeMemoryTopK(value: number | undefined): number {
   return clampInt(value ?? ragRuntimePolicy.retrieval.defaultMemoryTopK, 1, ragRuntimePolicy.retrieval.maxMemoryTopK)
 }
 
+export function normalizeSearchTopK(value: number | undefined): number {
+  return clampInt(value ?? ragRuntimePolicy.retrieval.defaultSearchBenchmarkTopK, 1, ragRuntimePolicy.retrieval.searchRagMaxTopK)
+}
+
+export function normalizeMinScore(value: number | undefined): number {
+  return clampNumber(value ?? ragRuntimePolicy.retrieval.defaultMinScore, -1, 1)
+}
+
 export function normalizeMaxIterations(value: number | undefined): number {
   return clampInt(value ?? ragRuntimePolicy.retrieval.defaultMaxIterations, 1, ragRuntimePolicy.retrieval.maxIterations)
 }
@@ -128,7 +146,7 @@ export function deriveMinEvidenceCount(topK: number): number {
 }
 
 export function expandedSearchTopK(topK: number): number {
-  return Math.max(topK, ragRuntimePolicy.retrieval.searchCandidateMinTopK)
+  return clampInt(Math.max(topK, ragRuntimePolicy.retrieval.searchCandidateMinTopK), 1, ragRuntimePolicy.retrieval.searchRagMaxTopK)
 }
 
 export function llmOptions(task: LlmTask, modelId: string): GenerateOptions {

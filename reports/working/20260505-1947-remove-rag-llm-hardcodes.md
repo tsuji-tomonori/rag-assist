@@ -18,6 +18,7 @@
 | R4 | 関連ドキュメントに運用・設計方針を反映する | 中 | 対応 |
 | R5 | 最小十分な検証を実行する | 高 | 対応 |
 | R6 | commit と PR 作成を行う | 高 | 対応 |
+| R7 | レビュー指摘の runtime policy clamp 漏れ、件数上限、clarification schema、score cap の意味ずれを修正する | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -25,6 +26,7 @@
 - `runtime-policy.ts` では環境変数値を clamp し、不正な運用値が workflow に直接流れないようにした。
 - 既存 API / route / permission は変更せず、RAG runtime 内部の検索件数、LLM options、confidence、件数上限、score 正規化を対象にした。
 - docs は恒久的な運用・設計情報として `README.md`、`docs/OPERATIONS.md`、`DES_DLD_001.md` に最小限追記した。
+- レビュー指摘を受け、`minScore`、`/search` 実装上限、clarification confidence、通常 retrieval score cap を runtime policy の正規化経路へ統一した。
 
 ## 4. 実施した作業
 
@@ -34,6 +36,8 @@
 - 検索計画、retrieval evaluator、answerability gate、sufficient context gate、answer support verifier、clue / answer / memory card 生成、citation / clarification 上限を policy 参照へ変更した。
 - README、運用ドキュメント、RAG 詳細設計に runtime policy と運用変数を追記した。
 - commit を作成し、GitHub Apps で PR #116 を作成した。
+- PR レビュー指摘への対応として、`normalizeMinScore()`、`normalizeSearchTopK()`、search 実装上限 policy、clarification schema / gate policy、`RAG_RETRIEVAL_COMBINED_MAX_SCORE` を追加・適用した。
+- `minScore=2` が workflow / chat run / benchmark run に流れず `1` に clamp される回帰テストと、search cap の policy テストを追加した。
 
 ## 5. 成果物
 
@@ -42,6 +46,7 @@
 | `memorag-bedrock-mvp/apps/api/src/agent/runtime-policy.ts` | TypeScript | RAG runtime policy と LLM options の中央管理 | R2, R3 |
 | `memorag-bedrock-mvp/apps/api/src/config.ts` | TypeScript | `RAG_*` 環境変数の読み取り | R3 |
 | RAG / LLM 関連 node の更新 | TypeScript | 直書き値を policy 参照へ変更 | R2 |
+| `runtime-policy.test.ts`、`graph.test.ts`、`memorag-service.test.ts` | TypeScript test | clamp 漏れと search cap の回帰確認 | R5, R7 |
 | `memorag-bedrock-mvp/README.md`、`docs/OPERATIONS.md`、`DES_DLD_001.md` | Markdown | 運用・設計方針の反映 | R4 |
 | PR #116 | GitHub Pull Request | main 向け PR | R6 |
 
@@ -62,7 +67,7 @@
 - `npm install`: pass
 - `npm --prefix memorag-bedrock-mvp run lint`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
-- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api`: pass（114 tests）
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api`: pass（117 tests）
 - `npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/api`: pass
 - `pre-commit run --files <changed-files>`: pass
 - `git diff --check`: pass

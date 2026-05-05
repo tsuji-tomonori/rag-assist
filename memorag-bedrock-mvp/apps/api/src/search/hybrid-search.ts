@@ -1,6 +1,7 @@
 import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
+import { normalizeSearchTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { loadPublishedAliasMap } from "./alias-artifacts.js"
 import type { DocumentManifest, JsonValue, RetrievedVector, VectorMetadata } from "../types.js"
@@ -119,9 +120,9 @@ let cachedIndex: CachedIndex | undefined
 
 export async function searchRag(deps: Dependencies, input: SearchInput, user: AppUser): Promise<SearchResponse> {
   const started = Date.now()
-  const topK = clampInt(input.topK ?? 10, 1, 50)
-  const lexicalTopK = clampInt(input.lexicalTopK ?? 80, 0, 100)
-  const semanticTopK = clampInt(input.semanticTopK ?? 80, 0, 100)
+  const topK = normalizeSearchTopK(input.topK)
+  const lexicalTopK = clampInt(input.lexicalTopK ?? ragRuntimePolicy.retrieval.lexicalTopK, 0, ragRuntimePolicy.retrieval.searchRagMaxSourceTopK)
+  const semanticTopK = clampInt(input.semanticTopK ?? ragRuntimePolicy.retrieval.semanticTopK, 0, ragRuntimePolicy.retrieval.searchRagMaxSourceTopK)
   const index = await getLexicalIndex(deps, user, input.filters)
   const queryTokens = tokenizeQuery(input.query)
 
@@ -134,7 +135,10 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     source: input.filters?.source,
     docType: input.filters?.docType
   }
-  const semanticQueryTopK = Math.min(100, Math.max(semanticTopK, semanticTopK * 3))
+  const semanticQueryTopK = Math.min(
+    ragRuntimePolicy.retrieval.searchRagMaxSourceTopK,
+    Math.max(semanticTopK, Math.ceil(semanticTopK * ragRuntimePolicy.retrieval.searchSemanticPrefetchMultiplier))
+  )
   const semanticHits =
     semanticTopK > 0
       ? (

@@ -159,7 +159,7 @@ export const ClarificationSchema = z.object({
     ])
     .default("not_needed"),
   question: z.string().default(""),
-  options: z.array(ClarificationOptionSchema).max(5).default(() => []),
+  options: z.array(ClarificationOptionSchema).max(ragRuntimePolicy.limits.clarificationOptionLimit).default(() => []),
   missingSlots: z.array(z.string()).default(() => []),
   confidence: z.number().min(0).max(1).default(0),
   ambiguityScore: z.number().min(0).max(1).optional(),

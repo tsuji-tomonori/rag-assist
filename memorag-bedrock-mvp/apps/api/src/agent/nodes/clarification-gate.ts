@@ -29,7 +29,7 @@ export async function clarificationGate(state: QaAgentState): Promise<QaAgentUpd
   const hasSearchedEvidence = state.actionHistory.length > 0 || state.retrievedChunks.length > 0
   const canAskBeforeSearch = reason === "unresolved_reference"
   const needsClarification =
-    score >= 0.65 &&
+    score >= ragRuntimePolicy.confidence.clarificationMinAmbiguityScore &&
     candidates.options.length >= 2 &&
     notClearlyUnanswerable &&
     (hasSearchedEvidence || canAskBeforeSearch) &&
@@ -43,7 +43,9 @@ export async function clarificationGate(state: QaAgentState): Promise<QaAgentUpd
     question: needsClarification ? buildQuestion(query, candidates.missingSlots) : "",
     options: needsClarification ? candidates.options.slice(0, ragRuntimePolicy.limits.clarificationOptionLimit) : [],
     missingSlots: needsClarification ? candidates.missingSlots : [],
-    confidence: needsClarification ? Math.min(0.95, Math.max(0.55, score)) : Math.min(0.49, score),
+    confidence: needsClarification
+      ? Math.min(ragRuntimePolicy.confidence.clarificationConfidenceCap, Math.max(ragRuntimePolicy.confidence.clarificationConfidenceFloor, score))
+      : Math.min(ragRuntimePolicy.confidence.clarificationNotNeededConfidenceCap, score),
     ambiguityScore: score,
     groundedOptionCount: candidates.options.length,
     rejectedOptions: candidates.rejectedOptions
