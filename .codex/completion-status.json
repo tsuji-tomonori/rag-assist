@@ -58,6 +58,6 @@
       "result": "not_run_task_missing"
     }
   ],
-  "next_action": "push conflict-resolution merge commit",
+  "next_action": "none",
   "safe_to_continue_without_user": true
 }
