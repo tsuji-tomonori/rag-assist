@@ -371,4 +371,14 @@ curl -s -X POST http://localhost:8787/benchmark-runs/bench_20260502_000000Z_abc1
   "${AUTH_HEADER[@]}" \
   -H 'Content-Type: application/json' \
   -d '{"artifact":"report"}' | jq
+
+curl -s -X POST http://localhost:8787/benchmark-runs/bench_20260502_000000Z_abc12345/download \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"artifact":"summary"}' | jq
+
+curl -s -X POST http://localhost:8787/benchmark-runs/bench_20260502_000000Z_abc12345/download \
+  "${AUTH_HEADER[@]}" \
+  -H 'Content-Type: application/json' \
+  -d '{"artifact":"results"}' | jq
 ```

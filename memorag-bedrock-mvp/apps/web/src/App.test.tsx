@@ -324,9 +324,12 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     if (requestUrl.endsWith("/benchmark-suites") && isGet(init)) return Promise.resolve(response({ suites: [{ suiteId: "standard-agent-v1", label: "Agent standard", mode: "agent", datasetS3Key: "datasets/agent/standard-v1.jsonl", preset: "standard", defaultConcurrency: 1 }] }))
     if (requestUrl.endsWith("/benchmark-runs") && isGet(init)) return Promise.resolve(response({ benchmarkRuns: [] }))
     if (requestUrl.endsWith("/benchmark-runs") && init?.method === "POST") {
-      return Promise.resolve(response({ runId: "bench-1", status: "queued", suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild", datasetS3Key: "datasets/agent/standard-v1.jsonl", createdBy: "user-1", createdAt: "2026-05-02T00:00:00.000Z", updatedAt: "2026-05-02T00:00:00.000Z", reportS3Key: "runs/bench-1/report.md" }))
+      return Promise.resolve(response({ runId: "bench-1", status: "queued", suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild", datasetS3Key: "datasets/agent/standard-v1.jsonl", createdBy: "user-1", createdAt: "2026-05-02T00:00:00.000Z", updatedAt: "2026-05-02T00:00:00.000Z", reportS3Key: "runs/bench-1/report.md", summaryS3Key: "runs/bench-1/summary.json", resultsS3Key: "runs/bench-1/results.jsonl" }))
     }
-    if (requestUrl.endsWith("/benchmark-runs/bench-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/report.md", expiresInSeconds: 900, objectKey: "runs/bench-1/report.md" }))
+    if (requestUrl.endsWith("/benchmark-runs/bench-1/download") && init?.method === "POST") {
+      const artifact = JSON.parse(String(init.body ?? "{}")).artifact ?? "report"
+      return Promise.resolve(response({ url: `https://signed.example/${artifact}`, expiresInSeconds: 900, objectKey: `runs/bench-1/${artifact}` }))
+    }
     if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
     if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}")) as ConversationHistoryItem
@@ -763,7 +766,14 @@ describe("App chat and upload flow", () => {
     })
 
     await userEvent.click(screen.getByTitle("レポートをダウンロード"))
+    await userEvent.click(screen.getByTitle("サマリJSONをダウンロード"))
+    await userEvent.click(screen.getByTitle("Raw resultsをダウンロード"))
     expect(click).toHaveBeenCalled()
+    expect(requestBodies(fetchMock, "/benchmark-runs/bench-1/download")).toEqual([
+      { artifact: "report" },
+      { artifact: "summary" },
+      { artifact: "results" }
+    ])
   })
 
   it("submits with Enter and sends the selected model", async () => {

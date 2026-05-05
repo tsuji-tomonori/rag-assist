@@ -228,7 +228,9 @@ function summarize(rows: SearchResultRow[]): SearchSummary {
 }
 
 function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): string {
-  const metricRows = Object.entries(summary.metrics).map(([name, value]) => `| ${name} | ${formatNumber(value)} |`).join("\n")
+  const metricRows = Object.entries(summary.metrics)
+    .map(([name, value]) => `| ${name} | ${formatNumber(value)} | ${metricDescription(name)} |`)
+    .join("\n")
   const failureRows = summary.failures.length === 0
     ? "\nNo failed search benchmark rows.\n"
     : [
@@ -262,8 +264,8 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
 
 ## Metrics
 
-| metric | value |
-| --- | ---: |
+| metric | value | 説明 |
+| --- | ---: | --- |
 ${metricRows}
 
 ## Failures
@@ -274,6 +276,35 @@ ${failureRows}
 
 ${detailRows}
 `
+}
+
+const metricDescriptions: Record<string, string> = {
+  recallAt1: "最上位 1 件に期待する relevant item が含まれた割合。",
+  recallAt3: "上位 3 件に期待する relevant item が含まれた割合。",
+  recallAt5: "上位 5 件に期待する relevant item が含まれた割合。",
+  recallAt10: "上位 10 件に期待する relevant item が含まれた割合。",
+  recallAt20: "上位 20 件に期待する relevant item が含まれた割合。",
+  mrrAt10: "上位 10 件で最初に relevant item が現れた順位の逆数平均。",
+  ndcgAt10: "上位 10 件の ranking 品質を、関連度と順位割引で評価した値。",
+  precisionAt5: "上位 5 件のうち relevant item が占める割合。",
+  precisionAt10: "上位 10 件のうち relevant item が占める割合。",
+  expectedFileHitRate: "期待ファイルが検索結果に含まれた割合。",
+  expectedDocumentHitRate: "期待 documentId が検索結果に含まれた割合。",
+  expectedChunkHitRate: "期待 chunkId が検索結果に含まれた割合。",
+  noAccessLeakCount: "アクセス権のない検索結果が返った件数。0 が望ましい。",
+  noAccessLeakRate: "アクセス権漏れが 1 件以上発生した行の割合。低いほどよい。",
+  p50LatencyMs: "検索 API latency の中央値。",
+  p95LatencyMs: "検索 API latency の 95 パーセンタイル。遅い tail latency を見る。",
+  p99LatencyMs: "検索 API latency の 99 パーセンタイル。",
+  averageLatencyMs: "検索 API latency の平均。",
+  errorRate: "HTTP 2xx 以外になった行の割合。低いほどよい。",
+  lexicalCountAvg: "lexical 検索候補数の平均。",
+  semanticCountAvg: "semantic 検索候補数の平均。",
+  fusedCountAvg: "lexical と semantic を統合した後の候補数の平均。"
+}
+
+function metricDescription(metric: string): string {
+  return metricDescriptions[metric] ?? "この search benchmark summary に含まれる集計指標。"
 }
 
 function averageMetric(rows: SearchResultRow[], metric: keyof RetrievalMetrics): number | null {

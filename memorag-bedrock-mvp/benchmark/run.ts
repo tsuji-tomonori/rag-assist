@@ -824,7 +824,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
 }
 
 function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): string {
-  const metricRows = [
+  const metricRows: Array<[string, string]> = [
     ["answerable_accuracy", formatRate(summary.metrics.answerableAccuracy)],
     ["clarification_need_precision", formatRate(summary.metrics.clarificationNeedPrecision)],
     ["clarification_need_recall", formatRate(summary.metrics.clarificationNeedRecall)],
@@ -927,9 +927,9 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
 
 ## Metrics
 
-| metric | value |
-| --- | ---: |
-${metricRows.map(([name, value]) => `| ${name} | ${value} |`).join("\n")}
+| metric | value | 説明 |
+| --- | ---: | --- |
+${metricRows.map(([name, value]) => `| ${name} | ${value} | ${metricDescription(name)} |`).join("\n")}
 
 ## Corpus Seed
 
@@ -956,6 +956,46 @@ ${failureRows}
 
 ${detailRows}
 `
+}
+
+const metricDescriptions: Record<string, string> = {
+  answerable_accuracy: "回答可能な行で、期待語句・正規表現・引用・期待資料などの判定をすべて満たした割合。",
+  clarification_need_precision: "実際に確認質問を返した行のうち、dataset でも確認質問を期待していた割合。",
+  clarification_need_recall: "確認質問が必要な行のうち、実際に確認質問を返せた割合。",
+  clarification_need_f1: "確認質問の precision と recall の調和平均。確認質問の出し過ぎと不足のバランスを見る。",
+  option_hit_rate: "確認質問の選択肢に、dataset が期待する候補語句が含まれた割合。",
+  missing_slot_hit_rate: "確認質問で不足 slot として返した項目が、dataset の期待不足 slot を満たした割合。",
+  corpus_grounded_option_rate: "確認質問の選択肢が、memory・evidence・aspect・history などの根拠に紐づいていた割合。",
+  post_clarification_accuracy: "確認質問後の follow-up 実行で、期待する回答または拒否に到達した割合。",
+  over_clarification_rate: "明確に回答すべき行で、不要な確認質問を返した割合。低いほどよい。",
+  clarification_latency_overhead_ms: "確認質問を返した行の初回 latency と、それ以外の行の初回 latency の平均差。",
+  post_clarification_task_latency_ms: "確認質問の初回応答から follow-up 完了までを含めた task latency の平均。",
+  abstention_recall: "回答不能な行のうち、回答せず拒否できた割合。",
+  unsupported_answer_rate: "回答不能な行で、根拠なしに回答してしまった割合。低いほどよい。",
+  answer_contains_rate: "回答可能な行で、期待語句または期待回答文字列を回答に含められた割合。",
+  citation_hit_rate: "回答可能な行で、少なくとも 1 件の citation を返した割合。",
+  expected_file_hit_rate: "期待ファイルまたは期待 document が citation/retrieved に含まれた割合。",
+  retrieval_recall_at_20: "上位 20 件の retrieved/citation に期待ファイルまたは期待 document が含まれた割合。",
+  expected_page_hit_rate: "期待 page が citation/retrieved に含まれた割合。",
+  fact_slot_coverage: "dataset の expectedFactSlots のうち、回答文または取得根拠で支持できた fact slot の平均割合。",
+  refusal_precision: "拒否した行のうち、dataset 上も回答不能だった割合。高いほど誤拒否が少ない。",
+  refusal_recall: "回答不能な行のうち、実際に拒否できた割合。",
+  unsupported_sentence_rate: "answerSupport が検出した非支持文の割合。低いほど根拠に忠実。",
+  avg_iterations: "debug trace 上の検索評価 iteration 数の平均。",
+  avg_retrieval_calls: "debug trace 上の検索 action 実行回数の平均。",
+  avg_risk_signals: "retrieval evaluator が検出した risk signal 数の平均。",
+  llm_judge_invocation_rate: "LLM judge が 1 回以上実行された行の割合。",
+  llm_judge_no_conflict_rate: "LLM judge 判定のうち NO_CONFLICT だった割合。",
+  llm_judge_conflict_rate: "LLM judge 判定のうち CONFLICT だった割合。低いほどよい。",
+  llm_judge_unclear_rate: "LLM judge 判定のうち UNCLEAR だった割合。",
+  llm_judge_resolved_rate: "LLM judge 対象行のうち、最終的に conflict を解消できた割合。",
+  p50_latency_ms: "初回 API call latency の中央値。",
+  p95_latency_ms: "初回 API call latency の 95 パーセンタイル。遅い tail latency を見る。",
+  average_latency_ms: "初回 API call latency の平均。"
+}
+
+function metricDescription(metric: string): string {
+  return metricDescriptions[metric] ?? "この benchmark summary に含まれる集計指標。"
 }
 
 function inferExpectedAnswerable(row: DatasetRow): boolean {

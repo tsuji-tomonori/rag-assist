@@ -25,6 +25,30 @@
 - AC-FR019-003: 未実施の LLM judge 評価は実施済みとして表示しないこと。
 - AC-FR019-004: benchmark report は既存の answerable、citation、expected file 指標を維持すること。
 - AC-FR019-005: retrieval evaluator が LLM judge を実行した場合、benchmark summary は judge 発火率、判定 label 内訳、解消率を出力できること。
+- AC-FR019-006: Markdown report の Metrics 表は `metric`、`value`、`説明` の列を持ち、各 metric の意味を日本語で説明すること。
+
+## Markdown report 指標説明
+
+benchmark runner は report の Metrics 表で、値だけでなく運用者が読み取るべき意味を `説明` 列に出力する。
+
+| 列 | 説明 |
+|---|---|
+| `metric` | summary JSON に対応する機械可読な指標名 |
+| `value` | benchmark 実行結果から集計した値。未評価の場合は `-` |
+| `説明` | 指標が何を測っているか、また高低どちらを重視するかを日本語で示す |
+
+代表的な指標の意味は次の通り。
+
+| metric | 説明 |
+|---|---|
+| `answerable_accuracy` | 回答可能な行で、期待語句・正規表現・引用・期待資料などの判定を満たした割合 |
+| `retrieval_recall_at_20` | 上位 20 件の retrieved/citation に期待ファイルまたは期待 document が含まれた割合 |
+| `fact_slot_coverage` | `expectedFactSlots` のうち、回答文または取得根拠で支持できた fact slot の平均割合 |
+| `refusal_precision` | 拒否した行のうち、dataset 上も回答不能だった割合 |
+| `refusal_recall` | 回答不能な行のうち、実際に拒否できた割合 |
+| `unsupported_sentence_rate` | answerSupport が検出した非支持文の割合。低いほど根拠に忠実 |
+| `llm_judge_invocation_rate` | LLM judge が 1 回以上実行された行の割合 |
+| `p95_latency_ms` | 初回 API call latency の 95 パーセンタイル |
 
 ## 要件の源泉・背景
 
@@ -51,7 +75,7 @@
 | 受け入れ基準 | `AC-FR019-001` から `AC-FR019-005` |
 | 優先度 | S |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-01 初版 / 2026-05-02 LLM judge 指標を追加 |
+| 変更履歴 | 2026-05-01 初版 / 2026-05-02 LLM judge 指標を追加 / 2026-05-05 Markdown report の日本語説明列を追加 |
 
 ## 妥当性確認
 
