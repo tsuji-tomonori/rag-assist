@@ -2,6 +2,7 @@ import type { AppUser } from "../../auth.js"
 import type { Dependencies } from "../../dependencies.js"
 import { rrfFuse, searchRag, type SearchResult, type SearchResponse } from "../../search/hybrid-search.js"
 import type { RetrievedVector, VectorMetadata } from "../../types.js"
+import { expandedSearchTopK, ragRuntimePolicy } from "../runtime-policy.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 
 export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
@@ -25,9 +26,9 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
         deps,
         {
           query: item.query,
-          topK: Math.max(state.topK, 30),
-          lexicalTopK: 80,
-          semanticTopK: 80,
+          topK: expandedSearchTopK(state.topK),
+          lexicalTopK: ragRuntimePolicy.retrieval.lexicalTopK,
+          semanticTopK: ragRuntimePolicy.retrieval.semanticTopK,
           embeddingModelId: state.embeddingModelId,
           semanticVector: item.vector.length > 0 ? item.vector : undefined
         },
@@ -49,7 +50,7 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
         return result ? toRetrievedVector(result, hit.score, index + 1) : undefined
       })
       .filter((hit): hit is RetrievedVector => hit !== undefined)
-      .slice(0, Math.max(state.topK, 30))
+      .slice(0, expandedSearchTopK(state.topK))
     return { retrievedChunks, retrievalDiagnostics: summarizeDiagnostics(diagnostics, retrievedChunks) }
   }
 }
@@ -79,12 +80,22 @@ function toRetrievedVector(result: SearchResult, crossQueryRrfScore: number, cro
 
 function retrievalScore(result: SearchResult): number {
   const semanticScore = result.semanticScore ?? 0
-  const lexicalScore = result.lexicalScore === undefined ? 0 : Math.min(0.95, 0.35 + Math.log1p(result.lexicalScore) / 3)
-  return Math.max(semanticScore, lexicalScore, Math.min(0.95, result.score))
+  const lexicalScore =
+    result.lexicalScore === undefined
+      ? 0
+      : Math.min(
+          ragRuntimePolicy.retrieval.sourceScoreMax,
+          ragRuntimePolicy.retrieval.lexicalBaseScore + Math.log1p(result.lexicalScore) / ragRuntimePolicy.retrieval.lexicalLogDivisor
+        )
+  return Math.max(semanticScore, lexicalScore, Math.min(ragRuntimePolicy.retrieval.sourceScoreMax, result.score))
 }
 
 function combinedRetrievalScore(result: SearchResult, crossQueryRrfScore: number): number {
-  return Math.min(0.99, retrievalScore(result) + Math.min(0.08, crossQueryRrfScore * 3))
+  return Math.min(
+    ragRuntimePolicy.retrieval.contextWindowMaxScore,
+    retrievalScore(result) +
+      Math.min(ragRuntimePolicy.retrieval.crossQueryRrfBoostCap, crossQueryRrfScore * ragRuntimePolicy.retrieval.crossQueryRrfBoostMultiplier)
+  )
 }
 
 function summarizeDiagnostics(diagnostics: SearchResponse["diagnostics"][], retrievedChunks: RetrievedVector[]) {

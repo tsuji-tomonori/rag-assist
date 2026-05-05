@@ -27,10 +27,11 @@ import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
+import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeTopK, ragRuntimePolicy } from "./runtime-policy.js"
 import { NO_ANSWER, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
-import { clamp, toCitation } from "./utils.js"
+import { toCitation } from "./utils.js"
 
 const systemAdminUser: AppUser = {
   userId: "system",
@@ -63,7 +64,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       nextAction
     ]
     const expandedQueries = nextAction.type === "evidence_search"
-      ? nextAction.query === query ? state.expandedQueries : [nextAction.query, ...state.expandedQueries].slice(0, 8)
+      ? nextAction.query === query ? state.expandedQueries : [nextAction.query, ...state.expandedQueries].slice(0, ragRuntimePolicy.limits.expandedQueryLimit)
       : state.expandedQueries
 
     return {
@@ -77,8 +78,8 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
         stopCriteria: {
           maxIterations: state.maxIterations,
           minTopScore: state.minScore,
-          minEvidenceCount: Math.max(2, Math.min(state.topK, 4)),
-          maxNoNewEvidenceStreak: 2
+          minEvidenceCount: deriveMinEvidenceCount(state.topK),
+          maxNoNewEvidenceStreak: ragRuntimePolicy.retrieval.maxNoNewEvidenceStreak
         }
       },
       searchDecision: "continue_search"
@@ -132,7 +133,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
   }> {
     if (action.type === "expand_context") {
       const expanded = await expandContextWindow(deps, state, action)
-      const retrievedChunks = mergeRetrievedChunks(state.retrievedChunks, expanded, Math.max(state.topK, 30))
+      const retrievedChunks = mergeRetrievedChunks(state.retrievedChunks, expanded, expandedSearchTopK(state.topK))
       return {
         searchUpdate: { retrievedChunks },
         hitCount: expanded.length,
@@ -341,7 +342,7 @@ function withRewrittenQuery(state: QaAgentState, action: Extract<SearchAction, {
   const rewritten = rewriteQuery(state, action)
   return {
     ...state,
-    expandedQueries: [rewritten, ...state.expandedQueries.filter((query) => query !== rewritten)].slice(0, 8),
+    expandedQueries: [rewritten, ...state.expandedQueries.filter((query) => query !== rewritten)].slice(0, ragRuntimePolicy.limits.expandedQueryLimit),
     queryEmbeddings: []
   }
 }
@@ -351,7 +352,7 @@ function rewriteQuery(state: QaAgentState, action: Extract<SearchAction, { type:
   const missingFacts = state.searchPlan.requiredFacts
     .filter((fact) => state.retrievalEvaluation.missingFactIds.includes(fact.id))
     .map((fact) => fact.description)
-    .slice(0, 4)
+    .slice(0, ragRuntimePolicy.limits.queryRewriteFactLimit)
   if (action.strategy === "section") return [...new Set([base, ...missingFacts, "章 見出し セクション"]).values()].join(" ")
   if (action.strategy === "entity") return [...new Set([base, ...missingFacts, "正式名称 略称 別名"]).values()].join(" ")
   if (action.strategy === "hyde") return `${base} ${missingFacts.join(" ")} 回答 根拠 条件 手順 期限 金額`.trim()
@@ -380,7 +381,10 @@ async function expandContextWindow(
     const distance = Math.abs(index - center)
     expanded.push({
       key: `${source.metadata.documentId}-${chunk.id}`,
-      score: Math.max(0, Math.min(0.99, source.score - distance * 0.03)),
+      score: Math.max(
+        0,
+        Math.min(ragRuntimePolicy.retrieval.contextWindowMaxScore, source.score - distance * ragRuntimePolicy.retrieval.contextWindowDecay)
+      ),
       metadata: {
         ...source.metadata,
         kind: "chunk",
@@ -427,7 +431,7 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
     ? []
     : clues.flatMap((clue) => clue.match(/[A-Za-z0-9_-]{3,}/g) ?? [])
   const refs = questionRefs.length > 0 ? questionRefs : clueRefs
-  const uniqueRefs = [...new Set(refs.filter(isUsefulFactReference))].slice(0, 8)
+  const uniqueRefs = [...new Set(refs.filter(isUsefulFactReference))].slice(0, ragRuntimePolicy.limits.factReferenceLimit)
   if (uniqueRefs.length === 0) {
     return [
       {
@@ -466,9 +470,10 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
   const startedAt = new Date()
   const startedMs = Date.now()
   const runId = createRunId(startedAt)
-  const topK = clamp(input.topK ?? 6, 1, 20)
-  const memoryTopK = clamp(input.memoryTopK ?? 4, 1, 10)
+  const topK = normalizeTopK(input.topK)
+  const memoryTopK = normalizeMemoryTopK(input.memoryTopK)
   const minScore = input.minScore ?? config.minRetrievalScore
+  const maxIterations = normalizeMaxIterations(input.maxIterations)
   const modelId = input.modelId ?? config.defaultModelId
   const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
   const clueModelId = input.clueModelId ?? input.modelId ?? config.defaultMemoryModelId
@@ -493,8 +498,8 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
     unresolvedReferenceTargets: [],
     visitedDocumentIds: [],
     searchBudget: {
-      maxReferenceDepth: 2,
-      remainingCalls: 3
+      maxReferenceDepth: ragRuntimePolicy.retrieval.referenceMaxDepth,
+      remainingCalls: ragRuntimePolicy.retrieval.searchBudgetCalls
     },
     memoryCards: [],
     clues: [],
@@ -506,10 +511,10 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       requiredFacts: [],
       actions: [],
       stopCriteria: {
-        maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
+        maxIterations,
         minTopScore: minScore,
-        minEvidenceCount: Math.max(2, Math.min(topK, 4)),
-        maxNoNewEvidenceStreak: 2
+        minEvidenceCount: deriveMinEvidenceCount(topK),
+        maxNoNewEvidenceStreak: ragRuntimePolicy.retrieval.maxNoNewEvidenceStreak
       }
     },
     actionHistory: [],
@@ -531,7 +536,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
     toolIntent: undefined,
     computedFacts: [],
     usedComputedFactIds: [],
-    maxIterations: Math.min(8, Math.max(1, input.maxIterations ?? 3)),
+    maxIterations,
     newEvidenceCount: 0,
     noNewEvidenceStreak: 0,
     searchDecision: "continue_search",

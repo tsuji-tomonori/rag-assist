@@ -69,6 +69,27 @@ task benchmark:sample
 | `EMBEDDING_MODEL_ID` | 埋め込みモデル | `amazon.titan-embed-text-v2:0` |
 | `EMBEDDING_DIMENSIONS` | vector次元数 | `1024` |
 | `MIN_RETRIEVAL_SCORE` | no-answer判定閾値 | `0.20` |
+| `RAG_DEFAULT_TOP_K` / `RAG_MAX_TOP_K` | 通常チャットの evidence 件数既定値と上限 | `6` / `20` |
+| `RAG_DEFAULT_MEMORY_TOP_K` / `RAG_MAX_MEMORY_TOP_K` | memory card 検索件数既定値と上限 | `4` / `10` |
+| `RAG_DEFAULT_MAX_ITERATIONS` / `RAG_MAX_ITERATIONS` | retrieval loop の既定反復数と上限 | `3` / `8` |
+| `RAG_SEARCH_CANDIDATE_MIN_TOP_K` | RRF・context expansion 用に内部保持する最小候補数 | `30` |
+| `RAG_SEARCH_LEXICAL_TOP_K` / `RAG_SEARCH_SEMANTIC_TOP_K` | hybrid retrieval の lexical / semantic 候補取得件数 | `80` / `80` |
+| `RAG_MEMORY_PREFETCH_MULTIPLIER` / `RAG_MEMORY_PREFETCH_MAX_TOP_K` | memory 検索の事前取得倍率と上限 | `3` / `100` |
+| `RAG_MIN_EVIDENCE_COUNT_MIN` / `RAG_MIN_EVIDENCE_COUNT_MAX` | search plan の evidence count 判定範囲 | `2` / `4` |
+| `RAG_MAX_NO_NEW_EVIDENCE_STREAK` | 新規 evidence なしで検索を停止する連続回数 | `2` |
+| `RAG_REFERENCE_MAX_DEPTH` / `RAG_SEARCH_BUDGET_CALLS` | 参照解決深度と検索 budget | `2` / `3` |
+| `RAG_CONTEXT_WINDOW_DECAY` / `RAG_CONTEXT_WINDOW_MAX_SCORE` | 隣接 chunk 展開時の score 減衰と上限 | `0.03` / `0.99` |
+| `RAG_RETRIEVAL_LEXICAL_BASE_SCORE` / `RAG_RETRIEVAL_LEXICAL_LOG_DIVISOR` / `RAG_RETRIEVAL_MAX_SOURCE_SCORE` | lexical score 正規化と source score 上限 | `0.35` / `3` / `0.95` |
+| `RAG_CROSS_QUERY_RRF_BOOST_CAP` / `RAG_CROSS_QUERY_RRF_BOOST_MULTIPLIER` | 複数 query RRF boost の上限と倍率 | `0.08` / `3` |
+| `RAG_LLM_TEMPERATURE` | RAG の clue、judge、回答生成、memory card 生成で使う LLM temperature | `0` |
+| `RAG_CLUE_MAX_TOKENS` / `RAG_FINAL_ANSWER_MAX_TOKENS` / `RAG_MEMORY_CARD_MAX_TOKENS` | clue、最終回答、memory card 生成の max tokens | `600` / `1200` / `1000` |
+| `RAG_SUFFICIENT_CONTEXT_MAX_TOKENS` / `RAG_RETRIEVAL_JUDGE_MAX_TOKENS` / `RAG_ANSWER_SUPPORT_MAX_TOKENS` / `RAG_ANSWER_REPAIR_MAX_TOKENS` | LLM judge / verifier / repair の max tokens | `900` / `700` / `900` / `900` |
+| `RAG_LLM_JUDGE_NO_CONFLICT_MIN_CONFIDENCE` | conflict risk を LLM judge が解消できる最小 confidence | `0.7` |
+| `RAG_COMPUTED_FACT_CONFIDENCE` / `RAG_FACT_COVERAGE_SUPPORTED_CONFIDENCE` / `RAG_ANSWERABILITY_MAX_CONFIDENCE` | deterministic fact と answerability gate の confidence policy | `0.86` / `0.8` / `0.99` |
+| `RAG_PARTIAL_EVIDENCE_CONFIDENCE_CAP` / `RAG_PARTIAL_EVIDENCE_FALLBACK_CONFIDENCE` | partial evidence を後段検証つきで進める場合の confidence policy | `0.78` / `0.66` |
+| `RAG_SUPPORT_SUPPORTED_FALLBACK_CONFIDENCE` / `RAG_SUPPORT_UNSUPPORTED_FALLBACK_CONFIDENCE` | answer support verifier の fallback confidence | `0.7` / `0.3` |
+| `RAG_JUDGE_CHUNK_LIMIT` / `RAG_JUDGE_REASON_MAX_CHARS` / `RAG_REQUIRED_FACT_LIMIT` | LLM judge 入出力の件数・文字数上限 | `8` / `800` / `12` |
+| `RAG_CITATION_LIMIT` / `RAG_SEARCH_CLUE_LIMIT` / `RAG_CLARIFICATION_OPTION_LIMIT` | citation、clue、確認質問 option の上限 | `5` / `6` / `5` |
 | `PUBLISH_LEXICAL_INDEX_ON_SEARCH` | 検索 path で lexical index artifact を生成するか。production では read-only 既定 | production以外は`true` |
 | `DEBUG_DOWNLOAD_BUCKET_NAME` | debug trace JSON download用S3 bucket | 未設定 |
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | debug trace download URL有効期限 | `900` |

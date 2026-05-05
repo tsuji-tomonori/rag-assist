@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { ragRuntimePolicy } from "./runtime-policy.js"
 
 export const NO_ANSWER = "資料からは回答できません。"
 
@@ -193,8 +194,8 @@ const QueryEmbeddingSchema = z.object({
 })
 
 const SearchBudgetSchema = z.object({
-  maxReferenceDepth: z.number().int().min(0).default(2),
-  remainingCalls: z.number().int().min(0).default(3)
+  maxReferenceDepth: z.number().int().min(0).default(ragRuntimePolicy.retrieval.referenceMaxDepth),
+  remainingCalls: z.number().int().min(0).default(ragRuntimePolicy.retrieval.searchBudgetCalls)
 })
 
 export const RequiredFactSchema = z.object({
@@ -214,10 +215,10 @@ export const SearchActionSchema = z.discriminatedUnion("type", [
 ])
 
 const StopCriteriaSchema = z.object({
-  maxIterations: z.number().int().min(1).default(3),
-  minTopScore: z.number().min(-1).max(1).default(0.2),
-  minEvidenceCount: z.number().int().min(1).default(2),
-  maxNoNewEvidenceStreak: z.number().int().min(1).default(2)
+  maxIterations: z.number().int().min(1).max(ragRuntimePolicy.retrieval.maxIterations).default(ragRuntimePolicy.retrieval.defaultMaxIterations),
+  minTopScore: z.number().min(-1).max(1).default(ragRuntimePolicy.retrieval.defaultMinScore),
+  minEvidenceCount: z.number().int().min(1).default(ragRuntimePolicy.retrieval.minEvidenceCountMin),
+  maxNoNewEvidenceStreak: z.number().int().min(1).default(ragRuntimePolicy.retrieval.maxNoNewEvidenceStreak)
 })
 
 export const SearchPlanSchema = z.object({
@@ -226,10 +227,10 @@ export const SearchPlanSchema = z.object({
   requiredFacts: z.array(RequiredFactSchema).default(() => []),
   actions: z.array(SearchActionSchema).default(() => []),
   stopCriteria: StopCriteriaSchema.default({
-    maxIterations: 3,
-    minTopScore: 0.2,
-    minEvidenceCount: 2,
-    maxNoNewEvidenceStreak: 2
+    maxIterations: ragRuntimePolicy.retrieval.defaultMaxIterations,
+    minTopScore: ragRuntimePolicy.retrieval.defaultMinScore,
+    minEvidenceCount: ragRuntimePolicy.retrieval.minEvidenceCountMin,
+    maxNoNewEvidenceStreak: ragRuntimePolicy.retrieval.maxNoNewEvidenceStreak
   })
 })
 
@@ -285,7 +286,7 @@ export const RetrievalEvaluationSchema = z.object({
   nextAction: SearchActionSchema.default({
     type: "evidence_search",
     query: "",
-    topK: 6
+    topK: ragRuntimePolicy.retrieval.defaultTopK
   }),
   reason: z.string().default("")
 })
@@ -391,9 +392,9 @@ export const AgentStateSchema = z.object({
   clueModelId: z.string(),
   useMemory: z.boolean().default(true),
   debug: z.boolean().default(false),
-  topK: z.number().int().min(1).max(20).default(6),
-  memoryTopK: z.number().int().min(1).max(10).default(4),
-  minScore: z.number().min(-1).max(1).default(0.2),
+  topK: z.number().int().min(1).max(ragRuntimePolicy.retrieval.maxTopK).default(ragRuntimePolicy.retrieval.defaultTopK),
+  memoryTopK: z.number().int().min(1).max(ragRuntimePolicy.retrieval.maxMemoryTopK).default(ragRuntimePolicy.retrieval.defaultMemoryTopK),
+  minScore: z.number().min(-1).max(1).default(ragRuntimePolicy.retrieval.defaultMinScore),
   strictGrounded: z.boolean().default(true),
   clarificationContext: ClarificationContextSchema.optional(),
 
@@ -403,8 +404,8 @@ export const AgentStateSchema = z.object({
   unresolvedReferenceTargets: z.array(ReferenceTargetSchema).default(() => []),
   visitedDocumentIds: z.array(z.string()).default(() => []),
   searchBudget: SearchBudgetSchema.default({
-    maxReferenceDepth: 2,
-    remainingCalls: 3
+    maxReferenceDepth: ragRuntimePolicy.retrieval.referenceMaxDepth,
+    remainingCalls: ragRuntimePolicy.retrieval.searchBudgetCalls
   }),
 
   normalizedQuery: z.string().optional(),
@@ -418,10 +419,10 @@ export const AgentStateSchema = z.object({
     requiredFacts: [],
     actions: [],
     stopCriteria: {
-      maxIterations: 3,
-      minTopScore: 0.2,
-      minEvidenceCount: 2,
-      maxNoNewEvidenceStreak: 2
+      maxIterations: ragRuntimePolicy.retrieval.defaultMaxIterations,
+      minTopScore: ragRuntimePolicy.retrieval.defaultMinScore,
+      minEvidenceCount: ragRuntimePolicy.retrieval.minEvidenceCountMin,
+      maxNoNewEvidenceStreak: ragRuntimePolicy.retrieval.maxNoNewEvidenceStreak
     }
   }),
   actionHistory: z.array(ActionObservationSchema).default(() => []),
@@ -433,7 +434,7 @@ export const AgentStateSchema = z.object({
     nextAction: {
       type: "evidence_search",
       query: "",
-      topK: 6
+      topK: ragRuntimePolicy.retrieval.defaultTopK
     },
     reason: ""
   }),
@@ -445,7 +446,7 @@ export const AgentStateSchema = z.object({
   computedFacts: z.array(ComputedFactSchema).default(() => []),
   usedComputedFactIds: z.array(z.string()).default(() => []),
 
-  maxIterations: z.number().int().min(1).max(8).default(3),
+  maxIterations: z.number().int().min(1).max(ragRuntimePolicy.retrieval.maxIterations).default(ragRuntimePolicy.retrieval.defaultMaxIterations),
   newEvidenceCount: z.number().int().min(0).default(0),
   noNewEvidenceStreak: z.number().int().min(0).default(0),
   searchDecision: z.enum(["continue_search", "done"]).default("continue_search"),

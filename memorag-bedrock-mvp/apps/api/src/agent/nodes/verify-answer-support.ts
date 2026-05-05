@@ -1,6 +1,7 @@
 import type { Dependencies } from "../../dependencies.js"
 import { parseJsonObject } from "../../rag/json.js"
 import { buildAnswerSupportPrompt, buildSupportedAnswerRepairPrompt } from "../../rag/prompts.js"
+import { llmOptions, ragRuntimePolicy } from "../runtime-policy.js"
 import { NO_ANSWER, type AnswerSupportJudgement, type QaAgentState, type QaAgentUpdate } from "../state.js"
 import { toCitation } from "../utils.js"
 
@@ -15,11 +16,10 @@ export function createVerifyAnswerSupportNode(deps: Dependencies) {
     }
 
     const evidenceChunks = selectCitedChunks(state)
-    const raw = await deps.textModel.generate(buildAnswerSupportPrompt(state.question, state.answer, evidenceChunks, selectedComputedFacts(state)), {
-      modelId: state.modelId,
-      temperature: 0,
-      maxTokens: 900
-    })
+    const raw = await deps.textModel.generate(
+      buildAnswerSupportPrompt(state.question, state.answer, evidenceChunks, selectedComputedFacts(state)),
+      llmOptions("answerSupport", state.modelId)
+    )
     const judgement = normalizeJudgement(parseJsonObject<SupportJson>(raw), state, evidenceChunks)
 
     if (judgement.supported) {
@@ -58,21 +58,16 @@ async function repairUnsupportedAnswer(
   if (evidenceChunks.length === 0 || judgement.unsupportedSentences.length === 0) return undefined
   const raw = await deps.textModel.generate(
     buildSupportedAnswerRepairPrompt(state.question, state.answer ?? "", judgement.unsupportedSentences, evidenceChunks),
-    {
-      modelId: state.modelId,
-      temperature: 0,
-      maxTokens: 900
-    }
+    llmOptions("answerRepair", state.modelId)
   )
   const repaired = parseJsonObject<RepairJson>(raw)
   if (repaired?.isAnswerable !== true || !repaired.answer || repaired.answer.trim() === NO_ANSWER) return undefined
   const repairedChunks = chunksForUsedIds(repaired.usedChunkIds ?? [], evidenceChunks)
   if (repairedChunks.length === 0) return undefined
-  const supportRaw = await deps.textModel.generate(buildAnswerSupportPrompt(state.question, repaired.answer, repairedChunks, selectedComputedFacts(state)), {
-    modelId: state.modelId,
-    temperature: 0,
-    maxTokens: 900
-  })
+  const supportRaw = await deps.textModel.generate(
+    buildAnswerSupportPrompt(state.question, repaired.answer, repairedChunks, selectedComputedFacts(state)),
+    llmOptions("answerSupport", state.modelId)
+  )
   const repairedJudgement = normalizeJudgement(parseJsonObject<SupportJson>(supportRaw), { ...state, answer: repaired.answer }, repairedChunks)
   if (!repairedJudgement.supported) return undefined
   return {
@@ -95,7 +90,7 @@ function selectCitedChunks(state: QaAgentState): QaAgentState["selectedChunks"] 
 }
 
 function normalizeJudgement(parsed: SupportJson | undefined, state: QaAgentState, evidenceChunks: QaAgentState["selectedChunks"]): AnswerSupportJudgement {
-  const unsupportedSentences = normalizeUnsupportedSentences(parsed?.unsupportedSentences).slice(0, 20)
+  const unsupportedSentences = normalizeUnsupportedSentences(parsed?.unsupportedSentences).slice(0, ragRuntimePolicy.limits.unsupportedSentenceLimit)
   const supportingChunkIds = validChunkIds(cleanStrings(parsed?.supportingChunkIds), evidenceChunks)
   const supportingComputedFactIds = validComputedFactIds(cleanStrings(parsed?.supportingComputedFactIds), state)
   const contradictionChunkIds = validChunkIds(cleanStrings(parsed?.contradictionChunkIds), evidenceChunks)
@@ -105,12 +100,23 @@ function normalizeJudgement(parsed: SupportJson | undefined, state: QaAgentState
   return {
     supported,
     unsupportedSentences: supported ? [] : unsupportedSentences.length > 0 ? unsupportedSentences : [{ sentence: state.answer ?? "", reason: "回答文を支持する根拠チャンクを確認できませんでした。" }],
-    supportingChunkIds: supported && supportingChunkIds.length === 0 ? evidenceChunks.slice(0, 5).map((chunk) => chunk.key) : supportingChunkIds,
+    supportingChunkIds:
+      supported && supportingChunkIds.length === 0
+        ? evidenceChunks.slice(0, ragRuntimePolicy.limits.supportingChunkFallbackLimit).map((chunk) => chunk.key)
+        : supportingChunkIds,
     supportingComputedFactIds,
     contradictionChunkIds,
-    confidence: clamp(parsed?.confidence ?? (supported ? 0.7 : 0.3)),
+    confidence: clamp(
+      parsed?.confidence ??
+        (supported ? ragRuntimePolicy.confidence.answerSupportSupportedFallback : ragRuntimePolicy.confidence.answerSupportUnsupportedFallback)
+    ),
     totalSentences,
-    reason: typeof parsed?.reason === "string" && parsed.reason.trim() ? parsed.reason.trim().slice(0, 800) : supported ? "回答文は根拠チャンクで支持されています。" : "根拠で支持されない回答文があります。"
+    reason:
+      typeof parsed?.reason === "string" && parsed.reason.trim()
+        ? parsed.reason.trim().slice(0, ragRuntimePolicy.limits.judgeReasonMaxChars)
+        : supported
+          ? "回答文は根拠チャンクで支持されています。"
+          : "根拠で支持されない回答文があります。"
   }
 }
 
