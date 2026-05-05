@@ -33,8 +33,7 @@ function sleep(ms: number): Promise<void> {
 function shouldClearFreeformContext(pending: PendingClarificationFreeform, nextQuestion: string): boolean {
   const trimmed = nextQuestion.trim()
   if (!trimmed) return false
-  if (pending.seedText.trim() && trimmed.startsWith(pending.seedText.trim())) return false
-  return looksLikeStandaloneQuestion(trimmed) && !sharesMeaningfulToken(pending.originalQuestion, trimmed) && !sharesMeaningfulToken(pending.seedText, trimmed)
+  return looksLikeStandaloneQuestion(trimmed) && !sharesMeaningfulToken(pending.originalQuestion, trimmed)
 }
 
 function looksLikeStandaloneQuestion(value: string): boolean {
