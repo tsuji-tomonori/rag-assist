@@ -278,9 +278,13 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
     if (fact.effect === "not_required" && fact.satisfiesCondition === true) return `不要です。${explanation}`
     if (fact.effect === "not_required" && fact.satisfiesCondition === false) return `資料上、この金額では不要条件に該当しません。${explanation}`
     if (fact.effect === "allowed" && fact.satisfiesCondition === true) return `可能です。${explanation}`
+    if (fact.effect === "allowed" && fact.satisfiesCondition === false) return `資料上、この金額では可能条件に該当しません。${explanation}`
     if (fact.effect === "not_allowed" && fact.satisfiesCondition === true) return `不可です。${explanation}`
+    if (fact.effect === "not_allowed" && fact.satisfiesCondition === false) return `資料上、この金額では不可条件に該当しません。${explanation}`
     if (fact.effect === "eligible" && fact.satisfiesCondition === true) return `対象です。${explanation}`
+    if (fact.effect === "eligible" && fact.satisfiesCondition === false) return `資料上、この金額では対象条件に該当しません。${explanation}`
     if (fact.effect === "not_eligible" && fact.satisfiesCondition === true) return `対象外です。${explanation}`
+    if (fact.effect === "not_eligible" && fact.satisfiesCondition === false) return `資料上、この金額では対象外条件に該当しません。${explanation}`
   }
   if (fact.kind === "task_deadline_query_unavailable") return "期限切れタスクの完全な一覧は、構造化インデックスが未実装のため取得できません。"
   if (fact.kind === "calculation_unavailable") return typeof fact.reason === "string" ? fact.reason : "計算できません。"
@@ -289,7 +293,8 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
 
 function mockPolicyComputationExtraction(prompt: string): Record<string, unknown> {
   const question = extractBetween(prompt, "<question>", "</question>")
-  const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
+  const contextXml = extractLastBetween(prompt, "<context>", "</context>")
+  const contexts = [...contextXml.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
   if (!/領収書|添付/.test(question) || !/[0-9０-９][0-9０-９,，]*(?:円|万円|千円)/.test(question)) {
     return {
       canExtract: false,
@@ -300,8 +305,8 @@ function mockPolicyComputationExtraction(prompt: string): Record<string, unknown
 
   const amount = question.match(/([0-9０-９][0-9０-９,，]*)\s*円/)?.[0] ?? "5200円"
   const candidates = contexts.flatMap((match) => {
-    const sourceChunkId = match[1] ?? "chunk-unknown"
-    const text = match[2] ?? ""
+    const sourceChunkId = unescapeXml(match[1] ?? "chunk-unknown")
+    const text = unescapeXml(match[2] ?? "")
     const items: Array<Record<string, unknown>> = []
     if (text.includes("1万円以上") && text.includes("領収書") && text.includes("必要")) {
       items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円以上", "必要"), "gte", "1万円", "required", "領収書の添付が必要"))

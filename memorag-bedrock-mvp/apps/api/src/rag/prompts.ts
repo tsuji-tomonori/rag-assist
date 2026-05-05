@@ -54,7 +54,12 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
 - 自分で日数計算や数値計算を再実行してはいけない。
 - computedFacts に必要な値がない場合は、推測で補完せず、計算できない理由を説明する。
 - threshold_comparison がある場合は、effect、satisfiesCondition、explanation に基づいて、質問された金額が資料内条件に該当するかを答える。
-- effect=required かつ satisfiesCondition=true は「必要」、effect=not_required かつ satisfiesCondition=true は「不要」、effect=allowed は「可能」、effect=not_allowed は「不可」、effect=eligible は「対象」、effect=not_eligible は「対象外」として扱う。
+- effect=required かつ satisfiesCondition=true は「必要」、false は「必要条件に該当しない」として扱う。
+- effect=not_required かつ satisfiesCondition=true は「不要」、false は「不要条件に該当しない」として扱う。
+- effect=allowed かつ satisfiesCondition=true は「可能」、false は「可能条件に該当しない」として扱う。
+- effect=not_allowed かつ satisfiesCondition=true は「不可」、false は「不可条件に該当しない」として扱う。
+- effect=eligible かつ satisfiesCondition=true は「対象」、false は「対象条件に該当しない」として扱う。
+- effect=not_eligible かつ satisfiesCondition=true は「対象外」、false は「対象外条件に該当しない」として扱う。
 - computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
@@ -188,6 +193,9 @@ export function buildPolicyComputationExtractionPrompt(question: string, chunks:
 - 回答文は生成しない。
 - 一般知識を使わない。
 - 条件に関係する原文を quote としてそのまま抜き出す。
+- sourceChunkId には <chunk id="..."> の id 属性値だけを入れる。chunkId 属性値ではない。
+- questionTarget.amountText は質問中に実在する金額表記をそのまま抜き出す。
+- condition.thresholdText は quote 中に実在する閾値金額表記をそのまま抜き出す。
 - quote に含まれない条件・効果・対象を補完しない。
 - 質問と同じ要件を扱っている条件だけ matchesQuestion=true にする。
 - 複数条件がある場合は candidates にすべて出す。
@@ -209,7 +217,7 @@ JSON schema:
   },
   "candidates": [
     {
-      "sourceChunkId": "chunk-0001",
+      "sourceChunkId": "doc-1-chunk-0001",
       "quote": "1万円以上の経費精算では領収書の添付が必要です。",
       "condition": {
         "subject": "経費精算",

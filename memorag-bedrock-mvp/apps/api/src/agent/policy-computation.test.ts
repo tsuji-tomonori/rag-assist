@@ -16,6 +16,7 @@ const chunk: RetrievedVector = {
     createdAt: "2026-05-01T00:00:00.000Z"
   }
 }
+const question = "5200円の経費精算では領収書いる?"
 
 test("policy extraction facts validate quote, confidence, question match, and compute comparison deterministically", () => {
   const facts = policyExtractionToComputedFacts(extraction({
@@ -23,7 +24,7 @@ test("policy extraction facts validate quote, confidence, question match, and co
     quote: "1万円以上の経費精算では領収書の添付が必要です。",
     comparator: "gte",
     effect: "required"
-  }), [chunk])
+  }), [chunk], question)
 
   assert.equal(facts[0]?.kind, "threshold_comparison")
   assert.equal(facts[0]?.kind === "threshold_comparison" ? facts[0].source : undefined, "llm_policy_extraction")
@@ -41,7 +42,7 @@ test("policy extraction supports not-required true and additional effects", () =
     quote: "1万円未満では不要です。",
     comparator: "lt",
     effect: "not_required"
-  }), [chunk])
+  }), [chunk], question)
   assert.equal(notRequired[0]?.kind === "threshold_comparison" ? notRequired[0].satisfiesCondition : undefined, true)
   assert.equal(notRequired[0]?.kind === "threshold_comparison" ? notRequired[0].effect : undefined, "not_required")
 
@@ -50,18 +51,75 @@ test("policy extraction supports not-required true and additional effects", () =
     quote: "1万円未満では不要です。",
     comparator: "lt",
     effect: "eligible"
-  }), [chunk])
+  }), [chunk], question)
   assert.equal(eligible[0]?.kind === "threshold_comparison" ? eligible[0].effect : undefined, "eligible")
   assert.equal(eligible[0]?.kind === "threshold_comparison" ? eligible[0].polarity : undefined, undefined)
+
+  const allowedFalse = policyExtractionToComputedFacts(extraction({
+    questionAmountText: "5200円",
+    quote: "1万円以上の経費精算では領収書の添付が必要です。",
+    comparator: "gte",
+    effect: "allowed"
+  }), [chunk], question)
+  assert.match(allowedFalse[0]?.kind === "threshold_comparison" ? allowedFalse[0].explanation : "", /可能条件に該当しません/)
 })
 
 test("policy extraction discards unsafe or ambiguous candidates", () => {
-  assert.equal(policyExtractionToComputedFacts(extraction({ quote: "資料にない引用です。" }), [chunk]).length, 0)
-  assert.equal(policyExtractionToComputedFacts(extraction({ confidence: 0.7 }), [chunk]).length, 0)
-  assert.equal(policyExtractionToComputedFacts(extraction({ matchesQuestion: false }), [chunk]).length, 0)
-  assert.equal(policyExtractionToComputedFacts(extraction({ ambiguity: ["scope が不明"] }), [chunk]).length, 0)
-  assert.equal(policyExtractionToComputedFacts(extraction({ effect: "unknown" }), [chunk]).length, 0)
-  assert.equal(policyExtractionToComputedFacts(extraction({ thresholdText: "1万円", thresholdValue: 9000 }), [chunk]).length, 0)
+  assert.equal(policyExtractionToComputedFacts(extraction({ quote: "資料にない引用です。" }), [chunk], question).length, 0)
+  assert.equal(policyExtractionToComputedFacts(extraction({ confidence: 0.7 }), [chunk], question).length, 0)
+  assert.equal(policyExtractionToComputedFacts(extraction({ matchesQuestion: false }), [chunk], question).length, 0)
+  assert.equal(policyExtractionToComputedFacts(extraction({ ambiguity: ["scope が不明"] }), [chunk], question).length, 0)
+  assert.equal(policyExtractionToComputedFacts(extraction({ effect: "unknown" }), [chunk], question).length, 0)
+  assert.equal(policyExtractionToComputedFacts(extraction({ thresholdText: "1万円", thresholdValue: 9000 }), [chunk], question).length, 0)
+})
+
+test("policy extraction requires amount and threshold text provenance", () => {
+  assert.equal(
+    policyExtractionToComputedFacts(
+      extraction({
+        questionAmountText: "12000円",
+        questionAmountValue: 12000
+      }),
+      [chunk],
+      question
+    ).length,
+    0
+  )
+  assert.equal(
+    policyExtractionToComputedFacts(
+      extraction({
+        quote: "1万円以上の経費精算では領収書の添付が必要です。",
+        thresholdText: "5千円",
+        thresholdValue: 5000
+      }),
+      [chunk],
+      question
+    ).length,
+    0
+  )
+})
+
+test("policy extraction resolves duplicate chunk ids by quote-bearing chunk", () => {
+  const first: RetrievedVector = {
+    ...chunk,
+    key: "doc-a-chunk-0001",
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-a",
+      text: "5千円以上の社内備品では承認が必要です。"
+    }
+  }
+  const second: RetrievedVector = {
+    ...chunk,
+    key: "doc-b-chunk-0001",
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-b"
+    }
+  }
+  const facts = policyExtractionToComputedFacts(extraction({ sourceChunkId: "chunk-0001" }), [first, second], question)
+
+  assert.equal(facts[0]?.kind === "threshold_comparison" ? facts[0].sourceChunkId : undefined, "doc-b-chunk-0001")
 })
 
 test("policy extraction prompt keeps natural language extraction separate from deterministic comparison", () => {
@@ -73,6 +131,9 @@ test("policy extraction prompt keeps natural language extraction separate from d
   assert.match(prompt, /複数条件がある場合は candidates にすべて出す/)
   assert.match(prompt, /曖昧、矛盾、比較不能なら canExtract=false/)
   assert.match(prompt, /数値比較の最終判定は行わない/)
+  assert.match(prompt, /sourceChunkId には <chunk id="..."> の id 属性値だけを入れる/)
+  assert.match(prompt, /questionTarget\.amountText は質問中に実在する金額表記/)
+  assert.match(prompt, /condition\.thresholdText は quote 中に実在する閾値金額表記/)
 })
 
 function extraction(overrides: {
@@ -85,13 +146,15 @@ function extraction(overrides: {
   ambiguity?: string[]
   thresholdText?: string
   thresholdValue?: number
+  questionAmountValue?: number
+  sourceChunkId?: string
 } = {}): PolicyComputationExtraction {
   return {
     canExtract: true,
     reason: "test",
     questionTarget: {
       amountText: overrides.questionAmountText ?? "5200円",
-      amountValue: 5200,
+      amountValue: overrides.questionAmountValue ?? 5200,
       currency: "JPY",
       subject: "経費精算",
       requestedEffect: "required",
@@ -99,7 +162,7 @@ function extraction(overrides: {
     },
     candidates: [
       {
-        sourceChunkId: "chunk-0001",
+        sourceChunkId: overrides.sourceChunkId ?? "chunk-0001",
         quote: overrides.quote ?? "1万円以上の経費精算では領収書の添付が必要です。",
         condition: {
           subject: "経費精算",

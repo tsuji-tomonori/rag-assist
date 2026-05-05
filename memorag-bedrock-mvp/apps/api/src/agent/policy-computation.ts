@@ -52,20 +52,25 @@ type ConcreteEffect = Exclude<z.infer<typeof EffectSchema>, "unknown">
 export function policyExtractionToComputedFacts(
   extraction: PolicyComputationExtraction,
   chunks: RetrievedVector[],
+  question: string,
   confidenceThreshold = CONFIDENCE_THRESHOLD
 ): ComputedFact[] {
   if (!extraction.canExtract) return []
-  const questionAmount = normalizeJpyAmount(extraction.questionTarget?.amountText, extraction.questionTarget?.amountValue)
+  const amountText = extraction.questionTarget?.amountText
+  if (!amountText || !quoteExistsInText(amountText, question)) return []
+  const questionAmount = normalizeJpyAmount(amountText, extraction.questionTarget?.amountValue)
   if (questionAmount === undefined || extraction.questionTarget?.currency !== "JPY") return []
 
   const facts = extraction.candidates.flatMap((candidate): ThresholdFact[] => {
     if (!candidate.matchesQuestion || candidate.confidence < confidenceThreshold || candidate.ambiguity.length > 0) return []
     if (candidate.consequence.effect === "unknown") return []
 
-    const chunk = findChunk(candidate.sourceChunkId, chunks)
-    if (!chunk || !quoteExistsInChunk(candidate.quote, chunk)) return []
+    const chunk = findChunkForQuote(candidate.sourceChunkId, candidate.quote, chunks)
+    if (!chunk) return []
 
-    const thresholdAmount = normalizeJpyAmount(candidate.condition.thresholdText, candidate.condition.thresholdValue)
+    const thresholdText = candidate.condition.thresholdText
+    if (!thresholdText || !quoteExistsInText(thresholdText, candidate.quote)) return []
+    const thresholdAmount = normalizeJpyAmount(thresholdText, candidate.condition.thresholdValue)
     if (thresholdAmount === undefined || candidate.condition.currency !== "JPY") return []
 
     const satisfiesCondition = compare(questionAmount, candidate.condition.comparator, thresholdAmount)
@@ -76,7 +81,7 @@ export function policyExtractionToComputedFacts(
         kind: "threshold_comparison",
         source: "llm_policy_extraction",
         inputFactIds: [],
-        sourceChunkId: chunk.metadata.chunkId ?? chunk.key,
+        sourceChunkId: chunk.key,
         questionAmount,
         thresholdAmount,
         operator: candidate.condition.comparator,
@@ -118,14 +123,18 @@ function normalizeJpyAmount(text: string | undefined, value: number | undefined)
   return parsedText ?? numericValue
 }
 
-function findChunk(sourceChunkId: string, chunks: RetrievedVector[]): RetrievedVector | undefined {
-  return chunks.find((chunk) => chunk.key === sourceChunkId || chunk.metadata.chunkId === sourceChunkId)
+function findChunkForQuote(sourceChunkId: string, quote: string, chunks: RetrievedVector[]): RetrievedVector | undefined {
+  const exact = chunks.find((chunk) => chunk.key === sourceChunkId)
+  if (exact && quoteExistsInChunk(quote, exact)) return exact
+  return chunks.find((chunk) => chunk.metadata.chunkId === sourceChunkId && quoteExistsInChunk(quote, chunk))
 }
 
 function quoteExistsInChunk(quote: string, chunk: RetrievedVector): boolean {
-  const text = chunk.metadata.text ?? ""
-  if (text.includes(quote)) return true
-  return text.normalize("NFKC").includes(quote.normalize("NFKC"))
+  return quoteExistsInText(quote, chunk.metadata.text ?? "")
+}
+
+function quoteExistsInText(needle: string, haystack: string): boolean {
+  return haystack.includes(needle) || haystack.normalize("NFKC").includes(needle.normalize("NFKC"))
 }
 
 function compare(amount: number, operator: ThresholdFact["operator"], threshold: number): boolean {

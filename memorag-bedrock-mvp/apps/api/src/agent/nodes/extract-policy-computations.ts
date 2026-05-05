@@ -16,7 +16,7 @@ export function createExtractPolicyComputationsNode(deps: Dependencies) {
     const parsed = PolicyComputationExtractionSchema.safeParse(parseJsonObject(raw))
     if (!parsed.success) return { computedFacts: state.computedFacts }
 
-    const facts = policyExtractionToComputedFacts(parsed.data, state.selectedChunks)
+    const facts = policyExtractionToComputedFacts(parsed.data, state.selectedChunks, state.question)
     return {
       computedFacts: [
         ...state.computedFacts,
