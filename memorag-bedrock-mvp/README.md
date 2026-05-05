@@ -125,7 +125,7 @@ npm run cdk -w @memorag-mvp/infra -- deploy
 
 Taskfileを使う場合は `task cdk:deploy` でフロントエンドbuild、Lambda bundle、CDK deployを順に実行します。
 
-GitHub Actionsでは `.github/workflows/memorag-ci.yml` がpull requestとmain branchへのpushで `npm run ci` を実行します。デプロイは `.github/workflows/memorag-deploy.yml` を使います。AWS側のOIDC RoleとGitHub secret `AWS_DEPLOY_ROLE_ARN` を設定してください。
+GitHub Actionsでは `.github/workflows/memorag-ci.yml` がpull requestで lint、typecheck、test、build、cdk-nag有効状態のCDK synthを実行します。デプロイは `.github/workflows/memorag-deploy.yml` を使います。AWS側のOIDC RoleとGitHub secret `AWS_DEPLOY_ROLE_ARN` を設定してください。
 デプロイ後の Cognito ユーザー追加は、ログイン画面からのアカウント作成、または `.github/workflows/memorag-create-cognito-user.yml` の手動実行で行えます。管理者設定のユーザー管理一覧は Cognito User Pool の全ユーザーを読み取り、管理台帳とマージして表示します。管理画面上のロール、停止、再開、削除状態は管理台帳を source of truth とし、実際の API 認可はログイン時の Cognito group を含む JWT で判定します。
 
 デプロイ後、CDK Outputs にAPI URLとCloudFront URLが出ます。

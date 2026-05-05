@@ -111,6 +111,22 @@ jobs:
         run: npm run build -w @memorag-mvp/benchmark
         continue-on-error: true
 
+      - name: Synthesize CDK template with cdk-nag
+        id: cdk_synth
+        run: npm run synth:yaml -w @memorag-mvp/infra
+        continue-on-error: true
+
+      - name: Upload CDK synth artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: memorag-ci-cdk-synth
+          path: |
+            memorag-bedrock-mvp/infra/cdk.out/MemoRagMvpStack.template.yaml
+            memorag-bedrock-mvp/infra/cdk.out/AwsSolutions-*-NagReport.csv
+          if-no-files-found: warn
+
       - name: Comment CI result on PR
         # 検証観点:
         # - 同一リポジトリPR: コメント投稿成功
@@ -143,6 +159,7 @@ jobs:
               ['api', 'Build', '${{ steps.api_build.outcome }}', '-', '`npm run build -w @memorag-mvp/api`'],
               ['web', 'Build', '${{ steps.web_build.outcome }}', '-', '`npm run build -w @memorag-mvp/web`'],
               ['benchmark', 'Build', '${{ steps.benchmark_build.outcome }}', '-', '`npm run build -w @memorag-mvp/benchmark`'],
+              ['infra', 'CDK synth', '${{ steps.cdk_synth.outcome }}', 'cdk-nag enabled', '`npm run synth:yaml -w @memorag-mvp/infra`'],
             ];
             const icon = (outcome) => outcome === 'success' ? ':white_check_mark:' : ':x:';
             const overall = results.every(([, , outcome]) => outcome === 'success') ? 'success' : 'failure';
@@ -199,5 +216,5 @@ jobs:
           echo "CI result comment was skipped because this PR is from a fork and GITHUB_TOKEN has read-only permissions." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail when CI checks failed
-        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success') }}
+        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success') }}
         run: exit 1
