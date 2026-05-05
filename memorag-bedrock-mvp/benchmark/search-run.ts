@@ -1,4 +1,4 @@
-import { createReadStream, createWriteStream, existsSync } from "node:fs"
+import { createReadStream, createWriteStream } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
@@ -12,6 +12,7 @@ import {
   type RelevanceItem,
   type RetrievalMetrics
 } from "./metrics/retrieval.js"
+import { resolveExistingPath, resolveOutputPath } from "./paths.js"
 
 type SearchDatasetRow = {
   id: string
@@ -94,9 +95,9 @@ const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const datasetPath = resolveExistingPath(process.env.DATASET ?? "datasets/search.sample.jsonl", [process.cwd(), benchmarkDir, repoRoot])
-const outputPath = resolveOutputPath(process.env.OUTPUT ?? ".local-data/search-benchmark-results.jsonl")
-const reportPath = resolveOutputPath(process.env.REPORT ?? outputPath.replace(/\.jsonl$/i, ".report.md"))
-const summaryPath = resolveOutputPath(process.env.SUMMARY ?? outputPath.replace(/\.jsonl$/i, ".summary.json"))
+const outputPath = resolveOutputPath(process.env.OUTPUT ?? ".local-data/search-benchmark-results.jsonl", repoRoot)
+const reportPath = resolveOutputPath(process.env.REPORT ?? outputPath.replace(/\.jsonl$/i, ".report.md"), repoRoot)
+const summaryPath = resolveOutputPath(process.env.SUMMARY ?? outputPath.replace(/\.jsonl$/i, ".summary.json"), repoRoot)
 
 await mkdir(path.dirname(outputPath), { recursive: true })
 await mkdir(path.dirname(reportPath), { recursive: true })
@@ -284,19 +285,6 @@ function averageMetric(rows: SearchResultRow[], metric: keyof RetrievalMetrics):
 function hitRate(rows: SearchResultRow[], metric: keyof RetrievalMetrics): number | null {
   const values = rows.map((row) => row.metrics[metric]).filter((value): value is boolean => typeof value === "boolean")
   return rate(values.filter(Boolean).length, values.length)
-}
-
-function resolveExistingPath(input: string, bases: string[]): string {
-  if (path.isAbsolute(input)) return input
-  for (const base of bases) {
-    const candidate = path.resolve(base, input)
-    if (existsSync(candidate)) return candidate
-  }
-  return path.resolve(process.cwd(), input)
-}
-
-function resolveOutputPath(input: string): string {
-  return path.isAbsolute(input) ? input : path.resolve(process.cwd(), input)
 }
 
 function envInt(name: string): number | undefined {

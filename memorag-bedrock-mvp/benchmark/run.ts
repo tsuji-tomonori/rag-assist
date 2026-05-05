@@ -1,10 +1,11 @@
-import { createReadStream, createWriteStream, existsSync } from "node:fs"
+import { createReadStream, createWriteStream } from "node:fs"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
+import { resolveExistingPath, resolveOutputPath } from "./paths.js"
 
 type DatasetRow = {
   id?: string
@@ -239,9 +240,9 @@ const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? benchmar
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const datasetPath = resolveExistingPath(process.env.DATASET ?? "dataset.sample.jsonl", [process.cwd(), benchmarkDir, repoRoot])
-const outputPath = resolveOutputPath(process.env.OUTPUT ?? ".local-data/benchmark-results.jsonl")
-const reportPath = resolveOutputPath(process.env.REPORT ?? outputPath.replace(/\.jsonl$/i, ".report.md"))
-const summaryPath = resolveOutputPath(process.env.SUMMARY ?? outputPath.replace(/\.jsonl$/i, ".summary.json"))
+const outputPath = resolveOutputPath(process.env.OUTPUT ?? ".local-data/benchmark-results.jsonl", repoRoot)
+const reportPath = resolveOutputPath(process.env.REPORT ?? outputPath.replace(/\.jsonl$/i, ".report.md"), repoRoot)
+const summaryPath = resolveOutputPath(process.env.SUMMARY ?? outputPath.replace(/\.jsonl$/i, ".summary.json"), repoRoot)
 const baselineSummaryPath = process.env.BASELINE_SUMMARY
   ? resolveExistingPath(process.env.BASELINE_SUMMARY, [process.cwd(), benchmarkDir, repoRoot])
   : undefined
@@ -1276,18 +1277,4 @@ async function closeStream(stream: NodeJS.WritableStream): Promise<void> {
     stream.once("error", reject)
     stream.end()
   })
-}
-
-function resolveExistingPath(input: string, bases: string[]): string {
-  if (path.isAbsolute(input)) return input
-  for (const base of bases) {
-    const candidate = path.resolve(base, input)
-    if (existsSync(candidate)) return candidate
-  }
-  return path.resolve(process.cwd(), input)
-}
-
-function resolveOutputPath(input: string): string {
-  if (path.isAbsolute(input)) return input
-  return path.resolve(repoRoot, input)
 }
