@@ -128,7 +128,11 @@ Cognito group 取得が一部ユーザーで失敗した場合、一覧取得は
 
 ## ベンチマークレポート
 
-`task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` と fact slot 系の期待値を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、fact slot coverage、p95 latencyを確認できる。確認質問 dataset では `followUp` を指定すると option の `resolvedQuery` で二段目の問い合わせを行い、`latencyMs` は初回 API call、`taskLatencyMs` と `postClarificationTaskLatencyMs` は確認質問から follow-up 完了までの task latency として出力する。`includeDebug=true` の benchmark response から `retrieval_evaluator` の `riskSignals` と `llmJudge` も集計し、judge 発火率、`NO_CONFLICT` / `CONFLICT` / `UNCLEAR` の内訳、解消率を report に出力する。
+`task benchmark:sample` は行ごとの結果JSONL、集計JSON、Markdownレポートを生成する。社内データセットではJSONLの各行に `answerable`、`expectedContains`、`expectedFiles`、必要に応じて `expectedPages` と fact slot 系の期待値を指定すると、回答可能問題の正答率、回答不能問題の拒否率、unsupported answer rate、citation/file/page hit rate、fact slot coverage、p95 latencyを確認できる。Markdown report は `Dataset Coverage` と metric ごとの `status`、`basis`、`note` を出力する。`status=not_applicable` は分母や期待値フィールドがなく、その dataset では評価対象外であることを示す。`0.0%` や `0` は分母が存在したうえで成功件数または count が 0 だったことを示す。
+
+`standard-agent-v1` のような回答可能な通常QAだけの dataset では、clarification / refusal / post-clarification / fact slot / page / LLM judge label-rate 系の分母が存在しないことがある。この場合、`answerable_accuracy`、`over_clarification_rate`、`answer_contains_rate`、`citation_hit_rate`、`expected_file_hit_rate`、`retrieval_recall_at_20`、latency 系を主要指標として扱い、clarification 評価は `clarification-smoke-v1` または `benchmark/dataset.clarification.sample.jsonl` のような専用 dataset で確認する。`clarification_latency_delta_vs_non_clarification_ms` は actual clarification 行の平均 latency から non-clarification 行の平均 latency を引いた差分であり、同一質問の overhead ではない。
+
+確認質問 dataset では `followUp` を指定すると option の `resolvedQuery` で二段目の問い合わせを行い、`latencyMs` は初回 API call、`taskLatencyMs` と `postClarificationTaskLatencyMs` は確認質問から follow-up 完了までの task latency として出力する。`includeDebug=true` の benchmark response から `retrieval_evaluator` の `riskSignals` と `llmJudge` も集計し、judge 発火率、`NO_CONFLICT` / `CONFLICT` / `UNCLEAR` の内訳、解消率を report に出力する。
 
 benchmark runner は summary と report に quality review を出力する。`BASELINE_SUMMARY=<過去のsummary.json>` を指定すると、`answerableAccuracy`、`retrievalRecallAt20`、`refusalPrecision`、`unsupportedSentenceRate`、`p95LatencyMs` などの劣化を閾値で検知する。検索 miss や期待語不足の failure から alias candidate も出力するため、`/admin/aliases` の draft 作成候補としてレビューできる。
 

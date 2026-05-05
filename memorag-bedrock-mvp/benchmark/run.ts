@@ -230,6 +230,20 @@ type Summary = {
   qualityReview: QualityReview
 }
 
+type MetricReportRow = {
+  metric: BenchmarkReportMetricName
+  value: string
+  status: "evaluated" | "not_applicable"
+  basis: string
+  note: string
+}
+
+type CoverageReportRow = {
+  item: string
+  count: number
+  note: string
+}
+
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
@@ -833,7 +847,7 @@ type BenchmarkReportMetricName =
   | "corpus_grounded_option_rate"
   | "post_clarification_accuracy"
   | "over_clarification_rate"
-  | "clarification_latency_overhead_ms"
+  | "clarification_latency_delta_vs_non_clarification_ms"
   | "post_clarification_task_latency_ms"
   | "abstention_recall"
   | "unsupported_answer_rate"
@@ -859,41 +873,8 @@ type BenchmarkReportMetricName =
   | "average_latency_ms"
 
 function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): string {
-  const metricRows: Array<[BenchmarkReportMetricName, string]> = [
-    ["answerable_accuracy", formatRate(summary.metrics.answerableAccuracy)],
-    ["clarification_need_precision", formatRate(summary.metrics.clarificationNeedPrecision)],
-    ["clarification_need_recall", formatRate(summary.metrics.clarificationNeedRecall)],
-    ["clarification_need_f1", formatRate(summary.metrics.clarificationNeedF1)],
-    ["option_hit_rate", formatRate(summary.metrics.optionHitRate)],
-    ["missing_slot_hit_rate", formatRate(summary.metrics.missingSlotHitRate)],
-    ["corpus_grounded_option_rate", formatRate(summary.metrics.corpusGroundedOptionRate)],
-    ["post_clarification_accuracy", formatRate(summary.metrics.postClarificationAccuracy)],
-    ["over_clarification_rate", formatRate(summary.metrics.overClarificationRate)],
-    ["clarification_latency_overhead_ms", formatNumber(summary.metrics.clarificationLatencyOverheadMs)],
-    ["post_clarification_task_latency_ms", formatNumber(summary.metrics.postClarificationTaskLatencyMs)],
-    ["abstention_recall", formatRate(summary.metrics.abstentionRecall)],
-    ["unsupported_answer_rate", formatRate(summary.metrics.unsupportedAnswerRate)],
-    ["answer_contains_rate", formatRate(summary.metrics.answerContainsRate)],
-    ["citation_hit_rate", formatRate(summary.metrics.citationHitRate)],
-    ["expected_file_hit_rate", formatRate(summary.metrics.expectedFileHitRate)],
-    ["retrieval_recall_at_20", formatRate(summary.metrics.retrievalRecallAt20)],
-    ["expected_page_hit_rate", formatRate(summary.metrics.expectedPageHitRate)],
-    ["fact_slot_coverage", formatRate(summary.metrics.factSlotCoverage)],
-    ["refusal_precision", formatRate(summary.metrics.refusalPrecision)],
-    ["refusal_recall", formatRate(summary.metrics.refusalRecall)],
-    ["unsupported_sentence_rate", formatRate(summary.metrics.unsupportedSentenceRate)],
-    ["avg_iterations", formatNumber(summary.metrics.avgIterations)],
-    ["avg_retrieval_calls", formatNumber(summary.metrics.avgRetrievalCalls)],
-    ["avg_risk_signals", formatNumber(summary.metrics.avgRiskSignals)],
-    ["llm_judge_invocation_rate", formatRate(summary.metrics.llmJudgeInvocationRate)],
-    ["llm_judge_no_conflict_rate", formatRate(summary.metrics.llmJudgeNoConflictRate)],
-    ["llm_judge_conflict_rate", formatRate(summary.metrics.llmJudgeConflictRate)],
-    ["llm_judge_unclear_rate", formatRate(summary.metrics.llmJudgeUnclearRate)],
-    ["llm_judge_resolved_rate", formatRate(summary.metrics.llmJudgeResolvedRate)],
-    ["p50_latency_ms", formatNumber(summary.metrics.p50LatencyMs)],
-    ["p95_latency_ms", formatNumber(summary.metrics.p95LatencyMs)],
-    ["average_latency_ms", formatNumber(summary.metrics.averageLatencyMs)]
-  ]
+  const coverageRows = buildCoverageReportRows(results)
+  const metricRows = buildMetricReportRows(summary, results)
 
   const corpusSeedRows = summary.corpusSeed.length === 0
     ? "\nNo benchmark corpus seed configured.\n"
@@ -960,11 +941,17 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
 - Answerable rows: ${summary.answerableTotal}
 - Unanswerable rows: ${summary.unanswerableTotal}
 
+## Dataset Coverage
+
+| item | count | note |
+| --- | ---: | --- |
+${coverageRows.map((row) => `| ${row.item} | ${row.count} | ${escapeMarkdown(row.note)} |`).join("\n")}
+
 ## Metrics
 
-| metric | value | 説明 |
-| --- | ---: | --- |
-${metricRows.map(([name, value]) => `| ${name} | ${value} | ${metricDescription(name)} |`).join("\n")}
+| metric | value | status | basis | description | note |
+| --- | ---: | --- | --- | --- | --- |
+${metricRows.map((row) => `| ${row.metric} | ${row.value} | ${row.status} | ${escapeMarkdown(row.basis)} | ${escapeMarkdown(metricDescription(row.metric))} | ${escapeMarkdown(row.note)} |`).join("\n")}
 
 ## Corpus Seed
 
@@ -973,7 +960,7 @@ ${corpusSeedRows}
 ## Quality Review
 
 - Status: ${summary.qualityReview.status}
-- Baseline summary: ${baselineSummaryPath ?? "n/a"}
+- Baseline summary: ${baselineSummaryPath ?? "not_configured"}
 
 ### Regressions
 
@@ -993,44 +980,218 @@ ${detailRows}
 `
 }
 
-const metricDescriptions = {
-  answerable_accuracy: "回答可能な行で、期待語句・正規表現・引用・期待資料などの判定をすべて満たした割合。",
-  clarification_need_precision: "実際に確認質問を返した行のうち、dataset でも確認質問を期待していた割合。",
-  clarification_need_recall: "確認質問が必要な行のうち、実際に確認質問を返せた割合。",
-  clarification_need_f1: "確認質問の precision と recall の調和平均。確認質問の出し過ぎと不足のバランスを見る。",
-  option_hit_rate: "確認質問の選択肢に、dataset が期待する候補語句が含まれた割合。",
-  missing_slot_hit_rate: "確認質問で不足 slot として返した項目が、dataset の期待不足 slot を満たした割合。",
-  corpus_grounded_option_rate: "確認質問の選択肢が、memory・evidence・aspect・history などの根拠に紐づいていた割合。",
-  post_clarification_accuracy: "確認質問後の follow-up 実行で、期待する回答または拒否に到達した割合。",
-  over_clarification_rate: "明確に回答すべき行で、不要な確認質問を返した割合。低いほどよい。",
-  clarification_latency_overhead_ms: "確認質問を返した行の初回 latency と、それ以外の行の初回 latency の平均差。",
-  post_clarification_task_latency_ms: "確認質問の初回応答から follow-up 完了までを含めた task latency の平均。",
-  abstention_recall: "回答不能な行のうち、回答せず拒否できた割合。",
-  unsupported_answer_rate: "回答不能な行で、根拠なしに回答してしまった割合。低いほどよい。",
-  answer_contains_rate: "回答可能な行で、期待語句または期待回答文字列を回答に含められた割合。",
-  citation_hit_rate: "回答可能な行で、少なくとも 1 件の citation を返した割合。",
-  expected_file_hit_rate: "期待ファイルまたは期待 document が citation/retrieved に含まれた割合。",
-  retrieval_recall_at_20: "上位 20 件の retrieved/citation に期待ファイルまたは期待 document が含まれた割合。",
-  expected_page_hit_rate: "期待 page が citation/retrieved に含まれた割合。",
-  fact_slot_coverage: "dataset の expectedFactSlots のうち、回答文または取得根拠で支持できた fact slot の平均割合。",
-  refusal_precision: "拒否した行のうち、dataset 上も回答不能だった割合。高いほど誤拒否が少ない。",
-  refusal_recall: "回答不能な行のうち、実際に拒否できた割合。",
-  unsupported_sentence_rate: "answerSupport が検出した非支持文の割合。低いほど根拠に忠実。",
-  avg_iterations: "debug trace 上の検索評価 iteration 数の平均。",
-  avg_retrieval_calls: "debug trace 上の検索 action 実行回数の平均。",
-  avg_risk_signals: "retrieval evaluator が検出した risk signal 数の平均。",
-  llm_judge_invocation_rate: "LLM judge が 1 回以上実行された行の割合。",
-  llm_judge_no_conflict_rate: "LLM judge 判定のうち NO_CONFLICT だった割合。",
-  llm_judge_conflict_rate: "LLM judge 判定のうち CONFLICT だった割合。低いほどよい。",
-  llm_judge_unclear_rate: "LLM judge 判定のうち UNCLEAR だった割合。",
-  llm_judge_resolved_rate: "LLM judge 対象行のうち、最終的に conflict を解消できた割合。",
-  p50_latency_ms: "初回 API call latency の中央値。",
-  p95_latency_ms: "初回 API call latency の 95 パーセンタイル。遅い tail latency を見る。",
-  average_latency_ms: "初回 API call latency の平均。"
-} satisfies Record<BenchmarkReportMetricName, string>
-
 function metricDescription(metric: BenchmarkReportMetricName): string {
-  return metricDescriptions[metric]
+  switch (metric) {
+    case "answerable_accuracy":
+      return "回答可能な行で、期待語句・正規表現・引用・期待資料などの判定をすべて満たした割合。"
+    case "clarification_need_precision":
+      return "実際に確認質問を返した行のうち、dataset でも確認質問を期待していた割合。"
+    case "clarification_need_recall":
+      return "確認質問が必要な行のうち、実際に確認質問を返せた割合。"
+    case "clarification_need_f1":
+      return "確認質問の precision と recall の調和平均。確認質問の出し過ぎと不足のバランスを見る。"
+    case "option_hit_rate":
+      return "確認質問の選択肢に、dataset が期待する候補語句が含まれた割合。"
+    case "missing_slot_hit_rate":
+      return "確認質問で不足 slot として返した項目が、dataset の期待不足 slot を満たした割合。"
+    case "corpus_grounded_option_rate":
+      return "確認質問の選択肢が、memory・evidence・aspect・history などの根拠に紐づいていた割合。"
+    case "post_clarification_accuracy":
+      return "確認質問後の follow-up 実行で、期待する回答または拒否に到達した割合。"
+    case "over_clarification_rate":
+      return "明確に回答すべき行で、不要な確認質問を返した割合。低いほどよい。"
+    case "clarification_latency_delta_vs_non_clarification_ms":
+      return "確認質問を返した行の初回 latency と、それ以外の行の初回 latency の平均差。"
+    case "post_clarification_task_latency_ms":
+      return "確認質問の初回応答から follow-up 完了までを含めた task latency の平均。"
+    case "abstention_recall":
+      return "回答不能な行のうち、回答せず拒否できた割合。"
+    case "unsupported_answer_rate":
+      return "回答不能な行で、根拠なしに回答してしまった割合。低いほどよい。"
+    case "answer_contains_rate":
+      return "回答可能な行で、期待語句または期待回答文字列を回答に含められた割合。"
+    case "citation_hit_rate":
+      return "回答可能な行で、少なくとも 1 件の citation を返した割合。"
+    case "expected_file_hit_rate":
+      return "期待ファイルまたは期待 document が citation/retrieved に含まれた割合。"
+    case "retrieval_recall_at_20":
+      return "上位 20 件の retrieved/citation に期待ファイルまたは期待 document が含まれた割合。"
+    case "expected_page_hit_rate":
+      return "期待 page が citation/retrieved に含まれた割合。"
+    case "fact_slot_coverage":
+      return "dataset の expectedFactSlots のうち、回答文または取得根拠で支持できた fact slot の平均割合。"
+    case "refusal_precision":
+      return "拒否した行のうち、dataset 上も回答不能だった割合。高いほど誤拒否が少ない。"
+    case "refusal_recall":
+      return "回答不能な行のうち、実際に拒否できた割合。"
+    case "unsupported_sentence_rate":
+      return "answerSupport が検出した非支持文の割合。低いほど根拠に忠実。"
+    case "avg_iterations":
+      return "debug trace 上の検索評価 iteration 数の平均。"
+    case "avg_retrieval_calls":
+      return "debug trace 上の検索 action 実行回数の平均。"
+    case "avg_risk_signals":
+      return "retrieval evaluator が検出した risk signal 数の平均。"
+    case "llm_judge_invocation_rate":
+      return "LLM judge が 1 回以上実行された行の割合。"
+    case "llm_judge_no_conflict_rate":
+      return "LLM judge 判定のうち NO_CONFLICT だった割合。"
+    case "llm_judge_conflict_rate":
+      return "LLM judge 判定のうち CONFLICT だった割合。低いほどよい。"
+    case "llm_judge_unclear_rate":
+      return "LLM judge 判定のうち UNCLEAR だった割合。"
+    case "llm_judge_resolved_rate":
+      return "LLM judge 対象行のうち、最終的に conflict を解消できた割合。"
+    case "p50_latency_ms":
+      return "初回 API call latency の中央値。"
+    case "p95_latency_ms":
+      return "初回 API call latency の 95 パーセンタイル。遅い tail latency を見る。"
+    case "average_latency_ms":
+      return "初回 API call latency の平均。"
+  }
+}
+
+function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportRow[] {
+  const expectedClarificationRows = results.filter((row) => row.evaluation.expectedResponseType === "clarification")
+  const expectedAnswerRows = results.filter((row) => row.evaluation.expectedResponseType === "answer")
+  const expectedUnanswerableRows = results.filter((row) => !row.evaluation.expectedAnswerable)
+  const actualClarificationRows = results.filter((row) => row.evaluation.actualResponseType === "clarification")
+  const refusedRows = results.filter((row) => row.evaluation.refused)
+  const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
+  const llmJudgeCallCount = llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeCount ?? 0), 0)
+  return [
+    { item: "expected_answer_rows", count: expectedAnswerRows.length, note: "answerable / normal QA denominator" },
+    { item: "expected_clarification_rows", count: expectedClarificationRows.length, note: "clarification recall and F1 denominator" },
+    { item: "expected_unanswerable_rows", count: expectedUnanswerableRows.length, note: "abstention / refusal recall denominator" },
+    {
+      item: "rows_with_expected_options_any_of",
+      count: results.filter((row) => row.evaluation.optionHit !== null).length,
+      note: "option_hit_rate denominator"
+    },
+    {
+      item: "rows_with_expected_missing_slots",
+      count: results.filter((row) => row.evaluation.missingSlotHit !== null).length,
+      note: "missing_slot_hit_rate denominator"
+    },
+    {
+      item: "rows_with_follow_up_expectation",
+      count: results.filter((row) => row.evaluation.postClarificationAnswerCorrect !== null).length,
+      note: "post_clarification_accuracy denominator"
+    },
+    {
+      item: "rows_with_expected_pages",
+      count: results.filter((row) => row.evaluation.expectedPageHit !== null).length,
+      note: "expected_page_hit_rate denominator"
+    },
+    {
+      item: "rows_with_expected_fact_slots",
+      count: results.filter((row) => row.evaluation.factSlotCoverage !== null).length,
+      note: "fact_slot_coverage denominator"
+    },
+    {
+      item: "actual_clarification_rows",
+      count: actualClarificationRows.length,
+      note: "clarification precision and latency delta group"
+    },
+    {
+      item: "refused_rows",
+      count: refusedRows.length,
+      note: "refusal precision denominator"
+    },
+    {
+      item: "rows_with_llm_judge_calls",
+      count: llmJudgeEvaluated.length,
+      note: "LLM judge invocation / resolved-rate row denominator"
+    },
+    {
+      item: "llm_judge_call_count",
+      count: llmJudgeCallCount,
+      note: "LLM judge NO_CONFLICT / CONFLICT / UNCLEAR label-rate denominator"
+    }
+  ]
+}
+
+function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]): MetricReportRow[] {
+  const answerableRows = results.filter((row) => row.evaluation.expectedAnswerable)
+  const unanswerableRows = results.filter((row) => !row.evaluation.expectedAnswerable)
+  const clarificationExpectedRows = results.filter((row) => row.evaluation.expectedResponseType === "clarification")
+  const clarificationActualRows = results.filter((row) => row.evaluation.actualResponseType === "clarification")
+  const clearAnswerRows = results.filter((row) => row.evaluation.expectedResponseType === "answer")
+  const optionHitRows = results.filter((row) => row.evaluation.optionHit !== null)
+  const missingSlotRows = results.filter((row) => row.evaluation.missingSlotHit !== null)
+  const groundedOptionRows = results.filter((row) => row.evaluation.corpusGroundedOptions !== null)
+  const postClarificationRows = results.filter((row) => row.evaluation.postClarificationAnswerCorrect !== null)
+  const postClarificationTaskLatencies = postClarificationRows.filter((row) => row.followUp)
+  const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
+  const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
+  const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
+  const retrievalRecallEvaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
+  const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
+  const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
+  const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
+  const refusedRows = results.filter((row) => row.evaluation.refused)
+  const iterationRows = results.filter((row) => row.evaluation.iterationCount !== null)
+  const retrievalCallRows = results.filter((row) => row.evaluation.retrievalCallCount !== null)
+  const riskSignalRows = results.filter((row) => row.evaluation.riskSignalCount !== null)
+  const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
+  const llmJudgeCallCount = llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeCount ?? 0), 0)
+  const nonClarificationRows = results.filter((row) => row.evaluation.actualResponseType !== "clarification")
+
+  return [
+    metricRateRow("answerable_accuracy", summary.metrics.answerableAccuracy, answerableRows.filter((row) => row.evaluation.answerCorrect).length, answerableRows.length, "通常QAの正答率。answerable rows が分母。"),
+    metricRateRow("clarification_need_precision", summary.metrics.clarificationNeedPrecision, clarificationActualRows.filter((row) => row.evaluation.expectedResponseType === "clarification").length, clarificationActualRows.length, "実際に clarification を返した行のうち、期待値も clarification だった割合。0.0% は false positive の存在を示す。"),
+    metricRateRow("clarification_need_recall", summary.metrics.clarificationNeedRecall, clarificationExpectedRows.filter((row) => row.evaluation.actualResponseType === "clarification").length, clarificationExpectedRows.length, "期待値として clarification が必要な行がない場合は評価対象外。"),
+    metricNullableRow("clarification_need_f1", formatRate(summary.metrics.clarificationNeedF1), summary.metrics.clarificationNeedF1, `precision=${formatRate(summary.metrics.clarificationNeedPrecision)}, recall=${formatRate(summary.metrics.clarificationNeedRecall)}`, "precision と recall の両方が計算できる場合だけ評価可能。"),
+    metricRateRow("option_hit_rate", summary.metrics.optionHitRate, optionHitRows.filter((row) => row.evaluation.optionHit === true).length, optionHitRows.length, "`expectedOptionsAnyOf` がある行だけを評価。"),
+    metricRateRow("missing_slot_hit_rate", summary.metrics.missingSlotHitRate, missingSlotRows.filter((row) => row.evaluation.missingSlotHit === true).length, missingSlotRows.length, "`expectedMissingSlots` がある行だけを評価。"),
+    metricRateRow("corpus_grounded_option_rate", summary.metrics.corpusGroundedOptionRate, groundedOptionRows.filter((row) => row.evaluation.corpusGroundedOptions === true).length, groundedOptionRows.length, "出してしまった clarification option の grounding を見る指標。clarification 判断の正しさとは別。"),
+    metricRateRow("post_clarification_accuracy", summary.metrics.postClarificationAccuracy, postClarificationRows.filter((row) => row.evaluation.postClarificationAnswerCorrect === true).length, postClarificationRows.length, "`followUp` 期待値がある行だけを評価。"),
+    metricRateRow("over_clarification_rate", summary.metrics.overClarificationRate, clearAnswerRows.filter((row) => row.evaluation.actualResponseType === "clarification").length, clearAnswerRows.length, "回答すべき行で不要な clarification になった割合。"),
+    metricNullableRow("clarification_latency_delta_vs_non_clarification_ms", formatNumber(summary.metrics.clarificationLatencyOverheadMs), summary.metrics.clarificationLatencyOverheadMs, `${clarificationActualRows.length} actual clarification rows vs ${nonClarificationRows.length} non-clarification rows`, "同一質問の overhead ではなく、actual clarification 行の平均 latency から non-clarification 行の平均 latency を引いた差分。負値は clarification 行の方が速いことを示す。summary JSON key は clarificationLatencyOverheadMs を維持。"),
+    metricNullableRow("post_clarification_task_latency_ms", formatNumber(summary.metrics.postClarificationTaskLatencyMs), summary.metrics.postClarificationTaskLatencyMs, `${postClarificationTaskLatencies.length}/${postClarificationRows.length} follow-up rows with latency`, "確認質問から follow-up 完了までの平均 task latency。"),
+    metricRateRow("abstention_recall", summary.metrics.abstentionRecall, unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
+    metricRateRow("unsupported_answer_rate", summary.metrics.unsupportedAnswerRate, unanswerableRows.filter((row) => row.evaluation.unsupportedAnswer).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
+    metricRateRow("answer_contains_rate", summary.metrics.answerContainsRate, containsEvaluated.filter((row) => row.evaluation.answerContainsExpected === true).length, containsEvaluated.length, "`expectedContains` / `expectedAnswer` を持つ answerable 行の期待語句一致率。"),
+    metricRateRow("citation_hit_rate", summary.metrics.citationHitRate, citationEvaluated.filter((row) => row.evaluation.citationHit === true).length, citationEvaluated.length, "answerable 行で citation が返った割合。"),
+    metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを評価。"),
+    metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallEvaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を top 20 retrieved/citation で評価。"),
+    metricRateRow("expected_page_hit_rate", summary.metrics.expectedPageHitRate, pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length, pageEvaluated.length, "`expectedPages` がある行だけを評価。"),
+    metricNullableRow("fact_slot_coverage", formatRate(summary.metrics.factSlotCoverage), summary.metrics.factSlotCoverage, `${factSlotEvaluated.length} rows with expectedFactSlots`, "`expectedFactSlots` がある行の平均 coverage。"),
+    metricRateRow("refusal_precision", summary.metrics.refusalPrecision, refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length, "実際に refusal した行のうち、期待値も unanswerable/refusal だった割合。0.0% は answer-only dataset での false positive を示す。"),
+    metricRateRow("refusal_recall", summary.metrics.refusalRecall, unanswerableRows.filter((row) => row.evaluation.refused).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
+    metricNullableRow("unsupported_sentence_rate", formatRate(summary.metrics.unsupportedSentenceRate), summary.metrics.unsupportedSentenceRate, `${supportEvaluated.length} rows with answer support output`, "answer support 出力がある行だけを評価。"),
+    metricNullableRow("avg_iterations", formatNumber(summary.metrics.avgIterations), summary.metrics.avgIterations, `${iterationRows.length} rows with evaluate_search_progress debug steps`, "debug steps がない場合は評価対象外。"),
+    metricNullableRow("avg_retrieval_calls", formatNumber(summary.metrics.avgRetrievalCalls), summary.metrics.avgRetrievalCalls, `${retrievalCallRows.length} rows with execute_search_action debug steps`, "debug steps がない場合は評価対象外。"),
+    metricNullableRow("avg_risk_signals", formatNumber(summary.metrics.avgRiskSignals), summary.metrics.avgRiskSignals, `${riskSignalRows.length} rows with retrieval_evaluator output`, "0 は評価対象行の risk signal count が 0 だったことを示す。"),
+    metricRateRow("llm_judge_invocation_rate", summary.metrics.llmJudgeInvocationRate, llmJudgeEvaluated.length, results.length, "全行のうち LLM judge call が1回以上あった行の割合。0.0% は呼び出し行がなかったことを示す。"),
+    metricRateRow("llm_judge_no_conflict_rate", summary.metrics.llmJudgeNoConflictRate, llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeNoConflictCount ?? 0), 0), llmJudgeCallCount, "LLM judge call がない場合は label rate を評価できない。"),
+    metricRateRow("llm_judge_conflict_rate", summary.metrics.llmJudgeConflictRate, llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeConflictCount ?? 0), 0), llmJudgeCallCount, "LLM judge call がない場合は label rate を評価できない。"),
+    metricRateRow("llm_judge_unclear_rate", summary.metrics.llmJudgeUnclearRate, llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeUnclearCount ?? 0), 0), llmJudgeCallCount, "LLM judge call がない場合は label rate を評価できない。"),
+    metricRateRow("llm_judge_resolved_rate", summary.metrics.llmJudgeResolvedRate, llmJudgeEvaluated.filter((row) => row.evaluation.llmJudgeResolved === true).length, llmJudgeEvaluated.length, "LLM judge call がある行だけを評価。"),
+    metricNullableRow("p50_latency_ms", formatNumber(summary.metrics.p50LatencyMs), summary.metrics.p50LatencyMs, `${results.length} rows`, "初回 API call latency の p50。"),
+    metricNullableRow("p95_latency_ms", formatNumber(summary.metrics.p95LatencyMs), summary.metrics.p95LatencyMs, `${results.length} rows`, "初回 API call latency の p95。"),
+    metricNullableRow("average_latency_ms", formatNumber(summary.metrics.averageLatencyMs), summary.metrics.averageLatencyMs, `${results.length} rows`, "初回 API call latency の平均。")
+  ]
+}
+
+function metricRateRow(metric: BenchmarkReportMetricName, value: number | null, numerator: number, denominator: number, note: string): MetricReportRow {
+  return {
+    metric,
+    value: formatRate(value),
+    status: denominator === 0 ? "not_applicable" : "evaluated",
+    basis: denominator === 0 ? "0 denominator" : `${numerator}/${denominator}`,
+    note
+  }
+}
+
+function metricNullableRow(metric: BenchmarkReportMetricName, value: string, rawValue: number | null, basis: string, note: string): MetricReportRow {
+  return {
+    metric,
+    value,
+    status: rawValue === null ? "not_applicable" : "evaluated",
+    basis,
+    note
+  }
 }
 
 function inferExpectedAnswerable(row: DatasetRow): boolean {
@@ -1297,34 +1458,34 @@ function percentile(sortedValues: number[], p: number): number | null {
 }
 
 function formatRate(value: number | null): string {
-  if (value === null) return "n/a"
+  if (value === null) return "not_applicable"
   return `${(value * 100).toFixed(1)}%`
 }
 
 function formatNumber(value: number | null): string {
-  return value === null ? "n/a" : String(value)
+  return value === null ? "not_applicable" : String(value)
 }
 
 function formatClarificationSummary(evaluation: RowEvaluation): string {
-  if (evaluation.expectedResponseType !== "clarification" && evaluation.actualResponseType !== "clarification") return "n/a"
+  if (evaluation.expectedResponseType !== "clarification" && evaluation.actualResponseType !== "clarification") return "not_applicable"
   return escapeMarkdown(
     [
-      `need=${evaluation.clarificationNeededCorrect === null ? "n/a" : evaluation.clarificationNeededCorrect ? "ok" : "ng"}`,
-      `option=${evaluation.optionHit === null ? "n/a" : evaluation.optionHit ? "hit" : "miss"}`,
-      `slot=${evaluation.missingSlotHit === null ? "n/a" : evaluation.missingSlotHit ? "hit" : "miss"}`,
-      `grounded=${evaluation.corpusGroundedOptions === null ? "n/a" : evaluation.corpusGroundedOptions ? "yes" : "no"}`
+      `need=${evaluation.clarificationNeededCorrect === null ? "not_specified" : evaluation.clarificationNeededCorrect ? "ok" : "ng"}`,
+      `option=${evaluation.optionHit === null ? "not_applicable" : evaluation.optionHit ? "hit" : "miss"}`,
+      `slot=${evaluation.missingSlotHit === null ? "not_applicable" : evaluation.missingSlotHit ? "hit" : "miss"}`,
+      `grounded=${evaluation.corpusGroundedOptions === null ? "not_applicable" : evaluation.corpusGroundedOptions ? "yes" : "no"}`
     ].join(", ")
   )
 }
 
 function formatLlmJudgeSummary(evaluation: RowEvaluation): string {
-  if ((evaluation.llmJudgeCount ?? 0) === 0) return "n/a"
+  if ((evaluation.llmJudgeCount ?? 0) === 0) return "not_applicable"
   const parts = [
     `calls=${evaluation.llmJudgeCount}`,
     `no_conflict=${evaluation.llmJudgeNoConflictCount ?? 0}`,
     `conflict=${evaluation.llmJudgeConflictCount ?? 0}`,
     `unclear=${evaluation.llmJudgeUnclearCount ?? 0}`,
-    `resolved=${evaluation.llmJudgeResolved === null ? "n/a" : evaluation.llmJudgeResolved ? "yes" : "no"}`
+    `resolved=${evaluation.llmJudgeResolved === null ? "not_applicable" : evaluation.llmJudgeResolved ? "yes" : "no"}`
   ]
   return escapeMarkdown(parts.join(", "))
 }
