@@ -62,6 +62,23 @@ const debugTrace = {
   ]
 }
 
+function benchmarkRun(index: number) {
+  return {
+    runId: `bench-visual-${String(index).padStart(2, '0')}`,
+    suiteId: 'standard-agent-v1',
+    status: index % 5 === 0 ? 'failed' : 'succeeded',
+    modelId: 'amazon.nova-lite-v1:0',
+    startedAt: `2026-05-02T00:${String(index).padStart(2, '0')}:00.000Z`,
+    completedAt: `2026-05-02T00:${String(index).padStart(2, '0')}:30.000Z`,
+    metrics: {
+      p50LatencyMs: 800 + index,
+      p95LatencyMs: 1400 + index,
+      answerableAccuracy: 0.92,
+      retrievalRecallAt20: 0.88
+    }
+  }
+}
+
 async function installMockApi(page: Page) {
   await page.route('**/config.json', async (route) => {
     await route.fulfill({ json: { apiBaseUrl: 'http://api.visual.test' } })
@@ -137,6 +154,20 @@ async function installMockApi(page: Page) {
       return
     }
     if (path === '/benchmark-runs') {
+      if (method === 'POST') {
+        await route.fulfill({
+          json: {
+            runId: 'bench-visual-created',
+            suiteId: 'standard-agent-v1',
+            status: 'queued',
+            modelId: 'amazon.nova-lite-v1:0',
+            createdAt: '2026-05-02T00:00:00.000Z',
+            updatedAt: '2026-05-02T00:00:00.000Z'
+          }
+        })
+        return
+      }
+
       await route.fulfill({
         json: {
           benchmarkRuns: [
@@ -180,6 +211,28 @@ async function installMockApi(page: Page) {
 
   await page.route('http://api.visual.test/**', handleApiRoute)
   await page.route('http://127.0.0.1:8787/**', handleApiRoute)
+}
+
+async function installBenchmarkRuns(page: Page, count: number) {
+  const benchmarkRuns = Array.from({ length: count }, (_, index) => benchmarkRun(index + 1))
+
+  await page.route(/http:\/\/(api\.visual\.test|127\.0\.0\.1:8787)\/benchmark-runs$/, async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({
+        json: {
+          runId: 'bench-visual-created',
+          suiteId: 'standard-agent-v1',
+          status: 'queued',
+          modelId: 'amazon.nova-lite-v1:0',
+          createdAt: '2026-05-02T00:00:00.000Z',
+          updatedAt: '2026-05-02T00:00:00.000Z'
+        }
+      })
+      return
+    }
+
+    await route.fulfill({ json: { benchmarkRuns } })
+  })
 }
 
 async function signIn(page: Page) {
@@ -256,6 +309,55 @@ test('管理系画面の visual regression @visual', async ({ page }) => {
   await page.getByTitle('管理者設定').click()
   await expect(page.getByLabel('管理者設定')).toBeVisible()
   await expect(page).toHaveScreenshot('admin-workspace.png', { fullPage: true, animations: 'disabled' })
+})
+
+test('性能テストの実行ボタンがサマリーに重ならずクリックできる @smoke', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 })
+  await signIn(page)
+
+  await page.getByTitle('性能テスト').click()
+  await expect(page.getByLabel('性能テスト')).toBeVisible()
+
+  const startButton = page.getByRole('button', { name: '性能テストを実行' })
+  const summaryPanel = page.locator('.benchmark-summary-grid')
+  await expect(startButton).toBeVisible()
+
+  const [startBox, summaryBox] = await Promise.all([
+    startButton.boundingBox(),
+    summaryPanel.boundingBox()
+  ])
+  expect(startBox).not.toBeNull()
+  expect(summaryBox).not.toBeNull()
+  expect((startBox?.y ?? 0) + (startBox?.height ?? 0)).toBeLessThanOrEqual(summaryBox?.y ?? 0)
+
+  const startRequest = page.waitForRequest((request) => {
+    const url = new URL(request.url())
+    return request.method() === 'POST' && url.pathname === '/benchmark-runs'
+  })
+  await startButton.click()
+  await startRequest
+  await expect(page.getByText('bench-visual-created', { exact: true })).toBeVisible()
+})
+
+test('性能テスト履歴が多い場合もテーブル内で縦スクロールする @smoke', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 })
+  await installBenchmarkRuns(page, 16)
+  await signIn(page)
+
+  await page.getByTitle('性能テスト').click()
+  await expect(page.getByLabel('性能テスト')).toBeVisible()
+  await expect(page.getByText('bench-visual-16', { exact: true })).toBeVisible()
+
+  const historyPanel = page.locator('.benchmark-history-panel')
+  const tableWrap = page.locator('.benchmark-table-wrap')
+  const [historyBox, tableScroll] = await Promise.all([
+    historyPanel.boundingBox(),
+    tableWrap.evaluate((element) => ({ clientHeight: element.clientHeight, scrollHeight: element.scrollHeight }))
+  ])
+
+  expect(historyBox).not.toBeNull()
+  expect(historyBox?.height ?? 0).toBeLessThanOrEqual(380)
+  expect(tableScroll.scrollHeight).toBeGreaterThan(tableScroll.clientHeight)
 })
 
 test('モバイル幅チャットの visual regression @visual', async ({ page }) => {
