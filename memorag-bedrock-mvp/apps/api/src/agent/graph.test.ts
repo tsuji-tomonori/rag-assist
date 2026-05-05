@@ -79,6 +79,24 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
   assert.deepEqual(supportStep?.output?.answerSupport && typeof supportStep.output.answerSupport === "object" ? (supportStep.output.answerSupport as Record<string, unknown>).unsupportedSentences : undefined, [])
 })
 
+test("fixed MemoRAG workflow clamps minScore before debug trace persistence", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "score-policy.txt",
+    text: "稟議の承認期限は申請から5営業日以内です。"
+  })
+
+  const result = await service.chat({
+    question: "稟議の承認期限は？",
+    includeDebug: true,
+    minScore: 2,
+    maxIterations: 1
+  })
+
+  assert.equal(result.debug?.minScore, 1)
+})
+
 test("fixed workflow executes nodes in the declared order", async () => {
   const service = new MemoRagService(await createTestDeps())
 

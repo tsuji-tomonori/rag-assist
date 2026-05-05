@@ -2,6 +2,7 @@ import type { AppUser } from "../../auth.js"
 import { config } from "../../config.js"
 import type { Dependencies } from "../../dependencies.js"
 import type { DocumentManifest, JsonValue, RetrievedVector, VectorMetadata } from "../../types.js"
+import { ragRuntimePolicy } from "../runtime-policy.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 
 export function createRetrieveMemoryNode(deps: Dependencies, user: AppUser) {
@@ -15,7 +16,10 @@ export function createRetrieveMemoryNode(deps: Dependencies, user: AppUser) {
       dimensions: config.embeddingDimensions
     })
 
-    const queryTopK = Math.min(100, Math.max(state.memoryTopK, state.memoryTopK * 3))
+    const queryTopK = Math.min(
+      ragRuntimePolicy.retrieval.memoryPrefetchMaxTopK,
+      Math.max(state.memoryTopK, Math.ceil(state.memoryTopK * ragRuntimePolicy.retrieval.memoryPrefetchMultiplier))
+    )
     const memoryCards = (await filterAccessibleMemoryHits(deps, await deps.memoryVectorStore.query(vector, queryTopK, { kind: "memory" }), user))
       .slice(0, state.memoryTopK)
     return { memoryCards }

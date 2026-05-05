@@ -1,5 +1,6 @@
 import { parseJsonObject } from "../../rag/json.js"
 import { hasInvalidRequirementsClassificationAnswer, isRequirementsClassificationQuestion } from "../../rag/prompts.js"
+import { ragRuntimePolicy } from "../runtime-policy.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 import { NO_ANSWER } from "../state.js"
 import type { AnswerJson } from "../types.js"
@@ -16,7 +17,7 @@ export async function validateCitations(state: QaAgentState): Promise<QaAgentUpd
   const citations = state.selectedChunks
     .filter((hit) => used.size === 0 || used.has(hit.key) || used.has(hit.metadata.chunkId ?? ""))
     .map(toCitation)
-    .slice(0, 5)
+    .slice(0, ragRuntimePolicy.limits.citationLimit)
   const usedComputedFactIds = validComputedFactIds(answerJson.usedComputedFactIds ?? [], state)
 
   if (state.strictGrounded && citations.length === 0 && usedComputedFactIds.length === 0) {

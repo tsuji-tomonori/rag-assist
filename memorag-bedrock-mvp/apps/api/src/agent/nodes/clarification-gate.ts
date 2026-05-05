@@ -1,4 +1,5 @@
 import type { RetrievedVector } from "../../types.js"
+import { ragRuntimePolicy } from "../runtime-policy.js"
 import type { Clarification, ClarificationOption, QaAgentState, QaAgentUpdate } from "../state.js"
 
 const referencePattern = /(それ|これ|上記|前述|この件|その件)/
@@ -28,7 +29,7 @@ export async function clarificationGate(state: QaAgentState): Promise<QaAgentUpd
   const hasSearchedEvidence = state.actionHistory.length > 0 || state.retrievedChunks.length > 0
   const canAskBeforeSearch = reason === "unresolved_reference"
   const needsClarification =
-    score >= 0.65 &&
+    score >= ragRuntimePolicy.confidence.clarificationMinAmbiguityScore &&
     candidates.options.length >= 2 &&
     notClearlyUnanswerable &&
     (hasSearchedEvidence || canAskBeforeSearch) &&
@@ -40,9 +41,11 @@ export async function clarificationGate(state: QaAgentState): Promise<QaAgentUpd
     needsClarification,
     reason: needsClarification ? reason : "not_needed",
     question: needsClarification ? buildQuestion(query, candidates.missingSlots) : "",
-    options: needsClarification ? candidates.options.slice(0, 5) : [],
+    options: needsClarification ? candidates.options.slice(0, ragRuntimePolicy.limits.clarificationOptionLimit) : [],
     missingSlots: needsClarification ? candidates.missingSlots : [],
-    confidence: needsClarification ? Math.min(0.95, Math.max(0.55, score)) : Math.min(0.49, score),
+    confidence: needsClarification
+      ? Math.min(ragRuntimePolicy.confidence.clarificationConfidenceCap, Math.max(ragRuntimePolicy.confidence.clarificationConfidenceFloor, score))
+      : Math.min(ragRuntimePolicy.confidence.clarificationNotNeededConfidenceCap, score),
     ambiguityScore: score,
     groundedOptionCount: candidates.options.length,
     rejectedOptions: candidates.rejectedOptions
@@ -115,7 +118,7 @@ function buildOptions(
       grounding: [grounding]
     }
     if (existing) {
-      existing.grounding = [...existing.grounding, grounding].slice(0, 3)
+      existing.grounding = [...existing.grounding, grounding].slice(0, ragRuntimePolicy.limits.clarificationGroundingLimit)
       continue
     }
     byLabel.set(label, option)
@@ -123,13 +126,13 @@ function buildOptions(
 
   const options = [...byLabel.values()]
     .filter((option) => option.grounding.length > 0)
-    .slice(0, 5)
+    .slice(0, ragRuntimePolicy.limits.clarificationOptionLimit)
     .map((option, index) => ({ ...option, id: `opt-${index + 1}` }))
 
   return {
     options,
     missingSlots: inferMissingSlots(query),
-    rejectedOptions: rejectedOptions.slice(0, 8)
+    rejectedOptions: rejectedOptions.slice(0, ragRuntimePolicy.limits.clarificationRejectedOptionLimit)
   }
 }
 
@@ -175,7 +178,7 @@ function inferMissingSlots(query: string): string[] {
   const slots = genericTerms
     .filter((term) => query.includes(term))
     .map((term) => slotByTerm.get(term) ?? "対象")
-  return [...new Set(slots.length > 0 ? slots : ["対象"])].slice(0, 3)
+  return [...new Set(slots.length > 0 ? slots : ["対象"])].slice(0, ragRuntimePolicy.limits.clarificationMissingSlotLimit)
 }
 
 function hasCandidateEvidence(state: QaAgentState): boolean {
