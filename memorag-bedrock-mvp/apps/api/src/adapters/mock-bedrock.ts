@@ -89,6 +89,16 @@ export class MockBedrockTextModel implements TextModel {
       const question = extractBetween(prompt, "<question>", "</question>")
       const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
       const computedFacts = parseComputedFacts(prompt)
+      if (computedFacts.length > 0) {
+        const fact = computedFacts[0] as Record<string, unknown> | undefined
+        const answer = fact ? answerFromComputedFact(fact) : "資料からは回答できません。"
+        return JSON.stringify({
+          isAnswerable: answer !== "資料からは回答できません。",
+          answer,
+          usedChunkIds: contexts.map((match) => match[1]).filter((id): id is string => typeof id === "string" && id.length > 0),
+          usedComputedFactIds: fact && typeof fact.id === "string" ? [fact.id] : []
+        })
+      }
       if (contexts.length === 0 && computedFacts.length > 0) {
         const fact = computedFacts[0] as Record<string, unknown> | undefined
         const answer = fact ? answerFromComputedFact(fact) : "資料からは回答できません。"
@@ -255,6 +265,7 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
   if (fact.kind === "days_until") return `${fact.today}から${fact.dueDate}まではあと${fact.daysRemaining}日です。`
   if (fact.kind === "current_date") return `今日の日付は${fact.today}です。`
   if (fact.kind === "add_days") return `期限は${fact.resultDate}です。`
+  if (fact.kind === "relative_policy_deadline") return `申請期限は${fact.resultDate}です。${fact.ruleText}に基づきます。`
   if (fact.kind === "arithmetic") return `計算結果は${fact.result}${fact.unit ?? ""}です。`
   if (fact.kind === "task_deadline_query_unavailable") return "期限切れタスクの完全な一覧は、構造化インデックスが未実装のため取得できません。"
   if (fact.kind === "calculation_unavailable") return typeof fact.reason === "string" ? fact.reason : "計算できません。"

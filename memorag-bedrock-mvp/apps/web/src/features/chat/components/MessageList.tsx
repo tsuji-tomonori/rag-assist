@@ -19,7 +19,8 @@ export function MessageList({
   onSelectPrompt,
   onCreateQuestion,
   onResolveQuestion,
-  onSubmitClarificationOption
+  onSubmitClarificationOption,
+  onStartClarificationFreeform
 }: {
   messages: Message[]
   questions: HumanQuestion[]
@@ -32,6 +33,7 @@ export function MessageList({
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
   onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
+  onStartClarificationFreeform: (originalQuestion: string, seedText: string) => void
 }) {
   return (
     <div className="message-list">
@@ -48,6 +50,7 @@ export function MessageList({
           onResolveQuestion={onResolveQuestion}
           onAdditionalQuestion={onSelectPrompt}
           onSubmitClarificationOption={onSubmitClarificationOption}
+          onStartClarificationFreeform={onStartClarificationFreeform}
         />
       ))}
       {pendingActivity && (

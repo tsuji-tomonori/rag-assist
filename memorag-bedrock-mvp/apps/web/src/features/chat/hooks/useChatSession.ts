@@ -59,6 +59,7 @@ export function useChatSession({
   const [messages, setMessages] = useState<Message[]>([])
   const [pendingActivity, setPendingActivity] = useState<string | null>(null)
   const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
+  const [pendingClarificationFreeform, setPendingClarificationFreeform] = useState<{ originalQuestion: string } | null>(null)
   const [conversationKey, setConversationKey] = useState(0)
   const [submitShortcut, setSubmitShortcut] = useState<"enter" | "ctrlEnter">("enter")
   const canAsk = useMemo(
@@ -73,7 +74,13 @@ export function useChatSession({
     const typedQuestion = question.trim()
     const userQuestion = typedQuestion || `${file?.name ?? "添付資料"}を取り込んでください`
     const hasAttachment = file !== null
-    await submitQuestion(userQuestion, typedQuestion, hasAttachment)
+    const freeformContext = pendingClarificationFreeform && typedQuestion.length > 0
+      ? {
+          originalQuestion: pendingClarificationFreeform.originalQuestion,
+          selectedValue: typedQuestion
+        }
+      : undefined
+    await submitQuestion(userQuestion, typedQuestion, hasAttachment, freeformContext)
   }
 
   async function submitClarificationOption(option: ClarificationOption, originalQuestion: string) {
@@ -84,6 +91,11 @@ export function useChatSession({
       selectedOptionId: option.id,
       selectedValue: option.label
     })
+  }
+
+  function startClarificationFreeform(originalQuestion: string, seedText: string) {
+    setPendingClarificationFreeform({ originalQuestion })
+    setQuestion(seedText)
   }
 
   async function submitQuestion(
@@ -195,6 +207,7 @@ export function useChatSession({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
+      setPendingClarificationFreeform(null)
       setPendingActivity(null)
       setPendingDebugQuestion(null)
       setLoading(false)
@@ -213,6 +226,7 @@ export function useChatSession({
     setError(null)
     setPendingActivity(null)
     setPendingDebugQuestion(null)
+    setPendingClarificationFreeform(null)
     setSelectedRunId("")
     setExpandedStepId(null)
     setAllExpanded(false)
@@ -234,6 +248,7 @@ export function useChatSession({
     canAsk,
     onAsk,
     submitClarificationOption,
+    startClarificationFreeform,
     newConversation
   }
 }

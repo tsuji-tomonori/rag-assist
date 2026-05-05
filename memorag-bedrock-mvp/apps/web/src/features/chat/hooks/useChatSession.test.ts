@@ -179,6 +179,38 @@ describe("useChatSession", () => {
     expect(setDebugRuns).toHaveBeenCalled()
   })
 
+  it("自由入力の確認回答では元質問を clarificationContext に含める", async () => {
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    chatApiMock.streamChatRunEvents.mockImplementationOnce(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "申請期限は2026-07-01です。",
+          isAnswerable: true,
+          citations: [],
+          retrieved: []
+        }
+      })
+    })
+    const { result } = renderHook(() => useChatSession(createProps()))
+
+    act(() => result.current.startClarificationFreeform("8/1から育休を取る場合、いつまでに申請する必要がある?", ""))
+    act(() => result.current.setQuestion("育児休業"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(chatApiMock.startChatRun).toHaveBeenCalledWith(expect.objectContaining({
+      question: "育児休業",
+      clarificationContext: {
+        originalQuestion: "8/1から育休を取る場合、いつまでに申請する必要がある?",
+        selectedValue: "育児休業"
+      }
+    }))
+    expect(result.current.messages.at(0)).toMatchObject({ role: "user", text: "育児休業" })
+  })
+
   it("debug trace 取得に失敗しても final answer を表示する", async () => {
     chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
     debugApiMock.getDebugRun.mockRejectedValue(new Error("debug trace unavailable"))

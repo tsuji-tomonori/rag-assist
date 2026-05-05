@@ -3,6 +3,7 @@ import type { ComputedFact, TemporalContext, ToolIntent } from "./state.js"
 const DEFAULT_TIMEZONE = "Asia/Tokyo"
 const ISO_DATE = /(\d{4})-(\d{1,2})-(\d{1,2})/g
 const JA_DATE = /(\d{4})年(\d{1,2})月(\d{1,2})日/g
+const SLASH_MONTH_DAY = /(?<!\d)(\d{1,2})\/(\d{1,2})(?!\d)/
 
 type DateCandidate = {
   text: string
@@ -57,12 +58,14 @@ export function detectToolIntent(question: string): ToolIntent {
   const asksTaskList = /(全部|一覧|全件|洗い出し|列挙).*(期限|締切|タスク)|(期限|締切).*(全部|一覧|全件|洗い出し|列挙)/.test(normalized)
   const asksBusinessDayCalculation = !asksDocumentVerification && isBusinessDayCalculationRequest(normalized)
   const asksDateComputation = !asksDocumentVerification && dateCandidates.length > 0 && isDateComputationRequest(normalized)
+  const asksPolicyDeadlineCalculation = hasSlashMonthDayMention(question) && /(いつまで|期限|締切|申請.*必要|提出.*必要)/.test(normalized)
   const relativeDeadline = parseRelativeDeadline(normalized)
   const asksRelativeDeadlineCalculation = relativeDeadline !== undefined && !asksDocumentVerification && isRelativeDeadlineCalculationRequest(normalized)
   const asksTemporal =
     asksCurrentDate ||
     asksTaskList ||
     asksDateComputation ||
+    asksPolicyDeadlineCalculation ||
     asksRelativeDeadlineCalculation ||
     asksBusinessDayCalculation
   const asksArithmetic = !asksDocumentVerification &&
@@ -315,6 +318,7 @@ function executeArithmeticCalculation(question: string): ComputedFact | undefine
 function inferTemporalOperation(question: string): ToolIntent["temporalOperation"] {
   if (isCurrentDateRequest(question)) return "current_date"
   if (isBusinessDayCalculationRequest(question)) return "business_day_calculation"
+  if (hasSlashMonthDayMention(question) && /(いつまで|申請.*必要|提出.*必要)/.test(question)) return "relative_policy_deadline"
   if (/(あと何日|残り何日|まで何日|何日)/.test(question)) return "days_until"
   if (/(申請から|提出から|起算).*日以内/.test(question)) return "add_days"
   if (/(期限切れ|期限|締切|超過)/.test(question)) return "deadline_status"
@@ -391,6 +395,10 @@ function parseRelativeDeadline(question: string): { baseEvent: string; amount: n
 function extractDueDate(question: string): string | undefined {
   const candidates = extractDateCandidates(question).filter((candidate) => !candidate.isAsOf)
   return candidates.at(-1)?.date
+}
+
+function hasSlashMonthDayMention(question: string): boolean {
+  return SLASH_MONTH_DAY.test(question)
 }
 
 function extractDateCandidates(text: string): DateCandidate[] {

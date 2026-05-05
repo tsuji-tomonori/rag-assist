@@ -1,4 +1,4 @@
-import { mkdtemp } from "node:fs/promises"
+import { mkdtemp, readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import assert from "node:assert/strict"
@@ -513,6 +513,36 @@ test("fixed workflow answers explicit scoped questions instead of clarifying fro
   assert.ok(result.retrieved.length > 0)
   const firstClarification = result.debug?.steps.find((step) => step.label === "clarification_gate")
   assert.match(firstClarification?.detail ?? "", /needsClarification=false/)
+})
+
+test("fixed workflow answers parental leave deadline questions with alias and start date", async () => {
+  const service = new MemoRagService(await createTestDeps())
+  const handbook = await readFile(new URL("../../../../benchmark/corpus/standard-agent-v1/handbook.md", import.meta.url), "utf-8")
+
+  await service.ingest({ fileName: "handbook.md", text: handbook })
+
+  const result = await service.chat({
+    question: "8/1から育休を取る場合、いつまでに申請する必要がある?",
+    includeDebug: true,
+    minScore: 0.01,
+    maxIterations: 1,
+    asOfDate: "2026-05-05",
+    asOfDateSource: "test"
+  })
+
+  assert.equal(result.responseType, "answer")
+  assert.equal(result.needsClarification, false)
+  assert.match(result.answer, /2026-07-01|7月1日|7\/1/)
+  assert.match(result.answer, /開始日の1か月前|申請期限/)
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(labels.at(-1), "finalize_response")
+  assert.equal(labels.includes("finalize_clarification"), false)
+  const normalized = result.debug?.steps.find((step) => step.label === "analyze_input")?.output?.normalizedQuery
+  assert.match(String(normalized), /育児休業/)
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "relative_policy_deadline")
+  assert.equal(computedFacts?.[0]?.resultDate, "2026-07-01")
 })
 
 test("fixed workflow merges node updates into state and appends trace entries", () => {
