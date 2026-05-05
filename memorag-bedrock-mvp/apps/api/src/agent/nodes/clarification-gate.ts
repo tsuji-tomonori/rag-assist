@@ -144,8 +144,8 @@ function selectPublicLabel(hit: RetrievedVector, query: string): string | undefi
     .join("\n")
   if (isPrivateLabel(text)) return undefined
   const terms = significantTerms(text).filter((term) => !genericTerms.includes(term) && !isPrivateLabel(term))
-  const queryTerms = significantTerms(query)
-  const scoped = terms.find((term) => queryTerms.some((queryTerm) => text.includes(`${term}${queryTerm}`) || text.includes(`${term}の${queryTerm}`)))
+  const queryTerms = significantTerms(query).filter((term) => !genericTerms.includes(term) && !isQuestionIntentTerm(term) && !isGenericCompoundTerm(term))
+  const scoped = terms.find((term) => queryTerms.some((queryTerm) => text.includes(`${term}${queryTerm}`) || text.includes(`${term}の${queryTerm}`) || termsMatch(queryTerm, term)))
   const label = scoped ?? terms[0]
   if (!label || isPrivateLabel(label)) return undefined
   return label.slice(0, 40)
@@ -200,7 +200,7 @@ function hasSpecificSubjectCue(query: string): boolean {
 
 function hasExplicitQuestionScope(query: string, state: QaAgentState): boolean {
   if (!hasGenericScopeNeed(query) || referencePattern.test(query)) return false
-  const queryTerms = significantTerms(query).filter((term) => !genericTerms.includes(term) && !isQuestionIntentTerm(term))
+  const queryTerms = significantTerms(query).filter((term) => !genericTerms.includes(term) && !isQuestionIntentTerm(term) && !isGenericCompoundTerm(term))
   if (queryTerms.length === 0) return false
 
   const labels = [...state.memoryCards, ...state.retrievedChunks]
@@ -208,7 +208,10 @@ function hasExplicitQuestionScope(query: string, state: QaAgentState): boolean {
     .filter((label): label is string => Boolean(label))
 
   if (labels.some((label) => query.includes(label))) return true
-  return queryTerms.some((term) => labels.some((label) => label.includes(term) || term.includes(label)))
+  if (queryTerms.some((term) => labels.some((label) => termsMatch(term, label)))) return true
+
+  const evidenceTerms = evidencePublicTerms(state)
+  return queryTerms.some((term) => evidenceTerms.some((evidenceTerm) => termsMatch(term, evidenceTerm)))
 }
 
 function hasGenericScopeNeed(query: string): boolean {
@@ -216,10 +219,14 @@ function hasGenericScopeNeed(query: string): boolean {
 }
 
 function hasSpecificTarget(query: string, state: QaAgentState): boolean {
+  const queryTerms = significantTerms(query).filter((term) => !genericTerms.includes(term) && !isQuestionIntentTerm(term) && !isGenericCompoundTerm(term))
   const labels = [...state.memoryCards, ...state.retrievedChunks]
     .map((hit) => selectPublicLabel(hit, query))
     .filter((label): label is string => Boolean(label))
-  return labels.some((label) => query.includes(label))
+  if (labels.some((label) => query.includes(label))) return true
+  if (queryTerms.some((term) => labels.some((label) => termsMatch(term, label)))) return true
+  const evidenceTerms = evidencePublicTerms(state)
+  return queryTerms.some((term) => evidenceTerms.some((evidenceTerm) => termsMatch(term, evidenceTerm)))
 }
 
 function computeTopClusterMargin(hits: RetrievedVector[]): number {
@@ -237,6 +244,44 @@ function significantTerms(text: string): string[] {
   const ascii = normalized.match(/[A-Za-z0-9][A-Za-z0-9_-]{2,}/g) ?? []
   const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
   return [...new Set([...japanese, ...ascii].map((term) => term.trim()).filter((term) => !isStopTerm(term)))]
+}
+
+function evidencePublicTerms(state: QaAgentState): string[] {
+  return [...state.memoryCards, ...state.retrievedChunks]
+    .flatMap((hit) => significantTerms([
+      hit.metadata.heading,
+      ...(hit.metadata.sectionPath ?? []),
+      hit.metadata.text,
+      hit.metadata.fileName.replace(/\.[^.]+$/, "")
+    ].filter(Boolean).join("\n")))
+    .filter((term) => !genericTerms.includes(term) && !isQuestionIntentTerm(term) && !isPrivateLabel(term))
+}
+
+function termsMatch(queryTerm: string, candidateTerm: string): boolean {
+  if (candidateTerm.includes(queryTerm) || queryTerm.includes(candidateTerm)) return true
+  return isCjkAbbreviationTerm(queryTerm) && isCjkAbbreviationExpansion(queryTerm, candidateTerm)
+}
+
+function isCjkAbbreviationTerm(term: string): boolean {
+  return term.length >= 2 && term.length <= 6 && isCjkText(term)
+}
+
+function isCjkText(value: string): boolean {
+  return /^[\p{Script=Han}\p{Script=Katakana}ー]+$/u.test(value)
+}
+
+function isCjkAbbreviationExpansion(term: string, candidate: string): boolean {
+  return isCjkText(candidate) && candidate[0] === term[0] && !candidate.includes(term) && isOrderedSubsequence(term, candidate)
+}
+
+function isOrderedSubsequence(short: string, long: string): boolean {
+  let index = 0
+  for (const char of short) {
+    index = long.indexOf(char, index)
+    if (index < 0) return false
+    index += char.length
+  }
+  return true
 }
 
 function isStopTerm(term: string): boolean {

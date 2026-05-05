@@ -289,7 +289,8 @@ export function bm25Search(index: LexicalIndex, rawTokens: string[], topK: numbe
         avgDocLen: index.avgDocLen,
         nDocs: index.nDocs
       })
-      scores.set(posting.docOrdinal, (scores.get(posting.docOrdinal) ?? 0) + score)
+      const abbreviationBonus = token.weight >= 5 ? token.weight * 0.35 : 0
+      scores.set(posting.docOrdinal, (scores.get(posting.docOrdinal) ?? 0) + score + abbreviationBonus)
       const terms = matched.get(posting.docOrdinal) ?? new Set<string>()
       terms.add(token.term)
       matched.set(posting.docOrdinal, terms)
@@ -413,6 +414,7 @@ function expandQueryTerms(rawTerms: string[], dictionary: string[], aliases: Ali
 
   for (const term of rawTerms) {
     for (const candidate of prefixCandidates(term, dictionary)) terms.set(candidate, Math.max(terms.get(candidate) ?? 0, 0.5))
+    for (const candidate of cjkAbbreviationCandidates(term, dictionary)) terms.set(candidate, Math.max(terms.get(candidate) ?? 0, 12))
     if (shouldFuzzy(term)) {
       for (const candidate of fuzzyCandidates(term, dictionary)) terms.set(candidate, Math.max(terms.get(candidate) ?? 0, 0.35))
     }
@@ -447,6 +449,14 @@ function prefixCandidates(term: string, dictionary: string[]): string[] {
   return dictionary.filter((candidate) => candidate.length > term.length && candidate.startsWith(term)).slice(0, 20)
 }
 
+function cjkAbbreviationCandidates(term: string, dictionary: string[]): string[] {
+  if (!isCjkAbbreviationTerm(term)) return []
+  return dictionary
+    .filter((candidate) => candidate.length > term.length && candidate.length <= Math.max(8, term.length * 12))
+    .filter((candidate) => isCjkAbbreviationExpansion(term, candidate))
+    .slice(0, 20)
+}
+
 function fuzzyCandidates(term: string, dictionary: string[]): string[] {
   const maxDistance = term.length > 7 ? 2 : 1
   return dictionary
@@ -457,6 +467,28 @@ function fuzzyCandidates(term: string, dictionary: string[]): string[] {
 
 function shouldFuzzy(term: string): boolean {
   return term.length >= 4 && /^[a-z0-9_-]+$/.test(term)
+}
+
+function isCjkAbbreviationTerm(term: string): boolean {
+  return term.length >= 2 && term.length <= 6 && isCjkText(term)
+}
+
+function isCjkText(value: string): boolean {
+  return /^[\p{Script=Katakana}\p{Script=Han}ー]+$/u.test(value)
+}
+
+function isCjkAbbreviationExpansion(term: string, candidate: string): boolean {
+  return isCjkText(candidate) && candidate[0] === term[0] && !candidate.includes(term) && isOrderedSubsequence(term, candidate)
+}
+
+function isOrderedSubsequence(short: string, long: string): boolean {
+  let index = 0
+  for (const char of short) {
+    index = long.indexOf(char, index)
+    if (index < 0) return false
+    index += char.length
+  }
+  return true
 }
 
 function levenshteinDistance(a: string, b: string, maxDistance: number): number {
