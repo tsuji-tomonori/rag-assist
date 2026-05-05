@@ -341,6 +341,32 @@ test("fixed workflow keeps not-required threshold rules from becoming required a
   assert.equal(computedFacts?.[0]?.satisfiesCondition, true)
 })
 
+test("fixed workflow binds threshold polarity at clause level", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "handbook.md",
+    text: "1万円以上の経費精算では領収書の添付が必要で、1万円未満では不要です。",
+    skipMemory: true
+  })
+
+  const result = await service.chat({
+    question: "15000円の経費精算では領収書いる?",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /必要/)
+  assert.doesNotMatch(result.answer, /^不要です。/)
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
+  assert.equal(computedFacts?.[0]?.polarity, "required")
+  assert.equal(computedFacts?.[0]?.satisfiesCondition, true)
+})
+
 test("fixed workflow answers self-contained arithmetic verification from computed facts", async () => {
   const service = new MemoRagService(await createTestDeps())
 

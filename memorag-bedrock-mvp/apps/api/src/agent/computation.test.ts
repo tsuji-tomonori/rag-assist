@@ -195,6 +195,78 @@ test("computation layer executes MVP temporal and arithmetic tools deterministic
   assert.equal(multiAmountThreshold[0]?.kind === "threshold_comparison" ? multiAmountThreshold[0].questionAmount : undefined, 5200)
   assert.equal(multiAmountThreshold[0]?.kind === "threshold_comparison" ? multiAmountThreshold[0].satisfiesCondition : undefined, false)
 
+  const mixedPolarityRequired = executeComputationTools(
+    "15000円の経費精算では領収書いる?",
+    fixedTemporalContext,
+    detectToolIntent("15000円の経費精算では領収書いる?"),
+    [
+      {
+        key: "doc-1-chunk-0005",
+        score: 0.9,
+        metadata: {
+          kind: "chunk",
+          documentId: "doc-1",
+          fileName: "handbook.md",
+          chunkId: "chunk-0005",
+          text: "1万円以上の経費精算では領収書の添付が必要で、1万円未満では不要です。",
+          createdAt: "2026-05-01T00:00:00.000Z"
+        }
+      }
+    ]
+  )
+  assert.equal(mixedPolarityRequired[0]?.kind, "threshold_comparison")
+  assert.equal(mixedPolarityRequired[0]?.kind === "threshold_comparison" ? mixedPolarityRequired[0].polarity : undefined, "required")
+  assert.equal(mixedPolarityRequired[0]?.kind === "threshold_comparison" ? mixedPolarityRequired[0].operator : undefined, "gte")
+  assert.equal(mixedPolarityRequired[0]?.kind === "threshold_comparison" ? mixedPolarityRequired[0].satisfiesCondition : undefined, true)
+
+  const reverseMixedPolarityRequired = executeComputationTools(
+    "15000円の経費精算では領収書いる?",
+    fixedTemporalContext,
+    detectToolIntent("15000円の経費精算では領収書いる?"),
+    [
+      {
+        key: "doc-1-chunk-0006",
+        score: 0.9,
+        metadata: {
+          kind: "chunk",
+          documentId: "doc-1",
+          fileName: "handbook.md",
+          chunkId: "chunk-0006",
+          text: "1万円未満の経費精算では領収書の添付は不要で、1万円以上では必要です。",
+          createdAt: "2026-05-01T00:00:00.000Z"
+        }
+      }
+    ]
+  )
+  assert.equal(reverseMixedPolarityRequired[0]?.kind, "threshold_comparison")
+  assert.equal(reverseMixedPolarityRequired[0]?.kind === "threshold_comparison" ? reverseMixedPolarityRequired[0].polarity : undefined, "required")
+  assert.equal(reverseMixedPolarityRequired[0]?.kind === "threshold_comparison" ? reverseMixedPolarityRequired[0].operator : undefined, "gte")
+  assert.equal(reverseMixedPolarityRequired[0]?.kind === "threshold_comparison" ? reverseMixedPolarityRequired[0].satisfiesCondition : undefined, true)
+
+  const reverseMixedPolarityNotRequired = executeComputationTools(
+    "5200円の経費精算では領収書いる?",
+    fixedTemporalContext,
+    detectToolIntent("5200円の経費精算では領収書いる?"),
+    [
+      {
+        key: "doc-1-chunk-0007",
+        score: 0.9,
+        metadata: {
+          kind: "chunk",
+          documentId: "doc-1",
+          fileName: "handbook.md",
+          chunkId: "chunk-0007",
+          text: "1万円未満の経費精算では領収書の添付は不要で、1万円以上では必要です。",
+          createdAt: "2026-05-01T00:00:00.000Z"
+        }
+      }
+    ]
+  )
+  assert.equal(reverseMixedPolarityNotRequired[0]?.kind, "threshold_comparison")
+  assert.equal(reverseMixedPolarityNotRequired[0]?.kind === "threshold_comparison" ? reverseMixedPolarityNotRequired[0].polarity : undefined, "not_required")
+  assert.equal(reverseMixedPolarityNotRequired[0]?.kind === "threshold_comparison" ? reverseMixedPolarityNotRequired[0].operator : undefined, "lt")
+  assert.equal(reverseMixedPolarityNotRequired[0]?.kind === "threshold_comparison" ? reverseMixedPolarityNotRequired[0].satisfiesCondition : undefined, true)
+
   const unrelatedTarget = executeComputationTools(
     "5200円の経費精算は対象ですか?",
     fixedTemporalContext,

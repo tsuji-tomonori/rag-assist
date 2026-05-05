@@ -328,28 +328,35 @@ function executeDocumentThresholdComparisons(question: string, evidenceChunks: R
   for (const chunk of evidenceChunks) {
     const sentences = splitPolicySentences(chunk.metadata.text ?? "")
     for (const sentence of sentences) {
-      const condition = extractRequiredThresholdCondition(question, sentence)
-      if (!condition) continue
-      const satisfiesCondition = compare(questionAmount, condition.operator, condition.thresholdAmount)
-      facts.push({
-        id: `threshold-${String(facts.length + 1).padStart(3, "0")}`,
-        kind: "threshold_comparison",
-        inputFactIds: [],
-        sourceChunkId: chunk.metadata.chunkId ?? chunk.key,
-        questionAmount,
-        thresholdAmount: condition.thresholdAmount,
-        operator: condition.operator,
-        satisfiesCondition,
-        polarity: condition.polarity,
-        subject: condition.subject,
-        requirement: condition.requirement,
-        sourceText: sentence,
-        explanation: `${formatYen(questionAmount)}は${formatThreshold(condition.operator, condition.thresholdAmount)}${satisfiesCondition ? "に該当します" : "に該当しません"}。${formatPolarity(condition.polarity, satisfiesCondition)}。根拠: ${sentence}`
-      })
+      const conditions = extractRequiredThresholdConditions(question, sentence)
+      for (const condition of conditions) {
+        const satisfiesCondition = compare(questionAmount, condition.operator, condition.thresholdAmount)
+        facts.push({
+          id: `threshold-${String(facts.length + 1).padStart(3, "0")}`,
+          kind: "threshold_comparison",
+          inputFactIds: [],
+          sourceChunkId: chunk.metadata.chunkId ?? chunk.key,
+          questionAmount,
+          thresholdAmount: condition.thresholdAmount,
+          operator: condition.operator,
+          satisfiesCondition,
+          polarity: condition.polarity,
+          subject: condition.subject,
+          requirement: condition.requirement,
+          sourceText: condition.sourceText,
+          explanation: `${formatYen(questionAmount)}は${formatThreshold(condition.operator, condition.thresholdAmount)}${satisfiesCondition ? "に該当します" : "に該当しません"}。${formatPolarity(condition.polarity, satisfiesCondition)}。根拠: ${condition.sourceText}`
+        })
+      }
     }
   }
 
-  return facts.slice(0, 5)
+  return facts
+    .sort((a, b) => Number(b.kind === "threshold_comparison" && b.satisfiesCondition) - Number(a.kind === "threshold_comparison" && a.satisfiesCondition))
+    .map((fact, index) => ({
+      ...fact,
+      id: `threshold-${String(index + 1).padStart(3, "0")}`
+    }))
+    .slice(0, 5)
 }
 
 function isDocumentThresholdComparisonRequest(question: string): boolean {
@@ -375,34 +382,39 @@ function extractQuestionYenAmount(question: string): number | undefined {
   return selected ? parseYenAmount(selected.rawValue, selected.unit) : undefined
 }
 
-function extractRequiredThresholdCondition(question: string, sentence: string):
-  | {
-      thresholdAmount: number
-      operator: Extract<ComputedFact, { kind: "threshold_comparison" }>["operator"]
-      polarity: Extract<ComputedFact, { kind: "threshold_comparison" }>["polarity"]
-      subject: string
-      requirement: string
-    }
-  | undefined {
+function extractRequiredThresholdConditions(question: string, sentence: string): Array<{
+  thresholdAmount: number
+  operator: Extract<ComputedFact, { kind: "threshold_comparison" }>["operator"]
+  polarity: Extract<ComputedFact, { kind: "threshold_comparison" }>["polarity"]
+  subject: string
+  requirement: string
+  sourceText: string
+}> {
   const normalizedSentence = sentence.normalize("NFKC")
   const questionTerms = extractRequirementTerms(question)
-  if (questionTerms.length === 0) return undefined
-  if (!questionTerms.some((term) => normalizedSentence.includes(term))) return undefined
-  const polarity = requirementPolarity(normalizedSentence)
-  if (!polarity) return undefined
+  if (questionTerms.length === 0) return []
+  if (!questionTerms.some((term) => normalizedSentence.includes(term))) return []
 
-  const threshold = normalizedSentence.match(/([0-9][0-9,]*(?:\.\d+)?)\s*(万円|千円|円)\s*(以上|超|より多い|以下|未満|より少ない)/)
-  if (!threshold?.[1] || !threshold[2] || !threshold[3]) return undefined
-  const thresholdAmount = parseYenAmount(threshold[1], threshold[2])
-  if (!Number.isFinite(thresholdAmount)) return undefined
-
-  return {
-    thresholdAmount,
-    operator: operatorFromText(threshold[3]),
-    polarity,
-    subject: extractSubject(question, normalizedSentence),
-    requirement: questionTerms[0] ?? "必要条件"
-  }
+  return splitPolicyClauses(normalizedSentence).flatMap((clause) => {
+    const polarity = requirementPolarity(clause)
+    if (!polarity) return []
+    const thresholds = [...clause.matchAll(/([0-9][0-9,]*(?:\.\d+)?)\s*(万円|千円|円)\s*(以上|超|より多い|以下|未満|より少ない)/g)]
+    return thresholds.flatMap((threshold) => {
+      if (!threshold[1] || !threshold[2] || !threshold[3]) return []
+      const thresholdAmount = parseYenAmount(threshold[1], threshold[2])
+      if (!Number.isFinite(thresholdAmount)) return []
+      return [
+        {
+          thresholdAmount,
+          operator: operatorFromText(threshold[3]),
+          polarity,
+          subject: extractSubject(question, normalizedSentence),
+          requirement: questionTerms[0] ?? "必要条件",
+          sourceText: clause
+        }
+      ]
+    })
+  })
 }
 
 function scoreQuestionAmountCandidate(after: string, order: number): number {
@@ -463,6 +475,13 @@ function splitPolicySentences(text: string): string[] {
     .replace(/\r\n?/g, "\n")
     .split(/(?<=[。！？!?])\s*|\n+/u)
     .map((sentence) => sentence.trim().replace(/^[-*]\s*/, ""))
+    .filter(Boolean)
+}
+
+function splitPolicyClauses(text: string): string[] {
+  return text
+    .split(/[、，；;]/u)
+    .map((clause) => clause.trim().replace(/^[-*]\s*/, ""))
     .filter(Boolean)
 }
 
