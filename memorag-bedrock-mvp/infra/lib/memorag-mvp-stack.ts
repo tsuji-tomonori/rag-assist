@@ -642,7 +642,8 @@ export class MemoRagMvpStack extends Stack {
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
               "aws s3 cp ./benchmark/.runner-results.jsonl \"$OUTPUT_S3_PREFIX/results.jsonl\"",
               "aws s3 cp ./benchmark/.runner-summary.json \"$OUTPUT_S3_PREFIX/summary.json\"",
-              "aws s3 cp ./benchmark/.runner-report.md \"$OUTPUT_S3_PREFIX/report.md\""
+              "aws s3 cp ./benchmark/.runner-report.md \"$OUTPUT_S3_PREFIX/report.md\"",
+              "node infra/scripts/update-benchmark-run-metrics.mjs"
             ]
           }
         },
@@ -650,7 +651,10 @@ export class MemoRagMvpStack extends Stack {
       })
     })
     benchmarkBucket.grantReadWrite(benchmarkProject)
-    benchmarkRunsTable.grantWriteData(benchmarkProject)
+    benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["dynamodb:UpdateItem"],
+      resources: [benchmarkRunsTable.tableArn]
+    }))
     benchmarkRunnerAuthSecret.grantRead(benchmarkProject)
     benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
       actions: ["cognito-idp:InitiateAuth"],
