@@ -114,7 +114,7 @@ ALLGANIZE_RAG_LIMIT=10 \
 task benchmark:allganize:ja
 ```
 
-この task は Hugging Face の `allganize/RAG-Evaluation-Dataset-JA` から `rag_evaluation_result.csv` と `documents.csv` を取得し、`.local-data/allganize-rag-evaluation-ja/dataset.jsonl` と `.local-data/allganize-rag-evaluation-ja/corpus/` を作成してから agent benchmark を実行する。`ALLGANIZE_RAG_DOMAIN=finance` などで domain を絞り込み、`ALLGANIZE_RAG_EXPECTED_MODE=strict-contains` で `target_answer` の完全包含判定を有効化できる。既定では `target_answer` は `referenceAnswer` として results に保持し、既存 runner の file/page/citation/retrieval 指標を中心に確認する。
+この task は Hugging Face の `allganize/RAG-Evaluation-Dataset-JA` から `rag_evaluation_result.csv` と `documents.csv` を取得し、`.local-data/allganize-rag-evaluation-ja/dataset.jsonl` と `.local-data/allganize-rag-evaluation-ja/corpus/` を作成してから agent benchmark を実行する。source PDF URL が移動または削除されている場合は NDL WARP の最新アーカイブも試行する。`ALLGANIZE_RAG_DOMAIN=finance` などで domain を絞り込み、`ALLGANIZE_RAG_EXPECTED_MODE=strict-contains` で `target_answer` の完全包含判定を有効化できる。既定では `target_answer` は `referenceAnswer` として results に保持し、既存 runner の file/page/citation/retrieval 指標を中心に確認する。
 
 evaluator profile を明示する場合:
 
