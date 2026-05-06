@@ -1,10 +1,10 @@
 # Search benchmark performance improvement
 
-保存先: `tasks/do/20260506-2048-search-benchmark-performance.md`
+保存先: `tasks/done/20260506-2048-search-benchmark-performance.md`
 
 ## 状態
 
-- do
+- done
 
 ## 背景
 
