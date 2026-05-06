@@ -69,6 +69,8 @@ npm run start -w @memorag-mvp/benchmark
 
 `task benchmark:sample` は上記の標準 corpus 指定を含む。`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1` では `handbook.md` を `/documents` に seed し、active chunk が作成されてから評価 query を実行する。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]` と `docType: "benchmark-corpus"` で隔離し、通常利用者の文書一覧にも表示しない。同じ corpus を複数 suite で共有する場合は `BENCHMARK_CORPUS_SUITE_ID` で seed 判定用の corpus identity を固定する。
 
+検索ベンチマーク runner は、初期化やレポート描画の fatal error でも `OUTPUT`、`SUMMARY`、`REPORT` の各 artifact を作成してから同じエラーで終了する。CodeBuild の `post_build` では、Build phase の失敗原因を保ったまま部分結果と runner error を S3 にアップロードできる。
+
 adaptive retrieval を opt-in で確認する場合:
 
 ```bash
