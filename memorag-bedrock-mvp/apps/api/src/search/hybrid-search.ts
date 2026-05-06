@@ -459,13 +459,12 @@ function buildSearchDiagnostics(input: {
   const unionSize = new Set([...lexicalIds, ...semanticIds]).size
   const overlap = unionSize === 0 ? 0 : [...lexicalIds].filter((id) => semanticIds.has(id)).length / unionSize
   const gap = top !== null && second !== null ? Number((top - second).toFixed(6)) : null
-  const scoreFloor = adaptiveScoreFloor(scores)
   const adaptiveDecision = ragRuntimePolicy.retrieval.adaptiveEnabled
     ? {
         strategy: "adaptive" as const,
         reason: gap !== null && gap < ragRuntimePolicy.retrieval.adaptiveTopGapExpandBelow ? "small_top_gap_expand_candidates" : overlap >= ragRuntimePolicy.retrieval.adaptiveOverlapBoostAtLeast ? "lexical_semantic_overlap_supports_precision" : "score_distribution_floor",
         effectiveTopK: input.effectiveTopK,
-        effectiveMinScore: Math.max(ragRuntimePolicy.retrieval.defaultMinScore, scoreFloor)
+        effectiveMinScore: adaptiveEffectiveMinScore(scores, ragRuntimePolicy.retrieval.adaptiveMinCombinedScore, ragRuntimePolicy.retrieval.adaptiveScoreFloorQuantile)
       }
     : {
         strategy: "fixed" as const,
@@ -496,8 +495,8 @@ function buildSearchDiagnostics(input: {
   }
 }
 
-function adaptiveScoreFloor(scores: number[]): number {
-  return percentileScore(scores, ragRuntimePolicy.retrieval.adaptiveScoreFloorQuantile) ?? -1
+export function adaptiveEffectiveMinScore(scores: number[], minCombinedScore: number, scoreFloorQuantile: number): number {
+  return Math.max(minCombinedScore, percentileScore([...scores].sort((a, b) => a - b), scoreFloorQuantile) ?? minCombinedScore)
 }
 
 function percentileScore(scores: number[], p: number): number | null {

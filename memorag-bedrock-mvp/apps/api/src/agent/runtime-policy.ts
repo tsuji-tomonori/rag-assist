@@ -70,7 +70,8 @@ const retrievalProfile: RetrievalProfile = {
     minTopK: clampInt(config.ragDefaultSearchBenchmarkTopK, 1, searchRagMaxTopK),
     topGapExpandBelow: clampNumber(config.ragAdaptiveTopGapExpandBelow, 0, 1),
     overlapBoostAtLeast: clampNumber(config.ragAdaptiveOverlapBoostAtLeast, 0, 1),
-    scoreFloorQuantile: clampNumber(config.ragAdaptiveScoreFloorQuantile, 0, 1)
+    scoreFloorQuantile: clampNumber(config.ragAdaptiveScoreFloorQuantile, 0, 1),
+    minCombinedScore: clampNumber(config.ragAdaptiveMinCombinedScore, -1, 1)
   }
 }
 const answerPolicy = answerPolicyById(config.ragDomainPolicyId)
@@ -109,6 +110,7 @@ export const ragRuntimePolicy = {
     adaptiveTopGapExpandBelow: retrievalProfile.adaptive.topGapExpandBelow,
     adaptiveOverlapBoostAtLeast: retrievalProfile.adaptive.overlapBoostAtLeast,
     adaptiveScoreFloorQuantile: retrievalProfile.adaptive.scoreFloorQuantile,
+    adaptiveMinCombinedScore: retrievalProfile.adaptive.minCombinedScore,
     memoryPrefetchMultiplier: Math.max(1, config.ragMemoryPrefetchMultiplier),
     memoryPrefetchMaxTopK: Math.max(1, config.ragMemoryPrefetchMaxTopK),
     minEvidenceCountMin,

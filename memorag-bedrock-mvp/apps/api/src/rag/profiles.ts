@@ -40,6 +40,7 @@ export type RetrievalProfile = {
     topGapExpandBelow: number
     overlapBoostAtLeast: number
     scoreFloorQuantile: number
+    minCombinedScore: number
   }
 }
 

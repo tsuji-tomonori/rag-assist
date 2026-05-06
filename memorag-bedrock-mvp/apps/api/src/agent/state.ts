@@ -297,7 +297,7 @@ export const RetrievalEvaluationSchema = z.object({
   riskSignals: z
     .array(
       z.object({
-        type: z.enum(["value_mismatch", "date_mismatch", "explicit_conflict_cue", "temporal_status_cue", "typed_claim_conflict"]),
+        type: z.enum(["value_mismatch", "date_mismatch", "explicit_conflict_cue", "temporal_status_cue", "typed_claim_conflict", "uncertain_scope_conflict"]),
         factId: z.string().optional(),
         chunkKeys: z.array(z.string()).default(() => []),
         values: z.array(z.string()).default(() => []),

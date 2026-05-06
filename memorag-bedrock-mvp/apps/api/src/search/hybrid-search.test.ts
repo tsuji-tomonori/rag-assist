@@ -14,7 +14,7 @@ import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
 import { MemoRagService } from "../rag/memorag-service.js"
-import { bm25Search, buildLexicalIndex, rrfFuse, tokenizeQuery } from "./hybrid-search.js"
+import { adaptiveEffectiveMinScore, bm25Search, buildLexicalIndex, rrfFuse, tokenizeQuery } from "./hybrid-search.js"
 
 test("tokenizeQuery normalizes Japanese and ASCII terms with n-grams", () => {
   const tokens = tokenizeQuery("  申請承認 Workflow  ")
@@ -80,6 +80,13 @@ test("RRF fusion rewards overlap while keeping independent lexical hits", () => 
   assert.equal(fused[0]?.id, "shared")
   assert.ok(fused.some((hit) => hit.id === "lexical-only"))
   assert.ok(fused.some((hit) => hit.id === "semantic-only"))
+})
+
+test("adaptive score floor does not reuse MIN_RETRIEVAL_SCORE for fused scores", () => {
+  const lowSemanticOnlyScores = [0.0159, 0.0142, 0.011]
+
+  assert.equal(adaptiveEffectiveMinScore(lowSemanticOnlyScores, 0, 0.25), 0.011)
+  assert.equal(adaptiveEffectiveMinScore([0.0159], 0, 0.25), 0.0159)
 })
 
 test("service search applies ACL and metadata filters across lexical and vector results", async () => {

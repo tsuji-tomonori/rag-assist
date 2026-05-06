@@ -642,6 +642,31 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   assert.deepEqual(noValue.retrievalEvaluation?.supportedFactIds, [])
   assert.deepEqual(noValue.retrievalEvaluation?.missingFactIds, ["deadline"])
 
+  const multiFacetSeparateChunks = await retrievalEvaluator(
+    state({
+      question: "経費精算の申請方法と期限と金額は？",
+      retrievedChunks: [
+        { ...chunk, key: "expense-amount", metadata: { ...chunk.metadata, chunkId: "expense-amount", text: "経費精算の金額上限は5,000円です。" } },
+        { ...chunk, key: "expense-deadline", metadata: { ...chunk.metadata, chunkId: "expense-deadline", text: "経費精算の申請期限は翌月5営業日です。" } },
+        { ...chunk, key: "expense-procedure", metadata: { ...chunk.metadata, chunkId: "expense-procedure", text: "経費精算は申請システムから提出します。" } }
+      ],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "経費精算の申請方法と期限と金額",
+        requiredFacts: [
+          { id: "amount", description: "経費精算 金額", factType: "amount", subject: "経費精算", priority: 1, status: "missing", supportingChunkKeys: [] },
+          { id: "deadline", description: "経費精算 期限", factType: "date", subject: "経費精算", priority: 2, status: "missing", supportingChunkKeys: [] },
+          { id: "procedure", description: "経費精算 手順", factType: "procedure", subject: "経費精算", priority: 3, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(multiFacetSeparateChunks.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(multiFacetSeparateChunks.retrievalEvaluation?.missingFactIds, [])
+  assert.deepEqual(new Set(multiFacetSeparateChunks.retrievalEvaluation?.supportedFactIds), new Set(["amount", "deadline", "procedure"]))
+
   const currentRuleWithStatusCue = await retrievalEvaluator(
     state({
       question: "現行制度の申請期限は？",
@@ -746,6 +771,43 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   assert.equal(scopedOldAndCurrent.retrievalEvaluation?.retrievalQuality, "sufficient")
   assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.conflictingFactIds, [])
   assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.riskSignals, [])
+
+  const uncertainScopeMismatch = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0005",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0005",
+            text: "申請期限は翌月5営業日です。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0006",
+          score: 0.89,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0006",
+            text: "現行の申請期限は翌月10営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", factType: "date", subject: "制度", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.retrievalQuality, "conflicting")
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "uncertain_scope_conflict")
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.riskSignals?.[0]?.conflictCandidate?.scope, "uncertain")
 
   const lowScoreTermMatch = await retrievalEvaluator(
     state({

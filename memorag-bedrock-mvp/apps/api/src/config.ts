@@ -75,6 +75,7 @@ export const config = {
   ragAdaptiveTopGapExpandBelow: numberEnv("RAG_ADAPTIVE_TOP_GAP_EXPAND_BELOW", 0.015),
   ragAdaptiveOverlapBoostAtLeast: numberEnv("RAG_ADAPTIVE_OVERLAP_BOOST_AT_LEAST", 0.35),
   ragAdaptiveScoreFloorQuantile: numberEnv("RAG_ADAPTIVE_SCORE_FLOOR_QUANTILE", 0.25),
+  ragAdaptiveMinCombinedScore: numberEnv("RAG_ADAPTIVE_MIN_COMBINED_SCORE", 0),
   ragSearchSemanticPrefetchMultiplier: numberEnv("RAG_SEARCH_SEMANTIC_PREFETCH_MULTIPLIER", 3),
   ragMemoryPrefetchMultiplier: numberEnv("RAG_MEMORY_PREFETCH_MULTIPLIER", 3),
   ragMemoryPrefetchMaxTopK: intEnv("RAG_MEMORY_PREFETCH_MAX_TOP_K", 100),

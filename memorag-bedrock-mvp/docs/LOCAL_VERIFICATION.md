@@ -81,7 +81,7 @@ REPORT=.local-data/search-adaptive-report.md \
 npm run start:search -w @memorag-mvp/benchmark
 ```
 
-`diagnostics.profileId`、`diagnostics.scoreDistribution`、`diagnostics.lexicalSemanticOverlap`、`diagnostics.adaptiveDecision` を確認し、default profile と比較する。default 化は、回答可能 20 件以上、不回答 10 件以上を含む benchmark suite で answerable accuracy、refusal precision、unsupported rate、citation hit rate、retrieval recall、p95 latency の劣化が許容閾値内に収まる場合だけ検討する。
+`diagnostics.profileId`、`diagnostics.scoreDistribution`、`diagnostics.lexicalSemanticOverlap`、`diagnostics.adaptiveDecision` を確認し、default profile と比較する。`adaptiveDecision.effectiveMinScore` は RRF + rerank の combined score 用で、`MIN_RETRIEVAL_SCORE` とは別の `RAG_ADAPTIVE_MIN_COMBINED_SCORE` で下限を制御する。default 化は、回答可能 20 件以上、不回答 10 件以上を含む benchmark suite で answerable accuracy、refusal precision、unsupported rate、citation hit rate、retrieval recall、p95 latency の劣化が許容閾値内に収まる場合だけ検討する。
 
 追加データセット:
 

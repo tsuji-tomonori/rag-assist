@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { assertComparableProfiles, defaultEvaluatorProfile, profileKey } from "../evaluator-profile.js"
+import { assertComparableProfiles, defaultEvaluatorProfile, profileKey, resolveEvaluatorProfile } from "../evaluator-profile.js"
 import { cjkBigramTokenizer, compareTokenizers, createQualityReview, detectRegressions, whitespaceTokenizer } from "./quality.js"
 
 test("detectRegressions flags metric drops and latency increases", () => {
@@ -54,4 +54,12 @@ test("evaluator profile comparison rejects mismatched baselines by default", () 
     assertComparableProfiles(defaultEvaluatorProfile, { evaluatorProfile: { id: "custom", version: "1" } }, true) ?? "",
     /reference comparison/
   )
+})
+
+test("resolver supports non-default evaluator profiles with retrieval K", () => {
+  const profile = resolveEvaluatorProfile("strict-ja")
+
+  assert.equal(profileKey(profile), "strict-ja@1")
+  assert.equal(profile.retrieval.recallK, 10)
+  assert.deepEqual(profile.answerMatching.noAnswerTexts, ["資料からは回答できません"])
 })

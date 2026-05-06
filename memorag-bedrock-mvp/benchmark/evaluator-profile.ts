@@ -26,7 +26,23 @@ export const defaultEvaluatorProfile: EvaluatorProfile = {
   thresholds: defaultThresholds
 }
 
-const profiles = new Map<string, EvaluatorProfile>([[profileKey(defaultEvaluatorProfile), defaultEvaluatorProfile]])
+export const strictJaEvaluatorProfile: EvaluatorProfile = {
+  id: "strict-ja",
+  version: "1",
+  answerMatching: {
+    noAnswerTexts: ["資料からは回答できません"],
+    caseInsensitive: true
+  },
+  retrieval: {
+    recallK: 10
+  },
+  thresholds: defaultThresholds
+}
+
+const profiles = new Map<string, EvaluatorProfile>([
+  [profileKey(defaultEvaluatorProfile), defaultEvaluatorProfile],
+  [profileKey(strictJaEvaluatorProfile), strictJaEvaluatorProfile]
+])
 
 export function resolveEvaluatorProfile(idOrVersion?: string): EvaluatorProfile {
   if (!idOrVersion) return defaultEvaluatorProfile

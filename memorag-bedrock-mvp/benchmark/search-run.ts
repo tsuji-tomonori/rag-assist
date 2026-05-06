@@ -74,6 +74,7 @@ type SearchResultRow = {
 }
 
 type SearchMetrics = {
+  recallAtK: number | null
   recallAt1: number | null
   recallAt3: number | null
   recallAt5: number | null
@@ -195,7 +196,7 @@ async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body:
 function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, body: SearchResponse, evaluatorProfile: EvaluatorProfile): SearchResultRow {
   const results = body.results ?? []
   const relevant = row.relevant ?? []
-  const metrics = evaluateRetrieval(results, relevant)
+  const metrics = evaluateRetrieval(results, relevant, { recallK: evaluatorProfile.retrieval.recallK })
   const noAccessLeakCount = row.caseType === "acl_negative"
     ? countAccessLeaks(results, relevant, row.forbidden)
     : countAccessLeaks(results, [], row.forbidden)
@@ -204,8 +205,8 @@ function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, b
   if (status < 200 || status >= 300) failureReasons.push(`http_${status}`)
   if (row.caseType === "acl_negative") {
     if (noAccessLeakCount > 0) failureReasons.push("no_access_leak")
-  } else if (relevant.length > 0 && metrics.recallAt10 === 0) {
-    failureReasons.push("recall_at_10_miss")
+  } else if (relevant.length > 0 && metrics.recallAtK === 0) {
+    failureReasons.push(`recall_at_${evaluatorProfile.retrieval.recallK}_miss`)
   }
   if (noAccessLeakCount > 0 && row.caseType !== "acl_negative") failureReasons.push("forbidden_result_leak")
 
@@ -227,6 +228,7 @@ function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, b
 function summarize(rows: SearchResultRow[]): SearchSummary {
   const latencies = rows.map((row) => row.latencyMs)
   const metricAverages = {
+    recallAtK: averageMetric(rows, "recallAtK"),
     recallAt1: averageMetric(rows, "recallAt1"),
     recallAt3: averageMetric(rows, "recallAt3"),
     recallAt5: averageMetric(rows, "recallAt5"),
@@ -285,10 +287,10 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
         )
       ].join("\n")
   const detailRows = [
-    "| id | case | recall@20 | mrr@10 | ndcg@10 | precision@10 | leak | latency_ms | lexical | semantic | fused |",
-    "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    `| id | case | recall@${summary.evaluatorProfile.retrieval.recallK} | recall@20 | mrr@10 | ndcg@10 | precision@10 | leak | latency_ms | lexical | semantic | fused |`,
+    "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ...rows.map((row) =>
-      `| ${escapeMarkdown(row.id)} | ${escapeMarkdown(row.caseType ?? "")} | ${formatNumber(row.metrics.recallAt20)} | ${formatNumber(row.metrics.mrrAt10)} | ${formatNumber(row.metrics.ndcgAt10)} | ${formatNumber(row.metrics.precisionAt10)} | ${row.noAccessLeakCount} | ${row.latencyMs} | ${row.diagnostics?.lexicalCount ?? 0} | ${row.diagnostics?.semanticCount ?? 0} | ${row.diagnostics?.fusedCount ?? 0} |`
+      `| ${escapeMarkdown(row.id)} | ${escapeMarkdown(row.caseType ?? "")} | ${formatNumber(row.metrics.recallAtK)} | ${formatNumber(row.metrics.recallAt20)} | ${formatNumber(row.metrics.mrrAt10)} | ${formatNumber(row.metrics.ndcgAt10)} | ${formatNumber(row.metrics.precisionAt10)} | ${row.noAccessLeakCount} | ${row.latencyMs} | ${row.diagnostics?.lexicalCount ?? 0} | ${row.diagnostics?.semanticCount ?? 0} | ${row.diagnostics?.fusedCount ?? 0} |`
     )
   ].join("\n")
 
@@ -325,6 +327,7 @@ ${detailRows}
 }
 
 const metricDescriptions = {
+  recallAtK: "evaluator profile の retrieval.recallK で期待する relevant item が含まれた割合。",
   recallAt1: "最上位 1 件に期待する relevant item が含まれた割合。",
   recallAt3: "上位 3 件に期待する relevant item が含まれた割合。",
   recallAt5: "上位 5 件に期待する relevant item が含まれた割合。",

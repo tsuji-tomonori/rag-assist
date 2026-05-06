@@ -504,11 +504,24 @@ function planStructuredFacts(question: string): RequiredFact[] {
 }
 
 function inferFactSubject(question: string): string {
-  return question
+  const inferred = question
     .replace(/[?？。.!！]/g, "")
     .replace(/(は|を|について|教えて|ください|ですか|ますか|何|いつ|誰|どこ|どの|いくら).*/u, "")
     .trim()
-    .slice(0, 80) || question.slice(0, 80)
+  const cleanedInferred = cleanFactSubject(inferred)
+  if (cleanedInferred) return cleanedInferred.slice(0, 80)
+  if (inferred) return inferred.slice(0, 80)
+  return cleanFactSubject(question).slice(0, 80) || question.slice(0, 80)
+}
+
+function cleanFactSubject(value: string): string {
+  return value
+    .normalize("NFKC")
+    .replace(/(金額|費用|料金|価格|単価|上限|下限|円|期限|期日|締切|締め切り|開始日|終了日|何日|何営業日|頻度|何回|何度|方法|手順|やり方|フロー|申請|提出|担当|承認者|責任者|部署|報告先|依頼先|条件|対象|例外|適用範囲|分類|種類|区分)/gu, "")
+    .replace(/(と|および|及び|かつ|または|又は|、|,|\/)+/gu, " ")
+    .replace(/の\s*$/u, "")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 function inferFactScope(question: string): string | undefined {
