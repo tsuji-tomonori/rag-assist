@@ -240,7 +240,126 @@ describe("auth client", () => {
       email: "local@example.com",
       idToken: "local-dev-token"
     })
+    await expect(signUp({ email: "local@example.com", password: "anything" })).resolves.toEqual({ email: "local@example.com" })
+    await expect(confirmSignUp({ email: "local@example.com", code: "000000" })).resolves.toBeUndefined()
     signOut()
     expect(getStoredAuthSession()).toBeNull()
+  })
+
+  it("validates required auth form inputs before calling Cognito", async () => {
+    await expect(signIn({ email: "", password: "", remember: false })).rejects.toThrow("メールアドレスとパスワードを入力してください。")
+    await expect(signUp({ email: "", password: "", })).rejects.toThrow("メールアドレスとパスワードを入力してください。")
+    await expect(confirmSignUp({ email: "", code: "" })).rejects.toThrow("メールアドレスと確認コードを入力してください。")
+    await expect(completeNewPasswordChallenge({
+      challenge: { type: "NEW_PASSWORD_REQUIRED", email: "tester@example.com", session: "session", requiredAttributes: [] },
+      newPassword: " ",
+      remember: false
+    })).rejects.toThrow("新しいパスワードを入力してください。")
+  })
+
+  it("handles uncommon Cognito challenge and malformed required attributes", async () => {
+    resetRuntimeConfigForTests()
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+        .mockResolvedValueOnce(response({ ChallengeName: "MFA_SETUP" }))
+    )
+
+    await expect(signIn({ email: "tester@example.com", password: "Password123!", remember: false })).rejects.toThrow("追加の認証操作が必要です: MFA_SETUP")
+
+    resetRuntimeConfigForTests()
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+        .mockResolvedValueOnce(response({ ChallengeName: "NEW_PASSWORD_REQUIRED", ChallengeParameters: { requiredAttributes: "email, phone_number" } }))
+    )
+
+    await expect(signIn({ email: "tester@example.com", password: "Password123!", remember: false })).rejects.toThrow("パスワード変更セッションを取得できませんでした。")
+  })
+
+  it("maps new password and confirmation Cognito failures", async () => {
+    resetRuntimeConfigForTests()
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ authMode: "cognito" }))
+    )
+    await expect(completeNewPasswordChallenge({
+      challenge: { type: "NEW_PASSWORD_REQUIRED", email: "tester@example.com", session: "session", requiredAttributes: [] },
+      newPassword: "NewPassword123!",
+      remember: false
+    })).rejects.toThrow("Cognito認証設定が未設定です。")
+
+    resetRuntimeConfigForTests()
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+        .mockResolvedValueOnce(response({ __type: "InvalidPasswordException" }, false))
+    )
+    await expect(completeNewPasswordChallenge({
+      challenge: { type: "NEW_PASSWORD_REQUIRED", email: "tester@example.com", session: "session", requiredAttributes: [] },
+      newPassword: "weak",
+      remember: false
+    })).rejects.toThrow("新しいパスワードを設定できませんでした。条件を確認して再入力してください。")
+
+    resetRuntimeConfigForTests()
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+        .mockResolvedValueOnce(response({ ChallengeName: "SMS_MFA" }))
+    )
+    await expect(completeNewPasswordChallenge({
+      challenge: { type: "NEW_PASSWORD_REQUIRED", email: "tester@example.com", session: "session", requiredAttributes: [] },
+      newPassword: "NewPassword123!",
+      remember: false
+    })).rejects.toThrow("追加の認証操作が必要です: SMS_MFA")
+
+    resetRuntimeConfigForTests()
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+        .mockResolvedValueOnce(response({ __type: "CodeMismatchException" }, false))
+    )
+    await expect(confirmSignUp({ email: "tester@example.com", code: "999999" })).rejects.toThrow("確認コードが正しくありません。")
+  })
+
+  it("supports runtime local mode and generic Cognito error messages", async () => {
+    resetRuntimeConfigForTests()
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ authMode: "local" })))
+
+    await expect(signIn({ email: "runtime-local@example.com", password: "anything", remember: false })).resolves.toMatchObject({
+      email: "runtime-local@example.com",
+      idToken: "local-dev-token"
+    })
+    signOut()
+
+    resetRuntimeConfigForTests()
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ authMode: "local" })))
+    await expect(signUp({ email: "runtime-local@example.com", password: "anything" })).resolves.toEqual({ email: "runtime-local@example.com" })
+
+    resetRuntimeConfigForTests()
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ authMode: "local" })))
+    await expect(confirmSignUp({ email: "runtime-local@example.com", code: "000000" })).resolves.toBeUndefined()
+
+    resetRuntimeConfigForTests()
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(response({ authMode: "cognito", cognitoRegion: "ap-northeast-1", cognitoUserPoolClientId: "client-1" }))
+        .mockResolvedValueOnce(response({ message: "service unavailable" }, false))
+    )
+    await expect(signUp({ email: "tester@example.com", password: "Password123!" })).rejects.toThrow("service unavailable")
   })
 })
