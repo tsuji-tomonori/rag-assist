@@ -276,7 +276,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     if (canReadHistory) loaders.push(refreshHistory().catch((err) => console.warn("Failed to load conversation history", err)))
     if (loaders.length === 0) return
     setLoading(true)
-    Promise.all(loaders).finally(() => setLoading(false))
+    void Promise.all(loaders).finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authSession, currentUser])
 
