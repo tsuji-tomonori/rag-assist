@@ -26,6 +26,16 @@ type AllganizeDatasetRow = {
 
 const datasetCsvUrl = "https://huggingface.co/datasets/allganize/RAG-Evaluation-Dataset-JA/resolve/main/rag_evaluation_result.csv"
 const documentsCsvUrl = "https://huggingface.co/datasets/allganize/RAG-Evaluation-Dataset-JA/resolve/main/documents.csv"
+const documentUrlFallbacks = new Map<string, string[]>([
+  [
+    "https://www.mof.go.jp/policy/filp/publication/filp_report/zaito2022/FILP_Report2022.pdf",
+    ["https://warp.ndl.go.jp/20260305/20260303041739/https://www.mof.go.jp/policy/filp/publication/filp_report/zaito2022/FILP_Report2022.pdf"]
+  ],
+  [
+    "https://cio.go.jp/sites/default/files/uploads/documents/cloud_policy_20210910.pdf",
+    ["https://warp.ndl.go.jp/20250903/20250901001159/https://cio.go.jp/sites/default/files/uploads/documents/cloud_policy_20210910.pdf"]
+  ]
+])
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 
@@ -161,8 +171,10 @@ async function downloadAllganizeDocuments(rows: CsvRecord[], corpusDir: string, 
       console.log(`Allganize document already exists: ${fileName}`)
       continue
     }
-    await downloadBinary(required(row, "url"), outputPath)
-    console.log(`Downloaded Allganize document: ${fileName}`)
+    const sourceUrl = required(row, "url")
+    const downloadedFrom = await downloadBinary(documentUrls(sourceUrl), outputPath, fileName)
+    const fallbackNote = downloadedFrom === sourceUrl ? "" : ` (fallback URL: ${downloadedFrom})`
+    console.log(`Downloaded Allganize document: ${fileName}${fallbackNote}`)
   }
 }
 
@@ -173,11 +185,43 @@ async function readText(filePath: string | undefined, url: string): Promise<stri
   return response.text()
 }
 
-async function downloadBinary(url: string, outputPath: string): Promise<void> {
-  const response = await fetch(url)
-  if (!response.ok) throw new Error(`Failed to download ${url}: HTTP ${response.status}`)
+async function downloadBinary(urls: string[], outputPath: string, fileName: string): Promise<string> {
+  const failures: string[] = []
+  for (const url of urls) {
+    const downloaded = await tryDownloadBinary(url, outputPath, failures)
+    if (downloaded) return downloaded
+  }
+
+  for (const url of urls) {
+    const archivedUrl = await resolveWarpLatestUrl(url, failures)
+    if (!archivedUrl || urls.includes(archivedUrl)) continue
+    const downloaded = await tryDownloadBinary(archivedUrl, outputPath, failures)
+    if (downloaded) return downloaded
+  }
+
+  throw new Error(`Failed to download Allganize document ${fileName}. Tried ${failures.join("; ")}`)
+}
+
+async function tryDownloadBinary(url: string, outputPath: string, failures: string[]): Promise<string | undefined> {
+  let response: Response
+  try {
+    response = await fetch(url)
+  } catch (error) {
+    failures.push(`${url}: ${downloadErrorMessage(error)}`)
+    return undefined
+  }
+  if (!response.ok) {
+    failures.push(`${url}: HTTP ${response.status}`)
+    return undefined
+  }
+  const body = Buffer.from(await response.arrayBuffer())
+  if (!isPdf(body)) {
+    failures.push(`${url}: non-PDF response`)
+    return undefined
+  }
   await mkdir(path.dirname(outputPath), { recursive: true })
-  await writeFile(outputPath, Buffer.from(await response.arrayBuffer()))
+  await writeFile(outputPath, body)
+  return url
 }
 
 async function writeJsonl(filePath: string, rows: unknown[]): Promise<void> {
@@ -206,6 +250,43 @@ function required(row: CsvRecord, key: string): string {
 
 function safeBaseName(fileName: string): string {
   return path.basename(fileName).replace(/[^a-zA-Z0-9._()-]/g, "_")
+}
+
+function documentUrls(url: string): string[] {
+  return [url, ...(documentUrlFallbacks.get(url) ?? [])]
+}
+
+function downloadErrorMessage(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const cause = (error as Error & { cause?: unknown }).cause
+  return cause instanceof Error ? `${error.message}: ${cause.message}` : error.message
+}
+
+async function resolveWarpLatestUrl(url: string, failures: string[]): Promise<string | undefined> {
+  const lookupUrl = `https://warp.ndl.go.jp/web/latest/${url}`
+  let response: Response
+  try {
+    response = await fetch(lookupUrl)
+  } catch (error) {
+    failures.push(`${lookupUrl}: ${downloadErrorMessage(error)}`)
+    return undefined
+  }
+  if (!response.ok) {
+    failures.push(`${lookupUrl}: HTTP ${response.status}`)
+    return undefined
+  }
+  const html = await response.text()
+  const match = html.match(/<iframe[^>]+src="(?<src>\/\d{8}\/\d{14}\/[^"]+)"/)
+  const archivedPath = match?.groups?.src
+  if (!archivedPath) {
+    failures.push(`${lookupUrl}: WARP archive URL not found`)
+    return undefined
+  }
+  return new URL(archivedPath.replaceAll("&amp;", "&"), "https://warp.ndl.go.jp").toString()
+}
+
+function isPdf(body: Buffer): boolean {
+  return body.length >= 4 && body[0] === 0x25 && body[1] === 0x50 && body[2] === 0x44 && body[3] === 0x46
 }
 
 function positiveInt(value: string | undefined): number | undefined {

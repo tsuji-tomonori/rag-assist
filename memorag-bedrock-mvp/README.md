@@ -199,7 +199,7 @@ ALLGANIZE_RAG_LIMIT=10 \
 task benchmark:allganize:ja
 ```
 
-管理画面の `allganize-rag-evaluation-ja-v1` suite は CodeBuild runner 内で同じ変換と download を行います。Hugging Face と各 source PDF URL へ到達できない環境では、dataset 準備段階で失敗します。
+管理画面の `allganize-rag-evaluation-ja-v1` suite は CodeBuild runner 内で同じ変換と download を行います。source PDF URL が移動または削除されている場合は NDL WARP の最新アーカイブも試行します。Hugging Face、各 source PDF URL、NDL WARP のいずれにも到達できない環境では、dataset 準備段階で失敗します。
 
 JSONL datasetの1行は次の形式です。`expected` だけでも動きますが、`answerable`、`expectedContains`、`expectedFiles` を指定すると正答率、拒否率、citation/file hit rateまで測定できます。
 
