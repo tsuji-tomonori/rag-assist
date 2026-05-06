@@ -16,6 +16,17 @@ export type PipelineVersions = {
   embeddingDimensions: number
 }
 
+export type DocumentStatistics = {
+  chunkCount: number
+  sectionCount: number
+  tableCount: number
+  listCount: number
+  codeCount: number
+  figureCount: number
+  averageChunkChars: number
+  headingDensity: number
+}
+
 export type VectorMetadata = {
   kind: VectorKind
   documentId: string
@@ -46,6 +57,9 @@ export type VectorMetadata = {
   department?: string
   source?: string
   docType?: string
+  domainPolicy?: string
+  ragPolicy?: string
+  answerPolicy?: string
   aclGroup?: string
   aclGroups?: string[]
   allowedUsers?: string[]
@@ -91,6 +105,7 @@ export type DocumentManifest = {
   memoryPromptVersion?: string
   indexVersion?: string
   pipelineVersions?: PipelineVersions
+  documentStatistics?: DocumentStatistics
   chunks?: ChunkMetadata[]
   lifecycleStatus?: DocumentLifecycleStatus
   activeDocumentId?: string
@@ -228,6 +243,14 @@ export type DebugTrace = {
   clueModelId: string
   clarificationContext?: ClarificationContext
   pipelineVersions?: PipelineVersions
+  ragProfile?: {
+    id: string
+    version: string
+    retrievalProfileId: string
+    retrievalProfileVersion: string
+    answerPolicyId: string
+    answerPolicyVersion: string
+  }
   topK: number
   memoryTopK: number
   minScore: number

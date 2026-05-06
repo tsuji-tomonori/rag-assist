@@ -1,6 +1,8 @@
 import type { RetrievedVector } from "../types.js"
-import type { ComputedFact, TemporalContext } from "../agent/state.js"
+import type { ComputedFact, RetrievalRiskSignal, TemporalContext } from "../agent/state.js"
 import { assembleContext, formatContextXml } from "./context-assembler.js"
+import { ragRuntimePolicy } from "../agent/runtime-policy.js"
+import { selectAnswerPolicyForMetadata, type AnswerPolicy } from "./profiles.js"
 
 export function buildMemoryCardPrompt(fileName: string, text: string): string {
   return `MEMORY_CARD_JSON
@@ -38,6 +40,7 @@ ${memoryContext || "メモリは見つかりませんでした。"}
 }
 
 export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector[], computedFacts: ComputedFact[] = [], temporalContext?: TemporalContext): string {
+  const policy = selectAnswerPolicyForChunks(chunks)
   const assembly = assembleContext({ question, chunks, tokenBudget: 3000 })
   const context = formatContextXml(assembly)
   const computedFactsJson = JSON.stringify(computedFacts, null, 2)
@@ -57,8 +60,8 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
 - 回答できる場合は isAnswerable=true とし、簡潔に日本語で回答する。
-- 質問が分類、一覧、洗い出しを求める場合は、<context>内に明示された分類項目を漏れなく列挙し、目次、章名、活動名、参考文献名を分類項目として混ぜない。
-- 要求獲得、要求分析、要求妥当性確認、要求管理、文書化、優先順位付け、追跡可能性、変更管理は要求活動や実務上の考慮であり、<context>に分類として明示されていない限り分類項目にしない。
+- 質問が分類、一覧、洗い出しを求める場合は、<context>内で分類対象として明示された項目だけを列挙し、目次、章名、活動名、参考文献名を分類項目として混ぜない。
+${policy.id === "swebok-requirements-policy" ? "- SWEBOK 要求分類 policy が有効です。要求活動や実務上の考慮は、<context>に分類として明示されていない限り分類項目にしない。" : ""}
 - usedChunkIds には根拠に使ったchunk idを入れる。
 - usedComputedFactIds には根拠に使った computed fact id を入れる。
 - 出力はJSONのみ。Markdownやコードフェンスは禁止。
@@ -213,12 +216,15 @@ ${context || "根拠チャンクはありません。"}
 export function buildRetrievalJudgePrompt(
   question: string,
   requiredFacts: Array<{ id: string; description: string }>,
-  riskSignals: Array<{ type: string; factId?: string; chunkKeys: string[]; values: string[]; reason: string }>,
+  riskSignals: RetrievalRiskSignal[],
   chunks: RetrievedVector[]
 ): string {
   const facts = requiredFacts.length > 0 ? requiredFacts.map((fact) => `- ${fact.id}: ${fact.description}`).join("\n") : `- fact-1: ${question}`
   const risks = riskSignals
-    .map((signal, index) => `- risk-${index + 1}: type=${signal.type}, factId=${signal.factId ?? ""}, values=${signal.values.join(", ")}, chunks=${signal.chunkKeys.join(", ")}, reason=${signal.reason}`)
+    .map((signal, index) => {
+      const claims = signal.claims?.map((claim) => `${claim.subject}/${claim.predicate}/${claim.scope ?? "default"}=${claim.value}`).join("; ") ?? ""
+      return `- risk-${index + 1}: type=${signal.type}, factId=${signal.factId ?? ""}, values=${signal.values.join(", ")}, chunks=${signal.chunkKeys.join(", ")}, claims=${claims}, reason=${signal.reason}`
+    })
     .join("\n")
   const context = chunks
     ? formatContextXml(assembleContext({ question, chunks, requiredFacts: requiredFacts.map((fact) => fact.description), tokenBudget: 2400 }))
@@ -261,7 +267,8 @@ ${context || "根拠チャンクはありません。"}
 }
 
 export function selectFinalAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
-  if (!isRequirementsClassificationQuestion(question)) return chunks
+  const policy = selectAnswerPolicyForChunks(chunks)
+  if (!isRequirementsClassificationQuestion(question) || policy.id !== "swebok-requirements-policy") return chunks
 
   const scored = chunks
     .map((chunk, index) => ({
@@ -289,17 +296,7 @@ function escapeXml(input: string): string {
 function intentAnchors(question: string): string[] {
   const anchors: string[] = []
   if (isRequirementsClassificationQuestion(question)) {
-    anchors.push(
-      "ソフトウェア要求の分類",
-      "要求分類",
-      "分類の目的",
-      "ソフトウェア製品要求",
-      "ソフトウェアプロジェクト要求",
-      "機能要求",
-      "非機能要求",
-      "技術制約",
-      "サービス品質制約"
-    )
+    anchors.push(...ragRuntimePolicy.profile.answerPolicy.classificationAnchors)
   }
   return anchors
 }
@@ -331,10 +328,8 @@ export function hasUsableRequirementsClassificationEvidence(text: string): boole
   return hasClassificationSectionEvidence(text) && categoryCount >= 1
 }
 
-export function hasInvalidRequirementsClassificationAnswer(answer: string): boolean {
-  return /Requirements Elicitation|Requirements Validation|Requirements Scrubbing|ATDD|BDD|UML\s*SysML|UML\/SysML|Kano|要求獲得|要求妥当性確認|要求管理|要求スクラビング|要求の優先順位付け|要求の追跡可能性/.test(
-    answer
-  )
+export function hasInvalidRequirementsClassificationAnswer(answer: string, policy: AnswerPolicy = ragRuntimePolicy.profile.answerPolicy): boolean {
+  return policy.invalidAnswerPatterns.some((pattern) => pattern.test(answer))
 }
 
 function countRequirementsClassificationTerms(text: string): number {
@@ -353,4 +348,11 @@ function isTableOfContentsLike(text: string): boolean {
   const dotLeaderCount = text.match(/\. \. \./g)?.length ?? 0
   const headingWithPageCount = text.match(/^\s*\d+(?:\.\d+)?\s+.+\s+\d+\s*$/gm)?.length ?? 0
   return dotLeaderCount >= 4 || (text.includes("目次") && headingWithPageCount >= 4)
+}
+
+function selectAnswerPolicyForChunks(chunks: RetrievedVector[]): AnswerPolicy {
+  return selectAnswerPolicyForMetadata(
+    chunks.map((chunk) => chunk.metadata as unknown as Record<string, unknown>),
+    ragRuntimePolicy.profile.answerPolicy
+  )
 }

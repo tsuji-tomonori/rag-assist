@@ -16,6 +16,8 @@ test("evaluateRetrieval calculates recall, MRR, nDCG, and hit flags", () => {
   )
 
   assert.equal(metrics.recallAt1, 0)
+  assert.equal(metrics.recallK, 20)
+  assert.equal(metrics.recallAtK, 1)
   assert.equal(metrics.recallAt3, 1)
   assert.equal(metrics.mrrAt10, 0.5)
   assert.equal(metrics.ndcgAt10, 0.659)
@@ -23,6 +25,21 @@ test("evaluateRetrieval calculates recall, MRR, nDCG, and hit flags", () => {
   assert.equal(metrics.expectedFileHit, true)
   assert.equal(metrics.expectedDocumentHit, true)
   assert.equal(metrics.expectedChunkHit, true)
+})
+
+test("evaluateRetrieval uses evaluator profile recall K when provided", () => {
+  const metrics = evaluateRetrieval(
+    [
+      { documentId: "doc-a", chunkId: "chunk-1", fileName: "a.md" },
+      { documentId: "doc-b", chunkId: "chunk-2", fileName: "b.md" }
+    ],
+    [{ documentId: "doc-b", chunkId: "chunk-2", fileName: "b.md", grade: 1 }],
+    { recallK: 1 }
+  )
+
+  assert.equal(metrics.recallK, 1)
+  assert.equal(metrics.recallAtK, 0)
+  assert.equal(metrics.recallAt20, 1)
 })
 
 test("countAccessLeaks treats relevant rows as forbidden for negative ACL cases", () => {

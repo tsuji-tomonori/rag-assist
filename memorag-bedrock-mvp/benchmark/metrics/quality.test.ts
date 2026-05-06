@@ -1,5 +1,13 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import {
+  assertComparableProfiles,
+  assertSuiteEvaluatorProfile,
+  defaultEvaluatorProfile,
+  profileKey,
+  resolveEvaluatorProfile,
+  strictJaEvaluatorProfile
+} from "../evaluator-profile.js"
 import { cjkBigramTokenizer, compareTokenizers, createQualityReview, detectRegressions, whitespaceTokenizer } from "./quality.js"
 
 test("detectRegressions flags metric drops and latency increases", () => {
@@ -41,4 +49,36 @@ test("compareTokenizers reports token counts and overlap for tokenizer candidate
   assert.ok((result.tokenizers.find((row) => row.name === "cjk_bigram")?.tokenCount ?? 0) > 2)
   assert.equal(result.overlap[0]?.left, "whitespace")
   assert.equal(result.overlap[0]?.right, "cjk_bigram")
+})
+
+test("evaluator profile comparison rejects mismatched baselines by default", () => {
+  assert.equal(profileKey(defaultEvaluatorProfile), "default@1")
+  assert.throws(
+    () => assertComparableProfiles(defaultEvaluatorProfile, { evaluatorProfile: { id: "custom", version: "1" } }, false),
+    /differs from current/
+  )
+  assert.match(
+    assertComparableProfiles(defaultEvaluatorProfile, { evaluatorProfile: { id: "custom", version: "1" } }, true) ?? "",
+    /reference comparison/
+  )
+})
+
+test("resolver supports non-default evaluator profiles with retrieval K", () => {
+  const profile = resolveEvaluatorProfile("strict-ja")
+
+  assert.equal(profileKey(profile), "strict-ja@1")
+  assert.equal(profile.retrieval.recallK, 10)
+  assert.deepEqual(profile.answerMatching.noAnswerTexts, ["資料からは回答できません"])
+})
+
+test("resolver rejects unknown evaluator profiles", () => {
+  assert.throws(() => resolveEvaluatorProfile("strct-ja"), /Unknown evaluator profile: strct-ja/)
+})
+
+test("benchmark runs reject mixed row evaluator profiles", () => {
+  assert.doesNotThrow(() => assertSuiteEvaluatorProfile(defaultEvaluatorProfile, defaultEvaluatorProfile, "row-1"))
+  assert.throws(
+    () => assertSuiteEvaluatorProfile(strictJaEvaluatorProfile, defaultEvaluatorProfile, "row-2"),
+    /Mixed evaluator profiles.*row-2/
+  )
 })

@@ -426,6 +426,9 @@ function mergeRetrievedChunks(chunks: RetrievedVector[], additions: RetrievedVec
 }
 
 function extractRequiredFacts(question: string, clues: string[]): RequiredFact[] {
+  const planned = planStructuredFacts(question)
+  if (planned.length > 0) return planned
+
   const questionRefs = question.match(/[A-Za-z0-9_-]{3,}/g) ?? []
   const clueRefs = /[\p{Script=Han}\p{Script=Katakana}\p{Script=Hiragana}]/u.test(question)
     ? []
@@ -435,21 +438,95 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
   if (uniqueRefs.length === 0) {
     return [
       {
-        id: "fact-1",
-        description: question,
-        priority: 1,
-        status: "missing",
-        supportingChunkKeys: []
+      id: "fact-1",
+      description: question,
+      factType: "unknown",
+      subject: inferFactSubject(question),
+      confidence: 0.45,
+      plannerSource: "legacy_fallback",
+      priority: 1,
+      status: "missing",
+      supportingChunkKeys: []
       }
     ]
   }
   return uniqueRefs.map((ref, index) => ({
     id: `fact-${index + 1}`,
     description: ref,
+    factType: "unknown",
+    subject: ref,
+    confidence: 0.5,
+    plannerSource: "legacy_fallback",
     priority: index + 1,
     status: "missing",
     supportingChunkKeys: []
   }))
+}
+
+function planStructuredFacts(question: string): RequiredFact[] {
+  const subject = inferFactSubject(question)
+  const candidates: Array<Pick<RequiredFact, "factType" | "description" | "expectedValueType">> = []
+  if (/金額|費用|料金|価格|単価|上限|下限|円|いくら/.test(question)) {
+    candidates.push({ factType: "amount", description: `${subject} 金額`, expectedValueType: "money" })
+  }
+  if (/いつ|期限|期日|締切|開始日|終了日|何日|何営業日/.test(question)) {
+    candidates.push({ factType: "date", description: `${subject} 期限`, expectedValueType: "date_or_duration" })
+  }
+  if (/頻度|何回|何度|ごと|毎月|毎年/.test(question)) {
+    candidates.push({ factType: "count", description: `${subject} 頻度`, expectedValueType: "count_or_frequency" })
+  }
+  if (/方法|手順|やり方|フロー|提出/.test(question) || (/申請/.test(question) && !/申請期限|申請期日|申請締切/.test(question))) {
+    candidates.push({ factType: "procedure", description: `${subject} 手順`, expectedValueType: "procedure" })
+  }
+  if (/誰|担当|承認者|責任者|部署|報告先|依頼先/.test(question)) {
+    candidates.push({ factType: "person", description: `${subject} 担当`, expectedValueType: "person_or_org" })
+  }
+  if (/条件|対象|例外|適用範囲/.test(question)) {
+    candidates.push({ factType: "condition", description: `${subject} 条件`, expectedValueType: "condition" })
+  }
+  if (/分類|種類|区分/.test(question)) {
+    candidates.push({ factType: "classification", description: `${subject} 分類`, expectedValueType: "classification_items" })
+  }
+
+  return candidates.slice(0, ragRuntimePolicy.limits.requiredFactLimit).map((candidate, index) => ({
+    id: `fact-${index + 1}`,
+    description: candidate.description,
+    factType: candidate.factType,
+    subject,
+    scope: inferFactScope(question),
+    expectedValueType: candidate.expectedValueType,
+    confidence: 0.72,
+    plannerSource: "deterministic",
+    priority: index + 1,
+    status: "missing",
+    supportingChunkKeys: []
+  }))
+}
+
+function inferFactSubject(question: string): string {
+  const inferred = question
+    .replace(/[?？。.!！]/g, "")
+    .replace(/(は|を|について|教えて|ください|ですか|ますか|何|いつ|誰|どこ|どの|いくら).*/u, "")
+    .trim()
+  const cleanedInferred = cleanFactSubject(inferred)
+  if (cleanedInferred) return cleanedInferred.slice(0, 80)
+  if (inferred) return inferred.slice(0, 80)
+  return cleanFactSubject(question).slice(0, 80) || question.slice(0, 80)
+}
+
+function cleanFactSubject(value: string): string {
+  return value
+    .normalize("NFKC")
+    .replace(/(金額|費用|料金|価格|単価|上限|下限|円|期限|期日|締切|締め切り|開始日|終了日|何日|何営業日|頻度|何回|何度|方法|手順|やり方|フロー|申請|提出|担当|承認者|責任者|部署|報告先|依頼先|条件|対象|例外|適用範囲|分類|種類|区分)/gu, "")
+    .replace(/(と|および|及び|かつ|または|又は|、|,|\/)+/gu, " ")
+    .replace(/の\s*$/u, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function inferFactScope(question: string): string | undefined {
+  const match = question.match(/(現行|旧制度|新制度|最新版|現在|過去|[0-9０-９]{4}年|[A-Za-z0-9_-]+部|[^\s、。?？]+部署)/u)
+  return match?.[0]
 }
 
 function isUsefulFactReference(ref: string): boolean {
@@ -523,6 +600,8 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       missingFactIds: [],
       conflictingFactIds: [],
       supportedFactIds: [],
+      claims: [],
+      conflictCandidates: [],
       nextAction: {
         type: "evidence_search",
         query: "",
@@ -657,6 +736,14 @@ async function persistDebugTrace(
       embeddingModelId: input.embeddingModelId,
       embeddingDimensions: config.embeddingDimensions
     }),
+    ragProfile: {
+      id: ragRuntimePolicy.profile.id,
+      version: ragRuntimePolicy.profile.version,
+      retrievalProfileId: ragRuntimePolicy.profile.retrieval.id,
+      retrievalProfileVersion: ragRuntimePolicy.profile.retrieval.version,
+      answerPolicyId: ragRuntimePolicy.profile.answerPolicy.id,
+      answerPolicyVersion: ragRuntimePolicy.profile.answerPolicy.version
+    },
     topK: input.topK,
     memoryTopK: input.memoryTopK,
     minScore: input.minScore,
