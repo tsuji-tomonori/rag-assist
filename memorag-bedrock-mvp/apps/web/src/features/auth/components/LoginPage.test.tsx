@@ -36,4 +36,24 @@ describe("LoginPage", () => {
     expect(screen.getByRole("button", { name: "サインインへ戻る" })).toBeInTheDocument()
     expect(screen.getByPlaceholderText("パスワードを再入力")).toBeInTheDocument()
   })
+
+  it("アカウント作成時にパスワード条件の達成状態を表示する", async () => {
+    renderLoginPage()
+
+    await userEvent.click(screen.getByRole("button", { name: "アカウント作成" }))
+
+    const submitButton = screen.getByRole("button", { name: "アカウントを作成" })
+    expect(submitButton).toBeDisabled()
+    expect(screen.getByRole("listitem", { name: "未達成: 12文字以上" })).toBeInTheDocument()
+    expect(screen.getByRole("listitem", { name: "未達成: 大文字を1文字以上" })).toBeInTheDocument()
+
+    await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "Password123!")
+
+    expect(screen.getByRole("listitem", { name: "達成: 12文字以上" })).toBeInTheDocument()
+    expect(screen.getByRole("listitem", { name: "達成: 小文字を1文字以上" })).toBeInTheDocument()
+    expect(screen.getByRole("listitem", { name: "達成: 大文字を1文字以上" })).toBeInTheDocument()
+    expect(screen.getByRole("listitem", { name: "達成: 数字を1文字以上" })).toBeInTheDocument()
+    expect(screen.getByRole("listitem", { name: "達成: 記号を1文字以上" })).toBeInTheDocument()
+    expect(submitButton).toBeEnabled()
+  })
 })

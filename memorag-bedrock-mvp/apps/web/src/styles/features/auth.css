@@ -118,9 +118,16 @@
 .login-challenge-summary { display: grid; gap: 4px; border: 1px solid #dbeafe; background: #eff6ff; border-radius: 10px; padding: 12px; color: #1e3a8a; }
 .login-challenge-summary span { font-size: 13px; color: #475569; }
 .login-challenge-summary strong { overflow-wrap: anywhere; }
+.password-requirements { display: grid; gap: 8px; margin: 0; border: 1px solid #dbeafe; background: #f8fbff; border-radius: 10px; padding: 12px; }
+.password-requirements-title { font-size: 13px; font-weight: 700; color: #334155; }
+.password-requirements ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; margin: 0; padding: 0; list-style: none; }
+.password-requirement { display: flex; min-width: 0; align-items: center; gap: 8px; color: #64748b; font-size: 13px; line-height: 1.35; }
+.password-requirement-icon { display: inline-grid; flex: 0 0 18px; width: 18px; height: 18px; place-items: center; border: 1px solid #cbd5e1; border-radius: 50%; color: transparent; font-size: 12px; font-weight: 800; line-height: 1; background: #fff; }
+.password-requirement-met { color: #067647; font-weight: 700; }
+.password-requirement-met .password-requirement-icon { border-color: #0f9f6e; background: #ecfdf3; color: #067647; }
 .login-form .remember { display: flex; align-items: center; gap: 8px; color: #334155; margin-top: 8px; }
 .login-form button { width: 100%; min-width: 0; height: 48px; border: none; border-radius: 10px; background: #165dff; color: #fff; font-weight: 700; cursor: pointer; }
-.login-form button:disabled { cursor: wait; opacity: 0.7; }
+.login-form button:disabled { cursor: not-allowed; opacity: 0.7; }
 .login-error { margin: 0; color: #b42318; font-weight: 700; }
 .login-success { margin: 0; color: #067647; font-weight: 700; }
 .login-secondary-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
@@ -136,4 +143,5 @@
   .login-page { display: block; width: 100%; max-width: 100vw; overflow-x: hidden; padding: 24px 0; }
   .login-panel { width: min(520px, calc(100% - 32px)); padding: 28px; }
   .login-panel h1 { font-size: 30px; }
+  .password-requirements ul { grid-template-columns: 1fr; }
 }
