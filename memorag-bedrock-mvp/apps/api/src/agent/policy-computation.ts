@@ -28,13 +28,16 @@ export const PolicyComputationExtractionSchema = z.object({
           subject: z.string(),
           leftQuantity: z.string(),
           comparator: z.enum(["gte", "gt", "lte", "lt", "eq"]),
+          comparatorText: z.string(),
           thresholdText: z.string().optional(),
           thresholdValue: z.number().optional(),
           currency: z.literal("JPY")
         }),
         consequence: z.object({
           target: z.string(),
+          targetText: z.string(),
           effect: EffectSchema,
+          effectText: z.string(),
           naturalLanguage: z.string()
         }),
         matchesQuestion: z.boolean(),
@@ -70,6 +73,11 @@ export function policyExtractionToComputedFacts(
 
     const thresholdText = candidate.condition.thresholdText
     if (!thresholdText || !quoteExistsInText(thresholdText, candidate.quote)) return []
+    const comparatorText = candidate.condition.comparatorText
+    if (!comparatorText || !quoteExistsInText(comparatorText, candidate.quote)) return []
+    if (operatorFromComparatorText(comparatorText) !== candidate.condition.comparator) return []
+    if (!quoteExistsInText(candidate.consequence.targetText, candidate.quote)) return []
+    if (!quoteExistsInText(candidate.consequence.effectText, candidate.quote)) return []
     const thresholdAmount = normalizeJpyAmount(thresholdText, candidate.condition.thresholdValue)
     if (thresholdAmount === undefined || candidate.condition.currency !== "JPY") return []
 
@@ -134,7 +142,23 @@ function quoteExistsInChunk(quote: string, chunk: RetrievedVector): boolean {
 }
 
 function quoteExistsInText(needle: string, haystack: string): boolean {
-  return haystack.includes(needle) || haystack.normalize("NFKC").includes(needle.normalize("NFKC"))
+  const trimmedNeedle = needle.trim()
+  if (!trimmedNeedle) return false
+  return haystack.includes(trimmedNeedle) || haystack.normalize("NFKC").includes(trimmedNeedle.normalize("NFKC"))
+}
+
+function operatorFromComparatorText(text: string): ThresholdFact["operator"] | undefined {
+  const normalized = text.normalize("NFKC").trim()
+  const mapping: Array<[RegExp, ThresholdFact["operator"]]> = [
+    [/^以上$/, "gte"],
+    [/^超$/, "gt"],
+    [/^より大きい$/, "gt"],
+    [/^以下$/, "lte"],
+    [/^未満$/, "lt"],
+    [/^より小さい$/, "lt"],
+    [/^(?:等しい|と等しい|同額)$/, "eq"]
+  ]
+  return mapping.find(([pattern]) => pattern.test(normalized))?.[1]
 }
 
 function compare(amount: number, operator: ThresholdFact["operator"], threshold: number): boolean {

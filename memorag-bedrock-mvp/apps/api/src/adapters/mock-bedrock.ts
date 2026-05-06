@@ -309,10 +309,10 @@ function mockPolicyComputationExtraction(prompt: string): Record<string, unknown
     const text = unescapeXml(match[2] ?? "")
     const items: Array<Record<string, unknown>> = []
     if (text.includes("1万円以上") && text.includes("領収書") && text.includes("必要")) {
-      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円以上", "必要"), "gte", "1万円", "required", "領収書の添付が必要"))
+      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円以上", "必要", "領収書"), "gte", "以上", "1万円", "required", "領収書", "必要", "領収書の添付が必要"))
     }
     if (text.includes("1万円未満") && text.includes("領収書") && text.includes("不要")) {
-      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円未満", "不要"), "lt", "1万円", "not_required", "領収書の添付は不要"))
+      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円未満", "不要", "領収書"), "lt", "未満", "1万円", "not_required", "領収書", "不要", "領収書の添付は不要"))
     }
     return items
   })
@@ -332,7 +332,17 @@ function mockPolicyComputationExtraction(prompt: string): Record<string, unknown
   }
 }
 
-function policyCandidate(sourceChunkId: string, quote: string, comparator: string, thresholdText: string, effect: string, naturalLanguage: string): Record<string, unknown> {
+function policyCandidate(
+  sourceChunkId: string,
+  quote: string,
+  comparator: string,
+  comparatorText: string,
+  thresholdText: string,
+  effect: string,
+  targetText: string,
+  effectText: string,
+  naturalLanguage: string
+): Record<string, unknown> {
   return {
     sourceChunkId,
     quote,
@@ -340,13 +350,16 @@ function policyCandidate(sourceChunkId: string, quote: string, comparator: strin
       subject: "経費精算",
       leftQuantity: "経費精算の金額",
       comparator,
+      comparatorText,
       thresholdText,
       thresholdValue: 10000,
       currency: "JPY"
     },
     consequence: {
       target: "領収書の添付",
+      targetText,
       effect,
+      effectText,
       naturalLanguage
     },
     matchesQuestion: true,
@@ -355,10 +368,11 @@ function policyCandidate(sourceChunkId: string, quote: string, comparator: strin
   }
 }
 
-function quoteFor(text: string, marker: string, effectMarker: string): string {
+function quoteFor(text: string, marker: string, effectMarker: string, targetMarker: string): string {
   const sentence = splitSentences(text).find((item) => item.includes(marker) && item.includes(effectMarker)) ?? text
   const clause = sentence.split(/[、，；;]/u).find((item) => item.includes(marker) && item.includes(effectMarker))
-  return (clause ?? sentence).trim()
+  const quote = (clause ?? sentence).trim()
+  return quote.includes(targetMarker) ? quote : text.trim()
 }
 
 function unescapeXml(input: string): string {

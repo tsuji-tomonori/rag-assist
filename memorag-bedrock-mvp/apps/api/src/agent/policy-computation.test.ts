@@ -39,28 +39,48 @@ test("policy extraction facts validate quote, confidence, question match, and co
 test("policy extraction supports not-required true and additional effects", () => {
   const notRequired = policyExtractionToComputedFacts(extraction({
     questionAmountText: "5200円",
-    quote: "1万円未満では不要です。",
+    quote: "1万円以上の経費精算では領収書の添付が必要です。1万円未満では不要です。",
     comparator: "lt",
     effect: "not_required"
   }), [chunk], question)
   assert.equal(notRequired[0]?.kind === "threshold_comparison" ? notRequired[0].satisfiesCondition : undefined, true)
   assert.equal(notRequired[0]?.kind === "threshold_comparison" ? notRequired[0].effect : undefined, "not_required")
 
+  const eligibleChunk: RetrievedVector = {
+    ...chunk,
+    metadata: {
+      ...chunk.metadata,
+      text: "1万円未満の経費精算は領収書確認の対象です。"
+    }
+  }
   const eligible = policyExtractionToComputedFacts(extraction({
     questionAmountText: "5200円",
-    quote: "1万円未満では不要です。",
+    quote: "1万円未満の経費精算は領収書確認の対象です。",
     comparator: "lt",
-    effect: "eligible"
-  }), [chunk], question)
+    effect: "eligible",
+    target: "領収書確認",
+    targetText: "領収書",
+    effectText: "対象"
+  }), [eligibleChunk], question)
   assert.equal(eligible[0]?.kind === "threshold_comparison" ? eligible[0].effect : undefined, "eligible")
   assert.equal(eligible[0]?.kind === "threshold_comparison" ? eligible[0].polarity : undefined, undefined)
 
+  const allowedChunk: RetrievedVector = {
+    ...chunk,
+    metadata: {
+      ...chunk.metadata,
+      text: "1万円以上の経費精算では領収書の省略が可能です。"
+    }
+  }
   const allowedFalse = policyExtractionToComputedFacts(extraction({
     questionAmountText: "5200円",
-    quote: "1万円以上の経費精算では領収書の添付が必要です。",
+    quote: "1万円以上の経費精算では領収書の省略が可能です。",
     comparator: "gte",
-    effect: "allowed"
-  }), [chunk], question)
+    effect: "allowed",
+    target: "領収書の省略",
+    targetText: "領収書",
+    effectText: "可能"
+  }), [allowedChunk], question)
   assert.match(allowedFalse[0]?.kind === "threshold_comparison" ? allowedFalse[0].explanation : "", /可能条件に該当しません/)
 })
 
@@ -91,6 +111,64 @@ test("policy extraction requires amount and threshold text provenance", () => {
         quote: "1万円以上の経費精算では領収書の添付が必要です。",
         thresholdText: "5千円",
         thresholdValue: 5000
+      }),
+      [chunk],
+      question
+    ).length,
+    0
+  )
+})
+
+test("policy extraction requires comparator and consequence provenance", () => {
+  assert.equal(
+    policyExtractionToComputedFacts(
+      extraction({
+        quote: "1万円以上の経費精算では領収書の添付が必要です。",
+        comparator: "lt",
+        comparatorText: "以上",
+        thresholdText: "1万円",
+        thresholdValue: 10000
+      }),
+      [chunk],
+      question
+    ).length,
+    0
+  )
+  assert.equal(
+    policyExtractionToComputedFacts(
+      extraction({
+        quote: "1万円以上の経費精算では領収書の添付が必要です。",
+        comparatorText: "未満"
+      }),
+      [chunk],
+      question
+    ).length,
+    0
+  )
+  assert.equal(
+    policyExtractionToComputedFacts(
+      extraction({
+        quote: "1万円以上の経費精算では承認が必要です。",
+        target: "領収書の添付",
+        targetText: "領収書",
+        effectText: "必要"
+      }),
+      [{
+        ...chunk,
+        metadata: {
+          ...chunk.metadata,
+          text: "1万円以上の経費精算では承認が必要です。"
+        }
+      }],
+      "60000円の経費精算では領収書いる?"
+    ).length,
+    0
+  )
+  assert.equal(
+    policyExtractionToComputedFacts(
+      extraction({
+        quote: "1万円以上の経費精算では領収書の添付が必要です。",
+        effectText: "不要"
       }),
       [chunk],
       question
@@ -134,13 +212,20 @@ test("policy extraction prompt keeps natural language extraction separate from d
   assert.match(prompt, /sourceChunkId には <chunk id="..."> の id 属性値だけを入れる/)
   assert.match(prompt, /questionTarget\.amountText は質問中に実在する金額表記/)
   assert.match(prompt, /condition\.thresholdText は quote 中に実在する閾値金額表記/)
+  assert.match(prompt, /condition\.comparatorText は quote 中に実在する比較表現/)
+  assert.match(prompt, /comparator enum と直接対応する最小表現/)
+  assert.match(prompt, /consequence\.targetText と consequence\.effectText は quote 中に実在する表現/)
 })
 
 function extraction(overrides: {
   questionAmountText?: string
   quote?: string
   comparator?: "gte" | "gt" | "lte" | "lt" | "eq"
+  comparatorText?: string
   effect?: "required" | "not_required" | "allowed" | "not_allowed" | "eligible" | "not_eligible" | "unknown"
+  effectText?: string
+  target?: string
+  targetText?: string
   confidence?: number
   matchesQuestion?: boolean
   ambiguity?: string[]
@@ -168,13 +253,16 @@ function extraction(overrides: {
           subject: "経費精算",
           leftQuantity: "経費精算の金額",
           comparator: overrides.comparator ?? "gte",
+          comparatorText: overrides.comparatorText ?? comparatorText(overrides.comparator ?? "gte"),
           thresholdText: overrides.thresholdText ?? "1万円",
           thresholdValue: overrides.thresholdValue ?? 10000,
           currency: "JPY"
         },
         consequence: {
-          target: "領収書の添付",
+          target: overrides.target ?? "領収書の添付",
+          targetText: overrides.targetText ?? "領収書",
           effect: overrides.effect ?? "required",
+          effectText: overrides.effectText ?? effectText(overrides.effect ?? "required"),
           naturalLanguage: "領収書の添付が必要"
         },
         matchesQuestion: overrides.matchesQuestion ?? true,
@@ -183,4 +271,26 @@ function extraction(overrides: {
       }
     ]
   }
+}
+
+function comparatorText(comparator: "gte" | "gt" | "lte" | "lt" | "eq"): string {
+  return {
+    gte: "以上",
+    gt: "超",
+    lte: "以下",
+    lt: "未満",
+    eq: "等しい"
+  }[comparator]
+}
+
+function effectText(effect: "required" | "not_required" | "allowed" | "not_allowed" | "eligible" | "not_eligible" | "unknown"): string {
+  return {
+    required: "必要",
+    not_required: "不要",
+    allowed: "可能",
+    not_allowed: "不可",
+    eligible: "対象",
+    not_eligible: "対象外",
+    unknown: "不明"
+  }[effect]
 }
