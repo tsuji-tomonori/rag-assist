@@ -87,42 +87,75 @@ export function buildRelevantSnippet(question: string, text: string, maxChars = 
 
 function buildFocusedSentenceSnippet(question: string, text: string, maxChars: number): string | undefined {
   if (isRequirementsClassificationQuestion(question)) return undefined
-  const sentences = splitSentences(text)
-  if (sentences.length <= 1 && text.length <= maxChars) return undefined
-  const scored = sentences
-    .map((sentence, index) => ({
-      sentence,
+  const units = splitEvidenceUnits(text)
+  if (units.length <= 1 && text.length <= maxChars) return undefined
+  const scored = units
+    .map((unit, index) => ({
+      sentence: unit.text,
+      scoringText: unit.contextText ? `${unit.contextText}\n${unit.text}` : unit.text,
       index,
-      score: sentenceAnswerScore(question, sentence)
+      score: evidenceUnitScore(question, unit)
     }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score || a.index - b.index)
 
   if (scored.length === 0) return undefined
 
-  const selectedIndexes = new Set(scored.slice(0, focusedSentenceLimit(question)).map((item) => item.index))
+  const selectedIndexes = selectFocusedSentenceIndexes(question, scored)
 
-  const snippet = [...selectedIndexes]
-    .sort((a, b) => a - b)
-    .map((idx) => sentences[idx])
+  const snippet = scored
+    .filter((item) => selectedIndexes.has(item.index))
+    .map((item) => item.sentence)
     .filter((sentence): sentence is string => Boolean(sentence))
     .join("\n")
   return snippet.length > maxChars ? snippet.slice(0, maxChars) : snippet
 }
 
 function focusedSentenceLimit(question: string): number {
-  return /比較|違い|差分|一覧|洗い出|条件|例外|手順|方法/.test(question) ? 4 : 1
+  return questionFacetCount(question) > 1 ? 4 : 1
+}
+
+function selectFocusedSentenceIndexes(question: string, scored: Array<{ sentence: string; scoringText: string; index: number; score: number }>): Set<number> {
+  const limit = Math.max(focusedSentenceLimit(question), 2)
+  const selected = new Set<number>()
+  const coveredTerms = new Set<string>()
+
+  for (const item of scored) {
+    const terms = dedupeContainedTerms(matchedQuestionTerms(question, item.scoringText))
+    const addsCoverage = terms.some((term) => !coveredTerms.has(term) && !isCoveredByRelatedTerm(term, coveredTerms))
+    if (selected.size === 0 || addsCoverage) {
+      selected.add(item.index)
+      for (const term of terms) coveredTerms.add(term)
+    }
+    if (selected.size >= limit) break
+  }
+
+  return selected
+}
+
+export function textAnswerRelevanceScore(question: string, text: string): number {
+  const units = splitEvidenceUnits(text)
+  if (units.length === 0) return sentenceAnswerScore(question, text)
+  const bestSentenceScore = Math.max(...units.map((unit) => evidenceUnitScore(question, unit)))
+  const wholeTextScore = lexicalOverlapScore(question, text) * 0.4
+  return bestSentenceScore + wholeTextScore
+}
+
+function evidenceUnitScore(question: string, unit: EvidenceUnit): number {
+  const sentenceScore = sentenceAnswerScore(question, unit.text)
+  const contextScore = unit.contextText ? lexicalOverlapScore(question, unit.contextText) * 0.5 : 0
+  const terms = answerSubjectTerms(question)
+  const primaryScore = matchedAttributeScore(questionPrimaryTerms(terms), unit.text)
+  const contextPrimaryScore = unit.contextText ? matchedAttributeScore(questionPrimaryTerms(terms), unit.contextText) : 0
+  const attributeScore = matchedAttributeScore(questionAttributeTerms(question, terms), unit.text)
+  const attributeBonus = attributeScore > 0 && (primaryScore > 0 || contextPrimaryScore > 0) ? attributeScore * 6 : 0
+  return sentenceScore + contextScore + attributeBonus - conditionalClausePenalty(question, unit.text) * 2
 }
 
 function sentenceAnswerScore(question: string, sentence: string): number {
-  const normalized = normalize(sentence)
-  const terms = answerSubjectTerms(question)
-  const termScore = terms.reduce((sum, term) => sum + (normalized.includes(normalize(term)) ? term.length >= 4 ? 5 : 3 : 0), 0)
-  const exactSubjectScore = terms.length > 0 && terms.every((term) => normalized.includes(normalize(term))) ? 6 : 0
-  const intentScore = intentCuePatterns(question).reduce((sum, pattern) => sum + (pattern.test(sentence.normalize("NFKC")) ? 10 : 0), 0)
-  const mismatchPenalty = /頻度|何回|何度|ごと|毎年|毎月/.test(question) && /例外|申請|提出|窓口/.test(sentence) ? 4 : 0
-  const missingSubjectPenalty = terms.length > 0 && termScore === 0 ? 12 : 0
-  return termScore + exactSubjectScore + intentScore - mismatchPenalty - missingSubjectPenalty
+  const lexicalScore = lexicalOverlapScore(question, sentence)
+  if (lexicalScore <= 0) return 0
+  return lexicalScore + answerValueSignalScore(question, sentence) + compactnessScore(sentence) - conditionalClausePenalty(question, sentence)
 }
 
 function splitSentences(text: string): string[] {
@@ -133,52 +166,50 @@ function splitSentences(text: string): string[] {
     .filter(Boolean)
 }
 
+type EvidenceUnit = {
+  text: string
+  contextText?: string
+}
+
+function splitEvidenceUnits(text: string): EvidenceUnit[] {
+  const units: EvidenceUnit[] = []
+  let heading = ""
+
+  for (const rawLine of text.replace(/\r\n?/g, "\n").split("\n")) {
+    const line = rawLine.trim()
+    if (!line) continue
+    const headingMatch = line.match(/^#{1,6}\s+(.+)$/)
+    if (headingMatch?.[1]) {
+      heading = headingMatch[1].trim()
+      continue
+    }
+
+    for (const sentence of splitSentences(line)) {
+      units.push({ text: sentence, contextText: heading && !sentence.includes(heading) ? heading : undefined })
+    }
+  }
+
+  return units
+}
+
 function answerSubjectTerms(question: string): string[] {
   const normalized = question
     .normalize("NFKC")
     .replace(/[?？。.!！]/g, " ")
   const ascii = normalized.match(/[A-Za-z0-9][A-Za-z0-9_-]{2,}/g) ?? []
   const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
-  return unique([...ascii, ...japanese.flatMap((term) => [term, ...splitMixedJapaneseTerm(term)])].filter((term) => !isGenericQuestionTerm(term)))
+  return unique([...ascii, ...japanese.flatMap((term) => [term, ...splitMixedJapaneseTerm(term)])])
 }
 
-function isGenericQuestionTerm(term: string): boolean {
-  return [
-    "申請",
-    "期限",
-    "期日",
-    "締切",
-    "必要",
-    "条件",
-    "対象",
-    "頻度",
-    "手順",
-    "方法",
-    "提出",
-    "報告",
-    "連絡",
-    "依頼先",
-    "窓口",
-    "部署",
-    "書類",
-    "記録",
-    "システム",
-    "チャンネル"
-  ].includes(term)
+function matchedQuestionTerms(question: string, text: string): string[] {
+  const normalizedText = normalize(text)
+  return answerSubjectTerms(question).filter((term) => normalizedText.includes(normalize(term)))
 }
 
 function splitMixedJapaneseTerm(term: string): string[] {
-  return (term.match(/[\p{Script=Katakana}ー]+|[\p{Script=Han}]+/gu) ?? []).filter((part) => part.length >= 2 && part !== term)
-}
-
-function intentCuePatterns(question: string): RegExp[] {
-  const patterns: RegExp[] = []
-  if (/いつ|期限|期日|締切|何日前|開始日|終了日/.test(question)) patterns.push(/[0-9０-９]+(?:日|営業日|か月|ヶ月|月|年)|前営業日|直ちに|入社初日|月末|月初|毎月/)
-  if (/頻度|何回|何度|ごと|毎年|毎月/.test(question)) patterns.push(/[0-9０-９]+回|年[0-9０-９]+回|[0-9０-９]+日ごと|毎年|毎月/)
-  if (/誰|担当|承認者|責任者|報告先|依頼先|窓口/.test(question)) patterns.push(/上長|責任者|産業医|法務部|総務部|人事部|ヘルプデスク|部|者/)
-  if (/どこ|どの|方法|手順|申請|提出|チャンネル|保管場所/.test(question)) patterns.push(/システム|フォーム|提出|部|窓口|チャンネル|ストレージ/)
-  if (/何が|何を|書類|記録|ありますか/.test(question)) patterns.push(/雇用契約書|身元確認書類|口座情報|版番号|更新日|更新者|変更理由|対象家族/)
-  return patterns
+  const scriptParts = term.match(/[\p{Script=Katakana}ー]+|[\p{Script=Han}]+/gu) ?? []
+  const hanBigrams = term.match(/[\p{Script=Han}]{2}/gu) ?? []
+  return unique([...scriptParts, ...hanBigrams].filter((part) => part.length >= 2 && part !== term))
 }
 
 function contextReason(requiredFacts: string[], text: string, chunk: RetrievedVector): string {
@@ -193,19 +224,18 @@ function contextReason(requiredFacts: string[], text: string, chunk: RetrievedVe
 
 function adjustTokenBudget(question: string, chunks: RetrievedVector[], defaultBudget: number): number {
   const structuralBoost = chunks.some((chunk) => ["table", "list", "code"].includes(chunk.metadata.chunkKind ?? "")) ? 1.1 : 1
-  const complexityBoost = /比較|手順|一覧|洗い出|条件|例外/.test(question) ? 1.15 : 1
-  const simplePenalty = chunks.length <= 2 && !/比較|手順|一覧|洗い出|条件|例外/.test(question) ? 0.85 : 1
+  const complexityBoost = questionFacetCount(question) > 1 ? 1.15 : 1
+  const simplePenalty = chunks.length <= 2 && questionFacetCount(question) <= 1 ? 0.85 : 1
   return Math.min(defaultBudget, Math.max(800, Math.round(defaultBudget * Math.min(1, structuralBoost * complexityBoost * simplePenalty))))
 }
 
 function snippetLimit(question: string, chunk: RetrievedVector): number {
-  const base = ["table", "list", "code"].includes(chunk.metadata.chunkKind ?? "") || /一覧|洗い出|手順/.test(question) ? 2200 : 1800
+  const base = ["table", "list", "code"].includes(chunk.metadata.chunkKind ?? "") || questionFacetCount(question) > 1 ? 2200 : 1800
   return Math.min(2400, base)
 }
 
 function findBestNeedleIndex(question: string, text: string): number {
   const normalizedQuestion = question.replace(/[?？。.!！\s]/g, "")
-  const priorityCandidates = intentAnchors(question)
   const fallbackCandidates = unique([
     normalizedQuestion,
     normalizedQuestion.replace(/とは$/, ""),
@@ -213,21 +243,12 @@ function findBestNeedleIndex(question: string, text: string): number {
     ...Array.from(normalizedQuestion.matchAll(/[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー]{2,}/gu)).map((match) => match[0])
   ])
 
-  for (const candidate of [...priorityCandidates, ...fallbackCandidates]) {
+  for (const candidate of fallbackCandidates) {
     if (!candidate || candidate.length < 2) continue
     const index = text.indexOf(candidate)
     if (index >= 0) return index
   }
   return -1
-}
-
-function intentAnchors(question: string): string[] {
-  const anchors: string[] = []
-  if (/分類|一覧|洗い出/.test(question)) anchors.push("分類", "種類", "区分")
-  if (/期限|期日|締切/.test(question)) anchors.push("期限", "期日", "締切")
-  if (/金額|費用|料金/.test(question)) anchors.push("金額", "費用", "料金")
-  if (/手順|方法|申請/.test(question)) anchors.push("手順", "方法", "申請")
-  return anchors
 }
 
 function significantTerms(text: string): string[] {
@@ -247,4 +268,93 @@ function normalize(text: string): string {
 
 function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
+}
+
+function lexicalOverlapScore(question: string, text: string): number {
+  const terms = answerSubjectTerms(question)
+  const matched = dedupeContainedTerms(matchedQuestionTerms(question, text))
+  if (matched.length === 0) return 0
+  const coverage = matched.length / Math.max(terms.length, 1)
+  const lengthWeighted = matched.reduce((sum, term) => sum + Math.min(14, Math.max(2, term.length * 2)), 0)
+  const allTermsBonus = matched.length === terms.length ? 4 : 0
+  const hasLongTerm = terms.some((term) => term.length >= 4)
+  const matchedLongTerm = matched.some((term) => term.length >= 4)
+  const specificityPenalty = hasLongTerm && !matchedLongTerm ? 6 : 0
+  const focusBonus = questionFocusTerms(terms).some((term) => matched.includes(term)) ? 12 : 0
+  return lengthWeighted + coverage * 6 + allTermsBonus + focusBonus - specificityPenalty
+}
+
+function answerValueSignalScore(question: string, sentence: string): number {
+  const questionValues = new Set(extractValueSignals(question).map(normalize))
+  const sentenceValues = extractValueSignals(sentence)
+  const novelValues = sentenceValues.filter((value) => !questionValues.has(normalize(value)))
+  if (novelValues.length === 0) return 0
+  return Math.min(4, novelValues.length * 2)
+}
+
+function extractValueSignals(text: string): string[] {
+  const normalized = text.normalize("NFKC")
+  return unique([
+    ...(normalized.match(/\d+(?:[.,:]\d+)*(?:\s*[^\s\d\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}]{1,3})?/gu) ?? []),
+    ...(normalized.match(/[A-Z][A-Z0-9_-]{2,}/g) ?? []),
+    ...(normalized.match(/[^\s@]+@[^\s@]+\.[^\s@]+/g) ?? []),
+    ...(normalized.match(/https?:\/\/[^\s]+/g) ?? [])
+  ])
+}
+
+function compactnessScore(sentence: string): number {
+  if (sentence.length <= 140) return 2
+  if (sentence.length <= 280) return 1
+  return 0
+}
+
+function conditionalClausePenalty(question: string, sentence: string): number {
+  if (!/(?:場合|とき|時は|なら)/.test(sentence)) return 0
+  return /(?:場合|とき|時は|なら)/.test(question) ? 0 : 10
+}
+
+function questionFacetCount(question: string): number {
+  return Math.min(4, 1 + (question.match(/[、,/]|(?:と|および|及び|または)/g)?.length ?? 0))
+}
+
+function dedupeContainedTerms(terms: string[]): string[] {
+  const kept: string[] = []
+  for (const term of [...terms].sort((a, b) => b.length - a.length || a.localeCompare(b))) {
+    const normalized = normalize(term)
+    if (kept.some((keptTerm) => normalize(keptTerm).includes(normalized))) continue
+    kept.push(term)
+  }
+  return kept
+}
+
+function questionFocusTerms(terms: string[]): string[] {
+  const longTerms = terms.filter((term) => term.length >= 4)
+  return unique([...(longTerms.length > 0 ? longTerms.slice(-1) : []), ...terms.slice(-3)])
+}
+
+function questionAttributeTerms(question: string, terms: string[]): string[] {
+  const normalized = question.normalize("NFKC")
+  const marker = normalized.lastIndexOf("の")
+  if (marker >= 0) {
+    const suffixTerms = answerSubjectTerms(normalized.slice(marker + 1))
+    if (suffixTerms.length > 0) return suffixTerms
+  }
+  return terms.slice(Math.floor(terms.length / 2))
+}
+
+function questionPrimaryTerms(terms: string[]): string[] {
+  return terms.slice(0, Math.max(1, Math.floor(terms.length / 2)))
+}
+
+function matchedAttributeScore(attributeTerms: string[], text: string): number {
+  const normalizedText = normalize(text)
+  return dedupeContainedTerms(attributeTerms.filter((term) => normalizedText.includes(normalize(term)))).reduce((sum, term) => sum + Math.max(1, term.length), 0)
+}
+
+function isCoveredByRelatedTerm(term: string, coveredTerms: Set<string>): boolean {
+  const normalized = normalize(term)
+  if ([...coveredTerms].some((coveredTerm) => normalize(coveredTerm).includes(normalized))) return true
+  const covered = [...coveredTerms].map(normalize).filter((coveredTerm) => normalized.includes(coveredTerm))
+  if (covered.length < 2) return false
+  return covered.join("").length >= normalized.length
 }

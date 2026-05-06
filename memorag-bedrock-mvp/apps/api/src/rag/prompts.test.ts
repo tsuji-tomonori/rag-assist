@@ -226,3 +226,28 @@ test("final answer context keeps subject match ahead of generic intent cues", ()
   assert.doesNotMatch(prompt, /有給休暇の取得申請/)
   assert.doesNotMatch(prompt, /経費精算は申請から30日以内/)
 })
+
+test("final answer context uses dynamic question terms and value signals without domain word lists", () => {
+  const hit: RetrievedVector = {
+    key: "doc-1-chunk-0001",
+    score: 0.95,
+    metadata: {
+      kind: "chunk",
+      documentId: "doc-1",
+      fileName: "operations.md",
+      chunkId: "chunk-0001",
+      text: [
+        "アルファ設定の変更依頼は管理画面から送信します。",
+        "アルファ設定の保持期間は14日です。",
+        "ベータ設定の保持期間は30日です。"
+      ].join("\n"),
+      createdAt: "2026-04-30T00:00:00.000Z"
+    }
+  }
+
+  const prompt = buildFinalAnswerPrompt("アルファ設定の保持期間は？", [hit])
+
+  assert.match(prompt, /アルファ設定の保持期間は14日です。/)
+  assert.doesNotMatch(prompt, /アルファ設定の変更依頼/)
+  assert.doesNotMatch(prompt, /ベータ設定の保持期間は30日/)
+})

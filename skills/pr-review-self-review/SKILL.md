@@ -128,6 +128,7 @@ Use checkboxes only for items actually satisfied. Use unchecked items for unreso
 - Citations match retrieved chunks.
 - Debug trace records step, score, risk signal, decision, and reason needed for investigation.
 - Benchmark queries use the intended same or explicitly documented RAG path as `/chat`.
+- RAG quality fixes do not hard-code benchmark expected phrases, QA sample row ids, dataset-specific branches, or domain word lists that bypass retrieved evidence selection.
 - New branches or gates update trace, benchmark, docs, and UI handling consistently.
 - Prompt or threshold changes are evaluated for answerable accuracy, refusal precision, unsupported sentence rate, citation hit rate, retrieval recall, precision, and latency when relevant.
 

@@ -89,6 +89,8 @@ query
 - agent `search_evidence` は `POST /search` と同じ `searchRag` 実装を使い、chat route の `AppUser` を渡して ACL guard を維持する。
 - agent `search_evidence` は複数 query / clue の結果を最大 score だけで統合せず、cross-query RRF の順位を `crossQueryRrfScore` / `crossQueryRank` として chunk metadata に残す。
 - agent debug trace の `execute_search_action` には query 数、index / alias version、lexical / semantic / fused count、source count を記録する。
+- agent の回答文脈選択は、質問から動的に得た語彙 overlap、根拠文内の一般的な値表現、文単位の補完関係など、通常運用の資料にも成立する信号だけを使う。benchmark dataset の期待語句、QA sample の行 ID、特定 corpus の回答語句、部署名や制度名の固定リストを実装へ持たせてはいけない。
+- QA benchmark の期待語句未一致を修正する場合も、`retrievalRecallAtK` や `citationHitRate` の結果だけで固定補正を追加しない。根拠 chunk は取れているが回答文へ渡す情報が不足する場合は、context assembly の一般規則、prompt の根拠使用指示、または support verification の責務として設計し、dataset 固有の分岐で数値だけを改善しない。
 
 ## テスト観点
 
@@ -110,6 +112,7 @@ query
 | agent hybrid search integration | `fixed MemoRAG workflow answers from selected evidence and records fixed trace steps`、`query nodes handle memory-disabled, fallback, generated clue, and search merge paths` |
 | agent cross-query RRF | `query nodes handle memory-disabled, fallback, generated clue, and search merge paths` |
 | agent retrieval diagnostics trace | `fixed MemoRAG workflow answers from selected evidence and records fixed trace steps` |
+| agent answer context generalization | `final answer context uses dynamic question terms and value signals without domain word lists` |
 
 ## 評価指標
 

@@ -140,6 +140,7 @@ Every implementation task for `rag-assist` / `memorag-bedrock-mvp` should includ
   - insufficient evidence refuses safely
   - citations point to retrieved chunks
   - retrieval changes are evaluated for recall, precision, refusal precision, unsupported rate, citation hit rate, and latency where relevant
+  - benchmark expected phrases, QA sample row ids, dataset-specific branches, or domain word lists are not introduced as shortcuts for RAG quality fixes
 - Data, compatibility, and migration:
   - optional fields remain backward-compatible
   - required field additions, manifest changes, benchmark schema changes, embedding dimension changes, reindex, cutover, and rollback are called out
