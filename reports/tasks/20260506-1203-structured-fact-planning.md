@@ -52,6 +52,14 @@
 7. planner fallback、fact type、scope、support 状態、decision reason を trace に表示する。
 8. docs に回答不能制御と trace への影響を反映する。
 
+## ドキュメントメンテナンス計画
+
+- 要求仕様: `FR-014`、`FR-015`、`FR-016`、`FR-017`、`SQ-001` の受け入れ条件へ required facts、fact type、fallback、回答不能制御への影響を反映するか確認する。
+- architecture / design: `RequiredFact`、answerability gate、sufficient context gate、debug trace の data / workflow 変更を該当 DLD、`DES_DATA_001`、`DES_API_001` に反映する。
+- README / API examples / OpenAPI: optional trace field や debug response schema を追加する場合は OpenAPI / API examples を更新する。通常 `/chat` の必須 field を増やさない場合は、後方互換として更新不要範囲を PR 本文に明記する。
+- local verification / operations: no-answer、ambiguous query、required fact 欠落、fallback 発生時の確認観点を `docs/LOCAL_VERIFICATION.md` に追記する。LLM 呼び出しを増やさない v1 方針のため cost / latency 影響が軽微なら operations ではその理由を書く。
+- PR 本文: docs 更新の有無、fallback strategy、未実施の benchmark、API / trace schema の互換性を明記する。
+
 ## 受け入れ条件
 
 - `RequiredFact` が fact type と scope を表現できる。

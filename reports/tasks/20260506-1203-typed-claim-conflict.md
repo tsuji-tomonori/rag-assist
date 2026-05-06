@@ -51,6 +51,14 @@ evidence sentence から typed claim を抽出し、同一 subject / predicate /
 7. benchmark fact slot または node test に conflicting evidence と scope-different no-conflict のケースを追加する。
 8. debug trace に claims と conflict candidate summary を出す。
 
+## ドキュメントメンテナンス計画
+
+- 要求仕様: `FR-014`、`FR-015`、`FR-016`、`FR-017`、`FR-019`、`SQ-001` について、conflicting evidence、unsupported citation、claim scope 判定の受け入れ条件更新要否を確認する。
+- architecture / design: claim / conflict candidate schema、retrieval evaluator、support verifier、debug trace の責務を該当 DLD と `DES_DATA_001` に反映する。
+- README / API examples / OpenAPI: claim / conflict summary が optional trace field として出る場合は OpenAPI / API examples / debug trace docs を更新する。既存 required schema を変えない場合は後方互換を PR 本文に書く。
+- benchmark / operations: fact slot dataset、baseline comparison、LLM judge の呼び出し条件、cost / latency 影響を benchmark docs または operations docs に追記する。
+- PR 本文: 同一 scope conflict と scope-different no-conflict の扱い、LLM 呼び出し条件、docs 更新範囲、未確認 benchmark を明記する。
+
 ## 受け入れ条件
 
 - 同一 scope の排他的な値は conflict candidate になる。

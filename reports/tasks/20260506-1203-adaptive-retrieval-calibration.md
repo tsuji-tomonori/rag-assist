@@ -52,6 +52,14 @@
 7. false answer、false refusal、unsupported citation、latency の悪化を比較する。
 8. docs に calibration 手順と rollback 方針を記載する。
 
+## ドキュメントメンテナンス計画
+
+- 要求仕様: `FR-016`、`FR-017`、`FR-018`、`FR-019`、`FR-026`、`SQ-001`、`TC-001` の検索品質、評価可能性、RRF / lexical / semantic 統合に関する受け入れ条件を確認する。
+- architecture / design: Hybrid Retriever、RRF、cheap rerank、retrieval diagnostics、benchmark runner の変更を `DES_HLD_001`、該当 DLD、`DES_DATA_001` に反映する。
+- README / API examples / OpenAPI: adaptive strategy は v1 で明示 opt-in とし通常 API contract を変えない。config / profile 選択や trace / benchmark output が変わる場合だけ README / API examples / OpenAPI を更新する。
+- local verification / operations: calibration 手順、dataset 条件、rollback、false answer / false refusal / latency の確認方法を `docs/LOCAL_VERIFICATION.md` と `docs/OPERATIONS.md` に追記する。
+- PR 本文: 改善対象 metric、dataset 規模、採用閾値、docs 更新範囲、未実施 benchmark を明記する。
+
 ## 受け入れ条件
 
 - retrieval parameter が profile で管理されている。

@@ -54,6 +54,14 @@ memory card 生成と context assembly では、summary 文字数、keywords 件
 8. debug trace に context selection reason を残す。
 9. docs に manifest / reindex / cost / rollback の影響を記載する。
 
+## ドキュメントメンテナンス計画
+
+- 要求仕様: `FR-002`、`FR-004`、`FR-005`、`FR-015`、`FR-020`、`SQ-001` について、memory card、context selection、citation、回答不能制御の受け入れ条件更新要否を確認する。
+- architecture / design: document statistics、manifest optional field、memory card、context assembly、evidence index の data / workflow 変更を `DES_HLD_001`、該当 DLD、`DES_DATA_001` に反映する。
+- README / API examples / OpenAPI: manifest / trace optional field が外部に見える場合は API examples / OpenAPI を更新する。通常 chat response が変わらない場合は更新不要理由を PR 本文に書く。
+- local verification / operations: reindex 要否、既存 manifest fallback、table / list / long document 確認、cost / latency / rollback を `docs/LOCAL_VERIFICATION.md` と `docs/OPERATIONS.md` に追記する。
+- PR 本文: docs 更新範囲、既存 manifest 互換、reindex / rollback 方針、未確認 benchmark を明記する。
+
 ## 受け入れ条件
 
 - memory card 生成件数が固定 slice だけに依存しない。

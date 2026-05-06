@@ -50,6 +50,14 @@
 7. default policy と SWEBOK policy の両方のテストを追加する。
 8. docs / task report に、固有 rule を code default に戻さない方針を明記する。
 
+## ドキュメントメンテナンス計画
+
+- 要求仕様: default policy の回答挙動が変わる場合は `FR-003`、`FR-004`、`FR-005`、`FR-014`、`FR-015` と受け入れ条件を確認し、要求に実装手段を混ぜずに「分類質問は根拠 chunk に明示された分類だけを扱う」条件を必要に応じて追加する。
+- architecture / design: prompt、context assembly、answerability gate、citation validation の責務が変わるため、該当 DLD と RAG workflow 設計の更新要否を確認する。
+- README / API examples / OpenAPI: 通常 API contract を変えない方針なので、request / response schema が不変なら API examples / OpenAPI は更新不要と PR 本文に明記する。policy id / version が trace に出る場合は trace schema docs を更新する。
+- local verification / operations: SWEBOK policy 有効時 / default policy 時の分類質問確認手順を local verification または benchmark dataset docs に追記する。
+- PR 本文: SWEBOK 固有 rule を default から外す理由、docs 更新要否、既存 SWEBOK 回帰テストの扱いを明記する。
+
 ## 受け入れ条件
 
 - default policy では SWEBOK / ソフトウェア要求分類の固定語彙が自動注入されない。

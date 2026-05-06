@@ -31,10 +31,11 @@ Each task file must include these sections:
 6. `方針`
 7. `必要情報`
 8. `実行計画`
-9. `受け入れ条件`
-10. `検証計画`
-11. `PRレビュー観点`
-12. `未決事項・リスク`
+9. `ドキュメントメンテナンス計画`
+10. `受け入れ条件`
+11. `検証計画`
+12. `PRレビュー観点`
+13. `未決事項・リスク`
 
 Use Japanese prose unless the user requests another language. Keep file paths, commands, API names, type names, and function names in their original spelling.
 
@@ -58,10 +59,30 @@ For each task:
 - `方針`: Describe the implementation approach and design constraints.
 - `必要情報`: Include prior reports, relevant code paths, assumptions, dependencies, and decisions needed before implementation.
 - `実行計画`: Write concrete steps in execution order.
+- `ドキュメントメンテナンス計画`: State which requirements, architecture/design, README, API examples, OpenAPI, local verification, operations, deploy docs, and PR body notes must be updated or explicitly judged unaffected.
 - `受け入れ条件`: Write observable completion checks. Avoid vague conditions such as "works well".
 - `検証計画`: Name likely commands or checks. Mark environment-dependent checks as candidates, not completed.
 - `PRレビュー観点`: Translate repository review expectations into checks that reviewers can apply to the future PR.
 - `未決事項・リスク`: Prefer explicit decisions over unresolved questions. Decide recommended defaults when reasonable, and leave only truly implementation-dependent items as proposals or risks.
+
+## Documentation Maintenance Policy
+
+Every task that can affect code, behavior, API contracts, data schemas, RAG quality, benchmark output, security, operations, or developer workflows must include a concrete `ドキュメントメンテナンス計画`.
+
+The plan should cover the relevant subset below:
+
+- Requirements:
+  - identify related `FR-*`, `NFR-*`, `SQ-*`, and `TC-*`
+  - update or add one-requirement-per-file docs when behavior or acceptance criteria change
+  - keep "what must be true" in requirements and move "how to implement" to architecture / design docs
+- Architecture / design:
+  - update RAG workflow, authorization, search, benchmark, debug trace, data structure, API, or deployment design docs when affected
+  - preserve traceability to ASR / ADR / DES docs
+- User / developer docs:
+  - update root `README.md`, `memorag-bedrock-mvp/README.md`, `docs/API_EXAMPLES.md`, OpenAPI targets, `docs/LOCAL_VERIFICATION.md`, `docs/OPERATIONS.md`, and deploy docs when behavior, API, verification, environment variables, permissions, rollback, cost, or deployment changes
+- PR body:
+  - if a doc is intentionally not updated, require the future PR body to explain why it is unaffected
+  - list unrun checks and residual documentation risks
 
 ## Decision Policy
 
@@ -122,6 +143,7 @@ Use review comment severity labels when capturing expected review outcomes:
 Before finishing:
 
 - Inspect changed task files for missing required sections.
+- Ensure each task has a `ドキュメントメンテナンス計画` section.
 - Ensure each task has a `PRレビュー観点` section.
 - Ensure `未決事項・リスク` uses explicit `決定事項` where a recommended choice is possible.
 - Run a trailing-whitespace check on created Markdown and skill files.
