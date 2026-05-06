@@ -1,0 +1,4 @@
+interface:
+  display_name: "Task File Writer"
+  short_description: "Create structured repository task files"
+  default_prompt: "Use $task-file-writer to create one Markdown task file per implementation task."
