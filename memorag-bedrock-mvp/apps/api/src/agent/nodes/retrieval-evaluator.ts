@@ -2,6 +2,7 @@ import type { RetrievedVector } from "../../types.js"
 import type { Dependencies } from "../../dependencies.js"
 import { parseJsonObject } from "../../rag/json.js"
 import { buildRetrievalJudgePrompt } from "../../rag/prompts.js"
+import { llmOptions, ragRuntimePolicy } from "../runtime-policy.js"
 import type { QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation, RetrievalLlmJudge, RetrievalRiskSignal } from "../state.js"
 
 type RetrievalJudgeJson = Partial<RetrievalLlmJudge>
@@ -16,11 +17,7 @@ export function createRetrievalEvaluatorNode(deps: Dependencies) {
       const relevantChunks = selectJudgeChunks(state.retrievedChunks, riskSignals)
       const raw = await deps.textModel.generate(
         buildRetrievalJudgePrompt(state.question, state.searchPlan.requiredFacts, riskSignals, relevantChunks),
-        {
-          modelId: state.modelId,
-          temperature: 0,
-          maxTokens: 700
-        }
+        llmOptions("retrievalJudge", state.modelId)
       )
       const judge = normalizeRetrievalJudge(parseJsonObject<RetrievalJudgeJson>(raw), state, riskSignals)
       return applyRetrievalJudge(state, heuristicUpdate, judge)
@@ -78,7 +75,7 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
 function selectJudgeChunks(chunks: RetrievedVector[], riskSignals: RetrievalRiskSignal[]): RetrievedVector[] {
   const riskChunkKeys = new Set(riskSignals.flatMap((signal) => signal.chunkKeys))
   const selected = chunks.filter((chunk) => riskChunkKeys.has(chunk.key))
-  return (selected.length > 0 ? selected : chunks).slice(0, 8)
+  return (selected.length > 0 ? selected : chunks).slice(0, ragRuntimePolicy.limits.judgeChunkLimit)
 }
 
 function normalizeRetrievalJudge(
@@ -100,7 +97,10 @@ function normalizeRetrievalJudge(
     factIds: factIds.length > 0 ? factIds : [...new Set(fallbackFactIds)],
     supportingChunkIds: validIds(cleanStrings(parsed?.supportingChunkIds), validChunkIds, byChunkId),
     contradictionChunkIds: validIds(cleanStrings(parsed?.contradictionChunkIds), validChunkIds, byChunkId),
-    reason: typeof parsed?.reason === "string" && parsed.reason.trim() ? parsed.reason.trim().slice(0, 800) : "LLM judge では判定理由が返されませんでした。"
+    reason:
+      typeof parsed?.reason === "string" && parsed.reason.trim()
+        ? parsed.reason.trim().slice(0, ragRuntimePolicy.limits.judgeReasonMaxChars)
+        : "LLM judge では判定理由が返されませんでした。"
   }
 }
 
@@ -109,7 +109,7 @@ function applyRetrievalJudge(state: QaAgentState, update: QaAgentUpdate, judge: 
   const searchPlan = update.searchPlan
   if (!evaluation || !searchPlan) return update
 
-  if (judge.label === "NO_CONFLICT" && judge.confidence >= 0.7) {
+  if (judge.label === "NO_CONFLICT" && judge.confidence >= ragRuntimePolicy.confidence.llmJudgeNoConflictMin) {
     const resolvedFactIds = new Set(judge.factIds.length > 0 ? judge.factIds : evaluation.conflictingFactIds)
     const conflictingFactIds = evaluation.conflictingFactIds.filter((factId) => !resolvedFactIds.has(factId))
     const supportedFactIds = [...new Set([...evaluation.supportedFactIds, ...resolvedFactIds])]
@@ -212,7 +212,7 @@ function chooseNextAction(
     const conflictingDescriptions = state.searchPlan.requiredFacts
       .filter((fact) => conflictingFactIds.includes(fact.id))
       .map((fact) => fact.description)
-      .slice(0, 3)
+      .slice(0, ragRuntimePolicy.limits.actionFactLimit)
     return {
       type: "evidence_search",
       query: [...new Set([state.normalizedQuery ?? state.question, ...conflictingDescriptions, "現行 最新 施行日 適用条件 旧制度"])].join(" "),
@@ -232,7 +232,7 @@ function chooseNextAction(
   const missingDescriptions = state.searchPlan.requiredFacts
     .filter((fact) => missingFactIds.includes(fact.id))
     .map((fact) => fact.description)
-    .slice(0, 3)
+    .slice(0, ragRuntimePolicy.limits.actionFactLimit)
   const queryParts = [state.normalizedQuery ?? state.question, ...missingDescriptions].filter(Boolean)
   return {
     type: "evidence_search",
@@ -269,7 +269,7 @@ function buildReason(
 ): string {
   if (retrievalQuality === "sufficient") return "必要事実が検索済み evidence chunk で支持されているため、rerank に進みます。"
   if (conflictingFactIds.length > 0) {
-    const values = riskSignals.flatMap((signal) => signal.values ?? []).slice(0, 6)
+    const values = riskSignals.flatMap((signal) => signal.values ?? []).slice(0, ragRuntimePolicy.limits.riskSignalValueLimit)
     const valueNote = values.length > 0 ? ` values=${values.join(", ")}` : ""
     return `同一 fact の値が食い違う候補があるため、現行条件と適用範囲を確認する追加 evidence search を試みます: ${conflictingFactIds.join(", ")}${valueNote}`
   }

@@ -1,6 +1,7 @@
 import type { Dependencies } from "../../dependencies.js"
 import { parseJsonObject } from "../../rag/json.js"
 import { buildSufficientContextPrompt } from "../../rag/prompts.js"
+import { llmOptions, ragRuntimePolicy } from "../runtime-policy.js"
 import { NO_ANSWER, type QaAgentState, type QaAgentUpdate, type SufficientContextJudgement } from "../state.js"
 
 type JudgeJson = Partial<SufficientContextJudgement>
@@ -8,11 +9,10 @@ type JudgeJson = Partial<SufficientContextJudgement>
 export function createSufficientContextGateNode(deps: Dependencies) {
   return async function sufficientContextGate(state: QaAgentState): Promise<QaAgentUpdate> {
     const requiredFacts = state.searchPlan.requiredFacts.map((fact) => fact.description).filter(Boolean)
-    const raw = await deps.textModel.generate(buildSufficientContextPrompt(state.question, requiredFacts, state.selectedChunks, state.computedFacts), {
-      modelId: state.modelId,
-      temperature: 0,
-      maxTokens: 900
-    })
+    const raw = await deps.textModel.generate(
+      buildSufficientContextPrompt(state.question, requiredFacts, state.selectedChunks, state.computedFacts),
+      llmOptions("sufficientContext", state.modelId)
+    )
     const judgement = normalizeJudgement(parseJsonObject<JudgeJson>(raw), state)
 
     if (judgement.label === "ANSWERABLE") {
@@ -39,7 +39,10 @@ export function createSufficientContextGateNode(deps: Dependencies) {
           ...state.answerability,
           isAnswerable: true,
           reason: "sufficient_evidence",
-          confidence: Math.max(state.answerability.confidence, Math.min(0.78, judgement.confidence || 0.66))
+          confidence: Math.max(
+            state.answerability.confidence,
+            Math.min(ragRuntimePolicy.confidence.partialEvidenceCap, judgement.confidence || ragRuntimePolicy.confidence.partialEvidenceFallback)
+          )
         }
       }
     }
@@ -117,12 +120,15 @@ function isGenericTerm(term: string): boolean {
 function normalizeJudgement(parsed: JudgeJson | undefined, state: QaAgentState): SufficientContextJudgement {
   const label = parsed?.label === "ANSWERABLE" || parsed?.label === "PARTIAL" || parsed?.label === "UNANSWERABLE" ? parsed.label : "UNANSWERABLE"
   const confidence = clamp(parsed?.confidence ?? 0)
-  const requiredFacts = cleanStrings(parsed?.requiredFacts).slice(0, 12)
-  const supportedFacts = cleanStrings(parsed?.supportedFacts).slice(0, 12)
-  const missingFacts = cleanStrings(parsed?.missingFacts).slice(0, 12)
-  const conflictingFacts = cleanStrings(parsed?.conflictingFacts).slice(0, 12)
+  const requiredFacts = cleanStrings(parsed?.requiredFacts).slice(0, ragRuntimePolicy.limits.requiredFactLimit)
+  const supportedFacts = cleanStrings(parsed?.supportedFacts).slice(0, ragRuntimePolicy.limits.requiredFactLimit)
+  const missingFacts = cleanStrings(parsed?.missingFacts).slice(0, ragRuntimePolicy.limits.requiredFactLimit)
+  const conflictingFacts = cleanStrings(parsed?.conflictingFacts).slice(0, ragRuntimePolicy.limits.requiredFactLimit)
   const supportingChunkIds = validSupportingChunkIds(cleanStrings(parsed?.supportingChunkIds), state)
-  const fallbackSupportingChunkIds = label === "ANSWERABLE" && supportingChunkIds.length === 0 ? state.selectedChunks.slice(0, 4).map((chunk) => chunk.key) : supportingChunkIds
+  const fallbackSupportingChunkIds =
+    label === "ANSWERABLE" && supportingChunkIds.length === 0
+      ? state.selectedChunks.slice(0, ragRuntimePolicy.limits.supportingChunkFallbackLimit).map((chunk) => chunk.key)
+      : supportingChunkIds
   const fallbackReason = label === "ANSWERABLE" ? "必要事実が根拠チャンクで支持されています。" : "根拠チャンクだけでは回答に必要な事実が不足しています。"
 
   return {
@@ -133,7 +139,10 @@ function normalizeJudgement(parsed: JudgeJson | undefined, state: QaAgentState):
     missingFacts: label === "ANSWERABLE" ? [] : missingFacts,
     conflictingFacts,
     supportingChunkIds: fallbackSupportingChunkIds,
-    reason: typeof parsed?.reason === "string" && parsed.reason.trim() ? parsed.reason.trim().slice(0, 800) : fallbackReason
+    reason:
+      typeof parsed?.reason === "string" && parsed.reason.trim()
+        ? parsed.reason.trim().slice(0, ragRuntimePolicy.limits.judgeReasonMaxChars)
+        : fallbackReason
   }
 }
 

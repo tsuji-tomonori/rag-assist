@@ -6,8 +6,83 @@ import type { ChatResponse } from "../types-api.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
 
+type PendingClarificationFreeform = {
+  originalQuestion: string
+  seedText: string
+}
+
+const genericFreeformContextTerms = new Set([
+  "申請",
+  "期限",
+  "締切",
+  "必要",
+  "方法",
+  "手順",
+  "条件",
+  "対象",
+  "場合",
+  "質問",
+  "申請期限",
+  "提出期限"
+])
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function shouldClearFreeformContext(pending: PendingClarificationFreeform, nextQuestion: string): boolean {
+  const trimmed = nextQuestion.trim()
+  if (!trimmed) return false
+  return looksLikeStandaloneQuestion(trimmed) && !sharesMeaningfulToken(pending.originalQuestion, trimmed)
+}
+
+function looksLikeStandaloneQuestion(value: string): boolean {
+  const normalized = value.replace(/\s+/g, "")
+  return /[?？]$/.test(normalized) ||
+    /(何|いつ|どこ|誰|だれ|なぜ|理由|方法|手順|期限|締切|教えて|ですか|ますか|できますか|質問)/.test(normalized)
+}
+
+function sharesMeaningfulToken(source: string, target: string): boolean {
+  const sourceTokens = [...meaningfulTokens(source)]
+  const targetTokens = [...meaningfulTokens(target)]
+  return targetTokens.some((targetToken) => sourceTokens.some((sourceToken) => termsMatch(sourceToken, targetToken)))
+}
+
+function termsMatch(a: string, b: string): boolean {
+  if (a === b || a.includes(b) || b.includes(a)) return true
+  return (isCjkAbbreviationTerm(a) && isCjkAbbreviationExpansion(a, b)) ||
+    (isCjkAbbreviationTerm(b) && isCjkAbbreviationExpansion(b, a))
+}
+
+function isCjkAbbreviationTerm(term: string): boolean {
+  return term.length >= 2 && term.length <= 6 && isCjkText(term)
+}
+
+function isCjkText(value: string): boolean {
+  return /^[\p{Script=Han}\p{Script=Katakana}ー]+$/u.test(value)
+}
+
+function isCjkAbbreviationExpansion(short: string, long: string): boolean {
+  return isCjkText(long) && long[0] === short[0] && !long.includes(short) && isOrderedSubsequence(short, long)
+}
+
+function isOrderedSubsequence(short: string, long: string): boolean {
+  let index = 0
+  for (const char of short) {
+    index = long.indexOf(char, index)
+    if (index < 0) return false
+    index += char.length
+  }
+  return true
+}
+
+function meaningfulTokens(value: string): Set<string> {
+  const normalized = value.normalize("NFKC")
+  const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
+  const ascii = normalized.toLowerCase().match(/[a-z0-9][a-z0-9_-]{2,}/g) ?? []
+  return new Set([...japanese, ...ascii]
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !genericFreeformContextTerms.has(token)))
 }
 
 export function useChatSession({
@@ -59,6 +134,7 @@ export function useChatSession({
   const [messages, setMessages] = useState<Message[]>([])
   const [pendingActivity, setPendingActivity] = useState<string | null>(null)
   const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
+  const [pendingClarificationFreeform, setPendingClarificationFreeform] = useState<PendingClarificationFreeform | null>(null)
   const [conversationKey, setConversationKey] = useState(0)
   const [submitShortcut, setSubmitShortcut] = useState<"enter" | "ctrlEnter">("enter")
   const canAsk = useMemo(
@@ -73,7 +149,13 @@ export function useChatSession({
     const typedQuestion = question.trim()
     const userQuestion = typedQuestion || `${file?.name ?? "添付資料"}を取り込んでください`
     const hasAttachment = file !== null
-    await submitQuestion(userQuestion, typedQuestion, hasAttachment)
+    const freeformContext = pendingClarificationFreeform && typedQuestion.length > 0 && !hasAttachment && !shouldClearFreeformContext(pendingClarificationFreeform, typedQuestion)
+      ? {
+          originalQuestion: pendingClarificationFreeform.originalQuestion,
+          selectedValue: typedQuestion
+        }
+      : undefined
+    await submitQuestion(userQuestion, typedQuestion, hasAttachment, freeformContext)
   }
 
   async function submitClarificationOption(option: ClarificationOption, originalQuestion: string) {
@@ -84,6 +166,16 @@ export function useChatSession({
       selectedOptionId: option.id,
       selectedValue: option.label
     })
+  }
+
+  function startClarificationFreeform(originalQuestion: string, seedText: string) {
+    setPendingClarificationFreeform({ originalQuestion, seedText })
+    setQuestion(seedText)
+  }
+
+  function setChatQuestion(value: string) {
+    setQuestion(value)
+    setPendingClarificationFreeform((pending) => pending && shouldClearFreeformContext(pending, value) ? null : pending)
   }
 
   async function submitQuestion(
@@ -195,6 +287,7 @@ export function useChatSession({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
+      setPendingClarificationFreeform(null)
       setPendingActivity(null)
       setPendingDebugQuestion(null)
       setLoading(false)
@@ -213,6 +306,7 @@ export function useChatSession({
     setError(null)
     setPendingActivity(null)
     setPendingDebugQuestion(null)
+    setPendingClarificationFreeform(null)
     setSelectedRunId("")
     setExpandedStepId(null)
     setAllExpanded(false)
@@ -221,7 +315,7 @@ export function useChatSession({
 
   return {
     question,
-    setQuestion,
+    setQuestion: setChatQuestion,
     messages,
     setMessages,
     pendingActivity,
@@ -234,6 +328,7 @@ export function useChatSession({
     canAsk,
     onAsk,
     submitClarificationOption,
+    startClarificationFreeform,
     newConversation
   }
 }

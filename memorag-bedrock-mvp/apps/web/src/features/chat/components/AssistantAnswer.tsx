@@ -14,7 +14,8 @@ export function AssistantAnswer({
   onCreateQuestion,
   onResolveQuestion,
   onAdditionalQuestion,
-  onSubmitClarificationOption
+  onSubmitClarificationOption,
+  onStartClarificationFreeform
 }: {
   message: Message
   linkedQuestion?: HumanQuestion
@@ -23,6 +24,7 @@ export function AssistantAnswer({
   onResolveQuestion: (questionId: string) => Promise<void>
   onAdditionalQuestion: (value: string) => void
   onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
+  onStartClarificationFreeform: (originalQuestion: string, seedText: string) => void
 }) {
   const citations = message.result?.citations ?? []
   const clarification = message.result?.clarification
@@ -119,7 +121,7 @@ export function AssistantAnswer({
             type="button"
             className="clarification-freeform"
             disabled={loading}
-            onClick={() => onAdditionalQuestion("例: 経費精算の申請期限は？")}
+            onClick={() => onStartClarificationFreeform(message.sourceQuestion ?? message.text, "例: 経費精算の申請期限は？")}
           >
             自分で入力
           </button>

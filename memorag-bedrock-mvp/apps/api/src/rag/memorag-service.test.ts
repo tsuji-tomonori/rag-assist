@@ -8,12 +8,14 @@ import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
 import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
+import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
 import type { DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
+import { ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
@@ -258,15 +260,19 @@ test("service preserves asynchronous chat run options and can mark worker failur
     clueModelId: "clue-a",
     topK: 5,
     memoryTopK: 2,
-    minScore: 0.33,
+    minScore: 2,
     strictGrounded: false,
     useMemory: false,
-    maxIterations: 1
+    maxIterations: 999
   }, user)
   const stored = await deps.chatRunStore.get(started.runId)
   assert.equal(stored?.strictGrounded, false)
   assert.equal(stored?.useMemory, false)
-  assert.equal(stored?.maxIterations, 1)
+  assert.equal(stored?.maxIterations, ragRuntimePolicy.retrieval.maxIterations)
+  assert.equal(stored?.minScore, 1)
+
+  const benchmarkRun = await service.createBenchmarkRun(user, { minScore: 2 })
+  assert.equal(benchmarkRun.minScore, 1)
 
   await deps.chatRunStore.create({
     runId: "run-worker-timeout",
@@ -753,6 +759,7 @@ async function createService(options: {
     textModel: options.textModel ?? new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
     userDirectory: options.userDirectory

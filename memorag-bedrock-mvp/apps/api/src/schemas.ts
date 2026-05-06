@@ -1,4 +1,5 @@
 import { z } from "@hono/zod-openapi"
+import { ragRuntimePolicy } from "./agent/runtime-policy.js"
 import type { JsonValue } from "./types.js"
 
 const MetadataValueSchema = z.custom<JsonValue>(isJsonValue)
@@ -303,10 +304,10 @@ export const ChatRequestSchema = z.object({
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   clueModelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
-  topK: z.number().int().min(1).max(20).optional().openapi({ example: 6 }),
-  memoryTopK: z.number().int().min(1).max(10).optional().openapi({ example: 4 }),
+  topK: z.number().int().min(1).max(ragRuntimePolicy.retrieval.maxTopK).optional().openapi({ example: 6 }),
+  memoryTopK: z.number().int().min(1).max(ragRuntimePolicy.retrieval.maxMemoryTopK).optional().openapi({ example: 4 }),
   minScore: z.number().min(-1).max(1).optional().openapi({ example: 0.20 }),
-  maxIterations: z.number().int().min(1).max(8).optional().openapi({ example: 3 }),
+  maxIterations: z.number().int().min(1).max(ragRuntimePolicy.retrieval.maxIterations).optional().openapi({ example: 3 }),
   strictGrounded: z.boolean().optional().openapi({ example: true }),
   includeDebug: z.boolean().optional().openapi({ example: false }),
   debug: z.boolean().optional().openapi({ example: false }),
@@ -315,9 +316,9 @@ export const ChatRequestSchema = z.object({
 
 export const SearchRequestSchema = z.object({
   query: z.string().min(1).openapi({ example: "経費精算 承認条件" }),
-  topK: z.number().int().min(1).max(50).optional().openapi({ example: 10 }),
-  lexicalTopK: z.number().int().min(0).max(100).optional().openapi({ example: 80 }),
-  semanticTopK: z.number().int().min(0).max(100).optional().openapi({ example: 80 }),
+  topK: z.number().int().min(1).max(ragRuntimePolicy.retrieval.searchRagMaxTopK).optional().openapi({ example: 10 }),
+  lexicalTopK: z.number().int().min(0).max(ragRuntimePolicy.retrieval.searchRagMaxSourceTopK).optional().openapi({ example: 80 }),
+  semanticTopK: z.number().int().min(0).max(ragRuntimePolicy.retrieval.searchRagMaxSourceTopK).optional().openapi({ example: 80 }),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   filters: z.object({
     tenantId: z.string().optional(),
@@ -388,7 +389,7 @@ export const ClarificationSchema = z.object({
     "not_needed"
   ]),
   question: z.string(),
-  options: z.array(ClarificationOptionSchema).max(5),
+  options: z.array(ClarificationOptionSchema).max(ragRuntimePolicy.limits.clarificationOptionLimit),
   missingSlots: z.array(z.string()).default(() => []),
   confidence: z.number().min(0).max(1),
   ambiguityScore: z.number().min(0).max(1).optional(),
@@ -674,8 +675,14 @@ export const CreateBenchmarkRunRequestSchema = z.object({
   runner: BenchmarkRunnerSchema.optional().openapi({ example: "codebuild" }),
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
-  topK: z.number().int().min(1).max(50).optional().openapi({ example: 6 }),
-  memoryTopK: z.number().int().min(1).max(10).optional().openapi({ example: 4 }),
+  topK: z
+    .number()
+    .int()
+    .min(1)
+    .max(Math.max(ragRuntimePolicy.retrieval.maxTopK, ragRuntimePolicy.retrieval.searchRagMaxTopK))
+    .optional()
+    .openapi({ example: 6 }),
+  memoryTopK: z.number().int().min(1).max(ragRuntimePolicy.retrieval.maxMemoryTopK).optional().openapi({ example: 4 }),
   minScore: z.number().min(-1).max(1).optional().openapi({ example: 0.2 }),
   concurrency: z.number().int().min(1).max(20).optional().openapi({ example: 1 }),
   thresholds: BenchmarkRunThresholdsSchema.optional()

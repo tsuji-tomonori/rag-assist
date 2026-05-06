@@ -1,6 +1,7 @@
 import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
+import { normalizeSearchTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { loadPublishedAliasMap } from "./alias-artifacts.js"
 import type { DocumentManifest, JsonValue, RetrievedVector, VectorMetadata } from "../types.js"
@@ -119,9 +120,9 @@ let cachedIndex: CachedIndex | undefined
 
 export async function searchRag(deps: Dependencies, input: SearchInput, user: AppUser): Promise<SearchResponse> {
   const started = Date.now()
-  const topK = clampInt(input.topK ?? 10, 1, 50)
-  const lexicalTopK = clampInt(input.lexicalTopK ?? 80, 0, 100)
-  const semanticTopK = clampInt(input.semanticTopK ?? 80, 0, 100)
+  const topK = normalizeSearchTopK(input.topK)
+  const lexicalTopK = clampInt(input.lexicalTopK ?? ragRuntimePolicy.retrieval.lexicalTopK, 0, ragRuntimePolicy.retrieval.searchRagMaxSourceTopK)
+  const semanticTopK = clampInt(input.semanticTopK ?? ragRuntimePolicy.retrieval.semanticTopK, 0, ragRuntimePolicy.retrieval.searchRagMaxSourceTopK)
   const index = await getLexicalIndex(deps, user, input.filters)
   const queryTokens = tokenizeQuery(input.query)
 
@@ -134,7 +135,10 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     source: input.filters?.source,
     docType: input.filters?.docType
   }
-  const semanticQueryTopK = Math.min(100, Math.max(semanticTopK, semanticTopK * 3))
+  const semanticQueryTopK = Math.min(
+    ragRuntimePolicy.retrieval.searchRagMaxSourceTopK,
+    Math.max(semanticTopK, Math.ceil(semanticTopK * ragRuntimePolicy.retrieval.searchSemanticPrefetchMultiplier))
+  )
   const semanticHits =
     semanticTopK > 0
       ? (
@@ -289,7 +293,8 @@ export function bm25Search(index: LexicalIndex, rawTokens: string[], topK: numbe
         avgDocLen: index.avgDocLen,
         nDocs: index.nDocs
       })
-      scores.set(posting.docOrdinal, (scores.get(posting.docOrdinal) ?? 0) + score)
+      const abbreviationBonus = token.weight >= 5 ? token.weight * 0.35 : 0
+      scores.set(posting.docOrdinal, (scores.get(posting.docOrdinal) ?? 0) + score + abbreviationBonus)
       const terms = matched.get(posting.docOrdinal) ?? new Set<string>()
       terms.add(token.term)
       matched.set(posting.docOrdinal, terms)
@@ -413,6 +418,7 @@ function expandQueryTerms(rawTerms: string[], dictionary: string[], aliases: Ali
 
   for (const term of rawTerms) {
     for (const candidate of prefixCandidates(term, dictionary)) terms.set(candidate, Math.max(terms.get(candidate) ?? 0, 0.5))
+    for (const candidate of cjkAbbreviationCandidates(term, dictionary)) terms.set(candidate, Math.max(terms.get(candidate) ?? 0, 12))
     if (shouldFuzzy(term)) {
       for (const candidate of fuzzyCandidates(term, dictionary)) terms.set(candidate, Math.max(terms.get(candidate) ?? 0, 0.35))
     }
@@ -447,6 +453,14 @@ function prefixCandidates(term: string, dictionary: string[]): string[] {
   return dictionary.filter((candidate) => candidate.length > term.length && candidate.startsWith(term)).slice(0, 20)
 }
 
+function cjkAbbreviationCandidates(term: string, dictionary: string[]): string[] {
+  if (!isCjkAbbreviationTerm(term)) return []
+  return dictionary
+    .filter((candidate) => candidate.length > term.length && candidate.length <= Math.max(8, term.length * 12))
+    .filter((candidate) => isCjkAbbreviationExpansion(term, candidate))
+    .slice(0, 20)
+}
+
 function fuzzyCandidates(term: string, dictionary: string[]): string[] {
   const maxDistance = term.length > 7 ? 2 : 1
   return dictionary
@@ -457,6 +471,28 @@ function fuzzyCandidates(term: string, dictionary: string[]): string[] {
 
 function shouldFuzzy(term: string): boolean {
   return term.length >= 4 && /^[a-z0-9_-]+$/.test(term)
+}
+
+function isCjkAbbreviationTerm(term: string): boolean {
+  return term.length >= 2 && term.length <= 6 && isCjkText(term)
+}
+
+function isCjkText(value: string): boolean {
+  return /^[\p{Script=Katakana}\p{Script=Han}ー]+$/u.test(value)
+}
+
+function isCjkAbbreviationExpansion(term: string, candidate: string): boolean {
+  return isCjkText(candidate) && candidate[0] === term[0] && !candidate.includes(term) && isOrderedSubsequence(term, candidate)
+}
+
+function isOrderedSubsequence(short: string, long: string): boolean {
+  let index = 0
+  for (const char of short) {
+    index = long.indexOf(char, index)
+    if (index < 0) return false
+    index += char.length
+  }
+  return true
 }
 
 function levenshteinDistance(a: string, b: string, maxDistance: number): number {

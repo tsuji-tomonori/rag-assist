@@ -41,6 +41,20 @@ test("BM25 search covers exact, Japanese n-gram, prefix, and ASCII fuzzy matches
   assert.equal(bm25Search(index, tokenizeQuery("aproval"), 3)[0]?.id, "doc-request-chunk-0000")
 })
 
+test("BM25 search expands short CJK abbreviation-like terms from the corpus dictionary", () => {
+  const index = buildLexicalIndex(
+    [
+      lexicalDoc("doc-parental-leave-chunk-0000", "doc-parental-leave", "handbook.md", "育児休業の申請期限は開始日の1か月前です。"),
+      lexicalDoc("doc-vacation-chunk-0000", "doc-vacation", "handbook.md", "有給休暇の取得申請は取得日の前営業日までに提出します。")
+    ],
+    "test-index"
+  )
+
+  const hits = bm25Search(index, tokenizeQuery("8/1から育休を取る場合、いつまでに申請する必要がある?"), 3)
+
+  assert.equal(hits[0]?.id, "doc-parental-leave-chunk-0000")
+})
+
 test("BM25 alias expansion uses caller-provided alias maps only", () => {
   const docs = [
     lexicalDoc("doc-vacation-chunk-0000", "doc-vacation", "vacation-guide.md", "Vacation requests require manager approval.")

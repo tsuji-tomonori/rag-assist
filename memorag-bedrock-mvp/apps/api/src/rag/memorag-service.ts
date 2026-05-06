@@ -6,6 +6,7 @@ import { config } from "../config.js"
 import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
+import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
 import type { ChatInput, QaGraphResult } from "../agent/types.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
@@ -699,12 +700,12 @@ export class MemoRagService {
       modelId: input.modelId ?? config.defaultModelId,
       embeddingModelId: input.embeddingModelId ?? config.embeddingModelId,
       clueModelId: input.clueModelId ?? input.modelId ?? config.defaultMemoryModelId,
-      topK: input.topK ?? 6,
-      memoryTopK: input.memoryTopK ?? 4,
-      minScore: input.minScore ?? config.minRetrievalScore,
+      topK: normalizeTopK(input.topK),
+      memoryTopK: normalizeMemoryTopK(input.memoryTopK),
+      minScore: normalizeMinScore(input.minScore),
       strictGrounded: input.strictGrounded,
       useMemory: input.useMemory,
-      maxIterations: input.maxIterations,
+      maxIterations: normalizeMaxIterations(input.maxIterations),
       includeDebug: input.includeDebug ?? input.debug ?? false,
       createdAt: now,
       updatedAt: now,
@@ -1220,9 +1221,15 @@ export class MemoRagService {
       updatedAt: now,
       modelId: input.modelId ?? config.defaultModelId,
       embeddingModelId: input.embeddingModelId ?? config.embeddingModelId,
-      topK: input.topK ?? (suite.mode === "search" ? 10 : 6),
-      memoryTopK: input.memoryTopK ?? 4,
-      minScore: input.minScore ?? config.minRetrievalScore,
+      topK: input.topK === undefined
+        ? suite.mode === "search"
+          ? ragRuntimePolicy.retrieval.defaultSearchBenchmarkTopK
+          : ragRuntimePolicy.retrieval.defaultTopK
+        : suite.mode === "search"
+          ? normalizeSearchTopK(input.topK)
+          : normalizeTopK(input.topK),
+      memoryTopK: normalizeMemoryTopK(input.memoryTopK),
+      minScore: normalizeMinScore(input.minScore),
       concurrency: input.concurrency ?? suite.defaultConcurrency,
       thresholds: input.thresholds,
       summaryS3Key: `${outputPrefix}/summary.json`,
@@ -1361,20 +1368,19 @@ export class MemoRagService {
   }
 
   private async createMemoryCards(input: { fileName: string; text: string; chunks: Chunk[]; modelId?: string }): Promise<MemoryCard[]> {
-    const raw = await this.deps.textModel.generate(buildMemoryCardPrompt(input.fileName, input.text), {
-      modelId: input.modelId ?? config.defaultMemoryModelId,
-      temperature: 0,
-      maxTokens: 1000
-    })
+    const raw = await this.deps.textModel.generate(
+      buildMemoryCardPrompt(input.fileName, input.text),
+      llmOptions("memoryCard", input.modelId ?? config.defaultMemoryModelId)
+    )
     const parsed = parseJsonObject<MemoryJson>(raw)
-    const fallbackSummary = input.text.replace(/\s+/g, " ").slice(0, 500)
+    const fallbackSummary = input.text.replace(/\s+/g, " ").slice(0, ragRuntimePolicy.limits.memorySummaryMaxChars)
     const card: MemoryCard = {
       id: "memory-0000",
       level: "document",
       summary: parsed?.summary ?? fallbackSummary,
-      keywords: parsed?.keywords?.slice(0, 30) ?? [],
-      likelyQuestions: parsed?.likelyQuestions?.slice(0, 20) ?? [],
-      constraints: parsed?.constraints?.slice(0, 20) ?? [],
+      keywords: parsed?.keywords?.slice(0, ragRuntimePolicy.limits.memoryKeywordLimit) ?? [],
+      likelyQuestions: parsed?.likelyQuestions?.slice(0, ragRuntimePolicy.limits.memoryQuestionLimit) ?? [],
+      constraints: parsed?.constraints?.slice(0, ragRuntimePolicy.limits.memoryConstraintLimit) ?? [],
       sourceChunkIds: input.chunks.map((chunk) => chunk.id),
       text: ""
     }
@@ -1397,13 +1403,13 @@ function createSectionMemoryCards(chunks: Chunk[]): MemoryCard[] {
     if (!section) continue
     bySection.set(section, [...(bySection.get(section) ?? []), chunk])
   }
-  return [...bySection.entries()].slice(0, 12).map(([section, sectionChunks], index) => {
-    const summary = sectionChunks.map((chunk) => chunk.text).join(" ").replace(/\s+/g, " ").slice(0, 500)
+  return [...bySection.entries()].slice(0, ragRuntimePolicy.limits.sectionMemoryLimit).map(([section, sectionChunks], index) => {
+    const summary = sectionChunks.map((chunk) => chunk.text).join(" ").replace(/\s+/g, " ").slice(0, ragRuntimePolicy.limits.memorySummaryMaxChars)
     const card: MemoryCard = {
       id: `memory-section-${String(index).padStart(4, "0")}`,
       level: "section",
       summary,
-      keywords: section.split(/\s+|>|、|,/).map((item) => item.trim()).filter(Boolean).slice(0, 20),
+      keywords: section.split(/\s+|>|、|,/).map((item) => item.trim()).filter(Boolean).slice(0, ragRuntimePolicy.limits.memoryKeywordLimit),
       likelyQuestions: [`${section}について教えてください。`],
       constraints: [],
       sourceChunkIds: sectionChunks.map((chunk) => chunk.id),
@@ -1422,9 +1428,15 @@ function createSectionMemoryCards(chunks: Chunk[]): MemoryCard[] {
 }
 
 function createConceptMemoryCards(chunks: Chunk[], keywords: string[]): MemoryCard[] {
-  const terms = [...new Set([...keywords, ...chunks.flatMap((chunk) => chunk.heading ? [chunk.heading] : [])].map((term) => term.trim()).filter(Boolean))].slice(0, 8)
+  const terms = [...new Set([...keywords, ...chunks.flatMap((chunk) => chunk.heading ? [chunk.heading] : [])].map((term) => term.trim()).filter(Boolean))].slice(
+    0,
+    ragRuntimePolicy.limits.conceptMemoryTermLimit
+  )
   return terms.map((term, index) => {
-    const sourceChunks = chunks.filter((chunk) => (chunk.text.includes(term) || chunk.heading === term)).slice(0, 8)
+    const sourceChunks = chunks.filter((chunk) => (chunk.text.includes(term) || chunk.heading === term)).slice(
+      0,
+      ragRuntimePolicy.limits.conceptMemorySourceChunkLimit
+    )
     const card: MemoryCard = {
       id: `memory-concept-${String(index).padStart(4, "0")}`,
       level: "concept",
@@ -1493,7 +1505,7 @@ function normalizeAliasTerm(term: string): string {
 }
 
 function normalizeAliasExpansions(expansions: string[]): string[] {
-  return [...new Set(expansions.map((value) => value.trim()).filter(Boolean))].slice(0, 20)
+  return [...new Set(expansions.map((value) => value.trim()).filter(Boolean))].slice(0, ragRuntimePolicy.limits.aliasExpansionLimit)
 }
 
 function normalizeAliasScope(scope: AliasInput["scope"]): AliasDefinition["scope"] | undefined {

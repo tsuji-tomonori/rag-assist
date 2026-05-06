@@ -2,6 +2,7 @@ import type { QaAgentState, QaAgentUpdate } from "../state.js"
 import { NO_ANSWER } from "../state.js"
 import { hasUnavailableComputedFact, hasUsableComputedFact } from "../computation.js"
 import { hasUsableRequirementsClassificationEvidence, isRequirementsClassificationQuestion } from "../../rag/prompts.js"
+import { ragRuntimePolicy } from "../runtime-policy.js"
 
 type SelectedChunk = QaAgentState["selectedChunks"][number]
 type SentenceAssessment = NonNullable<QaAgentState["answerability"]["sentenceAssessments"]>[number]
@@ -17,7 +18,7 @@ export async function answerabilityGate(state: QaAgentState): Promise<QaAgentUpd
         answerability: {
           isAnswerable: true,
           reason: computedFactAnswerabilityReason(state),
-          confidence: 0.86,
+          confidence: ragRuntimePolicy.confidence.computedFact,
           sentenceAssessments: [
             {
               status: "ok",
@@ -45,7 +46,7 @@ export async function answerabilityGate(state: QaAgentState): Promise<QaAgentUpd
     answerability: {
       isAnswerable: true,
       reason: "sufficient_evidence",
-      confidence: Math.min(0.99, Math.max(topScore, coverage.confidence)),
+      confidence: Math.min(ragRuntimePolicy.confidence.answerabilityMax, Math.max(topScore, coverage.confidence)),
       sentenceAssessments: coverage.sentenceAssessments
     }
   }
@@ -64,6 +65,7 @@ function formatComputedFactAssessment(fact: QaAgentState["computedFacts"][number
   if (fact.kind === "current_date") return fact.explanation
   if (fact.kind === "add_days") return `${fact.baseDate}+${fact.amount}日=${fact.resultDate}`
   if (fact.kind === "threshold_comparison") return fact.explanation
+  if (fact.kind === "relative_policy_deadline") return `${fact.baseDate}-${fact.amount}か月=${fact.resultDate}`
   if (fact.kind === "task_deadline_query_unavailable") return fact.reason
   return fact.reason
 }
@@ -91,18 +93,18 @@ function estimateRequiredFactCoverage(question: string, chunks: SelectedChunk[])
   const sentenceAssessments = buildSentenceAssessments(chunks, requiredChecks)
 
   if (isRequirementsClassificationQuestion(question) && !hasUsableRequirementsClassificationEvidence(joined)) {
-    return { ok: false, confidence: 0.35, sentenceAssessments }
+    return { ok: false, confidence: ragRuntimePolicy.confidence.missingClassificationFact, sentenceAssessments }
   }
 
   const asksAmount = /金額|費用|いくら|円|上限/.test(question)
   const asksDate = /いつ|期限|日数|何日|何営業日|開始日|終了日/.test(question)
   const asksHow = /方法|手順|申請|やり方|フロー/.test(question)
 
-  if (asksAmount && !matchesFactCheck("amount", joined)) return { ok: false, confidence: 0.4, sentenceAssessments }
-  if (asksDate && !matchesFactCheck("date", joined)) return { ok: false, confidence: 0.4, sentenceAssessments }
-  if (asksHow && !matchesFactCheck("procedure", joined)) return { ok: false, confidence: 0.45, sentenceAssessments }
+  if (asksAmount && !matchesFactCheck("amount", joined)) return { ok: false, confidence: ragRuntimePolicy.confidence.missingAmountFact, sentenceAssessments }
+  if (asksDate && !matchesFactCheck("date", joined)) return { ok: false, confidence: ragRuntimePolicy.confidence.missingDateFact, sentenceAssessments }
+  if (asksHow && !matchesFactCheck("procedure", joined)) return { ok: false, confidence: ragRuntimePolicy.confidence.missingProcedureFact, sentenceAssessments }
 
-  return { ok: true, confidence: 0.8, sentenceAssessments }
+  return { ok: true, confidence: ragRuntimePolicy.confidence.supportedFactCoverage, sentenceAssessments }
 }
 
 function requiredFactChecks(question: string): FactCheck[] {
@@ -155,7 +157,7 @@ function buildLowScoreAssessments(chunks: SelectedChunk[], minScore: number): Se
   )
 }
 
-function selectAssessmentsForDebug(assessments: SentenceAssessment[], maxItems = 12): SentenceAssessment[] {
+function selectAssessmentsForDebug(assessments: SentenceAssessment[], maxItems = ragRuntimePolicy.limits.answerabilityDebugAssessmentLimit): SentenceAssessment[] {
   const ok = assessments.filter((assessment) => assessment.status === "ok")
   const ng = assessments.filter((assessment) => assessment.status === "ng")
   return [...ok.slice(0, maxItems), ...ng.slice(0, Math.max(0, maxItems - ok.length))].slice(0, maxItems)
@@ -167,7 +169,7 @@ function splitSentences(text: string): string[] {
     .split(/(?<=[。！？!?])\s*|\n+/u)
     .map((sentence) => sentence.trim())
     .filter(Boolean)
-    .slice(0, 24)
+    .slice(0, ragRuntimePolicy.limits.answerabilitySentenceScanLimit)
 }
 
 function matchesFactCheck(check: FactCheck, text: string): boolean {

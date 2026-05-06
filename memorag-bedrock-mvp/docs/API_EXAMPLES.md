@@ -105,6 +105,7 @@ curl -s http://localhost:8787/chat \
 ```
 
 選択肢を選んだ後は、選択した `resolvedQuery` を次の `question` として送り、追跡用に `clarificationContext` を付与できる。
+自由入力で確認質問に回答する場合も `originalQuestion` と `selectedValue` を送ると、API は元質問と補足を合わせて検索・回答する。
 
 ```json
 {
@@ -113,6 +114,18 @@ curl -s http://localhost:8787/chat \
     "originalQuestion": "申請期限は？",
     "selectedOptionId": "opt-1",
     "selectedValue": "経費精算"
+  }
+}
+```
+
+自由入力 follow-up の例:
+
+```json
+{
+  "question": "育児休業",
+  "clarificationContext": {
+    "originalQuestion": "8/1から育休を取る場合、いつまでに申請する必要がある?",
+    "selectedValue": "育児休業"
   }
 }
 ```

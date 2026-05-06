@@ -1,4 +1,5 @@
 import type { Citation, RetrievedVector } from "../types.js"
+import { ragRuntimePolicy } from "./runtime-policy.js"
 
 export function toCitation(hit: RetrievedVector): Citation {
   return {
@@ -26,7 +27,7 @@ export function buildSearchClues(question: string, generatedClues: string[]): st
         "ソフトウェア製品要求 ソフトウェアプロジェクト要求 機能要求 非機能要求 技術制約 サービス品質制約"
       ]
     : []
-  return unique([question, ...anchors, ...generatedClues]).slice(0, 6)
+  return unique([question, ...anchors, ...generatedClues]).slice(0, ragRuntimePolicy.limits.searchClueLimit)
 }
 
 export function clamp(value: number, min: number, max: number): number {
