@@ -1,6 +1,6 @@
 # 回答担当・性能テスト担当の権限アクセス不具合修正
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -60,3 +60,34 @@
 - UI の表示条件と API の permission が別々に定義されている場合、片方だけ直すと再発する。
 - local auth と Cognito group のロール名がずれている場合、テストでは通っても実環境で再現する可能性がある。
 - 性能テスト機能には CodeBuild / artifact / 履歴取得など複数 route があり、必要権限の漏れを網羅する必要がある。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/140
+- commit: `ab9d3bf`
+- 障害レポート: `reports/bugs/20260506-2303-role-assignment-access-denied.md`
+- 作業完了レポート: `reports/working/20260506-2317-role-access-fix.md`
+
+## 受け入れ条件の確認結果
+
+- AC-001: 満たした。根拠: 障害レポートに `assignUserRoles()` が管理台帳だけを更新していたことを記録。
+- AC-002: 満たした。根拠: 障害レポートに `BENCHMARK_RUNNER` と Web の `benchmark:read` / `benchmark:run` 要件のずれを記録。
+- AC-003: 満たした。根拠: `reports/bugs/20260506-2303-role-assignment-access-denied.md`。
+- AC-004: 満たした。根拠: API test の `answer editors can list questions without user administration permission` と Web role navigation test。
+- AC-005: 満たした。根拠: API test の `benchmark operators can use benchmark run administration without direct query permission` と Web role navigation test。
+- AC-006: 満たした。根拠: API / Web / Infra test、typecheck、`git diff --check` を実行。
+- AC-007: 満たした。根拠: PR #140 に受け入れ条件確認コメントとセルフレビューコメントを投稿。
+
+## 実行した検証
+
+- `npm --prefix memorag-bedrock-mvp ci`: pass
+- `UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck --workspaces --if-present`: pass
+- `git diff --check`: pass
+
+## 未実施
+
+- 実 AWS 環境 smoke は未実施。CDK deploy 後に `BENCHMARK_OPERATOR` group 作成と対象ユーザー再ログイン後の permission 反映確認が必要。
+- `task docs:check:changed` は task が存在しないため未実施。
