@@ -115,7 +115,8 @@ const benchmarkSeedMetadataKeys = new Set([
   "aclGroups",
   "docType",
   "lifecycleStatus",
-  "source"
+  "source",
+  "searchAliases"
 ])
 
 function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof DocumentUploadRequestSchema>) {
@@ -138,6 +139,7 @@ export function isBenchmarkSeedUpload(body: z.infer<typeof DocumentUploadRequest
   if (metadata.docType !== "benchmark-corpus") return false
   if (metadata.lifecycleStatus !== "active") return false
   if (!Array.isArray(metadata.aclGroups) || metadata.aclGroups.length !== 1 || metadata.aclGroups[0] !== "BENCHMARK_RUNNER") return false
+  if (metadata.searchAliases !== undefined && !isBenchmarkSearchAliases(metadata.searchAliases)) return false
   if (!isSafeBenchmarkSeedFileName(body.fileName)) return false
   if (body.text !== undefined) return isBenchmarkSeedTextUpload(body)
   if (body.contentBase64 !== undefined) return isBenchmarkSeedPdfUpload(body)
@@ -148,6 +150,17 @@ function isBenchmarkSeedTextUpload(body: z.infer<typeof DocumentUploadRequestSch
   if (!body.text || body.text.length > maxBenchmarkSeedTextChars || body.contentBase64 || body.textractJson) return false
   if (!/\.(md|txt)$/i.test(body.fileName)) return false
   return !body.mimeType || body.mimeType === "text/markdown" || body.mimeType === "text/plain"
+}
+
+function isBenchmarkSearchAliases(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  return Object.entries(value).every(([term, expansions]) =>
+    typeof term === "string"
+      && term.trim().length > 0
+      && Array.isArray(expansions)
+      && expansions.length > 0
+      && expansions.every((item) => typeof item === "string" && item.trim().length > 0)
+  )
 }
 
 function isBenchmarkSeedPdfUpload(body: z.infer<typeof DocumentUploadRequestSchema>): boolean {

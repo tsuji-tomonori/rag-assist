@@ -25,6 +25,10 @@ export type SeededDocument = {
   ingestSignature: string
 }
 
+type CorpusFileMetadata = {
+  searchAliases?: Record<string, string[]>
+}
+
 type SeedCorpusOptions = {
   apiBaseUrl: string
   authToken?: string
@@ -36,7 +40,7 @@ type SeedCorpusOptions = {
   log?: (message: string) => void
 }
 
-const benchmarkIngestSignatureVersion = "benchmark-corpus-seed-v2"
+const benchmarkIngestSignatureVersion = "benchmark-corpus-seed-v3"
 const benchmarkCorpusAclGroups = ["BENCHMARK_RUNNER"]
 const benchmarkCorpusDocType = "benchmark-corpus"
 const benchmarkCorpusSource = "benchmark-runner"
@@ -55,12 +59,14 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
   for (const filePath of files) {
     const fileName = path.basename(filePath)
     const content = await readFile(filePath)
+    const metadata = await readCorpusFileMetadata(filePath)
     const sourceHash = sha256(content)
     const ingestSignature = createBenchmarkIngestSignature({
       sourceHash,
       suiteId: options.suiteId,
       skipMemory: options.skipMemory,
-      embeddingModelId: options.embeddingModelId
+      embeddingModelId: options.embeddingModelId,
+      metadata
     })
     const existing = existingDocuments.find((document) =>
       isMatchingSeedDocument(document, fileName, options.suiteId, sourceHash, ingestSignature, options)
@@ -82,7 +88,8 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
       sourceHash,
       ingestSignature,
       skipMemory: options.skipMemory,
-      embeddingModelId: options.embeddingModelId
+      embeddingModelId: options.embeddingModelId,
+      metadata
     })
     seeded.push({ fileName, status: "uploaded", chunkCount: uploaded.chunkCount ?? 0, sourceHash, ingestSignature })
     options.log?.(`Benchmark corpus uploaded: ${fileName} (${uploaded.chunkCount ?? 0} chunks)`)
@@ -106,13 +113,15 @@ export function createBenchmarkIngestSignature(input: {
   suiteId: string
   skipMemory: boolean
   embeddingModelId?: string
+  metadata?: CorpusFileMetadata
 }): string {
   return sha256(JSON.stringify({
     version: benchmarkIngestSignatureVersion,
     sourceHash: input.sourceHash,
     suiteId: input.suiteId,
     skipMemory: input.skipMemory,
-    embeddingModelId: input.embeddingModelId ?? "api-default"
+    embeddingModelId: input.embeddingModelId ?? "api-default",
+    metadata: input.metadata ?? {}
   }))
 }
 
@@ -152,6 +161,7 @@ async function uploadDocument(input: {
   ingestSignature: string
   skipMemory: boolean
   embeddingModelId?: string
+  metadata: CorpusFileMetadata
 }): Promise<DocumentManifest> {
   const response = await input.fetcher(`${input.apiBaseUrl}/documents`, {
     method: "POST",
@@ -172,7 +182,8 @@ async function uploadDocument(input: {
         aclGroups: benchmarkCorpusAclGroups,
         docType: benchmarkCorpusDocType,
         lifecycleStatus: "active",
-        source: benchmarkCorpusSource
+        source: benchmarkCorpusSource,
+        ...input.metadata
       }
     })
   })
@@ -182,6 +193,17 @@ async function uploadDocument(input: {
   if ((manifest.lifecycleStatus ?? "active") !== "active") throw new Error(`Benchmark corpus ${input.fileName} is not active after upload`)
   if ((manifest.chunkCount ?? 0) <= 0) throw new Error(`Benchmark corpus ${input.fileName} produced no chunks`)
   return manifest
+}
+
+async function readCorpusFileMetadata(filePath: string): Promise<CorpusFileMetadata> {
+  try {
+    const raw = JSON.parse(await readFile(`${filePath}.metadata.json`, "utf-8")) as CorpusFileMetadata
+    const searchAliases = normalizeSearchAliases(raw.searchAliases)
+    return searchAliases ? { searchAliases } : {}
+  } catch (error) {
+    if (isMissingFileError(error)) return {}
+    throw error
+  }
 }
 
 function isMatchingSeedDocument(
@@ -211,6 +233,24 @@ function hasBenchmarkCorpusAcl(value: unknown): boolean {
   return Array.isArray(value)
     && value.length === benchmarkCorpusAclGroups.length
     && benchmarkCorpusAclGroups.every((group) => value.includes(group))
+}
+
+function normalizeSearchAliases(value: unknown): Record<string, string[]> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
+  const aliases: Record<string, string[]> = {}
+  for (const [term, expansions] of Object.entries(value)) {
+    if (typeof term !== "string" || !term.trim() || !Array.isArray(expansions)) continue
+    const normalizedExpansions = expansions
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter(Boolean)
+    if (normalizedExpansions.length > 0) aliases[term.trim()] = normalizedExpansions
+  }
+  return Object.keys(aliases).length > 0 ? aliases : undefined
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && (error as { code?: unknown }).code === "ENOENT"
 }
 
 function createHeaders(authToken: string | undefined): Record<string, string> {

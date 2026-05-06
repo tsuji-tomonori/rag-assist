@@ -173,7 +173,7 @@ curl -s http://localhost:8787/chat \
 
 CodeBuild runner が本番 API を叩くための認証 token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から自動取得します。管理者が管理画面で token を入力する必要はありません。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡します。secret は `username` / `password`、または `idToken` / `token` を持てます。`username` / `password` 認証で token 解決に失敗した場合、CodeBuild runner は benchmark を継続せず失敗します。agent mode は `/benchmark/query`、search mode は `/benchmark/search` を呼びます。
 
-`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1`、`search-smoke-v1`、`search-standard-v1` の runner は、実行前に `benchmark/corpus/standard-agent-v1/handbook.md` を `/documents` へ seed し、active chunk が作成されたことを確認してから `/benchmark/query` または `/benchmark/search` を実行します。`mmrag-docqa-v1` は `benchmark/corpus/mmrag-docqa-v1/` を seed し、管理画面の「性能テスト」から `MMRAG-DocQA` として起動できます。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]` と `docType: "benchmark-corpus"` で隔離し、通常利用者の RAG 検索・回答・文書一覧には混入させません。同じ source hash と ingest signature の seed 済み資料が active な場合は再アップロードを省略します。任意の corpus を使う場合は `BENCHMARK_CORPUS_DIR` を指定してください。同じ corpus を複数 suite で共有する場合は `BENCHMARK_CORPUS_SUITE_ID` で seed 判定用の corpus identity を固定できます。
+`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1`、`search-smoke-v1`、`search-standard-v1` の runner は、実行前に `benchmark/corpus/standard-agent-v1/handbook.md` を `/documents` へ seed し、active chunk が作成されたことを確認してから `/benchmark/query` または `/benchmark/search` を実行します。`mmrag-docqa-v1` は `benchmark/corpus/mmrag-docqa-v1/` を seed し、管理画面の「性能テスト」から `MMRAG-DocQA` として起動できます。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]` と `docType: "benchmark-corpus"` で隔離し、通常利用者の RAG 検索・回答・文書一覧には混入させません。同じ source hash、per-file metadata、ingest signature の seed 済み資料が active な場合は再アップロードを省略します。任意の corpus を使う場合は `BENCHMARK_CORPUS_DIR` を指定してください。同じ corpus を複数 suite で共有する場合は `BENCHMARK_CORPUS_SUITE_ID` で seed 判定用の corpus identity を固定できます。`<file>.metadata.json` を置くと benchmark seed 文書に `searchAliases` を付与でき、search benchmark の alias case で使えます。
 
 CDK deploy 時に benchmark 用 S3 bucket へ `datasets/agent/smoke-v1.jsonl`、`datasets/agent/standard-v1.jsonl`、`datasets/agent/clarification-smoke-v1.jsonl`、`datasets/agent/mmrag-docqa-v1.jsonl`、`datasets/search/smoke-v1.jsonl`、`datasets/search/standard-v1.jsonl` を配置します。管理画面の `clarification-smoke-v1` suite は `benchmark/dataset.clarification.sample.jsonl`、`mmrag-docqa-v1` suite は `benchmark/dataset.mmrag-docqa.sample.jsonl` を元にします。`mmrag-docqa-v1` の sample dataset / corpus は UI と runner 導線確認用であり、本番評価には `docs/1_要求_REQ/31_変更管理_CHANGE/MMRAG_DOCQA_CONFIRMATION_PROMPT.md` の確認事項を埋めて差し替えてください。
 
@@ -189,6 +189,8 @@ BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1 \
 BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1 \
 npm run start -w @memorag-mvp/benchmark
 ```
+
+検索 benchmark は `npm run start:search -w @memorag-mvp/benchmark` または `task benchmark:search:sample` で実行します。sample task は `BENCHMARK_SUITE_ID=search-standard-v1` と同じ corpus seed を指定します。
 
 `OUTPUT` には行ごとのAPI応答と評価結果、`SUMMARY` には集計JSON、`REPORT` にはMarkdownレポートが出力されます。
 

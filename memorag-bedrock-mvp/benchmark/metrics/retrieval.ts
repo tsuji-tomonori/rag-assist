@@ -106,9 +106,15 @@ function reciprocalRank(results: RetrievedItem[], relevant: RelevanceItem[], k: 
 }
 
 function ndcgAt(results: RetrievedItem[], relevant: RelevanceItem[], k: number): number {
+  const consumedRelevantIndexes = new Set<number>()
   const gains = results.slice(0, k).map((result) => {
-    const matched = relevant.filter((item) => matchesRelevance(result, item)).sort((a, b) => relevanceGrade(b) - relevanceGrade(a))[0]
-    return matched ? relevanceGrade(matched) : 0
+    const matched = relevant
+      .map((item, index) => ({ item, index }))
+      .filter(({ item, index }) => !consumedRelevantIndexes.has(index) && matchesRelevance(result, item))
+      .sort((a, b) => relevanceGrade(b.item) - relevanceGrade(a.item))[0]
+    if (!matched) return 0
+    consumedRelevantIndexes.add(matched.index)
+    return relevanceGrade(matched.item)
   })
   const dcgValue = dcg(gains)
   const idealGains = relevant.map(relevanceGrade).sort((a, b) => b - a).slice(0, k)

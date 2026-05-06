@@ -593,15 +593,41 @@ test("benchmark runner can list and upload only isolated benchmark seed document
           aclGroups: ["BENCHMARK_RUNNER"],
           docType: "benchmark-corpus",
           lifecycleStatus: "active",
-          source: "benchmark-runner"
+          source: "benchmark-runner",
+          searchAliases: { "立替": ["経費精算"] }
         }
       })
     })
     assert.equal(seedUpload.status, 200)
-    const manifest = (await seedUpload.json()) as { metadata?: { aclGroups?: string[]; docType?: string; source?: string } }
+    const manifest = (await seedUpload.json()) as { metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]> } }
     assert.deepEqual(manifest.metadata?.aclGroups, ["BENCHMARK_RUNNER"])
     assert.equal(manifest.metadata?.docType, "benchmark-corpus")
     assert.equal(manifest.metadata?.source, "benchmark-runner")
+    assert.deepEqual(manifest.metadata?.searchAliases, { "立替": ["経費精算"] })
+
+    const allganizeSeedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "allganize.txt",
+        text: "Allganize benchmark seed text.",
+        mimeType: "text/plain",
+        skipMemory: true,
+        metadata: {
+          benchmarkSeed: true,
+          benchmarkSuiteId: "allganize-rag-evaluation-ja-v1",
+          benchmarkSourceHash: "allganize-hash",
+          benchmarkIngestSignature: "allganize-signature",
+          benchmarkCorpusSkipMemory: true,
+          benchmarkEmbeddingModelId: "api-default",
+          aclGroups: ["BENCHMARK_RUNNER"],
+          docType: "benchmark-corpus",
+          lifecycleStatus: "active",
+          source: "benchmark-runner"
+        }
+      })
+    })
+    assert.equal(allganizeSeedUpload.status, 200)
   } finally {
     server.kill("SIGTERM")
   }
