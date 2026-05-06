@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
+import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { adminAuditActionLabel, adminAuditSummary, costConfidenceLabel, formatCurrency, formatDate, formatDateTime, managedUserStatusLabel } from "../../../shared/utils/format.js"
 
 export function AdminWorkspace({
@@ -112,6 +113,7 @@ export function AdminWorkspace({
           <span>{user?.groups.join(" / ") || "権限未取得"}</span>
         </div>
       </header>
+      {loading && <LoadingStatus label="管理APIを処理中" />}
 
       <div className="admin-overview-grid">
         {canManageDocuments && (
@@ -201,7 +203,10 @@ export function AdminWorkspace({
           <section className="admin-section-panel user-admin-panel" aria-label="ユーザー管理一覧">
             <div className="document-list-head">
               <h3>ユーザー管理</h3>
-              <button type="button" onClick={() => void onRefreshAdminData()} disabled={loading}>更新</button>
+              <button type="button" onClick={() => void onRefreshAdminData()} disabled={loading}>
+                {loading && <LoadingSpinner className="button-spinner" />}
+                <span>更新</span>
+              </button>
             </div>
             {canCreateUsers && (
               <AdminCreateUserForm roles={accessRoles} loading={loading} onCreateUser={onCreateUser} />
@@ -398,7 +403,8 @@ function AliasAdminPanel({
         <div className="inline-action-group">
           <span>{aliases.length} 件</span>
           <button type="button" disabled={!canPublish || loading} onClick={() => void onPublish()}>
-            公開
+            {loading && <LoadingSpinner className="button-spinner" />}
+            <span>公開</span>
           </button>
         </div>
       </div>
@@ -418,7 +424,8 @@ function AliasAdminPanel({
             <input value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="任意" disabled={loading} />
           </label>
           <button type="submit" disabled={loading || !term.trim() || parseExpansionList(expansions).length === 0}>
-            追加
+            {loading && <LoadingSpinner className="button-spinner" />}
+            <span>追加</span>
           </button>
         </form>
       )}
@@ -436,16 +443,20 @@ function AliasAdminPanel({
               </div>
               <div className="inline-action-group">
                 <button type="button" disabled={!canWrite || loading || alias.status === "disabled"} onClick={() => void onUpdate(alias.aliasId, { expansions: alias.expansions })}>
-                  下書き化
+                  {loading && <LoadingSpinner className="button-spinner" />}
+                  <span>下書き化</span>
                 </button>
                 <button type="button" disabled={!canReview || loading || alias.status === "disabled"} onClick={() => void onReview(alias.aliasId, "approve")}>
-                  承認
+                  {loading && <LoadingSpinner className="button-spinner" />}
+                  <span>承認</span>
                 </button>
                 <button type="button" disabled={!canReview || loading || alias.status === "disabled"} onClick={() => void onReview(alias.aliasId, "reject", "Rejected from UI")}>
-                  差戻
+                  {loading && <LoadingSpinner className="button-spinner" />}
+                  <span>差戻</span>
                 </button>
                 <button type="button" disabled={!canDisable || loading || alias.status === "disabled"} onClick={() => void onDisable(alias.aliasId)}>
-                  無効
+                  {loading && <LoadingSpinner className="button-spinner" />}
+                  <span>無効</span>
                 </button>
               </div>
             </article>
@@ -516,7 +527,10 @@ function AdminCreateUserForm({
           ))}
         </select>
       </label>
-      <button type="submit" disabled={loading || email.trim().length === 0}>作成</button>
+      <button type="submit" disabled={loading || email.trim().length === 0}>
+        {loading && <LoadingSpinner className="button-spinner" />}
+        <span>作成</span>
+      </button>
     </form>
   )
 }
@@ -565,7 +579,8 @@ function ManagedUserRow({
             ))}
           </select>
           <button type="button" disabled={!canAssignRoles || loading || user.groups.includes(selectedRole)} onClick={() => void onAssignRoles(user.userId, [selectedRole])}>
-            付与
+            {loading && <LoadingSpinner className="button-spinner" />}
+            <span>付与</span>
           </button>
         </div>
         <small>{user.groups.join(" / ")}</small>
@@ -573,11 +588,20 @@ function ManagedUserRow({
       <span role="cell">
         <div className="user-row-actions">
           {user.status === "suspended" ? (
-            <button type="button" disabled={!canUnsuspend || loading} onClick={() => void onSetStatus(user.userId, "unsuspend")}>再開</button>
+            <button type="button" disabled={!canUnsuspend || loading} onClick={() => void onSetStatus(user.userId, "unsuspend")}>
+              {loading && <LoadingSpinner className="button-spinner" />}
+              <span>再開</span>
+            </button>
           ) : (
-            <button type="button" disabled={!canSuspend || loading} onClick={() => void onSetStatus(user.userId, "suspend")}>停止</button>
+            <button type="button" disabled={!canSuspend || loading} onClick={() => void onSetStatus(user.userId, "suspend")}>
+              {loading && <LoadingSpinner className="button-spinner" />}
+              <span>停止</span>
+            </button>
           )}
-          <button type="button" disabled={!canDelete || loading} onClick={() => void onSetStatus(user.userId, "delete")}>削除</button>
+          <button type="button" disabled={!canDelete || loading} onClick={() => void onSetStatus(user.userId, "delete")}>
+            {loading && <LoadingSpinner className="button-spinner" />}
+            <span>削除</span>
+          </button>
         </div>
       </span>
     </div>

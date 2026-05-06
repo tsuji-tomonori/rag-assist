@@ -50,6 +50,25 @@ describe("LoginPage", () => {
     expect(onLogin).toHaveBeenCalledWith({ email: "tester@example.com", password: "Password123!", remember: true })
   })
 
+  it("shows a loading spinner while sign-in is pending", async () => {
+    let resolveLogin: ((value: Awaited<ReturnType<ComponentProps<typeof LoginPage>["onLogin"]>>) => void) | undefined
+    const onLogin = vi.fn().mockImplementation(() => new Promise((resolve) => {
+      resolveLogin = resolve
+    }))
+    renderLoginPage({ onLogin })
+
+    await userEvent.type(screen.getByPlaceholderText("メールアドレスを入力"), "tester@example.com")
+    await userEvent.type(screen.getByPlaceholderText("パスワードを入力"), "Password123!")
+    await userEvent.click(screen.getByRole("button", { name: "サインイン" }))
+
+    expect(screen.getByRole("button", { name: "サインイン中" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "サインイン中" }).querySelector(".loading-spinner")).toBeInTheDocument()
+    expect(screen.getByPlaceholderText("メールアドレスを入力")).toBeDisabled()
+
+    resolveLogin?.({ email: "tester@example.com", idToken: "id-token", expiresAt: Date.now() + 3600_000 })
+    expect(await screen.findByRole("button", { name: "サインイン" })).toBeInTheDocument()
+  })
+
   it("shows the password change form and completes NEW_PASSWORD_REQUIRED", async () => {
     const onLogin = vi.fn().mockResolvedValue({
       type: "NEW_PASSWORD_REQUIRED",

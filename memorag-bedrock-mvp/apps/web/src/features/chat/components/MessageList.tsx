@@ -3,6 +3,7 @@ import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
+import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 import { getLinkedQuestion } from "../utils/getLinkedQuestion.js"
 import { ChatEmptyState } from "./ChatEmptyState.js"
 import { MessageItem } from "./MessageItem.js"
@@ -56,7 +57,7 @@ export function MessageList({
       {pendingActivity && (
         <article className="message-row assistant processing-row" aria-live="polite" ref={latestMessageRef}>
           <div className="message-avatar">
-            <span className="loading-spinner" aria-hidden="true" />
+            <LoadingSpinner />
           </div>
           <div className="message-content">
             <div className="message-meta">

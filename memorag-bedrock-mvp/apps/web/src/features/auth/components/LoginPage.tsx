@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react"
 import type { AuthResult, AuthSession, NewPasswordRequiredChallenge, SignUpResult } from "../../../authClient.js"
+import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 import { LoginHeroGraphic } from "./LoginHeroGraphic.js"
 
 type LoginPageProps = {
@@ -171,6 +172,7 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
                 type="password"
                 placeholder="新しいパスワードを入力"
                 value={newPassword}
+                disabled={isSubmitting}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
               <label>新しいパスワード（確認）</label>
@@ -178,61 +180,65 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
                 type="password"
                 placeholder="新しいパスワードを再入力"
                 value={confirmPassword}
+                disabled={isSubmitting}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </>
           ) : mode === "confirmSignUp" ? (
             <>
               <label>メールアドレス</label>
-              <input type="email" placeholder="メールアドレスを入力" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
               <label>確認コード</label>
               <input
                 type="text"
                 inputMode="numeric"
                 placeholder="確認コードを入力"
                 value={confirmationCode}
+                disabled={isSubmitting}
                 onChange={(e) => setConfirmationCode(e.target.value)}
               />
             </>
           ) : mode === "signUp" ? (
             <>
               <label>メールアドレス</label>
-              <input type="email" placeholder="メールアドレスを入力" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
               <label>パスワード</label>
-              <input type="password" placeholder="パスワードを入力" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <input type="password" placeholder="パスワードを入力" value={password} disabled={isSubmitting} onChange={(e) => setPassword(e.target.value)} />
               <label>パスワード（確認）</label>
               <input
                 type="password"
                 placeholder="パスワードを再入力"
                 value={signUpPasswordConfirm}
+                disabled={isSubmitting}
                 onChange={(e) => setSignUpPasswordConfirm(e.target.value)}
               />
             </>
           ) : (
             <>
               <label>メールアドレス</label>
-              <input type="email" placeholder="メールアドレスを入力" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
               <label>パスワード</label>
-              <input type="password" placeholder="パスワードを入力" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <input type="password" placeholder="パスワードを入力" value={password} disabled={isSubmitting} onChange={(e) => setPassword(e.target.value)} />
             </>
           )}
           {!isChangingPassword && mode === "signIn" ? (
-            <label className="remember"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> ログイン状態を保持</label>
+            <label className="remember"><input type="checkbox" checked={remember} disabled={isSubmitting} onChange={(e) => setRemember(e.target.checked)} /> ログイン状態を保持</label>
           ) : null}
           {notice ? <p className="login-success" role="status">{notice}</p> : null}
           {error ? <p className="login-error" role="alert">{error}</p> : null}
           <button type="submit" disabled={isSubmitting}>
-            {submitLabel}
+            {isSubmitting && <LoadingSpinner className="button-spinner" />}
+            <span>{submitLabel}</span>
           </button>
           {!isChangingPassword ? (
             <div className="login-secondary-actions">
               {mode === "signIn" ? (
                 <>
-                  <button type="button" className="login-text-button" onClick={() => switchMode("signUp")}>アカウント作成</button>
-                  <button type="button" className="login-text-button" onClick={() => switchMode("confirmSignUp")}>確認コード入力</button>
+                  <button type="button" className="login-text-button" disabled={isSubmitting} onClick={() => switchMode("signUp")}>アカウント作成</button>
+                  <button type="button" className="login-text-button" disabled={isSubmitting} onClick={() => switchMode("confirmSignUp")}>確認コード入力</button>
                 </>
               ) : (
-                <button type="button" className="login-text-button" onClick={() => switchMode("signIn")}>サインインへ戻る</button>
+                <button type="button" className="login-text-button" disabled={isSubmitting} onClick={() => switchMode("signIn")}>サインインへ戻る</button>
               )}
             </div>
           ) : null}

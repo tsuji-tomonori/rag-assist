@@ -24,6 +24,7 @@
 
 ## Worktree Task PR Flow
 - 対象: 「worktree を作成して作業」「task md を作成してから作業」「git commit + PR create to main」「PR 作成は GitHubApps / GitHub Apps を利用」など、worktree から main 向け PR まで進める依頼。
+- 上記の依頼を agent が守るよう `skills` や `AGENTS.md` で設定されているか確認し、不足時に対応する依頼も同じ workflow の対象として扱う。
 - 必読: `skills/worktree-task-pr-flow/SKILL.md`
 - 作業ブランチは原則 `origin/main` から専用 worktree として作成し、元 worktree の未追跡・未コミット変更を混ぜない。
 - 作業前に `tasks/todo/`, `tasks/do/`, `tasks/done/` を確認または作成し、着手する task md を `tasks/do/` に置く。
@@ -47,6 +48,14 @@
 - PR タイトル、PR 本文、PR コメント、レビューコメントは日本語で書く。
 - ブランチ名、ファイルパス、コマンド、API 名、型名、関数名、issue 番号は原文維持可。
 - PR 本文は `.github/pull_request_template.md` の見出しを優先する。
+
+## PR Self Review
+- 対象: PR 作成、PR 更新、PR 本文更新、PR コメント、レビューコメント、PR のセルフレビュー、`git diff` や作業レポートからレビュー観点を作る作業。
+- 必読: `skills/pr-review-self-review/SKILL.md`
+- `rag-assist` / `memorag-bedrock-mvp` の PR を作成または更新するたびに、変更差分・PR本文・検証結果を確認し、日本語のセルフレビュー結果を PR の top-level comment として記載する。
+- セルフレビューでは特に `docs と実装の同期`、`変更範囲に見合うテスト`、`RAG の根拠性・認可境界を弱めていないこと` を強く確認する。
+- 未実施の検証、未確認の CI、GitHub Apps や push の制約は実施済み扱いせず、PR コメントと PR 本文に理由とリスクを明記する。
+- blocking 指摘がある場合は、修正または blocked / partially complete として明示するまで「完了」扱いにしない。
 
 ## Post Task Work Report
 - 対象: ファイル編集、コマンド実行、調査、検証、ドキュメント作成など、リポジトリへの実作業。ユーザーが「レポート不要」「reports には出さないで」などと明示した場合のみ省略可。

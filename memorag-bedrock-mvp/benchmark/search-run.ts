@@ -119,6 +119,7 @@ type SearchSummary = {
   total: number
   succeeded: number
   failedHttp: number
+  runnerError?: string
   metrics: SearchMetrics
   failures: Array<{
     id: string
@@ -138,43 +139,61 @@ const summaryPath = resolveOutputPath(process.env.SUMMARY ?? outputPath.replace(
 const baselineSummaryPath = process.env.BASELINE_SUMMARY
   ? resolveExistingPath(process.env.BASELINE_SUMMARY, [process.cwd(), benchmarkDir, repoRoot])
   : undefined
-const baselineSummary = baselineSummaryPath
-  ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { evaluatorProfile?: SearchSummary["evaluatorProfile"] })
-  : undefined
-const suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
-const baselineComparisonNote = baselineSummary
-  ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
-  : undefined
 
 await mkdir(path.dirname(outputPath), { recursive: true })
 await mkdir(path.dirname(reportPath), { recursive: true })
 await mkdir(path.dirname(summaryPath), { recursive: true })
 
-const out = createWriteStream(outputPath, { encoding: "utf-8" })
-const rl = readline.createInterface({ input: createReadStream(datasetPath, { encoding: "utf-8" }), crlfDelay: Infinity })
 const rows: SearchResultRow[] = []
+let out: ReturnType<typeof createWriteStream> | undefined
+let outputClosed = false
+let suiteEvaluatorProfile = resolveEvaluatorProfile()
+let baselineComparisonNote: string | undefined
 
-for await (const line of rl) {
-  if (!line.trim()) continue
-  const row = JSON.parse(line) as SearchDatasetRow
-  const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
-  assertSuiteEvaluatorProfile(rowEvaluatorProfile, suiteEvaluatorProfile, row.id)
-  const startedAt = Date.now()
-  const { status, body } = await runSearch(row)
-  const latencyMs = body.diagnostics?.latencyMs ?? Date.now() - startedAt
-  const result = evaluateRow(row, status, latencyMs, body, rowEvaluatorProfile)
-  out.write(`${JSON.stringify(result)}\n`)
-  rows.push(result)
+try {
+  suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
+  const baselineSummary = baselineSummaryPath
+    ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { evaluatorProfile?: SearchSummary["evaluatorProfile"] })
+    : undefined
+  baselineComparisonNote = baselineSummary
+    ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
+    : undefined
+
+  out = createWriteStream(outputPath, { encoding: "utf-8" })
+  const rl = readline.createInterface({ input: createReadStream(datasetPath, { encoding: "utf-8" }), crlfDelay: Infinity })
+
+  for await (const line of rl) {
+    if (!line.trim()) continue
+    const row = JSON.parse(line) as SearchDatasetRow
+    const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
+    assertSuiteEvaluatorProfile(rowEvaluatorProfile, suiteEvaluatorProfile, row.id)
+    const startedAt = Date.now()
+    const { status, body } = await runSearch(row)
+    const latencyMs = body.diagnostics?.latencyMs ?? Date.now() - startedAt
+    const result = evaluateRow(row, status, latencyMs, body, rowEvaluatorProfile)
+    out.write(`${JSON.stringify(result)}\n`)
+    rows.push(result)
+  }
+
+  await closeStream(out)
+  outputClosed = true
+  const summary = summarize(rows)
+  await writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf-8")
+  await writeFile(reportPath, renderMarkdownReport(summary, rows), "utf-8")
+
+  console.log(`Wrote ${rows.length} search benchmark rows to ${outputPath}`)
+  console.log(`Wrote search benchmark summary to ${summaryPath}`)
+  console.log(`Wrote search benchmark report to ${reportPath}`)
+} catch (error) {
+  if (out && !outputClosed) await closeStream(out).catch(() => undefined)
+  if (!out) await writeFile(outputPath, "", "utf-8")
+  const runnerError = runnerErrorMessage(error)
+  const summary = summarize(rows, runnerError)
+  await writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf-8")
+  await writeFile(reportPath, renderFatalMarkdownReport(summary, rows), "utf-8")
+  console.error(runnerError)
+  throw error
 }
-
-await closeStream(out)
-const summary = summarize(rows)
-await writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf-8")
-await writeFile(reportPath, renderMarkdownReport(summary, rows), "utf-8")
-
-console.log(`Wrote ${rows.length} search benchmark rows to ${outputPath}`)
-console.log(`Wrote search benchmark summary to ${summaryPath}`)
-console.log(`Wrote search benchmark report to ${reportPath}`)
 
 async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body: SearchResponse }> {
   const headers: Record<string, string> = { "Content-Type": "application/json" }
@@ -234,7 +253,7 @@ function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, b
   }
 }
 
-function summarize(rows: SearchResultRow[]): SearchSummary {
+function summarize(rows: SearchResultRow[], runnerError?: string): SearchSummary {
   const latencies = rows.map((row) => row.latencyMs)
   const metricAverages = {
     recallAtK: averageMetric(rows, "recallAtK"),
@@ -262,6 +281,11 @@ function summarize(rows: SearchResultRow[]): SearchSummary {
     fusedCountAvg: average(rows.map((row) => row.diagnostics?.fusedCount ?? 0))
   }
 
+  const failures = rows
+    .filter((row) => row.failureReasons.length > 0)
+    .map((row) => ({ id: row.id, query: row.query, caseType: row.caseType, reasons: row.failureReasons }))
+  if (runnerError) failures.push({ id: "__runner__", query: "search benchmark runner", caseType: undefined, reasons: [runnerError] })
+
   return {
     mode: "search",
     datasetPath,
@@ -275,10 +299,9 @@ function summarize(rows: SearchResultRow[]): SearchSummary {
     total: rows.length,
     succeeded: rows.filter((row) => row.status >= 200 && row.status < 300).length,
     failedHttp: rows.filter((row) => row.status < 200 || row.status >= 300).length,
+    runnerError,
     metrics: metricAverages,
-    failures: rows
-      .filter((row) => row.failureReasons.length > 0)
-      .map((row) => ({ id: row.id, query: row.query, caseType: row.caseType, reasons: row.failureReasons }))
+    failures
   }
 }
 
@@ -318,6 +341,7 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
 - Total rows: ${summary.total}
 - HTTP success: ${summary.succeeded}
 - HTTP failed: ${summary.failedHttp}
+${summary.runnerError ? `- Runner error: ${escapeMarkdown(summary.runnerError)}\n` : ""}
 
 ## Metrics
 
@@ -332,6 +356,40 @@ ${failureRows}
 ## Row Details
 
 ${detailRows}
+`
+}
+
+function renderFatalMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): string {
+  const failureRows = summary.failures.length === 0
+    ? "\nNo failed search benchmark rows.\n"
+    : [
+        "| id | case | query | reasons |",
+        "| --- | --- | --- | --- |",
+        ...summary.failures.map((failure) =>
+          `| ${escapeMarkdown(failure.id)} | ${escapeMarkdown(failure.caseType ?? "")} | ${escapeMarkdown(failure.query)} | ${escapeMarkdown(failure.reasons.join(", "))} |`
+        )
+      ].join("\n")
+
+  return `# MemoRAG Search Benchmark Report
+
+- Generated at: ${summary.generatedAt}
+- API base URL: ${summary.apiBaseUrl}
+- Dataset: ${summary.datasetPath}
+- Raw results: ${summary.outputPath}
+- Summary JSON: ${summary.summaryPath}
+- Evaluator profile: ${profileKey(summary.evaluatorProfile)}
+- Baseline comparison: ${summary.baselineComparisonNote ?? "same_profile_or_not_configured"}
+
+## Summary
+
+- Total rows before runner error: ${rows.length}
+- HTTP success: ${summary.succeeded}
+- HTTP failed: ${summary.failedHttp}
+- Runner error: ${escapeMarkdown(summary.runnerError ?? "unknown runner error")}
+
+## Failures
+
+${failureRows}
 `
 }
 
@@ -429,4 +487,9 @@ function formatNumber(value: number | null | undefined): string {
 
 function escapeMarkdown(value: string): string {
   return value.replace(/\|/g, "\\|").replace(/\n/g, " ")
+}
+
+function runnerErrorMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  return `runner_error: ${message}`
 }

@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react"
 import type { answerQuestion } from "../api/questionsApi.js"
 import type { HumanQuestion } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
+import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { formatDateTime, priorityLabel, statusLabel } from "../../../shared/utils/format.js"
 
 type AssigneeLaneId = "unassigned" | "inProgress" | "waitingReview" | "resolved"
@@ -117,6 +118,7 @@ export function AssigneeWorkspace({
           <span>{openCount} 件が対応待ち</span>
         </div>
       </header>
+      {loading && <LoadingStatus label="問い合わせAPIを処理中" />}
       {questions.length > 0 ? (
         <>
           <div className="assignee-toolbar" aria-label="問い合わせ一覧">
@@ -227,7 +229,10 @@ export function AssigneeWorkspace({
                   </div>
                   <div className="answer-form-actions">
                     <button type="button" disabled={loading || !isDirty} onClick={onSaveDraft}>下書き保存</button>
-                    <button type="submit" disabled={loading || !answerTitle.trim() || !answerBody.trim()}>回答を送信</button>
+                    <button type="submit" disabled={loading || !answerTitle.trim() || !answerBody.trim()}>
+                      {loading && <LoadingSpinner className="button-spinner" />}
+                      <span>回答を送信</span>
+                    </button>
                   </div>
                 </form>
               </aside>
