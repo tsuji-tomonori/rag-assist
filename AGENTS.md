@@ -23,7 +23,9 @@
   - `.agents/skills/completion-status-reporter/SKILL.md`
 
 ## Worktree Task PR Flow
-- 対象: 「worktree を作成して作業」「task md を作成してから作業」「git commit + PR create to main」「PR 作成は GitHubApps / GitHub Apps を利用」など、worktree から main 向け PR まで進める依頼。
+- 常時適用: このリポジトリでファイル編集、コマンド実行、調査、検証、ドキュメント作成、commit、PR 作成などの実作業を伴う依頼は、ユーザーが明示しなくても `Worktree Task PR Flow` の対象として扱う。
+- 対象: 「worktree を作成して作業」「task md を作成してから作業」「git commit + PR create to main」「PR 作成は GitHubApps / GitHub Apps を利用」など、worktree から main 向け PR まで進める依頼、および通常のリポジトリ実作業。
+- 例外: 純粋な質問回答、計画のみの依頼、ユーザーが明示的に worktree / commit / PR を行わないよう指示した場合は、実施範囲に合わせてこの workflow の実行ステップを調整し、理由を報告する。
 - 上記の依頼を agent が守るよう `skills` や `AGENTS.md` で設定されているか確認し、不足時に対応する依頼も同じ workflow の対象として扱う。
 - 必読: `skills/worktree-task-pr-flow/SKILL.md`
 - 作業ブランチは原則 `origin/main` から専用 worktree として作成し、元 worktree の未追跡・未コミット変更を混ぜない。
