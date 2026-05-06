@@ -19,7 +19,7 @@ import {
   resolveEvaluatorProfile,
   type EvaluatorProfile
 } from "./evaluator-profile.js"
-import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus } from "./corpus.js"
+import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 
 type SearchDatasetRow = {
   id: string
@@ -115,6 +115,7 @@ type SearchSummary = {
   summaryPath: string
   evaluatorProfile: EvaluatorProfile
   baselineComparisonNote?: string
+  corpusSeed: SeededDocument[]
   apiBaseUrl: string
   generatedAt: string
   total: number
@@ -132,8 +133,8 @@ type SearchSummary = {
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
-const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "search-standard-v1"
-const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? benchmarkSuiteId
+const defaultEmbeddingModelId = process.env.EMBEDDING_MODEL_ID?.trim() || undefined
+const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? "standard-agent-v1"
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const datasetPath = resolveExistingPath(process.env.DATASET ?? "datasets/search.sample.jsonl", [process.cwd(), benchmarkDir, repoRoot])
@@ -153,6 +154,7 @@ let out: ReturnType<typeof createWriteStream> | undefined
 let outputClosed = false
 let suiteEvaluatorProfile = resolveEvaluatorProfile()
 let baselineComparisonNote: string | undefined
+let corpusSeed: SeededDocument[] = []
 
 try {
   suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
@@ -162,18 +164,17 @@ try {
   baselineComparisonNote = baselineSummary
     ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
     : undefined
-
   const benchmarkCorpusDir = benchmarkCorpusDirFromEnv(process.env)
   const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
     ? resolveExistingPath(benchmarkCorpusDir, [process.cwd(), benchmarkDir, repoRoot])
     : undefined
-  await seedBenchmarkCorpus({
+  corpusSeed = await seedBenchmarkCorpus({
     apiBaseUrl,
     authToken: apiAuthToken,
     corpusDir: resolvedBenchmarkCorpusDir,
     suiteId: benchmarkCorpusSuiteId,
     skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
-    embeddingModelId: process.env.EMBEDDING_MODEL_ID?.trim() || undefined,
+    embeddingModelId: defaultEmbeddingModelId,
     log: (message) => console.log(message)
   })
 
@@ -312,6 +313,7 @@ function summarize(rows: SearchResultRow[], runnerError?: string): SearchSummary
     summaryPath,
     evaluatorProfile: suiteEvaluatorProfile,
     baselineComparisonNote,
+    corpusSeed,
     apiBaseUrl,
     generatedAt: new Date().toISOString(),
     total: rows.length,
@@ -343,6 +345,15 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
       `| ${escapeMarkdown(row.id)} | ${escapeMarkdown(row.caseType ?? "")} | ${escapeMarkdown(row.evaluatorProfile)} | ${row.recallK} | ${formatNumber(row.metrics.recallAtK)} | ${formatNumber(row.metrics.recallAt20)} | ${formatNumber(row.metrics.mrrAt10)} | ${formatNumber(row.metrics.ndcgAt10)} | ${formatNumber(row.metrics.precisionAt10)} | ${row.noAccessLeakCount} | ${row.latencyMs} | ${row.diagnostics?.lexicalCount ?? 0} | ${row.diagnostics?.semanticCount ?? 0} | ${row.diagnostics?.fusedCount ?? 0} |`
     )
   ].join("\n")
+  const corpusSeedRows = summary.corpusSeed.length === 0
+    ? "\nNo benchmark corpus seed configured.\n"
+    : [
+        "| file | status | chunks | source hash | ingest signature |",
+        "| --- | --- | ---: | --- | --- |",
+        ...summary.corpusSeed.map((seed) =>
+          `| ${escapeMarkdown(seed.fileName)} | ${seed.status} | ${seed.chunkCount} | ${seed.sourceHash.slice(0, 12)} | ${seed.ingestSignature.slice(0, 12)} |`
+        )
+      ].join("\n")
 
   return `# MemoRAG Search Benchmark Report
 
@@ -360,6 +371,10 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
 - HTTP success: ${summary.succeeded}
 - HTTP failed: ${summary.failedHttp}
 ${summary.runnerError ? `- Runner error: ${escapeMarkdown(summary.runnerError)}\n` : ""}
+
+## Corpus Seed
+
+${corpusSeedRows}
 
 ## Metrics
 

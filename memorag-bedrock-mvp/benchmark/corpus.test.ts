@@ -174,3 +174,38 @@ test("seedBenchmarkCorpus uploads PDF files as base64 content", async () => {
   assert.equal(upload?.contentBase64, Buffer.from("%PDF-1.4 sample").toString("base64"))
   assert.equal(upload?.mimeType, "application/pdf")
 })
+
+test("seedBenchmarkCorpus includes optional per-file search aliases in seed metadata", async () => {
+  const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
+  await writeFile(path.join(corpusDir, "handbook.md"), "# Handbook\n\n経費精算は30日以内です。\n", "utf-8")
+  await writeFile(path.join(corpusDir, "handbook.md.metadata.json"), JSON.stringify({
+    searchAliases: {
+      "立替": ["経費精算"],
+      empty: []
+    }
+  }), "utf-8")
+  const requests: Array<{ body?: unknown }> = []
+  const fetchImpl = async (_url: string | URL | Request, init?: RequestInit) => {
+    const body = init?.body ? JSON.parse(String(init.body)) : undefined
+    requests.push({ body })
+    if (init?.method === "GET") {
+      return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    return new Response(JSON.stringify({ fileName: "handbook.md", lifecycleStatus: "active", chunkCount: 1 }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+
+  await seedBenchmarkCorpus({
+    apiBaseUrl: "http://localhost:8787",
+    corpusDir,
+    suiteId: "standard-agent-v1",
+    skipMemory: true,
+    fetchImpl
+  })
+
+  const upload = requests.at(-1)?.body as { metadata?: { searchAliases?: Record<string, string[]>; benchmarkIngestSignature?: string } }
+  assert.deepEqual(upload.metadata?.searchAliases, { "立替": ["経費精算"] })
+  assert.equal(typeof upload.metadata?.benchmarkIngestSignature, "string")
+})

@@ -42,6 +42,19 @@ test("evaluateRetrieval uses evaluator profile recall K when provided", () => {
   assert.equal(metrics.recallAt20, 1)
 })
 
+test("evaluateRetrieval caps nDCG when multiple chunks match one expected file", () => {
+  const metrics = evaluateRetrieval(
+    [
+      { documentId: "doc-a", chunkId: "chunk-1", fileName: "a.md" },
+      { documentId: "doc-a", chunkId: "chunk-2", fileName: "a.md" }
+    ],
+    [{ fileName: "a.md", grade: 2 }]
+  )
+
+  assert.equal(metrics.recallAt1, 1)
+  assert.equal(metrics.ndcgAt10, 1)
+})
+
 test("countAccessLeaks treats relevant rows as forbidden for negative ACL cases", () => {
   const leaks = countAccessLeaks(
     [
