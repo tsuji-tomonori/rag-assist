@@ -378,6 +378,63 @@ test("benchmark runner can call query endpoint without benchmark run administrat
   }
 })
 
+test("benchmark operators can use benchmark run administration without direct query permission", async () => {
+  const port = 21900 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-operator-rbac-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "BENCHMARK_OPERATOR"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const suites = await fetch(`http://127.0.0.1:${port}/benchmark-suites`)
+    assert.equal(suites.status, 200)
+
+    const listRuns = await fetch(`http://127.0.0.1:${port}/benchmark-runs`)
+    assert.equal(listRuns.status, 200)
+
+    const createRun = await fetch(`http://127.0.0.1:${port}/benchmark-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild" })
+    })
+    assert.equal(createRun.status, 200)
+    const run = (await createRun.json()) as { runId: string }
+
+    const query = await fetch(`http://127.0.0.1:${port}/benchmark/query`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id: "operator-check", question: "権限確認" })
+    })
+    assert.equal(query.status, 403)
+
+    const cancel = await fetch(`http://127.0.0.1:${port}/benchmark-runs/${run.runId}/cancel`, { method: "POST" })
+    assert.equal(cancel.status, 403)
+
+    const download = await fetch(`http://127.0.0.1:${port}/benchmark-runs/${run.runId}/download`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ artifact: "report" })
+    })
+    assert.equal(download.status, 403)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
 test("benchmark search uses dataset user groups for ACL evaluation", async () => {
   const setupPort = 20800 + Math.floor(Math.random() * 1000)
   const runnerPort = 21800 + Math.floor(Math.random() * 1000)

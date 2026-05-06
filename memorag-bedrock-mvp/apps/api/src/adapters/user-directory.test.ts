@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { setTimeout as delay } from "node:timers/promises"
 import test from "node:test"
-import { AdminListGroupsForUserCommand, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider"
+import { AdminAddUserToGroupCommand, AdminListGroupsForUserCommand, AdminRemoveUserFromGroupCommand, ListUsersCommand } from "@aws-sdk/client-cognito-identity-provider"
 import { CognitoUserDirectory } from "./user-directory.js"
 
 test("Cognito user directory paginates users and groups while tolerating per-user group failures", async () => {
@@ -106,4 +106,33 @@ test("Cognito user directory limits concurrent group lookups", async () => {
 
   assert.equal(users.length, 12)
   assert.equal(maxActiveGroupLookups <= 5, true)
+})
+
+test("Cognito user directory syncs managed role groups while preserving external groups", async () => {
+  const commands: unknown[] = []
+  const directory = new CognitoUserDirectory("pool-1", {
+    send: async (command) => {
+      commands.push(command)
+      if (command instanceof AdminListGroupsForUserCommand) {
+        return {
+          Groups: [
+            { GroupName: "CHAT_USER" },
+            { GroupName: "EXTERNAL_GROUP" }
+          ]
+        }
+      }
+      if (command instanceof AdminAddUserToGroupCommand || command instanceof AdminRemoveUserFromGroupCommand) {
+        return {}
+      }
+      throw new Error("unexpected command")
+    }
+  })
+
+  await directory.setUserGroups("user@example.com", ["ANSWER_EDITOR", "BENCHMARK_OPERATOR"])
+
+  const addCommands = commands.filter((command) => command instanceof AdminAddUserToGroupCommand)
+  const removeCommands = commands.filter((command) => command instanceof AdminRemoveUserFromGroupCommand)
+  assert.deepEqual(addCommands.map((command) => (command as any).input.GroupName), ["ANSWER_EDITOR", "BENCHMARK_OPERATOR"])
+  assert.deepEqual(removeCommands.map((command) => (command as any).input.GroupName), ["CHAT_USER"])
+  assert.equal(removeCommands.some((command) => (command as any).input.GroupName === "EXTERNAL_GROUP"), false)
 })

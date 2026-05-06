@@ -364,9 +364,13 @@ test("service lists all Cognito directory users in the managed user ledger", asy
       updatedAt: "2026-05-01T00:00:00.000Z"
     }
   ]
+  const assignedGroups: Array<{ username: string; groups: string[] }> = []
   const { service } = await createService({
     userDirectory: {
-      listUsers: async () => directoryUsers
+      listUsers: async () => directoryUsers,
+      setUserGroups: async (username, groups) => {
+        assignedGroups.push({ username, groups })
+      }
     }
   })
   const actor = { userId: "admin-sub", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
@@ -378,6 +382,7 @@ test("service lists all Cognito directory users in the managed user ledger", asy
 
   const updated = await service.assignUserRoles(actor, "member-sub", ["ANSWER_EDITOR"])
   assert.deepEqual(updated?.groups, ["ANSWER_EDITOR"])
+  assert.deepEqual(assignedGroups, [{ username: "member@example.com", groups: ["ANSWER_EDITOR"] }])
   assert.deepEqual((await service.listManagedUsers(actor)).find((user) => user.userId === "member-sub")?.groups, ["ANSWER_EDITOR"])
 
   const suspended = await service.suspendManagedUser(actor, "member-sub")

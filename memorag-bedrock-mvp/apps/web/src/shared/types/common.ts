@@ -29,6 +29,7 @@ export type Permission =
   | "benchmark:read"
   | "benchmark:query"
   | "benchmark:run"
+  | "benchmark:seed_corpus"
   | "benchmark:cancel"
   | "benchmark:download"
   | "usage:read:own"

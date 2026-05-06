@@ -130,7 +130,7 @@ npm run cdk -w @memorag-mvp/infra -- deploy
 Taskfileを使う場合は `task cdk:deploy` でフロントエンドbuild、Lambda bundle、CDK deployを順に実行します。
 
 GitHub Actionsでは `.github/workflows/memorag-ci.yml` がpull requestで lint、typecheck、test、build、cdk-nag有効状態のCDK synthを実行します。デプロイは `.github/workflows/memorag-deploy.yml` を使います。AWS側のOIDC RoleとGitHub secret `AWS_DEPLOY_ROLE_ARN` を設定してください。
-デプロイ後の Cognito ユーザー追加は、ログイン画面からのアカウント作成、または `.github/workflows/memorag-create-cognito-user.yml` の手動実行で行えます。管理者設定のユーザー管理一覧は Cognito User Pool の全ユーザーを読み取り、管理台帳とマージして表示します。管理画面上のロール、停止、再開、削除状態は管理台帳を source of truth とし、実際の API 認可はログイン時の Cognito group を含む JWT で判定します。
+デプロイ後の Cognito ユーザー追加は、ログイン画面からのアカウント作成、または `.github/workflows/memorag-create-cognito-user.yml` の手動実行で行えます。管理者設定のユーザー管理一覧は Cognito User Pool の全ユーザーを読み取り、管理台帳とマージして表示します。管理画面上のロール付与は Cognito group へ反映し、管理台帳にも監査用 snapshot として記録します。停止、再開、削除状態は管理台帳を source of truth とし、実際の API 認可はログイン時の Cognito group を含む JWT で判定します。
 
 デプロイ後、CDK Outputs にAPI URLとCloudFront URLが出ます。
 
@@ -147,8 +147,8 @@ infra/scripts/create-cognito-user.sh \
   --suppress-invite
 ```
 
-`--role` は複数回指定できます。ロールは `一般利用者`、`回答担当者`、`RAGグループ管理者`、`ユーザー管理者`、`アクセス管理者`、`コスト監査者`、`システム管理者` の日本語名、または `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の Cognito group 名で指定できます。
-`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。通常利用者は `CHAT_USER`、担当者は `ANSWER_EDITOR`、性能テストを管理画面から起動する運用者は `RAG_GROUP_MANAGER`、CodeBuild runner の service user は `BENCHMARK_RUNNER`、debug trace や benchmark を管理する管理者は `SYSTEM_ADMIN` または `システム管理者` を指定してください。`BENCHMARK_RUNNER` は `/benchmark/query` と `/benchmark/search` 用であり、管理画面から run を起動する権限ではありません。作成済みユーザーは、初回ログイン前でも管理者設定のユーザー管理一覧に表示されます。
+`--role` は複数回指定できます。ロールは `一般利用者`、`回答担当者`、`RAGグループ管理者`、`性能テスト担当者`、`ベンチマークAPI実行サービス`、`ユーザー管理者`、`アクセス管理者`、`コスト監査者`、`システム管理者` の日本語名、または `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_OPERATOR`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の Cognito group 名で指定できます。
+`--user-pool-id` を省略した場合は、CloudFormation stack `MemoRagMvpStack` の `CognitoUserPoolId` output から取得します。通常利用者は `CHAT_USER`、担当者は `ANSWER_EDITOR`、性能テストを管理画面から起動する運用者は `BENCHMARK_OPERATOR`、CodeBuild runner の service user は `BENCHMARK_RUNNER`、debug trace や benchmark 成果物を管理する管理者は `SYSTEM_ADMIN` または `システム管理者` を指定してください。`BENCHMARK_RUNNER` は `/benchmark/query` と `/benchmark/search` 用であり、管理画面から run を起動する権限ではありません。作成済みユーザーは、初回ログイン前でも管理者設定のユーザー管理一覧に表示されます。
 `CHAT_USER` などの Cognito group は CDK stack で作成されるため、ユーザー作成前に `npm run cdk -w @memorag-mvp/infra -- deploy` または `task cdk:deploy` を実行してください。
 ログイン画面から作成したユーザーは、メール確認後に Cognito post-confirmation trigger により `CHAT_USER` のみ自動付与されます。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが GitHub Actions または AWS 管理手順で後から付与してください。
 GitHub Actions から作成する場合は、`Actions` -> `Create MemoRAG Cognito User` -> `Run workflow` でメールアドレスと主ロールを日本語名で選択します。追加ロールが必要な場合は、`additional-roles` に日本語名または Cognito group 名をカンマ区切りで入力します。

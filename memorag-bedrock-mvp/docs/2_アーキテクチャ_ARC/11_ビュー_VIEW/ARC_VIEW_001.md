@@ -215,7 +215,7 @@ sequenceDiagram
 | 構成要素 | 関心事 |
 | --- | --- |
 | Cognito User Pool | sign-in、self sign-up、group 管理を担う。 |
-| Cognito group | `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の権限源泉になる。 |
+| Cognito group | `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_OPERATOR`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` の権限源泉になる。 |
 | `GET /me` | UI が利用可能導線を判断するための permission と user context を返す。 |
 | route-level `requirePermission` | UI 表示制御ではなく API route 側の強制境界として permission を検証する。 |
 | userId boundary | 会話履歴、お気に入り、通常利用者導線を別 userId へ漏えいさせない。 |

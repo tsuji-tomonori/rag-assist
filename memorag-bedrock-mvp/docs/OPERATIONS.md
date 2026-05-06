@@ -118,28 +118,29 @@ SWEBOK 要求分類向けの anchor、invalid answer pattern、検索 clue は `
 
 ## ロール運用
 
-CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を作成する。
+CDK stack は Cognito group として `CHAT_USER`、`ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_OPERATOR`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を作成する。
 
 | group | 運用上の用途 |
 | --- | --- |
 | `CHAT_USER` | 通常チャット、本人の会話履歴、担当者問い合わせ登録 |
 | `ANSWER_EDITOR` | 担当者問い合わせの一覧、回答、解決 |
 | `RAG_GROUP_MANAGER` | 文書登録、文書削除、再インデックス運用、benchmark run 起動 |
+| `BENCHMARK_OPERATOR` | 管理画面からの性能テスト run 起動、suite/run 履歴参照 |
 | `BENCHMARK_RUNNER` | CodeBuild runner から隔離された benchmark corpus を seed し、`/benchmark/query` と `/benchmark/search` を実行 |
 | `USER_ADMIN` | Cognito User Pool の全ユーザー参照、管理台帳上のユーザー作成、停止、再開、削除、利用状況確認 |
 | `ACCESS_ADMIN` | ロール定義参照、ロール付与、管理操作履歴参照 |
 | `COST_AUDITOR` | 概算コスト監査 |
 | `SYSTEM_ADMIN` | debug trace、benchmark cancel/download、管理者検証、Phase 2 管理操作 |
 
-通常利用者に `ANSWER_EDITOR`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。性能テストを起動する運用者には `RAG_GROUP_MANAGER`、CodeBuild runner 用 service user には `BENCHMARK_RUNNER`、debug trace と benchmark 成果物を確認する管理者には `SYSTEM_ADMIN` を付与する。
+通常利用者に `ANSWER_EDITOR`、`BENCHMARK_OPERATOR`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を付与しない。担当者には `ANSWER_EDITOR` を付与する。性能テストを起動する運用者には `BENCHMARK_OPERATOR`、文書管理と性能テストを兼務する運用者には `RAG_GROUP_MANAGER`、CodeBuild runner 用 service user には `BENCHMARK_RUNNER`、debug trace と benchmark 成果物を確認する管理者には `SYSTEM_ADMIN` を付与する。
 
 ログイン画面から self sign-up したユーザーは、メール確認後に Cognito post-confirmation trigger で `CHAT_USER` のみを自動付与する。担当者、管理、監査、`SYSTEM_ADMIN` などの上位権限は、管理ユーザーが対象者と必要性を確認し、`.github/workflows/memorag-create-cognito-user.yml` または AWS 管理手順で後から付与する。
 
-管理者設定のユーザー管理一覧は `GET /admin/users` で Cognito User Pool の全ユーザーを読み取り、email または Cognito `sub` で管理台帳とマージして表示する。Cognito はユーザー発見用 directory として扱い、管理画面上のロール、停止、再開、削除状態は管理台帳を source of truth とする。Cognito に存在しても管理台帳で `deleted` のユーザーは一覧に戻さない。実際の API 認可は Cognito group を含む JWT で判定するため、上位権限の実効付与は GitHub Actions または AWS 管理手順で Cognito group を更新する。API Lambda には `cognito-idp:ListUsers` と `cognito-idp:AdminListGroupsForUser` を User Pool ARN に限定して付与する。
+管理者設定のユーザー管理一覧は `GET /admin/users` で Cognito User Pool の全ユーザーを読み取り、email または Cognito `sub` で管理台帳とマージして表示する。Cognito はユーザー発見用 directory として扱う。管理画面上のロール付与は Cognito group へ反映し、管理台帳にも監査用 snapshot として記録する。停止、再開、削除状態は管理台帳を source of truth とする。Cognito に存在しても管理台帳で `deleted` のユーザーは一覧に戻さない。実際の API 認可は Cognito group を含む JWT で判定するため、role 変更後は対象ユーザーが再ログインして新しい token を取得する。API Lambda には `cognito-idp:ListUsers`、`cognito-idp:AdminListGroupsForUser`、`cognito-idp:AdminAddUserToGroup`、`cognito-idp:AdminRemoveUserFromGroup` を User Pool ARN に限定して付与する。
 
 Cognito group 取得が一部ユーザーで失敗した場合、一覧取得は継続し、該当ユーザーの Cognito group は空配列として扱う。API は CloudWatch Logs に `cognito_user_directory_group_lookup_failed` と `cognito_user_directory_group_lookup_failure_summary` を JSON で出力し、summary は Embedded Metric Format の `MemoRAG/Admin` namespace に `CognitoGroupLookupFailureCount` と `CognitoGroupLookupFailureRate` を記録する。これらが 0 以外の場合は IAM、User Pool ID、Cognito region、対象ユーザー状態を確認する。
 
-デプロイ後の smoke test では、管理者 token で `GET /admin/users` を実行し、初回ログイン前の Cognito ユーザーが表示されること、Cognito group lookup 失敗 metric が 0 であること、管理台帳で `deleted` にしたユーザーが再表示されないこと、管理画面上のロールと実効 Cognito group の運用差分が利用者に説明されていることを確認する。
+デプロイ後の smoke test では、管理者 token で `GET /admin/users` を実行し、初回ログイン前の Cognito ユーザーが表示されること、Cognito group lookup 失敗 metric が 0 であること、管理台帳で `deleted` にしたユーザーが再表示されないこと、管理画面上のロール付与が Cognito group に反映され、対象ユーザーの再ログイン後に実効 permission が変わることを確認する。
 
 ## AWSデプロイ前チェック
 
@@ -181,7 +182,7 @@ benchmark runner は summary と report に quality review を出力する。`BA
 
 evaluator profile は summary JSON、results JSONL、Markdown report に id / version を記録する。未指定の dataset row は suite-level の profile として扱う。未知の evaluator profile は default に fallback せず失敗する。row の `evaluatorProfile` は suite-level profile と同一の場合だけ許容し、異なる profile が混在する dataset は集計値の `recall@K` が曖昧になるため失敗させる。search benchmark の Markdown report は行ごとの `evaluator_profile` と `recall_k` を表示する。baseline summary と current run の evaluator profile が異なる場合は既定で失敗し、`ALLOW_EVALUATOR_PROFILE_MISMATCH=1` を指定した場合だけ参考比較として続行する。profile mismatch の run は regression 判定の合格扱いにせず、比較条件が違うことを PR 本文や作業レポートに残す。
 
-管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/` と `datasets/search/`、成果物は `runs/<runId>/` に保存する。CDK は agent 用の `smoke-v1.jsonl`、`standard-v1.jsonl`、`clarification-smoke-v1.jsonl`、`mmrag-docqa-v1.jsonl` と search 用の `smoke-v1.jsonl`、`standard-v1.jsonl` を deploy 時に配置する。benchmark の results / summary / report は `BenchmarkBucket` の `runs/<runId>/` に保存され、bucket 側では SSE-S3 を使う。CodeBuild project は起動直後に build ID と log URL を `BenchmarkRunsTable` に記録するため、benchmark 成果物が生成されない failed run でも管理画面から CodeBuild logs を確認できる。CodeBuild runner は `summary.json` から `BenchmarkRunsTable` の `metrics` を更新し、管理画面の p50 / p95 / accuracy / recall 表示に使う。CodeBuild project には customer managed KMS key を設定しており、CodeBuild 側の artifact 暗号化設定として利用する。Step Functions は CloudWatch Logs に `ALL` event を出力する。X-Ray tracing は trace 数に応じた追加コストを避けるため MVP では無効にし、必要になった時点で有効化を再検討する。production API を叩く runner の bearer token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から CodeBuild が自動取得する。管理画面の実行者が token を入力する必要はない。`RAG_GROUP_MANAGER` は benchmark run 起動用であり、runner API を直接呼ぶ外部運用 token は `BENCHMARK_RUNNER` service user へ移行する。agent mode runner は `/benchmark/query`、search mode runner は `/benchmark/search` を呼ぶ。
+管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/` と `datasets/search/`、成果物は `runs/<runId>/` に保存する。CDK は agent 用の `smoke-v1.jsonl`、`standard-v1.jsonl`、`clarification-smoke-v1.jsonl`、`mmrag-docqa-v1.jsonl` と search 用の `smoke-v1.jsonl`、`standard-v1.jsonl` を deploy 時に配置する。benchmark の results / summary / report は `BenchmarkBucket` の `runs/<runId>/` に保存され、bucket 側では SSE-S3 を使う。CodeBuild project は起動直後に build ID と log URL を `BenchmarkRunsTable` に記録するため、benchmark 成果物が生成されない failed run でも管理画面から CodeBuild logs を確認できる。CodeBuild runner は `summary.json` から `BenchmarkRunsTable` の `metrics` を更新し、管理画面の p50 / p95 / accuracy / recall 表示に使う。CodeBuild project には customer managed KMS key を設定しており、CodeBuild 側の artifact 暗号化設定として利用する。Step Functions は CloudWatch Logs に `ALL` event を出力する。X-Ray tracing は trace 数に応じた追加コストを避けるため MVP では無効にし、必要になった時点で有効化を再検討する。production API を叩く runner の bearer token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から CodeBuild が自動取得する。管理画面の実行者が token を入力する必要はない。`BENCHMARK_OPERATOR` と `RAG_GROUP_MANAGER` は benchmark run 起動用であり、runner API を直接呼ぶ外部運用 token は `BENCHMARK_RUNNER` service user へ移行する。agent mode runner は `/benchmark/query`、search mode runner は `/benchmark/search` を呼ぶ。
 
 `smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1`、`search-smoke-v1`、`search-standard-v1` は `handbook.md` を期待資料にする。CodeBuild runner は query / search 実行前に `benchmark/corpus/standard-agent-v1/handbook.md` を `/documents` へ seed し、active chunk が存在することを確認する。同じ `benchmarkSourceHash` と `benchmarkIngestSignature` の seed 済み active document がある場合は再アップロードしない。CodeBuild ではこれらの suite の `BENCHMARK_CORPUS_SUITE_ID` を `standard-agent-v1` に固定し、同じ corpus を共有する。`mmrag-docqa-v1` は `benchmark/corpus/mmrag-docqa-v1/` を seed し、`BENCHMARK_CORPUS_SUITE_ID` を `mmrag-docqa-v1` に固定する。`mmrag-docqa-v1` の sample corpus は UI と runner 導線確認用であり、本番評価前に `MMRAG_DOCQA_CONFIRMATION_PROMPT.md` に従って paper corpus、multimodal assets、ground-truth answers へ差し替える。seed 文書は `metadata.source = "benchmark-runner"`、`metadata.docType = "benchmark-corpus"`、`metadata.aclGroups = ["BENCHMARK_RUNNER"]` を強制し、通常利用者の RAG 検索・回答・文書一覧から隔離する。`BENCHMARK_RUNNER` はこの前処理のために `benchmark:seed_corpus` を持ち、seed 文書確認用に `/documents` の一覧取得だけを許可される。通常の `rag:doc:write:group` や `rag:doc:read` は持たないため、任意の一般文書 upload や通常 `/search` は実行できない。
 
