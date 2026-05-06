@@ -56,7 +56,7 @@ type CreateBenchmarkRunInput = {
   thresholds?: BenchmarkRunThresholds
 }
 
-type BenchmarkDownloadArtifact = "report" | "summary" | "results"
+type BenchmarkDownloadArtifact = "report" | "summary" | "results" | "logs"
 
 type AdminLedger = {
   users: ManagedUser[]
@@ -1281,9 +1281,17 @@ export class MemoRagService {
   }
 
   async createBenchmarkArtifactDownloadUrl(runId: string, artifact: BenchmarkDownloadArtifact): Promise<{ url: string; expiresInSeconds: number; objectKey: string } | undefined> {
-    if (!config.benchmarkBucketName) throw new Error("BENCHMARK_BUCKET_NAME is not configured")
     const run = await this.deps.benchmarkRunStore.get(runId)
     if (!run) return undefined
+    if (artifact === "logs") {
+      if (!run.codeBuildLogUrl) return undefined
+      return {
+        url: run.codeBuildLogUrl,
+        expiresInSeconds: config.benchmarkDownloadExpiresInSeconds,
+        objectKey: run.codeBuildBuildId ?? run.runId
+      }
+    }
+    if (!config.benchmarkBucketName) throw new Error("BENCHMARK_BUCKET_NAME is not configured")
     const objectKey = artifact === "summary" ? run.summaryS3Key : artifact === "results" ? run.resultsS3Key : run.reportS3Key
     if (!objectKey) return undefined
 

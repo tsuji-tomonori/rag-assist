@@ -2,6 +2,8 @@ import { get, post } from "../../../shared/api/http.js"
 import type { DebugDownloadResponse } from "../../debug/types.js"
 import type { BenchmarkMode, BenchmarkRun, BenchmarkRunner, BenchmarkSuite } from "../types.js"
 
+export type BenchmarkDownloadArtifact = "report" | "summary" | "results" | "logs"
+
 export async function listBenchmarkSuites(): Promise<BenchmarkSuite[]> {
   const result = await get<{ suites?: BenchmarkSuite[] }>("/benchmark-suites")
   return result.suites ?? []
@@ -30,6 +32,6 @@ export async function cancelBenchmarkRun(runId: string): Promise<BenchmarkRun> {
   return post<BenchmarkRun>(`/benchmark-runs/${encodeURIComponent(runId)}/cancel`, {})
 }
 
-export async function createBenchmarkDownload(runId: string, artifact: "report" | "summary" | "results" = "report"): Promise<DebugDownloadResponse> {
+export async function createBenchmarkDownload(runId: string, artifact: BenchmarkDownloadArtifact = "report"): Promise<DebugDownloadResponse> {
   return post<DebugDownloadResponse>(`/benchmark-runs/${encodeURIComponent(runId)}/download`, { artifact })
 }

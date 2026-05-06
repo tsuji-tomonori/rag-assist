@@ -194,6 +194,9 @@ describe("API client", () => {
 
     mockFetch({ url: "https://signed.example/report.md", expiresInSeconds: 900, objectKey: "runs/bench-2/report.md" })
     await expect(createBenchmarkDownload("bench-2", "report")).resolves.toMatchObject({ objectKey: "runs/bench-2/report.md" })
+
+    mockFetch({ url: "https://console.aws.amazon.com/codebuild/logs", expiresInSeconds: 900, objectKey: "codebuild-build-id" })
+    await expect(createBenchmarkDownload("bench-2", "logs")).resolves.toMatchObject({ objectKey: "codebuild-build-id" })
   })
 
   it("calls alias management APIs", async () => {

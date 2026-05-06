@@ -460,6 +460,24 @@ test("benchmark artifact download metadata forces attachment and artifact extens
   })
 })
 
+test("benchmark CodeBuild log download returns the stored log URL", async () => {
+  const { service, deps } = await createService()
+  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const run = await service.createBenchmarkRun(user, {})
+  await deps.benchmarkRunStore.update(run.runId, {
+    codeBuildBuildId: "memo-benchmark:build-id",
+    codeBuildLogUrl: "https://console.aws.amazon.com/codesuite/codebuild/projects/memo/build/build-id/log"
+  })
+
+  assert.equal(await service.createBenchmarkArtifactDownloadUrl("missing-run", "logs"), undefined)
+  const download = await service.createBenchmarkArtifactDownloadUrl(run.runId, "logs")
+  assert.deepEqual(download, {
+    url: "https://console.aws.amazon.com/codesuite/codebuild/projects/memo/build/build-id/log",
+    expiresInSeconds: 900,
+    objectKey: "memo-benchmark:build-id"
+  })
+})
+
 test("debug trace JSON for answerable runs matches the v1 schema example", () => {
   const trace: DebugTrace = {
     schemaVersion: 1,

@@ -1,4 +1,5 @@
 import { createBenchmarkDownload } from "../../features/benchmark/api/benchmarkApi.js"
+import type { BenchmarkDownloadArtifact } from "../../features/benchmark/api/benchmarkApi.js"
 import { createDebugDownload } from "../../features/debug/api/debugApi.js"
 import type { DebugTrace } from "../../features/debug/types.js"
 import { sanitizeFileName } from "./format.js"
@@ -16,9 +17,9 @@ export async function downloadDebugTrace(trace?: DebugTrace) {
   link.remove()
 }
 
-export async function downloadBenchmarkArtifact(runId: string, artifact: "report" | "summary" | "results") {
+export async function downloadBenchmarkArtifact(runId: string, artifact: BenchmarkDownloadArtifact) {
   const signed = await createBenchmarkDownload(runId, artifact)
-  const extension = artifact === "report" ? ".md" : artifact === "summary" ? ".json" : ".jsonl"
+  const extension = artifact === "report" ? ".md" : artifact === "summary" ? ".json" : artifact === "results" ? ".jsonl" : ".log"
   const link = document.createElement("a")
   link.href = signed.url
   link.download = `benchmark-${artifact}-${sanitizeFileName(runId)}${extension}`

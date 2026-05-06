@@ -2,12 +2,13 @@ import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
-import { formatDateTime, formatMetricLatency, formatPercent, formatShortDate, runStatusLabel } from "../../../shared/utils/format.js"
+import { formatDateTime, formatMetricLatency, formatPercent, runStatusLabel } from "../../../shared/utils/format.js"
 
 const benchmarkArtifacts = [
   { kind: "report", label: "レポート", description: "レポートMarkdown" },
   { kind: "summary", label: "サマリ", description: "サマリJSON" },
-  { kind: "results", label: "結果", description: "Raw results JSONL" }
+  { kind: "results", label: "結果", description: "Raw results JSONL" },
+  { kind: "logs", label: "ログ", description: "CodeBuildログ" }
 ] as const
 
 export function BenchmarkWorkspace({
@@ -47,6 +48,8 @@ export function BenchmarkWorkspace({
 }) {
   const selectedSuite = suites.find((suite) => suite.suiteId === suiteId)
   const summary = summarizeBenchmarkRuns(runs)
+  const runningCount = runs.filter((run) => run.status === "queued" || run.status === "running").length
+  const failedCount = runs.filter((run) => run.status === "failed").length
 
   return (
     <section className="benchmark-workspace" aria-label="性能テスト">
@@ -68,10 +71,9 @@ export function BenchmarkWorkspace({
           subValue={summary.latestRun ? `実行ID: ${summary.latestRun.runId}` : "ジョブ起動後に表示"}
           tone={summary.latestRun?.status ?? "queued"}
         />
-        <BenchmarkMetricCard title="平均応答時間" value={formatSummaryLatency(summary.averageLatencyMs, summary.completedCount)} subValue="直近完了 run の平均" />
-        <BenchmarkMetricCard title="回答正答率" value={formatSummaryPercent(summary.answerableAccuracy, summary.completedCount)} subValue="answerable accuracy" />
-        <BenchmarkMetricCard title="検索再現率" value={formatSummaryPercent(summary.retrievalRecallAt20, summary.completedCount)} subValue="retrieval recall@20" />
-        <BenchmarkMetricCard title="確認質問F1" value={formatSummaryPercent(summary.clarificationNeedF1, summary.completedCount)} subValue="clarification need F1" />
+        <BenchmarkMetricCard title="成功 run" value={String(summary.succeededCount)} subValue="成果物をダウンロード可能" tone="succeeded" />
+        <BenchmarkMetricCard title="処理中 run" value={String(runningCount)} subValue="queued / running" tone={runningCount > 0 ? "running" : "queued"} />
+        <BenchmarkMetricCard title="失敗 run" value={String(failedCount)} subValue="CodeBuildログで原因確認" tone={failedCount > 0 ? "failed" : "queued"} />
       </div>
 
       <div className="benchmark-layout">
@@ -144,31 +146,37 @@ export function BenchmarkWorkspace({
                 <tr>
                   <th>runId</th>
                   <th>status</th>
-                  <th>suite</th>
-                  <th>p50</th>
-                  <th>p95</th>
-                  <th>accuracy</th>
-                  <th>recall</th>
-                  <th>startedAt</th>
-                  <th>成果物</th>
+                  <th>実行内容</th>
+                  <th>時刻</th>
+                  <th>metrics</th>
+                  <th>DL / 操作</th>
                 </tr>
               </thead>
               <tbody>
                 {runs.length === 0 ? (
                   <tr>
-                    <td colSpan={9}>実行履歴はまだありません。</td>
+                    <td colSpan={6}>実行履歴はまだありません。</td>
                   </tr>
                 ) : (
                   runs.map((run) => (
-                    <tr key={run.runId}>
+                    <tr key={run.runId} className={run.error ? "has-error" : undefined}>
                       <td><code>{run.runId}</code></td>
                       <td><span className={`run-status ${run.status}`}>{runStatusLabel(run.status)}</span></td>
-                      <td>{run.suiteId}</td>
-                      <MetricCell value={run.metrics?.p50LatencyMs} formatter={formatMetricLatency} run={run} />
-                      <MetricCell value={run.metrics?.p95LatencyMs} formatter={formatMetricLatency} run={run} />
-                      <MetricCell value={run.metrics?.answerableAccuracy} formatter={formatPercent} run={run} />
-                      <MetricCell value={run.metrics?.retrievalRecallAt20} formatter={formatPercent} run={run} />
-                      <td>{formatDateTime(run.startedAt ?? run.createdAt)}</td>
+                      <td>
+                        <div className="benchmark-run-summary">
+                          <strong>{run.suiteId}</strong>
+                          <span>{run.mode} / {run.runner}</span>
+                          {run.modelId ? <small>{run.modelId}</small> : null}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="benchmark-time-stack">
+                          <span>開始 {formatDateTime(run.startedAt ?? run.createdAt)}</span>
+                          <span>更新 {formatDateTime(run.updatedAt)}</span>
+                          {run.completedAt ? <span>完了 {formatDateTime(run.completedAt)}</span> : null}
+                        </div>
+                      </td>
+                      <td><BenchmarkMetricChips run={run} /></td>
                       <td>
                         <div className="benchmark-row-actions">
                           {benchmarkArtifacts.map((artifact) => (
@@ -177,7 +185,7 @@ export function BenchmarkWorkspace({
                               key={artifact.kind}
                               title={`${artifact.description}をダウンロード`}
                               aria-label={`${artifact.description}をダウンロード`}
-                              disabled={!canDownload || !artifactKeyForRun(run, artifact.kind)}
+                              disabled={!canDownload || !canDownloadArtifact(run, artifact.kind)}
                               onClick={() => void downloadBenchmarkArtifact(run.runId, artifact.kind)}
                             >
                               <Icon name="download" />
@@ -188,6 +196,7 @@ export function BenchmarkWorkspace({
                             {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="stop" />}
                           </button>
                         </div>
+                        {run.error ? <p className="benchmark-run-error">{summarizeRunError(run.error)}</p> : null}
                       </td>
                     </tr>
                   ))
@@ -195,45 +204,6 @@ export function BenchmarkWorkspace({
               </tbody>
             </table>
           </div>
-        </section>
-      </div>
-
-      <div className="benchmark-summary-grid">
-        <section className="benchmark-summary-panel">
-          <div className="history-list-head">
-            <h3>結果サマリー</h3>
-            <span>{summary.completedCount} 件の完了 run</span>
-          </div>
-          <div className="benchmark-trend-bars" aria-label="p95応答時間推移">
-            {summary.trendRuns.length === 0 ? (
-              <span>完了 run の metrics が登録されると推移を表示します。</span>
-            ) : (
-              summary.trendRuns.map((run) => (
-                <div className="benchmark-trend-bar" key={run.runId}>
-                  <i style={{ height: `${Math.max(12, Math.min(108, (run.metrics?.p95LatencyMs ?? 0) / 25))}px` }} />
-                  <strong>{formatShortDate(run.completedAt ?? run.updatedAt)}</strong>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="benchmark-quality-grid">
-            <div><span>成功率</span><strong>{formatSummaryPercent(summary.runSuccessRate, summary.completedCount)}</strong></div>
-            <div><span>エラー率</span><strong>{formatSummaryPercent(summary.errorRate, summary.completedCount)}</strong></div>
-            <div><span>失敗HTTP</span><strong>{summary.failedHttpCount}</strong></div>
-          </div>
-        </section>
-
-        <section className="benchmark-contract-panel">
-          <div className="history-list-head">
-            <h3>必要なAPI/データ</h3>
-            <span>main 実装を利用</span>
-          </div>
-          <ul>
-            <li><code>GET /benchmark-suites</code><span>実行可能な suite と dataset を取得</span></li>
-            <li><code>POST /benchmark-runs</code><span>性能テスト run を queue に登録</span></li>
-            <li><code>GET /benchmark-runs</code><span>履歴、status、metrics、artifact key を取得</span></li>
-            <li><code>BenchmarkRunsTable</code><span><code>runId</code> 単位で実行状態と metrics を保持</span></li>
-          </ul>
         </section>
       </div>
     </section>
@@ -260,80 +230,50 @@ function BenchmarkMetricCard({
   )
 }
 
-function MetricCell({
-  value,
-  formatter,
-  run
-}: {
-  value?: number | null
-  formatter: (value?: number | null) => string
-  run: BenchmarkRun
-}) {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return <td>{formatter(value)}</td>
-  }
+function BenchmarkMetricChips({ run }: { run: BenchmarkRun }) {
+  const chips = [
+    run.metrics?.p50LatencyMs == null ? undefined : `p50 ${formatMetricLatency(run.metrics.p50LatencyMs)}`,
+    run.metrics?.p95LatencyMs == null ? undefined : `p95 ${formatMetricLatency(run.metrics.p95LatencyMs)}`,
+    run.metrics?.answerableAccuracy == null ? undefined : `accuracy ${formatPercent(run.metrics.answerableAccuracy)}`,
+    run.metrics?.retrievalRecallAt20 == null ? undefined : `recall ${formatPercent(run.metrics.retrievalRecallAt20)}`,
+    run.metrics?.clarificationNeedF1 == null ? undefined : `質問F1 ${formatPercent(run.metrics.clarificationNeedF1)}`,
+    run.metrics?.errorRate == null ? undefined : `error ${formatPercent(run.metrics.errorRate)}`
+  ].filter((chip): chip is string => Boolean(chip))
 
-  return <td><span className="metric-unavailable">{metricUnavailableLabel(run)}</span></td>
-}
-
-function formatSummaryLatency(value: number | null | undefined, completedCount: number): string {
-  if (typeof value === "number" && Number.isFinite(value)) return formatMetricLatency(value)
-  return completedCount === 0 ? "完了後に集計" : "未計測"
-}
-
-function formatSummaryPercent(value: number | null | undefined, completedCount: number): string {
-  if (typeof value === "number" && Number.isFinite(value)) return formatPercent(value)
-  return completedCount === 0 ? "完了後に集計" : "未計測"
-}
-
-function metricUnavailableLabel(run: BenchmarkRun): string {
-  if (run.status === "queued" || run.status === "running") return "完了後に集計"
-  return "未計測"
+  if (chips.length === 0) return <span className="metric-unavailable">{run.status === "queued" || run.status === "running" ? "完了後に集計" : "-"}</span>
+  return (
+    <div className="benchmark-metric-chips">
+      {chips.map((chip) => <span key={chip}>{chip}</span>)}
+    </div>
+  )
 }
 
 function artifactKeyForRun(run: BenchmarkRun, artifact: (typeof benchmarkArtifacts)[number]["kind"]): string | undefined {
   if (artifact === "report") return run.reportS3Key
   if (artifact === "summary") return run.summaryS3Key
-  return run.resultsS3Key
+  if (artifact === "results") return run.resultsS3Key
+  return run.codeBuildLogUrl
+}
+
+function canDownloadArtifact(run: BenchmarkRun, artifact: (typeof benchmarkArtifacts)[number]["kind"]): boolean {
+  if (!artifactKeyForRun(run, artifact)) return false
+  if (artifact === "logs") return true
+  return run.status === "succeeded"
+}
+
+function summarizeRunError(error: string): string {
+  const compact = error.replace(/\s+/g, " ").trim()
+  return compact.length <= 72 ? compact : `${compact.slice(0, 72)}...`
 }
 
 function summarizeBenchmarkRuns(runs: BenchmarkRun[]): {
   latestRun?: BenchmarkRun
-  completedCount: number
-  runSuccessRate?: number
-  averageLatencyMs?: number | null
-  answerableAccuracy?: number | null
-  clarificationNeedF1?: number | null
-  retrievalRecallAt20?: number | null
-  errorRate?: number | null
-  failedHttpCount: number
-  trendRuns: BenchmarkRun[]
+  succeededCount: number
 } {
   const completedRuns = runs.filter((run) => ["succeeded", "failed", "cancelled"].includes(run.status))
-  const metricRuns = completedRuns.filter((run) => run.metrics)
-  const runSuccessRate = completedRuns.length > 0
-    ? completedRuns.filter((run) => run.status === "succeeded").length / completedRuns.length
-    : undefined
 
   return {
     latestRun: runs[0],
-    completedCount: completedRuns.length,
-    runSuccessRate,
-    averageLatencyMs: averageNullable(metricRuns.map((run) => run.metrics?.averageLatencyMs ?? run.metrics?.p50LatencyMs)),
-    answerableAccuracy: averageNullable(metricRuns.map((run) => run.metrics?.answerableAccuracy)),
-    clarificationNeedF1: averageNullable(metricRuns.map((run) => run.metrics?.clarificationNeedF1)),
-    retrievalRecallAt20: averageNullable(metricRuns.map((run) => run.metrics?.retrievalRecallAt20)),
-    errorRate: averageNullable(metricRuns.map((run) => run.metrics?.errorRate)),
-    failedHttpCount: metricRuns.reduce((total, run) => total + (run.metrics?.failedHttp ?? 0), 0),
-    trendRuns: metricRuns
-      .filter((run) => typeof run.metrics?.p95LatencyMs === "number")
-      .sort((a, b) => (a.completedAt ?? a.updatedAt).localeCompare(b.completedAt ?? b.updatedAt))
-      .slice(-7)
+    succeededCount: completedRuns.filter((run) => run.status === "succeeded").length
   }
-}
-
-function averageNullable(values: Array<number | null | undefined>): number | null {
-  const valid = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value))
-  if (valid.length === 0) return null
-  return valid.reduce((sum, value) => sum + value, 0) / valid.length
 }

@@ -41,6 +41,7 @@ export type BenchmarkRun = {
   completedAt?: string
   executionArn?: string
   codeBuildBuildId?: string
+  codeBuildLogUrl?: string
   modelId?: string
   embeddingModelId?: string
   topK?: number
