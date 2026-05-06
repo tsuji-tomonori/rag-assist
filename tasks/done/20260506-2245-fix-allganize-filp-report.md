@@ -53,4 +53,16 @@ URL 変更や fallback のみで利用者向け手順・API・運用手順が変
 
 ## 状態
 
-do
+done
+
+## 完了記録
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/139
+- 受け入れ条件確認コメント: PR #139 に投稿済み。
+- セルフレビューコメント: PR #139 に投稿済み。
+- 主な検証:
+  - `npm run test -w @memorag-mvp/benchmark`
+  - `npm run typecheck -w @memorag-mvp/benchmark`
+  - `npm run prepare:allganize-ja -w @memorag-mvp/benchmark`
+  - `git diff --check`
+  - `pre-commit run --files ...`

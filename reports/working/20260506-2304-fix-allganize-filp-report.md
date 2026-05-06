@@ -16,7 +16,7 @@
 | R2 | Allganize corpus 準備を再現可能に通す | 高 | 対応 |
 | R3 | 外部 URL 変更時の原因追跡性を改善する | 中 | 対応 |
 | R4 | 変更範囲に見合う検証を実行する | 高 | 対応 |
-| R5 | task/report/commit/PR flow を進める | 高 | PR 作成前時点では進行中 |
+| R5 | task/report/commit/PR flow を進める | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -32,6 +32,7 @@
 - `FILP_Report2022.pdf` 固定 fallback と generic WARP fallback の回帰テストを追加した。
 - `README.md`、`docs/LOCAL_VERIFICATION.md`、`docs/OPERATIONS.md` に NDL WARP fallback の挙動を追記した。
 - `npm run prepare:allganize-ja -w @memorag-mvp/benchmark` で 300 rows の dataset と required corpus PDF の準備が通ることを確認した。
+- PR #139 を作成し、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
 
 ## 5. 成果物
 
@@ -42,7 +43,7 @@
 | `memorag-bedrock-mvp/README.md` | Markdown | Allganize suite の fallback 説明 | R3 |
 | `memorag-bedrock-mvp/docs/LOCAL_VERIFICATION.md` | Markdown | local verification 時の fallback 説明 | R3 |
 | `memorag-bedrock-mvp/docs/OPERATIONS.md` | Markdown | CodeBuild runner の fallback と失敗条件 | R3 |
-| `tasks/do/20260506-2245-fix-allganize-filp-report.md` | Markdown | task state と受け入れ条件 | R5 |
+| `tasks/done/20260506-2245-fix-allganize-filp-report.md` | Markdown | task state と受け入れ条件、完了記録 | R5 |
 | `reports/working/20260506-2304-fix-allganize-filp-report.md` | Markdown | 本作業レポート | R5 |
 
 ## 6. 検証結果
@@ -55,15 +56,16 @@
 | `npm run prepare:allganize-ja -w @memorag-mvp/benchmark` | pass |
 | `git diff --check` | pass |
 | `pre-commit run --files memorag-bedrock-mvp/README.md memorag-bedrock-mvp/docs/LOCAL_VERIFICATION.md memorag-bedrock-mvp/docs/OPERATIONS.md memorag-bedrock-mvp/benchmark/allganize-ja.ts memorag-bedrock-mvp/benchmark/allganize-ja.test.ts tasks/do/20260506-2245-fix-allganize-filp-report.md` | pass |
+| `pre-commit run --files reports/working/20260506-2304-fix-allganize-filp-report.md tasks/done/20260506-2245-fix-allganize-filp-report.md` | pass |
 
 ## 7. 指示へのfit評価
 
 総合fit: 4.8 / 5.0（約96%）
 
-理由: CodeBuild failure の直接原因だった FILP PDF 404 を解消し、full prepare で後続 stale URL も吸収できることを確認した。PR 作成・PR コメント・task done 移動はこのレポート作成時点では未完了だが、同一 turn 内で継続する。
+理由: CodeBuild failure の直接原因だった FILP PDF 404 を解消し、full prepare で後続 stale URL も吸収できることを確認した。PR 作成、PR コメント、task done 移動まで完了した。
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: この時点では PR 作成後の受け入れ条件コメントとセルフレビューコメントは未実施。
+- 未対応: なし。
 - 制約: 外部 PDF と NDL WARP への outbound HTTPS に依存する点は残る。
 - リスク: WARP の HTML 構造が変わると generic archive 解決が失敗する可能性がある。ただし PDF magic byte check により HTML を corpus として保存する誤動作は防ぐ。
