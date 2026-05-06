@@ -151,10 +151,10 @@ let suiteEvaluatorProfile = resolveEvaluatorProfile()
 let baselineComparisonNote: string | undefined
 
 try {
+  suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
   const baselineSummary = baselineSummaryPath
     ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { evaluatorProfile?: SearchSummary["evaluatorProfile"] })
     : undefined
-  suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
   baselineComparisonNote = baselineSummary
     ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
     : undefined
