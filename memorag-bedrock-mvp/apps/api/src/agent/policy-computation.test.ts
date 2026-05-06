@@ -3,6 +3,7 @@ import test from "node:test"
 import { buildPolicyComputationExtractionPrompt } from "../rag/prompts.js"
 import { policyExtractionToComputedFacts, type PolicyComputationExtraction } from "./policy-computation.js"
 import type { RetrievedVector } from "../types.js"
+import type { PolicyComputationPolicy } from "../rag/profiles.js"
 
 const chunk: RetrievedVector = {
   key: "doc-1-chunk-0001",
@@ -227,6 +228,41 @@ test("policy extraction requires condition span and effect enum consistency", ()
   )
 })
 
+test("policy extraction uses policy-configured text mappings instead of built-in Japanese fixed values", () => {
+  const customPolicy: PolicyComputationPolicy = {
+    comparatorTextMappings: [{ value: "gte", texts: ["以上または同額"] }],
+    effectTextMappings: [{ value: "required", texts: ["要提出"] }]
+  }
+  const customQuote = "1万円以上または同額の経費精算では証憑が要提出です。"
+  const facts = policyExtractionToComputedFacts(
+    extraction({
+      quote: customQuote,
+      conditionText: "1万円以上または同額",
+      comparator: "gte",
+      comparatorText: "以上または同額",
+      thresholdText: "1万円",
+      thresholdValue: 10000,
+      target: "証憑",
+      targetText: "証憑",
+      effect: "required",
+      effectText: "要提出"
+    }),
+    [{
+      ...chunk,
+      metadata: {
+        ...chunk.metadata,
+        text: customQuote
+      }
+    }],
+    question,
+    0.75,
+    customPolicy
+  )
+
+  assert.equal(facts[0]?.kind, "threshold_comparison")
+  assert.match(facts[0]?.kind === "threshold_comparison" ? facts[0].explanation : "", /要提出条件に該当しません/)
+})
+
 test("policy extraction resolves duplicate chunk ids by quote-bearing chunk", () => {
   const first: RetrievedVector = {
     ...chunk,
@@ -265,9 +301,12 @@ test("policy extraction prompt keeps natural language extraction separate from d
   assert.match(prompt, /condition\.conditionText は quote 中に実在する条件表現/)
   assert.match(prompt, /thresholdText と comparatorText を同じ条件として含める/)
   assert.match(prompt, /condition\.comparatorText は quote 中に実在する比較表現/)
-  assert.match(prompt, /comparator enum と直接対応する最小表現/)
+  assert.match(prompt, /policyComputationTextMap の comparatorTextMappings と直接対応する最小表現/)
   assert.match(prompt, /consequence\.targetText と consequence\.effectText は quote 中に実在する表現/)
-  assert.match(prompt, /consequence\.effectText は effect enum と直接対応する最小表現/)
+  assert.match(prompt, /policyComputationTextMap の effectTextMappings と直接対応する最小表現/)
+  assert.match(prompt, /<policyComputationTextMap>/)
+  assert.match(prompt, /comparatorTextMappings:/)
+  assert.match(prompt, /effectTextMappings:/)
 })
 
 function extraction(overrides: {

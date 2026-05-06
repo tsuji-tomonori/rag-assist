@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { config } from "../config.js"
+import { neutralAnswerPolicy } from "../rag/profiles.js"
 import type { EmbedOptions, GenerateOptions, TextModel } from "./text-model.js"
 
 function normalize(vector: number[]): number[] {
@@ -274,22 +275,18 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
   if (fact.kind === "arithmetic") return `計算結果は${fact.result}${fact.unit ?? ""}です。`
   if (fact.kind === "threshold_comparison") {
     const explanation = typeof fact.explanation === "string" ? fact.explanation : ""
-    if (fact.effect === "required" && fact.satisfiesCondition === true) return `必要です。${explanation}`
-    if (fact.effect === "required" && fact.satisfiesCondition === false) return `資料上、この金額では必要条件に該当しません。${explanation}`
-    if (fact.effect === "not_required" && fact.satisfiesCondition === true) return `不要です。${explanation}`
-    if (fact.effect === "not_required" && fact.satisfiesCondition === false) return `資料上、この金額では不要条件に該当しません。${explanation}`
-    if (fact.effect === "allowed" && fact.satisfiesCondition === true) return `可能です。${explanation}`
-    if (fact.effect === "allowed" && fact.satisfiesCondition === false) return `資料上、この金額では可能条件に該当しません。${explanation}`
-    if (fact.effect === "not_allowed" && fact.satisfiesCondition === true) return `不可です。${explanation}`
-    if (fact.effect === "not_allowed" && fact.satisfiesCondition === false) return `資料上、この金額では不可条件に該当しません。${explanation}`
-    if (fact.effect === "eligible" && fact.satisfiesCondition === true) return `対象です。${explanation}`
-    if (fact.effect === "eligible" && fact.satisfiesCondition === false) return `資料上、この金額では対象条件に該当しません。${explanation}`
-    if (fact.effect === "not_eligible" && fact.satisfiesCondition === true) return `対象外です。${explanation}`
-    if (fact.effect === "not_eligible" && fact.satisfiesCondition === false) return `資料上、この金額では対象外条件に該当しません。${explanation}`
+    const effectLabel = effectLabelFromPolicy(fact.effect)
+    if (effectLabel && fact.satisfiesCondition === true) return `${effectLabel}です。${explanation}`
+    if (effectLabel && fact.satisfiesCondition === false) return `資料上、この金額では${effectLabel}条件に該当しません。${explanation}`
   }
   if (fact.kind === "task_deadline_query_unavailable") return "期限切れタスクの完全な一覧は、構造化インデックスが未実装のため取得できません。"
   if (fact.kind === "calculation_unavailable") return typeof fact.reason === "string" ? fact.reason : "計算できません。"
   return "資料からは回答できません。"
+}
+
+function effectLabelFromPolicy(effect: unknown): string | undefined {
+  if (typeof effect !== "string") return undefined
+  return neutralAnswerPolicy.policyComputation.effectTextMappings.find((mapping) => mapping.value === effect)?.texts[0]
 }
 
 function mockPolicyComputationExtraction(prompt: string): Record<string, unknown> {

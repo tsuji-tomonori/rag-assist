@@ -45,6 +45,7 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
   const context = formatContextXml(assembly)
   const computedFactsJson = JSON.stringify(computedFacts, null, 2)
   const temporalContextJson = JSON.stringify(temporalContext ?? null, null, 2)
+  const thresholdEffectRules = formatThresholdEffectRules(policy)
 
   return `FINAL_ANSWER_JSON
 あなたは社内資料QAボットです。必ず以下のルールを守ってください。
@@ -57,12 +58,7 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
 - 自分で日数計算や数値計算を再実行してはいけない。
 - computedFacts に必要な値がない場合は、推測で補完せず、計算できない理由を説明する。
 - threshold_comparison がある場合は、effect、satisfiesCondition、explanation に基づいて、質問された金額が資料内条件に該当するかを答える。
-- effect=required かつ satisfiesCondition=true は「必要」、false は「必要条件に該当しない」として扱う。
-- effect=not_required かつ satisfiesCondition=true は「不要」、false は「不要条件に該当しない」として扱う。
-- effect=allowed かつ satisfiesCondition=true は「可能」、false は「可能条件に該当しない」として扱う。
-- effect=not_allowed かつ satisfiesCondition=true は「不可」、false は「不可条件に該当しない」として扱う。
-- effect=eligible かつ satisfiesCondition=true は「対象」、false は「対象条件に該当しない」として扱う。
-- effect=not_eligible かつ satisfiesCondition=true は「対象外」、false は「対象外条件に該当しない」として扱う。
+${thresholdEffectRules}
 - computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
@@ -141,9 +137,11 @@ ${context || "根拠チャンクはありません。"}
 }
 
 export function buildAnswerSupportPrompt(question: string, answer: string, chunks: RetrievedVector[], computedFacts: ComputedFact[] = []): string {
+  const policy = selectAnswerPolicyForChunks(chunks)
   const assembly = assembleContext({ question, chunks, tokenBudget: 2400 })
   const context = formatContextXml(assembly)
   const computedFactsJson = JSON.stringify(computedFacts, null, 2)
+  const effectLabels = formatEffectLabels(policy)
 
   return `ANSWER_SUPPORT_JSON
 あなたは社内QA用RAGの回答支持検証器です。<answer>の各文が<context>内のevidence chunkまたは<computedFacts>で明示的に支持されるかを厳密に判定してください。
@@ -155,7 +153,7 @@ export function buildAnswerSupportPrompt(question: string, answer: string, chunk
 - memory card、一般知識、推測、質問文そのものは根拠にしない。
 - 数値、期限、残日数、超過日数、手順、条件、承認者、例外条件は特に厳しく見る。
 - 計算結果や閾値条件への該当可否の主張は、文書チャンクではなく computedFacts に対応する値がある場合に支持されたものとして扱う。
-- 「必要 / 不要 / 可能 / 不可 / 対象 / 対象外」の主張は threshold_comparison.effect と satisfiesCondition に一致している場合だけ支持する。
+- policyComputation effect labels（${effectLabels}）の主張は threshold_comparison.effect と satisfiesCondition に一致している場合だけ支持する。
 - threshold_comparison.sourceText は元チャンク内の quote として扱い、computedFacts にない例外条件を回答が追加していないか確認する。
 - 引用チャンクに書かれていない断定文、範囲外の要約、過度な一般化は unsupportedSentences に入れる。
 - すべての実質的な回答文が evidence chunk または computedFacts で支持される場合だけ supported=true にする。
@@ -187,7 +185,9 @@ ${context || "根拠チャンクはありません。"}
 }
 
 export function buildPolicyComputationExtractionPrompt(question: string, chunks: RetrievedVector[]): string {
+  const policy = selectAnswerPolicyForChunks(chunks)
   const context = formatContextXml(assembleContext({ question, chunks, tokenBudget: 3200 }))
+  const textMap = formatPolicyComputationTextMap(policy)
 
   return `POLICY_COMPUTATION_EXTRACTION_JSON
 あなたは社内QA用RAGの policy condition extractor です。質問と evidence chunks だけを使い、質問に答えるために必要な「資料中の条件」と「質問中の具体値」を構造化してください。
@@ -202,9 +202,9 @@ export function buildPolicyComputationExtractionPrompt(question: string, chunks:
 - condition.conditionText は quote 中に実在する条件表現をそのまま抜き出す。
 - condition.conditionText は thresholdText と comparatorText を同じ条件として含める。例: "1万円以上"。
 - condition.comparatorText は quote 中に実在する比較表現をそのまま抜き出す。
-- condition.comparatorText は「以上」「超」「以下」「未満」「等しい」など、comparator enum と直接対応する最小表現にする。
+- condition.comparatorText は policyComputationTextMap の comparatorTextMappings と直接対応する最小表現にする。
 - consequence.targetText と consequence.effectText は quote 中に実在する表現をそのまま抜き出す。
-- consequence.effectText は effect enum と直接対応する最小表現にする。
+- consequence.effectText は policyComputationTextMap の effectTextMappings と直接対応する最小表現にする。
 - quote に含まれない条件・効果・対象を補完しない。
 - 質問と同じ要件を扱っている条件だけ matchesQuestion=true にする。
 - 複数条件がある場合は candidates にすべて出す。
@@ -267,6 +267,10 @@ comparator enum:
 - lte
 - lt
 - eq
+
+<policyComputationTextMap>
+${textMap}
+</policyComputationTextMap>
 
 <question>
 ${question}
@@ -391,6 +395,28 @@ export function selectFinalAnswerChunks(question: string, chunks: RetrievedVecto
 
   const nonToc = chunks.filter((chunk) => !isTableOfContentsLike(chunk.metadata.text ?? ""))
   return nonToc.length > 0 ? nonToc : chunks
+}
+
+function formatThresholdEffectRules(policy: AnswerPolicy): string {
+  return policy.policyComputation.effectTextMappings
+    .map((mapping) => {
+      const label = mapping.texts[0] ?? mapping.value
+      return `- effect=${mapping.value} かつ satisfiesCondition=true は「${label}」、false は「${label}条件に該当しない」として扱う。`
+    })
+    .join("\n")
+}
+
+function formatEffectLabels(policy: AnswerPolicy): string {
+  return policy.policyComputation.effectTextMappings.map((mapping) => mapping.texts[0] ?? mapping.value).join(" / ")
+}
+
+function formatPolicyComputationTextMap(policy: AnswerPolicy): string {
+  return [
+    "comparatorTextMappings:",
+    ...policy.policyComputation.comparatorTextMappings.map((mapping) => `- ${mapping.value}: ${mapping.texts.join(" / ")}`),
+    "effectTextMappings:",
+    ...policy.policyComputation.effectTextMappings.map((mapping) => `- ${mapping.value}: ${mapping.texts.join(" / ")}`)
+  ].join("\n")
 }
 
 function escapeXml(input: string): string {

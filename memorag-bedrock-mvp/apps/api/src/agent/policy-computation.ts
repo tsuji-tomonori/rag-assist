@@ -1,10 +1,11 @@
 import { z } from "zod"
 import type { RetrievedVector } from "../types.js"
 import type { ComputedFact } from "./state.js"
+import { policyComparatorOperators, policyEffectValues, type PolicyComputationPolicy, type PolicyTextMapping } from "../rag/profiles.js"
+import { ragRuntimePolicy } from "./runtime-policy.js"
 
-const CONFIDENCE_THRESHOLD = 0.75
-
-const EffectSchema = z.enum(["required", "not_required", "allowed", "not_allowed", "eligible", "not_eligible", "unknown"])
+const ComparatorSchema = z.enum(policyComparatorOperators)
+const EffectSchema = z.enum(policyEffectValues)
 
 export const PolicyComputationExtractionSchema = z.object({
   canExtract: z.boolean(),
@@ -28,7 +29,7 @@ export const PolicyComputationExtractionSchema = z.object({
           subject: z.string(),
           leftQuantity: z.string(),
           conditionText: z.string(),
-          comparator: z.enum(["gte", "gt", "lte", "lt", "eq"]),
+          comparator: ComparatorSchema,
           comparatorText: z.string(),
           thresholdText: z.string().optional(),
           thresholdValue: z.number().optional(),
@@ -57,7 +58,8 @@ export function policyExtractionToComputedFacts(
   extraction: PolicyComputationExtraction,
   chunks: RetrievedVector[],
   question: string,
-  confidenceThreshold = CONFIDENCE_THRESHOLD
+  confidenceThreshold = ragRuntimePolicy.confidence.computedFact,
+  policyComputation: PolicyComputationPolicy = ragRuntimePolicy.profile.answerPolicy.policyComputation
 ): ComputedFact[] {
   if (!extraction.canExtract) return []
   const amountText = extraction.questionTarget?.amountText
@@ -81,10 +83,10 @@ export function policyExtractionToComputedFacts(
     if (!comparatorText || !quoteExistsInText(comparatorText, candidate.quote)) return []
     if (!quoteExistsInText(comparatorText, conditionText)) return []
     if (!conditionHasAmountComparatorPair(conditionText, thresholdText, comparatorText)) return []
-    if (operatorFromComparatorText(comparatorText) !== candidate.condition.comparator) return []
+    if (policyValueFromText(comparatorText, policyComputation.comparatorTextMappings) !== candidate.condition.comparator) return []
     if (!quoteExistsInText(candidate.consequence.targetText, candidate.quote)) return []
     if (!quoteExistsInText(candidate.consequence.effectText, candidate.quote)) return []
-    if (effectFromEffectText(candidate.consequence.effectText) !== candidate.consequence.effect) return []
+    if (policyValueFromText(candidate.consequence.effectText, policyComputation.effectTextMappings) !== candidate.consequence.effect) return []
     const thresholdAmount = normalizeJpyAmount(thresholdText, candidate.condition.thresholdValue)
     if (thresholdAmount === undefined || candidate.condition.currency !== "JPY") return []
 
@@ -107,7 +109,7 @@ export function policyExtractionToComputedFacts(
         requirement: candidate.consequence.target || extraction.questionTarget?.requestedObligation || "条件",
         sourceText: candidate.quote,
         extractionConfidence: candidate.confidence,
-        explanation: `${formatYen(questionAmount)}は${formatThreshold(candidate.condition.comparator, thresholdAmount)}${satisfiesCondition ? "に該当します" : "に該当しません"}。${formatEffect(effect, satisfiesCondition)}。根拠: ${candidate.quote}`
+        explanation: `${formatYen(questionAmount)}は${formatThreshold(thresholdAmount, comparatorText)}${satisfiesCondition ? "に該当します" : "に該当しません"}。${formatEffect(candidate.consequence.effectText, satisfiesCondition)}。根拠: ${candidate.quote}`
       }
     ]
   })
@@ -154,31 +156,13 @@ function quoteExistsInText(needle: string, haystack: string): boolean {
   return haystack.includes(trimmedNeedle) || haystack.normalize("NFKC").includes(trimmedNeedle.normalize("NFKC"))
 }
 
-function operatorFromComparatorText(text: string): ThresholdFact["operator"] | undefined {
-  const normalized = text.normalize("NFKC").trim()
-  const mapping: Array<[RegExp, ThresholdFact["operator"]]> = [
-    [/^以上$/, "gte"],
-    [/^超$/, "gt"],
-    [/^より大きい$/, "gt"],
-    [/^以下$/, "lte"],
-    [/^未満$/, "lt"],
-    [/^より小さい$/, "lt"],
-    [/^(?:等しい|と等しい|同額)$/, "eq"]
-  ]
-  return mapping.find(([pattern]) => pattern.test(normalized))?.[1]
+function policyValueFromText<T extends string>(text: string, mappings: Array<PolicyTextMapping<T>>): T | undefined {
+  const normalized = normalizePolicyText(text)
+  return mappings.find((mapping) => mapping.texts.some((candidate) => normalizePolicyText(candidate) === normalized))?.value
 }
 
-function effectFromEffectText(text: string): ConcreteEffect | undefined {
-  const normalized = text.normalize("NFKC").trim()
-  const mapping: Array<[RegExp, ConcreteEffect]> = [
-    [/^(?:必要|必須|要)$/, "required"],
-    [/^(?:不要|免除)$/, "not_required"],
-    [/^(?:可能|可|できる|認められる)$/, "allowed"],
-    [/^(?:不可|禁止|できない|認められない)$/, "not_allowed"],
-    [/^(?:対象|該当)$/, "eligible"],
-    [/^(?:対象外|非該当)$/, "not_eligible"]
-  ]
-  return mapping.find(([pattern]) => pattern.test(normalized))?.[1]
+function normalizePolicyText(text: string): string {
+  return text.normalize("NFKC").trim()
 }
 
 function conditionHasAmountComparatorPair(conditionText: string, amountText: string, comparatorText: string): boolean {
@@ -212,19 +196,10 @@ function formatYen(amount: number): string {
   return `${amount.toLocaleString("ja-JP")}円`
 }
 
-function formatThreshold(operator: ThresholdFact["operator"], amount: number): string {
-  const suffix = operator === "gte" ? "以上" : operator === "gt" ? "超" : operator === "lte" ? "以下" : operator === "lt" ? "未満" : "と等しい"
-  return `${formatYen(amount)}${suffix}`
+function formatThreshold(amount: number, comparatorText: string): string {
+  return `${formatYen(amount)}${comparatorText}`
 }
 
-function formatEffect(effect: ConcreteEffect, satisfiesCondition: boolean): string {
-  const label = {
-    required: "必要",
-    not_required: "不要",
-    allowed: "可能",
-    not_allowed: "不可",
-    eligible: "対象",
-    not_eligible: "対象外"
-  }[effect]
-  return satisfiesCondition ? `資料上は${label}条件に該当します` : `資料上は${label}条件に該当しません`
+function formatEffect(effectText: string, satisfiesCondition: boolean): string {
+  return satisfiesCondition ? `資料上は${effectText}条件に該当します` : `資料上は${effectText}条件に該当しません`
 }

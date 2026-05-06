@@ -54,6 +54,25 @@ export type AnswerPolicy = {
   classificationAnchors: string[]
   invalidAnswerPatterns: RegExp[]
   searchClueAnchors: string[]
+  policyComputation: PolicyComputationPolicy
+}
+
+export const policyComparatorOperators = ["gte", "gt", "lte", "lt", "eq"] as const
+export const policyConcreteEffects = ["required", "not_required", "allowed", "not_allowed", "eligible", "not_eligible"] as const
+export const policyEffectValues = [...policyConcreteEffects, "unknown"] as const
+
+export type PolicyComparatorOperator = typeof policyComparatorOperators[number]
+export type PolicyConcreteEffect = typeof policyConcreteEffects[number]
+export type PolicyEffectValue = typeof policyEffectValues[number]
+
+export type PolicyTextMapping<T extends string> = {
+  value: T
+  texts: string[]
+}
+
+export type PolicyComputationPolicy = {
+  comparatorTextMappings: Array<PolicyTextMapping<PolicyComparatorOperator>>
+  effectTextMappings: Array<PolicyTextMapping<PolicyConcreteEffect>>
 }
 
 export type RAGProfile = {
@@ -63,12 +82,31 @@ export type RAGProfile = {
   answerPolicy: AnswerPolicy
 }
 
+export const defaultPolicyComputationPolicy: PolicyComputationPolicy = {
+  comparatorTextMappings: [
+    { value: "gte", texts: ["以上"] },
+    { value: "gt", texts: ["超", "より大きい"] },
+    { value: "lte", texts: ["以下"] },
+    { value: "lt", texts: ["未満", "より小さい"] },
+    { value: "eq", texts: ["等しい", "と等しい", "同額"] }
+  ],
+  effectTextMappings: [
+    { value: "required", texts: ["必要", "必須", "要"] },
+    { value: "not_required", texts: ["不要", "免除"] },
+    { value: "allowed", texts: ["可能", "可", "できる", "認められる"] },
+    { value: "not_allowed", texts: ["不可", "禁止", "できない", "認められない"] },
+    { value: "eligible", texts: ["対象", "該当"] },
+    { value: "not_eligible", texts: ["対象外", "非該当"] }
+  ]
+}
+
 export const neutralAnswerPolicy: AnswerPolicy = {
   id: "default-answer-policy",
   version: "1",
   classificationAnchors: ["分類", "種類", "区分"],
   invalidAnswerPatterns: [],
-  searchClueAnchors: []
+  searchClueAnchors: [],
+  policyComputation: defaultPolicyComputationPolicy
 }
 
 export const swebokRequirementsAnswerPolicy: AnswerPolicy = {
@@ -91,7 +129,8 @@ export const swebokRequirementsAnswerPolicy: AnswerPolicy = {
   searchClueAnchors: [
     "ソフトウェア要求の分類",
     "ソフトウェア製品要求 ソフトウェアプロジェクト要求 機能要求 非機能要求 技術制約 サービス品質制約"
-  ]
+  ],
+  policyComputation: defaultPolicyComputationPolicy
 }
 
 export function resolveRetrievalProfileId(id: string | undefined, adaptiveRetrievalEnabled = false): RetrievalProfileId {
