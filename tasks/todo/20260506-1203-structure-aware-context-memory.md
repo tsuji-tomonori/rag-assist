@@ -1,6 +1,10 @@
 # 文書構造に基づく Context / Memory Budget
 
-保存先: `reports/tasks/20260506-1203-structure-aware-context-memory.md`
+保存先: `tasks/todo/20260506-1203-structure-aware-context-memory.md`
+
+## 状態
+
+- todo
 
 ## 背景
 
@@ -32,8 +36,8 @@ memory card 生成と context assembly では、summary 文字数、keywords 件
 ## 必要情報
 
 - 前提タスク:
-  - `reports/tasks/20260506-1203-rag-policy-profile.md`
-  - `reports/tasks/20260506-1203-structured-fact-planning.md`
+  - `tasks/todo/20260506-1203-rag-policy-profile.md`
+  - `tasks/todo/20260506-1203-structured-fact-planning.md`
 - 固定値の例:
   - `memorag-service.ts` の section cards `12`、concept terms `8`
   - `context-assembler.ts` の token budget `3000`、snippet max `1800`

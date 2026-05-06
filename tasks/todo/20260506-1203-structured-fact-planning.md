@@ -1,6 +1,10 @@
 # Structured Fact Planning による回答可否判定
 
-保存先: `reports/tasks/20260506-1203-structured-fact-planning.md`
+保存先: `tasks/todo/20260506-1203-structured-fact-planning.md`
+
+## 状態
+
+- todo
 
 ## 背景
 
@@ -30,7 +34,7 @@
 
 ## 必要情報
 
-- 前提タスク: `reports/tasks/20260506-1203-rag-policy-profile.md`
+- 前提タスク: `tasks/todo/20260506-1203-rag-policy-profile.md`
 - 関連箇所:
   - `answerability-gate.ts`
   - `retrieval-evaluator.ts`

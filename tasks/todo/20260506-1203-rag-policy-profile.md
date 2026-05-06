@@ -1,6 +1,10 @@
 # RAG Policy / Profile 基盤の導入
 
-保存先: `reports/tasks/20260506-1203-rag-policy-profile.md`
+保存先: `tasks/todo/20260506-1203-rag-policy-profile.md`
+
+## 状態
+
+- todo
 
 ## 背景
 

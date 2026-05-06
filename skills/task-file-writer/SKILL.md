@@ -1,6 +1,6 @@
 ---
 name: task-file-writer
-description: リポジトリ内で実装・調査・改善タスクを Markdown ファイルとして分解、作成、更新する。Use when Codex needs to create reports/tasks task files, convert a report or plan into one-task-per-file work items, or write background, policy, required context, acceptance criteria, execution plan, validation, and risks for future implementation tasks.
+description: リポジトリ内で実装・調査・改善タスクを Markdown ファイルとして分解、作成、更新する。Use when Codex needs to create tasks/todo, tasks/do, or tasks/done task files, convert a report or plan into one-task-per-file work items, or write background, policy, required context, acceptance criteria, execution plan, validation, and risks for future implementation tasks.
 ---
 
 # Task File Writer
@@ -11,13 +11,18 @@ Use this skill to convert a plan, investigation report, review finding, roadmap,
 
 ## Output Location
 
-- Default directory: `reports/tasks/`.
-- Create the directory if it does not exist.
+- Default directory for new planned work: `tasks/todo/`.
+- State directories:
+  - `tasks/todo/`: accepted or planned but not started.
+  - `tasks/do/`: in progress. Move a task here before editing deliverables.
+  - `tasks/done/`: complete only after implementation, validation, PR creation/commenting when applicable, and completion notes are recorded.
+- Create `tasks/todo/`, `tasks/do/`, and `tasks/done/` if they do not exist.
 - Use Markdown files only.
 - Use the repository work-report filename convention:
   - `YYYYMMDD-HHMM-<task-summary>.md`
   - `<task-summary>` must be short ASCII lowercase kebab-case.
 - Do not combine multiple implementation goals in one task file.
+- Keep `保存先` aligned with the task file's current path whenever moving between state directories.
 
 ## Required Sections
 
@@ -25,17 +30,18 @@ Each task file must include these sections:
 
 1. `# <task title>`
 2. `保存先`
-3. `背景`
-4. `目的`
-5. `対象範囲`
-6. `方針`
-7. `必要情報`
-8. `実行計画`
-9. `ドキュメントメンテナンス計画`
-10. `受け入れ条件`
-11. `検証計画`
-12. `PRレビュー観点`
-13. `未決事項・リスク`
+3. `状態`
+4. `背景`
+5. `目的`
+6. `対象範囲`
+7. `方針`
+8. `必要情報`
+9. `実行計画`
+10. `ドキュメントメンテナンス計画`
+11. `受け入れ条件`
+12. `検証計画`
+13. `PRレビュー観点`
+14. `未決事項・リスク`
 
 Use Japanese prose unless the user requests another language. Keep file paths, commands, API names, type names, and function names in their original spelling.
 
@@ -53,6 +59,7 @@ When converting a report or plan:
 
 For each task:
 
+- `状態`: Use `todo`, `do`, or `done` consistently with the parent directory.
 - `背景`: Explain why the task exists and what concrete problem it addresses.
 - `目的`: State the desired outcome in one or two sentences.
 - `対象範囲`: List files, modules, docs, tests, or behavior likely to be touched.
@@ -99,6 +106,14 @@ When updating or creating task files:
   - preserve existing manifests / artifacts through runtime fallback
   - record profile id / version when behavior becomes configurable
 
+## State Transitions
+
+- New tasks from plans, reports, reviews, or roadmaps start in `tasks/todo/` unless they are being executed immediately.
+- Before implementation starts, move the task file to `tasks/do/`, update `保存先`, and set `状態` to `do`.
+- After all deliverables and validations are complete, move the task file to `tasks/done/`, update `保存先`, set `状態` to `done`, and add completion notes when useful.
+- Do not move a task to `tasks/done/` when validation is failing, PR-required acceptance comments are missing, or known blockers remain.
+- When moving task files, update direct task-to-task references in affected task files so they point to the new state directory.
+
 ## PR Review Checklist Base
 
 Every implementation task for `rag-assist` / `memorag-bedrock-mvp` should include task-specific review points covering the relevant subset below:
@@ -143,9 +158,11 @@ Use review comment severity labels when capturing expected review outcomes:
 Before finishing:
 
 - Inspect changed task files for missing required sections.
+- Ensure `保存先` and `状態` match the file's current state directory.
 - Ensure each task has a `ドキュメントメンテナンス計画` section.
 - Ensure each task has a `PRレビュー観点` section.
 - Ensure `未決事項・リスク` uses explicit `決定事項` where a recommended choice is possible.
+- Ensure moved task files do not leave stale `reports/tasks/` references unless the reference is intentionally historical.
 - Run a trailing-whitespace check on created Markdown and skill files.
 - Run `git diff --check` when practical.
 - If a validation command is skipped, record the reason in the final response or post-task report.
