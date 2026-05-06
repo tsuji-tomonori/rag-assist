@@ -263,6 +263,11 @@
     grid-template-columns: 1fr;
   }
 
+  .assignee-toolbar,
+  .assignee-kanban {
+    grid-template-columns: 1fr;
+  }
+
   .history-toolbar {
     grid-template-columns: 1fr;
   }

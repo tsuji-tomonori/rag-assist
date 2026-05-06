@@ -37,9 +37,46 @@
   font-weight: 800;
 }
 
+.assignee-toolbar {
+  display: grid;
+  grid-template-columns: auto 190px minmax(280px, 440px);
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.assignee-toolbar h3 {
+  margin: 0;
+  color: #17233f;
+  font-size: 15px;
+  line-height: 38px;
+}
+
+.assignee-toolbar label {
+  display: grid;
+  gap: 6px;
+}
+
+.assignee-toolbar label span {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.assignee-toolbar select,
+.assignee-toolbar input {
+  min-height: 38px;
+  border: 1px solid #cbd6e5;
+  border-radius: 7px;
+  padding: 0 12px;
+  color: #17233f;
+  background: #fff;
+  font-weight: 800;
+}
+
 .assignee-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 0.84fr) minmax(330px, 1fr) minmax(440px, 1.28fr);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 430px);
   gap: 14px;
 }
 
@@ -53,6 +90,179 @@
   padding: 18px;
   background: #fff;
   box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+}
+
+.assignee-kanban {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.kanban-column {
+  min-width: 0;
+  min-height: 520px;
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  padding: 12px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+}
+
+.kanban-column header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kanban-column header div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-column header h3 {
+  margin: 0;
+  color: #17233f;
+  font-size: 15px;
+}
+
+.kanban-column header > span {
+  min-width: 28px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #45546f;
+  background: #eef2f6;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.kanban-column > p {
+  min-height: 36px;
+  margin: 8px 0 12px;
+  color: #68758f;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.kanban-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #2f6fed;
+}
+
+.lane-inProgress .kanban-status-dot {
+  background: #16a1c4;
+}
+
+.lane-waitingReview .kanban-status-dot {
+  background: #d68a13;
+}
+
+.lane-resolved .kanban-status-dot {
+  background: #19a86b;
+}
+
+.kanban-card-list {
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.question-kanban-card {
+  width: 100%;
+  min-height: 132px;
+  border: 1px solid #dce4ee;
+  border-left: 4px solid #89a6d5;
+  border-radius: 7px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  color: #17233f;
+  background: #fff;
+  text-align: left;
+  box-shadow: 0 6px 16px rgba(28, 42, 68, 0.04);
+}
+
+.question-kanban-card.active {
+  border-color: #8db2fb;
+  border-left-color: #2f6fed;
+  background: #f4f8ff;
+  box-shadow: 0 10px 22px rgba(47, 111, 237, 0.12);
+}
+
+.question-kanban-card.priority-high {
+  border-left-color: #d65f72;
+}
+
+.question-kanban-card.priority-urgent {
+  border-left-color: #b32626;
+}
+
+.kanban-card-title {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.kanban-card-title strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #17233f;
+  font-size: 13px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+}
+
+.kanban-card-title span {
+  border-radius: 6px;
+  padding: 3px 7px;
+  color: #8a4b00;
+  background: #fff0d9;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.priority-normal .kanban-card-title span {
+  color: #2363d9;
+  background: #edf4ff;
+}
+
+.priority-urgent .kanban-card-title span {
+  color: #a10f2b;
+  background: #ffe8ec;
+}
+
+.question-kanban-card > span:not(.kanban-card-title),
+.question-kanban-card time,
+.kanban-empty {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.kanban-empty {
+  border: 1px dashed #cbd6e5;
+  border-radius: 7px;
+  padding: 14px;
+  background: #fbfdff;
+}
+
+.assignee-side-panel {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 14px;
 }
 
 .question-list {

@@ -1370,10 +1370,11 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("資料を添付して開始できます")).toBeInTheDocument()
     await userEvent.click(screen.getByTitle("担当者対応"))
     expect(await screen.findByText("問い合わせ一覧")).toBeInTheDocument()
-    expect(screen.getByText("対応中 / 総務部")).toBeInTheDocument()
+    expect(screen.getByText("未対応 / 総務部")).toBeInTheDocument()
+    expect(screen.getByText("確認待ち / 総務部")).toBeInTheDocument()
     await userEvent.click(screen.getByText("緊急確認"))
     expect(screen.getByText("解決済み / 総務部")).toBeInTheDocument()
-    expect(screen.getByText("緊急")).toBeInTheDocument()
+    expect(screen.getAllByText("緊急").length).toBeGreaterThan(0)
   })
 
   it("shows an empty assignee workspace when no questions exist", async () => {
