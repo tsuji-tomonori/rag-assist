@@ -306,7 +306,7 @@ export const ToolIntentSchema = z.object({
   needsTemporalCalculation: z.boolean().default(false),
   needsTaskDeadlineIndex: z.boolean().default(false),
   needsExhaustiveEnumeration: z.boolean().default(false),
-  temporalOperation: z.enum(["current_date", "days_until", "deadline_status", "add_days", "recurring_deadline", "business_day_calculation"]).optional(),
+  temporalOperation: z.enum(["current_date", "days_until", "deadline_status", "add_days", "recurring_deadline", "business_day_calculation", "relative_policy_deadline"]).optional(),
   arithmeticOperation: z.enum(["sum", "difference", "percentage", "price", "average"]).optional(),
   confidence: z.number().min(0).max(1).default(0),
   reason: z.string().default("")
@@ -360,6 +360,18 @@ export const ComputedFactSchema = z.discriminatedUnion("kind", [
     amount: z.number().int(),
     unit: z.enum(["calendar_day", "business_day"]),
     resultDate: z.string(),
+    explanation: z.string()
+  }),
+  ComputedFactBaseSchema.extend({
+    kind: z.literal("relative_policy_deadline"),
+    today: z.string(),
+    timezone: z.string(),
+    baseDate: z.string(),
+    resultDate: z.string(),
+    amount: z.number().int(),
+    unit: z.enum(["month"]),
+    direction: z.enum(["before"]),
+    ruleText: z.string(),
     explanation: z.string()
   }),
   ComputedFactBaseSchema.extend({

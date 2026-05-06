@@ -48,6 +48,7 @@ const copyScenarios: CopyScenario[] = [
           onResolveQuestion={async () => undefined}
           onAdditionalQuestion={() => undefined}
           onSubmitClarificationOption={async () => undefined}
+          onStartClarificationFreeform={() => undefined}
         />
       ),
     renderStrictComponent: () =>
@@ -60,6 +61,7 @@ const copyScenarios: CopyScenario[] = [
             onResolveQuestion={async () => undefined}
             onAdditionalQuestion={() => undefined}
             onSubmitClarificationOption={async () => undefined}
+            onStartClarificationFreeform={() => undefined}
           />
         </StrictMode>
       )

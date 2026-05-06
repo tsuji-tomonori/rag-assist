@@ -98,6 +98,10 @@ test("mock model generates embeddings, memory cards, clues, final answers, and f
   assert.match(await model.generate("MEMORY_CARD_JSON <document>要求分類</document>"), /資料外の内容は回答しない/)
   assert.match(await model.generate("CLUES_JSON <question>分類は？</question>"), /分類/)
   assert.match(await model.generate('FINAL_ANSWER_JSON <chunk id="c1">根拠本文</chunk>'), /根拠本文/)
+  assert.match(await model.generate(`FINAL_ANSWER_JSON <computedFacts>${JSON.stringify([
+    { id: "date-unavailable-001", kind: "calculation_unavailable", reason: "計算対象の期限日を特定できません。" },
+    { id: "relative-deadline-001", kind: "relative_policy_deadline", resultDate: "2026-07-01", ruleText: "申請期限は開始日の1か月前" }
+  ])}</computedFacts>`), /2026-07-01/)
   assert.match(await model.generate("FINAL_ANSWER_JSON"), /資料からは回答できません/)
   assert.equal(await model.generate("other prompt"), "{}")
 })

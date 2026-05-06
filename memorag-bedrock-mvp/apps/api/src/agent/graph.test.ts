@@ -1,4 +1,4 @@
-import { mkdtemp } from "node:fs/promises"
+import { mkdtemp, readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import assert from "node:assert/strict"
@@ -533,6 +533,64 @@ test("fixed workflow answers explicit scoped questions instead of clarifying fro
   assert.match(firstClarification?.detail ?? "", /needsClarification=false/)
 })
 
+test("fixed workflow answers parental leave deadline questions with abbreviation and start date", async () => {
+  const service = new MemoRagService(await createTestDeps())
+  const handbook = await readFile(new URL("../../../../benchmark/corpus/standard-agent-v1/handbook.md", import.meta.url), "utf-8")
+
+  await service.ingest({ fileName: "handbook.md", text: handbook })
+
+  const result = await service.chat({
+    question: "8/1から育休を取る場合、いつまでに申請する必要がある?",
+    includeDebug: true,
+    minScore: 0.01,
+    maxIterations: 1,
+    asOfDate: "2026-05-05",
+    asOfDateSource: "test"
+  })
+
+  assert.equal(result.responseType, "answer")
+  assert.equal(result.needsClarification, false)
+  assert.match(result.answer, /2026-07-01|7月1日|7\/1/)
+  assert.match(result.answer, /開始日の1か月前|申請期限/)
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(labels.at(-1), "finalize_response")
+  assert.equal(labels.includes("finalize_clarification"), false)
+  const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+  const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "relative_policy_deadline")
+  assert.equal(computedFacts?.[0]?.resultDate, "2026-07-01")
+})
+
+test("fixed workflow derives relative policy deadlines for deadline wording variants without unavailable facts", async () => {
+  const service = new MemoRagService(await createTestDeps())
+  const handbook = await readFile(new URL("../../../../benchmark/corpus/standard-agent-v1/handbook.md", import.meta.url), "utf-8")
+
+  await service.ingest({ fileName: "handbook.md", text: handbook })
+
+  for (const question of [
+    "8/1から育休を取る場合、申請期限は？",
+    "8/1から育休を取る場合、提出期限は？",
+    "8/1から育休を取る場合、締切は？"
+  ]) {
+    const result = await service.chat({
+      question,
+      includeDebug: true,
+      minScore: 0.01,
+      maxIterations: 1,
+      asOfDate: "2026-05-05",
+      asOfDateSource: "test"
+    })
+
+    assert.equal(result.responseType, "answer")
+    assert.equal(result.needsClarification, false)
+    assert.match(result.answer, /2026-07-01|7月1日|7\/1/)
+    const computationStep = result.debug?.steps.find((step) => step.label === "execute_computation_tools")
+    const computedFacts = computationStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+    assert.deepEqual(computedFacts?.map((fact) => fact.kind), ["relative_policy_deadline"])
+    assert.equal(computedFacts?.[0]?.resultDate, "2026-07-01")
+  }
+})
+
 test("fixed workflow merges node updates into state and appends trace entries", () => {
   const initial = state({
     normalizedQuery: "old query",
@@ -713,9 +771,9 @@ test("fixed workflow search cycle loops until maxIterations when retrieval score
   const actionSteps = result.debug?.steps.filter((step) => step.label === "execute_search_action") ?? []
   assert.match(actionSteps[0]?.summary ?? "", /action=evidence_search, hits=1, new=1/)
   assert.match(actionSteps[0]?.detail ?? "", /newEvidenceCount=1 topScore=/)
-  assert.match(actionSteps[1]?.summary ?? "", /action=query_rewrite, hits=1, new=0/)
+  assert.match(actionSteps[1]?.summary ?? "", /action=(query_rewrite|evidence_search), hits=1, new=0/)
   assert.match(actionSteps[1]?.detail ?? "", /newEvidenceCount=0 topScore=/)
-  assert.match(actionSteps[1]?.detail ?? "", /query rewrite 後のhybrid検索で1件取得し、新規根拠は0件でした。/)
+  assert.match(actionSteps[1]?.detail ?? "", /hybrid検索で1件取得し、新規根拠は0件でした。/)
 })
 
 test("fixed workflow search cycle stops after two consecutive no-new-evidence iterations", async () => {

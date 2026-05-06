@@ -64,6 +64,7 @@ function formatComputedFactAssessment(fact: QaAgentState["computedFacts"][number
   if (fact.kind === "days_until") return `${fact.today}から${fact.dueDate}まで${fact.daysRemaining}日`
   if (fact.kind === "current_date") return fact.explanation
   if (fact.kind === "add_days") return `${fact.baseDate}+${fact.amount}日=${fact.resultDate}`
+  if (fact.kind === "relative_policy_deadline") return `${fact.baseDate}-${fact.amount}か月=${fact.resultDate}`
   if (fact.kind === "task_deadline_query_unavailable") return fact.reason
   return fact.reason
 }

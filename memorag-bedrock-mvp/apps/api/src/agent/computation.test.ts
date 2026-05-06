@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import { buildTemporalContext, calculateDeadlineStatus, detectToolIntent, executeComputationTools } from "./computation.js"
+import { addMonths } from "./nodes/execute-computation-tools.js"
 import type { TemporalContext } from "./state.js"
 
 const fixedTemporalContext: TemporalContext = {
@@ -96,6 +97,31 @@ test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline 
   assert.equal(taskList.needsSearch, false)
 })
 
+test("tool intent consistently detects relative policy deadline wording variants", () => {
+  for (const question of [
+    "8/1から育休を取る場合、申請期限は？",
+    "8/1から育休を取る場合、提出期限は？",
+    "8/1から育休を取る場合、締切は？"
+  ]) {
+    const intent = detectToolIntent(question)
+    assert.equal(intent.needsTemporalCalculation, true)
+    assert.equal(intent.temporalOperation, "relative_policy_deadline")
+    assert.equal(intent.needsSearch, true)
+  }
+})
+
+test("tool intent keeps document verification questions out of relative policy deadline calculation", () => {
+  for (const question of [
+    "資料に、8/1から育休を取る場合の申請期限は書かれていますか？",
+    "規程には、8/1開始の場合の申請期限が記載されていますか？"
+  ]) {
+    const intent = detectToolIntent(question)
+    assert.equal(intent.needsTemporalCalculation, false)
+    assert.notEqual(intent.temporalOperation, "relative_policy_deadline")
+    assert.equal(intent.needsSearch, true)
+  }
+})
+
 test("computation layer executes MVP temporal and arithmetic tools deterministically", () => {
   const days = executeComputationTools("2026-05-10まであと何日？", fixedTemporalContext, detectToolIntent("2026-05-10まであと何日？"))
   assert.equal(days[0]?.kind, "days_until")
@@ -126,6 +152,13 @@ test("days_until past date reports overdue instead of negative remaining days", 
   const result = executeComputationTools("2026年5月3日時点で、2026-05-01まであと何日？", fixedTemporalContext, detectToolIntent("2026年5月3日時点で、2026-05-01まであと何日？"))
   assert.equal(result[0]?.kind, "deadline_status")
   assert.equal(result[0]?.kind === "deadline_status" ? result[0].overdueDays : undefined, 2)
+})
+
+test("addMonths clamps month-end dates to the target month end", () => {
+  assert.equal(addMonths("2026-08-01", -1), "2026-07-01")
+  assert.equal(addMonths("2026-03-31", -1), "2026-02-28")
+  assert.equal(addMonths("2028-03-31", -1), "2028-02-29")
+  assert.equal(addMonths("2026-05-31", -1), "2026-04-30")
 })
 
 test("arithmetic extraction treats calendar year and month separately from duration", () => {

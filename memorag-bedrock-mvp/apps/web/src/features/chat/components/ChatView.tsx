@@ -29,6 +29,7 @@ export function ChatView({
   expandedStepId,
   onAsk,
   onSubmitClarificationOption,
+  onStartClarificationFreeform,
   onSetQuestion,
   onSetFile,
   onSetSubmitShortcut,
@@ -58,6 +59,7 @@ export function ChatView({
   expandedStepId: number | null
   onAsk: (event: FormEvent) => Promise<void>
   onSubmitClarificationOption: Parameters<typeof MessageList>[0]["onSubmitClarificationOption"]
+  onStartClarificationFreeform: Parameters<typeof MessageList>[0]["onStartClarificationFreeform"]
   onSetQuestion: (value: string) => void
   onSetFile: (file: File | null) => void
   onSetSubmitShortcut: (value: "enter" | "ctrlEnter") => void
@@ -81,6 +83,7 @@ export function ChatView({
           onCreateQuestion={onCreateQuestion}
           onResolveQuestion={onResolveQuestion}
           onSubmitClarificationOption={onSubmitClarificationOption}
+          onStartClarificationFreeform={onStartClarificationFreeform}
         />
 
         <ChatComposer

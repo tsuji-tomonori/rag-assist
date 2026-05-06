@@ -17,7 +17,8 @@ export function MessageItem({
   onCreateQuestion,
   onResolveQuestion,
   onAdditionalQuestion,
-  onSubmitClarificationOption
+  onSubmitClarificationOption,
+  onStartClarificationFreeform
 }: {
   message: Message
   messageIndex: number
@@ -28,6 +29,7 @@ export function MessageItem({
   onResolveQuestion: (questionId: string) => Promise<void>
   onAdditionalQuestion: (value: string) => void
   onSubmitClarificationOption: (option: ClarificationOption, originalQuestion: string) => Promise<void>
+  onStartClarificationFreeform: (originalQuestion: string, seedText: string) => void
 }) {
   return (
     <article className={`message-row ${message.role}`} key={`${message.role}-${message.createdAt}-${messageIndex}`} ref={latestMessageRef}>
@@ -46,6 +48,7 @@ export function MessageItem({
             onResolveQuestion={onResolveQuestion}
             onAdditionalQuestion={onAdditionalQuestion}
             onSubmitClarificationOption={onSubmitClarificationOption}
+            onStartClarificationFreeform={onStartClarificationFreeform}
           />
         ) : (
           <UserPromptBubble text={message.text} />
