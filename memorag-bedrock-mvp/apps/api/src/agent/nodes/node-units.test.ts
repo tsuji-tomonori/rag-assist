@@ -243,7 +243,7 @@ test("sufficient context gate keeps generic partial questions refused without a 
   assert.equal(result.answer, NO_ANSWER)
 })
 
-test("sufficient context gate refuses partial evidence with missing specific facts", async () => {
+test("sufficient context gate proceeds on partial evidence when only secondary facts are missing", async () => {
   const deps = createDeps()
   const baseModel = deps.textModel
   deps.textModel = {
@@ -269,6 +269,72 @@ test("sufficient context gate refuses partial evidence with missing specific fac
     state({
       question: "申請期限と例外承認者は？",
       answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", factType: "date", necessity: "primary", priority: 1, status: "supported", supportingChunkKeys: ["doc-1-chunk-0001"] },
+          { id: "exception-approver", description: "例外承認者", factType: "person", necessity: "secondary", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      },
+      retrievalEvaluation: {
+        retrievalQuality: "partial",
+        missingFactIds: ["exception-approver"],
+        conflictingFactIds: [],
+        supportedFactIds: ["deadline"],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "partial evidence"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "PARTIAL")
+  assert.equal(result.answerability?.isAnswerable, true)
+  assert.equal(result.answerability?.reason, "sufficient_evidence")
+  assert.equal(result.answer, undefined)
+  assert.match(result.sufficientContext?.reason ?? "", /取得済み根拠で回答生成へ進みます/)
+})
+
+test("sufficient context gate refuses partial evidence when primary facts are missing", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.7,
+          requiredFacts: ["申請期限", "例外承認者"],
+          supportedFacts: ["申請期限"],
+          missingFacts: ["例外承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "例外承認者の根拠がありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "申請期限と例外承認者は？",
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限と例外承認者",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", factType: "date", necessity: "primary", priority: 1, status: "supported", supportingChunkKeys: ["doc-1-chunk-0001"] },
+          { id: "exception-approver", description: "例外承認者", factType: "person", necessity: "primary", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      },
       retrievalEvaluation: {
         retrievalQuality: "partial",
         missingFactIds: ["exception-approver"],
@@ -986,6 +1052,63 @@ test("retrieval evaluator LLM judge handles uncertain value mismatch cases", asy
   assert.equal(judgedConflict.retrievalEvaluation?.retrievalQuality, "conflicting")
   assert.deepEqual(judgedConflict.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
   assert.equal(judgedConflict.retrievalEvaluation?.nextAction.type, "evidence_search")
+})
+
+test("retrieval evaluator LLM judge resolves high-confidence no-conflict without requiring scoped candidates", async () => {
+  const mismatchState = state({
+    question: "申請期限は？",
+    retrievedChunks: [
+      {
+        ...chunk,
+        key: "doc-1-chunk-0001",
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "chunk-0001",
+          text: "申請期限は翌月5営業日です。"
+        }
+      },
+      {
+        ...chunk,
+        key: "doc-1-chunk-0002",
+        score: 0.88,
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "chunk-0002",
+          text: "申請期限は翌月10営業日です。"
+        }
+      }
+    ],
+    searchPlan: {
+      complexity: "simple",
+      intent: "申請期限",
+      requiredFacts: [{ id: "deadline", description: "申請期限", factType: "date", necessity: "primary", priority: 1, status: "missing", supportingChunkKeys: [] }],
+      actions: [],
+      stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+    }
+  })
+
+  const noConflict = createRetrievalEvaluatorNode({
+    ...createDeps(),
+    textModel: {
+      embed: async () => [1],
+      generate: async () =>
+        JSON.stringify({
+          label: "NO_CONFLICT",
+          confidence: 0.91,
+          factIds: ["deadline"],
+          supportingChunkIds: ["doc-1-chunk-0001"],
+          contradictionChunkIds: [],
+          reason: "回答に使う primary fact は翌月5営業日で支持され、他の値は競合として扱わない。"
+        })
+    }
+  })
+
+  const resolved = await noConflict(mismatchState)
+  assert.equal(resolved.retrievalEvaluation?.llmJudge?.label, "NO_CONFLICT")
+  assert.equal(resolved.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(resolved.retrievalEvaluation?.conflictingFactIds, [])
+  assert.equal(resolved.retrievalEvaluation?.nextAction.type, "rerank")
+  assert.equal(resolved.searchPlan?.requiredFacts[0]?.status, "supported")
 })
 
 test("traced node records success, warning, model ids, details, and thrown errors", async () => {

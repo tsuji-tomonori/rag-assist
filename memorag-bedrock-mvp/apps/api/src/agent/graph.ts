@@ -29,7 +29,7 @@ import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate
 import { validateCitations } from "./nodes/validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
 import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeTopK, ragRuntimePolicy } from "./runtime-policy.js"
-import { NO_ANSWER, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
+import { NO_ANSWER, isPrimaryRequiredFact, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
 import { toCitation } from "./utils.js"
@@ -171,8 +171,9 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     const evaluatorDone = nextActionType === "rerank" || nextActionType === "finalize_refusal"
     const stopByIteration = nextIteration >= stopCriteria.maxIterations
     const stopByNoEvidence = noNewEvidenceStreak >= stopCriteria.maxNoNewEvidenceStreak
+    const unresolvedPrimaryConflict = state.retrievalEvaluation.conflictingFactIds.some((factId) => isPrimaryRequiredFactId(state.searchPlan.requiredFacts, factId))
     const forcedRefusal =
-      state.retrievalEvaluation.conflictingFactIds.length > 0 &&
+      unresolvedPrimaryConflict &&
       state.retrievalEvaluation.nextAction.type !== "finalize_refusal" &&
       (stopByIteration || stopByNoEvidence)
 
@@ -185,7 +186,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
             ...state.retrievalEvaluation,
             retrievalQuality: "conflicting",
             nextAction: { type: "finalize_refusal", reason: "unresolved_conflicting_evidence" },
-            reason: `${state.retrievalEvaluation.reason} 検索 budget 内で conflicting evidence を解消できなかったため、回答生成前に拒否します。`
+            reason: `${state.retrievalEvaluation.reason} 検索 budget 内で primary fact の conflicting evidence を解消できなかったため、回答生成前に拒否します。`
           }
         : state.retrievalEvaluation
     }
@@ -193,6 +194,11 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
 
   function routeAfterSearchEvaluation(state: QaAgentState) {
     return state.searchDecision
+  }
+
+  function isPrimaryRequiredFactId(facts: RequiredFact[], factId: string): boolean {
+    const fact = facts.find((item) => item.id === factId)
+    return !fact || isPrimaryRequiredFact(fact)
   }
 
   function routeAfterGate(state: QaAgentState) {
@@ -445,6 +451,7 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
       id: "fact-1",
       description: question,
       factType: "unknown",
+      necessity: "primary",
       subject: inferFactSubject(question),
       confidence: 0.45,
       plannerSource: "legacy_fallback",
@@ -458,6 +465,7 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
     id: `fact-${index + 1}`,
     description: ref,
     factType: "unknown",
+    necessity: "primary",
     subject: ref,
     confidence: 0.5,
     plannerSource: "legacy_fallback",
@@ -496,6 +504,7 @@ function planStructuredFacts(question: string): RequiredFact[] {
     id: `fact-${index + 1}`,
     description: candidate.description,
     factType: candidate.factType,
+    necessity: "primary",
     subject,
     scope: inferFactScope(question),
     expectedValueType: candidate.expectedValueType,

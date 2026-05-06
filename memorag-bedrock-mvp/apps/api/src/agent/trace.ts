@@ -381,7 +381,7 @@ function formatSearchPlanDetail(searchPlan: NonNullable<QaAgentUpdate["searchPla
     lines.push("なし")
   } else {
     for (const fact of requiredFacts) {
-      lines.push(`- ${fact.id} priority=${fact.priority} status=${fact.status}: ${fact.description}`)
+      lines.push(`- ${fact.id} priority=${fact.priority} necessity=${fact.necessity ?? "primary"} status=${fact.status}: ${fact.description}`)
     }
   }
 

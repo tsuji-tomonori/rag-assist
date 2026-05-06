@@ -202,6 +202,7 @@ export const RequiredFactSchema = z.object({
   id: z.string(),
   description: z.string(),
   factType: z.enum(["amount", "date", "duration", "count", "status", "version", "condition", "procedure", "person", "scope", "classification", "unknown"]).optional(),
+  necessity: z.enum(["primary", "secondary", "inferred"]).optional(),
   subject: z.string().optional(),
   scope: z.string().optional(),
   expectedValueType: z.string().optional(),
@@ -570,6 +571,7 @@ export type AnswerabilityReason = QaAgentState["answerability"]["reason"]
 export type SufficientContextJudgement = z.infer<typeof SufficientContextJudgementSchema>
 export type AnswerSupportJudgement = z.infer<typeof AnswerSupportJudgementSchema>
 export type RequiredFact = z.infer<typeof RequiredFactSchema>
+export type RequiredFactNecessity = NonNullable<RequiredFact["necessity"]>
 export type SearchAction = z.infer<typeof SearchActionSchema>
 export type ActionObservation = z.infer<typeof ActionObservationSchema>
 export type RetrievalEvaluation = z.infer<typeof RetrievalEvaluationSchema>
@@ -585,3 +587,11 @@ export type ComputedFact = z.infer<typeof ComputedFactSchema>
 export type Clarification = z.infer<typeof ClarificationSchema>
 export type ClarificationOption = z.infer<typeof ClarificationOptionSchema>
 export type ClarificationContext = z.infer<typeof ClarificationContextSchema>
+
+export function requiredFactNecessity(fact: RequiredFact): RequiredFactNecessity {
+  return fact.necessity ?? "primary"
+}
+
+export function isPrimaryRequiredFact(fact: RequiredFact): boolean {
+  return requiredFactNecessity(fact) === "primary"
+}

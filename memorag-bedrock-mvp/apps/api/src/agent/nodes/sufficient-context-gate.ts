@@ -2,7 +2,7 @@ import type { Dependencies } from "../../dependencies.js"
 import { parseJsonObject } from "../../rag/json.js"
 import { buildSufficientContextPrompt } from "../../rag/prompts.js"
 import { llmOptions, ragRuntimePolicy } from "../runtime-policy.js"
-import { NO_ANSWER, type QaAgentState, type QaAgentUpdate, type SufficientContextJudgement } from "../state.js"
+import { NO_ANSWER, isPrimaryRequiredFact, requiredFactNecessity, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SufficientContextJudgement } from "../state.js"
 
 type JudgeJson = Partial<SufficientContextJudgement>
 
@@ -10,8 +10,9 @@ export function createSufficientContextGateNode(deps: Dependencies) {
   return async function sufficientContextGate(state: QaAgentState): Promise<QaAgentUpdate> {
     const requiredFacts = state.searchPlan.requiredFacts.map((fact) => {
       const type = fact.factType ? `type=${fact.factType}` : "type=unknown"
+      const necessity = ` necessity=${requiredFactNecessity(fact)}`
       const scope = fact.scope ? ` scope=${fact.scope}` : ""
-      return `${fact.description} (${type}${scope})`
+      return `${fact.description} (${type}${necessity}${scope})`
     }).filter(Boolean)
     const raw = await deps.textModel.generate(
       buildSufficientContextPrompt(state.question, requiredFacts, state.selectedChunks, state.computedFacts),
@@ -71,11 +72,65 @@ function canProceedWithGroundedPartialEvidence(state: QaAgentState, judgement: S
   if (!state.answerability.isAnswerable) return false
   if (state.selectedChunks.length === 0) return false
   if (judgement.supportedFacts.length === 0 && judgement.supportingChunkIds.length === 0) return false
-  if (judgement.missingFacts.length > 0) return false
-  if (judgement.conflictingFacts.length > 0) return false
-  if (state.retrievalEvaluation.retrievalQuality === "irrelevant" || state.retrievalEvaluation.retrievalQuality === "conflicting") return false
+  if (hasUnresolvedPrimaryMissingFact(state, judgement)) return false
+  if (hasPrimaryConflict(state, judgement)) return false
+  if (state.retrievalEvaluation.retrievalQuality === "irrelevant") return false
+  if (state.retrievalEvaluation.retrievalQuality === "conflicting" && hasPrimaryFactId(state, state.retrievalEvaluation.conflictingFactIds)) return false
   if (state.selectedChunks[0]?.score !== undefined && state.selectedChunks[0].score < state.minScore) return false
   return hasDirectAnswerCue(state.question, state.selectedChunks)
+}
+
+function hasUnresolvedPrimaryMissingFact(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
+  const primaryFacts = primaryRequiredFacts(state.searchPlan.requiredFacts)
+  if (primaryFacts.length === 0) return false
+  const supportedFacts = judgement.supportedFacts.map(normalize)
+  const missingFacts = judgement.missingFacts.map(normalize)
+  const missingFactIds = new Set(state.retrievalEvaluation.missingFactIds)
+
+  return primaryFacts.some((fact) => {
+    if (factSupportedByJudgement(fact, supportedFacts)) return false
+    if (missingFactIds.has(fact.id)) return true
+    return missingFacts.some((missing) => factMatchesJudgementText(fact, missing))
+  })
+}
+
+function hasPrimaryConflict(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
+  if (hasPrimaryFactId(state, state.retrievalEvaluation.conflictingFactIds)) return true
+  const conflictingFacts = judgement.conflictingFacts.map(normalize)
+  if (conflictingFacts.length === 0) return false
+  return primaryRequiredFacts(state.searchPlan.requiredFacts).some((fact) => conflictingFacts.some((conflict) => factMatchesJudgementText(fact, conflict)))
+}
+
+function primaryRequiredFacts(facts: RequiredFact[]): RequiredFact[] {
+  return facts.filter(isPrimaryRequiredFact)
+}
+
+function hasPrimaryFactId(state: QaAgentState, factIds: string[]): boolean {
+  if (factIds.length === 0) return false
+  return state.searchPlan.requiredFacts.some((fact) => factIds.includes(fact.id) && isPrimaryRequiredFact(fact))
+}
+
+function factSupportedByJudgement(fact: RequiredFact, supportedFacts: string[]): boolean {
+  return supportedFacts.some((supported) => factMatchesJudgementText(fact, supported))
+}
+
+function factMatchesJudgementText(fact: RequiredFact, normalizedJudgementText: string): boolean {
+  const description = normalize(fact.description)
+  if (normalizedJudgementText && (description.includes(normalizedJudgementText) || normalizedJudgementText.includes(description))) return true
+  const subject = fact.subject ? normalize(fact.subject) : ""
+  if (subject && normalizedJudgementText.includes(subject)) return true
+  return factTypeTerms(fact).some((term) => normalizedJudgementText.includes(term))
+}
+
+function factTypeTerms(fact: RequiredFact): string[] {
+  if (fact.factType === "amount") return ["金額", "費用", "料金", "円", "いくら"]
+  if (fact.factType === "date" || fact.factType === "duration") return ["期限", "期日", "締切", "日", "営業日", "いつ"]
+  if (fact.factType === "count") return ["頻度", "回", "毎月", "毎年"]
+  if (fact.factType === "procedure") return ["方法", "手順", "申請", "提出"]
+  if (fact.factType === "person") return ["担当", "承認者", "責任者", "部署", "報告先", "依頼先", "誰"]
+  if (fact.factType === "condition") return ["条件", "対象", "例外", "適用範囲"]
+  if (fact.factType === "classification") return ["分類", "種類", "区分"]
+  return []
 }
 
 function hasDirectAnswerCue(question: string, chunks: QaAgentState["selectedChunks"]): boolean {

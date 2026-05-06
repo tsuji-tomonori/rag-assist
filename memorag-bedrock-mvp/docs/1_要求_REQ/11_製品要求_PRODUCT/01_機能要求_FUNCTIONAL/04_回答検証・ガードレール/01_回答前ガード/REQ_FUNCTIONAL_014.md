@@ -24,11 +24,13 @@
 - AC-FR014-002: チャンク0件、上位スコア不足、選択チャンクなしの場合は LLM judge を呼ばずに拒否できること。
 - AC-FR014-003: `UNANSWERABLE` の場合、最終回答は `資料からは回答できません。` になること。
 - AC-FR014-004: 判定結果は debug trace または state から確認できること。
+- AC-FR014-005: `PARTIAL` の場合でも、質問へ直接必要な primary fact が検索済み evidence で支持され、missing / conflicting が secondary または inferred fact に限られる場合は、回答生成へ進めること。
+- AC-FR014-006: primary fact が missing または unresolved conflicting の場合は、`PARTIAL` でも回答生成前に拒否できること。
 
 ## 要件の源泉・背景
 
 - 源泉: ユーザー提示の PM 方針、現行 `answerability-gate.ts` の実装確認。
-- 背景: 現行 gate は chunk 数、score、正規表現ベースの coverage 判定が中心であり、資料外推測を防ぐには弱い。
+- 背景: 現行 gate は chunk 数、score、正規表現ベースの coverage 判定が中心であり、資料外推測を防ぐには弱い。一方で、primary fact が根拠で支持されている場合に secondary / inferred fact の不足だけで hard refusal すると、回答可能な質問を過剰拒否する。
 
 ## 要件の目的・意図
 
@@ -47,10 +49,10 @@
 | 種類 | 機能要求 |
 | 依存関係 | `selectedChunks`、`answerability` state、Bedrock text model |
 | 衝突 | LLM judge 呼び出しによる遅延とコスト増 |
-| 受け入れ基準 | `AC-FR014-001` から `AC-FR014-004` |
+| 受け入れ基準 | `AC-FR014-001` から `AC-FR014-006` |
 | 優先度 | S |
 | 安定性 | Medium |
-| 変更履歴 | 2026-05-01 初版 |
+| 変更履歴 | 2026-05-01 初版、2026-05-07 primary fact 支持時の `PARTIAL` 継続条件を追加 |
 
 ## 妥当性確認
 
