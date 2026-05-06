@@ -48,6 +48,14 @@
 - ブランチ名、ファイルパス、コマンド、API 名、型名、関数名、issue 番号は原文維持可。
 - PR 本文は `.github/pull_request_template.md` の見出しを優先する。
 
+## PR Self Review
+- 対象: PR 作成、PR 更新、PR 本文更新、PR コメント、レビューコメント、PR のセルフレビュー、`git diff` や作業レポートからレビュー観点を作る作業。
+- 必読: `skills/pr-review-self-review/SKILL.md`
+- `rag-assist` / `memorag-bedrock-mvp` の PR を作成または更新するたびに、変更差分・PR本文・検証結果を確認し、日本語のセルフレビュー結果を PR の top-level comment として記載する。
+- セルフレビューでは特に `docs と実装の同期`、`変更範囲に見合うテスト`、`RAG の根拠性・認可境界を弱めていないこと` を強く確認する。
+- 未実施の検証、未確認の CI、GitHub Apps や push の制約は実施済み扱いせず、PR コメントと PR 本文に理由とリスクを明記する。
+- blocking 指摘がある場合は、修正または blocked / partially complete として明示するまで「完了」扱いにしない。
+
 ## Post Task Work Report
 - 対象: ファイル編集、コマンド実行、調査、検証、ドキュメント作成など、リポジトリへの実作業。ユーザーが「レポート不要」「reports には出さないで」などと明示した場合のみ省略可。
 - 必読: `skills/post-task-fit-report/SKILL.md`
