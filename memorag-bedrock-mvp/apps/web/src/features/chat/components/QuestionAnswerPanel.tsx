@@ -1,4 +1,5 @@
 import { Icon } from "../../../shared/components/Icon.js"
+import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import type { HumanQuestion } from "../../questions/types.js"
 
@@ -37,7 +38,8 @@ export function QuestionAnswerPanel({
       </dl>
       <footer>
         <button type="button" disabled={loading || question.status === "resolved"} onClick={() => onResolveQuestion(question.questionId)}>
-          解決した
+          {loading && <LoadingSpinner className="button-spinner" />}
+          <span>解決した</span>
         </button>
         <button type="button" onClick={() => onAdditionalQuestion(`追加確認: ${question.title}\n`)}>
           追加で質問する

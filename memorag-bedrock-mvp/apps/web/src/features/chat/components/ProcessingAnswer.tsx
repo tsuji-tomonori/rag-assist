@@ -1,7 +1,9 @@
+import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+
 export function ProcessingAnswer({ label }: { label: string }) {
   return (
     <div className="answer-card processing-answer">
-      <span className="loading-spinner" aria-hidden="true" />
+      <LoadingSpinner />
       <p>
         {label}
         <span className="animated-dots" aria-hidden="true">

@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react"
 import type { DocumentManifest, ReindexMigration } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
+import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 
 export function DocumentWorkspace({
@@ -50,6 +51,7 @@ export function DocumentWorkspace({
           <span>{documents.length} 件の登録文書</span>
         </div>
       </header>
+      {loading && <LoadingStatus label="ドキュメントAPIを処理中" />}
 
       <div className="document-admin-grid">
         <section className="document-admin-panel" aria-label="文書アップロード">
@@ -60,8 +62,9 @@ export function DocumentWorkspace({
               <span>{uploadFile ? uploadFile.name : "ファイルを選択"}</span>
               <input type="file" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
             </label>
-            <button type="submit" disabled={!canWrite || !uploadFile || loading}>
-              アップロード
+            <button type="submit" className="button-with-spinner" disabled={!canWrite || !uploadFile || loading}>
+              {loading && <LoadingSpinner className="button-spinner" />}
+              <span>アップロード</span>
             </button>
           </form>
         </section>
@@ -95,7 +98,7 @@ export function DocumentWorkspace({
                       disabled={!canReindex || loading}
                       onClick={() => void onStageReindex(document.documentId)}
                     >
-                      <Icon name="gauge" />
+                      {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
                     </button>
                     <button
                       type="button"
@@ -104,7 +107,7 @@ export function DocumentWorkspace({
                       disabled={!canDelete || loading}
                       onClick={() => onDelete(document.documentId)}
                     >
-                      <Icon name="trash" />
+                      {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
                     </button>
                   </span>
                 </div>
@@ -136,14 +139,16 @@ export function DocumentWorkspace({
                         disabled={loading || migration.status !== "staged"}
                         onClick={() => void onCutoverReindex(migration.migrationId)}
                       >
-                        切替
+                        {loading && <LoadingSpinner className="button-spinner" />}
+                        <span>切替</span>
                       </button>
                       <button
                         type="button"
                         disabled={loading || migration.status !== "cutover"}
                         onClick={() => void onRollbackReindex(migration.migrationId)}
                       >
-                        戻す
+                        {loading && <LoadingSpinner className="button-spinner" />}
+                        <span>戻す</span>
                       </button>
                     </div>
                   </article>

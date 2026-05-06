@@ -706,6 +706,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("送信"))
 
     expect(await screen.findByText("処理中の表示を確認したい")).toBeInTheDocument()
+    expect(screen.getByText("API処理中")).toBeInTheDocument()
     expect(screen.getByTitle("送信")).toBeDisabled()
     await userEvent.click(screen.getByTitle("送信"))
     expect(requestBodies(fetchMock, "/chat-runs")).toHaveLength(1)
@@ -722,6 +723,7 @@ describe("App chat and upload flow", () => {
       }))
     )
     expect(await screen.findByText("処理中表示を確認しました。")).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText("API処理中")).not.toBeInTheDocument())
     expect(screen.getByLabelText("実行ID")).toHaveValue("run-processing")
     expect(screen.getAllByText("1.25 秒").length).toBeGreaterThanOrEqual(1)
   })

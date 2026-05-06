@@ -1,5 +1,6 @@
 import type { FormEvent } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
+import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 
 export function ChatComposer({
   onAsk,
@@ -9,6 +10,7 @@ export function ChatComposer({
   canWriteDocuments,
   conversationKey,
   canAsk,
+  loading,
   onSetQuestion,
   onSetFile,
   onSetSubmitShortcut
@@ -20,6 +22,7 @@ export function ChatComposer({
   canWriteDocuments: boolean
   conversationKey: number
   canAsk: boolean
+  loading: boolean
   onSetQuestion: (value: string) => void
   onSetFile: (file: File | null) => void
   onSetSubmitShortcut: (value: "enter" | "ctrlEnter") => void
@@ -34,6 +37,7 @@ export function ChatComposer({
             : "質問を入力してください...（Ctrl+Enterで送信 / Enterで改行）"
         }
         value={question}
+        disabled={loading}
         onChange={(event) => onSetQuestion(event.target.value)}
         onKeyDown={(event) => {
           if (event.key !== "Enter") return
@@ -64,11 +68,11 @@ export function ChatComposer({
         {canWriteDocuments && (
           <label className="icon-button attach-button" title="資料を添付">
             <Icon name="paperclip" />
-            <input key={conversationKey} type="file" onChange={(event) => onSetFile(event.target.files?.[0] ?? null)} />
+            <input key={conversationKey} type="file" disabled={loading} onChange={(event) => onSetFile(event.target.files?.[0] ?? null)} />
           </label>
         )}
         <button className="send-button" disabled={!canAsk} type="submit" title="送信">
-          <Icon name="send" />
+          {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" />}
         </button>
       </div>
     </form>
