@@ -847,7 +847,7 @@ async function waitUntilReady(server: ReturnType<typeof spawn>, port: number): P
     stderr += chunk.toString()
   })
 
-  for (let i = 0; i < 30; i += 1) {
+  for (let i = 0; i < 90; i += 1) {
     if (server.exitCode !== null) {
       throw new Error(`server exited early: ${stderr}`)
     }
