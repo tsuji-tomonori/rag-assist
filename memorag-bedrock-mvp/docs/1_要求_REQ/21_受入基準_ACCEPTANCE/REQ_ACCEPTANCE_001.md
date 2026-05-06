@@ -67,6 +67,18 @@ Then システムは lightweight lexical retrieval と S3 Vectors semantic searc
 
 And 検索 step は query 数、retrieval source 別件数、index/alias version 情報を trace に残せる。
 
+### AC-RAG-006: Grounded 確認質問
+
+Given 利用者質問が対象未指定で、登録済み文書または memory card から複数候補を作れる。
+
+When 利用者がその質問を送信する。
+
+Then システムは `responseType=clarification` の確認質問を返す。
+
+And 確認質問の option は文書、memory、evidence、または history 由来の grounding を持つ。
+
+And 候補を作れる根拠がない場合は確認質問ではなく回答不能として扱う。
+
 ### AC-SEC-001: benchmark/debug API 認可
 
 Given 本番または社内検証環境である。
@@ -134,7 +146,7 @@ And Markdown report を生成できる。
 ## 関連要求
 
 - `FR-003`, `FR-004`, `FR-005`
-- `FR-014`, `FR-015`, `FR-016`, `FR-017`, `FR-018`, `FR-019`, `FR-021`, `FR-022`, `FR-023`, `FR-024`, `FR-025`, `FR-026`
+- `FR-014`, `FR-015`, `FR-016`, `FR-017`, `FR-018`, `FR-019`, `FR-021`, `FR-022`, `FR-023`, `FR-024`, `FR-025`, `FR-026`, `FR-029`
 - `NFR-010`, `NFR-011`, `NFR-012`, `SQ-001`
 
 ## 関連設計

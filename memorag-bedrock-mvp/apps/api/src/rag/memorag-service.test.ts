@@ -35,6 +35,8 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   assert.ok(manifest.memoryVectorKeys?.length)
   assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-structured-v2")
   assert.ok(manifest.chunks?.[0]?.chunkHash)
+  assert.equal(manifest.documentStatistics?.chunkCount, manifest.chunkCount)
+  assert.ok((manifest.documentStatistics?.averageChunkChars ?? 0) > 0)
 
   const listed = await service.listDocuments()
   assert.deepEqual(listed.map((doc) => doc.documentId), [manifest.documentId])

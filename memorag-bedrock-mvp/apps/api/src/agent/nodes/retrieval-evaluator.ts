@@ -3,7 +3,7 @@ import type { Dependencies } from "../../dependencies.js"
 import { parseJsonObject } from "../../rag/json.js"
 import { buildRetrievalJudgePrompt } from "../../rag/prompts.js"
 import { llmOptions, ragRuntimePolicy } from "../runtime-policy.js"
-import type { QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation, RetrievalLlmJudge, RetrievalRiskSignal } from "../state.js"
+import type { Claim, ConflictCandidate, QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation, RetrievalLlmJudge, RetrievalRiskSignal } from "../state.js"
 
 type RetrievalJudgeJson = Partial<RetrievalLlmJudge>
 
@@ -43,6 +43,8 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
   const missingFactIds = factAssessments.filter((assessment) => assessment.status === "missing").map((assessment) => assessment.fact.id)
   const conflictingFactIds = factAssessments.filter((assessment) => assessment.status === "conflicting").map((assessment) => assessment.fact.id)
   const riskSignals = factAssessments.flatMap((assessment) => assessment.riskSignals)
+  const claims = factAssessments.flatMap((assessment) => assessment.claims)
+  const conflictCandidates = factAssessments.flatMap((assessment) => assessment.conflictCandidates)
   const retrievalQuality = classifyRetrieval(state, topScore, missingFactIds, conflictingFactIds)
   const nextAction = chooseNextAction(state, retrievalQuality, supportedFactIds, missingFactIds, conflictingFactIds)
   const supportingChunkKeysByFact = new Map(
@@ -55,6 +57,8 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
     conflictingFactIds,
     supportedFactIds,
     riskSignals,
+    claims,
+    conflictCandidates,
     nextAction,
     reason: buildReason(state, retrievalQuality, topScore, missingFactIds, conflictingFactIds, riskSignals)
   }
@@ -109,7 +113,9 @@ function applyRetrievalJudge(state: QaAgentState, update: QaAgentUpdate, judge: 
   const searchPlan = update.searchPlan
   if (!evaluation || !searchPlan) return update
 
-  if (judge.label === "NO_CONFLICT" && judge.confidence >= ragRuntimePolicy.confidence.llmJudgeNoConflictMin) {
+  const noConflictCanResolve =
+    evaluation.riskSignals?.some((signal) => signal.type === "uncertain_scope_conflict" || Boolean(signal.conflictCandidate?.scope)) ?? false
+  if (judge.label === "NO_CONFLICT" && judge.confidence >= ragRuntimePolicy.confidence.llmJudgeNoConflictMin && noConflictCanResolve) {
     const resolvedFactIds = new Set(judge.factIds.length > 0 ? judge.factIds : evaluation.conflictingFactIds)
     const conflictingFactIds = evaluation.conflictingFactIds.filter((factId) => !resolvedFactIds.has(factId))
     const supportedFactIds = [...new Set([...evaluation.supportedFactIds, ...resolvedFactIds])]
@@ -155,6 +161,8 @@ type FactAssessment = {
   status: RequiredFact["status"]
   supportingChunkKeys: string[]
   riskSignals: RetrievalRiskSignal[]
+  claims: Claim[]
+  conflictCandidates: ConflictCandidate[]
 }
 
 function fallbackFacts(question: string): RequiredFact[] {
@@ -170,14 +178,16 @@ function fallbackFacts(question: string): RequiredFact[] {
 }
 
 function assessFact(fact: RequiredFact, chunks: RetrievedVector[], minFactSupportScore: number): FactAssessment {
-  const supportingChunks = chunks.filter((chunk) => chunk.score >= minFactSupportScore && supportsFact(fact.description, chunk.metadata.text ?? ""))
+  const supportingChunks = chunks.filter((chunk) => chunk.score >= minFactSupportScore && supportsFact(fact, chunk.metadata.text ?? ""))
   const supportingChunkKeys = supportingChunks.map((chunk) => chunk.key)
-  const riskSignals = detectValueMismatch(fact, supportingChunks)
+  const { riskSignals, claims, conflictCandidates } = detectValueMismatch(fact, supportingChunks)
   return {
     fact,
     status: riskSignals.length > 0 ? "conflicting" : supportingChunkKeys.length > 0 ? "supported" : "missing",
     supportingChunkKeys,
-    riskSignals
+    riskSignals,
+    claims,
+    conflictCandidates
   }
 }
 
@@ -280,14 +290,22 @@ function buildReason(
   return `不足している必要事実があります: ${missingFactIds.join(", ")}`
 }
 
-function supportsFact(fact: string, text: string): boolean {
-  const terms = significantTerms(fact)
+function supportsFact(fact: RequiredFact | string, text: string): boolean {
+  const terms = factSupportTerms(fact)
   const normalizedText = normalize(text)
-  if (terms.length === 0 || terms.every(isGenericSingleFactTerm)) return false
-  if (requiresValueAnchor(fact) && !hasValueAnchor(text)) return false
+  if (!hasFactTypeAnchor(fact, text)) return false
+  if (terms.length === 0 || terms.every(isGenericSingleFactTerm)) return hasStandaloneFactTypeSupport(fact, text)
   const matched = terms.filter((term) => normalizedText.includes(normalize(term))).length
   if (terms.length === 1) return matched === 1
-  return matched === terms.length
+  return matched >= Math.min(2, terms.length)
+}
+
+function factSupportTerms(fact: RequiredFact | string): string[] {
+  const source = typeof fact === "string" ? fact : fact.subject ?? fact.description
+  const stripped = stripFactFacets(source)
+  const strippedTerms = significantTerms(stripped)
+  if (strippedTerms.length > 0 && !strippedTerms.every(isGenericSingleFactTerm)) return strippedTerms
+  return significantTerms(source)
 }
 
 function significantTerms(text: string): string[] {
@@ -302,7 +320,39 @@ function isStopTerm(term: string): boolean {
 }
 
 function isGenericSingleFactTerm(term: string): boolean {
-  return ["資料", "方法", "手順", "条件", "期限"].includes(term)
+  return ["資料", "方法", "手順", "条件", "期限", "金額", "担当", "分類", "制度", "申請"].includes(term)
+}
+
+function hasFactTypeAnchor(fact: RequiredFact | string, text: string): boolean {
+  const factType = typeof fact === "string" ? undefined : fact.factType
+  const haystack = `${typeof fact === "string" ? fact : fact.description}\n${text}`.normalize("NFKC")
+  if (factType === "amount") return /\d[\d,]*(?:\.\d+)?\s*(?:円|万円|千円|USD|ドル)|金額|費用|料金|価格|単価|上限|下限/u.test(haystack)
+  if (factType === "date" || factType === "duration") return hasValueAnchor(text) || /期限|期日|締切|締め切り|開始日|終了日|日付/u.test(haystack)
+  if (factType === "count") return /\d+\s*(?:回|件|個|名|人)|毎月|毎年|週次|月次|年次|頻度/u.test(haystack)
+  if (factType === "procedure") return /方法|手順|やり方|フロー|申請|提出|登録|設定|入力/u.test(haystack)
+  if (factType === "person") return /担当|承認者|責任者|部署|報告先|依頼先|[一-龠ァ-ヶーA-Za-z0-9_-]+部/u.test(haystack)
+  if (factType === "condition") return /条件|対象|例外|適用範囲/u.test(haystack)
+  if (factType === "classification") return /分類|種類|区分/u.test(haystack)
+  return !requiresValueAnchor(typeof fact === "string" ? fact : fact.description) || hasValueAnchor(text)
+}
+
+function hasStandaloneFactTypeSupport(fact: RequiredFact | string, text: string): boolean {
+  const factType = typeof fact === "string" ? undefined : fact.factType
+  if (factType === "amount") return /\d[\d,]*(?:\.\d+)?\s*(?:円|万円|千円|USD|ドル)/iu.test(text.normalize("NFKC"))
+  if (factType === "date" || factType === "duration") return hasValueAnchor(text)
+  if (factType === "procedure") return /方法|手順|やり方|フロー|申請|提出|登録|設定|入力/u.test(text.normalize("NFKC"))
+  return false
+}
+
+function stripFactFacets(value: string): string {
+  return value
+    .normalize("NFKC")
+    .replace(/(現行|旧制度|新制度|最新版|現在|過去|[0-9０-９]{4}年)/gu, "")
+    .replace(/(金額|費用|料金|価格|単価|上限|下限|円|期限|期日|締切|締め切り|開始日|終了日|日付|期間|日数|頻度|回数|方法|手順|やり方|フロー|申請|提出|担当|承認者|責任者|部署|報告先|依頼先|条件|対象|例外|適用範囲|分類|種類|区分)/gu, "")
+    .replace(/(と|および|及び|かつ|または|又は|、|,|\/)+/gu, " ")
+    .replace(/の\s*$/u, "")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 function requiresValueAnchor(fact: string): boolean {
@@ -315,59 +365,147 @@ function hasValueAnchor(text: string): boolean {
   )
 }
 
-function detectValueMismatch(fact: RequiredFact, chunks: RetrievedVector[]): RetrievalRiskSignal[] {
-  if (chunks.length < 2) return []
+function detectValueMismatch(fact: RequiredFact, chunks: RetrievedVector[]): { riskSignals: RetrievalRiskSignal[]; claims: Claim[]; conflictCandidates: ConflictCandidate[] } {
+  if (chunks.length < 2) return { riskSignals: [], claims: [], conflictCandidates: [] }
 
-  const claims = chunks.flatMap((chunk) => extractFactClaims(fact.description, chunk))
-  const values = [...new Map(claims.map((claim) => [claim.normalizedValue, claim.value] as const)).values()]
-  if (values.length < 2) return []
-
-  return [
-    {
-      type: "value_mismatch",
+  const claims = chunks.flatMap((chunk) => extractFactClaims(fact, chunk))
+  const groups = new Map<string, Claim[]>()
+  const subjectPredicateGroups = new Map<string, Claim[]>()
+  for (const claim of claims) {
+    const key = [normalize(claim.subject), normalize(claim.predicate), normalize(claim.scope ?? "default")].join("|")
+    groups.set(key, [...(groups.get(key) ?? []), claim])
+    const subjectPredicateKey = [normalize(claim.subject), normalize(claim.predicate)].join("|")
+    subjectPredicateGroups.set(subjectPredicateKey, [...(subjectPredicateGroups.get(subjectPredicateKey) ?? []), claim])
+  }
+  const conflictCandidates: ConflictCandidate[] = []
+  const candidateKeys = new Set<string>()
+  for (const group of groups.values()) {
+    const values = [...new Map(group.map((claim) => [normalizeValue(claim.value), claim.value] as const)).values()]
+    if (values.length < 2) continue
+    const first = group[0]
+    if (!first) continue
+    const candidateKey = [normalize(first.subject), normalize(first.predicate), normalize(first.scope ?? "default")].join("|")
+    candidateKeys.add(candidateKey)
+    conflictCandidates.push({
       factId: fact.id,
-      chunkKeys: [...new Set(claims.map((claim) => claim.chunkKey))],
+      subject: first.subject,
+      predicate: first.predicate,
+      scope: first.scope,
       values,
-      reason: `同一 fact に対して複数の排他的な値候補が見つかりました: ${values.join(", ")}`
-    }
-  ]
+      chunkKeys: [...new Set(group.map((claim) => claim.sourceChunkId))],
+      reason: `同一 subject/predicate/scope の typed claim に排他的な値があります: ${values.join(", ")}`
+    })
+  }
+  for (const group of subjectPredicateGroups.values()) {
+    const hasUnscoped = group.some((claim) => !claim.scope)
+    const scopedClaims = group.filter((claim) => claim.scope)
+    if (!hasUnscoped || scopedClaims.length === 0) continue
+    const values = [...new Map(group.map((claim) => [normalizeValue(claim.value), claim.value] as const)).values()]
+    if (values.length < 2) continue
+    const first = group[0]
+    if (!first) continue
+    const candidateKey = [normalize(first.subject), normalize(first.predicate), "uncertain"].join("|")
+    if (candidateKeys.has(candidateKey)) continue
+    candidateKeys.add(candidateKey)
+    conflictCandidates.push({
+      factId: fact.id,
+      subject: first.subject,
+      predicate: first.predicate,
+      scope: "uncertain",
+      values,
+      chunkKeys: [...new Set(group.map((claim) => claim.sourceChunkId))],
+      reason: `scope なし claim と明示 scope claim に値違いがあります。追加確認が必要です: ${values.join(", ")}`
+    })
+  }
+  if (conflictCandidates.length === 0) return { riskSignals: [], claims, conflictCandidates }
+
+  const riskSignals = conflictCandidates.map((candidate): RetrievalRiskSignal => ({
+      type: candidate.scope === "uncertain" ? "uncertain_scope_conflict" : "typed_claim_conflict",
+      factId: fact.id,
+      chunkKeys: candidate.chunkKeys,
+      values: candidate.values,
+      claims: claims.filter((claim) => candidate.chunkKeys.includes(claim.sourceChunkId)),
+      conflictCandidate: candidate,
+      reason: candidate.reason
+    }))
+  return { riskSignals, claims, conflictCandidates }
 }
 
-type FactClaim = {
-  chunkKey: string
-  value: string
-  normalizedValue: string
-}
-
-function extractFactClaims(fact: string, chunk: RetrievedVector): FactClaim[] {
-  const kind = factValueKind(fact)
-  if (!kind) return []
+function extractFactClaims(fact: RequiredFact, chunk: RetrievedVector): Claim[] {
+  const kinds = factValueKinds(fact)
+  if (kinds.length === 0) return []
 
   const sentences = splitSentences(chunk.metadata.text ?? "")
   return sentences.flatMap((sentence) => {
     if (!supportsFact(fact, sentence)) return []
-    return extractValues(kind, sentence).map((value) => ({
-      chunkKey: chunk.key,
-      value,
-      normalizedValue: normalizeValue(value)
-    }))
+    return kinds.flatMap((kind) =>
+      extractValues(kind, sentence).map((value) => ({
+        subject: inferClaimSubject(fact, sentence),
+        predicate: kind,
+        value,
+        valueType: kind,
+        unit: inferClaimUnit(value),
+        scope: inferClaimScope(sentence),
+        effectiveDate: inferEffectiveDate(sentence),
+        sourceChunkId: chunk.key,
+        sentence
+      }))
+    )
   })
 }
 
-function factValueKind(fact: string): "deadline" | "money" | undefined {
-  const normalized = fact.normalize("NFKC")
-  if (/期限|期日|締切|締め切り/.test(normalized)) return "deadline"
-  if (/金額|費用|料金|価格|単価|上限|下限|円/.test(normalized)) return "money"
-  return undefined
+function factValueKinds(fact: RequiredFact | string): Claim["valueType"][] {
+  const factType = typeof fact === "string" ? undefined : fact.factType
+  const normalized = (typeof fact === "string" ? fact : `${fact.description} ${fact.expectedValueType ?? ""}`).normalize("NFKC")
+  const kinds: Claim["valueType"][] = []
+  if (factType === "amount") kinds.push("money")
+  if (factType === "date") kinds.push("date")
+  if (factType === "duration") kinds.push("duration", "date")
+  if (factType === "count") kinds.push("count")
+  if (factType === "status") kinds.push("status")
+  if (factType === "version") kinds.push("version")
+  if (factType === "condition") kinds.push("condition")
+  if (/期限|期日|締切|締め切り|開始日|終了日|日付/.test(normalized)) kinds.push("date")
+  if (/金額|費用|料金|価格|単価|上限|下限|円/.test(normalized)) kinds.push("money")
+  if (/期間|日数|何日|何営業日/.test(normalized)) kinds.push("duration")
+  if (/回数|頻度|何回/.test(normalized)) kinds.push("count")
+  if (/状態|ステータス|有効|無効|現行/.test(normalized)) kinds.push("status")
+  if (/版|バージョン|version/i.test(normalized)) kinds.push("version")
+  if (/条件|対象|例外|適用範囲/.test(normalized)) kinds.push("condition")
+  return [...new Set(kinds)]
 }
 
-function extractValues(kind: "deadline" | "money", sentence: string): string[] {
+function extractValues(kind: Claim["valueType"], sentence: string): string[] {
   const normalized = sentence.normalize("NFKC")
-  const matches =
-    kind === "deadline"
-      ? (normalized.match(/(?:翌月|当月|前月)?\s*\d+\s*(?:営業日|日)|\d+\s*(?:営業日|日|週間|週|か月|ヶ月|月|年|時間|分)\s*以内|月末|月初|末日|\d{4}[-/年]\d{1,2}(?:[-/月]\d{1,2}日?)?/gu) ?? [])
-      : (normalized.match(/\d[\d,]*(?:\.\d+)?\s*(?:円|万円|千円|USD|ドル)/giu) ?? [])
+  const patterns: Record<Claim["valueType"], RegExp> = {
+    date: /(?:翌月|当月|前月)?\s*\d+\s*(?:営業日|日)|月末|月初|末日|\d{4}[-/年]\d{1,2}(?:[-/月]\d{1,2}日?)?/gu,
+    money: /\d[\d,]*(?:\.\d+)?\s*(?:円|万円|千円|USD|ドル)/giu,
+    duration: /\d+\s*(?:営業日|日|週間|週|か月|ヶ月|月|年|時間|分)\s*(?:以内|以上|以下|未満)?/gu,
+    count: /\d+\s*(?:回|件|個|名|人)|毎月|毎年|週次|月次|年次/gu,
+    status: /(?:有効|無効|承認済み|未承認|現行|旧制度|廃止|停止中|利用可|利用不可)/gu,
+    version: /v?\d+(?:\.\d+){1,3}|(?:第|ver\.?)\s*\d+\s*版/giu,
+    condition: /(?:対象|条件|例外|適用範囲)[^。！？!?]{0,80}/gu
+  }
+  const matches = normalized.match(patterns[kind]) ?? []
   return [...new Set(matches.map((match) => match.trim()).filter(Boolean))]
+}
+
+function inferClaimSubject(fact: RequiredFact, sentence: string): string {
+  const source = fact.subject ?? fact.description
+  const subject = stripFactFacets(source) || source
+  return (subject.match(/^[^はをの、。?？]{2,60}/u)?.[0] ?? sentence.slice(0, 40)).trim()
+}
+
+function inferClaimScope(sentence: string): string | undefined {
+  return sentence.match(/現行|旧制度|新制度|最新版|現在|過去|[0-9０-９]{4}年|[A-Za-z0-9_-]+部/u)?.[0]
+}
+
+function inferEffectiveDate(sentence: string): string | undefined {
+  return sentence.match(/\d{4}[-/年]\d{1,2}(?:[-/月]\d{1,2}日?)?/u)?.[0]
+}
+
+function inferClaimUnit(value: string): string | undefined {
+  return value.match(/円|万円|千円|USD|ドル|営業日|日|週間|週|か月|ヶ月|月|年|時間|分|回|件|個|名|人/u)?.[0]
 }
 
 function splitSentences(text: string): string[] {

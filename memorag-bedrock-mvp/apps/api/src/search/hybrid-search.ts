@@ -50,6 +50,23 @@ export type SearchResponse = {
     semanticCount: number
     fusedCount: number
     latencyMs: number
+    profileId: string
+    profileVersion: string
+    topGap: number | null
+    lexicalSemanticOverlap: number
+    scoreDistribution: {
+      top: number | null
+      median: number | null
+      p90: number | null
+      min: number | null
+      max: number | null
+    }
+    adaptiveDecision?: {
+      strategy: "fixed" | "adaptive"
+      reason: string
+      effectiveTopK: number
+      effectiveMinScore: number
+    }
   }
 }
 
@@ -120,13 +137,16 @@ let cachedIndex: CachedIndex | undefined
 
 export async function searchRag(deps: Dependencies, input: SearchInput, user: AppUser): Promise<SearchResponse> {
   const started = Date.now()
-  const topK = normalizeSearchTopK(input.topK)
+  const requestedTopK = normalizeSearchTopK(input.topK)
   const lexicalTopK = clampInt(input.lexicalTopK ?? ragRuntimePolicy.retrieval.lexicalTopK, 0, ragRuntimePolicy.retrieval.searchRagMaxSourceTopK)
   const semanticTopK = clampInt(input.semanticTopK ?? ragRuntimePolicy.retrieval.semanticTopK, 0, ragRuntimePolicy.retrieval.searchRagMaxSourceTopK)
+  const topK = ragRuntimePolicy.retrieval.adaptiveEnabled
+    ? clampInt(Math.max(requestedTopK, Math.ceil(requestedTopK * 1.5)), requestedTopK, ragRuntimePolicy.retrieval.searchRagMaxTopK)
+    : requestedTopK
   const index = await getLexicalIndex(deps, user, input.filters)
   const queryTokens = tokenizeQuery(input.query)
 
-  const lexicalHits = lexicalTopK > 0 ? bm25Search(index, queryTokens, lexicalTopK) : []
+  const lexicalHits = lexicalTopK > 0 ? bm25Search(index, queryTokens, lexicalTopK, { k1: ragRuntimePolicy.retrieval.bm25K1, b: ragRuntimePolicy.retrieval.bm25B }) : []
   const vectorFilter = {
     kind: "chunk" as const,
     documentId: input.filters?.documentId,
@@ -163,19 +183,32 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
       lexicalHits.map((hit) => ({ id: hit.id, score: hit.score })),
       semanticHits.map((hit) => ({ id: hit.key, score: hit.score }))
     ],
-    { weights: [1, 0.9] }
+    { k: ragRuntimePolicy.retrieval.rrfK, weights: ragRuntimePolicy.retrieval.rrfWeights }
   )
 
   const lexicalById = new Map(lexicalHits.map((hit, idx) => [hit.id, { ...hit, rank: idx + 1 }]))
   const semanticById = new Map(semanticHits.map((hit, idx) => [hit.key, { ...hit, rank: idx + 1 }]))
   const docsById = new Map(index.docs.map((doc) => [doc.id, doc]))
 
-  const results = cheapRerank(
+  const reranked = cheapRerank(
     input.query,
     fused
       .map((hit) => toSearchResult(hit, docsById.get(hit.id), lexicalById.get(hit.id), semanticById.get(hit.id)))
       .filter((result): result is SearchResult => result !== undefined)
-  ).slice(0, topK)
+  )
+  const diagnostics = buildSearchDiagnostics({
+    indexVersion: index.version,
+    aliasVersion: index.aliasVersion,
+    lexicalHits,
+    semanticHits,
+    fusedCount: fused.length,
+    results: reranked,
+    requestedTopK,
+    effectiveTopK: topK,
+    latencyMs: Date.now() - started
+  })
+  const decision = diagnostics.adaptiveDecision ?? { effectiveMinScore: -1, effectiveTopK: requestedTopK }
+  const results = reranked.filter((result) => result.score >= decision.effectiveMinScore).slice(0, decision.effectiveTopK)
 
   return {
     query: input.query,
@@ -186,7 +219,13 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
       lexicalCount: lexicalHits.length,
       semanticCount: semanticHits.length,
       fusedCount: fused.length,
-      latencyMs: Date.now() - started
+      latencyMs: diagnostics.latencyMs,
+      profileId: diagnostics.profileId,
+      profileVersion: diagnostics.profileVersion,
+      topGap: diagnostics.topGap,
+      lexicalSemanticOverlap: diagnostics.lexicalSemanticOverlap,
+      scoreDistribution: diagnostics.scoreDistribution,
+      adaptiveDecision: diagnostics.adaptiveDecision
     }
   }
 }
@@ -273,7 +312,7 @@ export function buildLexicalIndex(inputDocs: LexicalDocument[], version: string,
   }
 }
 
-export function bm25Search(index: LexicalIndex, rawTokens: string[], topK: number): LexicalHit[] {
+export function bm25Search(index: LexicalIndex, rawTokens: string[], topK: number, options: { k1?: number; b?: number } = {}): LexicalHit[] {
   if (index.nDocs === 0 || rawTokens.length === 0) return []
   const queryTokens = expandQueryTerms(rawTokens, index.dictionary, index.aliases)
   const scores = new Map<number, number>()
@@ -291,7 +330,9 @@ export function bm25Search(index: LexicalIndex, rawTokens: string[], topK: numbe
         df,
         docLen: doc.len,
         avgDocLen: index.avgDocLen,
-        nDocs: index.nDocs
+        nDocs: index.nDocs,
+        k1: options.k1,
+        b: options.b
       })
       const abbreviationBonus = token.weight >= 5 ? token.weight * 0.35 : 0
       scores.set(posting.docOrdinal, (scores.get(posting.docOrdinal) ?? 0) + score + abbreviationBonus)
@@ -385,18 +426,84 @@ function cheapRerank(query: string, results: SearchResult[]): SearchResult[] {
     .map((result) => {
       let score = result.rrfScore
       const normalizedText = normalize(`${result.fileName}\n${result.text}`)
-      if (normalizedQuery && normalizedText.includes(normalizedQuery)) score += 0.2
-      if (normalizedQuery && normalize(result.fileName).includes(normalizedQuery)) score += 0.15
+      if (normalizedQuery && normalizedText.includes(normalizedQuery)) score += ragRuntimePolicy.profile.retrieval.scoring.exactQueryBonus
+      if (normalizedQuery && normalize(result.fileName).includes(normalizedQuery)) score += ragRuntimePolicy.profile.retrieval.scoring.fileNameBonus
       const textTokens = new Set(tokenizeQuery(result.text))
       const covered = [...queryTokens].filter((token) => textTokens.has(token)).length
-      score += covered * 0.03
+      score += covered * ragRuntimePolicy.profile.retrieval.scoring.tokenCoverageBonus
       if (result.createdAt) {
         const ageDays = (Date.now() - new Date(result.createdAt).getTime()) / 86_400_000
-        if (Number.isFinite(ageDays) && ageDays < 90) score += 0.02
+        if (Number.isFinite(ageDays) && ageDays < 90) score += ragRuntimePolicy.profile.retrieval.scoring.recencyBonus
       }
       return { ...result, score }
     })
     .sort((a, b) => b.score - a.score)
+}
+
+function buildSearchDiagnostics(input: {
+  indexVersion: string
+  aliasVersion: string
+  lexicalHits: LexicalHit[]
+  semanticHits: RetrievedVector[]
+  fusedCount: number
+  results: SearchResult[]
+  requestedTopK: number
+  effectiveTopK: number
+  latencyMs: number
+}): SearchResponse["diagnostics"] {
+  const scores = input.results.map((result) => result.score).sort((a, b) => a - b)
+  const top = input.results[0]?.score ?? null
+  const second = input.results[1]?.score ?? null
+  const lexicalIds = new Set(input.lexicalHits.map((hit) => hit.id))
+  const semanticIds = new Set(input.semanticHits.map((hit) => hit.key))
+  const unionSize = new Set([...lexicalIds, ...semanticIds]).size
+  const overlap = unionSize === 0 ? 0 : [...lexicalIds].filter((id) => semanticIds.has(id)).length / unionSize
+  const gap = top !== null && second !== null ? Number((top - second).toFixed(6)) : null
+  const adaptiveDecision = ragRuntimePolicy.retrieval.adaptiveEnabled
+    ? {
+        strategy: "adaptive" as const,
+        reason: gap !== null && gap < ragRuntimePolicy.retrieval.adaptiveTopGapExpandBelow ? "small_top_gap_expand_candidates" : overlap >= ragRuntimePolicy.retrieval.adaptiveOverlapBoostAtLeast ? "lexical_semantic_overlap_supports_precision" : "score_distribution_floor",
+        effectiveTopK: input.effectiveTopK,
+        effectiveMinScore: adaptiveEffectiveMinScore(scores, ragRuntimePolicy.retrieval.adaptiveMinCombinedScore, ragRuntimePolicy.retrieval.adaptiveScoreFloorQuantile)
+      }
+    : {
+        strategy: "fixed" as const,
+        reason: "adaptive retrieval is opt-in",
+        effectiveTopK: input.requestedTopK,
+        effectiveMinScore: -1
+      }
+
+  return {
+    indexVersion: input.indexVersion,
+    aliasVersion: input.aliasVersion,
+    lexicalCount: input.lexicalHits.length,
+    semanticCount: input.semanticHits.length,
+    fusedCount: input.fusedCount,
+    latencyMs: input.latencyMs,
+    profileId: ragRuntimePolicy.retrieval.profileId,
+    profileVersion: ragRuntimePolicy.retrieval.profileVersion,
+    topGap: gap,
+    lexicalSemanticOverlap: Number(overlap.toFixed(4)),
+    scoreDistribution: {
+      top,
+      median: percentileScore(scores, 0.5),
+      p90: percentileScore(scores, 0.9),
+      min: scores[0] ?? null,
+      max: scores.at(-1) ?? null
+    },
+    adaptiveDecision
+  }
+}
+
+export function adaptiveEffectiveMinScore(scores: number[], minCombinedScore: number, scoreFloorQuantile: number): number {
+  return Math.max(minCombinedScore, percentileScore([...scores].sort((a, b) => a - b), scoreFloorQuantile) ?? minCombinedScore)
+}
+
+function percentileScore(scores: number[], p: number): number | null {
+  if (scores.length === 0) return null
+  const index = Math.min(scores.length - 1, Math.max(0, Math.ceil(scores.length * p) - 1))
+  const value = scores[index]
+  return value === undefined ? null : Number(value.toFixed(6))
 }
 
 function weightedDocumentTokens(title: string, body: string): WeightedToken[] {
@@ -633,7 +740,7 @@ function stableStringifyAliasMap(aliases: AliasMap): string {
 
 function sanitizeSearchMetadata(metadata: Record<string, JsonValue> | VectorMetadata | undefined): Record<string, JsonValue> | undefined {
   if (!metadata) return undefined
-  const allowedKeys = ["tenantId", "source", "docType", "department"] as const
+  const allowedKeys = ["tenantId", "source", "docType", "department", "domainPolicy", "ragPolicy", "answerPolicy"] as const
   const sanitized: Record<string, JsonValue> = {}
   for (const key of allowedKeys) {
     const value = metadata[key]

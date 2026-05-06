@@ -202,7 +202,7 @@
 
 .benchmark-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1180px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -261,18 +261,40 @@
 
 .benchmark-row-actions {
   display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
 .benchmark-row-actions button {
-  width: 34px;
+  min-width: 96px;
   min-height: 34px;
-  padding: 0;
+  padding: 0 10px;
+  white-space: nowrap;
 }
 
 .benchmark-row-actions .icon {
   width: 17px;
   height: 17px;
+}
+
+.benchmark-row-actions .benchmark-cancel-action {
+  min-width: 34px;
+  width: 34px;
+  padding: 0;
+}
+
+.metric-unavailable {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: #68758f;
+  background: #f3f6fa;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 .benchmark-summary-grid {

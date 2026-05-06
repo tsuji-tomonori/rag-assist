@@ -3,6 +3,12 @@ import { Icon } from "../../../shared/components/Icon.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
 import { formatDateTime, formatMetricLatency, formatPercent, formatShortDate, runStatusLabel } from "../../../shared/utils/format.js"
 
+const benchmarkArtifacts = [
+  { kind: "report", label: "レポート", description: "レポートMarkdown" },
+  { kind: "summary", label: "サマリ", description: "サマリJSON" },
+  { kind: "results", label: "結果", description: "Raw results JSONL" }
+] as const
+
 export function BenchmarkWorkspace({
   runs,
   suites,
@@ -60,10 +66,10 @@ export function BenchmarkWorkspace({
           subValue={summary.latestRun ? `実行ID: ${summary.latestRun.runId}` : "ジョブ起動後に表示"}
           tone={summary.latestRun?.status ?? "queued"}
         />
-        <BenchmarkMetricCard title="平均応答時間" value={formatMetricLatency(summary.averageLatencyMs)} subValue="直近完了 run の平均" />
-        <BenchmarkMetricCard title="回答正答率" value={formatPercent(summary.answerableAccuracy)} subValue="answerable accuracy" />
-        <BenchmarkMetricCard title="検索再現率" value={formatPercent(summary.retrievalRecallAt20)} subValue="retrieval recall@20" />
-        <BenchmarkMetricCard title="確認質問F1" value={formatPercent(summary.clarificationNeedF1)} subValue="clarification need F1" />
+        <BenchmarkMetricCard title="平均応答時間" value={formatSummaryLatency(summary.averageLatencyMs, summary.completedCount)} subValue="直近完了 run の平均" />
+        <BenchmarkMetricCard title="回答正答率" value={formatSummaryPercent(summary.answerableAccuracy, summary.completedCount)} subValue="answerable accuracy" />
+        <BenchmarkMetricCard title="検索再現率" value={formatSummaryPercent(summary.retrievalRecallAt20, summary.completedCount)} subValue="retrieval recall@20" />
+        <BenchmarkMetricCard title="確認質問F1" value={formatSummaryPercent(summary.clarificationNeedF1, summary.completedCount)} subValue="clarification need F1" />
       </div>
 
       <div className="benchmark-layout">
@@ -142,7 +148,7 @@ export function BenchmarkWorkspace({
                   <th>accuracy</th>
                   <th>recall</th>
                   <th>startedAt</th>
-                  <th>artifacts</th>
+                  <th>成果物</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,23 +162,27 @@ export function BenchmarkWorkspace({
                       <td><code>{run.runId}</code></td>
                       <td><span className={`run-status ${run.status}`}>{runStatusLabel(run.status)}</span></td>
                       <td>{run.suiteId}</td>
-                      <td>{formatMetricLatency(run.metrics?.p50LatencyMs)}</td>
-                      <td>{formatMetricLatency(run.metrics?.p95LatencyMs)}</td>
-                      <td>{formatPercent(run.metrics?.answerableAccuracy)}</td>
-                      <td>{formatPercent(run.metrics?.retrievalRecallAt20)}</td>
+                      <MetricCell value={run.metrics?.p50LatencyMs} formatter={formatMetricLatency} run={run} />
+                      <MetricCell value={run.metrics?.p95LatencyMs} formatter={formatMetricLatency} run={run} />
+                      <MetricCell value={run.metrics?.answerableAccuracy} formatter={formatPercent} run={run} />
+                      <MetricCell value={run.metrics?.retrievalRecallAt20} formatter={formatPercent} run={run} />
                       <td>{formatDateTime(run.startedAt ?? run.createdAt)}</td>
                       <td>
                         <div className="benchmark-row-actions">
-                          <button type="button" title="レポートをダウンロード" disabled={!canDownload || !run.reportS3Key} onClick={() => void downloadBenchmarkArtifact(run.runId, "report")}>
-                            <Icon name="download" />
-                          </button>
-                          <button type="button" title="サマリJSONをダウンロード" disabled={!canDownload || !run.summaryS3Key} onClick={() => void downloadBenchmarkArtifact(run.runId, "summary")}>
-                            <Icon name="download" />
-                          </button>
-                          <button type="button" title="Raw resultsをダウンロード" disabled={!canDownload || !run.resultsS3Key} onClick={() => void downloadBenchmarkArtifact(run.runId, "results")}>
-                            <Icon name="download" />
-                          </button>
-                          <button type="button" title="ジョブをキャンセル" disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>
+                          {benchmarkArtifacts.map((artifact) => (
+                            <button
+                              type="button"
+                              key={artifact.kind}
+                              title={`${artifact.description}をダウンロード`}
+                              aria-label={`${artifact.description}をダウンロード`}
+                              disabled={!canDownload || !artifactKeyForRun(run, artifact.kind)}
+                              onClick={() => void downloadBenchmarkArtifact(run.runId, artifact.kind)}
+                            >
+                              <Icon name="download" />
+                              <span>{artifact.label}</span>
+                            </button>
+                          ))}
+                          <button className="benchmark-cancel-action" type="button" title="ジョブをキャンセル" aria-label="ジョブをキャンセル" disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>
                             <Icon name="stop" />
                           </button>
                         </div>
@@ -205,8 +215,8 @@ export function BenchmarkWorkspace({
             )}
           </div>
           <div className="benchmark-quality-grid">
-            <div><span>成功率</span><strong>{formatPercent(summary.runSuccessRate)}</strong></div>
-            <div><span>エラー率</span><strong>{formatPercent(summary.errorRate)}</strong></div>
+            <div><span>成功率</span><strong>{formatSummaryPercent(summary.runSuccessRate, summary.completedCount)}</strong></div>
+            <div><span>エラー率</span><strong>{formatSummaryPercent(summary.errorRate, summary.completedCount)}</strong></div>
             <div><span>失敗HTTP</span><strong>{summary.failedHttpCount}</strong></div>
           </div>
         </section>
@@ -246,6 +256,43 @@ function BenchmarkMetricCard({
       <small>{subValue}</small>
     </article>
   )
+}
+
+function MetricCell({
+  value,
+  formatter,
+  run
+}: {
+  value?: number | null
+  formatter: (value?: number | null) => string
+  run: BenchmarkRun
+}) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return <td>{formatter(value)}</td>
+  }
+
+  return <td><span className="metric-unavailable">{metricUnavailableLabel(run)}</span></td>
+}
+
+function formatSummaryLatency(value: number | null | undefined, completedCount: number): string {
+  if (typeof value === "number" && Number.isFinite(value)) return formatMetricLatency(value)
+  return completedCount === 0 ? "完了後に集計" : "未計測"
+}
+
+function formatSummaryPercent(value: number | null | undefined, completedCount: number): string {
+  if (typeof value === "number" && Number.isFinite(value)) return formatPercent(value)
+  return completedCount === 0 ? "完了後に集計" : "未計測"
+}
+
+function metricUnavailableLabel(run: BenchmarkRun): string {
+  if (run.status === "queued" || run.status === "running") return "完了後に集計"
+  return "未計測"
+}
+
+function artifactKeyForRun(run: BenchmarkRun, artifact: (typeof benchmarkArtifacts)[number]["kind"]): string | undefined {
+  if (artifact === "report") return run.reportS3Key
+  if (artifact === "summary") return run.summaryS3Key
+  return run.resultsS3Key
 }
 
 function summarizeBenchmarkRuns(runs: BenchmarkRun[]): {

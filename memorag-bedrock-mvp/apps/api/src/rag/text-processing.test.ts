@@ -125,7 +125,7 @@ test("agent utility helpers normalize citations, clues, tokens, ranges, and trac
   assert.equal(estimateTokenCount(""), 0)
   assert.equal(estimateTokenCount("abcd"), 1)
   assert.deepEqual(unique([" a ", "a", "", " b "]), ["a", "b"])
-  assert.ok(buildSearchClues("分類を教えて", ["分類を教えて", "追加"]).includes("ソフトウェア要求の分類"))
+  assert.deepEqual(buildSearchClues("分類を教えて", ["分類を教えて", "追加"]), ["分類を教えて", "追加"])
   assert.equal(clamp(25, 1, 20), 20)
   assert.equal(clamp(-1, 1, 20), 1)
   assert.equal(compactDetail(["a", undefined, "b"], 3), "a\nb")

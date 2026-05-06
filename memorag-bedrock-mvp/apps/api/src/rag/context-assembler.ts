@@ -1,4 +1,5 @@
 import type { RetrievedVector } from "../types.js"
+import { ragRuntimePolicy } from "../agent/runtime-policy.js"
 
 export type ContextBlock = {
   id: string
@@ -22,13 +23,14 @@ export function assembleContext(input: {
   tokenBudget?: number
   requiredFacts?: string[]
 }): ContextAssembly {
-  const budgetChars = Math.max(800, (input.tokenBudget ?? 3000) * 4)
+  const budgetTokens = adjustTokenBudget(input.question, input.chunks, input.tokenBudget ?? 3000)
+  const budgetChars = Math.max(800, budgetTokens * 4)
   const included: ContextBlock[] = []
   const dropped: string[] = []
   let usedChars = 0
 
   for (const chunk of input.chunks) {
-    const snippet = buildRelevantSnippet(input.question, chunk.metadata.text ?? "", Math.min(1800, budgetChars))
+    const snippet = buildRelevantSnippet(input.question, chunk.metadata.text ?? "", Math.min(snippetLimit(input.question, chunk), budgetChars))
     if (!snippet) {
       dropped.push(chunk.key)
       continue
@@ -43,7 +45,7 @@ export function assembleContext(input: {
       fileName: chunk.metadata.fileName,
       score: chunk.score,
       text: snippet,
-      reason: contextReason(input.requiredFacts ?? [], snippet)
+      reason: contextReason(input.requiredFacts ?? [], snippet, chunk)
     })
     usedChars += snippet.length
   }
@@ -52,7 +54,7 @@ export function assembleContext(input: {
     contextBlocks: included,
     includedChunkIds: included.map((block) => block.id),
     droppedChunkIds: dropped,
-    assemblyReason: `included=${included.length}, dropped=${dropped.length}, budgetChars=${budgetChars}`
+    assemblyReason: `included=${included.length}, dropped=${dropped.length}, budgetChars=${budgetChars}, profile=${ragRuntimePolicy.retrieval.profileId}@${ragRuntimePolicy.retrieval.profileVersion}`
   }
 }
 
@@ -81,10 +83,26 @@ export function buildRelevantSnippet(question: string, text: string, maxChars = 
   return text.slice(start, end)
 }
 
-function contextReason(requiredFacts: string[], text: string): string {
+function contextReason(requiredFacts: string[], text: string, chunk: RetrievedVector): string {
   const normalized = normalize(text)
   const covered = requiredFacts.filter((fact) => significantTerms(fact).some((term) => normalized.includes(normalize(term))))
-  return covered.length > 0 ? `covers:${covered.slice(0, 3).join(",")}` : "score_ranked"
+  const structural = [chunk.metadata.chunkKind, chunk.metadata.heading ? "heading" : undefined, chunk.metadata.sectionPath?.length ? "section" : undefined]
+    .filter(Boolean)
+    .join("+")
+  if (covered.length > 0) return `covers:${covered.slice(0, 3).join(",")}${structural ? `;${structural}` : ""}`
+  return structural ? `score_ranked;${structural}` : "score_ranked"
+}
+
+function adjustTokenBudget(question: string, chunks: RetrievedVector[], defaultBudget: number): number {
+  const structuralBoost = chunks.some((chunk) => ["table", "list", "code"].includes(chunk.metadata.chunkKind ?? "")) ? 1.1 : 1
+  const complexityBoost = /比較|手順|一覧|洗い出|条件|例外/.test(question) ? 1.15 : 1
+  const simplePenalty = chunks.length <= 2 && !/比較|手順|一覧|洗い出|条件|例外/.test(question) ? 0.85 : 1
+  return Math.min(defaultBudget, Math.max(800, Math.round(defaultBudget * Math.min(1, structuralBoost * complexityBoost * simplePenalty))))
+}
+
+function snippetLimit(question: string, chunk: RetrievedVector): number {
+  const base = ["table", "list", "code"].includes(chunk.metadata.chunkKind ?? "") || /一覧|洗い出|手順/.test(question) ? 2200 : 1800
+  return Math.min(2400, base)
 }
 
 function findBestNeedleIndex(question: string, text: string): number {

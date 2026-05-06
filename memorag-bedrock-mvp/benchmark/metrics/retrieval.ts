@@ -12,6 +12,8 @@ export type RetrievedItem = {
 }
 
 export type RetrievalMetrics = {
+  recallK: number
+  recallAtK: number | null
   recallAt1: number | null
   recallAt3: number | null
   recallAt5: number | null
@@ -28,9 +30,12 @@ export type RetrievalMetrics = {
 
 const recallKs = [1, 3, 5, 10, 20] as const
 
-export function evaluateRetrieval(results: RetrievedItem[], relevant: RelevanceItem[]): RetrievalMetrics {
+export function evaluateRetrieval(results: RetrievedItem[], relevant: RelevanceItem[], options: { recallK?: number } = {}): RetrievalMetrics {
+  const recallK = Math.max(1, Math.trunc(options.recallK ?? 20))
   const positive = relevant.filter((item) => relevanceGrade(item) > 0)
   const metrics: RetrievalMetrics = {
+    recallK,
+    recallAtK: null,
     recallAt1: null,
     recallAt3: null,
     recallAt5: null,
@@ -49,6 +54,7 @@ export function evaluateRetrieval(results: RetrievedItem[], relevant: RelevanceI
   for (const k of recallKs) {
     metrics[`recallAt${k}` as keyof RetrievalMetrics] = recallAt(results, positive, k) as never
   }
+  metrics.recallAtK = recallAt(results, positive, recallK)
   metrics.mrrAt10 = reciprocalRank(results, positive, 10)
   metrics.ndcgAt10 = ndcgAt(results, relevant, 10)
   metrics.precisionAt5 = precisionAt(results, positive, 5)

@@ -252,7 +252,8 @@ function formatRiskSignals(signals: NonNullable<NonNullable<QaAgentUpdate["retri
   return signals.map((signal) => {
     const values = signal.values.length > 0 ? ` values=${signal.values.join(", ")}` : ""
     const chunks = signal.chunkKeys.length > 0 ? ` chunks=${signal.chunkKeys.join(", ")}` : ""
-    return `- ${signal.type}${signal.factId ? ` fact=${signal.factId}` : ""}${values}${chunks}: ${signal.reason}`
+    const candidate = signal.conflictCandidate ? ` subject=${signal.conflictCandidate.subject} predicate=${signal.conflictCandidate.predicate} scope=${signal.conflictCandidate.scope ?? "default"}` : ""
+    return `- ${signal.type}${signal.factId ? ` fact=${signal.factId}` : ""}${values}${chunks}${candidate}: ${signal.reason}`
   })
 }
 

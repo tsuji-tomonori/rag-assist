@@ -1,5 +1,5 @@
 import { createReadStream, createWriteStream, existsSync } from "node:fs"
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
@@ -12,6 +12,13 @@ import {
   type RelevanceItem,
   type RetrievalMetrics
 } from "./metrics/retrieval.js"
+import {
+  assertComparableProfiles,
+  assertSuiteEvaluatorProfile,
+  profileKey,
+  resolveEvaluatorProfile,
+  type EvaluatorProfile
+} from "./evaluator-profile.js"
 
 type SearchDatasetRow = {
   id: string
@@ -34,6 +41,7 @@ type SearchDatasetRow = {
   relevant?: RelevanceItem[]
   forbidden?: RelevanceItem[]
   caseType?: string
+  evaluatorProfile?: string
 }
 
 type SearchResult = {
@@ -67,10 +75,13 @@ type SearchResultRow = {
   noAccessLeakCount: number
   failureReasons: string[]
   diagnostics: SearchResponse["diagnostics"]
+  evaluatorProfile: string
+  recallK: number
   results: SearchResult[]
 }
 
 type SearchMetrics = {
+  recallAtK: number | null
   recallAt1: number | null
   recallAt3: number | null
   recallAt5: number | null
@@ -101,6 +112,8 @@ type SearchSummary = {
   outputPath: string
   reportPath: string
   summaryPath: string
+  evaluatorProfile: EvaluatorProfile
+  baselineComparisonNote?: string
   apiBaseUrl: string
   generatedAt: string
   total: number
@@ -122,6 +135,16 @@ const datasetPath = resolveExistingPath(process.env.DATASET ?? "datasets/search.
 const outputPath = resolveOutputPath(process.env.OUTPUT ?? ".local-data/search-benchmark-results.jsonl")
 const reportPath = resolveOutputPath(process.env.REPORT ?? outputPath.replace(/\.jsonl$/i, ".report.md"))
 const summaryPath = resolveOutputPath(process.env.SUMMARY ?? outputPath.replace(/\.jsonl$/i, ".summary.json"))
+const baselineSummaryPath = process.env.BASELINE_SUMMARY
+  ? resolveExistingPath(process.env.BASELINE_SUMMARY, [process.cwd(), benchmarkDir, repoRoot])
+  : undefined
+const baselineSummary = baselineSummaryPath
+  ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { evaluatorProfile?: SearchSummary["evaluatorProfile"] })
+  : undefined
+const suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
+const baselineComparisonNote = baselineSummary
+  ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
+  : undefined
 
 await mkdir(path.dirname(outputPath), { recursive: true })
 await mkdir(path.dirname(reportPath), { recursive: true })
@@ -134,10 +157,12 @@ const rows: SearchResultRow[] = []
 for await (const line of rl) {
   if (!line.trim()) continue
   const row = JSON.parse(line) as SearchDatasetRow
+  const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
+  assertSuiteEvaluatorProfile(rowEvaluatorProfile, suiteEvaluatorProfile, row.id)
   const startedAt = Date.now()
   const { status, body } = await runSearch(row)
   const latencyMs = body.diagnostics?.latencyMs ?? Date.now() - startedAt
-  const result = evaluateRow(row, status, latencyMs, body)
+  const result = evaluateRow(row, status, latencyMs, body, rowEvaluatorProfile)
   out.write(`${JSON.stringify(result)}\n`)
   rows.push(result)
 }
@@ -176,10 +201,10 @@ async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body:
   }
 }
 
-function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, body: SearchResponse): SearchResultRow {
+function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, body: SearchResponse, evaluatorProfile: EvaluatorProfile): SearchResultRow {
   const results = body.results ?? []
   const relevant = row.relevant ?? []
-  const metrics = evaluateRetrieval(results, relevant)
+  const metrics = evaluateRetrieval(results, relevant, { recallK: evaluatorProfile.retrieval.recallK })
   const noAccessLeakCount = row.caseType === "acl_negative"
     ? countAccessLeaks(results, relevant, row.forbidden)
     : countAccessLeaks(results, [], row.forbidden)
@@ -188,8 +213,8 @@ function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, b
   if (status < 200 || status >= 300) failureReasons.push(`http_${status}`)
   if (row.caseType === "acl_negative") {
     if (noAccessLeakCount > 0) failureReasons.push("no_access_leak")
-  } else if (relevant.length > 0 && metrics.recallAt10 === 0) {
-    failureReasons.push("recall_at_10_miss")
+  } else if (relevant.length > 0 && metrics.recallAtK === 0) {
+    failureReasons.push(`recall_at_${evaluatorProfile.retrieval.recallK}_miss`)
   }
   if (noAccessLeakCount > 0 && row.caseType !== "acl_negative") failureReasons.push("forbidden_result_leak")
 
@@ -203,6 +228,8 @@ function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, b
     noAccessLeakCount,
     failureReasons,
     diagnostics: body.diagnostics,
+    evaluatorProfile: profileKey(evaluatorProfile),
+    recallK: evaluatorProfile.retrieval.recallK,
     results
   }
 }
@@ -210,6 +237,7 @@ function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, b
 function summarize(rows: SearchResultRow[]): SearchSummary {
   const latencies = rows.map((row) => row.latencyMs)
   const metricAverages = {
+    recallAtK: averageMetric(rows, "recallAtK"),
     recallAt1: averageMetric(rows, "recallAt1"),
     recallAt3: averageMetric(rows, "recallAt3"),
     recallAt5: averageMetric(rows, "recallAt5"),
@@ -240,6 +268,8 @@ function summarize(rows: SearchResultRow[]): SearchSummary {
     outputPath,
     reportPath,
     summaryPath,
+    evaluatorProfile: suiteEvaluatorProfile,
+    baselineComparisonNote,
     apiBaseUrl,
     generatedAt: new Date().toISOString(),
     total: rows.length,
@@ -266,10 +296,10 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
         )
       ].join("\n")
   const detailRows = [
-    "| id | case | recall@20 | mrr@10 | ndcg@10 | precision@10 | leak | latency_ms | lexical | semantic | fused |",
-    "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    "| id | case | evaluator_profile | recall_k | recall@K | recall@20 | mrr@10 | ndcg@10 | precision@10 | leak | latency_ms | lexical | semantic | fused |",
+    "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ...rows.map((row) =>
-      `| ${escapeMarkdown(row.id)} | ${escapeMarkdown(row.caseType ?? "")} | ${formatNumber(row.metrics.recallAt20)} | ${formatNumber(row.metrics.mrrAt10)} | ${formatNumber(row.metrics.ndcgAt10)} | ${formatNumber(row.metrics.precisionAt10)} | ${row.noAccessLeakCount} | ${row.latencyMs} | ${row.diagnostics?.lexicalCount ?? 0} | ${row.diagnostics?.semanticCount ?? 0} | ${row.diagnostics?.fusedCount ?? 0} |`
+      `| ${escapeMarkdown(row.id)} | ${escapeMarkdown(row.caseType ?? "")} | ${escapeMarkdown(row.evaluatorProfile)} | ${row.recallK} | ${formatNumber(row.metrics.recallAtK)} | ${formatNumber(row.metrics.recallAt20)} | ${formatNumber(row.metrics.mrrAt10)} | ${formatNumber(row.metrics.ndcgAt10)} | ${formatNumber(row.metrics.precisionAt10)} | ${row.noAccessLeakCount} | ${row.latencyMs} | ${row.diagnostics?.lexicalCount ?? 0} | ${row.diagnostics?.semanticCount ?? 0} | ${row.diagnostics?.fusedCount ?? 0} |`
     )
   ].join("\n")
 
@@ -280,6 +310,8 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
 - Dataset: ${summary.datasetPath}
 - Raw results: ${summary.outputPath}
 - Summary JSON: ${summary.summaryPath}
+- Evaluator profile: ${profileKey(summary.evaluatorProfile)}
+- Baseline comparison: ${summary.baselineComparisonNote ?? "same_profile_or_not_configured"}
 
 ## Summary
 
@@ -303,33 +335,55 @@ ${detailRows}
 `
 }
 
-const metricDescriptions = {
-  recallAt1: "最上位 1 件に期待する relevant item が含まれた割合。",
-  recallAt3: "上位 3 件に期待する relevant item が含まれた割合。",
-  recallAt5: "上位 5 件に期待する relevant item が含まれた割合。",
-  recallAt10: "上位 10 件に期待する relevant item が含まれた割合。",
-  recallAt20: "上位 20 件に期待する relevant item が含まれた割合。",
-  mrrAt10: "上位 10 件で最初に relevant item が現れた順位の逆数平均。",
-  ndcgAt10: "上位 10 件の ranking 品質を、関連度と順位割引で評価した値。",
-  precisionAt5: "上位 5 件のうち relevant item が占める割合。",
-  precisionAt10: "上位 10 件のうち relevant item が占める割合。",
-  expectedFileHitRate: "期待ファイルが検索結果に含まれた割合。",
-  expectedDocumentHitRate: "期待 documentId が検索結果に含まれた割合。",
-  expectedChunkHitRate: "期待 chunkId が検索結果に含まれた割合。",
-  noAccessLeakCount: "アクセス権のない検索結果が返った件数。0 が望ましい。",
-  noAccessLeakRate: "アクセス権漏れが 1 件以上発生した行の割合。低いほどよい。",
-  p50LatencyMs: "検索 API latency の中央値。",
-  p95LatencyMs: "検索 API latency の 95 パーセンタイル。遅い tail latency を見る。",
-  p99LatencyMs: "検索 API latency の 99 パーセンタイル。",
-  averageLatencyMs: "検索 API latency の平均。",
-  errorRate: "HTTP 2xx 以外になった行の割合。低いほどよい。",
-  lexicalCountAvg: "lexical 検索候補数の平均。",
-  semanticCountAvg: "semantic 検索候補数の平均。",
-  fusedCountAvg: "lexical と semantic を統合した後の候補数の平均。"
-} satisfies Record<keyof SearchMetrics, string>
-
 function metricDescription(metric: keyof SearchMetrics): string {
-  return metricDescriptions[metric]
+  switch (metric) {
+    case "recallAtK":
+      return "evaluator profile の retrieval.recallK で期待する relevant item が含まれた割合。"
+    case "recallAt1":
+      return "最上位 1 件に期待する relevant item が含まれた割合。"
+    case "recallAt3":
+      return "上位 3 件に期待する relevant item が含まれた割合。"
+    case "recallAt5":
+      return "上位 5 件に期待する relevant item が含まれた割合。"
+    case "recallAt10":
+      return "上位 10 件に期待する relevant item が含まれた割合。"
+    case "recallAt20":
+      return "上位 20 件に期待する relevant item が含まれた割合。"
+    case "mrrAt10":
+      return "上位 10 件で最初に relevant item が現れた順位の逆数平均。"
+    case "ndcgAt10":
+      return "上位 10 件の ranking 品質を、関連度と順位割引で評価した値。"
+    case "precisionAt5":
+      return "上位 5 件のうち relevant item が占める割合。"
+    case "precisionAt10":
+      return "上位 10 件のうち relevant item が占める割合。"
+    case "expectedFileHitRate":
+      return "期待ファイルが検索結果に含まれた割合。"
+    case "expectedDocumentHitRate":
+      return "期待 documentId が検索結果に含まれた割合。"
+    case "expectedChunkHitRate":
+      return "期待 chunkId が検索結果に含まれた割合。"
+    case "noAccessLeakCount":
+      return "アクセス権のない検索結果が返った件数。0 が望ましい。"
+    case "noAccessLeakRate":
+      return "アクセス権漏れが 1 件以上発生した行の割合。低いほどよい。"
+    case "p50LatencyMs":
+      return "検索 API latency の中央値。"
+    case "p95LatencyMs":
+      return "検索 API latency の 95 パーセンタイル。遅い tail latency を見る。"
+    case "p99LatencyMs":
+      return "検索 API latency の 99 パーセンタイル。"
+    case "averageLatencyMs":
+      return "検索 API latency の平均。"
+    case "errorRate":
+      return "HTTP 2xx 以外になった行の割合。低いほどよい。"
+    case "lexicalCountAvg":
+      return "lexical 検索候補数の平均。"
+    case "semanticCountAvg":
+      return "semantic 検索候補数の平均。"
+    case "fusedCountAvg":
+      return "lexical と semantic を統合した後の候補数の平均。"
+  }
 }
 
 function averageMetric(rows: SearchResultRow[], metric: keyof RetrievalMetrics): number | null {

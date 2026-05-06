@@ -56,6 +56,7 @@ test("classification answers require actual requirements classification terms", 
     ...chunk,
     metadata: {
       ...chunk.metadata,
+      domainPolicy: "swebok-requirements",
       text: "2 Requirements Elicitation\n4.3 ATDD\nBDD\n4.4 UMLSysML\n5 Requirements Validation\n6.1 Requirements Scrubbing\n7.2 Kano"
     }
   }
@@ -65,6 +66,7 @@ test("classification answers require actual requirements classification terms", 
     score: 0.3,
     metadata: {
       ...chunk.metadata,
+      domainPolicy: "swebok-requirements",
       chunkId: "chunk-0009",
       text: "ソフトウェア要求の分類: ソフトウェア製品要求、ソフトウェアプロジェクト要求、機能要求、非機能要求、技術制約、サービス品質制約。"
     }
@@ -85,6 +87,21 @@ test("classification answers require actual requirements classification terms", 
       (selected) => selected.key
     ),
     ["doc-1-chunk-0009"]
+  )
+})
+
+test("default policy keeps requirements classification special cases opt-in", async () => {
+  const outlineChunk = {
+    ...chunk,
+    metadata: {
+      ...chunk.metadata,
+      text: "2 Requirements Elicitation\n5 Requirements Validation\n7.2 Kano"
+    }
+  }
+
+  assert.equal(
+    (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [outlineChunk] }))).answerability?.reason,
+    "sufficient_evidence"
   )
 })
 
@@ -168,6 +185,8 @@ test("sufficient context gate does not override unanswerable judgement", async (
         missingFactIds: [],
         conflictingFactIds: [],
         supportedFactIds: ["fact-1"],
+        claims: [],
+        conflictCandidates: [],
         nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
         reason: "heuristic supported"
       }
@@ -211,6 +230,8 @@ test("sufficient context gate keeps generic partial questions refused without a 
         missingFactIds: [],
         conflictingFactIds: [],
         supportedFactIds: ["fact-1"],
+        claims: [],
+        conflictCandidates: [],
         nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
         reason: "heuristic supported"
       }
@@ -253,6 +274,8 @@ test("sufficient context gate refuses partial evidence with missing specific fac
         missingFactIds: ["exception-approver"],
         conflictingFactIds: [],
         supportedFactIds: ["deadline"],
+        claims: [],
+        conflictCandidates: [],
         nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
         reason: "partial evidence"
       }
@@ -287,7 +310,7 @@ test("citation validation accepts used ids and rejects invalid or ungrounded ans
       await validateCitations(
         state({
           question: "ソフトウェア要求の分類を洗い出して",
-          selectedChunks: [chunk],
+          selectedChunks: [{ ...chunk, metadata: { ...chunk.metadata, domainPolicy: "swebok-requirements" } }],
           rawAnswer: JSON.stringify({ isAnswerable: true, answer: "1. Requirements Elicitation\n2. BDD", usedChunkIds: ["chunk-0001"] })
         })
       )
@@ -619,6 +642,31 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   assert.deepEqual(noValue.retrievalEvaluation?.supportedFactIds, [])
   assert.deepEqual(noValue.retrievalEvaluation?.missingFactIds, ["deadline"])
 
+  const multiFacetSeparateChunks = await retrievalEvaluator(
+    state({
+      question: "経費精算の申請方法と期限と金額は？",
+      retrievedChunks: [
+        { ...chunk, key: "expense-amount", metadata: { ...chunk.metadata, chunkId: "expense-amount", text: "経費精算の金額上限は5,000円です。" } },
+        { ...chunk, key: "expense-deadline", metadata: { ...chunk.metadata, chunkId: "expense-deadline", text: "経費精算の申請期限は翌月5営業日です。" } },
+        { ...chunk, key: "expense-procedure", metadata: { ...chunk.metadata, chunkId: "expense-procedure", text: "経費精算は申請システムから提出します。" } }
+      ],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "経費精算の申請方法と期限と金額",
+        requiredFacts: [
+          { id: "amount", description: "経費精算 金額", factType: "amount", subject: "経費精算", priority: 1, status: "missing", supportingChunkKeys: [] },
+          { id: "deadline", description: "経費精算 期限", factType: "date", subject: "経費精算", priority: 2, status: "missing", supportingChunkKeys: [] },
+          { id: "procedure", description: "経費精算 手順", factType: "procedure", subject: "経費精算", priority: 3, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(multiFacetSeparateChunks.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(multiFacetSeparateChunks.retrievalEvaluation?.missingFactIds, [])
+  assert.deepEqual(new Set(multiFacetSeparateChunks.retrievalEvaluation?.supportedFactIds), new Set(["amount", "deadline", "procedure"]))
+
   const currentRuleWithStatusCue = await retrievalEvaluator(
     state({
       question: "現行制度の申請期限は？",
@@ -680,8 +728,10 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   assert.equal(valueMismatch.retrievalEvaluation?.retrievalQuality, "conflicting")
   assert.deepEqual(valueMismatch.retrievalEvaluation?.supportedFactIds, [])
   assert.deepEqual(valueMismatch.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
-  assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "value_mismatch")
+  assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "typed_claim_conflict")
   assert.deepEqual(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.values, ["翌月5営業日", "翌月10営業日"])
+  assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.conflictCandidate?.scope, "現行")
+  assert.ok((valueMismatch.retrievalEvaluation?.claims.length ?? 0) >= 2)
   assert.equal(valueMismatch.retrievalEvaluation?.nextAction.type, "evidence_search")
   assert.match(valueMismatch.retrievalEvaluation?.nextAction.type === "evidence_search" ? valueMismatch.retrievalEvaluation.nextAction.query : "", /現行 最新/)
 
@@ -721,6 +771,43 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   assert.equal(scopedOldAndCurrent.retrievalEvaluation?.retrievalQuality, "sufficient")
   assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.conflictingFactIds, [])
   assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.riskSignals, [])
+
+  const uncertainScopeMismatch = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0005",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0005",
+            text: "申請期限は翌月5営業日です。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0006",
+          score: 0.89,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0006",
+            text: "現行の申請期限は翌月10営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", factType: "date", subject: "制度", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.retrievalQuality, "conflicting")
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "uncertain_scope_conflict")
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.riskSignals?.[0]?.conflictCandidate?.scope, "uncertain")
 
   const lowScoreTermMatch = await retrievalEvaluator(
     state({
@@ -1035,6 +1122,8 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
       missingFactIds: [],
       conflictingFactIds: [],
       supportedFactIds: [],
+      claims: [],
+      conflictCandidates: [],
       nextAction: {
         type: "evidence_search",
         query: "",

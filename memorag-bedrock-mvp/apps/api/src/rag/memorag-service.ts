@@ -13,7 +13,7 @@ import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
 import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
-import { chunkStructuredBlocks, chunkText } from "./chunk.js"
+import { chunkStructuredBlocks, chunkText, summarizeDocumentStatistics } from "./chunk.js"
 import { embedWithCache, mapWithConcurrency } from "./embedding-cache.js"
 import { parseJsonObject } from "./json.js"
 import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./manifest-chunks.js"
@@ -176,12 +176,14 @@ export class MemoRagService {
       await this.deps.objectStore.putText(structuredBlocksObjectKey, JSON.stringify({ schemaVersion: 1, blocks: extracted.blocks }, null, 2), "application/json")
     }
 
+    const documentStatistics = summarizeDocumentStatistics(chunks)
     const memoryCards = input.skipMemory
       ? []
       : await this.createMemoryCards({
           fileName: input.fileName,
           text,
           chunks,
+          documentStatistics,
           modelId: input.memoryModelId
         })
     if (memoryCardsObjectKey) {
@@ -285,6 +287,7 @@ export class MemoRagService {
       memoryPromptVersion: pipelineVersions.memoryPromptVersion,
       indexVersion: pipelineVersions.indexVersion,
       pipelineVersions,
+      documentStatistics,
       chunks: chunks.map(toChunkMetadata),
       lifecycleStatus: lifecycleStatus(input.metadata),
       activeDocumentId: stringValue(input.metadata?.activeDocumentId),
@@ -1367,7 +1370,7 @@ export class MemoRagService {
     return { url, expiresInSeconds, objectKey: downloadMetadata.objectKey }
   }
 
-  private async createMemoryCards(input: { fileName: string; text: string; chunks: Chunk[]; modelId?: string }): Promise<MemoryCard[]> {
+  private async createMemoryCards(input: { fileName: string; text: string; chunks: Chunk[]; documentStatistics?: DocumentManifest["documentStatistics"]; modelId?: string }): Promise<MemoryCard[]> {
     const raw = await this.deps.textModel.generate(
       buildMemoryCardPrompt(input.fileName, input.text),
       llmOptions("memoryCard", input.modelId ?? config.defaultMemoryModelId)
@@ -1390,20 +1393,21 @@ export class MemoRagService {
       `Likely questions: ${card.likelyQuestions.join(" / ")}`,
       `Constraints: ${card.constraints.join(" / ")}`
     ].join("\n")
-    const sectionCards = createSectionMemoryCards(input.chunks)
-    const conceptCards = createConceptMemoryCards(input.chunks, card.keywords)
+    const sectionCards = createSectionMemoryCards(input.chunks, input.documentStatistics)
+    const conceptCards = createConceptMemoryCards(input.chunks, card.keywords, input.documentStatistics)
     return [{ ...card, text }, ...sectionCards, ...conceptCards]
   }
 }
 
-function createSectionMemoryCards(chunks: Chunk[]): MemoryCard[] {
+function createSectionMemoryCards(chunks: Chunk[], statistics?: DocumentManifest["documentStatistics"]): MemoryCard[] {
   const bySection = new Map<string, Chunk[]>()
   for (const chunk of chunks) {
     const section = chunk.sectionPath?.join(" > ")
     if (!section) continue
     bySection.set(section, [...(bySection.get(section) ?? []), chunk])
   }
-  return [...bySection.entries()].slice(0, ragRuntimePolicy.limits.sectionMemoryLimit).map(([section, sectionChunks], index) => {
+  const limit = Math.min(ragRuntimePolicy.limits.sectionMemoryLimit, Math.max(1, statistics?.sectionCount ?? bySection.size))
+  return [...bySection.entries()].slice(0, limit).map(([section, sectionChunks], index) => {
     const summary = sectionChunks.map((chunk) => chunk.text).join(" ").replace(/\s+/g, " ").slice(0, ragRuntimePolicy.limits.memorySummaryMaxChars)
     const card: MemoryCard = {
       id: `memory-section-${String(index).padStart(4, "0")}`,
@@ -1427,12 +1431,17 @@ function createSectionMemoryCards(chunks: Chunk[]): MemoryCard[] {
   })
 }
 
-function createConceptMemoryCards(chunks: Chunk[], keywords: string[]): MemoryCard[] {
+function createConceptMemoryCards(chunks: Chunk[], keywords: string[], statistics?: DocumentManifest["documentStatistics"]): MemoryCard[] {
+  const structuralTerms = [
+    statistics && statistics.tableCount > 0 ? "table" : "",
+    statistics && statistics.listCount > 0 ? "list" : "",
+    statistics && statistics.codeCount > 0 ? "code" : ""
+  ].filter(Boolean)
   const terms = [...new Set([...keywords, ...chunks.flatMap((chunk) => chunk.heading ? [chunk.heading] : [])].map((term) => term.trim()).filter(Boolean))].slice(
     0,
-    ragRuntimePolicy.limits.conceptMemoryTermLimit
+    Math.max(1, ragRuntimePolicy.limits.conceptMemoryTermLimit - structuralTerms.length)
   )
-  return terms.map((term, index) => {
+  return [...terms, ...structuralTerms].map((term, index) => {
     const sourceChunks = chunks.filter((chunk) => (chunk.text.includes(term) || chunk.heading === term)).slice(
       0,
       ragRuntimePolicy.limits.conceptMemorySourceChunkLimit
@@ -1614,11 +1623,17 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   const department = stringValue(metadata.department)
   const source = stringValue(metadata.source)
   const docType = stringValue(metadata.docType)
+  const domainPolicy = stringValue(metadata.domainPolicy)
+  const ragPolicy = stringValue(metadata.ragPolicy)
+  const answerPolicy = stringValue(metadata.answerPolicy)
   const aclGroup = stringValue(metadata.aclGroup) ?? aclGroups[0]
   if (tenantId) filterable.tenantId = tenantId
   if (department) filterable.department = department
   if (source) filterable.source = source
   if (docType) filterable.docType = docType
+  if (domainPolicy) filterable.domainPolicy = domainPolicy
+  if (ragPolicy) filterable.ragPolicy = ragPolicy
+  if (answerPolicy) filterable.answerPolicy = answerPolicy
   if (aclGroup) filterable.aclGroup = aclGroup
   if (aclGroups.length > 0) filterable.aclGroups = aclGroups
   if (allowedUsers && allowedUsers.length > 0) filterable.allowedUsers = allowedUsers

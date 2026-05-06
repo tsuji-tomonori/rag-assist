@@ -5,6 +5,13 @@ import readline from "node:readline"
 import { fileURLToPath } from "node:url"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
+import {
+  assertComparableProfiles,
+  assertSuiteEvaluatorProfile,
+  profileKey,
+  resolveEvaluatorProfile,
+  type EvaluatorProfile
+} from "./evaluator-profile.js"
 
 type DatasetRow = {
   id?: string
@@ -34,6 +41,7 @@ type DatasetRow = {
   minScore?: number
   strictGrounded?: boolean
   useMemory?: boolean
+  evaluatorProfile?: string
 }
 
 type FollowUpExpectation = {
@@ -122,6 +130,7 @@ type RowEvaluation = {
   citationHit: boolean | null
   expectedFileHit: boolean | null
   expectedPageHit: boolean | null
+  retrievalRecallAtK: boolean | null
   retrievalRecallAt20: boolean | null
   factSlotCoverage: number | null
   supportedFactSlots: number | null
@@ -167,6 +176,7 @@ type BenchmarkResultRow = {
   latencyMs: number
   taskLatencyMs: number
   evaluation: RowEvaluation
+  evaluatorProfile: string
   result: BenchmarkResponse
 }
 
@@ -175,6 +185,8 @@ type Summary = {
   outputPath: string
   reportPath: string
   summaryPath: string
+  evaluatorProfile: EvaluatorProfile
+  baselineComparisonNote?: string
   apiBaseUrl: string
   corpusSeed: SeededDocument[]
   generatedAt: string
@@ -200,6 +212,7 @@ type Summary = {
     answerContainsRate: number | null
     citationHitRate: number | null
     expectedFileHitRate: number | null
+    retrievalRecallAtK: number | null
     retrievalRecallAt20: number | null
     expectedPageHitRate: number | null
     factSlotCoverage: number | null
@@ -260,7 +273,11 @@ const baselineSummaryPath = process.env.BASELINE_SUMMARY
   ? resolveExistingPath(process.env.BASELINE_SUMMARY, [process.cwd(), benchmarkDir, repoRoot])
   : undefined
 const baselineSummary = baselineSummaryPath
-  ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { metrics?: Summary["metrics"] })
+  ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { metrics?: Summary["metrics"]; evaluatorProfile?: Summary["evaluatorProfile"] })
+  : undefined
+const suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
+const baselineComparisonNote = baselineSummary
+  ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
   : undefined
 const benchmarkCorpusDir = benchmarkCorpusDirFromEnv(process.env)
 const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
@@ -288,6 +305,8 @@ const results: BenchmarkResultRow[] = []
 for await (const line of rl) {
   if (!line.trim()) continue
   const row = JSON.parse(line) as DatasetRow
+  const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
+  assertSuiteEvaluatorProfile(rowEvaluatorProfile, suiteEvaluatorProfile, row.id ?? row.question)
   const firstStartedAt = Date.now()
   const { status, body } = await runQuery(row)
   const initialLatencyMs = Date.now() - firstStartedAt
@@ -307,7 +326,8 @@ for await (const line of rl) {
     status,
     latencyMs: initialLatencyMs,
     taskLatencyMs: initialLatencyMs + (followUp?.latencyMs ?? 0),
-    evaluation: evaluateRow(row, body, status, followUp),
+    evaluation: evaluateRow(row, body, status, followUp, rowEvaluatorProfile),
+    evaluatorProfile: profileKey(rowEvaluatorProfile),
     result: body
   }
   out.write(`${JSON.stringify(result)}\n`)
@@ -450,9 +470,10 @@ function evaluateRow(
   row: DatasetRow,
   body: BenchmarkResponse,
   status: number,
-  followUp: BenchmarkResultRow["followUp"]
+  followUp: BenchmarkResultRow["followUp"],
+  evaluatorProfile: EvaluatorProfile
 ): RowEvaluation {
-  const expectedAnswerable = inferExpectedAnswerable(row)
+  const expectedAnswerable = inferExpectedAnswerable(row, evaluatorProfile)
   const actualAnswerable = Boolean(body.isAnswerable)
   const expectedResponseType = inferExpectedResponseType(row, expectedAnswerable)
   const actualResponseType = inferActualResponseType(body)
@@ -465,7 +486,7 @@ function evaluateRow(
   const expectedDocumentIds = toArray(row.expectedDocumentIds)
   const expectedPages = toArray(row.expectedPages).map(String)
   const failureReasons: string[] = []
-  const refused = !actualAnswerable || isNoAnswerText(answer)
+  const refused = !actualAnswerable || isNoAnswerText(answer, evaluatorProfile)
   const answerabilityCorrect = actualAnswerable === expectedAnswerable
   if (!answerabilityCorrect) failureReasons.push(expectedAnswerable ? "expected_answer_but_refused" : "expected_refusal_but_answered")
   const responseTypeCorrect = actualResponseType === expectedResponseType
@@ -499,7 +520,7 @@ function evaluateRow(
       : null
   if (corpusGroundedOptions === false) failureReasons.push("clarification_option_not_grounded")
 
-  const postClarificationAnswerCorrect = evaluateFollowUp(row.followUp, followUp, failureReasons)
+  const postClarificationAnswerCorrect = evaluateFollowUp(row.followUp, followUp, failureReasons, evaluatorProfile)
 
   const answerContainsExpected =
     expectedAnswerable && expectedContains.length > 0
@@ -528,11 +549,15 @@ function evaluateRow(
     expectedPages.length > 0 ? hasExpectedPageHit([...citations, ...retrieved], expectedPages) : null
   if (expectedPageHit === false) failureReasons.push("expected_page_not_hit")
 
+  const retrievalRecallAtK =
+    expectedFiles.length > 0 || expectedDocumentIds.length > 0
+      ? hasRetrievalRecallAtK([...retrieved, ...citations], expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
+      : null
+  if (retrievalRecallAtK === false) failureReasons.push(`retrieval_recall_at_${evaluatorProfile.retrieval.recallK}_miss`)
   const retrievalRecallAt20 =
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
-      ? hasRetrievalRecallAt20([...retrieved, ...citations], expectedFiles, expectedDocumentIds)
+      ? hasRetrievalRecallAtK([...retrieved, ...citations], expectedFiles, expectedDocumentIds, 20)
       : null
-  if (retrievalRecallAt20 === false) failureReasons.push("retrieval_recall_at_20_miss")
 
   const factSlotResult = evaluateFactSlots(row.expectedFactSlots ?? [], answer, [...citations, ...retrieved], expectedAnswerable)
   if (factSlotResult.coverage !== null && factSlotResult.coverage < 1) failureReasons.push("fact_slot_not_covered")
@@ -555,7 +580,7 @@ function evaluateRow(
     status >= 200 &&
     status < 300
 
-  const abstentionCorrect = expectedAnswerable ? null : !actualAnswerable || isNoAnswerText(answer)
+  const abstentionCorrect = expectedAnswerable ? null : !actualAnswerable || isNoAnswerText(answer, evaluatorProfile)
   if (abstentionCorrect === false) failureReasons.push("unsupported_answer")
 
   return {
@@ -574,10 +599,11 @@ function evaluateRow(
     regexMatched,
     answerCorrect,
     abstentionCorrect,
-    unsupportedAnswer: !expectedAnswerable && actualAnswerable && !isNoAnswerText(answer),
+    unsupportedAnswer: !expectedAnswerable && actualAnswerable && !isNoAnswerText(answer, evaluatorProfile),
     citationHit,
     expectedFileHit: expectedFileHit ?? expectedDocumentHit,
     expectedPageHit,
+    retrievalRecallAtK,
     retrievalRecallAt20,
     factSlotCoverage: factSlotResult.coverage,
     supportedFactSlots: factSlotResult.supported,
@@ -604,7 +630,8 @@ function evaluateRow(
 function evaluateFollowUp(
   expected: FollowUpExpectation | undefined,
   followUp: BenchmarkResultRow["followUp"],
-  failureReasons: string[]
+  failureReasons: string[],
+  evaluatorProfile: EvaluatorProfile
 ): boolean | null {
   if (!expected) return null
   if (!followUp) {
@@ -634,7 +661,7 @@ function evaluateFollowUp(
       : true
   const fileHit =
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
-      ? hasRetrievalRecallAt20([...citations, ...retrieved], expectedFiles, expectedDocumentIds)
+      ? hasRetrievalRecallAtK([...citations, ...retrieved], expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
       : true
   const httpOk = followUp.status >= 200 && followUp.status < 300
   const passed = httpOk && responseTypeCorrect && containsCorrect && regexCorrect && fileHit
@@ -664,7 +691,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
   const latencies = results.map((row) => row.latencyMs).sort((a, b) => a - b)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
-  const retrievalRecallEvaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
+  const retrievalRecallAtKEvaluated = results.filter((row) => row.evaluation.retrievalRecallAtK !== null)
+  const retrievalRecallAt20Evaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
@@ -687,6 +715,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
     outputPath,
     reportPath,
     summaryPath,
+    evaluatorProfile: suiteEvaluatorProfile,
+    baselineComparisonNote,
     apiBaseUrl,
     corpusSeed,
     generatedAt: new Date().toISOString(),
@@ -757,9 +787,13 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
         fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length,
         fileEvaluated.length
       ),
+      retrievalRecallAtK: rate(
+        retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length,
+        retrievalRecallAtKEvaluated.length
+      ),
       retrievalRecallAt20: rate(
-        retrievalRecallEvaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length,
-        retrievalRecallEvaluated.length
+        retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length,
+        retrievalRecallAt20Evaluated.length
       ),
       expectedPageHitRate: rate(
         pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length,
@@ -832,6 +866,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
     qualityReview: createQualityReview({
       current: summary.metrics,
       baseline: baselineSummary?.metrics,
+      thresholds: suiteEvaluatorProfile.thresholds,
       failures: summary.failures
     })
   }
@@ -854,6 +889,7 @@ type BenchmarkReportMetricName =
   | "answer_contains_rate"
   | "citation_hit_rate"
   | "expected_file_hit_rate"
+  | "retrieval_recall_at_k"
   | "retrieval_recall_at_20"
   | "expected_page_hit_rate"
   | "fact_slot_coverage"
@@ -932,6 +968,8 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
 - Dataset: ${summary.datasetPath}
 - Raw results: ${summary.outputPath}
 - Summary JSON: ${summary.summaryPath}
+- Evaluator profile: ${profileKey(summary.evaluatorProfile)}
+- Baseline comparison: ${summary.baselineComparisonNote ?? "same_profile_or_not_configured"}
 
 ## Summary
 
@@ -1014,6 +1052,8 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "回答可能な行で、少なくとも 1 件の citation を返した割合。"
     case "expected_file_hit_rate":
       return "期待ファイルまたは期待 document が citation/retrieved に含まれた割合。"
+    case "retrieval_recall_at_k":
+      return "evaluator profile の retrieval.recallK で期待ファイルまたは期待 document が含まれた割合。"
     case "retrieval_recall_at_20":
       return "上位 20 件の retrieved/citation に期待ファイルまたは期待 document が含まれた割合。"
     case "expected_page_hit_rate":
@@ -1125,7 +1165,8 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
-  const retrievalRecallEvaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
+  const retrievalRecallAtKEvaluated = results.filter((row) => row.evaluation.retrievalRecallAtK !== null)
+  const retrievalRecallAt20Evaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
@@ -1154,7 +1195,8 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("answer_contains_rate", summary.metrics.answerContainsRate, containsEvaluated.filter((row) => row.evaluation.answerContainsExpected === true).length, containsEvaluated.length, "`expectedContains` / `expectedAnswer` を持つ answerable 行の期待語句一致率。"),
     metricRateRow("citation_hit_rate", summary.metrics.citationHitRate, citationEvaluated.filter((row) => row.evaluation.citationHit === true).length, citationEvaluated.length, "answerable 行で citation が返った割合。"),
     metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを評価。"),
-    metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallEvaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を top 20 retrieved/citation で評価。"),
+    metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を evaluator profile の retrieval.recallK で評価。"),
+    metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を top 20 retrieved/citation で評価する後方互換指標。"),
     metricRateRow("expected_page_hit_rate", summary.metrics.expectedPageHitRate, pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length, pageEvaluated.length, "`expectedPages` がある行だけを評価。"),
     metricNullableRow("fact_slot_coverage", formatRate(summary.metrics.factSlotCoverage), summary.metrics.factSlotCoverage, `${factSlotEvaluated.length} rows with expectedFactSlots`, "`expectedFactSlots` がある行の平均 coverage。"),
     metricRateRow("refusal_precision", summary.metrics.refusalPrecision, refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length, "実際に refusal した行のうち、期待値も unanswerable/refusal だった割合。0.0% は answer-only dataset での false positive を示す。"),
@@ -1194,14 +1236,14 @@ function metricNullableRow(metric: BenchmarkReportMetricName, value: string, raw
   }
 }
 
-function inferExpectedAnswerable(row: DatasetRow): boolean {
+function inferExpectedAnswerable(row: DatasetRow, evaluatorProfile: EvaluatorProfile = suiteEvaluatorProfile): boolean {
   if (row.expectedResponseType === "clarification" || row.expectedClarification === true) return false
   if (row.expectedResponseType === "refusal") return false
   if (row.expectedResponseType === "answer") return true
   if (typeof row.answerable === "boolean") return row.answerable
   const expected = normalize(row.expected ?? row.expectedAnswer ?? "")
   if (!expected) return true
-  return !isNoAnswerText(expected)
+  return !isNoAnswerText(expected, evaluatorProfile)
 }
 
 function inferExpectedResponseType(row: DatasetRow, expectedAnswerable: boolean): RowEvaluation["expectedResponseType"] {
@@ -1216,9 +1258,9 @@ function inferActualResponseType(body: BenchmarkResponse): RowEvaluation["actual
   return body.isAnswerable ? "answer" : "refusal"
 }
 
-function isNoAnswerText(value: string): boolean {
+function isNoAnswerText(value: string, evaluatorProfile: EvaluatorProfile = suiteEvaluatorProfile): boolean {
   const normalized = normalize(value)
-  return normalized.includes("資料からは回答できません") || normalized.includes("回答できません") || normalized.includes("noanswer")
+  return evaluatorProfile.answerMatching.noAnswerTexts.some((text) => normalized.includes(normalize(text)))
 }
 
 function hasExpectedFileHit(citations: Citation[], expectedFiles: string[]): boolean {
@@ -1247,10 +1289,10 @@ function hasExpectedPageHit(citations: Citation[], expectedPages: string[]): boo
   })
 }
 
-function hasRetrievalRecallAt20(citations: Citation[], expectedFiles: string[], expectedDocumentIds: string[]): boolean {
-  const top20 = citations.slice(0, 20)
-  const fileHit = expectedFiles.length === 0 || hasExpectedFileHit(top20, expectedFiles)
-  const documentHit = expectedDocumentIds.length === 0 || hasExpectedDocumentHit(top20, expectedDocumentIds)
+function hasRetrievalRecallAtK(citations: Citation[], expectedFiles: string[], expectedDocumentIds: string[], k: number): boolean {
+  const topK = citations.slice(0, Math.max(1, Math.trunc(k)))
+  const fileHit = expectedFiles.length === 0 || hasExpectedFileHit(topK, expectedFiles)
+  const documentHit = expectedDocumentIds.length === 0 || hasExpectedDocumentHit(topK, expectedDocumentIds)
   return fileHit && documentHit
 }
 
