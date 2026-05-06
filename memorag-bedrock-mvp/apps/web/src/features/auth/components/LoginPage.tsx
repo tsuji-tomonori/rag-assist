@@ -16,6 +16,47 @@ type LoginPageProps = {
 
 type LoginMode = "signIn" | "signUp" | "confirmSignUp"
 
+type PasswordRequirement = {
+  readonly id: string
+  readonly label: string
+  readonly validate: (password: string) => boolean
+}
+
+const passwordRequirements: readonly PasswordRequirement[] = [
+  { id: "length", label: "12文字以上", validate: (password) => password.length >= 12 },
+  { id: "lowercase", label: "小文字を1文字以上", validate: (password) => /[a-z]/.test(password) },
+  { id: "uppercase", label: "大文字を1文字以上", validate: (password) => /[A-Z]/.test(password) },
+  { id: "digit", label: "数字を1文字以上", validate: (password) => /\d/.test(password) },
+  { id: "symbol", label: "記号を1文字以上", validate: (password) => /[^A-Za-z0-9]/.test(password) }
+] as const
+
+function isPasswordPolicySatisfied(password: string) {
+  return passwordRequirements.every((requirement) => requirement.validate(password))
+}
+
+function PasswordRequirementList({ password }: { password: string }) {
+  return (
+    <div className="password-requirements" aria-live="polite">
+      <span className="password-requirements-title">パスワード条件</span>
+      <ul>
+        {passwordRequirements.map((requirement) => {
+          const isMet = requirement.validate(password)
+          return (
+            <li
+              key={requirement.id}
+              className={isMet ? "password-requirement password-requirement-met" : "password-requirement"}
+              aria-label={`${isMet ? "達成" : "未達成"}: ${requirement.label}`}
+            >
+              <span className="password-requirement-icon" aria-hidden="true">{isMet ? "✓" : ""}</span>
+              <span>{requirement.label}</span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onCompleteNewPassword }: LoginPageProps) {
   const [mode, setMode] = useState<LoginMode>("signIn")
   const [email, setEmail] = useState("")
@@ -65,6 +106,10 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
 
   async function submitNewPassword() {
     if (!challenge || !newPassword || !confirmPassword) return
+    if (!isPasswordPolicySatisfied(newPassword)) {
+      setError("未達成のパスワード条件を確認してください。")
+      return
+    }
     if (newPassword !== confirmPassword) {
       setError("新しいパスワードが一致しません。")
       return
@@ -83,6 +128,10 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
 
   async function submitSignUp() {
     if (!email || !password || !signUpPasswordConfirm) return
+    if (!isPasswordPolicySatisfied(password)) {
+      setError("未達成のパスワード条件を確認してください。")
+      return
+    }
     if (password !== signUpPasswordConfirm) {
       setError("パスワードが一致しません。")
       return
@@ -134,6 +183,7 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
   }
 
   const isChangingPassword = challenge !== null
+  const isCurrentPasswordValid = isChangingPassword ? isPasswordPolicySatisfied(newPassword) : mode === "signUp" ? isPasswordPolicySatisfied(password) : true
   const title =
     isChangingPassword ? "初回ログイン用の新しいパスワードを設定" : mode === "signUp" ? "アカウントを作成" : mode === "confirmSignUp" ? "確認コードを入力" : "Cognitoで安全にサインイン"
   const submitLabel = isSubmitting
@@ -175,6 +225,7 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
                 disabled={isSubmitting}
                 onChange={(e) => setNewPassword(e.target.value)}
               />
+              <PasswordRequirementList password={newPassword} />
               <label>新しいパスワード（確認）</label>
               <input
                 type="password"
@@ -204,6 +255,7 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
               <input type="email" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
               <label>パスワード</label>
               <input type="password" placeholder="パスワードを入力" value={password} disabled={isSubmitting} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordRequirementList password={password} />
               <label>パスワード（確認）</label>
               <input
                 type="password"
@@ -226,7 +278,7 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
           ) : null}
           {notice ? <p className="login-success" role="status">{notice}</p> : null}
           {error ? <p className="login-error" role="alert">{error}</p> : null}
-          <button type="submit" disabled={isSubmitting}>
+          <button type="submit" disabled={isSubmitting || !isCurrentPasswordValid}>
             {isSubmitting && <LoadingSpinner className="button-spinner" />}
             <span>{submitLabel}</span>
           </button>
