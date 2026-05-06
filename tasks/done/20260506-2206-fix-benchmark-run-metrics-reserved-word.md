@@ -1,6 +1,6 @@
 # Benchmark run metrics 更新の DynamoDB 予約語修正
 
-状態: do
+状態: done
 
 ## 背景
 
