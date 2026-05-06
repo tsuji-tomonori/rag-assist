@@ -1,8 +1,10 @@
 # Benchmark performance improvement
 
-- 状態: do
+- 状態: done
 - 作成日時: 2026-05-06 20:45 JST
+- 完了日時: 2026-05-06 22:29 JST
 - ブランチ: `codex/benchmark-performance-improvement`
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/137
 
 ## 背景
 
@@ -28,13 +30,22 @@ RAG の根拠性と認可境界を保ちながら、社内ハンドブック ben
 
 ## 受け入れ条件
 
-- QA benchmark の誤拒否が減り、`answerable_accuracy` が改善する。
-- answer-only dataset での `refusal_precision` 低下要因である false refusal を減らす。
-- search benchmark の recall miss 原因を特定し、実装または fixture 側の必要最小限の修正を行う。
-- 追加 LLM call を増やさず、レイテンシ悪化リスクを抑える。
-- 変更範囲に見合う targeted test と benchmark を実行し、失敗があれば修正して再実行する。
-- 実施していない検証は PR 本文、PR コメント、作業レポートで実施済み扱いしない。
-- PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で記載する。
+- [x] QA benchmark の誤拒否が減り、`answerable_accuracy` が改善する。
+- [x] answer-only dataset での `refusal_precision` 低下要因である false refusal を減らす。
+- [x] search benchmark の recall miss 原因を特定し、実装または fixture 側の必要最小限の修正を行う。
+- [x] 追加 LLM call を増やさず、レイテンシ悪化リスクを抑える。
+- [x] 変更範囲に見合う targeted test と benchmark を実行し、失敗があれば修正して再実行する。
+- [x] 実施していない検証は PR 本文、PR コメント、作業レポートで実施済み扱いしない。
+- [x] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で記載する。
+
+## 完了結果
+
+- PR 作成: https://github.com/tsuji-tomonori/rag-assist/pull/137
+- 受け入れ条件確認コメント: PR top-level comment に投稿済み。
+- セルフレビューコメント: PR top-level comment に投稿済み。
+- 作業レポート: `reports/working/20260506-2221-benchmark-performance-improvement.md`
+- ローカル `MOCK_BEDROCK=true` QA sample: answerableAccuracy 0.92、false refusal 0、p95LatencyMs 46、failures 4。
+- ローカル search sample: recallAtK 1、failures 0、noAccessLeakCount 0。
 
 ## 計画
 
