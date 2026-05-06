@@ -376,7 +376,9 @@ ${context || "根拠チャンクはありません。"}
 
 export function selectFinalAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
   const policy = selectAnswerPolicyForChunks(chunks)
-  if (!isRequirementsClassificationQuestion(question) || policy.id !== "swebok-requirements-policy") return chunks
+  if (!isRequirementsClassificationQuestion(question) || policy.id !== "swebok-requirements-policy") {
+    return rankGeneralAnswerChunks(question, chunks)
+  }
 
   const scored = chunks
     .map((chunk, index) => ({
@@ -395,6 +397,83 @@ export function selectFinalAnswerChunks(question: string, chunks: RetrievedVecto
 
   const nonToc = chunks.filter((chunk) => !isTableOfContentsLike(chunk.metadata.text ?? ""))
   return nonToc.length > 0 ? nonToc : chunks
+}
+
+function rankGeneralAnswerChunks(question: string, chunks: RetrievedVector[]): RetrievedVector[] {
+  const scored = chunks
+    .map((chunk, index) => ({
+      chunk,
+      index,
+      score: generalAnswerEvidenceScore(question, chunk.metadata.text ?? "")
+    }))
+    .sort((a, b) => b.score - a.score || b.chunk.score - a.chunk.score || a.index - b.index)
+  return scored.map((item) => item.chunk)
+}
+
+function generalAnswerEvidenceScore(question: string, text: string): number {
+  const normalizedText = normalizeCompact(text)
+  const terms = answerSubjectTerms(question)
+  const termScore = terms.reduce((sum, term) => sum + (normalizedText.includes(normalizeCompact(term)) ? term.length >= 4 ? 5 : 3 : 0), 0)
+  const intentScore = answerIntentAnchors(question).reduce((sum, anchor) => sum + (anchor.test(text) ? 3 : 0), 0)
+  const exactQuestionCue = terms.length > 0 && terms.every((term) => normalizedText.includes(normalizeCompact(term))) ? 6 : 0
+  const missingSubjectPenalty = terms.length > 0 && termScore === 0 ? 4 : 0
+  return termScore + intentScore + exactQuestionCue - missingSubjectPenalty
+}
+
+function answerSubjectTerms(question: string): string[] {
+  const normalized = question
+    .normalize("NFKC")
+    .replace(/[?？。.!！]/g, " ")
+  const ascii = normalized.match(/[A-Za-z0-9][A-Za-z0-9_-]{2,}/g) ?? []
+  const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
+  return unique([...ascii, ...japanese.flatMap((term) => [term, ...splitMixedJapaneseTerm(term)])].filter((term) => !isGenericQuestionTerm(term)))
+}
+
+function isGenericQuestionTerm(term: string): boolean {
+  return [
+    "申請",
+    "期限",
+    "期日",
+    "締切",
+    "必要",
+    "条件",
+    "対象",
+    "頻度",
+    "手順",
+    "方法",
+    "提出",
+    "報告",
+    "連絡",
+    "依頼先",
+    "窓口",
+    "部署",
+    "書類",
+    "記録",
+    "システム",
+    "チャンネル"
+  ].includes(term)
+}
+
+function splitMixedJapaneseTerm(term: string): string[] {
+  return (term.match(/[\p{Script=Katakana}ー]+|[\p{Script=Han}]+/gu) ?? []).filter((part) => part.length >= 2 && part !== term)
+}
+
+function answerIntentAnchors(question: string): RegExp[] {
+  const anchors: RegExp[] = []
+  if (/いつ|期限|期日|締切|何日前|開始日|終了日/.test(question)) anchors.push(/[0-9０-９]+(?:日|営業日|か月|ヶ月|月|年)|前営業日|直ちに|入社初日|月末|月初|毎月/)
+  if (/頻度|何回|何度|ごと|毎年|毎月/.test(question)) anchors.push(/[0-9０-９]+回|年[0-9０-９]+回|[0-9０-９]+日ごと|毎年|毎月/)
+  if (/誰|担当|承認者|責任者|報告先|依頼先|窓口/.test(question)) anchors.push(/上長|責任者|産業医|法務部|総務部|人事部|ヘルプデスク|部|者/)
+  if (/どこ|どの|方法|手順|申請|提出|チャンネル|保管場所/.test(question)) anchors.push(/システム|フォーム|提出|部|窓口|チャンネル|ストレージ/)
+  if (/何が|何を|書類|記録|ありますか/.test(question)) anchors.push(/雇用契約書|身元確認書類|口座情報|版番号|更新日|更新者|変更理由|対象家族/)
+  return anchors
+}
+
+function normalizeCompact(text: string): string {
+  return text.normalize("NFKC").replace(/\s+/g, "").toLowerCase()
+}
+
+function unique(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))]
 }
 
 function formatThresholdEffectRules(policy: AnswerPolicy): string {

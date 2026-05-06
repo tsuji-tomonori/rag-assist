@@ -27,6 +27,6 @@ pnpm-debug.log*
 
 # workspace
 .workspace
-.codex
+.codex/
 .codex.bak-*
 .worktrees/
