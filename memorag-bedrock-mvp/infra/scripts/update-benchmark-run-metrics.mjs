@@ -15,16 +15,30 @@ export async function main() {
   const metrics = buildBenchmarkRunMetrics(summary)
   const client = new DynamoDBClient({ region: process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION })
 
-  await client.send(new UpdateItemCommand({
+  await client.send(new UpdateItemCommand(buildUpdateBenchmarkRunMetricsCommandInput({
     TableName: tableName,
+    runId,
+    metrics,
+    updatedAt: new Date().toISOString()
+  })))
+}
+
+export function buildUpdateBenchmarkRunMetricsCommandInput({ TableName, runId, metrics, updatedAt }) {
+  return {
+    TableName,
     Key: { runId: { S: runId } },
-    ConditionExpression: "attribute_exists(runId)",
-    UpdateExpression: "SET metrics = :metrics, updatedAt = :updatedAt",
+    ConditionExpression: "attribute_exists(#runId)",
+    UpdateExpression: "SET #metrics = :metrics, #updatedAt = :updatedAt",
+    ExpressionAttributeNames: {
+      "#runId": "runId",
+      "#metrics": "metrics",
+      "#updatedAt": "updatedAt"
+    },
     ExpressionAttributeValues: {
       ":metrics": dynamoMetricsAttributeValue(metrics),
-      ":updatedAt": { S: new Date().toISOString() }
+      ":updatedAt": { S: updatedAt }
     }
-  }))
+  }
 }
 
 export function buildBenchmarkRunMetrics(summary) {
