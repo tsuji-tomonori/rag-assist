@@ -1,8 +1,8 @@
 # QA 回答文選択の汎用改善
 
-保存先: `tasks/do/20260506-2331-qa-answer-selection-generalization.md`
+保存先: `tasks/done/20260506-2331-qa-answer-selection-generalization.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -52,12 +52,12 @@
 
 ## 受け入れ条件
 
-- [ ] `context-assembler.ts` の改善が、固定値、期待語句リスト、QA sample 固有 ID、benchmark suite 固有分岐を含まない。
-- [ ] ローカル QA sample の期待語句未一致が改善する。完全解消できない場合は、残件の原因と固定値なしでの限界を明記する。
-- [ ] `retrievalRecallAtK` と `citationHitRate` が 1.0 から低下しない。
-- [ ] 関連 unit test / typecheck / benchmark sample が pass する。
-- [ ] レビュー観点、skill、設計方針に同種の benchmark 特化修正を防ぐ確認項目が追加される。
-- [ ] PR に受け入れ条件の確認結果を日本語でコメントする。
+- [x] `context-assembler.ts` の改善が、固定値、期待語句リスト、QA sample 固有 ID、benchmark suite 固有分岐を含まない。
+- [x] ローカル QA sample の期待語句未一致が改善する。完全解消できない場合は、残件の原因と固定値なしでの限界を明記する。
+- [x] `retrievalRecallAtK` と `citationHitRate` が 1.0 から低下しない。
+- [x] 関連 unit test / typecheck / benchmark sample が pass する。
+- [x] レビュー観点、skill、設計方針に同種の benchmark 特化修正を防ぐ確認項目が追加される。
+- [x] PR に受け入れ条件の確認結果を日本語でコメントする。
 
 ## 検証計画
 
@@ -74,6 +74,15 @@
 - retrieval、citation validation、answerability gate の責務を混ぜていないか。
 - benchmark 指標が改善しても、根拠性、拒否制御、認可境界を弱めていないか。
 - docs と skill に再発防止観点が反映されているか。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/141
+- 受け入れ条件コメント: https://github.com/tsuji-tomonori/rag-assist/pull/141#issuecomment-4389592736
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/141#issuecomment-4389595366
+- 作業レポート: `reports/working/20260507-0020-qa-answer-selection-generalization.md`
+- QA sample: total 50 / answerContainsRate 1 / retrievalRecallAtK 1 / citationHitRate 1 / failures 0
+- CI: PR 作成直後のため、GitHub Actions の完了結果は未確認。
 
 ## 未決事項・リスク
 
