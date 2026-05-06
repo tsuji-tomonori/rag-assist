@@ -19,6 +19,7 @@ import {
   resolveEvaluatorProfile,
   type EvaluatorProfile
 } from "./evaluator-profile.js"
+import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus } from "./corpus.js"
 
 type SearchDatasetRow = {
   id: string
@@ -130,6 +131,9 @@ type SearchSummary = {
 }
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
+const apiAuthToken = process.env.API_AUTH_TOKEN
+const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "search-standard-v1"
+const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? benchmarkSuiteId
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const datasetPath = resolveExistingPath(process.env.DATASET ?? "datasets/search.sample.jsonl", [process.cwd(), benchmarkDir, repoRoot])
@@ -158,6 +162,20 @@ try {
   baselineComparisonNote = baselineSummary
     ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
     : undefined
+
+  const benchmarkCorpusDir = benchmarkCorpusDirFromEnv(process.env)
+  const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
+    ? resolveExistingPath(benchmarkCorpusDir, [process.cwd(), benchmarkDir, repoRoot])
+    : undefined
+  await seedBenchmarkCorpus({
+    apiBaseUrl,
+    authToken: apiAuthToken,
+    corpusDir: resolvedBenchmarkCorpusDir,
+    suiteId: benchmarkCorpusSuiteId,
+    skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
+    embeddingModelId: process.env.EMBEDDING_MODEL_ID?.trim() || undefined,
+    log: (message) => console.log(message)
+  })
 
   out = createWriteStream(outputPath, { encoding: "utf-8" })
   const rl = readline.createInterface({ input: createReadStream(datasetPath, { encoding: "utf-8" }), crlfDelay: Infinity })
@@ -197,7 +215,7 @@ try {
 
 async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body: SearchResponse }> {
   const headers: Record<string, string> = { "Content-Type": "application/json" }
-  if (process.env.API_AUTH_TOKEN) headers.Authorization = `Bearer ${process.env.API_AUTH_TOKEN}`
+  if (apiAuthToken) headers.Authorization = `Bearer ${apiAuthToken}`
 
   try {
     const response = await fetch(`${apiBaseUrl}/benchmark/search`, {

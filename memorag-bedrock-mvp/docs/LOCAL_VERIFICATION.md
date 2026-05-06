@@ -69,7 +69,7 @@ npm run start -w @memorag-mvp/benchmark
 
 `task benchmark:sample` は上記の標準 corpus 指定を含む。`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1` では `handbook.md` を `/documents` に seed し、active chunk が作成されてから評価 query を実行する。`mmrag-docqa-v1` をローカルで試す場合は `DATASET=benchmark/dataset.mmrag-docqa.sample.jsonl`、`BENCHMARK_SUITE_ID=mmrag-docqa-v1`、`BENCHMARK_CORPUS_DIR=benchmark/corpus/mmrag-docqa-v1`、`BENCHMARK_CORPUS_SUITE_ID=mmrag-docqa-v1` を指定する。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]` と `docType: "benchmark-corpus"` で隔離し、通常利用者の文書一覧にも表示しない。同じ corpus を複数 suite で共有する場合は `BENCHMARK_CORPUS_SUITE_ID` で seed 判定用の corpus identity を固定する。
 
-検索ベンチマーク runner は、初期化やレポート描画の fatal error でも `OUTPUT`、`SUMMARY`、`REPORT` の各 artifact を作成してから同じエラーで終了する。CodeBuild の `post_build` では、Build phase の失敗原因を保ったまま部分結果と runner error を S3 にアップロードできる。
+検索ベンチマーク runner は、`BENCHMARK_CORPUS_DIR` が指定されている場合に agent benchmark と同じ isolated corpus を seed してから `/benchmark/search` を実行する。`task benchmark:search:sample` は標準 corpus と `BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1` を指定する。初期化やレポート描画の fatal error でも `OUTPUT`、`SUMMARY`、`REPORT` の各 artifact を作成してから同じエラーで終了する。CodeBuild の `post_build` では、Build phase の失敗原因を保ったまま部分結果と runner error を S3 にアップロードできる。
 
 adaptive retrieval を opt-in で確認する場合:
 
@@ -80,6 +80,9 @@ DATASET=benchmark/datasets/search.sample.jsonl \
 OUTPUT=.local-data/search-adaptive-results.jsonl \
 SUMMARY=.local-data/search-adaptive-summary.json \
 REPORT=.local-data/search-adaptive-report.md \
+BENCHMARK_SUITE_ID=search-standard-v1 \
+BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1 \
+BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1 \
 npm run start:search -w @memorag-mvp/benchmark
 ```
 

@@ -142,3 +142,87 @@ test("default answer policy does not inject SWEBOK-only classification rules", (
 
   assert.deepEqual(selected.map((chunk) => chunk.key), ["doc-1-chunk-0001"])
 })
+
+test("general answer chunk selection prioritizes subject-matched evidence", () => {
+  const expense: RetrievedVector = {
+    key: "doc-1-chunk-0001",
+    score: 0.95,
+    metadata: {
+      kind: "chunk",
+      documentId: "doc-1",
+      fileName: "handbook.md",
+      chunkId: "chunk-0001",
+      text: "経費精算は申請から30日以内に行う必要があります。",
+      createdAt: "2026-04-30T00:00:00.000Z"
+    }
+  }
+  const vacation: RetrievedVector = {
+    key: "doc-1-chunk-0002",
+    score: 0.72,
+    metadata: {
+      kind: "chunk",
+      documentId: "doc-1",
+      fileName: "handbook.md",
+      chunkId: "chunk-0002",
+      text: "有給休暇の取得申請は取得日の前営業日までに提出します。",
+      createdAt: "2026-04-30T00:00:00.000Z"
+    }
+  }
+
+  const selected = selectFinalAnswerChunks("有給休暇の申請は何日前までに必要ですか？", [expense, vacation])
+
+  assert.deepEqual(selected.map((chunk) => chunk.key), ["doc-1-chunk-0002", "doc-1-chunk-0001"])
+})
+
+test("final answer context focuses long handbook chunks on the matching sentence", () => {
+  const hit: RetrievedVector = {
+    key: "doc-1-chunk-0001",
+    score: 0.95,
+    metadata: {
+      kind: "chunk",
+      documentId: "doc-1",
+      fileName: "handbook.md",
+      chunkId: "chunk-0001",
+      text: [
+        "経費精算は申請から30日以内に行う必要があります。",
+        "在宅勤務手当の申請期限は翌月5営業日です。",
+        "情報セキュリティ研修は年1回受講します。",
+        "パスワードは90日ごとに変更します。",
+        "多要素認証は社内システムで必須です。",
+        "パスワード変更の例外申請は情報システム部に提出します。"
+      ].join("\n"),
+      createdAt: "2026-04-30T00:00:00.000Z"
+    }
+  }
+
+  const prompt = buildFinalAnswerPrompt("パスワード変更の頻度は？", [hit])
+
+  assert.match(prompt, /パスワードは90日ごとに変更します。/)
+  assert.doesNotMatch(prompt, /経費精算は申請から30日以内/)
+  assert.doesNotMatch(prompt, /例外申請/)
+})
+
+test("final answer context keeps subject match ahead of generic intent cues", () => {
+  const hit: RetrievedVector = {
+    key: "doc-1-chunk-0001",
+    score: 0.95,
+    metadata: {
+      kind: "chunk",
+      documentId: "doc-1",
+      fileName: "handbook.md",
+      chunkId: "chunk-0001",
+      text: [
+        "有給休暇の取得申請は取得日の前営業日までに提出します。",
+        "経費精算は申請から30日以内に行う必要があります。",
+        "残業申請は事前申請が必要です。"
+      ].join("\n"),
+      createdAt: "2026-04-30T00:00:00.000Z"
+    }
+  }
+
+  const prompt = buildFinalAnswerPrompt("残業申請はいつ必要ですか？", [hit])
+
+  assert.match(prompt, /残業申請は事前申請が必要です。/)
+  assert.doesNotMatch(prompt, /有給休暇の取得申請/)
+  assert.doesNotMatch(prompt, /経費精算は申請から30日以内/)
+})
