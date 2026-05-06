@@ -757,6 +757,10 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "性能テストを実行" }))
 
     expect(await screen.findByText("bench-1")).toBeInTheDocument()
+    expect(screen.getAllByText("完了後に集計").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByRole("button", { name: "レポートMarkdownをダウンロード" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "サマリJSONをダウンロード" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Raw results JSONLをダウンロード" })).toBeInTheDocument()
     const startCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/benchmark-runs") && (init as RequestInit | undefined)?.method === "POST")
     expect(JSON.parse(String((startCall?.[1] as RequestInit).body))).toMatchObject({
       suiteId: "standard-agent-v1",
@@ -765,9 +769,9 @@ describe("App chat and upload flow", () => {
       modelId: "anthropic.claude-3-haiku-20240307-v1:0"
     })
 
-    await userEvent.click(screen.getByTitle("レポートをダウンロード"))
-    await userEvent.click(screen.getByTitle("サマリJSONをダウンロード"))
-    await userEvent.click(screen.getByTitle("Raw resultsをダウンロード"))
+    await userEvent.click(screen.getByRole("button", { name: "レポートMarkdownをダウンロード" }))
+    await userEvent.click(screen.getByRole("button", { name: "サマリJSONをダウンロード" }))
+    await userEvent.click(screen.getByRole("button", { name: "Raw results JSONLをダウンロード" }))
     expect(click).toHaveBeenCalled()
     expect(requestBodies(fetchMock, "/benchmark-runs/bench-1/download")).toEqual([
       { artifact: "report" },
