@@ -22,6 +22,17 @@
   - `.agents/skills/blocker-recovery/SKILL.md`
   - `.agents/skills/completion-status-reporter/SKILL.md`
 
+## Worktree Task PR Flow
+- 対象: 「worktree を作成して作業」「task md を作成してから作業」「git commit + PR create to main」「PR 作成は GitHubApps / GitHub Apps を利用」など、worktree から main 向け PR まで進める依頼。
+- 必読: `skills/worktree-task-pr-flow/SKILL.md`
+- 作業ブランチは原則 `origin/main` から専用 worktree として作成し、元 worktree の未追跡・未コミット変更を混ぜない。
+- 作業前に `tasks/todo/`, `tasks/do/`, `tasks/done/` を確認または作成し、着手する task md を `tasks/do/` に置く。
+- task md には作業前に「受け入れ条件」（ユーザー表記が「受け例条件」の場合も同義として扱う）を明記する。
+- task md は状態に応じて `tasks/todo/`、`tasks/do/`、`tasks/done/` の間で移動し、完了時は `状態: done` または同等の状態記載へ更新する。
+- PR 作成後、task md の受け入れ条件を満たしたか確認し、日本語の PR コメントとして結果を記載する。未検証・未達の項目を満たした扱いにしない。
+- PR コメントまで完了してから task md を `tasks/done/` に移動し、その完了更新も同じ PR branch に commit / push する。
+- PR 作成は GitHub Apps を優先する。利用できない場合は blocked として理由を報告し、代替手段を使う場合も `skills/japanese-pr-title-comment/SKILL.md` に従う。
+
 ## Git Commit Message
 - 対象: Git commit message、コミットメッセージ、コミットコメント、git comment、`git commit`。ユーザーの「コメント」も Git 文脈では commit message と扱う。
 - 必読: `skills/japanese-git-commit-gitmoji/SKILL.md`
