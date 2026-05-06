@@ -21,12 +21,7 @@ export function unique(items: string[]): string[] {
 }
 
 export function buildSearchClues(question: string, generatedClues: string[]): string[] {
-  const anchors = question.includes("分類")
-    ? [
-        "ソフトウェア要求の分類",
-        "ソフトウェア製品要求 ソフトウェアプロジェクト要求 機能要求 非機能要求 技術制約 サービス品質制約"
-      ]
-    : []
+  const anchors = question.includes("分類") ? ragRuntimePolicy.profile.answerPolicy.searchClueAnchors : []
   return unique([question, ...anchors, ...generatedClues]).slice(0, ragRuntimePolicy.limits.searchClueLimit)
 }
 

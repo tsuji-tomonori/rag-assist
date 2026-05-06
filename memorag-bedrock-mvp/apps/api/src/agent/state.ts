@@ -201,9 +201,37 @@ const SearchBudgetSchema = z.object({
 export const RequiredFactSchema = z.object({
   id: z.string(),
   description: z.string(),
+  factType: z.enum(["amount", "date", "duration", "count", "status", "version", "condition", "procedure", "person", "scope", "classification", "unknown"]).optional(),
+  subject: z.string().optional(),
+  scope: z.string().optional(),
+  expectedValueType: z.string().optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  plannerSource: z.enum(["deterministic", "sufficient_context", "legacy_fallback"]).optional(),
   priority: z.number().int().min(1),
   status: z.enum(["missing", "partially_supported", "supported", "conflicting"]).default("missing"),
   supportingChunkKeys: z.array(z.string()).default(() => [])
+})
+
+export const ClaimSchema = z.object({
+  subject: z.string(),
+  predicate: z.string(),
+  value: z.string(),
+  valueType: z.enum(["date", "money", "duration", "count", "status", "version", "condition"]),
+  unit: z.string().optional(),
+  scope: z.string().optional(),
+  effectiveDate: z.string().optional(),
+  sourceChunkId: z.string(),
+  sentence: z.string().optional()
+})
+
+export const ConflictCandidateSchema = z.object({
+  factId: z.string().optional(),
+  subject: z.string(),
+  predicate: z.string(),
+  scope: z.string().optional(),
+  values: z.array(z.string()).default(() => []),
+  chunkKeys: z.array(z.string()).default(() => []),
+  reason: z.string()
 })
 
 export const SearchActionSchema = z.discriminatedUnion("type", [
@@ -247,6 +275,10 @@ export const ActionObservationSchema = z.object({
       lexicalCount: z.number().int().min(0),
       semanticCount: z.number().int().min(0),
       fusedCount: z.number().int().min(0),
+      profileId: z.string().optional(),
+      profileVersion: z.string().optional(),
+      topGap: z.number().optional(),
+      lexicalSemanticOverlap: z.number().optional(),
       sourceCounts: z.object({
         lexical: z.number().int().min(0),
         semantic: z.number().int().min(0),
@@ -265,14 +297,18 @@ export const RetrievalEvaluationSchema = z.object({
   riskSignals: z
     .array(
       z.object({
-        type: z.enum(["value_mismatch", "date_mismatch", "explicit_conflict_cue", "temporal_status_cue"]),
+        type: z.enum(["value_mismatch", "date_mismatch", "explicit_conflict_cue", "temporal_status_cue", "typed_claim_conflict"]),
         factId: z.string().optional(),
         chunkKeys: z.array(z.string()).default(() => []),
         values: z.array(z.string()).default(() => []),
+        claims: z.array(ClaimSchema).optional(),
+        conflictCandidate: ConflictCandidateSchema.optional(),
         reason: z.string().default("")
       })
     )
     .optional(),
+  claims: z.array(ClaimSchema).default(() => []),
+  conflictCandidates: z.array(ConflictCandidateSchema).default(() => []),
   llmJudge: z
     .object({
       label: z.enum(["CONFLICT", "NO_CONFLICT", "UNCLEAR"]),
@@ -443,6 +479,8 @@ export const AgentStateSchema = z.object({
     missingFactIds: [],
     conflictingFactIds: [],
     supportedFactIds: [],
+    claims: [],
+    conflictCandidates: [],
     nextAction: {
       type: "evidence_search",
       query: "",
@@ -522,6 +560,8 @@ export type ActionObservation = z.infer<typeof ActionObservationSchema>
 export type RetrievalEvaluation = z.infer<typeof RetrievalEvaluationSchema>
 export type RetrievalRiskSignal = NonNullable<RetrievalEvaluation["riskSignals"]>[number]
 export type RetrievalLlmJudge = NonNullable<RetrievalEvaluation["llmJudge"]>
+export type Claim = z.infer<typeof ClaimSchema>
+export type ConflictCandidate = z.infer<typeof ConflictCandidateSchema>
 export type ReferenceTarget = z.infer<typeof ReferenceTargetSchema>
 export type ReferenceResolution = z.infer<typeof ReferenceResolutionSchema>
 export type TemporalContext = z.infer<typeof TemporalContextSchema>

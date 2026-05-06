@@ -2,6 +2,7 @@ import type { QaAgentState, QaAgentUpdate } from "../state.js"
 import { NO_ANSWER } from "../state.js"
 import { hasUnavailableComputedFact, hasUsableComputedFact } from "../computation.js"
 import { hasUsableRequirementsClassificationEvidence, isRequirementsClassificationQuestion } from "../../rag/prompts.js"
+import { selectAnswerPolicyForMetadata } from "../../rag/profiles.js"
 import { ragRuntimePolicy } from "../runtime-policy.js"
 
 type SelectedChunk = QaAgentState["selectedChunks"][number]
@@ -37,7 +38,7 @@ export async function answerabilityGate(state: QaAgentState): Promise<QaAgentUpd
     return refusal("low_similarity_score", Math.max(0, topScore), buildLowScoreAssessments(chunks, state.minScore))
   }
 
-  const coverage = estimateRequiredFactCoverage(state.question, chunks)
+  const coverage = estimateRequiredFactCoverage(state, chunks)
   if (!coverage.ok) {
     return refusal("missing_required_fact", coverage.confidence, coverage.sentenceAssessments)
   }
@@ -86,12 +87,17 @@ function refusal(
   }
 }
 
-function estimateRequiredFactCoverage(question: string, chunks: SelectedChunk[]): { ok: boolean; confidence: number; sentenceAssessments: SentenceAssessment[] } {
+function estimateRequiredFactCoverage(state: QaAgentState, chunks: SelectedChunk[]): { ok: boolean; confidence: number; sentenceAssessments: SentenceAssessment[] } {
+  const question = state.question
   const joined = chunks.map((chunk) => chunk.metadata.text ?? "").join("\n")
-  const requiredChecks = requiredFactChecks(question)
+  const requiredChecks = requiredFactChecks(question, state.searchPlan.requiredFacts)
   const sentenceAssessments = buildSentenceAssessments(chunks, requiredChecks)
+  const answerPolicy = selectAnswerPolicyForMetadata(
+    chunks.map((chunk) => chunk.metadata as unknown as Record<string, unknown>),
+    ragRuntimePolicy.profile.answerPolicy
+  )
 
-  if (isRequirementsClassificationQuestion(question) && !hasUsableRequirementsClassificationEvidence(joined)) {
+  if (isRequirementsClassificationQuestion(question) && answerPolicy.id === "swebok-requirements-policy" && !hasUsableRequirementsClassificationEvidence(joined)) {
     return { ok: false, confidence: ragRuntimePolicy.confidence.missingClassificationFact, sentenceAssessments }
   }
 
@@ -106,12 +112,17 @@ function estimateRequiredFactCoverage(question: string, chunks: SelectedChunk[])
   return { ok: true, confidence: ragRuntimePolicy.confidence.supportedFactCoverage, sentenceAssessments }
 }
 
-function requiredFactChecks(question: string): FactCheck[] {
+function requiredFactChecks(question: string, requiredFacts: QaAgentState["searchPlan"]["requiredFacts"] = []): FactCheck[] {
   const checks: FactCheck[] = []
-  if (isRequirementsClassificationQuestion(question)) checks.push("requirements_classification")
+  if (isRequirementsClassificationQuestion(question) && ragRuntimePolicy.profile.answerPolicy.id === "swebok-requirements-policy") checks.push("requirements_classification")
   if (/金額|費用|いくら|円|上限/.test(question)) checks.push("amount")
   if (/いつ|期限|日数|何日|何営業日|開始日|終了日/.test(question)) checks.push("date")
   if (/方法|手順|申請|やり方|フロー/.test(question)) checks.push("procedure")
+  for (const fact of requiredFacts) {
+    if (fact.factType === "amount") checks.push("amount")
+    if (fact.factType === "date" || fact.factType === "duration" || fact.factType === "count") checks.push("date")
+    if (fact.factType === "procedure") checks.push("procedure")
+  }
   return checks.length > 0 ? checks : ["retrieval_relevance"]
 }
 

@@ -1,5 +1,6 @@
 import { parseJsonObject } from "../../rag/json.js"
 import { hasInvalidRequirementsClassificationAnswer, isRequirementsClassificationQuestion } from "../../rag/prompts.js"
+import { selectAnswerPolicyForMetadata } from "../../rag/profiles.js"
 import { ragRuntimePolicy } from "../runtime-policy.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 import { NO_ANSWER } from "../state.js"
@@ -24,7 +25,11 @@ export async function validateCitations(state: QaAgentState): Promise<QaAgentUpd
     return citationFailure(state.rawAnswer)
   }
 
-  if (isRequirementsClassificationQuestion(state.question) && hasInvalidRequirementsClassificationAnswer(answerJson.answer)) {
+  const answerPolicy = selectAnswerPolicyForMetadata(
+    state.selectedChunks.map((chunk) => chunk.metadata as unknown as Record<string, unknown>),
+    ragRuntimePolicy.profile.answerPolicy
+  )
+  if (isRequirementsClassificationQuestion(state.question) && hasInvalidRequirementsClassificationAnswer(answerJson.answer, answerPolicy)) {
     return citationFailure(state.rawAnswer)
   }
 

@@ -123,6 +123,9 @@ test("service search applies ACL and metadata filters across lexical and vector 
   assert.equal(groupASearch.results.length, 1)
   assert.equal(groupASearch.results[0]?.fileName, "group-a-policy.md")
   assert.deepEqual(groupASearch.results[0]?.sources.sort(), ["lexical", "semantic"])
+  assert.equal(groupASearch.diagnostics.profileVersion, "1")
+  assert.equal(typeof groupASearch.diagnostics.lexicalSemanticOverlap, "number")
+  assert.ok(groupASearch.diagnostics.scoreDistribution.top !== null)
   assert.deepEqual(groupASearch.results[0]?.metadata, {
     tenantId: "tenant-a",
     source: "notion",

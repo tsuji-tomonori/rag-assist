@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
+import { assertComparableProfiles, defaultEvaluatorProfile, profileKey } from "../evaluator-profile.js"
 import { cjkBigramTokenizer, compareTokenizers, createQualityReview, detectRegressions, whitespaceTokenizer } from "./quality.js"
 
 test("detectRegressions flags metric drops and latency increases", () => {
@@ -41,4 +42,16 @@ test("compareTokenizers reports token counts and overlap for tokenizer candidate
   assert.ok((result.tokenizers.find((row) => row.name === "cjk_bigram")?.tokenCount ?? 0) > 2)
   assert.equal(result.overlap[0]?.left, "whitespace")
   assert.equal(result.overlap[0]?.right, "cjk_bigram")
+})
+
+test("evaluator profile comparison rejects mismatched baselines by default", () => {
+  assert.equal(profileKey(defaultEvaluatorProfile), "default@1")
+  assert.throws(
+    () => assertComparableProfiles(defaultEvaluatorProfile, { evaluatorProfile: { id: "custom", version: "1" } }, false),
+    /differs from current/
+  )
+  assert.match(
+    assertComparableProfiles(defaultEvaluatorProfile, { evaluatorProfile: { id: "custom", version: "1" } }, true) ?? "",
+    /reference comparison/
+  )
 })

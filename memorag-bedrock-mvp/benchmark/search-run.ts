@@ -1,5 +1,5 @@
 import { createReadStream, createWriteStream, existsSync } from "node:fs"
-import { mkdir, writeFile } from "node:fs/promises"
+import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
@@ -12,6 +12,7 @@ import {
   type RelevanceItem,
   type RetrievalMetrics
 } from "./metrics/retrieval.js"
+import { assertComparableProfiles, profileKey, resolveEvaluatorProfile, type EvaluatorProfile } from "./evaluator-profile.js"
 
 type SearchDatasetRow = {
   id: string
@@ -34,6 +35,7 @@ type SearchDatasetRow = {
   relevant?: RelevanceItem[]
   forbidden?: RelevanceItem[]
   caseType?: string
+  evaluatorProfile?: string
 }
 
 type SearchResult = {
@@ -67,6 +69,7 @@ type SearchResultRow = {
   noAccessLeakCount: number
   failureReasons: string[]
   diagnostics: SearchResponse["diagnostics"]
+  evaluatorProfile: string
   results: SearchResult[]
 }
 
@@ -101,6 +104,8 @@ type SearchSummary = {
   outputPath: string
   reportPath: string
   summaryPath: string
+  evaluatorProfile: EvaluatorProfile
+  baselineComparisonNote?: string
   apiBaseUrl: string
   generatedAt: string
   total: number
@@ -122,6 +127,16 @@ const datasetPath = resolveExistingPath(process.env.DATASET ?? "datasets/search.
 const outputPath = resolveOutputPath(process.env.OUTPUT ?? ".local-data/search-benchmark-results.jsonl")
 const reportPath = resolveOutputPath(process.env.REPORT ?? outputPath.replace(/\.jsonl$/i, ".report.md"))
 const summaryPath = resolveOutputPath(process.env.SUMMARY ?? outputPath.replace(/\.jsonl$/i, ".summary.json"))
+const baselineSummaryPath = process.env.BASELINE_SUMMARY
+  ? resolveExistingPath(process.env.BASELINE_SUMMARY, [process.cwd(), benchmarkDir, repoRoot])
+  : undefined
+const baselineSummary = baselineSummaryPath
+  ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { evaluatorProfile?: SearchSummary["evaluatorProfile"] })
+  : undefined
+const suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
+const baselineComparisonNote = baselineSummary
+  ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
+  : undefined
 
 await mkdir(path.dirname(outputPath), { recursive: true })
 await mkdir(path.dirname(reportPath), { recursive: true })
@@ -134,10 +149,11 @@ const rows: SearchResultRow[] = []
 for await (const line of rl) {
   if (!line.trim()) continue
   const row = JSON.parse(line) as SearchDatasetRow
+  const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
   const startedAt = Date.now()
   const { status, body } = await runSearch(row)
   const latencyMs = body.diagnostics?.latencyMs ?? Date.now() - startedAt
-  const result = evaluateRow(row, status, latencyMs, body)
+  const result = evaluateRow(row, status, latencyMs, body, rowEvaluatorProfile)
   out.write(`${JSON.stringify(result)}\n`)
   rows.push(result)
 }
@@ -176,7 +192,7 @@ async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body:
   }
 }
 
-function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, body: SearchResponse): SearchResultRow {
+function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, body: SearchResponse, evaluatorProfile: EvaluatorProfile): SearchResultRow {
   const results = body.results ?? []
   const relevant = row.relevant ?? []
   const metrics = evaluateRetrieval(results, relevant)
@@ -203,6 +219,7 @@ function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, b
     noAccessLeakCount,
     failureReasons,
     diagnostics: body.diagnostics,
+    evaluatorProfile: profileKey(evaluatorProfile),
     results
   }
 }
@@ -240,6 +257,8 @@ function summarize(rows: SearchResultRow[]): SearchSummary {
     outputPath,
     reportPath,
     summaryPath,
+    evaluatorProfile: suiteEvaluatorProfile,
+    baselineComparisonNote,
     apiBaseUrl,
     generatedAt: new Date().toISOString(),
     total: rows.length,
@@ -280,6 +299,8 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
 - Dataset: ${summary.datasetPath}
 - Raw results: ${summary.outputPath}
 - Summary JSON: ${summary.summaryPath}
+- Evaluator profile: ${profileKey(summary.evaluatorProfile)}
+- Baseline comparison: ${summary.baselineComparisonNote ?? "same_profile_or_not_configured"}
 
 ## Summary
 

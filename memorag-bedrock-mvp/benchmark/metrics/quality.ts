@@ -135,7 +135,7 @@ export function cjkBigramTokenizer(value: string): string[] {
   return [...tokens]
 }
 
-const defaultThresholds: RegressionThresholds = {
+export const defaultThresholds: RegressionThresholds = {
   answerableAccuracy: 0.03,
   abstentionRecall: 0.03,
   retrievalRecallAt20: 0.03,

@@ -114,8 +114,23 @@ function summarizeDiagnostics(diagnostics: SearchResponse["diagnostics"][], retr
     lexicalCount: diagnostics.reduce((sum, item) => sum + item.lexicalCount, 0),
     semanticCount: diagnostics.reduce((sum, item) => sum + item.semanticCount, 0),
     fusedCount: diagnostics.reduce((sum, item) => sum + item.fusedCount, 0),
+    profileId: diagnostics[0]?.profileId,
+    profileVersion: diagnostics[0]?.profileVersion,
+    topGap: minNumber(diagnostics.map((item) => item.topGap)),
+    lexicalSemanticOverlap: averageNumber(diagnostics.map((item) => item.lexicalSemanticOverlap)),
     sourceCounts
   }
+}
+
+function minNumber(values: Array<number | null | undefined>): number | undefined {
+  const numbers = values.filter((value): value is number => typeof value === "number")
+  return numbers.length > 0 ? Math.min(...numbers) : undefined
+}
+
+function averageNumber(values: Array<number | null | undefined>): number | undefined {
+  const numbers = values.filter((value): value is number => typeof value === "number")
+  if (numbers.length === 0) return undefined
+  return Number((numbers.reduce((sum, value) => sum + value, 0) / numbers.length).toFixed(4))
 }
 
 function sourceList(chunk: RetrievedVector): string[] {

@@ -1,4 +1,4 @@
-import type { Chunk, StructuredBlock } from "../types.js"
+import type { Chunk, DocumentStatistics, StructuredBlock } from "../types.js"
 
 export function chunkText(text: string, chunkSize = 1200, overlap = 200): Chunk[] {
   const normalized = text.replace(/\r\n/g, "\n").replace(/\f+/g, "\n\f\n").trim()
@@ -69,6 +69,23 @@ export function chunkStructuredBlocks(blocks: StructuredBlock[], chunkSize = 120
 
   linkChunks(chunks)
   return chunks
+}
+
+export function summarizeDocumentStatistics(chunks: Chunk[]): DocumentStatistics {
+  const sectionIds = new Set(chunks.map((chunk) => chunk.parentSectionId ?? chunk.sectionPath?.join(">")).filter(Boolean))
+  const kindCount = (kind: NonNullable<Chunk["chunkKind"]>) => chunks.filter((chunk) => chunk.chunkKind === kind).length
+  const headingCount = chunks.filter((chunk) => chunk.heading || (chunk.sectionPath?.length ?? 0) > 0).length
+  const totalChars = chunks.reduce((sum, chunk) => sum + chunk.text.length, 0)
+  return {
+    chunkCount: chunks.length,
+    sectionCount: sectionIds.size,
+    tableCount: kindCount("table"),
+    listCount: kindCount("list"),
+    codeCount: kindCount("code"),
+    figureCount: kindCount("figure"),
+    averageChunkChars: chunks.length === 0 ? 0 : Math.round(totalChars / chunks.length),
+    headingDensity: chunks.length === 0 ? 0 : Number((headingCount / chunks.length).toFixed(4))
+  }
 }
 
 function appendSegmentChunks(input: {

@@ -5,6 +5,7 @@ import readline from "node:readline"
 import { fileURLToPath } from "node:url"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
+import { assertComparableProfiles, profileKey, resolveEvaluatorProfile, type EvaluatorProfile } from "./evaluator-profile.js"
 
 type DatasetRow = {
   id?: string
@@ -34,6 +35,7 @@ type DatasetRow = {
   minScore?: number
   strictGrounded?: boolean
   useMemory?: boolean
+  evaluatorProfile?: string
 }
 
 type FollowUpExpectation = {
@@ -167,6 +169,7 @@ type BenchmarkResultRow = {
   latencyMs: number
   taskLatencyMs: number
   evaluation: RowEvaluation
+  evaluatorProfile: string
   result: BenchmarkResponse
 }
 
@@ -175,6 +178,8 @@ type Summary = {
   outputPath: string
   reportPath: string
   summaryPath: string
+  evaluatorProfile: EvaluatorProfile
+  baselineComparisonNote?: string
   apiBaseUrl: string
   corpusSeed: SeededDocument[]
   generatedAt: string
@@ -260,7 +265,11 @@ const baselineSummaryPath = process.env.BASELINE_SUMMARY
   ? resolveExistingPath(process.env.BASELINE_SUMMARY, [process.cwd(), benchmarkDir, repoRoot])
   : undefined
 const baselineSummary = baselineSummaryPath
-  ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { metrics?: Summary["metrics"] })
+  ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { metrics?: Summary["metrics"]; evaluatorProfile?: Summary["evaluatorProfile"] })
+  : undefined
+const suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
+const baselineComparisonNote = baselineSummary
+  ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
   : undefined
 const benchmarkCorpusDir = benchmarkCorpusDirFromEnv(process.env)
 const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
@@ -288,6 +297,7 @@ const results: BenchmarkResultRow[] = []
 for await (const line of rl) {
   if (!line.trim()) continue
   const row = JSON.parse(line) as DatasetRow
+  const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
   const firstStartedAt = Date.now()
   const { status, body } = await runQuery(row)
   const initialLatencyMs = Date.now() - firstStartedAt
@@ -308,6 +318,7 @@ for await (const line of rl) {
     latencyMs: initialLatencyMs,
     taskLatencyMs: initialLatencyMs + (followUp?.latencyMs ?? 0),
     evaluation: evaluateRow(row, body, status, followUp),
+    evaluatorProfile: profileKey(rowEvaluatorProfile),
     result: body
   }
   out.write(`${JSON.stringify(result)}\n`)
@@ -687,6 +698,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
     outputPath,
     reportPath,
     summaryPath,
+    evaluatorProfile: suiteEvaluatorProfile,
+    baselineComparisonNote,
     apiBaseUrl,
     corpusSeed,
     generatedAt: new Date().toISOString(),
@@ -832,6 +845,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
     qualityReview: createQualityReview({
       current: summary.metrics,
       baseline: baselineSummary?.metrics,
+      thresholds: suiteEvaluatorProfile.thresholds,
       failures: summary.failures
     })
   }
@@ -932,6 +946,8 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
 - Dataset: ${summary.datasetPath}
 - Raw results: ${summary.outputPath}
 - Summary JSON: ${summary.summaryPath}
+- Evaluator profile: ${profileKey(summary.evaluatorProfile)}
+- Baseline comparison: ${summary.baselineComparisonNote ?? "same_profile_or_not_configured"}
 
 ## Summary
 
@@ -1218,7 +1234,7 @@ function inferActualResponseType(body: BenchmarkResponse): RowEvaluation["actual
 
 function isNoAnswerText(value: string): boolean {
   const normalized = normalize(value)
-  return normalized.includes("資料からは回答できません") || normalized.includes("回答できません") || normalized.includes("noanswer")
+  return suiteEvaluatorProfile.answerMatching.noAnswerTexts.some((text) => normalized.includes(normalize(text)))
 }
 
 function hasExpectedFileHit(citations: Citation[], expectedFiles: string[]): boolean {

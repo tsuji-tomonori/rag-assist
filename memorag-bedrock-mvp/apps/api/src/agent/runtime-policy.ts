@@ -1,5 +1,6 @@
 import { config } from "../config.js"
 import type { GenerateOptions } from "../adapters/text-model.js"
+import { answerPolicyById, type RAGProfile, type RetrievalProfile } from "../rag/profiles.js"
 
 type LlmTask =
   | "clue"
@@ -28,23 +29,86 @@ const sourceScoreMax = clampNumber(config.ragRetrievalMaxSourceScore, 0, 1)
 const crossQueryRrfBoostCap = clampNumber(config.ragCrossQueryRrfBoostCap, 0, 1)
 const searchRagMaxTopK = Math.max(1, config.ragSearchRagMaxTopK)
 const searchRagMaxSourceTopK = Math.max(1, config.ragSearchRagMaxSourceTopK)
+const retrievalProfile: RetrievalProfile = {
+  id: config.ragAdaptiveRetrieval ? "adaptive-retrieval" : config.ragProfileId,
+  version: "1",
+  strategy: config.ragAdaptiveRetrieval ? "adaptive" : "fixed",
+  topK: {
+    default: clampInt(config.ragDefaultTopK, 1, maxTopK),
+    max: maxTopK,
+    searchBenchmarkDefault: clampInt(config.ragDefaultSearchBenchmarkTopK, 1, Math.min(maxTopK, searchRagMaxTopK))
+  },
+  candidate: {
+    lexicalTopK: clampInt(config.ragSearchLexicalTopK, 0, searchRagMaxSourceTopK),
+    semanticTopK: clampInt(config.ragSearchSemanticTopK, 0, searchRagMaxSourceTopK),
+    searchCandidateMinTopK: clampInt(config.ragSearchCandidateMinTopK, 1, searchRagMaxTopK),
+    searchRagMaxTopK,
+    searchRagMaxSourceTopK,
+    semanticPrefetchMultiplier: Math.max(1, config.ragSearchSemanticPrefetchMultiplier)
+  },
+  fusion: {
+    rrfK: Math.max(1, config.ragSearchRrfK),
+    weights: [Math.max(0, config.ragSearchLexicalWeight), Math.max(0, config.ragSearchSemanticWeight)]
+  },
+  bm25: {
+    k1: Math.max(Number.EPSILON, config.ragSearchBm25K1),
+    b: clampNumber(config.ragSearchBm25B, 0, 1)
+  },
+  scoring: {
+    minScore: clampNumber(config.minRetrievalScore, -1, 1),
+    combinedMaxScore: clampNumber(config.ragRetrievalCombinedMaxScore, 0, 1),
+    lexicalBaseScore: clampNumber(config.ragRetrievalLexicalBaseScore, 0, sourceScoreMax),
+    lexicalLogDivisor: Math.max(Number.EPSILON, config.ragRetrievalLexicalLogDivisor),
+    sourceScoreMax,
+    exactQueryBonus: 0.2,
+    fileNameBonus: 0.15,
+    tokenCoverageBonus: 0.03,
+    recencyBonus: 0.02
+  },
+  adaptive: {
+    enabled: config.ragAdaptiveRetrieval,
+    minTopK: clampInt(config.ragDefaultSearchBenchmarkTopK, 1, searchRagMaxTopK),
+    topGapExpandBelow: clampNumber(config.ragAdaptiveTopGapExpandBelow, 0, 1),
+    overlapBoostAtLeast: clampNumber(config.ragAdaptiveOverlapBoostAtLeast, 0, 1),
+    scoreFloorQuantile: clampNumber(config.ragAdaptiveScoreFloorQuantile, 0, 1)
+  }
+}
+const answerPolicy = answerPolicyById(config.ragDomainPolicyId)
+const ragProfile: RAGProfile = {
+  id: config.ragProfileId,
+  version: "1",
+  retrieval: retrievalProfile,
+  answerPolicy
+}
 
 export const ragRuntimePolicy = {
+  profile: ragProfile,
   retrieval: {
-    defaultTopK: clampInt(config.ragDefaultTopK, 1, maxTopK),
+    profileId: retrievalProfile.id,
+    profileVersion: retrievalProfile.version,
+    strategy: retrievalProfile.strategy,
+    defaultTopK: retrievalProfile.topK.default,
     maxTopK,
     defaultMemoryTopK: clampInt(config.ragDefaultMemoryTopK, 1, maxMemoryTopK),
     maxMemoryTopK,
-    defaultMinScore: clampNumber(config.minRetrievalScore, -1, 1),
+    defaultMinScore: retrievalProfile.scoring.minScore,
     defaultMaxIterations: clampInt(config.ragDefaultMaxIterations, 1, maxIterations),
     maxIterations,
     searchCandidateMinTopK: clampInt(config.ragSearchCandidateMinTopK, 1, searchRagMaxTopK),
-    defaultSearchBenchmarkTopK: clampInt(config.ragDefaultSearchBenchmarkTopK, 1, Math.min(maxTopK, searchRagMaxTopK)),
-    lexicalTopK: clampInt(config.ragSearchLexicalTopK, 0, searchRagMaxSourceTopK),
-    semanticTopK: clampInt(config.ragSearchSemanticTopK, 0, searchRagMaxSourceTopK),
+    defaultSearchBenchmarkTopK: retrievalProfile.topK.searchBenchmarkDefault,
+    lexicalTopK: retrievalProfile.candidate.lexicalTopK,
+    semanticTopK: retrievalProfile.candidate.semanticTopK,
     searchRagMaxTopK,
     searchRagMaxSourceTopK,
-    searchSemanticPrefetchMultiplier: Math.max(1, config.ragSearchSemanticPrefetchMultiplier),
+    searchSemanticPrefetchMultiplier: retrievalProfile.candidate.semanticPrefetchMultiplier,
+    rrfK: retrievalProfile.fusion.rrfK,
+    rrfWeights: retrievalProfile.fusion.weights,
+    bm25K1: retrievalProfile.bm25.k1,
+    bm25B: retrievalProfile.bm25.b,
+    adaptiveEnabled: retrievalProfile.adaptive.enabled,
+    adaptiveTopGapExpandBelow: retrievalProfile.adaptive.topGapExpandBelow,
+    adaptiveOverlapBoostAtLeast: retrievalProfile.adaptive.overlapBoostAtLeast,
+    adaptiveScoreFloorQuantile: retrievalProfile.adaptive.scoreFloorQuantile,
     memoryPrefetchMultiplier: Math.max(1, config.ragMemoryPrefetchMultiplier),
     memoryPrefetchMaxTopK: Math.max(1, config.ragMemoryPrefetchMaxTopK),
     minEvidenceCountMin,
@@ -54,9 +118,9 @@ export const ragRuntimePolicy = {
     searchBudgetCalls: Math.max(0, config.ragSearchBudgetCalls),
     contextWindowDecay: clampNumber(config.ragContextWindowDecay, 0, 1),
     contextWindowMaxScore: clampNumber(config.ragContextWindowMaxScore, 0, 1),
-    combinedMaxScore: clampNumber(config.ragRetrievalCombinedMaxScore, 0, 1),
-    lexicalBaseScore: clampNumber(config.ragRetrievalLexicalBaseScore, 0, sourceScoreMax),
-    lexicalLogDivisor: Math.max(Number.EPSILON, config.ragRetrievalLexicalLogDivisor),
+    combinedMaxScore: retrievalProfile.scoring.combinedMaxScore,
+    lexicalBaseScore: retrievalProfile.scoring.lexicalBaseScore,
+    lexicalLogDivisor: retrievalProfile.scoring.lexicalLogDivisor,
     sourceScoreMax,
     crossQueryRrfBoostCap,
     crossQueryRrfBoostMultiplier: Math.max(0, config.ragCrossQueryRrfBoostMultiplier)

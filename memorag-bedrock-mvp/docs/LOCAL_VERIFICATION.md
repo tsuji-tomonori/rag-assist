@@ -69,6 +69,20 @@ npm run start -w @memorag-mvp/benchmark
 
 `task benchmark:sample` は上記の標準 corpus 指定を含む。`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1` では `handbook.md` を `/documents` に seed し、active chunk が作成されてから評価 query を実行する。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]` と `docType: "benchmark-corpus"` で隔離し、通常利用者の文書一覧にも表示しない。同じ corpus を複数 suite で共有する場合は `BENCHMARK_CORPUS_SUITE_ID` で seed 判定用の corpus identity を固定する。
 
+adaptive retrieval を opt-in で確認する場合:
+
+```bash
+RAG_ADAPTIVE_RETRIEVAL=true \
+API_BASE_URL=http://localhost:8787 \
+DATASET=benchmark/datasets/search.sample.jsonl \
+OUTPUT=.local-data/search-adaptive-results.jsonl \
+SUMMARY=.local-data/search-adaptive-summary.json \
+REPORT=.local-data/search-adaptive-report.md \
+npm run start:search -w @memorag-mvp/benchmark
+```
+
+`diagnostics.profileId`、`diagnostics.scoreDistribution`、`diagnostics.lexicalSemanticOverlap`、`diagnostics.adaptiveDecision` を確認し、default profile と比較する。default 化は、回答可能 20 件以上、不回答 10 件以上を含む benchmark suite で answerable accuracy、refusal precision、unsupported rate、citation hit rate、retrieval recall、p95 latency の劣化が許容閾値内に収まる場合だけ検討する。
+
 追加データセット:
 
 ```bash
@@ -91,6 +105,17 @@ REPORT=.local-data/benchmark-clarification-report.md \
 npm run start -w @memorag-mvp/benchmark
 ```
 
+evaluator profile を明示する場合:
+
+```bash
+EVALUATOR_PROFILE=default@1 \
+BASELINE_SUMMARY=.local-data/benchmark-summary.json \
+ALLOW_EVALUATOR_PROFILE_MISMATCH=0 \
+npm run start -w @memorag-mvp/benchmark
+```
+
+summary JSON と Markdown report には `evaluatorProfile` が出力される。baseline と current の profile id / version が異なる場合は既定で失敗し、参考比較として扱う場合だけ `ALLOW_EVALUATOR_PROFILE_MISMATCH=1` を指定する。
+
 ## 確認観点
 
 - `/health` が `ok: true` を返す。
@@ -101,5 +126,8 @@ npm run start -w @memorag-mvp/benchmark
 - `/openapi.json` がJSONとして取得できる。
 - benchmark CLIが `.local-data/benchmark-results.jsonl`、`.local-data/benchmark-summary.json`、`.local-data/benchmark-report.md` を作成する。
 - benchmark summary が回答可能問題、不回答問題、fact slot 付き問題、確認質問問題の評価に必要な集計項目を出力する。
+- benchmark summary / report に `evaluatorProfile` が出力され、profile mismatch が成功扱いされない。
+- `/chat` の debug trace に `ragProfile`、structured required facts、typed claim conflict summary が出力され、raw prompt や ACL metadata が通常応答に露出しない。
+- SWEBOK 要求分類の補正は `domainPolicy: "swebok-requirements"` などの document metadata または内部 policy 選択時だけ有効で、default policy では汎用分類質問へ固定語彙を注入しない。
 - benchmark Markdown report の `Dataset Coverage` で dataset 内の期待値分母を確認でき、`Metrics` の `status=not_applicable` と評価済みの `0.0%` / `0` を区別できる。
 - 回答可能な通常QAだけの dataset では、clarification / refusal / post-clarification / fact slot / page / LLM judge label-rate 系が `not_applicable` になり、通常QAの主要指標は `answerable_accuracy`、`over_clarification_rate`、retrieval / citation / latency 系として読める。
