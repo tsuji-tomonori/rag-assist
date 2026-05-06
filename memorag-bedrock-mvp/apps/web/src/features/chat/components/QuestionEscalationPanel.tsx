@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
+import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import type { Message } from "../types.js"
 import { defaultQuestionBody, defaultQuestionTitle } from "../utils/questionDefaults.js"
@@ -98,7 +99,8 @@ export function QuestionEscalationPanel({
       <div className="question-form-actions">
         <span>通常 1 営業日以内に回答予定</span>
         <button type="submit" disabled={loading || !title.trim() || !body.trim()}>
-          担当者へ送信
+          {loading && <LoadingSpinner className="button-spinner" />}
+          <span>担当者へ送信</span>
         </button>
       </div>
     </form>

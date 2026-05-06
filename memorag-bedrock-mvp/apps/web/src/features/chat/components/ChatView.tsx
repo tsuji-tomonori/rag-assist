@@ -94,6 +94,7 @@ export function ChatView({
           canWriteDocuments={canWriteDocuments}
           conversationKey={conversationKey}
           canAsk={canAsk}
+          loading={loading}
           onSetQuestion={onSetQuestion}
           onSetFile={onSetFile}
           onSetSubmitShortcut={onSetSubmitShortcut}

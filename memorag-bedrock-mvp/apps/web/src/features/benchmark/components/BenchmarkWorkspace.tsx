@@ -1,5 +1,6 @@
 import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
+import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
 import { formatDateTime, formatMetricLatency, formatPercent, formatShortDate, runStatusLabel } from "../../../shared/utils/format.js"
 
@@ -58,6 +59,7 @@ export function BenchmarkWorkspace({
           <span>{runs.length} 件の実行履歴</span>
         </div>
       </header>
+      {loading && <LoadingStatus label="性能テストAPIを処理中" />}
 
       <div className="benchmark-kpi-grid">
         <BenchmarkMetricCard
@@ -121,11 +123,11 @@ export function BenchmarkWorkspace({
           </label>
           <div className="benchmark-actions">
             <button type="button" onClick={onStart} disabled={loading || !canRun}>
-              <Icon name="send" />
+              {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" />}
               <span>性能テストを実行</span>
             </button>
             <button type="button" onClick={onRefresh} disabled={loading}>
-              <Icon name="clock" />
+              {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="clock" />}
               <span>更新</span>
             </button>
           </div>
@@ -183,7 +185,7 @@ export function BenchmarkWorkspace({
                             </button>
                           ))}
                           <button className="benchmark-cancel-action" type="button" title="ジョブをキャンセル" aria-label="ジョブをキャンセル" disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>
-                            <Icon name="stop" />
+                            {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="stop" />}
                           </button>
                         </div>
                       </td>

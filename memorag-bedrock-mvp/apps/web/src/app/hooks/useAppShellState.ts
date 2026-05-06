@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from "react"
 import type { AuthSession } from "../../authClient.js"
 import type { AppRoutesProps } from "../AppRoutes.js"
 import type { RailNav } from "../components/RailNav.js"
@@ -23,10 +23,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const [modelId, setModelId] = useState(defaultModelId)
   const [embeddingModelId] = useState(defaultEmbeddingModelId)
   const [minScore] = useState(0.2)
-  const [loading, setLoading] = useState(false)
+  const [pendingApiCalls, setPendingApiCalls] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [debugMode, setDebugMode] = useState(false)
   const latestMessageRef = useRef<HTMLElement | null>(null)
+  const setLoading = useCallback((nextLoading: boolean) => {
+    setPendingApiCalls((current) => nextLoading ? current + 1 : Math.max(0, current - 1))
+  }, [])
+  const loading = pendingApiCalls > 0
 
   const {
     canCreateChat,
@@ -254,21 +258,25 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   useEffect(() => {
     if (!authSession || !currentUser) return
-    if (canReadDocuments) refreshDocuments().catch((err) => console.warn("Failed to load documents", err))
-    if (canReindexDocuments) refreshReindexMigrations().catch((err) => console.warn("Failed to load reindex migrations", err))
-    if (canReadDebugRuns) refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err))
+    const loaders: Promise<unknown>[] = []
+    if (canReadDocuments) loaders.push(refreshDocuments().catch((err) => console.warn("Failed to load documents", err)))
+    if (canReindexDocuments) loaders.push(refreshReindexMigrations().catch((err) => console.warn("Failed to load reindex migrations", err)))
+    if (canReadDebugRuns) loaders.push(refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err)))
     if (canReadBenchmarkRuns) {
-      refreshBenchmarkRuns().catch((err) => console.warn("Failed to load benchmark runs", err))
-      refreshBenchmarkSuites().catch((err) => console.warn("Failed to load benchmark suites", err))
+      loaders.push(refreshBenchmarkRuns().catch((err) => console.warn("Failed to load benchmark runs", err)))
+      loaders.push(refreshBenchmarkSuites().catch((err) => console.warn("Failed to load benchmark suites", err)))
     }
-    if (canReadUsers) refreshManagedUsers().catch((err) => console.warn("Failed to load managed users", err))
-    if (canOpenAdminSettings) refreshAccessRoles().catch((err) => console.warn("Failed to load access roles", err))
-    if (canReadAdminAuditLog) refreshAdminAuditLog().catch((err) => console.warn("Failed to load admin audit log", err))
-    if (canReadUsage) refreshUsageSummaries().catch((err) => console.warn("Failed to load usage summaries", err))
-    if (canReadCosts) refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err))
-    if (canReadAliases) refreshAliases().catch((err) => console.warn("Failed to load aliases", err))
-    if (canAnswerQuestions) refreshQuestions().catch((err) => console.warn("Failed to load questions", err))
-    if (canReadHistory) refreshHistory().catch((err) => console.warn("Failed to load conversation history", err))
+    if (canReadUsers) loaders.push(refreshManagedUsers().catch((err) => console.warn("Failed to load managed users", err)))
+    if (canOpenAdminSettings) loaders.push(refreshAccessRoles().catch((err) => console.warn("Failed to load access roles", err)))
+    if (canReadAdminAuditLog) loaders.push(refreshAdminAuditLog().catch((err) => console.warn("Failed to load admin audit log", err)))
+    if (canReadUsage) loaders.push(refreshUsageSummaries().catch((err) => console.warn("Failed to load usage summaries", err)))
+    if (canReadCosts) loaders.push(refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err)))
+    if (canReadAliases) loaders.push(refreshAliases().catch((err) => console.warn("Failed to load aliases", err)))
+    if (canAnswerQuestions) loaders.push(refreshQuestions().catch((err) => console.warn("Failed to load questions", err)))
+    if (canReadHistory) loaders.push(refreshHistory().catch((err) => console.warn("Failed to load conversation history", err)))
+    if (loaders.length === 0) return
+    setLoading(true)
+    Promise.all(loaders).finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authSession, currentUser])
 
@@ -425,7 +433,11 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onConcurrencyChange: setBenchmarkConcurrency,
       onStart: onStartBenchmark,
       onRefresh: () => {
-        void refreshBenchmarkRuns().catch((err) => setError(err instanceof Error ? err.message : String(err)))
+        setLoading(true)
+        setError(null)
+        void refreshBenchmarkRuns()
+          .catch((err) => setError(err instanceof Error ? err.message : String(err)))
+          .finally(() => setLoading(false))
       },
       onCancel: onCancelBenchmark,
       onBack: () => setActiveView("chat")
@@ -489,11 +501,19 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onAssignRoles: onAssignUserRoles,
       onSetUserStatus: onSetManagedUserStatus,
       onRefreshAdminData: async () => {
-        await Promise.all([
-          refreshAdminData(),
-          canReindexDocuments ? refreshReindexMigrations() : Promise.resolve(),
-          canReadAliases ? refreshAliases() : Promise.resolve()
-        ])
+        setLoading(true)
+        setError(null)
+        try {
+          await Promise.all([
+            refreshAdminData(),
+            canReindexDocuments ? refreshReindexMigrations() : Promise.resolve(),
+            canReadAliases ? refreshAliases() : Promise.resolve()
+          ])
+        } catch (err) {
+          setError(err instanceof Error ? err.message : String(err))
+        } finally {
+          setLoading(false)
+        }
       },
       onCreateAlias,
       onUpdateAlias,
@@ -521,6 +541,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   return {
     error,
+    loading,
     railProps,
     topBarProps,
     routeProps
