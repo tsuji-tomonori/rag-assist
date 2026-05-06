@@ -24,6 +24,7 @@
 
 ## Worktree Task PR Flow
 - 対象: 「worktree を作成して作業」「task md を作成してから作業」「git commit + PR create to main」「PR 作成は GitHubApps / GitHub Apps を利用」など、worktree から main 向け PR まで進める依頼。
+- 上記の依頼を agent が守るよう `skills` や `AGENTS.md` で設定されているか確認し、不足時に対応する依頼も同じ workflow の対象として扱う。
 - 必読: `skills/worktree-task-pr-flow/SKILL.md`
 - 作業ブランチは原則 `origin/main` から専用 worktree として作成し、元 worktree の未追跡・未コミット変更を混ぜない。
 - 作業前に `tasks/todo/`, `tasks/do/`, `tasks/done/` を確認または作成し、着手する task md を `tasks/do/` に置く。

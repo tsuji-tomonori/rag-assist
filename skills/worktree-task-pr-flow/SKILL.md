@@ -1,11 +1,12 @@
 ---
 name: worktree-task-pr-flow
-description: Use when repository work should be done in a dedicated git worktree and carried through task-file creation, acceptance criteria, commit, push, GitHub Apps pull request creation to main, PR acceptance comment, and tasks todo/do/done state updates.
+description: Use when repository work should be done in a dedicated git worktree and carried through task-file creation, acceptance criteria, commit, push, GitHub Apps pull request creation to main, PR acceptance comment, and tasks todo/do/done state updates, including requests to verify and fix whether agents are configured to follow that flow.
 ---
 
 # Worktree Task PR Flow
 
 Use this skill when the user asks to work via a worktree, create a task file before implementation, commit changes, and create a pull request to `main`.
+Also use it when the user asks to verify whether `AGENTS.md` or repository-local skills already make agents follow that worktree-to-main-PR flow, and to fix the configuration when it is missing or unclear.
 
 ## Required Workflow
 
@@ -13,6 +14,7 @@ Use this skill when the user asks to work via a worktree, create a task file bef
    - Identify deliverables, validations, and risks.
    - State a checklist and Done conditions before implementation.
    - Write acceptance criteria before touching the main deliverables.
+   - When the request is a policy/configuration check, inspect `AGENTS.md` and relevant skills first, then change only missing or unclear rules.
 2. Create a dedicated worktree.
    - Prefer `git worktree add -b codex/<short-task> .worktrees/<short-task> origin/main` unless the user specifies another base.
    - Keep unrelated changes in the original worktree out of scope.
