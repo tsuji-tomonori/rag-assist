@@ -19,7 +19,8 @@
     "Created PR #138",
     "Posted acceptance criteria confirmation comment",
     "Posted PR self-review comment",
-    "Moved task file to tasks/done"
+    "Moved task file to tasks/done",
+    "Rebased PR branch onto origin/main and resolved conflicts"
   ],
   "remaining_items": [],
   "blocked_items": [],
@@ -64,6 +65,39 @@
       "command": "task docs:check",
       "result": "not_run",
       "reason": "Taskfile has no docs:check task"
+    },
+    {
+      "command": "rg -n \"<<<<<<<|=======|>>>>>>>\" memorag-bedrock-mvp .codex tasks --glob '!reports/**'",
+      "result": "pass"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark",
+      "result": "pass_after_rebase"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api",
+      "result": "pass_after_rebase"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/benchmark",
+      "result": "pass_after_rebase"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/api -- src/contract/api-contract.test.ts src/search/hybrid-search.test.ts",
+      "result": "pass_after_rebase"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra",
+      "result": "pass_after_rebase"
+    },
+    {
+      "command": "npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/infra",
+      "result": "pass_after_rebase"
+    },
+    {
+      "command": "API_BASE_URL=http://localhost:18792 task benchmark:search:sample",
+      "result": "pass_after_rebase",
+      "note": "Local API used MOCK_BEDROCK=1 and LOCAL_AUTH_GROUPS=BENCHMARK_RUNNER"
     }
   ],
   "next_action": "none",
