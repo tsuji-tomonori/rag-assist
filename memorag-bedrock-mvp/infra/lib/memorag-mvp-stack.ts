@@ -587,7 +587,8 @@ export class MemoRagMvpStack extends Stack {
           COGNITO_USER_POOL_ID: { value: userPool.userPoolId },
           COGNITO_APP_CLIENT_ID: { value: userPoolClient.userPoolClientId },
           BENCHMARK_AUTH_SECRET_ID: { value: benchmarkRunnerAuthSecretId },
-          BENCHMARK_RUNNER_GROUP: { value: "BENCHMARK_RUNNER" }
+          BENCHMARK_RUNNER_GROUP: { value: "BENCHMARK_RUNNER" },
+          BENCHMARK_RUNS_TABLE_NAME: { value: benchmarkRunsTable.tableName }
         }
       },
       timeout: Duration.hours(2),
@@ -605,7 +606,13 @@ export class MemoRagMvpStack extends Stack {
         phases: {
           install: {
             "runtime-versions": { nodejs: 22 },
-            commands: ["set -euo pipefail", "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"", "npm ci"]
+            commands: [
+              "set -euo pipefail",
+              "LOG_URL=\"${CODEBUILD_BUILD_URL:-https://${AWS_DEFAULT_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${CODEBUILD_PROJECT_NAME}/build/${CODEBUILD_BUILD_ID}/log?region=${AWS_DEFAULT_REGION}}\"",
+              "aws dynamodb update-item --table-name \"$BENCHMARK_RUNS_TABLE_NAME\" --key \"{\\\"runId\\\":{\\\"S\\\":\\\"$RUN_ID\\\"}}\" --update-expression \"SET codeBuildBuildId = :buildId, codeBuildLogUrl = :logUrl\" --expression-attribute-values \"{\\\":buildId\\\":{\\\"S\\\":\\\"$CODEBUILD_BUILD_ID\\\"},\\\":logUrl\\\":{\\\"S\\\":\\\"$LOG_URL\\\"}}\" >/dev/null",
+              "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
+              "npm ci"
+            ]
           },
           pre_build: {
             commands: [
@@ -643,6 +650,7 @@ export class MemoRagMvpStack extends Stack {
       })
     })
     benchmarkBucket.grantReadWrite(benchmarkProject)
+    benchmarkRunsTable.grantWriteData(benchmarkProject)
     benchmarkRunnerAuthSecret.grantRead(benchmarkProject)
     benchmarkProject.addToRolePolicy(new iam.PolicyStatement({
       actions: ["cognito-idp:InitiateAuth"],

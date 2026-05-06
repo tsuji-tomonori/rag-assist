@@ -77,7 +77,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /benchmark-runs` benchmark run 履歴一覧
 - `GET /benchmark-runs/{runId}` benchmark run 詳細
 - `POST /benchmark-runs/{runId}/cancel` benchmark run キャンセル
-- `POST /benchmark-runs/{runId}/download` benchmark report / summary / results の download URL 作成
+- `POST /benchmark-runs/{runId}/download` benchmark report / summary / results / CodeBuild logs の download URL 作成
 - `GET/POST /admin/aliases`、`POST /admin/aliases/{aliasId}/review`、`POST /admin/aliases/publish` alias 管理 UI/API、review、versioned artifact publish
 - `GET/POST /admin/users`、`POST /admin/users/{userId}/roles|suspend|unsuspend`、`DELETE /admin/users/{userId}` 管理対象ユーザー台帳
 - `GET /admin/roles`、`GET /admin/audit-log`、`GET /admin/usage`、`GET /admin/costs` ロール、管理操作履歴、利用状況、概算コスト監査
@@ -169,7 +169,7 @@ curl -s http://localhost:8787/chat \
 
 ## ベンチマーク
 
-管理画面の「性能テスト」は `POST /benchmark-runs` で非同期 run を作成し、Step Functions が CodeBuild runner を起動します。run 状態と成果物キーは DynamoDB、dataset と `results.jsonl` / `summary.json` / `report.md` は benchmark 用 S3 bucket に保存します。管理画面は履歴表示、キャンセル、report / summary / raw results download URL 作成を担当します。
+管理画面の「性能テスト」は `POST /benchmark-runs` で非同期 run を作成し、Step Functions が CodeBuild runner を起動します。run 状態と成果物キー、CodeBuild log URL は DynamoDB、dataset と `results.jsonl` / `summary.json` / `report.md` は benchmark 用 S3 bucket に保存します。管理画面は履歴表示、キャンセル、成功 run の report / summary / raw results download URL 作成、失敗時を含む CodeBuild logs URL 作成を担当します。
 
 CodeBuild runner が本番 API を叩くための認証 token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から自動取得します。管理者が管理画面で token を入力する必要はありません。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡します。secret は `username` / `password`、または `idToken` / `token` を持てます。`username` / `password` 認証で token 解決に失敗した場合、CodeBuild runner は benchmark を継続せず失敗します。agent mode は `/benchmark/query`、search mode は `/benchmark/search` を呼びます。
 

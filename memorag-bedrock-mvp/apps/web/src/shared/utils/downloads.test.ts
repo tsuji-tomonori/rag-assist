@@ -20,7 +20,8 @@ describe("downloadBenchmarkArtifact", () => {
   it.each([
     ["report", "benchmark-report-bench_with_unsafe_chars.md"],
     ["summary", "benchmark-summary-bench_with_unsafe_chars.json"],
-    ["results", "benchmark-results-bench_with_unsafe_chars.jsonl"]
+    ["results", "benchmark-results-bench_with_unsafe_chars.jsonl"],
+    ["logs", "benchmark-logs-bench_with_unsafe_chars.log"]
   ] as const)("sets the %s artifact download filename", async (artifact, expectedFileName) => {
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
       expect(this.href).toBe("https://signed.example/artifact")

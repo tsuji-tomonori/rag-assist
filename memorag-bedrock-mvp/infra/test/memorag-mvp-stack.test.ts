@@ -210,7 +210,8 @@ test("implements the designed serverless resources", () => {
         Match.objectLike({ Name: "COGNITO_USER_POOL_ID" }),
         Match.objectLike({ Name: "COGNITO_APP_CLIENT_ID" }),
         Match.objectLike({ Name: "BENCHMARK_AUTH_SECRET_ID" }),
-        Match.objectLike({ Name: "BENCHMARK_RUNNER_GROUP", Value: "BENCHMARK_RUNNER" })
+        Match.objectLike({ Name: "BENCHMARK_RUNNER_GROUP", Value: "BENCHMARK_RUNNER" }),
+        Match.objectLike({ Name: "BENCHMARK_RUNS_TABLE_NAME" })
       ])
     }),
     TimeoutInMinutes: 120

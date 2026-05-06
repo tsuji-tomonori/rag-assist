@@ -1234,7 +1234,7 @@ app.openapi(
       params: z.object({ runId: z.string().min(1) }),
       body: {
         required: false,
-        content: { "application/json": { schema: z.object({ artifact: z.enum(["report", "summary", "results"]).optional() }) } }
+        content: { "application/json": { schema: z.object({ artifact: z.enum(["report", "summary", "results", "logs"]).optional() }) } }
       }
     },
     responses: {
@@ -1245,7 +1245,7 @@ app.openapi(
   async (c) => {
     requirePermission(c.get("user"), "benchmark:download")
     const { runId } = (c.req as any).valid("param") as { runId: string }
-    const body = ((c.req as any).valid("json") ?? {}) as { artifact?: "report" | "summary" | "results" }
+    const body = ((c.req as any).valid("json") ?? {}) as { artifact?: "report" | "summary" | "results" | "logs" }
     const download = await service.createBenchmarkArtifactDownloadUrl(runId, body.artifact ?? "report")
     if (!download) return c.json({ error: "Benchmark run not found" }, 404)
     return c.json(download, 200)

@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import App from "./App.js"
-import type { AliasAuditLogItem, AliasDefinition, ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
+import type { AliasAuditLogItem, AliasDefinition, BenchmarkRun, ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
@@ -192,8 +192,9 @@ function historyItem(id: string, title: string, text: string, updatedAt: string,
   }
 }
 
-function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHistoryItem[] = []) {
+function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHistoryItem[] = [], initialBenchmarkRuns: BenchmarkRun[] = []) {
   let storedHistory: ConversationHistoryItem[] = initialHistory
+  let benchmarkRuns: BenchmarkRun[] = initialBenchmarkRuns
   let managedUsers = [
     {
       userId: "local-dev",
@@ -322,9 +323,11 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     }
     if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
     if (requestUrl.endsWith("/benchmark-suites") && isGet(init)) return Promise.resolve(response({ suites: [{ suiteId: "standard-agent-v1", label: "Agent standard", mode: "agent", datasetS3Key: "datasets/agent/standard-v1.jsonl", preset: "standard", defaultConcurrency: 1 }] }))
-    if (requestUrl.endsWith("/benchmark-runs") && isGet(init)) return Promise.resolve(response({ benchmarkRuns: [] }))
+    if (requestUrl.endsWith("/benchmark-runs") && isGet(init)) return Promise.resolve(response({ benchmarkRuns }))
     if (requestUrl.endsWith("/benchmark-runs") && init?.method === "POST") {
-      return Promise.resolve(response({ runId: "bench-1", status: "queued", suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild", datasetS3Key: "datasets/agent/standard-v1.jsonl", createdBy: "user-1", createdAt: "2026-05-02T00:00:00.000Z", updatedAt: "2026-05-02T00:00:00.000Z", reportS3Key: "runs/bench-1/report.md", summaryS3Key: "runs/bench-1/summary.json", resultsS3Key: "runs/bench-1/results.jsonl" }))
+      const created = { runId: "bench-1", status: "queued", suiteId: "standard-agent-v1", mode: "agent", runner: "codebuild", datasetS3Key: "datasets/agent/standard-v1.jsonl", createdBy: "user-1", createdAt: "2026-05-02T00:00:00.000Z", updatedAt: "2026-05-02T00:00:00.000Z", reportS3Key: "runs/bench-1/report.md", summaryS3Key: "runs/bench-1/summary.json", resultsS3Key: "runs/bench-1/results.jsonl" } as BenchmarkRun
+      benchmarkRuns = [created, ...benchmarkRuns]
+      return Promise.resolve(response(created))
     }
     if (requestUrl.endsWith("/benchmark-runs/bench-1/download") && init?.method === "POST") {
       const artifact = JSON.parse(String(init.body ?? "{}")).artifact ?? "report"
@@ -758,9 +761,10 @@ describe("App chat and upload flow", () => {
 
     expect(await screen.findByText("bench-1")).toBeInTheDocument()
     expect(screen.getAllByText("完了後に集計").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByRole("button", { name: "レポートMarkdownをダウンロード" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "サマリJSONをダウンロード" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Raw results JSONLをダウンロード" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "レポートMarkdownをダウンロード" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "サマリJSONをダウンロード" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Raw results JSONLをダウンロード" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "CodeBuildログをダウンロード" })).toBeDisabled()
     const startCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/benchmark-runs") && (init as RequestInit | undefined)?.method === "POST")
     expect(JSON.parse(String((startCall?.[1] as RequestInit).body))).toMatchObject({
       suiteId: "standard-agent-v1",
@@ -769,14 +773,68 @@ describe("App chat and upload flow", () => {
       modelId: "anthropic.claude-3-haiku-20240307-v1:0"
     })
 
-    await userEvent.click(screen.getByRole("button", { name: "レポートMarkdownをダウンロード" }))
-    await userEvent.click(screen.getByRole("button", { name: "サマリJSONをダウンロード" }))
-    await userEvent.click(screen.getByRole("button", { name: "Raw results JSONLをダウンロード" }))
+    expect(click).not.toHaveBeenCalled()
+  })
+
+  it("disables failed benchmark artifacts but keeps CodeBuild log download available", async () => {
+    const runs: BenchmarkRun[] = [
+      {
+        runId: "bench-success",
+        status: "succeeded",
+        suiteId: "standard-agent-v1",
+        mode: "agent",
+        runner: "codebuild",
+        datasetS3Key: "datasets/agent/standard-v1.jsonl",
+        createdBy: "user-1",
+        createdAt: "2026-05-02T00:00:00.000Z",
+        updatedAt: "2026-05-02T00:10:00.000Z",
+        startedAt: "2026-05-02T00:01:00.000Z",
+        completedAt: "2026-05-02T00:10:00.000Z",
+        reportS3Key: "runs/bench-success/report.md",
+        summaryS3Key: "runs/bench-success/summary.json",
+        resultsS3Key: "runs/bench-success/results.jsonl",
+        codeBuildLogUrl: "https://console.aws.amazon.com/codebuild/logs/success",
+        metrics: { total: 2, succeeded: 2, failedHttp: 0, p50LatencyMs: 1200, p95LatencyMs: 1800, answerableAccuracy: 0.8, retrievalRecallAt20: 0.9, clarificationNeedF1: 0.75 }
+      },
+      {
+        runId: "bench-failed",
+        status: "failed",
+        suiteId: "standard-agent-v1",
+        mode: "agent",
+        runner: "codebuild",
+        datasetS3Key: "datasets/agent/standard-v1.jsonl",
+        createdBy: "user-1",
+        createdAt: "2026-05-02T00:00:00.000Z",
+        updatedAt: "2026-05-02T00:03:00.000Z",
+        reportS3Key: "runs/bench-failed/report.md",
+        summaryS3Key: "runs/bench-failed/summary.json",
+        resultsS3Key: "runs/bench-failed/results.jsonl",
+        codeBuildLogUrl: "https://console.aws.amazon.com/codebuild/logs/failed",
+        error: "Build failed"
+      }
+    ]
+    const fetchMock = mockAppFetch(["SYSTEM_ADMIN"], [], runs)
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
+    await renderAuthenticatedApp()
+
+    await userEvent.click(await screen.findByTitle("性能テスト"))
+    expect(screen.queryByText("結果サマリー")).not.toBeInTheDocument()
+    expect(screen.queryByText("必要なAPI/データ")).not.toBeInTheDocument()
+    expect(await screen.findByText("bench-success")).toBeInTheDocument()
+    expect(screen.getByText("p95 1.80 秒")).toBeInTheDocument()
+
+    const maybeFailedRow = screen.getByText("bench-failed").closest("tr")
+    assertElement(maybeFailedRow ?? undefined)
+    const failedRow = maybeFailedRow as HTMLElement
+    expect(within(failedRow).getByRole("button", { name: "レポートMarkdownをダウンロード" })).toBeDisabled()
+    expect(within(failedRow).getByRole("button", { name: "サマリJSONをダウンロード" })).toBeDisabled()
+    expect(within(failedRow).getByRole("button", { name: "Raw results JSONLをダウンロード" })).toBeDisabled()
+    expect(within(failedRow).getByRole("button", { name: "CodeBuildログをダウンロード" })).toBeEnabled()
+
+    await userEvent.click(within(failedRow).getByRole("button", { name: "CodeBuildログをダウンロード" }))
     expect(click).toHaveBeenCalled()
-    expect(requestBodies(fetchMock, "/benchmark-runs/bench-1/download")).toEqual([
-      { artifact: "report" },
-      { artifact: "summary" },
-      { artifact: "results" }
+    expect(requestBodies(fetchMock, "/benchmark-runs/bench-failed/download")).toEqual([
+      { artifact: "logs" }
     ])
   })
 

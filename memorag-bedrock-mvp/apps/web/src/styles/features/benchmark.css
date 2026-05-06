@@ -4,7 +4,7 @@
   min-height: 0;
   height: 100%;
   display: grid;
-  grid-template-rows: auto auto auto auto;
+  grid-template-rows: auto auto minmax(360px, 1fr);
   gap: 14px;
   overflow: auto;
   padding: 30px 20px;
@@ -190,7 +190,8 @@
 .benchmark-history-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  height: 360px;
+  height: min(620px, calc(100vh - 260px));
+  min-height: 420px;
   padding: 18px;
 }
 
@@ -202,7 +203,7 @@
 
 .benchmark-table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 1040px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -228,6 +229,26 @@
 .benchmark-table code {
   font-size: 12px;
   overflow-wrap: anywhere;
+}
+
+.benchmark-run-summary,
+.benchmark-time-stack {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.benchmark-run-summary strong {
+  color: #203250;
+  font-size: 13px;
+}
+
+.benchmark-run-summary span,
+.benchmark-run-summary small,
+.benchmark-time-stack span {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .run-status {
@@ -282,6 +303,35 @@
   min-width: 34px;
   width: 34px;
   padding: 0;
+}
+
+.benchmark-run-error {
+  max-width: 520px;
+  margin: 8px 0 0;
+  color: #b32626;
+  font-size: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.benchmark-metric-chips {
+  display: flex;
+  max-width: 340px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.benchmark-metric-chips span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: #24415f;
+  background: #edf4ff;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 .metric-unavailable {
