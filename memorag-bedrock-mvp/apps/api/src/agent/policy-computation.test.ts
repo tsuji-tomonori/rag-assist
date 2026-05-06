@@ -177,6 +177,56 @@ test("policy extraction requires comparator and consequence provenance", () => {
   )
 })
 
+test("policy extraction requires condition span and effect enum consistency", () => {
+  const mixedConditionQuote = "1万円以上の経費精算では承認が必要で、5万円未満では領収書の添付は不要です。"
+  assert.equal(
+    policyExtractionToComputedFacts(
+      extraction({
+        questionAmountText: "30000円",
+        questionAmountValue: 30000,
+        quote: mixedConditionQuote,
+        conditionText: mixedConditionQuote,
+        comparator: "lt",
+        comparatorText: "未満",
+        thresholdText: "1万円",
+        thresholdValue: 10000,
+        effect: "not_required",
+        effectText: "不要"
+      }),
+      [{
+        ...chunk,
+        metadata: {
+          ...chunk.metadata,
+          text: mixedConditionQuote
+        }
+      }],
+      "30000円の経費精算では領収書いる?"
+    ).length,
+    0
+  )
+
+  const mixedEffectQuote = "1万円以上では領収書が必要で、1万円未満では不要です。"
+  assert.equal(
+    policyExtractionToComputedFacts(
+      extraction({
+        quote: mixedEffectQuote,
+        conditionText: "1万円以上",
+        effect: "required",
+        effectText: "不要"
+      }),
+      [{
+        ...chunk,
+        metadata: {
+          ...chunk.metadata,
+          text: mixedEffectQuote
+        }
+      }],
+      question
+    ).length,
+    0
+  )
+})
+
 test("policy extraction resolves duplicate chunk ids by quote-bearing chunk", () => {
   const first: RetrievedVector = {
     ...chunk,
@@ -212,14 +262,18 @@ test("policy extraction prompt keeps natural language extraction separate from d
   assert.match(prompt, /sourceChunkId には <chunk id="..."> の id 属性値だけを入れる/)
   assert.match(prompt, /questionTarget\.amountText は質問中に実在する金額表記/)
   assert.match(prompt, /condition\.thresholdText は quote 中に実在する閾値金額表記/)
+  assert.match(prompt, /condition\.conditionText は quote 中に実在する条件表現/)
+  assert.match(prompt, /thresholdText と comparatorText を同じ条件として含める/)
   assert.match(prompt, /condition\.comparatorText は quote 中に実在する比較表現/)
   assert.match(prompt, /comparator enum と直接対応する最小表現/)
   assert.match(prompt, /consequence\.targetText と consequence\.effectText は quote 中に実在する表現/)
+  assert.match(prompt, /consequence\.effectText は effect enum と直接対応する最小表現/)
 })
 
 function extraction(overrides: {
   questionAmountText?: string
   quote?: string
+  conditionText?: string
   comparator?: "gte" | "gt" | "lte" | "lt" | "eq"
   comparatorText?: string
   effect?: "required" | "not_required" | "allowed" | "not_allowed" | "eligible" | "not_eligible" | "unknown"
@@ -254,6 +308,7 @@ function extraction(overrides: {
           leftQuantity: "経費精算の金額",
           comparator: overrides.comparator ?? "gte",
           comparatorText: overrides.comparatorText ?? comparatorText(overrides.comparator ?? "gte"),
+          conditionText: overrides.conditionText ?? `${overrides.thresholdText ?? "1万円"}${overrides.comparatorText ?? comparatorText(overrides.comparator ?? "gte")}`,
           thresholdText: overrides.thresholdText ?? "1万円",
           thresholdValue: overrides.thresholdValue ?? 10000,
           currency: "JPY"

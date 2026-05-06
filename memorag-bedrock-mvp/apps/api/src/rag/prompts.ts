@@ -196,9 +196,12 @@ export function buildPolicyComputationExtractionPrompt(question: string, chunks:
 - sourceChunkId には <chunk id="..."> の id 属性値だけを入れる。chunkId 属性値ではない。
 - questionTarget.amountText は質問中に実在する金額表記をそのまま抜き出す。
 - condition.thresholdText は quote 中に実在する閾値金額表記をそのまま抜き出す。
+- condition.conditionText は quote 中に実在する条件表現をそのまま抜き出す。
+- condition.conditionText は thresholdText と comparatorText を同じ条件として含める。例: "1万円以上"。
 - condition.comparatorText は quote 中に実在する比較表現をそのまま抜き出す。
 - condition.comparatorText は「以上」「超」「以下」「未満」「等しい」など、comparator enum と直接対応する最小表現にする。
 - consequence.targetText と consequence.effectText は quote 中に実在する表現をそのまま抜き出す。
+- consequence.effectText は effect enum と直接対応する最小表現にする。
 - quote に含まれない条件・効果・対象を補完しない。
 - 質問と同じ要件を扱っている条件だけ matchesQuestion=true にする。
 - 複数条件がある場合は candidates にすべて出す。
@@ -225,6 +228,7 @@ JSON schema:
       "condition": {
         "subject": "経費精算",
         "leftQuantity": "経費精算の金額",
+        "conditionText": "1万円以上",
         "comparator": "gte",
         "comparatorText": "以上",
         "thresholdText": "1万円",

@@ -27,6 +27,7 @@ export const PolicyComputationExtractionSchema = z.object({
         condition: z.object({
           subject: z.string(),
           leftQuantity: z.string(),
+          conditionText: z.string(),
           comparator: z.enum(["gte", "gt", "lte", "lt", "eq"]),
           comparatorText: z.string(),
           thresholdText: z.string().optional(),
@@ -73,11 +74,17 @@ export function policyExtractionToComputedFacts(
 
     const thresholdText = candidate.condition.thresholdText
     if (!thresholdText || !quoteExistsInText(thresholdText, candidate.quote)) return []
+    const conditionText = candidate.condition.conditionText
+    if (!quoteExistsInText(conditionText, candidate.quote)) return []
+    if (!quoteExistsInText(thresholdText, conditionText)) return []
     const comparatorText = candidate.condition.comparatorText
     if (!comparatorText || !quoteExistsInText(comparatorText, candidate.quote)) return []
+    if (!quoteExistsInText(comparatorText, conditionText)) return []
+    if (!conditionHasAmountComparatorPair(conditionText, thresholdText, comparatorText)) return []
     if (operatorFromComparatorText(comparatorText) !== candidate.condition.comparator) return []
     if (!quoteExistsInText(candidate.consequence.targetText, candidate.quote)) return []
     if (!quoteExistsInText(candidate.consequence.effectText, candidate.quote)) return []
+    if (effectFromEffectText(candidate.consequence.effectText) !== candidate.consequence.effect) return []
     const thresholdAmount = normalizeJpyAmount(thresholdText, candidate.condition.thresholdValue)
     if (thresholdAmount === undefined || candidate.condition.currency !== "JPY") return []
 
@@ -159,6 +166,26 @@ function operatorFromComparatorText(text: string): ThresholdFact["operator"] | u
     [/^(?:等しい|と等しい|同額)$/, "eq"]
   ]
   return mapping.find(([pattern]) => pattern.test(normalized))?.[1]
+}
+
+function effectFromEffectText(text: string): ConcreteEffect | undefined {
+  const normalized = text.normalize("NFKC").trim()
+  const mapping: Array<[RegExp, ConcreteEffect]> = [
+    [/^(?:必要|必須|要)$/, "required"],
+    [/^(?:不要|免除)$/, "not_required"],
+    [/^(?:可能|可|できる|認められる)$/, "allowed"],
+    [/^(?:不可|禁止|できない|認められない)$/, "not_allowed"],
+    [/^(?:対象|該当)$/, "eligible"],
+    [/^(?:対象外|非該当)$/, "not_eligible"]
+  ]
+  return mapping.find(([pattern]) => pattern.test(normalized))?.[1]
+}
+
+function conditionHasAmountComparatorPair(conditionText: string, amountText: string, comparatorText: string): boolean {
+  const normalized = conditionText.normalize("NFKC").replace(/\s+/g, "")
+  const amount = amountText.normalize("NFKC").replace(/\s+/g, "")
+  const comparator = comparatorText.normalize("NFKC").replace(/\s+/g, "")
+  return normalized.includes(`${amount}${comparator}`)
 }
 
 function compare(amount: number, operator: ThresholdFact["operator"], threshold: number): boolean {

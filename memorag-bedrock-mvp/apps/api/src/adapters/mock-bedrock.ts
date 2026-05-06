@@ -310,10 +310,10 @@ function mockPolicyComputationExtraction(prompt: string): Record<string, unknown
     const text = unescapeXml(match[2] ?? "")
     const items: Array<Record<string, unknown>> = []
     if (text.includes("1万円以上") && text.includes("領収書") && text.includes("必要")) {
-      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円以上", "必要", "領収書"), "gte", "以上", "1万円", "required", "領収書", "必要", "領収書の添付が必要"))
+      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円以上", "必要", "領収書"), "1万円以上", "gte", "以上", "1万円", "required", "領収書", "必要", "領収書の添付が必要"))
     }
     if (text.includes("1万円未満") && text.includes("領収書") && text.includes("不要")) {
-      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円未満", "不要", "領収書"), "lt", "未満", "1万円", "not_required", "領収書", "不要", "領収書の添付は不要"))
+      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円未満", "不要", "領収書"), "1万円未満", "lt", "未満", "1万円", "not_required", "領収書", "不要", "領収書の添付は不要"))
     }
     return items
   })
@@ -336,6 +336,7 @@ function mockPolicyComputationExtraction(prompt: string): Record<string, unknown
 function policyCandidate(
   sourceChunkId: string,
   quote: string,
+  conditionText: string,
   comparator: string,
   comparatorText: string,
   thresholdText: string,
@@ -350,6 +351,7 @@ function policyCandidate(
     condition: {
       subject: "経費精算",
       leftQuantity: "経費精算の金額",
+      conditionText,
       comparator,
       comparatorText,
       thresholdText,
