@@ -6,6 +6,7 @@
   "scripts": {
     "start": "tsx run.ts",
     "start:search": "tsx search-run.ts",
+    "prepare:allganize-ja": "tsx allganize-ja.ts",
     "test": "tsx --test *.test.ts metrics/**/*.test.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"

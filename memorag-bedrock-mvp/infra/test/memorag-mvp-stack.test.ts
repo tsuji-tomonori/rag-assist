@@ -383,6 +383,7 @@ test("fails the benchmark CodeBuild runner when auth token resolution fails", ()
   assert.ok(buildSpec.phases.pre_build.commands.includes("export BENCHMARK_SUITE_ID=\"$SUITE_ID\""))
   assert.ok(buildSpec.phases.pre_build.commands.includes("if [ \"$SUITE_ID\" = \"standard-agent-v1\" ] || [ \"$SUITE_ID\" = \"smoke-agent-v1\" ] || [ \"$SUITE_ID\" = \"clarification-smoke-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; export BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1; fi"))
   assert.ok(buildSpec.phases.post_build.commands.includes("node infra/scripts/update-benchmark-run-metrics.mjs"))
+  assert.ok(buildSpec.phases.pre_build.commands.includes("if [ \"$SUITE_ID\" = \"allganize-rag-evaluation-ja-v1\" ]; then export ALLGANIZE_RAG_DATASET_OUTPUT=\"$DATASET\"; export ALLGANIZE_RAG_CORPUS_DIR=./benchmark/.runner-allganize-corpus; export BENCHMARK_CORPUS_DIR=\"$ALLGANIZE_RAG_CORPUS_DIR\"; npm run prepare:allganize-ja -w @memorag-mvp/benchmark; else aws s3 cp \"$DATASET_S3_URI\" \"$DATASET\"; fi"))
   assert.equal(
     buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""),
     false

@@ -145,3 +145,32 @@ test("seedBenchmarkCorpus uploads markdown files with benchmark metadata", async
   assert.equal((upload?.body as { metadata?: { source?: string } }).metadata?.source, "benchmark-runner")
   assert.equal(typeof (upload?.body as { metadata?: { benchmarkIngestSignature?: string } }).metadata?.benchmarkIngestSignature, "string")
 })
+
+test("seedBenchmarkCorpus uploads PDF files as base64 content", async () => {
+  const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
+  await writeFile(path.join(corpusDir, "source.pdf"), Buffer.from("%PDF-1.4 sample"))
+  const requests: Array<{ body?: unknown }> = []
+  const fetchImpl = async (_url: string | URL | Request, init?: RequestInit) => {
+    requests.push({ body: init?.body ? JSON.parse(String(init.body)) : undefined })
+    if (init?.method === "GET") {
+      return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    return new Response(JSON.stringify({ fileName: "source.pdf", lifecycleStatus: "active", chunkCount: 1 }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+
+  await seedBenchmarkCorpus({
+    apiBaseUrl: "http://localhost:8787",
+    corpusDir,
+    suiteId: "allganize-rag-evaluation-ja-v1",
+    skipMemory: true,
+    fetchImpl
+  })
+
+  const upload = requests.at(-1)?.body as { text?: string; contentBase64?: string; mimeType?: string } | undefined
+  assert.equal(upload?.text, undefined)
+  assert.equal(upload?.contentBase64, Buffer.from("%PDF-1.4 sample").toString("base64"))
+  assert.equal(upload?.mimeType, "application/pdf")
+})

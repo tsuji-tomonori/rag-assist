@@ -618,13 +618,13 @@ export class MemoRagMvpStack extends Stack {
             commands: [
               "set -euo pipefail",
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
-              "aws s3 cp \"$DATASET_S3_URI\" ./benchmark/.runner-dataset.jsonl",
               "export OUTPUT=./benchmark/.runner-results.jsonl",
               "export SUMMARY=./benchmark/.runner-summary.json",
               "export REPORT=./benchmark/.runner-report.md",
               "export DATASET=./benchmark/.runner-dataset.jsonl",
               "export BENCHMARK_SUITE_ID=\"$SUITE_ID\"",
               "if [ \"$SUITE_ID\" = \"standard-agent-v1\" ] || [ \"$SUITE_ID\" = \"smoke-agent-v1\" ] || [ \"$SUITE_ID\" = \"clarification-smoke-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; export BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1; fi",
+              "if [ \"$SUITE_ID\" = \"allganize-rag-evaluation-ja-v1\" ]; then export ALLGANIZE_RAG_DATASET_OUTPUT=\"$DATASET\"; export ALLGANIZE_RAG_CORPUS_DIR=./benchmark/.runner-allganize-corpus; export BENCHMARK_CORPUS_DIR=\"$ALLGANIZE_RAG_CORPUS_DIR\"; npm run prepare:allganize-ja -w @memorag-mvp/benchmark; else aws s3 cp \"$DATASET_S3_URI\" \"$DATASET\"; fi",
               "API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\"",
               "export API_AUTH_TOKEN"
             ]

@@ -18,6 +18,7 @@ type DatasetRow = {
   question: string
   expected?: string
   expectedAnswer?: string
+  referenceAnswer?: string
   expectedContains?: string | string[]
   expectedRegex?: string | string[]
   expectedResponseType?: "answer" | "refusal" | "clarification"
@@ -42,6 +43,7 @@ type DatasetRow = {
   strictGrounded?: boolean
   useMemory?: boolean
   evaluatorProfile?: string
+  metadata?: Record<string, unknown>
 }
 
 type FollowUpExpectation = {
@@ -158,6 +160,7 @@ type BenchmarkResultRow = {
   question: string
   expected?: string
   expectedAnswer?: string
+  referenceAnswer?: string
   expectedContains?: string | string[]
   expectedRegex?: string | string[]
   answerable?: boolean
@@ -177,6 +180,7 @@ type BenchmarkResultRow = {
   taskLatencyMs: number
   evaluation: RowEvaluation
   evaluatorProfile: string
+  metadata?: Record<string, unknown>
   result: BenchmarkResponse
 }
 
@@ -316,6 +320,7 @@ for await (const line of rl) {
     question: row.question,
     expected: row.expected,
     expectedAnswer: row.expectedAnswer,
+    referenceAnswer: row.referenceAnswer,
     expectedContains: row.expectedContains,
     expectedRegex: row.expectedRegex,
     answerable: row.answerable,
@@ -328,6 +333,7 @@ for await (const line of rl) {
     taskLatencyMs: initialLatencyMs + (followUp?.latencyMs ?? 0),
     evaluation: evaluateRow(row, body, status, followUp, rowEvaluatorProfile),
     evaluatorProfile: profileKey(rowEvaluatorProfile),
+    metadata: row.metadata,
     result: body
   }
   out.write(`${JSON.stringify(result)}\n`)

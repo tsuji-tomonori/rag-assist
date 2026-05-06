@@ -113,6 +113,34 @@ tasks:
     cmds:
       - npm run start -w @memorag-mvp/benchmark
 
+  benchmark:allganize:prepare:
+    desc: Convert allganize/RAG-Evaluation-Dataset-JA CSV files and download the source PDF corpus
+    env:
+      ALLGANIZE_RAG_DATASET_OUTPUT: '{{.ALLGANIZE_RAG_DATASET_OUTPUT | default ".local-data/allganize-rag-evaluation-ja/dataset.jsonl"}}'
+      ALLGANIZE_RAG_CORPUS_DIR: '{{.ALLGANIZE_RAG_CORPUS_DIR | default ".local-data/allganize-rag-evaluation-ja/corpus"}}'
+      ALLGANIZE_RAG_LIMIT: '{{.ALLGANIZE_RAG_LIMIT | default ""}}'
+      ALLGANIZE_RAG_DOMAIN: '{{.ALLGANIZE_RAG_DOMAIN | default ""}}'
+    cmds:
+      - npm run prepare:allganize-ja -w @memorag-mvp/benchmark
+
+  benchmark:allganize:ja:
+    desc: Run allganize/RAG-Evaluation-Dataset-JA as an agent benchmark
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: '{{.ALLGANIZE_RAG_DATASET_OUTPUT | default ".local-data/allganize-rag-evaluation-ja/dataset.jsonl"}}'
+      OUTPUT: '{{.OUTPUT | default ".local-data/allganize-rag-evaluation-ja/results.jsonl"}}'
+      SUMMARY: '{{.SUMMARY | default ".local-data/allganize-rag-evaluation-ja/summary.json"}}'
+      REPORT: '{{.REPORT | default ".local-data/allganize-rag-evaluation-ja/report.md"}}'
+      BENCHMARK_SUITE_ID: 'allganize-rag-evaluation-ja-v1'
+      BENCHMARK_CORPUS_DIR: '{{.ALLGANIZE_RAG_CORPUS_DIR | default ".local-data/allganize-rag-evaluation-ja/corpus"}}'
+      ALLGANIZE_RAG_DATASET_OUTPUT: '{{.ALLGANIZE_RAG_DATASET_OUTPUT | default ".local-data/allganize-rag-evaluation-ja/dataset.jsonl"}}'
+      ALLGANIZE_RAG_CORPUS_DIR: '{{.ALLGANIZE_RAG_CORPUS_DIR | default ".local-data/allganize-rag-evaluation-ja/corpus"}}'
+      ALLGANIZE_RAG_LIMIT: '{{.ALLGANIZE_RAG_LIMIT | default ""}}'
+      ALLGANIZE_RAG_DOMAIN: '{{.ALLGANIZE_RAG_DOMAIN | default ""}}'
+    cmds:
+      - npm run prepare:allganize-ja -w @memorag-mvp/benchmark
+      - npm run start -w @memorag-mvp/benchmark
+
   benchmark:search:sample:
     desc: Run the sample Search API qrels benchmark and generate JSONL/JSON/Markdown reports
     env:

@@ -192,6 +192,15 @@ npm run start -w @memorag-mvp/benchmark
 
 `OUTPUT` には行ごとのAPI応答と評価結果、`SUMMARY` には集計JSON、`REPORT` にはMarkdownレポートが出力されます。
 
+Allganize の日本語公開データセット `allganize/RAG-Evaluation-Dataset-JA` は、CSV を既存 runner 用 JSONL へ変換し、`documents.csv` に含まれる source PDF を corpus として download してから実行します。既定では `target_answer` は `referenceAnswer` として results に残し、完全一致の正答判定には使いません。保守的な完全包含判定も行う場合は `ALLGANIZE_RAG_EXPECTED_MODE=strict-contains` を指定してください。
+
+```bash
+ALLGANIZE_RAG_LIMIT=10 \
+task benchmark:allganize:ja
+```
+
+管理画面の `allganize-rag-evaluation-ja-v1` suite は CodeBuild runner 内で同じ変換と download を行います。Hugging Face と各 source PDF URL へ到達できない環境では、dataset 準備段階で失敗します。
+
 JSONL datasetの1行は次の形式です。`expected` だけでも動きますが、`answerable`、`expectedContains`、`expectedFiles` を指定すると正答率、拒否率、citation/file hit rateまで測定できます。
 
 ```json
