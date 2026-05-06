@@ -1,6 +1,10 @@
 # Adaptive Retrieval Calibration
 
-保存先: `reports/tasks/20260506-1203-adaptive-retrieval-calibration.md`
+保存先: `tasks/todo/20260506-1203-adaptive-retrieval-calibration.md`
+
+## 状態
+
+- todo
 
 ## 背景
 
@@ -31,7 +35,7 @@
 
 ## 必要情報
 
-- 前提タスク: `reports/tasks/20260506-1203-rag-policy-profile.md`
+- 前提タスク: `tasks/todo/20260506-1203-rag-policy-profile.md`
 - 関連 benchmark:
   - `memorag-bedrock-mvp/benchmark/datasets/search.sample.jsonl`
   - `memorag-bedrock-mvp/benchmark/search-run.ts`

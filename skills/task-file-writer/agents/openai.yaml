@@ -1,4 +1,4 @@
 interface:
   display_name: "Task File Writer"
-  short_description: "Create structured repository task files"
-  default_prompt: "Use $task-file-writer to create one Markdown task file per implementation task."
+  short_description: "Create and move structured task files across todo, do, and done."
+  default_prompt: "Use $task-file-writer to create one Markdown task file per implementation task under tasks/todo, move it to tasks/do before implementation, and move it to tasks/done only after validations and completion notes are recorded."

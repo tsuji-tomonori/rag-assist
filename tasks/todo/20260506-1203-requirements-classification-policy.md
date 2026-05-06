@@ -1,6 +1,10 @@
 # 要求分類 Special Case の Policy 隔離
 
-保存先: `reports/tasks/20260506-1203-requirements-classification-policy.md`
+保存先: `tasks/todo/20260506-1203-requirements-classification-policy.md`
+
+## 状態
+
+- todo
 
 ## 背景
 
@@ -31,7 +35,7 @@
 
 ## 必要情報
 
-- 前提タスク: `reports/tasks/20260506-1203-rag-policy-profile.md`
+- 前提タスク: `tasks/todo/20260506-1203-rag-policy-profile.md`
 - 関連調査: `reports/working/20260506-1157-rag-rule-hardcode-review.md`
 - 既存の要求分類テストは、過去の誤答回避を守る回帰テストとして扱う。
 - 関連要求・設計:

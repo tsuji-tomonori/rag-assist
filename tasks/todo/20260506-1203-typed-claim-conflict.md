@@ -1,6 +1,10 @@
 # Typed Claim Extraction による Conflict 判定
 
-保存先: `reports/tasks/20260506-1203-typed-claim-conflict.md`
+保存先: `tasks/todo/20260506-1203-typed-claim-conflict.md`
+
+## 状態
+
+- todo
 
 ## 背景
 
@@ -30,8 +34,8 @@ evidence sentence から typed claim を抽出し、同一 subject / predicate /
 ## 必要情報
 
 - 前提タスク:
-  - `reports/tasks/20260506-1203-structured-fact-planning.md`
-  - `reports/tasks/20260506-1203-rag-policy-profile.md`
+  - `tasks/todo/20260506-1203-structured-fact-planning.md`
+  - `tasks/todo/20260506-1203-rag-policy-profile.md`
 - 関連既存レポート:
   - `reports/working/20260502-1517-value-mismatch-judge.md`
   - `reports/working/20260502-1457-retrieval-evaluator-review-fix.md`
