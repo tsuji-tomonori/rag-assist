@@ -70,3 +70,40 @@ test("maps search benchmark recall@20 into run metrics", async () => {
     }
   })
 })
+
+test("uses expression attribute names for DynamoDB reserved attributes", async () => {
+  const script = await importModule(pathToFileURL(scriptPath).href) as {
+    buildUpdateBenchmarkRunMetricsCommandInput(input: {
+      TableName: string
+      runId: string
+      metrics: Record<string, number>
+      updatedAt: string
+    }): unknown
+  }
+
+  assert.deepEqual(script.buildUpdateBenchmarkRunMetricsCommandInput({
+    TableName: "BenchmarkRuns",
+    runId: "bench_1",
+    metrics: { total: 1, errorRate: 0 },
+    updatedAt: "2026-05-06T12:00:00.000Z"
+  }), {
+    TableName: "BenchmarkRuns",
+    Key: { runId: { S: "bench_1" } },
+    ConditionExpression: "attribute_exists(#runId)",
+    UpdateExpression: "SET #metrics = :metrics, #updatedAt = :updatedAt",
+    ExpressionAttributeNames: {
+      "#runId": "runId",
+      "#metrics": "metrics",
+      "#updatedAt": "updatedAt"
+    },
+    ExpressionAttributeValues: {
+      ":metrics": {
+        M: {
+          total: { N: "1" },
+          errorRate: { N: "0" }
+        }
+      },
+      ":updatedAt": { S: "2026-05-06T12:00:00.000Z" }
+    }
+  })
+})
