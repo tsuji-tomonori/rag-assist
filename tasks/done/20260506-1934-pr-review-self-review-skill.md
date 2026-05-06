@@ -1,8 +1,8 @@
 # PRレビューセルフレビュー skill 追加
 
-保存先: `tasks/do/20260506-1934-pr-review-self-review-skill.md`
+保存先: `tasks/done/20260506-1934-pr-review-self-review-skill.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -78,4 +78,6 @@
 
 - 決定事項: PR は draft として作成し、セルフレビューコメントを追加する。
 - 決定事項: セルフレビューの結果は top-level PR comment として残し、未検証項目を明示する。
-- リスク: GitHub Apps または push 権限が利用できない場合、PR 作成・コメント投稿は blocked として扱う。
+- 完了記録: PR #127 を GitHub Apps で作成し、作成時セルフレビューコメントを投稿した。
+- 完了記録: 初回 PR 作成後の task 完了更新として、この task file を `tasks/done/` に移動した。
+- リスク: CI は PR 作成直後のため未確認。PR 本文とセルフレビューコメントに未確認事項として記載した。

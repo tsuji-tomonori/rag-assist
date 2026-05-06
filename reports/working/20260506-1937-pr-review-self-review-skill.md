@@ -17,8 +17,8 @@
 | R3 | PR 作成・更新時のセルフレビューと PR コメント投稿を運用化する | 高 | 対応 |
 | R4 | `AGENTS.md` に必要事項を反映する | 高 | 対応 |
 | R5 | 変更範囲に見合う検証を実行する | 高 | 対応 |
-| R6 | commit と GitHub Apps による PR 作成を行う | 高 | これから対応 |
-| R7 | PR コメント後に task file を `tasks/done/` へ移動する | 高 | PR 作成後に対応 |
+| R6 | commit と GitHub Apps による PR 作成を行う | 高 | 対応 |
+| R7 | PR コメント後に task file を `tasks/done/` へ移動する | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -33,6 +33,8 @@
 - `skills/pr-review-self-review/agents/openai.yaml` を追加し、UI metadata を skill 内容に合わせた。
 - `AGENTS.md` に `PR Self Review` セクションを追加し、PR 作成・更新時の必読 skill とセルフレビューコメント運用を明記した。
 - `tasks/do/20260506-1934-pr-review-self-review-skill.md` に受け入れ条件、検証計画、PRレビュー観点を記録した。
+- GitHub Apps で PR #127 を作成し、作成時セルフレビューコメントを投稿した。
+- セルフレビューコメント後に task file を `tasks/done/` へ移動した。
 
 ## 5. 成果物
 
@@ -41,22 +43,23 @@
 | `skills/pr-review-self-review/SKILL.md` | Markdown | PRレビュー用 skill 本体 | レビュー用 skill 作成に対応 |
 | `skills/pr-review-self-review/agents/openai.yaml` | YAML | skill UI metadata | skill 作成品質に対応 |
 | `AGENTS.md` | Markdown | PR 作成・更新時セルフレビューの必読ルール | AGENTS.md 反映に対応 |
-| `tasks/do/20260506-1934-pr-review-self-review-skill.md` | Markdown | 作業タスクと受け入れ条件 | worktree task flow に対応 |
+| `tasks/done/20260506-1934-pr-review-self-review-skill.md` | Markdown | 作業タスク、受け入れ条件、完了記録 | worktree task flow に対応 |
 | `reports/working/20260506-1937-pr-review-self-review-skill.md` | Markdown | 作業完了レポート | post-task report に対応 |
+| PR #127 | GitHub Pull Request | `main` 向け draft PR | PR 作成要件に対応 |
 
 ## 6. 指示へのfit評価
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.5 / 5 | skill、AGENTS、検証、レポートは対応済み。commit/PR/comment はこの後の手順で完了予定。 |
-| 制約遵守 | 4.5 / 5 | 未実施検証を実施済み扱いしていない。GitHub Apps 利用は PR 作成時に確認する。 |
+| 指示網羅性 | 5 / 5 | skill、AGENTS、検証、レポート、commit、PR 作成、PR comment、task done 移動に対応した。 |
+| 制約遵守 | 5 / 5 | 未実施検証を実施済み扱いせず、GitHub Apps で PR 作成・コメント投稿した。 |
 | 成果物品質 | 4.5 / 5 | 実運用向けに workflow とコメントテンプレートを含めた。 |
 | 説明責任 | 4.5 / 5 | 判断、未対応、リスクを分けて記載した。 |
 | 検収容易性 | 4.5 / 5 | 変更ファイルと検証結果を明示した。 |
 
-総合fit: 4.5 / 5.0（約90%）
+総合fit: 4.8 / 5.0（約96%）
 
-理由: 主要成果物は作成済みだが、このレポート作成時点では commit、PR 作成、PR コメント、task done 移動が未完了のため満点ではない。
+理由: 明示要件は完了した。CI は PR 作成直後のため未確認であり、PR 本文とセルフレビューコメントに未確認事項として記載した。
 
 ## 7. 検証結果
 
@@ -65,8 +68,14 @@
 - `rg -n "^name: " skills/*/SKILL.md`: pass（`pr-review-self-review` を含む skill name 一覧を確認）
 - `pre-commit run --files AGENTS.md skills/pr-review-self-review/SKILL.md skills/pr-review-self-review/agents/openai.yaml tasks/do/20260506-1934-pr-review-self-review-skill.md reports/working/20260506-1937-pr-review-self-review-skill.md`: pass
 
-## 8. 未対応・制約・リスク
+## 8. PR 作成・コメント
 
-- 未対応事項: commit、push、GitHub Apps による PR 作成、PR セルフレビューコメント投稿、task file の `tasks/done/` 移動はこの後に実施する。
-- 制約: `gh auth status` はローカル token 無効で失敗したため、PR 作成・コメントは GitHub Apps コネクタを優先する。
-- リスク: push または GitHub Apps が利用できない場合、PR 作成・コメント投稿は blocked として扱う必要がある。
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/127
+- PR 作成: GitHub Apps コネクタで実施
+- PR コメント: GitHub Apps コネクタで作成時セルフレビューコメントを投稿
+
+## 9. 未対応・制約・リスク
+
+- 未対応事項: なし。
+- 制約: `gh auth status` はローカル token 無効で失敗したため、PR 作成・コメントは GitHub Apps コネクタで実施した。
+- リスク: CI は PR 作成直後のため未確認。PR 本文とセルフレビューコメントに未確認事項として記載した。
