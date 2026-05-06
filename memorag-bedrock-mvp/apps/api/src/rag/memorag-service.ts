@@ -131,6 +131,14 @@ const benchmarkSuites: BenchmarkSuite[] = [
     defaultConcurrency: 1
   },
   {
+    suiteId: "mmrag-docqa-v1",
+    label: "MMRAG-DocQA",
+    mode: "agent",
+    datasetS3Key: "datasets/agent/mmrag-docqa-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
     suiteId: "search-smoke-v1",
     label: "Search smoke",
     mode: "search",

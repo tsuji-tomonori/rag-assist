@@ -169,7 +169,8 @@ export class MemoRagMvpStack extends Stack {
       sources: [
         s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
         s3deploy.Source.data("standard-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
-        s3deploy.Source.data("clarification-smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.clarification.sample.jsonl"), "utf-8"))
+        s3deploy.Source.data("clarification-smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.clarification.sample.jsonl"), "utf-8")),
+        s3deploy.Source.data("mmrag-docqa-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.mmrag-docqa.sample.jsonl"), "utf-8"))
       ],
       destinationBucket: benchmarkBucket,
       destinationKeyPrefix: "datasets/agent"
@@ -624,6 +625,7 @@ export class MemoRagMvpStack extends Stack {
               "export DATASET=./benchmark/.runner-dataset.jsonl",
               "export BENCHMARK_SUITE_ID=\"$SUITE_ID\"",
               "if [ \"$SUITE_ID\" = \"standard-agent-v1\" ] || [ \"$SUITE_ID\" = \"smoke-agent-v1\" ] || [ \"$SUITE_ID\" = \"clarification-smoke-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; export BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1; fi",
+              "if [ \"$SUITE_ID\" = \"mmrag-docqa-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/mmrag-docqa-v1; export BENCHMARK_CORPUS_SUITE_ID=mmrag-docqa-v1; fi",
               "if [ \"$SUITE_ID\" = \"allganize-rag-evaluation-ja-v1\" ]; then export ALLGANIZE_RAG_DATASET_OUTPUT=\"$DATASET\"; export ALLGANIZE_RAG_CORPUS_DIR=./benchmark/.runner-allganize-corpus; export BENCHMARK_CORPUS_DIR=\"$ALLGANIZE_RAG_CORPUS_DIR\"; npm run prepare:allganize-ja -w @memorag-mvp/benchmark; else aws s3 cp \"$DATASET_S3_URI\" \"$DATASET\"; fi",
               "API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\"",
               "export API_AUTH_TOKEN"

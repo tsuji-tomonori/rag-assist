@@ -96,7 +96,7 @@ function benchmarkSearchUser(runnerUser: AppUser, requestUser: z.infer<typeof Be
   }
 }
 
-const benchmarkSeedSuites = new Set(["smoke-agent-v1", "standard-agent-v1", "clarification-smoke-v1"])
+const benchmarkSeedSuites = new Set(["smoke-agent-v1", "standard-agent-v1", "clarification-smoke-v1", "mmrag-docqa-v1"])
 const benchmarkSeedMetadataKeys = new Set([
   "benchmarkSeed",
   "benchmarkSuiteId",
