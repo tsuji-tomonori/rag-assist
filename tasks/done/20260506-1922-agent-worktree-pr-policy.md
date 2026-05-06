@@ -1,10 +1,10 @@
 # Agent worktree PR policy confirmation
 
-保存先: `tasks/do/20260506-1922-agent-worktree-pr-policy.md`
+保存先: `tasks/done/20260506-1922-agent-worktree-pr-policy.md`
 
 ## 状態
 
-- do
+- done
 
 ## 背景
 
@@ -45,6 +45,15 @@
 6. commit / push し、GitHub Apps で main 向け PR を作成する。
 7. PR に受け入れ条件確認コメントを追加する。
 8. PR コメント後、この task md を `tasks/done/` へ移動し、状態を `done` に更新して追加 commit / push する。
+
+## 完了確認
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/124
+- 初回 commit: `70b8d70`
+- PR 作成: GitHub Apps connector で実施済み。
+- semver label: GitHub Apps connector で `semver:patch` を追加済み。
+- PR コメント: GitHub Apps connector で受け入れ条件確認コメントを投稿済み。
+- 完了更新: このファイルを `tasks/done/` に移動し、状態を `done` に更新済み。
 
 ## ドキュメントメンテナンス計画
 
