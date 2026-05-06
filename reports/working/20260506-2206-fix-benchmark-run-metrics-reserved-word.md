@@ -40,7 +40,7 @@
 |---|---|---|---|
 | `memorag-bedrock-mvp/infra/scripts/update-benchmark-run-metrics.mjs` | JavaScript | DynamoDB 更新式の属性名エイリアス化 | R1, R2 |
 | `memorag-bedrock-mvp/infra/test/update-benchmark-run-metrics.test.ts` | TypeScript test | `ExpressionAttributeNames` を検証する回帰テスト | R3, R4 |
-| `tasks/do/20260506-2206-fix-benchmark-run-metrics-reserved-word.md` | Markdown | 作業タスク、受け入れ条件、検証計画 | workflow 要件 |
+| `tasks/done/20260506-2206-fix-benchmark-run-metrics-reserved-word.md` | Markdown | 作業タスク、受け入れ条件、検証計画、完了状態 | workflow 要件 |
 | `reports/working/20260506-2206-fix-benchmark-run-metrics-reserved-word.md` | Markdown | 作業完了レポート | report 要件 |
 
 ## 6. 指示へのfit評価
@@ -62,6 +62,8 @@
 - `npm run test -w @memorag-mvp/infra`: pass
 - `npm run typecheck -w @memorag-mvp/infra`: pass
 - `git diff --check`: pass
+- `pre-commit run --files memorag-bedrock-mvp/infra/scripts/update-benchmark-run-metrics.mjs memorag-bedrock-mvp/infra/test/update-benchmark-run-metrics.test.ts tasks/do/20260506-2206-fix-benchmark-run-metrics-reserved-word.md reports/working/20260506-2206-fix-benchmark-run-metrics-reserved-word.md`: pass
+- `pre-commit run --files tasks/done/20260506-2206-fix-benchmark-run-metrics-reserved-word.md`: pass
 
 ## 8. 未対応・制約・リスク
 
