@@ -51,6 +51,7 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
       "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
+      "extract_policy_computations",
       "answerability_gate",
       "sufficient_context_gate",
       "generate_answer",
@@ -128,6 +129,7 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
+      "extract_policy_computations",
       "answerability_gate",
       "sufficient_context_gate",
       "generate_answer",
@@ -301,6 +303,89 @@ test("fixed workflow sends document-source arithmetic verification questions to 
   assert.ok(result.debug?.steps.some((step) => step.label === "retrieve_memory"))
   assert.ok(result.debug?.steps.some((step) => step.label === "execute_search_action"))
   assert.equal(result.debug?.steps.some((step) => step.label === "execute_computation_tools"), false)
+})
+
+test("fixed workflow answers document-grounded threshold comparison questions", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "handbook.md",
+    text: "経費精算は申請から30日以内に行う必要があります。1万円以上の経費精算では領収書の添付が必要です。",
+    skipMemory: true
+  })
+
+  const result = await service.chat({
+    question: "5200円の経費精算では領収書いる?",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /該当しません|必要条件に該当しません/)
+  assert.ok(result.citations.length > 0)
+  const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
+  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
+  assert.equal(computedFacts?.[0]?.source, "llm_policy_extraction")
+  assert.equal(computedFacts?.[0]?.questionAmount, 5200)
+  assert.equal(computedFacts?.[0]?.thresholdAmount, 10000)
+  assert.equal(computedFacts?.[0]?.satisfiesCondition, false)
+  const supportStep = result.debug?.steps.find((step) => step.label === "verify_answer_support")
+  const answerSupport = supportStep?.output?.answerSupport as Record<string, unknown> | undefined
+  assert.deepEqual(answerSupport?.supportingComputedFactIds, ["threshold-001"])
+})
+
+test("fixed workflow keeps not-required threshold rules from becoming required answers", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "handbook.md",
+    text: "1万円未満の経費精算では領収書の添付は不要です。",
+    skipMemory: true
+  })
+
+  const result = await service.chat({
+    question: "5200円の経費精算では領収書いる?",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /不要/)
+  assert.doesNotMatch(result.answer, /^必要です。/)
+  const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
+  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
+  assert.equal(computedFacts?.[0]?.effect, "not_required")
+  assert.equal(computedFacts?.[0]?.satisfiesCondition, true)
+})
+
+test("fixed workflow binds threshold polarity at clause level", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "handbook.md",
+    text: "1万円以上の経費精算では領収書の添付が必要で、1万円未満では不要です。",
+    skipMemory: true
+  })
+
+  const result = await service.chat({
+    question: "15000円の経費精算では領収書いる?",
+    includeDebug: true,
+    minScore: 0.05,
+    maxIterations: 1
+  })
+
+  assert.equal(result.isAnswerable, true)
+  assert.match(result.answer, /必要/)
+  assert.doesNotMatch(result.answer, /^不要です。/)
+  const extractionStep = result.debug?.steps.find((step) => step.label === "extract_policy_computations")
+  const computedFacts = extractionStep?.output?.computedFacts as Array<Record<string, unknown>> | undefined
+  assert.equal(computedFacts?.[0]?.kind, "threshold_comparison")
+  assert.equal(computedFacts?.[0]?.effect, "required")
+  assert.equal(computedFacts?.[0]?.satisfiesCondition, true)
 })
 
 test("fixed workflow answers self-contained arithmetic verification from computed facts", async () => {

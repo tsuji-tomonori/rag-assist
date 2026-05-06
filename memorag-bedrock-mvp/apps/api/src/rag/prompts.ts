@@ -45,6 +45,7 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
   const context = formatContextXml(assembly)
   const computedFactsJson = JSON.stringify(computedFacts, null, 2)
   const temporalContextJson = JSON.stringify(temporalContext ?? null, null, 2)
+  const thresholdEffectRules = formatThresholdEffectRules(policy)
 
   return `FINAL_ANSWER_JSON
 あなたは社内資料QAボットです。必ず以下のルールを守ってください。
@@ -53,9 +54,11 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
  - 回答は<context>内のチャンク、または<computedFacts>に明示された内容だけに基づける。
  - 文書由来の事実は<context>を根拠にし、計算由来の事実は<computedFacts>を根拠にする。
 - 日付計算、期限切れ判定、残日数、超過日数は<computedFacts>の値をそのまま使用する。
-- 金額、割合、合計、差分は<computedFacts>の値をそのまま使用する。
+- 金額、割合、合計、差分、閾値条件への該当可否は<computedFacts>の値をそのまま使用する。
 - 自分で日数計算や数値計算を再実行してはいけない。
 - computedFacts に必要な値がない場合は、推測で補完せず、計算できない理由を説明する。
+- threshold_comparison がある場合は、effect、satisfiesCondition、explanation に基づいて、質問された金額が資料内条件に該当するかを答える。
+${thresholdEffectRules}
 - computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
@@ -88,21 +91,23 @@ ${context}
 </context>`
 }
 
-export function buildSufficientContextPrompt(question: string, requiredFacts: string[], chunks: RetrievedVector[]): string {
+export function buildSufficientContextPrompt(question: string, requiredFacts: string[], chunks: RetrievedVector[], computedFacts: ComputedFact[] = []): string {
   const facts = requiredFacts.length > 0 ? requiredFacts.map((fact, index) => `${index + 1}. ${fact}`).join("\n") : `1. ${question}`
   const assembly = assembleContext({ question, chunks, requiredFacts, tokenBudget: 3000 })
   const context = formatContextXml(assembly)
+  const computedFactsJson = JSON.stringify(computedFacts, null, 2)
 
   return `SUFFICIENT_CONTEXT_JSON
-あなたは社内QA用RAGの回答可否判定器です。質問に対して、<context>内のevidence chunkだけで回答してよいかを厳密に判定してください。
+あなたは社内QA用RAGの回答可否判定器です。質問に対して、<context>内のevidence chunkと<computedFacts>だけで回答してよいかを厳密に判定してください。
 出力はJSONのみ。Markdownや説明文は禁止。
 
 判定ルール:
-- ANSWERABLE: 高優先度の必要事実がすべて evidence chunk で明示的に支持されている。
+- ANSWERABLE: 高優先度の必要事実がすべて evidence chunk または computedFacts で明示的に支持されている。
 - PARTIAL: 一部の必要事実は支持されるが、回答に必要な事実が不足している。
 - UNANSWERABLE: 関連チャンクがない、根拠が質問に答えていない、または矛盾がある。
 - memory card、一般知識、推測は根拠にしない。
 - 数値、期限、手順、条件、承認者は特に厳しく見る。
+- threshold_comparison は system-derived evidence として扱い、effect と satisfiesCondition の組み合わせで、質問金額が資料内の条件に該当するかを支持できる。
 - supportingChunkIds には根拠に使える <chunk id="..."> の id だけを入れる。
 
 JSON schema:
@@ -123,15 +128,20 @@ ${question}
 <requiredFacts>
 ${escapeXml(facts)}
 </requiredFacts>
+<computedFacts>
+${escapeXml(computedFactsJson)}
+</computedFacts>
 <context>
 ${context || "根拠チャンクはありません。"}
 </context>`
 }
 
 export function buildAnswerSupportPrompt(question: string, answer: string, chunks: RetrievedVector[], computedFacts: ComputedFact[] = []): string {
+  const policy = selectAnswerPolicyForChunks(chunks)
   const assembly = assembleContext({ question, chunks, tokenBudget: 2400 })
   const context = formatContextXml(assembly)
   const computedFactsJson = JSON.stringify(computedFacts, null, 2)
+  const effectLabels = formatEffectLabels(policy)
 
   return `ANSWER_SUPPORT_JSON
 あなたは社内QA用RAGの回答支持検証器です。<answer>の各文が<context>内のevidence chunkまたは<computedFacts>で明示的に支持されるかを厳密に判定してください。
@@ -142,7 +152,9 @@ export function buildAnswerSupportPrompt(question: string, answer: string, chunk
 - supportingComputedFactIds には <computedFacts> の id だけを入れる。
 - memory card、一般知識、推測、質問文そのものは根拠にしない。
 - 数値、期限、残日数、超過日数、手順、条件、承認者、例外条件は特に厳しく見る。
-- 計算結果の主張は、文書チャンクではなく computedFacts に対応する値がある場合に支持されたものとして扱う。
+- 計算結果や閾値条件への該当可否の主張は、文書チャンクではなく computedFacts に対応する値がある場合に支持されたものとして扱う。
+- policyComputation effect labels（${effectLabels}）の主張は threshold_comparison.effect と satisfiesCondition に一致している場合だけ支持する。
+- threshold_comparison.sourceText は元チャンク内の quote として扱い、computedFacts にない例外条件を回答が追加していないか確認する。
 - 引用チャンクに書かれていない断定文、範囲外の要約、過度な一般化は unsupportedSentences に入れる。
 - すべての実質的な回答文が evidence chunk または computedFacts で支持される場合だけ supported=true にする。
 
@@ -167,6 +179,102 @@ ${escapeXml(answer)}
 <computedFacts>
 ${escapeXml(computedFactsJson)}
 </computedFacts>
+<context>
+${context || "根拠チャンクはありません。"}
+</context>`
+}
+
+export function buildPolicyComputationExtractionPrompt(question: string, chunks: RetrievedVector[]): string {
+  const policy = selectAnswerPolicyForChunks(chunks)
+  const context = formatContextXml(assembleContext({ question, chunks, tokenBudget: 3200 }))
+  const textMap = formatPolicyComputationTextMap(policy)
+
+  return `POLICY_COMPUTATION_EXTRACTION_JSON
+あなたは社内QA用RAGの policy condition extractor です。質問と evidence chunks だけを使い、質問に答えるために必要な「資料中の条件」と「質問中の具体値」を構造化してください。
+
+重要:
+- 回答文は生成しない。
+- 一般知識を使わない。
+- 条件に関係する原文を quote としてそのまま抜き出す。
+- sourceChunkId には <chunk id="..."> の id 属性値だけを入れる。chunkId 属性値ではない。
+- questionTarget.amountText は質問中に実在する金額表記をそのまま抜き出す。
+- condition.thresholdText は quote 中に実在する閾値金額表記をそのまま抜き出す。
+- condition.conditionText は quote 中に実在する条件表現をそのまま抜き出す。
+- condition.conditionText は thresholdText と comparatorText を同じ条件として含める。例: "1万円以上"。
+- condition.comparatorText は quote 中に実在する比較表現をそのまま抜き出す。
+- condition.comparatorText は policyComputationTextMap の comparatorTextMappings と直接対応する最小表現にする。
+- consequence.targetText と consequence.effectText は quote 中に実在する表現をそのまま抜き出す。
+- consequence.effectText は policyComputationTextMap の effectTextMappings と直接対応する最小表現にする。
+- quote に含まれない条件・効果・対象を補完しない。
+- 質問と同じ要件を扱っている条件だけ matchesQuestion=true にする。
+- 複数条件がある場合は candidates にすべて出す。
+- 曖昧、矛盾、比較不能なら canExtract=false または ambiguity に理由を書く。
+- 数値比較の最終判定は行わない。条件式だけ抽出する。
+- 出力はJSONのみ。Markdownやコードフェンスは禁止。
+
+JSON schema:
+{
+  "canExtract": true,
+  "reason": "抽出可否の理由",
+  "questionTarget": {
+    "amountText": "5200円",
+    "amountValue": 5200,
+    "currency": "JPY",
+    "subject": "経費精算",
+    "requestedEffect": "required",
+    "requestedObligation": "領収書の添付"
+  },
+  "candidates": [
+    {
+      "sourceChunkId": "doc-1-chunk-0001",
+      "quote": "1万円以上の経費精算では領収書の添付が必要です。",
+      "condition": {
+        "subject": "経費精算",
+        "leftQuantity": "経費精算の金額",
+        "conditionText": "1万円以上",
+        "comparator": "gte",
+        "comparatorText": "以上",
+        "thresholdText": "1万円",
+        "thresholdValue": 10000,
+        "currency": "JPY"
+      },
+      "consequence": {
+        "target": "領収書の添付",
+        "targetText": "領収書の添付",
+        "effect": "required",
+        "effectText": "必要",
+        "naturalLanguage": "領収書の添付が必要"
+      },
+      "matchesQuestion": true,
+      "confidence": 0.95,
+      "ambiguity": []
+    }
+  ]
+}
+
+effect enum:
+- required
+- not_required
+- allowed
+- not_allowed
+- eligible
+- not_eligible
+- unknown
+
+comparator enum:
+- gte
+- gt
+- lte
+- lt
+- eq
+
+<policyComputationTextMap>
+${textMap}
+</policyComputationTextMap>
+
+<question>
+${question}
+</question>
 <context>
 ${context || "根拠チャンクはありません。"}
 </context>`
@@ -287,6 +395,28 @@ export function selectFinalAnswerChunks(question: string, chunks: RetrievedVecto
 
   const nonToc = chunks.filter((chunk) => !isTableOfContentsLike(chunk.metadata.text ?? ""))
   return nonToc.length > 0 ? nonToc : chunks
+}
+
+function formatThresholdEffectRules(policy: AnswerPolicy): string {
+  return policy.policyComputation.effectTextMappings
+    .map((mapping) => {
+      const label = mapping.texts[0] ?? mapping.value
+      return `- effect=${mapping.value} かつ satisfiesCondition=true は「${label}」、false は「${label}条件に該当しない」として扱う。`
+    })
+    .join("\n")
+}
+
+function formatEffectLabels(policy: AnswerPolicy): string {
+  return policy.policyComputation.effectTextMappings.map((mapping) => mapping.texts[0] ?? mapping.value).join(" / ")
+}
+
+function formatPolicyComputationTextMap(policy: AnswerPolicy): string {
+  return [
+    "comparatorTextMappings:",
+    ...policy.policyComputation.comparatorTextMappings.map((mapping) => `- ${mapping.value}: ${mapping.texts.join(" / ")}`),
+    "effectTextMappings:",
+    ...policy.policyComputation.effectTextMappings.map((mapping) => `- ${mapping.value}: ${mapping.texts.join(" / ")}`)
+  ].join("\n")
 }
 
 function escapeXml(input: string): string {

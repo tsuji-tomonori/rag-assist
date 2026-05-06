@@ -14,7 +14,7 @@ export function createSufficientContextGateNode(deps: Dependencies) {
       return `${fact.description} (${type}${scope})`
     }).filter(Boolean)
     const raw = await deps.textModel.generate(
-      buildSufficientContextPrompt(state.question, requiredFacts, state.selectedChunks),
+      buildSufficientContextPrompt(state.question, requiredFacts, state.selectedChunks, state.computedFacts),
       llmOptions("sufficientContext", state.modelId)
     )
     const judgement = normalizeJudgement(parseJsonObject<JudgeJson>(raw), state)

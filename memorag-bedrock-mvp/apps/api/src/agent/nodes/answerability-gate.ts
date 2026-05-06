@@ -24,7 +24,7 @@ export async function answerabilityGate(state: QaAgentState): Promise<QaAgentUpd
             {
               status: "ok",
               sentence: state.computedFacts.map(formatComputedFactAssessment).join(" / "),
-              checks: state.computedFacts.some((fact) => fact.kind === "arithmetic") ? ["amount"] : ["date"],
+              checks: state.computedFacts.some((fact) => fact.kind === "arithmetic" || fact.kind === "threshold_comparison") ? ["amount"] : ["date"],
               reason: "deterministic computation layer の computedFacts で回答できます。"
             }
           ]
@@ -65,6 +65,7 @@ function formatComputedFactAssessment(fact: QaAgentState["computedFacts"][number
   if (fact.kind === "days_until") return `${fact.today}から${fact.dueDate}まで${fact.daysRemaining}日`
   if (fact.kind === "current_date") return fact.explanation
   if (fact.kind === "add_days") return `${fact.baseDate}+${fact.amount}日=${fact.resultDate}`
+  if (fact.kind === "threshold_comparison") return fact.explanation
   if (fact.kind === "relative_policy_deadline") return `${fact.baseDate}-${fact.amount}か月=${fact.resultDate}`
   if (fact.kind === "task_deadline_query_unavailable") return fact.reason
   return fact.reason
@@ -183,9 +184,10 @@ function splitSentences(text: string): string[] {
 }
 
 function matchesFactCheck(check: FactCheck, text: string): boolean {
+  const normalized = text.normalize("NFKC")
   switch (check) {
     case "amount":
-      return /[0-9０-９,]+円/.test(text)
+      return /[0-9][0-9,]*(?:\.\d+)?\s*(?:円|万円|千円)/.test(normalized)
     case "date":
       return /[0-9０-９]+(日|営業日|ヶ月|か月|月|年)/.test(text)
     case "procedure":

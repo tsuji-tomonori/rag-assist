@@ -90,6 +90,9 @@ test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline 
   assert.equal(detectToolIntent("この資料では2026-05-01期限切れと記載されていますか？").needsSearch, true)
   assert.equal(detectToolIntent("この資料では5営業日以内と記載されていますか？").canAnswerFromQuestionOnly, false)
   assert.equal(detectToolIntent("この資料では5営業日以内と記載されていますか？").needsSearch, true)
+  assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").needsArithmeticCalculation, false)
+  assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").needsSearch, true)
+  assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").canAnswerFromQuestionOnly, false)
 
   const taskList = detectToolIntent("期限切れのタスクを全部出して")
   assert.equal(taskList.needsTaskDeadlineIndex, true)
@@ -146,6 +149,9 @@ test("computation layer executes MVP temporal and arithmetic tools deterministic
   )
   assert.equal(politeRelative[0]?.kind, "add_days")
   assert.equal(politeRelative[0]?.kind === "add_days" ? politeRelative[0].resultDate : undefined, "2026-05-15")
+
+  const documentThreshold = executeComputationTools("5200円の経費精算では領収書いる?", fixedTemporalContext, detectToolIntent("5200円の経費精算では領収書いる?"))
+  assert.equal(documentThreshold.length, 0)
 })
 
 test("days_until past date reports overdue instead of negative remaining days", () => {

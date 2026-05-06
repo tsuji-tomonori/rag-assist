@@ -15,7 +15,10 @@ export async function executeComputationTools(state: QaAgentState): Promise<QaAg
     : executeTools(state.question, state.temporalContext, state.toolIntent)
 
   return {
-    computedFacts
+    computedFacts: [
+      ...state.computedFacts,
+      ...computedFacts
+    ]
   }
 }
 

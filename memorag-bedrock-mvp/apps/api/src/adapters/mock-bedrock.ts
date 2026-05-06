@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { config } from "../config.js"
+import { neutralAnswerPolicy } from "../rag/profiles.js"
 import type { EmbedOptions, GenerateOptions, TextModel } from "./text-model.js"
 
 function normalize(vector: number[]): number[] {
@@ -85,6 +86,10 @@ export class MockBedrockTextModel implements TextModel {
       })
     }
 
+    if (prompt.includes("POLICY_COMPUTATION_EXTRACTION_JSON")) {
+      return JSON.stringify(mockPolicyComputationExtraction(prompt))
+    }
+
     if (prompt.includes("FINAL_ANSWER_JSON")) {
       const question = extractBetween(prompt, "<question>", "</question>")
       const contexts = [...prompt.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
@@ -105,6 +110,17 @@ export class MockBedrockTextModel implements TextModel {
       const first = contexts[0]
       if (!first) {
         return JSON.stringify({ isAnswerable: false, answer: "資料からは回答できません。", usedChunkIds: [] })
+      }
+      const thresholdFact = computedFacts.find((fact) => fact.kind === "threshold_comparison")
+      if (thresholdFact) {
+        const selected = selectAnswerEvidence(question, contexts)
+        const chunkId = selected.chunkId ?? first[1] ?? "chunk-unknown"
+        return JSON.stringify({
+          isAnswerable: true,
+          answer: answerFromComputedFact(thresholdFact),
+          usedChunkIds: [chunkId],
+          usedComputedFactIds: typeof thresholdFact.id === "string" ? [thresholdFact.id] : []
+        })
       }
       const selected = selectAnswerEvidence(question, contexts)
       const chunkId = selected.chunkId ?? first[1] ?? "chunk-unknown"
@@ -257,9 +273,106 @@ function answerFromComputedFact(fact: Record<string, unknown>): string {
   if (fact.kind === "add_days") return `期限は${fact.resultDate}です。`
   if (fact.kind === "relative_policy_deadline") return `申請期限は${fact.resultDate}です。${fact.ruleText}に基づきます。`
   if (fact.kind === "arithmetic") return `計算結果は${fact.result}${fact.unit ?? ""}です。`
+  if (fact.kind === "threshold_comparison") {
+    const explanation = typeof fact.explanation === "string" ? fact.explanation : ""
+    const effectLabel = effectLabelFromPolicy(fact.effect)
+    if (effectLabel && fact.satisfiesCondition === true) return `${effectLabel}です。${explanation}`
+    if (effectLabel && fact.satisfiesCondition === false) return `資料上、この金額では${effectLabel}条件に該当しません。${explanation}`
+  }
   if (fact.kind === "task_deadline_query_unavailable") return "期限切れタスクの完全な一覧は、構造化インデックスが未実装のため取得できません。"
   if (fact.kind === "calculation_unavailable") return typeof fact.reason === "string" ? fact.reason : "計算できません。"
   return "資料からは回答できません。"
+}
+
+function effectLabelFromPolicy(effect: unknown): string | undefined {
+  if (typeof effect !== "string") return undefined
+  return neutralAnswerPolicy.policyComputation.effectTextMappings.find((mapping) => mapping.value === effect)?.texts[0]
+}
+
+function mockPolicyComputationExtraction(prompt: string): Record<string, unknown> {
+  const question = extractBetween(prompt, "<question>", "</question>")
+  const contextXml = extractLastBetween(prompt, "<context>", "</context>")
+  const contexts = [...contextXml.matchAll(/<chunk id="([^"]+)"[^>]*>([\s\S]*?)<\/chunk>/g)]
+  if (!/領収書|添付/.test(question) || !/[0-9０-９][0-9０-９,，]*(?:円|万円|千円)/.test(question)) {
+    return {
+      canExtract: false,
+      reason: "モックでは金額閾値ポリシー抽出対象ではありません。",
+      candidates: []
+    }
+  }
+
+  const amount = question.match(/([0-9０-９][0-9０-９,，]*)\s*円/)?.[0] ?? "5200円"
+  const candidates = contexts.flatMap((match) => {
+    const sourceChunkId = unescapeXml(match[1] ?? "chunk-unknown")
+    const text = unescapeXml(match[2] ?? "")
+    const items: Array<Record<string, unknown>> = []
+    if (text.includes("1万円以上") && text.includes("領収書") && text.includes("必要")) {
+      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円以上", "必要", "領収書"), "1万円以上", "gte", "以上", "1万円", "required", "領収書", "必要", "領収書の添付が必要"))
+    }
+    if (text.includes("1万円未満") && text.includes("領収書") && text.includes("不要")) {
+      items.push(policyCandidate(sourceChunkId, quoteFor(text, "1万円未満", "不要", "領収書"), "1万円未満", "lt", "未満", "1万円", "not_required", "領収書", "不要", "領収書の添付は不要"))
+    }
+    return items
+  })
+
+  return {
+    canExtract: candidates.length > 0,
+    reason: candidates.length > 0 ? "モックでは領収書添付の金額閾値条件を抽出しました。" : "比較可能な条件はありません。",
+    questionTarget: {
+      amountText: amount,
+      amountValue: Number(amount.replace(/[^0-9]/g, "")),
+      currency: "JPY",
+      subject: "経費精算",
+      requestedEffect: "required",
+      requestedObligation: "領収書の添付"
+    },
+    candidates
+  }
+}
+
+function policyCandidate(
+  sourceChunkId: string,
+  quote: string,
+  conditionText: string,
+  comparator: string,
+  comparatorText: string,
+  thresholdText: string,
+  effect: string,
+  targetText: string,
+  effectText: string,
+  naturalLanguage: string
+): Record<string, unknown> {
+  return {
+    sourceChunkId,
+    quote,
+    condition: {
+      subject: "経費精算",
+      leftQuantity: "経費精算の金額",
+      conditionText,
+      comparator,
+      comparatorText,
+      thresholdText,
+      thresholdValue: 10000,
+      currency: "JPY"
+    },
+    consequence: {
+      target: "領収書の添付",
+      targetText,
+      effect,
+      effectText,
+      naturalLanguage
+    },
+    matchesQuestion: true,
+    confidence: 0.95,
+    ambiguity: []
+  }
+}
+
+function quoteFor(text: string, marker: string, effectMarker: string, targetMarker: string): string {
+  const sentence = splitSentences(text).find((item) => item.includes(marker) && item.includes(effectMarker)) ?? text
+  const clause = sentence.split(/[、，；;]/u).find((item) => item.includes(marker) && item.includes(effectMarker))
+  const quote = (clause ?? sentence).trim()
+  return quote.includes(targetMarker) ? quote : text.trim()
 }
 
 function selectComputedFactForAnswer(facts: unknown[]): Record<string, unknown> | undefined {

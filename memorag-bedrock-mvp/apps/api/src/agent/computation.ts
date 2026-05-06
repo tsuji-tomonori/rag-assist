@@ -107,7 +107,9 @@ export function detectToolIntent(question: string): ToolIntent {
     temporalOperation: inferTemporalOperation(normalized),
     arithmeticOperation: asksArithmetic ? "price" : undefined,
     confidence: asksTemporal || asksArithmetic ? 0.88 : 0.55,
-    reason: asksTemporal || asksArithmetic ? "質問文だけで明示的な計算対象を検出しました。" : "通常のRAG検索質問として扱います。"
+    reason: asksTemporal || asksArithmetic
+      ? "質問文だけで明示的な計算対象を検出しました。"
+      : "通常のRAG検索質問として扱います。"
   }
 }
 
