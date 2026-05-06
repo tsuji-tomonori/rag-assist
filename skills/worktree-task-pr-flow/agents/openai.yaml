@@ -1,4 +1,4 @@
 interface:
   display_name: "Worktree Task PR Flow"
-  short_description: "Run or verify worktree-based tasks through task files, commit, PR, and acceptance comments."
-  default_prompt: "Use $worktree-task-pr-flow to create a dedicated worktree, write the task file and acceptance criteria before implementation, commit, open a main-targeted PR with GitHub Apps, comment acceptance results, and move the task to done. Also use it to verify and fix whether AGENTS.md or local skills require agents to follow that flow."
+  short_description: "Default repository-work flow through worktree, task file, commit, PR, acceptance comment, and done state."
+  default_prompt: "Use $worktree-task-pr-flow by default for repository work involving file edits, commands, investigation, validation, docs, commits, or PRs. Create a dedicated worktree, write the task file and acceptance criteria before implementation, commit, open a main-targeted PR with GitHub Apps, comment acceptance results, and move the task to done. Also use it to verify and fix whether AGENTS.md or local skills require agents to follow that flow."
