@@ -40,7 +40,7 @@ const benchmarkIngestSignatureVersion = "benchmark-corpus-seed-v2"
 const benchmarkCorpusAclGroups = ["BENCHMARK_RUNNER"]
 const benchmarkCorpusDocType = "benchmark-corpus"
 const benchmarkCorpusSource = "benchmark-runner"
-const supportedExtensions = new Set([".md", ".txt"])
+const supportedExtensions = new Set([".md", ".txt", ".pdf"])
 
 export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<SeededDocument[]> {
   if (!options.corpusDir) return []
@@ -54,8 +54,8 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
 
   for (const filePath of files) {
     const fileName = path.basename(filePath)
-    const text = await readFile(filePath, "utf-8")
-    const sourceHash = sha256(text)
+    const content = await readFile(filePath)
+    const sourceHash = sha256(content)
     const ingestSignature = createBenchmarkIngestSignature({
       sourceHash,
       suiteId: options.suiteId,
@@ -76,7 +76,7 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
       authToken: options.authToken,
       fetcher,
       fileName,
-      text,
+      content,
       mimeType: mimeTypeFor(fileName),
       suiteId: options.suiteId,
       sourceHash,
@@ -145,7 +145,7 @@ async function uploadDocument(input: {
   authToken?: string
   fetcher: typeof fetch
   fileName: string
-  text: string
+  content: Buffer
   mimeType: string
   suiteId: string
   sourceHash: string
@@ -158,7 +158,7 @@ async function uploadDocument(input: {
     headers: createHeaders(input.authToken),
     body: JSON.stringify({
       fileName: input.fileName,
-      text: input.text,
+      ...(isTextMimeType(input.mimeType) ? { text: input.content.toString("utf-8") } : { contentBase64: input.content.toString("base64") }),
       mimeType: input.mimeType,
       embeddingModelId: input.embeddingModelId,
       skipMemory: input.skipMemory,
@@ -221,9 +221,16 @@ function createHeaders(authToken: string | undefined): Record<string, string> {
 }
 
 function mimeTypeFor(fileName: string): string {
-  return path.extname(fileName).toLowerCase() === ".md" ? "text/markdown" : "text/plain"
+  const extension = path.extname(fileName).toLowerCase()
+  if (extension === ".md") return "text/markdown"
+  if (extension === ".pdf") return "application/pdf"
+  return "text/plain"
 }
 
-function sha256(text: string): string {
-  return createHash("sha256").update(text).digest("hex")
+function isTextMimeType(mimeType: string): boolean {
+  return mimeType === "text/markdown" || mimeType === "text/plain"
+}
+
+function sha256(content: string | Buffer): string {
+  return createHash("sha256").update(content).digest("hex")
 }

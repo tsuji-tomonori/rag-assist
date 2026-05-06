@@ -123,6 +123,14 @@ const benchmarkSuites: BenchmarkSuite[] = [
     defaultConcurrency: 1
   },
   {
+    suiteId: "allganize-rag-evaluation-ja-v1",
+    label: "Allganize RAG Evaluation JA",
+    mode: "agent",
+    datasetS3Key: "hf://datasets/allganize/RAG-Evaluation-Dataset-JA",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
     suiteId: "search-smoke-v1",
     label: "Search smoke",
     mode: "search",
