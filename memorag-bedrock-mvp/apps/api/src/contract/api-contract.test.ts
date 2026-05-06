@@ -4,6 +4,7 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import { spawn } from "node:child_process"
 import test from "node:test"
+import { isBenchmarkSeedUpload } from "../app.js"
 
 type OpenApiDoc = {
   paths: Record<string, Record<string, { responses?: Record<string, { content?: Record<string, { schema: unknown }> }> }>>
@@ -547,6 +548,35 @@ test("benchmark runner can list and upload only isolated benchmark seed document
   } finally {
     server.kill("SIGTERM")
   }
+})
+
+test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only", () => {
+  const metadata = {
+    benchmarkSeed: true,
+    benchmarkSuiteId: "allganize-rag-evaluation-ja-v1",
+    benchmarkSourceHash: "hash",
+    benchmarkIngestSignature: "signature",
+    benchmarkCorpusSkipMemory: true,
+    benchmarkEmbeddingModelId: "api-default",
+    aclGroups: ["BENCHMARK_RUNNER"],
+    docType: "benchmark-corpus",
+    lifecycleStatus: "active",
+    source: "benchmark-runner"
+  }
+  const pdfSeed = {
+    fileName: "source.pdf",
+    contentBase64: Buffer.from("%PDF-1.4 sample").toString("base64"),
+    mimeType: "application/pdf",
+    metadata
+  }
+
+  assert.equal(isBenchmarkSeedUpload(pdfSeed), true)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, fileName: "../source.pdf" }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, mimeType: "text/plain" }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, text: "mixed payload" }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, contentBase64: "not-base64" }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, extra: "blocked" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "unknown-suite" } }), false)
 })
 
 test("question and debug management endpoints enforce Phase 1 role boundaries", async () => {
