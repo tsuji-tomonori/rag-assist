@@ -57,6 +57,8 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /documents/reindex-migrations`、`POST /documents/{documentId}/reindex/stage`、`POST /documents/reindex-migrations/{migrationId}/cutover|rollback` blue-green 再インデックス切替
 - `DELETE /documents/{documentId}` 資料削除
 - `POST /chat` チャット回答
+- `POST /chat-runs` 非同期チャット run 作成
+- `GET /chat-runs/{runId}/events` 非同期チャット run の SSE 進捗・最終回答 streaming
 - `POST /questions` 担当者への問い合わせ作成
 - `GET /questions` 担当者問い合わせ一覧
 - `GET /questions/{questionId}` 担当者問い合わせ詳細、または作成者本人向け回答確認
@@ -77,6 +79,8 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `POST /benchmark-runs/{runId}/cancel` benchmark run キャンセル
 - `POST /benchmark-runs/{runId}/download` benchmark report / summary / results の download URL 作成
 - `GET/POST /admin/aliases`、`POST /admin/aliases/{aliasId}/review`、`POST /admin/aliases/publish` alias 管理 UI/API、review、versioned artifact publish
+- `GET/POST /admin/users`、`POST /admin/users/{userId}/roles|suspend|unsuspend`、`DELETE /admin/users/{userId}` 管理対象ユーザー台帳
+- `GET /admin/roles`、`GET /admin/audit-log`、`GET /admin/usage`、`GET /admin/costs` ロール、管理操作履歴、利用状況、概算コスト監査
 
 管理画面は権限に応じて、文書管理、blue-green 再インデックス、alias review/publish、問い合わせ対応、debug/評価、benchmark、ユーザー/ロール、利用状況、コスト監査を表示します。
 
@@ -159,9 +163,9 @@ curl -s http://localhost:8787/documents \
 curl -s http://localhost:8787/chat \
   -H 'Content-Type: application/json' \
   -d '{"question":"経費精算の期限は？","modelId":"amazon.nova-lite-v1:0"}' | jq
+```
 
 新しい UI は `POST /chat-runs` で非同期 run を作成し、`GET /chat-runs/{runId}/events` を `fetch` stream で読みます。既存 `POST /chat` は後方互換の同期 JSON API として残します。
-```
 
 ## ベンチマーク
 
