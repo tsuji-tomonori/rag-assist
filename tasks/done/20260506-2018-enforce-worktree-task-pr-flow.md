@@ -1,8 +1,8 @@
 # Worktree Task PR Flow の常時適用化
 
-保存先: `tasks/do/20260506-2018-enforce-worktree-task-pr-flow.md`
+保存先: `tasks/done/20260506-2018-enforce-worktree-task-pr-flow.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -56,12 +56,18 @@
 
 ## 受け入れ条件
 
-- [ ] `AGENTS.md` が、実作業を伴う依頼では明示指示がなくても `skills/worktree-task-pr-flow/SKILL.md` を必読にする。
-- [ ] `skills/worktree-task-pr-flow/SKILL.md` が、通常のリポジトリ実作業にも常時適用される起動条件を明記する。
-- [ ] `skills/worktree-task-pr-flow/agents/openai.yaml` の説明が常時適用の意図と一致する。
-- [ ] 変更した Markdown / YAML に対して `git diff --check` と skill validation が通る。
-- [ ] GitHub Apps を使って `main` 向け PR を作成し、受け入れ条件確認コメントを記載する。
-- [ ] PR コメント後に task file を `tasks/done/` へ移動し、同じ PR branch に commit / push する。
+- [x] `AGENTS.md` が、実作業を伴う依頼では明示指示がなくても `skills/worktree-task-pr-flow/SKILL.md` を必読にする。
+- [x] `skills/worktree-task-pr-flow/SKILL.md` が、通常のリポジトリ実作業にも常時適用される起動条件を明記する。
+- [x] `skills/worktree-task-pr-flow/agents/openai.yaml` の説明が常時適用の意図と一致する。
+- [x] 変更した Markdown / YAML に対して `git diff --check` と skill validation が通る。
+- [x] GitHub Apps を使って `main` 向け PR を作成し、受け入れ条件確認コメントを記載する。
+- [x] PR コメント後に task file を `tasks/done/` へ移動し、同じ PR branch に commit / push する。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/130
+- 受け入れ条件確認コメント: PR #130 の top-level comment として記載済み。
+- セルフレビューコメント: PR #130 の top-level comment として記載済み。
 
 ## 検証計画
 
