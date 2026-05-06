@@ -1,10 +1,10 @@
 # 検索 benchmark runner fatal artifact レビュー指摘対応
 
-保存先: `tasks/do/20260506-1950-search-runner-fatal-artifact-review-fix.md`
+保存先: `tasks/done/20260506-1950-search-runner-fatal-artifact-review-fix.md`
 
 ## 状態
 
-- do
+- done
 
 ## 背景
 
@@ -18,7 +18,7 @@ PR #125 のレビューで、検索 benchmark runner の fatal error fallback ar
 
 - `memorag-bedrock-mvp/benchmark/search-run.ts`
 - `memorag-bedrock-mvp/benchmark/search-run.test.ts`
-- `tasks/do/20260506-1950-search-runner-fatal-artifact-review-fix.md`
+- `tasks/done/20260506-1950-search-runner-fatal-artifact-review-fix.md`
 - 必要に応じた作業レポートと PR コメント
 
 ## 方針
@@ -69,6 +69,18 @@ PR #125 のレビューで、検索 benchmark runner の fatal error fallback ar
 - AC7: `git diff --check` と関連 Markdown / TypeScript への pre-commit が通る。
 - AC8: PR #125 に受け入れ条件の確認結果が日本語コメントとして投稿される。
 - AC9: 本 task が完了時に `tasks/done/` へ移動され、状態が `done` になる。
+
+## 受け入れ条件チェック結果
+
+- [x] AC1: `search-run.ts` の evaluator profile 解決順序を修正し、missing baseline test で `strict-ja@1` が summary/report に残ることを確認した。
+- [x] AC2: unknown evaluator profile の fatal error で `OUTPUT`、`SUMMARY`、`REPORT` が生成されることを `search-run.test.ts` で確認した。
+- [x] AC3: missing baseline の fatal error で `OUTPUT`、`SUMMARY`、`REPORT` が生成されることを `search-run.test.ts` で確認した。
+- [x] AC4: `npm run test -w @memorag-mvp/benchmark` が pass し、fatal artifact regression test 2 件を含む 16 tests が通った。
+- [x] AC5: `API_BASE_URL=http://127.0.0.1:1 DATASET=benchmark/datasets/search.sample.jsonl OUTPUT=.local-data/search-validation-results.jsonl SUMMARY=.local-data/search-validation-summary.json REPORT=.local-data/search-validation-report.md npm run start:search -w @memorag-mvp/benchmark` が pass し、通常経路の artifact 生成を確認した。
+- [x] AC6: `npm run typecheck -w @memorag-mvp/benchmark`、`npm run test -w @memorag-mvp/benchmark`、`npm run build -w @memorag-mvp/benchmark` が pass した。
+- [x] AC7: `git diff --check` と `pre-commit run --files memorag-bedrock-mvp/benchmark/search-run.ts memorag-bedrock-mvp/benchmark/search-run.test.ts tasks/do/20260506-1950-search-runner-fatal-artifact-review-fix.md` が pass した。
+- [x] AC8: PR #125 に受け入れ条件確認コメントを投稿した。コメント ID: `4387281333`。
+- [x] AC9: 本 task を `tasks/done/` へ移動し、状態を `done` に更新した。
 
 ## 検証計画
 
