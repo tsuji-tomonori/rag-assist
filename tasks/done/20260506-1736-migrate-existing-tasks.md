@@ -1,10 +1,10 @@
 # 既存 reports tasks の状態ディレクトリ移行
 
-保存先: `tasks/do/20260506-1736-migrate-existing-tasks.md`
+保存先: `tasks/done/20260506-1736-migrate-existing-tasks.md`
 
 ## 状態
 
-- do
+- done
 
 ## 背景
 
@@ -48,6 +48,13 @@
 6. 作業レポートを作成または更新する。
 7. commit / push し、PR #123 の本文とコメントに移行結果を追記する。
 8. この task md を `tasks/done/` へ移動し、状態を `done` に更新して追加 commit / push する。
+
+## 完了確認
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/123
+- 移行 commit: `9072771`
+- PR コメント: GitHub Apps connector で追加受け入れ条件確認コメントを投稿済み。
+- 完了更新: このファイルを `tasks/done/` に移動し、状態を `done` に更新済み。
 
 ## ドキュメントメンテナンス計画
 
