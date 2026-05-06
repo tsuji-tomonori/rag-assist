@@ -41,7 +41,16 @@ export type Permission =
   | "access:role:assign"
   | "access:policy:read"
 
-export type Role = "CHAT_USER" | "ANSWER_EDITOR" | "RAG_GROUP_MANAGER" | "BENCHMARK_RUNNER" | "USER_ADMIN" | "ACCESS_ADMIN" | "COST_AUDITOR" | "SYSTEM_ADMIN"
+export type Role =
+  | "CHAT_USER"
+  | "ANSWER_EDITOR"
+  | "RAG_GROUP_MANAGER"
+  | "BENCHMARK_OPERATOR"
+  | "BENCHMARK_RUNNER"
+  | "USER_ADMIN"
+  | "ACCESS_ADMIN"
+  | "COST_AUDITOR"
+  | "SYSTEM_ADMIN"
 
 export const rolePermissions: Record<Role, Permission[]> = {
   CHAT_USER: ["chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "usage:read:own", "cost:read:own", "rag:doc:read"],
@@ -51,6 +60,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
     "benchmark:read","benchmark:run"
   ],
+  BENCHMARK_OPERATOR: ["benchmark:read", "benchmark:run"],
   BENCHMARK_RUNNER: ["benchmark:query", "benchmark:seed_corpus"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],

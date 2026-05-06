@@ -29,6 +29,7 @@ const appRoles = [
   "CHAT_USER",
   "ANSWER_EDITOR",
   "RAG_GROUP_MANAGER",
+  "BENCHMARK_OPERATOR",
   "BENCHMARK_RUNNER",
   "USER_ADMIN",
   "ACCESS_ADMIN",
@@ -437,7 +438,7 @@ export class MemoRagMvpStack extends Stack {
     }
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
-        actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser"],
+        actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminRemoveUserFromGroup"],
         resources: [userPool.userPoolArn]
       })
     )

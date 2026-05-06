@@ -23,7 +23,7 @@
 - AC-FR025-001: Web UI は未認証利用者にメールアドレス、パスワード、パスワード確認によるアカウント作成フォームを提供すること。
 - AC-FR025-002: Web UI は Cognito から送信された確認コードを入力するフォームを提供すること。
 - AC-FR025-003: Cognito self sign-up の確認完了時、システムは対象ユーザーを `CHAT_USER` group に追加すること。
-- AC-FR025-004: Cognito self sign-up 経由では `ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を付与しないこと。
+- AC-FR025-004: Cognito self sign-up 経由では `ANSWER_EDITOR`、`RAG_GROUP_MANAGER`、`BENCHMARK_OPERATOR`、`BENCHMARK_RUNNER`、`USER_ADMIN`、`ACCESS_ADMIN`、`COST_AUDITOR`、`SYSTEM_ADMIN` を付与しないこと。
 - AC-FR025-005: 上位権限が必要な場合、管理ユーザーは GitHub Actions の Cognito ユーザー作成 workflow または AWS 管理手順で後から付与できること。
 - AC-FR025-006: アカウント作成または確認コード検証に失敗した場合、Web UI は認証済み session を作成しないこと。
 - AC-FR025-007: Web UI はアカウント作成時に Cognito パスワード条件を送信前から表示し、入力中に各条件の達成状態を利用者へ示すこと。

@@ -332,6 +332,7 @@ export const SearchRequestSchema = z.object({
 const BenchmarkSearchForbiddenUserGroups = new Set([
   "SYSTEM_ADMIN",
   "RAG_GROUP_MANAGER",
+  "BENCHMARK_OPERATOR",
   "BENCHMARK_RUNNER",
   "ANSWER_EDITOR",
   "USER_ADMIN",

@@ -603,6 +603,7 @@ export class MemoRagService {
     user.groups = normalizedGroups
     if (user.groups.length === 0) user.groups = ["CHAT_USER"]
     user.updatedAt = new Date().toISOString()
+    await this.deps.userDirectory?.setUserGroups?.(user.email, user.groups)
     this.appendAdminAuditLog(db, actor, user, "role:assign", user.status, user.status, beforeGroups, user.groups, user.updatedAt)
     await this.saveAdminLedger(db)
     return user

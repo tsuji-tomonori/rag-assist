@@ -24,6 +24,16 @@ test("RAG_GROUP_MANAGER は文書一覧と文書更新権限を持つ", () => {
   assert.throws(() => requirePermission(user, "benchmark:cancel"))
 })
 
+test("BENCHMARK_OPERATOR は管理画面の性能テスト起動と履歴参照を許可される", () => {
+  const user = { userId: "u7", cognitoGroups: ["BENCHMARK_OPERATOR"] }
+  assert.doesNotThrow(() => requirePermission(user, "benchmark:read"))
+  assert.doesNotThrow(() => requirePermission(user, "benchmark:run"))
+  assert.throws(() => requirePermission(user, "benchmark:query"))
+  assert.throws(() => requirePermission(user, "benchmark:seed_corpus"))
+  assert.throws(() => requirePermission(user, "benchmark:cancel"))
+  assert.throws(() => requirePermission(user, "benchmark:download"))
+})
+
 test("問い合わせ対応ロールはユーザー管理なしで回答操作できる", () => {
   const user = { userId: "u4", cognitoGroups: ["ANSWER_EDITOR"] }
   assert.doesNotThrow(() => requirePermission(user, "answer:edit"))

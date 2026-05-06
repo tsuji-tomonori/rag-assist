@@ -1,16 +1,20 @@
 import {
+  AdminAddUserToGroupCommand,
   AdminListGroupsForUserCommand,
+  AdminRemoveUserFromGroupCommand,
   CognitoIdentityProviderClient,
   ListUsersCommand,
   type UserType
 } from "@aws-sdk/client-cognito-identity-provider"
 import { config } from "../config.js"
+import { rolePermissions } from "../authorization.js"
 import type { ManagedUser } from "../types.js"
 
 type CognitoDirectoryClient = Pick<CognitoIdentityProviderClient, "send">
 
 export interface UserDirectory {
   listUsers(): Promise<ManagedUser[]>
+  setUserGroups?(username: string, groups: string[]): Promise<void>
 }
 
 export class CognitoUserDirectory implements UserDirectory {
@@ -41,6 +45,31 @@ export class CognitoUserDirectory implements UserDirectory {
     const managedUsers = await mapWithConcurrency(users, 5, (user) => this.toManagedUser(user, groupLookupFailures))
     this.logGroupLookupFailureSummary(users.length, groupLookupFailures)
     return managedUsers
+  }
+
+  async setUserGroups(username: string, groups: string[]): Promise<void> {
+    if (!this.userPoolId) return
+    const desiredGroups = new Set(groups)
+    const managedGroups = new Set(Object.keys(rolePermissions))
+    const currentGroups = await this.listGroups(username)
+
+    for (const group of groups) {
+      if (currentGroups.includes(group)) continue
+      await this.client.send(new AdminAddUserToGroupCommand({
+        UserPoolId: this.userPoolId,
+        Username: username,
+        GroupName: group
+      }))
+    }
+
+    for (const group of currentGroups) {
+      if (!managedGroups.has(group) || desiredGroups.has(group)) continue
+      await this.client.send(new AdminRemoveUserFromGroupCommand({
+        UserPoolId: this.userPoolId,
+        Username: username,
+        GroupName: group
+      }))
+    }
   }
 
   private async toManagedUser(user: UserType, groupLookupFailures: Array<{ username: string; errorName: string; message: string }>): Promise<ManagedUser> {

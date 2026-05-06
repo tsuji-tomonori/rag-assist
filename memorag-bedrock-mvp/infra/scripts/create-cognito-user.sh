@@ -26,11 +26,11 @@ Options:
   --role ROLE                   Cognito group or Japanese role name to assign.
                                 Repeatable. Defaults to CHAT_USER.
                                 Groups are created by the CDK stack.
-                                Valid Cognito groups: CHAT_USER, ANSWER_EDITOR, RAG_GROUP_MANAGER, BENCHMARK_RUNNER,
-                                USER_ADMIN, ACCESS_ADMIN, COST_AUDITOR, SYSTEM_ADMIN.
+                                Valid Cognito groups: CHAT_USER, ANSWER_EDITOR, RAG_GROUP_MANAGER, BENCHMARK_OPERATOR,
+                                BENCHMARK_RUNNER, USER_ADMIN, ACCESS_ADMIN, COST_AUDITOR, SYSTEM_ADMIN.
                                 Japanese role names: 一般利用者, 回答担当者,
-                                RAGグループ管理者, ベンチマーク実行者, ユーザー管理者, アクセス管理者,
-                                コスト監査者, システム管理者.
+                                RAGグループ管理者, 性能テスト担当者, ベンチマークAPI実行サービス,
+                                ベンチマーク実行者, ユーザー管理者, アクセス管理者, コスト監査者, システム管理者.
   --name NAME                   Optional Cognito name attribute.
   --temporary-password VALUE    Temporary password for the new user.
   --password VALUE              Set a permanent password after creating/finding the user.
@@ -68,7 +68,8 @@ normalize_role() {
     CHAT_USER | 一般利用者) echo "CHAT_USER" ;;
     ANSWER_EDITOR | 回答担当者) echo "ANSWER_EDITOR" ;;
     RAG_GROUP_MANAGER | RAGグループ管理者) echo "RAG_GROUP_MANAGER" ;;
-    BENCHMARK_RUNNER | ベンチマーク実行者) echo "BENCHMARK_RUNNER" ;;
+    BENCHMARK_OPERATOR | 性能テスト担当者) echo "BENCHMARK_OPERATOR" ;;
+    BENCHMARK_RUNNER | ベンチマークAPI実行サービス | ベンチマーク実行者) echo "BENCHMARK_RUNNER" ;;
     USER_ADMIN | ユーザー管理者) echo "USER_ADMIN" ;;
     ACCESS_ADMIN | アクセス管理者) echo "ACCESS_ADMIN" ;;
     COST_AUDITOR | コスト監査者) echo "COST_AUDITOR" ;;

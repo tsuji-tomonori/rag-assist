@@ -2283,6 +2283,16 @@
         }
       }
     },
+    "BENCHMARKOPERATORGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "Description": "MemoRAG role: BENCHMARK_OPERATOR",
+        "GroupName": "BENCHMARK_OPERATOR",
+        "UserPoolId": {
+          "Ref": "UserPool6BA7E5F2"
+        }
+      }
+    },
     "BENCHMARKRUNNERGroup": {
       "Type": "AWS::Cognito::UserPoolGroup",
       "Properties": {
@@ -2785,7 +2795,9 @@
             {
               "Action": [
                 "cognito-idp:ListUsers",
-                "cognito-idp:AdminListGroupsForUser"
+                "cognito-idp:AdminListGroupsForUser",
+                "cognito-idp:AdminAddUserToGroup",
+                "cognito-idp:AdminRemoveUserFromGroup"
               ],
               "Effect": "Allow",
               "Resource": {

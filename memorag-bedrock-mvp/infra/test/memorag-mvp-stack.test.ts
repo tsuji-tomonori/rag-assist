@@ -21,7 +21,7 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::S3::Bucket", 5)
   template.resourceCountIs("AWS::Cognito::UserPool", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
-  template.resourceCountIs("AWS::Cognito::UserPoolGroup", 8)
+  template.resourceCountIs("AWS::Cognito::UserPoolGroup", 9)
   template.hasResourceProperties("AWS::Cognito::UserPool", {
     AdminCreateUserConfig: { AllowAdminCreateUserOnly: false },
     AutoVerifiedAttributes: ["email"],
@@ -159,6 +159,7 @@ test("implements the designed serverless resources", () => {
     "CHAT_USER",
     "ANSWER_EDITOR",
     "RAG_GROUP_MANAGER",
+    "BENCHMARK_OPERATOR",
     "BENCHMARK_RUNNER",
     "USER_ADMIN",
     "ACCESS_ADMIN",
@@ -222,7 +223,9 @@ test("implements the designed serverless resources", () => {
         Match.objectLike({
           Action: Match.arrayWith([
             "cognito-idp:ListUsers",
-            "cognito-idp:AdminListGroupsForUser"
+            "cognito-idp:AdminListGroupsForUser",
+            "cognito-idp:AdminAddUserToGroup",
+            "cognito-idp:AdminRemoveUserFromGroup"
           ]),
           Resource: Match.anyValue()
         })

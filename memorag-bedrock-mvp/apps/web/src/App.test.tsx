@@ -152,7 +152,8 @@ const rolePermissions: Record<string, Permission[]> = {
     "rag:alias:read", "rag:alias:write:group", "rag:alias:review:group", "rag:alias:disable:group", "rag:alias:publish:group",
     "benchmark:read", "benchmark:run"
   ],
-  BENCHMARK_RUNNER: ["benchmark:query"],
+  BENCHMARK_OPERATOR: ["benchmark:read", "benchmark:run"],
+  BENCHMARK_RUNNER: ["benchmark:query", "benchmark:seed_corpus"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   COST_AUDITOR: ["cost:read:all"],
@@ -1240,6 +1241,13 @@ describe("App chat and upload flow", () => {
       hidden: ["担当者対応"],
       expectedGetSuffixes: ["/me", "/documents", "/benchmark-runs", "/benchmark-suites"],
       forbiddenGetSuffixes: ["/questions", "/debug-runs", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+    },
+    {
+      groups: ["BENCHMARK_OPERATOR"],
+      visible: ["チャット", "履歴", "性能テスト", "お気に入り", "管理者設定"],
+      hidden: ["担当者対応", "ドキュメント"],
+      expectedGetSuffixes: ["/me", "/benchmark-runs", "/benchmark-suites"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/documents", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
     },
     {
       groups: ["USER_ADMIN"],
