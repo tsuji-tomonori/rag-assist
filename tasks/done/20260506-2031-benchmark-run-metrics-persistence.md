@@ -76,6 +76,7 @@ CodeBuild runner が完了時に benchmark summary の主要 metrics を run rec
 - AC8: 運用 docs と API design docs に metrics 永続化の説明がある。
 - AC9: infra test、infra typecheck、差分チェック、pre-commit が通る。
 - AC10: 実 AWS CodeBuild 未実施の制約が PR body、作業レポート、または PR コメントに明記される。
+- AC11: 受け入れ条件チェック結果が PR #131 に日本語コメントとして投稿される。
 
 ## 受け入れ条件チェック結果
 
@@ -89,6 +90,7 @@ CodeBuild runner が完了時に benchmark summary の主要 metrics を run rec
 - [x] AC8: `OPERATIONS.md` と `DES_API_001.md` に metrics 永続化の説明を追記した。
 - [x] AC9: `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`、`npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra`、`git diff --check HEAD~1..HEAD`、`pre-commit run --files ...` が pass した。
 - [x] AC10: PR #131 body と `reports/working/20260506-2022-benchmark-run-metrics.md` に実 AWS CodeBuild 実行未実施を明記した。
+- [x] AC11: PR #131 に受け入れ条件チェック結果コメントを投稿した。コメント ID: `4387543444`。
 
 ## 検証計画
 
