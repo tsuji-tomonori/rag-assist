@@ -1,6 +1,13 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { assertComparableProfiles, defaultEvaluatorProfile, profileKey, resolveEvaluatorProfile } from "../evaluator-profile.js"
+import {
+  assertComparableProfiles,
+  assertSuiteEvaluatorProfile,
+  defaultEvaluatorProfile,
+  profileKey,
+  resolveEvaluatorProfile,
+  strictJaEvaluatorProfile
+} from "../evaluator-profile.js"
 import { cjkBigramTokenizer, compareTokenizers, createQualityReview, detectRegressions, whitespaceTokenizer } from "./quality.js"
 
 test("detectRegressions flags metric drops and latency increases", () => {
@@ -62,4 +69,16 @@ test("resolver supports non-default evaluator profiles with retrieval K", () => 
   assert.equal(profileKey(profile), "strict-ja@1")
   assert.equal(profile.retrieval.recallK, 10)
   assert.deepEqual(profile.answerMatching.noAnswerTexts, ["資料からは回答できません"])
+})
+
+test("resolver rejects unknown evaluator profiles", () => {
+  assert.throws(() => resolveEvaluatorProfile("strct-ja"), /Unknown evaluator profile: strct-ja/)
+})
+
+test("benchmark runs reject mixed row evaluator profiles", () => {
+  assert.doesNotThrow(() => assertSuiteEvaluatorProfile(defaultEvaluatorProfile, defaultEvaluatorProfile, "row-1"))
+  assert.throws(
+    () => assertSuiteEvaluatorProfile(strictJaEvaluatorProfile, defaultEvaluatorProfile, "row-2"),
+    /Mixed evaluator profiles.*row-2/
+  )
 })

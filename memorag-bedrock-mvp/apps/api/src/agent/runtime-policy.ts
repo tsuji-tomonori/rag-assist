@@ -1,6 +1,6 @@
 import { config } from "../config.js"
 import type { GenerateOptions } from "../adapters/text-model.js"
-import { answerPolicyById, type RAGProfile, type RetrievalProfile } from "../rag/profiles.js"
+import { answerPolicyById, resolveRetrievalProfileId, type RAGProfile, type RetrievalProfile } from "../rag/profiles.js"
 
 type LlmTask =
   | "clue"
@@ -29,10 +29,12 @@ const sourceScoreMax = clampNumber(config.ragRetrievalMaxSourceScore, 0, 1)
 const crossQueryRrfBoostCap = clampNumber(config.ragCrossQueryRrfBoostCap, 0, 1)
 const searchRagMaxTopK = Math.max(1, config.ragSearchRagMaxTopK)
 const searchRagMaxSourceTopK = Math.max(1, config.ragSearchRagMaxSourceTopK)
+const retrievalProfileId = resolveRetrievalProfileId(config.ragProfileId, config.ragAdaptiveRetrieval)
+const adaptiveRetrievalEnabled = retrievalProfileId === "adaptive-retrieval"
 const retrievalProfile: RetrievalProfile = {
-  id: config.ragAdaptiveRetrieval ? "adaptive-retrieval" : config.ragProfileId,
+  id: retrievalProfileId,
   version: "1",
-  strategy: config.ragAdaptiveRetrieval ? "adaptive" : "fixed",
+  strategy: adaptiveRetrievalEnabled ? "adaptive" : "fixed",
   topK: {
     default: clampInt(config.ragDefaultTopK, 1, maxTopK),
     max: maxTopK,
@@ -66,7 +68,7 @@ const retrievalProfile: RetrievalProfile = {
     recencyBonus: 0.02
   },
   adaptive: {
-    enabled: config.ragAdaptiveRetrieval,
+    enabled: adaptiveRetrievalEnabled,
     minTopK: clampInt(config.ragDefaultSearchBenchmarkTopK, 1, searchRagMaxTopK),
     topGapExpandBelow: clampNumber(config.ragAdaptiveTopGapExpandBelow, 0, 1),
     overlapBoostAtLeast: clampNumber(config.ragAdaptiveOverlapBoostAtLeast, 0, 1),
@@ -76,7 +78,7 @@ const retrievalProfile: RetrievalProfile = {
 }
 const answerPolicy = answerPolicyById(config.ragDomainPolicyId)
 const ragProfile: RAGProfile = {
-  id: config.ragProfileId,
+  id: retrievalProfileId,
   version: "1",
   retrieval: retrievalProfile,
   answerPolicy

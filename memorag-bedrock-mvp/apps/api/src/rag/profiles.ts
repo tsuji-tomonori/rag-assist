@@ -1,5 +1,9 @@
+export const retrievalProfileIds = ["default", "adaptive-retrieval"] as const
+
+export type RetrievalProfileId = typeof retrievalProfileIds[number]
+
 export type RetrievalProfile = {
-  id: string
+  id: RetrievalProfileId
   version: string
   strategy: "fixed" | "adaptive"
   topK: {
@@ -88,6 +92,13 @@ export const swebokRequirementsAnswerPolicy: AnswerPolicy = {
     "ソフトウェア要求の分類",
     "ソフトウェア製品要求 ソフトウェアプロジェクト要求 機能要求 非機能要求 技術制約 サービス品質制約"
   ]
+}
+
+export function resolveRetrievalProfileId(id: string | undefined, adaptiveRetrievalEnabled = false): RetrievalProfileId {
+  const requested = id?.trim() || "default"
+  if (requested === "default") return adaptiveRetrievalEnabled ? "adaptive-retrieval" : "default"
+  if (requested === "adaptive-retrieval") return "adaptive-retrieval"
+  throw new Error(`Unknown RAG_PROFILE_ID: ${requested}`)
 }
 
 export function answerPolicyById(id: string | undefined): AnswerPolicy {

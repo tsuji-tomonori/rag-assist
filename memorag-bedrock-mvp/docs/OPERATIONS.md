@@ -68,7 +68,7 @@ task benchmark:sample
 | `DEFAULT_MEMORY_MODEL_ID` | memory card/clue生成モデル | `DEFAULT_MODEL_ID` |
 | `EMBEDDING_MODEL_ID` | 埋め込みモデル | `amazon.titan-embed-text-v2:0` |
 | `EMBEDDING_DIMENSIONS` | vector次元数 | `1024` |
-| `RAG_PROFILE_ID` | debug trace と benchmark に記録する RAG profile ID | `default` |
+| `RAG_PROFILE_ID` | retrieval profile selector。`default` / `adaptive-retrieval` 以外は起動時に失敗 | `default` |
 | `RAG_DOMAIN_POLICY_ID` | default answer policy。SWEBOK 固有 rule は `swebok-requirements-policy` で opt-in | `default-answer-policy` |
 | `RAG_ADAPTIVE_RETRIEVAL` | score 分布と overlap diagnostics に基づく adaptive retrieval を有効化 | `false` |
 | `MIN_RETRIEVAL_SCORE` | no-answer判定閾値 | `0.20` |
@@ -110,9 +110,9 @@ task benchmark:sample
 
 ## RAG profile / policy 運用
 
-RAG profile は `RAG_PROFILE_ID`、retrieval profile、answer policy の id / version を debug trace と benchmark artifact に記録する。通常 `/chat` の request / response schema には profile 選択 field を追加しない。profile 切り替えは内部 config、document / collection metadata、benchmark suite config で扱う。
+RAG profile は `RAG_PROFILE_ID`、retrieval profile、answer policy の id / version を debug trace と benchmark artifact に記録する。`RAG_PROFILE_ID=default` は固定 retrieval、`RAG_PROFILE_ID=adaptive-retrieval` は adaptive retrieval を選択する。未知の profile ID は default に fallback せず起動時に失敗する。通常 `/chat` の request / response schema には profile 選択 field を追加しない。profile 切り替えは内部 config、document / collection metadata、benchmark suite config で扱う。
 
-`RAG_ADAPTIVE_RETRIEVAL=true` は opt-in であり、default 互換を置き換えない。search diagnostics の `scoreDistribution`、`topGap`、`lexicalSemanticOverlap`、`adaptiveDecision` を見て、default profile との benchmark 比較を行う。adaptive の `effectiveMinScore` は RRF + rerank の combined score 用であり、no-answer 判定用の `MIN_RETRIEVAL_SCORE` は流用しない。悪化が見つかった場合は `RAG_ADAPTIVE_RETRIEVAL=false` に戻すだけで rollback できる。
+`RAG_ADAPTIVE_RETRIEVAL=true` は `RAG_PROFILE_ID=default` または未指定時に `adaptive-retrieval` を選ぶ互換 shortcut として扱う。search diagnostics の `scoreDistribution`、`topGap`、`lexicalSemanticOverlap`、`adaptiveDecision` を見て、default profile との benchmark 比較を行う。adaptive の `effectiveMinScore` は RRF + rerank の combined score 用であり、no-answer 判定用の `MIN_RETRIEVAL_SCORE` は流用しない。悪化が見つかった場合は `RAG_PROFILE_ID=default` かつ `RAG_ADAPTIVE_RETRIEVAL=false` に戻す。
 
 SWEBOK 要求分類向けの anchor、invalid answer pattern、検索 clue は `swebok-requirements-policy` に隔離する。default policy では `ソフトウェア要求の分類` などの固定語彙を自動注入しない。既存文書でこの policy を使う場合は、document metadata に `domainPolicy: "swebok-requirements"` などを付けて再インデックスする。
 
@@ -179,7 +179,7 @@ Cognito group 取得が一部ユーザーで失敗した場合、一覧取得は
 
 benchmark runner は summary と report に quality review を出力する。`BASELINE_SUMMARY=<過去のsummary.json>` を指定すると、`answerableAccuracy`、`retrievalRecallAt20`、`refusalPrecision`、`unsupportedSentenceRate`、`p95LatencyMs` などの劣化を閾値で検知する。検索 miss や期待語不足の failure から alias candidate も出力するため、`/admin/aliases` の draft 作成候補としてレビューできる。
 
-evaluator profile は summary JSON、results JSONL、Markdown report に id / version を記録する。未指定の dataset row は `default@1` として扱う。row の `evaluatorProfile` は no-answer 判定と retrieval recall K に反映される。baseline summary と current run の evaluator profile が異なる場合は既定で失敗し、`ALLOW_EVALUATOR_PROFILE_MISMATCH=1` を指定した場合だけ参考比較として続行する。profile mismatch の run は regression 判定の合格扱いにせず、比較条件が違うことを PR 本文や作業レポートに残す。
+evaluator profile は summary JSON、results JSONL、Markdown report に id / version を記録する。未指定の dataset row は suite-level の profile として扱う。未知の evaluator profile は default に fallback せず失敗する。row の `evaluatorProfile` は suite-level profile と同一の場合だけ許容し、異なる profile が混在する dataset は集計値の `recall@K` が曖昧になるため失敗させる。search benchmark の Markdown report は行ごとの `evaluator_profile` と `recall_k` を表示する。baseline summary と current run の evaluator profile が異なる場合は既定で失敗し、`ALLOW_EVALUATOR_PROFILE_MISMATCH=1` を指定した場合だけ参考比較として続行する。profile mismatch の run は regression 判定の合格扱いにせず、比較条件が違うことを PR 本文や作業レポートに残す。
 
 管理画面の性能テストは Step Functions + CodeBuild runner を使う。dataset は `BenchmarkBucket` の `datasets/agent/` と `datasets/search/`、成果物は `runs/<runId>/` に保存する。CDK は agent 用の `smoke-v1.jsonl`、`standard-v1.jsonl`、`clarification-smoke-v1.jsonl` と search 用の `smoke-v1.jsonl`、`standard-v1.jsonl` を deploy 時に配置する。benchmark の results / summary / report は `BenchmarkBucket` の `runs/<runId>/` に保存され、bucket 側では SSE-S3 を使う。CodeBuild project には customer managed KMS key を設定しており、CodeBuild 側の artifact 暗号化設定として利用する。Step Functions は CloudWatch Logs に `ALL` event を出力する。X-Ray tracing は trace 数に応じた追加コストを避けるため MVP では無効にし、必要になった時点で有効化を再検討する。production API を叩く runner の bearer token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から CodeBuild が自動取得する。管理画面の実行者が token を入力する必要はない。`RAG_GROUP_MANAGER` は benchmark run 起動用であり、runner API を直接呼ぶ外部運用 token は `BENCHMARK_RUNNER` service user へ移行する。agent mode runner は `/benchmark/query`、search mode runner は `/benchmark/search` を呼ぶ。
 

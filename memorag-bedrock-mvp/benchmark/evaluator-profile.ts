@@ -47,11 +47,22 @@ const profiles = new Map<string, EvaluatorProfile>([
 export function resolveEvaluatorProfile(idOrVersion?: string): EvaluatorProfile {
   if (!idOrVersion) return defaultEvaluatorProfile
   const normalized = idOrVersion.includes("@") ? idOrVersion : `${idOrVersion}@1`
-  return profiles.get(normalized) ?? defaultEvaluatorProfile
+  const profile = profiles.get(normalized)
+  if (!profile) throw new Error(`Unknown evaluator profile: ${idOrVersion}`)
+  return profile
 }
 
 export function profileKey(profile: Pick<EvaluatorProfile, "id" | "version">): string {
   return `${profile.id}@${profile.version}`
+}
+
+export function assertSuiteEvaluatorProfile(rowProfile: EvaluatorProfile, suiteProfile: EvaluatorProfile, rowId: string): void {
+  const rowKey = profileKey(rowProfile)
+  const suiteKey = profileKey(suiteProfile)
+  if (rowKey === suiteKey) return
+  throw new Error(
+    `Mixed evaluator profiles are not supported in one benchmark run: suite=${suiteKey}, row=${rowId} uses ${rowKey}`
+  )
 }
 
 export function assertComparableProfiles(current: EvaluatorProfile, baseline: unknown, allowMismatch: boolean): string | undefined {

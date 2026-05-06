@@ -5,7 +5,13 @@ import readline from "node:readline"
 import { fileURLToPath } from "node:url"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
-import { assertComparableProfiles, profileKey, resolveEvaluatorProfile, type EvaluatorProfile } from "./evaluator-profile.js"
+import {
+  assertComparableProfiles,
+  assertSuiteEvaluatorProfile,
+  profileKey,
+  resolveEvaluatorProfile,
+  type EvaluatorProfile
+} from "./evaluator-profile.js"
 
 type DatasetRow = {
   id?: string
@@ -300,6 +306,7 @@ for await (const line of rl) {
   if (!line.trim()) continue
   const row = JSON.parse(line) as DatasetRow
   const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
+  assertSuiteEvaluatorProfile(rowEvaluatorProfile, suiteEvaluatorProfile, row.id ?? row.question)
   const firstStartedAt = Date.now()
   const { status, body } = await runQuery(row)
   const initialLatencyMs = Date.now() - firstStartedAt

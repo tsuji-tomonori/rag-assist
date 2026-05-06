@@ -114,7 +114,7 @@ ALLOW_EVALUATOR_PROFILE_MISMATCH=0 \
 npm run start -w @memorag-mvp/benchmark
 ```
 
-summary JSON と Markdown report には `evaluatorProfile` が出力される。baseline と current の profile id / version が異なる場合は既定で失敗し、参考比較として扱う場合だけ `ALLOW_EVALUATOR_PROFILE_MISMATCH=1` を指定する。
+summary JSON と Markdown report には `evaluatorProfile` が出力される。baseline と current の profile id / version が異なる場合は既定で失敗し、参考比較として扱う場合だけ `ALLOW_EVALUATOR_PROFILE_MISMATCH=1` を指定する。未知の evaluator profile と suite-level と異なる row-level `evaluatorProfile` は、誤った `recall@K` 集計を避けるため失敗する。
 
 ## 確認観点
 
