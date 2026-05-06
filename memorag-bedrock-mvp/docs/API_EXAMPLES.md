@@ -363,7 +363,7 @@ curl -s http://localhost:8787/benchmark/search \
 ```bash
 curl -s http://localhost:8787/benchmark-suites "${AUTH_HEADER[@]}" | jq
 
-curl -s http://localhost:8787/benchmark-runs \
+curl -s -X POST http://localhost:8787/benchmark-runs \
   "${AUTH_HEADER[@]}" \
   -H 'Content-Type: application/json' \
   -d '{
