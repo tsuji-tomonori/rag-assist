@@ -413,7 +413,9 @@ function isTextMimeType(mimeType: string): boolean {
 
 function unextractableCorpusSkipReason(error: unknown): string | undefined {
   const message = error instanceof Error ? error.message : String(error)
-  return /did not contain extractable text/i.test(message) ? "no_extractable_text" : undefined
+  if (/did not contain extractable text/i.test(message)) return "no_extractable_text"
+  if (/PDF OCR fallback failed/i.test(message) && /Textract job did not finish within \d+ms/i.test(message)) return "ocr_timeout"
+  return undefined
 }
 
 function sha256(content: string | Buffer): string {
