@@ -325,13 +325,13 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
     if (requestUrl.endsWith("/benchmark-suites") && isGet(init)) return Promise.resolve(response({ suites: [
       { suiteId: "standard-agent-v1", label: "Agent standard", mode: "agent", datasetS3Key: "datasets/agent/standard-v1.jsonl", preset: "standard", defaultConcurrency: 1 },
-      { suiteId: "mmrag-docqa-v1", label: "MMRAG-DocQA", mode: "agent", datasetS3Key: "datasets/agent/mmrag-docqa-v1.jsonl", preset: "standard", defaultConcurrency: 1 }
+      { suiteId: "mmrag-docqa-v1", label: "MMRAG-DocQA", mode: "agent", datasetS3Key: "hf://datasets/yubo2333/MMLongBench-Doc", preset: "standard", defaultConcurrency: 1 }
     ] }))
     if (requestUrl.endsWith("/benchmark-runs") && isGet(init)) return Promise.resolve(response({ benchmarkRuns }))
     if (requestUrl.endsWith("/benchmark-runs") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}")) as { suiteId?: string; mode?: BenchmarkRun["mode"]; runner?: BenchmarkRun["runner"] }
       const suiteId = body.suiteId ?? "standard-agent-v1"
-      const datasetS3Key = suiteId === "mmrag-docqa-v1" ? "datasets/agent/mmrag-docqa-v1.jsonl" : "datasets/agent/standard-v1.jsonl"
+      const datasetS3Key = suiteId === "mmrag-docqa-v1" ? "hf://datasets/yubo2333/MMLongBench-Doc" : "datasets/agent/standard-v1.jsonl"
       const created = { runId: "bench-1", status: "queued", suiteId, mode: body.mode ?? "agent", runner: body.runner ?? "codebuild", datasetS3Key, createdBy: "user-1", createdAt: "2026-05-02T00:00:00.000Z", updatedAt: "2026-05-02T00:00:00.000Z", reportS3Key: "runs/bench-1/report.md", summaryS3Key: "runs/bench-1/summary.json", resultsS3Key: "runs/bench-1/results.jsonl" } as BenchmarkRun
       benchmarkRuns = [created, ...benchmarkRuns]
       return Promise.resolve(response(created))
@@ -784,7 +784,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(await screen.findByTitle("性能テスト"))
     expect(await screen.findByText("ジョブ起動")).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByLabelText("テスト種別"), "mmrag-docqa-v1")
-    expect(screen.getByLabelText("データセット")).toHaveValue("datasets/agent/mmrag-docqa-v1.jsonl")
+    expect(screen.getByLabelText("データセット")).toHaveValue("hf://datasets/yubo2333/MMLongBench-Doc")
     const benchmarkModelSelect = screen.getAllByLabelText("モデル")[1]
     expect(benchmarkModelSelect).toBeTruthy()
     await userEvent.selectOptions(benchmarkModelSelect as HTMLElement, "anthropic.claude-3-haiku-20240307-v1:0")

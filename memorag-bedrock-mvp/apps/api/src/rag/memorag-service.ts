@@ -135,7 +135,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
     suiteId: "mmrag-docqa-v1",
     label: "MMRAG-DocQA",
     mode: "agent",
-    datasetS3Key: "datasets/agent/mmrag-docqa-v1.jsonl",
+    datasetS3Key: "hf://datasets/yubo2333/MMLongBench-Doc",
     preset: "standard",
     defaultConcurrency: 1
   },
