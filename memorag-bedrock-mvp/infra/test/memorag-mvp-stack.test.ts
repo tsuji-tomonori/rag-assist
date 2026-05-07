@@ -230,7 +230,7 @@ test("implements the designed serverless resources", () => {
         Match.objectLike({ Name: "BENCHMARK_RUNS_TABLE_NAME" })
       ])
     }),
-    TimeoutInMinutes: 120
+    TimeoutInMinutes: 480
   })
   template.hasResourceProperties("AWS::IAM::Policy", {
     PolicyDocument: Match.objectLike({
@@ -290,6 +290,10 @@ test("implements the designed serverless resources", () => {
   const chatRunDefinition = JSON.stringify((chatRunStateMachine as any).Properties.DefinitionString)
   assert.match(chatRunDefinition, /ChatRunMarkFailedTask/)
   assert.match(chatRunDefinition, /States\.ALL/)
+  const benchmarkStateMachine = stateMachines.find((stateMachine: any) => JSON.stringify(stateMachine.Properties.DefinitionString).includes("BenchmarkStartCodeBuild"))
+  assert.ok(benchmarkStateMachine)
+  const benchmarkDefinition = JSON.stringify((benchmarkStateMachine as any).Properties.DefinitionString)
+  assert.match(benchmarkDefinition, /TimeoutSeconds\\":32400/)
   const documentIngestRunStateMachine = stateMachines.find((stateMachine: any) => JSON.stringify(stateMachine.Properties.DefinitionString).includes("DocumentIngestRunWorkerTask"))
   assert.ok(documentIngestRunStateMachine)
   const documentIngestRunDefinition = JSON.stringify((documentIngestRunStateMachine as any).Properties.DefinitionString)
