@@ -217,7 +217,8 @@ export const AliasScopeSchema = z.object({
   tenantId: z.string().optional(),
   department: z.string().optional(),
   source: z.string().optional(),
-  docType: z.string().optional()
+  docType: z.string().optional(),
+  benchmarkSuiteId: z.string().optional()
 })
 
 export const AliasDefinitionSchema = z.object({
@@ -350,6 +351,7 @@ export const SearchRequestSchema = z.object({
     department: z.string().optional(),
     source: z.string().optional(),
     docType: z.string().optional(),
+    benchmarkSuiteId: z.string().optional(),
     documentId: z.string().optional()
   }).optional()
 })
@@ -366,6 +368,7 @@ const BenchmarkSearchForbiddenUserGroups = new Set([
 ])
 
 export const BenchmarkSearchRequestSchema = SearchRequestSchema.extend({
+  benchmarkSuiteId: z.string().optional(),
   user: z.object({
     userId: z.string().min(1).max(160).optional().openapi({ example: "benchmark-user-1" }),
     groups: z.array(z.string().min(1).max(160)).max(20).optional().openapi({ example: ["GROUP_A"] })
@@ -457,6 +460,7 @@ export const DebugTraceSchema = z.object({
   isAnswerable: z.boolean(),
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
+  finalEvidence: z.array(CitationSchema).optional(),
   steps: z.array(DebugStepSchema)
 })
 
@@ -468,6 +472,7 @@ export const ChatResponseSchema = z.object({
   clarification: ClarificationSchema.optional(),
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
+  finalEvidence: z.array(CitationSchema).optional(),
   debug: DebugTraceSchema.optional()
 })
 
@@ -625,7 +630,8 @@ export const DebugTraceListResponseSchema = z.object({
 })
 
 export const BenchmarkQueryRequestSchema = ChatRequestSchema.extend({
-  id: z.string().optional()
+  id: z.string().optional(),
+  benchmarkSuiteId: z.string().optional()
 })
 
 export const BenchmarkQueryResponseSchema = ChatResponseSchema.extend({

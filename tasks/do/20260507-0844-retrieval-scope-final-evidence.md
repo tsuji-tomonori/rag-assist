@@ -1,8 +1,8 @@
 # retrieval scope と final evidence 出力整合
 
-保存先: `tasks/todo/20260507-0844-retrieval-scope-final-evidence.md`
+保存先: `tasks/do/20260507-0844-retrieval-scope-final-evidence.md`
 
-状態: todo
+状態: do
 
 ## 背景
 

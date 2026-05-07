@@ -99,6 +99,7 @@ type BenchmarkResponse = {
   }
   citations?: Citation[]
   retrieved?: Citation[]
+  finalEvidence?: Citation[]
   debug?: {
     runId?: string
     totalLatencyMs?: number
@@ -448,6 +449,7 @@ async function runQueryRequest(input: {
         minScore: input.minScore,
         strictGrounded: input.strictGrounded,
         useMemory: input.useMemory,
+        benchmarkSuiteId: benchmarkCorpusSuiteId,
         includeDebug: true
       })
     })
@@ -498,6 +500,7 @@ function evaluateRow(
   const answer = body.answer ?? ""
   const citations = body.citations ?? []
   const retrieved = body.retrieved ?? []
+  const finalEvidence = body.finalEvidence ?? citations
   const expectedContains = toArray(row.expectedContains ?? row.expectedAnswer ?? (expectedAnswerable ? row.expected : undefined))
   const expectedRegex = toArray(row.expectedRegex)
   const expectedFiles = toArray(row.expectedFiles ?? row.expectedFileNames)
@@ -556,28 +559,28 @@ function evaluateRow(
   if (citationHit === false) failureReasons.push("missing_citation")
 
   const expectedFileHit =
-    expectedFiles.length > 0 ? hasExpectedFileHit([...citations, ...retrieved], expectedFiles) : null
+    expectedFiles.length > 0 ? hasExpectedFileHit([...citations, ...finalEvidence], expectedFiles) : null
   if (expectedFileHit === false) failureReasons.push("expected_file_not_hit")
 
   const expectedDocumentHit =
-    expectedDocumentIds.length > 0 ? hasExpectedDocumentHit([...citations, ...retrieved], expectedDocumentIds) : null
+    expectedDocumentIds.length > 0 ? hasExpectedDocumentHit([...citations, ...finalEvidence], expectedDocumentIds) : null
   if (expectedDocumentHit === false) failureReasons.push("expected_document_not_hit")
 
   const expectedPageHit =
-    expectedPages.length > 0 ? hasExpectedPageHit([...citations, ...retrieved], expectedPages) : null
+    expectedPages.length > 0 ? hasExpectedPageHit([...citations, ...finalEvidence], expectedPages) : null
   if (expectedPageHit === false) failureReasons.push("expected_page_not_hit")
 
   const retrievalRecallAtK =
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
-      ? hasRetrievalRecallAtK([...retrieved, ...citations], expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
+      ? hasRetrievalRecallAtK(retrieved, expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
       : null
   if (retrievalRecallAtK === false) failureReasons.push(`retrieval_recall_at_${evaluatorProfile.retrieval.recallK}_miss`)
   const retrievalRecallAt20 =
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
-      ? hasRetrievalRecallAtK([...retrieved, ...citations], expectedFiles, expectedDocumentIds, 20)
+      ? hasRetrievalRecallAtK(retrieved, expectedFiles, expectedDocumentIds, 20)
       : null
 
-  const factSlotResult = evaluateFactSlots(row.expectedFactSlots ?? [], answer, [...citations, ...retrieved], expectedAnswerable)
+  const factSlotResult = evaluateFactSlots(row.expectedFactSlots ?? [], answer, [...citations, ...finalEvidence], expectedAnswerable)
   if (factSlotResult.coverage !== null && factSlotResult.coverage < 1) failureReasons.push("fact_slot_not_covered")
 
   const supportResult = evaluateUnsupportedSentences(body)
@@ -668,7 +671,7 @@ function evaluateFollowUp(
   const expectedFiles = toArray(expected.expectedFiles ?? expected.expectedFileNames)
   const expectedDocumentIds = toArray(expected.expectedDocumentIds)
   const citations = body.citations ?? []
-  const retrieved = body.retrieved ?? []
+  const finalEvidence = body.finalEvidence ?? citations
   const containsCorrect =
     expectedAnswerable && expectedContains.length > 0
       ? expectedContains.every((item) => normalize(answer).includes(normalize(item)))
@@ -679,7 +682,7 @@ function evaluateFollowUp(
       : true
   const fileHit =
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
-      ? hasRetrievalRecallAtK([...citations, ...retrieved], expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
+      ? hasRetrievalRecallAtK([...citations, ...finalEvidence], expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
       : true
   const httpOk = followUp.status >= 200 && followUp.status < 300
   const passed = httpOk && responseTypeCorrect && containsCorrect && regexCorrect && fileHit
@@ -1086,13 +1089,13 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
     case "citation_hit_rate":
       return "回答可能な行で、少なくとも 1 件の citation を返した割合。"
     case "expected_file_hit_rate":
-      return "期待ファイルまたは期待 document が citation/retrieved に含まれた割合。"
+      return "期待ファイルまたは期待 document が citation/finalEvidence に含まれた割合。"
     case "retrieval_recall_at_k":
       return "evaluator profile の retrieval.recallK で期待ファイルまたは期待 document が含まれた割合。"
     case "retrieval_recall_at_20":
-      return "上位 20 件の retrieved/citation に期待ファイルまたは期待 document が含まれた割合。"
+      return "上位 20 件の raw retrieved に期待ファイルまたは期待 document が含まれた割合。"
     case "expected_page_hit_rate":
-      return "期待 page が citation/retrieved に含まれた割合。"
+      return "期待 page が citation/finalEvidence に含まれた割合。"
     case "fact_slot_coverage":
       return "dataset の expectedFactSlots のうち、回答文または取得根拠で支持できた fact slot の平均割合。"
     case "refusal_precision":
@@ -1229,10 +1232,10 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("unsupported_answer_rate", summary.metrics.unsupportedAnswerRate, unanswerableRows.filter((row) => row.evaluation.unsupportedAnswer).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
     metricRateRow("answer_contains_rate", summary.metrics.answerContainsRate, containsEvaluated.filter((row) => row.evaluation.answerContainsExpected === true).length, containsEvaluated.length, "`expectedContains` / `expectedAnswer` を持つ answerable 行の期待語句一致率。"),
     metricRateRow("citation_hit_rate", summary.metrics.citationHitRate, citationEvaluated.filter((row) => row.evaluation.citationHit === true).length, citationEvaluated.length, "answerable 行で citation が返った割合。"),
-    metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを評価。"),
-    metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を evaluator profile の retrieval.recallK で評価。"),
-    metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を top 20 retrieved/citation で評価する後方互換指標。"),
-    metricRateRow("expected_page_hit_rate", summary.metrics.expectedPageHitRate, pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length, pageEvaluated.length, "`expectedPages` がある行だけを評価。"),
+    metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを citation/finalEvidence で評価。"),
+    metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
+    metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の top 20 で評価する後方互換指標。"),
+    metricRateRow("expected_page_hit_rate", summary.metrics.expectedPageHitRate, pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length, pageEvaluated.length, "`expectedPages` がある行だけを citation/finalEvidence で評価。"),
     metricNullableRow("fact_slot_coverage", formatRate(summary.metrics.factSlotCoverage), summary.metrics.factSlotCoverage, `${factSlotEvaluated.length} rows with expectedFactSlots`, "`expectedFactSlots` がある行の平均 coverage。"),
     metricRateRow("refusal_precision", summary.metrics.refusalPrecision, refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length, "実際に refusal した行のうち、期待値も unanswerable/refusal だった割合。0.0% は answer-only dataset での false positive を示す。"),
     metricRateRow("refusal_recall", summary.metrics.refusalRecall, unanswerableRows.filter((row) => row.evaluation.refused).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),

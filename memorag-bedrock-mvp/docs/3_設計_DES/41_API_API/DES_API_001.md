@@ -97,11 +97,28 @@
       "text": "再インデックスは管理者が承認後に実行します。"
     }
   ],
-  "retrieved": []
+  "finalEvidence": [
+    {
+      "documentId": "doc-001",
+      "fileName": "operations.md",
+      "chunkId": "chunk-003",
+      "score": 0.92,
+      "text": "再インデックスは管理者が承認後に実行します。"
+    }
+  ],
+  "retrieved": [
+    {
+      "documentId": "doc-001",
+      "fileName": "operations.md",
+      "chunkId": "chunk-003",
+      "score": 0.92,
+      "text": "再インデックスは管理者が承認後に実行します。"
+    }
+  ]
 }
 ```
 
-`responseType` は後方互換のため optional field として扱う。通常回答は `answer`、資料から回答できない場合は `refusal`、回答前に対象確認が必要な場合は `clarification` を返す。`clarification` の場合は `isAnswerable=false`、`needsClarification=true`、`clarification.options[].grounding` に文書または memory/evidence 由来の根拠を入れ、`citations` と `retrieved` は空配列にする。
+`responseType` は後方互換のため optional field として扱う。通常回答は `answer`、資料から回答できない場合は `refusal`、回答前に対象確認が必要な場合は `clarification` を返す。`retrieved` は検索直後の raw retrieval、`finalEvidence` は rerank 後に回答生成へ渡した根拠候補であり、既存 client 互換の optional field とする。`clarification` の場合は `isAnswerable=false`、`needsClarification=true`、`clarification.options[].grounding` に文書または memory/evidence 由来の根拠を入れ、`citations`、`retrieved`、`finalEvidence` は空配列にする。
 
 ## `POST /chat-runs`
 
