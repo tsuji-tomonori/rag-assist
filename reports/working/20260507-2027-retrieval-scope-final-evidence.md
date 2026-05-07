@@ -17,7 +17,7 @@
 | R3 | raw retrieval と final evidence を区別できる | 高 | 対応 |
 | R4 | metric が raw / final evidence のどちらを評価しているか docs / report から読める | 高 | 対応 |
 | R5 | 関連 API / benchmark tests と `git diff --check` を実行する | 高 | 対応 |
-| R6 | task md と作業レポートを残す | 高 | 対応中 |
+| R6 | task md と作業レポートを残す | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -29,7 +29,7 @@
 
 ## 4. 実施した作業
 
-- task md を `tasks/todo/` から `tasks/do/` へ移動し、状態を `do` に更新した。
+- task md を `tasks/todo/` から `tasks/do/` へ移動し、PR コメント後に `tasks/done/` へ移動して状態を `done` に更新した。
 - search filter / vector filter / alias scope に `benchmarkSuiteId` を追加した。
 - benchmark query runner と search runner が `BENCHMARK_CORPUS_SUITE_ID` を API に渡すようにした。
 - `/benchmark/query` は `source=benchmark-runner`、`docType=benchmark-corpus`、`benchmarkSuiteId` を search filter に設定するようにした。
@@ -47,7 +47,7 @@
 | `memorag-bedrock-mvp/benchmark/run.ts` | TypeScript | metric 入力を raw retrieval と final evidence で分離 | R4 |
 | `memorag-bedrock-mvp/benchmark/search-run.ts` | TypeScript | search benchmark runner から corpus suite を渡す | R1 |
 | `memorag-bedrock-mvp/docs/.../REQ_FUNCTIONAL_019.md` ほか | Markdown | metric / API / operations の説明更新 | R4 |
-| `tasks/do/20260507-0844-retrieval-scope-final-evidence.md` | Markdown | task 状態更新 | R6 |
+| `tasks/done/20260507-0844-retrieval-scope-final-evidence.md` | Markdown | task 状態更新 | R6 |
 
 ## 6. 検証
 
@@ -66,7 +66,7 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---|---|
-| 指示網羅性 | 4.5 / 5 | todo の受け入れ条件に沿って実装と検証を実施した。PR 作成後の task done 化は次工程。 |
+| 指示網羅性 | 4.5 / 5 | todo の受け入れ条件に沿って実装、検証、PR コメント、task done 化を実施した。 |
 | 制約遵守 | 4.5 / 5 | Worktree Task PR Flow、docs / security / test selection のルールに沿った。 |
 | 成果物品質 | 4.5 / 5 | scope filter と metric contract を分離し、既存互換の optional field にした。 |
 | 説明責任 | 4.5 / 5 | docs と report に未実施 benchmark smoke と評価対象の違いを明記した。 |
@@ -78,6 +78,6 @@
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: PR 作成後の受け入れ条件確認コメント、task の `done` 移動、完了 commit は次工程で実施する。
+- 未対応: `task benchmark:sample` は未実施。
 - 制約: 統合 benchmark smoke はローカル API server 前提のため未実施。
 - リスク: `finalEvidence` は optional response field なので既存 client は壊れない想定だが、UI が将来表示する場合は明示的な権限と表示範囲の確認が必要。
