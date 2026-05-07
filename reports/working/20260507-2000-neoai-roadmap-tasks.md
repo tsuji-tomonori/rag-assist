@@ -31,7 +31,7 @@
 
 - `skills/worktree-task-pr-flow/SKILL.md`、`skills/task-file-writer/SKILL.md`、`skills/post-task-fit-report/SKILL.md`、`skills/implementation-test-selector/SKILL.md` を確認した。
 - 専用 worktree `codex/neoai-roadmap-tasks` を `origin/main` から作成した。
-- 整理作業自体の task を `tasks/do/20260507-2000-neoai-roadmap-tasking.md` に作成した。
+- 整理作業自体の task を `tasks/do/20260507-2000-neoai-roadmap-tasking.md` に作成し、PR コメント後に `tasks/done/20260507-2000-neoai-roadmap-tasking.md` へ移動した。
 - ユーザー提示の内容を 6 件の future task に分解して `tasks/todo/` に追加した。
 - `git diff --check` で Markdown 差分の基本検証を実施した。
 
@@ -45,7 +45,7 @@
 | `tasks/todo/20260507-2000-assistant-profile-config.md` | Markdown task | Assistant Profile を profile as data として導入 | 業務アシスタント管理に対応 |
 | `tasks/todo/20260507-2000-hitl-review-feedback-loop.md` | Markdown task | HITL review feedback loop 強化 | 運用監査・人手改善ループに対応 |
 | `tasks/todo/20260507-2000-advanced-retrieval-gated-adoption.md` | Markdown task | 高度検索技術の評価駆動導入 gate | GraphRAG / reranker 等を後回しにする判断に対応 |
-| `tasks/do/20260507-2000-neoai-roadmap-tasking.md` | Markdown task | 今回の整理作業自体の task | Worktree Task PR Flow に対応 |
+| `tasks/done/20260507-2000-neoai-roadmap-tasking.md` | Markdown task | 今回の整理作業自体の task | Worktree Task PR Flow に対応 |
 
 ## 6. 指示へのfit評価
 
