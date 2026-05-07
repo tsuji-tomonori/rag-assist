@@ -5704,7 +5704,7 @@
             "Value": "tsuji-tomonori/rag-assist"
           }
         ],
-        "TimeoutInMinutes": 120
+        "TimeoutInMinutes": 480
       }
     },
     "BenchmarkStateMachineLogGroup6D80BBB2": {
@@ -5878,7 +5878,7 @@
               {
                 "Ref": "BenchmarkRunsTableD0841636"
               },
-              "\",\"Key\":{\"runId\":{\"S.$\":\"$.runId\"}},\"UpdateExpression\":\"SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, #error = :error\",\"ExpressionAttributeNames\":{\"#status\":\"status\",\"#error\":\"error\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"failed\"},\":completedAt\":{\"S.$\":\"$$.State.EnteredTime\"},\":error\":{\"S.$\":\"States.JsonToString($.errorInfo)\"}}}}},\"TimeoutSeconds\":10800}"
+              "\",\"Key\":{\"runId\":{\"S.$\":\"$.runId\"}},\"UpdateExpression\":\"SET #status = :status, completedAt = :completedAt, updatedAt = :completedAt, #error = :error\",\"ExpressionAttributeNames\":{\"#status\":\"status\",\"#error\":\"error\"},\"ExpressionAttributeValues\":{\":status\":{\"S\":\"failed\"},\":completedAt\":{\"S.$\":\"$$.State.EnteredTime\"},\":error\":{\"S.$\":\"States.JsonToString($.errorInfo)\"}}}}},\"TimeoutSeconds\":32400}"
             ]
           ]
         },

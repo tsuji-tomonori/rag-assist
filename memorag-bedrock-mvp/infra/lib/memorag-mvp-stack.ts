@@ -44,6 +44,9 @@ const defaultResourceTags = {
   Repository: "tsuji-tomonori/rag-assist"
 } as const
 
+const benchmarkCodeBuildTimeout = Duration.hours(8)
+const benchmarkStateMachineTimeout = Duration.hours(9)
+
 export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
     super(scope, id, props)
@@ -612,7 +615,7 @@ export class MemoRagMvpStack extends Stack {
           BENCHMARK_RUNS_TABLE_NAME: { value: benchmarkRunsTable.tableName }
         }
       },
-      timeout: Duration.hours(2),
+      timeout: benchmarkCodeBuildTimeout,
       logging: {
         cloudWatch: {
           logGroup: new logs.LogGroup(this, "BenchmarkProjectLogGroup", {
@@ -780,7 +783,7 @@ export class MemoRagMvpStack extends Stack {
         destination: benchmarkStateMachineLogGroup,
         level: sfn.LogLevel.ALL
       },
-      timeout: Duration.hours(3)
+      timeout: benchmarkStateMachineTimeout
     })
     NagSuppressions.addResourceSuppressions(
       benchmarkStateMachine,
