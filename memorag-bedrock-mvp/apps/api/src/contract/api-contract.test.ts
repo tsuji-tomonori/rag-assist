@@ -496,7 +496,7 @@ test("benchmark operators can use benchmark run administration without direct qu
   }
 })
 
-test("benchmark search uses dataset user groups for ACL evaluation", async () => {
+test("benchmark search does not allow dataset user overrides", async () => {
   const setupPort = 20800 + Math.floor(Math.random() * 1000)
   const runnerPort = 21800 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-benchmark-search-acl-"))
@@ -538,7 +538,7 @@ test("benchmark search uses dataset user groups for ACL evaluation", async () =>
         user: { userId: "dataset-user-a", groups: ["GROUP_A"] }
       })
     })
-    assert.equal(systemAdminOverride.status, 403)
+    assert.equal(systemAdminOverride.status, 400)
   } finally {
     await stopServer(setupServer)
   }
@@ -571,9 +571,7 @@ test("benchmark search uses dataset user groups for ACL evaluation", async () =>
         user: { userId: "dataset-user-a", groups: ["GROUP_A"] }
       })
     })
-    assert.equal(groupA.status, 200)
-    const groupABody = (await groupA.json()) as { results: Array<{ fileName: string }> }
-    assert.ok(groupABody.results.some((result) => result.fileName === "group-a-secret.md"))
+    assert.equal(groupA.status, 400)
 
     const groupB = await fetch(`http://127.0.0.1:${runnerPort}/benchmark/search`, {
       method: "POST",
@@ -586,9 +584,7 @@ test("benchmark search uses dataset user groups for ACL evaluation", async () =>
         user: { userId: "dataset-user-b", groups: ["GROUP_B"] }
       })
     })
-    assert.equal(groupB.status, 200)
-    const groupBBody = (await groupB.json()) as { results: Array<{ fileName: string }> }
-    assert.equal(groupBBody.results.some((result) => result.fileName === "group-a-secret.md"), false)
+    assert.equal(groupB.status, 400)
 
     const privilegedSubject = await fetch(`http://127.0.0.1:${runnerPort}/benchmark/search`, {
       method: "POST",
