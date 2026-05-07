@@ -1,6 +1,6 @@
 # REQ_PROJECT_001 の原子要求分割
 
-- 状態: do
+- 状態: done
 - 作成日: 2026-05-07
 - 対象ブランチ: `codex/split-project-requirements`
 
