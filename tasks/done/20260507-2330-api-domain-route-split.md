@@ -61,6 +61,12 @@ API 領域ごとに route 定義を分割し、変更競合をさらに減らす
 - 大きな機械移動により、route 登録順序や helper scope が意図せず変わる可能性がある。
 - 静的 policy test の source 抽出が file 分割に追従できないと、認可回帰検出が弱くなる。
 
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/181
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
+
 ## 状態
 
-do
+done
