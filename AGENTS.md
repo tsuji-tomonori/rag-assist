@@ -28,6 +28,8 @@
 - 例外: 純粋な質問回答、計画のみの依頼、ユーザーが明示的に worktree / commit / PR を行わないよう指示した場合は、実施範囲に合わせてこの workflow の実行ステップを調整し、理由を報告する。
 - 上記の依頼を agent が守るよう `skills` や `AGENTS.md` で設定されているか確認し、不足時に対応する依頼も同じ workflow の対象として扱う。
 - 必読: `skills/worktree-task-pr-flow/SKILL.md`
+- GitHub Apps / PR 作成・更新・コメントを行う場合は `skills/github-apps-pr-operator/SKILL.md` も必読とし、GitHub Apps を優先する。
+- Taskfile のコマンド実行、Taskfile 経由の検証、dev server / smoke / benchmark / docs check を扱う場合は `skills/taskfile-command-runner/SKILL.md` も必読とする。
 - 作業ブランチは原則 `origin/main` から専用 worktree として作成し、元 worktree の未追跡・未コミット変更を混ぜない。
 - 作業前に `tasks/todo/`, `tasks/do/`, `tasks/done/` を確認または作成し、着手する task md を `tasks/do/` に置く。
 - task md には作業前に「受け入れ条件」（ユーザー表記が「受け例条件」の場合も同義として扱う）を明記する。
@@ -47,6 +49,7 @@
 ## Pull Request Title and Comment
 - 対象: Pull Request、PR、PR タイトル、PR 本文、PR コメント、レビューコメント、`gh pr create`。
 - 必読: `skills/japanese-pr-title-comment/SKILL.md`
+- GitHub Apps 操作を伴う場合は `skills/github-apps-pr-operator/SKILL.md` も必読とし、通常の PR 作成・更新・top-level comment ではユーザー確認を追加で求めず workflow を進める。
 - PR タイトル、PR 本文、PR コメント、レビューコメントは日本語で書く。
 - ブランチ名、ファイルパス、コマンド、API 名、型名、関数名、issue 番号は原文維持可。
 - PR 本文は `.github/pull_request_template.md` の見出しを優先する。
@@ -78,8 +81,17 @@
 ## Implementation Test Selection
 - 対象: 実装、修正、リファクタ、設定変更、ドキュメント変更の完了前。
 - 必読: `skills/implementation-test-selector/SKILL.md`
+- 検証コマンドの実行・再実行・権限委譲・未実施理由の報告には `skills/repository-test-runner/SKILL.md` も適用する。
+- Taskfile 経由の検証コマンドには `skills/taskfile-command-runner/SKILL.md` も適用する。
 - `git diff --name-only` などで変更範囲を確認し、最小十分な lint、typecheck、test、build、smoke、docs check を選ぶ。
 - 実行できる検証は実行する。省略した場合は、コマンド名と理由を最終回答または作業レポートに記載する。
+
+## Permission Delegation and Confirmation Suppression
+- 対象: GitHub Apps 操作、Taskfile コマンド、テスト・lint・typecheck・build・docs check・smoke・benchmark の実行。
+- 必読: `skills/github-apps-pr-operator/SKILL.md`、`skills/taskfile-command-runner/SKILL.md`、`skills/repository-test-runner/SKILL.md`
+- 承認済み command prefix がある通常の検証・PR workflow 操作では、追加のユーザー確認を求めずに進める。
+- 必須コマンドが sandbox、network、port、service 権限などで失敗した場合は、`require_escalated` と再利用可能な `prefix_rule` を使って再実行を要求し、確認回数を抑える。
+- 破壊的削除、履歴改変、PR merge/close、deploy/release/bootstrap、production/external state を変更する操作は、確認抑制の対象外とする。
 
 ## Security Access-Control Review
 - 対象: API route、middleware、認証・認可、RBAC、所有者境界、管理 API、外部公開設定、機微データを返す schema/store の追加・変更。

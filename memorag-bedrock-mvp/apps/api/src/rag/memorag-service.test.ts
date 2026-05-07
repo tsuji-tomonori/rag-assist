@@ -8,6 +8,8 @@ import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
 import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
+import { LocalDocumentIngestRunEventStore } from "../adapters/local-document-ingest-run-event-store.js"
+import { LocalDocumentIngestRunStore } from "../adapters/local-document-ingest-run-store.js"
 import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
@@ -341,6 +343,30 @@ test("asynchronous chat run stores debug trace by reference", async () => {
   assert.equal(typeof (final.data as Record<string, unknown>).debugRunId, "string")
   assert.equal((final.data as Record<string, unknown>).debug, undefined)
   assert.ok(await service.getDebugRun(completed.debugRunId ?? ""))
+})
+
+test("service executes asynchronous document ingest runs from uploaded object", async () => {
+  const { service, deps } = await createService()
+  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  await deps.objectStore.putBytes("uploads/documents/user-1/handbook.txt", Buffer.from("非同期取り込みはS3 upload sessionからworkerで実行します。"), "text/plain")
+
+  const started = await service.startDocumentIngestRun({
+    uploadId: "upload-1",
+    objectKey: "uploads/documents/user-1/handbook.txt",
+    purpose: "document",
+    fileName: "handbook.txt",
+    mimeType: "text/plain",
+    skipMemory: true
+  }, user)
+
+  const completed = await service.executeDocumentIngestRun(started.runId)
+  assert.equal(completed.status, "succeeded")
+  assert.equal(completed.manifest?.fileName, "handbook.txt")
+  assert.equal(completed.documentId, completed.manifest?.documentId)
+
+  const events = await deps.documentIngestRunEventStore.listAfter(started.runId, 0)
+  assert.deepEqual(events.map((event) => event.type), ["status", "status", "final"])
+  assert.equal(events.at(-1)?.stage, "done")
 })
 
 test("service lists all Cognito directory users in the managed user ledger", async () => {
@@ -772,12 +798,14 @@ async function createService(options: {
   const deps = {
     objectStore: {
       putText: (...args: Parameters<LocalObjectStore["putText"]>) => baseObjectStore.putText(...args),
+      putBytes: (...args: Parameters<LocalObjectStore["putBytes"]>) => baseObjectStore.putBytes(...args),
       getText: async (key: string) => {
         if (options.objectGetError && options.objectGetErrorPrefix && key.startsWith(options.objectGetErrorPrefix)) {
           throw options.objectGetError
         }
         return baseObjectStore.getText(key)
       },
+      getBytes: (...args: Parameters<LocalObjectStore["getBytes"]>) => baseObjectStore.getBytes(...args),
       deleteObject: (...args: Parameters<LocalObjectStore["deleteObject"]>) => baseObjectStore.deleteObject(...args),
       listKeys: (...args: Parameters<LocalObjectStore["listKeys"]>) => baseObjectStore.listKeys(...args)
     },
@@ -799,6 +827,8 @@ async function createService(options: {
     benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
+    documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
+    documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
     userDirectory: options.userDirectory
   } as unknown as Dependencies
   return { service: new MemoRagService(deps), dataDir, deps }

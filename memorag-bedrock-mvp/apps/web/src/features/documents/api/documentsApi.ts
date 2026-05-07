@@ -23,6 +23,14 @@ type UploadSession = {
   requiresAuth: boolean
 }
 
+type DocumentIngestRun = {
+  runId: string
+  status: "queued" | "running" | "succeeded" | "failed" | "cancelled"
+  eventsPath?: string
+  manifest?: DocumentManifest
+  error?: string
+}
+
 export async function createDocumentUpload(input: {
   fileName: string
   mimeType?: string
@@ -38,6 +46,20 @@ export async function ingestUploadedDocument(uploadId: string, input: {
   embeddingModelId?: string
 }): Promise<DocumentManifest> {
   return post<DocumentManifest>(`/documents/uploads/${encodeURIComponent(uploadId)}/ingest`, input)
+}
+
+export async function startDocumentIngestRun(input: {
+  uploadId: string
+  fileName: string
+  mimeType?: string
+  memoryModelId?: string
+  embeddingModelId?: string
+}): Promise<DocumentIngestRun> {
+  return post<DocumentIngestRun>("/document-ingest-runs", input)
+}
+
+export async function getDocumentIngestRun(runId: string): Promise<DocumentIngestRun> {
+  return get<DocumentIngestRun>(`/document-ingest-runs/${encodeURIComponent(runId)}`)
 }
 
 export async function uploadDocumentFile(input: {
@@ -61,12 +83,30 @@ export async function uploadDocumentFile(input: {
     body: input.file
   })
   if (!uploadResponse.ok) throw new Error(await uploadResponse.text())
-  return ingestUploadedDocument(upload.uploadId, {
+  const run = await startDocumentIngestRun({
+    uploadId: upload.uploadId,
     fileName: input.file.name,
     mimeType,
     memoryModelId: input.memoryModelId,
     embeddingModelId: input.embeddingModelId
   })
+  return waitForDocumentIngestRun(run)
+}
+
+async function waitForDocumentIngestRun(initialRun: DocumentIngestRun): Promise<DocumentManifest> {
+  let run = initialRun
+  const deadline = Date.now() + 15 * 60 * 1000
+  while (Date.now() < deadline) {
+    if (run.status === "succeeded" && run.manifest) return run.manifest
+    if (run.status === "failed" || run.status === "cancelled") throw new Error(run.error ?? `document ingest run ${run.status}`)
+    await sleep(1000)
+    run = await getDocumentIngestRun(run.runId)
+  }
+  throw new Error("document ingest run timed out")
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export async function listDocuments(): Promise<DocumentManifest[]> {

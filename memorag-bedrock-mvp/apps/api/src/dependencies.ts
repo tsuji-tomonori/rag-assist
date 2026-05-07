@@ -23,6 +23,12 @@ import type { ChatRunStore } from "./adapters/chat-run-store.js"
 import { DynamoDbChatRunEventStore } from "./adapters/dynamodb-chat-run-event-store.js"
 import { LocalChatRunEventStore } from "./adapters/local-chat-run-event-store.js"
 import type { ChatRunEventStore } from "./adapters/chat-run-event-store.js"
+import { DynamoDbDocumentIngestRunStore } from "./adapters/dynamodb-document-ingest-run-store.js"
+import { LocalDocumentIngestRunStore } from "./adapters/local-document-ingest-run-store.js"
+import type { DocumentIngestRunStore } from "./adapters/document-ingest-run-store.js"
+import { DynamoDbDocumentIngestRunEventStore } from "./adapters/dynamodb-document-ingest-run-event-store.js"
+import { LocalDocumentIngestRunEventStore } from "./adapters/local-document-ingest-run-event-store.js"
+import type { DocumentIngestRunEventStore } from "./adapters/document-ingest-run-event-store.js"
 import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
 
 export type Dependencies = {
@@ -35,6 +41,8 @@ export type Dependencies = {
   benchmarkRunStore: BenchmarkRunStore
   chatRunStore: ChatRunStore
   chatRunEventStore: ChatRunEventStore
+  documentIngestRunStore: DocumentIngestRunStore
+  documentIngestRunEventStore: DocumentIngestRunEventStore
   userDirectory?: UserDirectory
 }
 
@@ -71,8 +79,14 @@ export function createDependencies(): Dependencies {
   const chatRunEventStore = config.useLocalChatRunStore
     ? new LocalChatRunEventStore(config.localDataDir)
     : new DynamoDbChatRunEventStore(config.chatRunEventsTableName)
+  const documentIngestRunStore = config.useLocalDocumentIngestRunStore
+    ? new LocalDocumentIngestRunStore(config.localDataDir)
+    : new DynamoDbDocumentIngestRunStore(config.documentIngestRunsTableName)
+  const documentIngestRunEventStore = config.useLocalDocumentIngestRunStore
+    ? new LocalDocumentIngestRunEventStore(config.localDataDir)
+    : new DynamoDbDocumentIngestRunEventStore(config.documentIngestRunEventsTableName)
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, userDirectory }
   return cached
 }

@@ -101,6 +101,7 @@ test("search runner seeds benchmark corpus before search rows when configured", 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
     assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), ["GET /documents", "DELETE /documents/stale-seed", "POST /documents", "POST /benchmark/search"])
     assert.equal((calls[2]?.body as { metadata?: { benchmarkSuiteId?: string } }).metadata?.benchmarkSuiteId, "standard-agent-v1")
+    assert.equal((calls[3]?.body as { benchmarkSuiteId?: string }).benchmarkSuiteId, "standard-agent-v1")
     const summary = readSummary(paths.summary)
     assert.equal(summary.total, 1)
     assert.equal(summary.failures.length, 0)

@@ -284,7 +284,7 @@ test("implements the designed serverless resources", () => {
   })
   const stateMachines = Object.values(template.toJSON().Resources ?? {})
     .filter((resource: any) => resource.Type === "AWS::StepFunctions::StateMachine")
-  assert.equal(stateMachines.length, 2)
+  assert.equal(stateMachines.length, 3)
   const chatRunStateMachine = stateMachines.find((stateMachine: any) => JSON.stringify(stateMachine.Properties.DefinitionString).includes("ChatRunWorkerTask"))
   assert.ok(chatRunStateMachine)
   const chatRunDefinition = JSON.stringify((chatRunStateMachine as any).Properties.DefinitionString)
@@ -294,6 +294,11 @@ test("implements the designed serverless resources", () => {
   assert.ok(benchmarkStateMachine)
   const benchmarkDefinition = JSON.stringify((benchmarkStateMachine as any).Properties.DefinitionString)
   assert.match(benchmarkDefinition, /TimeoutSeconds\\":32400/)
+  const documentIngestRunStateMachine = stateMachines.find((stateMachine: any) => JSON.stringify(stateMachine.Properties.DefinitionString).includes("DocumentIngestRunWorkerTask"))
+  assert.ok(documentIngestRunStateMachine)
+  const documentIngestRunDefinition = JSON.stringify((documentIngestRunStateMachine as any).Properties.DefinitionString)
+  assert.match(documentIngestRunDefinition, /DocumentIngestRunMarkFailedTask/)
+  assert.match(documentIngestRunDefinition, /States\.ALL/)
   for (const stateMachine of stateMachines) {
     assert.equal((stateMachine as any).Properties.TracingConfiguration, undefined)
   }

@@ -8,7 +8,7 @@ import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
 import type { ChatInput, QaGraphResult } from "../agent/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentManifest, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -39,6 +39,18 @@ type IngestInput = {
   skipMemory?: boolean
   structuredBlocks?: StructuredBlock[]
   sourceExtractorVersion?: string
+}
+
+type StartDocumentIngestRunInput = {
+  uploadId: string
+  objectKey: string
+  purpose: "document" | "benchmarkSeed"
+  fileName: string
+  mimeType?: string
+  metadata?: Record<string, JsonValue>
+  embeddingModelId?: string
+  memoryModelId?: string
+  skipMemory?: boolean
 }
 
 type MemoryJson = {
@@ -883,6 +895,146 @@ export class MemoRagService {
     })
   }
 
+  async startDocumentIngestRun(input: StartDocumentIngestRunInput, user: AppUser): Promise<{ runId: string; status: DocumentIngestRun["status"]; eventsPath: string }> {
+    const now = new Date().toISOString()
+    const runId = createDocumentIngestRunId(now)
+    const ttl = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
+    const run: DocumentIngestRun = {
+      runId,
+      status: "queued",
+      createdBy: user.userId,
+      userEmail: user.email,
+      userGroups: user.cognitoGroups,
+      uploadId: input.uploadId,
+      objectKey: input.objectKey,
+      purpose: input.purpose,
+      fileName: input.fileName,
+      mimeType: input.mimeType,
+      metadata: input.metadata,
+      embeddingModelId: input.embeddingModelId,
+      memoryModelId: input.memoryModelId,
+      skipMemory: input.skipMemory,
+      createdAt: now,
+      updatedAt: now,
+      ttl
+    }
+
+    await this.deps.documentIngestRunStore.create(run)
+    await this.deps.documentIngestRunEventStore.append({
+      runId,
+      type: "status",
+      stage: "queued",
+      message: "文書取り込みを受け付けました",
+      data: { status: "queued" },
+      ttl
+    })
+
+    if (config.documentIngestRunStateMachineArn) {
+      try {
+        await this.startDocumentIngestRunExecution(runId)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        await this.markDocumentIngestRunFailed(runId, `StartExecution failed: ${message}`)
+        throw err
+      }
+    } else {
+      void this.executeDocumentIngestRun(runId).catch(() => undefined)
+    }
+
+    return { runId, status: run.status, eventsPath: `/document-ingest-runs/${encodeURIComponent(runId)}/events` }
+  }
+
+  async executeDocumentIngestRun(runId: string): Promise<DocumentIngestRun> {
+    const run = await this.deps.documentIngestRunStore.get(runId)
+    if (!run) throw new Error(`Document ingest run not found: ${runId}`)
+    const ttl = run.ttl
+    const startedAt = new Date().toISOString()
+    await this.deps.documentIngestRunStore.update(runId, { status: "running", startedAt, updatedAt: startedAt })
+    await this.deps.documentIngestRunEventStore.append({
+      runId,
+      type: "status",
+      stage: "running",
+      message: "文書取り込みを開始しました",
+      data: { status: "running" },
+      ttl
+    })
+
+    try {
+      const contentBytes = await this.deps.objectStore.getBytes(run.objectKey)
+      if (contentBytes.length === 0) throw new Error("Uploaded object is empty")
+      const sourceS3Object = config.docsBucketName
+        ? { bucketName: config.docsBucketName, key: run.objectKey }
+        : undefined
+      const manifest = await this.ingest({
+        fileName: run.fileName,
+        mimeType: run.mimeType,
+        metadata: run.metadata,
+        embeddingModelId: run.embeddingModelId,
+        memoryModelId: run.memoryModelId,
+        skipMemory: run.skipMemory,
+        contentBytes,
+        sourceS3Object
+      })
+      await this.deps.objectStore.deleteObject(run.objectKey)
+      const manifestSummary = toDocumentManifestSummary(manifest)
+      const completedAt = new Date().toISOString()
+      await this.deps.documentIngestRunEventStore.append({
+        runId,
+        type: "final",
+        stage: "done",
+        message: "文書取り込みが完了しました",
+        data: { documentId: manifest.documentId, manifest: manifestSummary as unknown as JsonValue },
+        ttl
+      })
+      return this.deps.documentIngestRunStore.update(runId, {
+        status: "succeeded",
+        manifest: manifestSummary,
+        documentId: manifest.documentId,
+        completedAt,
+        updatedAt: completedAt
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      const completedAt = new Date().toISOString()
+      await this.deps.documentIngestRunEventStore.append({
+        runId,
+        type: "error",
+        stage: "failed",
+        message,
+        data: { message },
+        ttl
+      })
+      return this.deps.documentIngestRunStore.update(runId, {
+        status: "failed",
+        error: message,
+        completedAt,
+        updatedAt: completedAt
+      })
+    }
+  }
+
+  async markDocumentIngestRunFailed(runId: string, reason: string): Promise<DocumentIngestRun> {
+    const run = await this.deps.documentIngestRunStore.get(runId)
+    if (!run) throw new Error(`Document ingest run not found: ${runId}`)
+    if (run.status === "succeeded" || run.status === "failed" || run.status === "cancelled") return run
+
+    const completedAt = new Date().toISOString()
+    await this.deps.documentIngestRunEventStore.append({
+      runId,
+      type: "error",
+      stage: "failed",
+      message: reason,
+      data: { message: reason },
+      ttl: run.ttl
+    })
+    return this.deps.documentIngestRunStore.update(runId, {
+      status: "failed",
+      error: reason,
+      completedAt,
+      updatedAt: completedAt
+    })
+  }
+
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
     return searchRag(this.deps, input, user)
   }
@@ -1373,6 +1525,19 @@ export class MemoRagService {
     return response.executionArn
   }
 
+  private async startDocumentIngestRunExecution(runId: string): Promise<string> {
+    const states = new SFNClient({ region: config.region })
+    const response = await states.send(
+      new StartExecutionCommand({
+        stateMachineArn: config.documentIngestRunStateMachineArn,
+        name: runId,
+        input: JSON.stringify({ runId })
+      })
+    )
+    if (!response.executionArn) throw new Error("Step Functions executionArn was not returned")
+    return response.executionArn
+  }
+
 
 
   async createDebugTraceDownloadUrl(runId: string): Promise<{ url: string; expiresInSeconds: number; objectKey: string } | undefined> {
@@ -1505,6 +1670,28 @@ function createBenchmarkRunId(now: string): string {
 function createChatRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `chat_${compact}_${randomUUID().slice(0, 8)}`
+}
+
+function createDocumentIngestRunId(now: string): string {
+  const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
+  return `ingest_${compact}_${randomUUID().slice(0, 8)}`
+}
+
+function toDocumentManifestSummary(manifest: DocumentManifest): DocumentManifestSummary {
+  return {
+    documentId: manifest.documentId,
+    fileName: manifest.fileName,
+    mimeType: manifest.mimeType,
+    chunkCount: manifest.chunkCount,
+    memoryCardCount: manifest.memoryCardCount,
+    createdAt: manifest.createdAt,
+    lifecycleStatus: manifest.lifecycleStatus,
+    activeDocumentId: manifest.activeDocumentId,
+    stagedFromDocumentId: manifest.stagedFromDocumentId,
+    reindexMigrationId: manifest.reindexMigrationId,
+    chunkerVersion: manifest.chunkerVersion,
+    sourceExtractorVersion: manifest.sourceExtractorVersion
+  }
 }
 
 function toJsonValue(value: unknown): JsonValue | undefined {

@@ -40,6 +40,8 @@ import {
   DebugTraceListResponseSchema,
   DebugTraceSchema,
   DebugDownloadResponseSchema,
+  DocumentIngestRunSchema,
+  DocumentIngestRunStartResponseSchema,
   DocumentListResponseSchema,
   DocumentManifestSchema,
   DocumentUploadRequestSchema,
@@ -56,6 +58,7 @@ import {
   ReviewAliasRequestSchema,
   SearchRequestSchema,
   SearchResponseSchema,
+  StartDocumentIngestRunRequestSchema,
   UpdateAliasRequestSchema,
   UsageSummaryListResponseSchema
 } from "./schemas.js"
@@ -72,7 +75,7 @@ const app = new OpenAPIHono({
 })
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization", "Last-Event-ID"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/chat", "/chat-runs", "/chat-runs/*", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark/search", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
+for (const path of ["/me", "/admin/*", "/documents", "/documents/*", "/document-ingest-runs", "/document-ingest-runs/*", "/chat", "/chat-runs", "/chat-runs/*", "/search", "/questions", "/questions/*", "/conversation-history", "/conversation-history/*", "/debug-runs", "/debug-runs/*", "/benchmark/query", "/benchmark/search", "/benchmark-runs", "/benchmark-runs/*", "/benchmark-suites"]) {
   app.use(path, authMiddleware)
 }
 
@@ -99,6 +102,10 @@ function benchmarkSearchUser(runnerUser: AppUser, requestUser: z.infer<typeof Be
     userId: requestUser.userId ?? "benchmark-search-user",
     cognitoGroups: requestUser.groups ?? []
   }
+}
+
+function canReadOwnedRun(user: AppUser, createdBy: string): boolean {
+  return createdBy === user.userId || getPermissionsForGroups(user.cognitoGroups).includes("chat:admin:read_all")
 }
 
 const benchmarkSeedSuites = new Set([
@@ -807,6 +814,118 @@ app.openapi(
     const manifest = await service.ingest({ ...body, contentBytes, sourceS3Object })
     await deps.objectStore.deleteObject(objectKey)
     return c.json(manifest, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/document-ingest-runs",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: StartDocumentIngestRunRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Started asynchronous document ingest run", content: { "application/json": { schema: DocumentIngestRunStartResponseSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+      500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    const body = (c.req as any).valid("json") as z.infer<typeof StartDocumentIngestRunRequestSchema>
+    const objectKey = decodeUploadId(body.uploadId)
+    const purpose = uploadPurposeForKey(user, objectKey)
+    authorizeUploadedDocumentIngest(user, purpose, body)
+    return c.json(await service.startDocumentIngestRun({ ...body, objectKey, purpose }, user), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/document-ingest-runs/{runId}",
+    request: {
+      params: z.object({ runId: z.string().min(1) })
+    },
+    responses: {
+      200: { description: "Document ingest run", content: { "application/json": { schema: DocumentIngestRunSchema } } },
+      403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+      404: { description: "Document ingest run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "chat:read:own")
+    const runId = c.req.param("runId") ?? ""
+    const run = await deps.documentIngestRunStore.get(runId)
+    if (!run) return c.json({ error: "Document ingest run not found" }, 404)
+    if (!canReadOwnedRun(user, run.createdBy)) return c.json({ error: "Forbidden" }, 403)
+    return c.json(run, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "get",
+    path: "/document-ingest-runs/{runId}/events",
+    request: {
+      params: z.object({ runId: z.string().min(1) })
+    },
+    responses: {
+      200: { description: "Asynchronous document ingest run events", content: { "text/event-stream": { schema: z.string() } } },
+      403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+      404: { description: "Document ingest run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    requirePermission(user, "chat:read:own")
+    const runId = c.req.param("runId") ?? ""
+    const run = await deps.documentIngestRunStore.get(runId)
+    if (!run) return c.json({ error: "Document ingest run not found" }, 404)
+    if (!canReadOwnedRun(user, run.createdBy)) return c.json({ error: "Forbidden" }, 403)
+
+    return streamSSE(c, async (stream) => {
+      const lastEventId = Number(c.req.header("Last-Event-ID") ?? 0)
+      let afterSeq = Number.isFinite(lastEventId) ? lastEventId : 0
+      const deadline = Date.now() + 14 * 60 * 1000
+      let lastHeartbeat = 0
+
+      while (Date.now() < deadline) {
+        const events = await deps.documentIngestRunEventStore.listAfter(runId, afterSeq)
+        for (const item of events) {
+          await stream.writeSSE({
+            id: String(item.seq),
+            event: item.type,
+            data: JSON.stringify(eventPayload(item))
+          })
+          afterSeq = item.seq
+          if (item.type === "final" || item.type === "error") return
+        }
+
+        if (Date.now() - lastHeartbeat > 15_000) {
+          await stream.writeSSE({
+            event: "heartbeat",
+            data: JSON.stringify({ ts: new Date().toISOString(), nextSeq: afterSeq + 1 })
+          })
+          lastHeartbeat = Date.now()
+        }
+
+        await sleep(1000)
+      }
+
+      await stream.writeSSE({
+        event: "timeout",
+        data: JSON.stringify({
+          message: "stream timeout. reconnect with Last-Event-ID.",
+          nextSeq: afterSeq + 1
+        })
+      })
+    })
   }
 )
 

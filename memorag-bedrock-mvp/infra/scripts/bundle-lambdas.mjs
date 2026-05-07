@@ -28,6 +28,14 @@ await Promise.all([
     outfile: path.join(outDir, "chat-run-events-stream/index.js")
   }),
   bundle({
+    entry: path.join(repoRoot, "apps/api/src/document-ingest-run-worker.ts"),
+    outfile: path.join(outDir, "document-ingest-run-worker/index.js")
+  }),
+  bundle({
+    entry: path.join(repoRoot, "apps/api/src/document-ingest-run-mark-failed.ts"),
+    outfile: path.join(outDir, "document-ingest-run-mark-failed/index.js")
+  }),
+  bundle({
     entry: path.join(infraDir, "functions/s3-vectors-custom-resource.ts"),
     outfile: path.join(outDir, "s3-vectors-provider/index.js")
   }),

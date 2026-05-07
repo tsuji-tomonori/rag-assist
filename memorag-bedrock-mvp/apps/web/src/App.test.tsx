@@ -364,8 +364,12 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       }))
     }
     if (requestUrl === "http://upload.test/upload-session-1" && init?.method === "PUT") return Promise.resolve(response(""))
-    if (requestUrl.endsWith("/documents/uploads/upload-session-1/ingest") && init?.method === "POST") {
-      return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
+    if (requestUrl.endsWith("/document-ingest-runs") && init?.method === "POST") {
+      return Promise.resolve(response({
+        runId: "ingest-1",
+        status: "succeeded",
+        manifest: { documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }
+      }))
     }
     if (requestUrl.endsWith("/documents") && init?.method === "POST") {
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
@@ -549,6 +553,25 @@ describe("App document management", () => {
         return Promise.resolve(response({ documents: documentListCalls === 1 ? documents : [documents[1]] }))
       }
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
+      if (requestUrl.endsWith("/documents/uploads") && init?.method === "POST") {
+        return Promise.resolve(response({
+          uploadId: "upload-session-1",
+          objectKey: "uploads/documents/local-dev/upload-session-1-refresh.txt",
+          uploadUrl: "http://upload.test/upload-session-1",
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          expiresInSeconds: 900,
+          requiresAuth: false
+        }))
+      }
+      if (requestUrl === "http://upload.test/upload-session-1" && init?.method === "PUT") return Promise.resolve(response(""))
+      if (requestUrl.endsWith("/document-ingest-runs") && init?.method === "POST") {
+        return Promise.resolve(response({
+          runId: "ingest-1",
+          status: "succeeded",
+          manifest: { documentId: "doc-3", fileName: "refresh.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }
+        }))
+      }
       if (requestUrl.endsWith("/documents") && init?.method === "POST") {
         return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
       }
@@ -634,12 +657,12 @@ describe("App chat and upload flow", () => {
       }))
       .filter((call) => call.method === "POST" && (
         call.url === "http://api.test/documents/uploads" ||
-        call.url === "http://api.test/documents/uploads/upload-session-1/ingest" ||
+        call.url === "http://api.test/document-ingest-runs" ||
         call.url === "http://api.test/chat-runs"
       ))
     expect(writeCalls).toEqual([
       { url: "http://api.test/documents/uploads", method: "POST" },
-      { url: "http://api.test/documents/uploads/upload-session-1/ingest", method: "POST" },
+      { url: "http://api.test/document-ingest-runs", method: "POST" },
       { url: "http://api.test/chat-runs", method: "POST" }
     ])
   })

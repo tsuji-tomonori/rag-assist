@@ -54,6 +54,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /documents`
 - `POST /documents` 資料アップロード
 - `POST /documents/uploads`、`POST /documents/uploads/{uploadId}/ingest` S3 経由の資料アップロード
+- `POST /document-ingest-runs`、`GET /document-ingest-runs/{runId}`、`GET /document-ingest-runs/{runId}/events` S3 upload session 後の非同期資料取り込み
 - `POST /documents/{documentId}/reindex` 資料再インデックス
 - `GET /documents/reindex-migrations`、`POST /documents/{documentId}/reindex/stage`、`POST /documents/reindex-migrations/{migrationId}/cutover|rollback` blue-green 再インデックス切替
 - `DELETE /documents/{documentId}` 資料削除
@@ -168,6 +169,7 @@ curl -s http://localhost:8787/chat \
 ```
 
 新しい UI は `POST /chat-runs` で非同期 run を作成し、`GET /chat-runs/{runId}/events` を `fetch` stream で読みます。既存 `POST /chat` は後方互換の同期 JSON API として残します。
+ファイルアップロード UI は S3 upload session へ転送したあと `POST /document-ingest-runs` で非同期 ingest run を開始し、run 状態を取得して完了 manifest を受け取ります。既存 `POST /documents` と `POST /documents/uploads/{uploadId}/ingest` は後方互換の同期 API として残します。
 
 ## ベンチマーク
 
@@ -175,9 +177,9 @@ curl -s http://localhost:8787/chat \
 
 CodeBuild runner が本番 API を叩くための認証 token は、CDK が作成する Secrets Manager secret と `BENCHMARK_RUNNER` service user から自動取得します。管理者が管理画面で token を入力する必要はありません。外部管理の secret を使いたい場合だけ、CDK context `benchmarkRunnerAuthSecretId` に Secrets Manager secret ID を渡します。secret は `username` / `password`、または `idToken` / `token` を持てます。`username` / `password` 認証で token 解決に失敗した場合、CodeBuild runner は benchmark を継続せず失敗します。agent mode は `/benchmark/query`、search mode は `/benchmark/search` を呼びます。
 
-`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1`、`search-smoke-v1`、`search-standard-v1` の runner は、実行前に同じ `BENCHMARK_CORPUS_SUITE_ID` の benchmark seed 文書を削除し、`benchmark/corpus/standard-agent-v1/handbook.md` を再アップロードして、active chunk が作成されたことを確認してから `/benchmark/query` または `/benchmark/search` を実行します。削除または再アップロードに失敗した場合、古い corpus で測定を継続せず runner は失敗します。PDF corpus は `/documents/uploads` で発行した S3 upload URL に転送してから `/documents/uploads/{uploadId}/ingest` で登録するため、API Gateway/Lambda の JSON body size 制限に大きな PDF を載せません。抽出可能なテキストがない PDF は `skipped_unextractable` として summary / report の corpus seed に記録し、agent benchmark ではその file を期待する dataset row を `skippedRows` に移して評価対象から除外します。`mmrag-docqa-v1` は CodeBuild pre_build で Hugging Face `yubo2333/MMLongBench-Doc` train split の全 1,091 questions を JSONL 化し、参照 PDF を一時 corpus に download してから `MMRAG-DocQA` として起動します。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]` と `docType: "benchmark-corpus"` で隔離し、通常利用者の RAG 検索・回答・文書一覧には混入させません。同じ source hash、per-file metadata、ingest signature の seed 済み資料が active な場合は再アップロードを省略します。corpus seed の削除・アップロード時間は runner setup であり、summary の p50/p95/average latency は初回 `/benchmark/query` または `/benchmark/search` API call を対象にします。任意の corpus を使う場合は `BENCHMARK_CORPUS_DIR` を指定してください。同じ corpus を複数 suite で共有する場合は `BENCHMARK_CORPUS_SUITE_ID` で seed 判定用の corpus identity を固定できます。`<file>.metadata.json` を置くと benchmark seed 文書に `searchAliases` を付与でき、search benchmark の alias case で使えます。
+`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1`、`search-smoke-v1`、`search-standard-v1` の runner は、実行前に同じ `BENCHMARK_CORPUS_SUITE_ID` の benchmark seed 文書を削除し、`benchmark/corpus/standard-agent-v1/handbook.md` を再アップロードして、active chunk が作成されたことを確認してから `/benchmark/query` または `/benchmark/search` を実行します。削除または再アップロードに失敗した場合、古い corpus で測定を継続せず runner は失敗します。PDF corpus は `/documents/uploads` で発行した S3 upload URL に転送してから `/documents/uploads/{uploadId}/ingest` で登録するため、API Gateway/Lambda の JSON body size 制限に大きな PDF を載せません。抽出可能なテキストがない PDF、または Textract OCR fallback が同期 ingestion の待機時間内に完了しない PDF は `skipped_unextractable` として summary / report の corpus seed に記録し、agent benchmark ではその file を期待する dataset row を `skippedRows` に移して評価対象から除外します。`mmrag-docqa-v1` は CodeBuild pre_build で Hugging Face `yubo2333/MMLongBench-Doc` train split の全 1,091 questions を JSONL 化し、参照 PDF を一時 corpus に download してから `MMRAG-DocQA` として起動します。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]` と `docType: "benchmark-corpus"` で隔離し、通常利用者の RAG 検索・回答・文書一覧には混入させません。同じ source hash、per-file metadata、ingest signature の seed 済み資料が active な場合は再アップロードを省略します。corpus seed の削除・アップロード時間は runner setup であり、summary の p50/p95/average latency は初回 `/benchmark/query` または `/benchmark/search` API call を対象にします。任意の corpus を使う場合は `BENCHMARK_CORPUS_DIR` を指定してください。同じ corpus を複数 suite で共有する場合は `BENCHMARK_CORPUS_SUITE_ID` で seed 判定用の corpus identity を固定できます。`<file>.metadata.json` を置くと benchmark seed 文書に `searchAliases` を付与でき、search benchmark の alias case で使えます。
 
-CDK deploy 時に benchmark 用 S3 bucket へ `datasets/agent/smoke-v1.jsonl`、`datasets/agent/standard-v1.jsonl`、`datasets/agent/clarification-smoke-v1.jsonl`、`datasets/search/smoke-v1.jsonl`、`datasets/search/standard-v1.jsonl` を配置します。管理画面の `clarification-smoke-v1` suite は `benchmark/dataset.clarification.sample.jsonl` を元にします。`mmrag-docqa-v1` suite は S3 配置済み sample ではなく `npm run prepare:mmrag-docqa -w @memorag-mvp/benchmark` で全量 dataset と corpus を準備します。ローカルで軽量な導線だけを見る場合に限り、`benchmark/dataset.mmrag-docqa.sample.jsonl` と `benchmark/corpus/mmrag-docqa-v1/` を手動指定できます。
+CDK deploy 時に benchmark 用 S3 bucket へ `datasets/agent/smoke-v1.jsonl`、`datasets/agent/standard-v1.jsonl`、`datasets/agent/clarification-smoke-v1.jsonl`、`datasets/search/smoke-v1.jsonl`、`datasets/search/standard-v1.jsonl` を配置します。管理画面の `clarification-smoke-v1` suite は `benchmark/dataset.clarification.sample.jsonl` を元にします。`benchmark/dataset.rag-baseline.sample.jsonl` と `benchmark/corpus/rag-baseline-v1/` は、answerable / unanswerable / ambiguous / table / multi-doc / ACL の6分類を含むローカル baseline evaluation set です。`mmrag-docqa-v1` suite は S3 配置済み sample ではなく `npm run prepare:mmrag-docqa -w @memorag-mvp/benchmark` で全量 dataset と corpus を準備します。ローカルで軽量な導線だけを見る場合に限り、`benchmark/dataset.mmrag-docqa.sample.jsonl` と `benchmark/corpus/mmrag-docqa-v1/` を手動指定できます。
 
 ```bash
 API_BASE_URL=http://localhost:8787 \
@@ -192,9 +194,11 @@ BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1 \
 npm run start -w @memorag-mvp/benchmark
 ```
 
+baseline evaluation set をローカルで測る場合は、`task benchmark:rag-baseline:sample` を使うか、`DATASET=benchmark/dataset.rag-baseline.sample.jsonl`、`BENCHMARK_SUITE_ID=rag-baseline-v1`、`BENCHMARK_CORPUS_DIR=benchmark/corpus/rag-baseline-v1`、`BENCHMARK_CORPUS_SUITE_ID=rag-baseline-v1` を指定します。この dataset は改善前後の比較基準用であり、RAG 実装側に row ID、期待語句、dataset 固有分岐を入れてはいけません。
+
 検索 benchmark は `npm run start:search -w @memorag-mvp/benchmark` または `task benchmark:search:sample` で実行します。sample task は `BENCHMARK_SUITE_ID=search-standard-v1` と同じ corpus seed を指定します。
 
-`OUTPUT` には行ごとのAPI応答と評価結果、`SUMMARY` には集計JSON、`REPORT` にはMarkdownレポートが出力されます。
+`OUTPUT` には行ごとのAPI応答と評価結果、`SUMMARY` には集計JSON、`REPORT` にはMarkdownレポートが出力されます。agent benchmark report には `retrieval_mrr_at_k`、`citation_support_pass_rate`、`no_access_leak_count`、`no_access_leak_rate`、失敗行の failure category も出力されます。
 
 Allganize の日本語公開データセット `allganize/RAG-Evaluation-Dataset-JA` は、CSV を既存 runner 用 JSONL へ変換し、`documents.csv` に含まれる source PDF を corpus として download してから実行します。既定では `target_answer` は `referenceAnswer` として results に残し、完全一致の正答判定には使いません。保守的な完全包含判定も行う場合は `ALLGANIZE_RAG_EXPECTED_MODE=strict-contains` を指定してください。
 
