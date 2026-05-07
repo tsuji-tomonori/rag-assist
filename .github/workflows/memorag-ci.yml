@@ -78,6 +78,11 @@ jobs:
         run: npm test -w @memorag-mvp/infra
         continue-on-error: true
 
+      - name: Test benchmark
+        id: benchmark_test
+        run: npm test -w @memorag-mvp/benchmark
+        continue-on-error: true
+
       - name: Test api with coverage
         id: api_test
         run: |
@@ -158,10 +163,18 @@ jobs:
             } catch (error) {
               core.warning(`Failed to find CDK synth artifact: ${error.message}`);
             }
-            const coverage = (c0, c1) =>
-              c0 && c1
-                ? `C0 statements: ${c0} / C1 branches: ${c1}`
-                : 'C0 statements: unknown / C1 branches: unknown';
+            const coverage = (c0, c1, options = {}) => {
+              if (!c0 || !c1) return 'C0 statements: unknown / C1 branches: unknown';
+              const c0Value = Number.parseFloat(c0);
+              const c1Value = Number.parseFloat(c1);
+              const c0Status = c0Value >= 90 ? 'C0達成' : 'C0未達';
+              const c1Status = c1Value >= 85
+                ? 'C1達成'
+                : options.c1ImprovementTask
+                  ? `C1未達(改善計画: ${options.c1ImprovementTask})`
+                  : 'C1未達';
+              return `C0 statements: ${c0} / C1 branches: ${c1} (target: C0 >= 90% / C1 >= 85%; ${c0Status} / ${c1Status})`;
+            };
             const results = [
               ['all', 'Install dependencies', '${{ steps.install.outcome }}', '-', '`npm ci`'],
               ['web', 'Lint', '${{ steps.web_lint.outcome }}', '-', '`npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`'],
@@ -172,7 +185,8 @@ jobs:
               ['web', 'Type-check', '${{ steps.web_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/web`'],
               ['benchmark', 'Type-check', '${{ steps.benchmark_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/benchmark`'],
               ['infra', 'Test', '${{ steps.infra_test.outcome }}', 'C0: 未計測 / C1: 未計測', '`npm test -w @memorag-mvp/infra`'],
-              ['api', 'Test', '${{ steps.api_test.outcome }}', coverage('${{ steps.api_test.outputs.c0 }}', '${{ steps.api_test.outputs.c1 }}'), '`npm exec -w @memorag-mvp/api -- c8 ...`'],
+              ['benchmark', 'Test', '${{ steps.benchmark_test.outcome }}', 'C0: 未計測 / C1: 未計測', '`npm test -w @memorag-mvp/benchmark`'],
+              ['api', 'Test', '${{ steps.api_test.outcome }}', coverage('${{ steps.api_test.outputs.c0 }}', '${{ steps.api_test.outputs.c1 }}', { c1ImprovementTask: '`tasks/todo/20260507-2012-api-c1-coverage-improvement.md`' }), '`npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 ...`'],
               ['web', 'Test', '${{ steps.web_test.outcome }}', coverage('${{ steps.web_test.outputs.c0 }}', '${{ steps.web_test.outputs.c1 }}'), '`npm exec -w @memorag-mvp/web -- vitest run --coverage ...`'],
               ['infra', 'Build', '${{ steps.infra_build.outcome }}', '-', '`npm run build -w @memorag-mvp/infra`'],
               ['api', 'Build', '${{ steps.api_build.outcome }}', '-', '`npm run build -w @memorag-mvp/api`'],
@@ -235,5 +249,5 @@ jobs:
           echo "CI result comment was skipped because this PR is from a fork and GITHUB_TOKEN has read-only permissions." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail when CI checks failed
-        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success') }}
+        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.benchmark_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success') }}
         run: exit 1
