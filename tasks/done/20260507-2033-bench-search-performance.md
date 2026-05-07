@@ -57,4 +57,4 @@ benchmark search の cold latency、alias query の 500、benchmark corpus の�
 
 ## 状態
 
-in_progress
+done
