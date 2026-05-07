@@ -171,16 +171,18 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     const evaluatorDone = nextActionType === "rerank" || nextActionType === "finalize_refusal"
     const stopByIteration = nextIteration >= stopCriteria.maxIterations
     const stopByNoEvidence = noNewEvidenceStreak >= stopCriteria.maxNoNewEvidenceStreak
+    const stopByExhaustedCandidates = exhaustedCandidateSet(state)
+    const stopByRepeatedNoEvidence = repeatedNoNewEvidenceAction(state)
     const unresolvedPrimaryConflict = state.retrievalEvaluation.conflictingFactIds.some((factId) => isPrimaryRequiredFactId(state.searchPlan.requiredFacts, factId))
     const forcedRefusal =
       unresolvedPrimaryConflict &&
       state.retrievalEvaluation.nextAction.type !== "finalize_refusal" &&
-      (stopByIteration || stopByNoEvidence)
+      (stopByIteration || stopByNoEvidence || stopByExhaustedCandidates || stopByRepeatedNoEvidence)
 
     return {
       iteration: nextIteration,
       noNewEvidenceStreak,
-      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence ? "done" : "continue_search",
+      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence || stopByExhaustedCandidates || stopByRepeatedNoEvidence ? "done" : "continue_search",
       retrievalEvaluation: forcedRefusal
         ? {
             ...state.retrievalEvaluation,
@@ -199,6 +201,25 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
   function isPrimaryRequiredFactId(facts: RequiredFact[], factId: string): boolean {
     const fact = facts.find((item) => item.id === factId)
     return !fact || isPrimaryRequiredFact(fact)
+  }
+
+  function exhaustedCandidateSet(state: QaAgentState): boolean {
+    const latest = state.actionHistory.at(-1)
+    return Boolean(latest && latest.hitCount > 0 && latest.newEvidenceCount === 0)
+  }
+
+  function repeatedNoNewEvidenceAction(state: QaAgentState): boolean {
+    const latest = state.actionHistory.at(-1)
+    if (!latest || latest.newEvidenceCount > 0) return false
+    const latestKey = searchActionKey(latest.action)
+    return state.actionHistory.slice(0, -1).some((observation) => searchActionKey(observation.action) === latestKey)
+  }
+
+  function searchActionKey(action: SearchAction): string {
+    if (action.type === "evidence_search") return `${action.type}:${action.query}:${action.topK}`
+    if (action.type === "query_rewrite") return `${action.type}:${action.strategy}:${action.input}`
+    if (action.type === "expand_context") return `${action.type}:${action.chunkKey}:${action.window}`
+    return action.type
   }
 
   function routeAfterGate(state: QaAgentState) {
@@ -591,6 +612,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       maxReferenceDepth: ragRuntimePolicy.retrieval.referenceMaxDepth,
       remainingCalls: ragRuntimePolicy.retrieval.searchBudgetCalls
     },
+    searchFilters: input.searchFilters,
     memoryCards: [],
     clues: [],
     expandedQueries: [],
