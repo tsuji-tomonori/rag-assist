@@ -40,7 +40,7 @@
 |---|---|---|---|
 | `.github/workflows/memorag-deploy.yml` | YAML | `main` push trigger を復元 | R1, R3 |
 | `reports/bugs/20260508-0049-main-merge-deploy-not-triggered.md` | Markdown | 原因、影響、証拠、是正策を含む障害レポート | R2 |
-| `tasks/do/20260508-0049-fix-main-deploy-trigger.md` | Markdown | 作業 task と受け入れ条件 | workflow 要件 |
+| `tasks/done/20260508-0049-fix-main-deploy-trigger.md` | Markdown | 作業 task、受け入れ条件、完了メモ | workflow 要件 |
 | `reports/working/20260508-0050-fix-main-deploy-trigger.md` | Markdown | 作業完了レポート | R5 |
 
 ## 6. 指示へのfit評価

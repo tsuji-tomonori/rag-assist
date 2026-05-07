@@ -1,8 +1,8 @@
 # main merge deploy trigger failure fix
 
-保存先: `tasks/do/20260508-0049-fix-main-deploy-trigger.md`
+保存先: `tasks/done/20260508-0049-fix-main-deploy-trigger.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -52,11 +52,11 @@
 
 ## 受け入れ条件
 
-- [ ] main merge 後に deploy されない原因が、workflow 設定の具体的な根拠付きで説明されている。
-- [ ] `reports/bugs/` に障害レポートが作成され、事実・推定・対応が分離されている。
-- [ ] main merge で deploy workflow が起動対象になるように設定が修正されている。
-- [ ] 変更範囲に対して最小十分な検証が実行され、未実施の検証は理由付きで記録されている。
-- [ ] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントが日本語で投稿されている。
+- [x] main merge 後に deploy されない原因が、workflow 設定の具体的な根拠付きで説明されている。
+- [x] `reports/bugs/` に障害レポートが作成され、事実・推定・対応が分離されている。
+- [x] main merge で deploy workflow が起動対象になるように設定が修正されている。
+- [x] 変更範囲に対して最小十分な検証が実行され、未実施の検証は理由付きで記録されている。
+- [x] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントが日本語で投稿されている。
 
 ## 検証計画
 
@@ -77,3 +77,12 @@
 
 - 決定事項: 実際の deploy 実行は PR merge 後に GitHub Actions 上で確認する。作業内では workflow 設定の静的検証までを完了条件とする。
 - リスク: GitHub Actions の repository setting、environment protection、AWS credential 設定などリポジトリ外状態が原因に含まれる場合、workflow 修正だけでは完全復旧しない可能性がある。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/184
+- 障害レポート: `reports/bugs/20260508-0049-main-merge-deploy-not-triggered.md`
+- 作業完了レポート: `reports/working/20260508-0050-fix-main-deploy-trigger.md`
+- 受け入れ条件確認コメント: PR #184 の top-level comment として投稿済み。
+- セルフレビューコメント: PR #184 の top-level comment として投稿済み。
+- 実際の `main` merge 後 deploy workflow 起動確認は、PR merge 後の外部 GitHub Actions 事象のため未実施。
