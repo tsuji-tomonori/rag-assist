@@ -4,6 +4,7 @@ import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
+import { createSkippedDatasetRow, skippedCorpusFileNameSet, skippedExpectedFileNames, type SkippedDatasetRow } from "./skipped-corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
 import {
   assertComparableProfiles,
@@ -195,6 +196,8 @@ type Summary = {
   corpusSeed: SeededDocument[]
   generatedAt: string
   total: number
+  skipped: number
+  skippedRows: SkippedDatasetRow[]
   succeeded: number
   failedHttp: number
   answerableTotal: number
@@ -306,9 +309,17 @@ const rl = readline.createInterface({ input: createReadStream(datasetPath, { enc
 
 let count = 0
 const results: BenchmarkResultRow[] = []
+const skippedRows: SkippedDatasetRow[] = []
+const skippedCorpusFiles = skippedCorpusFileNameSet(corpusSeed)
 for await (const line of rl) {
   if (!line.trim()) continue
   const row = JSON.parse(line) as DatasetRow
+  const skippedFiles = skippedExpectedFileNames(row, skippedCorpusFiles)
+  if (skippedFiles.length > 0) {
+    skippedRows.push(createSkippedDatasetRow(row, skippedFiles))
+    console.log(`Benchmark row skipped: ${row.id ?? row.question} (required corpus skipped: ${skippedFiles.join(", ")})`)
+    continue
+  }
   const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
   assertSuiteEvaluatorProfile(rowEvaluatorProfile, suiteEvaluatorProfile, row.id ?? row.question)
   const firstStartedAt = Date.now()
@@ -342,11 +353,12 @@ for await (const line of rl) {
 }
 
 await closeStream(out)
-const summary = summarize(results, corpusSeed)
+const summary = summarize(results, corpusSeed, skippedRows)
 await writeFile(summaryPath, `${JSON.stringify(summary, null, 2)}\n`, "utf-8")
 await writeFile(reportPath, renderMarkdownReport(summary, results), "utf-8")
 
 console.log(`Wrote ${count} benchmark rows to ${outputPath}`)
+if (skippedRows.length > 0) console.log(`Skipped ${skippedRows.length} benchmark rows because required corpus was skipped`)
 console.log(`Wrote benchmark summary to ${summaryPath}`)
 console.log(`Wrote benchmark report to ${reportPath}`)
 
@@ -681,7 +693,7 @@ function evaluateFollowUp(
   return passed
 }
 
-function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]): Summary {
+function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], skippedRows: SkippedDatasetRow[]): Summary {
   const answerableRows = results.filter((row) => row.evaluation.expectedAnswerable)
   const unanswerableRows = results.filter((row) => !row.evaluation.expectedAnswerable)
   const clarificationExpectedRows = results.filter((row) => row.evaluation.expectedResponseType === "clarification")
@@ -727,6 +739,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[]):
     corpusSeed,
     generatedAt: new Date().toISOString(),
     total: results.length,
+    skipped: skippedRows.length,
+    skippedRows,
     succeeded: results.filter((row) => row.status >= 200 && row.status < 300).length,
     failedHttp: results.filter((row) => row.status < 200 || row.status >= 300).length,
     answerableTotal: answerableRows.length,
@@ -921,10 +935,20 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
   const corpusSeedRows = summary.corpusSeed.length === 0
     ? "\nNo benchmark corpus seed configured.\n"
     : [
-        "| file | status | chunks | source hash | ingest signature |",
-        "| --- | --- | ---: | --- | --- |",
+        "| file | status | reason | chunks | source hash | ingest signature |",
+        "| --- | --- | --- | ---: | --- | --- |",
         ...summary.corpusSeed.map((seed) =>
-          `| ${escapeMarkdown(seed.fileName)} | ${seed.status} | ${seed.chunkCount} | ${seed.sourceHash.slice(0, 12)} | ${seed.ingestSignature.slice(0, 12)} |`
+          `| ${escapeMarkdown(seed.fileName)} | ${seed.status} | ${escapeMarkdown(seed.skipReason ?? "")} | ${seed.chunkCount} | ${seed.sourceHash.slice(0, 12)} | ${seed.ingestSignature.slice(0, 12)} |`
+        )
+      ].join("\n")
+
+  const skippedRowRows = summary.skippedRows.length === 0
+    ? "\nNo skipped benchmark rows.\n"
+    : [
+        "| id | question | files | reason |",
+        "| --- | --- | --- | --- |",
+        ...summary.skippedRows.map((row) =>
+          `| ${escapeMarkdown(row.id ?? "")} | ${escapeMarkdown(row.question)} | ${escapeMarkdown(row.fileNames.join(", "))} | ${row.reason} |`
         )
       ].join("\n")
 
@@ -980,6 +1004,7 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
 ## Summary
 
 - Total rows: ${summary.total}
+- Skipped rows: ${summary.skipped}
 - HTTP success: ${summary.succeeded}
 - HTTP failed: ${summary.failedHttp}
 - Answerable rows: ${summary.answerableTotal}
@@ -1017,6 +1042,10 @@ ${aliasCandidateRows}
 ## Failures
 
 ${failureRows}
+
+## Skipped Rows
+
+${skippedRowRows}
 
 ## Row Details
 

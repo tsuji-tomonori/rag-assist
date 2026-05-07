@@ -348,10 +348,10 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
   const corpusSeedRows = summary.corpusSeed.length === 0
     ? "\nNo benchmark corpus seed configured.\n"
     : [
-        "| file | status | chunks | source hash | ingest signature |",
-        "| --- | --- | ---: | --- | --- |",
+        "| file | status | reason | chunks | source hash | ingest signature |",
+        "| --- | --- | --- | ---: | --- | --- |",
         ...summary.corpusSeed.map((seed) =>
-          `| ${escapeMarkdown(seed.fileName)} | ${seed.status} | ${seed.chunkCount} | ${seed.sourceHash.slice(0, 12)} | ${seed.ingestSignature.slice(0, 12)} |`
+          `| ${escapeMarkdown(seed.fileName)} | ${seed.status} | ${escapeMarkdown(seed.skipReason ?? "")} | ${seed.chunkCount} | ${seed.sourceHash.slice(0, 12)} | ${seed.ingestSignature.slice(0, 12)} |`
         )
       ].join("\n")
 
