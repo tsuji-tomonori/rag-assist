@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { readFile } from "node:fs/promises"
+import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import test from "node:test"
 
@@ -10,10 +10,8 @@ type RoutePolicy = {
   mode?: "authenticated" | "required" | "requesterOrPermission" | "ownedRun" | "benchmarkSeedRunOrOwnedRun" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission" | "benchmarkSeedDeleteOrPermission" | "documentUploadSession"
 }
 
-const routeSourcePaths = [
-  path.resolve(process.cwd(), "src/app.ts"),
-  path.resolve(process.cwd(), "src/routes/api-routes.ts")
-]
+const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
+const routeSourceDir = path.resolve(process.cwd(), "src/routes")
 
 const protectedMiddlewarePaths = [
   "/me",
@@ -244,6 +242,11 @@ test("question routes must be explicitly reviewed before they change", async () 
 })
 
 async function readRouteSources(): Promise<string> {
+  const routeFiles = (await readdir(routeSourceDir))
+    .filter((fileName) => fileName.endsWith(".ts"))
+    .map((fileName) => path.join(routeSourceDir, fileName))
+    .sort()
+  const routeSourcePaths = [appSourcePath, ...routeFiles]
   const sources = await Promise.all(routeSourcePaths.map((sourcePath) => readFile(sourcePath, "utf8")))
   return sources.join("\n")
 }
