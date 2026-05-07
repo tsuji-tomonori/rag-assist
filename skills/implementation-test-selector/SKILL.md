@@ -12,9 +12,11 @@ Use this skill before finishing implementation work, including documentation or 
 1. Inspect the changed files with `git diff --name-only` and `git diff --cached --name-only` when staging has started.
 2. Map each changed area to the smallest useful verification command.
 3. Prefer targeted checks first, then broader checks when shared behavior, contracts, build outputs, or multiple workspaces are affected.
-4. Run the selected checks unless the user explicitly says not to, required services are unavailable, or the check is unsafe for the environment.
-5. If a check cannot be run, record the concrete reason and the command that would normally be used.
-6. Do not mark unrun checks as completed in PR bodies, reports, or final responses.
+4. Use `skills/repository-test-runner/SKILL.md` to run, retry, escalate, and report the selected checks.
+5. Use `skills/taskfile-command-runner/SKILL.md` when a selected check is a Taskfile command.
+6. Run the selected checks unless the user explicitly says not to, required services are unavailable, or the check is unsafe for the environment.
+7. If a check cannot be run, record the concrete reason and the command that would normally be used.
+8. Do not mark unrun checks as completed in PR bodies, reports, or final responses.
 
 ## Command Selection
 
