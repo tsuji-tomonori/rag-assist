@@ -18,6 +18,7 @@ export type SearchInput = {
     department?: string
     source?: string
     docType?: string
+    benchmarkSuiteId?: string
     documentId?: string
   }
 }
@@ -153,7 +154,8 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     tenantId: input.filters?.tenantId,
     department: input.filters?.department,
     source: input.filters?.source,
-    docType: input.filters?.docType
+    docType: input.filters?.docType,
+    benchmarkSuiteId: input.filters?.benchmarkSuiteId
   }
   const semanticQueryTopK = Math.min(
     ragRuntimePolicy.retrieval.searchRagMaxSourceTopK,
@@ -687,6 +689,7 @@ function manifestMatchesFilters(manifest: DocumentManifest, filters: SearchInput
   if (filters.department && stringValue(metadata.department) !== filters.department) return false
   if (filters.source && stringValue(metadata.source) !== filters.source) return false
   if (filters.docType && stringValue(metadata.docType) !== filters.docType) return false
+  if (filters.benchmarkSuiteId && stringValue(metadata.benchmarkSuiteId) !== filters.benchmarkSuiteId) return false
   return true
 }
 
@@ -740,7 +743,7 @@ function stableStringifyAliasMap(aliases: AliasMap): string {
 
 function sanitizeSearchMetadata(metadata: Record<string, JsonValue> | VectorMetadata | undefined): Record<string, JsonValue> | undefined {
   if (!metadata) return undefined
-  const allowedKeys = ["tenantId", "source", "docType", "department", "domainPolicy", "ragPolicy", "answerPolicy"] as const
+  const allowedKeys = ["tenantId", "source", "docType", "benchmarkSuiteId", "department", "domainPolicy", "ragPolicy", "answerPolicy"] as const
   const sanitized: Record<string, JsonValue> = {}
   for (const key of allowedKeys) {
     const value = metadata[key]

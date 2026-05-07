@@ -83,6 +83,7 @@ type AliasInput = {
     department?: string
     source?: string
     docType?: string
+    benchmarkSuiteId?: string
   }
 }
 
@@ -1653,6 +1654,7 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   const department = stringValue(metadata.department)
   const source = stringValue(metadata.source)
   const docType = stringValue(metadata.docType)
+  const benchmarkSuiteId = stringValue(metadata.benchmarkSuiteId)
   const domainPolicy = stringValue(metadata.domainPolicy)
   const ragPolicy = stringValue(metadata.ragPolicy)
   const answerPolicy = stringValue(metadata.answerPolicy)
@@ -1661,6 +1663,7 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (department) filterable.department = department
   if (source) filterable.source = source
   if (docType) filterable.docType = docType
+  if (benchmarkSuiteId) filterable.benchmarkSuiteId = benchmarkSuiteId
   if (domainPolicy) filterable.domainPolicy = domainPolicy
   if (ragPolicy) filterable.ragPolicy = ragPolicy
   if (answerPolicy) filterable.answerPolicy = answerPolicy

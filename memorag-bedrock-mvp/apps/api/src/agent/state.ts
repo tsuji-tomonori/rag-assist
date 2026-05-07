@@ -198,6 +198,7 @@ const SearchFiltersSchema = z.object({
   department: z.string().optional(),
   source: z.string().optional(),
   docType: z.string().optional(),
+  benchmarkSuiteId: z.string().optional(),
   documentId: z.string().optional()
 })
 

@@ -63,7 +63,7 @@ export function scopeMatches(
 }
 
 function matchesScope(scope: AliasScope, candidate?: AliasScope): boolean {
-  for (const key of ["tenantId", "department", "source", "docType"] as const) {
+  for (const key of ["tenantId", "department", "source", "docType", "benchmarkSuiteId"] as const) {
     if (scope[key] && scope[key] !== candidate?.[key]) return false
   }
   return true
@@ -75,7 +75,8 @@ function metadataToScope(metadata: Record<string, JsonValue> | undefined): Alias
     tenantId: stringValue(metadata.tenantId),
     department: stringValue(metadata.department),
     source: stringValue(metadata.source),
-    docType: stringValue(metadata.docType)
+    docType: stringValue(metadata.docType),
+    benchmarkSuiteId: stringValue(metadata.benchmarkSuiteId)
   }
 }
 
