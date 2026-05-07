@@ -72,12 +72,13 @@ function canProceedWithGroundedPartialEvidence(state: QaAgentState, judgement: S
   if (!state.answerability.isAnswerable) return false
   if (state.selectedChunks.length === 0) return false
   if (judgement.supportedFacts.length === 0 && judgement.supportingChunkIds.length === 0) return false
+  if (!hasSupportedPrimaryEvidence(state, judgement)) return false
   if (hasUnresolvedPrimaryMissingFact(state, judgement)) return false
   if (hasPrimaryConflict(state, judgement)) return false
   if (state.retrievalEvaluation.retrievalQuality === "irrelevant") return false
   if (state.retrievalEvaluation.retrievalQuality === "conflicting" && hasPrimaryFactId(state, state.retrievalEvaluation.conflictingFactIds)) return false
   if (state.selectedChunks[0]?.score !== undefined && state.selectedChunks[0].score < state.minScore) return false
-  return hasDirectAnswerCue(state.question, state.selectedChunks)
+  return true
 }
 
 function hasUnresolvedPrimaryMissingFact(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
@@ -88,9 +89,9 @@ function hasUnresolvedPrimaryMissingFact(state: QaAgentState, judgement: Suffici
   const missingFactIds = new Set(state.retrievalEvaluation.missingFactIds)
 
   return primaryFacts.some((fact) => {
-    if (factSupportedByJudgement(fact, supportedFacts)) return false
+    if (primaryFactSupportedByEvidence(state, fact, supportedFacts)) return false
     if (missingFactIds.has(fact.id)) return true
-    return missingFacts.some((missing) => factMatchesJudgementText(fact, missing))
+    return missingFacts.some((missing) => judgementMentionsFact(fact, missing))
   })
 }
 
@@ -98,7 +99,14 @@ function hasPrimaryConflict(state: QaAgentState, judgement: SufficientContextJud
   if (hasPrimaryFactId(state, state.retrievalEvaluation.conflictingFactIds)) return true
   const conflictingFacts = judgement.conflictingFacts.map(normalize)
   if (conflictingFacts.length === 0) return false
-  return primaryRequiredFacts(state.searchPlan.requiredFacts).some((fact) => conflictingFacts.some((conflict) => factMatchesJudgementText(fact, conflict)))
+  return primaryRequiredFacts(state.searchPlan.requiredFacts).some((fact) => conflictingFacts.some((conflict) => judgementMentionsFact(fact, conflict)))
+}
+
+function hasSupportedPrimaryEvidence(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
+  const primaryFacts = primaryRequiredFacts(state.searchPlan.requiredFacts)
+  const supportedFacts = judgement.supportedFacts.map(normalize)
+  if (primaryFacts.length === 0) return false
+  return primaryFacts.some((fact) => primaryFactSupportedByEvidence(state, fact, supportedFacts))
 }
 
 function primaryRequiredFacts(facts: RequiredFact[]): RequiredFact[] {
@@ -110,70 +118,22 @@ function hasPrimaryFactId(state: QaAgentState, factIds: string[]): boolean {
   return state.searchPlan.requiredFacts.some((fact) => factIds.includes(fact.id) && isPrimaryRequiredFact(fact))
 }
 
-function factSupportedByJudgement(fact: RequiredFact, supportedFacts: string[]): boolean {
-  return supportedFacts.some((supported) => factMatchesJudgementText(fact, supported))
+function primaryFactSupportedByEvidence(state: QaAgentState, fact: RequiredFact, supportedFacts: string[]): boolean {
+  if (state.retrievalEvaluation.supportedFactIds.includes(fact.id)) return true
+  if (fact.status === "supported" || fact.supportingChunkKeys.length > 0) return true
+  return supportedFacts.some((supported) => judgementMentionsFact(fact, supported))
 }
 
-function factMatchesJudgementText(fact: RequiredFact, normalizedJudgementText: string): boolean {
-  const description = normalize(fact.description)
-  if (normalizedJudgementText && (description.includes(normalizedJudgementText) || normalizedJudgementText.includes(description))) return true
-  const subject = fact.subject ? normalize(fact.subject) : ""
-  if (subject && normalizedJudgementText.includes(subject)) return true
-  return factTypeTerms(fact).some((term) => normalizedJudgementText.includes(term))
+function judgementMentionsFact(fact: RequiredFact, normalizedJudgementText: string): boolean {
+  if (!normalizedJudgementText) return false
+  return factReferences(fact).some((reference) => {
+    const normalizedReference = normalize(reference)
+    return normalizedReference.length > 0 && (normalizedJudgementText === normalizedReference || normalizedJudgementText.includes(normalizedReference) || normalizedReference.includes(normalizedJudgementText))
+  })
 }
 
-function factTypeTerms(fact: RequiredFact): string[] {
-  if (fact.factType === "amount") return ["金額", "費用", "料金", "円", "いくら"]
-  if (fact.factType === "date" || fact.factType === "duration") return ["期限", "期日", "締切", "日", "営業日", "いつ"]
-  if (fact.factType === "count") return ["頻度", "回", "毎月", "毎年"]
-  if (fact.factType === "procedure") return ["方法", "手順", "申請", "提出"]
-  if (fact.factType === "person") return ["担当", "承認者", "責任者", "部署", "報告先", "依頼先", "誰"]
-  if (fact.factType === "condition") return ["条件", "対象", "例外", "適用範囲"]
-  if (fact.factType === "classification") return ["分類", "種類", "区分"]
-  return []
-}
-
-function hasDirectAnswerCue(question: string, chunks: QaAgentState["selectedChunks"]): boolean {
-  const joined = chunks.map((chunk) => chunk.metadata.text ?? "").join("\n")
-  const normalizedJoined = normalize(joined)
-  const subjectTerms = significantTerms(question)
-    .flatMap((term) => [term, ...expandedTermVariants(term)])
-    .filter((term) => !isGenericTerm(term))
-  const subjectMatched = subjectTerms.length > 0 && subjectTerms.some((term) => normalizedJoined.includes(normalize(term)))
-  return subjectMatched && matchesAnswerCue(question, joined)
-}
-
-function matchesAnswerCue(question: string, text: string): boolean {
-  const normalized = text.normalize("NFKC")
-  if (/金額|費用|いくら|円|上限/.test(question)) return /[0-9０-９,]+(?:円|万円|千円)/.test(normalized)
-  if (/いつ|期限|日数|何日|何営業日|何日前|開始日|終了日|頻度|何回/.test(question)) {
-    return /[0-9０-９]+(?:日|営業日|ヶ月|か月|月|年|回|分)|翌月|前営業日|月末|月初|毎月|年[0-9０-９]+回|[0-9０-９]+日ごと/.test(normalized)
-  }
-  if (/方法|手順|申請|やり方|フロー|提出|どこ|部署|依頼先/.test(question)) return /(申請|手順|システム|フォーム|提出|承認|部|窓口|チャンネル|ストレージ)/.test(normalized)
-  if (/誰|承認|判定|報告先/.test(question)) return /(上長|責任者|産業医|法務部|総務部|人事部|ヘルプデスク|部|者)/.test(normalized)
-  if (/何が|何を|ありますか|必要/.test(question)) return normalized.length > 0
-  return normalized.length > 0
-}
-
-function significantTerms(text: string): string[] {
-  const normalized = text.normalize("NFKC")
-  const ascii = normalized.match(/[A-Za-z0-9][A-Za-z0-9_-]{2,}/g) ?? []
-  const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
-  return [...new Set([...japanese, ...ascii].map((term) => term.trim()).filter(Boolean))]
-}
-
-function expandedTermVariants(term: string): string[] {
-  return [
-    term.replace(/承認者$/, "承認"),
-    term.replace(/判定者$/, "判定"),
-    term.replace(/担当部署$/, "部"),
-    term.replace(/(申請期限|提出期限|取得期限|変更頻度|依頼先|報告先|提出書類|対象家族|対象者|金額基準)$/, ""),
-    term.replace(/(申請|期限|条件|頻度|方法|手順|部署|書類|対象|必要|変更|提出|依頼先|報告先|判定)$/, "")
-  ].filter((variant) => variant.length >= 2 && variant !== term)
-}
-
-function isGenericTerm(term: string): boolean {
-  return ["期限", "条件", "手順", "方法", "対象", "申請", "利用", "設定", "削除", "費用", "権限", "頻度", "部署", "書類", "必要", "提出"].includes(term)
+function factReferences(fact: RequiredFact): string[] {
+  return [fact.id, fact.description]
 }
 
 function normalizeJudgement(parsed: JudgeJson | undefined, state: QaAgentState): SufficientContextJudgement {
