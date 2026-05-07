@@ -3,6 +3,14 @@ import { promises as fs } from "node:fs"
 import os from "node:os"
 import path from "node:path"
 import { promisify } from "node:util"
+import {
+  DetectDocumentTextCommand,
+  GetDocumentTextDetectionCommand,
+  StartDocumentTextDetectionCommand,
+  TextractClient,
+  type Block as AwsTextractBlock,
+  type GetDocumentTextDetectionCommandOutput
+} from "@aws-sdk/client-textract"
 import { config } from "../config.js"
 import type { StructuredBlock } from "../types.js"
 
@@ -15,6 +23,9 @@ export type UploadLike = {
   contentBytes?: Buffer
   textractJson?: string
   mimeType?: string
+  sourceS3Object?: SourceS3Object
+  ocrDetector?: OcrTextDetector
+  pdfTextExtractor?: (buffer: Buffer) => Promise<string>
 }
 
 export type ExtractedDocument = {
@@ -22,6 +33,18 @@ export type ExtractedDocument = {
   blocks?: StructuredBlock[]
   sourceExtractorVersion: string
 }
+
+type SourceS3Object = {
+  bucketName: string
+  key: string
+}
+
+export type OcrTextDetector = (input: {
+  fileName: string
+  mimeType?: string
+  bytes: Buffer
+  sourceS3Object?: SourceS3Object
+}) => Promise<ExtractedDocument | undefined>
 
 export async function extractTextFromUpload(input: UploadLike): Promise<string> {
   return (await extractDocumentFromUpload(input)).text
@@ -41,7 +64,7 @@ export async function extractDocumentFromUpload(input: UploadLike): Promise<Extr
   }
 
   if (mimeType.includes("pdf") || ext === "pdf") {
-    return limitDocument(textDocument(await extractPdfText(buffer), "pdf-layout-v2"))
+    return limitDocument(await extractPdfDocument(input, buffer))
   }
 
   if (mimeType.includes("wordprocessingml") || ext === "docx") {
@@ -84,6 +107,85 @@ async function extractPdfText(buffer: Buffer): Promise<string> {
   return pdfTextQualityScore(pdftotextText) > pdfTextQualityScore(parsedText) ? pdftotextText : parsedText
 }
 
+async function extractPdfDocument(input: UploadLike, buffer: Buffer): Promise<ExtractedDocument> {
+  const extractedText = await (input.pdfTextExtractor ?? extractPdfText)(buffer)
+  if (pdfTextQualityScore(extractedText) > 0) return textDocument(extractedText, "pdf-layout-v2")
+
+  const ocrDetector = input.ocrDetector ?? detectTextWithTextract
+  const ocrDocument = await ocrDetector({
+    fileName: input.fileName,
+    mimeType: input.mimeType,
+    bytes: buffer,
+    sourceS3Object: input.sourceS3Object
+  })
+  return ocrDocument ?? textDocument(extractedText, "pdf-layout-v2")
+}
+
+async function detectTextWithTextract(input: {
+  fileName: string
+  mimeType?: string
+  bytes: Buffer
+  sourceS3Object?: SourceS3Object
+}): Promise<ExtractedDocument | undefined> {
+  if (!config.pdfOcrFallbackEnabled) return undefined
+
+  try {
+    const blocks = input.sourceS3Object
+      ? await detectTextWithTextractAsync(input.sourceS3Object)
+      : await detectTextWithTextractSync(input.bytes)
+    if (blocks.length === 0) return undefined
+    return textractBlocksDocument(blocks, "textract-detect-document-text-v1")
+  } catch (error) {
+    throw new Error(`PDF OCR fallback failed for ${input.fileName}: ${errorMessage(error)}`)
+  }
+}
+
+async function detectTextWithTextractSync(bytes: Buffer): Promise<TextractBlock[]> {
+  if (bytes.length > config.pdfOcrFallbackSyncMaxBytes) return []
+  const client = new TextractClient({ region: config.region })
+  const response = await client.send(new DetectDocumentTextCommand({ Document: { Bytes: new Uint8Array(bytes) } }))
+  return normalizeTextractBlocks(response.Blocks ?? [])
+}
+
+async function detectTextWithTextractAsync(source: SourceS3Object): Promise<TextractBlock[]> {
+  const client = new TextractClient({ region: config.region })
+  const start = await client.send(new StartDocumentTextDetectionCommand({
+    DocumentLocation: {
+      S3Object: {
+        Bucket: source.bucketName,
+        Name: source.key
+      }
+    }
+  }))
+  if (!start.JobId) throw new Error("Textract did not return JobId")
+
+  const deadline = Date.now() + config.pdfOcrFallbackTimeoutMs
+  let firstPage: GetDocumentTextDetectionCommandOutput | undefined
+  while (Date.now() <= deadline) {
+    const response = await client.send(new GetDocumentTextDetectionCommand({ JobId: start.JobId }))
+    if (response.JobStatus === "SUCCEEDED" || response.JobStatus === "PARTIAL_SUCCESS") {
+      firstPage = response
+      break
+    }
+    if (response.JobStatus === "FAILED") throw new Error(response.StatusMessage || "Textract job failed")
+    await sleep(config.pdfOcrFallbackPollIntervalMs)
+  }
+  if (!firstPage) throw new Error(`Textract job did not finish within ${config.pdfOcrFallbackTimeoutMs}ms`)
+
+  const blocks = normalizeTextractBlocks(firstPage.Blocks ?? [])
+  let nextToken = firstPage.NextToken
+  while (nextToken) {
+    const response = await client.send(new GetDocumentTextDetectionCommand({ JobId: start.JobId, NextToken: nextToken }))
+    blocks.push(...normalizeTextractBlocks(response.Blocks ?? []))
+    nextToken = response.NextToken
+  }
+  return blocks
+}
+
+function textractBlocksDocument(blocks: TextractBlock[], sourceExtractorVersion: string): ExtractedDocument {
+  return parseTextractBlocks(blocks, sourceExtractorVersion)
+}
+
 async function extractWithPdftotext(buffer: Buffer): Promise<string | undefined> {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "memorag-pdf-"))
   const filePath = path.join(tempDir, "source.pdf")
@@ -103,14 +205,17 @@ async function extractWithPdftotext(buffer: Buffer): Promise<string | undefined>
 
 function parseTextractJson(jsonText: string): ExtractedDocument {
   const payload = JSON.parse(jsonText) as { Blocks?: TextractBlock[]; blocks?: TextractBlock[] }
-  const blocks = payload.Blocks ?? payload.blocks ?? []
+  return parseTextractBlocks(payload.Blocks ?? payload.blocks ?? [], "textract-json-v1")
+}
+
+function parseTextractBlocks(blocks: TextractBlock[], sourceExtractorVersion: string): ExtractedDocument {
   const byId = new Map(blocks.map((block) => [block.Id ?? "", block]))
 
   const structured: StructuredBlock[] = []
   for (const block of blocks) {
     if (block.BlockType === "TABLE") {
       const cells = childIds(block).map((id) => byId.get(id)).filter((candidate): candidate is TextractBlock => candidate?.BlockType === "CELL")
-      structured.push(textractTableBlock(block, cells, byId))
+      structured.push(textractTableBlock(block, cells, byId, sourceExtractorVersion))
       continue
     }
     if (block.BlockType === "LINE" && block.Text) {
@@ -123,15 +228,15 @@ function parseTextractJson(jsonText: string): ExtractedDocument {
         heading: headingFromLine(block.Text),
         sourceBlockId: block.Id,
         normalizedFrom: "textract-line",
-        extractionMethod: "textract-json-v1"
+        extractionMethod: sourceExtractorVersion
       })
     }
   }
 
-  return { text: structured.map((block) => block.text).join("\n\n"), blocks: structured, sourceExtractorVersion: "textract-json-v1" }
+  return { text: structured.map((block) => block.text).join("\n\n"), blocks: structured, sourceExtractorVersion }
 }
 
-function textractTableBlock(block: TextractBlock, cells: TextractBlock[], byId: Map<string, TextractBlock>): StructuredBlock {
+function textractTableBlock(block: TextractBlock, cells: TextractBlock[], byId: Map<string, TextractBlock>, extractionMethod: string): StructuredBlock {
   const rows = new Map<number, Map<number, string>>()
   let maxColumn = 0
   for (const cell of cells) {
@@ -155,7 +260,7 @@ function textractTableBlock(block: TextractBlock, cells: TextractBlock[], byId: 
     sourceBlockId: block.Id,
     normalizedFrom: "textract-table",
     tableColumnCount: maxColumn || undefined,
-    extractionMethod: "textract-json-v1"
+    extractionMethod
   }
 }
 
@@ -265,6 +370,21 @@ type TextractBlock = {
   Relationships?: Array<{ Type?: string; Ids?: string[] }>
 }
 
+function normalizeTextractBlocks(blocks: AwsTextractBlock[]): TextractBlock[] {
+  return blocks.map((block) => ({
+    Id: block.Id,
+    BlockType: block.BlockType,
+    Text: block.Text,
+    Page: block.Page,
+    RowIndex: block.RowIndex,
+    ColumnIndex: block.ColumnIndex,
+    Relationships: block.Relationships?.map((relationship) => ({
+      Type: relationship.Type,
+      Ids: relationship.Ids
+    }))
+  }))
+}
+
 function childIds(block: TextractBlock): string[] {
   return block.Relationships?.filter((relationship) => relationship.Type === "CHILD").flatMap((relationship) => relationship.Ids ?? []) ?? []
 }
@@ -309,4 +429,12 @@ function decodeHtml(value: string): string {
 
 function escapeTableCell(value: string): string {
   return value.replace(/\|/g, "\\|")
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, Math.max(0, ms)))
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }

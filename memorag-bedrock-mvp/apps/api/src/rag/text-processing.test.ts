@@ -125,6 +125,44 @@ test("upload extraction parses Textract JSON tables and lines into structured bl
   assert.ok(extracted.blocks?.some((block) => block.kind === "list" && block.text.includes("- 申請手順")))
 })
 
+test("upload extraction uses OCR fallback when PDF has no embedded text", async () => {
+  let fallbackCalled = false
+  const extracted = await extractDocumentFromUpload({
+    fileName: "foodkaku5.pdf",
+    contentBytes: Buffer.from("%PDF-1.4 scanned sample"),
+    mimeType: "application/pdf",
+    sourceS3Object: { bucketName: "docs-bucket", key: "uploads/benchmarkSeed/foodkaku5.pdf" },
+    pdfTextExtractor: async () => "   ",
+    ocrDetector: async (input) => {
+      fallbackCalled = true
+      assert.equal(input.fileName, "foodkaku5.pdf")
+      assert.equal(input.sourceS3Object?.bucketName, "docs-bucket")
+      assert.equal(input.sourceS3Object?.key, "uploads/benchmarkSeed/foodkaku5.pdf")
+      return {
+        text: "食品表示基準について",
+        sourceExtractorVersion: "textract-detect-document-text-v1",
+        blocks: [
+          {
+            id: "line-1",
+            kind: "text",
+            text: "食品表示基準について",
+            pageStart: 1,
+            pageEnd: 1,
+            sourceBlockId: "line-1",
+            normalizedFrom: "textract-line",
+            extractionMethod: "textract-detect-document-text-v1"
+          }
+        ]
+      }
+    }
+  })
+
+  assert.equal(fallbackCalled, true)
+  assert.equal(extracted.sourceExtractorVersion, "textract-detect-document-text-v1")
+  assert.equal(extracted.text, "食品表示基準について")
+  assert.equal(extracted.blocks?.[0]?.pageStart, 1)
+})
+
 test("json parser accepts raw JSON, fenced JSON, embedded JSON, and invalid inputs", () => {
   assert.deepEqual(parseJsonObject<{ ok: boolean }>("{\"ok\":true}"), { ok: true })
   assert.deepEqual(parseJsonObject<{ ok: boolean }>("```json\n{\"ok\":true}\n```"), { ok: true })

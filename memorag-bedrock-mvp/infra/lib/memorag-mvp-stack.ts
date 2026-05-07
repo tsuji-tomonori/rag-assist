@@ -358,6 +358,11 @@ export class MemoRagMvpStack extends Stack {
       DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
       DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
     }
+    const apiFunctionEnvironment = {
+      ...apiEnvironment,
+      PDF_OCR_FALLBACK_ENABLED: "true",
+      PDF_OCR_FALLBACK_TIMEOUT_MS: "45000"
+    }
     const syncApiTimeout = Duration.seconds(60)
     const apiFn = new lambda.Function(this, "ApiFunction", {
       code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/api")),
@@ -367,7 +372,7 @@ export class MemoRagMvpStack extends Stack {
       memorySize: 1024,
       timeout: syncApiTimeout,
       logGroup: apiLogGroup,
-      environment: apiEnvironment
+      environment: apiFunctionEnvironment
     })
 
     const chatRunWorkerLogGroup = new logs.LogGroup(this, "ChatRunWorkerLogGroup", {
@@ -449,6 +454,12 @@ export class MemoRagMvpStack extends Stack {
       new iam.PolicyStatement({
         actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminRemoveUserFromGroup"],
         resources: [userPool.userPoolArn]
+      })
+    )
+    apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["textract:DetectDocumentText", "textract:StartDocumentTextDetection", "textract:GetDocumentTextDetection"],
+        resources: ["*"]
       })
     )
 
@@ -845,7 +856,7 @@ export class MemoRagMvpStack extends Stack {
         },
         {
           id: "AwsSolutions-IAM5",
-          reason: "Bedrock model ARNs, S3 object grants, CloudFront invalidation, and S3 Vectors currently require wildcard or generated-object patterns in this MVP."
+          reason: "Bedrock model ARNs, Textract document text APIs, S3 object grants, CloudFront invalidation, and S3 Vectors currently require wildcard or generated-object patterns in this MVP."
         },
         {
           id: "AwsSolutions-CFR2",
