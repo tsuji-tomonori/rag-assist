@@ -1,10 +1,10 @@
 # Benchmark timeout extension
 
-保存先: `tasks/do/20260507-0857-benchmark-timeout-extension.md`
+保存先: `tasks/done/20260507-0857-benchmark-timeout-extension.md`
 
 ## 状態
 
-- do
+- done
 
 ## 背景
 
