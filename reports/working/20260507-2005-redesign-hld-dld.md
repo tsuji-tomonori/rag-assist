@@ -18,7 +18,7 @@
 | R3 | 主要フローを目的別に分割する | 高 | 対応 |
 | R4 | コンポーネント群ごとの DLD を追加する | 高 | 対応 |
 | R5 | 実施した検証だけを報告する | 高 | 対応 |
-| R6 | PR 作成後に受け入れ条件確認とセルフレビューをコメントする | 高 | PR 作成後に対応予定 |
+| R6 | PR 作成後に受け入れ条件確認とセルフレビューをコメントする | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -45,7 +45,7 @@
 | `memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_008.md` | Markdown | 認可・管理・監査詳細設計 | R4 に対応 |
 | `memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_009.md` | Markdown | Debug Trace・Benchmark 詳細設計 | R4 に対応 |
 | `memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_010.md` | Markdown | 利用量・コスト見積もり詳細設計 | R4 に対応 |
-| `tasks/do/20260507-2005-redesign-hld-dld.md` | Markdown | 作業 task と受け入れ条件 | workflow 要件に対応 |
+| `tasks/done/20260507-2005-redesign-hld-dld.md` | Markdown | 作業 task、受け入れ条件、完了結果 | workflow 要件に対応 |
 
 ## 6. 指示への fit 評価
 
@@ -63,11 +63,19 @@
 
 ## 7. 検証
 
-- `pre-commit run --files memorag-bedrock-mvp/docs/3_設計_DES/01_高レベル設計_HLD/DES_HLD_001.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_006.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_007.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_008.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_009.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_010.md tasks/do/20260507-2005-redesign-hld-dld.md`: pass
+- `pre-commit run --files memorag-bedrock-mvp/docs/3_設計_DES/01_高レベル設計_HLD/DES_HLD_001.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_006.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_007.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_008.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_009.md memorag-bedrock-mvp/docs/3_設計_DES/11_詳細設計_DLD/DES_DLD_010.md tasks/do/20260507-2005-redesign-hld-dld.md reports/working/20260507-2005-redesign-hld-dld.md`: pass
+- `pre-commit run --files tasks/done/20260507-2005-redesign-hld-dld.md reports/working/20260507-2005-redesign-hld-dld.md`: pass
 - `git diff --check`: pass
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: PR 作成後の受け入れ条件確認コメント、セルフレビューコメント、task done 移動は PR 作成後に実施する。
+- 未対応: なし。
 - 制約: ドキュメントのみの変更のため、アプリケーションの lint、typecheck、unit test は実行していない。
 - リスク: 今後の実装変更で API schema や store schema が変わる場合は、今回追加した DLD の具体型や endpoint 対応を更新する必要がある。
+
+## 9. PR 後の対応
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/155
+- 受け入れ条件確認コメント: 投稿済み。
+- セルフレビューコメント: 投稿済み。
+- task md: `tasks/done/20260507-2005-redesign-hld-dld.md` へ移動済み。
