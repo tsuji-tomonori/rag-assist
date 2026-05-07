@@ -14,8 +14,8 @@
 | mode | `agent`。 |
 | primary dataset | Hugging Face `yubo2333/MMLongBench-Doc` の `train` split。論文が評価に使った公開 dataset のうち、1,091 questions / 135 docs 規模で managed benchmark に載せやすい。 |
 | secondary dataset | Hugging Face `dengchao/LongDocURL`。規模が大きいため `mmrag-docqa-full-v1` または夜間 stress benchmark 用に分離し、`mmrag-docqa-v1` の既定にはしない。 |
-| default row selection | `MMLongBench-Doc` から deterministic stratified subset 100 questions。内訳は Chart 20、Table 20、Figure 15、Layout / generalized text 15、Pure-text 15、cross-page mixed 10、unanswerable 5 を目安にする。該当カテゴリが不足する場合は evidence source の希少カテゴリを優先し、総数 100 を維持する。 |
-| full run | 手動または nightly で `MMLongBench-Doc` 全 1,091 questions を実行する。PR 必須 gate にはしない。 |
+| default row selection | `MMLongBench-Doc` train split 全 1,091 questions。`mmrag-docqa-v1` の通常実行では subset に絞らない。 |
+| full run | `mmrag-docqa-v1` の既定 run として `MMLongBench-Doc` 全 1,091 questions を実行する。PR 必須 gate にはしないが、CodeBuild / managed benchmark の通常経路では全量を対象にする。 |
 | corpus policy | repository に PDF を commit しない。CodeBuild / local prepare step で selected rows が参照する `doc_id` の PDF だけを download し、`BENCHMARK_CORPUS_DIR` へ配置する。全 PDF download は opt-in にする。 |
 | corpus identity | `BENCHMARK_CORPUS_SUITE_ID=mmrag-docqa-v1`。seed 文書は `aclGroups: ["BENCHMARK_RUNNER"]`、`docType: "benchmark-corpus"`、`source: "benchmark-runner"` で隔離する。 |
 | dataset output path | local: `.local-data/mmrag-docqa-v1/dataset.jsonl`、CodeBuild: `./benchmark/.runner-dataset.jsonl`。 |
@@ -32,7 +32,7 @@
 | regression threshold | `answerCorrect`、`expectedFileHitRate`、`retrievalRecallAt20`、`factSlotCoverage` は baseline から 5 percentage points 超の低下で fail。`p95LatencyMs` は 25% 超の悪化で fail。 |
 | artifact policy | `results.jsonl`、`summary.json`、`report.md` を benchmark output S3 prefix に保存し、PR コメントには summary と threshold 判定のみ記載する。raw PDF と raw prompt は PR コメントへ貼らない。 |
 
-この決定値は、実データ変換器と downloader を実装するまでの仕様入力であり、現行の `dataset.mmrag-docqa.sample.jsonl` を本番評価済みとみなすものではない。
+この決定値は、`benchmark/mmrag-docqa.ts` の converter / downloader と CodeBuild pre_build の入力仕様である。現行の `dataset.mmrag-docqa.sample.jsonl` は軽量な導線確認用 fixture であり、`mmrag-docqa-v1` の通常評価結果として扱わない。
 
 参考:
 

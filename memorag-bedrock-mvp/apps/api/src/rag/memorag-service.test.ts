@@ -280,13 +280,13 @@ test("service preserves asynchronous chat run options and can mark worker failur
     suiteId: "mmrag-docqa-v1",
     label: "MMRAG-DocQA",
     mode: "agent",
-    datasetS3Key: "datasets/agent/mmrag-docqa-v1.jsonl",
+    datasetS3Key: "hf://datasets/yubo2333/MMLongBench-Doc",
     preset: "standard",
     defaultConcurrency: 1
   })
   const mmragRun = await service.createBenchmarkRun(user, { suiteId: "mmrag-docqa-v1", mode: "agent" })
   assert.equal(mmragRun.suiteId, "mmrag-docqa-v1")
-  assert.equal(mmragRun.datasetS3Key, "datasets/agent/mmrag-docqa-v1.jsonl")
+  assert.equal(mmragRun.datasetS3Key, "hf://datasets/yubo2333/MMLongBench-Doc")
 
   await deps.chatRunStore.create({
     runId: "run-worker-timeout",
