@@ -34,6 +34,8 @@ type DatasetRow = {
   expectedFileNames?: string[]
   expectedDocumentIds?: string[]
   expectedPages?: Array<number | string>
+  forbiddenFiles?: string[]
+  forbiddenDocumentIds?: string[]
   expectedFactSlots?: ExpectedFactSlot[]
   modelId?: string
   embeddingModelId?: string
@@ -135,12 +137,16 @@ type RowEvaluation = {
   expectedPageHit: boolean | null
   retrievalRecallAtK: boolean | null
   retrievalRecallAt20: boolean | null
+  retrievalMrrAtK: number | null
   factSlotCoverage: number | null
   supportedFactSlots: number | null
   totalFactSlots: number
+  citationSupportPass: boolean | null
   unsupportedSentenceRate: number | null
   unsupportedSentenceCount: number | null
   totalSentenceCount: number | null
+  noAccessLeakCount: number
+  noAccessLeak: boolean | null
   refused: boolean
   iterationCount: number | null
   retrievalCallCount: number | null
@@ -154,6 +160,7 @@ type RowEvaluation = {
   retrievedCount: number
   citationCount: number
   failureReasons: string[]
+  failureCategories: FailureCategory[]
 }
 
 type BenchmarkResultRow = {
@@ -220,11 +227,15 @@ type Summary = {
     citationHitRate: number | null
     expectedFileHitRate: number | null
     retrievalRecallAtK: number | null
+    retrievalMrrAtK: number | null
     retrievalRecallAt20: number | null
     expectedPageHitRate: number | null
     factSlotCoverage: number | null
+    citationSupportPassRate: number | null
     refusalPrecision: number | null
     refusalRecall: number | null
+    noAccessLeakCount: number
+    noAccessLeakRate: number | null
     unsupportedSentenceRate: number | null
     avgIterations: number | null
     avgRetrievalCalls: number | null
@@ -246,6 +257,7 @@ type Summary = {
     expectedAnswer?: string
     expected?: string
     answerPreview: string
+    categories: FailureCategory[]
   }>
   qualityReview: QualityReview
 }
@@ -263,6 +275,13 @@ type CoverageReportRow = {
   count: number
   note: string
 }
+
+type FailureCategory =
+  | "search_failure"
+  | "extraction_failure"
+  | "chunk_failure"
+  | "generation_failure"
+  | "refusal_failure"
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
@@ -503,6 +522,8 @@ function evaluateRow(
   const expectedFiles = toArray(row.expectedFiles ?? row.expectedFileNames)
   const expectedDocumentIds = toArray(row.expectedDocumentIds)
   const expectedPages = toArray(row.expectedPages).map(String)
+  const forbiddenFiles = toArray(row.forbiddenFiles)
+  const forbiddenDocumentIds = toArray(row.forbiddenDocumentIds)
   const failureReasons: string[] = []
   const refused = !actualAnswerable || isNoAnswerText(answer, evaluatorProfile)
   const answerabilityCorrect = actualAnswerable === expectedAnswerable
@@ -576,15 +597,24 @@ function evaluateRow(
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
       ? hasRetrievalRecallAtK([...retrieved, ...citations], expectedFiles, expectedDocumentIds, 20)
       : null
+  const retrievalMrrAtK =
+    expectedFiles.length > 0 || expectedDocumentIds.length > 0
+      ? reciprocalRankAtK([...retrieved, ...citations], expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
+      : null
 
   const factSlotResult = evaluateFactSlots(row.expectedFactSlots ?? [], answer, [...citations, ...retrieved], expectedAnswerable)
   if (factSlotResult.coverage !== null && factSlotResult.coverage < 1) failureReasons.push("fact_slot_not_covered")
 
   const supportResult = evaluateUnsupportedSentences(body)
   if (supportResult.rate !== null && supportResult.rate > 0) failureReasons.push("unsupported_sentence_detected")
+  const citationSupportPass = supportResult.rate === null ? null : supportResult.rate === 0
   const retrievalJudgeResult = evaluateRetrievalJudge(body)
+  const noAccessLeakCount = countForbiddenEvidence([...citations, ...retrieved], forbiddenFiles, forbiddenDocumentIds)
+  const noAccessLeak = forbiddenFiles.length > 0 || forbiddenDocumentIds.length > 0 ? noAccessLeakCount === 0 : null
+  if (noAccessLeak === false) failureReasons.push("no_access_leak")
 
   if (status < 200 || status >= 300) failureReasons.push(`http_${status}`)
+  const failureCategories = classifyFailureCategories(failureReasons)
 
   const answerCorrect =
     expectedAnswerable &&
@@ -623,12 +653,16 @@ function evaluateRow(
     expectedPageHit,
     retrievalRecallAtK,
     retrievalRecallAt20,
+    retrievalMrrAtK,
     factSlotCoverage: factSlotResult.coverage,
     supportedFactSlots: factSlotResult.supported,
     totalFactSlots: factSlotResult.total,
+    citationSupportPass,
     unsupportedSentenceRate: supportResult.rate,
     unsupportedSentenceCount: supportResult.unsupported,
     totalSentenceCount: supportResult.total,
+    noAccessLeakCount,
+    noAccessLeak,
     refused,
     iterationCount: countDebugSteps(body, "evaluate_search_progress"),
     retrievalCallCount: countDebugSteps(body, "execute_search_action"),
@@ -641,7 +675,8 @@ function evaluateRow(
     topCitationScore: citations.length > 0 ? Math.max(...citations.map((citation) => citation.score ?? 0)) : null,
     retrievedCount: retrieved.length,
     citationCount: citations.length,
-    failureReasons
+    failureReasons,
+    failureCategories
   }
 }
 
@@ -711,10 +746,13 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
   const retrievalRecallAtKEvaluated = results.filter((row) => row.evaluation.retrievalRecallAtK !== null)
   const retrievalRecallAt20Evaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
+  const retrievalMrrAtKEvaluated = results.filter((row) => row.evaluation.retrievalMrrAtK !== null)
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
+  const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
+  const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
   const refusedRows = results.filter((row) => row.evaluation.refused)
   const iterationCounts = results
     .map((row) => row.evaluation.iterationCount)
@@ -811,6 +849,15 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length,
         retrievalRecallAtKEvaluated.length
       ),
+      retrievalMrrAtK:
+        retrievalMrrAtKEvaluated.length === 0
+          ? null
+          : Number(
+              (
+                retrievalMrrAtKEvaluated.reduce((sum, row) => sum + (row.evaluation.retrievalMrrAtK ?? 0), 0) /
+                retrievalMrrAtKEvaluated.length
+              ).toFixed(4)
+            ),
       retrievalRecallAt20: rate(
         retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length,
         retrievalRecallAt20Evaluated.length
@@ -828,6 +875,10 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
                 factSlotEvaluated.length
               ).toFixed(4)
             ),
+      citationSupportPassRate: rate(
+        citationSupportEvaluated.filter((row) => row.evaluation.citationSupportPass === true).length,
+        citationSupportEvaluated.length
+      ),
       refusalPrecision: rate(
         refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length,
         refusedRows.length
@@ -835,6 +886,11 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       refusalRecall: rate(
         unanswerableRows.filter((row) => row.evaluation.refused).length,
         unanswerableRows.length
+      ),
+      noAccessLeakCount: results.reduce((sum, row) => sum + row.evaluation.noAccessLeakCount, 0),
+      noAccessLeakRate: rate(
+        noAccessLeakEvaluated.filter((row) => row.evaluation.noAccessLeak === true).length,
+        noAccessLeakEvaluated.length
       ),
       unsupportedSentenceRate:
         supportEvaluated.length === 0
@@ -878,7 +934,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         expectedContains: row.expectedContains,
         expectedAnswer: row.expectedAnswer,
         expected: row.expected,
-        answerPreview: (row.result.answer ?? row.result.error ?? "").slice(0, 180)
+        answerPreview: (row.result.answer ?? row.result.error ?? "").slice(0, 180),
+        categories: row.evaluation.failureCategories
       }))
   }
   return {
@@ -910,11 +967,15 @@ type BenchmarkReportMetricName =
   | "citation_hit_rate"
   | "expected_file_hit_rate"
   | "retrieval_recall_at_k"
+  | "retrieval_mrr_at_k"
   | "retrieval_recall_at_20"
   | "expected_page_hit_rate"
   | "fact_slot_coverage"
+  | "citation_support_pass_rate"
   | "refusal_precision"
   | "refusal_recall"
+  | "no_access_leak_count"
+  | "no_access_leak_rate"
   | "unsupported_sentence_rate"
   | "avg_iterations"
   | "avg_retrieval_calls"
@@ -955,10 +1016,10 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
   const failureRows = summary.failures.length === 0
     ? "\nNo failed benchmark rows.\n"
     : [
-        "| id | question | reasons | answer preview |",
-        "| --- | --- | --- | --- |",
+        "| id | question | reasons | categories | answer preview |",
+        "| --- | --- | --- | --- | --- |",
         ...summary.failures.map((failure) =>
-          `| ${escapeMarkdown(failure.id ?? "")} | ${escapeMarkdown(failure.question)} | ${escapeMarkdown(failure.reasons.join(", "))} | ${escapeMarkdown(failure.answerPreview)} |`
+          `| ${escapeMarkdown(failure.id ?? "")} | ${escapeMarkdown(failure.question)} | ${escapeMarkdown(failure.reasons.join(", "))} | ${escapeMarkdown(failure.categories.join(", "))} | ${escapeMarkdown(failure.answerPreview)} |`
         )
       ].join("\n")
 
@@ -983,11 +1044,11 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
       ].join("\n")
 
   const detailRows = [
-    "| id | expected | actual | fact_slots | clarification | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | task_latency_ms | citations | retrieved | result |",
-    "| --- | --- | --- | ---: | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |",
+    "| id | category | expected | actual | fact_slots | support | leak | clarification | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | task_latency_ms | citations | retrieved | result |",
+    "| --- | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |",
     ...results.map((row) => {
       const passed = row.evaluation.failureReasons.length === 0 ? "pass" : row.evaluation.failureReasons.join(", ")
-      return `| ${escapeMarkdown(row.id ?? "")} | ${row.evaluation.expectedResponseType} | ${row.evaluation.actualResponseType} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatClarificationSummary(row.evaluation)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${formatNumber(row.evaluation.riskSignalCount)} | ${formatLlmJudgeSummary(row.evaluation)} | ${row.latencyMs} | ${row.taskLatencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
+      return `| ${escapeMarkdown(row.id ?? "")} | ${escapeMarkdown(rowCategory(row))} | ${row.evaluation.expectedResponseType} | ${row.evaluation.actualResponseType} | ${formatRate(row.evaluation.factSlotCoverage)} | ${formatBoolean(row.evaluation.citationSupportPass)} | ${row.evaluation.noAccessLeakCount} | ${formatClarificationSummary(row.evaluation)} | ${formatNumber(row.evaluation.iterationCount)} | ${formatNumber(row.evaluation.retrievalCallCount)} | ${formatNumber(row.evaluation.riskSignalCount)} | ${formatLlmJudgeSummary(row.evaluation)} | ${row.latencyMs} | ${row.taskLatencyMs} | ${row.evaluation.citationCount} | ${row.evaluation.retrievedCount} | ${escapeMarkdown(passed)} |`
     })
   ].join("\n")
 
@@ -1089,16 +1150,24 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "期待ファイルまたは期待 document が citation/retrieved に含まれた割合。"
     case "retrieval_recall_at_k":
       return "evaluator profile の retrieval.recallK で期待ファイルまたは期待 document が含まれた割合。"
+    case "retrieval_mrr_at_k":
+      return "evaluator profile の retrieval.recallK 内で、最初に期待ファイルまたは期待 document が現れた順位の逆数平均。"
     case "retrieval_recall_at_20":
       return "上位 20 件の retrieved/citation に期待ファイルまたは期待 document が含まれた割合。"
     case "expected_page_hit_rate":
       return "期待 page が citation/retrieved に含まれた割合。"
     case "fact_slot_coverage":
       return "dataset の expectedFactSlots のうち、回答文または取得根拠で支持できた fact slot の平均割合。"
+    case "citation_support_pass_rate":
+      return "answerSupport が評価した行のうち、非支持文が 0 件だった割合。"
     case "refusal_precision":
       return "拒否した行のうち、dataset 上も回答不能だった割合。高いほど誤拒否が少ない。"
     case "refusal_recall":
       return "回答不能な行のうち、実際に拒否できた割合。"
+    case "no_access_leak_count":
+      return "dataset で forbiddenFiles または forbiddenDocumentIds に指定した根拠が citation/retrieved に出た件数。0 が gate。"
+    case "no_access_leak_rate":
+      return "ACL negative 行のうち、forbidden evidence が citation/retrieved に出なかった割合。"
     case "unsupported_sentence_rate":
       return "answerSupport が検出した非支持文の割合。低いほど根拠に忠実。"
     case "avg_iterations":
@@ -1130,6 +1199,12 @@ function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportR
   const expectedClarificationRows = results.filter((row) => row.evaluation.expectedResponseType === "clarification")
   const expectedAnswerRows = results.filter((row) => row.evaluation.expectedResponseType === "answer")
   const expectedUnanswerableRows = results.filter((row) => !row.evaluation.expectedAnswerable)
+  const categoryCounts = new Map<string, number>()
+  for (const result of results) {
+    const category = rowCategory(result)
+    if (!category) continue
+    categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1)
+  }
   const actualClarificationRows = results.filter((row) => row.evaluation.actualResponseType === "clarification")
   const refusedRows = results.filter((row) => row.evaluation.refused)
   const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
@@ -1138,6 +1213,11 @@ function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportR
     { item: "expected_answer_rows", count: expectedAnswerRows.length, note: "answerable / normal QA denominator" },
     { item: "expected_clarification_rows", count: expectedClarificationRows.length, note: "clarification recall and F1 denominator" },
     { item: "expected_unanswerable_rows", count: expectedUnanswerableRows.length, note: "abstention / refusal recall denominator" },
+    ...[...categoryCounts.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([category, count]) => ({
+      item: `evaluation_category_${category}`,
+      count,
+      note: "baseline evaluation category from row metadata.evaluationCategory"
+    })),
     {
       item: "rows_with_expected_options_any_of",
       count: results.filter((row) => row.evaluation.optionHit !== null).length,
@@ -1202,9 +1282,12 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
   const retrievalRecallAtKEvaluated = results.filter((row) => row.evaluation.retrievalRecallAtK !== null)
   const retrievalRecallAt20Evaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
+  const retrievalMrrAtKEvaluated = results.filter((row) => row.evaluation.retrievalMrrAtK !== null)
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
+  const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
+  const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
   const refusedRows = results.filter((row) => row.evaluation.refused)
   const iterationRows = results.filter((row) => row.evaluation.iterationCount !== null)
   const retrievalCallRows = results.filter((row) => row.evaluation.retrievalCallCount !== null)
@@ -1231,11 +1314,15 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("citation_hit_rate", summary.metrics.citationHitRate, citationEvaluated.filter((row) => row.evaluation.citationHit === true).length, citationEvaluated.length, "answerable 行で citation が返った割合。"),
     metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを評価。"),
     metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を evaluator profile の retrieval.recallK で評価。"),
+    metricNullableRow("retrieval_mrr_at_k", formatNumber(summary.metrics.retrievalMrrAtK), summary.metrics.retrievalMrrAtK, `${retrievalMrrAtKEvaluated.length} rows with expectedFiles or expectedDocumentIds`, "`expectedFiles` または `expectedDocumentIds` を evaluator profile の retrieval.recallK 内の reciprocal rank で評価。"),
     metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を top 20 retrieved/citation で評価する後方互換指標。"),
     metricRateRow("expected_page_hit_rate", summary.metrics.expectedPageHitRate, pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length, pageEvaluated.length, "`expectedPages` がある行だけを評価。"),
     metricNullableRow("fact_slot_coverage", formatRate(summary.metrics.factSlotCoverage), summary.metrics.factSlotCoverage, `${factSlotEvaluated.length} rows with expectedFactSlots`, "`expectedFactSlots` がある行の平均 coverage。"),
+    metricRateRow("citation_support_pass_rate", summary.metrics.citationSupportPassRate, citationSupportEvaluated.filter((row) => row.evaluation.citationSupportPass === true).length, citationSupportEvaluated.length, "answerSupport 出力がある行だけを評価。"),
     metricRateRow("refusal_precision", summary.metrics.refusalPrecision, refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length, "実際に refusal した行のうち、期待値も unanswerable/refusal だった割合。0.0% は answer-only dataset での false positive を示す。"),
     metricRateRow("refusal_recall", summary.metrics.refusalRecall, unanswerableRows.filter((row) => row.evaluation.refused).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
+    metricNullableRow("no_access_leak_count", formatNumber(summary.metrics.noAccessLeakCount), summary.metrics.noAccessLeakCount, `${noAccessLeakEvaluated.length} rows with forbiddenFiles or forbiddenDocumentIds`, "forbidden evidence が citation/retrieved に出た件数。0 が gate。"),
+    metricRateRow("no_access_leak_rate", summary.metrics.noAccessLeakRate, noAccessLeakEvaluated.filter((row) => row.evaluation.noAccessLeak === true).length, noAccessLeakEvaluated.length, "forbidden evidence を指定した行だけを評価。"),
     metricNullableRow("unsupported_sentence_rate", formatRate(summary.metrics.unsupportedSentenceRate), summary.metrics.unsupportedSentenceRate, `${supportEvaluated.length} rows with answer support output`, "answer support 出力がある行だけを評価。"),
     metricNullableRow("avg_iterations", formatNumber(summary.metrics.avgIterations), summary.metrics.avgIterations, `${iterationRows.length} rows with evaluate_search_progress debug steps`, "debug steps がない場合は評価対象外。"),
     metricNullableRow("avg_retrieval_calls", formatNumber(summary.metrics.avgRetrievalCalls), summary.metrics.avgRetrievalCalls, `${retrievalCallRows.length} rows with execute_search_action debug steps`, "debug steps がない場合は評価対象外。"),
@@ -1329,6 +1416,24 @@ function hasRetrievalRecallAtK(citations: Citation[], expectedFiles: string[], e
   const fileHit = expectedFiles.length === 0 || hasExpectedFileHit(topK, expectedFiles)
   const documentHit = expectedDocumentIds.length === 0 || hasExpectedDocumentHit(topK, expectedDocumentIds)
   return fileHit && documentHit
+}
+
+function reciprocalRankAtK(citations: Citation[], expectedFiles: string[], expectedDocumentIds: string[], k: number): number {
+  const topK = citations.slice(0, Math.max(1, Math.trunc(k)))
+  const index = topK.findIndex(
+    (citation) =>
+      (expectedFiles.length > 0 && hasExpectedFileHit([citation], expectedFiles)) ||
+      (expectedDocumentIds.length > 0 && hasExpectedDocumentHit([citation], expectedDocumentIds))
+  )
+  return index === -1 ? 0 : Number((1 / (index + 1)).toFixed(4))
+}
+
+function countForbiddenEvidence(citations: Citation[], forbiddenFiles: string[], forbiddenDocumentIds: string[]): number {
+  return citations.filter(
+    (citation) =>
+      (forbiddenFiles.length > 0 && hasExpectedFileHit([citation], forbiddenFiles)) ||
+      (forbiddenDocumentIds.length > 0 && hasExpectedDocumentHit([citation], forbiddenDocumentIds))
+  ).length
 }
 
 function evaluateFactSlots(
@@ -1565,6 +1670,29 @@ function formatLlmJudgeSummary(evaluation: RowEvaluation): string {
     `resolved=${evaluation.llmJudgeResolved === null ? "not_applicable" : evaluation.llmJudgeResolved ? "yes" : "no"}`
   ]
   return escapeMarkdown(parts.join(", "))
+}
+
+function formatBoolean(value: boolean | null): string {
+  if (value === null) return "not_applicable"
+  return value ? "pass" : "fail"
+}
+
+function rowCategory(row: Pick<BenchmarkResultRow, "metadata" | "complexity" | "unanswerableType">): string {
+  const category = row.metadata?.evaluationCategory ?? row.metadata?.category
+  if (typeof category === "string" && category.trim()) return category.trim()
+  return row.complexity ?? row.unanswerableType ?? ""
+}
+
+function classifyFailureCategories(reasons: string[]): FailureCategory[] {
+  const categories = new Set<FailureCategory>()
+  for (const reason of reasons) {
+    if (/retrieval|expected_file|expected_document/i.test(reason)) categories.add("search_failure")
+    else if (/expected_page|missing_citation/i.test(reason)) categories.add("extraction_failure")
+    else if (/fact_slot|chunk/i.test(reason)) categories.add("chunk_failure")
+    else if (/refus|unsupported_answer|expected_answer_but_refused|expected_refusal_but_answered|no_access_leak/i.test(reason)) categories.add("refusal_failure")
+    else categories.add("generation_failure")
+  }
+  return [...categories].sort()
 }
 
 function escapeMarkdown(value: string): string {

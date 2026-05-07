@@ -1,10 +1,10 @@
 # RAG baseline evaluation set の固定
 
-保存先: `tasks/todo/20260507-2000-rag-baseline-evaluation-set.md`
+保存先: `tasks/do/20260507-2000-rag-baseline-evaluation-set.md`
 
 ## 状態
 
-- todo
+- do
 
 ## 背景
 

@@ -19,6 +19,8 @@
 ## 受け入れ条件（この要件専用）
 
 - AC-008: サンプルデータで評価実行し、結果を出力できること。
+- AC-FR012-002: baseline evaluation set は answerable / unanswerable / ambiguous / table / multi-doc / ACL の分類を持ち、summary / report で retrieval recall、MRR、citation hit、citation support pass、refusal precision / recall、no-access leak、p95 latency を確認できること。
+- AC-FR012-003: benchmark 失敗行は検索失敗、抽出失敗、chunk 失敗、生成失敗、拒否失敗の分類を持ち、dataset 固有の期待語句や row ID を RAG 実装へ入れずに分析できること。
 
 ## 要件の源泉・背景
 

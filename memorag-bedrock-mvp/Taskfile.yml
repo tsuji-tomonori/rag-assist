@@ -113,6 +113,20 @@ tasks:
     cmds:
       - npm run start -w @memorag-mvp/benchmark
 
+  benchmark:rag-baseline:sample:
+    desc: Run the six-category RAG baseline benchmark and generate JSONL/JSON/Markdown reports
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: 'benchmark/dataset.rag-baseline.sample.jsonl'
+      OUTPUT: '.local-data/rag-baseline-results.jsonl'
+      SUMMARY: '.local-data/rag-baseline-summary.json'
+      REPORT: '.local-data/rag-baseline-report.md'
+      BENCHMARK_SUITE_ID: 'rag-baseline-v1'
+      BENCHMARK_CORPUS_DIR: 'benchmark/corpus/rag-baseline-v1'
+      BENCHMARK_CORPUS_SUITE_ID: 'rag-baseline-v1'
+    cmds:
+      - npm run start -w @memorag-mvp/benchmark
+
   benchmark:allganize:prepare:
     desc: Convert allganize/RAG-Evaluation-Dataset-JA CSV files and download the source PDF corpus
     env:
