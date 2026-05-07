@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
-import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
+import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createSkippedDatasetRow, skippedCorpusFileNameSet, skippedExpectedFileNames, type SkippedDatasetRow } from "./skipped-corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
 import {
@@ -318,6 +318,8 @@ const corpusSeed = await seedBenchmarkCorpus({
   suiteId: benchmarkCorpusSuiteId,
   skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
   embeddingModelId: defaultEmbeddingModelId,
+  ingestRunPollIntervalMs: benchmarkIngestRunPollIntervalMsFromEnv(process.env),
+  ingestRunTimeoutMs: benchmarkIngestRunTimeoutMsFromEnv(process.env),
   log: (message) => console.log(message)
 })
 

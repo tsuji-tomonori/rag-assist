@@ -743,6 +743,46 @@ test("benchmark runner can list and upload only isolated benchmark seed document
       })
     })
     assert.equal(uploadedSeedIngest.status, 200)
+
+    const asyncSeedUploadSession = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "async-seed.txt", mimeType: "text/plain", purpose: "benchmarkSeed" })
+    })
+    assert.equal(asyncSeedUploadSession.status, 200)
+    const asyncSession = (await asyncSeedUploadSession.json()) as { uploadId: string; uploadUrl: string; method: "POST"; headers: Record<string, string> }
+    const asyncTransfer = await fetch(asyncSession.uploadUrl, {
+      method: asyncSession.method,
+      headers: asyncSession.headers,
+      body: "Async benchmark seed text from upload session."
+    })
+    assert.equal(asyncTransfer.status, 204)
+    const asyncRunStart = await fetch(`http://127.0.0.1:${port}/document-ingest-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: asyncSession.uploadId,
+        fileName: "async-seed.txt",
+        mimeType: "text/plain",
+        skipMemory: true,
+        metadata: {
+          benchmarkSeed: true,
+          benchmarkSuiteId: "allganize-rag-evaluation-ja-v1",
+          benchmarkSourceHash: "async-upload-hash",
+          benchmarkIngestSignature: "async-upload-signature",
+          benchmarkCorpusSkipMemory: true,
+          benchmarkEmbeddingModelId: "api-default",
+          aclGroups: ["BENCHMARK_RUNNER"],
+          docType: "benchmark-corpus",
+          lifecycleStatus: "active",
+          source: "benchmark-runner"
+        }
+      })
+    })
+    assert.equal(asyncRunStart.status, 200)
+    const asyncRun = (await asyncRunStart.json()) as { runId: string }
+    const asyncRunRead = await fetch(`http://127.0.0.1:${port}/document-ingest-runs/${encodeURIComponent(asyncRun.runId)}`)
+    assert.equal(asyncRunRead.status, 200)
   } finally {
     server.kill("SIGTERM")
   }

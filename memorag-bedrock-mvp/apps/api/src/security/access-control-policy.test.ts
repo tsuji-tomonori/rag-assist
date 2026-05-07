@@ -7,7 +7,7 @@ type RoutePolicy = {
   method: string
   path: string
   permission?: string
-  mode?: "authenticated" | "required" | "requesterOrPermission" | "ownedRun" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission" | "benchmarkSeedDeleteOrPermission" | "documentUploadSession"
+  mode?: "authenticated" | "required" | "requesterOrPermission" | "ownedRun" | "benchmarkSeedRunOrOwnedRun" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission" | "benchmarkSeedDeleteOrPermission" | "documentUploadSession"
 }
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
@@ -61,8 +61,8 @@ const routePolicies: RoutePolicy[] = [
   { method: "post", path: "/documents/uploads/{uploadId}/content", permission: "rag:doc:write:group", mode: "documentUploadSession" },
   { method: "post", path: "/documents/uploads/{uploadId}/ingest", permission: "rag:doc:write:group", mode: "documentUploadSession" },
   { method: "post", path: "/document-ingest-runs", permission: "rag:doc:write:group", mode: "documentUploadSession" },
-  { method: "get", path: "/document-ingest-runs/{runId}", permission: "chat:read:own", mode: "ownedRun" },
-  { method: "get", path: "/document-ingest-runs/{runId}/events", permission: "chat:read:own", mode: "ownedRun" },
+  { method: "get", path: "/document-ingest-runs/{runId}", permission: "chat:read:own", mode: "benchmarkSeedRunOrOwnedRun" },
+  { method: "get", path: "/document-ingest-runs/{runId}/events", permission: "chat:read:own", mode: "benchmarkSeedRunOrOwnedRun" },
   { method: "post", path: "/documents/{documentId}/reindex", permission: "rag:index:rebuild:group" },
   { method: "get", path: "/documents/reindex-migrations", permission: "rag:index:rebuild:group" },
   { method: "post", path: "/documents/{documentId}/reindex/stage", permission: "rag:index:rebuild:group" },
@@ -186,6 +186,22 @@ test("protected API routes keep route-level permission checks", async () => {
         block,
         /canReadOwnedRun[\s\S]*?createdBy/,
         `${policy.method.toUpperCase()} ${policy.path} must check run ownership`
+      )
+    } else if (policy.mode === "benchmarkSeedRunOrOwnedRun") {
+      assert.match(
+        block,
+        /canReadDocumentIngestRun[\s\S]*?run/,
+        `${policy.method.toUpperCase()} ${policy.path} must use scoped document ingest run authorization`
+      )
+      assert.match(
+        source,
+        new RegExp(`function canReadDocumentIngestRun[\\s\\S]*?hasPermission\\([\\s\\S]*?["']${escapeRegex(policy.permission)}["']\\)`),
+        `${policy.method.toUpperCase()} ${policy.path} must preserve ${policy.permission} for owned document ingest runs`
+      )
+      assert.match(
+        source,
+        /function canReadDocumentIngestRun[\s\S]*?benchmark:seed_corpus[\s\S]*?purpose === "benchmarkSeed"[\s\S]*?isBenchmarkSeedUploadedObjectIngest/,
+        `${policy.method.toUpperCase()} ${policy.path} must restrict BENCHMARK_RUNNER reads to isolated benchmark seed runs`
       )
     } else {
       assert.match(

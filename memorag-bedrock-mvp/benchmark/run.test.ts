@@ -72,7 +72,8 @@ test("benchmark runner skips rows that require unextractable corpus", async () =
       "POST /documents",
       "POST /documents/uploads",
       "PUT /upload/image-only.pdf",
-      "POST /documents/uploads/upload-image-only/ingest",
+      "POST /document-ingest-runs",
+      "GET /document-ingest-runs/ingest-image-only",
       "POST /benchmark/query"
     ])
 
@@ -237,9 +238,12 @@ async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, ca
     res.end(JSON.stringify({ ok: true }))
     return
   }
-  if (req.method === "POST" && req.url === "/documents/uploads/upload-image-only/ingest") {
-    res.statusCode = 500
-    res.end(JSON.stringify({ error: "Uploaded document did not contain extractable text" }))
+  if (req.method === "POST" && req.url === "/document-ingest-runs") {
+    res.end(JSON.stringify({ runId: "ingest-image-only", status: "queued" }))
+    return
+  }
+  if (req.method === "GET" && req.url === "/document-ingest-runs/ingest-image-only") {
+    res.end(JSON.stringify({ runId: "ingest-image-only", status: "failed", error: "Uploaded document did not contain extractable text" }))
     return
   }
   if (req.method === "POST" && req.url === "/benchmark/query") {
