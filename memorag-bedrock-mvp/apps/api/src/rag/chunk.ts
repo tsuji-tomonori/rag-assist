@@ -55,8 +55,8 @@ export function chunkStructuredBlocks(blocks: StructuredBlock[], chunkSize = 120
     index = appendSegmentChunks({
       text,
       baseStart: cursor,
-      chunkSize: block.kind === "text" ? chunkSize : Math.max(chunkSize, text.length),
-      overlap: block.kind === "text" ? overlap : 0,
+      chunkSize: isAtomicStructuredBlock(block) ? Math.max(chunkSize, text.length) : chunkSize,
+      overlap: isAtomicStructuredBlock(block) ? 0 : overlap,
       startIndex: index,
       chunks,
       sectionPath: blockSectionPath ?? [],
@@ -102,16 +102,21 @@ function appendSegmentChunks(input: {
 }): number {
   const { text, baseStart, chunkSize, overlap, chunks } = input
   const safeOverlap = Math.min(overlap, Math.floor(chunkSize / 2))
-  let start = 0
+  const units = buildSemanticUnits(text, chunkSize)
+  let unitIndex = 0
   let index = input.startIndex
 
-  while (start < text.length) {
-    let end = Math.min(start + chunkSize, text.length)
-    if (end < text.length) {
-      const paragraphBreak = text.lastIndexOf("\n\n", end)
-      const sentenceBreak = Math.max(text.lastIndexOf("。", end), text.lastIndexOf(". ", end))
-      const candidate = Math.max(paragraphBreak, sentenceBreak)
-      if (candidate > start + Math.floor(chunkSize * 0.55)) end = candidate + 1
+  while (unitIndex < units.length) {
+    const startUnitIndex = unitIndex
+    const start = units[startUnitIndex]?.start ?? 0
+    let endUnitIndex = startUnitIndex
+    let end = units[endUnitIndex]?.end ?? text.length
+
+    while (endUnitIndex + 1 < units.length) {
+      const candidateEnd = units[endUnitIndex + 1]?.end ?? end
+      if (candidateEnd - start > chunkSize) break
+      endUnitIndex += 1
+      end = candidateEnd
     }
 
     const chunk = text.slice(start, end).trim()
@@ -139,10 +144,164 @@ function appendSegmentChunks(input: {
       index += 1
     }
     if (end >= text.length) break
-    start = Math.max(0, end - safeOverlap)
+    unitIndex = nextUnitIndexWithOverlap(units, startUnitIndex, endUnitIndex, safeOverlap)
   }
 
   return index
+}
+
+type SemanticUnit = {
+  start: number
+  end: number
+}
+
+function buildSemanticUnits(text: string, chunkSize: number): SemanticUnit[] {
+  return splitParagraphs(text).flatMap((paragraph) => splitParagraphUnit(text, paragraph, chunkSize))
+}
+
+function splitParagraphs(text: string): SemanticUnit[] {
+  const units: SemanticUnit[] = []
+  let cursor = 0
+
+  while (cursor < text.length) {
+    const separator = text.slice(cursor).match(/\n{2,}/)
+    const rawEnd = separator?.index === undefined ? text.length : cursor + separator.index
+    const paragraph = trimSpan(text, cursor, rawEnd)
+    if (paragraph) units.push(paragraph)
+    cursor = separator ? rawEnd + separator[0].length : text.length
+  }
+
+  return units
+}
+
+function splitParagraphUnit(text: string, unit: SemanticUnit, chunkSize: number): SemanticUnit[] {
+  const paragraph = text.slice(unit.start, unit.end)
+  const listItems = splitListItems(paragraph, unit.start)
+  if (listItems.length > 1) return listItems.flatMap((item) => splitLongUnit(text, item, chunkSize))
+  if (unit.end - unit.start <= chunkSize) return [unit]
+  const sentences = splitSentences(paragraph, unit.start)
+  if (sentences.length > 1) return sentences.flatMap((sentence) => splitLongUnit(text, sentence, chunkSize))
+  return splitLongUnit(text, unit, chunkSize)
+}
+
+function splitListItems(paragraph: string, baseStart: number): SemanticUnit[] {
+  const lines = lineSpans(paragraph)
+  const items: SemanticUnit[] = []
+  let currentStart: number | undefined
+  let currentEnd: number | undefined
+
+  for (const line of lines) {
+    const raw = paragraph.slice(line.start, line.end)
+    if (/^\s*(?:[-*]|\d+[.)])\s+/.test(raw)) {
+      if (currentStart !== undefined && currentEnd !== undefined) {
+        const item = trimSpan(paragraph, currentStart, currentEnd)
+        if (item) items.push({ start: baseStart + item.start, end: baseStart + item.end })
+      }
+      currentStart = line.start
+      currentEnd = line.end
+      continue
+    }
+    if (currentStart !== undefined) currentEnd = line.end
+  }
+
+  if (currentStart !== undefined && currentEnd !== undefined) {
+    const item = trimSpan(paragraph, currentStart, currentEnd)
+    if (item) items.push({ start: baseStart + item.start, end: baseStart + item.end })
+  }
+
+  return items
+}
+
+function splitSentences(paragraph: string, baseStart: number): SemanticUnit[] {
+  const units: SemanticUnit[] = []
+  let start = 0
+
+  for (let index = 0; index < paragraph.length; index += 1) {
+    const char = paragraph[index]
+    const next = paragraph[index + 1] ?? ""
+    const isJapaneseSentenceEnd = char !== undefined && /[。！？]/.test(char)
+    const isAsciiSentenceEnd = char !== undefined && /[.!?]/.test(char) && (!next || /\s/.test(next))
+    if (!isJapaneseSentenceEnd && !isAsciiSentenceEnd) continue
+
+    const sentence = trimSpan(paragraph, start, index + 1)
+    if (sentence) units.push({ start: baseStart + sentence.start, end: baseStart + sentence.end })
+    start = index + 1
+  }
+
+  const rest = trimSpan(paragraph, start, paragraph.length)
+  if (rest) units.push({ start: baseStart + rest.start, end: baseStart + rest.end })
+  return units
+}
+
+function splitLongUnit(text: string, unit: SemanticUnit, chunkSize: number): SemanticUnit[] {
+  if (unit.end - unit.start <= chunkSize) return [unit]
+
+  const units: SemanticUnit[] = []
+  let start = unit.start
+
+  while (start < unit.end) {
+    let end = Math.min(start + chunkSize, unit.end)
+    if (end < unit.end) {
+      const candidate = preferredFallbackBreak(text, start, end)
+      if (candidate > start + Math.floor(chunkSize * 0.55)) end = candidate
+    }
+    const span = trimSpan(text, start, end)
+    if (span) units.push(span)
+    if (end >= unit.end) break
+    start = end
+  }
+
+  return units
+}
+
+function nextUnitIndexWithOverlap(units: SemanticUnit[], startUnitIndex: number, endUnitIndex: number, safeOverlap: number): number {
+  const nextIndex = endUnitIndex + 1
+  if (nextIndex >= units.length) return nextIndex
+  if (safeOverlap <= 0) return nextIndex
+
+  let overlapStart = nextIndex
+  for (let index = endUnitIndex; index >= startUnitIndex; index -= 1) {
+    const start = units[index]?.start
+    const end = units[endUnitIndex]?.end
+    if (start === undefined || end === undefined) break
+    if (end - start > safeOverlap) break
+    overlapStart = index
+  }
+
+  return overlapStart === startUnitIndex ? nextIndex : overlapStart
+}
+
+function preferredFallbackBreak(text: string, start: number, end: number): number {
+  const candidates = ["\n", "。", "、", "，", "、", ",", " "]
+    .map((delimiter) => text.lastIndexOf(delimiter, end - 1))
+    .filter((candidate) => candidate >= start)
+  const candidate = Math.max(...candidates)
+  if (!Number.isFinite(candidate) || candidate < start) return end
+  return candidate + 1
+}
+
+function lineSpans(text: string): SemanticUnit[] {
+  const spans: SemanticUnit[] = []
+  let start = 0
+  for (let index = 0; index <= text.length; index += 1) {
+    if (index < text.length && text[index] !== "\n") continue
+    spans.push({ start, end: index })
+    start = index + 1
+  }
+  return spans
+}
+
+function trimSpan(text: string, start: number, end: number): SemanticUnit | undefined {
+  let trimmedStart = start
+  let trimmedEnd = end
+  while (trimmedStart < trimmedEnd && /\s/.test(text[trimmedStart] ?? "")) trimmedStart += 1
+  while (trimmedEnd > trimmedStart && /\s/.test(text[trimmedEnd - 1] ?? "")) trimmedEnd -= 1
+  if (trimmedStart >= trimmedEnd) return undefined
+  return { start: trimmedStart, end: trimmedEnd }
+}
+
+function isAtomicStructuredBlock(block: StructuredBlock): boolean {
+  return block.kind === "table" || block.kind === "code" || block.kind === "figure"
 }
 
 function detectChunkKind(text: string): Chunk["chunkKind"] {

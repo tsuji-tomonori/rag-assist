@@ -1,4 +1,4 @@
-export const CHUNKER_VERSION = "chunk-structured-v2"
+export const CHUNKER_VERSION = "chunk-semantic-v3"
 export const SOURCE_EXTRACTOR_VERSION = "extract-upload-v2"
 export const MEMORY_PROMPT_VERSION = "memory-card-v1"
 export const PROMPT_VERSION = "rag-prompts-v1"

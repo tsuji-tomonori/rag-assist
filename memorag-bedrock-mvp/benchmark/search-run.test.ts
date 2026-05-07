@@ -191,6 +191,30 @@ function readSummary(summaryPath: string): SearchSummaryArtifact {
   return JSON.parse(readFileSync(summaryPath, "utf-8")) as SearchSummaryArtifact
 }
 
+async function handleSearchRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestJson(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  if (req.method === "GET" && req.url === "/documents") {
+    res.end(JSON.stringify({ documents: [] }))
+    return
+  }
+  if (req.method === "POST" && req.url === "/documents") {
+    res.end(JSON.stringify({ fileName: "handbook.md", lifecycleStatus: "active", chunkCount: 1 }))
+    return
+  }
+  if (req.method === "POST" && req.url === "/benchmark/search") {
+    res.end(JSON.stringify({
+      query: "経費精算 期限",
+      results: [{ id: "doc-handbook-chunk-0000", documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
+      diagnostics: { lexicalCount: 1, semanticCount: 0, fusedCount: 1, latencyMs: 12 }
+    }))
+    return
+  }
+  res.statusCode = 404
+  res.end(JSON.stringify({ error: "not found" }))
+}
+
 async function readRequestJson(req: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = []
   for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
