@@ -1,6 +1,6 @@
 # PR159 競合解消と OCR 非同期化検討
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -30,11 +30,20 @@ PR #159 は MMRAG DocQA benchmark seed 中の Textract OCR timeout を `skipped_
 
 ## 受け入れ条件
 
-- [ ] `origin/main` との merge conflict が解消されている。
-- [ ] `LOCAL_VERIFICATION.md` に benchmark suite filter 強制と OCR timeout skip の説明が両方残っている。
-- [ ] PR #160 を踏まえた benchmark seed OCR 非同期化の後続 task が作成されている。
-- [ ] 変更範囲に対応する検証が実行され、結果が記録されている。
-- [ ] PR #159 に更新コメントとセルフレビューコメントが投稿されている。
+- [x] `origin/main` との merge conflict が解消されている。
+- [x] `LOCAL_VERIFICATION.md` に benchmark suite filter 強制と OCR timeout skip の説明が両方残っている。
+- [x] PR #160 を踏まえた benchmark seed OCR 非同期化の後続 task が作成されている。
+- [x] 変更範囲に対応する検証が実行され、結果が記録されている。
+- [x] PR #159 に更新コメントとセルフレビューコメントが投稿されている。
+
+## 完了結果
+
+- merge commit: `e36e489`
+- PR 更新コメント: posted
+- PR セルフレビューコメント: posted
+- 後続 task: `tasks/todo/20260507-2115-benchmark-seed-async-ocr-ingest.md`
+- 作業レポート: `reports/working/20260507-2115-resolve-pr159-conflicts-async-ocr-plan.md`
+- 未実施: AWS CodeBuild 上の `mmrag-docqa-v1` 全量再実行。
 
 ## 検証計画
 
