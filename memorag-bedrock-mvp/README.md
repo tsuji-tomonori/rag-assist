@@ -119,6 +119,7 @@ docker compose up --build
 ## AWSデプロイ
 
 Bedrockの対象モデルを利用するリージョンで有効化してから実行してください。
+同期 API の API Gateway integration timeout は 60 秒に設定しているため、デプロイ前に対象AWSアカウント / リージョンの API Gateway quota `Maximum integration timeout in milliseconds` を 60,000ms 以上へ引き上げてください。未設定の場合、`AWS::ApiGateway::Method` の更新が `Timeout should be between 50 ms and 29000 ms` で失敗します。詳細は [GitHub Actions Deploy](docs/GITHUB_ACTIONS_DEPLOY.md) を参照してください。
 
 ```bash
 npm install

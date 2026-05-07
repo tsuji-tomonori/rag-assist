@@ -72,6 +72,14 @@ RepositoryまたはEnvironment secretに次を設定する。
 | --- | --- |
 | `AWS_DEPLOY_ROLE_ARN` | CloudFormation Outputsの `GitHubActionsDeployRoleArn`。GitHub Actions OIDCからAssumeRoleするAWS IAM Role ARN。 |
 
+## API Gateway integration timeout quota
+
+MemoRAG MVP の同期 API は API Gateway REST API の Lambda integration timeout を 60 秒に設定している。GitHub Actions deploy を実行する前に、入力 `aws-region` で指定するデプロイ先リージョンと対象AWSアカウントで API Gateway quota `Maximum integration timeout in milliseconds` を 60,000ms 以上へ引き上げる。
+
+この quota が 29,000ms のままだと、`cdk deploy --require-approval never` は `AWS::ApiGateway::Method` の更新時に `Timeout should be between 50 ms and 29000 ms` で失敗する。これは WebSocket の `Idle Connection Timeout` ではなく REST API integration timeout の制約である。非同期 chat の進捗購読は `GET /chat-runs/{runId}/events` の streaming 経路を使うが、`POST /chat-runs` と通常の REST API method には REST API integration timeout が適用される。
+
+Regional REST API で 29 秒を超える timeout を使う場合、quota 引き上げに伴って account-level throttle quota への影響が出る可能性がある。デプロイ環境ごとに Service Quotas の承認状態を確認してから workflow を実行する。
+
 ## AWS IAM Role
 
 GitHub OIDC providerをAWSアカウントに作成し、deploy用Roleのtrust policyで対象repoとbranch/environmentを制限する。
