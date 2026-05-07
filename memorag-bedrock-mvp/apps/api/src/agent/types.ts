@@ -40,6 +40,7 @@ export type QaGraphResult = {
   clarification?: PublicClarification
   citations: Citation[]
   retrieved: Citation[]
+  finalEvidence?: Citation[]
   debug?: DebugTrace
 }
 

@@ -1368,7 +1368,8 @@ app.openapi(
       includeDebug: body.includeDebug ?? true,
       searchFilters: {
         source: "benchmark-runner",
-        docType: "benchmark-corpus"
+        docType: "benchmark-corpus",
+        benchmarkSuiteId: body.benchmarkSuiteId
       }
     }, c.get("user"))
     return c.json({ id: body.id, ...result }, 200)
@@ -1395,7 +1396,16 @@ app.openapi(
     const user = c.get("user")
     requirePermission(user, "benchmark:query")
     const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkSearchRequestSchema>
-    const { user: requestUser, ...searchInput } = body
+    const { user: requestUser, benchmarkSuiteId, ...searchInput } = body
+    const benchmarkFilterSuiteId = benchmarkSuiteId ?? searchInput.filters?.benchmarkSuiteId
+    if (benchmarkFilterSuiteId) {
+      searchInput.filters = {
+        ...(searchInput.filters ?? {}),
+        source: "benchmark-runner",
+        docType: "benchmark-corpus",
+        benchmarkSuiteId: benchmarkFilterSuiteId
+      }
+    }
     return c.json(await service.search(searchInput, benchmarkSearchUser(user, requestUser)), 200)
   }
 )

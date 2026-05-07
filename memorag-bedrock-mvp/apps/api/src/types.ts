@@ -57,6 +57,7 @@ export type VectorMetadata = {
   department?: string
   source?: string
   docType?: string
+  benchmarkSuiteId?: string
   domainPolicy?: string
   ragPolicy?: string
   answerPolicy?: string
@@ -262,6 +263,7 @@ export type DebugTrace = {
   isAnswerable: boolean
   citations: Citation[]
   retrieved: Citation[]
+  finalEvidence?: Citation[]
   steps: DebugStep[]
 }
 
@@ -273,6 +275,7 @@ export type ChatResponsePayload = {
   clarification?: Clarification
   citations: Citation[]
   retrieved: Citation[]
+  finalEvidence?: Citation[]
   debug?: DebugTrace
 }
 
@@ -439,6 +442,7 @@ export type AliasScope = {
   department?: string
   source?: string
   docType?: string
+  benchmarkSuiteId?: string
 }
 
 export type AliasDefinition = {

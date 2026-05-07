@@ -56,8 +56,10 @@ export function createChatRunEventsStreamHandler(runtime: LambdaStreamingRuntime
       const claims = (event.requestContext.authorizer as { claims?: Record<string, unknown> } | undefined)?.claims ?? {}
       const userId = claims.sub ? String(claims.sub) : ""
       const groups = parseGroups(claims["cognito:groups"])
-      const canReadAll = getPermissionsForGroups(groups).includes("chat:admin:read_all")
-      if (run.createdBy !== userId && !canReadAll) {
+      const permissions = getPermissionsForGroups(groups)
+      const canReadOwn = permissions.includes("chat:read:own")
+      const canReadAll = permissions.includes("chat:admin:read_all")
+      if ((!canReadOwn && !canReadAll) || (run.createdBy !== userId && !canReadAll)) {
         writePlainResponse(runtime, responseStream, 403, "Forbidden")
         return
       }

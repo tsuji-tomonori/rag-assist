@@ -675,7 +675,8 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
     tenantId: undefined,
     department: undefined,
     source: "benchmark-runner",
-    docType: "benchmark-corpus"
+    docType: "benchmark-corpus",
+    benchmarkSuiteId: undefined
   })
 })
 

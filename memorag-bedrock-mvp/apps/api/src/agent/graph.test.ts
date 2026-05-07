@@ -128,6 +128,23 @@ test("benchmark search filters keep agent retrieval scoped to isolated benchmark
       source: "benchmark-runner"
     }
   })
+  await service.ingest({
+    fileName: "other-benchmark-suite.md",
+    text: "MMRAG-DocQA is mentioned here, but this is a different benchmark suite corpus.",
+    skipMemory: true,
+    metadata: {
+      benchmarkSeed: true,
+      benchmarkSuiteId: "standard-agent-v1",
+      benchmarkSourceHash: "other-hash",
+      benchmarkIngestSignature: "other-signature",
+      benchmarkCorpusSkipMemory: true,
+      benchmarkEmbeddingModelId: "api-default",
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      lifecycleStatus: "active",
+      source: "benchmark-runner"
+    }
+  })
 
   const result = await service.chat(
     {
@@ -137,7 +154,8 @@ test("benchmark search filters keep agent retrieval scoped to isolated benchmark
       minScore: 0.05,
       searchFilters: {
         source: "benchmark-runner",
-        docType: "benchmark-corpus"
+        docType: "benchmark-corpus",
+        benchmarkSuiteId: "mmrag-docqa-v1"
       }
     },
     runner
@@ -146,8 +164,10 @@ test("benchmark search filters keep agent retrieval scoped to isolated benchmark
   assert.equal(result.isAnswerable, true)
   assert.ok(result.retrieved.length > 0)
   assert.equal(result.retrieved.every((item) => item.fileName === "mmrag-docqa-method.md"), true)
+  assert.equal(result.finalEvidence?.every((item) => item.fileName === "mmrag-docqa-method.md"), true)
   assert.equal(result.citations.some((item) => item.fileName === "mmrag-docqa-method.md"), true)
   assert.equal(result.retrieved.some((item) => item.fileName === "software_requirements_chapter01_ja_A4_final.tex"), false)
+  assert.equal(result.retrieved.some((item) => item.fileName === "other-benchmark-suite.md"), false)
   const labels = result.debug?.steps.map((step) => step.label) ?? []
   assert.equal(labels.filter((label) => label === "execute_search_action").length, 2)
   assert.equal(labels.filter((label) => label === "execute_search_action").length < 3, true)
