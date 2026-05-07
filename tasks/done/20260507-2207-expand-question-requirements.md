@@ -1,10 +1,10 @@
 # 問い合わせ管理の機能要求拡充
 
-保存先: `tasks/do/20260507-2207-expand-question-requirements.md`
+保存先: `tasks/done/20260507-2207-expand-question-requirements.md`
 
 ## 状態
 
-- doing
+- done
 
 ## 背景
 
@@ -73,3 +73,12 @@
 
 - 決定事項: 今回は docs の要件整理であり、API / Web / Store の実装変更は行わない。
 - リスク: `FR-031` 以降の番号が並行 PR と競合する場合は main 取り込み時に再採番が必要になる。
+
+## 完了確認
+
+- PR: `https://github.com/tsuji-tomonori/rag-assist/pull/178`
+- 作業 commit: `db71d52`
+- 受け入れ条件確認コメント: `4397445298`
+- セルフレビューコメント: `4397447204`
+- 検証: `git diff --check` pass
+- 検証: `git ls-files --modified --others --exclude-standard -z | xargs -0 pre-commit run --files` 初回自動修正後、再実行 pass
