@@ -96,13 +96,7 @@ function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.i
 
 function benchmarkSearchUser(runnerUser: AppUser, requestUser: z.infer<typeof BenchmarkSearchRequestSchema>["user"]): AppUser {
   if (!requestUser) return runnerUser
-  if (!runnerUser.cognitoGroups.includes("BENCHMARK_RUNNER")) {
-    throw new HTTPException(403, { message: "Forbidden: benchmark search user override requires BENCHMARK_RUNNER" })
-  }
-  return {
-    userId: requestUser.userId ?? "benchmark-search-user",
-    cognitoGroups: requestUser.groups ?? []
-  }
+  throw new HTTPException(400, { message: "Benchmark search user override is not supported" })
 }
 
 function canReadOwnedRun(user: AppUser, createdBy: string): boolean {
