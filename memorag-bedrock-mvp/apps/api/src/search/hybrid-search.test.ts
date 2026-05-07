@@ -191,6 +191,65 @@ test("service search publishes and reuses immutable lexical index artifacts", as
   assert.equal(second.diagnostics.indexVersion, first.diagnostics.indexVersion)
 })
 
+test("service search scopes benchmark corpus by suite metadata", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-benchmark-suite-search-"))
+  const service = new MemoRagService(createLocalDeps(dataDir))
+  const runner = user(["BENCHMARK_RUNNER"])
+
+  await service.ingest({
+    fileName: "handbook.md",
+    text: "経費精算は申請から30日以内に行う必要があります。立替精算も同じ期限です。",
+    skipMemory: true,
+    metadata: {
+      benchmarkSeed: true,
+      benchmarkSuiteId: "standard-agent-v1",
+      benchmarkSourceHash: "hash-a",
+      benchmarkIngestSignature: "signature-a",
+      benchmarkCorpusSkipMemory: true,
+      benchmarkEmbeddingModelId: "api-default",
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      lifecycleStatus: "active",
+      source: "benchmark-runner",
+      searchAliases: { "立替": ["経費精算"] }
+    }
+  })
+  await service.ingest({
+    fileName: "old-suite.pdf",
+    text: "経費精算 期限 申請という語を大量に含むが、別 suite の古い benchmark corpus です。",
+    skipMemory: true,
+    metadata: {
+      benchmarkSeed: true,
+      benchmarkSuiteId: "allganize-rag-evaluation-ja-v1",
+      benchmarkSourceHash: "hash-b",
+      benchmarkIngestSignature: "signature-b",
+      benchmarkCorpusSkipMemory: true,
+      benchmarkEmbeddingModelId: "api-default",
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      lifecycleStatus: "active",
+      source: "benchmark-runner"
+    }
+  })
+
+  const result = await service.search({
+    query: "立替 申請",
+    topK: 10,
+    lexicalTopK: 80,
+    semanticTopK: 0,
+    filters: {
+      source: "benchmark-runner",
+      docType: "benchmark-corpus",
+      benchmarkSuiteId: "standard-agent-v1"
+    }
+  }, runner)
+
+  assert.equal(result.results[0]?.fileName, "handbook.md")
+  assert.equal(result.results.some((item) => item.fileName === "old-suite.pdf"), false)
+  assert.equal(result.diagnostics.index?.visibleManifestCount, 1)
+  assert.equal(result.diagnostics.index?.indexedChunkCount, 1)
+})
+
 test("service search expands published reviewed aliases without returning alias details", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-published-alias-"))
   const service = new MemoRagService(createLocalDeps(dataDir))

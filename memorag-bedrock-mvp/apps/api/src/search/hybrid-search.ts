@@ -68,6 +68,12 @@ export type SearchResponse = {
       effectiveTopK: number
       effectiveMinScore: number
     }
+    index?: {
+      visibleManifestCount: number
+      indexedChunkCount: number
+      cache: "memory" | "artifact" | "built"
+      loadMs: number
+    }
   }
 }
 
@@ -102,6 +108,14 @@ type LexicalIndex = {
   dictionary: string[]
   aliases: AliasMap
   aliasVersion: string
+  diagnostics?: LexicalIndexDiagnostics
+}
+
+type LexicalIndexDiagnostics = {
+  visibleManifestCount: number
+  indexedChunkCount: number
+  cache: "memory" | "artifact" | "built"
+  loadMs: number
 }
 
 type SerializedLexicalIndex = {
@@ -207,7 +221,8 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
     results: reranked,
     requestedTopK,
     effectiveTopK: topK,
-    latencyMs: Date.now() - started
+    latencyMs: Date.now() - started,
+    indexDiagnostics: index.diagnostics
   })
   const decision = diagnostics.adaptiveDecision ?? { effectiveMinScore: -1, effectiveTopK: requestedTopK }
   const results = reranked.filter((result) => result.score >= decision.effectiveMinScore).slice(0, decision.effectiveTopK)
@@ -227,7 +242,8 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
       topGap: diagnostics.topGap,
       lexicalSemanticOverlap: diagnostics.lexicalSemanticOverlap,
       scoreDistribution: diagnostics.scoreDistribution,
-      adaptiveDecision: diagnostics.adaptiveDecision
+      adaptiveDecision: diagnostics.adaptiveDecision,
+      index: diagnostics.index
     }
   }
 }
@@ -237,6 +253,7 @@ export async function getLexicalIndex(
   user: AppUser,
   filters?: SearchInput["filters"]
 ): Promise<LexicalIndex> {
+  const started = Date.now()
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
   const visible = manifests.filter(isActiveManifest).filter((manifest) => canAccessManifest(manifest, user)).filter((manifest) => manifestMatchesFilters(manifest, filters))
@@ -249,9 +266,13 @@ export async function getLexicalIndex(
     .sort()
     .concat(`aliases:${publishedAliases.version}:${stableStringifyAliasMap(publishedAliases.aliases)}`)
     .join("|")
-  if (cachedIndex && cachedIndex.signature === signature) return cachedIndex.index
+  if (cachedIndex && cachedIndex.signature === signature) {
+    cachedIndex.index.diagnostics = indexDiagnostics(visible.length, cachedIndex.index.nDocs, "memory", started)
+    return cachedIndex.index
+  }
   const artifact = await loadLexicalIndexArtifact(deps, signature)
   if (artifact) {
+    artifact.diagnostics = indexDiagnostics(visible.length, artifact.nDocs, "artifact", started)
     cachedIndex = { signature, index: artifact }
     return artifact
   }
@@ -274,6 +295,7 @@ export async function getLexicalIndex(
   }
 
   const index = buildLexicalIndex(docs, versionLabel("lexical", signature || "empty"), aliases, aliasVersionLabel(aliasSignature))
+  index.diagnostics = indexDiagnostics(visible.length, index.nDocs, "built", started)
   if (config.publishLexicalIndexOnSearch) await publishLexicalIndexArtifact(deps, signature, index)
   cachedIndex = { signature, index }
   return index
@@ -452,6 +474,7 @@ function buildSearchDiagnostics(input: {
   requestedTopK: number
   effectiveTopK: number
   latencyMs: number
+  indexDiagnostics?: LexicalIndexDiagnostics
 }): SearchResponse["diagnostics"] {
   const scores = input.results.map((result) => result.score).sort((a, b) => a - b)
   const top = input.results[0]?.score ?? null
@@ -493,7 +516,22 @@ function buildSearchDiagnostics(input: {
       min: scores[0] ?? null,
       max: scores.at(-1) ?? null
     },
-    adaptiveDecision
+    adaptiveDecision,
+    index: input.indexDiagnostics
+  }
+}
+
+function indexDiagnostics(
+  visibleManifestCount: number,
+  indexedChunkCount: number,
+  cache: LexicalIndexDiagnostics["cache"],
+  started: number
+): LexicalIndexDiagnostics {
+  return {
+    visibleManifestCount,
+    indexedChunkCount,
+    cache,
+    loadMs: Date.now() - started
   }
 }
 
