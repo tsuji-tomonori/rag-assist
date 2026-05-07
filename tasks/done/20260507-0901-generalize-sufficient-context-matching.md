@@ -1,8 +1,8 @@
 # sufficient context の fact 判定汎化
 
-保存先: `tasks/do/20260507-0901-generalize-sufficient-context-matching.md`
+保存先: `tasks/done/20260507-0901-generalize-sufficient-context-matching.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -45,11 +45,11 @@ fact type 語彙リストによる pattern matching を削除し、fact id、fac
 
 ## 受け入れ条件
 
-- [ ] `factTypeTerms` と fact type 別固定語彙 fallback が削除されている。
-- [ ] `PARTIAL` 継続判定が primary fact の構造化 support に基づく。
-- [ ] primary fact missing / conflict の拒否経路が維持されている。
-- [ ] benchmark expected phrase、row id、dataset 固有分岐を追加していない。
-- [ ] 対象検証が pass する、または未実施理由を明記する。
+- [x] `factTypeTerms` と fact type 別固定語彙 fallback が削除されている。
+- [x] `PARTIAL` 継続判定が primary fact の構造化 support に基づく。
+- [x] primary fact missing / conflict の拒否経路が維持されている。
+- [x] benchmark expected phrase、row id、dataset 固有分岐を追加していない。
+- [x] 対象検証が pass する、または未実施理由を明記する。
 
 ## 検証計画
 
@@ -67,3 +67,10 @@ fact type 語彙リストによる pattern matching を削除し、fact id、fac
 
 - 決定事項: この task では `hasDirectAnswerCue` も `PARTIAL` 継続条件から外し、後段 citation / support verifier に確認させる。
 - リスク: LLM judge が fact id / description を返さない場合の判定は retrieval evaluator の fact id status に強く依存する。
+
+## 完了メモ
+
+- PR: <https://github.com/tsuji-tomonori/rag-assist/pull/142>
+- 受け入れ条件確認コメント: PR #142 に投稿済み。
+- セルフレビューコメント: PR #142 に投稿済み。
+- 検証: `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api -- --test-name-pattern "sufficient context|retrieval evaluator LLM judge|fixed workflow continues"`、`npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`、`git diff --check` が pass。
