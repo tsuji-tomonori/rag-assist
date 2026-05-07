@@ -31,8 +31,13 @@ Parameters:
 
   ManagedPolicyArns:
     Type: CommaDelimitedList
-    Default: arn:aws:iam::aws:policy/AdministratorAccess
-    Description: Comma-separated IAM managed policy ARNs attached to the deploy role. Restrict this for production.
+    Description: Comma-separated IAM managed policy ARNs attached to the deploy role. Specify least-privileged policies required for your deployment.
+
+  AllowedWorkflowRef:
+    Type: String
+    Default: tsuji-tomonori/rag-assist/.github/workflows/memorag-deploy.yml@refs/heads/main
+    Description: GitHub workflow_ref claim allowed to assume this role.
+    AllowedPattern: "^[A-Za-z0-9_.:/@-]+$"
 
 Conditions:
   CreateGitHubOidcProvider:
@@ -89,6 +94,8 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:workflow_ref:
+                  Ref: AllowedWorkflowRef
               StringLike:
                 token.actions.githubusercontent.com:sub:
                   Fn::Sub: repo:${GitHubOwner}/${GitHubRepository}:environment:${GitHubEnvironment}
