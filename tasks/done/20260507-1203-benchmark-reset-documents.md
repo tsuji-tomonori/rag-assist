@@ -1,6 +1,8 @@
 # Benchmark reset documents before performance test
 
-保存先: `tasks/do/20260507-1203-benchmark-reset-documents.md`
+保存先: `tasks/done/20260507-1203-benchmark-reset-documents.md`
+
+PR: https://github.com/tsuji-tomonori/rag-assist/pull/148
 
 ## Background
 
@@ -78,4 +80,4 @@
 
 ## 状態
 
-in_progress
+done
