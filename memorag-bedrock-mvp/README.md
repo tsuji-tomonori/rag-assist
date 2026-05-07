@@ -54,6 +54,7 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `GET /documents`
 - `POST /documents` 資料アップロード
 - `POST /documents/uploads`、`POST /documents/uploads/{uploadId}/ingest` S3 経由の資料アップロード
+- `POST /document-ingest-runs`、`GET /document-ingest-runs/{runId}`、`GET /document-ingest-runs/{runId}/events` S3 upload session 後の非同期資料取り込み
 - `POST /documents/{documentId}/reindex` 資料再インデックス
 - `GET /documents/reindex-migrations`、`POST /documents/{documentId}/reindex/stage`、`POST /documents/reindex-migrations/{migrationId}/cutover|rollback` blue-green 再インデックス切替
 - `DELETE /documents/{documentId}` 資料削除
@@ -168,6 +169,7 @@ curl -s http://localhost:8787/chat \
 ```
 
 新しい UI は `POST /chat-runs` で非同期 run を作成し、`GET /chat-runs/{runId}/events` を `fetch` stream で読みます。既存 `POST /chat` は後方互換の同期 JSON API として残します。
+ファイルアップロード UI は S3 upload session へ転送したあと `POST /document-ingest-runs` で非同期 ingest run を開始し、run 状態を取得して完了 manifest を受け取ります。既存 `POST /documents` と `POST /documents/uploads/{uploadId}/ingest` は後方互換の同期 API として残します。
 
 ## ベンチマーク
 

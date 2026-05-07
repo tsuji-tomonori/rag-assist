@@ -146,7 +146,11 @@ describe("API client", () => {
       .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
       .mockResolvedValueOnce({
         ok: true,
-        json: vi.fn().mockResolvedValue({ documentId: "doc-2", fileName: "handoff.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+        json: vi.fn().mockResolvedValue({
+          runId: "ingest-1",
+          status: "succeeded",
+          manifest: { documentId: "doc-2", fileName: "handoff.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }
+        })
       })
 
     vi.stubGlobal("fetch", fetchMock)
@@ -171,12 +175,107 @@ describe("API client", () => {
     )
     expect(fetchMock).toHaveBeenNthCalledWith(
       4,
-      "http://api.example.test/documents/uploads/upload-1/ingest",
+      "http://api.example.test/document-ingest-runs",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain", memoryModelId: "model", embeddingModelId: "embedding" })
+        body: JSON.stringify({ uploadId: "upload-1", fileName: "handoff.txt", mimeType: "text/plain", memoryModelId: "model", embeddingModelId: "embedding" })
       })
     )
+  })
+
+  it("polls document ingest runs until the manifest is available", async () => {
+    const file = new File(["body"], "queued.txt", { type: "text/plain" })
+    resetRuntimeConfigForTests()
+    vi.useFakeTimers()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ apiBaseUrl: "http://api.example.test" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          uploadId: "upload-queued",
+          objectKey: "uploads/documents/user/upload-queued-queued.txt",
+          uploadUrl: "http://s3.example.test/upload-queued",
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          expiresInSeconds: 900,
+          requiresAuth: false
+        })
+      })
+      .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ runId: "ingest-queued", status: "queued" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          runId: "ingest-queued",
+          status: "succeeded",
+          manifest: { documentId: "doc-queued", fileName: "queued.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }
+        })
+      })
+
+    vi.stubGlobal("fetch", fetchMock)
+
+    try {
+      const uploadPromise = uploadDocumentFile({ file })
+      await vi.advanceTimersByTimeAsync(1000)
+
+      await expect(uploadPromise).resolves.toMatchObject({ documentId: "doc-queued" })
+      expect(fetchMock).toHaveBeenNthCalledWith(5, "http://api.example.test/document-ingest-runs/ingest-queued", { headers: {} })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("surfaces failed document ingest runs", async () => {
+    const file = new File(["body"], "failed.txt", { type: "text/plain" })
+    resetRuntimeConfigForTests()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ apiBaseUrl: "http://api.example.test" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          uploadId: "upload-failed",
+          objectKey: "uploads/documents/user/upload-failed-failed.txt",
+          uploadUrl: "http://s3.example.test/upload-failed",
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          expiresInSeconds: 900,
+          requiresAuth: false
+        })
+      })
+      .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ runId: "ingest-failed", status: "failed", error: "ingest denied" }) })
+
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(uploadDocumentFile({ file })).rejects.toThrow("ingest denied")
+  })
+
+  it("uses a default message for cancelled document ingest runs", async () => {
+    const file = new File(["body"], "cancelled.txt", { type: "text/plain" })
+    resetRuntimeConfigForTests()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ apiBaseUrl: "http://api.example.test" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          uploadId: "upload-cancelled",
+          objectKey: "uploads/documents/user/upload-cancelled-cancelled.txt",
+          uploadUrl: "http://s3.example.test/upload-cancelled",
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          expiresInSeconds: 900,
+          requiresAuth: false
+        })
+      })
+      .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ runId: "ingest-cancelled", status: "cancelled" }) })
+
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(uploadDocumentFile({ file })).rejects.toThrow("document ingest run cancelled")
   })
 
   it("adds auth headers for local upload sessions without a file mime type", async () => {
@@ -201,7 +300,11 @@ describe("API client", () => {
       .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
       .mockResolvedValueOnce({
         ok: true,
-        json: vi.fn().mockResolvedValue({ documentId: "doc-local", fileName: "handoff.bin", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+        json: vi.fn().mockResolvedValue({
+          runId: "ingest-local",
+          status: "succeeded",
+          manifest: { documentId: "doc-local", fileName: "handoff.bin", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }
+        })
       })
 
     vi.stubGlobal("fetch", fetchMock)
@@ -227,11 +330,11 @@ describe("API client", () => {
     )
     expect(fetchMock).toHaveBeenNthCalledWith(
       4,
-      "http://api.example.test/documents/uploads/upload-local/ingest",
+      "http://api.example.test/document-ingest-runs",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer token-1" },
-        body: JSON.stringify({ fileName: "handoff.bin" })
+        body: JSON.stringify({ uploadId: "upload-local", fileName: "handoff.bin" })
       })
     )
   })

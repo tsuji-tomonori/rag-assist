@@ -41,6 +41,29 @@ curl -s -X "$UPLOAD_METHOD" "$UPLOAD_URL" \
   -H 'Content-Type: application/pdf' \
   --data-binary @./handbook.pdf
 
+INGEST_RUN_ID="$(
+  curl -s "http://localhost:8787/document-ingest-runs" \
+    "${AUTH_HEADER[@]}" \
+    -H 'Content-Type: application/json' \
+    -d "{
+      \"uploadId\":\"${UPLOAD_ID}\",
+      \"fileName\":\"handbook.pdf\",
+      \"mimeType\":\"application/pdf\",
+      \"memoryModelId\":\"amazon.nova-lite-v1:0\",
+      \"embeddingModelId\":\"amazon.titan-embed-text-v2:0\"
+    }" | jq -r '.runId'
+)"
+
+curl -s "http://localhost:8787/document-ingest-runs/${INGEST_RUN_ID}" \
+  "${AUTH_HEADER[@]}" | jq
+
+curl -N "http://localhost:8787/document-ingest-runs/${INGEST_RUN_ID}/events" \
+  "${AUTH_HEADER[@]}"
+```
+
+大きな PDF、OCR fallback、embedding で 60 秒を超える可能性があるため、UI と通常運用では `POST /document-ingest-runs` を使う。既存 `POST /documents/uploads/{uploadId}/ingest` は後方互換の同期 API として残す。
+
+```bash
 curl -s "http://localhost:8787/documents/uploads/${UPLOAD_ID}/ingest" \
   "${AUTH_HEADER[@]}" \
   -H 'Content-Type: application/json' \

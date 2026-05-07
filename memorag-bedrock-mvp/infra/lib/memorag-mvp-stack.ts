@@ -174,6 +174,23 @@ export class MemoRagMvpStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     })
 
+    const documentIngestRunsTable = new dynamodb.Table(this, "DocumentIngestRunsTable", {
+      partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "ttl",
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
+    const documentIngestRunEventsTable = new dynamodb.Table(this, "DocumentIngestRunEventsTable", {
+      partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "seq", type: dynamodb.AttributeType.NUMBER },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "ttl",
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
     new s3deploy.BucketDeployment(this, "DeployBenchmarkDatasets", {
       sources: [
         s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
@@ -335,6 +352,8 @@ export class MemoRagMvpStack extends Stack {
       BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
       CHAT_RUNS_TABLE_NAME: chatRunsTable.tableName,
       CHAT_RUN_EVENTS_TABLE_NAME: chatRunEventsTable.tableName,
+      DOCUMENT_INGEST_RUNS_TABLE_NAME: documentIngestRunsTable.tableName,
+      DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME: documentIngestRunEventsTable.tableName,
       BENCHMARK_BUCKET_NAME: benchmarkBucket.bucketName,
       BENCHMARK_DEFAULT_DATASET_KEY: "datasets/agent/standard-v1.jsonl",
       BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
@@ -419,8 +438,39 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
 
+    const documentIngestRunWorkerLogGroup = new logs.LogGroup(this, "DocumentIngestRunWorkerLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const documentIngestRunWorkerFn = new lambda.Function(this, "DocumentIngestRunWorkerFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/document-ingest-run-worker")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 1024,
+      timeout: Duration.minutes(15),
+      logGroup: documentIngestRunWorkerLogGroup,
+      environment: apiFunctionEnvironment
+    })
+
+    const documentIngestRunMarkFailedLogGroup = new logs.LogGroup(this, "DocumentIngestRunMarkFailedLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const documentIngestRunMarkFailedFn = new lambda.Function(this, "DocumentIngestRunMarkFailedFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/document-ingest-run-mark-failed")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 512,
+      timeout: Duration.seconds(29),
+      logGroup: documentIngestRunMarkFailedLogGroup,
+      environment: apiEnvironment
+    })
+
     docsBucket.grantReadWrite(apiFn)
     docsBucket.grantReadWrite(chatRunWorkerFn)
+    docsBucket.grantReadWrite(documentIngestRunWorkerFn)
     debugDownloadBucket.grantReadWrite(apiFn)
     debugDownloadBucket.grantReadWrite(chatRunWorkerFn)
     benchmarkBucket.grantRead(apiFn)
@@ -435,7 +485,13 @@ export class MemoRagMvpStack extends Stack {
     chatRunEventsTable.grantReadWriteData(chatRunWorkerFn)
     chatRunEventsTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunEventsTable.grantReadData(chatRunEventsFn)
-    for (const fn of [apiFn, chatRunWorkerFn]) {
+    documentIngestRunsTable.grantReadWriteData(apiFn)
+    documentIngestRunsTable.grantReadWriteData(documentIngestRunWorkerFn)
+    documentIngestRunsTable.grantReadWriteData(documentIngestRunMarkFailedFn)
+    documentIngestRunEventsTable.grantReadWriteData(apiFn)
+    documentIngestRunEventsTable.grantReadWriteData(documentIngestRunWorkerFn)
+    documentIngestRunEventsTable.grantReadWriteData(documentIngestRunMarkFailedFn)
+    for (const fn of [apiFn, chatRunWorkerFn, documentIngestRunWorkerFn]) {
       fn.addToRolePolicy(
         new iam.PolicyStatement({
           actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
@@ -456,6 +512,12 @@ export class MemoRagMvpStack extends Stack {
       })
     )
     apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["textract:DetectDocumentText", "textract:StartDocumentTextDetection", "textract:GetDocumentTextDetection"],
+        resources: ["*"]
+      })
+    )
+    documentIngestRunWorkerFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["textract:DetectDocumentText", "textract:StartDocumentTextDetection", "textract:GetDocumentTextDetection"],
         resources: ["*"]
@@ -584,6 +646,52 @@ export class MemoRagMvpStack extends Stack {
         {
           id: "AwsSolutions-SF2",
           reason: "X-Ray tracing is intentionally disabled for the MVP chat worker; CloudWatch ALL event logging is retained for troubleshooting."
+        }
+      ],
+      true
+    )
+
+    const documentIngestRunWorkerTask = new tasks.LambdaInvoke(this, "DocumentIngestRunWorkerTask", {
+      lambdaFunction: documentIngestRunWorkerFn,
+      payload: sfn.TaskInput.fromObject({
+        runId: sfn.JsonPath.stringAt("$.runId")
+      }),
+      resultPath: "$.worker"
+    })
+    const documentIngestRunMarkFailedTask = new tasks.LambdaInvoke(this, "DocumentIngestRunMarkFailedTask", {
+      lambdaFunction: documentIngestRunMarkFailedFn,
+      payload: sfn.TaskInput.fromObject({
+        runId: sfn.JsonPath.stringAt("$.runId"),
+        errorInfo: sfn.JsonPath.objectAt("$.errorInfo")
+      }),
+      resultPath: "$.markFailed"
+    })
+    documentIngestRunWorkerTask.addCatch(documentIngestRunMarkFailedTask, {
+      errors: ["States.ALL"],
+      resultPath: "$.errorInfo"
+    })
+    const documentIngestRunStateMachineLogGroup = new logs.LogGroup(this, "DocumentIngestRunStateMachineLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const documentIngestRunStateMachine = new sfn.StateMachine(this, "DocumentIngestRunStateMachine", {
+      definitionBody: sfn.DefinitionBody.fromChainable(documentIngestRunWorkerTask),
+      logs: {
+        destination: documentIngestRunStateMachineLogGroup,
+        level: sfn.LogLevel.ALL
+      },
+      timeout: Duration.minutes(16)
+    })
+    documentIngestRunWorkerFn.grantInvoke(documentIngestRunStateMachine)
+    documentIngestRunMarkFailedFn.grantInvoke(documentIngestRunStateMachine)
+    documentIngestRunStateMachine.grantStartExecution(apiFn)
+    apiFn.addEnvironment("DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN", documentIngestRunStateMachine.stateMachineArn)
+    NagSuppressions.addResourceSuppressions(
+      documentIngestRunStateMachine,
+      [
+        {
+          id: "AwsSolutions-SF2",
+          reason: "X-Ray tracing is intentionally disabled for the MVP ingest worker; CloudWatch ALL event logging is retained for troubleshooting."
         }
       ],
       true
