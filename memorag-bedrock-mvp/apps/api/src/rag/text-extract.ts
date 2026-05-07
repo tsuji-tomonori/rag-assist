@@ -136,7 +136,7 @@ async function detectTextWithTextract(input: {
     if (blocks.length === 0) return undefined
     return textractBlocksDocument(blocks, "textract-detect-document-text-v1")
   } catch (error) {
-    throw new Error(`PDF OCR fallback failed for ${input.fileName}: ${errorMessage(error)}`)
+    throw new Error(`PDF OCR fallback failed for ${input.fileName}: ${errorMessage(error)}`, { cause: error })
   }
 }
 
