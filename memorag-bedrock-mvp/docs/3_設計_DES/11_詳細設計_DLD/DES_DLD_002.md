@@ -127,6 +127,25 @@ query
 - `p95 latency`: Lambda cold/warm の両方で業務利用に耐えること。
 - `Grounded answer rate`: agent 統合後、回答が hybrid retrieval の出典に基づくこと。
 
+## 高度検索導入 gate
+
+現行 hybrid retrieval を baseline とし、GraphRAG、RAPTOR、visual retrieval、cross-encoder reranker、HyDE、OpenSearch / FTS index は、症状別の benchmark gate を満たすまで default path に入れない。
+
+| 症状 | 判定指標 | 優先する対応 | 導入候補 | safety gate |
+|---|---|---|---|---|
+| exact keyword、規程番号、品番、略語で落ちる | `Recall@20`、token coverage、alias candidate | alias / glossary、CJK n-gram、prefix、tokenizer 調整 | kuromoji.js、OpenSearch custom dictionary | `aliasScopeViolation=0`、`no_access_leak_count=0` |
+| 意味的言い換えで落ちる | semantic hit、query rewrite contribution、answerable accuracy | embedding model、query expansion、HyDE の ablation | HyDE、query rewrite profile | refusal precision と unsupported sentence rate を悪化させない |
+| Recall@20 に正解があるが順位が悪い | `MRR@10`、citation hit、finalEvidence hit | cheap rerank weight、RRF weight | cross-encoder reranker、LLM rerank | p95 latency と model cost budget を超えない |
+| 表、スキャン PDF、ページ抽出で evidence がない | extraction failure、chunk failure、expected page hit | OCR、structured block ingestion、table-aware chunking | visual retrieval は OCR / block ingestion 後に再評価 | raw evidence が存在しない回答を生成しない |
+| 複数文書統合で落ちる | multi-doc category、fact slot coverage、citation support | context assembly、memory card | RAPTOR、GraphRAG | 最終根拠は raw evidence に戻せる |
+| index size / query 量で latency が悪化する | p95 latency、index size、Lambda memory、cold start | immutable lexical index、candidate cap、cache | SQLite FTS5 / EFS、OpenSearch | ACL guard と rollback 手順を維持する |
+
+導入判断では、baseline と current run の evaluator profile を一致させる。profile mismatch の比較は参考値に留め、採用 gate の合格扱いにしない。
+
+ablation は少なくとも該当する `vector`、`BM25`、`CJK n-gram`、`alias`、`RRF`、`query rewrite`、`reranker`、`structured chunking` の寄与を比較する。該当しない項目は、failure taxonomy 上の理由を report に残す。
+
+高度検索候補を採用する PR は、成功条件、rollback 条件、latency / cost budget、ACL guard、answerability gate、citation validation、support verification への影響を PR 本文と運用 docs に記載する。
+
 ## 将来拡張
 
 - ingestion batch で immutable lexical index を生成し、S3 Brotli object として保存する。
