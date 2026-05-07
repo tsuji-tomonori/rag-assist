@@ -801,7 +801,10 @@ app.openapi(
     const contentBytes = await deps.objectStore.getBytes(objectKey)
     if (contentBytes.length === 0) return c.json({ error: "Uploaded object is empty" }, 400)
 
-    const manifest = await service.ingest({ ...body, contentBytes })
+    const sourceS3Object = config.docsBucketName
+      ? { bucketName: config.docsBucketName, key: objectKey }
+      : undefined
+    const manifest = await service.ingest({ ...body, contentBytes, sourceS3Object })
     await deps.objectStore.deleteObject(objectKey)
     return c.json(manifest, 200)
   }
