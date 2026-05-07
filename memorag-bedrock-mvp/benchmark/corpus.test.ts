@@ -298,6 +298,49 @@ test("seedBenchmarkCorpus skips uploaded PDFs without extractable text", async (
   assert.equal(logs.some((message) => message.includes("Benchmark corpus skipped: image-only.pdf")), true)
 })
 
+test("seedBenchmarkCorpus skips uploaded PDFs when OCR fallback times out", async () => {
+  const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
+  await writeFile(path.join(corpusDir, "slow-ocr.pdf"), Buffer.from("%PDF-1.4 sample"))
+  const logs: string[] = []
+  const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
+    const requestUrl = String(url)
+    if (init?.method === "GET") {
+      return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (requestUrl.endsWith("/documents/uploads")) {
+      return new Response(JSON.stringify({
+        uploadId: "upload-1",
+        uploadUrl: "http://upload.local/slow-ocr.pdf",
+        method: "PUT",
+        headers: { "Content-Type": "application/pdf" },
+        requiresAuth: false
+      }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (requestUrl === "http://upload.local/slow-ocr.pdf") return new Response("", { status: 200 })
+    return new Response(JSON.stringify({
+      error: "PDF OCR fallback failed for slow-ocr.pdf: Textract job did not finish within 45000ms"
+    }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+
+  const [result] = await seedBenchmarkCorpus({
+    apiBaseUrl: "http://localhost:8787",
+    corpusDir,
+    suiteId: "mmrag-docqa-v1",
+    skipMemory: true,
+    fetchImpl,
+    log: (message) => logs.push(message)
+  })
+
+  assert.equal(result?.fileName, "slow-ocr.pdf")
+  assert.equal(result?.status, "skipped_unextractable")
+  assert.equal(result?.chunkCount, 0)
+  assert.equal(result?.skipReason, "ocr_timeout")
+  assert.equal(logs.some((message) => message.includes("Benchmark corpus skipped: slow-ocr.pdf (ocr_timeout)")), true)
+})
+
 test("seedBenchmarkCorpus still fails on non-extractability ingest errors", async () => {
   const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
   await writeFile(path.join(corpusDir, "source.pdf"), Buffer.from("%PDF-1.4 sample"))
