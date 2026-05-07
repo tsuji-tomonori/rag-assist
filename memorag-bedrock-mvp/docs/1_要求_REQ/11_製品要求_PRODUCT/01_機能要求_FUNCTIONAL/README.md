@@ -69,7 +69,7 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 1.3 文書削除 | [`FR-007`](01_文書・知識ベース管理/03_文書削除/REQ_FUNCTIONAL_007.md) | 利用者が文書を識別子単位で削除できる。 |
 | 1.3 文書削除 | [`FR-008`](01_文書・知識ベース管理/03_文書削除/REQ_FUNCTIONAL_008.md) | 文書削除時に紐づく管理情報も削除する。 |
 | 1.5 多抽象度メモリ生成 | [`FR-020`](01_文書・知識ベース管理/05_多抽象度メモリ生成/REQ_FUNCTIONAL_020.md) | raw chunk とは別に section / document / concept memory を生成する。 |
-| 1.6 非同期文書取り込み | [`FR-031`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_031.md) | 長時間の文書取り込みを非同期 run として追跡する。 |
+| 1.6 非同期文書取り込み | [`FR-038`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_038.md) | 長時間の文書取り込みを非同期 run として追跡する。 |
 
 ### 2. チャットQA・根拠提示・回答不能制御
 
@@ -111,7 +111,14 @@ L0. rag-assist / MemoRAG MVP 機能要件
 
 | L2主機能群 | L3要件 | 要旨 |
 | --- | --- | --- |
-| 6.1 問い合わせ管理 | [`FR-021`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_021.md) | 回答不能質問を問い合わせとして登録し、状態管理と担当者回答を扱う。 |
+| 6.1 問い合わせ管理 | [`FR-021`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_021.md) | 回答不能質問を担当者向け問い合わせとして登録する。 |
+| 6.1 問い合わせ管理 | [`FR-031`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_031.md) | 担当者が問い合わせをカンバン形式で状態別に確認する。 |
+| 6.1 問い合わせ管理 | [`FR-032`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_032.md) | 担当者が問い合わせを検索または状態で絞り込む。 |
+| 6.1 問い合わせ管理 | [`FR-033`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_033.md) | 担当者が回答本文、下書き、内部メモ、通知希望を登録する。 |
+| 6.1 問い合わせ管理 | [`FR-034`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_034.md) | 通常利用者が自身の問い合わせ回答を確認する。 |
+| 6.1 問い合わせ管理 | [`FR-035`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_035.md) | 会話履歴が問い合わせ結果の状態を利用者に通知する。 |
+| 6.1 問い合わせ管理 | [`FR-036`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_036.md) | 通常利用者が回答済みの自身の問い合わせを解決済みにする。 |
+| 6.1 問い合わせ管理 | [`FR-037`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_037.md) | 問い合わせ対応結果を HITL 改善候補として分類する。 |
 
 ### 7. 評価・debug・benchmark
 
@@ -122,8 +129,8 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 7.3 UI非依存評価 | [`FR-012`](07_評価・debug・benchmark/03_UI非依存評価/REQ_FUNCTIONAL_012.md) | 画面を使わず同等の質問評価を実行できる。 |
 | 7.4 外部連携仕様 | [`FR-013`](07_評価・debug・benchmark/04_外部連携仕様/REQ_FUNCTIONAL_013.md) | 外部連携向け仕様情報を参照できる。 |
 | 7.5 benchmark 指標 | [`FR-019`](07_評価・debug・benchmark/05_benchmark指標/REQ_FUNCTIONAL_019.md) | fact coverage、faithfulness、context relevance、不回答精度を評価する。 |
-| 7.6 benchmark corpus seed | [`FR-032`](07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_032.md) | 評価前に corpus を取り込み、抽出不能や OCR timeout を分類する。 |
-| 7.7 benchmark corpus 隔離 | [`FR-033`](07_評価・debug・benchmark/07_benchmark_corpus隔離/REQ_FUNCTIONAL_033.md) | benchmark corpus と通常文書を混在させず scope を強制する。 |
+| 7.6 benchmark corpus seed | [`FR-039`](07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_039.md) | 評価前に corpus を取り込み、抽出不能や OCR timeout を分類する。 |
+| 7.7 benchmark corpus 隔離 | [`FR-040`](07_評価・debug・benchmark/07_benchmark_corpus隔離/REQ_FUNCTIONAL_040.md) | benchmark corpus と通常文書を混在させず scope を強制する。 |
 
 ### 8. 認証・認可・管理・監査
 
@@ -143,9 +150,16 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | [`FR-024`](08_認証・認可・管理・監査/02_Phase_1_RAG運用管理/REQ_FUNCTIONAL_024.md) | 8. 認証・認可・管理・監査 | 1. 文書・知識ベース管理、6. 問い合わせ・人手対応、7. 評価・debug・benchmark |
 | [`FR-027`](08_認証・認可・管理・監査/03_Phase_2_管理・監査/REQ_FUNCTIONAL_027.md) | 8. 認証・認可・管理・監査 | 7. 評価・debug・benchmark |
 | [`FR-029`](02_チャットQA・根拠提示・回答不能制御/06_確認質問・曖昧性解消/REQ_FUNCTIONAL_029.md) | 2. チャットQA・根拠提示・回答不能制御 | 3. RAG検索品質制御、4. 回答検証・ガードレール、7. 評価・debug・benchmark |
-| [`FR-031`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_031.md) | 1. 文書・知識ベース管理 | 7. 評価・debug・benchmark |
-| [`FR-032`](07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_032.md) | 7. 評価・debug・benchmark | 1. 文書・知識ベース管理 |
-| [`FR-033`](07_評価・debug・benchmark/07_benchmark_corpus隔離/REQ_FUNCTIONAL_033.md) | 7. 評価・debug・benchmark | 3. RAG検索品質制御、8. 認証・認可・管理・監査 |
+| [`FR-031`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_031.md) | 6. 問い合わせ・人手対応 | 8. 認証・認可・管理・監査 |
+| [`FR-032`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_032.md) | 6. 問い合わせ・人手対応 | 8. 認証・認可・管理・監査 |
+| [`FR-033`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_033.md) | 6. 問い合わせ・人手対応 | 8. 認証・認可・管理・監査 |
+| [`FR-034`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_034.md) | 6. 問い合わせ・人手対応 | 5. 会話履歴・お気に入り |
+| [`FR-035`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_035.md) | 6. 問い合わせ・人手対応 | 5. 会話履歴・お気に入り |
+| [`FR-036`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_036.md) | 6. 問い合わせ・人手対応 | 8. 認証・認可・管理・監査 |
+| [`FR-037`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_037.md) | 6. 問い合わせ・人手対応 | 1. 文書・知識ベース管理、3. RAG検索品質制御、7. 評価・debug・benchmark、8. 認証・認可・管理・監査 |
+| [`FR-038`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_038.md) | 1. 文書・知識ベース管理 | 7. 評価・debug・benchmark |
+| [`FR-039`](07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_039.md) | 7. 評価・debug・benchmark | 1. 文書・知識ベース管理 |
+| [`FR-040`](07_評価・debug・benchmark/07_benchmark_corpus隔離/REQ_FUNCTIONAL_040.md) | 7. 評価・debug・benchmark | 3. RAG検索品質制御、8. 認証・認可・管理・監査 |
 
 ## 網羅性チェック
 

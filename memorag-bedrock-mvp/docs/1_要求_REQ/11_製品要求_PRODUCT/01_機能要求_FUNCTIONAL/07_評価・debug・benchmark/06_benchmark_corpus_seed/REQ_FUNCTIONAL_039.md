@@ -1,6 +1,6 @@
 # 要件定義（1要件1ファイル）
 
-- 要件ID: `FR-032`
+- 要件ID: `FR-039`
 - 種別: `REQ_FUNCTIONAL`
 - 状態: Draft
 - 優先度: A
@@ -10,22 +10,22 @@
 - L0: `rag-assist / MemoRAG MVP 機能要件`
 - L1主分類: `7. 評価・debug・benchmark`
 - L2主機能群: `7.6 benchmark corpus seed`
-- L3要件: `FR-032`
+- L3要件: `FR-039`
 - 関連カテゴリ:
   - `1. 文書・知識ベース管理`
 
 ## 要件
 
-- FR-032: benchmark runner は、評価に必要な corpus 文書を評価前に取り込み、抽出不能または OCR timeout の文書を評価不能行として分類できること。
+- FR-039: benchmark runner は、評価に必要な corpus 文書を評価前に取り込み、抽出不能または OCR timeout の文書を評価不能行として分類できること。
 
 ## 受け入れ条件（この要件専用）
 
-- AC-FR032-001: runner は評価 query または search を実行する前に、必要な corpus 文書が QA 利用可能な状態であることを確認できること。
-- AC-FR032-002: runner は PDF corpus を同期 request body に載せずに seed できること。
-- AC-FR032-003: 抽出可能テキストがない corpus 文書は、runner fatal ではなく `skipped_unextractable` 相当として記録できること。
-- AC-FR032-004: OCR timeout になった corpus 文書は、runner fatal ではなく `skipped_unextractable` 相当として記録できること。
-- AC-FR032-005: 抽出不能または OCR timeout の文書を期待資料にする dataset row は、評価対象から除外されたことを summary または report で確認できること。
-- AC-FR032-006: 抽出不能とは異なる worker failure、polling failure、認可失敗は runner fatal として扱えること。
+- AC-FR039-001: runner は評価 query または search を実行する前に、必要な corpus 文書が QA 利用可能な状態であることを確認できること。
+- AC-FR039-002: runner は PDF corpus を同期 request body に載せずに seed できること。
+- AC-FR039-003: 抽出可能テキストがない corpus 文書は、runner fatal ではなく `skipped_unextractable` 相当として記録できること。
+- AC-FR039-004: OCR timeout になった corpus 文書は、runner fatal ではなく `skipped_unextractable` 相当として記録できること。
+- AC-FR039-005: 抽出不能または OCR timeout の文書を期待資料にする dataset row は、評価対象から除外されたことを summary または report で確認できること。
+- AC-FR039-006: 抽出不能とは異なる worker failure、polling failure、認可失敗は runner fatal として扱えること。
 
 ## 要件の源泉・背景
 
@@ -45,14 +45,14 @@
 
 | 属性 | 記入内容 |
 |---|---|
-| 識別子 | `FR-032` |
+| 識別子 | `FR-039` |
 | 説明 | benchmark corpus seed の完了確認と skip/fatal 分類 |
 | 根拠 | corpus seed の失敗分類がないと評価 artifact が空になり、改善判断に使えない |
 | 源泉 | `reports/bugs/20260507-2029-mmrag-textract-timeout.md`, `reports/working/20260507-2139-benchmark-seed-async-ocr-ingest.md` |
 | 種類 | 機能要求 |
-| 依存関係 | `FR-012`, `FR-019`, `FR-031`, `SQ-001` |
+| 依存関係 | `FR-012`, `FR-019`, `FR-038`, `SQ-001` |
 | 衝突 | skip を許容すると全 PDF を必ず評価したい用途とは衝突する |
-| 受け入れ基準 | `AC-FR032-001` から `AC-FR032-006` |
+| 受け入れ基準 | `AC-FR039-001` から `AC-FR039-006` |
 | 優先度 | A |
 | 安定性 | Medium |
 | 変更履歴 | 2026-05-07 初版 |

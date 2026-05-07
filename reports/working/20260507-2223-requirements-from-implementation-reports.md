@@ -22,16 +22,16 @@
 
 - 調査時に候補化した内容を、機能要求 3 件、非機能要求 1 件、サービス品質制約 1 件、技術制約 1 件に分割した。
 - 既存設計・運用文書にある実装手段は要求文へ過度に混ぜず、根拠、関連文書、受け入れ条件へ圧縮した。
-- `FR-031` は文書・知識ベース管理、`FR-032` と `FR-033` は評価・debug・benchmark を主分類にした。
+- `FR-038` は文書・知識ベース管理、`FR-039` と `FR-040` は評価・debug・benchmark を主分類にした。
 - `NFR-013` は streaming / secondary route の認可境界、`SQ-002` は長時間 benchmark の運用品質、`TC-002` は request body validation 方針として分けた。
 - README / API examples / OPERATIONS / DES は既に該当実装時に更新済みのため、今回は `REQUIREMENTS.md`、機能要求索引、`REQ_CHANGE_001.md` を更新対象にした。
 
 ## 4. 実施した作業
 
 - `tasks/do/20260507-2223-requirements-from-implementation-reports.md` を作成した。
-- `FR-031` 非同期文書取り込み要件を追加した。
-- `FR-032` benchmark corpus seed と OCR skip/fatal 分類要件を追加した。
-- `FR-033` benchmark corpus 隔離と検索前 scope 強制要件を追加した。
+- `FR-038` 非同期文書取り込み要件を追加した。
+- `FR-039` benchmark corpus seed と OCR skip/fatal 分類要件を追加した。
+- `FR-040` benchmark corpus 隔離と検索前 scope 強制要件を追加した。
 - `NFR-013` API 副経路・streaming endpoint の route-level permission 要件を追加した。
 - `SQ-002` 長時間 benchmark run の timeout / 診断 / artifact / cancel / cost 要件を追加した。
 - `TC-002` 外部公開 API request body validation 技術制約を追加した。
@@ -41,9 +41,9 @@
 
 | 成果物 | 形式 | 内容 | 指示との対応 |
 |---|---|---|---|
-| `REQ_FUNCTIONAL_031.md` | Markdown | 非同期文書取り込み要件 | R1, R2 |
-| `REQ_FUNCTIONAL_032.md` | Markdown | benchmark corpus seed 分類要件 | R1, R2 |
-| `REQ_FUNCTIONAL_033.md` | Markdown | benchmark corpus 隔離要件 | R1, R2 |
+| `REQ_FUNCTIONAL_038.md` | Markdown | 非同期文書取り込み要件 | R1, R2 |
+| `REQ_FUNCTIONAL_039.md` | Markdown | benchmark corpus seed 分類要件 | R1, R2 |
+| `REQ_FUNCTIONAL_040.md` | Markdown | benchmark corpus 隔離要件 | R1, R2 |
 | `REQ_NON_FUNCTIONAL_013.md` | Markdown | API 副経路の認可境界要件 | R1, R2 |
 | `REQ_SERVICE_QUALITY_002.md` | Markdown | 長時間 benchmark 運用品質要件 | R1, R2 |
 | `REQ_TECHNICAL_CONSTRAINT_002.md` | Markdown | request body validation 技術制約 | R1, R2 |
@@ -67,7 +67,7 @@
 
 - `git diff --check`: pass
 - `pre-commit run --files $(git ls-files --modified --others --exclude-standard)`: pass
-- `rg -n "FR-031|FR-032|FR-033|NFR-013|SQ-002|TC-002" ...`: pass。索引とトレーサビリティへの反映を確認した。
+- `rg -n "FR-038|FR-039|FR-040|NFR-013|SQ-002|TC-002" ...`: pass。索引とトレーサビリティへの反映を確認した。
 
 ## 8. 未対応・制約・リスク
 
@@ -78,7 +78,7 @@
 ## 9. CI 追補対応
 
 - PR #183 の CI で API test が失敗した。
-- 原因は `apps/api/src/rag/requirements-coverage.test.ts` が product requirement docs と coverage map の完全一致を検証しており、今回追加した `FR-031`、`FR-032`、`FR-033`、`NFR-013` が coverage map に未登録だったため。
+- 原因は `apps/api/src/rag/requirements-coverage.test.ts` が product requirement docs と coverage map の完全一致を検証しており、今回追加した `FR-038`、`FR-039`、`FR-040`、`NFR-013` が coverage map に未登録だったため。
 - `requirements-coverage.test.ts` に新規要件 ID と対応する既存 test / package test の参照を追加した。
 - 追補検証:
   - `npm ci`: pass。既存の moderate vulnerability 1 件が表示されたが、今回の変更範囲外。

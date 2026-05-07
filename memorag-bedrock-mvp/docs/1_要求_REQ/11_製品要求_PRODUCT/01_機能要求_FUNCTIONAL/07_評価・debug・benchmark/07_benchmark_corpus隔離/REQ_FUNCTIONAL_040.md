@@ -1,6 +1,6 @@
 # 要件定義（1要件1ファイル）
 
-- 要件ID: `FR-033`
+- 要件ID: `FR-040`
 - 種別: `REQ_FUNCTIONAL`
 - 状態: Draft
 - 優先度: A
@@ -10,23 +10,23 @@
 - L0: `rag-assist / MemoRAG MVP 機能要件`
 - L1主分類: `7. 評価・debug・benchmark`
 - L2主機能群: `7.7 benchmark corpus 隔離`
-- L3要件: `FR-033`
+- L3要件: `FR-040`
 - 関連カテゴリ:
   - `3. RAG検索品質制御`
   - `8. 認証・認可・管理・監査`
 
 ## 要件
 
-- FR-033: benchmark runner は、評価用 corpus と通常利用者の文書を混在させず、評価 query または search の検索前に benchmark corpus scope を強制できること。
+- FR-040: benchmark runner は、評価用 corpus と通常利用者の文書を混在させず、評価 query または search の検索前に benchmark corpus scope を強制できること。
 
 ## 受け入れ条件（この要件専用）
 
-- AC-FR033-001: runner が seed する文書は、通常利用者の文書一覧と通常 RAG 検索から隔離されること。
-- AC-FR033-002: runner が評価用 API を呼ぶとき、検索前 filter は benchmark corpus を識別する scope 条件を含むこと。
-- AC-FR033-003: runner は同じ corpus を共有する suite でも、corpus identity を固定して評価できること。
-- AC-FR033-004: raw retrieval と最終回答根拠は、評価 report で区別して解釈できること。
-- AC-FR033-005: benchmark の no-access leak 指標は、citation、最終回答根拠、raw retrieval の混入を検出できること。
-- AC-FR033-006: benchmark corpus scope の強制は、通常利用者向け検索 API の権限境界を広げないこと。
+- AC-FR040-001: runner が seed する文書は、通常利用者の文書一覧と通常 RAG 検索から隔離されること。
+- AC-FR040-002: runner が評価用 API を呼ぶとき、検索前 filter は benchmark corpus を識別する scope 条件を含むこと。
+- AC-FR040-003: runner は同じ corpus を共有する suite でも、corpus identity を固定して評価できること。
+- AC-FR040-004: raw retrieval と最終回答根拠は、評価 report で区別して解釈できること。
+- AC-FR040-005: benchmark の no-access leak 指標は、citation、最終回答根拠、raw retrieval の混入を検出できること。
+- AC-FR040-006: benchmark corpus scope の強制は、通常利用者向け検索 API の権限境界を広げないこと。
 
 ## 要件の源泉・背景
 
@@ -45,14 +45,14 @@
 
 | 属性 | 記入内容 |
 |---|---|
-| 識別子 | `FR-033` |
+| 識別子 | `FR-040` |
 | 説明 | benchmark corpus scope の強制、通常文書との隔離、raw/final evidence 分離 |
 | 根拠 | benchmark 結果の再現性と認可境界を維持するため |
 | 源泉 | `reports/working/20260507-2027-retrieval-scope-final-evidence.md`, `reports/working/20260507-2105-rag-baseline-evaluation-set.md` |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-012`, `FR-019`, `FR-026`, `NFR-012`, `SQ-001` |
 | 衝突 | 隔離 corpus の seed / cleanup に時間がかかる |
-| 受け入れ基準 | `AC-FR033-001` から `AC-FR033-006` |
+| 受け入れ基準 | `AC-FR040-001` から `AC-FR040-006` |
 | 優先度 | A |
 | 安定性 | Medium |
 | 変更履歴 | 2026-05-07 初版 |
