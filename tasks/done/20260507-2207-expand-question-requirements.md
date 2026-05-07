@@ -78,7 +78,13 @@
 
 - PR: `https://github.com/tsuji-tomonori/rag-assist/pull/178`
 - 作業 commit: `db71d52`
+- CI 修正 commit: 本 task 更新を含む後続 commit
 - 受け入れ条件確認コメント: `4397445298`
 - セルフレビューコメント: `4397447204`
 - 検証: `git diff --check` pass
 - 検証: `git ls-files --modified --others --exclude-standard -z | xargs -0 pre-commit run --files` 初回自動修正後、再実行 pass
+- PR CI の API test failure 原因: `FR-031` から `FR-037` を追加したが、`requirements-coverage.test.ts` の coverage map に新規 FR を追加していなかった。
+- PR CI 修正後の検証: `npm ci` pass
+- PR CI 修正後の検証: `npm run test:coverage -w @memorag-mvp/api` pass
+- PR CI 修正後の検証: `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0` pass
+- PR CI 修正後の検証: `npm run typecheck -w @memorag-mvp/api` pass

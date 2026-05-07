@@ -34,6 +34,7 @@
 - `FR-021` の受け入れ条件を問い合わせ登録と通常利用者導線へ絞った。
 - `FR-031` から `FR-037` を追加し、問い合わせ管理配下の複数機能を分割した。
 - `README.md`、`REQ_CHANGE_001.md`、`REQUIREMENTS.md`、`REQ_ACCEPTANCE_001.md` の索引・関連要求を更新した。
+- PR CI の API test failure を受け、`requirements-coverage.test.ts` の `coverageByRequirement` に `FR-031` から `FR-037` の追跡先を追加した。
 
 ## 5. 成果物
 
@@ -44,13 +45,19 @@
 | `01_機能要求_FUNCTIONAL/README.md` | Markdown | 問い合わせ管理の L1-L3 索引更新 | R5 |
 | `REQ_CHANGE_001.md`、`REQUIREMENTS.md`、`REQ_ACCEPTANCE_001.md` | Markdown | トレーサビリティと関連要求の同期 | R5 |
 | `tasks/do/20260507-2207-expand-question-requirements.md` | Markdown | 作業 task と受け入れ条件 | workflow 要件 |
+| `apps/api/src/rag/requirements-coverage.test.ts` | TypeScript test | 新規 FR の要件 coverage map | CI 修正 |
 
 ## 6. 検証
 
 - `git diff --check`: pass
 - `git ls-files --modified --others --exclude-standard -z | xargs -0 pre-commit run --files`: 初回は `end-of-file-fixer` が新規要件ファイルの末尾を自動修正。
 - `git ls-files --modified --others --exclude-standard -z | xargs -0 pre-commit run --files`: 修正後 pass
-- API / Web の typecheck、test、build は未実施。理由: 今回は docs と task/report の Markdown 変更のみで、アプリケーション挙動や API contract を変更していないため。
+- PR CI 失敗後の `npm ci`: pass
+- PR CI 失敗後の `npm run test:coverage -w @memorag-mvp/api`: pass。162 tests、Statements 93.15%、Functions 94.65%、Lines 93.15%。
+- PR CI 失敗後の `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
+- PR CI 失敗後の `npm run typecheck -w @memorag-mvp/api`: pass
+- PR CI 失敗後の `git diff --check`: pass
+- Web / Infra / Benchmark の typecheck、test、build はローカル未実施。理由: 修正対象は API の要件 coverage map のみであり、ユーザー提示の CI では該当領域は既に pass していたため。
 
 ## 7. 指示への fit 評価
 
@@ -64,10 +71,10 @@
 
 総合fit: 4.9 / 5.0（約98%）
 
-理由: 依頼された問い合わせ管理 docs の拡充は完了。HITL feedback loop は将来要件のため、実装済み機能としての検証は対象外にした。
+理由: 依頼された問い合わせ管理 docs の拡充と、追加 FR に伴う API requirements coverage の追跡更新まで完了。HITL feedback loop は将来要件のため、実装済み機能としての検証は対象外にした。
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: API / Web / Store の実装変更は行っていない。
+- 未対応: Web / Store の実装変更は行っていない。
 - 制約: docs 専用の包括 check task は確認しておらず、Markdown 向けの `pre-commit` と `git diff --check` に限定した。
 - リスク: 並行 PR で `FR-031` 以降の番号が追加された場合、main 取り込み時に再採番が必要になる。
