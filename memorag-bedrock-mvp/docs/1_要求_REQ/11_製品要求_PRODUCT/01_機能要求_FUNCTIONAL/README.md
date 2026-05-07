@@ -46,7 +46,8 @@ L0. rag-assist / MemoRAG MVP 機能要件
 │  ├─ 01_文書登録/
 │  ├─ 02_文書のQA利用可能化/
 │  ├─ 03_文書削除/
-│  └─ 05_多抽象度メモリ生成/
+│  ├─ 05_多抽象度メモリ生成/
+│  └─ 06_非同期文書取り込み/
 ├─ 02_チャットQA・根拠提示・回答不能制御/
 │  └─ 06_確認質問・曖昧性解消/
 ├─ 03_RAG検索品質制御/
@@ -68,6 +69,7 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 1.3 文書削除 | [`FR-007`](01_文書・知識ベース管理/03_文書削除/REQ_FUNCTIONAL_007.md) | 利用者が文書を識別子単位で削除できる。 |
 | 1.3 文書削除 | [`FR-008`](01_文書・知識ベース管理/03_文書削除/REQ_FUNCTIONAL_008.md) | 文書削除時に紐づく管理情報も削除する。 |
 | 1.5 多抽象度メモリ生成 | [`FR-020`](01_文書・知識ベース管理/05_多抽象度メモリ生成/REQ_FUNCTIONAL_020.md) | raw chunk とは別に section / document / concept memory を生成する。 |
+| 1.6 非同期文書取り込み | [`FR-038`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_038.md) | 長時間の文書取り込みを非同期 run として追跡する。 |
 
 ### 2. チャットQA・根拠提示・回答不能制御
 
@@ -127,6 +129,8 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 7.3 UI非依存評価 | [`FR-012`](07_評価・debug・benchmark/03_UI非依存評価/REQ_FUNCTIONAL_012.md) | 画面を使わず同等の質問評価を実行できる。 |
 | 7.4 外部連携仕様 | [`FR-013`](07_評価・debug・benchmark/04_外部連携仕様/REQ_FUNCTIONAL_013.md) | 外部連携向け仕様情報を参照できる。 |
 | 7.5 benchmark 指標 | [`FR-019`](07_評価・debug・benchmark/05_benchmark指標/REQ_FUNCTIONAL_019.md) | fact coverage、faithfulness、context relevance、不回答精度を評価する。 |
+| 7.6 benchmark corpus seed | [`FR-039`](07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_039.md) | 評価前に corpus を取り込み、抽出不能や OCR timeout を分類する。 |
+| 7.7 benchmark corpus 隔離 | [`FR-040`](07_評価・debug・benchmark/07_benchmark_corpus隔離/REQ_FUNCTIONAL_040.md) | benchmark corpus と通常文書を混在させず scope を強制する。 |
 
 ### 8. 認証・認可・管理・監査
 
@@ -153,6 +157,9 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | [`FR-035`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_035.md) | 6. 問い合わせ・人手対応 | 5. 会話履歴・お気に入り |
 | [`FR-036`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_036.md) | 6. 問い合わせ・人手対応 | 8. 認証・認可・管理・監査 |
 | [`FR-037`](06_問い合わせ・人手対応/01_問い合わせ管理/REQ_FUNCTIONAL_037.md) | 6. 問い合わせ・人手対応 | 1. 文書・知識ベース管理、3. RAG検索品質制御、7. 評価・debug・benchmark、8. 認証・認可・管理・監査 |
+| [`FR-038`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_038.md) | 1. 文書・知識ベース管理 | 7. 評価・debug・benchmark |
+| [`FR-039`](07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_039.md) | 7. 評価・debug・benchmark | 1. 文書・知識ベース管理 |
+| [`FR-040`](07_評価・debug・benchmark/07_benchmark_corpus隔離/REQ_FUNCTIONAL_040.md) | 7. 評価・debug・benchmark | 3. RAG検索品質制御、8. 認証・認可・管理・監査 |
 
 ## 網羅性チェック
 
