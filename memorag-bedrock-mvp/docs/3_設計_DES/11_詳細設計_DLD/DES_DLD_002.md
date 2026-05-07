@@ -118,7 +118,10 @@ query
 
 - `Recall@20`: 正解 chunk または正解 document が上位 20 件に含まれること。
 - `MRR@10`: 正解 chunk または正解 document が上位に出ること。
+- `retrieval_mrr_at_k`: agent benchmark で evaluator profile の `retrieval.recallK` 内に期待 document/file がどの順位で出るか。
+- `citation_support_pass_rate`: answer support verifier が非支持文を検出しなかった割合。
 - `No-access leak`: 権限外 document が検索結果に含まれないこと。
+- `no_access_leak_count`: agent benchmark の citation / retrieved に forbidden evidence が混入した件数。baseline gate では 0 を必須とする。
 - `aliasNoAccessLeak`: alias、ACL、許可 user、内部 project code が通常検索結果と diagnostics に含まれないこと。
 - `aliasScopeViolation`: ACL/filter 済み manifest の外側にある alias が query expansion に使われないこと。
 - `p95 latency`: Lambda cold/warm の両方で業務利用に耐えること。
