@@ -7,7 +7,7 @@ type RoutePolicy = {
   method: string
   path: string
   permission?: string
-  mode?: "authenticated" | "required" | "requesterOrPermission" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission" | "documentUploadSession"
+  mode?: "authenticated" | "required" | "requesterOrPermission" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission" | "benchmarkSeedDeleteOrPermission" | "documentUploadSession"
 }
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
@@ -63,7 +63,7 @@ const routePolicies: RoutePolicy[] = [
   { method: "post", path: "/documents/{documentId}/reindex/stage", permission: "rag:index:rebuild:group" },
   { method: "post", path: "/documents/reindex-migrations/{migrationId}/cutover", permission: "rag:index:rebuild:group" },
   { method: "post", path: "/documents/reindex-migrations/{migrationId}/rollback", permission: "rag:index:rebuild:group" },
-  { method: "delete", path: "/documents/{documentId}", permission: "rag:doc:delete:group" },
+  { method: "delete", path: "/documents/{documentId}", permission: "rag:doc:delete:group", mode: "benchmarkSeedDeleteOrPermission" },
   { method: "post", path: "/chat", permission: "chat:create" },
   { method: "post", path: "/chat-runs", permission: "chat:create" },
   { method: "get", path: "/chat-runs/{runId}/events", permission: "chat:read:own" },
@@ -148,6 +148,22 @@ test("protected API routes keep route-level permission checks", async () => {
         block,
         /benchmark:seed_corpus[\s\S]*?listDocuments/,
         `${policy.method.toUpperCase()} ${policy.path} must only allow benchmark seed document listing`
+      )
+    } else if (policy.mode === "benchmarkSeedDeleteOrPermission") {
+      assert.match(
+        block,
+        /authorizeDocumentDelete[\s\S]*?deleteDocument/,
+        `${policy.method.toUpperCase()} ${policy.path} must use scoped delete authorization`
+      )
+      assert.match(
+        source,
+        new RegExp(`function authorizeDocumentDelete[\\s\\S]*?hasPermission\\([\\s\\S]*?["']${escapeRegex(policy.permission)}["']\\)`),
+        `${policy.method.toUpperCase()} ${policy.path} must allow ${policy.permission}`
+      )
+      assert.match(
+        source,
+        /function authorizeDocumentDelete[\s\S]*?benchmark:seed_corpus[\s\S]*?isBenchmarkSeedDocumentManifest/,
+        `${policy.method.toUpperCase()} ${policy.path} must restrict benchmark seed deletes`
       )
     } else if (policy.mode === "documentUploadSession") {
       assert.match(

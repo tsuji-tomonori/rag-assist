@@ -14,7 +14,7 @@ test("benchmark corpus env helpers resolve optional corpus settings", () => {
   assert.equal(benchmarkCorpusSkipMemoryFromEnv({ BENCHMARK_CORPUS_SKIP_MEMORY: "false" }), false)
 })
 
-test("seedBenchmarkCorpus skips an already active matching seed document", async () => {
+test("seedBenchmarkCorpus deletes an active matching seed document before upload", async () => {
   const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
   const corpusText = "# Handbook\n\n経費精算は30日以内です。\n"
   const sourceHash = createHash("sha256").update(corpusText).digest("hex")
@@ -27,8 +27,9 @@ test("seedBenchmarkCorpus skips an already active matching seed document", async
   const calls: Array<{ url: string; init?: RequestInit }> = []
   const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
     calls.push({ url: String(url), init })
-    return new Response(JSON.stringify({
+    if (init?.method === "GET") return new Response(JSON.stringify({
       documents: [{
+        documentId: "doc-existing",
         fileName: "handbook.md",
         lifecycleStatus: "active",
         chunkCount: 1,
@@ -45,6 +46,14 @@ test("seedBenchmarkCorpus skips an already active matching seed document", async
         }
       }]
     }), { status: 200, headers: { "Content-Type": "application/json" } })
+    if (init?.method === "DELETE") return new Response(JSON.stringify({ documentId: "doc-existing", deletedVectorCount: 1 }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    })
+    return new Response(JSON.stringify({ fileName: "handbook.md", lifecycleStatus: "active", chunkCount: 1 }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    })
   }
 
   const [result] = await seedBenchmarkCorpus({
@@ -56,9 +65,13 @@ test("seedBenchmarkCorpus skips an already active matching seed document", async
   })
 
   assert.equal(result?.fileName, "handbook.md")
-  assert.equal(result?.status, "skipped")
+  assert.equal(result?.status, "uploaded")
   assert.equal(result?.ingestSignature, ingestSignature)
-  assert.equal(calls.length, 1)
+  assert.deepEqual(calls.map((call) => `${call.init?.method ?? "GET"} ${call.url}`), [
+    "GET http://localhost:8787/documents",
+    "DELETE http://localhost:8787/documents/doc-existing",
+    "POST http://localhost:8787/documents"
+  ])
 })
 
 test("seedBenchmarkCorpus reuploads when seed ingest signature differs", async () => {
@@ -101,6 +114,50 @@ test("seedBenchmarkCorpus reuploads when seed ingest signature differs", async (
 
   assert.equal(result?.status, "uploaded")
   assert.deepEqual(methods, ["GET", "POST"])
+})
+
+test("seedBenchmarkCorpus stops when deleting stale benchmark corpus fails", async () => {
+  const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
+  await writeFile(path.join(corpusDir, "handbook.md"), "# Handbook\n\n経費精算は30日以内です。\n", "utf-8")
+  const methods: Array<string | undefined> = []
+  const fetchImpl = async (_url: string | URL | Request, init?: RequestInit) => {
+    methods.push(init?.method)
+    if (init?.method === "GET") {
+      return new Response(JSON.stringify({
+        documents: [{
+          documentId: "stale-doc",
+          fileName: "handbook.md",
+          lifecycleStatus: "active",
+          chunkCount: 1,
+          metadata: {
+            benchmarkSeed: true,
+            benchmarkSuiteId: "standard-agent-v1",
+            benchmarkSourceHash: "old-hash",
+            benchmarkIngestSignature: "old-signature",
+            benchmarkCorpusSkipMemory: true,
+            benchmarkEmbeddingModelId: "api-default",
+            aclGroups: ["BENCHMARK_RUNNER"],
+            docType: "benchmark-corpus",
+            source: "benchmark-runner"
+          }
+        }]
+      }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (init?.method === "DELETE") return new Response("denied", { status: 403 })
+    return new Response(JSON.stringify({ fileName: "handbook.md", lifecycleStatus: "active", chunkCount: 1 }), { status: 200 })
+  }
+
+  await assert.rejects(
+    () => seedBenchmarkCorpus({
+      apiBaseUrl: "http://localhost:8787",
+      corpusDir,
+      suiteId: "standard-agent-v1",
+      skipMemory: true,
+      fetchImpl
+    }),
+    /Failed to delete existing benchmark corpus handbook\.md: HTTP 403 denied/
+  )
+  assert.deepEqual(methods, ["GET", "DELETE"])
 })
 
 test("seedBenchmarkCorpus uploads markdown files with benchmark metadata", async () => {
