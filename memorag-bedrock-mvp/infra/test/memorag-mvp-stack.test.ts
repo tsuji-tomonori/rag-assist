@@ -7,7 +7,14 @@ import { Match, Template } from "aws-cdk-lib/assertions"
 import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
 
 function synthesize(context?: Record<string, string>) {
-  const app = new cdk.App({ context })
+  const app = new cdk.App({
+    context: {
+      benchmarkSourceOwner: "tsuji-tomonori",
+      benchmarkSourceRepo: "rag-assist",
+      benchmarkSourceBranch: "main",
+      ...context
+    }
+  })
   const stack = new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
     env: { account: "111111111111", region: "ap-northeast-1" },
     includeFrontendDeployment: false
