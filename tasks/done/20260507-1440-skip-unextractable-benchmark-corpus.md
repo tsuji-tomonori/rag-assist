@@ -1,6 +1,6 @@
 # 抽出不能 benchmark corpus の skip 対応
 
-状態: do
+状態: done
 
 ## 背景
 
