@@ -39,14 +39,14 @@ RAG の根拠 chunk が意味的に読みやすい単位になるよう、見出
 
 ## 受け入れ条件
 
-- [ ] AC1: チャンク化が段落、文、箇条書きなどの意味境界を優先する。
-- [ ] AC2: overlap が文や箇条書きの途中から始まらない。
-- [ ] AC3: PDF page break segment をまたいで chunk が結合されない。
-- [ ] AC4: table / code / figure block は原則 atomic chunk として保持される。
-- [ ] AC5: 長すぎる意味単位は `chunkSize` に収まるよう fallback split される。
-- [ ] AC6: `CHUNKER_VERSION` が更新され、再 index 対象を識別できる。
-- [ ] AC7: 変更に見合う API test と typecheck が通る。
-- [ ] AC8: README にチャンク化方針の変更が反映される。
+- [x] AC1: チャンク化が段落、文、箇条書きなどの意味境界を優先する。
+- [x] AC2: overlap が文や箇条書きの途中から始まらない。
+- [x] AC3: PDF page break segment をまたいで chunk が結合されない。
+- [x] AC4: table / code / figure block は原則 atomic chunk として保持される。
+- [x] AC5: 長すぎる意味単位は `chunkSize` に収まるよう fallback split される。
+- [x] AC6: `CHUNKER_VERSION` が更新され、再 index 対象を識別できる。
+- [x] AC7: 変更に見合う API test と typecheck が通る。
+- [x] AC8: README にチャンク化方針の変更が反映される。
 
 ## Validation Plan
 
@@ -68,4 +68,17 @@ RAG の根拠 chunk が意味的に読みやすい単位になるよう、見出
 
 ## 状態
 
-in_progress
+done
+
+## 完了確認
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/145
+- 受け入れ条件確認コメント: PR #145 に投稿済み。
+- セルフレビューコメント: PR #145 に投稿済み。
+- 検証:
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
+  - `npm --prefix memorag-bedrock-mvp run lint`: pass
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/benchmark`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark`: pass
+  - `git diff --check`: pass
