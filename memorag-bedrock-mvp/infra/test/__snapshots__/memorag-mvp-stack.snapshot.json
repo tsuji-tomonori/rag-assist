@@ -2989,7 +2989,7 @@
             "Value": "tsuji-tomonori/rag-assist"
           }
         ],
-        "Timeout": 29
+        "Timeout": 60
       },
       "DependsOn": [
         "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
@@ -4160,7 +4160,7 @@
       "UpdateReplacePolicy": "Retain",
       "DeletionPolicy": "Retain"
     },
-    "RestApiDeployment180EC503671443c2ff5ded07d2267ccb7b9a032d": {
+    "RestApiDeployment180EC503513c2ec81bf1a78f6fb78b088df8fcbd": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "Description": "Automatically created by the RestApi construct",
@@ -4200,7 +4200,7 @@
           "Format": "{\"requestId\":\"$context.requestId\",\"ip\":\"$context.identity.sourceIp\",\"user\":\"$context.identity.user\",\"requestTime\":\"$context.requestTime\",\"httpMethod\":\"$context.httpMethod\",\"resourcePath\":\"$context.resourcePath\",\"status\":\"$context.status\",\"protocol\":\"$context.protocol\",\"responseLength\":\"$context.responseLength\"}"
         },
         "DeploymentId": {
-          "Ref": "RestApiDeployment180EC503671443c2ff5ded07d2267ccb7b9a032d"
+          "Ref": "RestApiDeployment180EC503513c2ec81bf1a78f6fb78b088df8fcbd"
         },
         "MethodSettings": [
           {
@@ -4363,7 +4363,7 @@
         "HttpMethod": "ANY",
         "Integration": {
           "IntegrationHttpMethod": "POST",
-          "TimeoutInMillis": 29000,
+          "TimeoutInMillis": 60000,
           "Type": "AWS_PROXY",
           "Uri": {
             "Fn::Join": [
@@ -4528,7 +4528,7 @@
         "HttpMethod": "ANY",
         "Integration": {
           "IntegrationHttpMethod": "POST",
-          "TimeoutInMillis": 29000,
+          "TimeoutInMillis": 60000,
           "Type": "AWS_PROXY",
           "Uri": {
             "Fn::Join": [
@@ -4690,7 +4690,7 @@
         "HttpMethod": "POST",
         "Integration": {
           "IntegrationHttpMethod": "POST",
-          "TimeoutInMillis": 29000,
+          "TimeoutInMillis": 60000,
           "Type": "AWS_PROXY",
           "Uri": {
             "Fn::Join": [

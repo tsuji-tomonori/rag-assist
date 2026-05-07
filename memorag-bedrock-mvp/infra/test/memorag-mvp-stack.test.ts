@@ -76,6 +76,14 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::Lambda::Function", {
     Handler: "index.handler",
     Runtime: "nodejs22.x",
+    Timeout: 60,
+    Environment: Match.objectLike({
+      Variables: Match.objectLike({ BENCHMARK_BUCKET_NAME: Match.anyValue() })
+    })
+  })
+  template.hasResourceProperties("AWS::Lambda::Function", {
+    Handler: "index.handler",
+    Runtime: "nodejs22.x",
     Environment: Match.objectLike({
       Variables: Match.objectLike({ DEFAULT_SIGNUP_GROUP_NAME: "CHAT_USER" })
     })
@@ -96,6 +104,11 @@ test("implements the designed serverless resources", () => {
         MetricsEnabled: true
       })
     ])
+  })
+  template.hasResourceProperties("AWS::ApiGateway::Method", {
+    Integration: Match.objectLike({
+      TimeoutInMillis: 60000
+    })
   })
   template.hasResourceProperties("AWS::ApiGateway::Method", {
     HttpMethod: "GET",

@@ -146,6 +146,7 @@ Cognito group 取得が一部ユーザーで失敗した場合、一覧取得は
 
 - Bedrockの利用モデルを対象リージョンで有効化する。
 - `EMBEDDING_DIMENSIONS` とS3 Vectors indexのdimensionを一致させる。
+- 同期APIの API Gateway integration timeout は 60 秒に設定している。Regional REST API で 29 秒を超える timeout を使うため、デプロイ先アカウントで必要に応じて API Gateway の integration timeout quota と account-level throttle quota への影響を確認する。
 - 文書データに社外秘や個人情報が含まれる場合、S3 bucket policy、KMS、ログ出力方針を本番基準に更新する。
 - MVPのCDKはRAG動作検証用なので、SSO、WAF、詳細監査ログは本番化時に追加する。
 

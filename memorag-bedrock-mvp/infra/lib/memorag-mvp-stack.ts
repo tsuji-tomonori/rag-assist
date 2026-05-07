@@ -350,13 +350,14 @@ export class MemoRagMvpStack extends Stack {
       DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
       DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
     }
+    const syncApiTimeout = Duration.seconds(60)
     const apiFn = new lambda.Function(this, "ApiFunction", {
       code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/api")),
       handler: "index.handler",
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       memorySize: 1024,
-      timeout: Duration.seconds(29),
+      timeout: syncApiTimeout,
       logGroup: apiLogGroup,
       environment: apiEnvironment
     })
@@ -504,7 +505,7 @@ export class MemoRagMvpStack extends Stack {
     }
     const apiIntegration = new apigw.LambdaIntegration(apiFn, {
       proxy: true,
-      timeout: Duration.seconds(29)
+      timeout: syncApiTimeout
     })
     restApi.root.addMethod("ANY", apiIntegration, apiMethodOptions)
     const proxy = restApi.root.addResource("{proxy+}")
