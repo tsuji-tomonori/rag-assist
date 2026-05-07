@@ -179,6 +179,89 @@ describe("API client", () => {
     )
   })
 
+  it("adds auth headers for local upload sessions without a file mime type", async () => {
+    const file = new File(["body"], "handoff.bin")
+    setAuthTokenProvider(() => "token-1")
+    resetRuntimeConfigForTests()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ apiBaseUrl: "http://api.example.test" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          uploadId: "upload-local",
+          objectKey: "uploads/documents/user/upload-local-handoff.bin",
+          uploadUrl: "http://api.example.test/documents/uploads/upload-local/content",
+          method: "POST",
+          headers: {},
+          expiresInSeconds: 900,
+          requiresAuth: true
+        })
+      })
+      .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ documentId: "doc-local", fileName: "handoff.bin", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+      })
+
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(uploadDocumentFile({ file })).resolves.toMatchObject({ documentId: "doc-local" })
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "http://api.example.test/documents/uploads",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer token-1" },
+        body: JSON.stringify({ fileName: "handoff.bin", purpose: "document" })
+      })
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "http://api.example.test/documents/uploads/upload-local/content",
+      expect.objectContaining({
+        method: "POST",
+        headers: { Authorization: "Bearer token-1" },
+        body: file
+      })
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      "http://api.example.test/documents/uploads/upload-local/ingest",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer token-1" },
+        body: JSON.stringify({ fileName: "handoff.bin" })
+      })
+    )
+  })
+
+  it("surfaces upload transfer failures before ingesting the document", async () => {
+    const file = new File(["body"], "broken.txt", { type: "text/plain" })
+    resetRuntimeConfigForTests()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ apiBaseUrl: "http://api.example.test" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          uploadId: "upload-broken",
+          objectKey: "uploads/documents/user/upload-broken-broken.txt",
+          uploadUrl: "http://s3.example.test/upload-broken",
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          expiresInSeconds: 900,
+          requiresAuth: false
+        })
+      })
+      .mockResolvedValueOnce({ ok: false, text: vi.fn().mockResolvedValue("upload denied") })
+
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(uploadDocumentFile({ file })).rejects.toThrow("upload denied")
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
   it("calls chat and debug trace endpoints", async () => {
     const fetchMock = mockFetch({ answer: "ok", isAnswerable: true, citations: [], retrieved: [] })
 
