@@ -542,7 +542,13 @@ export const SearchResponseSchema = z.object({
     lexicalCount: z.number().int(),
     semanticCount: z.number().int(),
     fusedCount: z.number().int(),
-    latencyMs: z.number().int()
+    latencyMs: z.number().int(),
+    index: z.object({
+      visibleManifestCount: z.number().int().nonnegative(),
+      indexedChunkCount: z.number().int().nonnegative(),
+      cache: z.enum(["memory", "artifact", "built"]),
+      loadMs: z.number().int().nonnegative()
+    }).optional()
   })
 })
 

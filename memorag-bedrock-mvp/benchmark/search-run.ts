@@ -63,6 +63,12 @@ type SearchResponse = {
     semanticCount?: number
     fusedCount?: number
     latencyMs?: number
+    index?: {
+      visibleManifestCount?: number
+      indexedChunkCount?: number
+      cache?: "memory" | "artifact" | "built"
+      loadMs?: number
+    }
   }
   error?: string
 }
