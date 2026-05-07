@@ -770,7 +770,7 @@ test("fixed MemoRAG workflow refuses before answer generation when evidence is m
   })
 })
 
-test("fixed workflow refuses when sufficient context judge returns partial", async () => {
+test("fixed workflow continues when sufficient context judge returns partial with supported primary evidence", async () => {
   const deps = await createTestDeps()
   const baseTextModel = deps.textModel
   deps.textModel = {
@@ -805,12 +805,13 @@ test("fixed workflow refuses when sufficient context judge returns partial", asy
     maxIterations: 1
   })
 
-  assert.equal(result.isAnswerable, false)
-  assert.equal(result.answer, "資料からは回答できません。")
-  assert.equal(result.debug?.steps.some((step) => step.label === "generate_answer"), false)
+  assert.equal(result.isAnswerable, true)
+  assert.notEqual(result.answer, "資料からは回答できません。")
+  assert.equal(result.debug?.steps.some((step) => step.label === "generate_answer"), true)
   const gateStep = result.debug?.steps.find((step) => step.label === "sufficient_context_gate")
   assert.match(gateStep?.detail ?? "", /label=PARTIAL/)
   assert.match(gateStep?.detail ?? "", /例外承認者/)
+  assert.match(gateStep?.summary ?? "", /sufficient_context=PARTIAL/)
 })
 
 async function createTestDeps(): Promise<Dependencies> {
@@ -901,8 +902,8 @@ test("fixed workflow search plan trace records complexity, facts, actions, and s
   assert.match(planStep?.detail ?? "", /complexity=procedure/)
   assert.match(planStep?.detail ?? "", /intent=経費精算の申請手順と期限は/)
   assert.match(planStep?.detail ?? "", /stop=maxIterations:2, minTopScore:0.07, minEvidenceCount:3, maxNoNewEvidenceStreak:2/)
-  assert.match(planStep?.detail ?? "", /- fact-1 priority=1 status=missing: 経費精算 期限/)
-  assert.match(planStep?.detail ?? "", /- fact-2 priority=2 status=missing: 経費精算 手順/)
+  assert.match(planStep?.detail ?? "", /- fact-1 priority=1 necessity=primary status=missing: 経費精算 期限/)
+  assert.match(planStep?.detail ?? "", /- fact-2 priority=2 necessity=primary status=missing: 経費精算 手順/)
   assert.match(planStep?.detail ?? "", /- evidence_search query="経費精算の申請手順と期限は" topK=3/)
 })
 

@@ -3,7 +3,7 @@ import type { Dependencies } from "../../dependencies.js"
 import { parseJsonObject } from "../../rag/json.js"
 import { buildRetrievalJudgePrompt } from "../../rag/prompts.js"
 import { llmOptions, ragRuntimePolicy } from "../runtime-policy.js"
-import type { Claim, ConflictCandidate, QaAgentState, QaAgentUpdate, RequiredFact, RetrievalEvaluation, RetrievalLlmJudge, RetrievalRiskSignal } from "../state.js"
+import { isPrimaryRequiredFact, type Claim, type ConflictCandidate, type QaAgentState, type QaAgentUpdate, type RequiredFact, type RetrievalEvaluation, type RetrievalLlmJudge, type RetrievalRiskSignal } from "../state.js"
 
 type RetrievalJudgeJson = Partial<RetrievalLlmJudge>
 
@@ -42,11 +42,13 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
   const supportedFactIds = factAssessments.filter((assessment) => assessment.status === "supported").map((assessment) => assessment.fact.id)
   const missingFactIds = factAssessments.filter((assessment) => assessment.status === "missing").map((assessment) => assessment.fact.id)
   const conflictingFactIds = factAssessments.filter((assessment) => assessment.status === "conflicting").map((assessment) => assessment.fact.id)
+  const primaryMissingFactIds = primaryFactIds(facts, missingFactIds)
+  const primaryConflictingFactIds = primaryFactIds(facts, conflictingFactIds)
   const riskSignals = factAssessments.flatMap((assessment) => assessment.riskSignals)
   const claims = factAssessments.flatMap((assessment) => assessment.claims)
   const conflictCandidates = factAssessments.flatMap((assessment) => assessment.conflictCandidates)
-  const retrievalQuality = classifyRetrieval(state, topScore, missingFactIds, conflictingFactIds)
-  const nextAction = chooseNextAction(state, retrievalQuality, supportedFactIds, missingFactIds, conflictingFactIds)
+  const retrievalQuality = classifyRetrieval(state, topScore, primaryMissingFactIds, primaryConflictingFactIds)
+  const nextAction = chooseNextAction(state, retrievalQuality, supportedFactIds, primaryMissingFactIds, primaryConflictingFactIds)
   const supportingChunkKeysByFact = new Map(
     factAssessments.map((assessment) => [assessment.fact.id, assessment.supportingChunkKeys] as const)
   )
@@ -60,7 +62,7 @@ export async function retrievalEvaluator(state: QaAgentState): Promise<QaAgentUp
     claims,
     conflictCandidates,
     nextAction,
-    reason: buildReason(state, retrievalQuality, topScore, missingFactIds, conflictingFactIds, riskSignals)
+    reason: buildReason(state, retrievalQuality, topScore, primaryMissingFactIds, primaryConflictingFactIds, riskSignals)
   }
 
   return {
@@ -113,17 +115,17 @@ function applyRetrievalJudge(state: QaAgentState, update: QaAgentUpdate, judge: 
   const searchPlan = update.searchPlan
   if (!evaluation || !searchPlan) return update
 
-  const noConflictCanResolve =
-    evaluation.riskSignals?.some((signal) => signal.type === "uncertain_scope_conflict" || Boolean(signal.conflictCandidate?.scope)) ?? false
-  if (judge.label === "NO_CONFLICT" && judge.confidence >= ragRuntimePolicy.confidence.llmJudgeNoConflictMin && noConflictCanResolve) {
+  if (judge.label === "NO_CONFLICT" && judge.confidence >= ragRuntimePolicy.confidence.llmJudgeNoConflictMin) {
     const resolvedFactIds = new Set(judge.factIds.length > 0 ? judge.factIds : evaluation.conflictingFactIds)
     const conflictingFactIds = evaluation.conflictingFactIds.filter((factId) => !resolvedFactIds.has(factId))
     const supportedFactIds = [...new Set([...evaluation.supportedFactIds, ...resolvedFactIds])]
-    const retrievalQuality = conflictingFactIds.length === 0 && evaluation.missingFactIds.length === 0 ? "sufficient" : "partial"
+    const primaryMissingFactIds = primaryFactIds(searchPlan.requiredFacts, evaluation.missingFactIds)
+    const primaryConflictingFactIds = primaryFactIds(searchPlan.requiredFacts, conflictingFactIds)
+    const retrievalQuality = primaryConflictingFactIds.length === 0 && primaryMissingFactIds.length === 0 ? "sufficient" : primaryConflictingFactIds.length > 0 ? "conflicting" : "partial"
     const nextAction =
       retrievalQuality === "sufficient"
         ? { type: "rerank" as const, objective: "answer_with_supported_evidence" }
-        : chooseNextAction(state, retrievalQuality, evaluation.supportedFactIds, evaluation.missingFactIds, conflictingFactIds)
+        : chooseNextAction(state, retrievalQuality, supportedFactIds, primaryMissingFactIds, primaryConflictingFactIds)
 
     return {
       ...update,
@@ -170,11 +172,21 @@ function fallbackFacts(question: string): RequiredFact[] {
     {
       id: "fact-1",
       description: question,
+      necessity: "primary",
       priority: 1,
       status: "missing",
       supportingChunkKeys: []
     }
   ]
+}
+
+function primaryFactIds(facts: RequiredFact[], factIds: string[]): string[] {
+  if (factIds.length === 0) return []
+  const factsById = new Map(facts.map((fact) => [fact.id, fact]))
+  return factIds.filter((factId) => {
+    const fact = factsById.get(factId)
+    return !fact || isPrimaryRequiredFact(fact)
+  })
 }
 
 function assessFact(fact: RequiredFact, chunks: RetrievedVector[], minFactSupportScore: number): FactAssessment {
