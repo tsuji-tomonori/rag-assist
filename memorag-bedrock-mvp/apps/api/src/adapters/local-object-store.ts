@@ -15,8 +15,18 @@ export class LocalObjectStore implements ObjectStore {
     await fs.writeFile(filePath, text, "utf-8")
   }
 
+  async putBytes(key: string, bytes: Uint8Array): Promise<void> {
+    const filePath = this.pathFor(key)
+    await fs.mkdir(path.dirname(filePath), { recursive: true })
+    await fs.writeFile(filePath, bytes)
+  }
+
   async getText(key: string): Promise<string> {
     return fs.readFile(this.pathFor(key), "utf-8")
+  }
+
+  async getBytes(key: string): Promise<Buffer> {
+    return fs.readFile(this.pathFor(key))
   }
 
   async deleteObject(key: string): Promise<void> {

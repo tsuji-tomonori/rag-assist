@@ -1,7 +1,9 @@
+import { randomUUID } from "node:crypto"
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
 import { cors } from "hono/cors"
 import { streamSSE } from "hono/streaming"
 import { HTTPException } from "hono/http-exception"
+import { config } from "./config.js"
 import { createDependencies } from "./dependencies.js"
 import { authMiddleware, type AppUser } from "./auth.js"
 import { getPermissionsForGroups, hasPermission, requirePermission } from "./authorization.js"
@@ -28,6 +30,8 @@ import {
   ConversationHistoryListResponseSchema,
   CostAuditSummarySchema,
   CreateAliasRequestSchema,
+  CreateDocumentUploadRequestSchema,
+  CreateDocumentUploadResponseSchema,
   CreateManagedUserRequestSchema,
   CreateBenchmarkRunRequestSchema,
   CreateQuestionRequestSchema,
@@ -41,6 +45,7 @@ import {
   DocumentUploadRequestSchema,
   ErrorResponseSchema,
   HealthResponseSchema,
+  IngestUploadedDocumentRequestSchema,
   ManagedUserListResponseSchema,
   ManagedUserSchema,
   PublishAliasesResponseSchema,
@@ -118,6 +123,9 @@ const benchmarkSeedMetadataKeys = new Set([
   "source",
   "searchAliases"
 ])
+const uploadObjectKeyPrefix = "uploads"
+
+type UploadPurpose = z.infer<typeof CreateDocumentUploadRequestSchema>["purpose"]
 
 function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof DocumentUploadRequestSchema>) {
   if (hasPermission(user, "rag:doc:write:group")) return
@@ -126,6 +134,24 @@ function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof DocumentUpl
 }
 
 export function isBenchmarkSeedUpload(body: z.infer<typeof DocumentUploadRequestSchema>): boolean {
+  if (!isBenchmarkSeedUploadMetadata(body)) return false
+  if (body.text !== undefined) return isBenchmarkSeedTextUpload(body)
+  if (body.contentBase64 !== undefined) return isBenchmarkSeedPdfUpload(body)
+  return false
+}
+
+export function isBenchmarkSeedUploadedObjectIngest(body: z.infer<typeof IngestUploadedDocumentRequestSchema>): boolean {
+  if (!isBenchmarkSeedUploadMetadata(body)) return false
+  if (!isSafeBenchmarkSeedFileName(body.fileName)) return false
+  if (body.mimeType === "application/pdf") return /\.pdf$/i.test(body.fileName)
+  if (!body.mimeType || body.mimeType === "text/markdown" || body.mimeType === "text/plain") return /\.(md|txt)$/i.test(body.fileName)
+  return false
+}
+
+function isBenchmarkSeedUploadMetadata(body: {
+  fileName: string
+  metadata?: Record<string, unknown>
+}): boolean {
   const metadata = body.metadata
   if (!metadata) return false
   if (!Object.keys(metadata).every((key) => benchmarkSeedMetadataKeys.has(key))) return false
@@ -141,9 +167,7 @@ export function isBenchmarkSeedUpload(body: z.infer<typeof DocumentUploadRequest
   if (!Array.isArray(metadata.aclGroups) || metadata.aclGroups.length !== 1 || metadata.aclGroups[0] !== "BENCHMARK_RUNNER") return false
   if (metadata.searchAliases !== undefined && !isBenchmarkSearchAliases(metadata.searchAliases)) return false
   if (!isSafeBenchmarkSeedFileName(body.fileName)) return false
-  if (body.text !== undefined) return isBenchmarkSeedTextUpload(body)
-  if (body.contentBase64 !== undefined) return isBenchmarkSeedPdfUpload(body)
-  return false
+  return true
 }
 
 function isBenchmarkSeedTextUpload(body: z.infer<typeof DocumentUploadRequestSchema>): boolean {
@@ -178,6 +202,71 @@ function isValidBenchmarkSeedBase64(value: string): boolean {
   if (value.length === 0 || value.length > maxBenchmarkSeedBase64Chars || value.length % 4 !== 0) return false
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value)) return false
   return Buffer.byteLength(value, "base64") > 0
+}
+
+function authorizeDocumentUploadSession(user: AppUser, purpose: UploadPurpose) {
+  if (purpose === "benchmarkSeed") {
+    if (hasPermission(user, "benchmark:seed_corpus")) return
+    throw new HTTPException(403, { message: "Forbidden: missing benchmark:seed_corpus" })
+  }
+  if (hasPermission(user, "rag:doc:write:group")) return
+  throw new HTTPException(403, { message: "Forbidden: missing rag:doc:write:group" })
+}
+
+function authorizeUploadedDocumentIngest(user: AppUser, purpose: UploadPurpose, body: z.infer<typeof IngestUploadedDocumentRequestSchema>) {
+  if (purpose === "benchmarkSeed") {
+    if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUploadedObjectIngest(body)) return
+    throw new HTTPException(403, { message: "Forbidden: benchmark seed upload requires isolated benchmark metadata" })
+  }
+  if (hasPermission(user, "rag:doc:write:group")) return
+  throw new HTTPException(403, { message: "Forbidden: missing rag:doc:write:group" })
+}
+
+function buildUploadObjectKey(user: AppUser, purpose: UploadPurpose, fileName: string): string {
+  return [
+    uploadObjectKeyPrefix,
+    purpose === "benchmarkSeed" ? "benchmark-seeds" : "documents",
+    safeUploadPathSegment(user.userId),
+    `${randomUUID()}-${safeUploadFileName(fileName)}`
+  ].join("/")
+}
+
+function uploadPurposeForKey(user: AppUser, objectKey: string): UploadPurpose {
+  const documentPrefix = `${uploadObjectKeyPrefix}/documents/${safeUploadPathSegment(user.userId)}/`
+  const benchmarkPrefix = `${uploadObjectKeyPrefix}/benchmark-seeds/${safeUploadPathSegment(user.userId)}/`
+  if (objectKey.startsWith(documentPrefix)) return "document"
+  if (objectKey.startsWith(benchmarkPrefix)) return "benchmarkSeed"
+  throw new HTTPException(403, { message: "Forbidden: upload object key is outside the caller scope" })
+}
+
+function encodeUploadId(objectKey: string): string {
+  return Buffer.from(objectKey, "utf-8").toString("base64url")
+}
+
+function decodeUploadId(uploadId: string): string {
+  try {
+    const objectKey = Buffer.from(uploadId, "base64url").toString("utf-8")
+    if (!objectKey.startsWith(`${uploadObjectKeyPrefix}/`) || objectKey.includes("..")) throw new Error("invalid upload object key")
+    return objectKey
+  } catch {
+    throw new HTTPException(400, { message: "Invalid uploadId" })
+  }
+}
+
+function safeUploadPathSegment(input: string): string {
+  return input.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 120) || "user"
+}
+
+function safeUploadFileName(input: string): string {
+  const baseName = input.split(/[\\/]/).filter(Boolean).at(-1) ?? "upload"
+  return baseName.replace(/[^A-Za-z0-9._()-]/g, "_").slice(0, 180) || "upload"
+}
+
+function localUploadUrl(requestUrl: string, uploadId: string): string {
+  const url = new URL(requestUrl)
+  url.pathname = `/documents/uploads/${encodeURIComponent(uploadId)}/content`
+  url.search = ""
+  return url.toString()
 }
 
 app.openapi(
@@ -593,6 +682,104 @@ app.openapi(
     authorizeDocumentUpload(user, body)
     if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
     return c.json(await service.ingest(body), 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/uploads",
+    request: {
+      body: {
+        required: true,
+        content: { "application/json": { schema: CreateDocumentUploadRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Created document upload URL", content: { "application/json": { schema: CreateDocumentUploadResponseSchema } } },
+      403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    const body = (c.req as any).valid("json") as z.infer<typeof CreateDocumentUploadRequestSchema>
+    authorizeDocumentUploadSession(user, body.purpose)
+    const objectKey = buildUploadObjectKey(user, body.purpose, body.fileName)
+    const uploadId = encodeUploadId(objectKey)
+    const contentType = body.mimeType || "application/octet-stream"
+    const expiresInSeconds = Math.max(60, config.documentUploadExpiresInSeconds)
+    const s3Upload = await deps.objectStore.createUploadUrl?.(objectKey, { contentType, expiresInSeconds })
+
+    return c.json({
+      uploadId,
+      objectKey,
+      uploadUrl: s3Upload?.url ?? localUploadUrl(c.req.url, uploadId),
+      method: s3Upload ? "PUT" : "POST",
+      headers: s3Upload?.headers ?? { "Content-Type": contentType },
+      expiresInSeconds,
+      requiresAuth: !s3Upload
+    }, 200)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/uploads/{uploadId}/content",
+    request: {
+      params: z.object({ uploadId: z.string().min(1) })
+    },
+    responses: {
+      204: { description: "Uploaded document bytes for local development" },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    const { uploadId } = (c.req as any).valid("param") as { uploadId: string }
+    const objectKey = decodeUploadId(uploadId)
+    const purpose = uploadPurposeForKey(user, objectKey)
+    authorizeDocumentUploadSession(user, purpose)
+    if (deps.objectStore.createUploadUrl) {
+      return c.json({ error: "Local upload content endpoint is disabled when S3 upload URLs are available" }, 400)
+    }
+
+    await deps.objectStore.putBytes(objectKey, Buffer.from(await c.req.arrayBuffer()), c.req.header("content-type") ?? undefined)
+    return c.body(null, 204)
+  }
+)
+
+app.openapi(
+  looseRoute({
+    method: "post",
+    path: "/documents/uploads/{uploadId}/ingest",
+    request: {
+      params: z.object({ uploadId: z.string().min(1) }),
+      body: {
+        required: true,
+        content: { "application/json": { schema: IngestUploadedDocumentRequestSchema } }
+      }
+    },
+    responses: {
+      200: { description: "Ingested uploaded document", content: { "application/json": { schema: DocumentManifestSchema } } },
+      400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+      403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
+    }
+  }),
+  async (c) => {
+    const user = c.get("user")
+    const { uploadId } = (c.req as any).valid("param") as { uploadId: string }
+    const body = (c.req as any).valid("json") as z.infer<typeof IngestUploadedDocumentRequestSchema>
+    const objectKey = decodeUploadId(uploadId)
+    const purpose = uploadPurposeForKey(user, objectKey)
+    authorizeUploadedDocumentIngest(user, purpose, body)
+    const contentBytes = await deps.objectStore.getBytes(objectKey)
+    if (contentBytes.length === 0) return c.json({ error: "Uploaded object is empty" }, 400)
+
+    const manifest = await service.ingest({ ...body, contentBytes })
+    await deps.objectStore.deleteObject(objectKey)
+    return c.json(manifest, 200)
   }
 )
 

@@ -352,6 +352,21 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       return Promise.resolve(response({ id }))
     }
     if (requestUrl.endsWith("/documents/doc-1") && init?.method === "DELETE") return Promise.resolve(response({ documentId: "doc-1", deletedVectorCount: 3 }))
+    if (requestUrl.endsWith("/documents/uploads") && init?.method === "POST") {
+      return Promise.resolve(response({
+        uploadId: "upload-session-1",
+        objectKey: "uploads/documents/local-dev/upload-session-1-upload.txt",
+        uploadUrl: "http://upload.test/upload-session-1",
+        method: "PUT",
+        headers: { "Content-Type": "text/plain" },
+        expiresInSeconds: 900,
+        requiresAuth: false
+      }))
+    }
+    if (requestUrl === "http://upload.test/upload-session-1" && init?.method === "PUT") return Promise.resolve(response(""))
+    if (requestUrl.endsWith("/documents/uploads/upload-session-1/ingest") && init?.method === "POST") {
+      return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
+    }
     if (requestUrl.endsWith("/documents") && init?.method === "POST") {
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
     }
@@ -518,7 +533,7 @@ describe("App document management", () => {
 
     await waitFor(() =>
       expect(
-        fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/documents") && (init as RequestInit | undefined)?.method === "POST")
+        fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/documents/uploads") && (init as RequestInit | undefined)?.method === "POST")
       ).toBe(true)
     )
   })
@@ -607,7 +622,7 @@ describe("App chat and upload flow", () => {
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
     expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(2)
 
-    const uploadCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/documents") && (init as RequestInit | undefined)?.method === "POST")
+    const uploadCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/documents/uploads") && (init as RequestInit | undefined)?.method === "POST")
     const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/chat-runs") && (init as RequestInit | undefined)?.method === "POST")
     expect(uploadCall).toBeTruthy()
     expect(chatCall).toBeTruthy()
@@ -617,9 +632,14 @@ describe("App chat and upload flow", () => {
         url: String(url),
         method: (init as RequestInit | undefined)?.method ?? "GET"
       }))
-      .filter((call) => call.method === "POST" && (call.url === "http://api.test/documents" || call.url === "http://api.test/chat-runs"))
+      .filter((call) => call.method === "POST" && (
+        call.url === "http://api.test/documents/uploads" ||
+        call.url === "http://api.test/documents/uploads/upload-session-1/ingest" ||
+        call.url === "http://api.test/chat-runs"
+      ))
     expect(writeCalls).toEqual([
-      { url: "http://api.test/documents", method: "POST" },
+      { url: "http://api.test/documents/uploads", method: "POST" },
+      { url: "http://api.test/documents/uploads/upload-session-1/ingest", method: "POST" },
       { url: "http://api.test/chat-runs", method: "POST" }
     ])
   })

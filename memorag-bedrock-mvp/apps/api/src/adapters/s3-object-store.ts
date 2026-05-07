@@ -5,6 +5,7 @@ import {
   PutObjectCommand,
   S3Client
 } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { config } from "../config.js"
 import type { ObjectStore } from "./object-store.js"
 
@@ -26,9 +27,26 @@ export class S3ObjectStore implements ObjectStore {
     )
   }
 
+  async putBytes(key: string, bytes: Uint8Array, contentType = "application/octet-stream"): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: bytes,
+        ContentType: contentType
+      })
+    )
+  }
+
   async getText(key: string): Promise<string> {
     const response = await this.client.send(new GetObjectCommand({ Bucket: this.bucketName, Key: key }))
     return response.Body?.transformToString("utf-8") ?? ""
+  }
+
+  async getBytes(key: string): Promise<Buffer> {
+    const response = await this.client.send(new GetObjectCommand({ Bucket: this.bucketName, Key: key }))
+    const bytes = await response.Body?.transformToByteArray()
+    return Buffer.from(bytes ?? [])
   }
 
   async deleteObject(key: string): Promise<void> {
@@ -51,5 +69,18 @@ export class S3ObjectStore implements ObjectStore {
       continuationToken = response.NextContinuationToken
     } while (continuationToken)
     return keys
+  }
+
+  async createUploadUrl(key: string, input: { contentType?: string; expiresInSeconds: number }): Promise<{ url: string; headers: Record<string, string> }> {
+    const contentType = input.contentType ?? "application/octet-stream"
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      ContentType: contentType
+    })
+    return {
+      url: await getSignedUrl(this.client, command, { expiresIn: input.expiresInSeconds }),
+      headers: { "Content-Type": contentType }
+    }
   }
 }

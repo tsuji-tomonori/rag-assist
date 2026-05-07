@@ -15,9 +15,11 @@ test("local object store writes, lists nested keys, reads, and deletes objects",
   assert.deepEqual(await store.listKeys("manifests/"), [])
   await store.putText("/manifests/doc-1.json", "{\"ok\":true}")
   await store.putText("manifests/nested/doc-2.json", "{\"ok\":true}")
+  await store.putBytes("uploads/doc.bin", Buffer.from([1, 2, 3]))
 
   assert.deepEqual((await store.listKeys("manifests/")).sort(), ["manifests/doc-1.json", "manifests/nested/doc-2.json"])
   assert.equal(await store.getText("manifests/doc-1.json"), "{\"ok\":true}")
+  assert.deepEqual(await store.getBytes("uploads/doc.bin"), Buffer.from([1, 2, 3]))
 
   await store.deleteObject("manifests/doc-1.json")
   assert.deepEqual(await store.listKeys("manifests/"), ["manifests/nested/doc-2.json"])

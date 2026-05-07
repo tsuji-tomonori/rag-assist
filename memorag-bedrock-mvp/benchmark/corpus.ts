@@ -17,6 +17,14 @@ type DocumentListResponse = {
   documents?: DocumentManifest[]
 }
 
+type UploadSessionResponse = {
+  uploadId: string
+  uploadUrl: string
+  method: "PUT" | "POST"
+  headers?: Record<string, string>
+  requiresAuth?: boolean
+}
+
 export type SeededDocument = {
   fileName: string
   status: "skipped" | "uploaded"
@@ -163,6 +171,8 @@ async function uploadDocument(input: {
   embeddingModelId?: string
   metadata: CorpusFileMetadata
 }): Promise<DocumentManifest> {
+  if (!isTextMimeType(input.mimeType)) return uploadDocumentFromUploadSession(input)
+
   const response = await input.fetcher(`${input.apiBaseUrl}/documents`, {
     method: "POST",
     headers: createHeaders(input.authToken),
@@ -189,6 +199,76 @@ async function uploadDocument(input: {
   })
   const text = await response.text()
   if (!response.ok) throw new Error(`Failed to upload benchmark corpus ${input.fileName}: HTTP ${response.status} ${text}`)
+  const manifest = text ? (JSON.parse(text) as DocumentManifest) : {}
+  if ((manifest.lifecycleStatus ?? "active") !== "active") throw new Error(`Benchmark corpus ${input.fileName} is not active after upload`)
+  if ((manifest.chunkCount ?? 0) <= 0) throw new Error(`Benchmark corpus ${input.fileName} produced no chunks`)
+  return manifest
+}
+
+async function uploadDocumentFromUploadSession(input: {
+  apiBaseUrl: string
+  authToken?: string
+  fetcher: typeof fetch
+  fileName: string
+  content: Buffer
+  mimeType: string
+  suiteId: string
+  sourceHash: string
+  ingestSignature: string
+  skipMemory: boolean
+  embeddingModelId?: string
+  metadata: CorpusFileMetadata
+}): Promise<DocumentManifest> {
+  const sessionResponse = await input.fetcher(`${input.apiBaseUrl}/documents/uploads`, {
+    method: "POST",
+    headers: createHeaders(input.authToken),
+    body: JSON.stringify({
+      fileName: input.fileName,
+      mimeType: input.mimeType,
+      purpose: "benchmarkSeed"
+    })
+  })
+  const sessionText = await sessionResponse.text()
+  if (!sessionResponse.ok) throw new Error(`Failed to create benchmark corpus upload ${input.fileName}: HTTP ${sessionResponse.status} ${sessionText}`)
+  const session = sessionText ? (JSON.parse(sessionText) as UploadSessionResponse) : undefined
+  if (!session?.uploadId || !session.uploadUrl) throw new Error(`Benchmark corpus upload session was incomplete for ${input.fileName}`)
+
+  const uploadResponse = await input.fetcher(session.uploadUrl, {
+    method: session.method,
+    headers: {
+      ...(session.requiresAuth ? createAuthHeaders(input.authToken) : {}),
+      ...(session.headers ?? {})
+    },
+    body: new Uint8Array(input.content)
+  })
+  const uploadText = await uploadResponse.text()
+  if (!uploadResponse.ok) throw new Error(`Failed to transfer benchmark corpus ${input.fileName}: HTTP ${uploadResponse.status} ${uploadText}`)
+
+  const response = await input.fetcher(`${input.apiBaseUrl}/documents/uploads/${encodeURIComponent(session.uploadId)}/ingest`, {
+    method: "POST",
+    headers: createHeaders(input.authToken),
+    body: JSON.stringify({
+      fileName: input.fileName,
+      mimeType: input.mimeType,
+      embeddingModelId: input.embeddingModelId,
+      skipMemory: input.skipMemory,
+      metadata: {
+        benchmarkSeed: true,
+        benchmarkSuiteId: input.suiteId,
+        benchmarkSourceHash: input.sourceHash,
+        benchmarkIngestSignature: input.ingestSignature,
+        benchmarkCorpusSkipMemory: input.skipMemory,
+        benchmarkEmbeddingModelId: input.embeddingModelId ?? "api-default",
+        aclGroups: benchmarkCorpusAclGroups,
+        docType: benchmarkCorpusDocType,
+        lifecycleStatus: "active",
+        source: benchmarkCorpusSource,
+        ...input.metadata
+      }
+    })
+  })
+  const text = await response.text()
+  if (!response.ok) throw new Error(`Failed to ingest uploaded benchmark corpus ${input.fileName}: HTTP ${response.status} ${text}`)
   const manifest = text ? (JSON.parse(text) as DocumentManifest) : {}
   if ((manifest.lifecycleStatus ?? "active") !== "active") throw new Error(`Benchmark corpus ${input.fileName} is not active after upload`)
   if ((manifest.chunkCount ?? 0) <= 0) throw new Error(`Benchmark corpus ${input.fileName} produced no chunks`)
@@ -258,6 +338,10 @@ function createHeaders(authToken: string | undefined): Record<string, string> {
     "Content-Type": "application/json",
     ...(authToken ? { Authorization: `Bearer ${authToken}` } : {})
   }
+}
+
+function createAuthHeaders(authToken: string | undefined): Record<string, string> {
+  return authToken ? { Authorization: `Bearer ${authToken}` } : {}
 }
 
 function mimeTypeFor(fileName: string): string {

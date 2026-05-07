@@ -88,6 +88,14 @@ export class MemoRagMvpStack extends Stack {
       enforceSSL: true,
       serverAccessLogsBucket: accessLogsBucket,
       serverAccessLogsPrefix: "s3/documents/",
+      cors: [{
+        allowedMethods: [s3.HttpMethods.PUT],
+        allowedOrigins: ["*"],
+        allowedHeaders: ["content-type"],
+        exposedHeaders: ["ETag"],
+        maxAge: 900
+      }],
+      lifecycleRules: [{ prefix: "uploads/", expiration: Duration.days(7) }],
       removalPolicy: RemovalPolicy.DESTROY,
       autoDeleteObjects: true
     })
@@ -643,9 +651,12 @@ export class MemoRagMvpStack extends Stack {
             commands: [
               "set -euo pipefail",
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
-              "aws s3 cp ./benchmark/.runner-results.jsonl \"$OUTPUT_S3_PREFIX/results.jsonl\"",
-              "aws s3 cp ./benchmark/.runner-summary.json \"$OUTPUT_S3_PREFIX/summary.json\"",
-              "aws s3 cp ./benchmark/.runner-report.md \"$OUTPUT_S3_PREFIX/report.md\"",
+              "if [ ! -f \"$OUTPUT\" ]; then printf '' > \"$OUTPUT\"; fi",
+              "if [ ! -f \"$SUMMARY\" ]; then printf '{\"total\":0,\"succeeded\":0,\"failedHttp\":0,\"metrics\":{\"errorRate\":1}}\\n' > \"$SUMMARY\"; fi",
+              "if [ ! -f \"$REPORT\" ]; then printf '# Benchmark runner failed\\n\\nCodeBuild failed before benchmark artifacts were produced. See the CodeBuild log URL recorded on the benchmark run.\\n' > \"$REPORT\"; fi",
+              "aws s3 cp \"$OUTPUT\" \"$OUTPUT_S3_PREFIX/results.jsonl\"",
+              "aws s3 cp \"$SUMMARY\" \"$OUTPUT_S3_PREFIX/summary.json\"",
+              "aws s3 cp \"$REPORT\" \"$OUTPUT_S3_PREFIX/report.md\"",
               "node infra/scripts/update-benchmark-run-metrics.mjs"
             ]
           }

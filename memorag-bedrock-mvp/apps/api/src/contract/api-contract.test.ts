@@ -4,7 +4,7 @@ import { tmpdir } from "node:os"
 import path from "node:path"
 import { spawn } from "node:child_process"
 import test from "node:test"
-import { isBenchmarkSeedUpload } from "../app.js"
+import { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "../app.js"
 
 type OpenApiDoc = {
   paths: Record<string, Record<string, { responses?: Record<string, { content?: Record<string, { schema: unknown }> }> }>>
@@ -74,6 +74,30 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     const created = (await postDocument.json()) as Record<string, unknown>
     assert.equal(created.fileName, fixtures.responses.uploadedDocumentShape.fileName)
     validateSchema(created, responseSchema(openapi, "/documents", "post", 200), openapi)
+
+    const uploadSessionRes = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain" })
+    })
+    assert.equal(uploadSessionRes.status, 200)
+    const uploadSession = (await uploadSessionRes.json()) as { uploadId: string; uploadUrl: string; method: "POST"; headers: Record<string, string> }
+    validateSchema(uploadSession, responseSchema(openapi, "/documents/uploads", "post", 200), openapi)
+
+    const putUpload = await fetch(uploadSession.uploadUrl, {
+      method: uploadSession.method,
+      headers: uploadSession.headers,
+      body: "S3 handoff upload text."
+    })
+    assert.equal(putUpload.status, 204)
+
+    const ingestUploaded = await fetch(`http://127.0.0.1:${port}/documents/uploads/${encodeURIComponent(uploadSession.uploadId)}/ingest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain" })
+    })
+    assert.equal(ingestUploaded.status, 200)
+    validateSchema(await ingestUploaded.json(), responseSchema(openapi, "/documents/uploads/{uploadId}/ingest", "post", 200), openapi)
 
     const postChat = await fetch(`http://127.0.0.1:${port}/chat`, {
       method: "POST",
@@ -575,6 +599,13 @@ test("benchmark runner can list and upload only isolated benchmark seed document
     })
     assert.equal(generalUpload.status, 403)
 
+    const generalUploadSession = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "general.md", mimeType: "text/markdown" })
+    })
+    assert.equal(generalUploadSession.status, 403)
+
     const seedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -628,6 +659,42 @@ test("benchmark runner can list and upload only isolated benchmark seed document
       })
     })
     assert.equal(allganizeSeedUpload.status, 200)
+
+    const seedUploadSession = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "allganize-uploaded.txt", mimeType: "text/plain", purpose: "benchmarkSeed" })
+    })
+    assert.equal(seedUploadSession.status, 200)
+    const session = (await seedUploadSession.json()) as { uploadId: string; uploadUrl: string; method: "POST"; headers: Record<string, string> }
+    const transfer = await fetch(session.uploadUrl, {
+      method: session.method,
+      headers: session.headers,
+      body: "Allganize benchmark seed text from upload session."
+    })
+    assert.equal(transfer.status, 204)
+    const uploadedSeedIngest = await fetch(`http://127.0.0.1:${port}/documents/uploads/${encodeURIComponent(session.uploadId)}/ingest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "allganize-uploaded.txt",
+        mimeType: "text/plain",
+        skipMemory: true,
+        metadata: {
+          benchmarkSeed: true,
+          benchmarkSuiteId: "allganize-rag-evaluation-ja-v1",
+          benchmarkSourceHash: "allganize-upload-hash",
+          benchmarkIngestSignature: "allganize-upload-signature",
+          benchmarkCorpusSkipMemory: true,
+          benchmarkEmbeddingModelId: "api-default",
+          aclGroups: ["BENCHMARK_RUNNER"],
+          docType: "benchmark-corpus",
+          lifecycleStatus: "active",
+          source: "benchmark-runner"
+        }
+      })
+    })
+    assert.equal(uploadedSeedIngest.status, 200)
   } finally {
     server.kill("SIGTERM")
   }
@@ -660,6 +727,9 @@ test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only"
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, contentBase64: "not-base64" }), false)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, extra: "blocked" } }), false)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "unknown-suite" } }), false)
+  assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "application/pdf", metadata }), true)
+  assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "text/plain", metadata }), false)
+  assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "../source.pdf", mimeType: "application/pdf", metadata }), false)
 })
 
 test("question and debug management endpoints enforce Phase 1 role boundaries", async () => {

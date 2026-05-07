@@ -12,6 +12,7 @@ export type UploadLike = {
   fileName: string
   text?: string
   contentBase64?: string
+  contentBytes?: Buffer
   textractJson?: string
   mimeType?: string
 }
@@ -29,9 +30,9 @@ export async function extractTextFromUpload(input: UploadLike): Promise<string> 
 export async function extractDocumentFromUpload(input: UploadLike): Promise<ExtractedDocument> {
   if (input.textractJson) return limitDocument(parseTextractJson(input.textractJson))
   if (input.text !== undefined) return limitDocument(textDocument(input.text, "direct-text-v1"))
-  if (!input.contentBase64) throw new Error("Either text or contentBase64 is required")
+  if (!input.contentBase64 && !input.contentBytes) throw new Error("Either text or contentBase64, or contentBytes is required")
 
-  const buffer = Buffer.from(input.contentBase64, "base64")
+  const buffer = input.contentBytes ?? Buffer.from(input.contentBase64 ?? "", "base64")
   const ext = input.fileName.split(".").pop()?.toLowerCase()
   const mimeType = input.mimeType?.toLowerCase() ?? ""
 

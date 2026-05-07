@@ -29,6 +29,7 @@ import {
   reviewAlias,
   rollbackReindexMigration,
   resolveQuestion,
+  resetRuntimeConfigForTests,
   saveConversationHistory,
   setAuthTokenProvider,
   stageReindexMigration,
@@ -36,7 +37,8 @@ import {
   startChatRun,
   streamChatRunEvents,
   updateAlias,
-  uploadDocument
+  uploadDocument,
+  uploadDocumentFile
 } from "./api.js"
 import * as api from "./api.js"
 
@@ -59,6 +61,7 @@ describe("API client", () => {
       api.getMe,
       api.listDocuments,
       api.uploadDocument,
+      api.uploadDocumentFile,
       api.deleteDocument,
       api.reindexDocument,
       api.stageReindexMigration,
@@ -120,6 +123,60 @@ describe("API client", () => {
       })
     )
     expect(fetchMock).toHaveBeenNthCalledWith(4, "http://api.example.test/documents/doc-2", { method: "DELETE", headers: {} })
+  })
+
+  it("uploads browser files through an upload session before ingest", async () => {
+    const file = new File(["body"], "handoff.txt", { type: "text/plain" })
+    resetRuntimeConfigForTests()
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue({ apiBaseUrl: "http://api.example.test" }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          uploadId: "upload-1",
+          objectKey: "uploads/documents/user/upload-1-handoff.txt",
+          uploadUrl: "http://s3.example.test/upload-1",
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          expiresInSeconds: 900,
+          requiresAuth: false
+        })
+      })
+      .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ documentId: "doc-2", fileName: "handoff.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+      })
+
+    vi.stubGlobal("fetch", fetchMock)
+
+    await expect(uploadDocumentFile({ file, memoryModelId: "model", embeddingModelId: "embedding" })).resolves.toMatchObject({ documentId: "doc-2" })
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "http://api.example.test/documents/uploads",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain", purpose: "document" })
+      })
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "http://s3.example.test/upload-1",
+      expect.objectContaining({
+        method: "PUT",
+        headers: { "Content-Type": "text/plain" },
+        body: file
+      })
+    )
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      "http://api.example.test/documents/uploads/upload-1/ingest",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain", memoryModelId: "model", embeddingModelId: "embedding" })
+      })
+    )
   })
 
   it("calls chat and debug trace endpoints", async () => {
