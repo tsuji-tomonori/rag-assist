@@ -81,6 +81,22 @@ test("chat run event stream responses include CORS headers", async () => {
   assert.equal(forbidden.metadata?.statusCode, 403)
   assert.deepEqual(forbidden.metadata?.headers, plainResponseHeaders)
 
+  const missingReadPermission = await invokeStream({
+    run,
+    events: [],
+    event: event({ runId: "run-1", userId: "user-1", groups: [] })
+  })
+  assert.equal(missingReadPermission.metadata?.statusCode, 403)
+  assert.deepEqual(missingReadPermission.metadata?.headers, plainResponseHeaders)
+
+  const adminReadAll = await invokeStream({
+    run,
+    events,
+    event: event({ runId: "run-1", userId: "admin-1", groups: ["SYSTEM_ADMIN"] })
+  })
+  assert.equal(adminReadAll.metadata?.statusCode, 200)
+  assert.deepEqual(adminReadAll.metadata?.headers, streamResponseHeaders)
+
   const missing = await invokeStream({
     events: [],
     event: event({ runId: "missing", userId: "user-1" })
@@ -158,7 +174,7 @@ async function invokeStream({
   return output
 }
 
-function event({ runId, userId }: { runId: string; userId: string }): APIGatewayProxyEvent {
+function event({ runId, userId, groups = ["CHAT_USER"] }: { runId: string; userId: string; groups?: string[] }): APIGatewayProxyEvent {
   return {
     headers: {},
     pathParameters: { runId },
@@ -166,7 +182,7 @@ function event({ runId, userId }: { runId: string; userId: string }): APIGateway
       authorizer: {
         claims: {
           sub: userId,
-          "cognito:groups": "CHAT_USER"
+          "cognito:groups": groups.join(",")
         }
       }
     }
