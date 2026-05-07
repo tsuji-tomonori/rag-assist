@@ -1,6 +1,6 @@
 # 権限周りバグ調査
 
-- 状態: do
+- 状態: done
 - 作成日時: 2026-05-07 20:13 JST
 - ブランチ: `codex/access-control-audit`
 
@@ -57,3 +57,11 @@
 
 - 静的調査だけでは runtime 環境変数やデプロイ済み authorizer の実態を完全には確認できない。
 - 外部 IDP / Cognito の実設定はリポジトリ外のため、IaC または設定ファイルから確認できる範囲に限られる。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/156
+- 受け入れ条件確認コメント: 追加済み。
+- セルフレビューコメント: 追加済み。
+- 主な修正: `GET /chat-runs/{runId}/events` の専用 streaming Lambda で `chat:read:own` または `chat:admin:read_all` を要求するよう修正。
+- 検証: `npm ci`、targeted streaming test、API typecheck、API 全体 test、`git diff --check` が pass。
