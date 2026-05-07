@@ -1,6 +1,7 @@
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client
@@ -49,6 +50,11 @@ export class S3ObjectStore implements ObjectStore {
     return Buffer.from(bytes ?? [])
   }
 
+  async getObjectSize(key: string): Promise<number> {
+    const response = await this.client.send(new HeadObjectCommand({ Bucket: this.bucketName, Key: key }))
+    return response.ContentLength ?? 0
+  }
+
   async deleteObject(key: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.bucketName, Key: key }))
   }
@@ -71,16 +77,20 @@ export class S3ObjectStore implements ObjectStore {
     return keys
   }
 
-  async createUploadUrl(key: string, input: { contentType?: string; expiresInSeconds: number }): Promise<{ url: string; headers: Record<string, string> }> {
+  async createUploadUrl(key: string, input: { contentType?: string; expiresInSeconds: number; maxBytes?: number }): Promise<{ url: string; headers: Record<string, string> }> {
     const contentType = input.contentType ?? "application/octet-stream"
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
-      ContentType: contentType
+      ContentType: contentType,
+      ...(input.maxBytes ? { ContentLength: input.maxBytes } : {})
     })
     return {
       url: await getSignedUrl(this.client, command, { expiresIn: input.expiresInSeconds }),
-      headers: { "Content-Type": contentType }
+      headers: {
+        "Content-Type": contentType,
+        ...(input.maxBytes ? { "Content-Length": String(input.maxBytes) } : {})
+      }
     }
   }
 }
