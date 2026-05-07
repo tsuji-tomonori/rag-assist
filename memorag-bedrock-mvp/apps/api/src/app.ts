@@ -285,6 +285,10 @@ app.openapi(
     requirePermission(actor, "access:role:assign")
     const { userId } = (c.req as any).valid("param") as { userId: string }
     const body = (c.req as any).valid("json") as z.infer<typeof AssignUserRolesRequestSchema>
+    if (actor.userId === userId) return c.json({ error: "Self role assignment is forbidden" }, 403)
+    const wantsSystemAdmin = body.groups.some((group) => group.trim() === "SYSTEM_ADMIN")
+    const isSystemAdmin = actor.cognitoGroups.includes("SYSTEM_ADMIN")
+    if (wantsSystemAdmin && !isSystemAdmin) return c.json({ error: "Forbidden role assignment" }, 403)
     const user = await service.assignUserRoles(actor, userId, body.groups)
     if (!user) return c.json({ error: "User not found" }, 404)
     return c.json(user, 200)

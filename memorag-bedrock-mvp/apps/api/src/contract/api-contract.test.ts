@@ -181,7 +181,9 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(Array.isArray(aliasAudit.body.auditLog), true)
     validateSchema(aliasAudit.body, responseSchema(openapi, "/admin/aliases/audit-log", "get", 200), openapi)
 
-    const assignRoles = await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/roles`, {
+    const createdUser = adminUsers.body.users.find((user: { email: string }) => user.email === "new-user@example.com")
+    assert.ok(createdUser)
+    const assignRoles = await fetch(`http://127.0.0.1:${port}/admin/users/${createdUser.userId}/roles`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ groups: ["SYSTEM_ADMIN", "COST_AUDITOR"] })
@@ -234,6 +236,41 @@ test("benchmark query endpoint requires authentication when auth is enabled", as
     })
 
     assert.equal(res.status, 401)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
+test("ACCESS_ADMIN は自分自身への SYSTEM_ADMIN 付与が拒否される", async () => {
+  const port = 20000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-access-admin-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_USER_ID: "attacker-sub",
+      LOCAL_AUTH_GROUPS: "ACCESS_ADMIN"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const res = await fetch(`http://127.0.0.1:${port}/admin/users/attacker-sub/roles`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ groups: ["SYSTEM_ADMIN"] })
+    })
+
+    assert.equal(res.status, 403)
   } finally {
     server.kill("SIGTERM")
   }
