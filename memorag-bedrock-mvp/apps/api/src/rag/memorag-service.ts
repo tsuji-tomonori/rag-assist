@@ -386,8 +386,9 @@ export class MemoRagService {
     const existingActor = db.users.find((user) => user.userId === actor.userId)
     if (existingActor) {
       existingActor.email = actorEmail
-      existingActor.groups = normalizeRoles(actor.cognitoGroups)
-      existingActor.status = existingActor.status === "deleted" ? "active" : existingActor.status
+      if (existingActor.status === "active") {
+        existingActor.groups = normalizeRoles(actor.cognitoGroups)
+      }
       existingActor.lastLoginAt = now
       existingActor.updatedAt = now
     } else {
