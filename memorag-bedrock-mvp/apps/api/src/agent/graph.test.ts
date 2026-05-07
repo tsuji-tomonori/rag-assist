@@ -98,6 +98,62 @@ test("fixed MemoRAG workflow clamps minScore before debug trace persistence", as
   assert.equal(result.debug?.minScore, 1)
 })
 
+test("benchmark search filters keep agent retrieval scoped to isolated benchmark corpus", async () => {
+  const service = new MemoRagService(await createTestDeps())
+  const runner = { userId: "benchmark-runner", cognitoGroups: ["BENCHMARK_RUNNER"] }
+
+  await service.ingest({
+    fileName: "software_requirements_chapter01_ja_A4_final.tex",
+    text: "MMRAG-DocQA という語は含みますが、この通常文書は benchmark corpus ではありません。要求分類と要求管理の説明です。",
+    skipMemory: true
+  })
+  await service.ingest({
+    fileName: "mmrag-docqa-method.md",
+    text: [
+      "MMRAG-DocQA is a Document Question-Answering benchmark target.",
+      "It focuses on hierarchical index behavior and multi-granularity retrieval behavior.",
+      "The expected retrieval evidence includes both section-level context and chunk-level context."
+    ].join("\n"),
+    skipMemory: true,
+    metadata: {
+      benchmarkSeed: true,
+      benchmarkSuiteId: "mmrag-docqa-v1",
+      benchmarkSourceHash: "hash",
+      benchmarkIngestSignature: "signature",
+      benchmarkCorpusSkipMemory: true,
+      benchmarkEmbeddingModelId: "api-default",
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      lifecycleStatus: "active",
+      source: "benchmark-runner"
+    }
+  })
+
+  const result = await service.chat(
+    {
+      question: "MMRAG-DocQA の検索観点として、どの2つの粒度を比較対象にしますか？",
+      includeDebug: true,
+      useMemory: false,
+      minScore: 0.05,
+      searchFilters: {
+        source: "benchmark-runner",
+        docType: "benchmark-corpus"
+      }
+    },
+    runner
+  )
+
+  assert.equal(result.isAnswerable, true)
+  assert.ok(result.retrieved.length > 0)
+  assert.equal(result.retrieved.every((item) => item.fileName === "mmrag-docqa-method.md"), true)
+  assert.equal(result.citations.some((item) => item.fileName === "mmrag-docqa-method.md"), true)
+  assert.equal(result.retrieved.some((item) => item.fileName === "software_requirements_chapter01_ja_A4_final.tex"), false)
+  const labels = result.debug?.steps.map((step) => step.label) ?? []
+  assert.equal(labels.filter((label) => label === "execute_search_action").length, 2)
+  assert.equal(labels.filter((label) => label === "execute_search_action").length < 3, true)
+  assert.match(result.debug?.steps.find((step) => step.label === "sufficient_context_gate")?.detail ?? "", /label=ANSWERABLE/)
+})
+
 test("fixed workflow executes nodes in the declared order", async () => {
   const service = new MemoRagService(await createTestDeps())
 

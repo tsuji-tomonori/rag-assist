@@ -652,6 +652,31 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   assert.equal(multiQuerySearch.retrievalDiagnostics?.queryCount, 2)
   assert.equal(multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRank, 1)
   assert.ok((multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRrfScore ?? 0) > 0)
+
+  const filterDeps = createDeps()
+  let capturedVectorFilter: unknown
+  filterDeps.evidenceVectorStore = {
+    put: async () => undefined,
+    query: async (_vector, _topK, filter) => {
+      capturedVectorFilter = filter
+      return []
+    },
+    delete: async () => undefined
+  }
+  await createSearchEvidenceNode(filterDeps, user())(
+    state({
+      queryEmbeddings: [{ query: "申請期限", vector: [1, 0] }],
+      searchFilters: { source: "benchmark-runner", docType: "benchmark-corpus" }
+    })
+  )
+  assert.deepEqual(capturedVectorFilter, {
+    kind: "chunk",
+    documentId: undefined,
+    tenantId: undefined,
+    department: undefined,
+    source: "benchmark-runner",
+    docType: "benchmark-corpus"
+  })
 })
 
 test("retrieval evaluator routes fact coverage conservatively", async () => {
@@ -1288,6 +1313,7 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
     memoryTopK: 4,
     minScore: 0.2,
     strictGrounded: true,
+    searchFilters: undefined,
     iteration: 0,
     referenceQueue: [],
     resolvedReferences: [],

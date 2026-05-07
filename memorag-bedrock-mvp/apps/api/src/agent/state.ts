@@ -193,6 +193,14 @@ const QueryEmbeddingSchema = z.object({
   vector: z.array(z.number())
 })
 
+const SearchFiltersSchema = z.object({
+  tenantId: z.string().optional(),
+  department: z.string().optional(),
+  source: z.string().optional(),
+  docType: z.string().optional(),
+  documentId: z.string().optional()
+})
+
 const SearchBudgetSchema = z.object({
   maxReferenceDepth: z.number().int().min(0).default(ragRuntimePolicy.retrieval.referenceMaxDepth),
   remainingCalls: z.number().int().min(0).default(ragRuntimePolicy.retrieval.searchBudgetCalls)
@@ -461,6 +469,7 @@ export const AgentStateSchema = z.object({
   minScore: z.number().min(-1).max(1).default(ragRuntimePolicy.retrieval.defaultMinScore),
   strictGrounded: z.boolean().default(true),
   clarificationContext: ClarificationContextSchema.optional(),
+  searchFilters: SearchFiltersSchema.optional(),
 
   iteration: z.number().int().min(0).default(0),
   referenceQueue: z.array(ReferenceTargetSchema).default(() => []),
