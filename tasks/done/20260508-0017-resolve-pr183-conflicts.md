@@ -1,6 +1,6 @@
 # PR #183 競合解消
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -32,12 +32,12 @@ PR #183 `codex/requirements-from-implementation-reports` が `main` に対して
 
 ## 受け入れ条件
 
-- [ ] PR #183 branch に `origin/main` が取り込まれている。
-- [ ] 競合ファイルがすべて解消され、未解決 conflict marker が残っていない。
-- [ ] 新規要件 ID と索引、トレーサビリティ、coverage map が整合している。
-- [ ] 必要な検証が実行され、未実施検証は理由が記録されている。
-- [ ] 作業レポートを `reports/working/` に残している。
-- [ ] PR に競合解消結果とセルフレビューを日本語コメントで投稿している。
+- [x] PR #183 branch に `origin/main` が取り込まれている。
+- [x] 競合ファイルがすべて解消され、未解決 conflict marker が残っていない。
+- [x] 新規要件 ID と索引、トレーサビリティ、coverage map が整合している。
+- [x] 必要な検証が実行され、未実施検証は理由が記録されている。
+- [x] 作業レポートを `reports/working/` に残している。
+- [x] PR に競合解消結果とセルフレビューを日本語コメントで投稿している。
 
 ## 検証計画
 
@@ -51,3 +51,19 @@ PR #183 `codex/requirements-from-implementation-reports` が `main` に対して
 
 - `main` 側で同じ要件番号が追加されている場合、採番調整が必要になる。
 - requirement coverage map と docs 索引のどちらかだけを更新すると CI が再度失敗する。
+
+## 完了記録
+
+- merge commit: `0cba737`
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/183
+- 採番調整: PR 側の `FR-031` / `FR-032` / `FR-033` を `FR-038` / `FR-039` / `FR-040` に変更した。
+- 作業レポート: `reports/working/20260508-0017-resolve-pr183-conflicts.md`
+- PR コメント:
+  - 競合解消結果コメント: `4398695088`
+  - セルフレビューコメント: `4398696383`
+- 検証:
+  - `rg -n '^(<<<<<<<|=======|>>>>>>>)'`: pass
+  - `git diff --check`: pass
+  - `npm --prefix memorag-bedrock-mvp exec -w @memorag-mvp/api -- tsx --test src/rag/requirements-coverage.test.ts`: pass
+  - `pre-commit run --files $(git diff --cached --name-only)`: pass
+- GitHub Actions: push 後に再実行中。`gh pr checks 183` では `Lint, type-check, test, build, and synth` と `validate-semver-label` が pending。
