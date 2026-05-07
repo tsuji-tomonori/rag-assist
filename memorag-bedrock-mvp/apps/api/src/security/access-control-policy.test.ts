@@ -10,7 +10,10 @@ type RoutePolicy = {
   mode?: "authenticated" | "required" | "requesterOrPermission" | "ownedRun" | "benchmarkSeedRunOrOwnedRun" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission" | "benchmarkSeedDeleteOrPermission" | "documentUploadSession"
 }
 
-const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
+const routeSourcePaths = [
+  path.resolve(process.cwd(), "src/app.ts"),
+  path.resolve(process.cwd(), "src/routes/api-routes.ts")
+]
 
 const protectedMiddlewarePaths = [
   "/me",
@@ -95,7 +98,7 @@ const routePolicies: RoutePolicy[] = [
 ]
 
 test("protected API paths keep auth middleware coverage", async () => {
-  const source = await readFile(appSourcePath, "utf8")
+  const source = await readRouteSources()
   const middlewareBlock = findAuthMiddlewareBlock(source)
 
   for (const protectedPath of protectedMiddlewarePaths) {
@@ -108,7 +111,7 @@ test("protected API paths keep auth middleware coverage", async () => {
 })
 
 test("protected API routes keep route-level permission checks", async () => {
-  const source = await readFile(appSourcePath, "utf8")
+  const source = await readRouteSources()
 
   for (const policy of routePolicies) {
     const block = findRouteBlock(source, policy)
@@ -214,7 +217,7 @@ test("protected API routes keep route-level permission checks", async () => {
 })
 
 test("protected API routes must be explicitly reviewed before they change", async () => {
-  const source = await readFile(appSourcePath, "utf8")
+  const source = await readRouteSources()
   const expectedProtectedRoutes = routePolicies.map(routeKey).sort()
 
   const actualProtectedRoutes = extractRoutes(source)
@@ -226,7 +229,7 @@ test("protected API routes must be explicitly reviewed before they change", asyn
 })
 
 test("question routes must be explicitly reviewed before they change", async () => {
-  const source = await readFile(appSourcePath, "utf8")
+  const source = await readRouteSources()
   const expectedQuestionRoutes = routePolicies
     .filter((policy) => policy.path.startsWith("/questions"))
     .map(routeKey)
@@ -240,10 +243,15 @@ test("question routes must be explicitly reviewed before they change", async () 
   assert.deepEqual(actualQuestionRoutes, expectedQuestionRoutes)
 })
 
+async function readRouteSources(): Promise<string> {
+  const sources = await Promise.all(routeSourcePaths.map((sourcePath) => readFile(sourcePath, "utf8")))
+  return sources.join("\n")
+}
+
 function findAuthMiddlewareBlock(source: string): string {
-  const start = source.indexOf("for (const path of [")
+  const start = source.indexOf("const protectedApiPaths = [")
   assert.notEqual(start, -1, "authMiddleware path list was not found")
-  const end = source.indexOf("}\n\nfunction looseRoute", start)
+  const end = source.indexOf("registerApiRoutes(app, deps, service)", start)
   assert.notEqual(end, -1, "authMiddleware path list end was not found")
   return source.slice(start, end)
 }
@@ -265,7 +273,7 @@ function findNamedRouteBlock(source: string, routeName: string): string {
   assert.notEqual(routeStart, -1, `${routeName} definition was not found`)
   const handlerStart = source.indexOf(`app.openapi(${routeName}`, routeStart)
   assert.notEqual(handlerStart, -1, `${routeName} handler was not found`)
-  const nextRouteStart = source.indexOf("\napp.openapi(", handlerStart + 1)
+  const nextRouteStart = findNextOpenApiStart(source, handlerStart + 1)
   return source.slice(routeStart, nextRouteStart)
 }
 
@@ -277,11 +285,17 @@ function extractRoutes(source: string): Array<Pick<RoutePolicy, "method" | "path
 }
 
 function extractOpenApiBlocks(source: string): string[] {
-  const starts = [...source.matchAll(/\napp\.openapi\(/g)].map((match) => match.index ?? 0)
+  const starts = [...source.matchAll(/\n\s*app\.openapi\(/g)].map((match) => match.index ?? 0)
   return starts.map((start, index) => {
     const nextStart = starts[index + 1]
     return source.slice(start, nextStart)
   })
+}
+
+function findNextOpenApiStart(source: string, startIndex: number): number {
+  const match = /\n\s*app\.openapi\(/g
+  match.lastIndex = startIndex
+  return match.exec(source)?.index ?? source.length
 }
 
 function routeKey(route: Pick<RoutePolicy, "method" | "path">): string {

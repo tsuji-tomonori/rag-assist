@@ -82,7 +82,7 @@
 | 理解容易性 | OK | API と permission を受け入れ条件に分解している |
 | 一貫性 | OK | 既存 RBAC と Cognito group 方針に沿う |
 | 標準・契約適合 | OK | 社内資料保護と最小権限の方針に合う |
-| 実現可能性 | OK | `app.ts` と `authorization.ts` で実装可能 |
+| 実現可能性 | OK | `app.ts`、`routes/api-routes.ts`、`authorization.ts` で実装可能 |
 | 検証可能性 | OK | authorization test、API contract test、access-control-policy test で確認可能 |
 | ニーズ適合 | OK | Phase 1 の RAG 運用管理範囲に対応する |
 
