@@ -31,12 +31,12 @@ PDF を評価対象から除外せず、embedded text が取れない PDF でも
 
 ## 受け入れ条件
 
-- [ ] Allganize benchmark の PDF を除外しない。
-- [ ] embedded text 抽出が空の PDF でも OCR/Textract fallback で extractable text または structured blocks を得られる。
-- [ ] `expectedFiles` と元 PDF ファイル名の対応を維持する。
-- [ ] benchmark 期待語句、QA sample 固有値、dataset 固有分岐を回答ロジックへ入れない。
-- [ ] 変更範囲に見合う API/benchmark/infra テストと typecheck を実行し、未実施項目は理由を記録する。
-- [ ] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] Allganize benchmark の PDF を除外しない。
+- [x] embedded text 抽出が空の PDF でも OCR/Textract fallback で extractable text または structured blocks を得られる。
+- [x] `expectedFiles` と元 PDF ファイル名の対応を維持する。
+- [x] benchmark 期待語句、QA sample 固有値、dataset 固有分岐を回答ロジックへ入れない。
+- [x] 変更範囲に見合う API/benchmark/infra テストと typecheck を実行し、未実施項目は理由を記録する。
+- [x] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証計画
 
@@ -60,4 +60,8 @@ PDF を評価対象から除外せず、embedded text が取れない PDF でも
 
 ## 状態
 
-in_progress
+done
+
+## PR
+
+- https://github.com/tsuji-tomonori/rag-assist/pull/151

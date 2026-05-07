@@ -17,7 +17,7 @@
 | R2 | embedded text が空の PDF でも fallback で抽出できる | 高 | 対応 |
 | R3 | benchmark 期待語句、QA sample 固有値、dataset 固有分岐を回答ロジックへ入れない | 高 | 対応 |
 | R4 | API/infra/benchmark の対象検証を実行する | 高 | 対応 |
-| R5 | Worktree Task PR Flow に従い、task md と PR コメントまで進める | 高 | 進行中 |
+| R5 | Worktree Task PR Flow に従い、task md と PR コメントまで進める | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -35,6 +35,7 @@
 - API Lambda に Textract text detection 権限と OCR fallback 環境変数を追加した。
 - Textract fallback の unit test、infra IAM/env assertion、CloudFormation snapshot を更新した。
 - README と Operations に PDF OCR fallback の前提と環境変数を追記した。
+- PR #151 を作成し、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
 
 ## 5. 成果物
 
@@ -45,7 +46,8 @@
 | `memorag-bedrock-mvp/infra/lib/memorag-mvp-stack.ts` | CDK | API Lambda の Textract 権限と env | R2 |
 | `memorag-bedrock-mvp/apps/api/src/rag/text-processing.test.ts` | Test | embedded text 空 PDF の OCR fallback 回帰テスト | R2 |
 | `memorag-bedrock-mvp/README.md`, `memorag-bedrock-mvp/docs/OPERATIONS.md` | Markdown | OCR fallback の運用前提 | R4 |
-| `tasks/do/20260507-1402-fix-pdf-ocr-fallback.md` | Markdown | task 状態と受け入れ条件 | R5 |
+| `tasks/done/20260507-1402-fix-pdf-ocr-fallback.md` | Markdown | task 状態と受け入れ条件 | R5 |
+| PR #151 | GitHub PR | 日本語 PR 本文、受け入れ条件確認コメント、セルフレビューコメント | R5 |
 
 ## 6. 検証結果
 
@@ -78,4 +80,4 @@
 - 未対応: 実 CodeBuild run の再実行は未実施。
 - 制約: Textract OCR fallback は AWS 権限、リージョン、対象 PDF サイズ、処理時間、Textract quota に依存する。
 - リスク: `PDF_OCR_FALLBACK_TIMEOUT_MS=45000` を超える PDF は ingest 失敗として残る。必要に応じて API timeout と非同期 ingest 設計を別途検討する。
-- 後続: PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを投稿し、task md を `done` に移動する。
+- 後続: deploy 後に `allganize-rag-evaluation-ja-v1` を再実行し、Textract OCR fallback の実 PDF 結果を確認する。
