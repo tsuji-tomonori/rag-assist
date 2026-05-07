@@ -1,6 +1,6 @@
 # Benchmark CodeBuild timeout 延長
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -59,3 +59,10 @@ CodeBuild / Step Functions の運用上限が変わるため、`memorag-bedrock-
 
 - timeout 延長により、失敗 run が長く残った場合の CodeBuild コストが増える。
 - 実 AWS 環境での build 再実行は認証・AWS 権限・外部 dataset download に依存するため、ローカル検証だけでは本番 timeout 解消を完全には保証できない。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/164
+- 作業レポート: `reports/working/20260507-2140-benchmark-build-timeout.md`
+- 検証: `npm ci`、`UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`、`npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`、`git diff --check` が pass。
+- 未実施: 実 AWS CodeBuild 再実行は AWS 認証、対象環境への deploy、外部 dataset download に依存するため未実施。
