@@ -8,12 +8,7 @@ type JudgeJson = Partial<SufficientContextJudgement>
 
 export function createSufficientContextGateNode(deps: Dependencies) {
   return async function sufficientContextGate(state: QaAgentState): Promise<QaAgentUpdate> {
-    const requiredFacts = state.searchPlan.requiredFacts.map((fact) => {
-      const type = fact.factType ? `type=${fact.factType}` : "type=unknown"
-      const necessity = ` necessity=${requiredFactNecessity(fact)}`
-      const scope = fact.scope ? ` scope=${fact.scope}` : ""
-      return `${fact.description} (${type}${necessity}${scope})`
-    }).filter(Boolean)
+    const requiredFacts = state.searchPlan.requiredFacts.map(formatRequiredFactForJudge).filter(Boolean)
     const raw = await deps.textModel.generate(
       buildSufficientContextPrompt(state.question, requiredFacts, state.selectedChunks, state.computedFacts),
       llmOptions("sufficientContext", state.modelId)
@@ -89,6 +84,7 @@ function hasUnresolvedPrimaryMissingFact(state: QaAgentState, judgement: Suffici
   const missingFactIds = new Set(state.retrievalEvaluation.missingFactIds)
 
   return primaryFacts.some((fact) => {
+    if (judgementHasExactFactId(fact, missingFacts)) return true
     if (primaryFactSupportedByEvidence(state, fact, supportedFacts)) return false
     if (missingFactIds.has(fact.id)) return true
     return missingFacts.some((missing) => judgementMentionsFact(fact, missing))
@@ -99,7 +95,7 @@ function hasPrimaryConflict(state: QaAgentState, judgement: SufficientContextJud
   if (hasPrimaryFactId(state, state.retrievalEvaluation.conflictingFactIds)) return true
   const conflictingFacts = judgement.conflictingFacts.map(normalize)
   if (conflictingFacts.length === 0) return false
-  return primaryRequiredFacts(state.searchPlan.requiredFacts).some((fact) => conflictingFacts.some((conflict) => judgementMentionsFact(fact, conflict)))
+  return primaryRequiredFacts(state.searchPlan.requiredFacts).some((fact) => judgementHasExactFactId(fact, conflictingFacts) || conflictingFacts.some((conflict) => judgementMentionsFact(fact, conflict)))
 }
 
 function hasSupportedPrimaryEvidence(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
@@ -132,8 +128,24 @@ function judgementMentionsFact(fact: RequiredFact, normalizedJudgementText: stri
   })
 }
 
+function judgementHasExactFactId(fact: RequiredFact, normalizedJudgementTexts: string[]): boolean {
+  const id = normalize(fact.id)
+  return normalizedJudgementTexts.some((text) => text === id)
+}
+
 function factReferences(fact: RequiredFact): string[] {
   return [fact.id, fact.description]
+}
+
+function formatRequiredFactForJudge(fact: RequiredFact): string {
+  const fields = [
+    `id=${fact.id}`,
+    `necessity=${requiredFactNecessity(fact)}`,
+    `type=${fact.factType ?? "unknown"}`,
+    fact.scope ? `scope=${fact.scope}` : undefined,
+    `description=${fact.description}`
+  ].filter((field): field is string => Boolean(field))
+  return fields.join("; ")
 }
 
 function normalizeJudgement(parsed: JudgeJson | undefined, state: QaAgentState): SufficientContextJudgement {
@@ -173,12 +185,11 @@ function updateRequiredFactStatuses(state: QaAgentState, judgement: SufficientCo
   return {
     ...state.searchPlan,
     requiredFacts: state.searchPlan.requiredFacts.map((fact) => {
-      const normalized = normalize(fact.description)
-      const status = conflicting.some((item) => item && normalized.includes(item))
+      const status = conflicting.some((item) => item && judgementMentionsFact(fact, item))
         ? "conflicting"
-        : supported.some((item) => item && (normalized.includes(item) || item.includes(normalized)))
+        : supported.some((item) => item && judgementMentionsFact(fact, item))
           ? "supported"
-          : missing.some((item) => item && (normalized.includes(item) || item.includes(normalized)))
+          : missing.some((item) => item && judgementMentionsFact(fact, item))
             ? "missing"
             : judgement.label === "ANSWERABLE"
               ? "supported"

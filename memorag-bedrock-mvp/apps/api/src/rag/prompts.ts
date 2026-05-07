@@ -108,16 +108,18 @@ export function buildSufficientContextPrompt(question: string, requiredFacts: st
 - memory card、一般知識、推測は根拠にしない。
 - 数値、期限、手順、条件、承認者は特に厳しく見る。
 - threshold_comparison は system-derived evidence として扱い、effect と satisfiesCondition の組み合わせで、質問金額が資料内の条件に該当するかを支持できる。
+- <requiredFacts> は id / necessity / type / description を持つ。supportedFacts、missingFacts、conflictingFacts には、原則として該当する required fact の id だけを入れる。
+- evidence が primary fact の answer span を支持しているが、資料にない追加の具体化だけが不足する場合、その primary fact id は supportedFacts に入れ、不足している追加情報は reason に説明する。missingFacts には required fact id として不足しているものだけを入れる。
 - supportingChunkIds には根拠に使える <chunk id="..."> の id だけを入れる。
 
 JSON schema:
 {
   "label": "ANSWERABLE | PARTIAL | UNANSWERABLE",
   "confidence": 0.0,
-  "requiredFacts": ["回答に必要な事実"],
-  "supportedFacts": ["根拠付きで確認できた事実"],
-  "missingFacts": ["不足している事実"],
-  "conflictingFacts": ["矛盾している事実"],
+  "requiredFacts": ["required fact id"],
+  "supportedFacts": ["supported required fact id"],
+  "missingFacts": ["missing required fact id"],
+  "conflictingFacts": ["conflicting required fact id"],
   "supportingChunkIds": ["retrieved chunk id from <chunk id=...>"],
   "reason": "判定理由"
 }
