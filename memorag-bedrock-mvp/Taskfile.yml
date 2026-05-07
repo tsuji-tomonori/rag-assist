@@ -67,7 +67,8 @@ tasks:
     cmds:
       - npm run build -w @memorag-mvp/web
       - npm run build -w @memorag-mvp/infra
-      - npm run synth:yaml -w @memorag-mvp/infra
+      - mkdir -p infra/cdk.out
+      - npm run cdk -w @memorag-mvp/infra -- synth {{.CDK_CONTEXT_ARGS}} > infra/cdk.out/MemoRagMvpStack.template.yaml
 
   cdk:test:
     desc: Run CDK assertion and snapshot tests
@@ -80,7 +81,7 @@ tasks:
     cmds:
       - npm run build -w @memorag-mvp/web
       - npm run build -w @memorag-mvp/infra
-      - npm run cdk -w @memorag-mvp/infra -- deploy
+      - npm run cdk -w @memorag-mvp/infra -- deploy {{.CDK_CONTEXT_ARGS}}
 
   cdk:bootstrap:
     desc: Bootstrap the target AWS account and region for CDK deployments

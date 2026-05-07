@@ -51,6 +51,14 @@ export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
     super(scope, id, props)
 
+    const requireContext = (key: string): string => {
+      const value = this.node.tryGetContext(key)
+      if (typeof value !== "string" || value.trim() === "") {
+        throw new Error(`CDK context "${key}" is required.`)
+      }
+      return value.trim()
+    }
+
     const deploymentEnvironment = String(this.node.tryGetContext("deploymentEnvironment") ?? "dev")
     const costCenter = String(this.node.tryGetContext("costCenter") ?? "memorag-mvp")
     const commonResourceTags = {
@@ -71,9 +79,9 @@ export class MemoRagMvpStack extends Stack {
     const evidenceVectorIndexName = "evidence-index"
     const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
     const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
-    const benchmarkSourceOwner = String(this.node.tryGetContext("benchmarkSourceOwner") ?? "tsuji-tomonori")
-    const benchmarkSourceRepo = String(this.node.tryGetContext("benchmarkSourceRepo") ?? "rag-assist")
-    const benchmarkSourceBranch = String(this.node.tryGetContext("benchmarkSourceBranch") ?? "main")
+    const benchmarkSourceOwner = requireContext("benchmarkSourceOwner")
+    const benchmarkSourceRepo = requireContext("benchmarkSourceRepo")
+    const benchmarkSourceBranch = requireContext("benchmarkSourceBranch")
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,

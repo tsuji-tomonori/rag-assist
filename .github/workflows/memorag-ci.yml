@@ -119,7 +119,13 @@ jobs:
 
       - name: Synthesize CDK template with cdk-nag
         id: cdk_synth
-        run: npm run synth:yaml -w @memorag-mvp/infra
+        run: |
+          mkdir -p memorag-bedrock-mvp/infra/cdk.out
+          npm run cdk -w @memorag-mvp/infra -- synth \
+            --context benchmarkSourceOwner=tsuji-tomonori \
+            --context benchmarkSourceRepo=rag-assist \
+            --context benchmarkSourceBranch=main \
+            > memorag-bedrock-mvp/infra/cdk.out/MemoRagMvpStack.template.yaml
         continue-on-error: true
 
       - name: Upload CDK synth artifacts
@@ -192,7 +198,7 @@ jobs:
               ['api', 'Build', '${{ steps.api_build.outcome }}', '-', '`npm run build -w @memorag-mvp/api`'],
               ['web', 'Build', '${{ steps.web_build.outcome }}', '-', '`npm run build -w @memorag-mvp/web`'],
               ['benchmark', 'Build', '${{ steps.benchmark_build.outcome }}', '-', '`npm run build -w @memorag-mvp/benchmark`'],
-              ['infra', 'CDK synth', '${{ steps.cdk_synth.outcome }}', 'cdk-nag enabled', '`npm run synth:yaml -w @memorag-mvp/infra`'],
+              ['infra', 'CDK synth', '${{ steps.cdk_synth.outcome }}', 'cdk-nag enabled', '`npm run cdk -w @memorag-mvp/infra -- synth --context benchmarkSourceOwner=... --context benchmarkSourceRepo=... --context benchmarkSourceBranch=...`'],
             ];
             const icon = (outcome) => outcome === 'success' ? ':white_check_mark:' : ':x:';
             const overall = results.every(([, , outcome]) => outcome === 'success') ? 'success' : 'failure';
