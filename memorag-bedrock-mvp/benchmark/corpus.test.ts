@@ -257,6 +257,78 @@ test("seedBenchmarkCorpus uploads PDF files through upload sessions", async () =
   assert.equal(ingest?.metadata?.benchmarkSuiteId, "allganize-rag-evaluation-ja-v1")
 })
 
+test("seedBenchmarkCorpus skips uploaded PDFs without extractable text", async () => {
+  const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
+  await writeFile(path.join(corpusDir, "image-only.pdf"), Buffer.from("%PDF-1.4 sample"))
+  const logs: string[] = []
+  const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
+    const requestUrl = String(url)
+    if (init?.method === "GET") {
+      return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (requestUrl.endsWith("/documents/uploads")) {
+      return new Response(JSON.stringify({
+        uploadId: "upload-1",
+        uploadUrl: "http://upload.local/image-only.pdf",
+        method: "PUT",
+        headers: { "Content-Type": "application/pdf" },
+        requiresAuth: false
+      }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (requestUrl === "http://upload.local/image-only.pdf") return new Response("", { status: 200 })
+    return new Response(JSON.stringify({ error: "Uploaded document did not contain extractable text" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+
+  const [result] = await seedBenchmarkCorpus({
+    apiBaseUrl: "http://localhost:8787",
+    corpusDir,
+    suiteId: "allganize-rag-evaluation-ja-v1",
+    skipMemory: true,
+    fetchImpl,
+    log: (message) => logs.push(message)
+  })
+
+  assert.equal(result?.fileName, "image-only.pdf")
+  assert.equal(result?.status, "skipped_unextractable")
+  assert.equal(result?.chunkCount, 0)
+  assert.equal(result?.skipReason, "no_extractable_text")
+  assert.equal(logs.some((message) => message.includes("Benchmark corpus skipped: image-only.pdf")), true)
+})
+
+test("seedBenchmarkCorpus still fails on non-extractability ingest errors", async () => {
+  const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
+  await writeFile(path.join(corpusDir, "source.pdf"), Buffer.from("%PDF-1.4 sample"))
+  const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
+    const requestUrl = String(url)
+    if (init?.method === "GET") {
+      return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (requestUrl.endsWith("/documents/uploads")) {
+      return new Response(JSON.stringify({
+        uploadId: "upload-1",
+        uploadUrl: "http://upload.local/source.pdf",
+        method: "PUT"
+      }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (requestUrl === "http://upload.local/source.pdf") return new Response("", { status: 200 })
+    return new Response("temporary ingest failure", { status: 503 })
+  }
+
+  await assert.rejects(
+    () => seedBenchmarkCorpus({
+      apiBaseUrl: "http://localhost:8787",
+      corpusDir,
+      suiteId: "allganize-rag-evaluation-ja-v1",
+      skipMemory: true,
+      fetchImpl
+    }),
+    /Failed to ingest uploaded benchmark corpus source\.pdf: HTTP 503 temporary ingest failure/
+  )
+})
+
 test("seedBenchmarkCorpus includes optional per-file search aliases in seed metadata", async () => {
   const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
   await writeFile(path.join(corpusDir, "handbook.md"), "# Handbook\n\n経費精算は30日以内です。\n", "utf-8")

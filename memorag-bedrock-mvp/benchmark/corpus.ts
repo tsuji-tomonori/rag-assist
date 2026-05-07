@@ -28,10 +28,11 @@ type UploadSessionResponse = {
 
 export type SeededDocument = {
   fileName: string
-  status: "skipped" | "uploaded"
+  status: "skipped" | "skipped_unextractable" | "uploaded"
   chunkCount: number
   sourceHash: string
   ingestSignature: string
+  skipReason?: string
 }
 
 type CorpusFileMetadata = {
@@ -94,22 +95,29 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
       continue
     }
 
-    const uploaded = await uploadDocument({
-      apiBaseUrl: options.apiBaseUrl,
-      authToken: options.authToken,
-      fetcher,
-      fileName,
-      content,
-      mimeType: mimeTypeFor(fileName),
-      suiteId: options.suiteId,
-      sourceHash,
-      ingestSignature,
-      skipMemory: options.skipMemory,
-      embeddingModelId: options.embeddingModelId,
-      metadata
-    })
-    seeded.push({ fileName, status: "uploaded", chunkCount: uploaded.chunkCount ?? 0, sourceHash, ingestSignature })
-    options.log?.(`Benchmark corpus uploaded: ${fileName} (${uploaded.chunkCount ?? 0} chunks)`)
+    try {
+      const uploaded = await uploadDocument({
+        apiBaseUrl: options.apiBaseUrl,
+        authToken: options.authToken,
+        fetcher,
+        fileName,
+        content,
+        mimeType: mimeTypeFor(fileName),
+        suiteId: options.suiteId,
+        sourceHash,
+        ingestSignature,
+        skipMemory: options.skipMemory,
+        embeddingModelId: options.embeddingModelId,
+        metadata
+      })
+      seeded.push({ fileName, status: "uploaded", chunkCount: uploaded.chunkCount ?? 0, sourceHash, ingestSignature })
+      options.log?.(`Benchmark corpus uploaded: ${fileName} (${uploaded.chunkCount ?? 0} chunks)`)
+    } catch (error) {
+      const skipReason = unextractableCorpusSkipReason(error)
+      if (!skipReason) throw error
+      seeded.push({ fileName, status: "skipped_unextractable", chunkCount: 0, sourceHash, ingestSignature, skipReason })
+      options.log?.(`Benchmark corpus skipped: ${fileName} (${skipReason})`)
+    }
   }
 
   return seeded
@@ -401,6 +409,11 @@ function mimeTypeFor(fileName: string): string {
 
 function isTextMimeType(mimeType: string): boolean {
   return mimeType === "text/markdown" || mimeType === "text/plain"
+}
+
+function unextractableCorpusSkipReason(error: unknown): string | undefined {
+  const message = error instanceof Error ? error.message : String(error)
+  return /did not contain extractable text/i.test(message) ? "no_extractable_text" : undefined
 }
 
 function sha256(content: string | Buffer): string {
