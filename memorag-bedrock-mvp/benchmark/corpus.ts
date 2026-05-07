@@ -3,6 +3,7 @@ import { readdir, readFile, stat } from "node:fs/promises"
 import path from "node:path"
 
 type DocumentManifest = {
+  documentId?: string
   fileName?: string
   chunkCount?: number
   lifecycleStatus?: string
@@ -62,6 +63,14 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
   if (files.length === 0) throw new Error(`Benchmark corpus directory has no supported files: ${options.corpusDir}`)
 
   const existingDocuments = await listDocuments(options.apiBaseUrl, options.authToken, fetcher)
+  const activeDocuments = await deleteExistingBenchmarkCorpusDocuments({
+    apiBaseUrl: options.apiBaseUrl,
+    authToken: options.authToken,
+    fetcher,
+    suiteId: options.suiteId,
+    documents: existingDocuments,
+    log: options.log
+  })
   const seeded: SeededDocument[] = []
 
   for (const filePath of files) {
@@ -76,7 +85,7 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
       embeddingModelId: options.embeddingModelId,
       metadata
     })
-    const existing = existingDocuments.find((document) =>
+    const existing = activeDocuments.find((document) =>
       isMatchingSeedDocument(document, fileName, options.suiteId, sourceHash, ingestSignature, options)
     )
     if (existing) {
@@ -155,6 +164,34 @@ async function listDocuments(apiBaseUrl: string, authToken: string | undefined, 
   if (!response.ok) throw new Error(`Failed to list documents before benchmark corpus seed: HTTP ${response.status} ${text}`)
   const body = text ? (JSON.parse(text) as DocumentListResponse) : {}
   return body.documents ?? []
+}
+
+async function deleteExistingBenchmarkCorpusDocuments(input: {
+  apiBaseUrl: string
+  authToken?: string
+  fetcher: typeof fetch
+  suiteId: string
+  documents: DocumentManifest[]
+  log?: (message: string) => void
+}): Promise<DocumentManifest[]> {
+  const remaining: DocumentManifest[] = []
+  for (const document of input.documents) {
+    if (!isResettableBenchmarkCorpusDocument(document, input.suiteId)) {
+      remaining.push(document)
+      continue
+    }
+    const documentId = document.documentId
+    const response = await input.fetcher(`${input.apiBaseUrl}/documents/${encodeURIComponent(documentId)}`, {
+      method: "DELETE",
+      headers: createHeaders(input.authToken)
+    })
+    const text = await response.text()
+    if (!response.ok) {
+      throw new Error(`Failed to delete existing benchmark corpus ${document.fileName ?? documentId}: HTTP ${response.status} ${text}`)
+    }
+    input.log?.(`Benchmark corpus deleted before seed: ${document.fileName ?? documentId}`)
+  }
+  return remaining
 }
 
 async function uploadDocument(input: {
@@ -307,6 +344,17 @@ function isMatchingSeedDocument(
     && document.metadata?.docType === benchmarkCorpusDocType
     && hasBenchmarkCorpusAcl(document.metadata?.aclGroups)
     && (!options.embeddingModelId || documentEmbeddingModelId === options.embeddingModelId)
+}
+
+function isResettableBenchmarkCorpusDocument(document: DocumentManifest, suiteId: string): document is DocumentManifest & { documentId: string } {
+  return typeof document.documentId === "string"
+    && document.documentId.length > 0
+    && (document.lifecycleStatus ?? "active") === "active"
+    && document.metadata?.benchmarkSeed === true
+    && document.metadata?.benchmarkSuiteId === suiteId
+    && document.metadata?.source === benchmarkCorpusSource
+    && document.metadata?.docType === benchmarkCorpusDocType
+    && hasBenchmarkCorpusAcl(document.metadata?.aclGroups)
 }
 
 function hasBenchmarkCorpusAcl(value: unknown): boolean {

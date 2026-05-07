@@ -630,11 +630,22 @@ test("benchmark runner can list and upload only isolated benchmark seed document
       })
     })
     assert.equal(seedUpload.status, 200)
-    const manifest = (await seedUpload.json()) as { metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]> } }
+    const manifest = (await seedUpload.json()) as {
+      documentId: string
+      metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]> }
+    }
     assert.deepEqual(manifest.metadata?.aclGroups, ["BENCHMARK_RUNNER"])
     assert.equal(manifest.metadata?.docType, "benchmark-corpus")
     assert.equal(manifest.metadata?.source, "benchmark-runner")
     assert.deepEqual(manifest.metadata?.searchAliases, { "立替": ["経費精算"] })
+
+    const seedDelete = await fetch(`http://127.0.0.1:${port}/documents/${encodeURIComponent(manifest.documentId)}`, {
+      method: "DELETE"
+    })
+    assert.equal(seedDelete.status, 200)
+    const deleteBody = (await seedDelete.json()) as { documentId?: string; deletedVectorCount?: number }
+    assert.equal(deleteBody.documentId, manifest.documentId)
+    assert.equal(typeof deleteBody.deletedVectorCount, "number")
 
     const allganizeSeedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
       method: "POST",

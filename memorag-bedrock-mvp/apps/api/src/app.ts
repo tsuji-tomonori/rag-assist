@@ -140,6 +140,19 @@ export function isBenchmarkSeedUpload(body: z.infer<typeof DocumentUploadRequest
   return false
 }
 
+function isBenchmarkSeedDocumentManifest(manifest: z.infer<typeof DocumentManifestSchema>): boolean {
+  const metadata = manifest.metadata
+  return (manifest.lifecycleStatus ?? "active") === "active"
+    && metadata?.benchmarkSeed === true
+    && typeof metadata.benchmarkSuiteId === "string"
+    && benchmarkSeedSuites.has(metadata.benchmarkSuiteId)
+    && metadata.source === "benchmark-runner"
+    && metadata.docType === "benchmark-corpus"
+    && Array.isArray(metadata.aclGroups)
+    && metadata.aclGroups.length === 1
+    && metadata.aclGroups[0] === "BENCHMARK_RUNNER"
+}
+
 export function isBenchmarkSeedUploadedObjectIngest(body: z.infer<typeof IngestUploadedDocumentRequestSchema>): boolean {
   if (!isBenchmarkSeedUploadMetadata(body)) return false
   if (!isSafeBenchmarkSeedFileName(body.fileName)) return false
@@ -220,6 +233,17 @@ function authorizeUploadedDocumentIngest(user: AppUser, purpose: UploadPurpose, 
   }
   if (hasPermission(user, "rag:doc:write:group")) return
   throw new HTTPException(403, { message: "Forbidden: missing rag:doc:write:group" })
+}
+
+async function authorizeDocumentDelete(user: AppUser, documentId: string) {
+  if (hasPermission(user, "rag:doc:delete:group")) return
+  if (!hasPermission(user, "benchmark:seed_corpus")) {
+    throw new HTTPException(403, { message: "Forbidden: missing document delete permission" })
+  }
+  const manifest = (await service.listDocuments(user)).find((document) => document.documentId === documentId)
+  if (!manifest || !isBenchmarkSeedDocumentManifest(manifest)) {
+    throw new HTTPException(403, { message: "Forbidden: benchmark seed delete requires isolated benchmark metadata" })
+  }
 }
 
 function buildUploadObjectKey(user: AppUser, purpose: UploadPurpose, fileName: string): string {
@@ -917,9 +941,10 @@ app.openapi(
     }
   }),
   async (c) => {
-    requirePermission(c.get("user"), "rag:doc:delete:group")
+    const user = c.get("user")
+    const { documentId } = (c.req as any).valid("param") as { documentId: string }
+    await authorizeDocumentDelete(user, documentId)
     try {
-      const { documentId } = (c.req as any).valid("param") as { documentId: string }
       return c.json(await service.deleteDocument(documentId), 200)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
