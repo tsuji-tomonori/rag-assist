@@ -8,6 +8,7 @@
 - 成果物: `origin/main` への rebase、競合解消、検証、PR branch 更新。
 - 条件: main 側の変更を落とさず、`mmrag-docqa-v1` の 1091 件 full prepare 変更を維持する。
 - 追加対応: 競合解決後に `origin/main` が再度進んだため、最新 main へ追従して CI 失敗も解消する。
+- 追加対応2: その後 `origin/main` が `ccb9510` まで進み PR が再度 `DIRTY` になったため、再 rebase して競合を解消する。
 
 ## 2. 要件整理
 
@@ -18,6 +19,7 @@
 | R3 | `mmrag-docqa-v1` の full prepare 経路を維持する | 高 | 対応 |
 | R4 | 変更範囲に見合う検証を実行する | 高 | 対応 |
 | R5 | 最新 main との PR merge commit で benchmark typecheck / build が通る状態にする | 高 | 対応 |
+| R6 | `ccb9510` 追従後の docs / benchmark test conflict を解消する | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -25,6 +27,7 @@
 - `infra/lib/memorag-mvp-stack.ts` は自動マージ後、CodeBuild timeout 2 時間、失敗時 artifact fallback、`prepare:mmrag-docqa` 分岐が共存していることを確認した。
 - CDK snapshot は手編集せず、source から `UPDATE_SNAPSHOTS=1` で再生成した。
 - 追加で `origin/main` が `9f7613d` まで進んだ後の PR CI では、`search-run.test.ts` の `handleSearchRunnerRequest` 重複定義が benchmark typecheck / build 失敗の原因だったため、重複した後続定義のみ削除した。
+- さらに `origin/main` が `ccb9510` まで進んだ後は、`README.md` と `LOCAL_VERIFICATION.md` で seed reset 説明と MMRAG-DocQA full prepare 説明を統合した。`search-run.test.ts` は main 側に正しい helper が残っていたため、削除側を採用せず marker のみ解消した。
 
 ## 4. 実施した作業
 
@@ -34,16 +37,19 @@
 - benchmark / infra / API / Web の test / typecheck と diff check を実行した。
 - 最新 `origin/main` へ再 rebase し、`memorag-bedrock-mvp/benchmark/search-run.test.ts` の重複 helper を削除した。
 - CI 失敗に対応して benchmark の test / typecheck / build を再実行した。
+- `origin/main` `ccb9510` へ再 rebase し、`README.md`、`LOCAL_VERIFICATION.md`、`search-run.test.ts` の競合を解消した。
+- conflict marker、diff whitespace、benchmark test / typecheck / build、infra test を再実行した。
 
 ## 5. 成果物
 
 | 成果物 | 形式 | 内容 | 指示との対応 |
 |---|---|---|---|
 | `memorag-bedrock-mvp/README.md` | Markdown | S3 upload seed と full prepare 説明の統合 | R1, R2, R3 |
+| `memorag-bedrock-mvp/docs/LOCAL_VERIFICATION.md` | Markdown | ローカル検証で seed reset と full prepare 手順を統合 | R6 |
 | `memorag-bedrock-mvp/docs/OPERATIONS.md` | Markdown | artifact fallback、S3 upload seed、full prepare 運用説明の統合 | R1, R2, R3 |
 | `memorag-bedrock-mvp/infra/test/__snapshots__/memorag-mvp-stack.snapshot.json` | JSON snapshot | 統合後 CDK snapshot | R1, R2, R3 |
-| `memorag-bedrock-mvp/benchmark/search-run.test.ts` | TypeScript test | 最新 main 追従後の重複 helper 解消 | R5 |
-| `reports/working/20260507-1203-mmrag-docqa-conflict-resolution.md` | Markdown | 競合解決レポート | R4, R5 |
+| `memorag-bedrock-mvp/benchmark/search-run.test.ts` | TypeScript test | 最新 main 追従後の helper 衝突解消 | R5, R6 |
+| `reports/working/20260507-1203-mmrag-docqa-conflict-resolution.md` | Markdown | 競合解決レポート | R4, R5, R6 |
 
 ## 6. 指示への fit 評価
 
@@ -58,18 +64,26 @@
 
 ## 7. 検証結果
 
-- `UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: pass
+`origin/main` `ccb9510` 追従後に再実行:
+
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/benchmark`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark`: pass
 - `npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/benchmark`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: pass
+- `rg -n "<<<<<<<|=======|>>>>>>>" memorag-bedrock-mvp tasks .github --glob '!reports/**'`: pass（exit 1、conflict marker なし）
+- `git diff --check origin/main..HEAD`: pass
+
+前回の `9f7613d` 追従時に実行済み:
+
+- `UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra`: pass
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
-- `git diff --check origin/main..HEAD`: pass
 
 ## 8. 未対応・制約・リスク
 
 - 未実施: PDF 135 件 download 込みの full prepare と 1091 件 full benchmark run。今回の依頼は競合解決であり、既存 PR の未実施制約から変更なし。
+- 未実施: `ccb9510` 追従後の API / Web test・typecheck のローカル再実行。今回の競合は docs と benchmark test helper に限定され、PR CI で全体検証を確認する。
 - 制約: branch は rebase により履歴を書き換えるため、remote 更新は `--force-with-lease` が必要。
