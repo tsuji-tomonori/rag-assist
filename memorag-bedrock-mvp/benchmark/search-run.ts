@@ -19,7 +19,7 @@ import {
   resolveEvaluatorProfile,
   type EvaluatorProfile
 } from "./evaluator-profile.js"
-import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
+import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 
 type SearchDatasetRow = {
   id: string
@@ -182,6 +182,8 @@ try {
     suiteId: benchmarkCorpusSuiteId,
     skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
     embeddingModelId: defaultEmbeddingModelId,
+    ingestRunPollIntervalMs: benchmarkIngestRunPollIntervalMsFromEnv(process.env),
+    ingestRunTimeoutMs: benchmarkIngestRunTimeoutMsFromEnv(process.env),
     log: (message) => console.log(message)
   })
 

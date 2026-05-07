@@ -372,7 +372,7 @@ curl -s http://localhost:8787/conversation-history "${AUTH_HEADER[@]}" | jq
 
 ## Benchmark query/search
 
-`POST /benchmark/query` と `POST /benchmark/search` は CodeBuild runner など `benchmark:query` 権限を持つ service token で実行する。管理画面からの非同期実行は `BENCHMARK_OPERATOR` または `RAG_GROUP_MANAGER` の `benchmark:run` 権限で `POST /benchmark-runs` を使う。既存の外部運用 token が `RAG_GROUP_MANAGER` で `/benchmark/query` または `/benchmark/search` を直接呼んでいる場合は、`BENCHMARK_RUNNER` service user へ移行する。`BENCHMARK_RUNNER` は benchmark seed metadata と `aclGroups: ["BENCHMARK_RUNNER"]` で隔離された seed 文書に限り、実行前セットアップのために `/documents` の list / upload / delete を行える。
+`POST /benchmark/query` と `POST /benchmark/search` は CodeBuild runner など `benchmark:query` 権限を持つ service token で実行する。管理画面からの非同期実行は `BENCHMARK_OPERATOR` または `RAG_GROUP_MANAGER` の `benchmark:run` 権限で `POST /benchmark-runs` を使う。既存の外部運用 token が `RAG_GROUP_MANAGER` で `/benchmark/query` または `/benchmark/search` を直接呼んでいる場合は、`BENCHMARK_RUNNER` service user へ移行する。`BENCHMARK_RUNNER` は benchmark seed metadata と `aclGroups: ["BENCHMARK_RUNNER"]` で隔離された seed 文書に限り、実行前セットアップのために `/documents` の list / upload / delete、`purpose=benchmarkSeed` の upload session 作成、同じ runner が開始した `document-ingest-runs` の取得を行える。
 
 `POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り search benchmark dataset の `user` を任意で受け取り、ACL 評価用の利用者文脈として `user.userId` と `user.groups` を使う。通常利用者向け `/search` は request body の `user` を受け付けず、認証 token の本人だけで検索する。
 

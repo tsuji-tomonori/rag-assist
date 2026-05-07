@@ -26,12 +26,26 @@ type UploadSessionResponse = {
   requiresAuth?: boolean
 }
 
+type DocumentIngestRun = {
+  runId: string
+  status: "queued" | "running" | "succeeded" | "failed" | "cancelled"
+  manifest?: DocumentManifest
+  error?: string
+}
+
+type DocumentIngestRunStartResponse = {
+  runId: string
+  status: DocumentIngestRun["status"]
+  eventsPath?: string
+}
+
 export type SeededDocument = {
   fileName: string
   status: "skipped" | "skipped_unextractable" | "uploaded"
   chunkCount: number
   sourceHash: string
   ingestSignature: string
+  ingestRunId?: string
   skipReason?: string
 }
 
@@ -47,6 +61,8 @@ type SeedCorpusOptions = {
   skipMemory: boolean
   embeddingModelId?: string
   fetchImpl?: typeof fetch
+  ingestRunPollIntervalMs?: number
+  ingestRunTimeoutMs?: number
   log?: (message: string) => void
 }
 
@@ -55,6 +71,8 @@ const benchmarkCorpusAclGroups = ["BENCHMARK_RUNNER"]
 const benchmarkCorpusDocType = "benchmark-corpus"
 const benchmarkCorpusSource = "benchmark-runner"
 const supportedExtensions = new Set([".md", ".txt", ".pdf"])
+const defaultIngestRunPollIntervalMs = 5000
+const defaultIngestRunTimeoutMs = 30 * 60 * 1000
 
 export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<SeededDocument[]> {
   if (!options.corpusDir) return []
@@ -108,10 +126,13 @@ export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<S
         ingestSignature,
         skipMemory: options.skipMemory,
         embeddingModelId: options.embeddingModelId,
-        metadata
+        metadata,
+        ingestRunPollIntervalMs: options.ingestRunPollIntervalMs,
+        ingestRunTimeoutMs: options.ingestRunTimeoutMs
       })
-      seeded.push({ fileName, status: "uploaded", chunkCount: uploaded.chunkCount ?? 0, sourceHash, ingestSignature })
-      options.log?.(`Benchmark corpus uploaded: ${fileName} (${uploaded.chunkCount ?? 0} chunks)`)
+      seeded.push({ fileName, status: "uploaded", chunkCount: uploaded.manifest.chunkCount ?? 0, sourceHash, ingestSignature, ingestRunId: uploaded.ingestRunId })
+      const runDetail = uploaded.ingestRunId ? `, run ${uploaded.ingestRunId}` : ""
+      options.log?.(`Benchmark corpus uploaded: ${fileName} (${uploaded.manifest.chunkCount ?? 0} chunks${runDetail})`)
     } catch (error) {
       const skipReason = unextractableCorpusSkipReason(error)
       if (!skipReason) throw error
@@ -131,6 +152,14 @@ export function benchmarkCorpusDirFromEnv(env: NodeJS.ProcessEnv, fallback?: str
 
 export function benchmarkCorpusSkipMemoryFromEnv(env: NodeJS.ProcessEnv): boolean {
   return env.BENCHMARK_CORPUS_SKIP_MEMORY?.toLowerCase() !== "false"
+}
+
+export function benchmarkIngestRunPollIntervalMsFromEnv(env: NodeJS.ProcessEnv): number {
+  return positiveIntFromEnv(env.BENCHMARK_INGEST_RUN_POLL_INTERVAL_MS, defaultIngestRunPollIntervalMs)
+}
+
+export function benchmarkIngestRunTimeoutMsFromEnv(env: NodeJS.ProcessEnv): number {
+  return positiveIntFromEnv(env.BENCHMARK_INGEST_RUN_TIMEOUT_MS, defaultIngestRunTimeoutMs)
 }
 
 export function createBenchmarkIngestSignature(input: {
@@ -215,7 +244,9 @@ async function uploadDocument(input: {
   skipMemory: boolean
   embeddingModelId?: string
   metadata: CorpusFileMetadata
-}): Promise<DocumentManifest> {
+  ingestRunPollIntervalMs?: number
+  ingestRunTimeoutMs?: number
+}): Promise<{ manifest: DocumentManifest; ingestRunId?: string }> {
   if (!isTextMimeType(input.mimeType)) return uploadDocumentFromUploadSession(input)
 
   const response = await input.fetcher(`${input.apiBaseUrl}/documents`, {
@@ -245,9 +276,8 @@ async function uploadDocument(input: {
   const text = await response.text()
   if (!response.ok) throw new Error(`Failed to upload benchmark corpus ${input.fileName}: HTTP ${response.status} ${text}`)
   const manifest = text ? (JSON.parse(text) as DocumentManifest) : {}
-  if ((manifest.lifecycleStatus ?? "active") !== "active") throw new Error(`Benchmark corpus ${input.fileName} is not active after upload`)
-  if ((manifest.chunkCount ?? 0) <= 0) throw new Error(`Benchmark corpus ${input.fileName} produced no chunks`)
-  return manifest
+  assertActiveChunkedManifest(input.fileName, manifest)
+  return { manifest }
 }
 
 async function uploadDocumentFromUploadSession(input: {
@@ -263,7 +293,9 @@ async function uploadDocumentFromUploadSession(input: {
   skipMemory: boolean
   embeddingModelId?: string
   metadata: CorpusFileMetadata
-}): Promise<DocumentManifest> {
+  ingestRunPollIntervalMs?: number
+  ingestRunTimeoutMs?: number
+}): Promise<{ manifest: DocumentManifest; ingestRunId: string }> {
   const sessionResponse = await input.fetcher(`${input.apiBaseUrl}/documents/uploads`, {
     method: "POST",
     headers: createHeaders(input.authToken),
@@ -289,10 +321,11 @@ async function uploadDocumentFromUploadSession(input: {
   const uploadText = await uploadResponse.text()
   if (!uploadResponse.ok) throw new Error(`Failed to transfer benchmark corpus ${input.fileName}: HTTP ${uploadResponse.status} ${uploadText}`)
 
-  const response = await input.fetcher(`${input.apiBaseUrl}/documents/uploads/${encodeURIComponent(session.uploadId)}/ingest`, {
+  const response = await input.fetcher(`${input.apiBaseUrl}/document-ingest-runs`, {
     method: "POST",
     headers: createHeaders(input.authToken),
     body: JSON.stringify({
+      uploadId: session.uploadId,
       fileName: input.fileName,
       mimeType: input.mimeType,
       embeddingModelId: input.embeddingModelId,
@@ -313,11 +346,57 @@ async function uploadDocumentFromUploadSession(input: {
     })
   })
   const text = await response.text()
-  if (!response.ok) throw new Error(`Failed to ingest uploaded benchmark corpus ${input.fileName}: HTTP ${response.status} ${text}`)
-  const manifest = text ? (JSON.parse(text) as DocumentManifest) : {}
-  if ((manifest.lifecycleStatus ?? "active") !== "active") throw new Error(`Benchmark corpus ${input.fileName} is not active after upload`)
-  if ((manifest.chunkCount ?? 0) <= 0) throw new Error(`Benchmark corpus ${input.fileName} produced no chunks`)
-  return manifest
+  if (!response.ok) throw new Error(`Failed to start benchmark corpus ingest run ${input.fileName}: HTTP ${response.status} ${text}`)
+  const started = text ? (JSON.parse(text) as DocumentIngestRunStartResponse) : undefined
+  if (!started?.runId) throw new Error(`Benchmark corpus ingest run start response was incomplete for ${input.fileName}`)
+  const run = await waitForDocumentIngestRun({
+    apiBaseUrl: input.apiBaseUrl,
+    authToken: input.authToken,
+    fetcher: input.fetcher,
+    fileName: input.fileName,
+    runId: started.runId,
+    pollIntervalMs: input.ingestRunPollIntervalMs ?? defaultIngestRunPollIntervalMs,
+    timeoutMs: input.ingestRunTimeoutMs ?? defaultIngestRunTimeoutMs
+  })
+  const manifest = run.manifest ?? {}
+  assertActiveChunkedManifest(input.fileName, manifest)
+  return { manifest, ingestRunId: started.runId }
+}
+
+async function waitForDocumentIngestRun(input: {
+  apiBaseUrl: string
+  authToken?: string
+  fetcher: typeof fetch
+  fileName: string
+  runId: string
+  pollIntervalMs: number
+  timeoutMs: number
+}): Promise<DocumentIngestRun> {
+  const startedAt = Date.now()
+  while (Date.now() - startedAt <= input.timeoutMs) {
+    const response = await input.fetcher(`${input.apiBaseUrl}/document-ingest-runs/${encodeURIComponent(input.runId)}`, {
+      method: "GET",
+      headers: createHeaders(input.authToken)
+    })
+    const text = await response.text()
+    if (!response.ok) {
+      throw new Error(`Failed to poll benchmark corpus ingest run ${input.fileName} (${input.runId}): HTTP ${response.status} ${text}`)
+    }
+    const run = text ? (JSON.parse(text) as DocumentIngestRun) : undefined
+    if (!run?.runId) throw new Error(`Benchmark corpus ingest run poll response was incomplete for ${input.fileName}`)
+    if (run.status === "succeeded") return run
+    if (run.status === "failed" || run.status === "cancelled") {
+      const reason = run.error ? `: ${run.error}` : ""
+      throw new Error(`Benchmark corpus ingest run ${input.runId} ${run.status} for ${input.fileName}${reason}`)
+    }
+    if (input.pollIntervalMs > 0) await sleep(input.pollIntervalMs)
+  }
+  throw new Error(`Benchmark corpus ingest run ${input.runId} timed out after ${input.timeoutMs}ms for ${input.fileName}`)
+}
+
+function assertActiveChunkedManifest(fileName: string, manifest: DocumentManifest) {
+  if ((manifest.lifecycleStatus ?? "active") !== "active") throw new Error(`Benchmark corpus ${fileName} is not active after upload`)
+  if ((manifest.chunkCount ?? 0) <= 0) throw new Error(`Benchmark corpus ${fileName} produced no chunks`)
 }
 
 async function readCorpusFileMetadata(filePath: string): Promise<CorpusFileMetadata> {
@@ -398,6 +477,15 @@ function createHeaders(authToken: string | undefined): Record<string, string> {
 
 function createAuthHeaders(authToken: string | undefined): Record<string, string> {
   return authToken ? { Authorization: `Bearer ${authToken}` } : {}
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function positiveIntFromEnv(value: string | undefined, fallback: number): number {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
 function mimeTypeFor(fileName: string): string {

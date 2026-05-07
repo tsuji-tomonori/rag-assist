@@ -4,7 +4,7 @@ import { createHash } from "node:crypto"
 import { mkdtemp, writeFile } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, createBenchmarkIngestSignature, seedBenchmarkCorpus } from "./corpus.js"
+import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, createBenchmarkIngestSignature, seedBenchmarkCorpus } from "./corpus.js"
 
 test("benchmark corpus env helpers resolve optional corpus settings", () => {
   assert.equal(benchmarkCorpusDirFromEnv({}, "benchmark/corpus/standard-agent-v1"), "benchmark/corpus/standard-agent-v1")
@@ -12,6 +12,8 @@ test("benchmark corpus env helpers resolve optional corpus settings", () => {
   assert.equal(benchmarkCorpusDirFromEnv({ BENCHMARK_CORPUS_DIR: " " }), undefined)
   assert.equal(benchmarkCorpusSkipMemoryFromEnv({}), true)
   assert.equal(benchmarkCorpusSkipMemoryFromEnv({ BENCHMARK_CORPUS_SKIP_MEMORY: "false" }), false)
+  assert.equal(benchmarkIngestRunPollIntervalMsFromEnv({ BENCHMARK_INGEST_RUN_POLL_INTERVAL_MS: "25" }), 25)
+  assert.equal(benchmarkIngestRunTimeoutMsFromEnv({ BENCHMARK_INGEST_RUN_TIMEOUT_MS: "60000" }), 60000)
 })
 
 test("seedBenchmarkCorpus deletes an active matching seed document before upload", async () => {
@@ -212,7 +214,7 @@ test("seedBenchmarkCorpus uploads PDF files through upload sessions", async () =
     const headers = init?.headers as Record<string, string> | undefined
     const body = init?.body && typeof init.body === "string" ? JSON.parse(init.body) : init?.body
     requests.push({ url: requestUrl, method: init?.method, body, authorization: headers?.Authorization, contentType: headers?.["Content-Type"] })
-    if (init?.method === "GET") {
+    if (init?.method === "GET" && requestUrl.endsWith("/documents")) {
       return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
     if (requestUrl.endsWith("/documents/uploads")) {
@@ -227,7 +229,17 @@ test("seedBenchmarkCorpus uploads PDF files through upload sessions", async () =
     if (requestUrl === "http://upload.local/source.pdf") {
       return new Response("", { status: 200 })
     }
-    return new Response(JSON.stringify({ fileName: "source.pdf", lifecycleStatus: "active", chunkCount: 1 }), {
+    if (requestUrl.endsWith("/document-ingest-runs")) {
+      return new Response(JSON.stringify({ runId: "ingest-run-1", status: "queued" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      })
+    }
+    return new Response(JSON.stringify({
+      runId: "ingest-run-1",
+      status: "succeeded",
+      manifest: { fileName: "source.pdf", lifecycleStatus: "active", chunkCount: 1 }
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     })
@@ -245,12 +257,14 @@ test("seedBenchmarkCorpus uploads PDF files through upload sessions", async () =
     "GET http://localhost:8787/documents",
     "POST http://localhost:8787/documents/uploads",
     "PUT http://upload.local/source.pdf",
-    "POST http://localhost:8787/documents/uploads/upload-1/ingest"
+    "POST http://localhost:8787/document-ingest-runs",
+    "GET http://localhost:8787/document-ingest-runs/ingest-run-1"
   ])
   assert.equal((requests[1]?.body as { purpose?: string }).purpose, "benchmarkSeed")
   assert.deepEqual(Buffer.from(requests[2]?.body as Uint8Array), Buffer.from("%PDF-1.4 sample"))
   assert.equal(requests[2]?.contentType, "application/pdf")
-  const ingest = requests[3]?.body as { contentBase64?: string; fileName?: string; mimeType?: string; metadata?: { benchmarkSuiteId?: string } } | undefined
+  const ingest = requests[3]?.body as { uploadId?: string; contentBase64?: string; fileName?: string; mimeType?: string; metadata?: { benchmarkSuiteId?: string } } | undefined
+  assert.equal(ingest?.uploadId, "upload-1")
   assert.equal(ingest?.contentBase64, undefined)
   assert.equal(ingest?.fileName, "source.pdf")
   assert.equal(ingest?.mimeType, "application/pdf")
@@ -263,7 +277,7 @@ test("seedBenchmarkCorpus skips uploaded PDFs without extractable text", async (
   const logs: string[] = []
   const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
     const requestUrl = String(url)
-    if (init?.method === "GET") {
+    if (init?.method === "GET" && requestUrl.endsWith("/documents")) {
       return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
     if (requestUrl.endsWith("/documents/uploads")) {
@@ -276,8 +290,18 @@ test("seedBenchmarkCorpus skips uploaded PDFs without extractable text", async (
       }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
     if (requestUrl === "http://upload.local/image-only.pdf") return new Response("", { status: 200 })
-    return new Response(JSON.stringify({ error: "Uploaded document did not contain extractable text" }), {
-      status: 500,
+    if (requestUrl.endsWith("/document-ingest-runs")) {
+      return new Response(JSON.stringify({ runId: "ingest-run-1", status: "queued" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      })
+    }
+    return new Response(JSON.stringify({
+      runId: "ingest-run-1",
+      status: "failed",
+      error: "Uploaded document did not contain extractable text"
+    }), {
+      status: 200,
       headers: { "Content-Type": "application/json" }
     })
   }
@@ -288,6 +312,7 @@ test("seedBenchmarkCorpus skips uploaded PDFs without extractable text", async (
     suiteId: "allganize-rag-evaluation-ja-v1",
     skipMemory: true,
     fetchImpl,
+    ingestRunPollIntervalMs: 0,
     log: (message) => logs.push(message)
   })
 
@@ -304,7 +329,7 @@ test("seedBenchmarkCorpus skips uploaded PDFs when OCR fallback times out", asyn
   const logs: string[] = []
   const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
     const requestUrl = String(url)
-    if (init?.method === "GET") {
+    if (init?.method === "GET" && requestUrl.endsWith("/documents")) {
       return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
     if (requestUrl.endsWith("/documents/uploads")) {
@@ -317,10 +342,18 @@ test("seedBenchmarkCorpus skips uploaded PDFs when OCR fallback times out", asyn
       }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
     if (requestUrl === "http://upload.local/slow-ocr.pdf") return new Response("", { status: 200 })
+    if (requestUrl.endsWith("/document-ingest-runs")) {
+      return new Response(JSON.stringify({ runId: "ingest-run-1", status: "queued" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      })
+    }
     return new Response(JSON.stringify({
+      runId: "ingest-run-1",
+      status: "failed",
       error: "PDF OCR fallback failed for slow-ocr.pdf: Textract job did not finish within 45000ms"
     }), {
-      status: 500,
+      status: 200,
       headers: { "Content-Type": "application/json" }
     })
   }
@@ -331,6 +364,7 @@ test("seedBenchmarkCorpus skips uploaded PDFs when OCR fallback times out", asyn
     suiteId: "mmrag-docqa-v1",
     skipMemory: true,
     fetchImpl,
+    ingestRunPollIntervalMs: 0,
     log: (message) => logs.push(message)
   })
 
@@ -346,7 +380,7 @@ test("seedBenchmarkCorpus still fails on non-extractability ingest errors", asyn
   await writeFile(path.join(corpusDir, "source.pdf"), Buffer.from("%PDF-1.4 sample"))
   const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
     const requestUrl = String(url)
-    if (init?.method === "GET") {
+    if (init?.method === "GET" && requestUrl.endsWith("/documents")) {
       return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
     if (requestUrl.endsWith("/documents/uploads")) {
@@ -357,7 +391,17 @@ test("seedBenchmarkCorpus still fails on non-extractability ingest errors", asyn
       }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
     if (requestUrl === "http://upload.local/source.pdf") return new Response("", { status: 200 })
-    return new Response("temporary ingest failure", { status: 503 })
+    if (requestUrl.endsWith("/document-ingest-runs")) {
+      return new Response(JSON.stringify({ runId: "ingest-run-1", status: "queued" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      })
+    }
+    return new Response(JSON.stringify({
+      runId: "ingest-run-1",
+      status: "failed",
+      error: "temporary ingest failure"
+    }), { status: 200, headers: { "Content-Type": "application/json" } })
   }
 
   await assert.rejects(
@@ -368,7 +412,7 @@ test("seedBenchmarkCorpus still fails on non-extractability ingest errors", asyn
       skipMemory: true,
       fetchImpl
     }),
-    /Failed to ingest uploaded benchmark corpus source\.pdf: HTTP 503 temporary ingest failure/
+    /Benchmark corpus ingest run ingest-run-1 failed for source\.pdf: temporary ingest failure/
   )
 })
 

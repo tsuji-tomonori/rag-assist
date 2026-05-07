@@ -62,6 +62,7 @@ import {
   UpdateAliasRequestSchema,
   UsageSummaryListResponseSchema
 } from "./schemas.js"
+import type { DocumentIngestRun } from "./types.js"
 
 const deps = createDependencies()
 const service = new MemoRagService(deps)
@@ -106,6 +107,14 @@ function benchmarkSearchUser(runnerUser: AppUser, requestUser: z.infer<typeof Be
 
 function canReadOwnedRun(user: AppUser, createdBy: string): boolean {
   return createdBy === user.userId || getPermissionsForGroups(user.cognitoGroups).includes("chat:admin:read_all")
+}
+
+function canReadDocumentIngestRun(user: AppUser, run: DocumentIngestRun): boolean {
+  if (hasPermission(user, "chat:read:own") && canReadOwnedRun(user, run.createdBy)) return true
+  return hasPermission(user, "benchmark:seed_corpus")
+    && run.createdBy === user.userId
+    && run.purpose === "benchmarkSeed"
+    && isBenchmarkSeedUploadedObjectIngest(run)
 }
 
 const benchmarkSeedSuites = new Set([
@@ -859,11 +868,10 @@ app.openapi(
   }),
   async (c) => {
     const user = c.get("user")
-    requirePermission(user, "chat:read:own")
     const runId = c.req.param("runId") ?? ""
     const run = await deps.documentIngestRunStore.get(runId)
     if (!run) return c.json({ error: "Document ingest run not found" }, 404)
-    if (!canReadOwnedRun(user, run.createdBy)) return c.json({ error: "Forbidden" }, 403)
+    if (!canReadDocumentIngestRun(user, run)) return c.json({ error: "Forbidden" }, 403)
     return c.json(run, 200)
   }
 )
@@ -883,11 +891,10 @@ app.openapi(
   }),
   async (c) => {
     const user = c.get("user")
-    requirePermission(user, "chat:read:own")
     const runId = c.req.param("runId") ?? ""
     const run = await deps.documentIngestRunStore.get(runId)
     if (!run) return c.json({ error: "Document ingest run not found" }, 404)
-    if (!canReadOwnedRun(user, run.createdBy)) return c.json({ error: "Forbidden" }, 403)
+    if (!canReadDocumentIngestRun(user, run)) return c.json({ error: "Forbidden" }, 403)
 
     return streamSSE(c, async (stream) => {
       const lastEventId = Number(c.req.header("Last-Event-ID") ?? 0)
