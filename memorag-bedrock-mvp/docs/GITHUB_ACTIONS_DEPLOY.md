@@ -12,7 +12,7 @@
 
 | 入力 | 既定値 | 用途 |
 | --- | --- | --- |
-| `environment` | `dev` | GitHub Environment名。承認ルールや環境別secretを使う。 |
+| `environment` | `dev` | GitHub Environment名。workflow側で `dev` のみ選択可能（固定choice）とし、承認ルールや環境別secretを使う。 |
 | `aws-region` | `us-east-1` | CDK deploy先リージョン。 |
 | `bootstrap` | `false` | 初回のみCDK bootstrapを同時実行する。 |
 | `default-model-id` | `amazon.nova-lite-v1:0` | 回答生成に使うBedrock model ID。 |
