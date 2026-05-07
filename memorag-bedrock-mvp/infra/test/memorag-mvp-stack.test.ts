@@ -7,7 +7,14 @@ import { Match, Template } from "aws-cdk-lib/assertions"
 import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
 
 function synthesize(context?: Record<string, string>) {
-  const app = new cdk.App({ context })
+  const app = new cdk.App({
+    context: {
+      benchmarkSourceOwner: "tsuji-tomonori",
+      benchmarkSourceRepo: "rag-assist",
+      benchmarkSourceBranch: "main",
+      ...context
+    }
+  })
   const stack = new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
     env: { account: "111111111111", region: "ap-northeast-1" },
     includeFrontendDeployment: false
@@ -23,9 +30,7 @@ test("implements the designed serverless resources", () => {
   template.resourceCountIs("AWS::Cognito::UserPoolClient", 1)
   template.resourceCountIs("AWS::Cognito::UserPoolGroup", 9)
   template.hasResourceProperties("AWS::Cognito::UserPool", {
-    AdminCreateUserConfig: { AllowAdminCreateUserOnly: false },
-    AutoVerifiedAttributes: ["email"],
-    LambdaConfig: Match.objectLike({ PostConfirmation: Match.anyValue() })
+    AdminCreateUserConfig: { AllowAdminCreateUserOnly: true }
   })
   template.resourceCountIs("AWS::SecretsManager::Secret", 1)
   template.resourceCountIs("AWS::KMS::Key", 1)
@@ -79,13 +84,6 @@ test("implements the designed serverless resources", () => {
     Timeout: 60,
     Environment: Match.objectLike({
       Variables: Match.objectLike({ BENCHMARK_BUCKET_NAME: Match.anyValue() })
-    })
-  })
-  template.hasResourceProperties("AWS::Lambda::Function", {
-    Handler: "index.handler",
-    Runtime: "nodejs22.x",
-    Environment: Match.objectLike({
-      Variables: Match.objectLike({ DEFAULT_SIGNUP_GROUP_NAME: "CHAT_USER" })
     })
   })
   template.hasResourceProperties("AWS::ApiGateway::RestApi", {

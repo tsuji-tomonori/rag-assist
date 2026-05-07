@@ -51,6 +51,14 @@ export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
     super(scope, id, props)
 
+    const requireContext = (key: string): string => {
+      const value = this.node.tryGetContext(key)
+      if (typeof value !== "string" || value.trim() === "") {
+        throw new Error(`CDK context "${key}" is required.`)
+      }
+      return value.trim()
+    }
+
     const deploymentEnvironment = String(this.node.tryGetContext("deploymentEnvironment") ?? "dev")
     const costCenter = String(this.node.tryGetContext("costCenter") ?? "memorag-mvp")
     const commonResourceTags = {
@@ -71,9 +79,9 @@ export class MemoRagMvpStack extends Stack {
     const evidenceVectorIndexName = "evidence-index"
     const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
     const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
-    const benchmarkSourceOwner = String(this.node.tryGetContext("benchmarkSourceOwner") ?? "tsuji-tomonori")
-    const benchmarkSourceRepo = String(this.node.tryGetContext("benchmarkSourceRepo") ?? "rag-assist")
-    const benchmarkSourceBranch = String(this.node.tryGetContext("benchmarkSourceBranch") ?? "main")
+    const benchmarkSourceOwner = requireContext("benchmarkSourceOwner")
+    const benchmarkSourceRepo = requireContext("benchmarkSourceRepo")
+    const benchmarkSourceBranch = requireContext("benchmarkSourceBranch")
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -252,7 +260,7 @@ export class MemoRagMvpStack extends Stack {
 
 
     const userPool = new cognito.UserPool(this, "UserPool", {
-      selfSignUpEnabled: true,
+      selfSignUpEnabled: false,
       signInAliases: { email: true },
       autoVerify: { email: true },
       mfa: cognito.Mfa.OPTIONAL,
@@ -263,35 +271,6 @@ export class MemoRagMvpStack extends Stack {
     })
     const userPoolResource = userPool.node.defaultChild as cognito.CfnUserPool
     userPoolResource.addPropertyOverride("UserPoolTags", commonResourceTags)
-
-    const signupRoleAssignmentLogGroup = new logs.LogGroup(this, "SignupRoleAssignmentLogGroup", {
-      retention: logs.RetentionDays.ONE_WEEK,
-      removalPolicy: RemovalPolicy.DESTROY
-    })
-    const signupRoleAssignmentFn = new lambda.Function(this, "SignupRoleAssignmentFunction", {
-      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/cognito-post-confirmation")),
-      handler: "index.handler",
-      runtime: lambda.Runtime.NODEJS_22_X,
-      architecture: lambda.Architecture.ARM_64,
-      timeout: Duration.seconds(10),
-      logGroup: signupRoleAssignmentLogGroup,
-      environment: {
-        DEFAULT_SIGNUP_GROUP_NAME: "CHAT_USER"
-      }
-    })
-    signupRoleAssignmentFn.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["cognito-idp:AdminAddUserToGroup"],
-        resources: [
-          Stack.of(this).formatArn({
-            service: "cognito-idp",
-            resource: "userpool",
-            resourceName: "*"
-          })
-        ]
-      })
-    )
-    userPool.addTrigger(cognito.UserPoolOperation.POST_CONFIRMATION, signupRoleAssignmentFn)
 
     const userPoolClient = userPool.addClient("WebClient", {
       authFlows: { userPassword: true, userSrp: true },

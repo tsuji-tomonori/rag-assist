@@ -15,6 +15,7 @@
 - AC-TC001-002: semantic search は S3 Vectors または local vector store adapter 経由で実行できること。
 - AC-TC001-003: lexical retrieval を追加する場合は Lambda の memory、timeout、cold start cache を前提に index サイズを制御すること。
 - AC-TC001-004: OpenSearch は高クエリ量、低レイテンシ検索UI、大規模 index が必要になった場合の再評価候補として扱うこと。
+- AC-TC001-005: OpenSearch、GraphRAG、RAPTOR、visual retrieval、cross-encoder reranker、HyDE は、現行 hybrid retrieval の baseline / ablation と ACL・answerability・citation support の safety gate を満たした場合だけ default path の導入候補にすること。
 
 ## 要件の源泉・背景
 
@@ -38,7 +39,7 @@
 | 種類 | 技術制約 |
 | 依存関係 | S3 Vectors adapter、Lambda runtime、TypeScript codebase |
 | 衝突 | 検索UIや高負荷用途では OpenSearch が有利 |
-| 受け入れ基準 | `AC-TC001-001` から `AC-TC001-004` |
+| 受け入れ基準 | `AC-TC001-001` から `AC-TC001-005` |
 | 優先度 | A |
 | 安定性 | Medium |
 | 変更履歴 | 2026-05-01 初版 |
