@@ -65,6 +65,8 @@ aws cloudformation deploy \
   --template-file infra/bootstrap/github-actions-oidc-role.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
+    GitHubOwner=<OWNER> \
+    GitHubRepository=<REPOSITORY> \
     GitHubEnvironment=dev
 ```
 
@@ -76,6 +78,8 @@ aws cloudformation deploy \
   --template-file infra/bootstrap/github-actions-oidc-role.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
+    GitHubOwner=<OWNER> \
+    GitHubRepository=<REPOSITORY> \
     GitHubEnvironment=dev \
     ExistingGitHubOidcProviderArn=arn:aws:iam::<ACCOUNT_ID>:oidc-provider/token.actions.githubusercontent.com
 ```
@@ -103,7 +107,7 @@ CloudFormation Outputsのうち、GitHub EnvironmentまたはRepository secret�
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:tsuji-tomonori/rag-assist:environment:dev"
+          "token.actions.githubusercontent.com:sub": "repo:<OWNER>/<REPOSITORY>:environment:dev"
         }
       }
     }
