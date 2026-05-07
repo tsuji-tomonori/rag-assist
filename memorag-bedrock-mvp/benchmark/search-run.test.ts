@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { createServer, type IncomingMessage } from "node:http"
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 import path from "node:path"
 import { spawn, spawnSync } from "node:child_process"
@@ -80,28 +80,8 @@ test("search runner seeds benchmark corpus before search rows when configured", 
   })}\n`, "utf-8")
 
   const calls: Array<{ method?: string; path?: string; body?: unknown }> = []
-  const server = createServer(async (req, res) => {
-    const body = await readRequestJson(req)
-    calls.push({ method: req.method, path: req.url, body })
-    res.setHeader("content-type", "application/json")
-    if (req.method === "GET" && req.url === "/documents") {
-      res.end(JSON.stringify({ documents: [] }))
-      return
-    }
-    if (req.method === "POST" && req.url === "/documents") {
-      res.end(JSON.stringify({ fileName: "handbook.md", lifecycleStatus: "active", chunkCount: 1 }))
-      return
-    }
-    if (req.method === "POST" && req.url === "/benchmark/search") {
-      res.end(JSON.stringify({
-        query: "経費精算 期限",
-        results: [{ id: "doc-handbook-chunk-0000", documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
-        diagnostics: { lexicalCount: 1, semanticCount: 0, fusedCount: 1, latencyMs: 12 }
-      }))
-      return
-    }
-    res.statusCode = 404
-    res.end(JSON.stringify({ error: "not found" }))
+  const server = createServer((req, res) => {
+    void handleSearchRunnerRequest(req, res, calls)
   })
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
   const address = server.address() as AddressInfo | null
@@ -181,6 +161,30 @@ function runSearchRunnerAsync(env: Record<string, string>): Promise<{ status: nu
 
 function readSummary(summaryPath: string): SearchSummaryArtifact {
   return JSON.parse(readFileSync(summaryPath, "utf-8")) as SearchSummaryArtifact
+}
+
+async function handleSearchRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestJson(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  if (req.method === "GET" && req.url === "/documents") {
+    res.end(JSON.stringify({ documents: [] }))
+    return
+  }
+  if (req.method === "POST" && req.url === "/documents") {
+    res.end(JSON.stringify({ fileName: "handbook.md", lifecycleStatus: "active", chunkCount: 1 }))
+    return
+  }
+  if (req.method === "POST" && req.url === "/benchmark/search") {
+    res.end(JSON.stringify({
+      query: "経費精算 期限",
+      results: [{ id: "doc-handbook-chunk-0000", documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
+      diagnostics: { lexicalCount: 1, semanticCount: 0, fusedCount: 1, latencyMs: 12 }
+    }))
+    return
+  }
+  res.statusCode = 404
+  res.end(JSON.stringify({ error: "not found" }))
 }
 
 async function readRequestJson(req: IncomingMessage): Promise<unknown> {
