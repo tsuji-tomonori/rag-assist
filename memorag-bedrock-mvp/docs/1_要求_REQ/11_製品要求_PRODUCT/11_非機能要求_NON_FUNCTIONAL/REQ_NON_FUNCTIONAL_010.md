@@ -23,7 +23,7 @@
 
 ## 要件の源泉・背景
 
-- 源泉: ユーザー提示の「ついでに直した方がよい点」、現行 `app.ts` の認証 middleware 対象確認。
+- 源泉: ユーザー提示の「ついでに直した方がよい点」、現行 `app.ts` と `routes/api-routes.ts` の認証 middleware 対象確認。
 - 背景: 現行の認証 middleware 対象に `/benchmark/query` が含まれておらず、benchmark response には retrieved chunk や debug 情報が含まれうる。
 
 ## 要件の目的・意図
@@ -57,6 +57,6 @@
 | 理解容易性 | OK | 対象 API と条件が明確 |
 | 一貫性 | OK | 既存認証方式を拡張するだけ |
 | 標準・契約適合 | OK | 社内資料保護方針に合う |
-| 実現可能性 | OK | `app.ts` と権限定義で対応可能 |
+| 実現可能性 | OK | `app.ts`、`routes/api-routes.ts`、権限定義で対応可能 |
 | 検証可能性 | OK | auth on/off と role 切り替えの API test で確認可能 |
 | ニーズ適合 | OK | 評価基盤拡張前の安全対策 |
