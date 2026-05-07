@@ -33,7 +33,7 @@ test("service ingests text, lists manifests, persists debug traces, and deletes 
   assert.ok(manifest.memoryCardsObjectKey)
   assert.ok(manifest.evidenceVectorKeys?.length)
   assert.ok(manifest.memoryVectorKeys?.length)
-  assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-structured-v2")
+  assert.equal(manifest.pipelineVersions?.chunkerVersion, "chunk-semantic-v3")
   assert.ok(manifest.chunks?.[0]?.chunkHash)
   assert.equal(manifest.documentStatistics?.chunkCount, manifest.chunkCount)
   assert.ok((manifest.documentStatistics?.averageChunkChars ?? 0) > 0)

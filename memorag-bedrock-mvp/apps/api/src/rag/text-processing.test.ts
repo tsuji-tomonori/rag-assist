@@ -6,13 +6,27 @@ import { chunkStructuredBlocks, chunkText } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
 import { extractDocumentFromUpload, extractTextFromUpload } from "./text-extract.js"
 
-test("chunking normalizes whitespace and respects overlap and sentence boundaries", () => {
+test("chunking normalizes whitespace and prefers semantic boundaries", () => {
   assert.deepEqual(chunkText(" \n\n "), [])
 
   const chunks = chunkText("第1文。第2文。\n\n第3文。第4文。", 12, 20)
   assert.ok(chunks.length > 1)
   assert.equal(chunks[0]?.id, "chunk-0000")
-  assert.ok((chunks[1]?.startChar ?? 0) < (chunks[0]?.endChar ?? 0))
+  assert.ok(chunks.every((chunk) => !chunk.text.startsWith("文。")))
+  assert.deepEqual(
+    chunks.map((chunk) => chunk.text),
+    ["第1文。第2文。", "第3文。第4文。"]
+  )
+})
+
+test("chunking uses semantic-unit overlap instead of starting mid sentence", () => {
+  const chunks = chunkText("第1文。\n\n第2文。\n\n第3文。", 14, 10)
+
+  assert.deepEqual(
+    chunks.map((chunk) => chunk.text),
+    ["第1文。\n\n第2文。", "第2文。\n\n第3文。"]
+  )
+  assert.equal(chunks[1]?.startChar, chunks[0]?.text.indexOf("第2文。"))
 })
 
 test("chunking keeps PDF page-break segments from being merged", () => {
@@ -36,6 +50,18 @@ test("chunking records section metadata and neighboring chunk links", () => {
   assert.equal(chunks[1]?.previousChunkId, chunks[0]?.id)
 })
 
+test("chunking keeps list items intact and falls back only for oversized units", () => {
+  const listChunks = chunkText("- 申請を入力します\n- 上長が承認します\n- 経理が確認します", 24, 8)
+
+  assert.ok(listChunks.length > 1)
+  assert.ok(listChunks.every((chunk) => chunk.text.split("\n").every((line) => /^-\s+/.test(line))))
+  assert.ok(listChunks.some((chunk) => chunk.text.includes("- 上長が承認します")))
+
+  const longChunks = chunkText("A".repeat(65), 20, 4)
+  assert.ok(longChunks.length > 1)
+  assert.ok(longChunks.every((chunk) => chunk.text.length <= 20))
+})
+
 test("chunking normalizes table, list, code, and figure blocks", () => {
   const chunks = chunkStructuredBlocks(
     [
@@ -52,6 +78,23 @@ test("chunking normalizes table, list, code, and figure blocks", () => {
   assert.equal(chunks[0]?.tableColumnCount, 2)
   assert.equal(chunks[1]?.listDepth, 1)
   assert.equal(chunks[3]?.figureCaption, "承認フロー")
+})
+
+test("chunking keeps atomic structured blocks unsplit", () => {
+  const tableText = "| 項目 | 期限 |\n| --- | --- |\n| 申請 | 翌月5営業日 |\n| 承認 | 翌月7営業日 |"
+  const codeText = "```\n" + "status = approved\n".repeat(8) + "```"
+  const figureText = "Figure: " + "承認フロー".repeat(20)
+  const chunks = chunkStructuredBlocks(
+    [
+      { id: "table-1", kind: "table", text: tableText },
+      { id: "code-1", kind: "code", text: codeText },
+      { id: "fig-1", kind: "figure", text: figureText, figureCaption: "承認フロー" }
+    ],
+    32,
+    8
+  )
+
+  assert.deepEqual(chunks.map((chunk) => chunk.text), [tableText, codeText, figureText])
 })
 
 test("upload text extraction handles direct text, base64, limits, and missing payloads", async () => {
