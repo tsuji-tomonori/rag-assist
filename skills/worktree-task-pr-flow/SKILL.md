@@ -31,8 +31,11 @@ Do not force the full workflow for pure question answering, plan-only requests, 
 5. Implement the requested change.
    - Follow repository-local skills and `AGENTS.md`.
    - Update durable docs when behavior or workflow changes require it.
+   - Use `skills/github-apps-pr-operator/SKILL.md` for GitHub Apps PR operations.
+   - Use `skills/taskfile-command-runner/SKILL.md` for Taskfile commands and permission delegation.
 6. Validate before commit.
    - Use `skills/implementation-test-selector/SKILL.md`.
+   - Use `skills/repository-test-runner/SKILL.md` to run, retry, escalate, and report selected checks.
    - Run relevant checks such as `git diff --check` and targeted test/lint/docs commands.
    - Do not claim unrun checks as completed.
 7. Write the post-task report.
@@ -44,6 +47,7 @@ Do not force the full workflow for pure question answering, plan-only requests, 
    - Push the worktree branch to `origin`.
 9. Create the PR to `main`.
    - Use GitHub Apps for PR creation whenever available.
+   - Follow `skills/github-apps-pr-operator/SKILL.md`; do not ask for extra confirmation for routine PR creation, PR body updates, or top-level acceptance/self-review comments.
    - Use `skills/japanese-pr-title-comment/SKILL.md` for the title, body, and comments.
    - Base branch is `main` unless the user explicitly specifies another target.
 10. Comment on acceptance criteria after PR creation.
