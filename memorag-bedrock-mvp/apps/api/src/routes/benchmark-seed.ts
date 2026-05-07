@@ -1,9 +1,9 @@
-import { z } from "@hono/zod-openapi"
+import type { z } from "@hono/zod-openapi"
 import { HTTPException } from "hono/http-exception"
 import { hasPermission } from "../authorization.js"
-import { DocumentManifestSchema, DocumentUploadRequestSchema, IngestUploadedDocumentRequestSchema } from "../schemas.js"
 import type { AppUser } from "../auth.js"
 import type { MemoRagService } from "../rag/memorag-service.js"
+import type { DocumentManifestSchema, DocumentUploadRequestSchema, IngestUploadedDocumentRequestSchema } from "../schemas.js"
 
 const benchmarkSeedSuites = new Set([
   "smoke-agent-v1",
