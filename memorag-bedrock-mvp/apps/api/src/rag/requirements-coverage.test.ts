@@ -34,6 +34,9 @@ const coverageByRequirement: Record<string, string[]> = {
   "FR-028": ["useConversationHistory.test.ts", "conversationHistorySearch.test.ts"],
   "FR-029": ["graph.test.ts", "useChatSession.test.ts"],
   "FR-030": ["conversationHistorySearch.test.ts"],
+  "FR-031": ["api-contract.test.ts", "document-ingest-runs tests", "documentsApi tests"],
+  "FR-032": ["benchmark/corpus.test.ts", "benchmark/run.test.ts"],
+  "FR-033": ["hybrid-search.test.ts", "benchmark/run.test.ts", "search-run.test.ts"],
   "NFR-001": ["graph.test.ts", "local-stores.test.ts", "text-processing.test.ts"],
   "NFR-002": ["infra/test/memorag-mvp-stack.test.ts", "docs/OPERATIONS.md"],
   "NFR-003": ["infra/test/memorag-mvp-stack.test.ts"],
@@ -45,7 +48,8 @@ const coverageByRequirement: Record<string, string[]> = {
   "NFR-009": ["docs/REQUIREMENTS.md", "docs/OPERATIONS.md"],
   "NFR-010": ["authorization.test.ts", "access-control-policy.test.ts"],
   "NFR-011": ["authorization.test.ts", "questions-access.test.ts"],
-  "NFR-012": ["hybrid-search.test.ts", "access-control-policy.test.ts"]
+  "NFR-012": ["hybrid-search.test.ts", "access-control-policy.test.ts"],
+  "NFR-013": ["chat-run-events-stream.test.ts", "access-control-policy.test.ts"]
 }
 
 test("covered requirements map to existing product requirement documents", async () => {

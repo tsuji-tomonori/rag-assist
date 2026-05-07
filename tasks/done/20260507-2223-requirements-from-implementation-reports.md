@@ -48,6 +48,10 @@
   - `git diff --check`: pass
   - `pre-commit run --files $(git ls-files --modified --others --exclude-standard)`: pass
   - 要件 ID の `rg` 整合確認: pass
+- CI 追補:
+  - 原因: 新規要件 `FR-031` / `FR-032` / `FR-033` / `NFR-013` が `requirements-coverage.test.ts` の coverage map に未登録だった。
+  - 修正: coverage map に新規要件 ID と対応 test 参照を追加。
+  - 追補検証: `requirements-coverage.test.ts` 単体、API coverage 全体、`git diff --check` が pass。
 
 ## 検証計画
 

@@ -74,3 +74,14 @@
 - 実装コードは変更していないため、API / Web / Infra / Benchmark の unit test は実行していない。
 - `task docs:check` は Taskfile に存在しないため未実施。代替として `git diff --check` と pre-commit を実行した。
 - 新規要件の採番は `origin/main` 時点の末尾に合わせた。並行 PR で同じ採番が追加された場合は merge 時に採番調整が必要になる。
+
+## 9. CI 追補対応
+
+- PR #183 の CI で API test が失敗した。
+- 原因は `apps/api/src/rag/requirements-coverage.test.ts` が product requirement docs と coverage map の完全一致を検証しており、今回追加した `FR-031`、`FR-032`、`FR-033`、`NFR-013` が coverage map に未登録だったため。
+- `requirements-coverage.test.ts` に新規要件 ID と対応する既存 test / package test の参照を追加した。
+- 追補検証:
+  - `npm ci`: pass。既存の moderate vulnerability 1 件が表示されたが、今回の変更範囲外。
+  - `npm --prefix memorag-bedrock-mvp exec -w @memorag-mvp/api -- tsx --test src/rag/requirements-coverage.test.ts`: pass
+  - `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 0 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass
+  - `git diff --check`: pass
