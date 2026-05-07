@@ -1,6 +1,6 @@
 # benchmark seed OCR 非同期 ingest 化
 
-状態: in_progress
+状態: done
 
 ## 背景
 
