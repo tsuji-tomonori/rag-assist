@@ -708,7 +708,8 @@ app.openapi(
     const uploadId = encodeUploadId(objectKey)
     const contentType = body.mimeType || "application/octet-stream"
     const expiresInSeconds = Math.max(60, config.documentUploadExpiresInSeconds)
-    const s3Upload = await deps.objectStore.createUploadUrl?.(objectKey, { contentType, expiresInSeconds })
+    const maxUploadBytes = Math.max(1, config.documentUploadMaxBytes)
+    const s3Upload = await deps.objectStore.createUploadUrl?.(objectKey, { contentType, expiresInSeconds, maxBytes: maxUploadBytes })
 
     return c.json({
       uploadId,
@@ -717,7 +718,8 @@ app.openapi(
       method: s3Upload ? "PUT" : "POST",
       headers: s3Upload?.headers ?? { "Content-Type": contentType },
       expiresInSeconds,
-      requiresAuth: !s3Upload
+      requiresAuth: !s3Upload,
+      maxUploadBytes
     }, 200)
   }
 )
@@ -745,7 +747,9 @@ app.openapi(
       return c.json({ error: "Local upload content endpoint is disabled when S3 upload URLs are available" }, 400)
     }
 
-    await deps.objectStore.putBytes(objectKey, Buffer.from(await c.req.arrayBuffer()), c.req.header("content-type") ?? undefined)
+    const uploaded = Buffer.from(await c.req.arrayBuffer())
+    if (uploaded.length > config.documentUploadMaxBytes) return c.json({ error: `Uploaded object exceeds ${config.documentUploadMaxBytes} bytes` }, 400)
+    await deps.objectStore.putBytes(objectKey, uploaded, c.req.header("content-type") ?? undefined)
     return c.body(null, 204)
   }
 )
@@ -774,6 +778,11 @@ app.openapi(
     const objectKey = decodeUploadId(uploadId)
     const purpose = uploadPurposeForKey(user, objectKey)
     authorizeUploadedDocumentIngest(user, purpose, body)
+    const objectSize = await deps.objectStore.getObjectSize(objectKey)
+    if (objectSize > config.documentUploadMaxBytes) {
+      await deps.objectStore.deleteObject(objectKey)
+      return c.json({ error: `Uploaded object exceeds ${config.documentUploadMaxBytes} bytes` }, 400)
+    }
     const contentBytes = await deps.objectStore.getBytes(objectKey)
     if (contentBytes.length === 0) return c.json({ error: "Uploaded object is empty" }, 400)
 

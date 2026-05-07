@@ -44,7 +44,8 @@ export const CreateDocumentUploadResponseSchema = z.object({
   method: z.enum(["PUT", "POST"]),
   headers: z.record(z.string(), z.string()),
   expiresInSeconds: z.number().int().positive(),
-  requiresAuth: z.boolean()
+  requiresAuth: z.boolean(),
+  maxUploadBytes: z.number().int().positive()
 })
 
 export const IngestUploadedDocumentRequestSchema = z.object({

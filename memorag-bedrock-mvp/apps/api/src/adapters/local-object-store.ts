@@ -29,6 +29,11 @@ export class LocalObjectStore implements ObjectStore {
     return fs.readFile(this.pathFor(key))
   }
 
+  async getObjectSize(key: string): Promise<number> {
+    const stats = await fs.stat(this.pathFor(key))
+    return stats.size
+  }
+
   async deleteObject(key: string): Promise<void> {
     await fs.rm(this.pathFor(key), { force: true })
   }
