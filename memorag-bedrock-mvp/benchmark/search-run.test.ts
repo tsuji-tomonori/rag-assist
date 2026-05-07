@@ -109,34 +109,6 @@ test("search runner seeds benchmark corpus before search rows when configured", 
   }
 })
 
-async function handleSearchRunnerRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  calls: Array<{ method?: string; path?: string; body?: unknown }>
-): Promise<void> {
-    const body = await readRequestJson(req)
-    calls.push({ method: req.method, path: req.url, body })
-    res.setHeader("content-type", "application/json")
-    if (req.method === "GET" && req.url === "/documents") {
-      res.end(JSON.stringify({ documents: [] }))
-      return
-    }
-    if (req.method === "POST" && req.url === "/documents") {
-      res.end(JSON.stringify({ fileName: "handbook.md", lifecycleStatus: "active", chunkCount: 1 }))
-      return
-    }
-    if (req.method === "POST" && req.url === "/benchmark/search") {
-      res.end(JSON.stringify({
-        query: "経費精算 期限",
-        results: [{ id: "doc-handbook-chunk-0000", documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
-        diagnostics: { lexicalCount: 1, semanticCount: 0, fusedCount: 1, latencyMs: 12 }
-      }))
-      return
-    }
-    res.statusCode = 404
-    res.end(JSON.stringify({ error: "not found" }))
-}
-
 function artifactPaths(name: string): { dir: string; output: string; summary: string; report: string } {
   const dir = mkdtempSync(path.join(tmpdir(), `memorag-search-run-${name}-`))
   return {
