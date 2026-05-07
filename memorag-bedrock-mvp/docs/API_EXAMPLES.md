@@ -23,15 +23,36 @@ curl -s http://localhost:8787/documents \
   }' | jq
 ```
 
-## Upload file as base64
+## Upload file through S3 handoff
 
 ```bash
-BASE64=$(base64 -w0 ./handbook.md)
-curl -s http://localhost:8787/documents \
+UPLOAD_JSON="$(
+  curl -s http://localhost:8787/documents/uploads \
+    "${AUTH_HEADER[@]}" \
+    -H 'Content-Type: application/json' \
+    -d '{"fileName":"handbook.pdf","mimeType":"application/pdf"}'
+)"
+
+UPLOAD_URL="$(echo "$UPLOAD_JSON" | jq -r '.uploadUrl')"
+UPLOAD_ID="$(echo "$UPLOAD_JSON" | jq -r '.uploadId')"
+UPLOAD_METHOD="$(echo "$UPLOAD_JSON" | jq -r '.method')"
+
+curl -s -X "$UPLOAD_METHOD" "$UPLOAD_URL" \
+  -H 'Content-Type: application/pdf' \
+  --data-binary @./handbook.pdf
+
+curl -s "http://localhost:8787/documents/uploads/${UPLOAD_ID}/ingest" \
   "${AUTH_HEADER[@]}" \
   -H 'Content-Type: application/json' \
-  -d "{\"fileName\":\"handbook.md\",\"contentBase64\":\"$BASE64\",\"mimeType\":\"text/markdown\"}" | jq
+  -d '{
+    "fileName":"handbook.pdf",
+    "mimeType":"application/pdf",
+    "memoryModelId":"amazon.nova-lite-v1:0",
+    "embeddingModelId":"amazon.titan-embed-text-v2:0"
+  }' | jq
 ```
+
+本番では `uploadUrl` は documents bucket への S3 presigned PUT URL になる。ローカルの file store では同じ contract の API upload URL を返すため、UI と curl 手順は同じ形で確認できる。`requiresAuth=true` の local upload URL を使う場合だけ、転送リクエストにも `Authorization` header を付ける。
 
 ## Chat
 

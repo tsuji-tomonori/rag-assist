@@ -46,6 +46,7 @@ export const config = {
   benchmarkDefaultDatasetKey: process.env.BENCHMARK_DEFAULT_DATASET_KEY ?? "datasets/agent/standard-v1.jsonl",
   benchmarkTargetApiBaseUrl: process.env.BENCHMARK_TARGET_API_BASE_URL ?? process.env.API_BASE_URL ?? "",
   benchmarkDownloadExpiresInSeconds: numberEnv("BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS", 900),
+  documentUploadExpiresInSeconds: numberEnv("DOCUMENT_UPLOAD_EXPIRES_IN_SECONDS", 900),
   vectorBucketName: process.env.VECTOR_BUCKET_NAME ?? "local-vector-bucket",
   memoryVectorIndexName: process.env.MEMORY_VECTOR_INDEX_NAME ?? process.env.VECTOR_INDEX_NAME ?? "memory-index",
   evidenceVectorIndexName: process.env.EVIDENCE_VECTOR_INDEX_NAME ?? process.env.VECTOR_INDEX_NAME ?? "evidence-index",

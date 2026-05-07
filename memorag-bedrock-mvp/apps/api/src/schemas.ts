@@ -31,6 +31,31 @@ export const DocumentUploadRequestSchema = z.object({
   skipMemory: z.boolean().optional()
 })
 
+export const CreateDocumentUploadRequestSchema = z.object({
+  fileName: z.string().min(1).openapi({ example: "handbook.pdf" }),
+  mimeType: z.string().optional().openapi({ example: "application/pdf" }),
+  purpose: z.enum(["document", "benchmarkSeed"]).optional().default("document")
+})
+
+export const CreateDocumentUploadResponseSchema = z.object({
+  uploadId: z.string(),
+  objectKey: z.string(),
+  uploadUrl: z.string().url(),
+  method: z.enum(["PUT", "POST"]),
+  headers: z.record(z.string(), z.string()),
+  expiresInSeconds: z.number().int().positive(),
+  requiresAuth: z.boolean()
+})
+
+export const IngestUploadedDocumentRequestSchema = z.object({
+  fileName: z.string().min(1).openapi({ example: "handbook.pdf" }),
+  mimeType: z.string().optional().openapi({ example: "application/pdf" }),
+  metadata: z.record(MetadataValueSchema).optional(),
+  embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
+  memoryModelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
+  skipMemory: z.boolean().optional()
+})
+
 export const PipelineVersionsSchema = z.object({
   agentWorkflowVersion: z.string(),
   chunkerVersion: z.string(),

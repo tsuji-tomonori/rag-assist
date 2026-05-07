@@ -26,6 +26,7 @@ type IngestInput = {
   fileName: string
   text?: string
   contentBase64?: string
+  contentBytes?: Buffer
   textractJson?: string
   mimeType?: string
   metadata?: Record<string, JsonValue>

@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { cutoverReindexMigration, deleteDocument, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, uploadDocument } from "../api/documentsApi.js"
+import { cutoverReindexMigration, deleteDocument, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, uploadDocumentFile } from "../api/documentsApi.js"
 import { useDocuments } from "./useDocuments.js"
 
 vi.mock("../api/documentsApi.js", () => ({
@@ -10,11 +10,7 @@ vi.mock("../api/documentsApi.js", () => ({
   listReindexMigrations: vi.fn(),
   rollbackReindexMigration: vi.fn(),
   stageReindexMigration: vi.fn(),
-  uploadDocument: vi.fn()
-}))
-
-vi.mock("../../../shared/utils/fileToBase64.js", () => ({
-  fileToBase64: vi.fn().mockResolvedValue("base64")
+  uploadDocumentFile: vi.fn()
 }))
 
 function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}): Parameters<typeof useDocuments>[0] {
@@ -34,7 +30,7 @@ describe("useDocuments", () => {
     vi.clearAllMocks()
     vi.mocked(listDocuments).mockResolvedValue([{ documentId: "doc-1", fileName: "a.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }])
     vi.mocked(listReindexMigrations).mockResolvedValue([])
-    vi.mocked(uploadDocument).mockResolvedValue({ documentId: "doc-2", fileName: "b.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+    vi.mocked(uploadDocumentFile).mockResolvedValue({ documentId: "doc-2", fileName: "b.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
     vi.mocked(deleteDocument).mockResolvedValue(undefined)
     vi.mocked(stageReindexMigration).mockResolvedValue({
       migrationId: "migration-1",
@@ -121,17 +117,15 @@ describe("useDocuments", () => {
     const file = new File(["body"], "b.txt", { type: "" })
 
     await act(() => result.current.onUploadDocumentFile(file))
-    expect(uploadDocument).toHaveBeenCalledWith(expect.objectContaining({
-      fileName: "b.txt",
-      contentBase64: "base64",
-      mimeType: undefined,
+    expect(uploadDocumentFile).toHaveBeenCalledWith(expect.objectContaining({
+      file,
       memoryModelId: "model",
       embeddingModelId: "embedding"
     }))
 
     const readonly = renderHook(() => useDocuments(createProps({ canWriteDocuments: false })))
     await act(() => readonly.result.current.onUploadDocumentFile(file))
-    expect(uploadDocument).toHaveBeenCalledTimes(1)
+    expect(uploadDocumentFile).toHaveBeenCalledTimes(1)
 
     vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true)
     await act(() => result.current.onDelete(undefined))

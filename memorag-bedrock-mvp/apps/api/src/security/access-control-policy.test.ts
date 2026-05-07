@@ -7,7 +7,7 @@ type RoutePolicy = {
   method: string
   path: string
   permission?: string
-  mode?: "authenticated" | "required" | "requesterOrPermission" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission"
+  mode?: "authenticated" | "required" | "requesterOrPermission" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission" | "documentUploadSession"
 }
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
@@ -55,6 +55,9 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/admin/costs", permission: "cost:read:all" },
   { method: "get", path: "/documents", permission: "rag:doc:read", mode: "benchmarkSeedListOrPermission" },
   { method: "post", path: "/documents", permission: "rag:doc:write:group", mode: "benchmarkSeedOrPermission" },
+  { method: "post", path: "/documents/uploads", permission: "rag:doc:write:group", mode: "documentUploadSession" },
+  { method: "post", path: "/documents/uploads/{uploadId}/content", permission: "rag:doc:write:group", mode: "documentUploadSession" },
+  { method: "post", path: "/documents/uploads/{uploadId}/ingest", permission: "rag:doc:write:group", mode: "documentUploadSession" },
   { method: "post", path: "/documents/{documentId}/reindex", permission: "rag:index:rebuild:group" },
   { method: "get", path: "/documents/reindex-migrations", permission: "rag:index:rebuild:group" },
   { method: "post", path: "/documents/{documentId}/reindex/stage", permission: "rag:index:rebuild:group" },
@@ -145,6 +148,12 @@ test("protected API routes keep route-level permission checks", async () => {
         block,
         /benchmark:seed_corpus[\s\S]*?listDocuments/,
         `${policy.method.toUpperCase()} ${policy.path} must only allow benchmark seed document listing`
+      )
+    } else if (policy.mode === "documentUploadSession") {
+      assert.match(
+        block,
+        /authorizeDocumentUploadSession|authorizeUploadedDocumentIngest/,
+        `${policy.method.toUpperCase()} ${policy.path} must use scoped upload-session authorization`
       )
     } else {
       assert.match(

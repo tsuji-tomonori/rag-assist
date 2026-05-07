@@ -146,14 +146,29 @@ test("seedBenchmarkCorpus uploads markdown files with benchmark metadata", async
   assert.equal(typeof (upload?.body as { metadata?: { benchmarkIngestSignature?: string } }).metadata?.benchmarkIngestSignature, "string")
 })
 
-test("seedBenchmarkCorpus uploads PDF files as base64 content", async () => {
+test("seedBenchmarkCorpus uploads PDF files through upload sessions", async () => {
   const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
   await writeFile(path.join(corpusDir, "source.pdf"), Buffer.from("%PDF-1.4 sample"))
-  const requests: Array<{ body?: unknown }> = []
-  const fetchImpl = async (_url: string | URL | Request, init?: RequestInit) => {
-    requests.push({ body: init?.body ? JSON.parse(String(init.body)) : undefined })
+  const requests: Array<{ url: string; method?: string; body?: unknown; authorization?: string; contentType?: string }> = []
+  const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
+    const requestUrl = String(url)
+    const headers = init?.headers as Record<string, string> | undefined
+    const body = init?.body && typeof init.body === "string" ? JSON.parse(init.body) : init?.body
+    requests.push({ url: requestUrl, method: init?.method, body, authorization: headers?.Authorization, contentType: headers?.["Content-Type"] })
     if (init?.method === "GET") {
       return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (requestUrl.endsWith("/documents/uploads")) {
+      return new Response(JSON.stringify({
+        uploadId: "upload-1",
+        uploadUrl: "http://upload.local/source.pdf",
+        method: "PUT",
+        headers: { "Content-Type": "application/pdf" },
+        requiresAuth: false
+      }), { status: 200, headers: { "Content-Type": "application/json" } })
+    }
+    if (requestUrl === "http://upload.local/source.pdf") {
+      return new Response("", { status: 200 })
     }
     return new Response(JSON.stringify({ fileName: "source.pdf", lifecycleStatus: "active", chunkCount: 1 }), {
       status: 200,
@@ -169,10 +184,20 @@ test("seedBenchmarkCorpus uploads PDF files as base64 content", async () => {
     fetchImpl
   })
 
-  const upload = requests.at(-1)?.body as { text?: string; contentBase64?: string; mimeType?: string } | undefined
-  assert.equal(upload?.text, undefined)
-  assert.equal(upload?.contentBase64, Buffer.from("%PDF-1.4 sample").toString("base64"))
-  assert.equal(upload?.mimeType, "application/pdf")
+  assert.deepEqual(requests.map((request) => `${request.method} ${request.url}`), [
+    "GET http://localhost:8787/documents",
+    "POST http://localhost:8787/documents/uploads",
+    "PUT http://upload.local/source.pdf",
+    "POST http://localhost:8787/documents/uploads/upload-1/ingest"
+  ])
+  assert.equal((requests[1]?.body as { purpose?: string }).purpose, "benchmarkSeed")
+  assert.deepEqual(Buffer.from(requests[2]?.body as Uint8Array), Buffer.from("%PDF-1.4 sample"))
+  assert.equal(requests[2]?.contentType, "application/pdf")
+  const ingest = requests[3]?.body as { contentBase64?: string; fileName?: string; mimeType?: string; metadata?: { benchmarkSuiteId?: string } } | undefined
+  assert.equal(ingest?.contentBase64, undefined)
+  assert.equal(ingest?.fileName, "source.pdf")
+  assert.equal(ingest?.mimeType, "application/pdf")
+  assert.equal(ingest?.metadata?.benchmarkSuiteId, "allganize-rag-evaluation-ja-v1")
 })
 
 test("seedBenchmarkCorpus includes optional per-file search aliases in seed metadata", async () => {

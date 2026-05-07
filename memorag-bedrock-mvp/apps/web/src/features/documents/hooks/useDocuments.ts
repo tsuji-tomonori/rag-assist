@@ -1,7 +1,6 @@
 import { useState } from "react"
-import { cutoverReindexMigration, deleteDocument, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, uploadDocument } from "../api/documentsApi.js"
+import { cutoverReindexMigration, deleteDocument, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, uploadDocumentFile } from "../api/documentsApi.js"
 import type { DocumentManifest, ReindexMigration } from "../types.js"
-import { fileToBase64 } from "../../../shared/utils/fileToBase64.js"
 
 export function useDocuments({
   modelId,
@@ -32,10 +31,8 @@ export function useDocuments({
   }
 
   async function ingestDocument(uploadFile: File) {
-    await uploadDocument({
-      fileName: uploadFile.name,
-      contentBase64: await fileToBase64(uploadFile),
-      mimeType: uploadFile.type || undefined,
+    await uploadDocumentFile({
+      file: uploadFile,
       memoryModelId: modelId,
       embeddingModelId
     })
