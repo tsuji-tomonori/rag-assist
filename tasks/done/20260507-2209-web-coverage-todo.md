@@ -1,8 +1,8 @@
 # Web coverage TODO 対応
 
-保存先: `tasks/do/20260507-2209-web-coverage-todo.md`
+保存先: `tasks/done/20260507-2209-web-coverage-todo.md`
 
-状態: do
+状態: done
 
 ## 背景
 

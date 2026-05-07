@@ -28,7 +28,7 @@
 ## 4. 実施した作業
 
 - 専用 worktree `codex/web-coverage-todo` を `origin/main` から作成し、最新 `origin/main` へ rebase した。
-- task md `tasks/do/20260507-2209-web-coverage-todo.md` を作成し、受け入れ条件と検証計画を記載した。
+- task md `tasks/do/20260507-2209-web-coverage-todo.md` を作成し、受け入れ条件と検証計画を記載した。PR コメント後に `tasks/done/20260507-2209-web-coverage-todo.md` へ移動した。
 - `DebugPanel.test.tsx` を追加し、以下のユーザー可視分岐を検証した。
   - debug trace から replay graph と diagnostics が表示されること
   - pending 中に処理中 step と footer が優先表示されること
@@ -40,7 +40,7 @@
 | 成果物 | 形式 | 内容 | 指示との対応 |
 |---|---|---|---|
 | `memorag-bedrock-mvp/apps/web/src/features/debug/components/DebugPanel.test.tsx` | TSX test | DebugPanel の replay/pending/upload 分岐テスト | Web coverage TODO 対応 |
-| `tasks/do/20260507-2209-web-coverage-todo.md` | Markdown | 受け入れ条件、検証計画、実施結果 | Worktree Task PR Flow 対応 |
+| `tasks/done/20260507-2209-web-coverage-todo.md` | Markdown | 受け入れ条件、検証計画、実施結果 | Worktree Task PR Flow 対応 |
 | `reports/working/20260507-2216-web-coverage-todo.md` | Markdown | 作業完了レポート | Post Task Work Report 対応 |
 
 ## 6. 指示へのfit評価
