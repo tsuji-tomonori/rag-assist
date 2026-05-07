@@ -1,8 +1,8 @@
 # プロジェクト要求をプロジェクト制約へ修正する
 
-保存先: `tasks/do/20260507-2008-project-constraints-doc.md`
+保存先: `tasks/done/20260507-2008-project-constraints-doc.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -84,3 +84,11 @@
 
 - 旧本文の RAG 品質ロードマップは、この文書からは外す。必要な場合は別の製品要求、アーキテクチャ、設計、または計画レポートへ分離する。
 - docs 変更のみのため、アプリケーションテストや benchmark 実行は対象外と判断する予定。
+
+## 完了記録
+
+- `REQ_PROJECT_001.md` をプロジェクト運営制約へ再分類した。
+- `reports/working/20260507-2008-project-constraints-doc.md` に作業完了レポートを保存した。
+- `git diff --check`、末尾空白確認、見出し・ID 確認、`pre-commit run --files ...` を実行し、docs 変更としての検証を通過した。
+- PR #154 を GitHub Apps で作成し、`semver:patch` ラベルを付与した。
+- PR #154 に受け入れ条件確認コメントとセルフレビューコメントを投稿した。

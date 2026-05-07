@@ -16,7 +16,7 @@
 | R2 | skills と過去レポートの内容を根拠に反映する | 高 | 対応 |
 | R3 | 製品要求・実装ロードマップ中心の内容を本文の中心から外す | 高 | 対応 |
 | R4 | docs 変更として妥当な検証を実行する | 高 | 対応 |
-| R5 | worktree task PR flow に従って task、report、commit、PR、PR コメントまで行う | 高 | 対応中。このレポート後に commit / PR / コメント / task done 移動を実施 |
+| R5 | worktree task PR flow に従って task、report、commit、PR、PR コメントまで行う | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -38,22 +38,23 @@
 | 成果物 | 形式 | 内容 | 指示との対応 |
 |---|---|---|---|
 | `memorag-bedrock-mvp/docs/1_要求_REQ/01_プロジェクト要求_PROJECT/REQ_PROJECT_001.md` | Markdown | プロジェクト運営制約へ再分類した要求文書 | R1, R2, R3 |
-| `tasks/do/20260507-2008-project-constraints-doc.md` | Markdown | 作業 task、受け入れ条件、検証計画 | R5 |
+| `tasks/done/20260507-2008-project-constraints-doc.md` | Markdown | 作業 task、受け入れ条件、検証計画、完了記録 | R5 |
 | `reports/working/20260507-2008-project-constraints-doc.md` | Markdown | 本作業完了レポート | R5 |
+| PR #154 | Pull Request | GitHub Apps で作成した main 向け draft PR | R5 |
 
 ## 6. 指示へのfit評価
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
 | 指示網羅性 | 5 | 指摘された製品要求化を解消し、skills / reports 由来の制約へ書き換えた。 |
-| 制約遵守 | 4.8 | worktree、task、検証、report の手順を適用した。PR 関連手順はこのレポート後に完了予定。 |
+| 制約遵守 | 5 | worktree、task、検証、report、commit、PR、PR コメント、task done 移動の手順を適用した。 |
 | 成果物品質 | 4.8 | 制約 ID、要求属性、受け入れ条件、妥当性確認を含めた。 |
 | 説明責任 | 5 | 旧本文をなぜ分離対象にしたか、どの資料を根拠にしたかを記録した。 |
 | 検収容易性 | 5 | task と要求文書に検証可能な条件を明記した。 |
 
 総合fit: 4.9 / 5.0（約98%）
 
-理由: 要求文書の主目的は満たした。PR 作成、PR コメント、task done 移動はこのレポート後に実施するため、現時点では対応中として扱う。
+理由: 要求文書の主目的を満たし、worktree task PR flow の後続手順も完了した。
 
 ## 7. 検証
 
@@ -61,9 +62,10 @@
 - `rg -n "[ \\t]+$" memorag-bedrock-mvp/docs/1_要求_REQ/01_プロジェクト要求_PROJECT/REQ_PROJECT_001.md tasks/do/20260507-2008-project-constraints-doc.md`: pass（該当なし、exit 1）
 - `rg -n "^#|^##|PRJ-001-C-|PRJ-001-AC-" memorag-bedrock-mvp/docs/1_要求_REQ/01_プロジェクト要求_PROJECT/REQ_PROJECT_001.md`: pass
 - `pre-commit run --files memorag-bedrock-mvp/docs/1_要求_REQ/01_プロジェクト要求_PROJECT/REQ_PROJECT_001.md tasks/do/20260507-2008-project-constraints-doc.md reports/working/20260507-2008-project-constraints-doc.md`: pass
+- `pre-commit run --files tasks/done/20260507-2008-project-constraints-doc.md reports/working/20260507-2008-project-constraints-doc.md`: pass
 
 ## 8. 未対応・制約・リスク
 
-- 未対応事項: このレポート作成時点では、commit、push、PR 作成、PR コメント、task done 移動は未実施。後続手順で実施する。
+- 未対応事項: なし。
 - 制約: docs のみの変更であるため、アプリケーションテスト、API テスト、Web テスト、benchmark 実行は対象外と判断した。
 - リスク: 旧本文の RAG 品質ロードマップを別要求・別設計へ移す作業は今回の範囲外であり、必要な場合は別 task 化する。
