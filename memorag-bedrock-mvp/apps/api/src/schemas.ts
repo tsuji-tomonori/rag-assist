@@ -118,8 +118,57 @@ export const DocumentManifestSchema = z.object({
   createdAt: z.string()
 })
 
+export const DocumentManifestSummarySchema = DocumentManifestSchema.pick({
+  documentId: true,
+  fileName: true,
+  mimeType: true,
+  chunkCount: true,
+  memoryCardCount: true,
+  createdAt: true,
+  lifecycleStatus: true,
+  activeDocumentId: true,
+  stagedFromDocumentId: true,
+  reindexMigrationId: true,
+  chunkerVersion: true,
+  sourceExtractorVersion: true
+})
+
 export const DocumentListResponseSchema = z.object({
   documents: z.array(DocumentManifestSchema)
+})
+
+export const StartDocumentIngestRunRequestSchema = IngestUploadedDocumentRequestSchema.extend({
+  uploadId: z.string().min(1)
+})
+
+export const DocumentIngestRunSchema = z.object({
+  runId: z.string(),
+  status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
+  createdBy: z.string(),
+  userEmail: z.string().optional(),
+  userGroups: z.array(z.string()).optional(),
+  uploadId: z.string(),
+  objectKey: z.string(),
+  purpose: z.enum(["document", "benchmarkSeed"]),
+  fileName: z.string(),
+  mimeType: z.string().optional(),
+  metadata: z.record(MetadataValueSchema).optional(),
+  embeddingModelId: z.string().optional(),
+  memoryModelId: z.string().optional(),
+  skipMemory: z.boolean().optional(),
+  manifest: DocumentManifestSummarySchema.optional(),
+  documentId: z.string().optional(),
+  error: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional()
+})
+
+export const DocumentIngestRunStartResponseSchema = z.object({
+  runId: z.string(),
+  status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
+  eventsPath: z.string()
 })
 
 export const DeleteDocumentResponseSchema = z.object({

@@ -116,6 +116,22 @@ export type DocumentManifest = {
   createdAt: string
 }
 
+export type DocumentManifestSummary = Pick<
+  DocumentManifest,
+  | "documentId"
+  | "fileName"
+  | "mimeType"
+  | "chunkCount"
+  | "memoryCardCount"
+  | "createdAt"
+  | "lifecycleStatus"
+  | "activeDocumentId"
+  | "stagedFromDocumentId"
+  | "reindexMigrationId"
+  | "chunkerVersion"
+  | "sourceExtractorVersion"
+>
+
 export type MemoryCard = {
   id: string
   level?: "document" | "section" | "concept"
@@ -318,6 +334,46 @@ export type ChatRunEvent = {
   runId: string
   seq: number
   type: ChatRunEventType
+  stage?: string
+  message?: string
+  data?: JsonValue
+  createdAt: string
+  ttl?: number
+}
+
+export type DocumentIngestRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
+
+export type DocumentIngestRun = {
+  runId: string
+  status: DocumentIngestRunStatus
+  createdBy: string
+  userEmail?: string
+  userGroups?: string[]
+  uploadId: string
+  objectKey: string
+  purpose: "document" | "benchmarkSeed"
+  fileName: string
+  mimeType?: string
+  metadata?: Record<string, JsonValue>
+  embeddingModelId?: string
+  memoryModelId?: string
+  skipMemory?: boolean
+  manifest?: DocumentManifestSummary
+  documentId?: string
+  error?: string
+  createdAt: string
+  updatedAt: string
+  startedAt?: string
+  completedAt?: string
+  ttl?: number
+}
+
+export type DocumentIngestRunEventType = "status" | "heartbeat" | "final" | "error"
+
+export type DocumentIngestRunEvent = {
+  runId: string
+  seq: number
+  type: DocumentIngestRunEventType
   stage?: string
   message?: string
   data?: JsonValue

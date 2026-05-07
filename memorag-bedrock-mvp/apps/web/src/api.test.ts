@@ -146,7 +146,11 @@ describe("API client", () => {
       .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
       .mockResolvedValueOnce({
         ok: true,
-        json: vi.fn().mockResolvedValue({ documentId: "doc-2", fileName: "handoff.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+        json: vi.fn().mockResolvedValue({
+          runId: "ingest-1",
+          status: "succeeded",
+          manifest: { documentId: "doc-2", fileName: "handoff.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }
+        })
       })
 
     vi.stubGlobal("fetch", fetchMock)
@@ -171,10 +175,10 @@ describe("API client", () => {
     )
     expect(fetchMock).toHaveBeenNthCalledWith(
       4,
-      "http://api.example.test/documents/uploads/upload-1/ingest",
+      "http://api.example.test/document-ingest-runs",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain", memoryModelId: "model", embeddingModelId: "embedding" })
+        body: JSON.stringify({ uploadId: "upload-1", fileName: "handoff.txt", mimeType: "text/plain", memoryModelId: "model", embeddingModelId: "embedding" })
       })
     )
   })
@@ -201,7 +205,11 @@ describe("API client", () => {
       .mockResolvedValueOnce({ ok: true, text: vi.fn().mockResolvedValue("") })
       .mockResolvedValueOnce({
         ok: true,
-        json: vi.fn().mockResolvedValue({ documentId: "doc-local", fileName: "handoff.bin", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+        json: vi.fn().mockResolvedValue({
+          runId: "ingest-local",
+          status: "succeeded",
+          manifest: { documentId: "doc-local", fileName: "handoff.bin", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }
+        })
       })
 
     vi.stubGlobal("fetch", fetchMock)
@@ -227,11 +235,11 @@ describe("API client", () => {
     )
     expect(fetchMock).toHaveBeenNthCalledWith(
       4,
-      "http://api.example.test/documents/uploads/upload-local/ingest",
+      "http://api.example.test/document-ingest-runs",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer token-1" },
-        body: JSON.stringify({ fileName: "handoff.bin" })
+        body: JSON.stringify({ uploadId: "upload-local", fileName: "handoff.bin" })
       })
     )
   })
