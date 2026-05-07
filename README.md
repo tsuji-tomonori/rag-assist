@@ -76,6 +76,8 @@ aws cloudformation deploy \
   --template-file memorag-bedrock-mvp/infra/bootstrap/github-actions-oidc-role.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
+    GitHubOwner=<OWNER> \
+    GitHubRepository=<REPOSITORY> \
     GitHubEnvironment=dev
 ```
 
@@ -102,7 +104,7 @@ Trust policy例:
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:tsuji-tomonori/rag-assist:environment:dev"
+          "token.actions.githubusercontent.com:sub": "repo:<OWNER>/<REPOSITORY>:environment:dev"
         }
       }
     }
