@@ -2832,6 +2832,15 @@
               }
             },
             {
+              "Action": [
+                "textract:DetectDocumentText",
+                "textract:StartDocumentTextDetection",
+                "textract:GetDocumentTextDetection"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            },
+            {
               "Action": "states:StartExecution",
               "Effect": "Allow",
               "Resource": {
@@ -2945,6 +2954,8 @@
               "Ref": "DebugDownloadBucketAB6A16BE"
             },
             "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+            "PDF_OCR_FALLBACK_ENABLED": "true",
+            "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
             "CHAT_RUN_STATE_MACHINE_ARN": {
               "Ref": "ChatRunStateMachine52CAF7BA"
             },

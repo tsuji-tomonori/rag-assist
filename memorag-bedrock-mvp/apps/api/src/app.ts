@@ -801,7 +801,10 @@ app.openapi(
     const contentBytes = await deps.objectStore.getBytes(objectKey)
     if (contentBytes.length === 0) return c.json({ error: "Uploaded object is empty" }, 400)
 
-    const manifest = await service.ingest({ ...body, contentBytes })
+    const sourceS3Object = config.docsBucketName
+      ? { bucketName: config.docsBucketName, key: objectKey }
+      : undefined
+    const manifest = await service.ingest({ ...body, contentBytes, sourceS3Object })
     await deps.objectStore.deleteObject(objectKey)
     return c.json(manifest, 200)
   }
@@ -1360,7 +1363,14 @@ app.openapi(
   async (c) => {
     requirePermission(c.get("user"), "benchmark:query")
     const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkQueryRequestSchema>
-    const result = await service.chat({ ...body, includeDebug: body.includeDebug ?? true }, c.get("user"))
+    const result = await service.chat({
+      ...body,
+      includeDebug: body.includeDebug ?? true,
+      searchFilters: {
+        source: "benchmark-runner",
+        docType: "benchmark-corpus"
+      }
+    }, c.get("user"))
     return c.json({ id: body.id, ...result }, 200)
   }
 )

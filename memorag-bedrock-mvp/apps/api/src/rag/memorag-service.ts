@@ -29,6 +29,10 @@ type IngestInput = {
   contentBytes?: Buffer
   textractJson?: string
   mimeType?: string
+  sourceS3Object?: {
+    bucketName: string
+    key: string
+  }
   metadata?: Record<string, JsonValue>
   embeddingModelId?: string
   memoryModelId?: string

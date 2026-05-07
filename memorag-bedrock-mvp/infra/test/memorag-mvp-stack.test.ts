@@ -204,7 +204,9 @@ test("implements the designed serverless resources", () => {
         COGNITO_USER_POOL_ID: Match.anyValue(),
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
         DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),
-        DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
+        DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
+        PDF_OCR_FALLBACK_ENABLED: "true",
+        PDF_OCR_FALLBACK_TIMEOUT_MS: "45000"
       })
     })
   })
@@ -256,6 +258,20 @@ test("implements the designed serverless resources", () => {
             "cognito-idp:AdminAddUserToGroup"
           ]),
           Resource: Match.anyValue()
+        })
+      ])
+    })
+  })
+  template.hasResourceProperties("AWS::IAM::Policy", {
+    PolicyDocument: Match.objectLike({
+      Statement: Match.arrayWith([
+        Match.objectLike({
+          Action: Match.arrayWith([
+            "textract:DetectDocumentText",
+            "textract:StartDocumentTextDetection",
+            "textract:GetDocumentTextDetection"
+          ]),
+          Resource: "*"
         })
       ])
     })
