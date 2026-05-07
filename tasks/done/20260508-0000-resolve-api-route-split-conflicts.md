@@ -37,6 +37,13 @@ PR #181 を main に対して merge 可能な状態へ戻す。
 - `git diff --check`
 - `pre-commit run --files ...`
 
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/181
+- merge commit: `4433460`
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
+
 ## 状態
 
-do
+done
