@@ -155,7 +155,7 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.equal(summary.total, 3)
     assert.equal(summary.metrics?.retrievalMrrAtK, 1)
     assert.equal(summary.metrics?.citationSupportPassRate, 1)
-    assert.equal(summary.metrics?.noAccessLeakCount, 2)
+    assert.equal(summary.metrics?.noAccessLeakCount, 1)
     assert.equal(summary.metrics?.noAccessLeakRate, 0.5)
     assert.deepEqual(summary.failures.find((failure) => failure.id === "baseline-leak-001")?.categories, ["refusal_failure"])
 

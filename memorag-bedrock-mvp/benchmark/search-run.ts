@@ -33,6 +33,7 @@ type SearchDatasetRow = {
     department?: string
     source?: string
     docType?: string
+    benchmarkSuiteId?: string
     documentId?: string
   }
   user?: {
@@ -229,6 +230,7 @@ async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body:
         semanticTopK: row.semanticTopK ?? envInt("SEMANTIC_TOP_K"),
         embeddingModelId: row.embeddingModelId ?? process.env.EMBEDDING_MODEL_ID,
         filters: row.filters,
+        benchmarkSuiteId: benchmarkCorpusSuiteId,
         user: row.user
       })
     })

@@ -73,4 +73,4 @@
 - `task docs:check:changed`: 未実施。root Taskfile に該当 task が存在しなかった。
 - `task benchmark:rag-baseline:sample`: 未完了。最初の `dev:api` は sandbox 内で tsx IPC pipe 作成が `EPERM`、承認後の再試行は `EADDRINUSE` により API 起動が安定せず、実 API benchmark までは到達しなかった。
 - API workspace は未変更のため API test は実行していない。benchmark package の typecheck / test / build を対象検証とした。
-- `noAccessLeakCount` は citation と retrieved の両方に出た forbidden evidence をそれぞれ数える。gate としては 0 であることを重視する。
+- `noAccessLeakCount` は citation、finalEvidence、retrieved に出た forbidden evidence を document / file / chunk の一意件数として数える。gate としては 0 であることを重視する。

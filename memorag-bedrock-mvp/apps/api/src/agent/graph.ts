@@ -701,6 +701,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
   const isAnswerable = !isClarification && state.answerability.isAnswerable && answer !== NO_ANSWER
   const citations = isAnswerable ? state.citations : []
   const retrieved = isClarification ? [] : state.retrievedChunks.map(toCitation)
+  const finalEvidence = isAnswerable ? state.selectedChunks.map(toCitation) : []
   const shouldIncludeDebug = input.includeDebug ?? input.debug ?? false
   const debug = shouldIncludeDebug
     ? await persistDebugTrace(deps, {
@@ -718,6 +719,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
         isAnswerable,
         citations,
         retrieved,
+        finalEvidence,
         state
       })
     : undefined
@@ -730,6 +732,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
     clarification: isClarification ? toPublicClarification(state.clarification) : undefined,
     citations,
     retrieved,
+    finalEvidence,
     debug
   }
 }
@@ -756,6 +759,7 @@ async function persistDebugTrace(
     isAnswerable: boolean
     citations: DebugTrace["citations"]
     retrieved: DebugTrace["retrieved"]
+    finalEvidence: NonNullable<DebugTrace["finalEvidence"]>
     state: QaAgentState
   }
 ): Promise<DebugTrace> {
@@ -791,6 +795,7 @@ async function persistDebugTrace(
     isAnswerable: input.isAnswerable,
     citations: input.citations,
     retrieved: input.retrieved,
+    finalEvidence: input.finalEvidence,
     steps: input.state.trace
   }
 

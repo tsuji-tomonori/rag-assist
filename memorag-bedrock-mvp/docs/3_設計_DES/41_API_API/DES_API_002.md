@@ -79,6 +79,10 @@
       "type": "array",
       "items": { "$ref": "#/$defs/citation" }
     },
+    "finalEvidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/citation" }
+    },
     "steps": {
       "type": "array",
       "items": { "$ref": "#/$defs/debugStep" }
