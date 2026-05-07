@@ -1,6 +1,6 @@
 # 抽出不能 benchmark corpus PR の競合解消
 
-状態: do
+状態: done
 
 ## 背景
 
