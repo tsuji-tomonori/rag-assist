@@ -299,6 +299,73 @@ test("sufficient context gate proceeds on partial evidence when only secondary f
   assert.match(result.sufficientContext?.reason ?? "", /取得済み根拠で回答生成へ進みます/)
 })
 
+test("sufficient context gate proceeds when judge maps supported primary fact by id", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  let capturedPrompt = ""
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        capturedPrompt = prompt
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.85,
+          requiredFacts: ["fact-1"],
+          supportedFacts: ["fact-1"],
+          missingFacts: ["慶弔事由の具体的な事由"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "primary fact は根拠で支持されていますが、追加の具体例は資料にありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "特別休暇の対象となる慶弔事由は？",
+      selectedChunks: [
+        {
+          ...chunk,
+          metadata: {
+            ...chunk.metadata,
+            text: "特別休暇は慶弔など会社が認める事由を対象にします。"
+          }
+        }
+      ],
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "特別休暇の対象となる慶弔事由",
+        requiredFacts: [
+          { id: "fact-1", description: "特別休暇の対象となる慶弔事由", factType: "condition", necessity: "primary", priority: 1, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      },
+      retrievalEvaluation: {
+        retrievalQuality: "partial",
+        missingFactIds: ["fact-1"],
+        conflictingFactIds: [],
+        supportedFactIds: [],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "heuristic missing"
+      }
+    })
+  )
+
+  assert.match(capturedPrompt, /id=fact-1; necessity=primary; type=condition; description=特別休暇の対象となる慶弔事由/)
+  assert.match(capturedPrompt, /supportedFacts、missingFacts、conflictingFacts には、原則として該当する required fact の id/)
+  assert.equal(result.sufficientContext?.label, "PARTIAL")
+  assert.equal(result.answerability?.isAnswerable, true)
+  assert.equal(result.searchPlan?.requiredFacts[0]?.status, "supported")
+  assert.equal(result.answer, undefined)
+})
+
 test("sufficient context gate refuses partial evidence when primary facts are missing", async () => {
   const deps = createDeps()
   const baseModel = deps.textModel
