@@ -15,7 +15,7 @@
 | R1 | benchmark typecheck failure の原因を特定する | 高 | 対応 |
 | R2 | benchmark build failure を解消する | 高 | 対応 |
 | R3 | 対象 workspace の検証を実行する | 高 | 対応 |
-| R4 | PR に修正内容と残リスクを反映する | 中 | 対応予定 |
+| R4 | PR に修正内容と残リスクを反映する | 中 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -28,6 +28,7 @@
 - `memorag-bedrock-mvp/benchmark/search-run.test.ts` の重複 helper 宣言を削除した。
 - `tasks/do/20260507-1956-fix-benchmark-ci-typecheck.md` を作成した。
 - benchmark workspace の typecheck/build/test を実行した。
+- PR 本文、受け入れ条件確認コメント、セルフレビューコメントを更新した。
 
 ## 5. 成果物
 
@@ -62,5 +63,5 @@
 ## 8. 未対応・制約・リスク
 
 - `gh auth status` は token invalid のため、Actions log 直接取得は未実施。
-- GitHub Actions の再実行結果は最終確認前時点では未確認。
+- GitHub Actions の再実行結果は未確認。
 - 修正は benchmark test helper の重複削除のみで、benchmark ロジック、期待語句、dataset 固有分岐は変更していない。
