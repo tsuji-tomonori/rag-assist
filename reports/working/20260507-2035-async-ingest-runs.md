@@ -70,3 +70,12 @@
 - Lambda Durable Functions への実移行は未実施。現時点では Step Functions を維持し、Durable Functions は worker Lambda 置換候補として扱う。
 - `npm ci` 時に 1 件の moderate vulnerability が報告されたが、今回の変更範囲外のため未対応。
 - benchmark seed runner は既存同期 ingest API のまま。必要なら別タスクで `purpose=benchmarkSeed` の非同期 ingest run へ移行する。
+
+## 9. CI 追補対応
+
+- CI で `npm exec -w @memorag-mvp/web -- vitest run --coverage` が branch coverage 84.79% で失敗した。
+- 原因は今回追加した `documentsApi.ts` の非同期 ingest run polling / failed / cancelled 分岐が未カバーだったこと。
+- `apps/web/src/api.test.ts` に polling 成功、failed run、cancelled run の API client test を追加した。
+- 追補検証:
+  - `npm exec -w @memorag-mvp/web -- vitest run src/api.test.ts`: pass
+  - `npm exec -w @memorag-mvp/web -- vitest run --coverage`: pass（C0 statements 91.92%、C1 branches 85.16%）
