@@ -31,4 +31,4 @@
 
 ## 状態
 
-ready_for_pr_comment
+done
