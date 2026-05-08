@@ -8,6 +8,14 @@ const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-05-01T00:00:00.000Z" }
 ]
 
+const typedDocuments = [
+  { documentId: "doc-tex", fileName: "requirements.tex", chunkCount: 30, memoryCardCount: 20, createdAt: "2026-05-02T00:00:00.000Z" },
+  { documentId: "doc-pdf", fileName: "security_policy.pdf", chunkCount: 18, memoryCardCount: 3, createdAt: "2026-05-03T00:00:00.000Z" },
+  { documentId: "doc-word", fileName: "onboarding.docx", chunkCount: 7, memoryCardCount: 2, createdAt: "2026-05-04T00:00:00.000Z" },
+  { documentId: "doc-ppt", fileName: "architecture.pptx", chunkCount: 12, memoryCardCount: 4, createdAt: "2026-05-05T00:00:00.000Z" },
+  { documentId: "doc-csv", fileName: "inventory.csv", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-06T00:00:00.000Z" }
+]
+
 const documentGroups: DocumentGroup[] = [
   {
     groupId: "group-1",
@@ -189,5 +197,65 @@ describe("DocumentWorkspace", () => {
       visibility: "shared",
       sharedGroups: ["HR", "RAG_GROUP_MANAGER"]
     })
+  })
+
+  it("フォルダ未指定でも補助フォルダとファイル種別を表示し、未選択の再インデックスを通知する", async () => {
+    const onStageReindex = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={typedDocuments}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={onStageReindex}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("heading", { name: "社内規定 / 2025" })).toBeInTheDocument()
+    expect(screen.getByText("TeX")).toBeInTheDocument()
+    expect(screen.getByText("PDF")).toBeInTheDocument()
+    expect(screen.getByText("Word")).toBeInTheDocument()
+    expect(screen.getByText("PowerPoint")).toBeInTheDocument()
+    expect(screen.getByText("CSV")).toBeInTheDocument()
+    expect(screen.getByText("2.1 MB")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByLabelText("inventory.csvを再インデックス対象にする"))
+
+    expect(onStageReindex).toHaveBeenCalledWith("doc-csv")
+  })
+
+  it("再インデックス対象のチェックを外した場合はステージングしない", async () => {
+    const onStageReindex = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={onStageReindex}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByLabelText("requirements.mdを再インデックス対象にする"))
+
+    expect(onStageReindex).not.toHaveBeenCalled()
   })
 })
