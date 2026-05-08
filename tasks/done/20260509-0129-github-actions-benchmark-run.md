@@ -1,8 +1,8 @@
 # GitHub Actions から benchmark run を起動する workflow 追加
 
-保存先: `tasks/do/20260509-0129-github-actions-benchmark-run.md`
+保存先: `tasks/done/20260509-0129-github-actions-benchmark-run.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -86,3 +86,4 @@ GitHub Actions から既存 API の `POST /benchmark-runs` を呼び、Step Func
 - `memorag-bedrock-mvp/infra/bootstrap/github-actions-oidc-role.yaml` に `AllowedBenchmarkWorkflowRef` を追加し、benchmark workflow が OIDC role を assume できるようにした。
 - `memorag-bedrock-mvp/docs/GITHUB_ACTIONS_DEPLOY.md` と `memorag-bedrock-mvp/docs/OPERATIONS.md` に運用手順、必要 secret、必要 IAM 権限、未ログ化方針を追記した。
 - 実 AWS での workflow 手動実行は、対象 role / secret の存在確認と外部状態変更を伴うためこの作業内では未実施。
+- PR #208 を作成し、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
