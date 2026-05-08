@@ -142,7 +142,7 @@
         "documents"
       ],
       "componentCount": 1,
-      "interactionCount": 45
+      "interactionCount": 27
     },
     {
       "feature": "history",
@@ -635,7 +635,6 @@
         "aside",
         "button",
         "dd",
-        "details",
         "div",
         "dl",
         "dt",
@@ -649,13 +648,12 @@
         "li",
         "nav",
         "option",
-        "progress",
+        "p",
         "section",
         "select",
         "small",
         "span",
         "strong",
-        "summary",
         "ul"
       ],
       "certainty": "confirmed"
@@ -6397,9 +6395,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:128:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:107:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 128,
+      "line": 107,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6441,93 +6439,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:150:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:127:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 150,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "フォルダを検索",
-      "a11y": {
-        "accessibleName": "フォルダを検索",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:152:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 152,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "input",
-      "isIntrinsic": true,
-      "label": "フォルダを検索",
-      "a11y": {
-        "accessibleName": "フォルダを検索",
-        "accessibleNameSource": "placeholder",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "placeholder",
-          "value": "フォルダを検索"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:154:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 154,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "フォルダを絞り込み",
-      "a11y": {
-        "accessibleName": "フォルダを絞り込み",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "フォルダを絞り込み"
-        },
-        {
-          "name": "aria-label",
-          "value": "フォルダを絞り込み"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:159:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 159,
+      "line": 127,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6567,36 +6481,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:165:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:139:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 165,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "社内規定",
-      "a11y": {
-        "accessibleName": "社内規定",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:172:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 172,
+      "line": 139,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6636,158 +6523,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:203:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:204:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 203,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "新規フォルダ",
-      "a11y": {
-        "accessibleName": "新規フォルダ",
-        "accessibleNameSource": "title",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canWrite || loading"
-        ],
-        "status": "warning",
-        "reason": "アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "新規フォルダ"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:206:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 206,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "共有設定を開く",
-      "a11y": {
-        "accessibleName": "共有設定を開く",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "共有設定"
-        },
-        {
-          "name": "aria-label",
-          "value": "共有設定を開く"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:229:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 229,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "input",
-      "isIntrinsic": true,
-      "label": "`${document.fileName}を選択`",
-      "a11y": {
-        "accessibleName": "`${document.fileName}を選択`",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "checkbox"
-        },
-        {
-          "name": "aria-label",
-          "value": "`${document.fileName}を選択`"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:240:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 240,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "input",
-      "isIntrinsic": true,
-      "label": "`${document.fileName}を再インデックス対象にする`",
-      "a11y": {
-        "accessibleName": "`${document.fileName}を再インデックス対象にする`",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canReindex || loading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => { if (event.target.checked) void onStageReindex(document.documentId) }"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "checkbox"
-        },
-        {
-          "name": "aria-label",
-          "value": "`${document.fileName}を再インデックス対象にする`"
-        },
-        {
-          "name": "disabled",
-          "value": "!canReindex || loading"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => { if (event.target.checked) void onStageReindex(document.documentId) }"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:251:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 251,
+      "line": 204,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6835,94 +6573,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:261:summary",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:213:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 261,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "summary",
-      "isIntrinsic": true,
-      "label": "`${document.fileName}の操作メニュー`",
-      "a11y": {
-        "accessibleName": "`${document.fileName}の操作メニュー`",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "title",
-          "value": "`${document.fileName}の操作メニュー`"
-        },
-        {
-          "name": "aria-label",
-          "value": "`${document.fileName}の操作メニュー`"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:263:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 263,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "名前を変更",
-      "a11y": {
-        "accessibleName": "名前を変更",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:267:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 267,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "移動",
-      "a11y": {
-        "accessibleName": "移動",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:271:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 271,
+      "line": 213,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6970,150 +6623,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:293:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:239:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 293,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "前のページ",
-      "a11y": {
-        "accessibleName": "前のページ",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "前のページ"
-        },
-        {
-          "name": "aria-label",
-          "value": "前のページ"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:297:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 297,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "次のページ",
-      "a11y": {
-        "accessibleName": "次のページ",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "次のページ"
-        },
-        {
-          "name": "aria-label",
-          "value": "次のページ"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:301:select",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 301,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "select",
-      "isIntrinsic": true,
-      "label": "表示件数",
-      "a11y": {
-        "accessibleName": "表示件数",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "aria-label",
-          "value": "表示件数"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:302:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 302,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "20 件/ページ",
-      "a11y": {
-        "accessibleName": "20 件/ページ",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:303:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 303,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "50 件/ページ",
-      "a11y": {
-        "accessibleName": "50 件/ページ",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:313:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 313,
+      "line": 239,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7153,9 +6665,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:314:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:240:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 314,
+      "line": 240,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7195,42 +6707,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:350:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:277:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 350,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "共有を編集",
-      "a11y": {
-        "accessibleName": "共有を編集",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canWrite || loading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:352:form",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 352,
+      "line": 277,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -7260,9 +6739,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:353:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:278:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 353,
+      "line": 278,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7282,9 +6761,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:355:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:280:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 355,
+      "line": 280,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -7324,9 +6803,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:356:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:281:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 356,
+      "line": 281,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7351,9 +6830,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:358:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:283:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 358,
+      "line": 283,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7378,9 +6857,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:362:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:287:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 362,
+      "line": 287,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7400,16 +6879,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:364:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:289:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 364,
+      "line": 289,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
       "isIntrinsic": true,
-      "label": "CHAT_USER,RAG_GROUP",
+      "label": "Cognito group をカンマ区切りで入力",
       "a11y": {
-        "accessibleName": "CHAT_USER,RAG_GROUP",
+        "accessibleName": "Cognito group をカンマ区切りで入力",
         "accessibleNameSource": "placeholder",
         "descriptionRefs": "-",
         "role": "-",
@@ -7440,15 +6919,15 @@
         },
         {
           "name": "placeholder",
-          "value": "CHAT_USER,RAG_GROUP"
+          "value": "Cognito group をカンマ区切りで入力"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:366:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:291:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 366,
+      "line": 291,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7479,9 +6958,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:381:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:314:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 381,
+      "line": 314,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -7511,9 +6990,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:382:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:315:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 382,
+      "line": 315,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7533,9 +7012,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:384:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:317:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 384,
+      "line": 317,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -7575,9 +7054,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:385:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:318:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 385,
+      "line": 318,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7602,9 +7081,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:387:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:320:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 387,
+      "line": 320,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7629,9 +7108,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:391:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:324:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 391,
+      "line": 324,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7656,9 +7135,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:394:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:327:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 394,
+      "line": 327,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -7702,9 +7181,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:396:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:329:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 396,
+      "line": 329,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7735,9 +7214,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:401:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:334:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 401,
+      "line": 334,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -7767,9 +7246,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:402:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:335:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 402,
+      "line": 335,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7789,16 +7268,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:404:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:337:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 404,
+      "line": 337,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
       "isIntrinsic": true,
-      "label": "2026",
+      "label": "フォルダ名",
       "a11y": {
-        "accessibleName": "2026",
+        "accessibleName": "フォルダ名",
         "accessibleNameSource": "placeholder",
         "descriptionRefs": "-",
         "role": "-",
@@ -7829,15 +7308,15 @@
         },
         {
           "name": "placeholder",
-          "value": "2026"
+          "value": "フォルダ名"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:406:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:339:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 406,
+      "line": 339,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7863,33 +7342,6 @@
         {
           "name": "disabled",
           "value": "!canWrite || !groupName.trim() || loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:413:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 413,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "すべて表示",
-      "a11y": {
-        "accessibleName": "すべて表示",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
         }
       ],
       "certainty": "confirmed"

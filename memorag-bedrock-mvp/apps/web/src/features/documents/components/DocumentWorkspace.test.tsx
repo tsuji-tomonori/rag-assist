@@ -30,6 +30,18 @@ const documentGroups: DocumentGroup[] = [
   }
 ]
 
+const organizationGroup: DocumentGroup = {
+  groupId: "group-org",
+  name: "全社公開",
+  visibility: "org",
+  ownerUserId: "user-1",
+  sharedUserIds: ["user-2"],
+  sharedGroups: [],
+  managerUserIds: ["user-1"],
+  createdAt: "2026-05-01T00:00:00.000Z",
+  updatedAt: "2026-05-01T00:00:00.000Z"
+}
+
 const migrations: ReindexMigration[] = [
   {
     migrationId: "migration-1",
@@ -259,5 +271,139 @@ describe("DocumentWorkspace", () => {
     expect(screen.queryByText("名前を変更")).not.toBeInTheDocument()
     expect(screen.queryByText("移動")).not.toBeInTheDocument()
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
+  })
+
+  it("空のドキュメント状態と未共有グループを実データのまま表示する", async () => {
+    render(
+      <DocumentWorkspace
+        documents={[]}
+        documentGroups={[{ ...documentGroups[0]!, sharedGroups: [] }]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
+
+    expect(screen.getByText("登録済みドキュメントはありません。")).toBeInTheDocument()
+    expect(screen.getByText("共有先は設定されていません。")).toBeInTheDocument()
+    expect(screen.getAllByText("0 件").length).toBeGreaterThanOrEqual(1)
+  })
+
+  it("組織公開とユーザー共有先、文字列のgroupId metadataを表示に反映する", async () => {
+    const groupedDocuments = [
+      {
+        ...documents[0]!,
+        metadata: { groupId: "group-org" }
+      }
+    ]
+
+    render(
+      <DocumentWorkspace
+        documents={groupedDocuments}
+        documentGroups={[organizationGroup]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /全社公開/ }))
+
+    expect(screen.getByText("組織全体")).toBeInTheDocument()
+    expect(screen.getByText("公開範囲")).toBeInTheDocument()
+    expect(screen.getByText("user-2")).toBeInTheDocument()
+    expect(screen.getByText("User ID")).toBeInTheDocument()
+    expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(1)
+  })
+
+  it("権限や入力が不足するフォーム操作では更新APIを呼ばない", async () => {
+    const onUpload = vi.fn().mockResolvedValue(undefined)
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={false}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={onUpload}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={onShareGroup}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "共有更新" }))
+    await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+
+    expect(onUpload).not.toHaveBeenCalled()
+    expect(onCreateGroup).not.toHaveBeenCalled()
+    expect(onShareGroup).not.toHaveBeenCalled()
+  })
+
+  it("ファイルアップロードとmimeType由来の種別表示を処理する", async () => {
+    const onUpload = vi.fn().mockResolvedValue(undefined)
+    const file = new File(["hello"], "memo.txt", { type: "text/plain" })
+
+    render(
+      <DocumentWorkspace
+        documents={[{ documentId: "doc-text", fileName: "memo.unknown", mimeType: "text/plain", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-07T00:00:00.000Z" }]}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={onUpload}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText("Text")).toBeInTheDocument()
+
+    await userEvent.upload(screen.getByLabelText("アップロードする文書を選択"), file)
+    expect(screen.getByText("memo.txt")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+    expect(onUpload).toHaveBeenCalledWith(file)
   })
 })
