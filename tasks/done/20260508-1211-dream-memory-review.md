@@ -34,16 +34,16 @@
 
 ## 受け入れ条件
 
-- [ ] `.codex-memory/dream-reports/2026-05-08-1211.md` が作成され、scope、sources read、durable facts、duplicates、contradictions、repeated mistakes、archive candidates、next-session context を含む。
-- [ ] `.codex-memory/working-memory.md` が作成・更新され、次回 session の startup context を含む。
-- [ ] `.codex-memory/decisions.md` が作成・更新され、現在有効な workflow / quality gate decision を含む。
-- [ ] `.codex-memory/contradictions.md` が作成・更新され、未解決矛盾または none found を明示する。
-- [ ] `.codex-memory/error-patterns.md` が作成・更新され、反復ミスと corrective rule を含む。
-- [ ] `.codex-memory/archive-candidates.md` が作成・更新され、削除ではなく review 候補として記録する。
-- [ ] `.codex-memory/audit-log.md` が作成・更新され、読んだ source と変更ファイルを記録する。
-- [ ] `reports/working/` に作業完了レポートを保存する。
-- [ ] `git diff --check`、対象 Markdown の `pre-commit run --files ...`、補助スクリプト実行が pass する。
-- [ ] main 向け PR を作成し、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] `.codex-memory/dream-reports/2026-05-08-1211.md` が作成され、scope、sources read、durable facts、duplicates、contradictions、repeated mistakes、archive candidates、next-session context を含む。
+- [x] `.codex-memory/working-memory.md` が作成・更新され、次回 session の startup context を含む。
+- [x] `.codex-memory/decisions.md` が作成・更新され、現在有効な workflow / quality gate decision を含む。
+- [x] `.codex-memory/contradictions.md` が作成・更新され、未解決矛盾または none found を明示する。
+- [x] `.codex-memory/error-patterns.md` が作成・更新され、反復ミスと corrective rule を含む。
+- [x] `.codex-memory/archive-candidates.md` が作成・更新され、削除ではなく review 候補として記録する。
+- [x] `.codex-memory/audit-log.md` が作成・更新され、読んだ source と変更ファイルを記録する。
+- [x] `reports/working/` に作業完了レポートを保存する。
+- [x] `git diff --check`、対象 Markdown の `pre-commit run --files ...`、補助スクリプト実行が pass する。
+- [x] main 向け PR を作成し、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証計画
 
@@ -65,4 +65,4 @@
 
 ## 状態
 
-in_progress
+done

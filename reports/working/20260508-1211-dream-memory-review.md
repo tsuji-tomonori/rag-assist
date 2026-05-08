@@ -18,7 +18,7 @@
 | R3 | `.codex-memory` を監査可能な形で作成する | 高 | 対応 |
 | R4 | 自動削除・圧縮を行わず archive 候補として扱う | 高 | 対応 |
 | R5 | 実行した検証のみ記録する | 高 | 対応 |
-| R6 | commit / push / PR / PR コメントまで進める | 高 | PR 作成後に完了予定 |
+| R6 | commit / push / PR / PR コメントまで進める | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -36,6 +36,8 @@
 - `consolidate_memory.py` を実行し、489 files の first-pass scan を `/tmp/dream-memory-review.md` に出力した。
 - `AGENTS.md`、README、project requirements、bug reports、recent git log、関連 skills を読み、durable claims を抽出した。
 - `.codex-memory/` に working memory、decisions、contradictions、error patterns、archive candidates、audit log、dream report を作成した。
+- PR #190 を作成し、受け入れ条件確認コメントとセルフレビューコメントを GitHub Apps で投稿した。
+- task md を完了状態に更新し、`tasks/done/` へ移動した。
 
 ## 5. 成果物
 
@@ -48,7 +50,7 @@
 | `.codex-memory/archive-candidates.md` | Markdown | 削除しない archive/review 候補 | R4 |
 | `.codex-memory/audit-log.md` | Markdown | 読んだ source と変更ファイル | R3 |
 | `.codex-memory/dream-reports/2026-05-08-1211.md` | Markdown | 今回の dream report | R2, R3 |
-| `tasks/do/20260508-1211-dream-memory-review.md` | Markdown | task と受け入れ条件 | workflow |
+| `tasks/done/20260508-1211-dream-memory-review.md` | Markdown | task と受け入れ条件 | workflow |
 | `reports/working/20260508-1211-dream-memory-review.md` | Markdown | 本作業レポート | workflow |
 
 ## 6. 指示へのfit評価
@@ -73,6 +75,6 @@
 
 ## 8. 未対応・制約・リスク
 
-- PR 作成、受け入れ条件確認コメント、セルフレビューコメント、task done 移動はこのレポート作成後に実施する。
+- PR 作成は GitHub Apps に該当ツールが見つからなかったため `gh` を使用した。PR コメントは GitHub Apps を使用した。
 - 元 root worktree の未追跡ファイルはユーザーまたは別作業の可能性があるため、今回の clean worktree には取り込まず、archive candidate として「要レビュー」とした。
 - `.codex-memory` は初回作成のため、今後の dreaming pass で追記・調整する前提。
