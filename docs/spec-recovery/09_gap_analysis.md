@@ -1,14 +1,14 @@
 # Gap Analysis
 
-## GAP-001: 入力ソース全量の読解が未完了
+## GAP-001: 作業レポート全量は分類済みだが本文精読は未完了
 
 - Category: no_source_requirement
 - Related: 00_input_inventory.md, Q-010
-- Severity: medium
+- Severity: low
 - Confidence: confirmed
-- Evidence: `reports/working/` は 200 件超あり、初版では代表ソースのみ本文確認した。
-- Impact: 仕様候補に漏れが残る可能性がある。
-- Recommended action: PR/日付/機能カテゴリごとに追加バッチで inventory と facts を拡張する。
+- Evidence: `reports/working/*.md` 384 件と `reports/bugs/*.md` 7 件はファイル単位で全量分類した。181 件は commit/PR/merge/CI コメント/競合解消/task acceptance のみとして task 化対象外にした。一方で、391 件すべての本文精読は未実施。
+- Impact: file name/category から拾えない細かな画面文言、境界値、運用値が残る可能性がある。
+- Recommended action: 未分類 37 件と product behavior 関連カテゴリを優先し、本文精読 batch を追加する。
 
 ## GAP-002: 個別 FR/NFR 受け入れ条件との完全照合が未完了
 
@@ -109,3 +109,23 @@
 - Evidence: benchmark auth と Textract timeout の reports に、実 AWS rerun 未実施/未確認が記録されている。
 - Impact: CodeBuild/Cognito/Textract 依存の failure handling は local test だけでは保証しきれない。
 - Recommended action: CodeBuild suite 実行結果を traceability に追加する。
+
+## GAP-012: 未分類または横断レポート 37 件の精査が残っている
+
+- Category: no_source_requirement
+- Related: SRC-023, TASK-024, Q-010
+- Severity: medium
+- Confidence: confirmed
+- Evidence: 全量ファイル分類で、policy extraction、temporal computation、alias governance、advanced RAG ops、web component refactor など 37 件が未分類または横断カテゴリとして残った。
+- Impact: 既存 task family に統合できる追加仕様、または新しい横断仕様が漏れる可能性がある。
+- Recommended action: 未分類 37 件を本文精読し、既存 TASK への統合または新規 TASK として追加する。
+
+## GAP-013: 全量分類はカテゴリ単位であり、レポートごとの source ID は未付与
+
+- Category: traceability_granularity
+- Related: SRC-023, FACT-016, TASK-024
+- Severity: low
+- Confidence: confirmed
+- Evidence: 今回は `SRC-024` から `SRC-032` のカテゴリ source として扱い、391 件それぞれに個別 `RPT-*` ID は付けていない。
+- Impact: 特定 report から task/AC への一点トレースは、代表ソース以外では粗い。
+- Recommended action: 次バッチで機能カテゴリごとに個別 `RPT-*` ID を採番し、traceability matrix を詳細化する。

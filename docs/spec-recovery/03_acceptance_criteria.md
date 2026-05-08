@@ -232,6 +232,224 @@
 
 ## Coverage gaps
 
-- GAP-003: ファイルサイズ上限、対応 mime type の完全リスト、OCR timeout の運用閾値は未確定。
+## AC-AUTH-001: 許可された認証フローだけで利用開始できる
+
+- Task: TASK-011
+- Type: security
+- Confidence: confirmed
+- Source: FACT-017
+
+### Given
+- 未ログインユーザーまたは初回ログインユーザーがいる
+
+### When
+- login、new password required、self signup、password guidance を実行する
+
+### Then
+- 許可された Cognito flow だけが成功する
+- 自己登録が許可される場合も最小 role に限定される
+- 認証失敗や初回パスワード変更要求は UI で明示される
+
+## AC-API-001: API 契約と request validation は実装と同期する
+
+- Task: TASK-012, TASK-022
+- Type: contract
+- Confidence: confirmed
+- Source: FACT-024
+
+### Given
+- API route または OpenAPI 定義を変更する
+
+### When
+- docs check、API contract test、access-control policy test を実行する
+
+### Then
+- request/response schema と route implementation が一致する
+- 保護 route には認証境界と permission policy がある
+- 不正 request は明示的な validation error になる
+
+## AC-UI-001: Chat UI の基本操作は layout を崩さず動く
+
+- Task: TASK-013
+- Type: ui
+- Confidence: confirmed
+- Source: FACT-021
+
+### Given
+- `CHAT_USER` が chat 画面を開いている
+
+### When
+- 質問送信、回答 copy、根拠表示、scroll、loading、send shortcut を操作する
+
+### Then
+- 主要操作が keyboard/mouse で実行できる
+- 回答、引用、debug panel、loading 表示が互いに重ならない
+- copy/send 設定の状態が期待通りに反映される
+
+## AC-HIST-002: 履歴検索・並び替え・通知は userId 境界を保つ
+
+- Task: TASK-014
+- Type: ui_data
+- Confidence: confirmed
+- Source: FACT-021
+
+### Given
+- ユーザーに複数の会話履歴、問い合わせ回答通知、お気に入りがある
+
+### When
+- 履歴検索、sort、favorite filter、通知確認を行う
+
+### Then
+- 自分の履歴だけが検索・表示される
+- 同一時刻や短い substring でも安定した順序で表示される
+- 問い合わせ回答の通知は本人の履歴から確認できる
+
+## AC-DOC-003: PDF/OCR/大容量文書は非同期で安全に扱う
+
+- Task: TASK-015
+- Type: boundary_error_path
+- Confidence: confirmed
+- Source: FACT-022
+
+### Given
+- PDF、OCR が必要な文書、大容量文書、抽出不能文書のいずれかを処理する
+
+### When
+- upload、S3 handoff、async ingest、benchmark corpus seed を実行する
+
+### Then
+- size/quota 超過は明示エラーまたは skip として記録される
+- OCR timeout は run 全体を不必要に fatal にしない
+- ingest status、skip reason、artifact に追跡情報が残る
+
+## AC-RAG-003: 回答可能性 policy は dataset 固有 hardcode なしで判定する
+
+- Task: TASK-016
+- Type: rag_quality
+- Confidence: confirmed
+- Source: FACT-018
+
+### Given
+- threshold、clause polarity、abbreviation、value mismatch を含む評価質問がある
+
+### When
+- answerability gate と support verifier を実行する
+
+### Then
+- dataset 固有の期待語句分岐ではなく、根拠・数値・言い換え・否定極性に基づき判定する
+- 不十分または不支持の回答は拒否または確認質問に流れる
+- 判定理由は trace に残る
+
+## AC-SRCH-002: chunking と retrieval adoption gate は回答根拠を選別する
+
+- Task: TASK-017
+- Type: rag_retrieval
+- Confidence: confirmed
+- Source: FACT-019
+
+### Given
+- semantic chunking と hybrid retrieval が有効である
+
+### When
+- RAG graph が検索結果を評価する
+
+### Then
+- chunk、score、quality、nextAction が trace される
+- 採用基準を満たす根拠だけが回答生成へ渡る
+- 採用基準を満たさない場合は再検索、context expansion、または回答不能へ流れる
+
+## AC-DBG-002: Debug trace artifact は redaction 済みで取得できる
+
+- Task: TASK-018
+- Type: security_operations
+- Confidence: confirmed
+- Source: FACT-020
+
+### Given
+- `SYSTEM_ADMIN` が debug run を調査している
+
+### When
+- timeline、sentence assessments、JSON/Markdown download を要求する
+
+### Then
+- redaction 済み artifact が取得できる
+- finalEvidence と判定 step を時系列で追跡できる
+- 通常ユーザーは artifact を取得できない
+
+## AC-BENCH-002: dataset adapter は metrics と skipped rows を一貫生成する
+
+- Task: TASK-019
+- Type: benchmark_quality
+- Confidence: confirmed
+- Source: FACT-023
+
+### Given
+- Allganize、MMRAG DocQA、NeoAI などの dataset を benchmark へ投入する
+
+### When
+- dataset adapter と runner が評価を実行する
+
+### Then
+- corpus、expected answer、source context、skip reason が正規化される
+- metrics と report artifact が dataset をまたいで比較可能な形で生成される
+- dataset 固有値は product 実装へ hardcode されない
+
+## AC-BENCH-003: Benchmark の timeout・cost・artifact は運用可能に追跡できる
+
+- Task: TASK-020
+- Type: operations
+- Confidence: confirmed
+- Source: FACT-023, FACT-024
+
+### Given
+- 長時間 benchmark run が実行されている
+
+### When
+- runner、CodeBuild、UI/API が進捗を更新する
+
+### Then
+- timeout、progress、metrics、raw results download が確認できる
+- cost/anomaly/tag の運用 guard がある
+- 失敗時も原因と未生成 artifact が区別される
+
+## AC-ADM-002: 管理画面は role と全ユーザー一覧を権限内で扱う
+
+- Task: TASK-021
+- Type: admin_security
+- Confidence: confirmed
+- Source: FACT-017
+
+### Given
+- `USER_ADMIN` または `ACCESS_ADMIN` が管理画面を開く
+
+### When
+- 全ユーザー一覧、admin me permissions、role assignment を操作する
+
+### Then
+- 付与可能 role と操作対象は permission により制限される
+- 自己昇格や権限外 role 付与は拒否される
+- Cognito group sync と audit が残る
+
+## AC-DOCS-001: 仕様 docs は implementation report と trace できる
+
+- Task: TASK-023, TASK-024
+- Type: documentation_traceability
+- Confidence: confirmed
+- Source: FACT-016, FACT-025
+
+### Given
+- 新しい作業レポートまたは既存 docs/tests の変更がある
+
+### When
+- spec recovery を更新する
+
+### Then
+- product behavior に関係するものだけ task/fact/AC に取り込まれる
+- commit/PR/merge only レポートは対象外として分類される
+- 要件・仕様・E2E・gap から report source へ逆引きできる
+
+## Coverage gaps
+
+- GAP-003: 対応 mime type の完全リスト、OCR timeout の本番閾値は未確定。ただし upload size validation と timeout/skip task は追加済み。
 - GAP-004: prompt injection 文書を含む end-to-end 受け入れ条件は初版では仕様候補止まり。
-- GAP-006: accessibility、latency SLO、cost SLO は SQ/NFR に存在するが、UI 操作単位の AC までは未復元。
+- GAP-006: accessibility、latency SLO、cost SLO は SQ/NFR に存在するが、UI 操作単位の AC は代表ケースのみ復元。

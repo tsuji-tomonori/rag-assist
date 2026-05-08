@@ -225,3 +225,157 @@ Benchmark operator は suite を選択して run を起動できる。runner は
 
 ### Verification
 - AC-SRCH-001
+
+## SPEC-AUTH-001: Cognito 認証 flow と初回パスワード
+
+- Requirement: REQ-AUTH-001
+- Type: security/UI/API
+- Target: Auth UI / Cognito
+- Confidence: confirmed
+- Source: OP-040, EXP-040, FACT-017
+
+### Specification
+ログイン、初回パスワード変更、自己登録、password guidance は Cognito の許可 flow に限定する。自己登録を許可する場合でも初期 role は最小権限にし、管理 role は管理者操作を経由する。
+
+### Verification
+- AC-AUTH-001
+
+## SPEC-API-001: API 契約・OpenAPI・policy 同期
+
+- Requirement: REQ-API-001
+- Type: API/maintainability/security
+- Target: API routes / OpenAPI / access-control-policy.test
+- Confidence: confirmed
+- Source: AC-API-001, FACT-024
+
+### Specification
+API route の分割や OpenAPI 更新時は、request/response schema、examples、docs check、access-control policy を同期する。保護 route には route-level permission と所有者境界を明示する。
+
+### Verification
+- AC-API-001
+
+## SPEC-UI-001: Chat UI 操作性
+
+- Requirement: REQ-UI-001
+- Type: UI/usability
+- Target: Chat UI
+- Confidence: confirmed
+- Source: OP-041, EXP-041, FACT-021
+
+### Specification
+チャット画面は送信ショートカット、copy、loading/streaming、根拠表示、debug panel 表示を layout 破綻なく提供する。copy は対象テキストのみを扱い、不要な feedback action を出さない。
+
+### Verification
+- AC-UI-001
+
+## SPEC-HIST-003: 履歴検索・sort・通知
+
+- Requirement: REQ-HIST-002
+- Type: UI/API/data
+- Target: History UI / History API
+- Confidence: confirmed
+- Source: OP-042, EXP-042, FACT-021
+
+### Specification
+履歴検索、sort、favorite filter、問い合わせ回答通知は userId 境界内で動作する。短い substring や同一時刻 item でも安定した表示順を維持する。
+
+### Verification
+- AC-HIST-002
+
+## SPEC-DOC-003: PDF/OCR/大容量 ingest boundary
+
+- Requirement: REQ-DOC-002, REQ-OPS-001
+- Type: API/operations
+- Target: Upload API / S3 / Textract / ingest run
+- Confidence: confirmed
+- Source: OP-043, EXP-043, FACT-022
+
+### Specification
+文書 upload は size/quota validation、S3 handoff、async OCR/ingest を扱う。OCR timeout や抽出不能文書は error/skip reason として記録し、run/artifact から追跡できる。
+
+### Verification
+- AC-DOC-003
+
+## SPEC-RAG-003: 回答可能性 policy profile
+
+- Requirement: REQ-RAG-003
+- Type: AI/RAG quality
+- Target: Answerability gate / Support verifier / LLM judge
+- Confidence: confirmed
+- Source: OP-044, EXP-044, FACT-018
+
+### Specification
+回答可能性判定は threshold、clause polarity、abbreviation、value mismatch を汎用 policy として扱う。dataset 固有の期待語句や QA sample 固有値を product 実装に hardcode しない。
+
+### Verification
+- AC-RAG-003
+
+## SPEC-SRCH-002: Retrieval adoption gate
+
+- Requirement: REQ-SRCH-002
+- Type: search/RAG quality
+- Target: Chunker / Retrieval evaluator / RAG graph
+- Confidence: confirmed
+- Source: OP-045, EXP-045, FACT-019
+
+### Specification
+semantic chunking、hybrid retrieval、retrieval evaluator は chunk、score、quality、nextAction を trace する。採用基準を満たす根拠だけを回答生成へ渡し、満たさない場合は再検索、context expansion、回答不能へ流す。
+
+### Verification
+- AC-SRCH-002
+
+## SPEC-DBG-002: Debug timeline artifact
+
+- Requirement: REQ-DBG-002
+- Type: security/operations
+- Target: Debug panel / trace artifact
+- Confidence: confirmed
+- Source: OP-046, EXP-046, FACT-020
+
+### Specification
+Debug trace artifact は timeline、sentence assessments、finalEvidence、判定 step を再現できる。JSON/Markdown download は admin only とし、artifact 生成または download 時に redaction を適用する。
+
+### Verification
+- AC-DBG-002
+
+## SPEC-BENCH-002: Dataset adapter と metrics
+
+- Requirement: REQ-BENCH-002
+- Type: benchmark/evaluation
+- Target: Benchmark adapters / Metrics / Reports
+- Confidence: confirmed
+- Source: OP-047, EXP-047, FACT-023
+
+### Specification
+Allganize、MMRAG DocQA、NeoAI などの dataset は、source context、expected answer、skip reason、metrics、report artifact を一貫形式に正規化する。dataset 固有分岐は adapter に閉じ込め、product RAG 実装へ入れない。
+
+### Verification
+- AC-BENCH-002
+
+## SPEC-BENCH-003: Benchmark timeout/cost/artifact operation
+
+- Requirement: REQ-BENCH-003, REQ-OPS-001
+- Type: operations/reliability
+- Target: Benchmark UI/API / CodeBuild / cost guard
+- Confidence: confirmed
+- Source: AC-BENCH-003, FACT-023, FACT-024
+
+### Specification
+Benchmark run は timeout、progress、metrics、raw results download、artifact generation を追跡する。運用では cost/anomaly/tag guard を持ち、失敗時は原因と未生成 artifact を区別する。
+
+### Verification
+- AC-BENCH-003
+
+## SPEC-DOCS-001: 作業レポート分類と仕様復元 trace
+
+- Requirement: REQ-DOCS-001
+- Type: documentation/traceability
+- Target: `docs/spec-recovery`
+- Confidence: confirmed
+- Source: OP-048, EXP-048, FACT-016, FACT-025
+
+### Specification
+作業レポートは product behavior に関係するカテゴリと、commit/PR/merge only など task 化対象外カテゴリに分ける。仕様化対象カテゴリは facts/tasks/AC/E2E/REQ/SPEC/gap に trace し、対象外カテゴリは除外理由を inventory に残す。
+
+### Verification
+- AC-DOCS-001

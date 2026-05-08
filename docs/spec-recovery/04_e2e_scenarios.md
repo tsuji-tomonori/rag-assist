@@ -207,3 +207,176 @@
 - Cognito group と JWT permission に role が反映される
 - 対象画面が利用可能になる
 - role 変更が audit log に残る
+
+## E2E-AUTH-001: 初回ログインと自己登録制限を確認する
+
+- Acceptance Criteria: AC-AUTH-001
+- Target screen: Login / password guidance
+- Actor: 未ログインユーザー, 初回ログインユーザー
+- Priority: high
+- Confidence: confirmed
+- Source: TASK-011, FACT-017
+
+### 画面操作
+1. 初回パスワード変更が必要なユーザーでログインする
+2. 新しいパスワードを設定する
+3. 自己登録または許可されていない認証 flow を試す
+
+### 期待値
+- 初回パスワード変更後に通常ログインできる
+- 許可されていない自己登録または auth flow は拒否される
+- password guidance は利用者に分かる文言で表示される
+
+## E2E-UI-001: チャット UI の copy/send/loading 操作を確認する
+
+- Acceptance Criteria: AC-UI-001
+- Target screen: Chat
+- Actor: `CHAT_USER`
+- Priority: medium
+- Confidence: confirmed
+- Source: TASK-013, FACT-021
+
+### 画面操作
+1. チャット画面で質問を入力する
+2. 送信ショートカット設定を切り替える
+3. 質問を送信し、loading と streaming 表示を確認する
+4. 回答または prompt copy ボタンを押す
+
+### 期待値
+- send shortcut 設定どおりに送信される
+- loading/streaming 表示中も主要 UI が重ならない
+- copy 操作は対象テキストだけをコピーし、不要な feedback action は出ない
+
+## E2E-HIST-002: 履歴検索と回答通知を確認する
+
+- Acceptance Criteria: AC-HIST-002
+- Target screen: History / question answer notification
+- Actor: `CHAT_USER`
+- Priority: medium
+- Confidence: confirmed
+- Source: TASK-014, FACT-021
+
+### 画面操作
+1. 複数の会話履歴を作成する
+2. 短い substring または日本語語句で履歴検索する
+3. sort と favorite filter を切り替える
+4. 担当者回答後に履歴画面を開く
+
+### 期待値
+- 自分の履歴だけが検索対象になる
+- 同一時刻や類似タイトルでも安定した順序で表示される
+- 担当者回答通知が本人の履歴に表示される
+
+## E2E-DOC-002: S3 upload と async OCR ingest を確認する
+
+- Acceptance Criteria: AC-DOC-003
+- Target screen: Documents / non-UI ingest verification
+- Actor: `RAG_GROUP_MANAGER`
+- Priority: high
+- Confidence: confirmed
+- Source: TASK-015, FACT-022
+
+### 画面操作
+1. 文書管理画面で PDF を選択する
+2. S3 upload handoff または upload API を実行する
+3. async ingest run を開始する
+4. ingest status と events を確認する
+
+### 期待値
+- size/quota 超過時は明示エラーになる
+- OCR が必要な文書は非同期処理として追跡できる
+- timeout/抽出不能時は error または skipped reason が残る
+
+## E2E-RAG-002: 回答可能性 policy の汎用判定を確認する
+
+- Acceptance Criteria: AC-RAG-003
+- Target screen: 非 UI RAG evaluation
+- Actor: evaluator
+- Priority: high
+- Confidence: confirmed
+- Source: TASK-016, FACT-018
+
+### 非UI検証
+1. threshold、clause polarity、abbreviation、value mismatch を含む評価 dataset を実行する
+2. answerability gate、support verifier、trace を確認する
+
+### 期待値
+- dataset 固有 hardcode なしで判定される
+- 根拠不足または不支持回答は拒否される
+- 判定理由と根拠が trace に残る
+
+## E2E-SRCH-002: chunking と retrieval adoption gate を確認する
+
+- Acceptance Criteria: AC-SRCH-002
+- Target screen: 非 UI RAG retrieval verification
+- Actor: evaluator
+- Priority: high
+- Confidence: confirmed
+- Source: TASK-017, FACT-019
+
+### 非UI検証
+1. semantic chunking が必要な文書を ingest する
+2. hybrid retrieval と retrieval evaluator を実行する
+3. adoption gate の quality/nextAction を確認する
+
+### 期待値
+- chunk と score が trace される
+- 採用基準未満の根拠は回答生成へ渡らない
+- 必要に応じて再検索、context expansion、回答不能へ流れる
+
+## E2E-DBG-002: debug trace artifact を redaction 済みで取得する
+
+- Acceptance Criteria: AC-DBG-002
+- Target screen: Debug panel / artifact download
+- Actor: `SYSTEM_ADMIN`
+- Priority: medium
+- Confidence: confirmed
+- Source: TASK-018, FACT-020
+
+### 画面操作
+1. 管理者として debug run を開く
+2. timeline と sentence assessments を確認する
+3. JSON または Markdown artifact を download する
+
+### 期待値
+- finalEvidence と判定 step を時系列で追跡できる
+- artifact は redaction 済みである
+- 通常ユーザーでは download できない
+
+## E2E-BENCH-002: dataset adapter と metrics を確認する
+
+- Acceptance Criteria: AC-BENCH-002, AC-BENCH-003
+- Target screen: Benchmark / report artifact
+- Actor: `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`
+- Priority: medium
+- Confidence: confirmed
+- Source: TASK-019, TASK-020, FACT-023
+
+### 画面操作
+1. Allganize、MMRAG DocQA、NeoAI のいずれかの suite を選択する
+2. benchmark run を起動する
+3. run metrics、skipped rows、report artifact、raw results download を確認する
+
+### 期待値
+- dataset adapter が source context と expected answer を正規化する
+- skipped rows と skip reason が report に残る
+- timeout/cost/artifact の状態が UI/API で追跡できる
+
+## E2E-DOCS-001: 作業レポートを仕様化対象と対象外に分類する
+
+- Acceptance Criteria: AC-DOCS-001
+- Target screen: 非 UI docs verification
+- Actor: Codex agent, reviewer
+- Priority: medium
+- Confidence: confirmed
+- Source: TASK-023, TASK-024, FACT-016, FACT-025
+
+### 非UI検証
+1. `reports/working/*.md` と `reports/bugs/*.md` を分類する
+2. commit/PR/merge only を task 化対象外へ分ける
+3. product behavior に関係する category から task family を抽出する
+
+### 期待値
+- 対象外理由が inventory に残る
+- 追加 task、AC、REQ/SPEC、gap が trace できる
+- 代表抽出と全量棚卸しの違いが明示される

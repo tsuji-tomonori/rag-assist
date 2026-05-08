@@ -91,3 +91,33 @@
 | EXP-032 | E2E-DBG-001 | セキュリティ | debug trace は admin only かつ redaction 済み | debug routes | policy test | SPEC-DBG-001 |
 | EXP-033 | E2E-BENCH-001 | 評価 | benchmark run と artifact を追跡できる | benchmark run | API/CI | SPEC-BENCH-001 |
 | EXP-034 | E2E-ADM-001 | 認可 | role 付与が Cognito group/JWT に反映される | admin/Cognito | API/infra test | SPEC-ADM-001 |
+
+## Group: 全量レポート棚卸しで追加した task family
+
+### Operations
+
+| OP ID | E2E | 画面 | 操作種別 | 操作対象 | 操作内容 | 入力データ | 備考 |
+|---|---|---|---|---|---|---|---|
+| OP-040 | E2E-AUTH-001 | Login | authenticate | Cognito flow | 初回ログイン/パスワード変更を行う | username/password | self signup 制限含む |
+| OP-041 | E2E-UI-001 | Chat | interact | copy/send/loading | 送信ショートカット、copy、loading を操作する | question/answer | UI 操作性 |
+| OP-042 | E2E-HIST-002 | History | search/sort | 履歴一覧 | 履歴検索、sort、通知確認を行う | query/filter | userId 境界 |
+| OP-043 | E2E-DOC-002 | Documents | upload/observe | S3/OCR ingest | PDF upload と async OCR ingest を追跡する | PDF/runId | timeout/skip |
+| OP-044 | E2E-RAG-002 | 非UI | evaluate | answerability policy | 回答可能性 dataset を評価する | eval dataset | hardcode 禁止 |
+| OP-045 | E2E-SRCH-002 | 非UI | evaluate | retrieval adoption | chunking/retrieval gate を確認する | corpus/query | nextAction |
+| OP-046 | E2E-DBG-002 | Debug | download | trace artifact | JSON/Markdown artifact を取得する | runId | redaction |
+| OP-047 | E2E-BENCH-002 | Benchmark | run/download | dataset metrics | dataset adapter と metrics を確認する | suite/dataset | skipped rows |
+| OP-048 | E2E-DOCS-001 | 非UI | classify | work reports | レポートを task 化対象/対象外へ分類する | report files | commit-only 除外 |
+
+### Expectations
+
+| EXP ID | E2E | 種別 | 期待値 | 対象 | 検証方法 | 備考 |
+|---|---|---|---|---|---|---|
+| EXP-040 | E2E-AUTH-001 | 認証 | 許可 flow のみ成功し、自己登録は最小 role に限定される | Auth/Cognito | UI/API/infra test | SPEC-AUTH-001 |
+| EXP-041 | E2E-UI-001 | UI操作性 | copy/send/loading が layout を崩さず動く | Chat UI | UI test | SPEC-UI-001 |
+| EXP-042 | E2E-HIST-002 | UI/データ | 履歴検索・sort・通知が userId 境界内で動く | History UI/API | UI/API test | SPEC-HIST-003 |
+| EXP-043 | E2E-DOC-002 | 運用/境界値 | 大容量/OCR/抽出不能文書が status/skip reason として追跡される | Ingest/OCR | API/benchmark | SPEC-DOC-003 |
+| EXP-044 | E2E-RAG-002 | RAG品質 | 回答可能性判定は dataset 固有 hardcode なしで動く | RAG guard | evaluation | SPEC-RAG-003 |
+| EXP-045 | E2E-SRCH-002 | 検索品質 | 採用基準を満たす retrieval だけが回答生成へ渡る | Retrieval gate | evaluation/trace | SPEC-SRCH-002 |
+| EXP-046 | E2E-DBG-002 | セキュリティ | trace artifact は redaction 済みで admin only | Debug artifact | policy/API test | SPEC-DBG-002 |
+| EXP-047 | E2E-BENCH-002 | 評価/運用 | dataset adapter、metrics、skipped rows、artifact が一貫する | Benchmark | benchmark run | SPEC-BENCH-002 |
+| EXP-048 | E2E-DOCS-001 | トレーサビリティ | product behavior 関連レポートだけが task/AC/REQ/SPEC へ trace される | Spec recovery | docs validation | SPEC-DOCS-001 |
