@@ -27,6 +27,11 @@ tasks:
     cmds:
       - npm run typecheck --workspaces --if-present
 
+  docs:openapi:
+    desc: Generate OpenAPI JSON and Markdown API reference from the Hono app
+    cmds:
+      - npm run docs:openapi
+
   dev:api:
     desc: Run the Hono API locally with mock Bedrock and local vector store
     env:

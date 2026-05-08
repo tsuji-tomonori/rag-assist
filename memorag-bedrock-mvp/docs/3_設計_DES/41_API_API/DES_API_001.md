@@ -67,6 +67,16 @@
 
 注: `GET /admin/costs` は運用者向けの概算コスト監査 summary を返す。請求確定用の料金算出 API は現行 MVP では未提供であり、`DES_DATA_001` の `UsageMeter`、`PricingCatalogEntry`、`CostEstimate` を使う将来拡張として扱う。
 
+## OpenAPI 生成ドキュメント
+
+API contract の source of truth は Hono + `@hono/zod-openapi` の route 定義と `GET /openapi.json` とする。Markdown の API reference は手作業で編集せず、次のコマンドで再生成する。
+
+```bash
+npm run docs:openapi
+```
+
+生成物は `docs/generated/openapi.json` と `docs/generated/openapi.md` に出力する。GitHub Actions では `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で同じコマンドを実行し、差分がある場合に更新 PR を作成する。
+
 ## `POST /chat`
 
 後方互換用の同期 JSON API。新しい UI は、長時間 RAG 処理の進捗を表示するため `POST /chat-runs` と `GET /chat-runs/{runId}/events` を使用する。
