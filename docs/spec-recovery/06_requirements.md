@@ -400,10 +400,10 @@ Allganize、MMRAG DocQA、NeoAI などの dataset は、source context、expecte
 - Actor: Codex agent, reviewer
 - Priority: medium
 - Confidence: confirmed
-- Source: TASK-023, TASK-024, AC-DOCS-001
+- Source: TASK-023, TASK-024, AC-DOCS-001, FACT-026
 
 ### Description
-作業レポート全量から product behavior に関係する情報だけを facts/tasks/AC/REQ/SPEC に抽出し、commit/PR/merge only のレポートは process evidence として分類する。
+作業レポート本文全量から product behavior に関係する情報だけを facts/tasks/AC/REQ/SPEC に抽出し、commit/PR/merge only のレポートは process evidence として分類する。各 report には `RPT-*` ID を付け、関連 task へ trace できるようにする。
 
 ### Acceptance criteria
 - AC-DOCS-001

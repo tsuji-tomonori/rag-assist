@@ -1,14 +1,14 @@
 # Gap Analysis
 
-## GAP-001: 作業レポート全量は分類済みだが本文精読は未完了
+## GAP-001: 作業レポート本文精読は完了
 
-- Category: no_source_requirement
-- Related: 00_input_inventory.md, Q-010
-- Severity: low
+- Category: resolved_coverage_gap
+- Related: 00_input_inventory.md, 12_report_reading_inventory.md, Q-010
+- Severity: resolved
 - Confidence: confirmed
-- Evidence: `reports/working/*.md` 384 件と `reports/bugs/*.md` 7 件はファイル単位で全量分類した。181 件は commit/PR/merge/CI コメント/競合解消/task acceptance のみとして task 化対象外にした。一方で、391 件すべての本文精読は未実施。
-- Impact: file name/category から拾えない細かな画面文言、境界値、運用値が残る可能性がある。
-- Recommended action: 未分類 37 件と product behavior 関連カテゴリを優先し、本文精読 batch を追加する。
+- Evidence: `reports/working/*.md` と `reports/bugs/*.md` の本文 393 件を読み込み、`RPT-*` ID、分類、target、対象外理由、関連 task を `12_report_reading_inventory.md` に記録した。ユーザー指定の 391 件に、PR #189 の直前追加レポート 1 件と本作業レポート 1 件を含む。
+- Impact: ファイル名分類だけに依存する漏れは解消した。
+- Recommended action: 解決済み。今後は新規 report 追加時に `12_report_reading_inventory.md` を更新する。
 
 ## GAP-002: 個別 FR/NFR 受け入れ条件との完全照合が未完了
 
@@ -110,22 +110,22 @@
 - Impact: CodeBuild/Cognito/Textract 依存の failure handling は local test だけでは保証しきれない。
 - Recommended action: CodeBuild suite 実行結果を traceability に追加する。
 
-## GAP-012: 未分類または横断レポート 37 件の精査が残っている
+## GAP-012: 未分類または横断レポート 37 件の精査は完了
 
-- Category: no_source_requirement
+- Category: resolved_coverage_gap
 - Related: SRC-023, TASK-024, Q-010
-- Severity: medium
+- Severity: resolved
 - Confidence: confirmed
-- Evidence: 全量ファイル分類で、policy extraction、temporal computation、alias governance、advanced RAG ops、web component refactor など 37 件が未分類または横断カテゴリとして残った。
-- Impact: 既存 task family に統合できる追加仕様、または新しい横断仕様が漏れる可能性がある。
-- Recommended action: 未分類 37 件を本文精読し、既存 TASK への統合または新規 TASK として追加する。
+- Evidence: 本文精読 inventory では個別確認候補は 0 件。旧未分類/横断 37 件は `chat-rag`、`search-retrieval`、`api-ops`、`docs-process` など既存カテゴリへ再分類した。
+- Impact: 未分類のまま残る report はない。
+- Recommended action: 解決済み。
 
-## GAP-013: 全量分類はカテゴリ単位であり、レポートごとの source ID は未付与
+## GAP-013: レポートごとの source ID は付与済み
 
-- Category: traceability_granularity
+- Category: resolved_traceability_gap
 - Related: SRC-023, FACT-016, TASK-024
-- Severity: low
+- Severity: resolved
 - Confidence: confirmed
-- Evidence: 今回は `SRC-024` から `SRC-032` のカテゴリ source として扱い、391 件それぞれに個別 `RPT-*` ID は付けていない。
-- Impact: 特定 report から task/AC への一点トレースは、代表ソース以外では粗い。
-- Recommended action: 次バッチで機能カテゴリごとに個別 `RPT-*` ID を採番し、traceability matrix を詳細化する。
+- Evidence: `12_report_reading_inventory.md` で各 report に `RPT-001` から `RPT-393` までの個別 ID を付け、関連 task と対象外理由を記録した。
+- Impact: 特定 report から関連 task への trace が可能になった。
+- Recommended action: 解決済み。ただし AC/E2E/REQ/SPEC への一点トレースは task family 経由で扱う。

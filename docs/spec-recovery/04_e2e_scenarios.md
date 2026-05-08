@@ -369,14 +369,16 @@
 - Actor: Codex agent, reviewer
 - Priority: medium
 - Confidence: confirmed
-- Source: TASK-023, TASK-024, FACT-016, FACT-025
+- Source: TASK-023, TASK-024, FACT-016, FACT-025, FACT-026
 
 ### 非UI検証
-1. `reports/working/*.md` と `reports/bugs/*.md` を分類する
-2. commit/PR/merge only を task 化対象外へ分ける
-3. product behavior に関係する category から task family を抽出する
+1. `reports/working/*.md` と `reports/bugs/*.md` の本文を全件読む
+2. 各 report に `RPT-*` ID を付ける
+3. commit/PR/merge only を task 化対象外へ分ける
+4. product behavior に関係する category から task family を抽出する
 
 ### 期待値
 - 対象外理由が inventory に残る
+- 個別 `RPT-*` から関連 task へ trace できる
 - 追加 task、AC、REQ/SPEC、gap が trace できる
-- 代表抽出と全量棚卸しの違いが明示される
+- 代表抽出、ファイル名分類、本文精読の違いが明示される

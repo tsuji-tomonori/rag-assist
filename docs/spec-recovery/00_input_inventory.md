@@ -2,7 +2,7 @@
 
 ## 方針
 
-この版では、既存仕様・設計・API・静的認可テスト・代表的な作業/障害レポートを高信頼ソースとして本文確認し、さらに `reports/working/*.md` と `reports/bugs/*.md` をファイル単位で全量棚卸しした。
+この版では、既存仕様・設計・API・静的認可テスト・代表的な作業/障害レポートを高信頼ソースとして本文確認し、さらに `reports/working/*.md` と `reports/bugs/*.md` を本文ベースで全量棚卸しした。
 
 commit、PR 作成、merge/rebase、競合解消、CI コメント投稿、task acceptance 確認だけを扱うレポートは、ユーザー価値や observable behavior へ直接つながる task としては扱わない。これらは process/audit evidence として分類し、機能・挙動・品質・運用に関係する report category から task family を抽出する。
 
@@ -40,24 +40,26 @@ commit、PR 作成、merge/rebase、競合解消、CI コメント投稿、task 
 | SRC-030 | report category | 2026-05-08 | benchmark/evaluation 系 21 件 | medium | benchmark run/admin、LLM judge、Allganize/MMRAG/NeoAI dataset、metrics、artifact、timeout。 |
 | SRC-031 | report category | 2026-05-08 | API/infra/ops 系 11 件 | medium | API contract、OpenAPI/route split、APIGW request validation、cost/tag/anomaly、CodeBuild/CDK。 |
 | SRC-032 | report category | 2026-05-08 | docs/requirements/process 系 32 件 | low | docs/requirements/skill/process 改善。product behavior の根拠になるものだけ仕様へ反映。 |
+| SRC-033 | report reading inventory | 2026-05-08 | `docs/spec-recovery/12_report_reading_inventory.md` | medium | `reports/working/*.md` と `reports/bugs/*.md` の本文確認済み inventory。個別 `RPT-*` ID と分類、対象外理由、関連 task を記録。 |
 
-## 作業レポート全量棚卸し結果
+## 作業レポート本文精読結果
 
 | 分類 | 件数 | task 化方針 |
 |---|---:|---|
-| commit/PR/merge/CI コメント/競合解消/task acceptance のみ | 181 | 原則 task 化しない。workflow/process evidence として扱う。 |
-| docs/requirements/process | 32 | product behavior に関係するものだけ facts/gaps に反映する。 |
-| auth/RBAC/security | 29 | 認証、role、permission、所有者境界、self signup/OIDC/CORS として task 化する。 |
-| chat/RAG answer/question | 21 | chat run、回答可能性、回答支持、人手問い合わせとして task 化する。 |
-| search/retrieval | 26 | hybrid search、search cycle、semantic chunking、retrieval evaluator として task 化する。 |
-| debug/trace | 10 | trace 調査、download、redaction、timeline replay として task 化する。 |
-| history/favorite/UI | 14 | 履歴、お気に入り、UI 操作性、loading/copy/send shortcut として task 化する。 |
-| documents/ingest/OCR/upload | 9 | upload、async ingest、PDF/OCR fallback、size/timeout/quota として task 化する。 |
-| benchmark/evaluation | 21 | benchmark run、dataset/corpus、metric、artifact、CI/AWS 実行として task 化する。 |
-| API/infra/ops | 11 | API 契約、route 分割、request validation、cost/ops guard として task 化する。 |
-| 未分類または横断 | 37 | 本文確認または近接カテゴリへ統合が必要。仕様化対象候補は gap に残す。 |
+| commit/PR/merge/CI コメント/競合解消/task acceptance のみ | 90 | 原則 task 化しない。workflow/process evidence として扱う。 |
+| docs/requirements/process | 51 | product behavior に関係するものだけ `TASK-023` / `TASK-024` と traceability に反映する。 |
+| auth/RBAC/security | 24 | 認証、role、permission、所有者境界、self signup/OIDC/CORS として task 化する。 |
+| chat/RAG answer/question | 63 | chat run、回答可能性、回答支持、人手問い合わせとして task 化する。 |
+| search/retrieval | 20 | hybrid search、search cycle、semantic chunking、retrieval evaluator として task 化する。 |
+| debug/trace | 9 | trace 調査、download、redaction、timeline replay として task 化する。 |
+| history/favorite/UI | 47 | 履歴、お気に入り、UI 操作性、loading/copy/send shortcut として task 化する。 |
+| documents/ingest/OCR/upload | 7 | upload、async ingest、PDF/OCR fallback、size/timeout/quota として task 化する。 |
+| benchmark/evaluation | 44 | benchmark run、dataset/corpus、metric、artifact、CI/AWS 実行として task 化する。 |
+| API/infra/ops | 38 | API 契約、route 分割、request validation、cost/ops guard として task 化する。 |
+
+本文確認済み report は 393 件である。ユーザーが指摘した 391 件に、PR #189 の直前追加作業レポート 1 件と、この本文精読作業の完了レポート 1 件が加わっているためである。個別確認候補は 0 件で、すべて `yes`、`partial`、`no` のいずれかに分類した。
 
 ## ソース範囲外または未読代表外
 
-- `reports/working/` と `reports/bugs/` は全量ファイル分類済み。ただし、全 391 件の本文を一件ずつ精読したわけではない。本文精読は代表ソースと追加カテゴリの根拠に限定した。
+- `reports/working/` と `reports/bugs/` は本文確認済み。個別 `RPT-*` ID と分類結果は `12_report_reading_inventory.md` に記録した。
 - `memorag-bedrock-mvp/docs/1_要求_REQ/` 配下の個別 FR/NFR ファイルは索引と設計との整合確認に留め、全ファイルの受け入れ条件までは精査していない。

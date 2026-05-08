@@ -435,7 +435,7 @@
 - Task: TASK-023, TASK-024
 - Type: documentation_traceability
 - Confidence: confirmed
-- Source: FACT-016, FACT-025
+- Source: FACT-016, FACT-025, FACT-026
 
 ### Given
 - 新しい作業レポートまたは既存 docs/tests の変更がある
@@ -444,9 +444,10 @@
 - spec recovery を更新する
 
 ### Then
+- 各 report に `RPT-*` ID、分類、対象/対象外、関連 task が記録される
 - product behavior に関係するものだけ task/fact/AC に取り込まれる
 - commit/PR/merge only レポートは対象外として分類される
-- 要件・仕様・E2E・gap から report source へ逆引きできる
+- 要件・仕様・E2E・gap から report source または task family へ逆引きできる
 
 ## Coverage gaps
 

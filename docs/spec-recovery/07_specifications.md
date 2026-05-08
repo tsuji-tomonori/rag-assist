@@ -372,10 +372,10 @@ Benchmark run は timeout、progress、metrics、raw results download、artifact
 - Type: documentation/traceability
 - Target: `docs/spec-recovery`
 - Confidence: confirmed
-- Source: OP-048, EXP-048, FACT-016, FACT-025
+- Source: OP-048, EXP-048, FACT-016, FACT-025, FACT-026
 
 ### Specification
-作業レポートは product behavior に関係するカテゴリと、commit/PR/merge only など task 化対象外カテゴリに分ける。仕様化対象カテゴリは facts/tasks/AC/E2E/REQ/SPEC/gap に trace し、対象外カテゴリは除外理由を inventory に残す。
+作業レポート本文は product behavior に関係するカテゴリと、commit/PR/merge only など task 化対象外カテゴリに分ける。各 report に `RPT-*` ID を付け、関連 task、対象/対象外、除外理由を inventory に残す。仕様化対象カテゴリは facts/tasks/AC/E2E/REQ/SPEC/gap に task family 経由で trace する。
 
 ### Verification
 - AC-DOCS-001

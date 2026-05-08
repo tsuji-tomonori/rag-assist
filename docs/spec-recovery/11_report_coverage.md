@@ -4,23 +4,25 @@
 
 現時点の task は、作業レポート 1 件につき 1 task ではなく、product behavior に関係する作業レポートを task family へ集約したものである。
 
-`reports/working/*.md` 384 件と `reports/bugs/*.md` 7 件、合計 391 件をファイル単位で全量分類した。commit、PR 作成、merge/rebase、競合解消、CI コメント投稿、task acceptance 確認だけのレポートは、ユーザー価値や observable behavior に直接つながる task としては扱わない。
+`reports/working/*.md` と `reports/bugs/*.md` の本文を全件確認した。ユーザーが指摘した 391 件に、PR #189 の直前追加作業レポート 1 件と、この本文精読作業の完了レポート 1 件を含め、本文確認済み report は 393 件である。
+
+commit、PR 作成、merge/rebase、競合解消、CI コメント投稿、task acceptance 確認だけのレポートは、ユーザー価値や observable behavior に直接つながる task としては扱わない。
 
 ## 分類結果
 
 | 分類 | 件数 | task 化 |
 |---|---:|---|
-| commit/PR/merge/CI コメント/競合解消/task acceptance のみ | 181 | 原則対象外 |
-| docs/requirements/process | 32 | product behavior に関係するものだけ対象 |
-| auth/RBAC/security | 29 | 対象 |
-| chat/RAG answer/question | 21 | 対象 |
-| search/retrieval | 26 | 対象 |
-| debug/trace | 10 | 対象 |
-| history/favorite/UI | 14 | 対象 |
-| documents/ingest/OCR/upload | 9 | 対象 |
-| benchmark/evaluation | 21 | 対象 |
-| API/infra/ops | 11 | 対象 |
-| 未分類または横断 | 37 | 追加精査 |
+| commit/PR/merge/CI コメント/競合解消/task acceptance のみ | 90 | 原則対象外 |
+| docs/requirements/process | 51 | product behavior に関係するものだけ対象 |
+| auth/RBAC/security | 24 | 対象 |
+| chat/RAG answer/question | 63 | 対象 |
+| search/retrieval | 20 | 対象 |
+| debug/trace | 9 | 対象 |
+| history/favorite/UI | 47 | 対象 |
+| documents/ingest/OCR/upload | 7 | 対象 |
+| benchmark/evaluation | 44 | 対象 |
+| API/infra/ops | 38 | 対象 |
+| 個別確認候補 | 0 | なし |
 
 ## 追加した task family
 
@@ -43,6 +45,6 @@
 
 ## 残課題
 
-- 391 件すべての本文精読は未実施。今回の追加は全量ファイル分類とカテゴリ単位の task family 抽出である。
-- 未分類または横断カテゴリ 37 件は、次バッチで本文精読して既存 task への統合または新規 task 化を判断する。
-- 代表ソース以外はカテゴリ source として扱っており、全 report への個別 `RPT-*` ID 採番は未実施。
+- 本文精読と個別 `RPT-*` ID 採番は完了した。
+- AC/E2E/REQ/SPEC への trace は report 直結ではなく task family 経由で扱う。個別 report から関連 task への対応は `12_report_reading_inventory.md` に記録した。
+- 新規 report 追加時の inventory 更新タイミングは `Q-010` として残す。

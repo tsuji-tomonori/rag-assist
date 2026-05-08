@@ -25,3 +25,4 @@
 | SRC-024 | FACT-017 | TASK-021 | AC-ADM-002 | E2E-ADM-001 | OP-033, EXP-034 | REQ-ADM-001, REQ-SEC-001 | SPEC-ADM-001, SPEC-SEC-001 | confirmed | all users/admin me permissions/role assignment。 |
 | SRC-032 | FACT-025 | TASK-023 | AC-DOCS-001 | E2E-DOCS-001 | OP-048, EXP-048 | REQ-DOCS-001 | SPEC-DOCS-001 | confirmed | docs/requirements/coverage 管理。 |
 | SRC-023 | FACT-016 | TASK-024 | AC-DOCS-001 | E2E-DOCS-001 | OP-048, EXP-048 | REQ-DOCS-001 | SPEC-DOCS-001 | confirmed | 全量 report 分类と commit/PR/merge only 除外。 |
+| SRC-033 | FACT-026 | TASK-001..TASK-024 | AC-DOCS-001 | E2E-DOCS-001 | OP-048, EXP-048 | REQ-DOCS-001 | SPEC-DOCS-001 | confirmed | 本文確認済み `RPT-*` inventory。各 report の関連 task は `12_report_reading_inventory.md` に記録。 |

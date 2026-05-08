@@ -11,6 +11,6 @@
 | Q-007 | REQ-ADM-001, SPEC-ADM-001 | 既存環境のユーザーに `BENCHMARK_OPERATOR` など新 role をどう移行するか。 | role 定義修正後も既存ユーザーの group 付け替えが必要。 | 管理画面から再付与、必要なら one-shot migration | Ops/Admin | open |
 | Q-008 | GAP-007, SPEC-SRCH-001 | retrieval evaluator の `query_rewrite` / `expand_context` をいつ実装するか。 | partial retrieval の改善と trace/action の完全性に関わる。 | 次の RAG 改善 PR で action executor を追加 | Tech Lead | open |
 | Q-009 | GAP-008, SPEC-DBG-001 | debug trace `detail` の raw text を保存時 sanitize するか、download 時 redact するか。 | 管理者 artifact の機微情報露出リスクに関わる。 | 保存時 sanitize と download allowlist を優先 | Security | open |
-| Q-010 | GAP-001, GAP-012, GAP-013 | 全量分類済みレポートのうち、未分類 37 件とカテゴリ source をどの粒度で本文精読し、個別 `RPT-*` ID を付けるか。 | 仕様復元の網羅性と一点トレース性を高めるため。 | まず未分類 37 件、次に auth/RAG/search/benchmark の順で個別 `RPT-*` ID 化 | PO/Codex | open |
+| Q-010 | GAP-001, GAP-012, GAP-013 | 新規作業レポートが追加されたとき、`12_report_reading_inventory.md` をどのタイミングで更新するか。 | 本文精読 inventory を継続的に最新化するため。 | PR ごと、または spec recovery 更新時に差分 report だけ追記 | PO/Codex | open |
 | Q-011 | GAP-002 | 既存 `FR-*` / `NFR-*` の受け入れ条件と今回の `AC-*` をどの形式で同期するか。 | 既存要件体系と spec recovery の二重管理を避けるため。 | traceability matrix に既存 FR/NFR ID 列を追加 | Tech Writer | open |
-| Q-012 | GAP-013, REQ-DOCS-001 | commit/PR/merge only 以外の process レポートを product docs とは別の process requirements として管理するか。 | agent workflow や PR flow も repo の品質要件だが、product requirement と混ぜると仕様が読みにくくなるため。 | `docs/spec-recovery/process-requirements.md` など別ファイルに分離 | Tech Lead | open |
+| Q-012 | REQ-DOCS-001 | commit/PR/merge only 以外の process レポートを product docs とは別の process requirements として管理するか。 | agent workflow や PR flow も repo の品質要件だが、product requirement と混ぜると仕様が読みにくくなるため。 | `docs/spec-recovery/process-requirements.md` など別ファイルに分離 | Tech Lead | open |
