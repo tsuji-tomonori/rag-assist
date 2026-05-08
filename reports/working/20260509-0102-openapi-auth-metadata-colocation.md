@@ -31,6 +31,7 @@
 - `admin-routes.ts`、`document-routes.ts`、`chat-routes.ts`、`question-routes.ts`、`conversation-history-routes.ts`、`debug-routes.ts`、`benchmark-routes.ts`、`system-routes.ts` の各 route 定義へ `x-memorag-authorization` を追加した。
 - `access-control-policy.test.ts` を OpenAPI metadata 由来の policy で handler 側 permission check を検証する形へ変更した。
 - `docs:openapi` を再実行し、生成 Markdown の内容が維持されることを確認した。
+- PR CI が最新 `origin/main` との merge ref で API test 失敗になったため、`origin/main` を取り込んで再検証した。
 
 ## 5. 成果物
 
@@ -58,9 +59,11 @@
 - `npm --prefix memorag-bedrock-mvp run docs:openapi:check`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api`: pass
+- `npm --prefix memorag-bedrock-mvp run test:coverage -w @memorag-mvp/api`: pass（`origin/main` 取り込み後、165 tests）
 - `git diff --check`: pass
 
 ## 8. 未対応・制約・リスク
 
 - 生成 Markdown の内容は同一のため、今回の追加対応では generated docs に差分は出ていない。
 - `routeAuthorization` helper は role 計算を共通化するため残している。API ごとの metadata 自体は各 route 定義に分散した。
+- PR CI の初回失敗は、古い branch と最新 `main` の merge ref で追加テストが入り、ローカル branch 側で再現条件が不足していたことが原因。`origin/main` 取り込み後の API coverage では再現せず pass した。
