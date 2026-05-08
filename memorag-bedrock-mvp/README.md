@@ -74,8 +74,8 @@ Hono + `@hono/zod-openapi` でOpenAPIを生成します。
 - `POST /debug-runs/{runId}/download` persisted debug trace JSON download URL作成
 - `POST /benchmark/query` ベンチマーク用。`/chat` と同じRAG処理をAPIから呼び出し、retrieval情報も返します。
 
-OpenAPI 仕様の機械生成ファイルは次のコマンドで更新します。生成先は `docs/generated/openapi.json` と `docs/generated/openapi.md` です。
-`openapi.md` は schema を JSON dump せず、各 API ごとに headers、path parameters、query parameters、data、responses を表形式で出力します。operation summary / description、parameter description、request / response field description は日本語で記載します。
+OpenAPI 仕様の機械生成 Markdown は次のコマンドで更新します。生成先は上位 index の `docs/generated/openapi.md` と、API ごとの詳細ファイルを置く `docs/generated/openapi/` です。
+`openapi.md` は API 一覧と詳細ファイルへのリンクを持ちます。各 API 詳細 Markdown は schema を JSON dump せず、headers、path parameters、query parameters、data、responses を表形式で出力します。operation summary / description、parameter description、request / response field description は日本語で記載します。生成済み `openapi.json` は commit せず、JSON 仕様は runtime の `GET /openapi.json` を source of truth とします。
 
 ```bash
 npm run docs:openapi
@@ -153,7 +153,7 @@ npm run cdk -w @memorag-mvp/infra -- deploy
 Taskfileを使う場合は `task cdk:deploy` でフロントエンドbuild、Lambda bundle、CDK deployを順に実行します。
 
 GitHub Actionsでは `.github/workflows/memorag-ci.yml` がpull requestで lint、typecheck、test、build、cdk-nag有効状態のCDK synthを実行します。デプロイは `.github/workflows/memorag-deploy.yml` を使います。AWS側のOIDC RoleとGitHub secret `AWS_DEPLOY_ROLE_ARN` を設定してください。
-OpenAPI 生成ドキュメントは `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で `npm run docs:openapi` を実行し、差分がある場合は `docs/generated/openapi.json` と `docs/generated/openapi.md` の更新 PR を作成します。
+OpenAPI 生成ドキュメントは `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で `npm run docs:openapi` を実行し、差分がある場合は `docs/generated/openapi.md` と `docs/generated/openapi/` の更新 PR を作成します。生成済み JSON は commit 対象にしません。
 OpenAPI summary / description の品質 gate は `.github/workflows/memorag-ci.yml` と `.github/workflows/memorag-openapi-docs.yml` の両方で `npm run docs:openapi:check` として実行され、不足がある場合は CI を失敗させます。
 デプロイ後の Cognito ユーザー追加は、ログイン画面からのアカウント作成、または `.github/workflows/memorag-create-cognito-user.yml` の手動実行で行えます。管理者設定のユーザー管理一覧は Cognito User Pool の全ユーザーを読み取り、管理台帳とマージして表示します。管理画面上のロール付与は Cognito group へ反映し、管理台帳にも監査用 snapshot として記録します。停止、再開、削除状態は管理台帳を source of truth とし、実際の API 認可はログイン時の Cognito group を含む JWT で判定します。
 

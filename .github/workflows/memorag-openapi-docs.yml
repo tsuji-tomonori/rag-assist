@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   generate:
-    name: Generate OpenAPI JSON and Markdown
+    name: Generate OpenAPI Markdown
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -55,11 +55,11 @@ jobs:
           commit-message: "📝 docs(api): OpenAPI 生成ドキュメントを更新"
           title: "📝 docs(api): OpenAPI 生成ドキュメントを更新"
           body: |
-            Hono の OpenAPI 定義から `docs/generated/openapi.json` と `docs/generated/openapi.md` を再生成しました。
+            Hono の OpenAPI 定義から `docs/generated/openapi.md` と API ごとの Markdown を再生成しました。
 
             ### 生成コマンド
 
             - `npm run docs:openapi`
           add-paths: |
-            memorag-bedrock-mvp/docs/generated/openapi.json
             memorag-bedrock-mvp/docs/generated/openapi.md
+            memorag-bedrock-mvp/docs/generated/openapi

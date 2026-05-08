@@ -28,7 +28,7 @@ tasks:
       - npm run typecheck --workspaces --if-present
 
   docs:openapi:
-    desc: Generate OpenAPI JSON and Markdown API reference from the Hono app
+    desc: Generate Markdown API reference from the Hono OpenAPI document
     cmds:
       - npm run docs:openapi
 

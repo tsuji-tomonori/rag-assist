@@ -30,3 +30,6 @@ pnpm-debug.log*
 .codex/
 .codex.bak-*
 .worktrees/
+
+# Generated OpenAPI JSON is served at runtime and is not committed.
+memorag-bedrock-mvp/docs/generated/openapi.json
