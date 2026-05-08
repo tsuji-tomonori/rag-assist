@@ -1,4 +1,5 @@
 import { type Dispatch, type FormEvent, type SetStateAction, useMemo, useState } from "react"
+import type { SubmitShortcut } from "../../../app/types.js"
 import { startChatRun, streamChatRunEvents } from "../api/chatApi.js"
 import { getDebugRun } from "../../debug/api/debugApi.js"
 import type { DebugTrace } from "../../debug/types.js"
@@ -138,7 +139,7 @@ export function useChatSession({
   const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
   const [pendingClarificationFreeform, setPendingClarificationFreeform] = useState<PendingClarificationFreeform | null>(null)
   const [conversationKey, setConversationKey] = useState(0)
-  const [submitShortcut, setSubmitShortcut] = useState<"enter" | "ctrlEnter">("enter")
+  const [submitShortcut, setSubmitShortcut] = useState<SubmitShortcut>("enter")
   const canAsk = useMemo(
     () => (question.trim().length > 0 || (file !== null && canWriteDocuments)) && !loading && canCreateChat,
     [question, file, loading, canCreateChat, canWriteDocuments]

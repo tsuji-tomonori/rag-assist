@@ -138,7 +138,7 @@ vi.mock("../../features/chat/hooks/useChatSession.js", () => ({
     pendingActivity: null,
     pendingDebugQuestion: null,
     conversationKey: "conv-1",
-    submitShortcut: "mod-enter",
+    submitShortcut: "ctrlEnter",
     canAsk: true,
     ...chatMock
   }))
@@ -274,6 +274,11 @@ describe("useAppShellState", () => {
     expect(debugMock.setAllExpanded).toHaveBeenCalled()
     act(() => result.current.routeProps.chatProps.onToggleDebugStep(1))
     expect(debugMock.setExpandedStepId).toHaveBeenCalled()
+
+    act(() => result.current.railProps.onChangeView("profile"))
+    expect(result.current.routeProps.profileProps.authSession.email).toBe("user@example.com")
+    result.current.routeProps.profileProps.onSetSubmitShortcut("enter")
+    expect(chatMock.setSubmitShortcut).toHaveBeenCalledWith("enter")
   })
 
   it("resets inaccessible state and exposes current user errors", async () => {

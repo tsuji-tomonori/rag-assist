@@ -911,7 +911,12 @@ describe("App chat and upload flow", () => {
     const fetchMock = mockAppFetch()
     await renderAuthenticatedApp()
 
+    await userEvent.click(screen.getByRole("button", { name: "個人設定" }))
+    expect(await screen.findByRole("heading", { name: "個人設定" })).toBeInTheDocument()
+    expect(screen.getByText("tester@example.com")).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByLabelText("送信キー"), "ctrlEnter")
+    await userEvent.click(screen.getByRole("button", { name: "チャットへ戻る" }))
+
     const textarea = screen.getByLabelText("質問")
     await userEvent.type(textarea, "分類は？{Enter}続き")
     expect(textarea).toHaveValue("分類は？\n続き")

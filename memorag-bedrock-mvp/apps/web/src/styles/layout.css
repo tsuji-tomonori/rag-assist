@@ -164,6 +164,12 @@ button:has(.button-spinner) {
   height: 14px;
 }
 
+.account-button.active .account-avatar {
+  border-color: #2f6fed;
+  color: #1d66ee;
+  background: #edf4ff;
+}
+
 .main-area {
   height: 100vh;
   min-height: 0;
@@ -369,4 +375,126 @@ button:has(.button-spinner) {
 
 .split-workspace.debug-off .chat-card {
   width: 100%;
+}
+
+.settings-workspace {
+  grid-row: 3;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  padding: 30px 20px;
+}
+
+.personal-settings-card {
+  width: min(720px, 100%);
+  border: 1px solid #d7e0ea;
+  border-radius: 8px;
+  display: grid;
+  gap: 22px;
+  margin: 0 auto;
+  padding: 24px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+}
+
+.workspace-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.workspace-head div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.workspace-head span {
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.workspace-head h2 {
+  margin: 0;
+  color: #111a2e;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.workspace-head button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  border: 1px solid #aac3f4;
+  border-radius: 7px;
+  padding: 0 14px;
+  color: #1f62dc;
+  background: #f8fbff;
+  font-weight: 900;
+}
+
+.personal-settings-list {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.personal-settings-list div {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.personal-settings-list dt,
+.personal-setting-field span {
+  color: #68758f;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.personal-settings-list dd {
+  min-width: 0;
+  margin: 0;
+  color: #17233f;
+  font-weight: 800;
+}
+
+.personal-email {
+  overflow-wrap: anywhere;
+}
+
+.personal-setting-field {
+  display: grid;
+  gap: 8px;
+}
+
+.personal-setting-field select {
+  width: min(280px, 100%);
+  min-height: 38px;
+  border: 1px solid #c9d4e3;
+  border-radius: 7px;
+  padding: 0 34px 0 12px;
+  color: #273750;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.personal-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.secondary-action {
+  min-height: 38px;
+  border: 1px solid #cbd6e5;
+  border-radius: 7px;
+  padding: 0 16px;
+  color: #354763;
+  background: #fff;
+  font-weight: 900;
 }

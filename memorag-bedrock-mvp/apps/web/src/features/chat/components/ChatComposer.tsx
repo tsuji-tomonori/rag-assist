@@ -1,4 +1,5 @@
 import type { FormEvent } from "react"
+import type { SubmitShortcut } from "../../../app/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
@@ -15,12 +16,11 @@ export function ChatComposer({
   canAsk,
   loading,
   onSetQuestion,
-  onSetFile,
-  onSetSubmitShortcut
+  onSetFile
 }: {
   onAsk: (event: FormEvent) => Promise<void>
   question: string
-  submitShortcut: "enter" | "ctrlEnter"
+  submitShortcut: SubmitShortcut
   file: File | null
   selectedGroupId: string
   documentGroups: DocumentGroup[]
@@ -30,7 +30,6 @@ export function ChatComposer({
   loading: boolean
   onSetQuestion: (value: string) => void
   onSetFile: (file: File | null) => void
-  onSetSubmitShortcut: (value: "enter" | "ctrlEnter") => void
 }) {
   const selectedGroupName = selectedGroupId === "all"
     ? "全フォルダ"
@@ -66,13 +65,6 @@ export function ChatComposer({
         }}
       />
       <div className="composer-actions">
-        <div className="composer-shortcut-toggle">
-          <label htmlFor="submit-shortcut">送信キー</label>
-          <select id="submit-shortcut" value={submitShortcut} onChange={(event) => onSetSubmitShortcut(event.target.value as "enter" | "ctrlEnter")}>
-            <option value="enter">Enterで送信</option>
-            <option value="ctrlEnter">Ctrl+Enterで送信</option>
-          </select>
-        </div>
         <span className="file-chip">{`参照: ${selectedGroupName}`}</span>
         {file && <span className="file-chip">{`一時添付: ${file.name}`}</span>}
         {canWriteDocuments && (

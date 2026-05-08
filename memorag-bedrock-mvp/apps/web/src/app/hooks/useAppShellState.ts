@@ -362,8 +362,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canReadBenchmarkRuns,
     canManageDocuments,
     canSeeAdminSettings,
-    onChangeView: setActiveView,
-    onSignOut
+    onChangeView: setActiveView
   }
 
   const topBarProps: ComponentProps<typeof TopBar> = {
@@ -421,7 +420,6 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onStartClarificationFreeform: startClarificationFreeform,
       onSetQuestion: setQuestion,
       onSetFile: setFile,
-      onSetSubmitShortcut: setSubmitShortcut,
       onCreateQuestion,
       onResolveQuestion,
       onToggleAllDebugSteps: () => setAllExpanded((value) => !value),
@@ -557,6 +555,13 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       },
       onDelete: deleteHistoryItem,
       onToggleFavorite: toggleFavorite,
+      onBack: () => setActiveView("chat")
+    },
+    profileProps: {
+      authSession,
+      submitShortcut,
+      onSetSubmitShortcut: setSubmitShortcut,
+      onSignOut,
       onBack: () => setActiveView("chat")
     }
   }
