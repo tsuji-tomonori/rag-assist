@@ -1,11 +1,11 @@
 # スコープ付き資料グループ管理
 
-保存先: `tasks/do/20260508-1310-scoped-document-groups.md`
+保存先: `tasks/done/20260508-1310-scoped-document-groups.md`
 
 ## 状態
 
-- do
-- 実装・検証完了。PR 作成、受け入れ条件コメント、セルフレビューコメント後に `tasks/done/` へ移動する。
+- done
+- 実装・検証、PR 作成、受け入れ条件コメント、セルフレビューコメントまで完了。
 
 ## 背景
 
