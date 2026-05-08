@@ -63,6 +63,8 @@ type SearchResponse = {
     semanticCount?: number
     fusedCount?: number
     latencyMs?: number
+    profileId?: string
+    profileVersion?: string
     index?: {
       visibleManifestCount?: number
       indexedChunkCount?: number
@@ -349,10 +351,10 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
         )
       ].join("\n")
   const detailRows = [
-    "| id | case | evaluator_profile | recall_k | recall@K | recall@20 | mrr@10 | ndcg@10 | precision@10 | leak | latency_ms | lexical | semantic | fused |",
-    "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    "| id | case | evaluator_profile | retrieval_profile | recall_k | recall@K | recall@20 | mrr@10 | ndcg@10 | precision@10 | leak | latency_ms | lexical | semantic | fused |",
+    "| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ...rows.map((row) =>
-      `| ${escapeMarkdown(row.id)} | ${escapeMarkdown(row.caseType ?? "")} | ${escapeMarkdown(row.evaluatorProfile)} | ${row.recallK} | ${formatNumber(row.metrics.recallAtK)} | ${formatNumber(row.metrics.recallAt20)} | ${formatNumber(row.metrics.mrrAt10)} | ${formatNumber(row.metrics.ndcgAt10)} | ${formatNumber(row.metrics.precisionAt10)} | ${row.noAccessLeakCount} | ${row.latencyMs} | ${row.diagnostics?.lexicalCount ?? 0} | ${row.diagnostics?.semanticCount ?? 0} | ${row.diagnostics?.fusedCount ?? 0} |`
+      `| ${escapeMarkdown(row.id)} | ${escapeMarkdown(row.caseType ?? "")} | ${escapeMarkdown(row.evaluatorProfile)} | ${escapeMarkdown(formatSearchRetrievalProfile(row))} | ${row.recallK} | ${formatNumber(row.metrics.recallAtK)} | ${formatNumber(row.metrics.recallAt20)} | ${formatNumber(row.metrics.mrrAt10)} | ${formatNumber(row.metrics.ndcgAt10)} | ${formatNumber(row.metrics.precisionAt10)} | ${row.noAccessLeakCount} | ${row.latencyMs} | ${row.diagnostics?.lexicalCount ?? 0} | ${row.diagnostics?.semanticCount ?? 0} | ${row.diagnostics?.fusedCount ?? 0} |`
     )
   ].join("\n")
   const corpusSeedRows = summary.corpusSeed.length === 0
@@ -373,6 +375,7 @@ function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): 
 - Raw results: ${summary.outputPath}
 - Summary JSON: ${summary.summaryPath}
 - Evaluator profile: ${profileKey(summary.evaluatorProfile)}
+- Retrieval profile: ${formatSearchRetrievalProfiles(rows)}
 - Baseline comparison: ${summary.baselineComparisonNote ?? "same_profile_or_not_configured"}
 
 ## Summary
@@ -421,6 +424,7 @@ function renderFatalMarkdownReport(summary: SearchSummary, rows: SearchResultRow
 - Raw results: ${summary.outputPath}
 - Summary JSON: ${summary.summaryPath}
 - Evaluator profile: ${profileKey(summary.evaluatorProfile)}
+- Retrieval profile: ${formatSearchRetrievalProfiles(rows)}
 - Baseline comparison: ${summary.baselineComparisonNote ?? "same_profile_or_not_configured"}
 
 ## Summary
@@ -485,6 +489,17 @@ function metricDescription(metric: keyof SearchMetrics): string {
     case "fusedCountAvg":
       return "lexical と semantic を統合した後の候補数の平均。"
   }
+}
+
+function formatSearchRetrievalProfile(row: SearchResultRow): string {
+  const id = row.diagnostics?.profileId
+  const version = row.diagnostics?.profileVersion
+  return id && version ? `${id}@${version}` : "not_reported"
+}
+
+function formatSearchRetrievalProfiles(rows: SearchResultRow[]): string {
+  const profiles = Array.from(new Set(rows.map(formatSearchRetrievalProfile))).sort()
+  return profiles.length === 0 ? "not_reported" : profiles.join(", ")
 }
 
 function averageMetric(rows: SearchResultRow[], metric: keyof RetrievalMetrics): number | null {

@@ -105,6 +105,9 @@ test("search runner seeds benchmark corpus before search rows when configured", 
     const summary = readSummary(paths.summary)
     assert.equal(summary.total, 1)
     assert.equal(summary.failures.length, 0)
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /Retrieval profile: default@1/)
+    assert.match(report, /\| search-seeded-001 \| .* \| default@1 \|/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -202,7 +205,7 @@ async function handleSearchRunnerRequest(req: IncomingMessage, res: ServerRespon
     res.end(JSON.stringify({
       query: "経費精算 期限",
       results: [{ id: "doc-handbook-chunk-0000", documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
-      diagnostics: { lexicalCount: 1, semanticCount: 0, fusedCount: 1, latencyMs: 12 }
+      diagnostics: { lexicalCount: 1, semanticCount: 0, fusedCount: 1, latencyMs: 12, profileId: "default", profileVersion: "1" }
     }))
     return
   }

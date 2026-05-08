@@ -68,6 +68,15 @@ export const PipelineVersionsSchema = z.object({
   embeddingDimensions: z.number().int().positive()
 })
 
+export const RagProfileTraceSchema = z.object({
+  id: z.string(),
+  version: z.string(),
+  retrievalProfileId: z.string(),
+  retrievalProfileVersion: z.string(),
+  answerPolicyId: z.string(),
+  answerPolicyVersion: z.string()
+})
+
 const ChunkMetadataSchema = z.object({
   id: z.string(),
   startChar: z.number().int().nonnegative(),
@@ -499,6 +508,7 @@ export const DebugTraceSchema = z.object({
   clueModelId: z.string(),
   clarificationContext: ClarificationContextSchema.optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
+  ragProfile: RagProfileTraceSchema.optional(),
   topK: z.number(),
   memoryTopK: z.number(),
   minScore: z.number(),
