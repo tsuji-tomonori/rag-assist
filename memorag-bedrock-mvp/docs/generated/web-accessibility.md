@@ -25,7 +25,7 @@
 | 性能テスト | benchmark | 18 | 「チャットへ戻る」を実行するボタン。<br>「テスト種別」に紐づく入力ラベル。<br>「テスト種別」を選ぶ選択項目。<br>「standard-agent-v1」を表す option 要素。 ほか 12 件 | [benchmark.md](web-features/benchmark.md) |
 | チャット | chat | 37 | 「参照元」へ移動するリンク。<br>「追加質問候補」を実行するボタン。<br>「回答をコピー済み / 回答をコピー」を実行するボタン。<br>「この候補で質問する」を実行するボタン。 ほか 33 件 | [chat.md](web-features/chat.md) |
 | デバッグ | debug | 10 | 「保存JSON」を実行するボタン。<br>「可視化JSON」を実行するボタン。<br>「JSONをアップロード」に紐づく入力ラベル。<br>「JSONをアップロード」を入力または選択する項目。 ほか 2 件 | [debug.md](web-features/debug.md) |
-| ドキュメント | documents | 45 | 「管理者設定へ戻る」を実行するボタン。<br>「フォルダを検索」に紐づく入力ラベル。<br>「フォルダを検索」を入力または選択する項目。<br>「フォルダを絞り込み」を実行するボタン。 ほか 34 件 | [documents.md](web-features/documents.md) |
+| ドキュメント | documents | 27 | 「管理者設定へ戻る」を実行するボタン。<br>「すべてのドキュメント」を実行するボタン。<br>「切替」を実行するボタン。<br>「戻す」を実行するボタン。 ほか 20 件 | [documents.md](web-features/documents.md) |
 | 履歴 | history | 11 | 「チャットへ戻る」を実行するボタン。<br>「履歴を検索」を入力または選択する項目。<br>「履歴の並び順」を選ぶ選択項目。<br>「新しい順」を表す option 要素。 ほか 5 件 | [history.md](web-features/history.md) |
 | 担当者対応 | questions | 21 | 「チャットへ戻る」を実行するボタン。<br>「ステータス / すべて」に紐づく入力ラベル。<br>「すべて」を選ぶ選択項目。<br>「すべて」を表す option 要素。 ほか 16 件 | [questions.md](web-features/questions.md) |
 | 共通 | shared | 1 | - | [shared.md](web-features/shared.md) |
@@ -195,51 +195,33 @@
 | デバッグ | DebugPanel | DebugFlowNodeButton | 未推定 | DebugFlowNodeButton 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/debug/components/DebugPanel.tsx:128 |
 | デバッグ | DebugPanel | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-expanded=expanded | apps/web/src/features/debug/components/DebugPanel.tsx:154 |
 | デバッグ | DebugFlowNodeButton | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-pressed=selected | apps/web/src/features/debug/components/DebugPanel.tsx:234 |
-| ドキュメント | DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:128 |
-| ドキュメント | DocumentWorkspace | label | フォルダを検索 | 「フォルダを検索」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:150 |
-| ドキュメント | DocumentWorkspace | input | フォルダを検索 | 「フォルダを検索」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:152 |
-| ドキュメント | DocumentWorkspace | button | フォルダを絞り込み | 「フォルダを絞り込み」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:154 |
-| ドキュメント | DocumentWorkspace | button | すべてのドキュメント | 「すべてのドキュメント」を実行するボタン。 | 状態: aria-current=selectedFolderId === "all" ? "true" : undefined | apps/web/src/features/documents/components/DocumentWorkspace.tsx:159 |
-| ドキュメント | DocumentWorkspace | button | 社内規定 | 「社内規定」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:165 |
-| ドキュメント | DocumentWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=selectedFolder?.id === folder.id ? "true" : undefined | apps/web/src/features/documents/components/DocumentWorkspace.tsx:172 |
-| ドキュメント | DocumentWorkspace | button | 新規フォルダ | 「新規フォルダ」を実行するボタン。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:203 |
-| ドキュメント | DocumentWorkspace | button | 共有設定を開く | 「共有設定を開く」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:206 |
-| ドキュメント | DocumentWorkspace | input | `${document.fileName}を選択` | 「`${document.fileName}を選択`」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:229 |
-| ドキュメント | DocumentWorkspace | input | `${document.fileName}を再インデックス対象にする` | 「`${document.fileName}を再インデックス対象にする`」を入力または選択する項目。 | 状態: disabled=!canReindex \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:240 |
-| ドキュメント | DocumentWorkspace | button | `${document.fileName}の再インデックスをステージング` | 「`${document.fileName}の再インデックスをステージング`」を実行するボタン。 | 状態: disabled=!canReindex \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:251 |
-| ドキュメント | DocumentWorkspace | summary | `${document.fileName}の操作メニュー` | 「`${document.fileName}の操作メニュー`」の詳細を開閉する要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:261 |
-| ドキュメント | DocumentWorkspace | button | 名前を変更 | 「名前を変更」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:263 |
-| ドキュメント | DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:267 |
-| ドキュメント | DocumentWorkspace | button | `${document.fileName}を削除` | 「`${document.fileName}を削除`」を実行するボタン。 | 状態: disabled=!canDelete \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:271 |
-| ドキュメント | DocumentWorkspace | button | 前のページ | 「前のページ」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:293 |
-| ドキュメント | DocumentWorkspace | button | 次のページ | 「次のページ」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:297 |
-| ドキュメント | DocumentWorkspace | select | 表示件数 | 「表示件数」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:301 |
-| ドキュメント | DocumentWorkspace | option | 20 件 / ページ | 「20 件 / ページ」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:302 |
-| ドキュメント | DocumentWorkspace | option | 50 件 / ページ | 「50 件 / ページ」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:303 |
-| ドキュメント | DocumentWorkspace | button | 切替 | 「切替」を実行するボタン。 | 状態: disabled=loading \|\| migration.status !== "staged" | apps/web/src/features/documents/components/DocumentWorkspace.tsx:313 |
-| ドキュメント | DocumentWorkspace | button | 戻す | 「戻す」を実行するボタン。 | 状態: disabled=loading \|\| migration.status !== "cutover" | apps/web/src/features/documents/components/DocumentWorkspace.tsx:314 |
-| ドキュメント | DocumentWorkspace | button | 共有を編集 | 「共有を編集」を実行するボタン。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:350 |
-| ドキュメント | DocumentWorkspace | form | 共有フォルダ / 選択してください / 共有 Cognito group / 共有更新 | 「共有フォルダ / 選択してください / 共有 Cognito group / 共有更新」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:352 |
-| ドキュメント | DocumentWorkspace | label | 共有フォルダ / 選択してください | 「共有フォルダ / 選択してください」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:353 |
-| ドキュメント | DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:355 |
-| ドキュメント | DocumentWorkspace | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:356 |
-| ドキュメント | DocumentWorkspace | option | 共有フォルダ / 選択してください | 「共有フォルダ / 選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:358 |
-| ドキュメント | DocumentWorkspace | label | 共有 Cognito group | 「共有 Cognito group」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:362 |
-| ドキュメント | DocumentWorkspace | input | CHAT_USER,RAG_GROUP | 「CHAT_USER,RAG_GROUP」を入力または選択する項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:364 |
-| ドキュメント | DocumentWorkspace | button | 共有更新 | 「共有更新」を実行するボタン。 | 状態: disabled=!canWrite \|\| (!shareGroupId && !selectedGroupId) \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:366 |
-| ドキュメント | DocumentWorkspace | form | 保存先フォルダ / フォルダなし / アップロード | 「保存先フォルダ / フォルダなし / アップロード」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:381 |
-| ドキュメント | DocumentWorkspace | label | 保存先フォルダ / フォルダなし | 「保存先フォルダ / フォルダなし」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:382 |
-| ドキュメント | DocumentWorkspace | select | フォルダなし | 「フォルダなし」を選ぶ選択項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:384 |
-| ドキュメント | DocumentWorkspace | option | フォルダなし | 「フォルダなし」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:385 |
-| ドキュメント | DocumentWorkspace | option | 保存先フォルダ / フォルダなし | 「保存先フォルダ / フォルダなし」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:387 |
-| ドキュメント | DocumentWorkspace | label | 文書アップロード | 「文書アップロード」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:391 |
-| ドキュメント | DocumentWorkspace | input | アップロードする文書を選択 | 「アップロードする文書を選択」を入力または選択する項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:394 |
-| ドキュメント | DocumentWorkspace | button | アップロード | 「アップロード」を実行するボタン。 | 状態: disabled=!canWrite \|\| !uploadFile \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:396 |
-| ドキュメント | DocumentWorkspace | form | 新規フォルダ / 新規フォルダ | 「新規フォルダ / 新規フォルダ」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:401 |
-| ドキュメント | DocumentWorkspace | label | 新規フォルダ | 「新規フォルダ」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:402 |
-| ドキュメント | DocumentWorkspace | input | 2026 | 「2026」を入力または選択する項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:404 |
-| ドキュメント | DocumentWorkspace | button | 新規フォルダ | 「新規フォルダ」を実行するボタン。 | 状態: disabled=!canWrite \|\| !groupName.trim() \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:406 |
-| ドキュメント | DocumentWorkspace | button | すべて表示 | 「すべて表示」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:413 |
+| ドキュメント | DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:107 |
+| ドキュメント | DocumentWorkspace | button | すべてのドキュメント | 「すべてのドキュメント」を実行するボタン。 | 状態: aria-current=selectedFolderId === "all" ? "true" : undefined | apps/web/src/features/documents/components/DocumentWorkspace.tsx:127 |
+| ドキュメント | DocumentWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=selectedFolder?.id === folder.id ? "true" : undefined | apps/web/src/features/documents/components/DocumentWorkspace.tsx:139 |
+| ドキュメント | DocumentWorkspace | button | `${document.fileName}の再インデックスをステージング` | 「`${document.fileName}の再インデックスをステージング`」を実行するボタン。 | 状態: disabled=!canReindex \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:204 |
+| ドキュメント | DocumentWorkspace | button | `${document.fileName}を削除` | 「`${document.fileName}を削除`」を実行するボタン。 | 状態: disabled=!canDelete \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:213 |
+| ドキュメント | DocumentWorkspace | button | 切替 | 「切替」を実行するボタン。 | 状態: disabled=loading \|\| migration.status !== "staged" | apps/web/src/features/documents/components/DocumentWorkspace.tsx:239 |
+| ドキュメント | DocumentWorkspace | button | 戻す | 「戻す」を実行するボタン。 | 状態: disabled=loading \|\| migration.status !== "cutover" | apps/web/src/features/documents/components/DocumentWorkspace.tsx:240 |
+| ドキュメント | DocumentWorkspace | form | 共有フォルダ / 選択してください / 共有 Cognito group / 共有更新 | 「共有フォルダ / 選択してください / 共有 Cognito group / 共有更新」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:277 |
+| ドキュメント | DocumentWorkspace | label | 共有フォルダ / 選択してください | 「共有フォルダ / 選択してください」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:278 |
+| ドキュメント | DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:280 |
+| ドキュメント | DocumentWorkspace | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:281 |
+| ドキュメント | DocumentWorkspace | option | 共有フォルダ / 選択してください | 「共有フォルダ / 選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:283 |
+| ドキュメント | DocumentWorkspace | label | 共有 Cognito group | 「共有 Cognito group」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:287 |
+| ドキュメント | DocumentWorkspace | input | Cognito group をカンマ区切りで入力 | 「Cognito group をカンマ区切りで入力」を入力または選択する項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:289 |
+| ドキュメント | DocumentWorkspace | button | 共有更新 | 「共有更新」を実行するボタン。 | 状態: disabled=!canWrite \|\| (!shareGroupId && !selectedGroupId) \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:291 |
+| ドキュメント | DocumentWorkspace | form | 保存先フォルダ / フォルダなし / アップロード | 「保存先フォルダ / フォルダなし / アップロード」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:314 |
+| ドキュメント | DocumentWorkspace | label | 保存先フォルダ / フォルダなし | 「保存先フォルダ / フォルダなし」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:315 |
+| ドキュメント | DocumentWorkspace | select | フォルダなし | 「フォルダなし」を選ぶ選択項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:317 |
+| ドキュメント | DocumentWorkspace | option | フォルダなし | 「フォルダなし」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:318 |
+| ドキュメント | DocumentWorkspace | option | 保存先フォルダ / フォルダなし | 「保存先フォルダ / フォルダなし」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:320 |
+| ドキュメント | DocumentWorkspace | label | 文書アップロード | 「文書アップロード」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:324 |
+| ドキュメント | DocumentWorkspace | input | アップロードする文書を選択 | 「アップロードする文書を選択」を入力または選択する項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:327 |
+| ドキュメント | DocumentWorkspace | button | アップロード | 「アップロード」を実行するボタン。 | 状態: disabled=!canWrite \|\| !uploadFile \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:329 |
+| ドキュメント | DocumentWorkspace | form | 新規フォルダ / 新規フォルダ | 「新規フォルダ / 新規フォルダ」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:334 |
+| ドキュメント | DocumentWorkspace | label | 新規フォルダ | 「新規フォルダ」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:335 |
+| ドキュメント | DocumentWorkspace | input | フォルダ名 | 「フォルダ名」を入力または選択する項目。 | 状態: disabled=!canWrite \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:337 |
+| ドキュメント | DocumentWorkspace | button | 新規フォルダ | 「新規フォルダ」を実行するボタン。 | 状態: disabled=!canWrite \|\| !groupName.trim() \|\| loading | apps/web/src/features/documents/components/DocumentWorkspace.tsx:339 |
 | 履歴 | HistoryWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:51 |
 | 履歴 | HistoryWorkspace | input | 履歴を検索 | 「履歴を検索」を入力または選択する項目。 | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:65 |
 | 履歴 | HistoryWorkspace | select | 履歴の並び順 | 「履歴の並び順」を選ぶ選択項目。 | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:72 |
