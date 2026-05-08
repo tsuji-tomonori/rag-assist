@@ -136,6 +136,7 @@ async function scopedMetadata(
 
   if (!scope) return metadata
   const groupIds = scope.groupIds ?? []
+  if (scope.scopeType === "group" && groupIds.length === 0) throw new HTTPException(400, { message: "group scope requires non-empty groupIds" })
   if (groupIds.length > 0) await service.assertDocumentGroupsWritable(user, groupIds)
   if (groupIds.length > 0 || scope.scopeType === "group") {
     return { ...base, scopeType: "group", ownerUserId: user.userId, groupIds }
