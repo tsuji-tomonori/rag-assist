@@ -166,6 +166,7 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.match(report, /retrieval_mrr_at_k/)
     assert.match(report, /citation_support_pass_rate/)
     assert.match(report, /no_access_leak_count/)
+    assert.match(report, /RAG profile: default@1 retrieval=default@1 answer=default-answer-policy@1/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -254,7 +255,7 @@ async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, ca
       isAnswerable: true,
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
-      debug: { totalLatencyMs: 10, steps: [] }
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
     }))
     return
   }
@@ -282,7 +283,7 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9, text: "p1 経費精算は30日以内です。" }],
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
       answerSupport: { unsupportedSentences: [], totalSentences: 1 },
-      debug: { totalLatencyMs: 10, steps: [] }
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
     }))
     return
   }
@@ -305,8 +306,26 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
     isAnswerable: true,
     citations: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
     retrieved: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
-    debug: { totalLatencyMs: 10, steps: [] }
+    debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
   }))
+}
+
+function defaultRagProfile(): {
+  id: string
+  version: string
+  retrievalProfileId: string
+  retrievalProfileVersion: string
+  answerPolicyId: string
+  answerPolicyVersion: string
+} {
+  return {
+    id: "default",
+    version: "1",
+    retrievalProfileId: "default",
+    retrievalProfileVersion: "1",
+    answerPolicyId: "default-answer-policy",
+    answerPolicyVersion: "1"
+  }
 }
 
 async function readRequestBody(req: IncomingMessage): Promise<unknown> {

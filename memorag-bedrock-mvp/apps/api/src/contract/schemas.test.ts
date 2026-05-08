@@ -62,3 +62,52 @@ test("chat response clarification schema strips internal rejected options", () =
 
   assert.equal(Object.hasOwn(result.clarification ?? {}, "rejectedOptions"), false)
 })
+
+test("chat debug trace schema exposes only profile identifiers", () => {
+  const result = ChatResponseSchema.safeParse({
+    responseType: "answer",
+    answer: "回答です。",
+    isAnswerable: true,
+    citations: [],
+    retrieved: [],
+    debug: {
+      schemaVersion: 1,
+      runId: "run_20260508_000000Z_abcdef12",
+      question: "質問",
+      modelId: "amazon.nova-lite-v1:0",
+      embeddingModelId: "amazon.titan-embed-text-v2:0",
+      clueModelId: "amazon.nova-lite-v1:0",
+      ragProfile: {
+        id: "default",
+        version: "1",
+        retrievalProfileId: "default",
+        retrievalProfileVersion: "1",
+        answerPolicyId: "default-answer-policy",
+        answerPolicyVersion: "1"
+      },
+      topK: 6,
+      memoryTopK: 4,
+      minScore: 0.2,
+      startedAt: "2026-05-08T00:00:00.000Z",
+      completedAt: "2026-05-08T00:00:01.000Z",
+      totalLatencyMs: 1000,
+      status: "success",
+      answerPreview: "回答です。",
+      isAnswerable: true,
+      citations: [],
+      retrieved: [],
+      steps: []
+    }
+  })
+
+  assert.equal(result.success, true)
+  if (!result.success) return
+  assert.deepEqual(result.data.debug?.ragProfile, {
+    id: "default",
+    version: "1",
+    retrievalProfileId: "default",
+    retrievalProfileVersion: "1",
+    answerPolicyId: "default-answer-policy",
+    answerPolicyVersion: "1"
+  })
+})

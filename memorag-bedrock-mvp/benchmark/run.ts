@@ -104,6 +104,14 @@ type BenchmarkResponse = {
   finalEvidence?: Citation[]
   debug?: {
     runId?: string
+    ragProfile?: {
+      id?: string
+      version?: string
+      retrievalProfileId?: string
+      retrievalProfileVersion?: string
+      answerPolicyId?: string
+      answerPolicyVersion?: string
+    }
     totalLatencyMs?: number
     steps?: Array<{ label: string; latencyMs: number; status: string; summary?: string; detail?: string; output?: Record<string, unknown> }>
   }
@@ -1065,6 +1073,7 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
 - Raw results: ${summary.outputPath}
 - Summary JSON: ${summary.summaryPath}
 - Evaluator profile: ${profileKey(summary.evaluatorProfile)}
+- RAG profile: ${formatBenchmarkRagProfiles(results)}
 - Baseline comparison: ${summary.baselineComparisonNote ?? "same_profile_or_not_configured"}
 
 ## Summary
@@ -1198,6 +1207,33 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
     case "average_latency_ms":
       return "初回 API call latency の平均。"
   }
+}
+
+function formatBenchmarkRagProfiles(results: BenchmarkResultRow[]): string {
+  const profiles = new Set<string>()
+  for (const row of results) {
+    const profile = row.result.debug?.ragProfile
+    if (profile?.id && profile?.version) {
+      const retrieval = profile.retrievalProfileId && profile.retrievalProfileVersion
+        ? ` retrieval=${profile.retrievalProfileId}@${profile.retrievalProfileVersion}`
+        : ""
+      const answer = profile.answerPolicyId && profile.answerPolicyVersion
+        ? ` answer=${profile.answerPolicyId}@${profile.answerPolicyVersion}`
+        : ""
+      profiles.add(`${profile.id}@${profile.version}${retrieval}${answer}`)
+    }
+    const followUpProfile = row.followUp?.result.debug?.ragProfile
+    if (followUpProfile?.id && followUpProfile?.version) {
+      const retrieval = followUpProfile.retrievalProfileId && followUpProfile.retrievalProfileVersion
+        ? ` retrieval=${followUpProfile.retrievalProfileId}@${followUpProfile.retrievalProfileVersion}`
+        : ""
+      const answer = followUpProfile.answerPolicyId && followUpProfile.answerPolicyVersion
+        ? ` answer=${followUpProfile.answerPolicyId}@${followUpProfile.answerPolicyVersion}`
+        : ""
+      profiles.add(`${followUpProfile.id}@${followUpProfile.version}${retrieval}${answer}`)
+    }
+  }
+  return profiles.size === 0 ? "not_reported" : Array.from(profiles).sort().join(", ")
 }
 
 function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportRow[] {
