@@ -31,13 +31,13 @@ Skill 自体が repository-local agent automation のドキュメント兼実装
 
 ## 受け入れ条件
 
-- [ ] `.agents/skills/agent-dreaming-memory/SKILL.md` が存在し、`name` と `description` を持つ。
-- [ ] zip の主要同梱物である `references/`、`scripts/`、`assets/`、`agents/openai.yaml` が配置されている。
-- [ ] 同梱 Python スクリプトが構文エラーなくコンパイルできる。
-- [ ] `agents/openai.yaml` が YAML として読み込める。
-- [ ] `git diff --check` が pass する。
-- [ ] 作業完了レポートを `reports/working/` に保存する。
-- [ ] main 向け PR を作成し、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] `.agents/skills/agent-dreaming-memory/SKILL.md` が存在し、`name` と `description` を持つ。
+- [x] zip の主要同梱物である `references/`、`scripts/`、`assets/`、`agents/openai.yaml` が配置されている。
+- [x] 同梱 Python スクリプトが構文エラーなくコンパイルできる。
+- [x] `agents/openai.yaml` が YAML として読み込める。
+- [x] `git diff --check` が pass する。
+- [x] 作業完了レポートを `reports/working/` に保存する。
+- [x] main 向け PR を作成し、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証計画
 
@@ -60,4 +60,4 @@ Skill 自体が repository-local agent automation のドキュメント兼実装
 
 ## 状態
 
-in_progress
+done
