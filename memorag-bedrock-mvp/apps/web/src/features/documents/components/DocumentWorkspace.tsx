@@ -197,6 +197,7 @@ export function DocumentWorkspace({
         <section className="document-file-panel" aria-label="登録文書一覧">
           <div className="document-file-panel-head">
             <h3>社内規定 / {selectedFolder?.name ?? "すべて"}</h3>
+            <span className="sr-only">登録文書</span>
             <div>
               <button type="button" title="新規フォルダ" disabled={!canWrite || loading}>
                 <Icon name="plus" />
@@ -384,7 +385,7 @@ export function DocumentWorkspace({
                   ))}
                 </select>
               </label>
-              <label className="compact-file-input">
+              <label className="compact-file-input" aria-label="文書アップロード">
                 <Icon name="download" />
                 <span>{uploadFile ? uploadFile.name : "このフォルダにアップロード"}</span>
                 <input type="file" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />

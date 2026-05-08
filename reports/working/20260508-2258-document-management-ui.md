@@ -34,6 +34,7 @@
 - `folder` と `share` アイコンを既存 `Icon` コンポーネントに追加した。
 - ドキュメント画面 CSS とレスポンシブ CSS を更新した。
 - `DocumentWorkspace.test.tsx` を新 UI の期待値に合わせて更新した。
+- PR CI で旧 UI 前提の `App.test.tsx` が失敗したため、`登録文書` と `文書アップロード` のアクセシブルラベルを互換的に残して修正した。
 
 ## 5. 成果物
 
@@ -64,6 +65,7 @@
 
 - `npm ci`: pass
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- DocumentWorkspace`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- App.test.tsx DocumentWorkspace`: pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
 - `npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web`: pass
 - `git diff --check`: pass
