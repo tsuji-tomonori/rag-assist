@@ -1,6 +1,6 @@
 # Benchmark upload Content-Length mismatch 修正
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -18,11 +18,11 @@ S3 presigned upload session で、実ファイルサイズと異なる `Content-
 
 ## 計画
 
-1. S3 upload URL 生成時の `ContentLength` / `Content-Length` 利用箇所を確認する。
-2. `maxBytes` を固定 `Content-Length` として署名・返却しないよう修正する。
-3. 上限検証が ingest 側で維持されることをテストで確認する。
-4. 変更範囲に見合う API/benchmark 検証を実行する。
-5. 作業レポート、commit、push、PR 作成、受け入れ条件コメント、セルフレビューコメントを行う。
+1. S3 upload URL 生成時の `ContentLength` / `Content-Length` 利用箇所を確認した。
+2. `maxBytes` を固定 `Content-Length` として署名・返却しないよう修正した。
+3. 上限検証が ingest 側で維持されることをテストと差分確認で確認した。
+4. 変更範囲に見合う API/benchmark 検証を実行した。
+5. 作業レポート、commit、push、PR 作成、受け入れ条件コメント、セルフレビューコメントを行った。
 
 ## ドキュメント保守計画
 
@@ -30,11 +30,11 @@ S3 presigned upload session で、実ファイルサイズと異なる `Content-
 
 ## 受け入れ条件
 
-- [ ] S3 presigned upload session の返却 headers に、最大サイズ由来の `Content-Length` が含まれない。
-- [ ] `maxUploadBytes` は upload session response に残り、クライアントへ上限値を伝え続ける。
-- [ ] ingest 時の object size 上限検証は維持される。
-- [ ] benchmark runner の PDF upload session 転送が `Content-Length` mismatch を誘発しない body/header 構成になる。
-- [ ] 変更範囲に見合うテストが pass する。
+- [x] S3 presigned upload session の返却 headers に、最大サイズ由来の `Content-Length` が含まれない。
+- [x] `maxUploadBytes` は upload session response に残り、クライアントへ上限値を伝え続ける。
+- [x] ingest 時の object size 上限検証は維持される。
+- [x] benchmark runner の PDF upload session 転送が `Content-Length` mismatch を誘発しない body/header 構成になる。
+- [x] 変更範囲に見合うテストが pass する。
 
 ## 検証計画
 
@@ -55,3 +55,9 @@ S3 presigned upload session で、実ファイルサイズと異なる `Content-
 
 - S3 presigned PUT でアップロード時点のサイズ制限が弱まり、ingest 時検証に寄る。
 - 実 AWS CodeBuild 再実行は環境・権限に依存するため、PR 作成時点では未実施になる可能性がある。
+
+## PR
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/199
+- 受け入れ条件コメント: posted
+- セルフレビューコメント: posted
