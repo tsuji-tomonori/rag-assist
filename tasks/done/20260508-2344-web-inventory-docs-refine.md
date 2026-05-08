@@ -39,12 +39,12 @@
 
 ## 受け入れ条件
 
-- [ ] PR branch が最新 `origin/main` に追従し、GitHub 上の conflict が解消されている。
-- [ ] 初見の人が Web UI の全体像、画面、主な導線、機能領域を Markdown から把握できる。
-- [ ] コンポーネント一覧に、どの機能領域・画面に関係するかを読み取る情報がある。
-- [ ] 機能一覧が機能別 Markdown に分割され、索引から辿れる。
-- [ ] Markdown と JSON が `docs:web-inventory` で再生成でき、`docs:web-inventory:check` が pass する。
-- [ ] 実行した検証と未実施の制約を report / PR に明記する。
+- [x] PR branch が最新 `origin/main` に追従し、GitHub 上の conflict が解消されている。
+- [x] 初見の人が Web UI の全体像、画面、主な導線、機能領域を Markdown から把握できる。
+- [x] コンポーネント一覧に、どの機能領域・画面に関係するかを読み取る情報がある。
+- [x] 機能一覧が機能別 Markdown に分割され、索引から辿れる。
+- [x] Markdown と JSON が `docs:web-inventory` で再生成でき、`docs:web-inventory:check` が pass する。
+- [x] 実行した検証と未実施の制約を report / PR に明記する。
 
 ## 検証計画
 
@@ -70,4 +70,4 @@
 
 ## 状態
 
-in_progress
+done
