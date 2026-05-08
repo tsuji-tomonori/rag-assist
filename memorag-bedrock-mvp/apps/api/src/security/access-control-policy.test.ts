@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import test from "node:test"
 import app from "../app.js"
-import { routeAuthorizationMetadata, routeAuthorizationPolicies, type RouteAuthorizationPolicy as RoutePolicy } from "../authorization.js"
+import type { Permission, RouteAuthorizationMode } from "../authorization.js"
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
 const routeSourceDir = path.resolve(process.cwd(), "src/routes")
@@ -34,7 +34,12 @@ const protectedMiddlewarePaths = [
   "/benchmark-suites"
 ]
 
-const routePolicies: RoutePolicy[] = routeAuthorizationPolicies.filter((policy) => policy.mode !== "public")
+type RoutePolicy = {
+  method: string
+  path: string
+  mode: RouteAuthorizationMode
+  permission?: Permission
+}
 
 test("protected API paths keep auth middleware coverage", async () => {
   const source = await readRouteSources()
@@ -51,6 +56,7 @@ test("protected API paths keep auth middleware coverage", async () => {
 
 test("protected API routes keep route-level permission checks", async () => {
   const source = await readRouteSources()
+  const routePolicies = (await openApiRoutePolicies()).filter((policy) => policy.mode !== "public")
 
   for (const policy of routePolicies) {
     const block = findRouteBlock(source, policy)
@@ -157,19 +163,22 @@ test("protected API routes keep route-level permission checks", async () => {
 
 test("protected API routes must be explicitly reviewed before they change", async () => {
   const source = await readRouteSources()
-  const expectedProtectedRoutes = routePolicies.map(routeKey).sort()
+  const documentedProtectedRoutes = (await openApiRoutePolicies())
+    .filter((policy) => policy.mode !== "public")
+    .map(routeKey)
+    .sort()
 
   const actualProtectedRoutes = extractRoutes(source)
     .filter((route) => isProtectedRoute(route.path))
     .map(routeKey)
     .sort()
 
-  assert.deepEqual(actualProtectedRoutes, expectedProtectedRoutes)
+  assert.deepEqual(actualProtectedRoutes, documentedProtectedRoutes)
 })
 
 test("question routes must be explicitly reviewed before they change", async () => {
   const source = await readRouteSources()
-  const expectedQuestionRoutes = routePolicies
+  const expectedQuestionRoutes = (await openApiRoutePolicies())
     .filter((policy) => policy.path.startsWith("/questions"))
     .map(routeKey)
     .sort()
@@ -182,21 +191,12 @@ test("question routes must be explicitly reviewed before they change", async () 
   assert.deepEqual(actualQuestionRoutes, expectedQuestionRoutes)
 })
 
-test("OpenAPI authorization metadata matches route authorization policies", async () => {
-  const response = await app.request("/openapi.json")
-  assert.equal(response.status, 200)
-  const document = await response.json() as {
-    paths?: Record<string, Record<string, { responses?: Record<string, unknown>; "x-memorag-authorization"?: unknown }>>
-  }
+test("protected API routes document authorization metadata and auth error responses in OpenAPI", async () => {
+  const policies = await openApiRoutePolicies()
 
-  for (const policy of routeAuthorizationPolicies) {
-    const operation = document.paths?.[policy.path]?.[policy.method]
-    assert.ok(operation, `${policy.method.toUpperCase()} ${policy.path} must exist in OpenAPI`)
-    assert.deepEqual(
-      operation["x-memorag-authorization"],
-      routeAuthorizationMetadata(policy),
-      `${policy.method.toUpperCase()} ${policy.path} OpenAPI authorization metadata must match policy`
-    )
+  for (const policy of policies) {
+    const operation = policy.operation
+    assert.ok(operation["x-memorag-authorization"], `${policy.method.toUpperCase()} ${policy.path} must document x-memorag-authorization`)
     if (policy.mode !== "public") {
       assert.ok(operation.responses?.["401"], `${policy.method.toUpperCase()} ${policy.path} must document 401`)
     }
@@ -205,6 +205,43 @@ test("OpenAPI authorization metadata matches route authorization policies", asyn
     }
   }
 })
+
+async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {
+  operation: {
+    responses?: Record<string, unknown>
+    "x-memorag-authorization"?: {
+      mode?: RouteAuthorizationMode
+      requiredPermissions?: Permission[]
+    }
+  }
+}>> {
+  const response = await app.request("/openapi.json")
+  assert.equal(response.status, 200)
+  const document = await response.json() as {
+    paths?: Record<string, Record<string, {
+      responses?: Record<string, unknown>
+      "x-memorag-authorization"?: {
+        mode?: RouteAuthorizationMode
+        requiredPermissions?: Permission[]
+      }
+    }>>
+  }
+  const policies: Array<RoutePolicy & { operation: NonNullable<NonNullable<typeof document.paths>[string][string]> }> = []
+  for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
+    for (const [method, operation] of Object.entries(pathItem)) {
+      const auth = operation["x-memorag-authorization"]
+      if (!auth?.mode) continue
+      policies.push({
+        method,
+        path,
+        mode: auth.mode,
+        permission: auth.requiredPermissions?.[0],
+        operation
+      })
+    }
+  }
+  return policies
+}
 
 async function readRouteSources(): Promise<string> {
   const routeFiles = (await readdir(routeSourceDir))

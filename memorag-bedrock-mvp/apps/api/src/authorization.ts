@@ -65,8 +65,6 @@ export type RouteAuthorizationMode =
   | "documentUploadSession"
 
 export type RouteAuthorizationPolicy = {
-  method: string
-  path: string
   mode: RouteAuthorizationMode
   permission?: Permission
   permissions?: Permission[]
@@ -114,76 +112,6 @@ export const rolePermissions: Record<Role, Permission[]> = {
 
 export const applicationRoles = Object.keys(rolePermissions) as Role[]
 
-export const routeAuthorizationPolicies: RouteAuthorizationPolicy[] = [
-  { method: "get", path: "/health", mode: "public", notes: ["認証なしで実行できます。"] },
-  { method: "get", path: "/me", mode: "authenticated", notes: ["認証済みユーザーであれば role に関係なく実行できます。"] },
-  { method: "post", path: "/admin/users", mode: "required", permission: "user:create" },
-  { method: "get", path: "/admin/users", mode: "required", permission: "user:read" },
-  { method: "get", path: "/admin/audit-log", mode: "required", permission: "access:policy:read" },
-  { method: "post", path: "/admin/users/{userId}/roles", mode: "required", permission: "access:role:assign", notes: ["自分自身の role 更新は 403 を返します。", "SYSTEM_ADMIN を付与する場合、実行者も SYSTEM_ADMIN role である必要があります。"] },
-  { method: "post", path: "/admin/users/{userId}/suspend", mode: "required", permission: "user:suspend" },
-  { method: "post", path: "/admin/users/{userId}/unsuspend", mode: "required", permission: "user:unsuspend" },
-  { method: "delete", path: "/admin/users/{userId}", mode: "required", permission: "user:delete" },
-  { method: "get", path: "/admin/roles", mode: "required", permission: "access:policy:read" },
-  { method: "get", path: "/admin/aliases", mode: "required", permission: "rag:alias:read" },
-  { method: "post", path: "/admin/aliases", mode: "required", permission: "rag:alias:write:group" },
-  { method: "post", path: "/admin/aliases/{aliasId}/update", mode: "required", permission: "rag:alias:write:group" },
-  { method: "post", path: "/admin/aliases/{aliasId}/review", mode: "required", permission: "rag:alias:review:group" },
-  { method: "post", path: "/admin/aliases/{aliasId}/disable", mode: "required", permission: "rag:alias:disable:group" },
-  { method: "post", path: "/admin/aliases/publish", mode: "required", permission: "rag:alias:publish:group" },
-  { method: "get", path: "/admin/aliases/audit-log", mode: "required", permission: "rag:alias:read" },
-  { method: "get", path: "/admin/usage", mode: "required", permission: "usage:read:all_users" },
-  { method: "get", path: "/admin/costs", mode: "required", permission: "cost:read:all" },
-  { method: "get", path: "/documents", mode: "benchmarkSeedListOrPermission", permission: "rag:doc:read", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 文書の一覧に限定して実行できます。"] },
-  { method: "get", path: "/document-groups", mode: "required", permission: "rag:doc:read" },
-  { method: "post", path: "/document-groups", mode: "required", permission: "rag:group:create" },
-  { method: "post", path: "/document-groups/{groupId}/share", mode: "required", permission: "rag:group:assign_manager" },
-  { method: "post", path: "/documents", mode: "benchmarkSeedOrPermission", permission: "rag:doc:write:group", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 用 upload body の場合だけ実行できます。"] },
-  { method: "post", path: "/documents/uploads", mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["purpose=document は rag:doc:write:group、purpose=chatAttachment は chat:create、purpose=benchmarkSeed は benchmark:seed_corpus が必要です。"] },
-  { method: "post", path: "/documents/uploads/{uploadId}/content", mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["uploadId の object key が実行者 scope 外の場合は 403 を返します。"] },
-  { method: "post", path: "/documents/uploads/{uploadId}/ingest", mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["upload purpose と scope に応じた permission を確認します。"] },
-  { method: "post", path: "/document-ingest-runs", mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["upload purpose と scope に応じた permission を確認します。"] },
-  { method: "get", path: "/document-ingest-runs/{runId}", mode: "benchmarkSeedRunOrOwnedRun", permission: "chat:read:own", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["chat:read:own は自分が作成した run のみ参照できます。BENCHMARK_RUNNER は自分が作成した benchmark seed run のみ参照できます。"] },
-  { method: "get", path: "/document-ingest-runs/{runId}/events", mode: "benchmarkSeedRunOrOwnedRun", permission: "chat:read:own", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["chat:read:own は自分が作成した run のみ購読できます。BENCHMARK_RUNNER は自分が作成した benchmark seed run のみ購読できます。"] },
-  { method: "post", path: "/documents/{documentId}/reindex", mode: "required", permission: "rag:index:rebuild:group" },
-  { method: "get", path: "/documents/reindex-migrations", mode: "required", permission: "rag:index:rebuild:group" },
-  { method: "post", path: "/documents/{documentId}/reindex/stage", mode: "required", permission: "rag:index:rebuild:group" },
-  { method: "post", path: "/documents/reindex-migrations/{migrationId}/cutover", mode: "required", permission: "rag:index:rebuild:group" },
-  { method: "post", path: "/documents/reindex-migrations/{migrationId}/rollback", mode: "required", permission: "rag:index:rebuild:group" },
-  { method: "delete", path: "/documents/{documentId}", mode: "benchmarkSeedDeleteOrPermission", permission: "rag:doc:delete:group", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 文書だけ削除できます。"] },
-  { method: "post", path: "/chat", mode: "required", permission: "chat:create", conditionalPermissions: ["chat:admin:read_all"], notes: ["includeDebug または debug が true の場合は chat:admin:read_all も必要です。"] },
-  { method: "post", path: "/chat-runs", mode: "required", permission: "chat:create", conditionalPermissions: ["chat:admin:read_all"], notes: ["includeDebug または debug が true の場合は chat:admin:read_all も必要です。"] },
-  { method: "get", path: "/chat-runs/{runId}/events", mode: "ownedRun", permission: "chat:read:own", conditionalPermissions: ["chat:admin:read_all"], notes: ["chat:read:own は自分が作成した run のみ購読できます。chat:admin:read_all は他ユーザーの run も購読できます。"] },
-  { method: "post", path: "/search", mode: "required", permission: "rag:doc:read" },
-  { method: "post", path: "/questions", mode: "required", permission: "chat:create" },
-  { method: "get", path: "/questions", mode: "required", permission: "answer:edit" },
-  { method: "get", path: "/questions/{questionId}", mode: "requesterOrPermission", permission: "answer:edit", notes: ["問い合わせ作成者本人は answer:edit がなくても実行できます。その場合 internalMemo は返しません。"] },
-  { method: "post", path: "/questions/{questionId}/answer", mode: "required", permission: "answer:publish" },
-  { method: "post", path: "/questions/{questionId}/resolve", mode: "requesterOrPermission", permission: "answer:publish", notes: ["問い合わせ作成者本人は answer:publish がなくても、回答済み問い合わせだけ解決できます。"] },
-  { method: "get", path: "/conversation-history", mode: "required", permission: "chat:read:own", notes: ["実行者自身の会話履歴だけ返します。"] },
-  { method: "post", path: "/conversation-history", mode: "required", permission: "chat:create", notes: ["実行者自身の会話履歴として保存します。"] },
-  { method: "delete", path: "/conversation-history/{id}", mode: "required", permission: "chat:delete:own", notes: ["実行者自身の会話履歴だけ削除できます。"] },
-  { method: "get", path: "/debug-runs", mode: "required", permission: "chat:admin:read_all" },
-  { method: "get", path: "/debug-runs/{runId}", mode: "required", permission: "chat:admin:read_all" },
-  { method: "post", path: "/debug-runs/{runId}/download", mode: "required", permission: "chat:admin:read_all" },
-  { method: "post", path: "/benchmark/query", mode: "required", permission: "benchmark:query" },
-  { method: "post", path: "/benchmark/search", mode: "required", permission: "benchmark:query" },
-  { method: "get", path: "/benchmark-suites", mode: "required", permission: "benchmark:read" },
-  { method: "post", path: "/benchmark-runs", mode: "required", permission: "benchmark:run" },
-  { method: "get", path: "/benchmark-runs", mode: "required", permission: "benchmark:read" },
-  { method: "get", path: "/benchmark-runs/{runId}", mode: "required", permission: "benchmark:read" },
-  { method: "post", path: "/benchmark-runs/{runId}/cancel", mode: "required", permission: "benchmark:cancel" },
-  { method: "post", path: "/benchmark-runs/{runId}/download", mode: "required", permission: "benchmark:download" }
-]
-
-export function routeAuthorizationKey(method: string, path: string): string {
-  return `${method.toLowerCase()} ${path}`
-}
-
-export const routeAuthorizationPolicyByKey = new Map(
-  routeAuthorizationPolicies.map((policy) => [routeAuthorizationKey(policy.method, policy.path), policy])
-)
-
 export function getPermissionsForGroups(groups: string[]): Permission[] {
   const permissions = new Set<Permission>()
   for (const group of groups) {
@@ -199,7 +127,7 @@ export function rolesWithAnyPermission(permissions: Permission[]): Role[] {
   return applicationRoles.filter((role) => permissions.some((permission) => rolePermissions[role].includes(permission)))
 }
 
-export function routeAuthorizationMetadata(policy: RouteAuthorizationPolicy): RouteAuthorizationMetadata {
+export function routeAuthorization(policy: RouteAuthorizationPolicy): RouteAuthorizationMetadata {
   const requiredPermissions = policy.permissions ?? (policy.permission ? [policy.permission] : [])
   const conditionalPermissions = policy.conditionalPermissions ?? []
   const effectivePermissions = [...requiredPermissions, ...conditionalPermissions]

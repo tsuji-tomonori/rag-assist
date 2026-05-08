@@ -19,13 +19,14 @@ import {
   UsageSummaryListResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute } from "./route-utils.js"
+import { looseRoute, routeAuthorization } from "./route-utils.js"
 
 export function registerAdminRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
     looseRoute({
       method: "post",
       path: "/admin/users",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:create" }),
       request: {
         body: {
           required: true,
@@ -56,6 +57,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/users",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:read" }),
       responses: {
         200: { description: "List managed users", content: { "application/json": { schema: ManagedUserListResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
@@ -72,6 +74,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/audit-log",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:policy:read" }),
       responses: {
         200: { description: "List recent admin audit log entries", content: { "application/json": { schema: AdminAuditLogResponseSchema } } }
       }
@@ -87,6 +90,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/users/{userId}/roles",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:role:assign", notes: ["自分自身の role 更新は 403 を返します。", "SYSTEM_ADMIN を付与する場合、実行者も SYSTEM_ADMIN role である必要があります。"] }),
       request: {
         params: z.object({ userId: z.string().min(1) }),
         body: {
@@ -118,6 +122,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/users/{userId}/suspend",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:suspend" }),
       request: { params: z.object({ userId: z.string().min(1) }) },
       responses: {
         200: { description: "Suspended user", content: { "application/json": { schema: ManagedUserSchema } } },
@@ -138,6 +143,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/users/{userId}/unsuspend",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:unsuspend" }),
       request: { params: z.object({ userId: z.string().min(1) }) },
       responses: {
         200: { description: "Unsuspended user", content: { "application/json": { schema: ManagedUserSchema } } },
@@ -158,6 +164,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "delete",
       path: "/admin/users/{userId}",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:delete" }),
       request: { params: z.object({ userId: z.string().min(1) }) },
       responses: {
         200: { description: "Deleted user from management ledger", content: { "application/json": { schema: ManagedUserSchema } } },
@@ -178,6 +185,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/roles",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:policy:read" }),
       responses: {
         200: { description: "List access roles and permissions", content: { "application/json": { schema: AccessRoleListResponseSchema } } }
       }
@@ -192,6 +200,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/aliases",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:read" }),
       responses: {
         200: { description: "List alias definitions", content: { "application/json": { schema: AliasListResponseSchema } } }
       }
@@ -206,6 +215,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:write:group" }),
       request: {
         body: {
           required: true,
@@ -228,6 +238,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases/{aliasId}/update",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:write:group" }),
       request: {
         params: z.object({ aliasId: z.string().min(1) }),
         body: {
@@ -255,6 +266,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases/{aliasId}/review",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:review:group" }),
       request: {
         params: z.object({ aliasId: z.string().min(1) }),
         body: {
@@ -282,6 +294,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases/{aliasId}/disable",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:disable:group" }),
       request: { params: z.object({ aliasId: z.string().min(1) }) },
       responses: {
         200: { description: "Disabled alias", content: { "application/json": { schema: AliasDefinitionSchema } } },
@@ -302,6 +315,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/aliases/publish",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:publish:group" }),
       responses: {
         200: { description: "Published approved aliases", content: { "application/json": { schema: PublishAliasesResponseSchema } } }
       }
@@ -317,6 +331,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/aliases/audit-log",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:read" }),
       responses: {
         200: { description: "List alias audit events", content: { "application/json": { schema: AliasAuditLogResponseSchema } } }
       }
@@ -331,6 +346,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/usage",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "usage:read:all_users" }),
       responses: {
         200: { description: "List all-user usage summaries", content: { "application/json": { schema: UsageSummaryListResponseSchema } } }
       }
@@ -346,6 +362,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/costs",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "cost:read:all" }),
       responses: {
         200: { description: "Get estimated cost audit summary", content: { "application/json": { schema: CostAuditSummarySchema } } }
       }

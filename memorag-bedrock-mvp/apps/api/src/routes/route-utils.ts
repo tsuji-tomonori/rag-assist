@@ -1,6 +1,8 @@
 import { createRoute } from "@hono/zod-openapi"
-import { routeAuthorizationMetadata, routeAuthorizationPolicyByKey, routeAuthorizationKey } from "../authorization.js"
+import { routeAuthorization, type RouteAuthorizationMetadata } from "../authorization.js"
 import { ErrorResponseSchema } from "../schemas.js"
+
+export { routeAuthorization }
 
 export function looseRoute(config: any) {
   return createRoute(withAuthorizationMetadata(config)) as any
@@ -11,17 +13,16 @@ export function sleep(ms: number): Promise<void> {
 }
 
 function withAuthorizationMetadata(config: any): any {
-  const policy = routeAuthorizationPolicyByKey.get(routeAuthorizationKey(String(config.method), String(config.path)))
-  if (!policy) return config
-  const metadata = routeAuthorizationMetadata(policy)
+  const metadata = config["x-memorag-authorization"] as RouteAuthorizationMetadata | undefined
+  if (!metadata) return config
   const responses = { ...(config.responses ?? {}) }
-  if (policy.mode !== "public") {
+  if (metadata.mode !== "public") {
     responses[401] ??= {
       description: "Authentication required",
       content: { "application/json": { schema: ErrorResponseSchema } }
     }
   }
-  if (policy.mode !== "public" && policy.mode !== "authenticated") {
+  if (metadata.mode !== "public" && metadata.mode !== "authenticated") {
     responses[403] ??= {
       description: "Forbidden",
       content: { "application/json": { schema: ErrorResponseSchema } }
