@@ -106,6 +106,36 @@ test("service listDocuments filters manifests by ACL for callers", async () => {
   assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
 })
 
+test("service listDocuments denies group-scoped manifests to non-members without legacy ACLs", async () => {
+  const { service } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const member = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
+  const group = await service.createDocumentGroup(owner, {
+    name: "Private launch group",
+    sharedUserIds: [member.userId]
+  })
+  const publicDoc = await service.ingest({
+    fileName: "public.md",
+    text: "全員が読める一般資料です。",
+    skipMemory: true
+  })
+  const groupDoc = await service.ingest({
+    fileName: "group-secret.md",
+    text: "group scope only launch plan.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  assert.deepEqual((await service.listDocuments(outsider)).map((doc) => doc.documentId), [publicDoc.documentId])
+  assert.deepEqual((await service.listDocuments(owner)).map((doc) => doc.documentId).sort(), [groupDoc.documentId, publicDoc.documentId].sort())
+  assert.deepEqual((await service.listDocuments(member)).map((doc) => doc.documentId).sort(), [groupDoc.documentId, publicDoc.documentId].sort())
+})
+
 test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
   const { service } = await createService()
   const manifest = await service.ingest({

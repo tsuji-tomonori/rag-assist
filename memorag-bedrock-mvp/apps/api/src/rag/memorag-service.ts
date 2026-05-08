@@ -2002,6 +2002,7 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGr
   if (stringValue(metadata.ownerUserId) === user.userId) return true
   const groupIds = stringArray(metadata.groupIds ?? metadata.groupId) ?? []
   if (groupIds.some((groupId) => canAccessDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user))) return true
+  if (stringValue(metadata.scopeType) === "group") return false
   const groups = new Set(user.cognitoGroups)
   const aclGroups = stringArray(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group) ?? []
   if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false

@@ -28,7 +28,36 @@ _なし_
 
 _なし_
 
+## Authorization
+
+| 項目 | 内容 |
+| --- | --- |
+| 認可モード | `ownedRun` |
+| 必須 permission | `chat:read:own` |
+| 条件付き permission | `chat:admin:read_all` |
+| 実行可能 role | `CHAT_USER`, `SYSTEM_ADMIN` |
+| エラーになる role | `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| 条件付きでエラーになる role | `CHAT_USER` |
+
+補足:
+- chat:read:own は自分が作成した run のみ購読できます。chat:admin:read_all は他ユーザーの run も購読できます。
+
+認証・認可エラー:
+
+| Status | 発生条件 | Body |
+| --- | --- | --- |
+| `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
+| `403` | 必要 permission (chat:read:own) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing chat:read:own"}` |
+
 ## Responses
+
+| Status | 説明 | Media type | Body |
+| --- | --- | --- | --- |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `text/event-stream` | 1 field(s) |
+| `401` | 認証が必要です。 | `application/json` | 2 field(s) |
+| `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -37,6 +66,15 @@ Media type: `text/event-stream`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `response` | `string` | yes | チャット API が返す回答または拒否文。 | - |
+
+##### `401` 認証が必要です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `403` 対象操作を実行する権限がありません。
 

@@ -1,4 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises"
+import { randomUUID } from "node:crypto"
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises"
 import path from "node:path"
 import type { DocumentIngestRun } from "../types.js"
 import type { CreateDocumentIngestRunInput, DocumentIngestRunStore, UpdateDocumentIngestRunInput } from "./document-ingest-run-store.js"
@@ -29,8 +30,12 @@ export class LocalDocumentIngestRunStore implements DocumentIngestRunStore {
   }
 
   private async write(run: DocumentIngestRun): Promise<void> {
-    await mkdir(path.dirname(this.runPath(run.runId)), { recursive: true })
-    await writeFile(this.runPath(run.runId), JSON.stringify(run, null, 2))
+    const targetPath = this.runPath(run.runId)
+    const targetDir = path.dirname(targetPath)
+    const tempPath = path.join(targetDir, `.${path.basename(targetPath)}.${randomUUID()}.tmp`)
+    await mkdir(targetDir, { recursive: true })
+    await writeFile(tempPath, JSON.stringify(run, null, 2))
+    await rename(tempPath, targetPath)
   }
 
   private runPath(runId: string): string {

@@ -165,6 +165,34 @@ test("service search applies ACL and metadata filters across lexical and vector 
   assert.equal(groupBOnlySearch.results.some((result) => result.fileName === "group-a-policy.md"), false)
 })
 
+test("service search denies group-scoped manifests to non-members without legacy ACLs", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-group-scope-search-"))
+  const service = new MemoRagService(createLocalDeps(dataDir))
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+  const outsider: AppUser = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
+  const group = await service.createDocumentGroup(owner, {
+    name: "Private search group",
+    sharedUserIds: [member.userId]
+  })
+  await service.ingest({
+    fileName: "group-secret.md",
+    text: "TOPSECRET dragonfruit launch plan is restricted to the private group.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  const outsiderSearch = await service.search({ query: "dragonfruit launch", topK: 10 }, outsider)
+  assert.equal(outsiderSearch.results.some((result) => result.fileName === "group-secret.md"), false)
+
+  const memberSearch = await service.search({ query: "dragonfruit launch", topK: 10 }, member)
+  assert.equal(memberSearch.results[0]?.fileName, "group-secret.md")
+})
+
 test("service search publishes and reuses immutable lexical index artifacts", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-lexical-artifact-"))
   const objectStore = new LocalObjectStore(dataDir)

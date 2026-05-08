@@ -677,6 +677,7 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: Do
   if (stringValue(metadata.ownerUserId) === user.userId) return true
   const manifestGroupIds = stringValues(metadata.groupIds ?? metadata.groupId)
   if (manifestGroupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user))) return true
+  if (stringValue(metadata.scopeType) === "group") return false
   return canAccessMetadata(metadata, user)
 }
 
