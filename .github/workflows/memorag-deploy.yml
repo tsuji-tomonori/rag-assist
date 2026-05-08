@@ -53,6 +53,10 @@ jobs:
     env:
       AWS_REGION: ${{ inputs.aws-region || 'us-east-1' }}
       CDK_DEFAULT_REGION: ${{ inputs.aws-region || 'us-east-1' }}
+      DEFAULT_MODEL_ID: ${{ inputs.default-model-id || 'amazon.nova-lite-v1:0' }}
+      EMBEDDING_MODEL_ID: ${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}
+      EMBEDDING_DIMENSIONS: ${{ inputs.embedding-dimensions || '1024' }}
+      DEPLOYMENT_ENVIRONMENT: ${{ inputs.environment || 'dev' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -69,6 +73,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+
+      - name: Validate deploy inputs
+        run: |
+          set -euo pipefail
+          [[ "$DEFAULT_MODEL_ID" =~ ^[A-Za-z0-9._:/-]+$ ]] || { echo "Invalid default-model-id"; exit 1; }
+          [[ "$EMBEDDING_MODEL_ID" =~ ^[A-Za-z0-9._:/-]+$ ]] || { echo "Invalid embedding-model-id"; exit 1; }
+          [[ "$EMBEDDING_DIMENSIONS" =~ ^[0-9]{1,5}$ ]] || { echo "Invalid embedding-dimensions"; exit 1; }
+          [[ "$DEPLOYMENT_ENVIRONMENT" =~ ^(dev)$ ]] || { echo "Invalid environment"; exit 1; }
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -84,20 +97,20 @@ jobs:
         if: ${{ inputs.bootstrap || false }}
         run: >-
           npm run cdk -w @memorag-mvp/infra -- bootstrap
-          --context "defaultModelId=${{ inputs.default-model-id || 'amazon.nova-lite-v1:0' }}"
-          --context "embeddingModelId=${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}"
-          --context "embeddingDimensions=${{ inputs.embedding-dimensions || '1024' }}"
-          --context "deploymentEnvironment=${{ inputs.environment || 'dev' }}"
+          --context "defaultModelId=$DEFAULT_MODEL_ID"
+          --context "embeddingModelId=$EMBEDDING_MODEL_ID"
+          --context "embeddingDimensions=$EMBEDDING_DIMENSIONS"
+          --context "deploymentEnvironment=$DEPLOYMENT_ENVIRONMENT"
 
       - name: Synthesize CloudFormation YAML
         run: |
           mkdir -p infra/cdk.out
           cd infra
           ../node_modules/.bin/cdk synth \
-            --context "defaultModelId=${{ inputs.default-model-id || 'amazon.nova-lite-v1:0' }}" \
-            --context "embeddingModelId=${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}" \
-            --context "embeddingDimensions=${{ inputs.embedding-dimensions || '1024' }}" \
-            --context "deploymentEnvironment=${{ inputs.environment || 'dev' }}" \
+            --context "defaultModelId=$DEFAULT_MODEL_ID" \
+            --context "embeddingModelId=$EMBEDDING_MODEL_ID" \
+            --context "embeddingDimensions=$EMBEDDING_DIMENSIONS" \
+            --context "deploymentEnvironment=$DEPLOYMENT_ENVIRONMENT" \
             > cdk.out/MemoRagMvpStack.template.yaml
 
       - name: Upload synth artifacts
@@ -115,10 +128,10 @@ jobs:
           deploy
           --require-approval never
           --outputs-file cdk-outputs.json
-          --context "defaultModelId=${{ inputs.default-model-id || 'amazon.nova-lite-v1:0' }}"
-          --context "embeddingModelId=${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}"
-          --context "embeddingDimensions=${{ inputs.embedding-dimensions || '1024' }}"
-          --context "deploymentEnvironment=${{ inputs.environment || 'dev' }}"
+          --context "defaultModelId=$DEFAULT_MODEL_ID"
+          --context "embeddingModelId=$EMBEDDING_MODEL_ID"
+          --context "embeddingDimensions=$EMBEDDING_DIMENSIONS"
+          --context "deploymentEnvironment=$DEPLOYMENT_ENVIRONMENT"
 
       - name: Upload deployment outputs
         uses: actions/upload-artifact@v4
