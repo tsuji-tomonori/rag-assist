@@ -24,6 +24,7 @@
 - AC-FR048-002: benchmark run の進捗は、少なくとも処理済み件数、skip 件数、失敗件数のいずれかを確認できること。
 - AC-FR048-003: results、summary、report、log などの artifact は、生成済み、未生成、生成失敗を区別できること。
 - AC-FR048-004: raw results download が利用可能な場合、対象 run と artifact 種別が取り違えられないこと。
+- AC-FR048-005: CodeBuild log stream が記録された run では、管理画面からログ本文を `.txt` として download できること。
 
 ## 要件の源泉・背景
 

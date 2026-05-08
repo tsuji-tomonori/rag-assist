@@ -12,7 +12,7 @@
 ## 受け入れ条件（この要件専用）
 
 - AC-SQ002-001: benchmark orchestration の timeout は、runner 実行基盤の timeout より先に切れないこと。
-- AC-SQ002-002: benchmark run が評価 artifact 生成前に失敗した場合でも、失敗状態と一次調査に必要な log 参照を残せること。
+- AC-SQ002-002: benchmark run が評価 artifact 生成前に失敗した場合でも、失敗状態と一次調査に必要な log 参照および取得導線を残せること。
 - AC-SQ002-003: benchmark run が失敗した場合、空または部分的な results / summary / report が成功 artifact と誤認されないこと。
 - AC-SQ002-004: 長時間 run は、運用者が不要と判断したときに停止または cancel できる運用導線を持つこと。
 - AC-SQ002-005: 長時間 run の timeout 延長は、コスト影響と未実施の実環境再実行確認を運用文書または PR 本文に記録すること。

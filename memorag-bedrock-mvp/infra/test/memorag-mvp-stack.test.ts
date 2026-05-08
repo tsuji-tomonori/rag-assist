@@ -227,10 +227,36 @@ test("implements the designed serverless resources", () => {
         Match.objectLike({ Name: "COGNITO_APP_CLIENT_ID" }),
         Match.objectLike({ Name: "BENCHMARK_AUTH_SECRET_ID" }),
         Match.objectLike({ Name: "BENCHMARK_RUNNER_GROUP", Value: "BENCHMARK_RUNNER" }),
-        Match.objectLike({ Name: "BENCHMARK_RUNS_TABLE_NAME" })
+        Match.objectLike({ Name: "BENCHMARK_RUNS_TABLE_NAME" }),
+        Match.objectLike({ Name: "BENCHMARK_CODEBUILD_LOG_GROUP_NAME" })
       ])
     }),
     TimeoutInMinutes: 480
+  })
+  const benchmarkProject = getBenchmarkProject(template)
+  assert.match(benchmarkProject.Properties.Source.BuildSpec, /codeBuildLogGroupName/)
+  assert.match(benchmarkProject.Properties.Source.BuildSpec, /codeBuildLogStreamName/)
+  template.hasResourceProperties("AWS::IAM::ManagedPolicy", {
+    PolicyDocument: Match.objectLike({
+      Statement: Match.arrayWith([
+        Match.objectLike({
+          Action: "logs:GetLogEvents",
+          Resource: {
+            "Fn::Join": [
+              "",
+              [
+                { "Fn::GetAtt": [Match.stringLikeRegexp("BenchmarkProjectLogGroup"), "Arn"] },
+                ":log-stream:*"
+              ]
+            ]
+          }
+        }),
+        Match.objectLike({
+          Action: "codebuild:BatchGetBuilds",
+          Resource: { "Fn::GetAtt": [Match.stringLikeRegexp("BenchmarkProject"), "Arn"] }
+        })
+      ])
+    })
   })
   template.hasResourceProperties("AWS::IAM::Policy", {
     PolicyDocument: Match.objectLike({

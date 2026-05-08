@@ -32,7 +32,8 @@ AWS KMS の AWS managed key は key storage 自体の課金対象外だが、AWS
 2. CloudFormation stack に `BenchmarkProjectKey` と `BenchmarkRunnerAuthSecret` が存在するか確認する。
 3. `benchmarkRunnerAuthSecretId` context で外部 secret を参照している場合、外部 secret の所有者と利用目的を確認する。
 4. CodeBuild benchmark runner の実行履歴と Secrets Manager `GetSecretValue` の時刻を突合する。
-5. 予算超過や想定外 region での発生があれば、benchmark runner の起動を止めて stack drift と未使用 stack を確認する。
+5. 性能テスト画面または `GET /benchmark-runs/{runId}/logs` から CodeBuild ログ本文を `.txt` として取得し、runner setup、dataset 準備、API 呼び出し、artifact upload のどこで失敗したかを確認する。
+6. 予算超過や想定外 region での発生があれば、benchmark runner の起動を止めて stack drift と未使用 stack を確認する。
 
 ## 削除・抑制できる条件
 
@@ -46,6 +47,7 @@ AWS KMS の AWS managed key は key storage 自体の課金対象外だが、AWS
 
 - AC-OPS-MON-001: Cost anomaly で KMS または Secrets Manager が検知された場合、上記の必要リソース表で MemoRAG MVP の既知リソースか判断できること。
 - AC-OPS-MON-002: benchmark runner を使わない運用では、削除・抑制条件に従って関連リソースの停止候補を説明できること。
+- AC-OPS-MON-003: benchmark runner の失敗時に、CodeBuild ログ本文を API または画面から取得して一次調査できること。
 
 ## 参照
 

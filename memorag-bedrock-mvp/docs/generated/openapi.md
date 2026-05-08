@@ -33,6 +33,7 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/benchmark-runs/{runId}` | benchmark run 詳細を取得する | [詳細](openapi/get-benchmark-runs-runid.md) |
 | `POST` | `/benchmark-runs/{runId}/cancel` | benchmark run をキャンセルする | [詳細](openapi/post-benchmark-runs-runid-cancel.md) |
 | `POST` | `/benchmark-runs/{runId}/download` | benchmark artifact ダウンロード URL を作成する | [詳細](openapi/post-benchmark-runs-runid-download.md) |
+| `GET` | `/benchmark-runs/{runId}/logs` | CodeBuild ログをテキストで取得する | [詳細](openapi/get-benchmark-runs-runid-logs.md) |
 | `GET` | `/benchmark-suites` | ベンチマーク suite 一覧を取得する | [詳細](openapi/get-benchmark-suites.md) |
 | `POST` | `/benchmark/query` | ベンチマーク質問を実行する | [詳細](openapi/post-benchmark-query.md) |
 | `POST` | `/benchmark/search` | 検索ベンチマークを実行する | [詳細](openapi/post-benchmark-search.md) |

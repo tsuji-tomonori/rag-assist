@@ -678,6 +678,10 @@ export class MemoRagMvpStack extends Stack {
       enableKeyRotation: true,
       removalPolicy: RemovalPolicy.DESTROY
     })
+    const benchmarkProjectLogGroup = new logs.LogGroup(this, "BenchmarkProjectLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
     const benchmarkProject = new codebuild.Project(this, "BenchmarkProject", {
       source: codebuild.Source.gitHub({
         owner: defaultBenchmarkSource.owner,
@@ -694,16 +698,14 @@ export class MemoRagMvpStack extends Stack {
           COGNITO_APP_CLIENT_ID: { value: userPoolClient.userPoolClientId },
           BENCHMARK_AUTH_SECRET_ID: { value: benchmarkRunnerAuthSecretId },
           BENCHMARK_RUNNER_GROUP: { value: "BENCHMARK_RUNNER" },
-          BENCHMARK_RUNS_TABLE_NAME: { value: benchmarkRunsTable.tableName }
+          BENCHMARK_RUNS_TABLE_NAME: { value: benchmarkRunsTable.tableName },
+          BENCHMARK_CODEBUILD_LOG_GROUP_NAME: { value: benchmarkProjectLogGroup.logGroupName }
         }
       },
       timeout: benchmarkCodeBuildTimeout,
       logging: {
         cloudWatch: {
-          logGroup: new logs.LogGroup(this, "BenchmarkProjectLogGroup", {
-            retention: logs.RetentionDays.ONE_WEEK,
-            removalPolicy: RemovalPolicy.DESTROY
-          })
+          logGroup: benchmarkProjectLogGroup
         }
       },
       buildSpec: codebuild.BuildSpec.fromObject({
@@ -715,7 +717,8 @@ export class MemoRagMvpStack extends Stack {
             commands: [
               "set -euo pipefail",
               "LOG_URL=\"${CODEBUILD_BUILD_URL:-https://${AWS_DEFAULT_REGION}.console.aws.amazon.com/codesuite/codebuild/projects/${CODEBUILD_PROJECT_NAME}/build/${CODEBUILD_BUILD_ID}/log?region=${AWS_DEFAULT_REGION}}\"",
-              "aws dynamodb update-item --table-name \"$BENCHMARK_RUNS_TABLE_NAME\" --key \"{\\\"runId\\\":{\\\"S\\\":\\\"$RUN_ID\\\"}}\" --update-expression \"SET codeBuildBuildId = :buildId, codeBuildLogUrl = :logUrl\" --expression-attribute-values \"{\\\":buildId\\\":{\\\"S\\\":\\\"$CODEBUILD_BUILD_ID\\\"},\\\":logUrl\\\":{\\\"S\\\":\\\"$LOG_URL\\\"}}\" >/dev/null",
+              "if [[ \"$CODEBUILD_LOG_PATH\" == *:* ]]; then LOG_GROUP_NAME=\"${CODEBUILD_LOG_PATH%%:*}\"; LOG_STREAM_NAME=\"${CODEBUILD_LOG_PATH#*:}\"; else LOG_GROUP_NAME=\"$BENCHMARK_CODEBUILD_LOG_GROUP_NAME\"; LOG_STREAM_NAME=\"$CODEBUILD_LOG_PATH\"; fi",
+              "aws dynamodb update-item --table-name \"$BENCHMARK_RUNS_TABLE_NAME\" --key \"{\\\"runId\\\":{\\\"S\\\":\\\"$RUN_ID\\\"}}\" --update-expression \"SET codeBuildBuildId = :buildId, codeBuildLogUrl = :logUrl, codeBuildLogGroupName = :logGroupName, codeBuildLogStreamName = :logStreamName\" --expression-attribute-values \"{\\\":buildId\\\":{\\\"S\\\":\\\"$CODEBUILD_BUILD_ID\\\"},\\\":logUrl\\\":{\\\"S\\\":\\\"$LOG_URL\\\"},\\\":logGroupName\\\":{\\\"S\\\":\\\"$LOG_GROUP_NAME\\\"},\\\":logStreamName\\\":{\\\"S\\\":\\\"$LOG_STREAM_NAME\\\"}}\" >/dev/null",
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
               "npm ci"
             ]
@@ -890,6 +893,14 @@ export class MemoRagMvpStack extends Stack {
     apiFn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", restApiBaseUrl)
     benchmarkStateMachine.grantStartExecution(apiFn)
     benchmarkStateMachine.grant(apiFn, "states:StopExecution", "states:DescribeExecution")
+    apiFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["logs:GetLogEvents"],
+      resources: [`${benchmarkProjectLogGroup.logGroupArn}:log-stream:*`]
+    }))
+    apiFn.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["codebuild:BatchGetBuilds"],
+      resources: [benchmarkProject.projectArn]
+    }))
 
     const distribution = new cloudfront.Distribution(this, "FrontendDistribution", {
       defaultRootObject: "index.html",

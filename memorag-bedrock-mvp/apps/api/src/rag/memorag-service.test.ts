@@ -17,6 +17,7 @@ import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
 import type { DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
+import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
 import { ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
@@ -551,6 +552,41 @@ test("benchmark CodeBuild log download returns the stored log URL", async () => 
   })
 })
 
+test("benchmark CodeBuild log text download uses stored log stream metadata", async () => {
+  const references: unknown[] = []
+  const logReader: CodeBuildLogReader = {
+    getText: async (reference) => {
+      references.push(reference)
+      return reference.logGroupName === "/aws/codebuild/memo" && reference.logStreamName === "build-stream"
+        ? "install phase\nbuild phase\n"
+        : undefined
+    }
+  }
+  const { service, deps } = await createService({ codeBuildLogReader: logReader })
+  const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const run = await service.createBenchmarkRun(user, {})
+  await deps.benchmarkRunStore.update(run.runId, {
+    codeBuildBuildId: "memo-benchmark:build-id",
+    codeBuildLogGroupName: "/aws/codebuild/memo",
+    codeBuildLogStreamName: "build-stream"
+  })
+
+  assert.equal(await service.getBenchmarkCodeBuildLogText("missing-run"), undefined)
+  const download = await service.getBenchmarkCodeBuildLogText(run.runId)
+  assert.deepEqual(download, {
+    text: "install phase\nbuild phase\n",
+    fileName: `benchmark-logs-${run.runId}.txt`,
+    contentDisposition: `attachment; filename="benchmark-logs-${run.runId}.txt"`
+  })
+  assert.deepEqual(references, [
+    {
+      buildId: "memo-benchmark:build-id",
+      logGroupName: "/aws/codebuild/memo",
+      logStreamName: "build-stream"
+    }
+  ])
+})
+
 test("debug trace JSON for answerable runs matches the v1 schema example", () => {
   const trace: DebugTrace = {
     schemaVersion: 1,
@@ -821,6 +857,7 @@ async function createService(options: {
   objectGetErrorPrefix?: string
   objectGetError?: Error
   userDirectory?: UserDirectory
+  codeBuildLogReader?: CodeBuildLogReader
 } = {}): Promise<{ service: MemoRagService; dataDir: string; deps: Dependencies }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-service-test-"))
   const baseObjectStore = new LocalObjectStore(dataDir)
@@ -859,6 +896,7 @@ async function createService(options: {
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
     documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
+    codeBuildLogReader: options.codeBuildLogReader ?? { getText: async () => undefined },
     userDirectory: options.userDirectory
   } as unknown as Dependencies
   return { service: new MemoRagService(deps), dataDir, deps }

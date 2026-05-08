@@ -30,6 +30,7 @@ import { DynamoDbDocumentIngestRunEventStore } from "./adapters/dynamodb-documen
 import { LocalDocumentIngestRunEventStore } from "./adapters/local-document-ingest-run-event-store.js"
 import type { DocumentIngestRunEventStore } from "./adapters/document-ingest-run-event-store.js"
 import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
+import { AwsCodeBuildLogReader, type CodeBuildLogReader } from "./adapters/codebuild-log-reader.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
@@ -43,6 +44,7 @@ export type Dependencies = {
   chatRunEventStore: ChatRunEventStore
   documentIngestRunStore: DocumentIngestRunStore
   documentIngestRunEventStore: DocumentIngestRunEventStore
+  codeBuildLogReader?: CodeBuildLogReader
   userDirectory?: UserDirectory
 }
 
@@ -85,8 +87,9 @@ export function createDependencies(): Dependencies {
   const documentIngestRunEventStore = config.useLocalDocumentIngestRunStore
     ? new LocalDocumentIngestRunEventStore(config.localDataDir)
     : new DynamoDbDocumentIngestRunEventStore(config.documentIngestRunEventsTableName)
+  const codeBuildLogReader = new AwsCodeBuildLogReader()
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, codeBuildLogReader, userDirectory }
   return cached
 }
