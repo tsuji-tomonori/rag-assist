@@ -80,7 +80,7 @@ npm run docs:openapi
 
 生成物は上位 index の `docs/generated/openapi.md` と、API ごとの詳細ファイルを置く `docs/generated/openapi/` に出力する。生成済み `openapi.json` は commit せず、JSON 仕様は runtime の `GET /openapi.json` を source of truth とする。GitHub Actions では `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で同じコマンドを実行し、Markdown 差分がある場合に更新 PR を作成する。
 
-`docs/generated/openapi.md` は API 一覧と詳細ファイルへのリンクを持つ上位ドキュメントとする。各 API 詳細 Markdown は schema を JSON block としてそのまま記載しない。各 operation の `headers`、`path parameters`、`query parameters`、`data`、`responses` を表形式で出力し、各項目に型、必須、説明、制約を記載する。operation の `summary` / `description` と parameter / request body / response body の field description は日本語であることを必須とする。
+`docs/generated/openapi.md` は API 一覧と詳細ファイルへのリンクを持つ上位ドキュメントとする。各 API 詳細 Markdown は schema を JSON block としてそのまま記載しない。各 operation の `headers`、`path parameters`、`query parameters`、`data`、`authorization`、`responses` を表形式で出力し、各項目に型、必須、説明、制約を記載する。`authorization` は route 定義時に OpenAPI extension `x-memorag-authorization` として付与する。Markdown 生成スクリプトは role / permission を推測せず、OpenAPI 上の extension を整形して、実行可能 role、エラーになる role、条件付きでエラーになる role、401 / 403 の発生条件と body を出力する。`responses` は先に status / 説明 / media type / body の一覧を出し、その後に各 response body の詳細を出力する。operation の `summary` / `description` と parameter / request body / response body の field description は日本語であることを必須とする。
 
 OpenAPI 説明品質は次のコマンドで検証する。
 

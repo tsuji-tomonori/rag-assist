@@ -26,7 +26,35 @@ _なし_
 
 _なし_
 
+## Authorization
+
+| 項目 | 内容 |
+| --- | --- |
+| 認可モード | `required` |
+| 必須 permission | `chat:read:own` |
+| 条件付き permission | - |
+| 実行可能 role | `CHAT_USER`, `SYSTEM_ADMIN` |
+| エラーになる role | `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| 条件付きでエラーになる role | なし |
+
+補足:
+- 実行者自身の会話履歴だけ返します。
+
+認証・認可エラー:
+
+| Status | 発生条件 | Body |
+| --- | --- | --- |
+| `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
+| `403` | 必要 permission (chat:read:own) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing chat:read:own"}` |
+
 ## Responses
+
+| Status | 説明 | Media type | Body |
+| --- | --- | --- | --- |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 145 field(s) |
+| `401` | 認証が必要です。 | `application/json` | 2 field(s) |
+| `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
+| `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -179,6 +207,24 @@ Media type: `application/json`
 | `history[].messages[].questionTicket.updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `history[].messages[].questionTicket.answeredAt` | `string` | no | `response.history[].messages[].questionTicket.answeredAt` の値。項目名は answered at を表します。 | - |
 | `history[].messages[].questionTicket.resolvedAt` | `string` | no | `response.history[].messages[].questionTicket.resolvedAt` の値。項目名は resolved at を表します。 | - |
+
+##### `401` 認証が必要です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `403` 対象操作を実行する権限がありません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `500` サーバー内部で処理エラーが発生しました。
 

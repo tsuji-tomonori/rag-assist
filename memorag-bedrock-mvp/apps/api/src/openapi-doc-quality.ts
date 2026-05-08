@@ -23,6 +23,22 @@ export type OperationObject = {
   parameters?: ParameterObject[]
   requestBody?: RequestBodyObject
   responses?: Record<string, ResponseObject>
+  "x-memorag-authorization"?: RouteAuthorizationMetadataObject
+}
+
+export type RouteAuthorizationMetadataObject = {
+  mode?: string
+  requiredPermissions?: string[]
+  conditionalPermissions?: string[]
+  allowedRoles?: string[]
+  deniedRoles?: string[]
+  conditionalDeniedRoles?: string[]
+  notes?: string[]
+  errors?: Array<{
+    status?: number
+    when?: string
+    body?: Record<string, unknown>
+  }>
 }
 
 export type ParameterObject = {
@@ -479,6 +495,7 @@ export function validateOpenApiDocument(api: OpenApiDocument): string[] {
       if (!operationDocs[key]) errors.push(`${key}: operationDocs に日本語 summary / description がありません`)
       if (!hasJapanese(operation.summary)) errors.push(`${key}: summary に日本語説明がありません`)
       if (!hasJapanese(operation.description)) errors.push(`${key}: description に日本語説明がありません`)
+      if (requiresAuthorization(path)) validateAuthorizationMetadata(errors, key, operation)
       for (const parameter of operation.parameters ?? []) {
         if (!hasJapanese(parameter.description)) errors.push(`${key}: ${parameter.in ?? "parameter"} parameter ${parameter.name ?? "(unknown)"} に日本語 description がありません`)
       }
@@ -495,6 +512,20 @@ export function validateOpenApiDocument(api: OpenApiDocument): string[] {
   }
 
   return errors
+}
+
+function validateAuthorizationMetadata(errors: string[], key: string, operation: OperationObject): void {
+  const auth = operation["x-memorag-authorization"]
+  if (!auth) {
+    errors.push(`${key}: x-memorag-authorization がありません`)
+    return
+  }
+  if (!auth.mode) errors.push(`${key}: x-memorag-authorization.mode がありません`)
+  if (!Array.isArray(auth.allowedRoles)) errors.push(`${key}: x-memorag-authorization.allowedRoles がありません`)
+  if (!Array.isArray(auth.deniedRoles)) errors.push(`${key}: x-memorag-authorization.deniedRoles がありません`)
+  if (!Array.isArray(auth.errors)) errors.push(`${key}: x-memorag-authorization.errors がありません`)
+  if (!operation.responses?.["401"]) errors.push(`${key}: protected API に 401 response がありません`)
+  if (auth.mode !== "authenticated" && !operation.responses?.["403"]) errors.push(`${key}: permission protected API に 403 response がありません`)
 }
 
 export function parametersByGroup(operation: OperationObject, group: ParameterGroup): ParameterObject[] {
