@@ -1,6 +1,6 @@
 # 仕様復元 Codex skill パック導入
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -34,13 +34,20 @@
 
 ## 受け入れ条件
 
-- [ ] zip 内の想定外パスや危険な上書きがないことを確認している。
-- [ ] 仕様復元 skill 群が repository-local skill として利用可能な場所に配置されている。
-- [ ] `docs/spec-recovery/` と `scripts/validate_spec_recovery.py` が導入され、使い方が追える。
-- [ ] AGENTS.md または README から、導入した workflow の位置づけが分かる。
-- [ ] 変更範囲に対して選定した検証が実行され、結果が記録されている。
-- [ ] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿している。
-- [ ] 作業完了レポートを `reports/working/` に保存している。
+- [x] zip 内の想定外パスや危険な上書きがないことを確認している。
+- [x] 仕様復元 skill 群が repository-local skill として利用可能な場所に配置されている。
+- [x] `docs/spec-recovery/` と `scripts/validate_spec_recovery.py` が導入され、使い方が追える。
+- [x] AGENTS.md または README から、導入した workflow の位置づけが分かる。
+- [x] 変更範囲に対して選定した検証が実行され、結果が記録されている。
+- [x] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿している。
+- [x] 作業完了レポートを `reports/working/` に保存している。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/186
+- 受け入れ条件確認コメント: GitHub Apps で投稿済み
+- セルフレビューコメント: GitHub Apps で投稿済み
+- PR 作成: GitHub Apps に PR 作成 tool がなかったため `gh pr create` fallback
 
 ## 検証計画
 
