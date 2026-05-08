@@ -36,9 +36,10 @@ export function ChatComposer({
     : documentGroups.find((group) => group.groupId === selectedGroupId)?.name ?? "選択フォルダ"
 
   return (
-    <form className="composer" onSubmit={onAsk}>
+    <form className="composer" onSubmit={onAsk} aria-label="質問入力">
       <textarea
         aria-label="質問"
+        aria-describedby="chat-composer-shortcut"
         placeholder={
           submitShortcut === "enter"
             ? "質問を入力してください...（Enterで送信 / Shift+Enterで改行）"
@@ -69,7 +70,7 @@ export function ChatComposer({
           {canWriteDocuments && (
             <label className="icon-button attach-button" title="資料を添付">
               <Icon name="paperclip" />
-              <input key={conversationKey} type="file" disabled={loading} onChange={(event) => onSetFile(event.target.files?.[0] ?? null)} />
+              <input key={conversationKey} type="file" aria-label="資料を添付" disabled={loading} onChange={(event) => onSetFile(event.target.files?.[0] ?? null)} />
               <span className="attach-menu" aria-hidden="true">
                 <span>
                   <Icon name="document" />
@@ -87,9 +88,9 @@ export function ChatComposer({
         </div>
         <div className="composer-shortcut-toggle">
           <Icon name="settings" />
-          <span>{submitShortcut === "enter" ? "Enterで送信" : "Ctrl+Enterで送信"}</span>
+          <span id="chat-composer-shortcut">{submitShortcut === "enter" ? "Enterで送信" : "Ctrl+Enterで送信"}</span>
         </div>
-        <button className="send-button" disabled={!canAsk} type="submit" title="送信">
+        <button className="send-button" disabled={!canAsk} type="submit" title="送信" aria-label="質問を送信">
           {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" />}
         </button>
       </div>

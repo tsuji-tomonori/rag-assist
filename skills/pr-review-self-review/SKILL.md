@@ -140,6 +140,13 @@ Use checkboxes only for items actually satisfied. Use unchecked items for unreso
 - Debug trace, benchmark artifacts, admin data, aliases, ACL metadata, raw prompt, chunk text, and internal memo are not exposed to unauthorized users.
 - Loading, failure, empty, permission denied, and refusal states render coherently.
 - New UI flow remains consistent with the README UI policy.
+- Web a11y metadata follows `skills/web-a11y-metadata-reviewer/SKILL.md`:
+  - interactive controls have accessible names
+  - icon-only controls have short Japanese `aria-label`
+  - risky actions expose target/risk through accessible name or `aria-describedby`
+  - form fields have labels and help/error text connections where needed
+  - stateful UI exposes `aria-current`, `aria-expanded`, `aria-controls`, `aria-selected`, `aria-invalid`, `aria-busy`, or live regions as appropriate
+  - decorative icons/SVGs are hidden from assistive technology
 
 ### 5. Infra, CDK, and GitHub Actions
 

@@ -125,7 +125,7 @@ export function DocumentWorkspace({
     <section className="document-workspace" aria-label="ドキュメント管理">
       <header className="document-page-header">
         <div>
-          <button className="document-back-button" type="button" onClick={onBack} title="管理者設定へ戻る">
+          <button className="document-back-button" type="button" onClick={onBack} title="管理者設定へ戻る" aria-label="管理者設定へ戻る">
             <Icon name="chevron" />
           </button>
           <div>
@@ -151,12 +151,12 @@ export function DocumentWorkspace({
               <span className="sr-only">フォルダを検索</span>
               <input placeholder="フォルダを検索" />
             </label>
-            <button type="button" title="フォルダを絞り込み">
+            <button type="button" title="フォルダを絞り込み" aria-label="フォルダを絞り込み">
               <Icon name="gauge" />
             </button>
           </div>
           <div className="folder-tree">
-            <button className={`folder-tree-row ${selectedFolderId === "all" ? "active" : ""}`} type="button" onClick={() => setSelectedFolderId("all")}>
+            <button className={`folder-tree-row ${selectedFolderId === "all" ? "active" : ""}`} type="button" aria-current={selectedFolderId === "all" ? "true" : undefined} onClick={() => setSelectedFolderId("all")}>
               <Icon name="folder" />
               <span>すべてのドキュメント</span>
               <strong>{documents.length}</strong>
@@ -173,6 +173,7 @@ export function DocumentWorkspace({
                   className={`folder-tree-row child ${selectedFolder?.id === folder.id ? "active" : ""}`}
                   type="button"
                   key={folder.id}
+                  aria-current={selectedFolder?.id === folder.id ? "true" : undefined}
                   onClick={() => {
                     setSelectedFolderId(folder.id)
                     if (folder.group) onUploadGroupChange(folder.group.groupId)
@@ -202,7 +203,7 @@ export function DocumentWorkspace({
               <button type="button" title="新規フォルダ" disabled={!canWrite || loading}>
                 <Icon name="plus" />
               </button>
-              <button type="button" title="共有設定">
+              <button type="button" title="共有設定" aria-label="共有設定を開く">
                 <Icon name="share" />
               </button>
             </div>
@@ -250,13 +251,14 @@ export function DocumentWorkspace({
                     <button
                       type="button"
                       title={`${document.fileName}の再インデックスをステージング`}
+                      aria-label={`${document.fileName}の再インデックスをステージング`}
                       disabled={!canReindex || loading}
                       onClick={() => void onStageReindex(document.documentId)}
                     >
                       {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
                     </button>
                     <details className="document-action-menu">
-                      <summary title={`${document.fileName}の操作メニュー`}>...</summary>
+                      <summary title={`${document.fileName}の操作メニュー`} aria-label={`${document.fileName}の操作メニュー`}>...</summary>
                       <div>
                         <button type="button">
                           <Icon name="document" />
@@ -270,6 +272,7 @@ export function DocumentWorkspace({
                           type="button"
                           className="delete-document-button"
                           title={`${document.fileName}を削除`}
+                          aria-label={`${document.fileName}を削除`}
                           disabled={!canDelete || loading}
                           onClick={() => onDelete(document.documentId)}
                         >
@@ -287,11 +290,11 @@ export function DocumentWorkspace({
           <footer className="document-table-footer">
             <span>1-{visibleDocuments.length} / {visibleDocuments.length} 件を表示</span>
             <div>
-              <button type="button" title="前のページ">
+              <button type="button" title="前のページ" aria-label="前のページ">
                 <Icon name="chevron" />
               </button>
               <strong>1</strong>
-              <button type="button" title="次のページ">
+              <button type="button" title="次のページ" aria-label="次のページ">
                 <Icon name="chevron" />
               </button>
             </div>
@@ -388,7 +391,7 @@ export function DocumentWorkspace({
               <label className="compact-file-input" aria-label="文書アップロード">
                 <Icon name="download" />
                 <span>{uploadFile ? uploadFile.name : "このフォルダにアップロード"}</span>
-                <input type="file" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
+                <input type="file" aria-label="アップロードする文書を選択" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
               </label>
               <button type="submit" disabled={!canWrite || !uploadFile || loading}>
                 {loading && <LoadingSpinner className="button-spinner" />}

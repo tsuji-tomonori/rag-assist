@@ -54,7 +54,7 @@ export function BenchmarkWorkspace({
   return (
     <section className="benchmark-workspace" aria-label="性能テスト">
       <header className="assignee-header">
-        <button type="button" onClick={onBack} title="チャットへ戻る">
+        <button type="button" onClick={onBack} title="チャットへ戻る" aria-label="チャットへ戻る">
           <Icon name="chevron" />
         </button>
         <div>
@@ -192,7 +192,7 @@ export function BenchmarkWorkspace({
                               <span>{artifact.label}</span>
                             </button>
                           ))}
-                          <button className="benchmark-cancel-action" type="button" title="ジョブをキャンセル" aria-label="ジョブをキャンセル" disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>
+                          <button className="benchmark-cancel-action" type="button" title="ジョブをキャンセル" aria-label={`${run.runId}のジョブをキャンセル`} disabled={!canCancel || loading || !["queued", "running"].includes(run.status)} onClick={() => void onCancel(run.runId)}>
                             {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="stop" />}
                           </button>
                         </div>

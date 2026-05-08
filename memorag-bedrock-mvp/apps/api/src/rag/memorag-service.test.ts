@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { mkdtemp } from "node:fs/promises"
+import { setTimeout as delay } from "node:timers/promises"
 import test from "node:test"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
@@ -390,7 +391,7 @@ test("service executes asynchronous document ingest runs from uploaded object", 
     skipMemory: true
   }, user)
 
-  const completed = await service.executeDocumentIngestRun(started.runId)
+  const completed = await waitForDocumentIngestRun(deps, started.runId)
   assert.equal(completed.status, "succeeded")
   assert.equal(completed.manifest?.fileName, "handbook.txt")
   assert.equal(completed.documentId, completed.manifest?.documentId)
@@ -900,4 +901,13 @@ async function createService(options: {
     userDirectory: options.userDirectory
   } as unknown as Dependencies
   return { service: new MemoRagService(deps), dataDir, deps }
+}
+
+async function waitForDocumentIngestRun(deps: Dependencies, runId: string) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const run = await deps.documentIngestRunStore.get(runId)
+    if (run?.status === "succeeded" || run?.status === "failed" || run?.status === "cancelled") return run
+    await delay(20)
+  }
+  throw new Error(`Timed out waiting for document ingest run: ${runId}`)
 }
