@@ -91,9 +91,6 @@ jobs:
           --context "embeddingModelId=${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}"
           --context "embeddingDimensions=${{ inputs.embedding-dimensions || '1024' }}"
           --context "deploymentEnvironment=${{ inputs.environment || 'dev' }}"
-          --context benchmarkSourceOwner=tsuji-tomonori
-          --context benchmarkSourceRepo=rag-assist
-          --context benchmarkSourceBranch=main
 
       - name: Synthesize CloudFormation YAML
         run: |
@@ -104,9 +101,6 @@ jobs:
             --context "embeddingModelId=${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}" \
             --context "embeddingDimensions=${{ inputs.embedding-dimensions || '1024' }}" \
             --context "deploymentEnvironment=${{ inputs.environment || 'dev' }}" \
-            --context benchmarkSourceOwner=tsuji-tomonori \
-            --context benchmarkSourceRepo=rag-assist \
-            --context benchmarkSourceBranch=main \
             > cdk.out/MemoRagMvpStack.template.yaml
 
       - name: Upload synth artifacts
@@ -128,9 +122,6 @@ jobs:
           --context "embeddingModelId=${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}"
           --context "embeddingDimensions=${{ inputs.embedding-dimensions || '1024' }}"
           --context "deploymentEnvironment=${{ inputs.environment || 'dev' }}"
-          --context benchmarkSourceOwner=tsuji-tomonori
-          --context benchmarkSourceRepo=rag-assist
-          --context benchmarkSourceBranch=main
 
       - name: Upload deployment outputs
         uses: actions/upload-artifact@v4
