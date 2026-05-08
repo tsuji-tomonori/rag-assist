@@ -26,6 +26,12 @@ export const DocumentUploadRequestSchema = z.object({
   textractJson: z.string().optional(),
   mimeType: z.string().optional().openapi({ example: "text/markdown" }),
   metadata: z.record(MetadataValueSchema).optional(),
+  scope: z.object({
+    scopeType: z.enum(["personal", "group", "chat", "benchmark"]).optional(),
+    groupIds: z.array(z.string().min(1)).max(20).optional(),
+    temporaryScopeId: z.string().min(1).optional(),
+    expiresAt: z.string().optional()
+  }).optional(),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   memoryModelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   skipMemory: z.boolean().optional()
@@ -34,7 +40,7 @@ export const DocumentUploadRequestSchema = z.object({
 export const CreateDocumentUploadRequestSchema = z.object({
   fileName: z.string().min(1).openapi({ example: "handbook.pdf" }),
   mimeType: z.string().optional().openapi({ example: "application/pdf" }),
-  purpose: z.enum(["document", "benchmarkSeed"]).optional().default("document")
+  purpose: z.enum(["document", "benchmarkSeed", "chatAttachment"]).optional().default("document")
 })
 
 export const CreateDocumentUploadResponseSchema = z.object({
@@ -52,6 +58,12 @@ export const IngestUploadedDocumentRequestSchema = z.object({
   fileName: z.string().min(1).openapi({ example: "handbook.pdf" }),
   mimeType: z.string().optional().openapi({ example: "application/pdf" }),
   metadata: z.record(MetadataValueSchema).optional(),
+  scope: z.object({
+    scopeType: z.enum(["personal", "group", "chat", "benchmark"]).optional(),
+    groupIds: z.array(z.string().min(1)).max(20).optional(),
+    temporaryScopeId: z.string().min(1).optional(),
+    expiresAt: z.string().optional()
+  }).optional(),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   memoryModelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   skipMemory: z.boolean().optional()
@@ -128,6 +140,39 @@ export const DocumentManifestSchema = z.object({
   createdAt: z.string()
 })
 
+export const DocumentGroupSchema = z.object({
+  groupId: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  ownerUserId: z.string(),
+  visibility: z.enum(["private", "shared", "org"]),
+  sharedUserIds: z.array(z.string()),
+  sharedGroups: z.array(z.string()),
+  managerUserIds: z.array(z.string()),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const DocumentGroupListResponseSchema = z.object({
+  groups: z.array(DocumentGroupSchema)
+})
+
+export const CreateDocumentGroupRequestSchema = z.object({
+  name: z.string().min(1).max(120).openapi({ example: "社内規定" }),
+  description: z.string().max(1000).optional(),
+  visibility: z.enum(["private", "shared", "org"]).optional().default("private"),
+  sharedUserIds: z.array(z.string().min(1)).max(50).optional(),
+  sharedGroups: z.array(z.string().min(1)).max(50).optional(),
+  managerUserIds: z.array(z.string().min(1)).max(50).optional()
+})
+
+export const ShareDocumentGroupRequestSchema = z.object({
+  visibility: z.enum(["private", "shared", "org"]).optional(),
+  sharedUserIds: z.array(z.string().min(1)).max(50).optional(),
+  sharedGroups: z.array(z.string().min(1)).max(50).optional(),
+  managerUserIds: z.array(z.string().min(1)).max(50).optional()
+})
+
 export const DocumentManifestSummarySchema = DocumentManifestSchema.pick({
   documentId: true,
   fileName: true,
@@ -159,7 +204,7 @@ export const DocumentIngestRunSchema = z.object({
   userGroups: z.array(z.string()).optional(),
   uploadId: z.string(),
   objectKey: z.string(),
-  purpose: z.enum(["document", "benchmarkSeed"]),
+  purpose: z.enum(["document", "benchmarkSeed", "chatAttachment"]),
   fileName: z.string(),
   mimeType: z.string().optional(),
   metadata: z.record(MetadataValueSchema).optional(),
@@ -383,6 +428,14 @@ const ClarificationContextSchema = z.object({
   selectedValue: z.string().optional()
 })
 
+export const SearchScopeSchema = z.object({
+  mode: z.enum(["all", "groups", "documents", "temporary"]).optional(),
+  groupIds: z.array(z.string().min(1)).max(20).optional(),
+  documentIds: z.array(z.string().min(1)).max(100).optional(),
+  includeTemporary: z.boolean().optional(),
+  temporaryScopeId: z.string().min(1).optional()
+})
+
 export const ChatRequestSchema = z.object({
   question: z.string().min(1).openapi({ example: "経費精算の期限は？" }),
   clarificationContext: ClarificationContextSchema.optional(),
@@ -396,7 +449,8 @@ export const ChatRequestSchema = z.object({
   strictGrounded: z.boolean().optional().openapi({ example: true }),
   includeDebug: z.boolean().optional().openapi({ example: false }),
   debug: z.boolean().optional().openapi({ example: false }),
-  useMemory: z.boolean().optional().openapi({ example: true })
+  useMemory: z.boolean().optional().openapi({ example: true }),
+  searchScope: SearchScopeSchema.optional()
 })
 
 export const SearchRequestSchema = z.object({
@@ -412,7 +466,8 @@ export const SearchRequestSchema = z.object({
     docType: z.string().optional(),
     benchmarkSuiteId: z.string().optional(),
     documentId: z.string().optional()
-  }).optional()
+  }).optional(),
+  scope: SearchScopeSchema.optional()
 })
 
 const BenchmarkSearchForbiddenUserGroups = new Set([

@@ -202,6 +202,14 @@ const SearchFiltersSchema = z.object({
   documentId: z.string().optional()
 })
 
+const SearchScopeSchema = z.object({
+  mode: z.enum(["all", "groups", "documents", "temporary"]).optional(),
+  groupIds: z.array(z.string()).optional(),
+  documentIds: z.array(z.string()).optional(),
+  includeTemporary: z.boolean().optional(),
+  temporaryScopeId: z.string().optional()
+})
+
 const SearchBudgetSchema = z.object({
   maxReferenceDepth: z.number().int().min(0).default(ragRuntimePolicy.retrieval.referenceMaxDepth),
   remainingCalls: z.number().int().min(0).default(ragRuntimePolicy.retrieval.searchBudgetCalls)
@@ -471,6 +479,7 @@ export const AgentStateSchema = z.object({
   strictGrounded: z.boolean().default(true),
   clarificationContext: ClarificationContextSchema.optional(),
   searchFilters: SearchFiltersSchema.optional(),
+  searchScope: SearchScopeSchema.optional(),
 
   iteration: z.number().int().min(0).default(0),
   referenceQueue: z.array(ReferenceTargetSchema).default(() => []),

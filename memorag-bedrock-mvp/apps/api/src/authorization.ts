@@ -56,7 +56,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
   CHAT_USER: ["chat:create", "chat:read:own", "chat:read:shared", "chat:share:own", "chat:delete:own", "usage:read:own", "cost:read:own", "rag:doc:read"],
   ANSWER_EDITOR: ["answer:edit", "answer:publish"],
   RAG_GROUP_MANAGER: [
-    "rag:doc:read","rag:doc:write:group","rag:doc:delete:group","rag:index:rebuild:group",
+    "rag:group:create","rag:group:assign_manager","rag:doc:read","rag:doc:write:group","rag:doc:delete:group","rag:index:rebuild:group",
     "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
     "benchmark:read","benchmark:run"
   ],

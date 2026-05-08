@@ -1,4 +1,5 @@
 import type { FormEvent } from "react"
+import type { DocumentGroup } from "../../documents/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 
@@ -7,6 +8,8 @@ export function ChatComposer({
   question,
   submitShortcut,
   file,
+  selectedGroupId,
+  documentGroups,
   canWriteDocuments,
   conversationKey,
   canAsk,
@@ -19,6 +22,8 @@ export function ChatComposer({
   question: string
   submitShortcut: "enter" | "ctrlEnter"
   file: File | null
+  selectedGroupId: string
+  documentGroups: DocumentGroup[]
   canWriteDocuments: boolean
   conversationKey: number
   canAsk: boolean
@@ -27,6 +32,10 @@ export function ChatComposer({
   onSetFile: (file: File | null) => void
   onSetSubmitShortcut: (value: "enter" | "ctrlEnter") => void
 }) {
+  const selectedGroupName = selectedGroupId === "all"
+    ? "全フォルダ"
+    : documentGroups.find((group) => group.groupId === selectedGroupId)?.name ?? "選択フォルダ"
+
   return (
     <form className="composer" onSubmit={onAsk}>
       <textarea
@@ -64,7 +73,8 @@ export function ChatComposer({
             <option value="ctrlEnter">Ctrl+Enterで送信</option>
           </select>
         </div>
-        {file && <span className="file-chip">{file.name}</span>}
+        <span className="file-chip">{`参照: ${selectedGroupName}`}</span>
+        {file && <span className="file-chip">{`一時添付: ${file.name}`}</span>}
         {canWriteDocuments && (
           <label className="icon-button attach-button" title="資料を添付">
             <Icon name="paperclip" />

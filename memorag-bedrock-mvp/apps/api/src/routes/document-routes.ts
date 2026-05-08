@@ -7,9 +7,12 @@ import { eventPayload } from "../chat-run-events-stream.js"
 import type { AppUser } from "../auth.js"
 import { getPermissionsForGroups, hasPermission, requirePermission } from "../authorization.js"
 import {
+  CreateDocumentGroupRequestSchema,
   CreateDocumentUploadRequestSchema,
   CreateDocumentUploadResponseSchema,
   DeleteDocumentResponseSchema,
+  DocumentGroupListResponseSchema,
+  DocumentGroupSchema,
   DocumentIngestRunSchema,
   DocumentIngestRunStartResponseSchema,
   DocumentListResponseSchema,
@@ -19,9 +22,10 @@ import {
   IngestUploadedDocumentRequestSchema,
   ReindexMigrationListResponseSchema,
   ReindexMigrationSchema,
+  ShareDocumentGroupRequestSchema,
   StartDocumentIngestRunRequestSchema
 } from "../schemas.js"
-import type { DocumentIngestRun } from "../types.js"
+import type { DocumentIngestRun, JsonValue } from "../types.js"
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, sleep } from "./route-utils.js"
 import {
@@ -48,6 +52,10 @@ function canReadDocumentIngestRun(user: AppUser, run: DocumentIngestRun): boolea
 }
 
 function authorizeDocumentUploadSession(user: AppUser, purpose: UploadPurpose) {
+  if (purpose === "chatAttachment") {
+    if (hasPermission(user, "chat:create")) return
+    throw new HTTPException(403, { message: "Forbidden: missing chat:create" })
+  }
   if (purpose === "benchmarkSeed") {
     if (hasPermission(user, "benchmark:seed_corpus")) return
     throw new HTTPException(403, { message: "Forbidden: missing benchmark:seed_corpus" })
@@ -59,7 +67,7 @@ function authorizeDocumentUploadSession(user: AppUser, purpose: UploadPurpose) {
 function buildUploadObjectKey(user: AppUser, purpose: UploadPurpose, fileName: string): string {
   return [
     uploadObjectKeyPrefix,
-    purpose === "benchmarkSeed" ? "benchmark-seeds" : "documents",
+    purpose === "benchmarkSeed" ? "benchmark-seeds" : purpose === "chatAttachment" ? "chat-attachments" : "documents",
     safeUploadPathSegment(user.userId),
     `${randomUUID()}-${safeUploadFileName(fileName)}`
   ].join("/")
@@ -68,8 +76,10 @@ function buildUploadObjectKey(user: AppUser, purpose: UploadPurpose, fileName: s
 function uploadPurposeForKey(user: AppUser, objectKey: string): UploadPurpose {
   const documentPrefix = `${uploadObjectKeyPrefix}/documents/${safeUploadPathSegment(user.userId)}/`
   const benchmarkPrefix = `${uploadObjectKeyPrefix}/benchmark-seeds/${safeUploadPathSegment(user.userId)}/`
+  const chatAttachmentPrefix = `${uploadObjectKeyPrefix}/chat-attachments/${safeUploadPathSegment(user.userId)}/`
   if (objectKey.startsWith(documentPrefix)) return "document"
   if (objectKey.startsWith(benchmarkPrefix)) return "benchmarkSeed"
+  if (objectKey.startsWith(chatAttachmentPrefix)) return "chatAttachment"
   throw new HTTPException(403, { message: "Forbidden: upload object key is outside the caller scope" })
 }
 
@@ -103,7 +113,128 @@ function localUploadUrl(requestUrl: string, uploadId: string): string {
   return url.toString()
 }
 
+async function scopedMetadata(
+  service: ApiRouteContext["service"],
+  user: AppUser,
+  metadata: Record<string, JsonValue> | undefined,
+  scope: z.infer<typeof DocumentUploadRequestSchema>["scope"],
+  purpose: UploadPurpose = "document"
+): Promise<Record<string, JsonValue> | undefined> {
+  const base: Record<string, JsonValue> = { ...(metadata ?? {}) }
+  if (purpose === "chatAttachment") {
+    const temporaryScopeId = scope?.temporaryScopeId
+    if (!temporaryScopeId) throw new HTTPException(400, { message: "chatAttachment requires temporaryScopeId" })
+    return {
+      ...base,
+      scopeType: "chat",
+      ownerUserId: user.userId,
+      allowedUsers: [user.userId, ...(user.email ? [user.email] : [])],
+      temporaryScopeId,
+      expiresAt: scope?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    }
+  }
+
+  if (!scope) return metadata
+  const groupIds = scope.groupIds ?? []
+  if (groupIds.length > 0) await service.assertDocumentGroupsWritable(user, groupIds)
+  if (groupIds.length > 0 || scope.scopeType === "group") {
+    return { ...base, scopeType: "group", ownerUserId: user.userId, groupIds }
+  }
+  if (scope.scopeType === "personal") {
+    return { ...base, scopeType: "personal", ownerUserId: user.userId, allowedUsers: [user.userId, ...(user.email ? [user.email] : [])] }
+  }
+  return Object.keys(base).length > 0 ? base : undefined
+}
+
+async function authorizeScopedIngest(
+  service: ApiRouteContext["service"],
+  user: AppUser,
+  purpose: UploadPurpose,
+  body: z.infer<typeof IngestUploadedDocumentRequestSchema>
+) {
+  if (purpose === "chatAttachment") {
+    if (!hasPermission(user, "chat:create")) throw new HTTPException(403, { message: "Forbidden: missing chat:create" })
+    if (body.scope?.scopeType && body.scope.scopeType !== "chat") throw new HTTPException(400, { message: "chatAttachment scopeType must be chat" })
+    if (!body.scope?.temporaryScopeId) throw new HTTPException(400, { message: "chatAttachment requires temporaryScopeId" })
+    return
+  }
+  authorizeUploadedDocumentIngest(user, purpose, body)
+  await scopedMetadata(service, user, body.metadata, body.scope, purpose)
+}
+
 export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) {
+  app.openapi(
+    looseRoute({
+      method: "get",
+      path: "/document-groups",
+      responses: {
+        200: { description: "List visible document groups", content: { "application/json": { schema: DocumentGroupListResponseSchema } } },
+        500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:read")
+      return c.json({ groups: await service.listDocumentGroups(user) }, 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/document-groups",
+      request: {
+        body: {
+          required: true,
+          content: { "application/json": { schema: CreateDocumentGroupRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Created document group", content: { "application/json": { schema: DocumentGroupSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:group:create")
+      const body = (c.req as any).valid("json") as z.infer<typeof CreateDocumentGroupRequestSchema>
+      return c.json(await service.createDocumentGroup(user, body), 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/document-groups/{groupId}/share",
+      request: {
+        params: z.object({ groupId: z.string().min(1) }),
+        body: {
+          required: true,
+          content: { "application/json": { schema: ShareDocumentGroupRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Updated document group sharing", content: { "application/json": { schema: DocumentGroupSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:group:assign_manager")
+      const { groupId } = (c.req as any).valid("param") as { groupId: string }
+      const body = (c.req as any).valid("json") as z.infer<typeof ShareDocumentGroupRequestSchema>
+      try {
+        const group = await service.updateDocumentGroupSharing(user, groupId, body)
+        if (!group) return c.json({ error: "Document group not found" }, 404)
+        return c.json(group, 200)
+      } catch (err) {
+        if (err instanceof Error && err.message.startsWith("Forbidden:")) throw new HTTPException(403, { message: err.message })
+        throw err
+      }
+    }
+  )
+
   app.openapi(
     looseRoute({
       method: "get",
@@ -149,7 +280,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
       authorizeDocumentUpload(user, body)
       if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
-      return c.json(await service.ingest(body), 200)
+      const metadata = await scopedMetadata(service, user, body.metadata, body.scope)
+      return c.json(await service.ingest({ ...body, metadata }), 200)
     }
   )
 
@@ -245,7 +377,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const body = (c.req as any).valid("json") as z.infer<typeof IngestUploadedDocumentRequestSchema>
       const objectKey = decodeUploadId(uploadId)
       const purpose = uploadPurposeForKey(user, objectKey)
-      authorizeUploadedDocumentIngest(user, purpose, body)
+      await authorizeScopedIngest(service, user, purpose, body)
       const objectSize = await deps.objectStore.getObjectSize(objectKey)
       if (objectSize > config.documentUploadMaxBytes) {
         await deps.objectStore.deleteObject(objectKey)
@@ -257,7 +389,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const sourceS3Object = config.docsBucketName
         ? { bucketName: config.docsBucketName, key: objectKey }
         : undefined
-      const manifest = await service.ingest({ ...body, contentBytes, sourceS3Object })
+      const metadata = await scopedMetadata(service, user, body.metadata, body.scope, purpose)
+      const manifest = await service.ingest({ ...body, metadata, contentBytes, sourceS3Object })
       await deps.objectStore.deleteObject(objectKey)
       return c.json(manifest, 200)
     }
@@ -285,8 +418,9 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const body = (c.req as any).valid("json") as z.infer<typeof StartDocumentIngestRunRequestSchema>
       const objectKey = decodeUploadId(body.uploadId)
       const purpose = uploadPurposeForKey(user, objectKey)
-      authorizeUploadedDocumentIngest(user, purpose, body)
-      return c.json(await service.startDocumentIngestRun({ ...body, objectKey, purpose }, user), 200)
+      await authorizeScopedIngest(service, user, purpose, body)
+      const metadata = await scopedMetadata(service, user, body.metadata, body.scope, purpose)
+      return c.json(await service.startDocumentIngestRun({ ...body, metadata, objectKey, purpose }, user), 200)
     }
   )
 

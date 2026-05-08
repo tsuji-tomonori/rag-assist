@@ -1,6 +1,7 @@
 export type DocumentManifest = {
   documentId: string
   fileName: string
+  metadata?: Record<string, unknown>
   chunkCount: number
   memoryCardCount: number
   createdAt: string
@@ -10,6 +11,27 @@ export type DocumentManifest = {
   reindexMigrationId?: string
   chunkerVersion?: string
   sourceExtractorVersion?: string
+}
+
+export type DocumentGroup = {
+  groupId: string
+  name: string
+  description?: string
+  ownerUserId: string
+  visibility: "private" | "shared" | "org"
+  sharedUserIds: string[]
+  sharedGroups: string[]
+  managerUserIds: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type SearchScope = {
+  mode?: "all" | "groups" | "documents" | "temporary"
+  groupIds?: string[]
+  documentIds?: string[]
+  includeTemporary?: boolean
+  temporaryScopeId?: string
 }
 
 export type ReindexMigration = {

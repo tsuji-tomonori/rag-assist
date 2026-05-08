@@ -44,6 +44,7 @@ const coverageByRequirement: Record<string, string[]> = {
   "FR-038": ["api-contract.test.ts", "document-ingest-runs tests", "documentsApi tests"],
   "FR-039": ["benchmark/corpus.test.ts", "benchmark/run.test.ts"],
   "FR-040": ["hybrid-search.test.ts", "benchmark/run.test.ts", "search-run.test.ts"],
+  "FR-041": ["hybrid-search.test.ts", "access-control-policy.test.ts", "useChatSession.test.ts", "DocumentWorkspace.test.tsx"],
   "NFR-001": ["graph.test.ts", "local-stores.test.ts", "text-processing.test.ts"],
   "NFR-002": ["infra/test/memorag-mvp-stack.test.ts", "docs/OPERATIONS.md"],
   "NFR-003": ["infra/test/memorag-mvp-stack.test.ts"],

@@ -4,7 +4,7 @@ import type { Dependencies } from "../dependencies.js"
 import { normalizeSearchTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { loadPublishedAliasMap } from "./alias-artifacts.js"
-import type { DocumentManifest, JsonValue, RetrievedVector, VectorMetadata } from "../types.js"
+import type { DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../types.js"
 
 export type SearchInput = {
   query: string
@@ -21,6 +21,7 @@ export type SearchInput = {
     benchmarkSuiteId?: string
     documentId?: string
   }
+  scope?: SearchScope
 }
 
 export type SearchResult = {
@@ -158,7 +159,7 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
   const topK = ragRuntimePolicy.retrieval.adaptiveEnabled
     ? clampInt(Math.max(requestedTopK, Math.ceil(requestedTopK * 1.5)), requestedTopK, ragRuntimePolicy.retrieval.searchRagMaxTopK)
     : requestedTopK
-  const index = await getLexicalIndex(deps, user, input.filters)
+  const index = await getLexicalIndex(deps, user, input.filters, input.scope)
   const queryTokens = tokenizeQuery(input.query)
 
   const lexicalHits = lexicalTopK > 0 ? bm25Search(index, queryTokens, lexicalTopK, { k1: ragRuntimePolicy.retrieval.bm25K1, b: ragRuntimePolicy.retrieval.bm25B }) : []
@@ -189,7 +190,8 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
               semanticQueryTopK,
               vectorFilter
             ),
-            user
+            user,
+            input.scope
           )
         ).slice(0, semanticTopK)
       : []
@@ -251,12 +253,18 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
 export async function getLexicalIndex(
   deps: Pick<Dependencies, "objectStore">,
   user: AppUser,
-  filters?: SearchInput["filters"]
+  filters?: SearchInput["filters"],
+  scope?: SearchScope
 ): Promise<LexicalIndex> {
   const started = Date.now()
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
-  const visible = manifests.filter(isActiveManifest).filter((manifest) => canAccessManifest(manifest, user)).filter((manifest) => manifestMatchesFilters(manifest, filters))
+  const groups = await loadDocumentGroups(deps)
+  const visible = manifests
+    .filter(isActiveManifest)
+    .filter((manifest) => canAccessManifest(manifest, user, groups))
+    .filter((manifest) => manifestMatchesFilters(manifest, filters))
+    .filter((manifest) => manifestMatchesScope(manifest, scope))
   const publishedAliases = await loadPublishedAliasMap(deps, filters, visible.map((manifest) => manifest.metadata))
   const aliases = mergeAliases([publishedAliases.aliases, ...visible.map((manifest) => aliasMapFromMetadata(manifest.metadata))])
   const combinedAliasSignature = stableStringifyAliasMap(aliases)
@@ -663,27 +671,34 @@ function normalize(text: string): string {
   return text.normalize("NFKC").toLowerCase().trim()
 }
 
-function canAccessManifest(manifest: DocumentManifest, user: AppUser): boolean {
+function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: DocumentGroup[] = []): boolean {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
+  const manifestGroupIds = stringValues(metadata.groupIds ?? metadata.groupId)
+  if (manifestGroupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user))) return true
   return canAccessMetadata(metadata, user)
 }
 
 function isActiveManifest(manifest: DocumentManifest): boolean {
-  return (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active"
+  if ((manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") !== "active") return false
+  const expiresAt = stringValue(manifest.metadata?.expiresAt)
+  return !expiresAt || new Date(expiresAt).getTime() > Date.now()
 }
 
 async function filterAccessibleVectorHits(
   deps: Pick<Dependencies, "objectStore">,
   hits: RetrievedVector[],
-  user: AppUser
+  user: AppUser,
+  scope?: SearchScope
 ): Promise<RetrievedVector[]> {
   const manifestCache = new Map<string, DocumentManifest | undefined>()
+  const groups = await loadDocumentGroups(deps)
   const result: RetrievedVector[] = []
   for (const hit of hits) {
     if (!canAccessVectorMetadata(hit.metadata, user)) continue
     const manifest = await getCachedManifest(deps, manifestCache, hit.metadata.documentId)
-    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user)) continue
+    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user, groups) || !manifestMatchesScope(manifest, scope)) continue
     result.push(hit)
   }
   return result
@@ -708,6 +723,8 @@ async function getCachedManifest(
 function canAccessVectorMetadata(metadata: VectorMetadata, user: AppUser): boolean {
   if ((metadata.lifecycleStatus ?? "active") !== "active") return false
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
+  const scopeType = metadata.scopeType
+  if (scopeType === "group" || scopeType === "chat") return true
   return canAccessMetadata(metadata as unknown as Record<string, JsonValue>, user)
 }
 
@@ -729,6 +746,48 @@ function manifestMatchesFilters(manifest: DocumentManifest, filters: SearchInput
   if (filters.docType && stringValue(metadata.docType) !== filters.docType) return false
   if (filters.benchmarkSuiteId && stringValue(metadata.benchmarkSuiteId) !== filters.benchmarkSuiteId) return false
   return true
+}
+
+function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | undefined): boolean {
+  const metadata = manifest.metadata ?? {}
+  const scopeType = stringValue(metadata.scopeType)
+  const temporaryMatch = Boolean(
+    scope?.includeTemporary && scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId
+  )
+  if (!scope || scope.mode === "all" || !scope.mode) {
+    if (scopeType !== "chat") return true
+    return temporaryMatch
+  }
+  const groupIds = stringValues(metadata.groupIds ?? metadata.groupId)
+  if (scope.mode === "groups") {
+    const requested = new Set(scope.groupIds ?? [])
+    return temporaryMatch || groupIds.some((groupId) => requested.has(groupId))
+  }
+  if (scope.mode === "documents") {
+    const requested = new Set(scope.documentIds ?? [])
+    return temporaryMatch || requested.has(manifest.documentId)
+  }
+  if (scope.mode === "temporary") {
+    return Boolean(scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId)
+  }
+  return true
+}
+
+async function loadDocumentGroups(deps: Pick<Dependencies, "objectStore">): Promise<DocumentGroup[]> {
+  try {
+    const raw = JSON.parse(await deps.objectStore.getText("document-groups/groups.json")) as { groups?: DocumentGroup[] }
+    return Array.isArray(raw.groups) ? raw.groups : []
+  } catch {
+    return []
+  }
+}
+
+function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
+  if (!group) return false
+  if (group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId) || group.sharedUserIds.includes(user.userId)) return true
+  if (user.email && group.sharedUserIds.includes(user.email)) return true
+  if (group.visibility === "org") return true
+  return group.sharedGroups.some((sharedGroup) => user.cognitoGroups.includes(sharedGroup))
 }
 
 function stringValues(value: JsonValue | undefined): string[] {
