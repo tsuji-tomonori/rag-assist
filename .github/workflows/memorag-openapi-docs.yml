@@ -44,6 +44,9 @@ jobs:
       - name: Generate OpenAPI docs
         run: npm run docs:openapi
 
+      - name: Check OpenAPI doc quality
+        run: npm run docs:openapi:check
+
       - name: Create pull request
         uses: peter-evans/create-pull-request@v6
         with:

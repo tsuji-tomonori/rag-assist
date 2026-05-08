@@ -77,6 +77,16 @@ npm run docs:openapi
 
 生成物は `docs/generated/openapi.json` と `docs/generated/openapi.md` に出力する。GitHub Actions では `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で同じコマンドを実行し、差分がある場合に更新 PR を作成する。
 
+`docs/generated/openapi.md` は schema を JSON block としてそのまま記載しない。各 operation の `headers`、`path parameters`、`query parameters`、`data`、`responses` を表形式で出力し、各項目に型、必須、説明、制約を記載する。operation の `summary` / `description` と parameter / request body / response body の field description は日本語であることを必須とする。
+
+OpenAPI 説明品質は次のコマンドで検証する。
+
+```bash
+npm run docs:openapi:check
+```
+
+`.github/workflows/memorag-ci.yml` と `.github/workflows/memorag-openapi-docs.yml` はこの検証を実行し、summary / description / field description の不足がある場合は CI を失敗させる。
+
 ## `POST /chat`
 
 後方互換用の同期 JSON API。新しい UI は、長時間 RAG 処理の進捗を表示するため `POST /chat-runs` と `GET /chat-runs/{runId}/events` を使用する。

@@ -32,6 +32,11 @@ tasks:
     cmds:
       - npm run docs:openapi
 
+  docs:openapi:check:
+    desc: Validate Japanese OpenAPI summaries, descriptions, and field descriptions
+    cmds:
+      - npm run docs:openapi:check
+
   dev:api:
     desc: Run the Hono API locally with mock Bedrock and local vector store
     env:

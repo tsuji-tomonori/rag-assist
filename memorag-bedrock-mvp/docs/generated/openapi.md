@@ -9,12423 +9,4404 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 
 ## Operations
 
-| Method | Path | Summary | Tags |
-| --- | --- | --- | --- |
-| `GET` | `/admin/aliases` | - | - |
-| `POST` | `/admin/aliases` | - | - |
-| `POST` | `/admin/aliases/{aliasId}/disable` | - | - |
-| `POST` | `/admin/aliases/{aliasId}/review` | - | - |
-| `POST` | `/admin/aliases/{aliasId}/update` | - | - |
-| `GET` | `/admin/aliases/audit-log` | - | - |
-| `POST` | `/admin/aliases/publish` | - | - |
-| `GET` | `/admin/audit-log` | - | - |
-| `GET` | `/admin/costs` | - | - |
-| `GET` | `/admin/roles` | - | - |
-| `GET` | `/admin/usage` | - | - |
-| `POST` | `/admin/users` | - | - |
-| `GET` | `/admin/users` | - | - |
-| `DELETE` | `/admin/users/{userId}` | - | - |
-| `POST` | `/admin/users/{userId}/roles` | - | - |
-| `POST` | `/admin/users/{userId}/suspend` | - | - |
-| `POST` | `/admin/users/{userId}/unsuspend` | - | - |
-| `POST` | `/benchmark-runs` | - | - |
-| `GET` | `/benchmark-runs` | - | - |
-| `GET` | `/benchmark-runs/{runId}` | - | - |
-| `POST` | `/benchmark-runs/{runId}/cancel` | - | - |
-| `POST` | `/benchmark-runs/{runId}/download` | - | - |
-| `GET` | `/benchmark-suites` | - | - |
-| `POST` | `/benchmark/query` | - | - |
-| `POST` | `/benchmark/search` | - | - |
-| `POST` | `/chat` | - | - |
-| `POST` | `/chat-runs` | - | - |
-| `GET` | `/chat-runs/{runId}/events` | - | - |
-| `GET` | `/conversation-history` | - | - |
-| `POST` | `/conversation-history` | - | - |
-| `DELETE` | `/conversation-history/{id}` | - | - |
-| `GET` | `/debug-runs` | - | - |
-| `GET` | `/debug-runs/{runId}` | - | - |
-| `POST` | `/debug-runs/{runId}/download` | - | - |
-| `POST` | `/document-ingest-runs` | - | - |
-| `GET` | `/document-ingest-runs/{runId}` | - | - |
-| `GET` | `/document-ingest-runs/{runId}/events` | - | - |
-| `GET` | `/documents` | - | - |
-| `POST` | `/documents` | - | - |
-| `DELETE` | `/documents/{documentId}` | - | - |
-| `POST` | `/documents/{documentId}/reindex` | - | - |
-| `POST` | `/documents/{documentId}/reindex/stage` | - | - |
-| `GET` | `/documents/reindex-migrations` | - | - |
-| `POST` | `/documents/reindex-migrations/{migrationId}/cutover` | - | - |
-| `POST` | `/documents/reindex-migrations/{migrationId}/rollback` | - | - |
-| `POST` | `/documents/uploads` | - | - |
-| `POST` | `/documents/uploads/{uploadId}/content` | - | - |
-| `POST` | `/documents/uploads/{uploadId}/ingest` | - | - |
-| `GET` | `/health` | - | - |
-| `GET` | `/me` | - | - |
-| `POST` | `/questions` | - | - |
-| `GET` | `/questions` | - | - |
-| `GET` | `/questions/{questionId}` | - | - |
-| `POST` | `/questions/{questionId}/answer` | - | - |
-| `POST` | `/questions/{questionId}/resolve` | - | - |
-| `POST` | `/search` | - | - |
+| Method | Path | Summary |
+| --- | --- | --- |
+| `GET` | `/admin/aliases` | 検索 alias 一覧を取得する |
+| `POST` | `/admin/aliases` | 検索 alias draft を作成する |
+| `POST` | `/admin/aliases/{aliasId}/disable` | 検索 alias を無効化する |
+| `POST` | `/admin/aliases/{aliasId}/review` | 検索 alias をレビューする |
+| `POST` | `/admin/aliases/{aliasId}/update` | 検索 alias draft を更新する |
+| `GET` | `/admin/aliases/audit-log` | 検索 alias 監査ログを取得する |
+| `POST` | `/admin/aliases/publish` | 検索 alias を公開する |
+| `GET` | `/admin/audit-log` | 管理操作履歴を取得する |
+| `GET` | `/admin/costs` | 概算コストを取得する |
+| `GET` | `/admin/roles` | 利用可能なロール一覧を取得する |
+| `GET` | `/admin/usage` | 利用状況を取得する |
+| `POST` | `/admin/users` | 管理対象ユーザーを作成する |
+| `GET` | `/admin/users` | 管理対象ユーザー一覧を取得する |
+| `DELETE` | `/admin/users/{userId}` | ユーザーを削除する |
+| `POST` | `/admin/users/{userId}/roles` | ユーザーのロールを更新する |
+| `POST` | `/admin/users/{userId}/suspend` | ユーザーを停止する |
+| `POST` | `/admin/users/{userId}/unsuspend` | ユーザー停止を解除する |
+| `POST` | `/benchmark-runs` | 非同期 benchmark run を開始する |
+| `GET` | `/benchmark-runs` | benchmark run 一覧を取得する |
+| `GET` | `/benchmark-runs/{runId}` | benchmark run 詳細を取得する |
+| `POST` | `/benchmark-runs/{runId}/cancel` | benchmark run をキャンセルする |
+| `POST` | `/benchmark-runs/{runId}/download` | benchmark artifact ダウンロード URL を作成する |
+| `GET` | `/benchmark-suites` | ベンチマーク suite 一覧を取得する |
+| `POST` | `/benchmark/query` | ベンチマーク質問を実行する |
+| `POST` | `/benchmark/search` | 検索ベンチマークを実行する |
+| `POST` | `/chat` | 同期チャット回答を生成する |
+| `POST` | `/chat-runs` | 非同期チャット run を開始する |
+| `GET` | `/chat-runs/{runId}/events` | チャット run イベントを購読する |
+| `GET` | `/conversation-history` | 会話履歴一覧を取得する |
+| `POST` | `/conversation-history` | 会話履歴を保存する |
+| `DELETE` | `/conversation-history/{id}` | 会話履歴を削除する |
+| `GET` | `/debug-runs` | debug trace 一覧を取得する |
+| `GET` | `/debug-runs/{runId}` | debug trace 詳細を取得する |
+| `POST` | `/debug-runs/{runId}/download` | debug trace ダウンロード URL を作成する |
+| `POST` | `/document-ingest-runs` | 非同期文書取り込みを開始する |
+| `GET` | `/document-ingest-runs/{runId}` | 文書取り込み run を取得する |
+| `GET` | `/document-ingest-runs/{runId}/events` | 文書取り込みイベントを購読する |
+| `GET` | `/documents` | 登録文書一覧を取得する |
+| `POST` | `/documents` | 文書を登録する |
+| `DELETE` | `/documents/{documentId}` | 文書を削除する |
+| `POST` | `/documents/{documentId}/reindex` | 文書を再インデックスする |
+| `POST` | `/documents/{documentId}/reindex/stage` | 再インデックスを stage する |
+| `GET` | `/documents/reindex-migrations` | 再インデックス移行一覧を取得する |
+| `POST` | `/documents/reindex-migrations/{migrationId}/cutover` | 再インデックス結果へ切り替える |
+| `POST` | `/documents/reindex-migrations/{migrationId}/rollback` | 再インデックス切替を戻す |
+| `POST` | `/documents/uploads` | 文書アップロード URL を作成する |
+| `POST` | `/documents/uploads/{uploadId}/content` | 文書アップロード内容を保存する |
+| `POST` | `/documents/uploads/{uploadId}/ingest` | アップロード済み文書を取り込む |
+| `GET` | `/health` | ヘルスチェックを取得する |
+| `GET` | `/me` | ログインユーザー情報を取得する |
+| `POST` | `/questions` | 担当者問い合わせを作成する |
+| `GET` | `/questions` | 担当者問い合わせ一覧を取得する |
+| `GET` | `/questions/{questionId}` | 担当者問い合わせ詳細を取得する |
+| `POST` | `/questions/{questionId}/answer` | 担当者回答を登録する |
+| `POST` | `/questions/{questionId}/resolve` | 問い合わせを解決済みにする |
+| `POST` | `/search` | ハイブリッド検索を実行する |
 
 ## Operation Details
 
 ### GET /admin/aliases
 
-Anchor: `get-/admin/aliases`
+Summary: 検索 alias 一覧を取得する
 
-Tags: -
-Security: default
+RAG 検索で利用する alias 定義と公開状態を取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List alias definitions
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "aliases": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "aliasId": {
-            "type": "string"
-          },
-          "term": {
-            "type": "string"
-          },
-          "expansions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "scope": {
-            "type": "object",
-            "properties": {
-              "tenantId": {
-                "type": "string"
-              },
-              "department": {
-                "type": "string"
-              },
-              "source": {
-                "type": "string"
-              },
-              "docType": {
-                "type": "string"
-              },
-              "benchmarkSuiteId": {
-                "type": "string"
-              }
-            }
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "draft",
-              "approved",
-              "disabled"
-            ]
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          },
-          "reviewedBy": {
-            "type": "string"
-          },
-          "reviewedAt": {
-            "type": "string"
-          },
-          "reviewComment": {
-            "type": "string"
-          },
-          "publishedVersion": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "aliasId",
-          "term",
-          "expansions",
-          "status",
-          "createdBy",
-          "createdAt",
-          "updatedAt"
-        ]
-      }
-    }
-  },
-  "required": [
-    "aliases"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `aliases` | `array<object>` | yes | 検索 alias 一覧。 | - |
+| `aliases[].aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `aliases[].term` | `string` | yes | `response.aliases[].term` の値。項目名は term を表します。 | - |
+| `aliases[].expansions` | `array<string>` | yes | `response.aliases[].expansions` の値。項目名は expansions を表します。 | - |
+| `aliases[].scope` | `object` | no | `response.aliases[].scope` の値。項目名は scope を表します。 | - |
+| `aliases[].scope.tenantId` | `string` | no | `response.aliases[].scope.tenantId` の値。項目名は tenant id を表します。 | - |
+| `aliases[].scope.department` | `string` | no | `response.aliases[].scope.department` の値。項目名は department を表します。 | - |
+| `aliases[].scope.source` | `string` | no | `response.aliases[].scope.source` の値。項目名は source を表します。 | - |
+| `aliases[].scope.docType` | `string` | no | `response.aliases[].scope.docType` の値。項目名は doc type を表します。 | - |
+| `aliases[].scope.benchmarkSuiteId` | `string` | no | `response.aliases[].scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
+| `aliases[].status` | `enum(draft \| approved \| disabled)` | yes | 現在の処理状態または管理状態。 | enum=draft, approved, disabled |
+| `aliases[].createdBy` | `string` | yes | `response.aliases[].createdBy` の値。項目名は created by を表します。 | - |
+| `aliases[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `aliases[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `aliases[].reviewedBy` | `string` | no | `response.aliases[].reviewedBy` の値。項目名は reviewed by を表します。 | - |
+| `aliases[].reviewedAt` | `string` | no | `response.aliases[].reviewedAt` の値。項目名は reviewed at を表します。 | - |
+| `aliases[].reviewComment` | `string` | no | `response.aliases[].reviewComment` の値。項目名は review comment を表します。 | - |
+| `aliases[].publishedVersion` | `string` | no | `response.aliases[].publishedVersion` の値。項目名は published version を表します。 | - |
 
 ### POST /admin/aliases
 
-Anchor: `post-/admin/aliases`
+Summary: 検索 alias draft を作成する
 
-Tags: -
-Security: default
+検索語の展開に使う alias の draft 定義を作成します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "term": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 120,
-      "example": "pto"
-    },
-    "expansions": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 120
-      },
-      "minItems": 1,
-      "maxItems": 20,
-      "example": [
-        "有給休暇",
-        "休暇申請"
-      ]
-    },
-    "scope": {
-      "type": "object",
-      "properties": {
-        "tenantId": {
-          "type": "string"
-        },
-        "department": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "docType": {
-          "type": "string"
-        },
-        "benchmarkSuiteId": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "term",
-    "expansions"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `term` | `string` | yes | `data.term` の値。項目名は term を表します。 | minLength=1<br>maxLength=120 |
+| `expansions` | `array<string>` | yes | `data.expansions` の値。項目名は expansions を表します。 | minItems=1<br>maxItems=20 |
+| `scope` | `object` | no | `data.scope` の値。項目名は scope を表します。 | - |
+| `scope.tenantId` | `string` | no | `data.scope.tenantId` の値。項目名は tenant id を表します。 | - |
+| `scope.department` | `string` | no | `data.scope.department` の値。項目名は department を表します。 | - |
+| `scope.source` | `string` | no | `data.scope.source` の値。項目名は source を表します。 | - |
+| `scope.docType` | `string` | no | `data.scope.docType` の値。項目名は doc type を表します。 | - |
+| `scope.benchmarkSuiteId` | `string` | no | `data.scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Created alias draft
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "aliasId": {
-      "type": "string"
-    },
-    "term": {
-      "type": "string"
-    },
-    "expansions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "scope": {
-      "type": "object",
-      "properties": {
-        "tenantId": {
-          "type": "string"
-        },
-        "department": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "docType": {
-          "type": "string"
-        },
-        "benchmarkSuiteId": {
-          "type": "string"
-        }
-      }
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "draft",
-        "approved",
-        "disabled"
-      ]
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "reviewedBy": {
-      "type": "string"
-    },
-    "reviewedAt": {
-      "type": "string"
-    },
-    "reviewComment": {
-      "type": "string"
-    },
-    "publishedVersion": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "aliasId",
-    "term",
-    "expansions",
-    "status",
-    "createdBy",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `term` | `string` | yes | `response.term` の値。項目名は term を表します。 | - |
+| `expansions` | `array<string>` | yes | `response.expansions` の値。項目名は expansions を表します。 | - |
+| `scope` | `object` | no | `response.scope` の値。項目名は scope を表します。 | - |
+| `scope.tenantId` | `string` | no | `response.scope.tenantId` の値。項目名は tenant id を表します。 | - |
+| `scope.department` | `string` | no | `response.scope.department` の値。項目名は department を表します。 | - |
+| `scope.source` | `string` | no | `response.scope.source` の値。項目名は source を表します。 | - |
+| `scope.docType` | `string` | no | `response.scope.docType` の値。項目名は doc type を表します。 | - |
+| `scope.benchmarkSuiteId` | `string` | no | `response.scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
+| `status` | `enum(draft \| approved \| disabled)` | yes | 現在の処理状態または管理状態。 | enum=draft, approved, disabled |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `reviewedBy` | `string` | no | `response.reviewedBy` の値。項目名は reviewed by を表します。 | - |
+| `reviewedAt` | `string` | no | `response.reviewedAt` の値。項目名は reviewed at を表します。 | - |
+| `reviewComment` | `string` | no | `response.reviewComment` の値。項目名は review comment を表します。 | - |
+| `publishedVersion` | `string` | no | `response.publishedVersion` の値。項目名は published version を表します。 | - |
 
 ### POST /admin/aliases/{aliasId}/disable
 
-Anchor: `post-/admin/aliases/{aliasid}/disable`
+Summary: 検索 alias を無効化する
 
-Tags: -
-Security: default
+指定した alias を検索展開から外すため無効化します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `aliasId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `aliasId` | `string` | yes | 検索 alias を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Disabled alias
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "aliasId": {
-      "type": "string"
-    },
-    "term": {
-      "type": "string"
-    },
-    "expansions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "scope": {
-      "type": "object",
-      "properties": {
-        "tenantId": {
-          "type": "string"
-        },
-        "department": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "docType": {
-          "type": "string"
-        },
-        "benchmarkSuiteId": {
-          "type": "string"
-        }
-      }
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "draft",
-        "approved",
-        "disabled"
-      ]
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "reviewedBy": {
-      "type": "string"
-    },
-    "reviewedAt": {
-      "type": "string"
-    },
-    "reviewComment": {
-      "type": "string"
-    },
-    "publishedVersion": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "aliasId",
-    "term",
-    "expansions",
-    "status",
-    "createdBy",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `term` | `string` | yes | `response.term` の値。項目名は term を表します。 | - |
+| `expansions` | `array<string>` | yes | `response.expansions` の値。項目名は expansions を表します。 | - |
+| `scope` | `object` | no | `response.scope` の値。項目名は scope を表します。 | - |
+| `scope.tenantId` | `string` | no | `response.scope.tenantId` の値。項目名は tenant id を表します。 | - |
+| `scope.department` | `string` | no | `response.scope.department` の値。項目名は department を表します。 | - |
+| `scope.source` | `string` | no | `response.scope.source` の値。項目名は source を表します。 | - |
+| `scope.docType` | `string` | no | `response.scope.docType` の値。項目名は doc type を表します。 | - |
+| `scope.benchmarkSuiteId` | `string` | no | `response.scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
+| `status` | `enum(draft \| approved \| disabled)` | yes | 現在の処理状態または管理状態。 | enum=draft, approved, disabled |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `reviewedBy` | `string` | no | `response.reviewedBy` の値。項目名は reviewed by を表します。 | - |
+| `reviewedAt` | `string` | no | `response.reviewedAt` の値。項目名は reviewed at を表します。 | - |
+| `reviewComment` | `string` | no | `response.reviewComment` の値。項目名は review comment を表します。 | - |
+| `publishedVersion` | `string` | no | `response.publishedVersion` の値。項目名は published version を表します。 | - |
 
-#### `404`
-
-Alias not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /admin/aliases/{aliasId}/review
 
-Anchor: `post-/admin/aliases/{aliasid}/review`
+Summary: 検索 alias をレビューする
 
-Tags: -
-Security: default
+指定した alias draft をレビュー済み状態へ進めます。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `aliasId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `aliasId` | `string` | yes | 検索 alias を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "decision": {
-      "type": "string",
-      "enum": [
-        "approve",
-        "reject"
-      ]
-    },
-    "comment": {
-      "type": "string",
-      "maxLength": 1000
-    }
-  },
-  "required": [
-    "decision"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `decision` | `enum(approve \| reject)` | yes | `data.decision` の値。項目名は decision を表します。 | enum=approve, reject |
+| `comment` | `string` | no | `data.comment` の値。項目名は comment を表します。 | maxLength=1000 |
 
 #### Responses
 
-#### `200`
-
-Reviewed alias
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "aliasId": {
-      "type": "string"
-    },
-    "term": {
-      "type": "string"
-    },
-    "expansions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "scope": {
-      "type": "object",
-      "properties": {
-        "tenantId": {
-          "type": "string"
-        },
-        "department": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "docType": {
-          "type": "string"
-        },
-        "benchmarkSuiteId": {
-          "type": "string"
-        }
-      }
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "draft",
-        "approved",
-        "disabled"
-      ]
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "reviewedBy": {
-      "type": "string"
-    },
-    "reviewedAt": {
-      "type": "string"
-    },
-    "reviewComment": {
-      "type": "string"
-    },
-    "publishedVersion": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "aliasId",
-    "term",
-    "expansions",
-    "status",
-    "createdBy",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `term` | `string` | yes | `response.term` の値。項目名は term を表します。 | - |
+| `expansions` | `array<string>` | yes | `response.expansions` の値。項目名は expansions を表します。 | - |
+| `scope` | `object` | no | `response.scope` の値。項目名は scope を表します。 | - |
+| `scope.tenantId` | `string` | no | `response.scope.tenantId` の値。項目名は tenant id を表します。 | - |
+| `scope.department` | `string` | no | `response.scope.department` の値。項目名は department を表します。 | - |
+| `scope.source` | `string` | no | `response.scope.source` の値。項目名は source を表します。 | - |
+| `scope.docType` | `string` | no | `response.scope.docType` の値。項目名は doc type を表します。 | - |
+| `scope.benchmarkSuiteId` | `string` | no | `response.scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
+| `status` | `enum(draft \| approved \| disabled)` | yes | 現在の処理状態または管理状態。 | enum=draft, approved, disabled |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `reviewedBy` | `string` | no | `response.reviewedBy` の値。項目名は reviewed by を表します。 | - |
+| `reviewedAt` | `string` | no | `response.reviewedAt` の値。項目名は reviewed at を表します。 | - |
+| `reviewComment` | `string` | no | `response.reviewComment` の値。項目名は review comment を表します。 | - |
+| `publishedVersion` | `string` | no | `response.publishedVersion` の値。項目名は published version を表します。 | - |
 
-#### `404`
-
-Alias not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /admin/aliases/{aliasId}/update
 
-Anchor: `post-/admin/aliases/{aliasid}/update`
+Summary: 検索 alias draft を更新する
 
-Tags: -
-Security: default
+指定した alias draft の語句、展開語、状態を更新します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `aliasId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `aliasId` | `string` | yes | 検索 alias を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "term": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 120,
-      "example": "pto"
-    },
-    "expansions": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 120
-      },
-      "minItems": 1,
-      "maxItems": 20,
-      "example": [
-        "有給休暇",
-        "休暇申請"
-      ]
-    },
-    "scope": {
-      "type": "object",
-      "properties": {
-        "tenantId": {
-          "type": "string"
-        },
-        "department": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "docType": {
-          "type": "string"
-        },
-        "benchmarkSuiteId": {
-          "type": "string"
-        }
-      }
-    }
-  }
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `term` | `string` | no | `data.term` の値。項目名は term を表します。 | minLength=1<br>maxLength=120 |
+| `expansions` | `array<string>` | no | `data.expansions` の値。項目名は expansions を表します。 | minItems=1<br>maxItems=20 |
+| `scope` | `object` | no | `data.scope` の値。項目名は scope を表します。 | - |
+| `scope.tenantId` | `string` | no | `data.scope.tenantId` の値。項目名は tenant id を表します。 | - |
+| `scope.department` | `string` | no | `data.scope.department` の値。項目名は department を表します。 | - |
+| `scope.source` | `string` | no | `data.scope.source` の値。項目名は source を表します。 | - |
+| `scope.docType` | `string` | no | `data.scope.docType` の値。項目名は doc type を表します。 | - |
+| `scope.benchmarkSuiteId` | `string` | no | `data.scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Updated alias draft
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "aliasId": {
-      "type": "string"
-    },
-    "term": {
-      "type": "string"
-    },
-    "expansions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "scope": {
-      "type": "object",
-      "properties": {
-        "tenantId": {
-          "type": "string"
-        },
-        "department": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "docType": {
-          "type": "string"
-        },
-        "benchmarkSuiteId": {
-          "type": "string"
-        }
-      }
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "draft",
-        "approved",
-        "disabled"
-      ]
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "reviewedBy": {
-      "type": "string"
-    },
-    "reviewedAt": {
-      "type": "string"
-    },
-    "reviewComment": {
-      "type": "string"
-    },
-    "publishedVersion": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "aliasId",
-    "term",
-    "expansions",
-    "status",
-    "createdBy",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `aliasId` | `string` | yes | 検索 alias を識別する ID。 | - |
+| `term` | `string` | yes | `response.term` の値。項目名は term を表します。 | - |
+| `expansions` | `array<string>` | yes | `response.expansions` の値。項目名は expansions を表します。 | - |
+| `scope` | `object` | no | `response.scope` の値。項目名は scope を表します。 | - |
+| `scope.tenantId` | `string` | no | `response.scope.tenantId` の値。項目名は tenant id を表します。 | - |
+| `scope.department` | `string` | no | `response.scope.department` の値。項目名は department を表します。 | - |
+| `scope.source` | `string` | no | `response.scope.source` の値。項目名は source を表します。 | - |
+| `scope.docType` | `string` | no | `response.scope.docType` の値。項目名は doc type を表します。 | - |
+| `scope.benchmarkSuiteId` | `string` | no | `response.scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
+| `status` | `enum(draft \| approved \| disabled)` | yes | 現在の処理状態または管理状態。 | enum=draft, approved, disabled |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `reviewedBy` | `string` | no | `response.reviewedBy` の値。項目名は reviewed by を表します。 | - |
+| `reviewedAt` | `string` | no | `response.reviewedAt` の値。項目名は reviewed at を表します。 | - |
+| `reviewComment` | `string` | no | `response.reviewComment` の値。項目名は review comment を表します。 | - |
+| `publishedVersion` | `string` | no | `response.publishedVersion` の値。項目名は published version を表します。 | - |
 
-#### `404`
-
-Alias not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /admin/aliases/audit-log
 
-Anchor: `get-/admin/aliases/audit-log`
+Summary: 検索 alias 監査ログを取得する
 
-Tags: -
-Security: default
+alias 作成、更新、レビュー、公開に関する監査ログを取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List alias audit events
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "auditLog": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "auditId": {
-            "type": "string"
-          },
-          "aliasId": {
-            "type": "string"
-          },
-          "action": {
-            "type": "string",
-            "enum": [
-              "create",
-              "update",
-              "review",
-              "disable",
-              "publish"
-            ]
-          },
-          "actorUserId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "detail": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "auditId",
-          "action",
-          "actorUserId",
-          "createdAt",
-          "detail"
-        ]
-      }
-    }
-  },
-  "required": [
-    "auditLog"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `auditLog` | `array<object>` | yes | 監査ログ一覧。 | - |
+| `auditLog[].auditId` | `string` | yes | `response.auditLog[].auditId` の値。項目名は audit id を表します。 | - |
+| `auditLog[].aliasId` | `string` | no | 検索 alias を識別する ID。 | - |
+| `auditLog[].action` | `enum(create \| update \| review \| disable \| publish)` | yes | `response.auditLog[].action` の値。項目名は action を表します。 | enum=create, update, review, disable, publish |
+| `auditLog[].actorUserId` | `string` | yes | `response.auditLog[].actorUserId` の値。項目名は actor user id を表します。 | - |
+| `auditLog[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `auditLog[].detail` | `string` | yes | `response.auditLog[].detail` の値。項目名は detail を表します。 | - |
 
 ### POST /admin/aliases/publish
 
-Anchor: `post-/admin/aliases/publish`
+Summary: 検索 alias を公開する
 
-Tags: -
-Security: default
+レビュー済み alias を公開し、検索処理で参照できる状態にします。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Published approved aliases
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "version": {
-      "type": "string"
-    },
-    "publishedAt": {
-      "type": "string"
-    },
-    "aliasCount": {
-      "type": "integer",
-      "minimum": 0
-    }
-  },
-  "required": [
-    "version",
-    "publishedAt",
-    "aliasCount"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `version` | `string` | yes | `response.version` の値。項目名は version を表します。 | - |
+| `publishedAt` | `string` | yes | `response.publishedAt` の値。項目名は published at を表します。 | - |
+| `aliasCount` | `integer` | yes | `response.aliasCount` の値。項目名は alias count を表します。 | minimum=0 |
 
 ### GET /admin/audit-log
 
-Anchor: `get-/admin/audit-log`
+Summary: 管理操作履歴を取得する
 
-Tags: -
-Security: default
+ユーザー管理や権限管理に関する監査ログを取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List recent admin audit log entries
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "auditLog": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "auditId": {
-            "type": "string"
-          },
-          "action": {
-            "type": "string",
-            "enum": [
-              "user:create",
-              "role:assign",
-              "user:suspend",
-              "user:unsuspend",
-              "user:delete"
-            ]
-          },
-          "actorUserId": {
-            "type": "string"
-          },
-          "actorEmail": {
-            "type": "string"
-          },
-          "targetUserId": {
-            "type": "string"
-          },
-          "targetEmail": {
-            "type": "string"
-          },
-          "beforeStatus": {
-            "type": "string",
-            "enum": [
-              "active",
-              "suspended",
-              "deleted"
-            ]
-          },
-          "afterStatus": {
-            "type": "string",
-            "enum": [
-              "active",
-              "suspended",
-              "deleted"
-            ]
-          },
-          "beforeGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "afterGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "createdAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "auditId",
-          "action",
-          "actorUserId",
-          "targetUserId",
-          "targetEmail",
-          "beforeGroups",
-          "afterGroups",
-          "createdAt"
-        ]
-      }
-    }
-  },
-  "required": [
-    "auditLog"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `auditLog` | `array<object>` | yes | 監査ログ一覧。 | - |
+| `auditLog[].auditId` | `string` | yes | `response.auditLog[].auditId` の値。項目名は audit id を表します。 | - |
+| `auditLog[].action` | `enum(user:create \| role:assign \| user:suspend \| user:unsuspend \| user:delete)` | yes | `response.auditLog[].action` の値。項目名は action を表します。 | enum=user:create, role:assign, user:suspend, user:unsuspend, user:delete |
+| `auditLog[].actorUserId` | `string` | yes | `response.auditLog[].actorUserId` の値。項目名は actor user id を表します。 | - |
+| `auditLog[].actorEmail` | `string` | no | `response.auditLog[].actorEmail` の値。項目名は actor email を表します。 | - |
+| `auditLog[].targetUserId` | `string` | yes | `response.auditLog[].targetUserId` の値。項目名は target user id を表します。 | - |
+| `auditLog[].targetEmail` | `string` | yes | `response.auditLog[].targetEmail` の値。項目名は target email を表します。 | - |
+| `auditLog[].beforeStatus` | `enum(active \| suspended \| deleted)` | no | `response.auditLog[].beforeStatus` の値。項目名は before status を表します。 | enum=active, suspended, deleted |
+| `auditLog[].afterStatus` | `enum(active \| suspended \| deleted)` | no | `response.auditLog[].afterStatus` の値。項目名は after status を表します。 | enum=active, suspended, deleted |
+| `auditLog[].beforeGroups` | `array<string>` | yes | `response.auditLog[].beforeGroups` の値。項目名は before groups を表します。 | - |
+| `auditLog[].afterGroups` | `array<string>` | yes | `response.auditLog[].afterGroups` の値。項目名は after groups を表します。 | - |
+| `auditLog[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 
 ### GET /admin/costs
 
-Anchor: `get-/admin/costs`
+Summary: 概算コストを取得する
 
-Tags: -
-Security: default
+モデル利用や処理量に基づく概算コストの監査向け summary を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Get estimated cost audit summary
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "periodStart": {
-      "type": "string"
-    },
-    "periodEnd": {
-      "type": "string"
-    },
-    "currency": {
-      "type": "string",
-      "enum": [
-        "USD"
-      ]
-    },
-    "totalEstimatedUsd": {
-      "type": "number",
-      "minimum": 0
-    },
-    "items": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "service": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string"
-          },
-          "usage": {
-            "type": "number",
-            "minimum": 0
-          },
-          "unit": {
-            "type": "string"
-          },
-          "unitCostUsd": {
-            "type": "number",
-            "minimum": 0
-          },
-          "estimatedCostUsd": {
-            "type": "number",
-            "minimum": 0
-          },
-          "confidence": {
-            "type": "string",
-            "enum": [
-              "actual_usage",
-              "estimated_usage",
-              "manual_estimate"
-            ]
-          }
-        },
-        "required": [
-          "service",
-          "category",
-          "usage",
-          "unit",
-          "unitCostUsd",
-          "estimatedCostUsd",
-          "confidence"
-        ]
-      }
-    },
-    "users": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "estimatedCostUsd": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "required": [
-          "userId",
-          "email",
-          "estimatedCostUsd"
-        ]
-      }
-    },
-    "pricingCatalogUpdatedAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "periodStart",
-    "periodEnd",
-    "currency",
-    "totalEstimatedUsd",
-    "items",
-    "users",
-    "pricingCatalogUpdatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `periodStart` | `string` | yes | `response.periodStart` の値。項目名は period start を表します。 | - |
+| `periodEnd` | `string` | yes | `response.periodEnd` の値。項目名は period end を表します。 | - |
+| `currency` | `enum(USD)` | yes | `response.currency` の値。項目名は currency を表します。 | enum=USD |
+| `totalEstimatedUsd` | `number` | yes | `response.totalEstimatedUsd` の値。項目名は total estimated usd を表します。 | minimum=0 |
+| `items` | `array<object>` | yes | 一覧レスポンスに含まれる item 配列。 | - |
+| `items[].service` | `string` | yes | `response.items[].service` の値。項目名は service を表します。 | - |
+| `items[].category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `items[].usage` | `number` | yes | 利用状況の集計。 | minimum=0 |
+| `items[].unit` | `string` | yes | `response.items[].unit` の値。項目名は unit を表します。 | - |
+| `items[].unitCostUsd` | `number` | yes | `response.items[].unitCostUsd` の値。項目名は unit cost usd を表します。 | minimum=0 |
+| `items[].estimatedCostUsd` | `number` | yes | `response.items[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
+| `items[].confidence` | `enum(actual_usage \| estimated_usage \| manual_estimate)` | yes | `response.items[].confidence` の値。項目名は confidence を表します。 | enum=actual_usage, estimated_usage, manual_estimate |
+| `users` | `array<object>` | yes | `response.users` の値。項目名は users を表します。 | - |
+| `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
+| `users[].estimatedCostUsd` | `number` | yes | `response.users[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
+| `pricingCatalogUpdatedAt` | `string` | yes | `response.pricingCatalogUpdatedAt` の値。項目名は pricing catalog updated at を表します。 | - |
 
 ### GET /admin/roles
 
-Anchor: `get-/admin/roles`
+Summary: 利用可能なロール一覧を取得する
 
-Tags: -
-Security: default
+管理画面で付与可能なロールと permission の一覧を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List access roles and permissions
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "roles": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "role": {
-            "type": "string"
-          },
-          "permissions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
-          "role",
-          "permissions"
-        ]
-      }
-    }
-  },
-  "required": [
-    "roles"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `roles` | `array<object>` | yes | ユーザーに付与するアプリケーションロール。 | - |
+| `roles[].role` | `string` | yes | `response.roles[].role` の値。項目名は role を表します。 | - |
+| `roles[].permissions` | `array<string>` | yes | ログインユーザーに有効な permission 一覧。 | - |
 
 ### GET /admin/usage
 
-Anchor: `get-/admin/usage`
+Summary: 利用状況を取得する
 
-Tags: -
-Security: default
+全ユーザーまたは指定条件に一致する利用状況の集計を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List all-user usage summaries
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "users": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "chatMessages": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "conversationCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "questionCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "documentCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "benchmarkRunCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "debugRunCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "lastActivityAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "userId",
-          "email",
-          "chatMessages",
-          "conversationCount",
-          "questionCount",
-          "documentCount",
-          "benchmarkRunCount",
-          "debugRunCount"
-        ]
-      }
-    }
-  },
-  "required": [
-    "users"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `users` | `array<object>` | yes | `response.users` の値。項目名は users を表します。 | - |
+| `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
+| `users[].displayName` | `string` | no | 画面に表示するユーザー名。 | - |
+| `users[].chatMessages` | `integer` | yes | `response.users[].chatMessages` の値。項目名は chat messages を表します。 | minimum=0 |
+| `users[].conversationCount` | `integer` | yes | `response.users[].conversationCount` の値。項目名は conversation count を表します。 | minimum=0 |
+| `users[].questionCount` | `integer` | yes | `response.users[].questionCount` の値。項目名は question count を表します。 | minimum=0 |
+| `users[].documentCount` | `integer` | yes | `response.users[].documentCount` の値。項目名は document count を表します。 | minimum=0 |
+| `users[].benchmarkRunCount` | `integer` | yes | `response.users[].benchmarkRunCount` の値。項目名は benchmark run count を表します。 | minimum=0 |
+| `users[].debugRunCount` | `integer` | yes | `response.users[].debugRunCount` の値。項目名は debug run count を表します。 | minimum=0 |
+| `users[].lastActivityAt` | `string` | no | `response.users[].lastActivityAt` の値。項目名は last activity at を表します。 | - |
 
 ### POST /admin/users
 
-Anchor: `post-/admin/users`
+Summary: 管理対象ユーザーを作成する
 
-Tags: -
-Security: default
+管理者が Cognito と管理台帳に新しいユーザーを作成します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "email": {
-      "type": "string",
-      "format": "email",
-      "example": "new-user@example.com"
-    },
-    "displayName": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 120,
-      "example": "新規 利用者"
-    },
-    "groups": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "minItems": 1,
-      "maxItems": 12,
-      "example": [
-        "CHAT_USER"
-      ]
-    }
-  },
-  "required": [
-    "email"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `email` | `string:email` | yes | ユーザーのメールアドレス。 | - |
+| `displayName` | `string` | no | 画面に表示するユーザー名。 | minLength=1<br>maxLength=120 |
+| `groups` | `array<string>` | no | ユーザーが所属する Cognito group または検証用 group。 | minItems=1<br>maxItems=12 |
 
 #### Responses
 
-#### `200`
-
-Created managed user
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "userId": {
-      "type": "string"
-    },
-    "email": {
-      "type": "string"
-    },
-    "displayName": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "active",
-        "suspended",
-        "deleted"
-      ]
-    },
-    "groups": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "lastLoginAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "userId",
-    "email",
-    "status",
-    "groups",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `email` | `string` | yes | ユーザーのメールアドレス。 | - |
+| `displayName` | `string` | no | 画面に表示するユーザー名。 | - |
+| `status` | `enum(active \| suspended \| deleted)` | yes | 現在の処理状態または管理状態。 | enum=active, suspended, deleted |
+| `groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `lastLoginAt` | `string` | no | `response.lastLoginAt` の値。項目名は last login at を表します。 | - |
 
-#### `409`
-
-User already exists
+##### `409` 現在のリソース状態と要求された操作が競合しています。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /admin/users
 
-Anchor: `get-/admin/users`
+Summary: 管理対象ユーザー一覧を取得する
 
-Tags: -
-Security: default
+Cognito と管理台帳を照合し、管理画面で扱うユーザー一覧を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List managed users
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "users": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "active",
-              "suspended",
-              "deleted"
-            ]
-          },
-          "groups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          },
-          "lastLoginAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "userId",
-          "email",
-          "status",
-          "groups",
-          "createdAt",
-          "updatedAt"
-        ]
-      }
-    }
-  },
-  "required": [
-    "users"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `users` | `array<object>` | yes | `response.users` の値。項目名は users を表します。 | - |
+| `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
+| `users[].displayName` | `string` | no | 画面に表示するユーザー名。 | - |
+| `users[].status` | `enum(active \| suspended \| deleted)` | yes | 現在の処理状態または管理状態。 | enum=active, suspended, deleted |
+| `users[].groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
+| `users[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `users[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `users[].lastLoginAt` | `string` | no | `response.users[].lastLoginAt` の値。項目名は last login at を表します。 | - |
 
-#### `403`
-
-Forbidden
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### DELETE /admin/users/{userId}
 
-Anchor: `delete-/admin/users/{userid}`
+Summary: ユーザーを削除する
 
-Tags: -
-Security: default
+指定した管理対象ユーザーを削除し、管理台帳へ反映します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `userId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Deleted user from management ledger
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "userId": {
-      "type": "string"
-    },
-    "email": {
-      "type": "string"
-    },
-    "displayName": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "active",
-        "suspended",
-        "deleted"
-      ]
-    },
-    "groups": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "lastLoginAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "userId",
-    "email",
-    "status",
-    "groups",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `email` | `string` | yes | ユーザーのメールアドレス。 | - |
+| `displayName` | `string` | no | 画面に表示するユーザー名。 | - |
+| `status` | `enum(active \| suspended \| deleted)` | yes | 現在の処理状態または管理状態。 | enum=active, suspended, deleted |
+| `groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `lastLoginAt` | `string` | no | `response.lastLoginAt` の値。項目名は last login at を表します。 | - |
 
-#### `404`
-
-User not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /admin/users/{userId}/roles
 
-Anchor: `post-/admin/users/{userid}/roles`
+Summary: ユーザーのロールを更新する
 
-Tags: -
-Security: default
+指定した管理対象ユーザーに付与するアプリケーションロールを更新します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `userId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "groups": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "minLength": 1
-      },
-      "minItems": 1,
-      "maxItems": 12
-    }
-  },
-  "required": [
-    "groups"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | minItems=1<br>maxItems=12 |
 
 #### Responses
 
-#### `200`
-
-Assigned user roles
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "userId": {
-      "type": "string"
-    },
-    "email": {
-      "type": "string"
-    },
-    "displayName": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "active",
-        "suspended",
-        "deleted"
-      ]
-    },
-    "groups": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "lastLoginAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "userId",
-    "email",
-    "status",
-    "groups",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `email` | `string` | yes | ユーザーのメールアドレス。 | - |
+| `displayName` | `string` | no | 画面に表示するユーザー名。 | - |
+| `status` | `enum(active \| suspended \| deleted)` | yes | 現在の処理状態または管理状態。 | enum=active, suspended, deleted |
+| `groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `lastLoginAt` | `string` | no | `response.lastLoginAt` の値。項目名は last login at を表します。 | - |
 
-#### `404`
-
-User not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /admin/users/{userId}/suspend
 
-Anchor: `post-/admin/users/{userid}/suspend`
+Summary: ユーザーを停止する
 
-Tags: -
-Security: default
+指定したユーザーを停止状態にし、以後の利用を制限します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `userId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Suspended user
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "userId": {
-      "type": "string"
-    },
-    "email": {
-      "type": "string"
-    },
-    "displayName": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "active",
-        "suspended",
-        "deleted"
-      ]
-    },
-    "groups": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "lastLoginAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "userId",
-    "email",
-    "status",
-    "groups",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `email` | `string` | yes | ユーザーのメールアドレス。 | - |
+| `displayName` | `string` | no | 画面に表示するユーザー名。 | - |
+| `status` | `enum(active \| suspended \| deleted)` | yes | 現在の処理状態または管理状態。 | enum=active, suspended, deleted |
+| `groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `lastLoginAt` | `string` | no | `response.lastLoginAt` の値。項目名は last login at を表します。 | - |
 
-#### `404`
-
-User not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /admin/users/{userId}/unsuspend
 
-Anchor: `post-/admin/users/{userid}/unsuspend`
+Summary: ユーザー停止を解除する
 
-Tags: -
-Security: default
+指定した停止中ユーザーを再開状態に戻します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `userId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Unsuspended user
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "userId": {
-      "type": "string"
-    },
-    "email": {
-      "type": "string"
-    },
-    "displayName": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "active",
-        "suspended",
-        "deleted"
-      ]
-    },
-    "groups": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "lastLoginAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "userId",
-    "email",
-    "status",
-    "groups",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `email` | `string` | yes | ユーザーのメールアドレス。 | - |
+| `displayName` | `string` | no | 画面に表示するユーザー名。 | - |
+| `status` | `enum(active \| suspended \| deleted)` | yes | 現在の処理状態または管理状態。 | enum=active, suspended, deleted |
+| `groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `lastLoginAt` | `string` | no | `response.lastLoginAt` の値。項目名は last login at を表します。 | - |
 
-#### `404`
-
-User not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /benchmark-runs
 
-Anchor: `post-/benchmark-runs`
+Summary: 非同期 benchmark run を開始する
 
-Tags: -
-Security: default
+Step Functions / CodeBuild runner による非同期 benchmark run を起動します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "suiteId": {
-      "type": "string",
-      "example": "standard-agent-v1"
-    },
-    "mode": {
-      "type": "string",
-      "enum": [
-        "agent",
-        "search",
-        "load"
-      ],
-      "example": "agent"
-    },
-    "runner": {
-      "type": "string",
-      "enum": [
-        "codebuild",
-        "lambda"
-      ],
-      "example": "codebuild"
-    },
-    "modelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "topK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 50,
-      "example": 6
-    },
-    "memoryTopK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 10,
-      "example": 4
-    },
-    "minScore": {
-      "type": "number",
-      "minimum": -1,
-      "maximum": 1,
-      "example": 0.2
-    },
-    "concurrency": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 20,
-      "example": 1
-    },
-    "thresholds": {
-      "type": "object",
-      "properties": {
-        "answerableAccuracy": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "example": 0.8
-        },
-        "retrievalRecallAt20": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "example": 0.8
-        },
-        "p95LatencyMs": {
-          "type": "integer",
-          "minimum": 0,
-          "exclusiveMinimum": true,
-          "example": 15000
-        }
-      }
-    }
-  }
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `suiteId` | `string` | no | benchmark suite を識別する ID。 | - |
+| `mode` | `enum(agent \| search \| load)` | no | benchmark 実行モード。 | enum=agent, search, load |
+| `runner` | `enum(codebuild \| lambda)` | no | benchmark を実行する runner 種別。 | enum=codebuild, lambda |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | minimum=1<br>maximum=50 |
+| `memoryTopK` | `integer` | no | memory 検索で取得する上位件数。 | minimum=1<br>maximum=10 |
+| `minScore` | `number` | no | 検索結果として採用する最小 score。 | minimum=-1<br>maximum=1 |
+| `concurrency` | `integer` | no | 同時実行数。 | minimum=1<br>maximum=20 |
+| `thresholds` | `object` | no | benchmark 判定に使う閾値。 | - |
+| `thresholds.answerableAccuracy` | `number` | no | `data.thresholds.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | minimum=0<br>maximum=1 |
+| `thresholds.retrievalRecallAt20` | `number` | no | `data.thresholds.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | minimum=0<br>maximum=1 |
+| `thresholds.p95LatencyMs` | `integer` | no | `data.thresholds.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | minimum=0 |
 
 #### Responses
 
-#### `200`
-
-Queued benchmark run
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "runId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "queued",
-        "running",
-        "succeeded",
-        "failed",
-        "cancelled"
-      ]
-    },
-    "mode": {
-      "type": "string",
-      "enum": [
-        "agent",
-        "search",
-        "load"
-      ]
-    },
-    "runner": {
-      "type": "string",
-      "enum": [
-        "codebuild",
-        "lambda"
-      ]
-    },
-    "suiteId": {
-      "type": "string"
-    },
-    "datasetS3Key": {
-      "type": "string"
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "startedAt": {
-      "type": "string"
-    },
-    "completedAt": {
-      "type": "string"
-    },
-    "executionArn": {
-      "type": "string"
-    },
-    "codeBuildBuildId": {
-      "type": "string"
-    },
-    "codeBuildLogUrl": {
-      "type": "string",
-      "format": "uri"
-    },
-    "modelId": {
-      "type": "string"
-    },
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "topK": {
-      "type": "integer"
-    },
-    "memoryTopK": {
-      "type": "integer"
-    },
-    "minScore": {
-      "type": "number"
-    },
-    "concurrency": {
-      "type": "integer"
-    },
-    "thresholds": {
-      "type": "object",
-      "properties": {
-        "answerableAccuracy": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "example": 0.8
-        },
-        "retrievalRecallAt20": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "example": 0.8
-        },
-        "p95LatencyMs": {
-          "type": "integer",
-          "minimum": 0,
-          "exclusiveMinimum": true,
-          "example": 15000
-        }
-      }
-    },
-    "summaryS3Key": {
-      "type": "string"
-    },
-    "reportS3Key": {
-      "type": "string"
-    },
-    "resultsS3Key": {
-      "type": "string"
-    },
-    "metrics": {
-      "type": "object",
-      "properties": {
-        "total": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "succeeded": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "failedHttp": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "answerableAccuracy": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedPrecision": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedRecall": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedF1": {
-          "type": "number",
-          "nullable": true
-        },
-        "optionHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "missingSlotHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "corpusGroundedOptionRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "postClarificationAccuracy": {
-          "type": "number",
-          "nullable": true
-        },
-        "overClarificationRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationLatencyOverheadMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "postClarificationTaskLatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "abstentionRecall": {
-          "type": "number",
-          "nullable": true
-        },
-        "citationHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "expectedFileHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "retrievalRecallAt20": {
-          "type": "number",
-          "nullable": true
-        },
-        "p50LatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "p95LatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "averageLatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "errorRate": {
-          "type": "number",
-          "nullable": true
-        }
-      },
-      "required": [
-        "total",
-        "succeeded",
-        "failedHttp"
-      ]
-    },
-    "error": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "runId",
-    "status",
-    "mode",
-    "runner",
-    "suiteId",
-    "datasetS3Key",
-    "createdBy",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `mode` | `enum(agent \| search \| load)` | yes | benchmark 実行モード。 | enum=agent, search, load |
+| `runner` | `enum(codebuild \| lambda)` | yes | benchmark を実行する runner 種別。 | enum=codebuild, lambda |
+| `suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
+| `datasetS3Key` | `string` | yes | `response.datasetS3Key` の値。項目名は dataset s3 key を表します。 | - |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `completedAt` | `string` | no | 処理が完了した日時。 | - |
+| `executionArn` | `string` | no | `response.executionArn` の値。項目名は execution arn を表します。 | - |
+| `codeBuildBuildId` | `string` | no | `response.codeBuildBuildId` の値。項目名は code build build id を表します。 | - |
+| `codeBuildLogUrl` | `string:uri` | no | `response.codeBuildLogUrl` の値。項目名は code build log url を表します。 | - |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | - |
+| `memoryTopK` | `integer` | no | memory 検索で取得する上位件数。 | - |
+| `minScore` | `number` | no | 検索結果として採用する最小 score。 | - |
+| `concurrency` | `integer` | no | 同時実行数。 | - |
+| `thresholds` | `object` | no | benchmark 判定に使う閾値。 | - |
+| `thresholds.answerableAccuracy` | `number` | no | `response.thresholds.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | minimum=0<br>maximum=1 |
+| `thresholds.retrievalRecallAt20` | `number` | no | `response.thresholds.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | minimum=0<br>maximum=1 |
+| `thresholds.p95LatencyMs` | `integer` | no | `response.thresholds.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | minimum=0 |
+| `summaryS3Key` | `string` | no | `response.summaryS3Key` の値。項目名は summary s3 key を表します。 | - |
+| `reportS3Key` | `string` | no | `response.reportS3Key` の値。項目名は report s3 key を表します。 | - |
+| `resultsS3Key` | `string` | no | `response.resultsS3Key` の値。項目名は results s3 key を表します。 | - |
+| `metrics` | `object` | no | 評価や benchmark の指標値。 | - |
+| `metrics.total` | `integer` | yes | `response.metrics.total` の値。項目名は total を表します。 | minimum=0 |
+| `metrics.succeeded` | `integer` | yes | `response.metrics.succeeded` の値。項目名は succeeded を表します。 | minimum=0 |
+| `metrics.failedHttp` | `integer` | yes | `response.metrics.failedHttp` の値。項目名は failed http を表します。 | minimum=0 |
+| `metrics.answerableAccuracy` | `number` | no | `response.metrics.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | nullable |
+| `metrics.clarificationNeedPrecision` | `number` | no | `response.metrics.clarificationNeedPrecision` の値。項目名は clarification need precision を表します。 | nullable |
+| `metrics.clarificationNeedRecall` | `number` | no | `response.metrics.clarificationNeedRecall` の値。項目名は clarification need recall を表します。 | nullable |
+| `metrics.clarificationNeedF1` | `number` | no | `response.metrics.clarificationNeedF1` の値。項目名は clarification need f1 を表します。 | nullable |
+| `metrics.optionHitRate` | `number` | no | `response.metrics.optionHitRate` の値。項目名は option hit rate を表します。 | nullable |
+| `metrics.missingSlotHitRate` | `number` | no | `response.metrics.missingSlotHitRate` の値。項目名は missing slot hit rate を表します。 | nullable |
+| `metrics.corpusGroundedOptionRate` | `number` | no | `response.metrics.corpusGroundedOptionRate` の値。項目名は corpus grounded option rate を表します。 | nullable |
+| `metrics.postClarificationAccuracy` | `number` | no | `response.metrics.postClarificationAccuracy` の値。項目名は post clarification accuracy を表します。 | nullable |
+| `metrics.overClarificationRate` | `number` | no | `response.metrics.overClarificationRate` の値。項目名は over clarification rate を表します。 | nullable |
+| `metrics.clarificationLatencyOverheadMs` | `number` | no | `response.metrics.clarificationLatencyOverheadMs` の値。項目名は clarification latency overhead ms を表します。 | nullable |
+| `metrics.postClarificationTaskLatencyMs` | `number` | no | `response.metrics.postClarificationTaskLatencyMs` の値。項目名は post clarification task latency ms を表します。 | nullable |
+| `metrics.abstentionRecall` | `number` | no | `response.metrics.abstentionRecall` の値。項目名は abstention recall を表します。 | nullable |
+| `metrics.citationHitRate` | `number` | no | `response.metrics.citationHitRate` の値。項目名は citation hit rate を表します。 | nullable |
+| `metrics.expectedFileHitRate` | `number` | no | `response.metrics.expectedFileHitRate` の値。項目名は expected file hit rate を表します。 | nullable |
+| `metrics.retrievalRecallAt20` | `number` | no | `response.metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
+| `metrics.p50LatencyMs` | `number` | no | `response.metrics.p50LatencyMs` の値。項目名は p50 latency ms を表します。 | nullable |
+| `metrics.p95LatencyMs` | `number` | no | `response.metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
+| `metrics.averageLatencyMs` | `number` | no | `response.metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
+| `metrics.errorRate` | `number` | no | `response.metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
+| `error` | `string` | no | エラー内容を表すメッセージ。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /benchmark-runs
 
-Anchor: `get-/benchmark-runs`
+Summary: benchmark run 一覧を取得する
 
-Tags: -
-Security: default
+保存済み benchmark run の履歴一覧を取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List benchmark runs
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "benchmarkRuns": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "runId": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "queued",
-              "running",
-              "succeeded",
-              "failed",
-              "cancelled"
-            ]
-          },
-          "mode": {
-            "type": "string",
-            "enum": [
-              "agent",
-              "search",
-              "load"
-            ]
-          },
-          "runner": {
-            "type": "string",
-            "enum": [
-              "codebuild",
-              "lambda"
-            ]
-          },
-          "suiteId": {
-            "type": "string"
-          },
-          "datasetS3Key": {
-            "type": "string"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          },
-          "startedAt": {
-            "type": "string"
-          },
-          "completedAt": {
-            "type": "string"
-          },
-          "executionArn": {
-            "type": "string"
-          },
-          "codeBuildBuildId": {
-            "type": "string"
-          },
-          "codeBuildLogUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "modelId": {
-            "type": "string"
-          },
-          "embeddingModelId": {
-            "type": "string"
-          },
-          "topK": {
-            "type": "integer"
-          },
-          "memoryTopK": {
-            "type": "integer"
-          },
-          "minScore": {
-            "type": "number"
-          },
-          "concurrency": {
-            "type": "integer"
-          },
-          "thresholds": {
-            "type": "object",
-            "properties": {
-              "answerableAccuracy": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1,
-                "example": 0.8
-              },
-              "retrievalRecallAt20": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 1,
-                "example": 0.8
-              },
-              "p95LatencyMs": {
-                "type": "integer",
-                "minimum": 0,
-                "exclusiveMinimum": true,
-                "example": 15000
-              }
-            }
-          },
-          "summaryS3Key": {
-            "type": "string"
-          },
-          "reportS3Key": {
-            "type": "string"
-          },
-          "resultsS3Key": {
-            "type": "string"
-          },
-          "metrics": {
-            "type": "object",
-            "properties": {
-              "total": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "succeeded": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "failedHttp": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "answerableAccuracy": {
-                "type": "number",
-                "nullable": true
-              },
-              "clarificationNeedPrecision": {
-                "type": "number",
-                "nullable": true
-              },
-              "clarificationNeedRecall": {
-                "type": "number",
-                "nullable": true
-              },
-              "clarificationNeedF1": {
-                "type": "number",
-                "nullable": true
-              },
-              "optionHitRate": {
-                "type": "number",
-                "nullable": true
-              },
-              "missingSlotHitRate": {
-                "type": "number",
-                "nullable": true
-              },
-              "corpusGroundedOptionRate": {
-                "type": "number",
-                "nullable": true
-              },
-              "postClarificationAccuracy": {
-                "type": "number",
-                "nullable": true
-              },
-              "overClarificationRate": {
-                "type": "number",
-                "nullable": true
-              },
-              "clarificationLatencyOverheadMs": {
-                "type": "number",
-                "nullable": true
-              },
-              "postClarificationTaskLatencyMs": {
-                "type": "number",
-                "nullable": true
-              },
-              "abstentionRecall": {
-                "type": "number",
-                "nullable": true
-              },
-              "citationHitRate": {
-                "type": "number",
-                "nullable": true
-              },
-              "expectedFileHitRate": {
-                "type": "number",
-                "nullable": true
-              },
-              "retrievalRecallAt20": {
-                "type": "number",
-                "nullable": true
-              },
-              "p50LatencyMs": {
-                "type": "number",
-                "nullable": true
-              },
-              "p95LatencyMs": {
-                "type": "number",
-                "nullable": true
-              },
-              "averageLatencyMs": {
-                "type": "number",
-                "nullable": true
-              },
-              "errorRate": {
-                "type": "number",
-                "nullable": true
-              }
-            },
-            "required": [
-              "total",
-              "succeeded",
-              "failedHttp"
-            ]
-          },
-          "error": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "runId",
-          "status",
-          "mode",
-          "runner",
-          "suiteId",
-          "datasetS3Key",
-          "createdBy",
-          "createdAt",
-          "updatedAt"
-        ]
-      }
-    }
-  },
-  "required": [
-    "benchmarkRuns"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `benchmarkRuns` | `array<object>` | yes | `response.benchmarkRuns` の値。項目名は benchmark runs を表します。 | - |
+| `benchmarkRuns[].runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `benchmarkRuns[].status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `benchmarkRuns[].mode` | `enum(agent \| search \| load)` | yes | benchmark 実行モード。 | enum=agent, search, load |
+| `benchmarkRuns[].runner` | `enum(codebuild \| lambda)` | yes | benchmark を実行する runner 種別。 | enum=codebuild, lambda |
+| `benchmarkRuns[].suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
+| `benchmarkRuns[].datasetS3Key` | `string` | yes | `response.benchmarkRuns[].datasetS3Key` の値。項目名は dataset s3 key を表します。 | - |
+| `benchmarkRuns[].createdBy` | `string` | yes | `response.benchmarkRuns[].createdBy` の値。項目名は created by を表します。 | - |
+| `benchmarkRuns[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `benchmarkRuns[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `benchmarkRuns[].startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `benchmarkRuns[].completedAt` | `string` | no | 処理が完了した日時。 | - |
+| `benchmarkRuns[].executionArn` | `string` | no | `response.benchmarkRuns[].executionArn` の値。項目名は execution arn を表します。 | - |
+| `benchmarkRuns[].codeBuildBuildId` | `string` | no | `response.benchmarkRuns[].codeBuildBuildId` の値。項目名は code build build id を表します。 | - |
+| `benchmarkRuns[].codeBuildLogUrl` | `string:uri` | no | `response.benchmarkRuns[].codeBuildLogUrl` の値。項目名は code build log url を表します。 | - |
+| `benchmarkRuns[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `benchmarkRuns[].embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `benchmarkRuns[].topK` | `integer` | no | 検索で取得する上位件数。 | - |
+| `benchmarkRuns[].memoryTopK` | `integer` | no | memory 検索で取得する上位件数。 | - |
+| `benchmarkRuns[].minScore` | `number` | no | 検索結果として採用する最小 score。 | - |
+| `benchmarkRuns[].concurrency` | `integer` | no | 同時実行数。 | - |
+| `benchmarkRuns[].thresholds` | `object` | no | benchmark 判定に使う閾値。 | - |
+| `benchmarkRuns[].thresholds.answerableAccuracy` | `number` | no | `response.benchmarkRuns[].thresholds.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | minimum=0<br>maximum=1 |
+| `benchmarkRuns[].thresholds.retrievalRecallAt20` | `number` | no | `response.benchmarkRuns[].thresholds.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | minimum=0<br>maximum=1 |
+| `benchmarkRuns[].thresholds.p95LatencyMs` | `integer` | no | `response.benchmarkRuns[].thresholds.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | minimum=0 |
+| `benchmarkRuns[].summaryS3Key` | `string` | no | `response.benchmarkRuns[].summaryS3Key` の値。項目名は summary s3 key を表します。 | - |
+| `benchmarkRuns[].reportS3Key` | `string` | no | `response.benchmarkRuns[].reportS3Key` の値。項目名は report s3 key を表します。 | - |
+| `benchmarkRuns[].resultsS3Key` | `string` | no | `response.benchmarkRuns[].resultsS3Key` の値。項目名は results s3 key を表します。 | - |
+| `benchmarkRuns[].metrics` | `object` | no | 評価や benchmark の指標値。 | - |
+| `benchmarkRuns[].metrics.total` | `integer` | yes | `response.benchmarkRuns[].metrics.total` の値。項目名は total を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.succeeded` | `integer` | yes | `response.benchmarkRuns[].metrics.succeeded` の値。項目名は succeeded を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.failedHttp` | `integer` | yes | `response.benchmarkRuns[].metrics.failedHttp` の値。項目名は failed http を表します。 | minimum=0 |
+| `benchmarkRuns[].metrics.answerableAccuracy` | `number` | no | `response.benchmarkRuns[].metrics.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | nullable |
+| `benchmarkRuns[].metrics.clarificationNeedPrecision` | `number` | no | `response.benchmarkRuns[].metrics.clarificationNeedPrecision` の値。項目名は clarification need precision を表します。 | nullable |
+| `benchmarkRuns[].metrics.clarificationNeedRecall` | `number` | no | `response.benchmarkRuns[].metrics.clarificationNeedRecall` の値。項目名は clarification need recall を表します。 | nullable |
+| `benchmarkRuns[].metrics.clarificationNeedF1` | `number` | no | `response.benchmarkRuns[].metrics.clarificationNeedF1` の値。項目名は clarification need f1 を表します。 | nullable |
+| `benchmarkRuns[].metrics.optionHitRate` | `number` | no | `response.benchmarkRuns[].metrics.optionHitRate` の値。項目名は option hit rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.missingSlotHitRate` | `number` | no | `response.benchmarkRuns[].metrics.missingSlotHitRate` の値。項目名は missing slot hit rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.corpusGroundedOptionRate` | `number` | no | `response.benchmarkRuns[].metrics.corpusGroundedOptionRate` の値。項目名は corpus grounded option rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.postClarificationAccuracy` | `number` | no | `response.benchmarkRuns[].metrics.postClarificationAccuracy` の値。項目名は post clarification accuracy を表します。 | nullable |
+| `benchmarkRuns[].metrics.overClarificationRate` | `number` | no | `response.benchmarkRuns[].metrics.overClarificationRate` の値。項目名は over clarification rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.clarificationLatencyOverheadMs` | `number` | no | `response.benchmarkRuns[].metrics.clarificationLatencyOverheadMs` の値。項目名は clarification latency overhead ms を表します。 | nullable |
+| `benchmarkRuns[].metrics.postClarificationTaskLatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.postClarificationTaskLatencyMs` の値。項目名は post clarification task latency ms を表します。 | nullable |
+| `benchmarkRuns[].metrics.abstentionRecall` | `number` | no | `response.benchmarkRuns[].metrics.abstentionRecall` の値。項目名は abstention recall を表します。 | nullable |
+| `benchmarkRuns[].metrics.citationHitRate` | `number` | no | `response.benchmarkRuns[].metrics.citationHitRate` の値。項目名は citation hit rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.expectedFileHitRate` | `number` | no | `response.benchmarkRuns[].metrics.expectedFileHitRate` の値。項目名は expected file hit rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.retrievalRecallAt20` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
+| `benchmarkRuns[].metrics.p50LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p50LatencyMs` の値。項目名は p50 latency ms を表します。 | nullable |
+| `benchmarkRuns[].metrics.p95LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
+| `benchmarkRuns[].metrics.averageLatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
+| `benchmarkRuns[].metrics.errorRate` | `number` | no | `response.benchmarkRuns[].metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
+| `benchmarkRuns[].error` | `string` | no | エラー内容を表すメッセージ。 | - |
 
 ### GET /benchmark-runs/{runId}
 
-Anchor: `get-/benchmark-runs/{runid}`
+Summary: benchmark run 詳細を取得する
 
-Tags: -
-Security: default
+指定した benchmark run の状態、設定、指標、artifact 情報を返します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `runId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Get benchmark run
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "runId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "queued",
-        "running",
-        "succeeded",
-        "failed",
-        "cancelled"
-      ]
-    },
-    "mode": {
-      "type": "string",
-      "enum": [
-        "agent",
-        "search",
-        "load"
-      ]
-    },
-    "runner": {
-      "type": "string",
-      "enum": [
-        "codebuild",
-        "lambda"
-      ]
-    },
-    "suiteId": {
-      "type": "string"
-    },
-    "datasetS3Key": {
-      "type": "string"
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "startedAt": {
-      "type": "string"
-    },
-    "completedAt": {
-      "type": "string"
-    },
-    "executionArn": {
-      "type": "string"
-    },
-    "codeBuildBuildId": {
-      "type": "string"
-    },
-    "codeBuildLogUrl": {
-      "type": "string",
-      "format": "uri"
-    },
-    "modelId": {
-      "type": "string"
-    },
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "topK": {
-      "type": "integer"
-    },
-    "memoryTopK": {
-      "type": "integer"
-    },
-    "minScore": {
-      "type": "number"
-    },
-    "concurrency": {
-      "type": "integer"
-    },
-    "thresholds": {
-      "type": "object",
-      "properties": {
-        "answerableAccuracy": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "example": 0.8
-        },
-        "retrievalRecallAt20": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "example": 0.8
-        },
-        "p95LatencyMs": {
-          "type": "integer",
-          "minimum": 0,
-          "exclusiveMinimum": true,
-          "example": 15000
-        }
-      }
-    },
-    "summaryS3Key": {
-      "type": "string"
-    },
-    "reportS3Key": {
-      "type": "string"
-    },
-    "resultsS3Key": {
-      "type": "string"
-    },
-    "metrics": {
-      "type": "object",
-      "properties": {
-        "total": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "succeeded": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "failedHttp": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "answerableAccuracy": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedPrecision": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedRecall": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedF1": {
-          "type": "number",
-          "nullable": true
-        },
-        "optionHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "missingSlotHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "corpusGroundedOptionRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "postClarificationAccuracy": {
-          "type": "number",
-          "nullable": true
-        },
-        "overClarificationRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationLatencyOverheadMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "postClarificationTaskLatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "abstentionRecall": {
-          "type": "number",
-          "nullable": true
-        },
-        "citationHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "expectedFileHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "retrievalRecallAt20": {
-          "type": "number",
-          "nullable": true
-        },
-        "p50LatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "p95LatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "averageLatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "errorRate": {
-          "type": "number",
-          "nullable": true
-        }
-      },
-      "required": [
-        "total",
-        "succeeded",
-        "failedHttp"
-      ]
-    },
-    "error": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "runId",
-    "status",
-    "mode",
-    "runner",
-    "suiteId",
-    "datasetS3Key",
-    "createdBy",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `mode` | `enum(agent \| search \| load)` | yes | benchmark 実行モード。 | enum=agent, search, load |
+| `runner` | `enum(codebuild \| lambda)` | yes | benchmark を実行する runner 種別。 | enum=codebuild, lambda |
+| `suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
+| `datasetS3Key` | `string` | yes | `response.datasetS3Key` の値。項目名は dataset s3 key を表します。 | - |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `completedAt` | `string` | no | 処理が完了した日時。 | - |
+| `executionArn` | `string` | no | `response.executionArn` の値。項目名は execution arn を表します。 | - |
+| `codeBuildBuildId` | `string` | no | `response.codeBuildBuildId` の値。項目名は code build build id を表します。 | - |
+| `codeBuildLogUrl` | `string:uri` | no | `response.codeBuildLogUrl` の値。項目名は code build log url を表します。 | - |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | - |
+| `memoryTopK` | `integer` | no | memory 検索で取得する上位件数。 | - |
+| `minScore` | `number` | no | 検索結果として採用する最小 score。 | - |
+| `concurrency` | `integer` | no | 同時実行数。 | - |
+| `thresholds` | `object` | no | benchmark 判定に使う閾値。 | - |
+| `thresholds.answerableAccuracy` | `number` | no | `response.thresholds.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | minimum=0<br>maximum=1 |
+| `thresholds.retrievalRecallAt20` | `number` | no | `response.thresholds.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | minimum=0<br>maximum=1 |
+| `thresholds.p95LatencyMs` | `integer` | no | `response.thresholds.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | minimum=0 |
+| `summaryS3Key` | `string` | no | `response.summaryS3Key` の値。項目名は summary s3 key を表します。 | - |
+| `reportS3Key` | `string` | no | `response.reportS3Key` の値。項目名は report s3 key を表します。 | - |
+| `resultsS3Key` | `string` | no | `response.resultsS3Key` の値。項目名は results s3 key を表します。 | - |
+| `metrics` | `object` | no | 評価や benchmark の指標値。 | - |
+| `metrics.total` | `integer` | yes | `response.metrics.total` の値。項目名は total を表します。 | minimum=0 |
+| `metrics.succeeded` | `integer` | yes | `response.metrics.succeeded` の値。項目名は succeeded を表します。 | minimum=0 |
+| `metrics.failedHttp` | `integer` | yes | `response.metrics.failedHttp` の値。項目名は failed http を表します。 | minimum=0 |
+| `metrics.answerableAccuracy` | `number` | no | `response.metrics.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | nullable |
+| `metrics.clarificationNeedPrecision` | `number` | no | `response.metrics.clarificationNeedPrecision` の値。項目名は clarification need precision を表します。 | nullable |
+| `metrics.clarificationNeedRecall` | `number` | no | `response.metrics.clarificationNeedRecall` の値。項目名は clarification need recall を表します。 | nullable |
+| `metrics.clarificationNeedF1` | `number` | no | `response.metrics.clarificationNeedF1` の値。項目名は clarification need f1 を表します。 | nullable |
+| `metrics.optionHitRate` | `number` | no | `response.metrics.optionHitRate` の値。項目名は option hit rate を表します。 | nullable |
+| `metrics.missingSlotHitRate` | `number` | no | `response.metrics.missingSlotHitRate` の値。項目名は missing slot hit rate を表します。 | nullable |
+| `metrics.corpusGroundedOptionRate` | `number` | no | `response.metrics.corpusGroundedOptionRate` の値。項目名は corpus grounded option rate を表します。 | nullable |
+| `metrics.postClarificationAccuracy` | `number` | no | `response.metrics.postClarificationAccuracy` の値。項目名は post clarification accuracy を表します。 | nullable |
+| `metrics.overClarificationRate` | `number` | no | `response.metrics.overClarificationRate` の値。項目名は over clarification rate を表します。 | nullable |
+| `metrics.clarificationLatencyOverheadMs` | `number` | no | `response.metrics.clarificationLatencyOverheadMs` の値。項目名は clarification latency overhead ms を表します。 | nullable |
+| `metrics.postClarificationTaskLatencyMs` | `number` | no | `response.metrics.postClarificationTaskLatencyMs` の値。項目名は post clarification task latency ms を表します。 | nullable |
+| `metrics.abstentionRecall` | `number` | no | `response.metrics.abstentionRecall` の値。項目名は abstention recall を表します。 | nullable |
+| `metrics.citationHitRate` | `number` | no | `response.metrics.citationHitRate` の値。項目名は citation hit rate を表します。 | nullable |
+| `metrics.expectedFileHitRate` | `number` | no | `response.metrics.expectedFileHitRate` の値。項目名は expected file hit rate を表します。 | nullable |
+| `metrics.retrievalRecallAt20` | `number` | no | `response.metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
+| `metrics.p50LatencyMs` | `number` | no | `response.metrics.p50LatencyMs` の値。項目名は p50 latency ms を表します。 | nullable |
+| `metrics.p95LatencyMs` | `number` | no | `response.metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
+| `metrics.averageLatencyMs` | `number` | no | `response.metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
+| `metrics.errorRate` | `number` | no | `response.metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
+| `error` | `string` | no | エラー内容を表すメッセージ。 | - |
 
-#### `404`
-
-Benchmark run not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /benchmark-runs/{runId}/cancel
 
-Anchor: `post-/benchmark-runs/{runid}/cancel`
+Summary: benchmark run をキャンセルする
 
-Tags: -
-Security: default
+実行中または待機中の benchmark run をキャンセルします。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `runId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Cancelled benchmark run
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "runId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "queued",
-        "running",
-        "succeeded",
-        "failed",
-        "cancelled"
-      ]
-    },
-    "mode": {
-      "type": "string",
-      "enum": [
-        "agent",
-        "search",
-        "load"
-      ]
-    },
-    "runner": {
-      "type": "string",
-      "enum": [
-        "codebuild",
-        "lambda"
-      ]
-    },
-    "suiteId": {
-      "type": "string"
-    },
-    "datasetS3Key": {
-      "type": "string"
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "startedAt": {
-      "type": "string"
-    },
-    "completedAt": {
-      "type": "string"
-    },
-    "executionArn": {
-      "type": "string"
-    },
-    "codeBuildBuildId": {
-      "type": "string"
-    },
-    "codeBuildLogUrl": {
-      "type": "string",
-      "format": "uri"
-    },
-    "modelId": {
-      "type": "string"
-    },
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "topK": {
-      "type": "integer"
-    },
-    "memoryTopK": {
-      "type": "integer"
-    },
-    "minScore": {
-      "type": "number"
-    },
-    "concurrency": {
-      "type": "integer"
-    },
-    "thresholds": {
-      "type": "object",
-      "properties": {
-        "answerableAccuracy": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "example": 0.8
-        },
-        "retrievalRecallAt20": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "example": 0.8
-        },
-        "p95LatencyMs": {
-          "type": "integer",
-          "minimum": 0,
-          "exclusiveMinimum": true,
-          "example": 15000
-        }
-      }
-    },
-    "summaryS3Key": {
-      "type": "string"
-    },
-    "reportS3Key": {
-      "type": "string"
-    },
-    "resultsS3Key": {
-      "type": "string"
-    },
-    "metrics": {
-      "type": "object",
-      "properties": {
-        "total": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "succeeded": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "failedHttp": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "answerableAccuracy": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedPrecision": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedRecall": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationNeedF1": {
-          "type": "number",
-          "nullable": true
-        },
-        "optionHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "missingSlotHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "corpusGroundedOptionRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "postClarificationAccuracy": {
-          "type": "number",
-          "nullable": true
-        },
-        "overClarificationRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "clarificationLatencyOverheadMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "postClarificationTaskLatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "abstentionRecall": {
-          "type": "number",
-          "nullable": true
-        },
-        "citationHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "expectedFileHitRate": {
-          "type": "number",
-          "nullable": true
-        },
-        "retrievalRecallAt20": {
-          "type": "number",
-          "nullable": true
-        },
-        "p50LatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "p95LatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "averageLatencyMs": {
-          "type": "number",
-          "nullable": true
-        },
-        "errorRate": {
-          "type": "number",
-          "nullable": true
-        }
-      },
-      "required": [
-        "total",
-        "succeeded",
-        "failedHttp"
-      ]
-    },
-    "error": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "runId",
-    "status",
-    "mode",
-    "runner",
-    "suiteId",
-    "datasetS3Key",
-    "createdBy",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `mode` | `enum(agent \| search \| load)` | yes | benchmark 実行モード。 | enum=agent, search, load |
+| `runner` | `enum(codebuild \| lambda)` | yes | benchmark を実行する runner 種別。 | enum=codebuild, lambda |
+| `suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
+| `datasetS3Key` | `string` | yes | `response.datasetS3Key` の値。項目名は dataset s3 key を表します。 | - |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `completedAt` | `string` | no | 処理が完了した日時。 | - |
+| `executionArn` | `string` | no | `response.executionArn` の値。項目名は execution arn を表します。 | - |
+| `codeBuildBuildId` | `string` | no | `response.codeBuildBuildId` の値。項目名は code build build id を表します。 | - |
+| `codeBuildLogUrl` | `string:uri` | no | `response.codeBuildLogUrl` の値。項目名は code build log url を表します。 | - |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | - |
+| `memoryTopK` | `integer` | no | memory 検索で取得する上位件数。 | - |
+| `minScore` | `number` | no | 検索結果として採用する最小 score。 | - |
+| `concurrency` | `integer` | no | 同時実行数。 | - |
+| `thresholds` | `object` | no | benchmark 判定に使う閾値。 | - |
+| `thresholds.answerableAccuracy` | `number` | no | `response.thresholds.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | minimum=0<br>maximum=1 |
+| `thresholds.retrievalRecallAt20` | `number` | no | `response.thresholds.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | minimum=0<br>maximum=1 |
+| `thresholds.p95LatencyMs` | `integer` | no | `response.thresholds.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | minimum=0 |
+| `summaryS3Key` | `string` | no | `response.summaryS3Key` の値。項目名は summary s3 key を表します。 | - |
+| `reportS3Key` | `string` | no | `response.reportS3Key` の値。項目名は report s3 key を表します。 | - |
+| `resultsS3Key` | `string` | no | `response.resultsS3Key` の値。項目名は results s3 key を表します。 | - |
+| `metrics` | `object` | no | 評価や benchmark の指標値。 | - |
+| `metrics.total` | `integer` | yes | `response.metrics.total` の値。項目名は total を表します。 | minimum=0 |
+| `metrics.succeeded` | `integer` | yes | `response.metrics.succeeded` の値。項目名は succeeded を表します。 | minimum=0 |
+| `metrics.failedHttp` | `integer` | yes | `response.metrics.failedHttp` の値。項目名は failed http を表します。 | minimum=0 |
+| `metrics.answerableAccuracy` | `number` | no | `response.metrics.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | nullable |
+| `metrics.clarificationNeedPrecision` | `number` | no | `response.metrics.clarificationNeedPrecision` の値。項目名は clarification need precision を表します。 | nullable |
+| `metrics.clarificationNeedRecall` | `number` | no | `response.metrics.clarificationNeedRecall` の値。項目名は clarification need recall を表します。 | nullable |
+| `metrics.clarificationNeedF1` | `number` | no | `response.metrics.clarificationNeedF1` の値。項目名は clarification need f1 を表します。 | nullable |
+| `metrics.optionHitRate` | `number` | no | `response.metrics.optionHitRate` の値。項目名は option hit rate を表します。 | nullable |
+| `metrics.missingSlotHitRate` | `number` | no | `response.metrics.missingSlotHitRate` の値。項目名は missing slot hit rate を表します。 | nullable |
+| `metrics.corpusGroundedOptionRate` | `number` | no | `response.metrics.corpusGroundedOptionRate` の値。項目名は corpus grounded option rate を表します。 | nullable |
+| `metrics.postClarificationAccuracy` | `number` | no | `response.metrics.postClarificationAccuracy` の値。項目名は post clarification accuracy を表します。 | nullable |
+| `metrics.overClarificationRate` | `number` | no | `response.metrics.overClarificationRate` の値。項目名は over clarification rate を表します。 | nullable |
+| `metrics.clarificationLatencyOverheadMs` | `number` | no | `response.metrics.clarificationLatencyOverheadMs` の値。項目名は clarification latency overhead ms を表します。 | nullable |
+| `metrics.postClarificationTaskLatencyMs` | `number` | no | `response.metrics.postClarificationTaskLatencyMs` の値。項目名は post clarification task latency ms を表します。 | nullable |
+| `metrics.abstentionRecall` | `number` | no | `response.metrics.abstentionRecall` の値。項目名は abstention recall を表します。 | nullable |
+| `metrics.citationHitRate` | `number` | no | `response.metrics.citationHitRate` の値。項目名は citation hit rate を表します。 | nullable |
+| `metrics.expectedFileHitRate` | `number` | no | `response.metrics.expectedFileHitRate` の値。項目名は expected file hit rate を表します。 | nullable |
+| `metrics.retrievalRecallAt20` | `number` | no | `response.metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
+| `metrics.p50LatencyMs` | `number` | no | `response.metrics.p50LatencyMs` の値。項目名は p50 latency ms を表します。 | nullable |
+| `metrics.p95LatencyMs` | `number` | no | `response.metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
+| `metrics.averageLatencyMs` | `number` | no | `response.metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |
+| `metrics.errorRate` | `number` | no | `response.metrics.errorRate` の値。項目名は error rate を表します。 | nullable |
+| `error` | `string` | no | エラー内容を表すメッセージ。 | - |
 
-#### `404`
-
-Benchmark run not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /benchmark-runs/{runId}/download
 
-Anchor: `post-/benchmark-runs/{runid}/download`
+Summary: benchmark artifact ダウンロード URL を作成する
 
-Tags: -
-Security: default
+指定した benchmark report / summary / results / logs の署名付き URL を作成します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `runId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: no
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "artifact": {
-      "type": "string",
-      "enum": [
-        "report",
-        "summary",
-        "results",
-        "logs"
-      ]
-    }
-  }
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `artifact` | `enum(report \| summary \| results \| logs)` | no | ダウンロード対象の artifact 種別。 | enum=report, summary, results, logs |
 
 #### Responses
 
-#### `200`
-
-Create signed download URL for benchmark artifact
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "url": {
-      "type": "string",
-      "format": "uri"
-    },
-    "expiresInSeconds": {
-      "type": "integer",
-      "minimum": 0,
-      "exclusiveMinimum": true
-    },
-    "objectKey": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "url",
-    "expiresInSeconds",
-    "objectKey"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `url` | `string:uri` | yes | アクセス先または署名付き URL。 | - |
+| `expiresInSeconds` | `integer` | yes | `response.expiresInSeconds` の値。項目名は expires in seconds を表します。 | minimum=0 |
+| `objectKey` | `string` | yes | `response.objectKey` の値。項目名は object key を表します。 | - |
 
-#### `404`
-
-Benchmark run not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /benchmark-suites
 
-Anchor: `get-/benchmark-suites`
+Summary: ベンチマーク suite 一覧を取得する
 
-Tags: -
-Security: default
+非同期 benchmark run で選択可能な suite 定義を取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List benchmark suites available for asynchronous runs
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "suites": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "suiteId": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "mode": {
-            "type": "string",
-            "enum": [
-              "agent",
-              "search",
-              "load"
-            ]
-          },
-          "datasetS3Key": {
-            "type": "string"
-          },
-          "preset": {
-            "type": "string",
-            "enum": [
-              "smoke",
-              "standard"
-            ]
-          },
-          "defaultConcurrency": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          }
-        },
-        "required": [
-          "suiteId",
-          "label",
-          "mode",
-          "datasetS3Key",
-          "preset",
-          "defaultConcurrency"
-        ]
-      }
-    }
-  },
-  "required": [
-    "suites"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `suites` | `array<object>` | yes | benchmark suite 一覧。 | - |
+| `suites[].suiteId` | `string` | yes | benchmark suite を識別する ID。 | - |
+| `suites[].label` | `string` | yes | `response.suites[].label` の値。項目名は label を表します。 | - |
+| `suites[].mode` | `enum(agent \| search \| load)` | yes | benchmark 実行モード。 | enum=agent, search, load |
+| `suites[].datasetS3Key` | `string` | yes | `response.suites[].datasetS3Key` の値。項目名は dataset s3 key を表します。 | - |
+| `suites[].preset` | `enum(smoke \| standard)` | yes | `response.suites[].preset` の値。項目名は preset を表します。 | enum=smoke, standard |
+| `suites[].defaultConcurrency` | `integer` | yes | `response.suites[].defaultConcurrency` の値。項目名は default concurrency を表します。 | minimum=0 |
 
 ### POST /benchmark/query
 
-Anchor: `post-/benchmark/query`
+Summary: ベンチマーク質問を実行する
 
-Tags: -
-Security: default
+ベンチマーク runner が `/chat` 相当の RAG 処理を実行し、評価用の詳細情報を取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "question": {
-      "type": "string",
-      "minLength": 1,
-      "example": "経費精算の期限は？"
-    },
-    "clarificationContext": {
-      "type": "object",
-      "properties": {
-        "originalQuestion": {
-          "type": "string"
-        },
-        "selectedOptionId": {
-          "type": "string"
-        },
-        "selectedValue": {
-          "type": "string"
-        }
-      }
-    },
-    "modelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "clueModelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "topK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 20,
-      "example": 6
-    },
-    "memoryTopK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 10,
-      "example": 4
-    },
-    "minScore": {
-      "type": "number",
-      "minimum": -1,
-      "maximum": 1,
-      "example": 0.2
-    },
-    "maxIterations": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 8,
-      "example": 3
-    },
-    "strictGrounded": {
-      "type": "boolean",
-      "example": true
-    },
-    "includeDebug": {
-      "type": "boolean",
-      "example": false
-    },
-    "debug": {
-      "type": "boolean",
-      "example": false
-    },
-    "useMemory": {
-      "type": "boolean",
-      "example": true
-    },
-    "id": {
-      "type": "string"
-    },
-    "benchmarkSuiteId": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "question"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | minLength=1 |
+| `clarificationContext` | `object` | no | `data.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `clarificationContext.originalQuestion` | `string` | no | `data.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `clarificationContext.selectedOptionId` | `string` | no | `data.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `clarificationContext.selectedValue` | `string` | no | `data.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `clueModelId` | `string` | no | `data.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | minimum=1<br>maximum=20 |
+| `memoryTopK` | `integer` | no | memory 検索で取得する上位件数。 | minimum=1<br>maximum=10 |
+| `minScore` | `number` | no | 検索結果として採用する最小 score。 | minimum=-1<br>maximum=1 |
+| `maxIterations` | `integer` | no | `data.maxIterations` の値。項目名は max iterations を表します。 | minimum=1<br>maximum=8 |
+| `strictGrounded` | `boolean` | no | `data.strictGrounded` の値。項目名は strict grounded を表します。 | - |
+| `includeDebug` | `boolean` | no | レスポンスに debug 情報を含めるかどうか。 | - |
+| `debug` | `boolean` | no | 調査用の内部処理情報。 | - |
+| `useMemory` | `boolean` | no | `data.useMemory` の値。項目名は use memory を表します。 | - |
+| `id` | `string` | no | リソースを一意に識別する ID。 | - |
+| `benchmarkSuiteId` | `string` | no | `data.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Benchmark query result
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "responseType": {
-      "type": "string",
-      "enum": [
-        "answer",
-        "refusal",
-        "clarification"
-      ]
-    },
-    "answer": {
-      "type": "string"
-    },
-    "isAnswerable": {
-      "type": "boolean"
-    },
-    "needsClarification": {
-      "type": "boolean"
-    },
-    "clarification": {
-      "type": "object",
-      "properties": {
-        "needsClarification": {
-          "type": "boolean"
-        },
-        "reason": {
-          "type": "string",
-          "enum": [
-            "ambiguous_target",
-            "missing_scope",
-            "unresolved_reference",
-            "multiple_candidate_intents",
-            "conflicting_scope",
-            "not_needed"
-          ]
-        },
-        "question": {
-          "type": "string"
-        },
-        "options": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "label": {
-                "type": "string"
-              },
-              "resolvedQuery": {
-                "type": "string"
-              },
-              "reason": {
-                "type": "string"
-              },
-              "source": {
-                "type": "string",
-                "enum": [
-                  "memory",
-                  "evidence",
-                  "aspect",
-                  "history"
-                ]
-              },
-              "grounding": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "documentId": {
-                      "type": "string"
-                    },
-                    "fileName": {
-                      "type": "string"
-                    },
-                    "chunkId": {
-                      "type": "string"
-                    },
-                    "heading": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "default": []
-              }
-            },
-            "required": [
-              "id",
-              "label",
-              "resolvedQuery",
-              "source"
-            ]
-          },
-          "maxItems": 5
-        },
-        "missingSlots": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": []
-        },
-        "confidence": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "ambiguityScore": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "groundedOptionCount": {
-          "type": "integer",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "needsClarification",
-        "reason",
-        "question",
-        "options",
-        "confidence"
-      ]
-    },
-    "citations": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "retrieved": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "finalEvidence": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "debug": {
-      "type": "object",
-      "properties": {
-        "schemaVersion": {
-          "type": "number",
-          "enum": [
-            1
-          ],
-          "default": 1
-        },
-        "runId": {
-          "type": "string"
-        },
-        "question": {
-          "type": "string"
-        },
-        "modelId": {
-          "type": "string"
-        },
-        "embeddingModelId": {
-          "type": "string"
-        },
-        "clueModelId": {
-          "type": "string"
-        },
-        "clarificationContext": {
-          "type": "object",
-          "properties": {
-            "originalQuestion": {
-              "type": "string"
-            },
-            "selectedOptionId": {
-              "type": "string"
-            },
-            "selectedValue": {
-              "type": "string"
-            }
-          }
-        },
-        "pipelineVersions": {
-          "type": "object",
-          "properties": {
-            "agentWorkflowVersion": {
-              "type": "string"
-            },
-            "chunkerVersion": {
-              "type": "string"
-            },
-            "sourceExtractorVersion": {
-              "type": "string"
-            },
-            "memoryPromptVersion": {
-              "type": "string"
-            },
-            "promptVersion": {
-              "type": "string"
-            },
-            "indexVersion": {
-              "type": "string"
-            },
-            "embeddingModelId": {
-              "type": "string"
-            },
-            "embeddingDimensions": {
-              "type": "integer",
-              "minimum": 0,
-              "exclusiveMinimum": true
-            }
-          },
-          "required": [
-            "agentWorkflowVersion",
-            "chunkerVersion",
-            "sourceExtractorVersion",
-            "memoryPromptVersion",
-            "promptVersion",
-            "indexVersion",
-            "embeddingModelId",
-            "embeddingDimensions"
-          ]
-        },
-        "ragProfile": {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "version": {
-              "type": "string"
-            },
-            "retrievalProfileId": {
-              "type": "string"
-            },
-            "retrievalProfileVersion": {
-              "type": "string"
-            },
-            "answerPolicyId": {
-              "type": "string"
-            },
-            "answerPolicyVersion": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "id",
-            "version",
-            "retrievalProfileId",
-            "retrievalProfileVersion",
-            "answerPolicyId",
-            "answerPolicyVersion"
-          ]
-        },
-        "topK": {
-          "type": "number"
-        },
-        "memoryTopK": {
-          "type": "number"
-        },
-        "minScore": {
-          "type": "number"
-        },
-        "startedAt": {
-          "type": "string"
-        },
-        "completedAt": {
-          "type": "string"
-        },
-        "totalLatencyMs": {
-          "type": "number"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "success",
-            "warning",
-            "error"
-          ]
-        },
-        "answerPreview": {
-          "type": "string"
-        },
-        "isAnswerable": {
-          "type": "boolean"
-        },
-        "citations": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "documentId": {
-                "type": "string"
-              },
-              "fileName": {
-                "type": "string"
-              },
-              "chunkId": {
-                "type": "string"
-              },
-              "score": {
-                "type": "number"
-              },
-              "text": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "documentId",
-              "fileName",
-              "score",
-              "text"
-            ]
-          }
-        },
-        "retrieved": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "documentId": {
-                "type": "string"
-              },
-              "fileName": {
-                "type": "string"
-              },
-              "chunkId": {
-                "type": "string"
-              },
-              "score": {
-                "type": "number"
-              },
-              "text": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "documentId",
-              "fileName",
-              "score",
-              "text"
-            ]
-          }
-        },
-        "finalEvidence": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "documentId": {
-                "type": "string"
-              },
-              "fileName": {
-                "type": "string"
-              },
-              "chunkId": {
-                "type": "string"
-              },
-              "score": {
-                "type": "number"
-              },
-              "text": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "documentId",
-              "fileName",
-              "score",
-              "text"
-            ]
-          }
-        },
-        "steps": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "number"
-              },
-              "label": {
-                "type": "string"
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "success",
-                  "warning",
-                  "error"
-                ]
-              },
-              "latencyMs": {
-                "type": "number"
-              },
-              "modelId": {
-                "type": "string"
-              },
-              "summary": {
-                "type": "string"
-              },
-              "detail": {
-                "type": "string"
-              },
-              "output": {
-                "type": "object",
-                "additionalProperties": {
-                  "nullable": true
-                }
-              },
-              "hitCount": {
-                "type": "number"
-              },
-              "tokenCount": {
-                "type": "number"
-              },
-              "startedAt": {
-                "type": "string"
-              },
-              "completedAt": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "label",
-              "status",
-              "latencyMs",
-              "summary",
-              "startedAt",
-              "completedAt"
-            ]
-          }
-        }
-      },
-      "required": [
-        "runId",
-        "question",
-        "modelId",
-        "embeddingModelId",
-        "clueModelId",
-        "topK",
-        "memoryTopK",
-        "minScore",
-        "startedAt",
-        "completedAt",
-        "totalLatencyMs",
-        "status",
-        "answerPreview",
-        "isAnswerable",
-        "citations",
-        "retrieved",
-        "steps"
-      ]
-    },
-    "id": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "answer",
-    "isAnswerable",
-    "citations",
-    "retrieved"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `responseType` | `enum(answer \| refusal \| clarification)` | no | 回答、回答不能、確認質問などのレスポンス種別。 | enum=answer, refusal, clarification |
+| `answer` | `string` | yes | RAG または担当者による回答本文。 | - |
+| `isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `needsClarification` | `boolean` | no | 回答前に対象確認が必要かどうか。 | - |
+| `clarification` | `object` | no | `response.clarification` の値。項目名は clarification を表します。 | - |
+| `clarification.needsClarification` | `boolean` | yes | 回答前に対象確認が必要かどうか。 | - |
+| `clarification.reason` | `enum(ambiguous_target \| missing_scope \| unresolved_reference \| multiple_candidate_intents \| conflicting_scope \| not_needed)` | yes | 判断や失敗の理由。 | enum=ambiguous_target, missing_scope, unresolved_reference, multiple_candidate_intents, conflicting_scope, not_needed |
+| `clarification.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `clarification.options` | `array<object>` | yes | `response.clarification.options` の値。項目名は options を表します。 | maxItems=5 |
+| `clarification.options[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `clarification.options[].label` | `string` | yes | `response.clarification.options[].label` の値。項目名は label を表します。 | - |
+| `clarification.options[].resolvedQuery` | `string` | yes | `response.clarification.options[].resolvedQuery` の値。項目名は resolved query を表します。 | - |
+| `clarification.options[].reason` | `string` | no | 判断や失敗の理由。 | - |
+| `clarification.options[].source` | `enum(memory \| evidence \| aspect \| history)` | yes | `response.clarification.options[].source` の値。項目名は source を表します。 | enum=memory, evidence, aspect, history |
+| `clarification.options[].grounding` | `array<object>` | no | `response.clarification.options[].grounding` の値。項目名は grounding を表します。 | - |
+| `clarification.options[].grounding[].documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `clarification.options[].grounding[].fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `clarification.options[].grounding[].chunkId` | `string` | no | `response.clarification.options[].grounding[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `clarification.options[].grounding[].heading` | `string` | no | `response.clarification.options[].grounding[].heading` の値。項目名は heading を表します。 | - |
+| `clarification.missingSlots` | `array<string>` | no | `response.clarification.missingSlots` の値。項目名は missing slots を表します。 | - |
+| `clarification.confidence` | `number` | yes | `response.clarification.confidence` の値。項目名は confidence を表します。 | minimum=0<br>maximum=1 |
+| `clarification.ambiguityScore` | `number` | no | `response.clarification.ambiguityScore` の値。項目名は ambiguity score を表します。 | minimum=0<br>maximum=1 |
+| `clarification.groundedOptionCount` | `integer` | no | `response.clarification.groundedOptionCount` の値。項目名は grounded option count を表します。 | minimum=0 |
+| `citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `citations[].chunkId` | `string` | no | `response.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `retrieved[].chunkId` | `string` | no | `response.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `finalEvidence[].chunkId` | `string` | no | `response.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug` | `object` | no | 調査用の内部処理情報。 | - |
+| `debug.schemaVersion` | `enum(1)` | no | `response.debug.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `debug.runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `debug.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
+| `debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `debug.clueModelId` | `string` | yes | `response.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `debug.clarificationContext` | `object` | no | `response.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `debug.clarificationContext.originalQuestion` | `string` | no | `response.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `debug.clarificationContext.selectedOptionId` | `string` | no | `response.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `debug.clarificationContext.selectedValue` | `string` | no | `response.debug.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `debug.pipelineVersions` | `object` | no | `response.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `debug.pipelineVersions.chunkerVersion` | `string` | yes | `response.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `debug.pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.debug.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `debug.pipelineVersions.memoryPromptVersion` | `string` | yes | `response.debug.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `debug.pipelineVersions.promptVersion` | `string` | yes | `response.debug.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `debug.pipelineVersions.indexVersion` | `string` | yes | `response.debug.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `debug.pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `debug.pipelineVersions.embeddingDimensions` | `integer` | yes | `response.debug.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `debug.ragProfile` | `object` | no | `response.debug.ragProfile` の値。項目名は rag profile を表します。 | - |
+| `debug.ragProfile.id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `debug.ragProfile.version` | `string` | yes | `response.debug.ragProfile.version` の値。項目名は version を表します。 | - |
+| `debug.ragProfile.retrievalProfileId` | `string` | yes | `response.debug.ragProfile.retrievalProfileId` の値。項目名は retrieval profile id を表します。 | - |
+| `debug.ragProfile.retrievalProfileVersion` | `string` | yes | `response.debug.ragProfile.retrievalProfileVersion` の値。項目名は retrieval profile version を表します。 | - |
+| `debug.ragProfile.answerPolicyId` | `string` | yes | `response.debug.ragProfile.answerPolicyId` の値。項目名は answer policy id を表します。 | - |
+| `debug.ragProfile.answerPolicyVersion` | `string` | yes | `response.debug.ragProfile.answerPolicyVersion` の値。項目名は answer policy version を表します。 | - |
+| `debug.topK` | `number` | yes | 検索で取得する上位件数。 | - |
+| `debug.memoryTopK` | `number` | yes | memory 検索で取得する上位件数。 | - |
+| `debug.minScore` | `number` | yes | 検索結果として採用する最小 score。 | - |
+| `debug.startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `debug.completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `debug.totalLatencyMs` | `number` | yes | `response.debug.totalLatencyMs` の値。項目名は total latency ms を表します。 | - |
+| `debug.status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `debug.answerPreview` | `string` | yes | `response.debug.answerPreview` の値。項目名は answer preview を表します。 | - |
+| `debug.isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `debug.citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `debug.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debug.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debug.citations[].chunkId` | `string` | no | `response.debug.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debug.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debug.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `debug.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debug.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debug.retrieved[].chunkId` | `string` | no | `response.debug.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debug.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debug.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `debug.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debug.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debug.finalEvidence[].chunkId` | `string` | no | `response.debug.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug.steps` | `array<object>` | yes | `response.debug.steps` の値。項目名は steps を表します。 | - |
+| `debug.steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
+| `debug.steps[].label` | `string` | yes | `response.debug.steps[].label` の値。項目名は label を表します。 | - |
+| `debug.steps[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `debug.steps[].latencyMs` | `number` | yes | `response.debug.steps[].latencyMs` の値。項目名は latency ms を表します。 | - |
+| `debug.steps[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `debug.steps[].summary` | `string` | yes | 処理結果や debug step の要約。 | - |
+| `debug.steps[].detail` | `string` | no | `response.debug.steps[].detail` の値。項目名は detail を表します。 | - |
+| `debug.steps[].output` | `object` | no | `response.debug.steps[].output` の値。項目名は output を表します。 | - |
+| `debug.steps[].hitCount` | `number` | no | `response.debug.steps[].hitCount` の値。項目名は hit count を表します。 | - |
+| `debug.steps[].tokenCount` | `number` | no | `response.debug.steps[].tokenCount` の値。項目名は token count を表します。 | - |
+| `debug.steps[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `debug.steps[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `id` | `string` | no | リソースを一意に識別する ID。 | - |
 
 ### POST /benchmark/search
 
-Anchor: `post-/benchmark/search`
+Summary: 検索ベンチマークを実行する
 
-Tags: -
-Security: default
+ベンチマーク runner が `/search` 相当の検索処理を実行し、検索評価用の結果を取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "query": {
-      "type": "string",
-      "minLength": 1,
-      "example": "経費精算 承認条件"
-    },
-    "topK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 50,
-      "example": 10
-    },
-    "lexicalTopK": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 100,
-      "example": 80
-    },
-    "semanticTopK": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 100,
-      "example": 80
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "filters": {
-      "type": "object",
-      "properties": {
-        "tenantId": {
-          "type": "string"
-        },
-        "department": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "docType": {
-          "type": "string"
-        },
-        "benchmarkSuiteId": {
-          "type": "string"
-        },
-        "documentId": {
-          "type": "string"
-        }
-      }
-    },
-    "benchmarkSuiteId": {
-      "type": "string"
-    },
-    "user": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 160,
-          "example": "benchmark-user-1"
-        },
-        "groups": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 160
-          },
-          "maxItems": 20,
-          "example": [
-            "GROUP_A"
-          ]
-        }
-      }
-    }
-  },
-  "required": [
-    "query"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `query` | `string` | yes | 検索や benchmark に利用する query。 | minLength=1 |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | minimum=1<br>maximum=50 |
+| `lexicalTopK` | `integer` | no | `data.lexicalTopK` の値。項目名は lexical top k を表します。 | minimum=0<br>maximum=100 |
+| `semanticTopK` | `integer` | no | `data.semanticTopK` の値。項目名は semantic top k を表します。 | minimum=0<br>maximum=100 |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `filters` | `object` | no | 検索対象を絞り込む条件。 | - |
+| `filters.tenantId` | `string` | no | `data.filters.tenantId` の値。項目名は tenant id を表します。 | - |
+| `filters.department` | `string` | no | `data.filters.department` の値。項目名は department を表します。 | - |
+| `filters.source` | `string` | no | `data.filters.source` の値。項目名は source を表します。 | - |
+| `filters.docType` | `string` | no | `data.filters.docType` の値。項目名は doc type を表します。 | - |
+| `filters.benchmarkSuiteId` | `string` | no | `data.filters.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
+| `filters.documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `benchmarkSuiteId` | `string` | no | `data.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
+| `user` | `object` | no | `data.user` の値。項目名は user を表します。 | - |
+| `user.userId` | `string` | no | 対象ユーザーを一意に識別する ID。 | minLength=1<br>maxLength=160 |
+| `user.groups` | `array<string>` | no | ユーザーが所属する Cognito group または検証用 group。 | maxItems=20 |
 
 #### Responses
 
-#### `200`
-
-Benchmark search result
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "query": {
-      "type": "string"
-    },
-    "results": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "text": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "rrfScore": {
-            "type": "number"
-          },
-          "lexicalScore": {
-            "type": "number"
-          },
-          "semanticScore": {
-            "type": "number"
-          },
-          "lexicalRank": {
-            "type": "number"
-          },
-          "semanticRank": {
-            "type": "number"
-          },
-          "matchedTerms": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "sources": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "lexical",
-                "semantic"
-              ]
-            }
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            }
-          }
-        },
-        "required": [
-          "id",
-          "documentId",
-          "fileName",
-          "text",
-          "score",
-          "rrfScore",
-          "matchedTerms",
-          "sources"
-        ]
-      }
-    },
-    "diagnostics": {
-      "type": "object",
-      "properties": {
-        "indexVersion": {
-          "type": "string"
-        },
-        "aliasVersion": {
-          "type": "string"
-        },
-        "lexicalCount": {
-          "type": "integer"
-        },
-        "semanticCount": {
-          "type": "integer"
-        },
-        "fusedCount": {
-          "type": "integer"
-        },
-        "latencyMs": {
-          "type": "integer"
-        },
-        "index": {
-          "type": "object",
-          "properties": {
-            "visibleManifestCount": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "indexedChunkCount": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "cache": {
-              "type": "string",
-              "enum": [
-                "memory",
-                "artifact",
-                "built"
-              ]
-            },
-            "loadMs": {
-              "type": "integer",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "visibleManifestCount",
-            "indexedChunkCount",
-            "cache",
-            "loadMs"
-          ]
-        }
-      },
-      "required": [
-        "indexVersion",
-        "aliasVersion",
-        "lexicalCount",
-        "semanticCount",
-        "fusedCount",
-        "latencyMs"
-      ]
-    }
-  },
-  "required": [
-    "query",
-    "results",
-    "diagnostics"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `query` | `string` | yes | 検索や benchmark に利用する query。 | - |
+| `results` | `array<object>` | yes | `response.results` の値。項目名は results を表します。 | - |
+| `results[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `results[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `results[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `results[].chunkId` | `string` | no | `response.results[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `results[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `results[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `results[].rrfScore` | `number` | yes | `response.results[].rrfScore` の値。項目名は rrf score を表します。 | - |
+| `results[].lexicalScore` | `number` | no | `response.results[].lexicalScore` の値。項目名は lexical score を表します。 | - |
+| `results[].semanticScore` | `number` | no | `response.results[].semanticScore` の値。項目名は semantic score を表します。 | - |
+| `results[].lexicalRank` | `number` | no | `response.results[].lexicalRank` の値。項目名は lexical rank を表します。 | - |
+| `results[].semanticRank` | `number` | no | `response.results[].semanticRank` の値。項目名は semantic rank を表します。 | - |
+| `results[].matchedTerms` | `array<string>` | yes | `response.results[].matchedTerms` の値。項目名は matched terms を表します。 | - |
+| `results[].sources` | `array<enum(lexical \| semantic)>` | yes | `response.results[].sources` の値。項目名は sources を表します。 | - |
+| `results[].createdAt` | `string` | no | レコードを作成した日時。 | - |
+| `results[].metadata` | `object` | no | `response.results[].metadata` の値。項目名は metadata を表します。 | - |
+| `diagnostics` | `object` | yes | 検索や benchmark の診断情報。 | - |
+| `diagnostics.indexVersion` | `string` | yes | `response.diagnostics.indexVersion` の値。項目名は index version を表します。 | - |
+| `diagnostics.aliasVersion` | `string` | yes | `response.diagnostics.aliasVersion` の値。項目名は alias version を表します。 | - |
+| `diagnostics.lexicalCount` | `integer` | yes | `response.diagnostics.lexicalCount` の値。項目名は lexical count を表します。 | - |
+| `diagnostics.semanticCount` | `integer` | yes | `response.diagnostics.semanticCount` の値。項目名は semantic count を表します。 | - |
+| `diagnostics.fusedCount` | `integer` | yes | `response.diagnostics.fusedCount` の値。項目名は fused count を表します。 | - |
+| `diagnostics.latencyMs` | `integer` | yes | `response.diagnostics.latencyMs` の値。項目名は latency ms を表します。 | - |
+| `diagnostics.index` | `object` | no | `response.diagnostics.index` の値。項目名は index を表します。 | - |
+| `diagnostics.index.visibleManifestCount` | `integer` | yes | `response.diagnostics.index.visibleManifestCount` の値。項目名は visible manifest count を表します。 | minimum=0 |
+| `diagnostics.index.indexedChunkCount` | `integer` | yes | `response.diagnostics.index.indexedChunkCount` の値。項目名は indexed chunk count を表します。 | minimum=0 |
+| `diagnostics.index.cache` | `enum(memory \| artifact \| built)` | yes | `response.diagnostics.index.cache` の値。項目名は cache を表します。 | enum=memory, artifact, built |
+| `diagnostics.index.loadMs` | `integer` | yes | `response.diagnostics.index.loadMs` の値。項目名は load ms を表します。 | minimum=0 |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /chat
 
-Anchor: `post-/chat`
+Summary: 同期チャット回答を生成する
 
-Tags: -
-Security: default
+登録済み文書を根拠に RAG 回答、回答不能、確認質問のいずれかを同期的に返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "question": {
-      "type": "string",
-      "minLength": 1,
-      "example": "経費精算の期限は？"
-    },
-    "clarificationContext": {
-      "type": "object",
-      "properties": {
-        "originalQuestion": {
-          "type": "string"
-        },
-        "selectedOptionId": {
-          "type": "string"
-        },
-        "selectedValue": {
-          "type": "string"
-        }
-      }
-    },
-    "modelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "clueModelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "topK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 20,
-      "example": 6
-    },
-    "memoryTopK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 10,
-      "example": 4
-    },
-    "minScore": {
-      "type": "number",
-      "minimum": -1,
-      "maximum": 1,
-      "example": 0.2
-    },
-    "maxIterations": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 8,
-      "example": 3
-    },
-    "strictGrounded": {
-      "type": "boolean",
-      "example": true
-    },
-    "includeDebug": {
-      "type": "boolean",
-      "example": false
-    },
-    "debug": {
-      "type": "boolean",
-      "example": false
-    },
-    "useMemory": {
-      "type": "boolean",
-      "example": true
-    }
-  },
-  "required": [
-    "question"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | minLength=1 |
+| `clarificationContext` | `object` | no | `data.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `clarificationContext.originalQuestion` | `string` | no | `data.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `clarificationContext.selectedOptionId` | `string` | no | `data.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `clarificationContext.selectedValue` | `string` | no | `data.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `clueModelId` | `string` | no | `data.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | minimum=1<br>maximum=20 |
+| `memoryTopK` | `integer` | no | memory 検索で取得する上位件数。 | minimum=1<br>maximum=10 |
+| `minScore` | `number` | no | 検索結果として採用する最小 score。 | minimum=-1<br>maximum=1 |
+| `maxIterations` | `integer` | no | `data.maxIterations` の値。項目名は max iterations を表します。 | minimum=1<br>maximum=8 |
+| `strictGrounded` | `boolean` | no | `data.strictGrounded` の値。項目名は strict grounded を表します。 | - |
+| `includeDebug` | `boolean` | no | レスポンスに debug 情報を含めるかどうか。 | - |
+| `debug` | `boolean` | no | 調査用の内部処理情報。 | - |
+| `useMemory` | `boolean` | no | `data.useMemory` の値。項目名は use memory を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Grounded answer
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "responseType": {
-      "type": "string",
-      "enum": [
-        "answer",
-        "refusal",
-        "clarification"
-      ]
-    },
-    "answer": {
-      "type": "string"
-    },
-    "isAnswerable": {
-      "type": "boolean"
-    },
-    "needsClarification": {
-      "type": "boolean"
-    },
-    "clarification": {
-      "type": "object",
-      "properties": {
-        "needsClarification": {
-          "type": "boolean"
-        },
-        "reason": {
-          "type": "string",
-          "enum": [
-            "ambiguous_target",
-            "missing_scope",
-            "unresolved_reference",
-            "multiple_candidate_intents",
-            "conflicting_scope",
-            "not_needed"
-          ]
-        },
-        "question": {
-          "type": "string"
-        },
-        "options": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "label": {
-                "type": "string"
-              },
-              "resolvedQuery": {
-                "type": "string"
-              },
-              "reason": {
-                "type": "string"
-              },
-              "source": {
-                "type": "string",
-                "enum": [
-                  "memory",
-                  "evidence",
-                  "aspect",
-                  "history"
-                ]
-              },
-              "grounding": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "documentId": {
-                      "type": "string"
-                    },
-                    "fileName": {
-                      "type": "string"
-                    },
-                    "chunkId": {
-                      "type": "string"
-                    },
-                    "heading": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "default": []
-              }
-            },
-            "required": [
-              "id",
-              "label",
-              "resolvedQuery",
-              "source"
-            ]
-          },
-          "maxItems": 5
-        },
-        "missingSlots": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": []
-        },
-        "confidence": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "ambiguityScore": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "groundedOptionCount": {
-          "type": "integer",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "needsClarification",
-        "reason",
-        "question",
-        "options",
-        "confidence"
-      ]
-    },
-    "citations": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "retrieved": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "finalEvidence": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "debug": {
-      "type": "object",
-      "properties": {
-        "schemaVersion": {
-          "type": "number",
-          "enum": [
-            1
-          ],
-          "default": 1
-        },
-        "runId": {
-          "type": "string"
-        },
-        "question": {
-          "type": "string"
-        },
-        "modelId": {
-          "type": "string"
-        },
-        "embeddingModelId": {
-          "type": "string"
-        },
-        "clueModelId": {
-          "type": "string"
-        },
-        "clarificationContext": {
-          "type": "object",
-          "properties": {
-            "originalQuestion": {
-              "type": "string"
-            },
-            "selectedOptionId": {
-              "type": "string"
-            },
-            "selectedValue": {
-              "type": "string"
-            }
-          }
-        },
-        "pipelineVersions": {
-          "type": "object",
-          "properties": {
-            "agentWorkflowVersion": {
-              "type": "string"
-            },
-            "chunkerVersion": {
-              "type": "string"
-            },
-            "sourceExtractorVersion": {
-              "type": "string"
-            },
-            "memoryPromptVersion": {
-              "type": "string"
-            },
-            "promptVersion": {
-              "type": "string"
-            },
-            "indexVersion": {
-              "type": "string"
-            },
-            "embeddingModelId": {
-              "type": "string"
-            },
-            "embeddingDimensions": {
-              "type": "integer",
-              "minimum": 0,
-              "exclusiveMinimum": true
-            }
-          },
-          "required": [
-            "agentWorkflowVersion",
-            "chunkerVersion",
-            "sourceExtractorVersion",
-            "memoryPromptVersion",
-            "promptVersion",
-            "indexVersion",
-            "embeddingModelId",
-            "embeddingDimensions"
-          ]
-        },
-        "ragProfile": {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "version": {
-              "type": "string"
-            },
-            "retrievalProfileId": {
-              "type": "string"
-            },
-            "retrievalProfileVersion": {
-              "type": "string"
-            },
-            "answerPolicyId": {
-              "type": "string"
-            },
-            "answerPolicyVersion": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "id",
-            "version",
-            "retrievalProfileId",
-            "retrievalProfileVersion",
-            "answerPolicyId",
-            "answerPolicyVersion"
-          ]
-        },
-        "topK": {
-          "type": "number"
-        },
-        "memoryTopK": {
-          "type": "number"
-        },
-        "minScore": {
-          "type": "number"
-        },
-        "startedAt": {
-          "type": "string"
-        },
-        "completedAt": {
-          "type": "string"
-        },
-        "totalLatencyMs": {
-          "type": "number"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "success",
-            "warning",
-            "error"
-          ]
-        },
-        "answerPreview": {
-          "type": "string"
-        },
-        "isAnswerable": {
-          "type": "boolean"
-        },
-        "citations": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "documentId": {
-                "type": "string"
-              },
-              "fileName": {
-                "type": "string"
-              },
-              "chunkId": {
-                "type": "string"
-              },
-              "score": {
-                "type": "number"
-              },
-              "text": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "documentId",
-              "fileName",
-              "score",
-              "text"
-            ]
-          }
-        },
-        "retrieved": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "documentId": {
-                "type": "string"
-              },
-              "fileName": {
-                "type": "string"
-              },
-              "chunkId": {
-                "type": "string"
-              },
-              "score": {
-                "type": "number"
-              },
-              "text": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "documentId",
-              "fileName",
-              "score",
-              "text"
-            ]
-          }
-        },
-        "finalEvidence": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "documentId": {
-                "type": "string"
-              },
-              "fileName": {
-                "type": "string"
-              },
-              "chunkId": {
-                "type": "string"
-              },
-              "score": {
-                "type": "number"
-              },
-              "text": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "documentId",
-              "fileName",
-              "score",
-              "text"
-            ]
-          }
-        },
-        "steps": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "number"
-              },
-              "label": {
-                "type": "string"
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "success",
-                  "warning",
-                  "error"
-                ]
-              },
-              "latencyMs": {
-                "type": "number"
-              },
-              "modelId": {
-                "type": "string"
-              },
-              "summary": {
-                "type": "string"
-              },
-              "detail": {
-                "type": "string"
-              },
-              "output": {
-                "type": "object",
-                "additionalProperties": {
-                  "nullable": true
-                }
-              },
-              "hitCount": {
-                "type": "number"
-              },
-              "tokenCount": {
-                "type": "number"
-              },
-              "startedAt": {
-                "type": "string"
-              },
-              "completedAt": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "label",
-              "status",
-              "latencyMs",
-              "summary",
-              "startedAt",
-              "completedAt"
-            ]
-          }
-        }
-      },
-      "required": [
-        "runId",
-        "question",
-        "modelId",
-        "embeddingModelId",
-        "clueModelId",
-        "topK",
-        "memoryTopK",
-        "minScore",
-        "startedAt",
-        "completedAt",
-        "totalLatencyMs",
-        "status",
-        "answerPreview",
-        "isAnswerable",
-        "citations",
-        "retrieved",
-        "steps"
-      ]
-    }
-  },
-  "required": [
-    "answer",
-    "isAnswerable",
-    "citations",
-    "retrieved"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `responseType` | `enum(answer \| refusal \| clarification)` | no | 回答、回答不能、確認質問などのレスポンス種別。 | enum=answer, refusal, clarification |
+| `answer` | `string` | yes | RAG または担当者による回答本文。 | - |
+| `isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `needsClarification` | `boolean` | no | 回答前に対象確認が必要かどうか。 | - |
+| `clarification` | `object` | no | `response.clarification` の値。項目名は clarification を表します。 | - |
+| `clarification.needsClarification` | `boolean` | yes | 回答前に対象確認が必要かどうか。 | - |
+| `clarification.reason` | `enum(ambiguous_target \| missing_scope \| unresolved_reference \| multiple_candidate_intents \| conflicting_scope \| not_needed)` | yes | 判断や失敗の理由。 | enum=ambiguous_target, missing_scope, unresolved_reference, multiple_candidate_intents, conflicting_scope, not_needed |
+| `clarification.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `clarification.options` | `array<object>` | yes | `response.clarification.options` の値。項目名は options を表します。 | maxItems=5 |
+| `clarification.options[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `clarification.options[].label` | `string` | yes | `response.clarification.options[].label` の値。項目名は label を表します。 | - |
+| `clarification.options[].resolvedQuery` | `string` | yes | `response.clarification.options[].resolvedQuery` の値。項目名は resolved query を表します。 | - |
+| `clarification.options[].reason` | `string` | no | 判断や失敗の理由。 | - |
+| `clarification.options[].source` | `enum(memory \| evidence \| aspect \| history)` | yes | `response.clarification.options[].source` の値。項目名は source を表します。 | enum=memory, evidence, aspect, history |
+| `clarification.options[].grounding` | `array<object>` | no | `response.clarification.options[].grounding` の値。項目名は grounding を表します。 | - |
+| `clarification.options[].grounding[].documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `clarification.options[].grounding[].fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `clarification.options[].grounding[].chunkId` | `string` | no | `response.clarification.options[].grounding[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `clarification.options[].grounding[].heading` | `string` | no | `response.clarification.options[].grounding[].heading` の値。項目名は heading を表します。 | - |
+| `clarification.missingSlots` | `array<string>` | no | `response.clarification.missingSlots` の値。項目名は missing slots を表します。 | - |
+| `clarification.confidence` | `number` | yes | `response.clarification.confidence` の値。項目名は confidence を表します。 | minimum=0<br>maximum=1 |
+| `clarification.ambiguityScore` | `number` | no | `response.clarification.ambiguityScore` の値。項目名は ambiguity score を表します。 | minimum=0<br>maximum=1 |
+| `clarification.groundedOptionCount` | `integer` | no | `response.clarification.groundedOptionCount` の値。項目名は grounded option count を表します。 | minimum=0 |
+| `citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `citations[].chunkId` | `string` | no | `response.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `retrieved[].chunkId` | `string` | no | `response.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `finalEvidence[].chunkId` | `string` | no | `response.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug` | `object` | no | 調査用の内部処理情報。 | - |
+| `debug.schemaVersion` | `enum(1)` | no | `response.debug.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `debug.runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `debug.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
+| `debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `debug.clueModelId` | `string` | yes | `response.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `debug.clarificationContext` | `object` | no | `response.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `debug.clarificationContext.originalQuestion` | `string` | no | `response.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `debug.clarificationContext.selectedOptionId` | `string` | no | `response.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `debug.clarificationContext.selectedValue` | `string` | no | `response.debug.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `debug.pipelineVersions` | `object` | no | `response.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `debug.pipelineVersions.chunkerVersion` | `string` | yes | `response.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `debug.pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.debug.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `debug.pipelineVersions.memoryPromptVersion` | `string` | yes | `response.debug.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `debug.pipelineVersions.promptVersion` | `string` | yes | `response.debug.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `debug.pipelineVersions.indexVersion` | `string` | yes | `response.debug.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `debug.pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `debug.pipelineVersions.embeddingDimensions` | `integer` | yes | `response.debug.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `debug.ragProfile` | `object` | no | `response.debug.ragProfile` の値。項目名は rag profile を表します。 | - |
+| `debug.ragProfile.id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `debug.ragProfile.version` | `string` | yes | `response.debug.ragProfile.version` の値。項目名は version を表します。 | - |
+| `debug.ragProfile.retrievalProfileId` | `string` | yes | `response.debug.ragProfile.retrievalProfileId` の値。項目名は retrieval profile id を表します。 | - |
+| `debug.ragProfile.retrievalProfileVersion` | `string` | yes | `response.debug.ragProfile.retrievalProfileVersion` の値。項目名は retrieval profile version を表します。 | - |
+| `debug.ragProfile.answerPolicyId` | `string` | yes | `response.debug.ragProfile.answerPolicyId` の値。項目名は answer policy id を表します。 | - |
+| `debug.ragProfile.answerPolicyVersion` | `string` | yes | `response.debug.ragProfile.answerPolicyVersion` の値。項目名は answer policy version を表します。 | - |
+| `debug.topK` | `number` | yes | 検索で取得する上位件数。 | - |
+| `debug.memoryTopK` | `number` | yes | memory 検索で取得する上位件数。 | - |
+| `debug.minScore` | `number` | yes | 検索結果として採用する最小 score。 | - |
+| `debug.startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `debug.completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `debug.totalLatencyMs` | `number` | yes | `response.debug.totalLatencyMs` の値。項目名は total latency ms を表します。 | - |
+| `debug.status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `debug.answerPreview` | `string` | yes | `response.debug.answerPreview` の値。項目名は answer preview を表します。 | - |
+| `debug.isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `debug.citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `debug.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debug.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debug.citations[].chunkId` | `string` | no | `response.debug.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debug.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debug.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `debug.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debug.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debug.retrieved[].chunkId` | `string` | no | `response.debug.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debug.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debug.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `debug.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debug.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debug.finalEvidence[].chunkId` | `string` | no | `response.debug.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug.steps` | `array<object>` | yes | `response.debug.steps` の値。項目名は steps を表します。 | - |
+| `debug.steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
+| `debug.steps[].label` | `string` | yes | `response.debug.steps[].label` の値。項目名は label を表します。 | - |
+| `debug.steps[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `debug.steps[].latencyMs` | `number` | yes | `response.debug.steps[].latencyMs` の値。項目名は latency ms を表します。 | - |
+| `debug.steps[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `debug.steps[].summary` | `string` | yes | 処理結果や debug step の要約。 | - |
+| `debug.steps[].detail` | `string` | no | `response.debug.steps[].detail` の値。項目名は detail を表します。 | - |
+| `debug.steps[].output` | `object` | no | `response.debug.steps[].output` の値。項目名は output を表します。 | - |
+| `debug.steps[].hitCount` | `number` | no | `response.debug.steps[].hitCount` の値。項目名は hit count を表します。 | - |
+| `debug.steps[].tokenCount` | `number` | no | `response.debug.steps[].tokenCount` の値。項目名は token count を表します。 | - |
+| `debug.steps[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `debug.steps[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /chat-runs
 
-Anchor: `post-/chat-runs`
+Summary: 非同期チャット run を開始する
 
-Tags: -
-Security: default
+長時間 RAG 処理の進捗を追跡できる非同期チャット run を作成します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "question": {
-      "type": "string",
-      "minLength": 1,
-      "example": "経費精算の期限は？"
-    },
-    "clarificationContext": {
-      "type": "object",
-      "properties": {
-        "originalQuestion": {
-          "type": "string"
-        },
-        "selectedOptionId": {
-          "type": "string"
-        },
-        "selectedValue": {
-          "type": "string"
-        }
-      }
-    },
-    "modelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "clueModelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "topK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 20,
-      "example": 6
-    },
-    "memoryTopK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 10,
-      "example": 4
-    },
-    "minScore": {
-      "type": "number",
-      "minimum": -1,
-      "maximum": 1,
-      "example": 0.2
-    },
-    "maxIterations": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 8,
-      "example": 3
-    },
-    "strictGrounded": {
-      "type": "boolean",
-      "example": true
-    },
-    "includeDebug": {
-      "type": "boolean",
-      "example": false
-    },
-    "debug": {
-      "type": "boolean",
-      "example": false
-    },
-    "useMemory": {
-      "type": "boolean",
-      "example": true
-    }
-  },
-  "required": [
-    "question"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | minLength=1 |
+| `clarificationContext` | `object` | no | `data.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `clarificationContext.originalQuestion` | `string` | no | `data.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `clarificationContext.selectedOptionId` | `string` | no | `data.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `clarificationContext.selectedValue` | `string` | no | `data.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `clueModelId` | `string` | no | `data.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | minimum=1<br>maximum=20 |
+| `memoryTopK` | `integer` | no | memory 検索で取得する上位件数。 | minimum=1<br>maximum=10 |
+| `minScore` | `number` | no | 検索結果として採用する最小 score。 | minimum=-1<br>maximum=1 |
+| `maxIterations` | `integer` | no | `data.maxIterations` の値。項目名は max iterations を表します。 | minimum=1<br>maximum=8 |
+| `strictGrounded` | `boolean` | no | `data.strictGrounded` の値。項目名は strict grounded を表します。 | - |
+| `includeDebug` | `boolean` | no | レスポンスに debug 情報を含めるかどうか。 | - |
+| `debug` | `boolean` | no | 調査用の内部処理情報。 | - |
+| `useMemory` | `boolean` | no | `data.useMemory` の値。項目名は use memory を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Started asynchronous chat run
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "runId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "queued",
-        "running",
-        "succeeded",
-        "failed",
-        "cancelled"
-      ]
-    },
-    "eventsPath": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "runId",
-    "status",
-    "eventsPath"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `eventsPath` | `string` | yes | SSE イベントを購読する API path。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /chat-runs/{runId}/events
 
-Anchor: `get-/chat-runs/{runid}/events`
+Summary: チャット run イベントを購読する
 
-Tags: -
-Security: default
+指定したチャット run の進捗と最終回答を Server-Sent Events で返します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `runId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Asynchronous chat run events
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `text/event-stream`
 
-```json
-{
-  "type": "string"
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `response` | `string` | yes | チャット API が返す回答または拒否文。 | - |
 
-#### `403`
-
-Forbidden
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `404`
-
-Chat run not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /conversation-history
 
-Anchor: `get-/conversation-history`
+Summary: 会話履歴一覧を取得する
 
-Tags: -
-Security: default
+ログインユーザー自身の保存済み会話履歴を取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List persisted conversation history for the current user
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "history": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "schemaVersion": {
-            "type": "number",
-            "enum": [
-              1
-            ],
-            "default": 1
-          },
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 120
-          },
-          "updatedAt": {
-            "type": "string"
-          },
-          "isFavorite": {
-            "type": "boolean",
-            "default": false
-          },
-          "messages": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "role": {
-                  "type": "string",
-                  "enum": [
-                    "user",
-                    "assistant"
-                  ]
-                },
-                "text": {
-                  "type": "string"
-                },
-                "createdAt": {
-                  "type": "string"
-                },
-                "sourceQuestion": {
-                  "type": "string"
-                },
-                "result": {
-                  "type": "object",
-                  "properties": {
-                    "responseType": {
-                      "type": "string",
-                      "enum": [
-                        "answer",
-                        "refusal",
-                        "clarification"
-                      ]
-                    },
-                    "answer": {
-                      "type": "string"
-                    },
-                    "isAnswerable": {
-                      "type": "boolean"
-                    },
-                    "needsClarification": {
-                      "type": "boolean"
-                    },
-                    "clarification": {
-                      "type": "object",
-                      "properties": {
-                        "needsClarification": {
-                          "type": "boolean"
-                        },
-                        "reason": {
-                          "type": "string",
-                          "enum": [
-                            "ambiguous_target",
-                            "missing_scope",
-                            "unresolved_reference",
-                            "multiple_candidate_intents",
-                            "conflicting_scope",
-                            "not_needed"
-                          ]
-                        },
-                        "question": {
-                          "type": "string"
-                        },
-                        "options": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string"
-                              },
-                              "label": {
-                                "type": "string"
-                              },
-                              "resolvedQuery": {
-                                "type": "string"
-                              },
-                              "reason": {
-                                "type": "string"
-                              },
-                              "source": {
-                                "type": "string",
-                                "enum": [
-                                  "memory",
-                                  "evidence",
-                                  "aspect",
-                                  "history"
-                                ]
-                              },
-                              "grounding": {
-                                "type": "array",
-                                "items": {
-                                  "type": "object",
-                                  "properties": {
-                                    "documentId": {
-                                      "type": "string"
-                                    },
-                                    "fileName": {
-                                      "type": "string"
-                                    },
-                                    "chunkId": {
-                                      "type": "string"
-                                    },
-                                    "heading": {
-                                      "type": "string"
-                                    }
-                                  }
-                                },
-                                "default": []
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "label",
-                              "resolvedQuery",
-                              "source"
-                            ]
-                          },
-                          "maxItems": 5
-                        },
-                        "missingSlots": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "default": []
-                        },
-                        "confidence": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 1
-                        },
-                        "ambiguityScore": {
-                          "type": "number",
-                          "minimum": 0,
-                          "maximum": 1
-                        },
-                        "groundedOptionCount": {
-                          "type": "integer",
-                          "minimum": 0
-                        }
-                      },
-                      "required": [
-                        "needsClarification",
-                        "reason",
-                        "question",
-                        "options",
-                        "confidence"
-                      ]
-                    },
-                    "citations": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "documentId": {
-                            "type": "string"
-                          },
-                          "fileName": {
-                            "type": "string"
-                          },
-                          "chunkId": {
-                            "type": "string"
-                          },
-                          "score": {
-                            "type": "number"
-                          },
-                          "text": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "documentId",
-                          "fileName",
-                          "score",
-                          "text"
-                        ]
-                      }
-                    },
-                    "retrieved": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "documentId": {
-                            "type": "string"
-                          },
-                          "fileName": {
-                            "type": "string"
-                          },
-                          "chunkId": {
-                            "type": "string"
-                          },
-                          "score": {
-                            "type": "number"
-                          },
-                          "text": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "documentId",
-                          "fileName",
-                          "score",
-                          "text"
-                        ]
-                      }
-                    },
-                    "finalEvidence": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "documentId": {
-                            "type": "string"
-                          },
-                          "fileName": {
-                            "type": "string"
-                          },
-                          "chunkId": {
-                            "type": "string"
-                          },
-                          "score": {
-                            "type": "number"
-                          },
-                          "text": {
-                            "type": "string"
-                          }
-                        },
-                        "required": [
-                          "documentId",
-                          "fileName",
-                          "score",
-                          "text"
-                        ]
-                      }
-                    },
-                    "debug": {
-                      "type": "object",
-                      "properties": {
-                        "schemaVersion": {
-                          "type": "number",
-                          "enum": [
-                            1
-                          ],
-                          "default": 1
-                        },
-                        "runId": {
-                          "type": "string"
-                        },
-                        "question": {
-                          "type": "string"
-                        },
-                        "modelId": {
-                          "type": "string"
-                        },
-                        "embeddingModelId": {
-                          "type": "string"
-                        },
-                        "clueModelId": {
-                          "type": "string"
-                        },
-                        "clarificationContext": {
-                          "type": "object",
-                          "properties": {
-                            "originalQuestion": {
-                              "type": "string"
-                            },
-                            "selectedOptionId": {
-                              "type": "string"
-                            },
-                            "selectedValue": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "pipelineVersions": {
-                          "type": "object",
-                          "properties": {
-                            "agentWorkflowVersion": {
-                              "type": "string"
-                            },
-                            "chunkerVersion": {
-                              "type": "string"
-                            },
-                            "sourceExtractorVersion": {
-                              "type": "string"
-                            },
-                            "memoryPromptVersion": {
-                              "type": "string"
-                            },
-                            "promptVersion": {
-                              "type": "string"
-                            },
-                            "indexVersion": {
-                              "type": "string"
-                            },
-                            "embeddingModelId": {
-                              "type": "string"
-                            },
-                            "embeddingDimensions": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "exclusiveMinimum": true
-                            }
-                          },
-                          "required": [
-                            "agentWorkflowVersion",
-                            "chunkerVersion",
-                            "sourceExtractorVersion",
-                            "memoryPromptVersion",
-                            "promptVersion",
-                            "indexVersion",
-                            "embeddingModelId",
-                            "embeddingDimensions"
-                          ]
-                        },
-                        "ragProfile": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string"
-                            },
-                            "version": {
-                              "type": "string"
-                            },
-                            "retrievalProfileId": {
-                              "type": "string"
-                            },
-                            "retrievalProfileVersion": {
-                              "type": "string"
-                            },
-                            "answerPolicyId": {
-                              "type": "string"
-                            },
-                            "answerPolicyVersion": {
-                              "type": "string"
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "version",
-                            "retrievalProfileId",
-                            "retrievalProfileVersion",
-                            "answerPolicyId",
-                            "answerPolicyVersion"
-                          ]
-                        },
-                        "topK": {
-                          "type": "number"
-                        },
-                        "memoryTopK": {
-                          "type": "number"
-                        },
-                        "minScore": {
-                          "type": "number"
-                        },
-                        "startedAt": {
-                          "type": "string"
-                        },
-                        "completedAt": {
-                          "type": "string"
-                        },
-                        "totalLatencyMs": {
-                          "type": "number"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "success",
-                            "warning",
-                            "error"
-                          ]
-                        },
-                        "answerPreview": {
-                          "type": "string"
-                        },
-                        "isAnswerable": {
-                          "type": "boolean"
-                        },
-                        "citations": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "documentId": {
-                                "type": "string"
-                              },
-                              "fileName": {
-                                "type": "string"
-                              },
-                              "chunkId": {
-                                "type": "string"
-                              },
-                              "score": {
-                                "type": "number"
-                              },
-                              "text": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "documentId",
-                              "fileName",
-                              "score",
-                              "text"
-                            ]
-                          }
-                        },
-                        "retrieved": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "documentId": {
-                                "type": "string"
-                              },
-                              "fileName": {
-                                "type": "string"
-                              },
-                              "chunkId": {
-                                "type": "string"
-                              },
-                              "score": {
-                                "type": "number"
-                              },
-                              "text": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "documentId",
-                              "fileName",
-                              "score",
-                              "text"
-                            ]
-                          }
-                        },
-                        "finalEvidence": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "documentId": {
-                                "type": "string"
-                              },
-                              "fileName": {
-                                "type": "string"
-                              },
-                              "chunkId": {
-                                "type": "string"
-                              },
-                              "score": {
-                                "type": "number"
-                              },
-                              "text": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "documentId",
-                              "fileName",
-                              "score",
-                              "text"
-                            ]
-                          }
-                        },
-                        "steps": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "number"
-                              },
-                              "label": {
-                                "type": "string"
-                              },
-                              "status": {
-                                "type": "string",
-                                "enum": [
-                                  "success",
-                                  "warning",
-                                  "error"
-                                ]
-                              },
-                              "latencyMs": {
-                                "type": "number"
-                              },
-                              "modelId": {
-                                "type": "string"
-                              },
-                              "summary": {
-                                "type": "string"
-                              },
-                              "detail": {
-                                "type": "string"
-                              },
-                              "output": {
-                                "type": "object",
-                                "additionalProperties": {
-                                  "nullable": true
-                                }
-                              },
-                              "hitCount": {
-                                "type": "number"
-                              },
-                              "tokenCount": {
-                                "type": "number"
-                              },
-                              "startedAt": {
-                                "type": "string"
-                              },
-                              "completedAt": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "label",
-                              "status",
-                              "latencyMs",
-                              "summary",
-                              "startedAt",
-                              "completedAt"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "runId",
-                        "question",
-                        "modelId",
-                        "embeddingModelId",
-                        "clueModelId",
-                        "topK",
-                        "memoryTopK",
-                        "minScore",
-                        "startedAt",
-                        "completedAt",
-                        "totalLatencyMs",
-                        "status",
-                        "answerPreview",
-                        "isAnswerable",
-                        "citations",
-                        "retrieved",
-                        "steps"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "answer",
-                    "isAnswerable",
-                    "citations",
-                    "retrieved"
-                  ]
-                },
-                "questionTicket": {
-                  "type": "object",
-                  "properties": {
-                    "questionId": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "question": {
-                      "type": "string"
-                    },
-                    "requesterName": {
-                      "type": "string"
-                    },
-                    "requesterUserId": {
-                      "type": "string"
-                    },
-                    "requesterDepartment": {
-                      "type": "string"
-                    },
-                    "assigneeDepartment": {
-                      "type": "string"
-                    },
-                    "category": {
-                      "type": "string"
-                    },
-                    "priority": {
-                      "type": "string",
-                      "enum": [
-                        "normal",
-                        "high",
-                        "urgent"
-                      ]
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "open",
-                        "answered",
-                        "resolved"
-                      ]
-                    },
-                    "sourceQuestion": {
-                      "type": "string"
-                    },
-                    "chatAnswer": {
-                      "type": "string"
-                    },
-                    "chatRunId": {
-                      "type": "string"
-                    },
-                    "references": {
-                      "type": "string"
-                    },
-                    "answerTitle": {
-                      "type": "string"
-                    },
-                    "answerBody": {
-                      "type": "string"
-                    },
-                    "responderName": {
-                      "type": "string"
-                    },
-                    "responderDepartment": {
-                      "type": "string"
-                    },
-                    "internalMemo": {
-                      "type": "string"
-                    },
-                    "notifyRequester": {
-                      "type": "boolean"
-                    },
-                    "createdAt": {
-                      "type": "string"
-                    },
-                    "updatedAt": {
-                      "type": "string"
-                    },
-                    "answeredAt": {
-                      "type": "string"
-                    },
-                    "resolvedAt": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "questionId",
-                    "title",
-                    "question",
-                    "requesterName",
-                    "requesterDepartment",
-                    "assigneeDepartment",
-                    "category",
-                    "priority",
-                    "status",
-                    "createdAt",
-                    "updatedAt"
-                  ]
-                }
-              },
-              "required": [
-                "role",
-                "text",
-                "createdAt"
-              ]
-            },
-            "maxItems": 100
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "updatedAt",
-          "messages"
-        ]
-      }
-    }
-  },
-  "required": [
-    "history"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `history` | `array<object>` | yes | `response.history` の値。項目名は history を表します。 | - |
+| `history[].schemaVersion` | `enum(1)` | no | `response.history[].schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `history[].id` | `string` | yes | リソースを一意に識別する ID。 | minLength=1 |
+| `history[].title` | `string` | yes | 表示や一覧で利用するタイトル。 | minLength=1<br>maxLength=120 |
+| `history[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `history[].isFavorite` | `boolean` | no | `response.history[].isFavorite` の値。項目名は is favorite を表します。 | - |
+| `history[].messages` | `array<object>` | yes | `response.history[].messages` の値。項目名は messages を表します。 | maxItems=100 |
+| `history[].messages[].role` | `enum(user \| assistant)` | yes | `response.history[].messages[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `history[].messages[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `history[].messages[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `history[].messages[].sourceQuestion` | `string` | no | `response.history[].messages[].sourceQuestion` の値。項目名は source question を表します。 | - |
+| `history[].messages[].result` | `object` | no | `response.history[].messages[].result` の値。項目名は result を表します。 | - |
+| `history[].messages[].result.responseType` | `enum(answer \| refusal \| clarification)` | no | 回答、回答不能、確認質問などのレスポンス種別。 | enum=answer, refusal, clarification |
+| `history[].messages[].result.answer` | `string` | yes | RAG または担当者による回答本文。 | - |
+| `history[].messages[].result.isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `history[].messages[].result.needsClarification` | `boolean` | no | 回答前に対象確認が必要かどうか。 | - |
+| `history[].messages[].result.clarification` | `object` | no | `response.history[].messages[].result.clarification` の値。項目名は clarification を表します。 | - |
+| `history[].messages[].result.clarification.needsClarification` | `boolean` | yes | 回答前に対象確認が必要かどうか。 | - |
+| `history[].messages[].result.clarification.reason` | `enum(ambiguous_target \| missing_scope \| unresolved_reference \| multiple_candidate_intents \| conflicting_scope \| not_needed)` | yes | 判断や失敗の理由。 | enum=ambiguous_target, missing_scope, unresolved_reference, multiple_candidate_intents, conflicting_scope, not_needed |
+| `history[].messages[].result.clarification.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `history[].messages[].result.clarification.options` | `array<object>` | yes | `response.history[].messages[].result.clarification.options` の値。項目名は options を表します。 | maxItems=5 |
+| `history[].messages[].result.clarification.options[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `history[].messages[].result.clarification.options[].label` | `string` | yes | `response.history[].messages[].result.clarification.options[].label` の値。項目名は label を表します。 | - |
+| `history[].messages[].result.clarification.options[].resolvedQuery` | `string` | yes | `response.history[].messages[].result.clarification.options[].resolvedQuery` の値。項目名は resolved query を表します。 | - |
+| `history[].messages[].result.clarification.options[].reason` | `string` | no | 判断や失敗の理由。 | - |
+| `history[].messages[].result.clarification.options[].source` | `enum(memory \| evidence \| aspect \| history)` | yes | `response.history[].messages[].result.clarification.options[].source` の値。項目名は source を表します。 | enum=memory, evidence, aspect, history |
+| `history[].messages[].result.clarification.options[].grounding` | `array<object>` | no | `response.history[].messages[].result.clarification.options[].grounding` の値。項目名は grounding を表します。 | - |
+| `history[].messages[].result.clarification.options[].grounding[].documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `history[].messages[].result.clarification.options[].grounding[].fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `history[].messages[].result.clarification.options[].grounding[].chunkId` | `string` | no | `response.history[].messages[].result.clarification.options[].grounding[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `history[].messages[].result.clarification.options[].grounding[].heading` | `string` | no | `response.history[].messages[].result.clarification.options[].grounding[].heading` の値。項目名は heading を表します。 | - |
+| `history[].messages[].result.clarification.missingSlots` | `array<string>` | no | `response.history[].messages[].result.clarification.missingSlots` の値。項目名は missing slots を表します。 | - |
+| `history[].messages[].result.clarification.confidence` | `number` | yes | `response.history[].messages[].result.clarification.confidence` の値。項目名は confidence を表します。 | minimum=0<br>maximum=1 |
+| `history[].messages[].result.clarification.ambiguityScore` | `number` | no | `response.history[].messages[].result.clarification.ambiguityScore` の値。項目名は ambiguity score を表します。 | minimum=0<br>maximum=1 |
+| `history[].messages[].result.clarification.groundedOptionCount` | `integer` | no | `response.history[].messages[].result.clarification.groundedOptionCount` の値。項目名は grounded option count を表します。 | minimum=0 |
+| `history[].messages[].result.citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `history[].messages[].result.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `history[].messages[].result.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `history[].messages[].result.citations[].chunkId` | `string` | no | `response.history[].messages[].result.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `history[].messages[].result.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `history[].messages[].result.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `history[].messages[].result.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `history[].messages[].result.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `history[].messages[].result.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `history[].messages[].result.retrieved[].chunkId` | `string` | no | `response.history[].messages[].result.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `history[].messages[].result.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `history[].messages[].result.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `history[].messages[].result.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `history[].messages[].result.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `history[].messages[].result.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `history[].messages[].result.finalEvidence[].chunkId` | `string` | no | `response.history[].messages[].result.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `history[].messages[].result.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `history[].messages[].result.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `history[].messages[].result.debug` | `object` | no | 調査用の内部処理情報。 | - |
+| `history[].messages[].result.debug.schemaVersion` | `enum(1)` | no | `response.history[].messages[].result.debug.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `history[].messages[].result.debug.runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `history[].messages[].result.debug.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `history[].messages[].result.debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
+| `history[].messages[].result.debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `history[].messages[].result.debug.clueModelId` | `string` | yes | `response.history[].messages[].result.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `history[].messages[].result.debug.clarificationContext` | `object` | no | `response.history[].messages[].result.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `history[].messages[].result.debug.clarificationContext.originalQuestion` | `string` | no | `response.history[].messages[].result.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `history[].messages[].result.debug.clarificationContext.selectedOptionId` | `string` | no | `response.history[].messages[].result.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `history[].messages[].result.debug.clarificationContext.selectedValue` | `string` | no | `response.history[].messages[].result.debug.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `history[].messages[].result.debug.pipelineVersions` | `object` | no | `response.history[].messages[].result.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `history[].messages[].result.debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.history[].messages[].result.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `history[].messages[].result.debug.pipelineVersions.chunkerVersion` | `string` | yes | `response.history[].messages[].result.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `history[].messages[].result.debug.pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.history[].messages[].result.debug.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `history[].messages[].result.debug.pipelineVersions.memoryPromptVersion` | `string` | yes | `response.history[].messages[].result.debug.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `history[].messages[].result.debug.pipelineVersions.promptVersion` | `string` | yes | `response.history[].messages[].result.debug.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `history[].messages[].result.debug.pipelineVersions.indexVersion` | `string` | yes | `response.history[].messages[].result.debug.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `history[].messages[].result.debug.pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `history[].messages[].result.debug.pipelineVersions.embeddingDimensions` | `integer` | yes | `response.history[].messages[].result.debug.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `history[].messages[].result.debug.ragProfile` | `object` | no | `response.history[].messages[].result.debug.ragProfile` の値。項目名は rag profile を表します。 | - |
+| `history[].messages[].result.debug.ragProfile.id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `history[].messages[].result.debug.ragProfile.version` | `string` | yes | `response.history[].messages[].result.debug.ragProfile.version` の値。項目名は version を表します。 | - |
+| `history[].messages[].result.debug.ragProfile.retrievalProfileId` | `string` | yes | `response.history[].messages[].result.debug.ragProfile.retrievalProfileId` の値。項目名は retrieval profile id を表します。 | - |
+| `history[].messages[].result.debug.ragProfile.retrievalProfileVersion` | `string` | yes | `response.history[].messages[].result.debug.ragProfile.retrievalProfileVersion` の値。項目名は retrieval profile version を表します。 | - |
+| `history[].messages[].result.debug.ragProfile.answerPolicyId` | `string` | yes | `response.history[].messages[].result.debug.ragProfile.answerPolicyId` の値。項目名は answer policy id を表します。 | - |
+| `history[].messages[].result.debug.ragProfile.answerPolicyVersion` | `string` | yes | `response.history[].messages[].result.debug.ragProfile.answerPolicyVersion` の値。項目名は answer policy version を表します。 | - |
+| `history[].messages[].result.debug.topK` | `number` | yes | 検索で取得する上位件数。 | - |
+| `history[].messages[].result.debug.memoryTopK` | `number` | yes | memory 検索で取得する上位件数。 | - |
+| `history[].messages[].result.debug.minScore` | `number` | yes | 検索結果として採用する最小 score。 | - |
+| `history[].messages[].result.debug.startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `history[].messages[].result.debug.completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `history[].messages[].result.debug.totalLatencyMs` | `number` | yes | `response.history[].messages[].result.debug.totalLatencyMs` の値。項目名は total latency ms を表します。 | - |
+| `history[].messages[].result.debug.status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `history[].messages[].result.debug.answerPreview` | `string` | yes | `response.history[].messages[].result.debug.answerPreview` の値。項目名は answer preview を表します。 | - |
+| `history[].messages[].result.debug.isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `history[].messages[].result.debug.citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `history[].messages[].result.debug.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `history[].messages[].result.debug.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `history[].messages[].result.debug.citations[].chunkId` | `string` | no | `response.history[].messages[].result.debug.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `history[].messages[].result.debug.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `history[].messages[].result.debug.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `history[].messages[].result.debug.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `history[].messages[].result.debug.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `history[].messages[].result.debug.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `history[].messages[].result.debug.retrieved[].chunkId` | `string` | no | `response.history[].messages[].result.debug.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `history[].messages[].result.debug.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `history[].messages[].result.debug.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `history[].messages[].result.debug.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `history[].messages[].result.debug.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `history[].messages[].result.debug.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `history[].messages[].result.debug.finalEvidence[].chunkId` | `string` | no | `response.history[].messages[].result.debug.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `history[].messages[].result.debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `history[].messages[].result.debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `history[].messages[].result.debug.steps` | `array<object>` | yes | `response.history[].messages[].result.debug.steps` の値。項目名は steps を表します。 | - |
+| `history[].messages[].result.debug.steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
+| `history[].messages[].result.debug.steps[].label` | `string` | yes | `response.history[].messages[].result.debug.steps[].label` の値。項目名は label を表します。 | - |
+| `history[].messages[].result.debug.steps[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `history[].messages[].result.debug.steps[].latencyMs` | `number` | yes | `response.history[].messages[].result.debug.steps[].latencyMs` の値。項目名は latency ms を表します。 | - |
+| `history[].messages[].result.debug.steps[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `history[].messages[].result.debug.steps[].summary` | `string` | yes | 処理結果や debug step の要約。 | - |
+| `history[].messages[].result.debug.steps[].detail` | `string` | no | `response.history[].messages[].result.debug.steps[].detail` の値。項目名は detail を表します。 | - |
+| `history[].messages[].result.debug.steps[].output` | `object` | no | `response.history[].messages[].result.debug.steps[].output` の値。項目名は output を表します。 | - |
+| `history[].messages[].result.debug.steps[].hitCount` | `number` | no | `response.history[].messages[].result.debug.steps[].hitCount` の値。項目名は hit count を表します。 | - |
+| `history[].messages[].result.debug.steps[].tokenCount` | `number` | no | `response.history[].messages[].result.debug.steps[].tokenCount` の値。項目名は token count を表します。 | - |
+| `history[].messages[].result.debug.steps[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `history[].messages[].result.debug.steps[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `history[].messages[].questionTicket` | `object` | no | `response.history[].messages[].questionTicket` の値。項目名は question ticket を表します。 | - |
+| `history[].messages[].questionTicket.questionId` | `string` | yes | 担当者問い合わせを識別する ID。 | - |
+| `history[].messages[].questionTicket.title` | `string` | yes | 表示や一覧で利用するタイトル。 | - |
+| `history[].messages[].questionTicket.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `history[].messages[].questionTicket.requesterName` | `string` | yes | `response.history[].messages[].questionTicket.requesterName` の値。項目名は requester name を表します。 | - |
+| `history[].messages[].questionTicket.requesterUserId` | `string` | no | `response.history[].messages[].questionTicket.requesterUserId` の値。項目名は requester user id を表します。 | - |
+| `history[].messages[].questionTicket.requesterDepartment` | `string` | yes | `response.history[].messages[].questionTicket.requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `history[].messages[].questionTicket.assigneeDepartment` | `string` | yes | `response.history[].messages[].questionTicket.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `history[].messages[].questionTicket.category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `history[].messages[].questionTicket.priority` | `enum(normal \| high \| urgent)` | yes | `response.history[].messages[].questionTicket.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `history[].messages[].questionTicket.status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `history[].messages[].questionTicket.sourceQuestion` | `string` | no | `response.history[].messages[].questionTicket.sourceQuestion` の値。項目名は source question を表します。 | - |
+| `history[].messages[].questionTicket.chatAnswer` | `string` | no | `response.history[].messages[].questionTicket.chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `history[].messages[].questionTicket.chatRunId` | `string` | no | `response.history[].messages[].questionTicket.chatRunId` の値。項目名は chat run id を表します。 | - |
+| `history[].messages[].questionTicket.references` | `string` | no | `response.history[].messages[].questionTicket.references` の値。項目名は references を表します。 | - |
+| `history[].messages[].questionTicket.answerTitle` | `string` | no | `response.history[].messages[].questionTicket.answerTitle` の値。項目名は answer title を表します。 | - |
+| `history[].messages[].questionTicket.answerBody` | `string` | no | `response.history[].messages[].questionTicket.answerBody` の値。項目名は answer body を表します。 | - |
+| `history[].messages[].questionTicket.responderName` | `string` | no | `response.history[].messages[].questionTicket.responderName` の値。項目名は responder name を表します。 | - |
+| `history[].messages[].questionTicket.responderDepartment` | `string` | no | `response.history[].messages[].questionTicket.responderDepartment` の値。項目名は responder department を表します。 | - |
+| `history[].messages[].questionTicket.internalMemo` | `string` | no | `response.history[].messages[].questionTicket.internalMemo` の値。項目名は internal memo を表します。 | - |
+| `history[].messages[].questionTicket.notifyRequester` | `boolean` | no | `response.history[].messages[].questionTicket.notifyRequester` の値。項目名は notify requester を表します。 | - |
+| `history[].messages[].questionTicket.createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `history[].messages[].questionTicket.updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `history[].messages[].questionTicket.answeredAt` | `string` | no | `response.history[].messages[].questionTicket.answeredAt` の値。項目名は answered at を表します。 | - |
+| `history[].messages[].questionTicket.resolvedAt` | `string` | no | `response.history[].messages[].questionTicket.resolvedAt` の値。項目名は resolved at を表します。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /conversation-history
 
-Anchor: `post-/conversation-history`
+Summary: 会話履歴を保存する
 
-Tags: -
-Security: default
+会話履歴 item を保存し、お気に入り状態などの表示情報を更新します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "schemaVersion": {
-      "type": "number",
-      "enum": [
-        1
-      ],
-      "default": 1
-    },
-    "id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "title": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 120
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "isFavorite": {
-      "type": "boolean",
-      "default": false
-    },
-    "messages": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "role": {
-            "type": "string",
-            "enum": [
-              "user",
-              "assistant"
-            ]
-          },
-          "text": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "sourceQuestion": {
-            "type": "string"
-          },
-          "result": {
-            "type": "object",
-            "properties": {
-              "responseType": {
-                "type": "string",
-                "enum": [
-                  "answer",
-                  "refusal",
-                  "clarification"
-                ]
-              },
-              "answer": {
-                "type": "string"
-              },
-              "isAnswerable": {
-                "type": "boolean"
-              },
-              "needsClarification": {
-                "type": "boolean"
-              },
-              "clarification": {
-                "type": "object",
-                "properties": {
-                  "needsClarification": {
-                    "type": "boolean"
-                  },
-                  "reason": {
-                    "type": "string",
-                    "enum": [
-                      "ambiguous_target",
-                      "missing_scope",
-                      "unresolved_reference",
-                      "multiple_candidate_intents",
-                      "conflicting_scope",
-                      "not_needed"
-                    ]
-                  },
-                  "question": {
-                    "type": "string"
-                  },
-                  "options": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "label": {
-                          "type": "string"
-                        },
-                        "resolvedQuery": {
-                          "type": "string"
-                        },
-                        "reason": {
-                          "type": "string"
-                        },
-                        "source": {
-                          "type": "string",
-                          "enum": [
-                            "memory",
-                            "evidence",
-                            "aspect",
-                            "history"
-                          ]
-                        },
-                        "grounding": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "documentId": {
-                                "type": "string"
-                              },
-                              "fileName": {
-                                "type": "string"
-                              },
-                              "chunkId": {
-                                "type": "string"
-                              },
-                              "heading": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "default": []
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "label",
-                        "resolvedQuery",
-                        "source"
-                      ]
-                    },
-                    "maxItems": 5
-                  },
-                  "missingSlots": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "default": []
-                  },
-                  "confidence": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                  },
-                  "ambiguityScore": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                  },
-                  "groundedOptionCount": {
-                    "type": "integer",
-                    "minimum": 0
-                  }
-                },
-                "required": [
-                  "needsClarification",
-                  "reason",
-                  "question",
-                  "options",
-                  "confidence"
-                ]
-              },
-              "citations": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "documentId": {
-                      "type": "string"
-                    },
-                    "fileName": {
-                      "type": "string"
-                    },
-                    "chunkId": {
-                      "type": "string"
-                    },
-                    "score": {
-                      "type": "number"
-                    },
-                    "text": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "documentId",
-                    "fileName",
-                    "score",
-                    "text"
-                  ]
-                }
-              },
-              "retrieved": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "documentId": {
-                      "type": "string"
-                    },
-                    "fileName": {
-                      "type": "string"
-                    },
-                    "chunkId": {
-                      "type": "string"
-                    },
-                    "score": {
-                      "type": "number"
-                    },
-                    "text": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "documentId",
-                    "fileName",
-                    "score",
-                    "text"
-                  ]
-                }
-              },
-              "finalEvidence": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "documentId": {
-                      "type": "string"
-                    },
-                    "fileName": {
-                      "type": "string"
-                    },
-                    "chunkId": {
-                      "type": "string"
-                    },
-                    "score": {
-                      "type": "number"
-                    },
-                    "text": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "documentId",
-                    "fileName",
-                    "score",
-                    "text"
-                  ]
-                }
-              },
-              "debug": {
-                "type": "object",
-                "properties": {
-                  "schemaVersion": {
-                    "type": "number",
-                    "enum": [
-                      1
-                    ],
-                    "default": 1
-                  },
-                  "runId": {
-                    "type": "string"
-                  },
-                  "question": {
-                    "type": "string"
-                  },
-                  "modelId": {
-                    "type": "string"
-                  },
-                  "embeddingModelId": {
-                    "type": "string"
-                  },
-                  "clueModelId": {
-                    "type": "string"
-                  },
-                  "clarificationContext": {
-                    "type": "object",
-                    "properties": {
-                      "originalQuestion": {
-                        "type": "string"
-                      },
-                      "selectedOptionId": {
-                        "type": "string"
-                      },
-                      "selectedValue": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "pipelineVersions": {
-                    "type": "object",
-                    "properties": {
-                      "agentWorkflowVersion": {
-                        "type": "string"
-                      },
-                      "chunkerVersion": {
-                        "type": "string"
-                      },
-                      "sourceExtractorVersion": {
-                        "type": "string"
-                      },
-                      "memoryPromptVersion": {
-                        "type": "string"
-                      },
-                      "promptVersion": {
-                        "type": "string"
-                      },
-                      "indexVersion": {
-                        "type": "string"
-                      },
-                      "embeddingModelId": {
-                        "type": "string"
-                      },
-                      "embeddingDimensions": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
-                      }
-                    },
-                    "required": [
-                      "agentWorkflowVersion",
-                      "chunkerVersion",
-                      "sourceExtractorVersion",
-                      "memoryPromptVersion",
-                      "promptVersion",
-                      "indexVersion",
-                      "embeddingModelId",
-                      "embeddingDimensions"
-                    ]
-                  },
-                  "ragProfile": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "version": {
-                        "type": "string"
-                      },
-                      "retrievalProfileId": {
-                        "type": "string"
-                      },
-                      "retrievalProfileVersion": {
-                        "type": "string"
-                      },
-                      "answerPolicyId": {
-                        "type": "string"
-                      },
-                      "answerPolicyVersion": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "version",
-                      "retrievalProfileId",
-                      "retrievalProfileVersion",
-                      "answerPolicyId",
-                      "answerPolicyVersion"
-                    ]
-                  },
-                  "topK": {
-                    "type": "number"
-                  },
-                  "memoryTopK": {
-                    "type": "number"
-                  },
-                  "minScore": {
-                    "type": "number"
-                  },
-                  "startedAt": {
-                    "type": "string"
-                  },
-                  "completedAt": {
-                    "type": "string"
-                  },
-                  "totalLatencyMs": {
-                    "type": "number"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "success",
-                      "warning",
-                      "error"
-                    ]
-                  },
-                  "answerPreview": {
-                    "type": "string"
-                  },
-                  "isAnswerable": {
-                    "type": "boolean"
-                  },
-                  "citations": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "documentId": {
-                          "type": "string"
-                        },
-                        "fileName": {
-                          "type": "string"
-                        },
-                        "chunkId": {
-                          "type": "string"
-                        },
-                        "score": {
-                          "type": "number"
-                        },
-                        "text": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "documentId",
-                        "fileName",
-                        "score",
-                        "text"
-                      ]
-                    }
-                  },
-                  "retrieved": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "documentId": {
-                          "type": "string"
-                        },
-                        "fileName": {
-                          "type": "string"
-                        },
-                        "chunkId": {
-                          "type": "string"
-                        },
-                        "score": {
-                          "type": "number"
-                        },
-                        "text": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "documentId",
-                        "fileName",
-                        "score",
-                        "text"
-                      ]
-                    }
-                  },
-                  "finalEvidence": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "documentId": {
-                          "type": "string"
-                        },
-                        "fileName": {
-                          "type": "string"
-                        },
-                        "chunkId": {
-                          "type": "string"
-                        },
-                        "score": {
-                          "type": "number"
-                        },
-                        "text": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "documentId",
-                        "fileName",
-                        "score",
-                        "text"
-                      ]
-                    }
-                  },
-                  "steps": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "number"
-                        },
-                        "label": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "success",
-                            "warning",
-                            "error"
-                          ]
-                        },
-                        "latencyMs": {
-                          "type": "number"
-                        },
-                        "modelId": {
-                          "type": "string"
-                        },
-                        "summary": {
-                          "type": "string"
-                        },
-                        "detail": {
-                          "type": "string"
-                        },
-                        "output": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "nullable": true
-                          }
-                        },
-                        "hitCount": {
-                          "type": "number"
-                        },
-                        "tokenCount": {
-                          "type": "number"
-                        },
-                        "startedAt": {
-                          "type": "string"
-                        },
-                        "completedAt": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "label",
-                        "status",
-                        "latencyMs",
-                        "summary",
-                        "startedAt",
-                        "completedAt"
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "runId",
-                  "question",
-                  "modelId",
-                  "embeddingModelId",
-                  "clueModelId",
-                  "topK",
-                  "memoryTopK",
-                  "minScore",
-                  "startedAt",
-                  "completedAt",
-                  "totalLatencyMs",
-                  "status",
-                  "answerPreview",
-                  "isAnswerable",
-                  "citations",
-                  "retrieved",
-                  "steps"
-                ]
-              }
-            },
-            "required": [
-              "answer",
-              "isAnswerable",
-              "citations",
-              "retrieved"
-            ]
-          },
-          "questionTicket": {
-            "type": "object",
-            "properties": {
-              "questionId": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              },
-              "question": {
-                "type": "string"
-              },
-              "requesterName": {
-                "type": "string"
-              },
-              "requesterUserId": {
-                "type": "string"
-              },
-              "requesterDepartment": {
-                "type": "string"
-              },
-              "assigneeDepartment": {
-                "type": "string"
-              },
-              "category": {
-                "type": "string"
-              },
-              "priority": {
-                "type": "string",
-                "enum": [
-                  "normal",
-                  "high",
-                  "urgent"
-                ]
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "open",
-                  "answered",
-                  "resolved"
-                ]
-              },
-              "sourceQuestion": {
-                "type": "string"
-              },
-              "chatAnswer": {
-                "type": "string"
-              },
-              "chatRunId": {
-                "type": "string"
-              },
-              "references": {
-                "type": "string"
-              },
-              "answerTitle": {
-                "type": "string"
-              },
-              "answerBody": {
-                "type": "string"
-              },
-              "responderName": {
-                "type": "string"
-              },
-              "responderDepartment": {
-                "type": "string"
-              },
-              "internalMemo": {
-                "type": "string"
-              },
-              "notifyRequester": {
-                "type": "boolean"
-              },
-              "createdAt": {
-                "type": "string"
-              },
-              "updatedAt": {
-                "type": "string"
-              },
-              "answeredAt": {
-                "type": "string"
-              },
-              "resolvedAt": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "questionId",
-              "title",
-              "question",
-              "requesterName",
-              "requesterDepartment",
-              "assigneeDepartment",
-              "category",
-              "priority",
-              "status",
-              "createdAt",
-              "updatedAt"
-            ]
-          }
-        },
-        "required": [
-          "role",
-          "text",
-          "createdAt"
-        ]
-      },
-      "maxItems": 100
-    }
-  },
-  "required": [
-    "id",
-    "title",
-    "updatedAt",
-    "messages"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `schemaVersion` | `enum(1)` | no | `data.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `id` | `string` | yes | リソースを一意に識別する ID。 | minLength=1 |
+| `title` | `string` | yes | 表示や一覧で利用するタイトル。 | minLength=1<br>maxLength=120 |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `isFavorite` | `boolean` | no | `data.isFavorite` の値。項目名は is favorite を表します。 | - |
+| `messages` | `array<object>` | yes | `data.messages` の値。項目名は messages を表します。 | maxItems=100 |
+| `messages[].role` | `enum(user \| assistant)` | yes | `data.messages[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `messages[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `messages[].sourceQuestion` | `string` | no | `data.messages[].sourceQuestion` の値。項目名は source question を表します。 | - |
+| `messages[].result` | `object` | no | `data.messages[].result` の値。項目名は result を表します。 | - |
+| `messages[].result.responseType` | `enum(answer \| refusal \| clarification)` | no | 回答、回答不能、確認質問などのレスポンス種別。 | enum=answer, refusal, clarification |
+| `messages[].result.answer` | `string` | yes | RAG または担当者による回答本文。 | - |
+| `messages[].result.isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `messages[].result.needsClarification` | `boolean` | no | 回答前に対象確認が必要かどうか。 | - |
+| `messages[].result.clarification` | `object` | no | `data.messages[].result.clarification` の値。項目名は clarification を表します。 | - |
+| `messages[].result.clarification.needsClarification` | `boolean` | yes | 回答前に対象確認が必要かどうか。 | - |
+| `messages[].result.clarification.reason` | `enum(ambiguous_target \| missing_scope \| unresolved_reference \| multiple_candidate_intents \| conflicting_scope \| not_needed)` | yes | 判断や失敗の理由。 | enum=ambiguous_target, missing_scope, unresolved_reference, multiple_candidate_intents, conflicting_scope, not_needed |
+| `messages[].result.clarification.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `messages[].result.clarification.options` | `array<object>` | yes | `data.messages[].result.clarification.options` の値。項目名は options を表します。 | maxItems=5 |
+| `messages[].result.clarification.options[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `messages[].result.clarification.options[].label` | `string` | yes | `data.messages[].result.clarification.options[].label` の値。項目名は label を表します。 | - |
+| `messages[].result.clarification.options[].resolvedQuery` | `string` | yes | `data.messages[].result.clarification.options[].resolvedQuery` の値。項目名は resolved query を表します。 | - |
+| `messages[].result.clarification.options[].reason` | `string` | no | 判断や失敗の理由。 | - |
+| `messages[].result.clarification.options[].source` | `enum(memory \| evidence \| aspect \| history)` | yes | `data.messages[].result.clarification.options[].source` の値。項目名は source を表します。 | enum=memory, evidence, aspect, history |
+| `messages[].result.clarification.options[].grounding` | `array<object>` | no | `data.messages[].result.clarification.options[].grounding` の値。項目名は grounding を表します。 | - |
+| `messages[].result.clarification.options[].grounding[].documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.clarification.options[].grounding[].fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.clarification.options[].grounding[].chunkId` | `string` | no | `data.messages[].result.clarification.options[].grounding[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.clarification.options[].grounding[].heading` | `string` | no | `data.messages[].result.clarification.options[].grounding[].heading` の値。項目名は heading を表します。 | - |
+| `messages[].result.clarification.missingSlots` | `array<string>` | no | `data.messages[].result.clarification.missingSlots` の値。項目名は missing slots を表します。 | - |
+| `messages[].result.clarification.confidence` | `number` | yes | `data.messages[].result.clarification.confidence` の値。項目名は confidence を表します。 | minimum=0<br>maximum=1 |
+| `messages[].result.clarification.ambiguityScore` | `number` | no | `data.messages[].result.clarification.ambiguityScore` の値。項目名は ambiguity score を表します。 | minimum=0<br>maximum=1 |
+| `messages[].result.clarification.groundedOptionCount` | `integer` | no | `data.messages[].result.clarification.groundedOptionCount` の値。項目名は grounded option count を表します。 | minimum=0 |
+| `messages[].result.citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `messages[].result.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.citations[].chunkId` | `string` | no | `data.messages[].result.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `messages[].result.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.retrieved[].chunkId` | `string` | no | `data.messages[].result.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `messages[].result.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.finalEvidence[].chunkId` | `string` | no | `data.messages[].result.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug` | `object` | no | 調査用の内部処理情報。 | - |
+| `messages[].result.debug.schemaVersion` | `enum(1)` | no | `data.messages[].result.debug.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `messages[].result.debug.runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `messages[].result.debug.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `messages[].result.debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
+| `messages[].result.debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `messages[].result.debug.clueModelId` | `string` | yes | `data.messages[].result.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `messages[].result.debug.clarificationContext` | `object` | no | `data.messages[].result.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `messages[].result.debug.clarificationContext.originalQuestion` | `string` | no | `data.messages[].result.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `messages[].result.debug.clarificationContext.selectedOptionId` | `string` | no | `data.messages[].result.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `messages[].result.debug.clarificationContext.selectedValue` | `string` | no | `data.messages[].result.debug.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `messages[].result.debug.pipelineVersions` | `object` | no | `data.messages[].result.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `messages[].result.debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.chunkerVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.sourceExtractorVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.memoryPromptVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.promptVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.indexVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `messages[].result.debug.pipelineVersions.embeddingDimensions` | `integer` | yes | `data.messages[].result.debug.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `messages[].result.debug.ragProfile` | `object` | no | `data.messages[].result.debug.ragProfile` の値。項目名は rag profile を表します。 | - |
+| `messages[].result.debug.ragProfile.id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `messages[].result.debug.ragProfile.version` | `string` | yes | `data.messages[].result.debug.ragProfile.version` の値。項目名は version を表します。 | - |
+| `messages[].result.debug.ragProfile.retrievalProfileId` | `string` | yes | `data.messages[].result.debug.ragProfile.retrievalProfileId` の値。項目名は retrieval profile id を表します。 | - |
+| `messages[].result.debug.ragProfile.retrievalProfileVersion` | `string` | yes | `data.messages[].result.debug.ragProfile.retrievalProfileVersion` の値。項目名は retrieval profile version を表します。 | - |
+| `messages[].result.debug.ragProfile.answerPolicyId` | `string` | yes | `data.messages[].result.debug.ragProfile.answerPolicyId` の値。項目名は answer policy id を表します。 | - |
+| `messages[].result.debug.ragProfile.answerPolicyVersion` | `string` | yes | `data.messages[].result.debug.ragProfile.answerPolicyVersion` の値。項目名は answer policy version を表します。 | - |
+| `messages[].result.debug.topK` | `number` | yes | 検索で取得する上位件数。 | - |
+| `messages[].result.debug.memoryTopK` | `number` | yes | memory 検索で取得する上位件数。 | - |
+| `messages[].result.debug.minScore` | `number` | yes | 検索結果として採用する最小 score。 | - |
+| `messages[].result.debug.startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `messages[].result.debug.completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `messages[].result.debug.totalLatencyMs` | `number` | yes | `data.messages[].result.debug.totalLatencyMs` の値。項目名は total latency ms を表します。 | - |
+| `messages[].result.debug.status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `messages[].result.debug.answerPreview` | `string` | yes | `data.messages[].result.debug.answerPreview` の値。項目名は answer preview を表します。 | - |
+| `messages[].result.debug.isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `messages[].result.debug.citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `messages[].result.debug.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.debug.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.debug.citations[].chunkId` | `string` | no | `data.messages[].result.debug.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.debug.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `messages[].result.debug.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.debug.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.debug.retrieved[].chunkId` | `string` | no | `data.messages[].result.debug.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.debug.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `messages[].result.debug.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.debug.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.debug.finalEvidence[].chunkId` | `string` | no | `data.messages[].result.debug.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug.steps` | `array<object>` | yes | `data.messages[].result.debug.steps` の値。項目名は steps を表します。 | - |
+| `messages[].result.debug.steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
+| `messages[].result.debug.steps[].label` | `string` | yes | `data.messages[].result.debug.steps[].label` の値。項目名は label を表します。 | - |
+| `messages[].result.debug.steps[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `messages[].result.debug.steps[].latencyMs` | `number` | yes | `data.messages[].result.debug.steps[].latencyMs` の値。項目名は latency ms を表します。 | - |
+| `messages[].result.debug.steps[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `messages[].result.debug.steps[].summary` | `string` | yes | 処理結果や debug step の要約。 | - |
+| `messages[].result.debug.steps[].detail` | `string` | no | `data.messages[].result.debug.steps[].detail` の値。項目名は detail を表します。 | - |
+| `messages[].result.debug.steps[].output` | `object` | no | `data.messages[].result.debug.steps[].output` の値。項目名は output を表します。 | - |
+| `messages[].result.debug.steps[].hitCount` | `number` | no | `data.messages[].result.debug.steps[].hitCount` の値。項目名は hit count を表します。 | - |
+| `messages[].result.debug.steps[].tokenCount` | `number` | no | `data.messages[].result.debug.steps[].tokenCount` の値。項目名は token count を表します。 | - |
+| `messages[].result.debug.steps[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `messages[].result.debug.steps[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `messages[].questionTicket` | `object` | no | `data.messages[].questionTicket` の値。項目名は question ticket を表します。 | - |
+| `messages[].questionTicket.questionId` | `string` | yes | 担当者問い合わせを識別する ID。 | - |
+| `messages[].questionTicket.title` | `string` | yes | 表示や一覧で利用するタイトル。 | - |
+| `messages[].questionTicket.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `messages[].questionTicket.requesterName` | `string` | yes | `data.messages[].questionTicket.requesterName` の値。項目名は requester name を表します。 | - |
+| `messages[].questionTicket.requesterUserId` | `string` | no | `data.messages[].questionTicket.requesterUserId` の値。項目名は requester user id を表します。 | - |
+| `messages[].questionTicket.requesterDepartment` | `string` | yes | `data.messages[].questionTicket.requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `messages[].questionTicket.assigneeDepartment` | `string` | yes | `data.messages[].questionTicket.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `messages[].questionTicket.category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `messages[].questionTicket.priority` | `enum(normal \| high \| urgent)` | yes | `data.messages[].questionTicket.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `messages[].questionTicket.status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `messages[].questionTicket.sourceQuestion` | `string` | no | `data.messages[].questionTicket.sourceQuestion` の値。項目名は source question を表します。 | - |
+| `messages[].questionTicket.chatAnswer` | `string` | no | `data.messages[].questionTicket.chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `messages[].questionTicket.chatRunId` | `string` | no | `data.messages[].questionTicket.chatRunId` の値。項目名は chat run id を表します。 | - |
+| `messages[].questionTicket.references` | `string` | no | `data.messages[].questionTicket.references` の値。項目名は references を表します。 | - |
+| `messages[].questionTicket.answerTitle` | `string` | no | `data.messages[].questionTicket.answerTitle` の値。項目名は answer title を表します。 | - |
+| `messages[].questionTicket.answerBody` | `string` | no | `data.messages[].questionTicket.answerBody` の値。項目名は answer body を表します。 | - |
+| `messages[].questionTicket.responderName` | `string` | no | `data.messages[].questionTicket.responderName` の値。項目名は responder name を表します。 | - |
+| `messages[].questionTicket.responderDepartment` | `string` | no | `data.messages[].questionTicket.responderDepartment` の値。項目名は responder department を表します。 | - |
+| `messages[].questionTicket.internalMemo` | `string` | no | `data.messages[].questionTicket.internalMemo` の値。項目名は internal memo を表します。 | - |
+| `messages[].questionTicket.notifyRequester` | `boolean` | no | `data.messages[].questionTicket.notifyRequester` の値。項目名は notify requester を表します。 | - |
+| `messages[].questionTicket.createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `messages[].questionTicket.updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `messages[].questionTicket.answeredAt` | `string` | no | `data.messages[].questionTicket.answeredAt` の値。項目名は answered at を表します。 | - |
+| `messages[].questionTicket.resolvedAt` | `string` | no | `data.messages[].questionTicket.resolvedAt` の値。項目名は resolved at を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Saved conversation history
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "schemaVersion": {
-      "type": "number",
-      "enum": [
-        1
-      ],
-      "default": 1
-    },
-    "id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "title": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 120
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "isFavorite": {
-      "type": "boolean",
-      "default": false
-    },
-    "messages": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "role": {
-            "type": "string",
-            "enum": [
-              "user",
-              "assistant"
-            ]
-          },
-          "text": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "sourceQuestion": {
-            "type": "string"
-          },
-          "result": {
-            "type": "object",
-            "properties": {
-              "responseType": {
-                "type": "string",
-                "enum": [
-                  "answer",
-                  "refusal",
-                  "clarification"
-                ]
-              },
-              "answer": {
-                "type": "string"
-              },
-              "isAnswerable": {
-                "type": "boolean"
-              },
-              "needsClarification": {
-                "type": "boolean"
-              },
-              "clarification": {
-                "type": "object",
-                "properties": {
-                  "needsClarification": {
-                    "type": "boolean"
-                  },
-                  "reason": {
-                    "type": "string",
-                    "enum": [
-                      "ambiguous_target",
-                      "missing_scope",
-                      "unresolved_reference",
-                      "multiple_candidate_intents",
-                      "conflicting_scope",
-                      "not_needed"
-                    ]
-                  },
-                  "question": {
-                    "type": "string"
-                  },
-                  "options": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "label": {
-                          "type": "string"
-                        },
-                        "resolvedQuery": {
-                          "type": "string"
-                        },
-                        "reason": {
-                          "type": "string"
-                        },
-                        "source": {
-                          "type": "string",
-                          "enum": [
-                            "memory",
-                            "evidence",
-                            "aspect",
-                            "history"
-                          ]
-                        },
-                        "grounding": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "documentId": {
-                                "type": "string"
-                              },
-                              "fileName": {
-                                "type": "string"
-                              },
-                              "chunkId": {
-                                "type": "string"
-                              },
-                              "heading": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "default": []
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "label",
-                        "resolvedQuery",
-                        "source"
-                      ]
-                    },
-                    "maxItems": 5
-                  },
-                  "missingSlots": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "default": []
-                  },
-                  "confidence": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                  },
-                  "ambiguityScore": {
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1
-                  },
-                  "groundedOptionCount": {
-                    "type": "integer",
-                    "minimum": 0
-                  }
-                },
-                "required": [
-                  "needsClarification",
-                  "reason",
-                  "question",
-                  "options",
-                  "confidence"
-                ]
-              },
-              "citations": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "documentId": {
-                      "type": "string"
-                    },
-                    "fileName": {
-                      "type": "string"
-                    },
-                    "chunkId": {
-                      "type": "string"
-                    },
-                    "score": {
-                      "type": "number"
-                    },
-                    "text": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "documentId",
-                    "fileName",
-                    "score",
-                    "text"
-                  ]
-                }
-              },
-              "retrieved": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "documentId": {
-                      "type": "string"
-                    },
-                    "fileName": {
-                      "type": "string"
-                    },
-                    "chunkId": {
-                      "type": "string"
-                    },
-                    "score": {
-                      "type": "number"
-                    },
-                    "text": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "documentId",
-                    "fileName",
-                    "score",
-                    "text"
-                  ]
-                }
-              },
-              "finalEvidence": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "documentId": {
-                      "type": "string"
-                    },
-                    "fileName": {
-                      "type": "string"
-                    },
-                    "chunkId": {
-                      "type": "string"
-                    },
-                    "score": {
-                      "type": "number"
-                    },
-                    "text": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "documentId",
-                    "fileName",
-                    "score",
-                    "text"
-                  ]
-                }
-              },
-              "debug": {
-                "type": "object",
-                "properties": {
-                  "schemaVersion": {
-                    "type": "number",
-                    "enum": [
-                      1
-                    ],
-                    "default": 1
-                  },
-                  "runId": {
-                    "type": "string"
-                  },
-                  "question": {
-                    "type": "string"
-                  },
-                  "modelId": {
-                    "type": "string"
-                  },
-                  "embeddingModelId": {
-                    "type": "string"
-                  },
-                  "clueModelId": {
-                    "type": "string"
-                  },
-                  "clarificationContext": {
-                    "type": "object",
-                    "properties": {
-                      "originalQuestion": {
-                        "type": "string"
-                      },
-                      "selectedOptionId": {
-                        "type": "string"
-                      },
-                      "selectedValue": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "pipelineVersions": {
-                    "type": "object",
-                    "properties": {
-                      "agentWorkflowVersion": {
-                        "type": "string"
-                      },
-                      "chunkerVersion": {
-                        "type": "string"
-                      },
-                      "sourceExtractorVersion": {
-                        "type": "string"
-                      },
-                      "memoryPromptVersion": {
-                        "type": "string"
-                      },
-                      "promptVersion": {
-                        "type": "string"
-                      },
-                      "indexVersion": {
-                        "type": "string"
-                      },
-                      "embeddingModelId": {
-                        "type": "string"
-                      },
-                      "embeddingDimensions": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
-                      }
-                    },
-                    "required": [
-                      "agentWorkflowVersion",
-                      "chunkerVersion",
-                      "sourceExtractorVersion",
-                      "memoryPromptVersion",
-                      "promptVersion",
-                      "indexVersion",
-                      "embeddingModelId",
-                      "embeddingDimensions"
-                    ]
-                  },
-                  "ragProfile": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "version": {
-                        "type": "string"
-                      },
-                      "retrievalProfileId": {
-                        "type": "string"
-                      },
-                      "retrievalProfileVersion": {
-                        "type": "string"
-                      },
-                      "answerPolicyId": {
-                        "type": "string"
-                      },
-                      "answerPolicyVersion": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "version",
-                      "retrievalProfileId",
-                      "retrievalProfileVersion",
-                      "answerPolicyId",
-                      "answerPolicyVersion"
-                    ]
-                  },
-                  "topK": {
-                    "type": "number"
-                  },
-                  "memoryTopK": {
-                    "type": "number"
-                  },
-                  "minScore": {
-                    "type": "number"
-                  },
-                  "startedAt": {
-                    "type": "string"
-                  },
-                  "completedAt": {
-                    "type": "string"
-                  },
-                  "totalLatencyMs": {
-                    "type": "number"
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "success",
-                      "warning",
-                      "error"
-                    ]
-                  },
-                  "answerPreview": {
-                    "type": "string"
-                  },
-                  "isAnswerable": {
-                    "type": "boolean"
-                  },
-                  "citations": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "documentId": {
-                          "type": "string"
-                        },
-                        "fileName": {
-                          "type": "string"
-                        },
-                        "chunkId": {
-                          "type": "string"
-                        },
-                        "score": {
-                          "type": "number"
-                        },
-                        "text": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "documentId",
-                        "fileName",
-                        "score",
-                        "text"
-                      ]
-                    }
-                  },
-                  "retrieved": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "documentId": {
-                          "type": "string"
-                        },
-                        "fileName": {
-                          "type": "string"
-                        },
-                        "chunkId": {
-                          "type": "string"
-                        },
-                        "score": {
-                          "type": "number"
-                        },
-                        "text": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "documentId",
-                        "fileName",
-                        "score",
-                        "text"
-                      ]
-                    }
-                  },
-                  "finalEvidence": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "documentId": {
-                          "type": "string"
-                        },
-                        "fileName": {
-                          "type": "string"
-                        },
-                        "chunkId": {
-                          "type": "string"
-                        },
-                        "score": {
-                          "type": "number"
-                        },
-                        "text": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "documentId",
-                        "fileName",
-                        "score",
-                        "text"
-                      ]
-                    }
-                  },
-                  "steps": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "number"
-                        },
-                        "label": {
-                          "type": "string"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "success",
-                            "warning",
-                            "error"
-                          ]
-                        },
-                        "latencyMs": {
-                          "type": "number"
-                        },
-                        "modelId": {
-                          "type": "string"
-                        },
-                        "summary": {
-                          "type": "string"
-                        },
-                        "detail": {
-                          "type": "string"
-                        },
-                        "output": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "nullable": true
-                          }
-                        },
-                        "hitCount": {
-                          "type": "number"
-                        },
-                        "tokenCount": {
-                          "type": "number"
-                        },
-                        "startedAt": {
-                          "type": "string"
-                        },
-                        "completedAt": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "label",
-                        "status",
-                        "latencyMs",
-                        "summary",
-                        "startedAt",
-                        "completedAt"
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "runId",
-                  "question",
-                  "modelId",
-                  "embeddingModelId",
-                  "clueModelId",
-                  "topK",
-                  "memoryTopK",
-                  "minScore",
-                  "startedAt",
-                  "completedAt",
-                  "totalLatencyMs",
-                  "status",
-                  "answerPreview",
-                  "isAnswerable",
-                  "citations",
-                  "retrieved",
-                  "steps"
-                ]
-              }
-            },
-            "required": [
-              "answer",
-              "isAnswerable",
-              "citations",
-              "retrieved"
-            ]
-          },
-          "questionTicket": {
-            "type": "object",
-            "properties": {
-              "questionId": {
-                "type": "string"
-              },
-              "title": {
-                "type": "string"
-              },
-              "question": {
-                "type": "string"
-              },
-              "requesterName": {
-                "type": "string"
-              },
-              "requesterUserId": {
-                "type": "string"
-              },
-              "requesterDepartment": {
-                "type": "string"
-              },
-              "assigneeDepartment": {
-                "type": "string"
-              },
-              "category": {
-                "type": "string"
-              },
-              "priority": {
-                "type": "string",
-                "enum": [
-                  "normal",
-                  "high",
-                  "urgent"
-                ]
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "open",
-                  "answered",
-                  "resolved"
-                ]
-              },
-              "sourceQuestion": {
-                "type": "string"
-              },
-              "chatAnswer": {
-                "type": "string"
-              },
-              "chatRunId": {
-                "type": "string"
-              },
-              "references": {
-                "type": "string"
-              },
-              "answerTitle": {
-                "type": "string"
-              },
-              "answerBody": {
-                "type": "string"
-              },
-              "responderName": {
-                "type": "string"
-              },
-              "responderDepartment": {
-                "type": "string"
-              },
-              "internalMemo": {
-                "type": "string"
-              },
-              "notifyRequester": {
-                "type": "boolean"
-              },
-              "createdAt": {
-                "type": "string"
-              },
-              "updatedAt": {
-                "type": "string"
-              },
-              "answeredAt": {
-                "type": "string"
-              },
-              "resolvedAt": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "questionId",
-              "title",
-              "question",
-              "requesterName",
-              "requesterDepartment",
-              "assigneeDepartment",
-              "category",
-              "priority",
-              "status",
-              "createdAt",
-              "updatedAt"
-            ]
-          }
-        },
-        "required": [
-          "role",
-          "text",
-          "createdAt"
-        ]
-      },
-      "maxItems": 100
-    }
-  },
-  "required": [
-    "id",
-    "title",
-    "updatedAt",
-    "messages"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `schemaVersion` | `enum(1)` | no | `response.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `id` | `string` | yes | リソースを一意に識別する ID。 | minLength=1 |
+| `title` | `string` | yes | 表示や一覧で利用するタイトル。 | minLength=1<br>maxLength=120 |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `isFavorite` | `boolean` | no | `response.isFavorite` の値。項目名は is favorite を表します。 | - |
+| `messages` | `array<object>` | yes | `response.messages` の値。項目名は messages を表します。 | maxItems=100 |
+| `messages[].role` | `enum(user \| assistant)` | yes | `response.messages[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `messages[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `messages[].sourceQuestion` | `string` | no | `response.messages[].sourceQuestion` の値。項目名は source question を表します。 | - |
+| `messages[].result` | `object` | no | `response.messages[].result` の値。項目名は result を表します。 | - |
+| `messages[].result.responseType` | `enum(answer \| refusal \| clarification)` | no | 回答、回答不能、確認質問などのレスポンス種別。 | enum=answer, refusal, clarification |
+| `messages[].result.answer` | `string` | yes | RAG または担当者による回答本文。 | - |
+| `messages[].result.isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `messages[].result.needsClarification` | `boolean` | no | 回答前に対象確認が必要かどうか。 | - |
+| `messages[].result.clarification` | `object` | no | `response.messages[].result.clarification` の値。項目名は clarification を表します。 | - |
+| `messages[].result.clarification.needsClarification` | `boolean` | yes | 回答前に対象確認が必要かどうか。 | - |
+| `messages[].result.clarification.reason` | `enum(ambiguous_target \| missing_scope \| unresolved_reference \| multiple_candidate_intents \| conflicting_scope \| not_needed)` | yes | 判断や失敗の理由。 | enum=ambiguous_target, missing_scope, unresolved_reference, multiple_candidate_intents, conflicting_scope, not_needed |
+| `messages[].result.clarification.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `messages[].result.clarification.options` | `array<object>` | yes | `response.messages[].result.clarification.options` の値。項目名は options を表します。 | maxItems=5 |
+| `messages[].result.clarification.options[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `messages[].result.clarification.options[].label` | `string` | yes | `response.messages[].result.clarification.options[].label` の値。項目名は label を表します。 | - |
+| `messages[].result.clarification.options[].resolvedQuery` | `string` | yes | `response.messages[].result.clarification.options[].resolvedQuery` の値。項目名は resolved query を表します。 | - |
+| `messages[].result.clarification.options[].reason` | `string` | no | 判断や失敗の理由。 | - |
+| `messages[].result.clarification.options[].source` | `enum(memory \| evidence \| aspect \| history)` | yes | `response.messages[].result.clarification.options[].source` の値。項目名は source を表します。 | enum=memory, evidence, aspect, history |
+| `messages[].result.clarification.options[].grounding` | `array<object>` | no | `response.messages[].result.clarification.options[].grounding` の値。項目名は grounding を表します。 | - |
+| `messages[].result.clarification.options[].grounding[].documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.clarification.options[].grounding[].fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.clarification.options[].grounding[].chunkId` | `string` | no | `response.messages[].result.clarification.options[].grounding[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.clarification.options[].grounding[].heading` | `string` | no | `response.messages[].result.clarification.options[].grounding[].heading` の値。項目名は heading を表します。 | - |
+| `messages[].result.clarification.missingSlots` | `array<string>` | no | `response.messages[].result.clarification.missingSlots` の値。項目名は missing slots を表します。 | - |
+| `messages[].result.clarification.confidence` | `number` | yes | `response.messages[].result.clarification.confidence` の値。項目名は confidence を表します。 | minimum=0<br>maximum=1 |
+| `messages[].result.clarification.ambiguityScore` | `number` | no | `response.messages[].result.clarification.ambiguityScore` の値。項目名は ambiguity score を表します。 | minimum=0<br>maximum=1 |
+| `messages[].result.clarification.groundedOptionCount` | `integer` | no | `response.messages[].result.clarification.groundedOptionCount` の値。項目名は grounded option count を表します。 | minimum=0 |
+| `messages[].result.citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `messages[].result.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.citations[].chunkId` | `string` | no | `response.messages[].result.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `messages[].result.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.retrieved[].chunkId` | `string` | no | `response.messages[].result.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `messages[].result.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.finalEvidence[].chunkId` | `string` | no | `response.messages[].result.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug` | `object` | no | 調査用の内部処理情報。 | - |
+| `messages[].result.debug.schemaVersion` | `enum(1)` | no | `response.messages[].result.debug.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `messages[].result.debug.runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `messages[].result.debug.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `messages[].result.debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
+| `messages[].result.debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `messages[].result.debug.clueModelId` | `string` | yes | `response.messages[].result.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `messages[].result.debug.clarificationContext` | `object` | no | `response.messages[].result.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `messages[].result.debug.clarificationContext.originalQuestion` | `string` | no | `response.messages[].result.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `messages[].result.debug.clarificationContext.selectedOptionId` | `string` | no | `response.messages[].result.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `messages[].result.debug.clarificationContext.selectedValue` | `string` | no | `response.messages[].result.debug.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `messages[].result.debug.pipelineVersions` | `object` | no | `response.messages[].result.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `messages[].result.debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.chunkerVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.memoryPromptVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.promptVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.indexVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `messages[].result.debug.pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `messages[].result.debug.pipelineVersions.embeddingDimensions` | `integer` | yes | `response.messages[].result.debug.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `messages[].result.debug.ragProfile` | `object` | no | `response.messages[].result.debug.ragProfile` の値。項目名は rag profile を表します。 | - |
+| `messages[].result.debug.ragProfile.id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `messages[].result.debug.ragProfile.version` | `string` | yes | `response.messages[].result.debug.ragProfile.version` の値。項目名は version を表します。 | - |
+| `messages[].result.debug.ragProfile.retrievalProfileId` | `string` | yes | `response.messages[].result.debug.ragProfile.retrievalProfileId` の値。項目名は retrieval profile id を表します。 | - |
+| `messages[].result.debug.ragProfile.retrievalProfileVersion` | `string` | yes | `response.messages[].result.debug.ragProfile.retrievalProfileVersion` の値。項目名は retrieval profile version を表します。 | - |
+| `messages[].result.debug.ragProfile.answerPolicyId` | `string` | yes | `response.messages[].result.debug.ragProfile.answerPolicyId` の値。項目名は answer policy id を表します。 | - |
+| `messages[].result.debug.ragProfile.answerPolicyVersion` | `string` | yes | `response.messages[].result.debug.ragProfile.answerPolicyVersion` の値。項目名は answer policy version を表します。 | - |
+| `messages[].result.debug.topK` | `number` | yes | 検索で取得する上位件数。 | - |
+| `messages[].result.debug.memoryTopK` | `number` | yes | memory 検索で取得する上位件数。 | - |
+| `messages[].result.debug.minScore` | `number` | yes | 検索結果として採用する最小 score。 | - |
+| `messages[].result.debug.startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `messages[].result.debug.completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `messages[].result.debug.totalLatencyMs` | `number` | yes | `response.messages[].result.debug.totalLatencyMs` の値。項目名は total latency ms を表します。 | - |
+| `messages[].result.debug.status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `messages[].result.debug.answerPreview` | `string` | yes | `response.messages[].result.debug.answerPreview` の値。項目名は answer preview を表します。 | - |
+| `messages[].result.debug.isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `messages[].result.debug.citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `messages[].result.debug.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.debug.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.debug.citations[].chunkId` | `string` | no | `response.messages[].result.debug.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.debug.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `messages[].result.debug.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.debug.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.debug.retrieved[].chunkId` | `string` | no | `response.messages[].result.debug.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.debug.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `messages[].result.debug.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `messages[].result.debug.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `messages[].result.debug.finalEvidence[].chunkId` | `string` | no | `response.messages[].result.debug.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `messages[].result.debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug.steps` | `array<object>` | yes | `response.messages[].result.debug.steps` の値。項目名は steps を表します。 | - |
+| `messages[].result.debug.steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
+| `messages[].result.debug.steps[].label` | `string` | yes | `response.messages[].result.debug.steps[].label` の値。項目名は label を表します。 | - |
+| `messages[].result.debug.steps[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `messages[].result.debug.steps[].latencyMs` | `number` | yes | `response.messages[].result.debug.steps[].latencyMs` の値。項目名は latency ms を表します。 | - |
+| `messages[].result.debug.steps[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `messages[].result.debug.steps[].summary` | `string` | yes | 処理結果や debug step の要約。 | - |
+| `messages[].result.debug.steps[].detail` | `string` | no | `response.messages[].result.debug.steps[].detail` の値。項目名は detail を表します。 | - |
+| `messages[].result.debug.steps[].output` | `object` | no | `response.messages[].result.debug.steps[].output` の値。項目名は output を表します。 | - |
+| `messages[].result.debug.steps[].hitCount` | `number` | no | `response.messages[].result.debug.steps[].hitCount` の値。項目名は hit count を表します。 | - |
+| `messages[].result.debug.steps[].tokenCount` | `number` | no | `response.messages[].result.debug.steps[].tokenCount` の値。項目名は token count を表します。 | - |
+| `messages[].result.debug.steps[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `messages[].result.debug.steps[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `messages[].questionTicket` | `object` | no | `response.messages[].questionTicket` の値。項目名は question ticket を表します。 | - |
+| `messages[].questionTicket.questionId` | `string` | yes | 担当者問い合わせを識別する ID。 | - |
+| `messages[].questionTicket.title` | `string` | yes | 表示や一覧で利用するタイトル。 | - |
+| `messages[].questionTicket.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `messages[].questionTicket.requesterName` | `string` | yes | `response.messages[].questionTicket.requesterName` の値。項目名は requester name を表します。 | - |
+| `messages[].questionTicket.requesterUserId` | `string` | no | `response.messages[].questionTicket.requesterUserId` の値。項目名は requester user id を表します。 | - |
+| `messages[].questionTicket.requesterDepartment` | `string` | yes | `response.messages[].questionTicket.requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `messages[].questionTicket.assigneeDepartment` | `string` | yes | `response.messages[].questionTicket.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `messages[].questionTicket.category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `messages[].questionTicket.priority` | `enum(normal \| high \| urgent)` | yes | `response.messages[].questionTicket.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `messages[].questionTicket.status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `messages[].questionTicket.sourceQuestion` | `string` | no | `response.messages[].questionTicket.sourceQuestion` の値。項目名は source question を表します。 | - |
+| `messages[].questionTicket.chatAnswer` | `string` | no | `response.messages[].questionTicket.chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `messages[].questionTicket.chatRunId` | `string` | no | `response.messages[].questionTicket.chatRunId` の値。項目名は chat run id を表します。 | - |
+| `messages[].questionTicket.references` | `string` | no | `response.messages[].questionTicket.references` の値。項目名は references を表します。 | - |
+| `messages[].questionTicket.answerTitle` | `string` | no | `response.messages[].questionTicket.answerTitle` の値。項目名は answer title を表します。 | - |
+| `messages[].questionTicket.answerBody` | `string` | no | `response.messages[].questionTicket.answerBody` の値。項目名は answer body を表します。 | - |
+| `messages[].questionTicket.responderName` | `string` | no | `response.messages[].questionTicket.responderName` の値。項目名は responder name を表します。 | - |
+| `messages[].questionTicket.responderDepartment` | `string` | no | `response.messages[].questionTicket.responderDepartment` の値。項目名は responder department を表します。 | - |
+| `messages[].questionTicket.internalMemo` | `string` | no | `response.messages[].questionTicket.internalMemo` の値。項目名は internal memo を表します。 | - |
+| `messages[].questionTicket.notifyRequester` | `boolean` | no | `response.messages[].questionTicket.notifyRequester` の値。項目名は notify requester を表します。 | - |
+| `messages[].questionTicket.createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `messages[].questionTicket.updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `messages[].questionTicket.answeredAt` | `string` | no | `response.messages[].questionTicket.answeredAt` の値。項目名は answered at を表します。 | - |
+| `messages[].questionTicket.resolvedAt` | `string` | no | `response.messages[].questionTicket.resolvedAt` の値。項目名は resolved at を表します。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### DELETE /conversation-history/{id}
 
-Anchor: `delete-/conversation-history/{id}`
+Summary: 会話履歴を削除する
 
-Tags: -
-Security: default
+ログインユーザー自身の指定した会話履歴 item を削除します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `id` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `id` | `string` | yes | リソースを一意に識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Deleted conversation history
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "id": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "id"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `id` | `string` | yes | リソースを一意に識別する ID。 | - |
 
-#### `404`
-
-Conversation history not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /debug-runs
 
-Anchor: `get-/debug-runs`
+Summary: debug trace 一覧を取得する
 
-Tags: -
-Security: default
+永続化された RAG debug trace の一覧を管理者向けに返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List persisted chat debug traces
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "debugRuns": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "schemaVersion": {
-            "type": "number",
-            "enum": [
-              1
-            ],
-            "default": 1
-          },
-          "runId": {
-            "type": "string"
-          },
-          "question": {
-            "type": "string"
-          },
-          "modelId": {
-            "type": "string"
-          },
-          "embeddingModelId": {
-            "type": "string"
-          },
-          "clueModelId": {
-            "type": "string"
-          },
-          "clarificationContext": {
-            "type": "object",
-            "properties": {
-              "originalQuestion": {
-                "type": "string"
-              },
-              "selectedOptionId": {
-                "type": "string"
-              },
-              "selectedValue": {
-                "type": "string"
-              }
-            }
-          },
-          "pipelineVersions": {
-            "type": "object",
-            "properties": {
-              "agentWorkflowVersion": {
-                "type": "string"
-              },
-              "chunkerVersion": {
-                "type": "string"
-              },
-              "sourceExtractorVersion": {
-                "type": "string"
-              },
-              "memoryPromptVersion": {
-                "type": "string"
-              },
-              "promptVersion": {
-                "type": "string"
-              },
-              "indexVersion": {
-                "type": "string"
-              },
-              "embeddingModelId": {
-                "type": "string"
-              },
-              "embeddingDimensions": {
-                "type": "integer",
-                "minimum": 0,
-                "exclusiveMinimum": true
-              }
-            },
-            "required": [
-              "agentWorkflowVersion",
-              "chunkerVersion",
-              "sourceExtractorVersion",
-              "memoryPromptVersion",
-              "promptVersion",
-              "indexVersion",
-              "embeddingModelId",
-              "embeddingDimensions"
-            ]
-          },
-          "ragProfile": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
-              },
-              "retrievalProfileId": {
-                "type": "string"
-              },
-              "retrievalProfileVersion": {
-                "type": "string"
-              },
-              "answerPolicyId": {
-                "type": "string"
-              },
-              "answerPolicyVersion": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "id",
-              "version",
-              "retrievalProfileId",
-              "retrievalProfileVersion",
-              "answerPolicyId",
-              "answerPolicyVersion"
-            ]
-          },
-          "topK": {
-            "type": "number"
-          },
-          "memoryTopK": {
-            "type": "number"
-          },
-          "minScore": {
-            "type": "number"
-          },
-          "startedAt": {
-            "type": "string"
-          },
-          "completedAt": {
-            "type": "string"
-          },
-          "totalLatencyMs": {
-            "type": "number"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "success",
-              "warning",
-              "error"
-            ]
-          },
-          "answerPreview": {
-            "type": "string"
-          },
-          "isAnswerable": {
-            "type": "boolean"
-          },
-          "citations": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "documentId": {
-                  "type": "string"
-                },
-                "fileName": {
-                  "type": "string"
-                },
-                "chunkId": {
-                  "type": "string"
-                },
-                "score": {
-                  "type": "number"
-                },
-                "text": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "documentId",
-                "fileName",
-                "score",
-                "text"
-              ]
-            }
-          },
-          "retrieved": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "documentId": {
-                  "type": "string"
-                },
-                "fileName": {
-                  "type": "string"
-                },
-                "chunkId": {
-                  "type": "string"
-                },
-                "score": {
-                  "type": "number"
-                },
-                "text": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "documentId",
-                "fileName",
-                "score",
-                "text"
-              ]
-            }
-          },
-          "finalEvidence": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "documentId": {
-                  "type": "string"
-                },
-                "fileName": {
-                  "type": "string"
-                },
-                "chunkId": {
-                  "type": "string"
-                },
-                "score": {
-                  "type": "number"
-                },
-                "text": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "documentId",
-                "fileName",
-                "score",
-                "text"
-              ]
-            }
-          },
-          "steps": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "number"
-                },
-                "label": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "success",
-                    "warning",
-                    "error"
-                  ]
-                },
-                "latencyMs": {
-                  "type": "number"
-                },
-                "modelId": {
-                  "type": "string"
-                },
-                "summary": {
-                  "type": "string"
-                },
-                "detail": {
-                  "type": "string"
-                },
-                "output": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "nullable": true
-                  }
-                },
-                "hitCount": {
-                  "type": "number"
-                },
-                "tokenCount": {
-                  "type": "number"
-                },
-                "startedAt": {
-                  "type": "string"
-                },
-                "completedAt": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "label",
-                "status",
-                "latencyMs",
-                "summary",
-                "startedAt",
-                "completedAt"
-              ]
-            }
-          }
-        },
-        "required": [
-          "runId",
-          "question",
-          "modelId",
-          "embeddingModelId",
-          "clueModelId",
-          "topK",
-          "memoryTopK",
-          "minScore",
-          "startedAt",
-          "completedAt",
-          "totalLatencyMs",
-          "status",
-          "answerPreview",
-          "isAnswerable",
-          "citations",
-          "retrieved",
-          "steps"
-        ]
-      }
-    }
-  },
-  "required": [
-    "debugRuns"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `debugRuns` | `array<object>` | yes | `response.debugRuns` の値。項目名は debug runs を表します。 | - |
+| `debugRuns[].schemaVersion` | `enum(1)` | no | `response.debugRuns[].schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `debugRuns[].runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `debugRuns[].question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `debugRuns[].modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
+| `debugRuns[].embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `debugRuns[].clueModelId` | `string` | yes | `response.debugRuns[].clueModelId` の値。項目名は clue model id を表します。 | - |
+| `debugRuns[].clarificationContext` | `object` | no | `response.debugRuns[].clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `debugRuns[].clarificationContext.originalQuestion` | `string` | no | `response.debugRuns[].clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `debugRuns[].clarificationContext.selectedOptionId` | `string` | no | `response.debugRuns[].clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `debugRuns[].clarificationContext.selectedValue` | `string` | no | `response.debugRuns[].clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `debugRuns[].pipelineVersions` | `object` | no | `response.debugRuns[].pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `debugRuns[].pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `debugRuns[].pipelineVersions.chunkerVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `debugRuns[].pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `debugRuns[].pipelineVersions.memoryPromptVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `debugRuns[].pipelineVersions.promptVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `debugRuns[].pipelineVersions.indexVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `debugRuns[].pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `debugRuns[].pipelineVersions.embeddingDimensions` | `integer` | yes | `response.debugRuns[].pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `debugRuns[].ragProfile` | `object` | no | `response.debugRuns[].ragProfile` の値。項目名は rag profile を表します。 | - |
+| `debugRuns[].ragProfile.id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `debugRuns[].ragProfile.version` | `string` | yes | `response.debugRuns[].ragProfile.version` の値。項目名は version を表します。 | - |
+| `debugRuns[].ragProfile.retrievalProfileId` | `string` | yes | `response.debugRuns[].ragProfile.retrievalProfileId` の値。項目名は retrieval profile id を表します。 | - |
+| `debugRuns[].ragProfile.retrievalProfileVersion` | `string` | yes | `response.debugRuns[].ragProfile.retrievalProfileVersion` の値。項目名は retrieval profile version を表します。 | - |
+| `debugRuns[].ragProfile.answerPolicyId` | `string` | yes | `response.debugRuns[].ragProfile.answerPolicyId` の値。項目名は answer policy id を表します。 | - |
+| `debugRuns[].ragProfile.answerPolicyVersion` | `string` | yes | `response.debugRuns[].ragProfile.answerPolicyVersion` の値。項目名は answer policy version を表します。 | - |
+| `debugRuns[].topK` | `number` | yes | 検索で取得する上位件数。 | - |
+| `debugRuns[].memoryTopK` | `number` | yes | memory 検索で取得する上位件数。 | - |
+| `debugRuns[].minScore` | `number` | yes | 検索結果として採用する最小 score。 | - |
+| `debugRuns[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `debugRuns[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `debugRuns[].totalLatencyMs` | `number` | yes | `response.debugRuns[].totalLatencyMs` の値。項目名は total latency ms を表します。 | - |
+| `debugRuns[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `debugRuns[].answerPreview` | `string` | yes | `response.debugRuns[].answerPreview` の値。項目名は answer preview を表します。 | - |
+| `debugRuns[].isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `debugRuns[].citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `debugRuns[].citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debugRuns[].citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debugRuns[].citations[].chunkId` | `string` | no | `response.debugRuns[].citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debugRuns[].citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debugRuns[].citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debugRuns[].retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `debugRuns[].retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debugRuns[].retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debugRuns[].retrieved[].chunkId` | `string` | no | `response.debugRuns[].retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debugRuns[].retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debugRuns[].retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debugRuns[].finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `debugRuns[].finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `debugRuns[].finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `debugRuns[].finalEvidence[].chunkId` | `string` | no | `response.debugRuns[].finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debugRuns[].finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `debugRuns[].finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debugRuns[].steps` | `array<object>` | yes | `response.debugRuns[].steps` の値。項目名は steps を表します。 | - |
+| `debugRuns[].steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
+| `debugRuns[].steps[].label` | `string` | yes | `response.debugRuns[].steps[].label` の値。項目名は label を表します。 | - |
+| `debugRuns[].steps[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `debugRuns[].steps[].latencyMs` | `number` | yes | `response.debugRuns[].steps[].latencyMs` の値。項目名は latency ms を表します。 | - |
+| `debugRuns[].steps[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `debugRuns[].steps[].summary` | `string` | yes | 処理結果や debug step の要約。 | - |
+| `debugRuns[].steps[].detail` | `string` | no | `response.debugRuns[].steps[].detail` の値。項目名は detail を表します。 | - |
+| `debugRuns[].steps[].output` | `object` | no | `response.debugRuns[].steps[].output` の値。項目名は output を表します。 | - |
+| `debugRuns[].steps[].hitCount` | `number` | no | `response.debugRuns[].steps[].hitCount` の値。項目名は hit count を表します。 | - |
+| `debugRuns[].steps[].tokenCount` | `number` | no | `response.debugRuns[].steps[].tokenCount` の値。項目名は token count を表します。 | - |
+| `debugRuns[].steps[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `debugRuns[].steps[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
 
 ### GET /debug-runs/{runId}
 
-Anchor: `get-/debug-runs/{runid}`
+Summary: debug trace 詳細を取得する
 
-Tags: -
-Security: default
+指定した RAG debug trace の詳細ステップと判断情報を返します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `runId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Get a persisted chat debug trace
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "schemaVersion": {
-      "type": "number",
-      "enum": [
-        1
-      ],
-      "default": 1
-    },
-    "runId": {
-      "type": "string"
-    },
-    "question": {
-      "type": "string"
-    },
-    "modelId": {
-      "type": "string"
-    },
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "clueModelId": {
-      "type": "string"
-    },
-    "clarificationContext": {
-      "type": "object",
-      "properties": {
-        "originalQuestion": {
-          "type": "string"
-        },
-        "selectedOptionId": {
-          "type": "string"
-        },
-        "selectedValue": {
-          "type": "string"
-        }
-      }
-    },
-    "pipelineVersions": {
-      "type": "object",
-      "properties": {
-        "agentWorkflowVersion": {
-          "type": "string"
-        },
-        "chunkerVersion": {
-          "type": "string"
-        },
-        "sourceExtractorVersion": {
-          "type": "string"
-        },
-        "memoryPromptVersion": {
-          "type": "string"
-        },
-        "promptVersion": {
-          "type": "string"
-        },
-        "indexVersion": {
-          "type": "string"
-        },
-        "embeddingModelId": {
-          "type": "string"
-        },
-        "embeddingDimensions": {
-          "type": "integer",
-          "minimum": 0,
-          "exclusiveMinimum": true
-        }
-      },
-      "required": [
-        "agentWorkflowVersion",
-        "chunkerVersion",
-        "sourceExtractorVersion",
-        "memoryPromptVersion",
-        "promptVersion",
-        "indexVersion",
-        "embeddingModelId",
-        "embeddingDimensions"
-      ]
-    },
-    "ragProfile": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "version": {
-          "type": "string"
-        },
-        "retrievalProfileId": {
-          "type": "string"
-        },
-        "retrievalProfileVersion": {
-          "type": "string"
-        },
-        "answerPolicyId": {
-          "type": "string"
-        },
-        "answerPolicyVersion": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "version",
-        "retrievalProfileId",
-        "retrievalProfileVersion",
-        "answerPolicyId",
-        "answerPolicyVersion"
-      ]
-    },
-    "topK": {
-      "type": "number"
-    },
-    "memoryTopK": {
-      "type": "number"
-    },
-    "minScore": {
-      "type": "number"
-    },
-    "startedAt": {
-      "type": "string"
-    },
-    "completedAt": {
-      "type": "string"
-    },
-    "totalLatencyMs": {
-      "type": "number"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "success",
-        "warning",
-        "error"
-      ]
-    },
-    "answerPreview": {
-      "type": "string"
-    },
-    "isAnswerable": {
-      "type": "boolean"
-    },
-    "citations": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "retrieved": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "finalEvidence": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "text": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "score",
-          "text"
-        ]
-      }
-    },
-    "steps": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number"
-          },
-          "label": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "success",
-              "warning",
-              "error"
-            ]
-          },
-          "latencyMs": {
-            "type": "number"
-          },
-          "modelId": {
-            "type": "string"
-          },
-          "summary": {
-            "type": "string"
-          },
-          "detail": {
-            "type": "string"
-          },
-          "output": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            }
-          },
-          "hitCount": {
-            "type": "number"
-          },
-          "tokenCount": {
-            "type": "number"
-          },
-          "startedAt": {
-            "type": "string"
-          },
-          "completedAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "label",
-          "status",
-          "latencyMs",
-          "summary",
-          "startedAt",
-          "completedAt"
-        ]
-      }
-    }
-  },
-  "required": [
-    "runId",
-    "question",
-    "modelId",
-    "embeddingModelId",
-    "clueModelId",
-    "topK",
-    "memoryTopK",
-    "minScore",
-    "startedAt",
-    "completedAt",
-    "totalLatencyMs",
-    "status",
-    "answerPreview",
-    "isAnswerable",
-    "citations",
-    "retrieved",
-    "steps"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `schemaVersion` | `enum(1)` | no | `response.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
+| `embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `clueModelId` | `string` | yes | `response.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `clarificationContext` | `object` | no | `response.clarificationContext` の値。項目名は clarification context を表します。 | - |
+| `clarificationContext.originalQuestion` | `string` | no | `response.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
+| `clarificationContext.selectedOptionId` | `string` | no | `response.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
+| `clarificationContext.selectedValue` | `string` | no | `response.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `pipelineVersions` | `object` | no | `response.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `pipelineVersions.chunkerVersion` | `string` | yes | `response.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `pipelineVersions.memoryPromptVersion` | `string` | yes | `response.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `pipelineVersions.promptVersion` | `string` | yes | `response.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `pipelineVersions.indexVersion` | `string` | yes | `response.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `pipelineVersions.embeddingDimensions` | `integer` | yes | `response.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `ragProfile` | `object` | no | `response.ragProfile` の値。項目名は rag profile を表します。 | - |
+| `ragProfile.id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `ragProfile.version` | `string` | yes | `response.ragProfile.version` の値。項目名は version を表します。 | - |
+| `ragProfile.retrievalProfileId` | `string` | yes | `response.ragProfile.retrievalProfileId` の値。項目名は retrieval profile id を表します。 | - |
+| `ragProfile.retrievalProfileVersion` | `string` | yes | `response.ragProfile.retrievalProfileVersion` の値。項目名は retrieval profile version を表します。 | - |
+| `ragProfile.answerPolicyId` | `string` | yes | `response.ragProfile.answerPolicyId` の値。項目名は answer policy id を表します。 | - |
+| `ragProfile.answerPolicyVersion` | `string` | yes | `response.ragProfile.answerPolicyVersion` の値。項目名は answer policy version を表します。 | - |
+| `topK` | `number` | yes | 検索で取得する上位件数。 | - |
+| `memoryTopK` | `number` | yes | memory 検索で取得する上位件数。 | - |
+| `minScore` | `number` | yes | 検索結果として採用する最小 score。 | - |
+| `startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `completedAt` | `string` | yes | 処理が完了した日時。 | - |
+| `totalLatencyMs` | `number` | yes | `response.totalLatencyMs` の値。項目名は total latency ms を表します。 | - |
+| `status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `answerPreview` | `string` | yes | `response.answerPreview` の値。項目名は answer preview を表します。 | - |
+| `isAnswerable` | `boolean` | yes | 資料から回答可能と判断されたかどうか。 | - |
+| `citations` | `array<object>` | yes | 回答根拠として提示する引用情報。 | - |
+| `citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `citations[].chunkId` | `string` | no | `response.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
+| `retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `retrieved[].chunkId` | `string` | no | `response.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
+| `finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `finalEvidence[].chunkId` | `string` | no | `response.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `steps` | `array<object>` | yes | `response.steps` の値。項目名は steps を表します。 | - |
+| `steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
+| `steps[].label` | `string` | yes | `response.steps[].label` の値。項目名は label を表します。 | - |
+| `steps[].status` | `enum(success \| warning \| error)` | yes | 現在の処理状態または管理状態。 | enum=success, warning, error |
+| `steps[].latencyMs` | `number` | yes | `response.steps[].latencyMs` の値。項目名は latency ms を表します。 | - |
+| `steps[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
+| `steps[].summary` | `string` | yes | 処理結果や debug step の要約。 | - |
+| `steps[].detail` | `string` | no | `response.steps[].detail` の値。項目名は detail を表します。 | - |
+| `steps[].output` | `object` | no | `response.steps[].output` の値。項目名は output を表します。 | - |
+| `steps[].hitCount` | `number` | no | `response.steps[].hitCount` の値。項目名は hit count を表します。 | - |
+| `steps[].tokenCount` | `number` | no | `response.steps[].tokenCount` の値。項目名は token count を表します。 | - |
+| `steps[].startedAt` | `string` | yes | 処理を開始した日時。 | - |
+| `steps[].completedAt` | `string` | yes | 処理が完了した日時。 | - |
 
-#### `404`
-
-Debug run not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /debug-runs/{runId}/download
 
-Anchor: `post-/debug-runs/{runid}/download`
+Summary: debug trace ダウンロード URL を作成する
 
-Tags: -
-Security: default
+指定した debug trace JSON を取得するための署名付き URL を作成します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `runId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Create signed download URL for debug JSON
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "url": {
-      "type": "string",
-      "format": "uri"
-    },
-    "expiresInSeconds": {
-      "type": "integer",
-      "minimum": 0,
-      "exclusiveMinimum": true
-    },
-    "objectKey": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "url",
-    "expiresInSeconds",
-    "objectKey"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `url` | `string:uri` | yes | アクセス先または署名付き URL。 | - |
+| `expiresInSeconds` | `integer` | yes | `response.expiresInSeconds` の値。項目名は expires in seconds を表します。 | minimum=0 |
+| `objectKey` | `string` | yes | `response.objectKey` の値。項目名は object key を表します。 | - |
 
-#### `404`
-
-Debug run not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /document-ingest-runs
 
-Anchor: `post-/document-ingest-runs`
+Summary: 非同期文書取り込みを開始する
 
-Tags: -
-Security: default
+アップロード済み文書の非同期取り込み run を開始し、進捗参照用 ID を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "example": "handbook.pdf"
-    },
-    "mimeType": {
-      "type": "string",
-      "example": "application/pdf"
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": {
-        "nullable": true
-      }
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "memoryModelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "skipMemory": {
-      "type": "boolean"
-    },
-    "uploadId": {
-      "type": "string",
-      "minLength": 1
-    }
-  },
-  "required": [
-    "fileName",
-    "uploadId"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | minLength=1 |
+| `mimeType` | `string` | no | `data.mimeType` の値。項目名は mime type を表します。 | - |
+| `metadata` | `object` | no | `data.metadata` の値。項目名は metadata を表します。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
+| `skipMemory` | `boolean` | no | `data.skipMemory` の値。項目名は skip memory を表します。 | - |
+| `uploadId` | `string` | yes | 文書アップロードセッションを識別する ID。 | minLength=1 |
 
 #### Responses
 
-#### `200`
-
-Started asynchronous document ingest run
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "runId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "queued",
-        "running",
-        "succeeded",
-        "failed",
-        "cancelled"
-      ]
-    },
-    "eventsPath": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "runId",
-    "status",
-    "eventsPath"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `eventsPath` | `string` | yes | SSE イベントを購読する API path。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `403`
-
-Forbidden
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /document-ingest-runs/{runId}
 
-Anchor: `get-/document-ingest-runs/{runid}`
+Summary: 文書取り込み run を取得する
 
-Tags: -
-Security: default
+指定した非同期文書取り込み run の状態と結果を返します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `runId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Document ingest run
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "runId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "queued",
-        "running",
-        "succeeded",
-        "failed",
-        "cancelled"
-      ]
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "userEmail": {
-      "type": "string"
-    },
-    "userGroups": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "uploadId": {
-      "type": "string"
-    },
-    "objectKey": {
-      "type": "string"
-    },
-    "purpose": {
-      "type": "string",
-      "enum": [
-        "document",
-        "benchmarkSeed"
-      ]
-    },
-    "fileName": {
-      "type": "string"
-    },
-    "mimeType": {
-      "type": "string"
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": {
-        "nullable": true
-      }
-    },
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "memoryModelId": {
-      "type": "string"
-    },
-    "skipMemory": {
-      "type": "boolean"
-    },
-    "manifest": {
-      "type": "object",
-      "properties": {
-        "documentId": {
-          "type": "string"
-        },
-        "fileName": {
-          "type": "string"
-        },
-        "mimeType": {
-          "type": "string"
-        },
-        "chunkCount": {
-          "type": "number"
-        },
-        "memoryCardCount": {
-          "type": "number"
-        },
-        "createdAt": {
-          "type": "string"
-        },
-        "lifecycleStatus": {
-          "type": "string",
-          "enum": [
-            "active",
-            "staging",
-            "superseded"
-          ]
-        },
-        "activeDocumentId": {
-          "type": "string"
-        },
-        "stagedFromDocumentId": {
-          "type": "string"
-        },
-        "reindexMigrationId": {
-          "type": "string"
-        },
-        "chunkerVersion": {
-          "type": "string"
-        },
-        "sourceExtractorVersion": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "documentId",
-        "fileName",
-        "chunkCount",
-        "memoryCardCount",
-        "createdAt"
-      ]
-    },
-    "documentId": {
-      "type": "string"
-    },
-    "error": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "startedAt": {
-      "type": "string"
-    },
-    "completedAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "runId",
-    "status",
-    "createdBy",
-    "uploadId",
-    "objectKey",
-    "purpose",
-    "fileName",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `status` | `enum(queued \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, running, succeeded, failed, cancelled |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `userEmail` | `string` | no | `response.userEmail` の値。項目名は user email を表します。 | - |
+| `userGroups` | `array<string>` | no | `response.userGroups` の値。項目名は user groups を表します。 | - |
+| `uploadId` | `string` | yes | 文書アップロードセッションを識別する ID。 | - |
+| `objectKey` | `string` | yes | `response.objectKey` の値。項目名は object key を表します。 | - |
+| `purpose` | `enum(document \| benchmarkSeed)` | yes | `response.purpose` の値。項目名は purpose を表します。 | enum=document, benchmarkSeed |
+| `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `mimeType` | `string` | no | `response.mimeType` の値。項目名は mime type を表します。 | - |
+| `metadata` | `object` | no | `response.metadata` の値。項目名は metadata を表します。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
+| `skipMemory` | `boolean` | no | `response.skipMemory` の値。項目名は skip memory を表します。 | - |
+| `manifest` | `object` | no | `response.manifest` の値。項目名は manifest を表します。 | - |
+| `manifest.documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `manifest.fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `manifest.mimeType` | `string` | no | `response.manifest.mimeType` の値。項目名は mime type を表します。 | - |
+| `manifest.chunkCount` | `number` | yes | `response.manifest.chunkCount` の値。項目名は chunk count を表します。 | - |
+| `manifest.memoryCardCount` | `number` | yes | `response.manifest.memoryCardCount` の値。項目名は memory card count を表します。 | - |
+| `manifest.createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `manifest.lifecycleStatus` | `enum(active \| staging \| superseded)` | no | `response.manifest.lifecycleStatus` の値。項目名は lifecycle status を表します。 | enum=active, staging, superseded |
+| `manifest.activeDocumentId` | `string` | no | `response.manifest.activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `manifest.stagedFromDocumentId` | `string` | no | `response.manifest.stagedFromDocumentId` の値。項目名は staged from document id を表します。 | - |
+| `manifest.reindexMigrationId` | `string` | no | `response.manifest.reindexMigrationId` の値。項目名は reindex migration id を表します。 | - |
+| `manifest.chunkerVersion` | `string` | no | `response.manifest.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `manifest.sourceExtractorVersion` | `string` | no | `response.manifest.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `error` | `string` | no | エラー内容を表すメッセージ。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `completedAt` | `string` | no | 処理が完了した日時。 | - |
 
-#### `403`
-
-Forbidden
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `404`
-
-Document ingest run not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /document-ingest-runs/{runId}/events
 
-Anchor: `get-/document-ingest-runs/{runid}/events`
+Summary: 文書取り込みイベントを購読する
 
-Tags: -
-Security: default
+指定した文書取り込み run の進捗イベントを Server-Sent Events で返します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `runId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Asynchronous document ingest run events
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `text/event-stream`
 
-```json
-{
-  "type": "string"
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `response` | `string` | yes | チャット API が返す回答または拒否文。 | - |
 
-#### `403`
-
-Forbidden
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `404`
-
-Document ingest run not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /documents
 
-Anchor: `get-/documents`
+Summary: 登録文書一覧を取得する
 
-Tags: -
-Security: default
+ログインユーザーが参照できる登録済み文書の一覧を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List ingested documents
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "documents": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "mimeType": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            }
-          },
-          "sourceObjectKey": {
-            "type": "string"
-          },
-          "structuredBlocksObjectKey": {
-            "type": "string"
-          },
-          "memoryCardsObjectKey": {
-            "type": "string"
-          },
-          "manifestObjectKey": {
-            "type": "string"
-          },
-          "vectorKeys": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "memoryVectorKeys": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "evidenceVectorKeys": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "embeddingModelId": {
-            "type": "string"
-          },
-          "embeddingDimensions": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "chunkerVersion": {
-            "type": "string"
-          },
-          "sourceExtractorVersion": {
-            "type": "string"
-          },
-          "memoryPromptVersion": {
-            "type": "string"
-          },
-          "indexVersion": {
-            "type": "string"
-          },
-          "pipelineVersions": {
-            "type": "object",
-            "properties": {
-              "agentWorkflowVersion": {
-                "type": "string"
-              },
-              "chunkerVersion": {
-                "type": "string"
-              },
-              "sourceExtractorVersion": {
-                "type": "string"
-              },
-              "memoryPromptVersion": {
-                "type": "string"
-              },
-              "promptVersion": {
-                "type": "string"
-              },
-              "indexVersion": {
-                "type": "string"
-              },
-              "embeddingModelId": {
-                "type": "string"
-              },
-              "embeddingDimensions": {
-                "type": "integer",
-                "minimum": 0,
-                "exclusiveMinimum": true
-              }
-            },
-            "required": [
-              "agentWorkflowVersion",
-              "chunkerVersion",
-              "sourceExtractorVersion",
-              "memoryPromptVersion",
-              "promptVersion",
-              "indexVersion",
-              "embeddingModelId",
-              "embeddingDimensions"
-            ]
-          },
-          "chunks": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "startChar": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "endChar": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "sectionPath": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "heading": {
-                  "type": "string"
-                },
-                "parentSectionId": {
-                  "type": "string"
-                },
-                "previousChunkId": {
-                  "type": "string"
-                },
-                "nextChunkId": {
-                  "type": "string"
-                },
-                "chunkHash": {
-                  "type": "string"
-                },
-                "pageStart": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "exclusiveMinimum": true
-                },
-                "pageEnd": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "exclusiveMinimum": true
-                },
-                "chunkKind": {
-                  "type": "string",
-                  "enum": [
-                    "text",
-                    "table",
-                    "list",
-                    "code",
-                    "figure"
-                  ]
-                },
-                "sourceBlockId": {
-                  "type": "string"
-                },
-                "normalizedFrom": {
-                  "type": "string"
-                },
-                "tableColumnCount": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "exclusiveMinimum": true
-                },
-                "listDepth": {
-                  "type": "integer",
-                  "minimum": 0,
-                  "exclusiveMinimum": true
-                },
-                "codeLanguage": {
-                  "type": "string"
-                },
-                "figureCaption": {
-                  "type": "string"
-                },
-                "extractionMethod": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "startChar",
-                "endChar"
-              ]
-            }
-          },
-          "lifecycleStatus": {
-            "type": "string",
-            "enum": [
-              "active",
-              "staging",
-              "superseded"
-            ]
-          },
-          "activeDocumentId": {
-            "type": "string"
-          },
-          "stagedFromDocumentId": {
-            "type": "string"
-          },
-          "reindexMigrationId": {
-            "type": "string"
-          },
-          "chunkCount": {
-            "type": "number"
-          },
-          "memoryCardCount": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "documentId",
-          "fileName",
-          "sourceObjectKey",
-          "manifestObjectKey",
-          "vectorKeys",
-          "chunkCount",
-          "memoryCardCount",
-          "createdAt"
-        ]
-      }
-    }
-  },
-  "required": [
-    "documents"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `documents` | `array<object>` | yes | 文書一覧。 | - |
+| `documents[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `documents[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `documents[].mimeType` | `string` | no | `response.documents[].mimeType` の値。項目名は mime type を表します。 | - |
+| `documents[].metadata` | `object` | no | `response.documents[].metadata` の値。項目名は metadata を表します。 | - |
+| `documents[].sourceObjectKey` | `string` | yes | `response.documents[].sourceObjectKey` の値。項目名は source object key を表します。 | - |
+| `documents[].structuredBlocksObjectKey` | `string` | no | `response.documents[].structuredBlocksObjectKey` の値。項目名は structured blocks object key を表します。 | - |
+| `documents[].memoryCardsObjectKey` | `string` | no | `response.documents[].memoryCardsObjectKey` の値。項目名は memory cards object key を表します。 | - |
+| `documents[].manifestObjectKey` | `string` | yes | `response.documents[].manifestObjectKey` の値。項目名は manifest object key を表します。 | - |
+| `documents[].vectorKeys` | `array<string>` | yes | `response.documents[].vectorKeys` の値。項目名は vector keys を表します。 | - |
+| `documents[].memoryVectorKeys` | `array<string>` | no | `response.documents[].memoryVectorKeys` の値。項目名は memory vector keys を表します。 | - |
+| `documents[].evidenceVectorKeys` | `array<string>` | no | `response.documents[].evidenceVectorKeys` の値。項目名は evidence vector keys を表します。 | - |
+| `documents[].embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `documents[].embeddingDimensions` | `integer` | no | `response.documents[].embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `documents[].chunkerVersion` | `string` | no | `response.documents[].chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `documents[].sourceExtractorVersion` | `string` | no | `response.documents[].sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `documents[].memoryPromptVersion` | `string` | no | `response.documents[].memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `documents[].indexVersion` | `string` | no | `response.documents[].indexVersion` の値。項目名は index version を表します。 | - |
+| `documents[].pipelineVersions` | `object` | no | `response.documents[].pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `documents[].pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.documents[].pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `documents[].pipelineVersions.chunkerVersion` | `string` | yes | `response.documents[].pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `documents[].pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.documents[].pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `documents[].pipelineVersions.memoryPromptVersion` | `string` | yes | `response.documents[].pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `documents[].pipelineVersions.promptVersion` | `string` | yes | `response.documents[].pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `documents[].pipelineVersions.indexVersion` | `string` | yes | `response.documents[].pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `documents[].pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `documents[].pipelineVersions.embeddingDimensions` | `integer` | yes | `response.documents[].pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `documents[].chunks` | `array<object>` | no | `response.documents[].chunks` の値。項目名は chunks を表します。 | - |
+| `documents[].chunks[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `documents[].chunks[].startChar` | `integer` | yes | `response.documents[].chunks[].startChar` の値。項目名は start char を表します。 | minimum=0 |
+| `documents[].chunks[].endChar` | `integer` | yes | `response.documents[].chunks[].endChar` の値。項目名は end char を表します。 | minimum=0 |
+| `documents[].chunks[].sectionPath` | `array<string>` | no | `response.documents[].chunks[].sectionPath` の値。項目名は section path を表します。 | - |
+| `documents[].chunks[].heading` | `string` | no | `response.documents[].chunks[].heading` の値。項目名は heading を表します。 | - |
+| `documents[].chunks[].parentSectionId` | `string` | no | `response.documents[].chunks[].parentSectionId` の値。項目名は parent section id を表します。 | - |
+| `documents[].chunks[].previousChunkId` | `string` | no | `response.documents[].chunks[].previousChunkId` の値。項目名は previous chunk id を表します。 | - |
+| `documents[].chunks[].nextChunkId` | `string` | no | `response.documents[].chunks[].nextChunkId` の値。項目名は next chunk id を表します。 | - |
+| `documents[].chunks[].chunkHash` | `string` | no | `response.documents[].chunks[].chunkHash` の値。項目名は chunk hash を表します。 | - |
+| `documents[].chunks[].pageStart` | `integer` | no | `response.documents[].chunks[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `documents[].chunks[].pageEnd` | `integer` | no | `response.documents[].chunks[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `documents[].chunks[].chunkKind` | `enum(text \| table \| list \| code \| figure)` | no | `response.documents[].chunks[].chunkKind` の値。項目名は chunk kind を表します。 | enum=text, table, list, code, figure |
+| `documents[].chunks[].sourceBlockId` | `string` | no | `response.documents[].chunks[].sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `documents[].chunks[].normalizedFrom` | `string` | no | `response.documents[].chunks[].normalizedFrom` の値。項目名は normalized from を表します。 | - |
+| `documents[].chunks[].tableColumnCount` | `integer` | no | `response.documents[].chunks[].tableColumnCount` の値。項目名は table column count を表します。 | minimum=0 |
+| `documents[].chunks[].listDepth` | `integer` | no | `response.documents[].chunks[].listDepth` の値。項目名は list depth を表します。 | minimum=0 |
+| `documents[].chunks[].codeLanguage` | `string` | no | `response.documents[].chunks[].codeLanguage` の値。項目名は code language を表します。 | - |
+| `documents[].chunks[].figureCaption` | `string` | no | `response.documents[].chunks[].figureCaption` の値。項目名は figure caption を表します。 | - |
+| `documents[].chunks[].extractionMethod` | `string` | no | `response.documents[].chunks[].extractionMethod` の値。項目名は extraction method を表します。 | - |
+| `documents[].lifecycleStatus` | `enum(active \| staging \| superseded)` | no | `response.documents[].lifecycleStatus` の値。項目名は lifecycle status を表します。 | enum=active, staging, superseded |
+| `documents[].activeDocumentId` | `string` | no | `response.documents[].activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `documents[].stagedFromDocumentId` | `string` | no | `response.documents[].stagedFromDocumentId` の値。項目名は staged from document id を表します。 | - |
+| `documents[].reindexMigrationId` | `string` | no | `response.documents[].reindexMigrationId` の値。項目名は reindex migration id を表します。 | - |
+| `documents[].chunkCount` | `number` | yes | `response.documents[].chunkCount` の値。項目名は chunk count を表します。 | - |
+| `documents[].memoryCardCount` | `number` | yes | `response.documents[].memoryCardCount` の値。項目名は memory card count を表します。 | - |
+| `documents[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /documents
 
-Anchor: `post-/documents`
+Summary: 文書を登録する
 
-Tags: -
-Security: default
+テキストまたはファイル内容を登録し、RAG 検索用の文書として取り込みます。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "example": "handbook.md"
-    },
-    "text": {
-      "type": "string",
-      "example": "経費精算は申請から30日以内に行う必要があります。"
-    },
-    "contentBase64": {
-      "type": "string"
-    },
-    "textractJson": {
-      "type": "string"
-    },
-    "mimeType": {
-      "type": "string",
-      "example": "text/markdown"
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": {
-        "nullable": true
-      }
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "memoryModelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "skipMemory": {
-      "type": "boolean"
-    }
-  },
-  "required": [
-    "fileName"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | minLength=1 |
+| `text` | `string` | no | 文書本文またはチャンク本文。 | - |
+| `contentBase64` | `string` | no | `data.contentBase64` の値。項目名は content base64 を表します。 | - |
+| `textractJson` | `string` | no | `data.textractJson` の値。項目名は textract json を表します。 | - |
+| `mimeType` | `string` | no | `data.mimeType` の値。項目名は mime type を表します。 | - |
+| `metadata` | `object` | no | `data.metadata` の値。項目名は metadata を表します。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
+| `skipMemory` | `boolean` | no | `data.skipMemory` の値。項目名は skip memory を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Ingested document
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "documentId": {
-      "type": "string"
-    },
-    "fileName": {
-      "type": "string"
-    },
-    "mimeType": {
-      "type": "string"
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": {
-        "nullable": true
-      }
-    },
-    "sourceObjectKey": {
-      "type": "string"
-    },
-    "structuredBlocksObjectKey": {
-      "type": "string"
-    },
-    "memoryCardsObjectKey": {
-      "type": "string"
-    },
-    "manifestObjectKey": {
-      "type": "string"
-    },
-    "vectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "memoryVectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "evidenceVectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "embeddingDimensions": {
-      "type": "integer",
-      "minimum": 0,
-      "exclusiveMinimum": true
-    },
-    "chunkerVersion": {
-      "type": "string"
-    },
-    "sourceExtractorVersion": {
-      "type": "string"
-    },
-    "memoryPromptVersion": {
-      "type": "string"
-    },
-    "indexVersion": {
-      "type": "string"
-    },
-    "pipelineVersions": {
-      "type": "object",
-      "properties": {
-        "agentWorkflowVersion": {
-          "type": "string"
-        },
-        "chunkerVersion": {
-          "type": "string"
-        },
-        "sourceExtractorVersion": {
-          "type": "string"
-        },
-        "memoryPromptVersion": {
-          "type": "string"
-        },
-        "promptVersion": {
-          "type": "string"
-        },
-        "indexVersion": {
-          "type": "string"
-        },
-        "embeddingModelId": {
-          "type": "string"
-        },
-        "embeddingDimensions": {
-          "type": "integer",
-          "minimum": 0,
-          "exclusiveMinimum": true
-        }
-      },
-      "required": [
-        "agentWorkflowVersion",
-        "chunkerVersion",
-        "sourceExtractorVersion",
-        "memoryPromptVersion",
-        "promptVersion",
-        "indexVersion",
-        "embeddingModelId",
-        "embeddingDimensions"
-      ]
-    },
-    "chunks": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "startChar": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "endChar": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "sectionPath": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "heading": {
-            "type": "string"
-          },
-          "parentSectionId": {
-            "type": "string"
-          },
-          "previousChunkId": {
-            "type": "string"
-          },
-          "nextChunkId": {
-            "type": "string"
-          },
-          "chunkHash": {
-            "type": "string"
-          },
-          "pageStart": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "pageEnd": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "chunkKind": {
-            "type": "string",
-            "enum": [
-              "text",
-              "table",
-              "list",
-              "code",
-              "figure"
-            ]
-          },
-          "sourceBlockId": {
-            "type": "string"
-          },
-          "normalizedFrom": {
-            "type": "string"
-          },
-          "tableColumnCount": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "listDepth": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "codeLanguage": {
-            "type": "string"
-          },
-          "figureCaption": {
-            "type": "string"
-          },
-          "extractionMethod": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "startChar",
-          "endChar"
-        ]
-      }
-    },
-    "lifecycleStatus": {
-      "type": "string",
-      "enum": [
-        "active",
-        "staging",
-        "superseded"
-      ]
-    },
-    "activeDocumentId": {
-      "type": "string"
-    },
-    "stagedFromDocumentId": {
-      "type": "string"
-    },
-    "reindexMigrationId": {
-      "type": "string"
-    },
-    "chunkCount": {
-      "type": "number"
-    },
-    "memoryCardCount": {
-      "type": "number"
-    },
-    "createdAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "documentId",
-    "fileName",
-    "sourceObjectKey",
-    "manifestObjectKey",
-    "vectorKeys",
-    "chunkCount",
-    "memoryCardCount",
-    "createdAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `mimeType` | `string` | no | `response.mimeType` の値。項目名は mime type を表します。 | - |
+| `metadata` | `object` | no | `response.metadata` の値。項目名は metadata を表します。 | - |
+| `sourceObjectKey` | `string` | yes | `response.sourceObjectKey` の値。項目名は source object key を表します。 | - |
+| `structuredBlocksObjectKey` | `string` | no | `response.structuredBlocksObjectKey` の値。項目名は structured blocks object key を表します。 | - |
+| `memoryCardsObjectKey` | `string` | no | `response.memoryCardsObjectKey` の値。項目名は memory cards object key を表します。 | - |
+| `manifestObjectKey` | `string` | yes | `response.manifestObjectKey` の値。項目名は manifest object key を表します。 | - |
+| `vectorKeys` | `array<string>` | yes | `response.vectorKeys` の値。項目名は vector keys を表します。 | - |
+| `memoryVectorKeys` | `array<string>` | no | `response.memoryVectorKeys` の値。項目名は memory vector keys を表します。 | - |
+| `evidenceVectorKeys` | `array<string>` | no | `response.evidenceVectorKeys` の値。項目名は evidence vector keys を表します。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `embeddingDimensions` | `integer` | no | `response.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `chunkerVersion` | `string` | no | `response.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `sourceExtractorVersion` | `string` | no | `response.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `memoryPromptVersion` | `string` | no | `response.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `indexVersion` | `string` | no | `response.indexVersion` の値。項目名は index version を表します。 | - |
+| `pipelineVersions` | `object` | no | `response.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `pipelineVersions.chunkerVersion` | `string` | yes | `response.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `pipelineVersions.memoryPromptVersion` | `string` | yes | `response.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `pipelineVersions.promptVersion` | `string` | yes | `response.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `pipelineVersions.indexVersion` | `string` | yes | `response.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `pipelineVersions.embeddingDimensions` | `integer` | yes | `response.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `chunks` | `array<object>` | no | `response.chunks` の値。項目名は chunks を表します。 | - |
+| `chunks[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `chunks[].startChar` | `integer` | yes | `response.chunks[].startChar` の値。項目名は start char を表します。 | minimum=0 |
+| `chunks[].endChar` | `integer` | yes | `response.chunks[].endChar` の値。項目名は end char を表します。 | minimum=0 |
+| `chunks[].sectionPath` | `array<string>` | no | `response.chunks[].sectionPath` の値。項目名は section path を表します。 | - |
+| `chunks[].heading` | `string` | no | `response.chunks[].heading` の値。項目名は heading を表します。 | - |
+| `chunks[].parentSectionId` | `string` | no | `response.chunks[].parentSectionId` の値。項目名は parent section id を表します。 | - |
+| `chunks[].previousChunkId` | `string` | no | `response.chunks[].previousChunkId` の値。項目名は previous chunk id を表します。 | - |
+| `chunks[].nextChunkId` | `string` | no | `response.chunks[].nextChunkId` の値。項目名は next chunk id を表します。 | - |
+| `chunks[].chunkHash` | `string` | no | `response.chunks[].chunkHash` の値。項目名は chunk hash を表します。 | - |
+| `chunks[].pageStart` | `integer` | no | `response.chunks[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `chunks[].pageEnd` | `integer` | no | `response.chunks[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `chunks[].chunkKind` | `enum(text \| table \| list \| code \| figure)` | no | `response.chunks[].chunkKind` の値。項目名は chunk kind を表します。 | enum=text, table, list, code, figure |
+| `chunks[].sourceBlockId` | `string` | no | `response.chunks[].sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `chunks[].normalizedFrom` | `string` | no | `response.chunks[].normalizedFrom` の値。項目名は normalized from を表します。 | - |
+| `chunks[].tableColumnCount` | `integer` | no | `response.chunks[].tableColumnCount` の値。項目名は table column count を表します。 | minimum=0 |
+| `chunks[].listDepth` | `integer` | no | `response.chunks[].listDepth` の値。項目名は list depth を表します。 | minimum=0 |
+| `chunks[].codeLanguage` | `string` | no | `response.chunks[].codeLanguage` の値。項目名は code language を表します。 | - |
+| `chunks[].figureCaption` | `string` | no | `response.chunks[].figureCaption` の値。項目名は figure caption を表します。 | - |
+| `chunks[].extractionMethod` | `string` | no | `response.chunks[].extractionMethod` の値。項目名は extraction method を表します。 | - |
+| `lifecycleStatus` | `enum(active \| staging \| superseded)` | no | `response.lifecycleStatus` の値。項目名は lifecycle status を表します。 | enum=active, staging, superseded |
+| `activeDocumentId` | `string` | no | `response.activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `stagedFromDocumentId` | `string` | no | `response.stagedFromDocumentId` の値。項目名は staged from document id を表します。 | - |
+| `reindexMigrationId` | `string` | no | `response.reindexMigrationId` の値。項目名は reindex migration id を表します。 | - |
+| `chunkCount` | `number` | yes | `response.chunkCount` の値。項目名は chunk count を表します。 | - |
+| `memoryCardCount` | `number` | yes | `response.memoryCardCount` の値。項目名は memory card count を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### DELETE /documents/{documentId}
 
-Anchor: `delete-/documents/{documentid}`
+Summary: 文書を削除する
 
-Tags: -
-Security: default
+指定した文書と検索用データを削除します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `documentId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `documentId` | `string` | yes | 対象文書を一意に識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Deleted document
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "documentId": {
-      "type": "string"
-    },
-    "deletedVectorCount": {
-      "type": "number"
-    }
-  },
-  "required": [
-    "documentId",
-    "deletedVectorCount"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `deletedVectorCount` | `number` | yes | `response.deletedVectorCount` の値。項目名は deleted vector count を表します。 | - |
 
-#### `404`
-
-Document not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /documents/{documentId}/reindex
 
-Anchor: `post-/documents/{documentid}/reindex`
+Summary: 文書を再インデックスする
 
-Tags: -
-Security: default
+指定した文書を現在設定の embedding / memory モデルで再処理します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `documentId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: no
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `documentId` | `string` | yes | 対象文書を一意に識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "memoryModelId": {
-      "type": "string"
-    }
-  }
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
 
 #### Responses
 
-#### `200`
-
-Reindexed document
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "documentId": {
-      "type": "string"
-    },
-    "fileName": {
-      "type": "string"
-    },
-    "mimeType": {
-      "type": "string"
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": {
-        "nullable": true
-      }
-    },
-    "sourceObjectKey": {
-      "type": "string"
-    },
-    "structuredBlocksObjectKey": {
-      "type": "string"
-    },
-    "memoryCardsObjectKey": {
-      "type": "string"
-    },
-    "manifestObjectKey": {
-      "type": "string"
-    },
-    "vectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "memoryVectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "evidenceVectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "embeddingDimensions": {
-      "type": "integer",
-      "minimum": 0,
-      "exclusiveMinimum": true
-    },
-    "chunkerVersion": {
-      "type": "string"
-    },
-    "sourceExtractorVersion": {
-      "type": "string"
-    },
-    "memoryPromptVersion": {
-      "type": "string"
-    },
-    "indexVersion": {
-      "type": "string"
-    },
-    "pipelineVersions": {
-      "type": "object",
-      "properties": {
-        "agentWorkflowVersion": {
-          "type": "string"
-        },
-        "chunkerVersion": {
-          "type": "string"
-        },
-        "sourceExtractorVersion": {
-          "type": "string"
-        },
-        "memoryPromptVersion": {
-          "type": "string"
-        },
-        "promptVersion": {
-          "type": "string"
-        },
-        "indexVersion": {
-          "type": "string"
-        },
-        "embeddingModelId": {
-          "type": "string"
-        },
-        "embeddingDimensions": {
-          "type": "integer",
-          "minimum": 0,
-          "exclusiveMinimum": true
-        }
-      },
-      "required": [
-        "agentWorkflowVersion",
-        "chunkerVersion",
-        "sourceExtractorVersion",
-        "memoryPromptVersion",
-        "promptVersion",
-        "indexVersion",
-        "embeddingModelId",
-        "embeddingDimensions"
-      ]
-    },
-    "chunks": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "startChar": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "endChar": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "sectionPath": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "heading": {
-            "type": "string"
-          },
-          "parentSectionId": {
-            "type": "string"
-          },
-          "previousChunkId": {
-            "type": "string"
-          },
-          "nextChunkId": {
-            "type": "string"
-          },
-          "chunkHash": {
-            "type": "string"
-          },
-          "pageStart": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "pageEnd": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "chunkKind": {
-            "type": "string",
-            "enum": [
-              "text",
-              "table",
-              "list",
-              "code",
-              "figure"
-            ]
-          },
-          "sourceBlockId": {
-            "type": "string"
-          },
-          "normalizedFrom": {
-            "type": "string"
-          },
-          "tableColumnCount": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "listDepth": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "codeLanguage": {
-            "type": "string"
-          },
-          "figureCaption": {
-            "type": "string"
-          },
-          "extractionMethod": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "startChar",
-          "endChar"
-        ]
-      }
-    },
-    "lifecycleStatus": {
-      "type": "string",
-      "enum": [
-        "active",
-        "staging",
-        "superseded"
-      ]
-    },
-    "activeDocumentId": {
-      "type": "string"
-    },
-    "stagedFromDocumentId": {
-      "type": "string"
-    },
-    "reindexMigrationId": {
-      "type": "string"
-    },
-    "chunkCount": {
-      "type": "number"
-    },
-    "memoryCardCount": {
-      "type": "number"
-    },
-    "createdAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "documentId",
-    "fileName",
-    "sourceObjectKey",
-    "manifestObjectKey",
-    "vectorKeys",
-    "chunkCount",
-    "memoryCardCount",
-    "createdAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `mimeType` | `string` | no | `response.mimeType` の値。項目名は mime type を表します。 | - |
+| `metadata` | `object` | no | `response.metadata` の値。項目名は metadata を表します。 | - |
+| `sourceObjectKey` | `string` | yes | `response.sourceObjectKey` の値。項目名は source object key を表します。 | - |
+| `structuredBlocksObjectKey` | `string` | no | `response.structuredBlocksObjectKey` の値。項目名は structured blocks object key を表します。 | - |
+| `memoryCardsObjectKey` | `string` | no | `response.memoryCardsObjectKey` の値。項目名は memory cards object key を表します。 | - |
+| `manifestObjectKey` | `string` | yes | `response.manifestObjectKey` の値。項目名は manifest object key を表します。 | - |
+| `vectorKeys` | `array<string>` | yes | `response.vectorKeys` の値。項目名は vector keys を表します。 | - |
+| `memoryVectorKeys` | `array<string>` | no | `response.memoryVectorKeys` の値。項目名は memory vector keys を表します。 | - |
+| `evidenceVectorKeys` | `array<string>` | no | `response.evidenceVectorKeys` の値。項目名は evidence vector keys を表します。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `embeddingDimensions` | `integer` | no | `response.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `chunkerVersion` | `string` | no | `response.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `sourceExtractorVersion` | `string` | no | `response.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `memoryPromptVersion` | `string` | no | `response.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `indexVersion` | `string` | no | `response.indexVersion` の値。項目名は index version を表します。 | - |
+| `pipelineVersions` | `object` | no | `response.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `pipelineVersions.chunkerVersion` | `string` | yes | `response.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `pipelineVersions.memoryPromptVersion` | `string` | yes | `response.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `pipelineVersions.promptVersion` | `string` | yes | `response.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `pipelineVersions.indexVersion` | `string` | yes | `response.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `pipelineVersions.embeddingDimensions` | `integer` | yes | `response.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `chunks` | `array<object>` | no | `response.chunks` の値。項目名は chunks を表します。 | - |
+| `chunks[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `chunks[].startChar` | `integer` | yes | `response.chunks[].startChar` の値。項目名は start char を表します。 | minimum=0 |
+| `chunks[].endChar` | `integer` | yes | `response.chunks[].endChar` の値。項目名は end char を表します。 | minimum=0 |
+| `chunks[].sectionPath` | `array<string>` | no | `response.chunks[].sectionPath` の値。項目名は section path を表します。 | - |
+| `chunks[].heading` | `string` | no | `response.chunks[].heading` の値。項目名は heading を表します。 | - |
+| `chunks[].parentSectionId` | `string` | no | `response.chunks[].parentSectionId` の値。項目名は parent section id を表します。 | - |
+| `chunks[].previousChunkId` | `string` | no | `response.chunks[].previousChunkId` の値。項目名は previous chunk id を表します。 | - |
+| `chunks[].nextChunkId` | `string` | no | `response.chunks[].nextChunkId` の値。項目名は next chunk id を表します。 | - |
+| `chunks[].chunkHash` | `string` | no | `response.chunks[].chunkHash` の値。項目名は chunk hash を表します。 | - |
+| `chunks[].pageStart` | `integer` | no | `response.chunks[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `chunks[].pageEnd` | `integer` | no | `response.chunks[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `chunks[].chunkKind` | `enum(text \| table \| list \| code \| figure)` | no | `response.chunks[].chunkKind` の値。項目名は chunk kind を表します。 | enum=text, table, list, code, figure |
+| `chunks[].sourceBlockId` | `string` | no | `response.chunks[].sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `chunks[].normalizedFrom` | `string` | no | `response.chunks[].normalizedFrom` の値。項目名は normalized from を表します。 | - |
+| `chunks[].tableColumnCount` | `integer` | no | `response.chunks[].tableColumnCount` の値。項目名は table column count を表します。 | minimum=0 |
+| `chunks[].listDepth` | `integer` | no | `response.chunks[].listDepth` の値。項目名は list depth を表します。 | minimum=0 |
+| `chunks[].codeLanguage` | `string` | no | `response.chunks[].codeLanguage` の値。項目名は code language を表します。 | - |
+| `chunks[].figureCaption` | `string` | no | `response.chunks[].figureCaption` の値。項目名は figure caption を表します。 | - |
+| `chunks[].extractionMethod` | `string` | no | `response.chunks[].extractionMethod` の値。項目名は extraction method を表します。 | - |
+| `lifecycleStatus` | `enum(active \| staging \| superseded)` | no | `response.lifecycleStatus` の値。項目名は lifecycle status を表します。 | enum=active, staging, superseded |
+| `activeDocumentId` | `string` | no | `response.activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `stagedFromDocumentId` | `string` | no | `response.stagedFromDocumentId` の値。項目名は staged from document id を表します。 | - |
+| `reindexMigrationId` | `string` | no | `response.reindexMigrationId` の値。項目名は reindex migration id を表します。 | - |
+| `chunkCount` | `number` | yes | `response.chunkCount` の値。項目名は chunk count を表します。 | - |
+| `memoryCardCount` | `number` | yes | `response.memoryCardCount` の値。項目名は memory card count を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 
-#### `404`
-
-Document not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /documents/{documentId}/reindex/stage
 
-Anchor: `post-/documents/{documentid}/reindex/stage`
+Summary: 再インデックスを stage する
 
-Tags: -
-Security: default
+指定文書の staged document を作成し、cutover 前に検証できる状態にします。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `documentId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: no
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `documentId` | `string` | yes | 対象文書を一意に識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "memoryModelId": {
-      "type": "string"
-    }
-  }
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
 
 #### Responses
 
-#### `200`
-
-Staged reindex migration
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "migrationId": {
-      "type": "string"
-    },
-    "sourceDocumentId": {
-      "type": "string"
-    },
-    "stagedDocumentId": {
-      "type": "string"
-    },
-    "activeDocumentId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "staged",
-        "cutover",
-        "rolled_back"
-      ]
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "cutoverAt": {
-      "type": "string"
-    },
-    "rolledBackAt": {
-      "type": "string"
-    },
-    "previousManifestObjectKey": {
-      "type": "string"
-    },
-    "stagedManifestObjectKey": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "migrationId",
-    "sourceDocumentId",
-    "stagedDocumentId",
-    "status",
-    "createdBy",
-    "createdAt",
-    "updatedAt",
-    "previousManifestObjectKey",
-    "stagedManifestObjectKey"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `migrationId` | `string` | yes | 再インデックス migration を識別する ID。 | - |
+| `sourceDocumentId` | `string` | yes | `response.sourceDocumentId` の値。項目名は source document id を表します。 | - |
+| `stagedDocumentId` | `string` | yes | `response.stagedDocumentId` の値。項目名は staged document id を表します。 | - |
+| `activeDocumentId` | `string` | no | `response.activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `status` | `enum(staged \| cutover \| rolled_back)` | yes | 現在の処理状態または管理状態。 | enum=staged, cutover, rolled_back |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `cutoverAt` | `string` | no | `response.cutoverAt` の値。項目名は cutover at を表します。 | - |
+| `rolledBackAt` | `string` | no | `response.rolledBackAt` の値。項目名は rolled back at を表します。 | - |
+| `previousManifestObjectKey` | `string` | yes | `response.previousManifestObjectKey` の値。項目名は previous manifest object key を表します。 | - |
+| `stagedManifestObjectKey` | `string` | yes | `response.stagedManifestObjectKey` の値。項目名は staged manifest object key を表します。 | - |
 
-#### `404`
-
-Document not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /documents/reindex-migrations
 
-Anchor: `get-/documents/reindex-migrations`
+Summary: 再インデックス移行一覧を取得する
 
-Tags: -
-Security: default
+blue-green 再インデックスの migration 状態と履歴を取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List blue-green reindex migrations
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "migrations": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "migrationId": {
-            "type": "string"
-          },
-          "sourceDocumentId": {
-            "type": "string"
-          },
-          "stagedDocumentId": {
-            "type": "string"
-          },
-          "activeDocumentId": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "staged",
-              "cutover",
-              "rolled_back"
-            ]
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          },
-          "cutoverAt": {
-            "type": "string"
-          },
-          "rolledBackAt": {
-            "type": "string"
-          },
-          "previousManifestObjectKey": {
-            "type": "string"
-          },
-          "stagedManifestObjectKey": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "migrationId",
-          "sourceDocumentId",
-          "stagedDocumentId",
-          "status",
-          "createdBy",
-          "createdAt",
-          "updatedAt",
-          "previousManifestObjectKey",
-          "stagedManifestObjectKey"
-        ]
-      }
-    }
-  },
-  "required": [
-    "migrations"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `migrations` | `array<object>` | yes | `response.migrations` の値。項目名は migrations を表します。 | - |
+| `migrations[].migrationId` | `string` | yes | 再インデックス migration を識別する ID。 | - |
+| `migrations[].sourceDocumentId` | `string` | yes | `response.migrations[].sourceDocumentId` の値。項目名は source document id を表します。 | - |
+| `migrations[].stagedDocumentId` | `string` | yes | `response.migrations[].stagedDocumentId` の値。項目名は staged document id を表します。 | - |
+| `migrations[].activeDocumentId` | `string` | no | `response.migrations[].activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `migrations[].status` | `enum(staged \| cutover \| rolled_back)` | yes | 現在の処理状態または管理状態。 | enum=staged, cutover, rolled_back |
+| `migrations[].createdBy` | `string` | yes | `response.migrations[].createdBy` の値。項目名は created by を表します。 | - |
+| `migrations[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `migrations[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `migrations[].cutoverAt` | `string` | no | `response.migrations[].cutoverAt` の値。項目名は cutover at を表します。 | - |
+| `migrations[].rolledBackAt` | `string` | no | `response.migrations[].rolledBackAt` の値。項目名は rolled back at を表します。 | - |
+| `migrations[].previousManifestObjectKey` | `string` | yes | `response.migrations[].previousManifestObjectKey` の値。項目名は previous manifest object key を表します。 | - |
+| `migrations[].stagedManifestObjectKey` | `string` | yes | `response.migrations[].stagedManifestObjectKey` の値。項目名は staged manifest object key を表します。 | - |
 
 ### POST /documents/reindex-migrations/{migrationId}/cutover
 
-Anchor: `post-/documents/reindex-migrations/{migrationid}/cutover`
+Summary: 再インデックス結果へ切り替える
 
-Tags: -
-Security: default
+指定 migration の staged document を active document として切り替えます。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `migrationId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `migrationId` | `string` | yes | 再インデックス migration を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Cut over staged reindex migration
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "migrationId": {
-      "type": "string"
-    },
-    "sourceDocumentId": {
-      "type": "string"
-    },
-    "stagedDocumentId": {
-      "type": "string"
-    },
-    "activeDocumentId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "staged",
-        "cutover",
-        "rolled_back"
-      ]
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "cutoverAt": {
-      "type": "string"
-    },
-    "rolledBackAt": {
-      "type": "string"
-    },
-    "previousManifestObjectKey": {
-      "type": "string"
-    },
-    "stagedManifestObjectKey": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "migrationId",
-    "sourceDocumentId",
-    "stagedDocumentId",
-    "status",
-    "createdBy",
-    "createdAt",
-    "updatedAt",
-    "previousManifestObjectKey",
-    "stagedManifestObjectKey"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `migrationId` | `string` | yes | 再インデックス migration を識別する ID。 | - |
+| `sourceDocumentId` | `string` | yes | `response.sourceDocumentId` の値。項目名は source document id を表します。 | - |
+| `stagedDocumentId` | `string` | yes | `response.stagedDocumentId` の値。項目名は staged document id を表します。 | - |
+| `activeDocumentId` | `string` | no | `response.activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `status` | `enum(staged \| cutover \| rolled_back)` | yes | 現在の処理状態または管理状態。 | enum=staged, cutover, rolled_back |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `cutoverAt` | `string` | no | `response.cutoverAt` の値。項目名は cutover at を表します。 | - |
+| `rolledBackAt` | `string` | no | `response.rolledBackAt` の値。項目名は rolled back at を表します。 | - |
+| `previousManifestObjectKey` | `string` | yes | `response.previousManifestObjectKey` の値。項目名は previous manifest object key を表します。 | - |
+| `stagedManifestObjectKey` | `string` | yes | `response.stagedManifestObjectKey` の値。項目名は staged manifest object key を表します。 | - |
 
-#### `404`
-
-Migration not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /documents/reindex-migrations/{migrationId}/rollback
 
-Anchor: `post-/documents/reindex-migrations/{migrationid}/rollback`
+Summary: 再インデックス切替を戻す
 
-Tags: -
-Security: default
+指定 migration の cutover 後状態から元の active document へ戻します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `migrationId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `migrationId` | `string` | yes | 再インデックス migration を識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Rolled back reindex migration
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "migrationId": {
-      "type": "string"
-    },
-    "sourceDocumentId": {
-      "type": "string"
-    },
-    "stagedDocumentId": {
-      "type": "string"
-    },
-    "activeDocumentId": {
-      "type": "string"
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "staged",
-        "cutover",
-        "rolled_back"
-      ]
-    },
-    "createdBy": {
-      "type": "string"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "cutoverAt": {
-      "type": "string"
-    },
-    "rolledBackAt": {
-      "type": "string"
-    },
-    "previousManifestObjectKey": {
-      "type": "string"
-    },
-    "stagedManifestObjectKey": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "migrationId",
-    "sourceDocumentId",
-    "stagedDocumentId",
-    "status",
-    "createdBy",
-    "createdAt",
-    "updatedAt",
-    "previousManifestObjectKey",
-    "stagedManifestObjectKey"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `migrationId` | `string` | yes | 再インデックス migration を識別する ID。 | - |
+| `sourceDocumentId` | `string` | yes | `response.sourceDocumentId` の値。項目名は source document id を表します。 | - |
+| `stagedDocumentId` | `string` | yes | `response.stagedDocumentId` の値。項目名は staged document id を表します。 | - |
+| `activeDocumentId` | `string` | no | `response.activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `status` | `enum(staged \| cutover \| rolled_back)` | yes | 現在の処理状態または管理状態。 | enum=staged, cutover, rolled_back |
+| `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `cutoverAt` | `string` | no | `response.cutoverAt` の値。項目名は cutover at を表します。 | - |
+| `rolledBackAt` | `string` | no | `response.rolledBackAt` の値。項目名は rolled back at を表します。 | - |
+| `previousManifestObjectKey` | `string` | yes | `response.previousManifestObjectKey` の値。項目名は previous manifest object key を表します。 | - |
+| `stagedManifestObjectKey` | `string` | yes | `response.stagedManifestObjectKey` の値。項目名は staged manifest object key を表します。 | - |
 
-#### `404`
-
-Migration not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /documents/uploads
 
-Anchor: `post-/documents/uploads`
+Summary: 文書アップロード URL を作成する
 
-Tags: -
-Security: default
+S3 またはローカル開発用のアップロードセッションと送信先を作成します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "example": "handbook.pdf"
-    },
-    "mimeType": {
-      "type": "string",
-      "example": "application/pdf"
-    },
-    "purpose": {
-      "type": "string",
-      "enum": [
-        "document",
-        "benchmarkSeed"
-      ],
-      "default": "document"
-    }
-  },
-  "required": [
-    "fileName"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | minLength=1 |
+| `mimeType` | `string` | no | `data.mimeType` の値。項目名は mime type を表します。 | - |
+| `purpose` | `enum(document \| benchmarkSeed)` | no | `data.purpose` の値。項目名は purpose を表します。 | enum=document, benchmarkSeed |
 
 #### Responses
 
-#### `200`
-
-Created document upload URL
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "uploadId": {
-      "type": "string"
-    },
-    "objectKey": {
-      "type": "string"
-    },
-    "uploadUrl": {
-      "type": "string",
-      "format": "uri"
-    },
-    "method": {
-      "type": "string",
-      "enum": [
-        "PUT",
-        "POST"
-      ]
-    },
-    "headers": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "string"
-      }
-    },
-    "expiresInSeconds": {
-      "type": "integer",
-      "minimum": 0,
-      "exclusiveMinimum": true
-    },
-    "requiresAuth": {
-      "type": "boolean"
-    },
-    "maxUploadBytes": {
-      "type": "integer",
-      "minimum": 0,
-      "exclusiveMinimum": true
-    }
-  },
-  "required": [
-    "uploadId",
-    "objectKey",
-    "uploadUrl",
-    "method",
-    "headers",
-    "expiresInSeconds",
-    "requiresAuth",
-    "maxUploadBytes"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `uploadId` | `string` | yes | 文書アップロードセッションを識別する ID。 | - |
+| `objectKey` | `string` | yes | `response.objectKey` の値。項目名は object key を表します。 | - |
+| `uploadUrl` | `string:uri` | yes | `response.uploadUrl` の値。項目名は upload url を表します。 | - |
+| `method` | `enum(PUT \| POST)` | yes | 利用する HTTP メソッド。 | enum=PUT, POST |
+| `headers` | `object` | yes | アップロードや API 呼び出しに付与する HTTP header。 | - |
+| `expiresInSeconds` | `integer` | yes | `response.expiresInSeconds` の値。項目名は expires in seconds を表します。 | minimum=0 |
+| `requiresAuth` | `boolean` | yes | `response.requiresAuth` の値。項目名は requires auth を表します。 | - |
+| `maxUploadBytes` | `integer` | yes | `response.maxUploadBytes` の値。項目名は max upload bytes を表します。 | minimum=0 |
 
-#### `403`
-
-Forbidden
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /documents/uploads/{uploadId}/content
 
-Anchor: `post-/documents/uploads/{uploadid}/content`
+Summary: 文書アップロード内容を保存する
 
-Tags: -
-Security: default
+ローカル開発用アップロードセッションに文書バイト列を保存します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `uploadId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `uploadId` | `string` | yes | 文書アップロードセッションを識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `204`
+##### `204` リクエストは成功し、レスポンス body はありません。
 
-Uploaded document bytes for local development
+Media type: `-`
 
-_No content schema._
+_body なし_
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `403`
-
-Forbidden
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /documents/uploads/{uploadId}/ingest
 
-Anchor: `post-/documents/uploads/{uploadid}/ingest`
+Summary: アップロード済み文書を取り込む
 
-Tags: -
-Security: default
+アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `uploadId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `uploadId` | `string` | yes | 文書アップロードセッションを識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "fileName": {
-      "type": "string",
-      "minLength": 1,
-      "example": "handbook.pdf"
-    },
-    "mimeType": {
-      "type": "string",
-      "example": "application/pdf"
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": {
-        "nullable": true
-      }
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "memoryModelId": {
-      "type": "string",
-      "example": "amazon.nova-lite-v1:0"
-    },
-    "skipMemory": {
-      "type": "boolean"
-    }
-  },
-  "required": [
-    "fileName"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | minLength=1 |
+| `mimeType` | `string` | no | `data.mimeType` の値。項目名は mime type を表します。 | - |
+| `metadata` | `object` | no | `data.metadata` の値。項目名は metadata を表します。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
+| `skipMemory` | `boolean` | no | `data.skipMemory` の値。項目名は skip memory を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Ingested uploaded document
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "documentId": {
-      "type": "string"
-    },
-    "fileName": {
-      "type": "string"
-    },
-    "mimeType": {
-      "type": "string"
-    },
-    "metadata": {
-      "type": "object",
-      "additionalProperties": {
-        "nullable": true
-      }
-    },
-    "sourceObjectKey": {
-      "type": "string"
-    },
-    "structuredBlocksObjectKey": {
-      "type": "string"
-    },
-    "memoryCardsObjectKey": {
-      "type": "string"
-    },
-    "manifestObjectKey": {
-      "type": "string"
-    },
-    "vectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "memoryVectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "evidenceVectorKeys": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "embeddingModelId": {
-      "type": "string"
-    },
-    "embeddingDimensions": {
-      "type": "integer",
-      "minimum": 0,
-      "exclusiveMinimum": true
-    },
-    "chunkerVersion": {
-      "type": "string"
-    },
-    "sourceExtractorVersion": {
-      "type": "string"
-    },
-    "memoryPromptVersion": {
-      "type": "string"
-    },
-    "indexVersion": {
-      "type": "string"
-    },
-    "pipelineVersions": {
-      "type": "object",
-      "properties": {
-        "agentWorkflowVersion": {
-          "type": "string"
-        },
-        "chunkerVersion": {
-          "type": "string"
-        },
-        "sourceExtractorVersion": {
-          "type": "string"
-        },
-        "memoryPromptVersion": {
-          "type": "string"
-        },
-        "promptVersion": {
-          "type": "string"
-        },
-        "indexVersion": {
-          "type": "string"
-        },
-        "embeddingModelId": {
-          "type": "string"
-        },
-        "embeddingDimensions": {
-          "type": "integer",
-          "minimum": 0,
-          "exclusiveMinimum": true
-        }
-      },
-      "required": [
-        "agentWorkflowVersion",
-        "chunkerVersion",
-        "sourceExtractorVersion",
-        "memoryPromptVersion",
-        "promptVersion",
-        "indexVersion",
-        "embeddingModelId",
-        "embeddingDimensions"
-      ]
-    },
-    "chunks": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "startChar": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "endChar": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "sectionPath": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "heading": {
-            "type": "string"
-          },
-          "parentSectionId": {
-            "type": "string"
-          },
-          "previousChunkId": {
-            "type": "string"
-          },
-          "nextChunkId": {
-            "type": "string"
-          },
-          "chunkHash": {
-            "type": "string"
-          },
-          "pageStart": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "pageEnd": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "chunkKind": {
-            "type": "string",
-            "enum": [
-              "text",
-              "table",
-              "list",
-              "code",
-              "figure"
-            ]
-          },
-          "sourceBlockId": {
-            "type": "string"
-          },
-          "normalizedFrom": {
-            "type": "string"
-          },
-          "tableColumnCount": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "listDepth": {
-            "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": true
-          },
-          "codeLanguage": {
-            "type": "string"
-          },
-          "figureCaption": {
-            "type": "string"
-          },
-          "extractionMethod": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "startChar",
-          "endChar"
-        ]
-      }
-    },
-    "lifecycleStatus": {
-      "type": "string",
-      "enum": [
-        "active",
-        "staging",
-        "superseded"
-      ]
-    },
-    "activeDocumentId": {
-      "type": "string"
-    },
-    "stagedFromDocumentId": {
-      "type": "string"
-    },
-    "reindexMigrationId": {
-      "type": "string"
-    },
-    "chunkCount": {
-      "type": "number"
-    },
-    "memoryCardCount": {
-      "type": "number"
-    },
-    "createdAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "documentId",
-    "fileName",
-    "sourceObjectKey",
-    "manifestObjectKey",
-    "vectorKeys",
-    "chunkCount",
-    "memoryCardCount",
-    "createdAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `mimeType` | `string` | no | `response.mimeType` の値。項目名は mime type を表します。 | - |
+| `metadata` | `object` | no | `response.metadata` の値。項目名は metadata を表します。 | - |
+| `sourceObjectKey` | `string` | yes | `response.sourceObjectKey` の値。項目名は source object key を表します。 | - |
+| `structuredBlocksObjectKey` | `string` | no | `response.structuredBlocksObjectKey` の値。項目名は structured blocks object key を表します。 | - |
+| `memoryCardsObjectKey` | `string` | no | `response.memoryCardsObjectKey` の値。項目名は memory cards object key を表します。 | - |
+| `manifestObjectKey` | `string` | yes | `response.manifestObjectKey` の値。項目名は manifest object key を表します。 | - |
+| `vectorKeys` | `array<string>` | yes | `response.vectorKeys` の値。項目名は vector keys を表します。 | - |
+| `memoryVectorKeys` | `array<string>` | no | `response.memoryVectorKeys` の値。項目名は memory vector keys を表します。 | - |
+| `evidenceVectorKeys` | `array<string>` | no | `response.evidenceVectorKeys` の値。項目名は evidence vector keys を表します。 | - |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `embeddingDimensions` | `integer` | no | `response.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `chunkerVersion` | `string` | no | `response.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `sourceExtractorVersion` | `string` | no | `response.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `memoryPromptVersion` | `string` | no | `response.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `indexVersion` | `string` | no | `response.indexVersion` の値。項目名は index version を表します。 | - |
+| `pipelineVersions` | `object` | no | `response.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
+| `pipelineVersions.chunkerVersion` | `string` | yes | `response.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `pipelineVersions.memoryPromptVersion` | `string` | yes | `response.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
+| `pipelineVersions.promptVersion` | `string` | yes | `response.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
+| `pipelineVersions.indexVersion` | `string` | yes | `response.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
+| `pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
+| `pipelineVersions.embeddingDimensions` | `integer` | yes | `response.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `chunks` | `array<object>` | no | `response.chunks` の値。項目名は chunks を表します。 | - |
+| `chunks[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `chunks[].startChar` | `integer` | yes | `response.chunks[].startChar` の値。項目名は start char を表します。 | minimum=0 |
+| `chunks[].endChar` | `integer` | yes | `response.chunks[].endChar` の値。項目名は end char を表します。 | minimum=0 |
+| `chunks[].sectionPath` | `array<string>` | no | `response.chunks[].sectionPath` の値。項目名は section path を表します。 | - |
+| `chunks[].heading` | `string` | no | `response.chunks[].heading` の値。項目名は heading を表します。 | - |
+| `chunks[].parentSectionId` | `string` | no | `response.chunks[].parentSectionId` の値。項目名は parent section id を表します。 | - |
+| `chunks[].previousChunkId` | `string` | no | `response.chunks[].previousChunkId` の値。項目名は previous chunk id を表します。 | - |
+| `chunks[].nextChunkId` | `string` | no | `response.chunks[].nextChunkId` の値。項目名は next chunk id を表します。 | - |
+| `chunks[].chunkHash` | `string` | no | `response.chunks[].chunkHash` の値。項目名は chunk hash を表します。 | - |
+| `chunks[].pageStart` | `integer` | no | `response.chunks[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `chunks[].pageEnd` | `integer` | no | `response.chunks[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `chunks[].chunkKind` | `enum(text \| table \| list \| code \| figure)` | no | `response.chunks[].chunkKind` の値。項目名は chunk kind を表します。 | enum=text, table, list, code, figure |
+| `chunks[].sourceBlockId` | `string` | no | `response.chunks[].sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `chunks[].normalizedFrom` | `string` | no | `response.chunks[].normalizedFrom` の値。項目名は normalized from を表します。 | - |
+| `chunks[].tableColumnCount` | `integer` | no | `response.chunks[].tableColumnCount` の値。項目名は table column count を表します。 | minimum=0 |
+| `chunks[].listDepth` | `integer` | no | `response.chunks[].listDepth` の値。項目名は list depth を表します。 | minimum=0 |
+| `chunks[].codeLanguage` | `string` | no | `response.chunks[].codeLanguage` の値。項目名は code language を表します。 | - |
+| `chunks[].figureCaption` | `string` | no | `response.chunks[].figureCaption` の値。項目名は figure caption を表します。 | - |
+| `chunks[].extractionMethod` | `string` | no | `response.chunks[].extractionMethod` の値。項目名は extraction method を表します。 | - |
+| `lifecycleStatus` | `enum(active \| staging \| superseded)` | no | `response.lifecycleStatus` の値。項目名は lifecycle status を表します。 | enum=active, staging, superseded |
+| `activeDocumentId` | `string` | no | `response.activeDocumentId` の値。項目名は active document id を表します。 | - |
+| `stagedFromDocumentId` | `string` | no | `response.stagedFromDocumentId` の値。項目名は staged from document id を表します。 | - |
+| `reindexMigrationId` | `string` | no | `response.reindexMigrationId` の値。項目名は reindex migration id を表します。 | - |
+| `chunkCount` | `number` | yes | `response.chunkCount` の値。項目名は chunk count を表します。 | - |
+| `memoryCardCount` | `number` | yes | `response.memoryCardCount` の値。項目名は memory card count を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `403`
-
-Forbidden
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /health
 
-Anchor: `get-/health`
+Summary: ヘルスチェックを取得する
 
-Tags: -
-Security: default
+API プロセスが応答可能かを確認するため、サービス状態を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+_なし_
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Health check
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "ok": {
-      "type": "boolean"
-    },
-    "service": {
-      "type": "string"
-    },
-    "timestamp": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "ok",
-    "service",
-    "timestamp"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `ok` | `boolean` | yes | `response.ok` の値。項目名は ok を表します。 | - |
+| `service` | `string` | yes | `response.service` の値。項目名は service を表します。 | - |
+| `timestamp` | `string` | yes | `response.timestamp` の値。項目名は timestamp を表します。 | - |
 
 ### GET /me
 
-Anchor: `get-/me`
+Summary: ログインユーザー情報を取得する
 
-Tags: -
-Security: default
+認証済みユーザーの ID、ロール、有効 permission を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Current authenticated user and effective permissions
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "user": {
-      "type": "object",
-      "properties": {
-        "userId": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "groups": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "permissions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "required": [
-        "userId",
-        "groups",
-        "permissions"
-      ]
-    }
-  },
-  "required": [
-    "user"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `user` | `object` | yes | `response.user` の値。項目名は user を表します。 | - |
+| `user.userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
+| `user.email` | `string` | no | ユーザーのメールアドレス。 | - |
+| `user.groups` | `array<string>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
+| `user.permissions` | `array<string>` | yes | ログインユーザーに有効な permission 一覧。 | - |
 
-#### `401`
-
-Authentication required
+##### `401` 認証が必要です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /questions
 
-Anchor: `post-/questions`
+Summary: 担当者問い合わせを作成する
 
-Tags: -
-Security: default
+回答不能または確認が必要な内容を担当者へ引き継ぐ問い合わせとして登録します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "title": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 120,
-      "example": "山田さんの昼食について確認したい"
-    },
-    "question": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 2000,
-      "example": "今日山田さんは何を食べたか、担当者に確認してください。"
-    },
-    "requesterName": {
-      "type": "string",
-      "example": "山田 太郎"
-    },
-    "requesterDepartment": {
-      "type": "string",
-      "example": "総務部"
-    },
-    "assigneeDepartment": {
-      "type": "string",
-      "example": "総務部"
-    },
-    "category": {
-      "type": "string",
-      "example": "その他の質問"
-    },
-    "priority": {
-      "type": "string",
-      "enum": [
-        "normal",
-        "high",
-        "urgent"
-      ]
-    },
-    "sourceQuestion": {
-      "type": "string"
-    },
-    "chatAnswer": {
-      "type": "string"
-    },
-    "chatRunId": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "title",
-    "question"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `title` | `string` | yes | 表示や一覧で利用するタイトル。 | minLength=1<br>maxLength=120 |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | minLength=1<br>maxLength=2000 |
+| `requesterName` | `string` | no | `data.requesterName` の値。項目名は requester name を表します。 | - |
+| `requesterDepartment` | `string` | no | `data.requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `assigneeDepartment` | `string` | no | `data.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `category` | `string` | no | 問い合わせや文書の分類。 | - |
+| `priority` | `enum(normal \| high \| urgent)` | no | `data.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `sourceQuestion` | `string` | no | `data.sourceQuestion` の値。項目名は source question を表します。 | - |
+| `chatAnswer` | `string` | no | `data.chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `chatRunId` | `string` | no | `data.chatRunId` の値。項目名は chat run id を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Created human follow-up question
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "questionId": {
-      "type": "string"
-    },
-    "title": {
-      "type": "string"
-    },
-    "question": {
-      "type": "string"
-    },
-    "requesterName": {
-      "type": "string"
-    },
-    "requesterUserId": {
-      "type": "string"
-    },
-    "requesterDepartment": {
-      "type": "string"
-    },
-    "assigneeDepartment": {
-      "type": "string"
-    },
-    "category": {
-      "type": "string"
-    },
-    "priority": {
-      "type": "string",
-      "enum": [
-        "normal",
-        "high",
-        "urgent"
-      ]
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "open",
-        "answered",
-        "resolved"
-      ]
-    },
-    "sourceQuestion": {
-      "type": "string"
-    },
-    "chatAnswer": {
-      "type": "string"
-    },
-    "chatRunId": {
-      "type": "string"
-    },
-    "references": {
-      "type": "string"
-    },
-    "answerTitle": {
-      "type": "string"
-    },
-    "answerBody": {
-      "type": "string"
-    },
-    "responderName": {
-      "type": "string"
-    },
-    "responderDepartment": {
-      "type": "string"
-    },
-    "internalMemo": {
-      "type": "string"
-    },
-    "notifyRequester": {
-      "type": "boolean"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "answeredAt": {
-      "type": "string"
-    },
-    "resolvedAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "questionId",
-    "title",
-    "question",
-    "requesterName",
-    "requesterDepartment",
-    "assigneeDepartment",
-    "category",
-    "priority",
-    "status",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `questionId` | `string` | yes | 担当者問い合わせを識別する ID。 | - |
+| `title` | `string` | yes | 表示や一覧で利用するタイトル。 | - |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `requesterName` | `string` | yes | `response.requesterName` の値。項目名は requester name を表します。 | - |
+| `requesterUserId` | `string` | no | `response.requesterUserId` の値。項目名は requester user id を表します。 | - |
+| `requesterDepartment` | `string` | yes | `response.requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `assigneeDepartment` | `string` | yes | `response.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `priority` | `enum(normal \| high \| urgent)` | yes | `response.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `sourceQuestion` | `string` | no | `response.sourceQuestion` の値。項目名は source question を表します。 | - |
+| `chatAnswer` | `string` | no | `response.chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `chatRunId` | `string` | no | `response.chatRunId` の値。項目名は chat run id を表します。 | - |
+| `references` | `string` | no | `response.references` の値。項目名は references を表します。 | - |
+| `answerTitle` | `string` | no | `response.answerTitle` の値。項目名は answer title を表します。 | - |
+| `answerBody` | `string` | no | `response.answerBody` の値。項目名は answer body を表します。 | - |
+| `responderName` | `string` | no | `response.responderName` の値。項目名は responder name を表します。 | - |
+| `responderDepartment` | `string` | no | `response.responderDepartment` の値。項目名は responder department を表します。 | - |
+| `internalMemo` | `string` | no | `response.internalMemo` の値。項目名は internal memo を表します。 | - |
+| `notifyRequester` | `boolean` | no | `response.notifyRequester` の値。項目名は notify requester を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `answeredAt` | `string` | no | `response.answeredAt` の値。項目名は answered at を表します。 | - |
+| `resolvedAt` | `string` | no | `response.resolvedAt` の値。項目名は resolved at を表します。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /questions
 
-Anchor: `get-/questions`
+Summary: 担当者問い合わせ一覧を取得する
 
-Tags: -
-Security: default
+担当者または作成者が参照可能な問い合わせ一覧を取得します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-List human follow-up questions
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "questions": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "questionId": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "question": {
-            "type": "string"
-          },
-          "requesterName": {
-            "type": "string"
-          },
-          "requesterUserId": {
-            "type": "string"
-          },
-          "requesterDepartment": {
-            "type": "string"
-          },
-          "assigneeDepartment": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string"
-          },
-          "priority": {
-            "type": "string",
-            "enum": [
-              "normal",
-              "high",
-              "urgent"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "open",
-              "answered",
-              "resolved"
-            ]
-          },
-          "sourceQuestion": {
-            "type": "string"
-          },
-          "chatAnswer": {
-            "type": "string"
-          },
-          "chatRunId": {
-            "type": "string"
-          },
-          "references": {
-            "type": "string"
-          },
-          "answerTitle": {
-            "type": "string"
-          },
-          "answerBody": {
-            "type": "string"
-          },
-          "responderName": {
-            "type": "string"
-          },
-          "responderDepartment": {
-            "type": "string"
-          },
-          "internalMemo": {
-            "type": "string"
-          },
-          "notifyRequester": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string"
-          },
-          "answeredAt": {
-            "type": "string"
-          },
-          "resolvedAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "questionId",
-          "title",
-          "question",
-          "requesterName",
-          "requesterDepartment",
-          "assigneeDepartment",
-          "category",
-          "priority",
-          "status",
-          "createdAt",
-          "updatedAt"
-        ]
-      }
-    }
-  },
-  "required": [
-    "questions"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `questions` | `array<object>` | yes | 問い合わせ一覧。 | - |
+| `questions[].questionId` | `string` | yes | 担当者問い合わせを識別する ID。 | - |
+| `questions[].title` | `string` | yes | 表示や一覧で利用するタイトル。 | - |
+| `questions[].question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `questions[].requesterName` | `string` | yes | `response.questions[].requesterName` の値。項目名は requester name を表します。 | - |
+| `questions[].requesterUserId` | `string` | no | `response.questions[].requesterUserId` の値。項目名は requester user id を表します。 | - |
+| `questions[].requesterDepartment` | `string` | yes | `response.questions[].requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `questions[].assigneeDepartment` | `string` | yes | `response.questions[].assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `questions[].category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `questions[].priority` | `enum(normal \| high \| urgent)` | yes | `response.questions[].priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `questions[].status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `questions[].sourceQuestion` | `string` | no | `response.questions[].sourceQuestion` の値。項目名は source question を表します。 | - |
+| `questions[].chatAnswer` | `string` | no | `response.questions[].chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `questions[].chatRunId` | `string` | no | `response.questions[].chatRunId` の値。項目名は chat run id を表します。 | - |
+| `questions[].references` | `string` | no | `response.questions[].references` の値。項目名は references を表します。 | - |
+| `questions[].answerTitle` | `string` | no | `response.questions[].answerTitle` の値。項目名は answer title を表します。 | - |
+| `questions[].answerBody` | `string` | no | `response.questions[].answerBody` の値。項目名は answer body を表します。 | - |
+| `questions[].responderName` | `string` | no | `response.questions[].responderName` の値。項目名は responder name を表します。 | - |
+| `questions[].responderDepartment` | `string` | no | `response.questions[].responderDepartment` の値。項目名は responder department を表します。 | - |
+| `questions[].internalMemo` | `string` | no | `response.questions[].internalMemo` の値。項目名は internal memo を表します。 | - |
+| `questions[].notifyRequester` | `boolean` | no | `response.questions[].notifyRequester` の値。項目名は notify requester を表します。 | - |
+| `questions[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `questions[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `questions[].answeredAt` | `string` | no | `response.questions[].answeredAt` の値。項目名は answered at を表します。 | - |
+| `questions[].resolvedAt` | `string` | no | `response.questions[].resolvedAt` の値。項目名は resolved at を表します。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### GET /questions/{questionId}
 
-Anchor: `get-/questions/{questionid}`
+Summary: 担当者問い合わせ詳細を取得する
 
-Tags: -
-Security: default
+指定した問い合わせの本文、回答、状態を取得します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `questionId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `questionId` | `string` | yes | 担当者問い合わせを識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Get a human follow-up question
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "questionId": {
-      "type": "string"
-    },
-    "title": {
-      "type": "string"
-    },
-    "question": {
-      "type": "string"
-    },
-    "requesterName": {
-      "type": "string"
-    },
-    "requesterUserId": {
-      "type": "string"
-    },
-    "requesterDepartment": {
-      "type": "string"
-    },
-    "assigneeDepartment": {
-      "type": "string"
-    },
-    "category": {
-      "type": "string"
-    },
-    "priority": {
-      "type": "string",
-      "enum": [
-        "normal",
-        "high",
-        "urgent"
-      ]
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "open",
-        "answered",
-        "resolved"
-      ]
-    },
-    "sourceQuestion": {
-      "type": "string"
-    },
-    "chatAnswer": {
-      "type": "string"
-    },
-    "chatRunId": {
-      "type": "string"
-    },
-    "references": {
-      "type": "string"
-    },
-    "answerTitle": {
-      "type": "string"
-    },
-    "answerBody": {
-      "type": "string"
-    },
-    "responderName": {
-      "type": "string"
-    },
-    "responderDepartment": {
-      "type": "string"
-    },
-    "internalMemo": {
-      "type": "string"
-    },
-    "notifyRequester": {
-      "type": "boolean"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "answeredAt": {
-      "type": "string"
-    },
-    "resolvedAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "questionId",
-    "title",
-    "question",
-    "requesterName",
-    "requesterDepartment",
-    "assigneeDepartment",
-    "category",
-    "priority",
-    "status",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `questionId` | `string` | yes | 担当者問い合わせを識別する ID。 | - |
+| `title` | `string` | yes | 表示や一覧で利用するタイトル。 | - |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `requesterName` | `string` | yes | `response.requesterName` の値。項目名は requester name を表します。 | - |
+| `requesterUserId` | `string` | no | `response.requesterUserId` の値。項目名は requester user id を表します。 | - |
+| `requesterDepartment` | `string` | yes | `response.requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `assigneeDepartment` | `string` | yes | `response.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `priority` | `enum(normal \| high \| urgent)` | yes | `response.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `sourceQuestion` | `string` | no | `response.sourceQuestion` の値。項目名は source question を表します。 | - |
+| `chatAnswer` | `string` | no | `response.chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `chatRunId` | `string` | no | `response.chatRunId` の値。項目名は chat run id を表します。 | - |
+| `references` | `string` | no | `response.references` の値。項目名は references を表します。 | - |
+| `answerTitle` | `string` | no | `response.answerTitle` の値。項目名は answer title を表します。 | - |
+| `answerBody` | `string` | no | `response.answerBody` の値。項目名は answer body を表します。 | - |
+| `responderName` | `string` | no | `response.responderName` の値。項目名は responder name を表します。 | - |
+| `responderDepartment` | `string` | no | `response.responderDepartment` の値。項目名は responder department を表します。 | - |
+| `internalMemo` | `string` | no | `response.internalMemo` の値。項目名は internal memo を表します。 | - |
+| `notifyRequester` | `boolean` | no | `response.notifyRequester` の値。項目名は notify requester を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `answeredAt` | `string` | no | `response.answeredAt` の値。項目名は answered at を表します。 | - |
+| `resolvedAt` | `string` | no | `response.resolvedAt` の値。項目名は resolved at を表します。 | - |
 
-#### `404`
-
-Question not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /questions/{questionId}/answer
 
-Anchor: `post-/questions/{questionid}/answer`
+Summary: 担当者回答を登録する
 
-Tags: -
-Security: default
+指定した問い合わせに担当者回答を登録します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `questionId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `questionId` | `string` | yes | 担当者問い合わせを識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "answerTitle": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 120,
-      "example": "山田さんの昼食についての回答"
-    },
-    "answerBody": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 4000,
-      "example": "山田さんは本日、社内食堂でカレーを食べました。"
-    },
-    "responderName": {
-      "type": "string",
-      "example": "佐藤 花子"
-    },
-    "responderDepartment": {
-      "type": "string",
-      "example": "総務部"
-    },
-    "references": {
-      "type": "string"
-    },
-    "internalMemo": {
-      "type": "string"
-    },
-    "notifyRequester": {
-      "type": "boolean"
-    }
-  },
-  "required": [
-    "answerTitle",
-    "answerBody"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `answerTitle` | `string` | yes | `data.answerTitle` の値。項目名は answer title を表します。 | minLength=1<br>maxLength=120 |
+| `answerBody` | `string` | yes | `data.answerBody` の値。項目名は answer body を表します。 | minLength=1<br>maxLength=4000 |
+| `responderName` | `string` | no | `data.responderName` の値。項目名は responder name を表します。 | - |
+| `responderDepartment` | `string` | no | `data.responderDepartment` の値。項目名は responder department を表します。 | - |
+| `references` | `string` | no | `data.references` の値。項目名は references を表します。 | - |
+| `internalMemo` | `string` | no | `data.internalMemo` の値。項目名は internal memo を表します。 | - |
+| `notifyRequester` | `boolean` | no | `data.notifyRequester` の値。項目名は notify requester を表します。 | - |
 
 #### Responses
 
-#### `200`
-
-Answered human follow-up question
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "questionId": {
-      "type": "string"
-    },
-    "title": {
-      "type": "string"
-    },
-    "question": {
-      "type": "string"
-    },
-    "requesterName": {
-      "type": "string"
-    },
-    "requesterUserId": {
-      "type": "string"
-    },
-    "requesterDepartment": {
-      "type": "string"
-    },
-    "assigneeDepartment": {
-      "type": "string"
-    },
-    "category": {
-      "type": "string"
-    },
-    "priority": {
-      "type": "string",
-      "enum": [
-        "normal",
-        "high",
-        "urgent"
-      ]
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "open",
-        "answered",
-        "resolved"
-      ]
-    },
-    "sourceQuestion": {
-      "type": "string"
-    },
-    "chatAnswer": {
-      "type": "string"
-    },
-    "chatRunId": {
-      "type": "string"
-    },
-    "references": {
-      "type": "string"
-    },
-    "answerTitle": {
-      "type": "string"
-    },
-    "answerBody": {
-      "type": "string"
-    },
-    "responderName": {
-      "type": "string"
-    },
-    "responderDepartment": {
-      "type": "string"
-    },
-    "internalMemo": {
-      "type": "string"
-    },
-    "notifyRequester": {
-      "type": "boolean"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "answeredAt": {
-      "type": "string"
-    },
-    "resolvedAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "questionId",
-    "title",
-    "question",
-    "requesterName",
-    "requesterDepartment",
-    "assigneeDepartment",
-    "category",
-    "priority",
-    "status",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `questionId` | `string` | yes | 担当者問い合わせを識別する ID。 | - |
+| `title` | `string` | yes | 表示や一覧で利用するタイトル。 | - |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `requesterName` | `string` | yes | `response.requesterName` の値。項目名は requester name を表します。 | - |
+| `requesterUserId` | `string` | no | `response.requesterUserId` の値。項目名は requester user id を表します。 | - |
+| `requesterDepartment` | `string` | yes | `response.requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `assigneeDepartment` | `string` | yes | `response.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `priority` | `enum(normal \| high \| urgent)` | yes | `response.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `sourceQuestion` | `string` | no | `response.sourceQuestion` の値。項目名は source question を表します。 | - |
+| `chatAnswer` | `string` | no | `response.chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `chatRunId` | `string` | no | `response.chatRunId` の値。項目名は chat run id を表します。 | - |
+| `references` | `string` | no | `response.references` の値。項目名は references を表します。 | - |
+| `answerTitle` | `string` | no | `response.answerTitle` の値。項目名は answer title を表します。 | - |
+| `answerBody` | `string` | no | `response.answerBody` の値。項目名は answer body を表します。 | - |
+| `responderName` | `string` | no | `response.responderName` の値。項目名は responder name を表します。 | - |
+| `responderDepartment` | `string` | no | `response.responderDepartment` の値。項目名は responder department を表します。 | - |
+| `internalMemo` | `string` | no | `response.internalMemo` の値。項目名は internal memo を表します。 | - |
+| `notifyRequester` | `boolean` | no | `response.notifyRequester` の値。項目名は notify requester を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `answeredAt` | `string` | no | `response.answeredAt` の値。項目名は answered at を表します。 | - |
+| `resolvedAt` | `string` | no | `response.resolvedAt` の値。項目名は resolved at を表します。 | - |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `404`
-
-Question not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /questions/{questionId}/resolve
 
-Anchor: `post-/questions/{questionid}/resolve`
+Summary: 問い合わせを解決済みにする
 
-Tags: -
-Security: default
+回答済み問い合わせを解決済み状態へ更新します。
 
-#### Parameters
+#### Headers
 
-| Name | In | Required | Schema | Description |
+| 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `questionId` | path | yes | `string` | - |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-_No request body._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `questionId` | `string` | yes | 担当者問い合わせを識別する ID。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
 
 #### Responses
 
-#### `200`
-
-Resolved human follow-up question
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "questionId": {
-      "type": "string"
-    },
-    "title": {
-      "type": "string"
-    },
-    "question": {
-      "type": "string"
-    },
-    "requesterName": {
-      "type": "string"
-    },
-    "requesterUserId": {
-      "type": "string"
-    },
-    "requesterDepartment": {
-      "type": "string"
-    },
-    "assigneeDepartment": {
-      "type": "string"
-    },
-    "category": {
-      "type": "string"
-    },
-    "priority": {
-      "type": "string",
-      "enum": [
-        "normal",
-        "high",
-        "urgent"
-      ]
-    },
-    "status": {
-      "type": "string",
-      "enum": [
-        "open",
-        "answered",
-        "resolved"
-      ]
-    },
-    "sourceQuestion": {
-      "type": "string"
-    },
-    "chatAnswer": {
-      "type": "string"
-    },
-    "chatRunId": {
-      "type": "string"
-    },
-    "references": {
-      "type": "string"
-    },
-    "answerTitle": {
-      "type": "string"
-    },
-    "answerBody": {
-      "type": "string"
-    },
-    "responderName": {
-      "type": "string"
-    },
-    "responderDepartment": {
-      "type": "string"
-    },
-    "internalMemo": {
-      "type": "string"
-    },
-    "notifyRequester": {
-      "type": "boolean"
-    },
-    "createdAt": {
-      "type": "string"
-    },
-    "updatedAt": {
-      "type": "string"
-    },
-    "answeredAt": {
-      "type": "string"
-    },
-    "resolvedAt": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "questionId",
-    "title",
-    "question",
-    "requesterName",
-    "requesterDepartment",
-    "assigneeDepartment",
-    "category",
-    "priority",
-    "status",
-    "createdAt",
-    "updatedAt"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `questionId` | `string` | yes | 担当者問い合わせを識別する ID。 | - |
+| `title` | `string` | yes | 表示や一覧で利用するタイトル。 | - |
+| `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
+| `requesterName` | `string` | yes | `response.requesterName` の値。項目名は requester name を表します。 | - |
+| `requesterUserId` | `string` | no | `response.requesterUserId` の値。項目名は requester user id を表します。 | - |
+| `requesterDepartment` | `string` | yes | `response.requesterDepartment` の値。項目名は requester department を表します。 | - |
+| `assigneeDepartment` | `string` | yes | `response.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
+| `category` | `string` | yes | 問い合わせや文書の分類。 | - |
+| `priority` | `enum(normal \| high \| urgent)` | yes | `response.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `sourceQuestion` | `string` | no | `response.sourceQuestion` の値。項目名は source question を表します。 | - |
+| `chatAnswer` | `string` | no | `response.chatAnswer` の値。項目名は chat answer を表します。 | - |
+| `chatRunId` | `string` | no | `response.chatRunId` の値。項目名は chat run id を表します。 | - |
+| `references` | `string` | no | `response.references` の値。項目名は references を表します。 | - |
+| `answerTitle` | `string` | no | `response.answerTitle` の値。項目名は answer title を表します。 | - |
+| `answerBody` | `string` | no | `response.answerBody` の値。項目名は answer body を表します。 | - |
+| `responderName` | `string` | no | `response.responderName` の値。項目名は responder name を表します。 | - |
+| `responderDepartment` | `string` | no | `response.responderDepartment` の値。項目名は responder department を表します。 | - |
+| `internalMemo` | `string` | no | `response.internalMemo` の値。項目名は internal memo を表します。 | - |
+| `notifyRequester` | `boolean` | no | `response.notifyRequester` の値。項目名は notify requester を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+| `answeredAt` | `string` | no | `response.answeredAt` の値。項目名は answered at を表します。 | - |
+| `resolvedAt` | `string` | no | `response.resolvedAt` の値。項目名は resolved at を表します。 | - |
 
-#### `404`
-
-Question not found
+##### `404` 指定したリソースが見つかりません。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `409`
-
-Question is not answered yet
+##### `409` 現在のリソース状態と要求された操作が競合しています。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ### POST /search
 
-Anchor: `post-/search`
+Summary: ハイブリッド検索を実行する
 
-Tags: -
-Security: default
+lexical / vector / RRF を組み合わせた検索結果と診断情報を返します。
 
-#### Parameters
+#### Headers
 
-_No parameters._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
 
-#### Request Body
+#### Path Parameters
 
-Required: yes
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
 Media type: `application/json`
-```json
-{
-  "type": "object",
-  "properties": {
-    "query": {
-      "type": "string",
-      "minLength": 1,
-      "example": "経費精算 承認条件"
-    },
-    "topK": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 50,
-      "example": 10
-    },
-    "lexicalTopK": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 100,
-      "example": 80
-    },
-    "semanticTopK": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 100,
-      "example": 80
-    },
-    "embeddingModelId": {
-      "type": "string",
-      "example": "amazon.titan-embed-text-v2:0"
-    },
-    "filters": {
-      "type": "object",
-      "properties": {
-        "tenantId": {
-          "type": "string"
-        },
-        "department": {
-          "type": "string"
-        },
-        "source": {
-          "type": "string"
-        },
-        "docType": {
-          "type": "string"
-        },
-        "benchmarkSuiteId": {
-          "type": "string"
-        },
-        "documentId": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "query"
-  ]
-}
-```
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `query` | `string` | yes | 検索や benchmark に利用する query。 | minLength=1 |
+| `topK` | `integer` | no | 検索で取得する上位件数。 | minimum=1<br>maximum=50 |
+| `lexicalTopK` | `integer` | no | `data.lexicalTopK` の値。項目名は lexical top k を表します。 | minimum=0<br>maximum=100 |
+| `semanticTopK` | `integer` | no | `data.semanticTopK` の値。項目名は semantic top k を表します。 | minimum=0<br>maximum=100 |
+| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
+| `filters` | `object` | no | 検索対象を絞り込む条件。 | - |
+| `filters.tenantId` | `string` | no | `data.filters.tenantId` の値。項目名は tenant id を表します。 | - |
+| `filters.department` | `string` | no | `data.filters.department` の値。項目名は department を表します。 | - |
+| `filters.source` | `string` | no | `data.filters.source` の値。項目名は source を表します。 | - |
+| `filters.docType` | `string` | no | `data.filters.docType` の値。項目名は doc type を表します。 | - |
+| `filters.benchmarkSuiteId` | `string` | no | `data.filters.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
+| `filters.documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
 
 #### Responses
 
-#### `200`
-
-Hybrid lexical and vector search results
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "query": {
-      "type": "string"
-    },
-    "results": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "documentId": {
-            "type": "string"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "chunkId": {
-            "type": "string"
-          },
-          "text": {
-            "type": "string"
-          },
-          "score": {
-            "type": "number"
-          },
-          "rrfScore": {
-            "type": "number"
-          },
-          "lexicalScore": {
-            "type": "number"
-          },
-          "semanticScore": {
-            "type": "number"
-          },
-          "lexicalRank": {
-            "type": "number"
-          },
-          "semanticRank": {
-            "type": "number"
-          },
-          "matchedTerms": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "sources": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "lexical",
-                "semantic"
-              ]
-            }
-          },
-          "createdAt": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            }
-          }
-        },
-        "required": [
-          "id",
-          "documentId",
-          "fileName",
-          "text",
-          "score",
-          "rrfScore",
-          "matchedTerms",
-          "sources"
-        ]
-      }
-    },
-    "diagnostics": {
-      "type": "object",
-      "properties": {
-        "indexVersion": {
-          "type": "string"
-        },
-        "aliasVersion": {
-          "type": "string"
-        },
-        "lexicalCount": {
-          "type": "integer"
-        },
-        "semanticCount": {
-          "type": "integer"
-        },
-        "fusedCount": {
-          "type": "integer"
-        },
-        "latencyMs": {
-          "type": "integer"
-        },
-        "index": {
-          "type": "object",
-          "properties": {
-            "visibleManifestCount": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "indexedChunkCount": {
-              "type": "integer",
-              "minimum": 0
-            },
-            "cache": {
-              "type": "string",
-              "enum": [
-                "memory",
-                "artifact",
-                "built"
-              ]
-            },
-            "loadMs": {
-              "type": "integer",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "visibleManifestCount",
-            "indexedChunkCount",
-            "cache",
-            "loadMs"
-          ]
-        }
-      },
-      "required": [
-        "indexVersion",
-        "aliasVersion",
-        "lexicalCount",
-        "semanticCount",
-        "fusedCount",
-        "latencyMs"
-      ]
-    }
-  },
-  "required": [
-    "query",
-    "results",
-    "diagnostics"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `query` | `string` | yes | 検索や benchmark に利用する query。 | - |
+| `results` | `array<object>` | yes | `response.results` の値。項目名は results を表します。 | - |
+| `results[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
+| `results[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
+| `results[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
+| `results[].chunkId` | `string` | no | `response.results[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `results[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `results[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
+| `results[].rrfScore` | `number` | yes | `response.results[].rrfScore` の値。項目名は rrf score を表します。 | - |
+| `results[].lexicalScore` | `number` | no | `response.results[].lexicalScore` の値。項目名は lexical score を表します。 | - |
+| `results[].semanticScore` | `number` | no | `response.results[].semanticScore` の値。項目名は semantic score を表します。 | - |
+| `results[].lexicalRank` | `number` | no | `response.results[].lexicalRank` の値。項目名は lexical rank を表します。 | - |
+| `results[].semanticRank` | `number` | no | `response.results[].semanticRank` の値。項目名は semantic rank を表します。 | - |
+| `results[].matchedTerms` | `array<string>` | yes | `response.results[].matchedTerms` の値。項目名は matched terms を表します。 | - |
+| `results[].sources` | `array<enum(lexical \| semantic)>` | yes | `response.results[].sources` の値。項目名は sources を表します。 | - |
+| `results[].createdAt` | `string` | no | レコードを作成した日時。 | - |
+| `results[].metadata` | `object` | no | `response.results[].metadata` の値。項目名は metadata を表します。 | - |
+| `diagnostics` | `object` | yes | 検索や benchmark の診断情報。 | - |
+| `diagnostics.indexVersion` | `string` | yes | `response.diagnostics.indexVersion` の値。項目名は index version を表します。 | - |
+| `diagnostics.aliasVersion` | `string` | yes | `response.diagnostics.aliasVersion` の値。項目名は alias version を表します。 | - |
+| `diagnostics.lexicalCount` | `integer` | yes | `response.diagnostics.lexicalCount` の値。項目名は lexical count を表します。 | - |
+| `diagnostics.semanticCount` | `integer` | yes | `response.diagnostics.semanticCount` の値。項目名は semantic count を表します。 | - |
+| `diagnostics.fusedCount` | `integer` | yes | `response.diagnostics.fusedCount` の値。項目名は fused count を表します。 | - |
+| `diagnostics.latencyMs` | `integer` | yes | `response.diagnostics.latencyMs` の値。項目名は latency ms を表します。 | - |
+| `diagnostics.index` | `object` | no | `response.diagnostics.index` の値。項目名は index を表します。 | - |
+| `diagnostics.index.visibleManifestCount` | `integer` | yes | `response.diagnostics.index.visibleManifestCount` の値。項目名は visible manifest count を表します。 | minimum=0 |
+| `diagnostics.index.indexedChunkCount` | `integer` | yes | `response.diagnostics.index.indexedChunkCount` の値。項目名は indexed chunk count を表します。 | minimum=0 |
+| `diagnostics.index.cache` | `enum(memory \| artifact \| built)` | yes | `response.diagnostics.index.cache` の値。項目名は cache を表します。 | enum=memory, artifact, built |
+| `diagnostics.index.loadMs` | `integer` | yes | `response.diagnostics.index.loadMs` の値。項目名は load ms を表します。 | minimum=0 |
 
-#### `400`
-
-Validation error
+##### `400` リクエスト形式または入力値が不正です。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
-#### `500`
-
-Server error
+##### `500` サーバー内部で処理エラーが発生しました。
 
 Media type: `application/json`
 
-```json
-{
-  "type": "object",
-  "properties": {
-    "error": {
-      "type": "string"
-    },
-    "details": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    }
-  },
-  "required": [
-    "error"
-  ]
-}
-```
-
-## Components
-
-_No component schemas._
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |

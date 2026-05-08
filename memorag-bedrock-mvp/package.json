@@ -17,6 +17,7 @@
     "test:coverage": "npm run test:coverage -w @memorag-mvp/api && npm run test:coverage -w @memorag-mvp/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "docs:openapi": "npm run docs:openapi -w @memorag-mvp/api",
+    "docs:openapi:check": "npm run docs:openapi:check -w @memorag-mvp/api",
     "dev:api": "npm run dev -w @memorag-mvp/api",
     "dev:web": "VITE_AUTH_MODE=local npm run dev -w @memorag-mvp/web",
     "benchmark": "npm run start -w @memorag-mvp/benchmark",

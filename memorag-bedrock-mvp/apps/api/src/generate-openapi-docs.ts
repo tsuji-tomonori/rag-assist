@@ -1,6 +1,19 @@
 import { mkdir, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
+import {
+  contentRows,
+  enrichOpenApiDocument,
+  isHttpMethod,
+  operationKey,
+  parameterRows,
+  parametersByGroup,
+  responseRows,
+  validateOpenApiDocument,
+  type FieldRow,
+  type OpenApiDocument,
+  type OperationObject
+} from "./openapi-doc-quality.js"
 
 process.env.MOCK_BEDROCK ??= "true"
 process.env.USE_LOCAL_VECTOR_STORE ??= "true"
@@ -11,142 +24,59 @@ process.env.USE_LOCAL_CHAT_RUN_STORE ??= "true"
 process.env.USE_LOCAL_DOCUMENT_INGEST_RUN_STORE ??= "true"
 process.env.LOCAL_DATA_DIR ??= ".local-data"
 
-type JsonObject = Record<string, unknown>
-
-type OpenApiDocument = {
-  openapi?: string
-  info?: {
-    title?: string
-    version?: string
-    description?: string
-  }
-  paths?: Record<string, Record<string, OperationObject>>
-  components?: {
-    schemas?: Record<string, unknown>
-    securitySchemes?: Record<string, unknown>
-  }
-}
-
-type OperationObject = {
-  summary?: string
-  description?: string
-  operationId?: string
-  tags?: string[]
-  security?: Array<Record<string, string[]>>
-  parameters?: ParameterObject[]
-  requestBody?: RequestBodyObject
-  responses?: Record<string, ResponseObject>
-}
-
-type ParameterObject = {
-  name?: string
-  in?: string
-  required?: boolean
-  description?: string
-  schema?: unknown
-}
-
-type RequestBodyObject = {
-  required?: boolean
-  description?: string
-  content?: Record<string, MediaTypeObject>
-}
-
-type ResponseObject = {
-  description?: string
-  content?: Record<string, MediaTypeObject>
-}
-
-type MediaTypeObject = {
-  schema?: unknown
-}
-
-const httpMethods = new Set(["get", "put", "post", "delete", "patch", "options", "head", "trace"])
 const outputDir = fileURLToPath(new URL("../../../docs/generated/", import.meta.url))
 const openApiOutputPath = join(outputDir, "openapi.json")
 const markdownOutputPath = join(outputDir, "openapi.md")
-
-function asObject(value: unknown): JsonObject | undefined {
-  return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonObject) : undefined
-}
 
 function escapeMarkdown(value: string): string {
   return value.replaceAll("|", "\\|").replaceAll("\n", " ").trim()
 }
 
-function headingId(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9/_{} -]/g, "")
-    .replace(/\s+/g, "-")
-}
-
-function formatSchema(schema: unknown): string {
-  const objectSchema = asObject(schema)
-  if (!objectSchema) return "-"
-  if (typeof objectSchema.$ref === "string") return `\`${objectSchema.$ref.replace("#/components/schemas/", "")}\``
-  if (typeof objectSchema.type === "string") {
-    const format = typeof objectSchema.format === "string" ? `:${objectSchema.format}` : ""
-    return `\`${objectSchema.type}${format}\``
-  }
-  return "inline schema"
-}
-
-function formatSchemaBlock(schema: unknown): string {
-  if (!schema) return "_No schema._"
-  return ["```json", JSON.stringify(schema, null, 2), "```"].join("\n")
-}
-
 function operationRows(api: OpenApiDocument): string[] {
-  const rows = ["| Method | Path | Summary | Tags |", "| --- | --- | --- | --- |"]
+  const rows = ["| Method | Path | Summary |", "| --- | --- | --- |"]
   for (const [path, pathItem] of Object.entries(api.paths ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
     for (const [method, operation] of Object.entries(pathItem)) {
-      if (!httpMethods.has(method)) continue
-      rows.push(`| \`${method.toUpperCase()}\` | \`${path}\` | ${escapeMarkdown(operation.summary ?? operation.operationId ?? "-")} | ${escapeMarkdown((operation.tags ?? []).join(", ") || "-")} |`)
+      if (!isHttpMethod(method)) continue
+      rows.push(`| \`${method.toUpperCase()}\` | \`${path}\` | ${escapeMarkdown(operation.summary ?? "-")} |`)
     }
   }
   return rows
 }
 
-function renderParameters(parameters: ParameterObject[] | undefined): string[] {
-  if (!parameters?.length) return ["_No parameters._"]
-  const rows = ["| Name | In | Required | Schema | Description |", "| --- | --- | --- | --- | --- |"]
-  for (const parameter of parameters) {
-    rows.push(`| \`${parameter.name ?? "-"}\` | ${parameter.in ?? "-"} | ${parameter.required ? "yes" : "no"} | ${formatSchema(parameter.schema)} | ${escapeMarkdown(parameter.description ?? "-")} |`)
-  }
-  return rows
+function fieldTable(rows: FieldRow[], emptyText = "_なし_"): string[] {
+  if (rows.length === 0) return [emptyText]
+  return [
+    "| 項目 | 型 | 必須 | 説明 | 制約 |",
+    "| --- | --- | --- | --- | --- |",
+    ...rows.map((row) => `| \`${escapeMarkdown(row.name)}\` | \`${escapeMarkdown(row.type)}\` | ${row.required ? "yes" : "no"} | ${escapeMarkdown(row.description)} | ${row.constraints} |`)
+  ]
 }
 
-function renderContent(content: Record<string, MediaTypeObject> | undefined): string[] {
-  if (!content || Object.keys(content).length === 0) return ["_No content schema._"]
+function renderRequestData(api: OpenApiDocument, operation: OperationObject): string[] {
+  const body = operation.requestBody
+  if (!body || typeof body !== "object" || !("content" in body)) return ["_なし_"]
+  const content = contentRows(api, body.content)
+  if (content.length === 0) return ["_なし_"]
   const lines: string[] = []
-  for (const [mediaType, media] of Object.entries(content).sort(([a], [b]) => a.localeCompare(b))) {
-    lines.push(`Media type: \`${mediaType}\``)
+  for (const item of content) {
+    lines.push(`Media type: \`${item.mediaType}\``)
     lines.push("")
-    lines.push(formatSchemaBlock(media.schema))
+    lines.push(...fieldTable(item.rows))
+    lines.push("")
   }
   return lines
 }
 
-function renderRequestBody(requestBody: RequestBodyObject | undefined): string[] {
-  if (!requestBody) return ["_No request body._"]
-  return [
-    `Required: ${requestBody.required ? "yes" : "no"}`,
-    requestBody.description ? `Description: ${requestBody.description}` : "",
-    "",
-    ...renderContent(requestBody.content)
-  ].filter((line) => line !== "")
-}
-
-function renderResponses(responses: Record<string, ResponseObject> | undefined): string[] {
-  if (!responses || Object.keys(responses).length === 0) return ["_No responses._"]
+function renderResponses(api: OpenApiDocument, operation: OperationObject): string[] {
+  const responses = responseRows(api, operation.responses)
+  if (responses.length === 0) return ["_なし_"]
   const lines: string[] = []
-  for (const [status, response] of Object.entries(responses).sort(([a], [b]) => a.localeCompare(b))) {
-    lines.push(`#### \`${status}\``)
+  for (const response of responses) {
+    lines.push(`##### \`${response.status}\` ${response.description}`)
     lines.push("")
-    lines.push(response.description ?? "_No description._")
+    lines.push(`Media type: \`${response.mediaType}\``)
     lines.push("")
-    lines.push(...renderContent(response.content))
+    lines.push(...fieldTable(response.rows, response.mediaType === "-" ? "_body なし_" : "_項目なし_"))
     lines.push("")
   }
   return lines
@@ -156,42 +86,33 @@ function renderOperations(api: OpenApiDocument): string[] {
   const lines: string[] = []
   for (const [path, pathItem] of Object.entries(api.paths ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
     for (const [method, operation] of Object.entries(pathItem)) {
-      if (!httpMethods.has(method)) continue
-      const title = `${method.toUpperCase()} ${path}`
-      lines.push(`### ${title}`)
+      if (!isHttpMethod(method)) continue
+      lines.push(`### ${operationKey(method, path)}`)
       lines.push("")
-      if (operation.summary) lines.push(operation.summary, "")
-      if (operation.description) lines.push(operation.description, "")
-      lines.push(`Anchor: \`${headingId(title)}\``)
+      lines.push(`Summary: ${operation.summary ?? "-"}`)
       lines.push("")
-      lines.push(`Tags: ${(operation.tags ?? []).map((tag) => `\`${tag}\``).join(", ") || "-"}`)
-      lines.push(`Security: ${operation.security === undefined ? "default" : JSON.stringify(operation.security)}`)
+      lines.push(operation.description ?? "-")
       lines.push("")
-      lines.push("#### Parameters")
+      lines.push("#### Headers")
       lines.push("")
-      lines.push(...renderParameters(operation.parameters))
+      lines.push(...fieldTable(parameterRows(parametersByGroup(operation, "header"))))
       lines.push("")
-      lines.push("#### Request Body")
+      lines.push("#### Path Parameters")
       lines.push("")
-      lines.push(...renderRequestBody(operation.requestBody))
+      lines.push(...fieldTable(parameterRows(parametersByGroup(operation, "path"))))
+      lines.push("")
+      lines.push("#### Query Parameters")
+      lines.push("")
+      lines.push(...fieldTable(parameterRows(parametersByGroup(operation, "query"))))
+      lines.push("")
+      lines.push("#### Data")
+      lines.push("")
+      lines.push(...renderRequestData(api, operation))
       lines.push("")
       lines.push("#### Responses")
       lines.push("")
-      lines.push(...renderResponses(operation.responses))
+      lines.push(...renderResponses(api, operation))
     }
-  }
-  return lines
-}
-
-function renderSchemas(api: OpenApiDocument): string[] {
-  const schemas = api.components?.schemas
-  if (!schemas || Object.keys(schemas).length === 0) return ["_No component schemas._"]
-  const lines: string[] = []
-  for (const [name, schema] of Object.entries(schemas).sort(([a], [b]) => a.localeCompare(b))) {
-    lines.push(`### ${name}`)
-    lines.push("")
-    lines.push(formatSchemaBlock(schema))
-    lines.push("")
   }
   return lines
 }
@@ -216,10 +137,7 @@ function renderMarkdown(api: OpenApiDocument): string {
     "",
     "## Operation Details",
     "",
-    ...renderOperations(api),
-    "## Components",
-    "",
-    ...renderSchemas(api)
+    ...renderOperations(api)
   ]
   return `${lines.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`
 }
@@ -231,7 +149,12 @@ async function main(): Promise<void> {
     throw new Error(`Failed to generate OpenAPI document: ${response.status}`)
   }
 
-  const api = (await response.json()) as OpenApiDocument
+  const api = enrichOpenApiDocument((await response.json()) as OpenApiDocument)
+  const errors = validateOpenApiDocument(api)
+  if (errors.length > 0) {
+    throw new Error(`OpenAPI document quality check failed:\n${errors.map((error) => `- ${error}`).join("\n")}`)
+  }
+
   await mkdir(outputDir, { recursive: true })
   await writeFile(openApiOutputPath, `${JSON.stringify(api, null, 2)}\n`)
   await writeFile(markdownOutputPath, renderMarkdown(api))
