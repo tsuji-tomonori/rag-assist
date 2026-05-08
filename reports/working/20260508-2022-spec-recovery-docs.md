@@ -31,6 +31,7 @@
 - `docs/spec-recovery/03_acceptance_criteria.md`、`06_requirements.md`、`07_specifications.md`、`09_gap_analysis.md` を確認した。
 - `memorag-bedrock-mvp/docs` に `FR-041` から `FR-047`、`NFR-014`、`NFR-015`、`SQ-003`、`SQ-004`、`CHG-002` を追加した。
 - `memorag-bedrock-mvp/docs/REQUIREMENTS.md`、機能要求分類索引、`REQ_CHANGE_001.md`、`DOCS_STRUCTURE.md` を更新した。
+- 追加した `FR-*` / `NFR-*` に合わせて、`requirements-coverage.test.ts` の trace map を更新した。
 - `task docs:check` 相当の Taskfile target が存在しないことを確認した。
 - `pre-commit run --all-files` は既存スコープ外ファイルを自動修正したため、それらを戻し、対象 staged files に限定して再実行した。
 
@@ -43,6 +44,7 @@
 | `REQ_SERVICE_QUALITY_003.md`, `REQ_SERVICE_QUALITY_004.md` | Markdown | 汎用 answerability policy、chat UI 表示非重なり | サービス品質制約追加 |
 | `REQ_CHANGE_002.md` | Markdown | spec recovery の report trace 維持 | 仕様復元 trace 要求追加 |
 | `REQUIREMENTS.md`, `README.md`, `REQ_CHANGE_001.md`, `DOCS_STRUCTURE.md` | Markdown | 索引とトレーサビリティ更新 | 追加要件との整合 |
+| `requirements-coverage.test.ts` | TypeScript test | 新規 `FR-*` / `NFR-*` の coverage map 追加 | CI の requirement coverage と整合 |
 
 ## 6. 指示へのfit評価
 
@@ -63,9 +65,13 @@
 - `git diff --check`: pass
 - `git diff --check --cached`: pass
 - `pre-commit run --files $(git diff --cached --name-only)`: pass
+- `npm --prefix memorag-bedrock-mvp ci`: pass
+- `npm --prefix memorag-bedrock-mvp exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 0 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
 
 ## 8. 未対応・制約・リスク
 
 - `task docs:check`: 未実施。`Taskfile.yaml` と `memorag-bedrock-mvp/Taskfile.yml` に該当 target がないため。
-- 実装・E2E テスト追加: 未実施。今回の依頼は docs 更新・追加であり、実装挙動変更は行っていないため。
+- E2E テスト追加: 未実施。今回の依頼は docs 更新・追加であり、画面挙動や API 挙動は変更していないため。
 - `pre-commit run --all-files`: 初回実行はスコープ外既存ファイルを自動修正したため、対象ファイル限定で再実行した。
+- CI: 初回は追加した要求 ID が coverage map に未登録だったため失敗した。`requirements-coverage.test.ts` を更新し、同じ API coverage command をローカルで pass させた。

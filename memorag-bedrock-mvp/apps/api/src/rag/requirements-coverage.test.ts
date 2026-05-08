@@ -44,6 +44,13 @@ const coverageByRequirement: Record<string, string[]> = {
   "FR-038": ["api-contract.test.ts", "document-ingest-runs tests", "documentsApi tests"],
   "FR-039": ["benchmark/corpus.test.ts", "benchmark/run.test.ts"],
   "FR-040": ["hybrid-search.test.ts", "benchmark/run.test.ts", "search-run.test.ts"],
+  "FR-041": ["ChatComposer.test.tsx", "docs/spec-recovery/03_acceptance_criteria.md"],
+  "FR-042": ["AssistantAnswer.test.tsx", "docs/spec-recovery/07_specifications.md"],
+  "FR-043": ["conversationHistorySearch.test.ts", "docs/spec-recovery/03_acceptance_criteria.md"],
+  "FR-044": ["node-units.test.ts", "hybrid-search.test.ts", "docs/spec-recovery/07_specifications.md"],
+  "FR-045": ["DebugPanel.test.tsx", "debugApi.test.ts", "docs/spec-recovery/07_specifications.md"],
+  "FR-046": ["benchmark/run.test.ts", "benchmark/corpus.test.ts", "docs/spec-recovery/07_specifications.md"],
+  "FR-047": ["benchmarkApi.test.ts", "useBenchmarkRuns.test.ts", "docs/spec-recovery/07_specifications.md"],
   "NFR-001": ["graph.test.ts", "local-stores.test.ts", "text-processing.test.ts"],
   "NFR-002": ["infra/test/memorag-mvp-stack.test.ts", "docs/OPERATIONS.md"],
   "NFR-003": ["infra/test/memorag-mvp-stack.test.ts"],
@@ -56,7 +63,9 @@ const coverageByRequirement: Record<string, string[]> = {
   "NFR-010": ["authorization.test.ts", "access-control-policy.test.ts"],
   "NFR-011": ["authorization.test.ts", "questions-access.test.ts"],
   "NFR-012": ["hybrid-search.test.ts", "access-control-policy.test.ts"],
-  "NFR-013": ["chat-run-events-stream.test.ts", "access-control-policy.test.ts"]
+  "NFR-013": ["chat-run-events-stream.test.ts", "access-control-policy.test.ts"],
+  "NFR-014": ["document-ingest-runs tests", "benchmark/corpus.test.ts", "docs/spec-recovery/09_gap_analysis.md"],
+  "NFR-015": ["debugApi.test.ts", "access-control-policy.test.ts", "docs/spec-recovery/09_gap_analysis.md"]
 }
 
 test("covered requirements map to existing product requirement documents", async () => {

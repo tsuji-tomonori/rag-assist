@@ -74,4 +74,7 @@
 - `git diff --check`: pass
 - `git diff --check --cached`: pass
 - `pre-commit run --files $(git diff --cached --name-only)`: pass
+- `npm --prefix memorag-bedrock-mvp ci`: pass
+- `npm --prefix memorag-bedrock-mvp exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 0 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
 - `task docs:check`: 未実施。`Taskfile.yaml` と `memorag-bedrock-mvp/Taskfile.yml` に該当 target がないため。
