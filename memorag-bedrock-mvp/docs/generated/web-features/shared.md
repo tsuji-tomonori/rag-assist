@@ -36,5 +36,6 @@
 
 ## UI 操作要素の全量
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Icon | svg | getIconPath(name) | getIconPath(name) (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/shared/components/Icon.tsx:26 | confirmed |

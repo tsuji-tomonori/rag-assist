@@ -25,13 +25,13 @@
 
 ## 主なボタン・リンク
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| BenchmarkWorkspace | button | チャットへ戻る | onClick=onBack | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:57 | confirmed |
-| BenchmarkWorkspace | button | 性能テストを実行 | onClick=onStart | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:127 | confirmed |
-| BenchmarkWorkspace | button | 更新 | onClick=onRefresh | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:131 | confirmed |
-| BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | onClick=() => void downloadBenchmarkArtifact(run.runId, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:183 | confirmed |
-| BenchmarkWorkspace | button | ジョブをキャンセル | onClick=() => void onCancel(run.runId) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:195 | confirmed |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BenchmarkWorkspace | button | チャットへ戻る | チャットへ戻る (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onBack | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:57 | confirmed |
+| BenchmarkWorkspace | button | loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" /> … | loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" /> / 性能テストを実行 (visible-text) | disabled=loading \|\| !canRun | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onStart | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:127 | confirmed |
+| BenchmarkWorkspace | button | loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="clock" />… | loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="clock" /> / 更新 (visible-text) | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onRefresh | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:131 | confirmed |
+| BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | `${artifact.description}をダウンロード` (aria-label) | disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => void downloadBenchmarkArtifact(run.runId, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:183 | confirmed |
+| BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | `${run.runId}のジョブをキャンセル` (aria-label) | disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => void onCancel(run.runId) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:195 | confirmed |
 
 ## フォーム
 
@@ -39,32 +39,32 @@
 
 ## 入力項目
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| BenchmarkWorkspace | select | suiteId | onChange=(event) => onSuiteChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:85 | confirmed |
-| BenchmarkWorkspace | input | selectedSuite?.datasetS3Key ?? "datasets/agent/standard-v1.jsonl" | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:106 | confirmed |
-| BenchmarkWorkspace | select | modelId | onChange=(event) => onModelChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:110 | confirmed |
-| BenchmarkWorkspace | input | concurrency | onChange=(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) \|\| 1))) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:118 | confirmed |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 説明参照 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BenchmarkWorkspace | select | suiteId | suites.length === 0 && <option value={suiteId}>standard-agent-v1</option> / suites.map((suite) => ( <option value={suit… (visible-text) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onSuiteChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:85 | confirmed |
+| BenchmarkWorkspace | input | selectedSuite?.datasetS3Key ?? "datasets/agent/standard-v1.jsonl" | データセット (label) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:106 | confirmed |
+| BenchmarkWorkspace | select | modelId | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku (visible-text) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onModelChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:110 | confirmed |
+| BenchmarkWorkspace | input | concurrency | 並列数 (label) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) \|\| 1))) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:118 | confirmed |
 
 ## UI 操作要素の全量
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| BenchmarkWorkspace | button | チャットへ戻る | onClick=onBack | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:57 | confirmed |
-| BenchmarkWorkspace | label | テスト種別 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:83 | confirmed |
-| BenchmarkWorkspace | select | suiteId | onChange=(event) => onSuiteChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:85 | confirmed |
-| BenchmarkWorkspace | option | suiteId | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86 | confirmed |
-| BenchmarkWorkspace | option | suite.suiteId | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:88 | confirmed |
-| BenchmarkWorkspace | label | データセット | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:104 | confirmed |
-| BenchmarkWorkspace | input | selectedSuite?.datasetS3Key ?? "datasets/agent/standard-v1.jsonl" | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:106 | confirmed |
-| BenchmarkWorkspace | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:108 | confirmed |
-| BenchmarkWorkspace | select | modelId | onChange=(event) => onModelChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:110 | confirmed |
-| BenchmarkWorkspace | option | amazon.nova-lite-v1:0 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:111 | confirmed |
-| BenchmarkWorkspace | option | anthropic.claude-3-5-sonnet-20240620-v1:0 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:112 | confirmed |
-| BenchmarkWorkspace | option | anthropic.claude-3-haiku-20240307-v1:0 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:113 | confirmed |
-| BenchmarkWorkspace | label | 並列数 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:116 | confirmed |
-| BenchmarkWorkspace | input | concurrency | onChange=(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) \|\| 1))) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:118 | confirmed |
-| BenchmarkWorkspace | button | 性能テストを実行 | onClick=onStart | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:127 | confirmed |
-| BenchmarkWorkspace | button | 更新 | onClick=onRefresh | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:131 | confirmed |
-| BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | onClick=() => void downloadBenchmarkArtifact(run.runId, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:183 | confirmed |
-| BenchmarkWorkspace | button | ジョブをキャンセル | onClick=() => void onCancel(run.runId) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:195 | confirmed |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| BenchmarkWorkspace | button | チャットへ戻る | チャットへ戻る (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onBack | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:57 | confirmed |
+| BenchmarkWorkspace | label | テスト種別 / suites.length === 0 && <option value={suiteId}>standard-agent-v1</optio… | テスト種別 / suites.length === 0 && <option value={suiteId}>standard-agent-v1</option> / suites.map((suite) => ( <option val… (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:83 | confirmed |
+| BenchmarkWorkspace | select | suiteId | suites.length === 0 && <option value={suiteId}>standard-agent-v1</option> / suites.map((suite) => ( <option value={suit… (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onSuiteChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:85 | confirmed |
+| BenchmarkWorkspace | option | suiteId | standard-agent-v1 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86 | confirmed |
+| BenchmarkWorkspace | option | suite.suiteId | suite.label (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:88 | confirmed |
+| BenchmarkWorkspace | label | データセット | データセット (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:104 | confirmed |
+| BenchmarkWorkspace | input | selectedSuite?.datasetS3Key ?? "datasets/agent/standard-v1.jsonl" | データセット (label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:106 | confirmed |
+| BenchmarkWorkspace | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:108 | confirmed |
+| BenchmarkWorkspace | select | modelId | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onModelChange(event.target.value) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:110 | confirmed |
+| BenchmarkWorkspace | option | amazon.nova-lite-v1:0 | Nova Lite v1 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:111 | confirmed |
+| BenchmarkWorkspace | option | anthropic.claude-3-5-sonnet-20240620-v1:0 | Claude 3.5 Sonnet (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:112 | confirmed |
+| BenchmarkWorkspace | option | anthropic.claude-3-haiku-20240307-v1:0 | Claude 3 Haiku (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:113 | confirmed |
+| BenchmarkWorkspace | label | 並列数 | 並列数 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:116 | confirmed |
+| BenchmarkWorkspace | input | concurrency | 並列数 (label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) \|\| 1))) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:118 | confirmed |
+| BenchmarkWorkspace | button | loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" /> … | loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" /> / 性能テストを実行 (visible-text) | disabled=loading \|\| !canRun | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onStart | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:127 | confirmed |
+| BenchmarkWorkspace | button | loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="clock" />… | loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="clock" /> / 更新 (visible-text) | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onRefresh | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:131 | confirmed |
+| BenchmarkWorkspace | button | `${artifact.description}をダウンロード` | `${artifact.description}をダウンロード` (aria-label) | disabled=!canDownload \|\| !canDownloadArtifact(run, artifact.kind) | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => void downloadBenchmarkArtifact(run.runId, artifact.kind) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:183 | confirmed |
+| BenchmarkWorkspace | button | `${run.runId}のジョブをキャンセル` | `${run.runId}のジョブをキャンセル` (aria-label) | disabled=!canCancel \|\| loading \|\| !["queued", "running"].includes(run.status) | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => void onCancel(run.runId) | apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:195 | confirmed |

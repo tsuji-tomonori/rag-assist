@@ -13,6 +13,7 @@ const outputFiles = {
   screens: path.join(outputDir, "web-screens.md"),
   features: path.join(outputDir, "web-features.md"),
   components: path.join(outputDir, "web-components.md"),
+  accessibility: path.join(outputDir, "web-accessibility.md"),
   json: path.join(outputDir, "web-ui-inventory.json")
 }
 const args = new Set(process.argv.slice(2))
@@ -77,7 +78,34 @@ const viewFeatures = {
   profile: "app"
 }
 
-const intrinsicUiElements = new Set(["button", "a", "form", "input", "select", "textarea", "label", "option"])
+const intrinsicUiElements = new Set(["button", "a", "form", "input", "select", "textarea", "label", "option", "summary", "img", "svg"])
+const a11yAttributeNames = new Set([
+  "alt",
+  "aria-busy",
+  "aria-controls",
+  "aria-current",
+  "aria-describedby",
+  "aria-expanded",
+  "aria-hidden",
+  "aria-invalid",
+  "aria-label",
+  "aria-labelledby",
+  "aria-live",
+  "aria-pressed",
+  "aria-selected",
+  "disabled",
+  "htmlFor",
+  "id",
+  "placeholder",
+  "role",
+  "title",
+  "type",
+  "value"
+])
+const requiredAccessibleNameElements = new Set(["button", "a", "input", "select", "textarea", "summary", "img"])
+const stateAttributeNames = ["aria-current", "aria-expanded", "aria-pressed", "aria-selected", "aria-invalid", "aria-busy", "aria-controls", "disabled"]
+const riskyLabelPattern = /(削除|停止|再開|無効|差戻|承認|公開|付与|キャンセル|切替|戻す|共有更新)/i
+const riskyHandlerPattern = /(onDelete|onSetStatus|onSuspend|onUnsuspend|onDisable|onReject|onApprove|onReview|onPublish|onAssignRoles|onCancel|onCutover|onRollback)/i
 const handlerAttribute = /^on[A-Z]/
 
 function walkFiles(dir) {
@@ -149,6 +177,7 @@ function extractTextFromChildren(children) {
     }
     if (ts.isJsxExpression(child) && child.expression) {
       if (ts.isStringLiteral(child.expression) || ts.isNoSubstitutionTemplateLiteral(child.expression)) values.push(child.expression.text)
+      else values.push(truncate(nodeText(child.expression), 80))
     }
     if (ts.isJsxElement(child)) {
       values.push(...extractTextFromChildren(child.children))
@@ -159,13 +188,121 @@ function extractTextFromChildren(children) {
 
 function getElementLabel(node) {
   const attrs = ts.isJsxElement(node) ? node.openingElement.attributes : node.attributes
-  const attrLabel = getAttribute(attrs, "aria-label") ?? getAttribute(attrs, "title") ?? getAttribute(attrs, "placeholder") ?? getAttribute(attrs, "value")
+  const attrLabel = getAttribute(attrs, "aria-label") ?? getAttribute(attrs, "aria-labelledby") ?? getAttribute(attrs, "title") ?? getAttribute(attrs, "placeholder") ?? getAttribute(attrs, "value") ?? getAttribute(attrs, "alt")
   if (attrLabel) return truncate(attrLabel, 80)
   if (ts.isJsxElement(node)) {
     const text = extractTextFromChildren(node.children).join(" / ")
     if (text) return truncate(text, 80)
   }
+  const wrappingLabel = findWrappingLabelText(node)
+  if (wrappingLabel) return truncate(wrappingLabel, 80)
   return "未推定"
+}
+
+function attributeValue(attributes, name) {
+  return attributes.find((attr) => attr.name === name)?.value ?? null
+}
+
+function hasJsxDescendant(node, tagPattern) {
+  let found = false
+  function visit(child) {
+    if (found) return
+    const jsxNode = ts.isJsxElement(child) ? child.openingElement : ts.isJsxSelfClosingElement(child) ? child : null
+    if (jsxNode && tagPattern.test(getJsxTagName(jsxNode.tagName))) found = true
+    ts.forEachChild(child, visit)
+  }
+  if (ts.isJsxElement(node)) {
+    for (const child of node.children) visit(child)
+  }
+  return found
+}
+
+function getVisibleText(node) {
+  if (!ts.isJsxElement(node)) return ""
+  return truncate(extractTextFromChildren(node.children).join(" / "), 120)
+}
+
+function findWrappingLabelText(node) {
+  let current = node.parent
+  while (current) {
+    if (ts.isJsxElement(current) && getJsxTagName(current.openingElement.tagName) === "label") {
+      const text = extractTextFromChildren(current.children).join(" / ")
+      if (text) return text
+    }
+    current = current.parent
+  }
+  return ""
+}
+
+function getAccessibleNameInfo(node, tagName, attributes, label) {
+  const ariaLabel = attributeValue(attributes, "aria-label")
+  if (ariaLabel) return { name: truncate(ariaLabel, 100), source: "aria-label" }
+  const labelledBy = attributeValue(attributes, "aria-labelledby")
+  if (labelledBy) return { name: `参照: ${truncate(labelledBy, 90)}`, source: "aria-labelledby" }
+  const alt = attributeValue(attributes, "alt")
+  if (alt) return { name: truncate(alt, 100), source: "alt" }
+  const visibleText = getVisibleText(node)
+  if (visibleText) return { name: visibleText, source: "visible-text" }
+  const title = attributeValue(attributes, "title")
+  if (title) return { name: truncate(title, 100), source: "title" }
+  const placeholder = attributeValue(attributes, "placeholder")
+  if (placeholder) return { name: truncate(placeholder, 100), source: "placeholder" }
+  const wrappingLabel = findWrappingLabelText(node)
+  if (wrappingLabel) return { name: truncate(wrappingLabel, 100), source: "label" }
+  const value = attributeValue(attributes, "value")
+  if (value && !["input", "textarea", "select"].includes(tagName)) return { name: truncate(value, 100), source: "value" }
+  if (label && label !== "未推定") return { name: label, source: "label-fallback" }
+  return { name: "", source: "missing" }
+}
+
+function getA11yInfo({ node, tagName, attributes, handlers, isIntrinsic }) {
+  const label = getElementLabel(node)
+  const nameInfo = getAccessibleNameInfo(node, tagName, attributes, label)
+  const descriptionRefs = attributeValue(attributes, "aria-describedby") ?? ""
+  const role = attributeValue(attributes, "role") ?? ""
+  const ariaHidden = attributeValue(attributes, "aria-hidden") ?? ""
+  const state = stateAttributeNames
+    .map((name) => {
+      const value = attributeValue(attributes, name)
+      return value ? `${name}=${value}` : null
+    })
+    .filter(Boolean)
+  const handlerText = handlers.map((handler) => `${handler.name}=${handler.value}`).join(" ")
+  const labelText = `${label} ${nameInfo.name}`
+  const isRiskyAction = riskyLabelPattern.test(labelText) || riskyHandlerPattern.test(handlerText)
+  const requiresAccessibleName = requiredAccessibleNameElements.has(tagName)
+  const isDecorativeGraphic = ["svg", "img"].includes(tagName) && ariaHidden === "true"
+  const isIconOnlyButton = tagName === "button" && !getVisibleText(node) && hasJsxDescendant(node, /Icon|svg/i)
+  const reasons = []
+  let status = "ok"
+
+  if (requiresAccessibleName && !nameInfo.name && !isDecorativeGraphic) {
+    status = "missing"
+    reasons.push("アクセシブル名が静的解析で確認できません。")
+  }
+  if (isIconOnlyButton && nameInfo.source !== "aria-label" && nameInfo.source !== "aria-labelledby") {
+    status = status === "missing" ? status : "warning"
+    reasons.push("アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。")
+  }
+  if (isIntrinsic && isRiskyAction && !descriptionRefs && !["aria-label", "aria-labelledby"].includes(nameInfo.source)) {
+    status = status === "missing" ? status : "warning"
+    reasons.push("削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。")
+  }
+  if (tagName === "svg" && ariaHidden !== "true" && !role && !nameInfo.name) {
+    status = status === "missing" ? status : "warning"
+    reasons.push("装飾 SVG は aria-hidden、意味のある SVG は名前または role が必要です。")
+  }
+  if (reasons.length === 0) reasons.push("日本語のアクセシブル名または表示テキストを確認できます。")
+
+  return {
+    accessibleName: nameInfo.name || "未推定",
+    accessibleNameSource: nameInfo.source,
+    descriptionRefs: descriptionRefs || "-",
+    role: role || "-",
+    state: state.length > 0 ? state : [],
+    status,
+    reason: reasons.join(" ")
+  }
 }
 
 function findNearestFunctionName(node) {
@@ -214,6 +351,23 @@ function summarizeLabels(items, limit = 8) {
   const visible = labels.slice(0, limit)
   const suffix = labels.length > limit ? ` ほか ${labels.length - limit} 件` : ""
   return `${visible.join("、")}${suffix}`
+}
+
+function summarizeA11yStatus(items) {
+  const counts = { ok: 0, warning: 0, missing: 0 }
+  for (const item of items) {
+    if (item.a11y?.status in counts) counts[item.a11y.status] += 1
+  }
+  return `ok ${counts.ok} / warning ${counts.warning} / missing ${counts.missing}`
+}
+
+function a11yStateText(item) {
+  return item.a11y?.state?.length > 0 ? item.a11y.state.join("<br>") : "-"
+}
+
+function a11yStatusText(item) {
+  if (!item.a11y) return "-"
+  return `${item.a11y.status}: ${item.a11y.reason}`
 }
 
 function roleFromComponent(component) {
@@ -374,9 +528,11 @@ function collectInteractions(sourceFile, filePath) {
     const attrs = getAttributes(jsxNode.attributes)
     const handlers = attrs.filter((attr) => handlerAttribute.test(attr.name))
     const isIntrinsic = intrinsicUiElements.has(tagName)
-    const isCustomAction = /^[A-Z]/.test(tagName) && (handlers.length > 0 || /(Button|Link|Form|Composer|Nav|Panel)$/.test(tagName))
+    const isCustomAction = /^[A-Z]/.test(tagName) && (handlers.length > 0 || /(Button|Link|Form)$/.test(tagName))
     if (isIntrinsic || isCustomAction) {
       const line = sourceFile.getLineAndCharacterOfPosition(jsxNode.getStart()).line + 1
+      const label = getElementLabel(node)
+      const a11y = getA11yInfo({ node, tagName, attributes: attrs, handlers, isIntrinsic })
       interactions.push({
         id: `${toRepoPath(filePath)}:${line}:${tagName}`,
         file: toRepoPath(filePath),
@@ -384,10 +540,11 @@ function collectInteractions(sourceFile, filePath) {
         feature: getFeature(filePath),
         component: findNearestFunctionName(node),
         element: tagName,
-        label: getElementLabel(node),
+        label,
+        a11y,
         handlers,
-        attributes: attrs.filter((attr) => ["type", "href", "name", "role", "aria-label", "title", "placeholder", "disabled"].includes(attr.name)),
-        certainty: getElementLabel(node) === "未推定" ? "unknown" : "confirmed"
+        attributes: attrs.filter((attr) => a11yAttributeNames.has(attr.name) || handlerAttribute.test(attr.name)),
+        certainty: label === "未推定" ? "unknown" : "confirmed"
       })
     }
     ts.forEachChild(node, visit)
@@ -473,6 +630,7 @@ function renderOverview(inventory) {
 - 各画面がどの画面コンポーネントに対応するか。
 - 機能領域ごとに、どのコンポーネントと UI 操作要素があるか。
 - ボタン、リンク、フォーム、入力欄、主要 handler がどのファイルにあるか。
+- アクセシブル名、説明参照、状態属性、アクセシビリティ上の不足候補がどこにあるか。
 
 ## 全体サマリ
 
@@ -482,7 +640,8 @@ ${markdownTable(
     ["画面", inventory.screens.length, "[web-screens.md](web-screens.md)"],
     ["機能領域", inventory.features.length, "[web-features.md](web-features.md)"],
     ["コンポーネント", inventory.components.length, "[web-components.md](web-components.md)"],
-    ["UI 操作要素", inventory.interactions.length, "[web-features.md](web-features.md)"]
+    ["UI 操作要素", inventory.interactions.length, "[web-features.md](web-features.md)"],
+    ["a11y 注意/不足", inventory.interactions.filter((item) => item.a11y?.status !== "ok").length, "[web-accessibility.md](web-accessibility.md)"]
   ]
 )}
 
@@ -491,7 +650,8 @@ ${markdownTable(
 1. [画面一覧](web-screens.md) で、ユーザーが見る画面と権限条件を把握する。
 2. [機能一覧](web-features.md) で、機能領域と関連画面の対応を見る。
 3. 気になる機能の詳細ファイルを開き、ボタン、フォーム、handler、実装ファイルを確認する。
-4. [コンポーネント一覧](web-components.md) で、画面を構成する部品と JSX 使用要素を確認する。
+4. [アクセシビリティ一覧](web-accessibility.md) で、アクセシブル名や状態属性の不足候補を確認する。
+5. [コンポーネント一覧](web-components.md) で、画面を構成する部品と JSX 使用要素を確認する。
 
 ## 生成されるファイル
 
@@ -503,6 +663,7 @@ ${markdownTable(
     ["[web-features.md](web-features.md)", "機能別詳細ファイルへの索引"],
     ["[web-features/*.md](web-features/)", "機能ごとの画面、コンポーネント、UI 操作要素"],
     ["[web-components.md](web-components.md)", "コンポーネント、export、役割、関連画面"],
+    ["[web-accessibility.md](web-accessibility.md)", "アクセシブル名、説明参照、状態属性、注意/不足候補"],
     ["web-ui-inventory.json", "CI や将来の可視化に使える機械可読データ"]
   ]
 )}
@@ -552,7 +713,7 @@ function renderFeatures(inventory) {
 ## 機能別ファイル
 
 ${markdownTable(
-  ["機能", "feature", "概要", "関連画面", "コンポーネント数", "UI 操作要素数", "詳細"],
+  ["機能", "feature", "概要", "関連画面", "コンポーネント数", "UI 操作要素数", "a11y", "詳細"],
   inventory.features.map((feature) => [
     feature.label,
     feature.feature,
@@ -560,6 +721,7 @@ ${markdownTable(
     feature.screens.length > 0 ? feature.screens.join(", ") : "-",
     feature.componentCount,
     feature.interactionCount,
+    summarizeA11yStatus(inventory.interactions.filter((item) => item.feature === feature.feature)),
     `[${featureFileName(feature.feature)}](${featureLink(feature.feature)})`
   ])
 )}
@@ -609,11 +771,14 @@ ${markdownTable(
 ## 主なボタン・リンク
 
 ${buttons.length > 0 ? markdownTable(
-  ["コンポーネント", "要素", "ラベル", "ハンドラ", "場所", "確度"],
+  ["コンポーネント", "要素", "ラベル", "アクセシブル名", "状態", "a11y", "ハンドラ", "場所", "確度"],
   buttons.map((item) => [
     item.component,
     item.element,
     item.label,
+    `${item.a11y.accessibleName} (${item.a11y.accessibleNameSource})`,
+    a11yStateText(item),
+    a11yStatusText(item),
     item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
     `${item.file}:${item.line}`,
     item.certainty
@@ -623,10 +788,12 @@ ${buttons.length > 0 ? markdownTable(
 ## フォーム
 
 ${forms.length > 0 ? markdownTable(
-  ["コンポーネント", "ラベル", "送信ハンドラ", "場所", "確度"],
+  ["コンポーネント", "ラベル", "説明参照", "a11y", "送信ハンドラ", "場所", "確度"],
   forms.map((item) => [
     item.component,
     item.label,
+    item.a11y.descriptionRefs,
+    a11yStatusText(item),
     item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
     `${item.file}:${item.line}`,
     item.certainty
@@ -636,11 +803,15 @@ ${forms.length > 0 ? markdownTable(
 ## 入力項目
 
 ${fields.length > 0 ? markdownTable(
-  ["コンポーネント", "要素", "ラベル", "ハンドラ", "場所", "確度"],
+  ["コンポーネント", "要素", "ラベル", "アクセシブル名", "説明参照", "状態", "a11y", "ハンドラ", "場所", "確度"],
   fields.map((item) => [
     item.component,
     item.element,
     item.label,
+    `${item.a11y.accessibleName} (${item.a11y.accessibleNameSource})`,
+    item.a11y.descriptionRefs,
+    a11yStateText(item),
+    a11yStatusText(item),
     item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
     `${item.file}:${item.line}`,
     item.certainty
@@ -650,11 +821,14 @@ ${fields.length > 0 ? markdownTable(
 ## UI 操作要素の全量
 
 ${markdownTable(
-  ["コンポーネント", "要素", "ラベル", "ハンドラ", "場所", "確度"],
+  ["コンポーネント", "要素", "ラベル", "アクセシブル名", "状態", "a11y", "ハンドラ", "場所", "確度"],
   interactions.map((item) => [
     item.component,
     item.element,
     item.label,
+    `${item.a11y.accessibleName} (${item.a11y.accessibleNameSource})`,
+    a11yStateText(item),
+    a11yStatusText(item),
     item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
     `${item.file}:${item.line}`,
     item.certainty
@@ -684,12 +858,76 @@ ${markdownTable(
 `
 }
 
+function renderAccessibility(inventory) {
+  const findings = inventory.interactions.filter((item) => item.a11y?.status !== "ok")
+  const byFeature = inventory.features.map((feature) => {
+    const items = inventory.interactions.filter((item) => item.feature === feature.feature)
+    return [
+      feature.label,
+      feature.feature,
+      items.length,
+      items.filter((item) => item.a11y?.status === "ok").length,
+      items.filter((item) => item.a11y?.status === "warning").length,
+      items.filter((item) => item.a11y?.status === "missing").length,
+      `[${featureFileName(feature.feature)}](${featureLink(feature.feature)})`
+    ]
+  })
+
+  return `${renderHeader("Web アクセシビリティメタデータ一覧", inventory)}
+
+## 判定方針
+
+- 対象: button、link、form、input、select、textarea、summary、img/svg、handler を持つカスタム UI。
+- ok: 日本語の表示テキスト、\`aria-label\`、\`aria-labelledby\`、\`title\`、\`alt\` などからアクセシブル名を推定できる。
+- warning: アイコン中心、削除/停止/公開/切替など影響が大きい操作、または SVG の意味付けに追加説明が望ましい。
+- missing: 操作対象なのにアクセシブル名を推定できない。
+- 静的解析のため、実行時に組み立てる label や CSS による非表示制御は推定を含みます。最終判断は画面確認と支援技術での確認を併用してください。
+
+## 機能別サマリ
+
+${markdownTable(
+  ["機能", "feature", "操作要素", "ok", "warning", "missing", "詳細"],
+  byFeature
+)}
+
+## 注意・不足候補
+
+${findings.length > 0 ? markdownTable(
+  ["機能", "コンポーネント", "要素", "ラベル", "アクセシブル名", "説明参照", "状態", "理由", "場所"],
+  findings.map((item) => [
+    featureLabels[item.feature] ?? item.feature,
+    item.component,
+    item.element,
+    item.label,
+    `${item.a11y.accessibleName} (${item.a11y.accessibleNameSource})`,
+    item.a11y.descriptionRefs,
+    a11yStateText(item),
+    a11yStatusText(item),
+    `${item.file}:${item.line}`
+  ])
+) : "注意・不足候補は静的解析では見つかりませんでした。"}
+
+## メタデータとして仕様書に使える情報
+
+${markdownTable(
+  ["項目", "仕様書での使い方"],
+  [
+    ["アクセシブル名", "ボタンや入力項目を、見た目ではなく操作目的として日本語で説明する。"],
+    ["説明参照", "エラー、補足、リスク説明がどの UI と紐づくかを確認する。"],
+    ["状態属性", "現在地、展開状態、選択状態、処理中、無効状態を画面仕様に記載する。"],
+    ["注意・不足候補", "PR self-review と a11y 修正タスクの入口にする。"]
+  ]
+)}
+`
+}
+
 function renderOutputs(inventory) {
   const outputs = {
     [outputFiles.overview]: renderOverview(inventory),
     [outputFiles.screens]: renderScreens(inventory),
     [outputFiles.features]: renderFeatures(inventory),
     [outputFiles.components]: renderComponents(inventory),
+    [outputFiles.accessibility]: renderAccessibility(inventory),
     [outputFiles.json]: `${JSON.stringify(inventory, null, 2)}\n`
   }
   for (const feature of inventory.features) {

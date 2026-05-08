@@ -25,83 +25,83 @@
 
 ## 主なボタン・リンク
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| AdminWorkspace | button | チャットへ戻る | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:108 | confirmed |
-| AdminWorkspace | button | ドキュメント管理 / 件 | onClick=onOpenDocuments | apps/web/src/features/admin/components/AdminWorkspace.tsx:120 | confirmed |
-| AdminWorkspace | button | 担当者対応 / 件が対応待ち | onClick=onOpenAssignee | apps/web/src/features/admin/components/AdminWorkspace.tsx:127 | confirmed |
-| AdminWorkspace | button | デバッグ / 評価 / 件の実行履歴 | onClick=onOpenDebug | apps/web/src/features/admin/components/AdminWorkspace.tsx:134 | confirmed |
-| AdminWorkspace | button | 性能テスト / 件の実行履歴 | onClick=onOpenBenchmark | apps/web/src/features/admin/components/AdminWorkspace.tsx:141 | confirmed |
-| AdminWorkspace | button | 更新 | onClick=() => void onRefreshAdminData() | apps/web/src/features/admin/components/AdminWorkspace.tsx:206 | confirmed |
-| AliasAdminPanel | button | 公開 | onClick=() => void onPublish() | apps/web/src/features/admin/components/AdminWorkspace.tsx:405 | confirmed |
-| AliasAdminPanel | button | 追加 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:426 | confirmed |
-| AliasAdminPanel | button | 下書き化 | onClick=() => void onUpdate(alias.aliasId, { expansions: alias.expansions }) | apps/web/src/features/admin/components/AdminWorkspace.tsx:445 | confirmed |
-| AliasAdminPanel | button | 承認 | onClick=() => void onReview(alias.aliasId, "approve") | apps/web/src/features/admin/components/AdminWorkspace.tsx:449 | confirmed |
-| AliasAdminPanel | button | 差戻 | onClick=() => void onReview(alias.aliasId, "reject", "Rejected from UI") | apps/web/src/features/admin/components/AdminWorkspace.tsx:453 | confirmed |
-| AliasAdminPanel | button | 無効 | onClick=() => void onDisable(alias.aliasId) | apps/web/src/features/admin/components/AdminWorkspace.tsx:457 | confirmed |
-| AdminCreateUserForm | button | 作成 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:530 | confirmed |
-| ManagedUserRow | button | 付与 | onClick=() => void onAssignRoles(user.userId, [selectedRole]) | apps/web/src/features/admin/components/AdminWorkspace.tsx:581 | confirmed |
-| ManagedUserRow | button | 再開 | onClick=() => void onSetStatus(user.userId, "unsuspend") | apps/web/src/features/admin/components/AdminWorkspace.tsx:591 | confirmed |
-| ManagedUserRow | button | 停止 | onClick=() => void onSetStatus(user.userId, "suspend") | apps/web/src/features/admin/components/AdminWorkspace.tsx:596 | confirmed |
-| ManagedUserRow | button | 削除 | onClick=() => void onSetStatus(user.userId, "delete") | apps/web/src/features/admin/components/AdminWorkspace.tsx:601 | confirmed |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AdminWorkspace | button | チャットへ戻る | チャットへ戻る (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:108 | confirmed |
+| AdminWorkspace | button | ドキュメント管理 / documentsCount / 件 | ドキュメント管理 / documentsCount / 件 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onOpenDocuments | apps/web/src/features/admin/components/AdminWorkspace.tsx:120 | confirmed |
+| AdminWorkspace | button | 担当者対応 / openQuestionsCount / 件が対応待ち | 担当者対応 / openQuestionsCount / 件が対応待ち (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onOpenAssignee | apps/web/src/features/admin/components/AdminWorkspace.tsx:127 | confirmed |
+| AdminWorkspace | button | デバッグ / 評価 / debugRunsCount / 件の実行履歴 | デバッグ / 評価 / debugRunsCount / 件の実行履歴 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onOpenDebug | apps/web/src/features/admin/components/AdminWorkspace.tsx:134 | confirmed |
+| AdminWorkspace | button | 性能テスト / benchmarkRunsCount / 件の実行履歴 | 性能テスト / benchmarkRunsCount / 件の実行履歴 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onOpenBenchmark | apps/web/src/features/admin/components/AdminWorkspace.tsx:141 | confirmed |
+| AdminWorkspace | button | loading && <LoadingSpinner className="button-spinner" /> / 更新 | loading && <LoadingSpinner className="button-spinner" /> / 更新 (visible-text) | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => void onRefreshAdminData() | apps/web/src/features/admin/components/AdminWorkspace.tsx:206 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 公開 | loading && <LoadingSpinner className="button-spinner" /> / 公開 (visible-text) | disabled=!canPublish \|\| loading | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onPublish() | apps/web/src/features/admin/components/AdminWorkspace.tsx:405 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 追加 | loading && <LoadingSpinner className="button-spinner" /> / 追加 (visible-text) | disabled=loading \|\| !term.trim() \|\| parseExpansionList(expansions).length === 0 | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:426 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 下書き化 | loading && <LoadingSpinner className="button-spinner" /> / 下書き化 (visible-text) | disabled=!canWrite \|\| loading \|\| alias.status === "disabled" | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => void onUpdate(alias.aliasId, { expansions: alias.expansions }) | apps/web/src/features/admin/components/AdminWorkspace.tsx:445 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 承認 | loading && <LoadingSpinner className="button-spinner" /> / 承認 (visible-text) | disabled=!canReview \|\| loading \|\| alias.status === "disabled" | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onReview(alias.aliasId, "approve") | apps/web/src/features/admin/components/AdminWorkspace.tsx:449 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 差戻 | loading && <LoadingSpinner className="button-spinner" /> / 差戻 (visible-text) | disabled=!canReview \|\| loading \|\| alias.status === "disabled" | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onReview(alias.aliasId, "reject", "Rejected from UI") | apps/web/src/features/admin/components/AdminWorkspace.tsx:453 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 無効 | loading && <LoadingSpinner className="button-spinner" /> / 無効 (visible-text) | disabled=!canDisable \|\| loading \|\| alias.status === "disabled" | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onDisable(alias.aliasId) | apps/web/src/features/admin/components/AdminWorkspace.tsx:457 | confirmed |
+| AdminCreateUserForm | button | loading && <LoadingSpinner className="button-spinner" /> / 作成 | loading && <LoadingSpinner className="button-spinner" /> / 作成 (visible-text) | disabled=loading \|\| email.trim().length === 0 | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:530 | confirmed |
+| ManagedUserRow | button | loading && <LoadingSpinner className="button-spinner" /> / 付与 | loading && <LoadingSpinner className="button-spinner" /> / 付与 (visible-text) | disabled=!canAssignRoles \|\| loading \|\| user.groups.includes(selectedRole) | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onAssignRoles(user.userId, [selectedRole]) | apps/web/src/features/admin/components/AdminWorkspace.tsx:581 | confirmed |
+| ManagedUserRow | button | loading && <LoadingSpinner className="button-spinner" /> / 再開 | loading && <LoadingSpinner className="button-spinner" /> / 再開 (visible-text) | disabled=!canUnsuspend \|\| loading | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onSetStatus(user.userId, "unsuspend") | apps/web/src/features/admin/components/AdminWorkspace.tsx:591 | confirmed |
+| ManagedUserRow | button | loading && <LoadingSpinner className="button-spinner" /> / 停止 | loading && <LoadingSpinner className="button-spinner" /> / 停止 (visible-text) | disabled=!canSuspend \|\| loading | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onSetStatus(user.userId, "suspend") | apps/web/src/features/admin/components/AdminWorkspace.tsx:596 | confirmed |
+| ManagedUserRow | button | loading && <LoadingSpinner className="button-spinner" /> / 削除 | loading && <LoadingSpinner className="button-spinner" /> / 削除 (visible-text) | disabled=!canDelete \|\| loading | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onSetStatus(user.userId, "delete") | apps/web/src/features/admin/components/AdminWorkspace.tsx:601 | confirmed |
 
 ## フォーム
 
-| コンポーネント | ラベル | 送信ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- |
-| AliasAdminPanel | 用語 / 展開語 / 部署 scope / 追加 | onSubmit=(event) => void onSubmit(event) | apps/web/src/features/admin/components/AdminWorkspace.tsx:413 | confirmed |
-| AdminCreateUserForm | 管理対象ユーザー作成 | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/AdminWorkspace.tsx:513 | confirmed |
+| コンポーネント | ラベル | 説明参照 | a11y | 送信ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- |
+| AliasAdminPanel | 用語 / 展開語 / 部署 scope / loading && <LoadingSpinner className="button-spinner" /> … | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onSubmit=(event) => void onSubmit(event) | apps/web/src/features/admin/components/AdminWorkspace.tsx:413 | confirmed |
+| AdminCreateUserForm | 管理対象ユーザー作成 | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/AdminWorkspace.tsx:513 | confirmed |
 
 ## 入力項目
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| AliasAdminPanel | input | pto | onChange=(event) => setTerm(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:416 | confirmed |
-| AliasAdminPanel | input | 有給休暇, 休暇申請 | onChange=(event) => setExpansions(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:420 | confirmed |
-| AliasAdminPanel | input | 任意 | onChange=(event) => setDepartment(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:424 | confirmed |
-| AdminCreateUserForm | input | new-user@example.com | onChange=(event) => setEmail(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:516 | confirmed |
-| AdminCreateUserForm | input | 任意 | onChange=(event) => setDisplayName(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:520 | confirmed |
-| AdminCreateUserForm | select | role | onChange=(event) => setRole(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:524 | confirmed |
-| ManagedUserRow | select | selectedRole | onChange=(event) => setSelectedRole(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:576 | confirmed |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 説明参照 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AliasAdminPanel | input | pto | pto (placeholder) | - | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setTerm(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:416 | confirmed |
+| AliasAdminPanel | input | 有給休暇, 休暇申請 | 有給休暇, 休暇申請 (placeholder) | - | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setExpansions(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:420 | confirmed |
+| AliasAdminPanel | input | 任意 | 任意 (placeholder) | - | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setDepartment(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:424 | confirmed |
+| AdminCreateUserForm | input | new-user@example.com | new-user@example.com (placeholder) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setEmail(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:516 | confirmed |
+| AdminCreateUserForm | input | 任意 | 任意 (placeholder) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setDisplayName(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:520 | confirmed |
+| AdminCreateUserForm | select | role | roles.map((roleDefinition) => ( <option value={roleDefinition.role} key={roleDe… (visible-text) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setRole(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:524 | confirmed |
+| ManagedUserRow | select | `${user.email}に付与するロール` | `${user.email}に付与するロール` (aria-label) | - | disabled=!canAssignRoles \|\| loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setSelectedRole(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:576 | confirmed |
 
 ## UI 操作要素の全量
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| AdminWorkspace | button | チャットへ戻る | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:108 | confirmed |
-| AdminWorkspace | button | ドキュメント管理 / 件 | onClick=onOpenDocuments | apps/web/src/features/admin/components/AdminWorkspace.tsx:120 | confirmed |
-| AdminWorkspace | button | 担当者対応 / 件が対応待ち | onClick=onOpenAssignee | apps/web/src/features/admin/components/AdminWorkspace.tsx:127 | confirmed |
-| AdminWorkspace | button | デバッグ / 評価 / 件の実行履歴 | onClick=onOpenDebug | apps/web/src/features/admin/components/AdminWorkspace.tsx:134 | confirmed |
-| AdminWorkspace | button | 性能テスト / 件の実行履歴 | onClick=onOpenBenchmark | apps/web/src/features/admin/components/AdminWorkspace.tsx:141 | confirmed |
-| AdminWorkspace | AliasAdminPanel | 未推定 | onCreate=onCreateAlias<br>onUpdate=onUpdateAlias<br>onReview=onReviewAlias<br>onDisable=onDisableAlias<br>onPublish=onPublishAliases | apps/web/src/features/admin/components/AdminWorkspace.tsx:186 | unknown |
-| AdminWorkspace | button | 更新 | onClick=() => void onRefreshAdminData() | apps/web/src/features/admin/components/AdminWorkspace.tsx:206 | confirmed |
-| AdminWorkspace | AdminCreateUserForm | 未推定 | onCreateUser=onCreateUser | apps/web/src/features/admin/components/AdminWorkspace.tsx:212 | unknown |
-| AdminWorkspace | ManagedUserRow | 未推定 | onAssignRoles=onAssignRoles<br>onSetStatus=onSetUserStatus | apps/web/src/features/admin/components/AdminWorkspace.tsx:225 | unknown |
-| AliasAdminPanel | button | 公開 | onClick=() => void onPublish() | apps/web/src/features/admin/components/AdminWorkspace.tsx:405 | confirmed |
-| AliasAdminPanel | form | 用語 / 展開語 / 部署 scope / 追加 | onSubmit=(event) => void onSubmit(event) | apps/web/src/features/admin/components/AdminWorkspace.tsx:413 | confirmed |
-| AliasAdminPanel | label | 用語 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:414 | confirmed |
-| AliasAdminPanel | input | pto | onChange=(event) => setTerm(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:416 | confirmed |
-| AliasAdminPanel | label | 展開語 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:418 | confirmed |
-| AliasAdminPanel | input | 有給休暇, 休暇申請 | onChange=(event) => setExpansions(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:420 | confirmed |
-| AliasAdminPanel | label | 部署 scope | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:422 | confirmed |
-| AliasAdminPanel | input | 任意 | onChange=(event) => setDepartment(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:424 | confirmed |
-| AliasAdminPanel | button | 追加 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:426 | confirmed |
-| AliasAdminPanel | button | 下書き化 | onClick=() => void onUpdate(alias.aliasId, { expansions: alias.expansions }) | apps/web/src/features/admin/components/AdminWorkspace.tsx:445 | confirmed |
-| AliasAdminPanel | button | 承認 | onClick=() => void onReview(alias.aliasId, "approve") | apps/web/src/features/admin/components/AdminWorkspace.tsx:449 | confirmed |
-| AliasAdminPanel | button | 差戻 | onClick=() => void onReview(alias.aliasId, "reject", "Rejected from UI") | apps/web/src/features/admin/components/AdminWorkspace.tsx:453 | confirmed |
-| AliasAdminPanel | button | 無効 | onClick=() => void onDisable(alias.aliasId) | apps/web/src/features/admin/components/AdminWorkspace.tsx:457 | confirmed |
-| AdminCreateUserForm | form | 管理対象ユーザー作成 | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/AdminWorkspace.tsx:513 | confirmed |
-| AdminCreateUserForm | label | メール | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:514 | confirmed |
-| AdminCreateUserForm | input | new-user@example.com | onChange=(event) => setEmail(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:516 | confirmed |
-| AdminCreateUserForm | label | 表示名 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:518 | confirmed |
-| AdminCreateUserForm | input | 任意 | onChange=(event) => setDisplayName(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:520 | confirmed |
-| AdminCreateUserForm | label | 初期ロール | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:522 | confirmed |
-| AdminCreateUserForm | select | role | onChange=(event) => setRole(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:524 | confirmed |
-| AdminCreateUserForm | option | roleDefinition.role | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:526 | confirmed |
-| AdminCreateUserForm | button | 作成 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:530 | confirmed |
-| ManagedUserRow | select | selectedRole | onChange=(event) => setSelectedRole(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:576 | confirmed |
-| ManagedUserRow | option | role.role | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:578 | confirmed |
-| ManagedUserRow | button | 付与 | onClick=() => void onAssignRoles(user.userId, [selectedRole]) | apps/web/src/features/admin/components/AdminWorkspace.tsx:581 | confirmed |
-| ManagedUserRow | button | 再開 | onClick=() => void onSetStatus(user.userId, "unsuspend") | apps/web/src/features/admin/components/AdminWorkspace.tsx:591 | confirmed |
-| ManagedUserRow | button | 停止 | onClick=() => void onSetStatus(user.userId, "suspend") | apps/web/src/features/admin/components/AdminWorkspace.tsx:596 | confirmed |
-| ManagedUserRow | button | 削除 | onClick=() => void onSetStatus(user.userId, "delete") | apps/web/src/features/admin/components/AdminWorkspace.tsx:601 | confirmed |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| AdminWorkspace | button | チャットへ戻る | チャットへ戻る (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onBack | apps/web/src/features/admin/components/AdminWorkspace.tsx:108 | confirmed |
+| AdminWorkspace | button | ドキュメント管理 / documentsCount / 件 | ドキュメント管理 / documentsCount / 件 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onOpenDocuments | apps/web/src/features/admin/components/AdminWorkspace.tsx:120 | confirmed |
+| AdminWorkspace | button | 担当者対応 / openQuestionsCount / 件が対応待ち | 担当者対応 / openQuestionsCount / 件が対応待ち (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onOpenAssignee | apps/web/src/features/admin/components/AdminWorkspace.tsx:127 | confirmed |
+| AdminWorkspace | button | デバッグ / 評価 / debugRunsCount / 件の実行履歴 | デバッグ / 評価 / debugRunsCount / 件の実行履歴 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onOpenDebug | apps/web/src/features/admin/components/AdminWorkspace.tsx:134 | confirmed |
+| AdminWorkspace | button | 性能テスト / benchmarkRunsCount / 件の実行履歴 | 性能テスト / benchmarkRunsCount / 件の実行履歴 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onOpenBenchmark | apps/web/src/features/admin/components/AdminWorkspace.tsx:141 | confirmed |
+| AdminWorkspace | AliasAdminPanel | 未推定 | 未推定 (missing) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onCreate=onCreateAlias<br>onUpdate=onUpdateAlias<br>onReview=onReviewAlias<br>onDisable=onDisableAlias<br>onPublish=onPublishAliases | apps/web/src/features/admin/components/AdminWorkspace.tsx:186 | unknown |
+| AdminWorkspace | button | loading && <LoadingSpinner className="button-spinner" /> / 更新 | loading && <LoadingSpinner className="button-spinner" /> / 更新 (visible-text) | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => void onRefreshAdminData() | apps/web/src/features/admin/components/AdminWorkspace.tsx:206 | confirmed |
+| AdminWorkspace | AdminCreateUserForm | 未推定 | 未推定 (missing) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onCreateUser=onCreateUser | apps/web/src/features/admin/components/AdminWorkspace.tsx:212 | unknown |
+| AdminWorkspace | ManagedUserRow | 未推定 | 未推定 (missing) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onAssignRoles=onAssignRoles<br>onSetStatus=onSetUserStatus | apps/web/src/features/admin/components/AdminWorkspace.tsx:225 | unknown |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 公開 | loading && <LoadingSpinner className="button-spinner" /> / 公開 (visible-text) | disabled=!canPublish \|\| loading | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onPublish() | apps/web/src/features/admin/components/AdminWorkspace.tsx:405 | confirmed |
+| AliasAdminPanel | form | 用語 / 展開語 / 部署 scope / loading && <LoadingSpinner className="button-spinner" /> … | 用語 / 展開語 / 部署 scope / loading && <LoadingSpinner className="button-spinner" /> / 追加 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onSubmit=(event) => void onSubmit(event) | apps/web/src/features/admin/components/AdminWorkspace.tsx:413 | confirmed |
+| AliasAdminPanel | label | 用語 | 用語 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:414 | confirmed |
+| AliasAdminPanel | input | pto | pto (placeholder) | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setTerm(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:416 | confirmed |
+| AliasAdminPanel | label | 展開語 | 展開語 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:418 | confirmed |
+| AliasAdminPanel | input | 有給休暇, 休暇申請 | 有給休暇, 休暇申請 (placeholder) | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setExpansions(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:420 | confirmed |
+| AliasAdminPanel | label | 部署 scope | 部署 scope (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:422 | confirmed |
+| AliasAdminPanel | input | 任意 | 任意 (placeholder) | disabled=loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setDepartment(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:424 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 追加 | loading && <LoadingSpinner className="button-spinner" /> / 追加 (visible-text) | disabled=loading \|\| !term.trim() \|\| parseExpansionList(expansions).length === 0 | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:426 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 下書き化 | loading && <LoadingSpinner className="button-spinner" /> / 下書き化 (visible-text) | disabled=!canWrite \|\| loading \|\| alias.status === "disabled" | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => void onUpdate(alias.aliasId, { expansions: alias.expansions }) | apps/web/src/features/admin/components/AdminWorkspace.tsx:445 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 承認 | loading && <LoadingSpinner className="button-spinner" /> / 承認 (visible-text) | disabled=!canReview \|\| loading \|\| alias.status === "disabled" | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onReview(alias.aliasId, "approve") | apps/web/src/features/admin/components/AdminWorkspace.tsx:449 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 差戻 | loading && <LoadingSpinner className="button-spinner" /> / 差戻 (visible-text) | disabled=!canReview \|\| loading \|\| alias.status === "disabled" | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onReview(alias.aliasId, "reject", "Rejected from UI") | apps/web/src/features/admin/components/AdminWorkspace.tsx:453 | confirmed |
+| AliasAdminPanel | button | loading && <LoadingSpinner className="button-spinner" /> / 無効 | loading && <LoadingSpinner className="button-spinner" /> / 無効 (visible-text) | disabled=!canDisable \|\| loading \|\| alias.status === "disabled" | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onDisable(alias.aliasId) | apps/web/src/features/admin/components/AdminWorkspace.tsx:457 | confirmed |
+| AdminCreateUserForm | form | 管理対象ユーザー作成 | 管理対象ユーザー作成 (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onSubmit=(event) => void submit(event) | apps/web/src/features/admin/components/AdminWorkspace.tsx:513 | confirmed |
+| AdminCreateUserForm | label | メール | メール (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:514 | confirmed |
+| AdminCreateUserForm | input | new-user@example.com | new-user@example.com (placeholder) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setEmail(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:516 | confirmed |
+| AdminCreateUserForm | label | 表示名 | 表示名 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:518 | confirmed |
+| AdminCreateUserForm | input | 任意 | 任意 (placeholder) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setDisplayName(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:520 | confirmed |
+| AdminCreateUserForm | label | 初期ロール / roles.map((roleDefinition) => ( <option value={roleDefinition.role} key… | 初期ロール / roles.map((roleDefinition) => ( <option value={roleDefinition.role} key={roleDe… (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:522 | confirmed |
+| AdminCreateUserForm | select | role | roles.map((roleDefinition) => ( <option value={roleDefinition.role} key={roleDe… (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setRole(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:524 | confirmed |
+| AdminCreateUserForm | option | roleDefinition.role | roleDefinition.role (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:526 | confirmed |
+| AdminCreateUserForm | button | loading && <LoadingSpinner className="button-spinner" /> / 作成 | loading && <LoadingSpinner className="button-spinner" /> / 作成 (visible-text) | disabled=loading \|\| email.trim().length === 0 | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:530 | confirmed |
+| ManagedUserRow | select | `${user.email}に付与するロール` | `${user.email}に付与するロール` (aria-label) | disabled=!canAssignRoles \|\| loading | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setSelectedRole(event.target.value) | apps/web/src/features/admin/components/AdminWorkspace.tsx:576 | confirmed |
+| ManagedUserRow | option | role.role | role.role (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:578 | confirmed |
+| ManagedUserRow | button | loading && <LoadingSpinner className="button-spinner" /> / 付与 | loading && <LoadingSpinner className="button-spinner" /> / 付与 (visible-text) | disabled=!canAssignRoles \|\| loading \|\| user.groups.includes(selectedRole) | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onAssignRoles(user.userId, [selectedRole]) | apps/web/src/features/admin/components/AdminWorkspace.tsx:581 | confirmed |
+| ManagedUserRow | button | loading && <LoadingSpinner className="button-spinner" /> / 再開 | loading && <LoadingSpinner className="button-spinner" /> / 再開 (visible-text) | disabled=!canUnsuspend \|\| loading | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onSetStatus(user.userId, "unsuspend") | apps/web/src/features/admin/components/AdminWorkspace.tsx:591 | confirmed |
+| ManagedUserRow | button | loading && <LoadingSpinner className="button-spinner" /> / 停止 | loading && <LoadingSpinner className="button-spinner" /> / 停止 (visible-text) | disabled=!canSuspend \|\| loading | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onSetStatus(user.userId, "suspend") | apps/web/src/features/admin/components/AdminWorkspace.tsx:596 | confirmed |
+| ManagedUserRow | button | loading && <LoadingSpinner className="button-spinner" /> / 削除 | loading && <LoadingSpinner className="button-spinner" /> / 削除 (visible-text) | disabled=!canDelete \|\| loading | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => void onSetStatus(user.userId, "delete") | apps/web/src/features/admin/components/AdminWorkspace.tsx:601 | confirmed |

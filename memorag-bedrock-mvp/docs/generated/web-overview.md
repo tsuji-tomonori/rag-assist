@@ -13,6 +13,7 @@
 - 各画面がどの画面コンポーネントに対応するか。
 - 機能領域ごとに、どのコンポーネントと UI 操作要素があるか。
 - ボタン、リンク、フォーム、入力欄、主要 handler がどのファイルにあるか。
+- アクセシブル名、説明参照、状態属性、アクセシビリティ上の不足候補がどこにあるか。
 
 ## 全体サマリ
 
@@ -21,14 +22,16 @@
 | 画面 | 8 | [web-screens.md](web-screens.md) |
 | 機能領域 | 10 | [web-features.md](web-features.md) |
 | コンポーネント | 27 | [web-components.md](web-components.md) |
-| UI 操作要素 | 252 | [web-features.md](web-features.md) |
+| UI 操作要素 | 251 | [web-features.md](web-features.md) |
+| a11y 注意/不足 | 13 | [web-accessibility.md](web-accessibility.md) |
 
 ## 初めて見る人向けの導線
 
 1. [画面一覧](web-screens.md) で、ユーザーが見る画面と権限条件を把握する。
 2. [機能一覧](web-features.md) で、機能領域と関連画面の対応を見る。
 3. 気になる機能の詳細ファイルを開き、ボタン、フォーム、handler、実装ファイルを確認する。
-4. [コンポーネント一覧](web-components.md) で、画面を構成する部品と JSX 使用要素を確認する。
+4. [アクセシビリティ一覧](web-accessibility.md) で、アクセシブル名や状態属性の不足候補を確認する。
+5. [コンポーネント一覧](web-components.md) で、画面を構成する部品と JSX 使用要素を確認する。
 
 ## 生成されるファイル
 
@@ -39,4 +42,5 @@
 | [web-features.md](web-features.md) | 機能別詳細ファイルへの索引 |
 | [web-features/*.md](web-features/) | 機能ごとの画面、コンポーネント、UI 操作要素 |
 | [web-components.md](web-components.md) | コンポーネント、export、役割、関連画面 |
+| [web-accessibility.md](web-accessibility.md) | アクセシブル名、説明参照、状態属性、注意/不足候補 |
 | web-ui-inventory.json | CI や将来の可視化に使える機械可読データ |

@@ -31,20 +31,20 @@
 
 ## 主なボタン・リンク
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| PersonalSettingsView | button | チャットへ戻る | onClick=onBack | apps/web/src/app/components/PersonalSettingsView.tsx:25 | confirmed |
-| PersonalSettingsView | button | サインアウト | onClick=onSignOut | apps/web/src/app/components/PersonalSettingsView.tsx:48 | confirmed |
-| RailNav | a | ホーム | - | apps/web/src/app/components/RailNav.tsx:24 | confirmed |
-| RailNav | button | チャット | onClick=() => onChangeView("chat") | apps/web/src/app/components/RailNav.tsx:28 | confirmed |
-| RailNav | button | 担当者対応 | onClick=() => onChangeView("assignee") | apps/web/src/app/components/RailNav.tsx:33 | confirmed |
-| RailNav | button | 履歴 | onClick=() => onChangeView("history") | apps/web/src/app/components/RailNav.tsx:38 | confirmed |
-| RailNav | button | 性能テスト | onClick=() => onChangeView("benchmark") | apps/web/src/app/components/RailNav.tsx:43 | confirmed |
-| RailNav | button | お気に入り | onClick=() => onChangeView("favorites") | apps/web/src/app/components/RailNav.tsx:48 | confirmed |
-| RailNav | button | ドキュメント | onClick=() => onChangeView("documents") | apps/web/src/app/components/RailNav.tsx:53 | confirmed |
-| RailNav | button | 管理者設定 | onClick=() => onChangeView("admin") | apps/web/src/app/components/RailNav.tsx:59 | confirmed |
-| RailNav | button | 個人設定 | onClick=() => onChangeView("profile") | apps/web/src/app/components/RailNav.tsx:65 | confirmed |
-| TopBar | button | 新しい会話 | onClick=onNewConversation | apps/web/src/app/components/TopBar.tsx:108 | confirmed |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PersonalSettingsView | button | チャットへ戻る | チャットへ戻る (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onBack | apps/web/src/app/components/PersonalSettingsView.tsx:25 | confirmed |
+| PersonalSettingsView | button | サインアウト | サインアウト (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onSignOut | apps/web/src/app/components/PersonalSettingsView.tsx:48 | confirmed |
+| RailNav | a | ホーム | ホーム (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/RailNav.tsx:24 | confirmed |
+| RailNav | button | チャット | チャット (visible-text) | aria-current=activeView === "chat" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("chat") | apps/web/src/app/components/RailNav.tsx:28 | confirmed |
+| RailNav | button | 担当者対応 | 担当者対応 (visible-text) | aria-current=activeView === "assignee" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("assignee") | apps/web/src/app/components/RailNav.tsx:33 | confirmed |
+| RailNav | button | 履歴 | 履歴 (visible-text) | aria-current=activeView === "history" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("history") | apps/web/src/app/components/RailNav.tsx:38 | confirmed |
+| RailNav | button | 性能テスト | 性能テスト (visible-text) | aria-current=activeView === "benchmark" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("benchmark") | apps/web/src/app/components/RailNav.tsx:43 | confirmed |
+| RailNav | button | お気に入り | お気に入り (visible-text) | aria-current=activeView === "favorites" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("favorites") | apps/web/src/app/components/RailNav.tsx:48 | confirmed |
+| RailNav | button | ドキュメント | ドキュメント (visible-text) | aria-current=activeView === "documents" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("documents") | apps/web/src/app/components/RailNav.tsx:53 | confirmed |
+| RailNav | button | 管理者設定 | 管理者設定 (visible-text) | aria-current=activeView === "admin" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("admin") | apps/web/src/app/components/RailNav.tsx:59 | confirmed |
+| RailNav | button | 個人設定 | 個人設定 (aria-label) | aria-current=activeView === "profile" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("profile") | apps/web/src/app/components/RailNav.tsx:65 | confirmed |
+| TopBar | button | 新しい会話 | 新しい会話 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onNewConversation | apps/web/src/app/components/TopBar.tsx:108 | confirmed |
 
 ## フォーム
 
@@ -52,54 +52,53 @@
 
 ## 入力項目
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| PersonalSettingsView | select | submitShortcut | onChange=(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut) | apps/web/src/app/components/PersonalSettingsView.tsx:37 | confirmed |
-| TopBar | select | modelId | onChange=(event) => onModelChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:51 | confirmed |
-| TopBar | select | デバッグ表示用の文書選択 | onChange=(event) => onDocumentChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:61 | confirmed |
-| TopBar | select | 参照フォルダ | onChange=(event) => onGroupChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:69 | confirmed |
-| TopBar | select | selectedRunValue | onChange=(event) => onRunChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:84 | confirmed |
-| TopBar | input | 未推定 | onChange=(event) => onDebugModeChange(event.target.checked) | apps/web/src/app/components/TopBar.tsx:103 | unknown |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 説明参照 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| PersonalSettingsView | select | submitShortcut | Enterで送信 / Ctrl+Enterで送信 (visible-text) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut) | apps/web/src/app/components/PersonalSettingsView.tsx:37 | confirmed |
+| TopBar | select | modelId | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku (visible-text) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onModelChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:51 | confirmed |
+| TopBar | select | デバッグ表示用の文書選択 | すべての資料 / documents.map((document) => ( <option value={document.documentId} key={document… (visible-text) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onDocumentChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:61 | confirmed |
+| TopBar | select | 参照フォルダ | 参照フォルダ (aria-label) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onGroupChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:69 | confirmed |
+| TopBar | select | selectedRunValue | pendingDebugQuestion ? <option value="__processing__">処理中</option> : <option va… / (latestTrace && !debugRuns.some((run… (visible-text) | - | disabled=pendingDebugQuestion !== null \|\| (debugRuns.length === 0 && !latestTrace) | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onRunChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:84 | confirmed |
+| TopBar | input | デバッグモード / debugMode ? "ON" : "OFF" | デバッグモード / debugMode ? "ON" : "OFF" (label) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onDebugModeChange(event.target.checked) | apps/web/src/app/components/TopBar.tsx:103 | confirmed |
 
 ## UI 操作要素の全量
 
-| コンポーネント | 要素 | ラベル | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- |
-| App | LoginPage | 未推定 | onLogin=login<br>onSignUp=signUp<br>onConfirmSignUp=confirmSignUp<br>onCompleteNewPassword=completeNewPassword | apps/web/src/App.tsx:10 | unknown |
-| App | AppShell | 未推定 | onSignOut=logout | apps/web/src/App.tsx:19 | unknown |
-| AppShell | RailNav | 未推定 | - | apps/web/src/app/AppShell.tsx:13 | unknown |
-| PersonalSettingsView | button | チャットへ戻る | onClick=onBack | apps/web/src/app/components/PersonalSettingsView.tsx:25 | confirmed |
-| PersonalSettingsView | label | 送信キー / Enterで送信 / Ctrl+Enterで送信 | - | apps/web/src/app/components/PersonalSettingsView.tsx:35 | confirmed |
-| PersonalSettingsView | select | submitShortcut | onChange=(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut) | apps/web/src/app/components/PersonalSettingsView.tsx:37 | confirmed |
-| PersonalSettingsView | option | enter | - | apps/web/src/app/components/PersonalSettingsView.tsx:42 | confirmed |
-| PersonalSettingsView | option | ctrlEnter | - | apps/web/src/app/components/PersonalSettingsView.tsx:43 | confirmed |
-| PersonalSettingsView | button | サインアウト | onClick=onSignOut | apps/web/src/app/components/PersonalSettingsView.tsx:48 | confirmed |
-| RailNav | a | ホーム | - | apps/web/src/app/components/RailNav.tsx:24 | confirmed |
-| RailNav | button | チャット | onClick=() => onChangeView("chat") | apps/web/src/app/components/RailNav.tsx:28 | confirmed |
-| RailNav | button | 担当者対応 | onClick=() => onChangeView("assignee") | apps/web/src/app/components/RailNav.tsx:33 | confirmed |
-| RailNav | button | 履歴 | onClick=() => onChangeView("history") | apps/web/src/app/components/RailNav.tsx:38 | confirmed |
-| RailNav | button | 性能テスト | onClick=() => onChangeView("benchmark") | apps/web/src/app/components/RailNav.tsx:43 | confirmed |
-| RailNav | button | お気に入り | onClick=() => onChangeView("favorites") | apps/web/src/app/components/RailNav.tsx:48 | confirmed |
-| RailNav | button | ドキュメント | onClick=() => onChangeView("documents") | apps/web/src/app/components/RailNav.tsx:53 | confirmed |
-| RailNav | button | 管理者設定 | onClick=() => onChangeView("admin") | apps/web/src/app/components/RailNav.tsx:59 | confirmed |
-| RailNav | button | 個人設定 | onClick=() => onChangeView("profile") | apps/web/src/app/components/RailNav.tsx:65 | confirmed |
-| TopBar | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | - | apps/web/src/app/components/TopBar.tsx:49 | confirmed |
-| TopBar | select | modelId | onChange=(event) => onModelChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:51 | confirmed |
-| TopBar | option | amazon.nova-lite-v1:0 | - | apps/web/src/app/components/TopBar.tsx:52 | confirmed |
-| TopBar | option | anthropic.claude-3-5-sonnet-20240620-v1:0 | - | apps/web/src/app/components/TopBar.tsx:53 | confirmed |
-| TopBar | option | anthropic.claude-3-haiku-20240307-v1:0 | - | apps/web/src/app/components/TopBar.tsx:54 | confirmed |
-| TopBar | label | ドキュメント | - | apps/web/src/app/components/TopBar.tsx:59 | confirmed |
-| TopBar | select | デバッグ表示用の文書選択 | onChange=(event) => onDocumentChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:61 | confirmed |
-| TopBar | option | all | - | apps/web/src/app/components/TopBar.tsx:62 | confirmed |
-| TopBar | option | document.documentId | - | apps/web/src/app/components/TopBar.tsx:64 | confirmed |
-| TopBar | select | 参照フォルダ | onChange=(event) => onGroupChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:69 | confirmed |
-| TopBar | option | all | - | apps/web/src/app/components/TopBar.tsx:70 | confirmed |
-| TopBar | option | group.groupId | - | apps/web/src/app/components/TopBar.tsx:72 | confirmed |
-| TopBar | label | 実行ID | - | apps/web/src/app/components/TopBar.tsx:82 | confirmed |
-| TopBar | select | selectedRunValue | onChange=(event) => onRunChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:84 | confirmed |
-| TopBar | option | __processing__ | - | apps/web/src/app/components/TopBar.tsx:89 | confirmed |
-| TopBar | option | 未実行 | - | apps/web/src/app/components/TopBar.tsx:89 | confirmed |
-| TopBar | option | run.runId | - | apps/web/src/app/components/TopBar.tsx:91 | confirmed |
-| TopBar | label | デバッグモード | - | apps/web/src/app/components/TopBar.tsx:101 | confirmed |
-| TopBar | input | 未推定 | onChange=(event) => onDebugModeChange(event.target.checked) | apps/web/src/app/components/TopBar.tsx:103 | unknown |
-| TopBar | button | 新しい会話 | onClick=onNewConversation | apps/web/src/app/components/TopBar.tsx:108 | confirmed |
+| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| App | LoginPage | 未推定 | 未推定 (missing) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onLogin=login<br>onSignUp=signUp<br>onConfirmSignUp=confirmSignUp<br>onCompleteNewPassword=completeNewPassword | apps/web/src/App.tsx:10 | unknown |
+| App | AppShell | 未推定 | 未推定 (missing) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onSignOut=logout | apps/web/src/App.tsx:19 | unknown |
+| PersonalSettingsView | button | チャットへ戻る | チャットへ戻る (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onBack | apps/web/src/app/components/PersonalSettingsView.tsx:25 | confirmed |
+| PersonalSettingsView | label | 送信キー / Enterで送信 / Ctrl+Enterで送信 | 送信キー / Enterで送信 / Ctrl+Enterで送信 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/PersonalSettingsView.tsx:35 | confirmed |
+| PersonalSettingsView | select | submitShortcut | Enterで送信 / Ctrl+Enterで送信 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut) | apps/web/src/app/components/PersonalSettingsView.tsx:37 | confirmed |
+| PersonalSettingsView | option | enter | Enterで送信 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/PersonalSettingsView.tsx:42 | confirmed |
+| PersonalSettingsView | option | ctrlEnter | Ctrl+Enterで送信 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/PersonalSettingsView.tsx:43 | confirmed |
+| PersonalSettingsView | button | サインアウト | サインアウト (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onSignOut | apps/web/src/app/components/PersonalSettingsView.tsx:48 | confirmed |
+| RailNav | a | ホーム | ホーム (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/RailNav.tsx:24 | confirmed |
+| RailNav | button | チャット | チャット (visible-text) | aria-current=activeView === "chat" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("chat") | apps/web/src/app/components/RailNav.tsx:28 | confirmed |
+| RailNav | button | 担当者対応 | 担当者対応 (visible-text) | aria-current=activeView === "assignee" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("assignee") | apps/web/src/app/components/RailNav.tsx:33 | confirmed |
+| RailNav | button | 履歴 | 履歴 (visible-text) | aria-current=activeView === "history" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("history") | apps/web/src/app/components/RailNav.tsx:38 | confirmed |
+| RailNav | button | 性能テスト | 性能テスト (visible-text) | aria-current=activeView === "benchmark" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("benchmark") | apps/web/src/app/components/RailNav.tsx:43 | confirmed |
+| RailNav | button | お気に入り | お気に入り (visible-text) | aria-current=activeView === "favorites" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("favorites") | apps/web/src/app/components/RailNav.tsx:48 | confirmed |
+| RailNav | button | ドキュメント | ドキュメント (visible-text) | aria-current=activeView === "documents" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("documents") | apps/web/src/app/components/RailNav.tsx:53 | confirmed |
+| RailNav | button | 管理者設定 | 管理者設定 (visible-text) | aria-current=activeView === "admin" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("admin") | apps/web/src/app/components/RailNav.tsx:59 | confirmed |
+| RailNav | button | 個人設定 | 個人設定 (aria-label) | aria-current=activeView === "profile" ? "page" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onChangeView("profile") | apps/web/src/app/components/RailNav.tsx:65 | confirmed |
+| TopBar | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:49 | confirmed |
+| TopBar | select | modelId | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onModelChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:51 | confirmed |
+| TopBar | option | amazon.nova-lite-v1:0 | Nova Lite v1 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:52 | confirmed |
+| TopBar | option | anthropic.claude-3-5-sonnet-20240620-v1:0 | Claude 3.5 Sonnet (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:53 | confirmed |
+| TopBar | option | anthropic.claude-3-haiku-20240307-v1:0 | Claude 3 Haiku (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:54 | confirmed |
+| TopBar | label | ドキュメント | ドキュメント (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:59 | confirmed |
+| TopBar | select | デバッグ表示用の文書選択 | すべての資料 / documents.map((document) => ( <option value={document.documentId} key={document… (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onDocumentChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:61 | confirmed |
+| TopBar | option | all | すべての資料 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:62 | confirmed |
+| TopBar | option | document.documentId | document.fileName (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:64 | confirmed |
+| TopBar | select | 参照フォルダ | 参照フォルダ (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onGroupChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:69 | confirmed |
+| TopBar | option | all | 全フォルダ (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:70 | confirmed |
+| TopBar | option | group.groupId | group.name (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:72 | confirmed |
+| TopBar | label | 実行ID / pendingDebugQuestion ? <option value="__processing__">処理中</option> : <op… | 実行ID / pendingDebugQuestion ? <option value="__processing__">処理中</option> : <option va… / (latestTrace && !debugRuns.so… (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:82 | confirmed |
+| TopBar | select | selectedRunValue | pendingDebugQuestion ? <option value="__processing__">処理中</option> : <option va… / (latestTrace && !debugRuns.some((run… (visible-text) | disabled=pendingDebugQuestion !== null \|\| (debugRuns.length === 0 && !latestTrace) | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onRunChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:84 | confirmed |
+| TopBar | option | __processing__ | 処理中 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:89 | confirmed |
+| TopBar | option | 未実行 | 未実行 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:89 | confirmed |
+| TopBar | option | run.runId | run.runId (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:91 | confirmed |
+| TopBar | label | デバッグモード / debugMode ? "ON" : "OFF" | デバッグモード / debugMode ? "ON" : "OFF" (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/app/components/TopBar.tsx:101 | confirmed |
+| TopBar | input | デバッグモード / debugMode ? "ON" : "OFF" | デバッグモード / debugMode ? "ON" : "OFF" (label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => onDebugModeChange(event.target.checked) | apps/web/src/app/components/TopBar.tsx:103 | confirmed |
+| TopBar | button | 新しい会話 | 新しい会話 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onNewConversation | apps/web/src/app/components/TopBar.tsx:108 | confirmed |

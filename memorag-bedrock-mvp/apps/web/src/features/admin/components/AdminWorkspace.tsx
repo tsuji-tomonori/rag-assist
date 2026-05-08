@@ -105,7 +105,7 @@ export function AdminWorkspace({
   return (
     <section className="admin-workspace" aria-label="管理者設定">
       <header className="assignee-header">
-        <button type="button" onClick={onBack} title="チャットへ戻る">
+        <button type="button" onClick={onBack} title="チャットへ戻る" aria-label="チャットへ戻る">
           <Icon name="chevron" />
         </button>
         <div>
@@ -573,7 +573,7 @@ function ManagedUserRow({
       </span>
       <span role="cell">
         <div className="role-assignment">
-          <select value={selectedRole} disabled={!canAssignRoles || loading} onChange={(event) => setSelectedRole(event.target.value)}>
+          <select value={selectedRole} disabled={!canAssignRoles || loading} aria-label={`${user.email}に付与するロール`} onChange={(event) => setSelectedRole(event.target.value)}>
             {roles.map((role) => (
               <option value={role.role} key={role.role}>{role.role}</option>
             ))}

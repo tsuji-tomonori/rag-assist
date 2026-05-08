@@ -48,7 +48,7 @@ export function HistoryWorkspace({
   return (
     <section className="assignee-workspace" aria-label="履歴">
       <header className="assignee-header">
-        <button type="button" onClick={onBack} title="チャットへ戻る">
+        <button type="button" onClick={onBack} title="チャットへ戻る" aria-label="チャットへ戻る">
           <Icon name="chevron" />
         </button>
         <div>
