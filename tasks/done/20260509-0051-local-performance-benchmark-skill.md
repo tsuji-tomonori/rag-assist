@@ -1,8 +1,8 @@
 # ローカル性能テストベンチマーク実行手順の確認と skill 化
 
-保存先: `tasks/do/20260509-0051-local-performance-benchmark-skill.md`
+保存先: `tasks/done/20260509-0051-local-performance-benchmark-skill.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -81,3 +81,4 @@
 - ローカル API を `PORT=18787`、`LOCAL_AUTH_GROUPS=BENCHMARK_RUNNER` で起動し、`API_BASE_URL=http://localhost:18787 task benchmark:sample` が pass した。
 - 生成結果は `.local-data/benchmark-results.jsonl`、`.local-data/benchmark-summary.json`、`.local-data/benchmark-report.md`。summary は total 50、succeeded 50、failedHttp 0。
 - 成功したローカル実行・結果確認手順を `skills/local-performance-benchmark-runner/SKILL.md` に追加した。
+- PR #205 を作成し、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
