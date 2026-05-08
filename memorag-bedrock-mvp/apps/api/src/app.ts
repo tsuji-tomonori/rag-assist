@@ -24,6 +24,8 @@ const protectedApiPaths = [
   "/admin/*",
   "/documents",
   "/documents/*",
+  "/document-groups",
+  "/document-groups/*",
   "/document-ingest-runs",
   "/document-ingest-runs/*",
   "/chat",

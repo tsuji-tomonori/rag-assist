@@ -613,6 +613,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
       remainingCalls: ragRuntimePolicy.retrieval.searchBudgetCalls
     },
     searchFilters: input.searchFilters,
+    searchScope: input.searchScope,
     memoryCards: [],
     clues: [],
     expandedQueries: [],

@@ -28,7 +28,7 @@ const benchmarkSeedMetadataKeys = new Set([
   "searchAliases"
 ])
 
-type UploadPurpose = "document" | "benchmarkSeed"
+type UploadPurpose = "document" | "benchmarkSeed" | "chatAttachment"
 
 export function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof DocumentUploadRequestSchema>) {
   if (hasPermission(user, "rag:doc:write:group")) return
@@ -121,6 +121,10 @@ function isValidBenchmarkSeedBase64(value: string): boolean {
 }
 
 export function authorizeUploadedDocumentIngest(user: AppUser, purpose: UploadPurpose, body: z.infer<typeof IngestUploadedDocumentRequestSchema>) {
+  if (purpose === "chatAttachment") {
+    if (hasPermission(user, "chat:create")) return
+    throw new HTTPException(403, { message: "Forbidden: missing chat:create" })
+  }
   if (purpose === "benchmarkSeed") {
     if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUploadedObjectIngest(body)) return
     throw new HTTPException(403, { message: "Forbidden: benchmark seed upload requires isolated benchmark metadata" })

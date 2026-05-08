@@ -1,5 +1,6 @@
 import { createHeaders, post } from "../../../shared/api/http.js"
 import { getApiBaseUrl } from "../../../shared/api/runtimeConfig.js"
+import type { SearchScope } from "../../documents/types.js"
 import type { ChatResponse, ChatRunEvent, ChatRunStartResponse } from "../types-api.js"
 
 export async function chat(input: {
@@ -18,6 +19,7 @@ export async function chat(input: {
   useMemory?: boolean
   maxIterations?: number
   includeDebug?: boolean
+  searchScope?: SearchScope
 }): Promise<ChatResponse> {
   return post<ChatResponse>("/chat", input)
 }
@@ -38,6 +40,7 @@ export async function startChatRun(input: {
   useMemory?: boolean
   maxIterations?: number
   includeDebug?: boolean
+  searchScope?: SearchScope
 }): Promise<ChatRunStartResponse> {
   return post<ChatRunStartResponse>("/chat-runs", input)
 }

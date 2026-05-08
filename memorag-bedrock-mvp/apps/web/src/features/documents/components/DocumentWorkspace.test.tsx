@@ -33,6 +33,14 @@ const migrations: ReindexMigration[] = [
   }
 ]
 
+const documentGroupProps = {
+  documentGroups: [],
+  uploadGroupId: "",
+  onUploadGroupChange: vi.fn(),
+  onCreateGroup: vi.fn(),
+  onShareGroup: vi.fn()
+}
+
 describe("DocumentWorkspace", () => {
   it("登録文書を表示し、削除操作を通知する", async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
@@ -40,6 +48,7 @@ describe("DocumentWorkspace", () => {
     render(
       <DocumentWorkspace
         documents={documents}
+        {...documentGroupProps}
         loading={false}
         canWrite={true}
         canDelete={true}
@@ -65,6 +74,7 @@ describe("DocumentWorkspace", () => {
     render(
       <DocumentWorkspace
         documents={documents}
+        {...documentGroupProps}
         loading={false}
         canWrite={true}
         canDelete={false}
@@ -90,6 +100,7 @@ describe("DocumentWorkspace", () => {
     render(
       <DocumentWorkspace
         documents={documents}
+        {...documentGroupProps}
         loading={false}
         canWrite={true}
         canDelete={true}

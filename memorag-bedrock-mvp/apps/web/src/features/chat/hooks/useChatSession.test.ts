@@ -27,6 +27,7 @@ function createProps(overrides: Partial<Parameters<typeof useChatSession>[0]> = 
     minScore: 0.2,
     currentConversationId: "conv-1",
     setCurrentConversationId: vi.fn(),
+    selectedGroupId: "all",
     loading: false,
     rememberMessages: vi.fn(),
     createConversationId: () => "conv-2",
