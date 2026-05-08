@@ -8,8 +8,22 @@
 - `.github/workflows/memorag-deploy.yml`: 親リポジトリからMVPをAWSへCDKデプロイするGitHub Actions workflow
 - `agents/`: Codex/PM用途のagent設定
 - `skills/`: 要件定義、設計レビュー、ドキュメント生成などのローカルskill定義
+- `docs/spec-recovery/`: 作業レポート起点の要件・仕様復元テンプレートとトレーサビリティ成果物の置き場
+- `scripts/validate_spec_recovery.py`: 仕様復元成果物の軽量検証スクリプト
 
 MVPの詳細は [memorag-bedrock-mvp/README.md](memorag-bedrock-mvp/README.md) を参照してください。
+
+## 仕様復元 workflow
+
+作業レポート、チケット、PR、既存テストから要件・仕様・受け入れ条件・E2Eシナリオを復元する場合は、`skills/rag-assist-spec-completion-orchestrator/SKILL.md` を起点にします。
+
+成果物は原則として `docs/spec-recovery/` に配置し、`RPT -> FACT -> TASK -> AC -> E2E -> OP/EXP -> REQ/SPEC` の双方向トレースを残します。推定や未確定事項は確定要件に混ぜず、`confirmed`、`inferred`、`conflict`、`open_question` で区別してください。
+
+軽量検証:
+
+```bash
+python3 scripts/validate_spec_recovery.py docs/spec-recovery
+```
 
 ## ローカル操作
 

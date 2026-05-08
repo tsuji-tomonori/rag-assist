@@ -1,0 +1,2 @@
+Source,Fact,Task,AcceptanceCriterion,E2EScenario,OperationExpectation,Requirement,Specification,Confidence,Notes
+RPT-001,FACT-001,TASK-001,AC-001,E2E-001,"OP-001; EXP-001",REQ-DOC-001,SPEC-DOC-001,confirmed,
