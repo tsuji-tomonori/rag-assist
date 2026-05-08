@@ -8,7 +8,7 @@ import {
   QuestionSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute } from "./route-utils.js"
+import { looseRoute, routeAuthorization } from "./route-utils.js"
 
 function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.infer<typeof QuestionSchema> {
   const visibleQuestion = { ...question }
@@ -21,6 +21,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/questions",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:create" }),
       request: {
         body: {
           required: true,
@@ -45,6 +46,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/questions",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "answer:edit" }),
       responses: {
         200: { description: "List human follow-up questions", content: { "application/json": { schema: QuestionListResponseSchema } } },
         500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
@@ -60,6 +62,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/questions/{questionId}",
+      "x-memorag-authorization": routeAuthorization({ mode: "requesterOrPermission", permission: "answer:edit", notes: ["問い合わせ作成者本人は answer:edit がなくても実行できます。その場合 internalMemo は返しません。"] }),
       request: {
         params: z.object({ questionId: z.string().min(1) })
       },
@@ -83,6 +86,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/questions/{questionId}/answer",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "answer:publish" }),
       request: {
         params: z.object({ questionId: z.string().min(1) }),
         body: {
@@ -113,6 +117,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/questions/{questionId}/resolve",
+      "x-memorag-authorization": routeAuthorization({ mode: "requesterOrPermission", permission: "answer:publish", notes: ["問い合わせ作成者本人は answer:publish がなくても、回答済み問い合わせだけ解決できます。"] }),
       request: {
         params: z.object({ questionId: z.string().min(1) })
       },

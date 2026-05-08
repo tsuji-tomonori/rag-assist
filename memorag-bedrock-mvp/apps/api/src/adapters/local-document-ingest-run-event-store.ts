@@ -1,4 +1,5 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises"
+import { randomUUID } from "node:crypto"
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises"
 import path from "node:path"
 import type { DocumentIngestRunEvent } from "../types.js"
 import type { CreateDocumentIngestRunEventInput, DocumentIngestRunEventStore } from "./document-ingest-run-event-store.js"
@@ -32,8 +33,12 @@ export class LocalDocumentIngestRunEventStore implements DocumentIngestRunEventS
   }
 
   private async write(runId: string, events: DocumentIngestRunEvent[]): Promise<void> {
-    await mkdir(path.dirname(this.eventsPath(runId)), { recursive: true })
-    await writeFile(this.eventsPath(runId), JSON.stringify(events, null, 2))
+    const targetPath = this.eventsPath(runId)
+    const targetDir = path.dirname(targetPath)
+    const tempPath = path.join(targetDir, `.${path.basename(targetPath)}.${randomUUID()}.tmp`)
+    await mkdir(targetDir, { recursive: true })
+    await writeFile(tempPath, JSON.stringify(events, null, 2))
+    await rename(tempPath, targetPath)
   }
 
   private eventsPath(runId: string): string {

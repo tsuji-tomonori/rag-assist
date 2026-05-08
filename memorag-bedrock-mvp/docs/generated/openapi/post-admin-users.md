@@ -32,7 +32,32 @@ Media type: `application/json`
 | `displayName` | `string` | no | 画面に表示するユーザー名。 | minLength=1<br>maxLength=120 |
 | `groups` | `array<string>` | no | ユーザーが所属する Cognito group または検証用 group。 | minItems=1<br>maxItems=12 |
 
+## Authorization
+
+| 項目 | 内容 |
+| --- | --- |
+| 認可モード | `required` |
+| 必須 permission | `user:create` |
+| 条件付き permission | - |
+| 実行可能 role | `USER_ADMIN`, `SYSTEM_ADMIN` |
+| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| 条件付きでエラーになる role | なし |
+
+認証・認可エラー:
+
+| Status | 発生条件 | Body |
+| --- | --- | --- |
+| `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
+| `403` | 必要 permission (user:create) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing user:create"}` |
+
 ## Responses
+
+| Status | 説明 | Media type | Body |
+| --- | --- | --- | --- |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 8 field(s) |
+| `401` | 認証が必要です。 | `application/json` | 2 field(s) |
+| `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
+| `409` | 現在のリソース状態と要求された操作が競合しています。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -48,6 +73,24 @@ Media type: `application/json`
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `lastLoginAt` | `string` | no | `response.lastLoginAt` の値。項目名は last login at を表します。 | - |
+
+##### `401` 認証が必要です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `403` 対象操作を実行する権限がありません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `409` 現在のリソース状態と要求された操作が競合しています。
 

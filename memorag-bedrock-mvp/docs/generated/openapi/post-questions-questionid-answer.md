@@ -38,7 +38,33 @@ Media type: `application/json`
 | `internalMemo` | `string` | no | `data.internalMemo` の値。項目名は internal memo を表します。 | - |
 | `notifyRequester` | `boolean` | no | `data.notifyRequester` の値。項目名は notify requester を表します。 | - |
 
+## Authorization
+
+| 項目 | 内容 |
+| --- | --- |
+| 認可モード | `required` |
+| 必須 permission | `answer:publish` |
+| 条件付き permission | - |
+| 実行可能 role | `ANSWER_EDITOR`, `SYSTEM_ADMIN` |
+| エラーになる role | `CHAT_USER`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| 条件付きでエラーになる role | なし |
+
+認証・認可エラー:
+
+| Status | 発生条件 | Body |
+| --- | --- | --- |
+| `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
+| `403` | 必要 permission (answer:publish) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing answer:publish"}` |
+
 ## Responses
+
+| Status | 説明 | Media type | Body |
+| --- | --- | --- | --- |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 24 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
+| `401` | 認証が必要です。 | `application/json` | 2 field(s) |
+| `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
+| `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -72,6 +98,24 @@ Media type: `application/json`
 | `resolvedAt` | `string` | no | `response.resolvedAt` の値。項目名は resolved at を表します。 | - |
 
 ##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `401` 認証が必要です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `403` 対象操作を実行する権限がありません。
 
 Media type: `application/json`
 

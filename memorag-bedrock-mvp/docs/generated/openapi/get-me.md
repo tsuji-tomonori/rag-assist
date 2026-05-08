@@ -26,7 +26,32 @@ _なし_
 
 _なし_
 
+## Authorization
+
+| 項目 | 内容 |
+| --- | --- |
+| 認可モード | `authenticated` |
+| 必須 permission | - |
+| 条件付き permission | - |
+| 実行可能 role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR`, `SYSTEM_ADMIN` |
+| エラーになる role | なし |
+| 条件付きでエラーになる role | なし |
+
+補足:
+- 認証済みユーザーであれば role に関係なく実行できます。
+
+認証・認可エラー:
+
+| Status | 発生条件 | Body |
+| --- | --- | --- |
+| `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
+
 ## Responses
+
+| Status | 説明 | Media type | Body |
+| --- | --- | --- | --- |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 5 field(s) |
+| `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 

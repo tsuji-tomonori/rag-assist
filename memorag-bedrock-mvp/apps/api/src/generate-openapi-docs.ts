@@ -12,7 +12,8 @@ import {
   validateOpenApiDocument,
   type FieldRow,
   type OpenApiDocument,
-  type OperationObject
+  type OperationObject,
+  type RouteAuthorizationMetadataObject
 } from "./openapi-doc-quality.js"
 
 process.env.MOCK_BEDROCK ??= "true"
@@ -90,6 +91,44 @@ function fieldTable(rows: FieldRow[], emptyText = "_なし_"): string[] {
   ]
 }
 
+function inlineList(values: string[] | undefined, emptyText = "-"): string {
+  if (!values || values.length === 0) return emptyText
+  return values.map((value) => `\`${escapeMarkdown(value)}\``).join(", ")
+}
+
+function renderAuthorization(operation: OperationObject): string[] {
+  const auth = operation["x-memorag-authorization"] as RouteAuthorizationMetadataObject | undefined
+  if (!auth) return ["_なし_"]
+  const requiredPermissions = auth.requiredPermissions ?? []
+  const conditionalPermissions = auth.conditionalPermissions ?? []
+  const lines: string[] = [
+    "| 項目 | 内容 |",
+    "| --- | --- |",
+    `| 認可モード | \`${escapeMarkdown(auth.mode ?? "-")}\` |`,
+    `| 必須 permission | ${inlineList(requiredPermissions)} |`,
+    `| 条件付き permission | ${inlineList(conditionalPermissions)} |`,
+    `| 実行可能 role | ${inlineList(auth.allowedRoles)} |`,
+    `| エラーになる role | ${inlineList(auth.deniedRoles, "なし")} |`,
+    `| 条件付きでエラーになる role | ${inlineList(auth.conditionalDeniedRoles, "なし")} |`
+  ]
+  if (auth.notes && auth.notes.length > 0) {
+    lines.push("")
+    lines.push("補足:")
+    for (const note of auth.notes) lines.push(`- ${escapeMarkdown(note)}`)
+  }
+  if (auth.errors && auth.errors.length > 0) {
+    lines.push("")
+    lines.push("認証・認可エラー:")
+    lines.push("")
+    lines.push("| Status | 発生条件 | Body |")
+    lines.push("| --- | --- | --- |")
+    for (const error of auth.errors) {
+      lines.push(`| \`${error.status ?? "-"}\` | ${escapeMarkdown(error.when ?? "-")} | \`${escapeMarkdown(JSON.stringify(error.body ?? {}))}\` |`)
+    }
+  }
+  return lines
+}
+
 function renderRequestData(api: OpenApiDocument, operation: OperationObject): string[] {
   const body = operation.requestBody
   if (!body || typeof body !== "object" || !("content" in body)) return ["_なし_"]
@@ -109,6 +148,13 @@ function renderResponses(api: OpenApiDocument, operation: OperationObject): stri
   const responses = responseRows(api, operation.responses)
   if (responses.length === 0) return ["_なし_"]
   const lines: string[] = []
+  lines.push("| Status | 説明 | Media type | Body |")
+  lines.push("| --- | --- | --- | --- |")
+  for (const response of responses) {
+    const body = response.mediaType === "-" ? "なし" : response.rows.length > 0 ? `${response.rows.length} field(s)` : "項目なし"
+    lines.push(`| \`${response.status}\` | ${escapeMarkdown(response.description)} | \`${escapeMarkdown(response.mediaType)}\` | ${escapeMarkdown(body)} |`)
+  }
+  lines.push("")
   for (const response of responses) {
     lines.push(`##### \`${response.status}\` ${response.description}`)
     lines.push("")
@@ -147,6 +193,10 @@ function renderOperationDetail(api: OpenApiDocument, method: string, path: strin
   lines.push("## Data")
   lines.push("")
   lines.push(...renderRequestData(api, operation))
+  lines.push("")
+  lines.push("## Authorization")
+  lines.push("")
+  lines.push(...renderAuthorization(operation))
   lines.push("")
   lines.push("## Responses")
   lines.push("")

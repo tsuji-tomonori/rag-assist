@@ -2,13 +2,14 @@ import { z } from "@hono/zod-openapi"
 import { requirePermission } from "../authorization.js"
 import { DebugDownloadResponseSchema, DebugTraceListResponseSchema, DebugTraceSchema, ErrorResponseSchema } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute } from "./route-utils.js"
+import { looseRoute, routeAuthorization } from "./route-utils.js"
 
 export function registerDebugRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
     looseRoute({
       method: "get",
       path: "/debug-runs",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all" }),
       responses: {
         200: {
           description: "List persisted chat debug traces",
@@ -26,6 +27,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/debug-runs/{runId}",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all" }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -48,6 +50,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/debug-runs/{runId}/download",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all" }),
       request: { params: z.object({ runId: z.string().min(1) }) },
       responses: {
         200: { description: "Create signed download URL for debug JSON", content: { "application/json": { schema: DebugDownloadResponseSchema } } },
