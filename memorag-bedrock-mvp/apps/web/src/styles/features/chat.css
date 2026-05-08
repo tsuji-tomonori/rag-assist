@@ -663,32 +663,6 @@
   padding: 0 12px 12px;
 }
 
-
-.composer-shortcut-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-right: 8px;
-}
-
-.composer-shortcut-toggle label {
-  color: #5e6e88;
-  font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.composer-shortcut-toggle select {
-  min-height: 30px;
-  border: 1px solid #c9d4e3;
-  border-radius: 8px;
-  padding: 0 28px 0 10px;
-  color: #253650;
-  background: #fff;
-  font-size: 13px;
-  font-weight: 700;
-}
-
 .file-chip {
   min-width: 0;
   max-width: 46%;

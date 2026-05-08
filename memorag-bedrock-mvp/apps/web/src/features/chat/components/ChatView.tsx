@@ -1,4 +1,5 @@
 import type { FormEvent, RefObject } from "react"
+import type { SubmitShortcut } from "../../../app/types.js"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { DebugTrace } from "../../debug/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
@@ -35,7 +36,6 @@ export function ChatView({
   onStartClarificationFreeform,
   onSetQuestion,
   onSetFile,
-  onSetSubmitShortcut,
   onCreateQuestion,
   onResolveQuestion,
   onToggleAllDebugSteps,
@@ -54,7 +54,7 @@ export function ChatView({
   selectedGroupId: string
   documentGroups: DocumentGroup[]
   conversationKey: number
-  submitShortcut: "enter" | "ctrlEnter"
+  submitShortcut: SubmitShortcut
   question: string
   debugMode: boolean
   canReadDebugRuns: boolean
@@ -67,7 +67,6 @@ export function ChatView({
   onStartClarificationFreeform: Parameters<typeof MessageList>[0]["onStartClarificationFreeform"]
   onSetQuestion: (value: string) => void
   onSetFile: (file: File | null) => void
-  onSetSubmitShortcut: (value: "enter" | "ctrlEnter") => void
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
   onToggleAllDebugSteps: () => void
@@ -104,7 +103,6 @@ export function ChatView({
           loading={loading}
           onSetQuestion={onSetQuestion}
           onSetFile={onSetFile}
-          onSetSubmitShortcut={onSetSubmitShortcut}
         />
         <p className="composer-note">本サービスの回答は社内ドキュメントをもとに生成されます。内容の正確性をご確認のうえご利用ください。</p>
       </section>

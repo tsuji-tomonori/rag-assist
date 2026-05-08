@@ -9,8 +9,7 @@ export function RailNav({
   canReadBenchmarkRuns,
   canManageDocuments,
   canSeeAdminSettings,
-  onChangeView,
-  onSignOut
+  onChangeView
 }: {
   activeView: AppView
   authSession: AuthSession
@@ -19,7 +18,6 @@ export function RailNav({
   canManageDocuments: boolean
   canSeeAdminSettings: boolean
   onChangeView: (view: AppView) => void
-  onSignOut: () => void
 }) {
   return (
     <aside className="rail" aria-label="主要ナビゲーション">
@@ -64,9 +62,15 @@ export function RailNav({
           </button>
         )}
       </nav>
-      <button className="account-button" type="button" title="サインアウト" onClick={onSignOut}>
+      <button
+        className={`account-button ${activeView === "profile" ? "active" : ""}`}
+        type="button"
+        title="個人設定"
+        aria-label="個人設定"
+        onClick={() => onChangeView("profile")}
+      >
         <span className="account-avatar">{authSession.email.slice(0, 1).toUpperCase()}</span>
-        <span>{authSession.email}</span>
+        <span>個人設定</span>
         <Icon name="chevron" />
       </button>
     </aside>

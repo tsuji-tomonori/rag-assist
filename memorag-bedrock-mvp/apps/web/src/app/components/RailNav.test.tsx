@@ -22,7 +22,6 @@ describe("RailNav", () => {
         canManageDocuments={true}
         canSeeAdminSettings={true}
         onChangeView={onChangeView}
-        onSignOut={vi.fn()}
       />
     )
 
@@ -46,7 +45,6 @@ describe("RailNav", () => {
         canManageDocuments={false}
         canSeeAdminSettings={false}
         onChangeView={vi.fn()}
-        onSignOut={vi.fn()}
       />
     )
 
@@ -54,5 +52,27 @@ describe("RailNav", () => {
     expect(screen.queryByTitle("性能テスト")).not.toBeInTheDocument()
     expect(screen.queryByTitle("ドキュメント")).not.toBeInTheDocument()
     expect(screen.queryByTitle("管理者設定")).not.toBeInTheDocument()
+  })
+
+  it("アカウントボタンにメールアドレスを出さず、個人設定を開く", async () => {
+    const onChangeView = vi.fn()
+
+    render(
+      <RailNav
+        activeView="chat"
+        authSession={{ ...authSession, email: "very-long-account-name-for-layout-check@example.internal" }}
+        canAnswerQuestions={false}
+        canReadBenchmarkRuns={false}
+        canManageDocuments={false}
+        canSeeAdminSettings={false}
+        onChangeView={onChangeView}
+      />
+    )
+
+    expect(screen.queryByText("very-long-account-name-for-layout-check@example.internal")).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "個人設定" }))
+
+    expect(onChangeView).toHaveBeenCalledWith("profile")
   })
 })

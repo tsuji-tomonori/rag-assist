@@ -122,6 +122,10 @@
     padding: 16px;
   }
 
+  .settings-workspace {
+    padding: 16px;
+  }
+
   .chat-card,
   .debug-card {
     min-height: min(640px, 100%);
@@ -181,6 +185,24 @@
 
   .split-workspace {
     padding: 12px;
+  }
+
+  .settings-workspace {
+    padding: 12px;
+  }
+
+  .personal-settings-card {
+    padding: 16px;
+  }
+
+  .workspace-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .personal-settings-list div {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 
   .prompt-grid {
