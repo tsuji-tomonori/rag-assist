@@ -8,18 +8,20 @@ import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
 
 function synthesize(context?: Record<string, string>) {
   const app = new cdk.App({
-    context: {
-      benchmarkSourceOwner: "tsuji-tomonori",
-      benchmarkSourceRepo: "rag-assist",
-      benchmarkSourceBranch: "main",
-      ...context
-    }
+    context
   })
   const stack = new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
     env: { account: "111111111111", region: "ap-northeast-1" },
     includeFrontendDeployment: false
   })
   return Template.fromStack(stack)
+}
+
+function getBenchmarkProject(template: Template) {
+  const projects = Object.values(template.toJSON().Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::CodeBuild::Project")
+  assert.equal(projects.length, 1)
+  return projects[0] as any
 }
 
 test("implements the designed serverless resources", () => {
@@ -347,6 +349,24 @@ test("allows deployment environment and cost center tag overrides", () => {
     Environment: "staging",
     CostCenter: "rag-platform"
   })
+})
+
+test("uses default benchmark source when CDK context is omitted", () => {
+  const project = getBenchmarkProject(synthesize())
+
+  assert.equal(project.Properties.Source.Location, "https://github.com/tsuji-tomonori/rag-assist.git")
+  assert.equal(project.Properties.SourceVersion, "main")
+})
+
+test("allows CDK context to override benchmark source", () => {
+  const project = getBenchmarkProject(synthesize({
+    benchmarkSourceOwner: "example-owner",
+    benchmarkSourceRepo: "example-repo",
+    benchmarkSourceBranch: "release"
+  }))
+
+  assert.equal(project.Properties.Source.Location, "https://github.com/example-owner/example-repo.git")
+  assert.equal(project.Properties.SourceVersion, "release")
 })
 
 test("keeps bootstrap IAM resources aligned with the tag strategy", () => {
