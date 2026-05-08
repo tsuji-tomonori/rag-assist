@@ -8,7 +8,12 @@ import { MemoRagMvpStack } from "../lib/memorag-mvp-stack"
 
 function synthesize(context?: Record<string, string>) {
   const app = new cdk.App({
-    context
+    context: {
+      benchmarkSourceOwner: "example-owner",
+      benchmarkSourceRepo: "example-repo",
+      benchmarkSourceBranch: "example-branch",
+      ...context
+    }
   })
   const stack = new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
     env: { account: "111111111111", region: "ap-northeast-1" },
@@ -352,10 +357,14 @@ test("allows deployment environment and cost center tag overrides", () => {
 })
 
 test("uses default benchmark source when CDK context is omitted", () => {
-  const project = getBenchmarkProject(synthesize())
-
-  assert.equal(project.Properties.Source.Location, "https://github.com/tsuji-tomonori/rag-assist.git")
-  assert.equal(project.Properties.SourceVersion, "main")
+  const app = new cdk.App()
+  assert.throws(
+    () => new MemoRagMvpStack(app, "MemoRagMvpStackTest", {
+      env: { account: "111111111111", region: "ap-northeast-1" },
+      includeFrontendDeployment: false
+    }),
+    /CDK context "benchmarkSourceOwner" is required and must be a non-empty string/
+  )
 })
 
 test("allows CDK context to override benchmark source", () => {
