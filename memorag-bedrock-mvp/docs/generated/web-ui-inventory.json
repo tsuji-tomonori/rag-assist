@@ -1,0 +1,5250 @@
+{
+  "generatedBy": "tools/web-inventory/generate-web-inventory.mjs",
+  "sourceRoot": "apps/web/src",
+  "note": "静的解析による推定を含みます。条件付き表示、権限別表示、実行時データ依存の UI は certainty を確認してください。",
+  "screens": [
+    {
+      "view": "chat",
+      "label": "チャット",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "ChatView",
+      "permissions": [],
+      "certainty": "confirmed"
+    },
+    {
+      "view": "assignee",
+      "label": "担当者対応",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "AssigneeWorkspace",
+      "permissions": [
+        "canAnswerQuestions"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "view": "history",
+      "label": "履歴",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "HistoryWorkspace",
+      "permissions": [],
+      "certainty": "inferred"
+    },
+    {
+      "view": "favorites",
+      "label": "お気に入り",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "HistoryWorkspace",
+      "permissions": [],
+      "certainty": "inferred"
+    },
+    {
+      "view": "benchmark",
+      "label": "性能テスト",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "BenchmarkWorkspace",
+      "permissions": [
+        "canReadBenchmarkRuns"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "view": "admin",
+      "label": "管理者設定",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "AdminWorkspace",
+      "permissions": [
+        "canSeeAdminSettings"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "view": "documents",
+      "label": "ドキュメント",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "DocumentWorkspace",
+      "permissions": [
+        "canManageDocuments"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "view": "profile",
+      "label": "個人設定",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "PersonalSettingsView",
+      "permissions": [],
+      "certainty": "confirmed"
+    }
+  ],
+  "features": [
+    {
+      "feature": "admin",
+      "label": "管理",
+      "screens": [
+        "admin"
+      ],
+      "componentCount": 1,
+      "interactionCount": 37
+    },
+    {
+      "feature": "app",
+      "label": "アプリケーション枠",
+      "screens": [
+        "profile"
+      ],
+      "componentCount": 7,
+      "interactionCount": 38
+    },
+    {
+      "feature": "auth",
+      "label": "認証",
+      "screens": [],
+      "componentCount": 2,
+      "interactionCount": 25
+    },
+    {
+      "feature": "benchmark",
+      "label": "性能テスト",
+      "screens": [
+        "benchmark"
+      ],
+      "componentCount": 1,
+      "interactionCount": 18
+    },
+    {
+      "feature": "chat",
+      "label": "チャット",
+      "screens": [
+        "chat"
+      ],
+      "componentCount": 10,
+      "interactionCount": 44
+    },
+    {
+      "feature": "debug",
+      "label": "デバッグ",
+      "screens": [],
+      "componentCount": 1,
+      "interactionCount": 13
+    },
+    {
+      "feature": "documents",
+      "label": "ドキュメント",
+      "screens": [
+        "documents"
+      ],
+      "componentCount": 1,
+      "interactionCount": 25
+    },
+    {
+      "feature": "history",
+      "label": "履歴",
+      "screens": [
+        "history",
+        "favorites"
+      ],
+      "componentCount": 1,
+      "interactionCount": 11
+    },
+    {
+      "feature": "questions",
+      "label": "担当者対応",
+      "screens": [
+        "assignee"
+      ],
+      "componentCount": 1,
+      "interactionCount": 21
+    },
+    {
+      "feature": "shared",
+      "label": "共通",
+      "screens": [],
+      "componentCount": 2,
+      "interactionCount": 0
+    }
+  ],
+  "components": [
+    {
+      "file": "apps/web/src/App.tsx",
+      "feature": "app",
+      "exports": [
+        "App"
+      ],
+      "jsxUsages": [
+        "AppShell",
+        "LoginPage"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/app/AppRoutes.tsx",
+      "feature": "app",
+      "exports": [
+        "AppRoutes"
+      ],
+      "jsxUsages": [
+        "AdminWorkspace",
+        "AssigneeWorkspace",
+        "BenchmarkWorkspace",
+        "ChatView",
+        "DocumentWorkspace",
+        "HistoryWorkspace",
+        "PersonalSettingsView"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/app/AppShell.tsx",
+      "feature": "app",
+      "exports": [
+        "AppShell"
+      ],
+      "jsxUsages": [
+        "AppRoutes",
+        "LoadingStatus",
+        "RailNav",
+        "TopBar",
+        "div",
+        "main",
+        "section"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
+      "feature": "app",
+      "exports": [
+        "PersonalSettingsView"
+      ],
+      "jsxUsages": [
+        "button",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "footer",
+        "h2",
+        "header",
+        "label",
+        "option",
+        "section",
+        "select",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "feature": "app",
+      "exports": [
+        "RailNav"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "a",
+        "aside",
+        "button",
+        "nav",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "feature": "app",
+      "exports": [
+        "TopBar"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "div",
+        "h1",
+        "header",
+        "i",
+        "input",
+        "label",
+        "option",
+        "select",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "feature": "admin",
+      "exports": [
+        "AdminWorkspace"
+      ],
+      "jsxUsages": [
+        "AdminCreateUserForm",
+        "AliasAdminPanel",
+        "Icon",
+        "LoadingSpinner",
+        "LoadingStatus",
+        "ManagedUserRow",
+        "article",
+        "button",
+        "div",
+        "form",
+        "h2",
+        "h3",
+        "header",
+        "i",
+        "input",
+        "label",
+        "option",
+        "p",
+        "section",
+        "select",
+        "small",
+        "span",
+        "strong",
+        "time"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/auth/components/LoginHeroGraphic.tsx",
+      "feature": "auth",
+      "exports": [
+        "LoginHeroGraphic"
+      ],
+      "jsxUsages": [
+        "circle",
+        "defs",
+        "feDropShadow",
+        "filter",
+        "g",
+        "linearGradient",
+        "path",
+        "radialGradient",
+        "rect",
+        "stop",
+        "svg"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "feature": "auth",
+      "exports": [
+        "LoginPage"
+      ],
+      "jsxUsages": [
+        "LoadingSpinner",
+        "LoginHeroGraphic",
+        "PasswordRequirementList",
+        "button",
+        "div",
+        "form",
+        "h1",
+        "input",
+        "label",
+        "li",
+        "p",
+        "span",
+        "strong",
+        "ul"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "feature": "benchmark",
+      "exports": [
+        "BenchmarkWorkspace"
+      ],
+      "jsxUsages": [
+        "BenchmarkMetricCard",
+        "BenchmarkMetricChips",
+        "Icon",
+        "LoadingSpinner",
+        "LoadingStatus",
+        "article",
+        "button",
+        "code",
+        "div",
+        "h2",
+        "h3",
+        "header",
+        "input",
+        "label",
+        "option",
+        "p",
+        "section",
+        "select",
+        "small",
+        "span",
+        "strong",
+        "table",
+        "tbody",
+        "td",
+        "th",
+        "thead",
+        "tr"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
+      "feature": "chat",
+      "exports": [
+        "AssistantAnswer"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "QuestionAnswerPanel",
+        "QuestionEscalationPanel",
+        "a",
+        "button",
+        "div",
+        "li",
+        "p",
+        "span",
+        "strong",
+        "ul"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "feature": "chat",
+      "exports": [
+        "ChatComposer"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "LoadingSpinner",
+        "button",
+        "div",
+        "form",
+        "input",
+        "label",
+        "span",
+        "textarea"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/ChatEmptyState.tsx",
+      "feature": "chat",
+      "exports": [
+        "ChatEmptyState"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "div",
+        "h2",
+        "section",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/ChatView.tsx",
+      "feature": "chat",
+      "exports": [
+        "ChatView"
+      ],
+      "jsxUsages": [
+        "ChatComposer",
+        "DebugPanel",
+        "MessageList",
+        "p",
+        "section"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/MessageItem.tsx",
+      "feature": "chat",
+      "exports": [
+        "MessageItem"
+      ],
+      "jsxUsages": [
+        "AssistantAnswer",
+        "Icon",
+        "UserPromptBubble",
+        "article",
+        "div",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/MessageList.tsx",
+      "feature": "chat",
+      "exports": [
+        "MessageList"
+      ],
+      "jsxUsages": [
+        "ChatEmptyState",
+        "LoadingSpinner",
+        "MessageItem",
+        "ProcessingAnswer",
+        "article",
+        "div",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/ProcessingAnswer.tsx",
+      "feature": "chat",
+      "exports": [
+        "ProcessingAnswer"
+      ],
+      "jsxUsages": [
+        "LoadingSpinner",
+        "div",
+        "p",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx",
+      "feature": "chat",
+      "exports": [
+        "QuestionAnswerPanel"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "LoadingSpinner",
+        "button",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "footer",
+        "header",
+        "p",
+        "section",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "feature": "chat",
+      "exports": [
+        "QuestionEscalationPanel"
+      ],
+      "jsxUsages": [
+        "LoadingSpinner",
+        "button",
+        "div",
+        "form",
+        "h3",
+        "input",
+        "label",
+        "option",
+        "p",
+        "section",
+        "select",
+        "span",
+        "strong",
+        "textarea"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/UserPromptBubble.tsx",
+      "feature": "chat",
+      "exports": [
+        "UserPromptBubble"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "div",
+        "p",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "feature": "debug",
+      "exports": [
+        "DebugPanel"
+      ],
+      "jsxUsages": [
+        "AnswerSupportPanel",
+        "ContextAssemblyPanel",
+        "DebugFlowNodeButton",
+        "DebugNodeDetailPanel",
+        "DebugRunSummaryView",
+        "EvidenceDebugTable",
+        "FactCoverageTable",
+        "Icon",
+        "article",
+        "aside",
+        "button",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "em",
+        "footer",
+        "h2",
+        "h3",
+        "header",
+        "input",
+        "label",
+        "p",
+        "pre",
+        "section",
+        "span",
+        "strong",
+        "table",
+        "tbody",
+        "td",
+        "th",
+        "thead",
+        "tr"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "feature": "documents",
+      "exports": [
+        "DocumentWorkspace"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "LoadingSpinner",
+        "LoadingStatus",
+        "article",
+        "button",
+        "div",
+        "form",
+        "h2",
+        "h3",
+        "header",
+        "input",
+        "label",
+        "option",
+        "section",
+        "select",
+        "small",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "feature": "history",
+      "exports": [
+        "HistoryWorkspace"
+      ],
+      "jsxUsages": [
+        "HistorySearchSummary",
+        "Icon",
+        "button",
+        "div",
+        "h2",
+        "h3",
+        "header",
+        "input",
+        "label",
+        "option",
+        "section",
+        "select",
+        "small",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "feature": "questions",
+      "exports": [
+        "AssigneeWorkspace"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "LoadingSpinner",
+        "LoadingStatus",
+        "aside",
+        "button",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "form",
+        "h2",
+        "h3",
+        "h4",
+        "header",
+        "input",
+        "label",
+        "option",
+        "p",
+        "section",
+        "select",
+        "span",
+        "strong",
+        "textarea",
+        "time"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/main.tsx",
+      "feature": "app",
+      "exports": [],
+      "jsxUsages": [
+        "App",
+        "React.StrictMode"
+      ],
+      "certainty": "inferred"
+    },
+    {
+      "file": "apps/web/src/shared/components/Icon.tsx",
+      "feature": "shared",
+      "exports": [
+        "Icon"
+      ],
+      "jsxUsages": [
+        "path",
+        "svg"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/components/LoadingSpinner.tsx",
+      "feature": "shared",
+      "exports": [
+        "LoadingSpinner",
+        "LoadingStatus"
+      ],
+      "jsxUsages": [
+        "LoadingSpinner",
+        "div",
+        "span"
+      ],
+      "certainty": "confirmed"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "apps/web/src/App.tsx:10:LoginPage",
+      "file": "apps/web/src/App.tsx",
+      "line": 10,
+      "feature": "app",
+      "component": "App",
+      "element": "LoginPage",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onLogin",
+          "value": "login"
+        },
+        {
+          "name": "onSignUp",
+          "value": "signUp"
+        },
+        {
+          "name": "onConfirmSignUp",
+          "value": "confirmSignUp"
+        },
+        {
+          "name": "onCompleteNewPassword",
+          "value": "completeNewPassword"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/App.tsx:19:AppShell",
+      "file": "apps/web/src/App.tsx",
+      "line": 19,
+      "feature": "app",
+      "component": "App",
+      "element": "AppShell",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onSignOut",
+          "value": "logout"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/app/AppShell.tsx:13:RailNav",
+      "file": "apps/web/src/app/AppShell.tsx",
+      "line": 13,
+      "feature": "app",
+      "component": "AppShell",
+      "element": "RailNav",
+      "label": "未推定",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:25:button",
+      "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
+      "line": 25,
+      "feature": "app",
+      "component": "PersonalSettingsView",
+      "element": "button",
+      "label": "チャットへ戻る",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onBack"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:35:label",
+      "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
+      "line": 35,
+      "feature": "app",
+      "component": "PersonalSettingsView",
+      "element": "label",
+      "label": "送信キー / Enterで送信 / Ctrl+Enterで送信",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:37:select",
+      "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
+      "line": 37,
+      "feature": "app",
+      "component": "PersonalSettingsView",
+      "element": "select",
+      "label": "submitShortcut",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:42:option",
+      "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
+      "line": 42,
+      "feature": "app",
+      "component": "PersonalSettingsView",
+      "element": "option",
+      "label": "enter",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:43:option",
+      "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
+      "line": 43,
+      "feature": "app",
+      "component": "PersonalSettingsView",
+      "element": "option",
+      "label": "ctrlEnter",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/PersonalSettingsView.tsx:48:button",
+      "file": "apps/web/src/app/components/PersonalSettingsView.tsx",
+      "line": 48,
+      "feature": "app",
+      "component": "PersonalSettingsView",
+      "element": "button",
+      "label": "サインアウト",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onSignOut"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:24:a",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 24,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "a",
+      "label": "ホーム",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "href",
+          "value": "/"
+        },
+        {
+          "name": "aria-label",
+          "value": "ホーム"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:28:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 28,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "label": "チャット",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"chat\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "チャット"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:33:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 33,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "label": "担当者対応",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"assignee\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "担当者対応"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:38:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 38,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "label": "履歴",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"history\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "履歴"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:43:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 43,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "label": "性能テスト",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"benchmark\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "性能テスト"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:48:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 48,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "label": "お気に入り",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"favorites\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "お気に入り"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:53:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 53,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "label": "ドキュメント",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"documents\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "ドキュメント"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:59:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 59,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "label": "管理者設定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"admin\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "管理者設定"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:65:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 65,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "label": "個人設定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"profile\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "個人設定"
+        },
+        {
+          "name": "aria-label",
+          "value": "個人設定"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:49:label",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 49,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "label",
+      "label": "モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:51:select",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 51,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "select",
+      "label": "modelId",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onModelChange(event.target.value)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:52:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 52,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "amazon.nova-lite-v1:0",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:53:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 53,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:54:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 54,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "anthropic.claude-3-haiku-20240307-v1:0",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:59:label",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 59,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "label",
+      "label": "ドキュメント",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:61:select",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 61,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "select",
+      "label": "デバッグ表示用の文書選択",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onDocumentChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "title",
+          "value": "デバッグ表示用の文書選択"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:62:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 62,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "all",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:64:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 64,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "document.documentId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:69:select",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 69,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "select",
+      "label": "参照フォルダ",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onGroupChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "参照フォルダ"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:70:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 70,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "all",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:72:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 72,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "group.groupId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:82:label",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 82,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "label",
+      "label": "実行ID",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:84:select",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 84,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "select",
+      "label": "selectedRunValue",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onRunChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "pendingDebugQuestion !== null || (debugRuns.length === 0 && !latestTrace)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:89:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 89,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "__processing__",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:89:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 89,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "未実行",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:91:option",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 91,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "option",
+      "label": "run.runId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:101:label",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 101,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "label",
+      "label": "デバッグモード",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:103:input",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 103,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "input",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onDebugModeChange(event.target.checked)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "checkbox"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/app/components/TopBar.tsx:108:button",
+      "file": "apps/web/src/app/components/TopBar.tsx",
+      "line": 108,
+      "feature": "app",
+      "component": "TopBar",
+      "element": "button",
+      "label": "新しい会話",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onNewConversation"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:108:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 108,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "button",
+      "label": "チャットへ戻る",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onBack"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "チャットへ戻る"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:120:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 120,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "button",
+      "label": "ドキュメント管理 / 件",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onOpenDocuments"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:127:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 127,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "button",
+      "label": "担当者対応 / 件が対応待ち",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onOpenAssignee"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:134:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 134,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "button",
+      "label": "デバッグ / 評価 / 件の実行履歴",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onOpenDebug"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:141:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 141,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "button",
+      "label": "性能テスト / 件の実行履歴",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onOpenBenchmark"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:186:AliasAdminPanel",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 186,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "AliasAdminPanel",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onCreate",
+          "value": "onCreateAlias"
+        },
+        {
+          "name": "onUpdate",
+          "value": "onUpdateAlias"
+        },
+        {
+          "name": "onReview",
+          "value": "onReviewAlias"
+        },
+        {
+          "name": "onDisable",
+          "value": "onDisableAlias"
+        },
+        {
+          "name": "onPublish",
+          "value": "onPublishAliases"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:206:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 206,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "button",
+      "label": "更新",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onRefreshAdminData()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:212:AdminCreateUserForm",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 212,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "AdminCreateUserForm",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onCreateUser",
+          "value": "onCreateUser"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:225:ManagedUserRow",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 225,
+      "feature": "admin",
+      "component": "AdminWorkspace",
+      "element": "ManagedUserRow",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onAssignRoles",
+          "value": "onAssignRoles"
+        },
+        {
+          "name": "onSetStatus",
+          "value": "onSetUserStatus"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:405:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 405,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "label": "公開",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onPublish()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canPublish || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:413:form",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 413,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "form",
+      "label": "用語 / 展開語 / 部署 scope / 追加",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "(event) => void onSubmit(event)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:414:label",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 414,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "label": "用語",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:416:input",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 416,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "input",
+      "label": "pto",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setTerm(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "placeholder",
+          "value": "pto"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:418:label",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 418,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "label": "展開語",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:420:input",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 420,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "input",
+      "label": "有給休暇, 休暇申請",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setExpansions(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "placeholder",
+          "value": "有給休暇, 休暇申請"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:422:label",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 422,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "label": "部署 scope",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:424:input",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 424,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "input",
+      "label": "任意",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setDepartment(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "placeholder",
+          "value": "任意"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:426:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 426,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "label": "追加",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !term.trim() || parseExpansionList(expansions).length === 0"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:445:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 445,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "label": "下書き化",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onUpdate(alias.aliasId, { expansions: alias.expansions })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading || alias.status === \"disabled\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:449:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 449,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "label": "承認",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onReview(alias.aliasId, \"approve\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canReview || loading || alias.status === \"disabled\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:453:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 453,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "label": "差戻",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onReview(alias.aliasId, \"reject\", \"Rejected from UI\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canReview || loading || alias.status === \"disabled\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:457:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 457,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "label": "無効",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onDisable(alias.aliasId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canDisable || loading || alias.status === \"disabled\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:513:form",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 513,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "form",
+      "label": "管理対象ユーザー作成",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "(event) => void submit(event)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "管理対象ユーザー作成"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:514:label",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 514,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "label",
+      "label": "メール",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:516:input",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 516,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "input",
+      "label": "new-user@example.com",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setEmail(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "email"
+        },
+        {
+          "name": "placeholder",
+          "value": "new-user@example.com"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:518:label",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 518,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "label",
+      "label": "表示名",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:520:input",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 520,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "input",
+      "label": "任意",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setDisplayName(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "placeholder",
+          "value": "任意"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:522:label",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 522,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "label",
+      "label": "初期ロール",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:524:select",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 524,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "select",
+      "label": "role",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setRole(event.target.value)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:526:option",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 526,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "option",
+      "label": "roleDefinition.role",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:530:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 530,
+      "feature": "admin",
+      "component": "AdminCreateUserForm",
+      "element": "button",
+      "label": "作成",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || email.trim().length === 0"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:576:select",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 576,
+      "feature": "admin",
+      "component": "ManagedUserRow",
+      "element": "select",
+      "label": "selectedRole",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setSelectedRole(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canAssignRoles || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:578:option",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 578,
+      "feature": "admin",
+      "component": "ManagedUserRow",
+      "element": "option",
+      "label": "role.role",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:581:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 581,
+      "feature": "admin",
+      "component": "ManagedUserRow",
+      "element": "button",
+      "label": "付与",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onAssignRoles(user.userId, [selectedRole])"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canAssignRoles || loading || user.groups.includes(selectedRole)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:591:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 591,
+      "feature": "admin",
+      "component": "ManagedUserRow",
+      "element": "button",
+      "label": "再開",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onSetStatus(user.userId, \"unsuspend\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canUnsuspend || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:596:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 596,
+      "feature": "admin",
+      "component": "ManagedUserRow",
+      "element": "button",
+      "label": "停止",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onSetStatus(user.userId, \"suspend\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canSuspend || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:601:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 601,
+      "feature": "admin",
+      "component": "ManagedUserRow",
+      "element": "button",
+      "label": "削除",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onSetStatus(user.userId, \"delete\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canDelete || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:213:form",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 213,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "form",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onSubmit"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:220:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 220,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "新しいパスワード",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:221:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 221,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "新しいパスワードを入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setNewPassword(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "password"
+        },
+        {
+          "name": "placeholder",
+          "value": "新しいパスワードを入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:229:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 229,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "新しいパスワード（確認）",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:230:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 230,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "新しいパスワードを再入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setConfirmPassword(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "password"
+        },
+        {
+          "name": "placeholder",
+          "value": "新しいパスワードを再入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:240:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 240,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "メールアドレス",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:241:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 241,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "メールアドレスを入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setEmail(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "email"
+        },
+        {
+          "name": "placeholder",
+          "value": "メールアドレスを入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:242:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 242,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "確認コード",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:243:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 243,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "確認コードを入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setConfirmationCode(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "text"
+        },
+        {
+          "name": "placeholder",
+          "value": "確認コードを入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:254:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 254,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "メールアドレス",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:255:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 255,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "メールアドレスを入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setEmail(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "email"
+        },
+        {
+          "name": "placeholder",
+          "value": "メールアドレスを入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:256:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 256,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "パスワード",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:257:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 257,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "パスワードを入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setPassword(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "password"
+        },
+        {
+          "name": "placeholder",
+          "value": "パスワードを入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:259:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 259,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "パスワード（確認）",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:260:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 260,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "パスワードを再入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setSignUpPasswordConfirm(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "password"
+        },
+        {
+          "name": "placeholder",
+          "value": "パスワードを再入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:270:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 270,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "メールアドレス",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:271:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 271,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "メールアドレスを入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setEmail(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "email"
+        },
+        {
+          "name": "placeholder",
+          "value": "メールアドレスを入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:272:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 272,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "パスワード",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:273:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 273,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "パスワードを入力",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setPassword(e.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "password"
+        },
+        {
+          "name": "placeholder",
+          "value": "パスワードを入力"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:277:label",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 277,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "label",
+      "label": "ログイン状態を保持",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:277:input",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 277,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "input",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(e) => setRemember(e.target.checked)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "checkbox"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:281:button",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 281,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "button",
+      "label": "未推定",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting || !isCurrentPasswordValid"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:289:button",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 289,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "button",
+      "label": "アカウント作成",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => switchMode(\"signUp\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:290:button",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 290,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "button",
+      "label": "確認コード入力",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => switchMode(\"confirmSignUp\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/auth/components/LoginPage.tsx:293:button",
+      "file": "apps/web/src/features/auth/components/LoginPage.tsx",
+      "line": 293,
+      "feature": "auth",
+      "component": "LoginPage",
+      "element": "button",
+      "label": "サインインへ戻る",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => switchMode(\"signIn\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "isSubmitting"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:57:button",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 57,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "button",
+      "label": "チャットへ戻る",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onBack"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "チャットへ戻る"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:83:label",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 83,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "label",
+      "label": "テスト種別",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:85:select",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 85,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "select",
+      "label": "suiteId",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onSuiteChange(event.target.value)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86:option",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 86,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "option",
+      "label": "suiteId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:88:option",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 88,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "option",
+      "label": "suite.suiteId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:104:label",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 104,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "label",
+      "label": "データセット",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:106:input",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 106,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "input",
+      "label": "selectedSuite?.datasetS3Key ?? \"datasets/agent/standard-v1.jsonl\"",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:108:label",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 108,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "label",
+      "label": "モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:110:select",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 110,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "select",
+      "label": "modelId",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onModelChange(event.target.value)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:111:option",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 111,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "option",
+      "label": "amazon.nova-lite-v1:0",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:112:option",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 112,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "option",
+      "label": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:113:option",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 113,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "option",
+      "label": "anthropic.claude-3-haiku-20240307-v1:0",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:116:label",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 116,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "label",
+      "label": "並列数",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:118:input",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 118,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "input",
+      "label": "concurrency",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onConcurrencyChange(Math.max(1, Math.min(20, Number(event.target.value) || 1)))"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "number"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:127:button",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 127,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "button",
+      "label": "性能テストを実行",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onStart"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !canRun"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:131:button",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 131,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "button",
+      "label": "更新",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onRefresh"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:183:button",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 183,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "button",
+      "label": "`${artifact.description}をダウンロード`",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void downloadBenchmarkArtifact(run.runId, artifact.kind)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "`${artifact.description}をダウンロード`"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${artifact.description}をダウンロード`"
+        },
+        {
+          "name": "disabled",
+          "value": "!canDownload || !canDownloadArtifact(run, artifact.kind)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:195:button",
+      "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
+      "line": 195,
+      "feature": "benchmark",
+      "component": "BenchmarkWorkspace",
+      "element": "button",
+      "label": "ジョブをキャンセル",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onCancel(run.runId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "ジョブをキャンセル"
+        },
+        {
+          "name": "aria-label",
+          "value": "ジョブをキャンセル"
+        },
+        {
+          "name": "disabled",
+          "value": "!canCancel || loading || ![\"queued\", \"running\"].includes(run.status)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:80:a",
+      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
+      "line": 80,
+      "feature": "chat",
+      "component": "AssistantAnswer",
+      "element": "a",
+      "label": "未推定",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "href",
+          "value": "`#source-${index}`"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:89:button",
+      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
+      "line": 89,
+      "feature": "chat",
+      "component": "AssistantAnswer",
+      "element": "button",
+      "label": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\"",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => copyText(message.text)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canCopyAnswer"
+        },
+        {
+          "name": "aria-label",
+          "value": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\""
+        },
+        {
+          "name": "title",
+          "value": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:110:button",
+      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
+      "line": 110,
+      "feature": "chat",
+      "component": "AssistantAnswer",
+      "element": "button",
+      "label": "option.reason ?? \"この候補で質問する\"",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onSubmitClarificationOption(option, message.sourceQuestion ?? message.text)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "title",
+          "value": "option.reason ?? \"この候補で質問する\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:120:button",
+      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
+      "line": 120,
+      "feature": "chat",
+      "component": "AssistantAnswer",
+      "element": "button",
+      "label": "自分で入力",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onStartClarificationFreeform(message.sourceQuestion ?? message.text, \"例: 経費精算の申請期限は…"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:131:QuestionEscalationPanel",
+      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
+      "line": 131,
+      "feature": "chat",
+      "component": "AssistantAnswer",
+      "element": "QuestionEscalationPanel",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onCreateQuestion",
+          "value": "onCreateQuestion"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:134:QuestionAnswerPanel",
+      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
+      "line": 134,
+      "feature": "chat",
+      "component": "AssistantAnswer",
+      "element": "QuestionAnswerPanel",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onResolveQuestion",
+          "value": "onResolveQuestion"
+        },
+        {
+          "name": "onAdditionalQuestion",
+          "value": "onAdditionalQuestion"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:39:form",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 39,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "form",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onAsk"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:40:textarea",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 40,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "textarea",
+      "label": "質問",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onSetQuestion(event.target.value)"
+        },
+        {
+          "name": "onKeyDown",
+          "value": "(event) => { if (event.key !== \"Enter\") return if (submitShortcut === \"enter\") { if (!eve…"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "質問"
+        },
+        {
+          "name": "placeholder",
+          "value": "submitShortcut === \"enter\" ? \"質問を入力してください...（Enterで送信 / Shift+Enterで改行）\" : \"質問を入力してください..…"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:71:label",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 71,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "label",
+      "label": "資料を添付",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "title",
+          "value": "資料を添付"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:73:input",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 73,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "input",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onSetFile(event.target.files?.[0] ?? null)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "file"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:76:button",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 76,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "button",
+      "label": "送信",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canAsk"
+        },
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "title",
+          "value": "送信"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatEmptyState.tsx:21:button",
+      "file": "apps/web/src/features/chat/components/ChatEmptyState.tsx",
+      "line": 21,
+      "feature": "chat",
+      "component": "ChatEmptyState",
+      "element": "button",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onSelectPrompt(prompt)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatView.tsx:78:MessageList",
+      "file": "apps/web/src/features/chat/components/ChatView.tsx",
+      "line": 78,
+      "feature": "chat",
+      "component": "ChatView",
+      "element": "MessageList",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onSelectPrompt",
+          "value": "onSetQuestion"
+        },
+        {
+          "name": "onCreateQuestion",
+          "value": "onCreateQuestion"
+        },
+        {
+          "name": "onResolveQuestion",
+          "value": "onResolveQuestion"
+        },
+        {
+          "name": "onSubmitClarificationOption",
+          "value": "onSubmitClarificationOption"
+        },
+        {
+          "name": "onStartClarificationFreeform",
+          "value": "onStartClarificationFreeform"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatView.tsx:93:ChatComposer",
+      "file": "apps/web/src/features/chat/components/ChatView.tsx",
+      "line": 93,
+      "feature": "chat",
+      "component": "ChatView",
+      "element": "ChatComposer",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onAsk",
+          "value": "onAsk"
+        },
+        {
+          "name": "onSetQuestion",
+          "value": "onSetQuestion"
+        },
+        {
+          "name": "onSetFile",
+          "value": "onSetFile"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatView.tsx:111:DebugPanel",
+      "file": "apps/web/src/features/chat/components/ChatView.tsx",
+      "line": 111,
+      "feature": "chat",
+      "component": "ChatView",
+      "element": "DebugPanel",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onToggleAll",
+          "value": "onToggleAllDebugSteps"
+        },
+        {
+          "name": "onToggleStep",
+          "value": "onToggleDebugStep"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/MessageItem.tsx:43:AssistantAnswer",
+      "file": "apps/web/src/features/chat/components/MessageItem.tsx",
+      "line": 43,
+      "feature": "chat",
+      "component": "MessageItem",
+      "element": "AssistantAnswer",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onCreateQuestion",
+          "value": "(input) => onCreateQuestion(messageIndex, message, input)"
+        },
+        {
+          "name": "onResolveQuestion",
+          "value": "onResolveQuestion"
+        },
+        {
+          "name": "onAdditionalQuestion",
+          "value": "onAdditionalQuestion"
+        },
+        {
+          "name": "onSubmitClarificationOption",
+          "value": "onSubmitClarificationOption"
+        },
+        {
+          "name": "onStartClarificationFreeform",
+          "value": "onStartClarificationFreeform"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/MessageList.tsx:41:ChatEmptyState",
+      "file": "apps/web/src/features/chat/components/MessageList.tsx",
+      "line": 41,
+      "feature": "chat",
+      "component": "MessageList",
+      "element": "ChatEmptyState",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onSelectPrompt",
+          "value": "onSelectPrompt"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/MessageList.tsx:43:MessageItem",
+      "file": "apps/web/src/features/chat/components/MessageList.tsx",
+      "line": 43,
+      "feature": "chat",
+      "component": "MessageList",
+      "element": "MessageItem",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onCreateQuestion",
+          "value": "onCreateQuestion"
+        },
+        {
+          "name": "onResolveQuestion",
+          "value": "onResolveQuestion"
+        },
+        {
+          "name": "onAdditionalQuestion",
+          "value": "onSelectPrompt"
+        },
+        {
+          "name": "onSubmitClarificationOption",
+          "value": "onSubmitClarificationOption"
+        },
+        {
+          "name": "onStartClarificationFreeform",
+          "value": "onStartClarificationFreeform"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx:40:button",
+      "file": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx",
+      "line": 40,
+      "feature": "chat",
+      "component": "QuestionAnswerPanel",
+      "element": "button",
+      "label": "解決した",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onResolveQuestion(question.questionId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || question.status === \"resolved\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx:44:button",
+      "file": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx",
+      "line": 44,
+      "feature": "chat",
+      "component": "QuestionAnswerPanel",
+      "element": "button",
+      "label": "追加で質問する",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onAdditionalQuestion(`追加確認: ${question.title}\\n`)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:56:form",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 56,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "form",
+      "label": "担当者へ質問",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onSubmit"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "担当者へ質問"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:63:label",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 63,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "label",
+      "label": "件名",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:65:input",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 65,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "input",
+      "label": "title",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setTitle(event.target.value)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:67:label",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 67,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "label",
+      "label": "質問内容",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:69:textarea",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 69,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "textarea",
+      "label": "body",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setBody(event.target.value)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:72:label",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 72,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "label",
+      "label": "カテゴリ / その他の質問 / 手続き / 社内制度 / 資料確認",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:74:select",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 74,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "select",
+      "label": "category",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setCategory(event.target.value)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:75:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 75,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "その他の質問",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:76:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 76,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "手続き",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:77:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 77,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "社内制度",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:78:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 78,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "資料確認",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:81:label",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 81,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "label",
+      "label": "優先度 / 通常 / 高 / 緊急",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:83:select",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 83,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "select",
+      "label": "priority",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setPriority(event.target.value as HumanQuestion[\"priority\"])"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:84:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 84,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "normal",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:85:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 85,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "high",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:86:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 86,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "urgent",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:90:label",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 90,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "label",
+      "label": "担当部署 / 総務部 / 人事部 / 情報システム部 / 経理部",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:92:select",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 92,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "select",
+      "label": "assigneeDepartment",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setAssigneeDepartment(event.target.value)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:93:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 93,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "総務部",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:94:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 94,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "人事部",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:95:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 95,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "情報システム部",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:96:option",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 96,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "option",
+      "label": "経理部",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:101:button",
+      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
+      "line": 101,
+      "feature": "chat",
+      "component": "QuestionEscalationPanel",
+      "element": "button",
+      "label": "担当者へ送信",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !title.trim() || !body.trim()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/UserPromptBubble.tsx:47:button",
+      "file": "apps/web/src/features/chat/components/UserPromptBubble.tsx",
+      "line": 47,
+      "feature": "chat",
+      "component": "UserPromptBubble",
+      "element": "button",
+      "label": "copyStatus === \"copied\" ? \"プロンプトをコピー済み\" : \"プロンプトをコピー\"",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "copyPrompt"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canCopyPrompt"
+        },
+        {
+          "name": "aria-label",
+          "value": "copyStatus === \"copied\" ? \"プロンプトをコピー済み\" : \"プロンプトをコピー\""
+        },
+        {
+          "name": "title",
+          "value": "copyStatus === \"copied\" ? \"プロンプトをコピー済み\" : \"プロンプトをコピー\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:95:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 95,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "button",
+      "label": "保存済みJSONをダウンロード",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void downloadDebugTrace(activeTrace)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!activeTrace || pending || Boolean(replayEnvelope)"
+        },
+        {
+          "name": "title",
+          "value": "保存済みJSONをダウンロード"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:99:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 99,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "button",
+      "label": "可視化JSONをダウンロード",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => downloadDebugReplayEnvelope(envelope)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!envelope || pending"
+        },
+        {
+          "name": "title",
+          "value": "可視化JSONをダウンロード"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:103:label",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 103,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "label",
+      "label": "JSONをアップロード",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "title",
+          "value": "JSONをアップロード"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:106:input",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 106,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "input",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => void onUploadDebugJson(event)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "file"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:109:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 109,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "button",
+      "label": "アップロード表示を解除",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "clearReplay"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "アップロード表示を解除"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:114:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 114,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "button",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onToggleAll"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:116:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 116,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "button",
+      "label": "拡大表示",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "拡大表示"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:128:DebugFlowNodeButton",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 128,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "DebugFlowNodeButton",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onSelect",
+          "value": "() => setSelectedNodeId(node.id)"
+        }
+      ],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:137:DebugNodeDetailPanel",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 137,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "DebugNodeDetailPanel",
+      "label": "未推定",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:142:AnswerSupportPanel",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 142,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "AnswerSupportPanel",
+      "label": "未推定",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:143:ContextAssemblyPanel",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 143,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "ContextAssemblyPanel",
+      "label": "未推定",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:154:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 154,
+      "feature": "debug",
+      "component": "DebugPanel",
+      "element": "button",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onToggleStep(step.id)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:234:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 234,
+      "feature": "debug",
+      "component": "DebugFlowNodeButton",
+      "element": "button",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onSelect"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:75:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 75,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "管理者設定へ戻る",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onBack"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "管理者設定へ戻る"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:88:form",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 88,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "form",
+      "label": "保存先フォルダ / フォルダなし / アップロード",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onSubmit"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:89:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 89,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "保存先フォルダ / フォルダなし",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:91:select",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 91,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "select",
+      "label": "uploadGroupId",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onUploadGroupChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:92:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 92,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "フォルダなし",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:94:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 94,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "group.groupId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:98:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 98,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "未推定",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:101:input",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 101,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "input",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setUploadFile(event.target.files?.[0] ?? null)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "file"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:103:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 103,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "アップロード",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || !uploadFile || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:112:form",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 112,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "form",
+      "label": "新規フォルダ / 作成",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onCreateGroupSubmit"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:113:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 113,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "新規フォルダ",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:115:input",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 115,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "input",
+      "label": "社内規定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setGroupName(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        },
+        {
+          "name": "placeholder",
+          "value": "社内規定"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:117:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 117,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "作成",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || !groupName.trim() || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:119:form",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 119,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "form",
+      "label": "共有フォルダ / 選択してください / 共有 Cognito group / 共有更新",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onShareSubmit"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:120:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 120,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "共有フォルダ / 選択してください",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:122:select",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 122,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "select",
+      "label": "shareGroupId",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setShareGroupId(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:123:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 123,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "選択してください",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:125:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 125,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "group.groupId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:129:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 129,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "共有 Cognito group",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:131:input",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 131,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "input",
+      "label": "CHAT_USER,RAG_GROUP_MANAGER",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setShareGroups(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        },
+        {
+          "name": "placeholder",
+          "value": "CHAT_USER,RAG_GROUP_MANAGER"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:133:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 133,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "共有更新",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || !shareGroupId || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:175:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 175,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "`${document.fileName}の再インデックスをステージング`",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onStageReindex(document.documentId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "`${document.fileName}の再インデックスをステージング`"
+        },
+        {
+          "name": "disabled",
+          "value": "!canReindex || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:183:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 183,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "`${document.fileName}を削除`",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onDelete(document.documentId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "`${document.fileName}を削除`"
+        },
+        {
+          "name": "disabled",
+          "value": "!canDelete || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:217:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 217,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "切替",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onCutoverReindex(migration.migrationId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || migration.status !== \"staged\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:225:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 225,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "戻す",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onRollbackReindex(migration.migrationId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || migration.status !== \"cutover\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:51:button",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 51,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "button",
+      "label": "チャットへ戻る",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onBack"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "チャットへ戻る"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:65:input",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 65,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "input",
+      "label": "履歴を検索",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setQuery(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "search"
+        },
+        {
+          "name": "placeholder",
+          "value": "タイトルや会話内容で検索"
+        },
+        {
+          "name": "aria-label",
+          "value": "履歴を検索"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:72:select",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 72,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "select",
+      "label": "履歴の並び順",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setSortOrder(event.target.value as \"newest\" | \"oldest\" | \"messages\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "履歴の並び順"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:73:option",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 73,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "option",
+      "label": "newest",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:74:option",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 74,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "option",
+      "label": "oldest",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:75:option",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 75,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "option",
+      "label": "messages",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:77:label",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 77,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "label",
+      "label": "お気に入りのみ",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:78:input",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 78,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "input",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setFavoritesOnly(event.target.checked)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "checkbox"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:91:button",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 91,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "button",
+      "label": "item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onToggleFavorite(item)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-label",
+          "value": "item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`"
+        },
+        {
+          "name": "title",
+          "value": "item.isFavorite ? \"お気に入りから外す\" : \"お気に入りに追加\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:100:button",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 100,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "button",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onSelect(item)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:108:button",
+      "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
+      "line": 108,
+      "feature": "history",
+      "component": "HistoryWorkspace",
+      "element": "button",
+      "label": "削除",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onDelete(item.id)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:113:button",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 113,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "button",
+      "label": "チャットへ戻る",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onBack"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "チャットへ戻る"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:126:label",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 126,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "label",
+      "label": "ステータス / すべて",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:128:select",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 128,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "select",
+      "label": "statusFilter",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setStatusFilter(event.target.value as AssigneeLaneId | \"all\")"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:129:option",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 129,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "option",
+      "label": "all",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:131:option",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 131,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "option",
+      "label": "lane.id",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:135:label",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 135,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "label",
+      "label": "検索",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:137:input",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 137,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "input",
+      "label": "タイトル・名前・部署で検索",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setSearchQuery(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "search"
+        },
+        {
+          "name": "placeholder",
+          "value": "タイトル・名前・部署で検索"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:161:button",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 161,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "button",
+      "label": "/ / （ / ）",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onSelect(question.questionId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:205:form",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 205,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "form",
+      "label": "回答作成 / 回答タイトル / 回答内容 / 参照資料 / 関連リンク / 内部メモ / 質問者へ通知する / 下書き保存 / 回答を送信",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onSubmit"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:207:label",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 207,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "label",
+      "label": "回答タイトル",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:209:input",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 209,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "input",
+      "label": "answerTitle",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => { setAnswerTitle(event.target.value); markDirty() }"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:211:label",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 211,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "label",
+      "label": "回答内容",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:213:textarea",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 213,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "textarea",
+      "label": "answerBody",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => { setAnswerBody(event.target.value); markDirty() }"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:215:label",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 215,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "label",
+      "label": "参照資料 / 関連リンク",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:217:input",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 217,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "input",
+      "label": "資料名、URL、またはナレッジリンク",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => { setReferences(event.target.value); markDirty() }"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "placeholder",
+          "value": "資料名、URL、またはナレッジリンク"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:219:label",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 219,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "label",
+      "label": "内部メモ",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:221:textarea",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 221,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "textarea",
+      "label": "internalMemo",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => { setInternalMemo(event.target.value); markDirty() }"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:223:label",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 223,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "label",
+      "label": "質問者へ通知する",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:224:input",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 224,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "input",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => { setNotifyRequester(event.target.checked); markDirty() }"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "checkbox"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:231:button",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 231,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "button",
+      "label": "下書き保存",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onSaveDraft"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !isDirty"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx:232:button",
+      "file": "apps/web/src/features/questions/components/AssigneeWorkspace.tsx",
+      "line": 232,
+      "feature": "questions",
+      "component": "AssigneeWorkspace",
+      "element": "button",
+      "label": "回答を送信",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !answerTitle.trim() || !answerBody.trim()"
+        }
+      ],
+      "certainty": "confirmed"
+    }
+  ]
+}

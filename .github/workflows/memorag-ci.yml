@@ -73,6 +73,11 @@ jobs:
         run: npm run typecheck -w @memorag-mvp/web
         continue-on-error: true
 
+      - name: Check generated web inventory
+        id: web_inventory
+        run: npm run docs:web-inventory:check
+        continue-on-error: true
+
       - name: Type-check benchmark
         id: benchmark_typecheck
         run: npm run typecheck -w @memorag-mvp/benchmark
@@ -191,6 +196,7 @@ jobs:
               ['api', 'Type-check', '${{ steps.api_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/api`'],
               ['api', 'OpenAPI docs', '${{ steps.openapi_docs.outcome }}', '日本語 summary / description gate', '`npm run docs:openapi:check`'],
               ['web', 'Type-check', '${{ steps.web_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/web`'],
+              ['web', 'Generated inventory check', '${{ steps.web_inventory.outcome }}', '-', '`npm run docs:web-inventory:check`'],
               ['benchmark', 'Type-check', '${{ steps.benchmark_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/benchmark`'],
               ['infra', 'Test', '${{ steps.infra_test.outcome }}', 'C0: 未計測 / C1: 未計測', '`npm test -w @memorag-mvp/infra`'],
               ['benchmark', 'Test', '${{ steps.benchmark_test.outcome }}', 'C0: 未計測 / C1: 未計測', '`npm test -w @memorag-mvp/benchmark`'],

@@ -88,7 +88,8 @@ export default tseslint.config(
       "infra/**/*.ts",
       "benchmark/**/*.ts",
       "**/*.config.{js,mjs,ts}",
-      "**/scripts/**/*.{js,mjs,ts}"
+      "**/scripts/**/*.{js,mjs,ts}",
+      "**/tools/**/*.{js,mjs,ts}"
     ],
     languageOptions: {
       globals: {
