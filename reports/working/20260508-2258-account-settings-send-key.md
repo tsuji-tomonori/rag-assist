@@ -44,7 +44,7 @@
 | `memorag-bedrock-mvp/apps/web/src/features/chat/components/ChatComposer.tsx` | TSX | 送信キー select を除去し設定値の送信挙動を維持 | R4, R5 |
 | `memorag-bedrock-mvp/apps/web/src/styles/*.css` | CSS | 個人設定画面と responsive 表示 | R1, R3 |
 | `memorag-bedrock-mvp/apps/web/src/**/*.test.tsx` | Test | 導線と送信キー挙動の regression test | R6 |
-| `tasks/do/20260508-2253-account-settings-send-key.md` | Markdown | 受け入れ条件と検証結果 | workflow 対応 |
+| `tasks/done/20260508-2253-account-settings-send-key.md` | Markdown | 受け入れ条件と検証結果 | workflow 対応 |
 
 ## 6. 実行した検証
 
