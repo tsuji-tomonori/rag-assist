@@ -52,6 +52,15 @@
     grid-template-columns: repeat(2, minmax(180px, 1fr));
   }
 
+  .document-management-layout {
+    grid-template-columns: minmax(230px, 260px) minmax(560px, 1fr);
+  }
+
+  .document-detail-panel {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .step-summary .sub-chip:nth-of-type(3) {
     display: none;
   }
@@ -132,6 +141,26 @@
     grid-template-columns: 1fr;
   }
 
+  .document-workspace {
+    overflow: auto;
+    padding: 16px;
+  }
+
+  .document-management-layout {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .document-folder-panel,
+  .document-file-panel {
+    min-height: 360px;
+  }
+
+  .document-detail-panel {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
   .phase2-admin-grid {
     grid-template-columns: 1fr;
   }
@@ -177,6 +206,22 @@
 
   .topbar h1 {
     white-space: normal;
+  }
+
+  .document-page-header,
+  .document-page-header > div:first-child {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .document-table-footer {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    padding: 12px 16px;
+  }
+
+  .folder-stats {
+    grid-template-columns: 1fr;
   }
 
   .split-workspace {

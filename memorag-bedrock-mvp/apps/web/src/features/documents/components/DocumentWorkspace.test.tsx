@@ -77,7 +77,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByText("requirements.md")).toBeInTheDocument()
+    expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(1)
 
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
 
@@ -171,13 +171,14 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getAllByRole("cell", { name: "社内規定" }).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getByRole("button", { name: "社内規定1" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "フォルダ情報 / 共有設定" })).toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByLabelText("保存先フォルダ"), "group-1")
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
 
     await userEvent.type(screen.getByLabelText("新規フォルダ"), "個人メモ")
-    await userEvent.click(screen.getByRole("button", { name: "作成" }))
+    await userEvent.click(screen.getAllByRole("button", { name: "新規フォルダ" })[1]!)
     expect(onCreateGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
 
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")

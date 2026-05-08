@@ -4,11 +4,13 @@ export type IconName =
   | "clock"
   | "star"
   | "document"
+  | "folder"
   | "settings"
   | "paperclip"
   | "send"
   | "chevron"
   | "check"
+  | "share"
   | "warning"
   | "expand"
   | "plus"
@@ -39,6 +41,8 @@ function getIconPath(name: IconName) {
       return <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z" />
     case "document":
       return <path d="M6 3h8l4 4v14H6V3Zm7 2.5V8h2.5L13 5.5ZM8 11h8v2H8v-2Zm0 4h8v2H8v-2Z" />
+    case "folder":
+      return <path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Zm2 2v10h14V8h-8l-2-2H5v2Z" />
     case "settings":
       return <path d="m13.3 3 .6 2a7.8 7.8 0 0 1 1.7.7l1.9-1 2 2-1 1.9c.3.5.5 1.1.7 1.7l2 .6v2.8l-2 .6a7.8 7.8 0 0 1-.7 1.7l1 1.9-2 2-1.9-1c-.5.3-1.1.5-1.7.7l-.6 2h-2.8l-.6-2a7.8 7.8 0 0 1-1.7-.7l-1.9 1-2-2 1-1.9a7.8 7.8 0 0 1-.7-1.7l-2-.6v-2.8l2-.6c.2-.6.4-1.2.7-1.7l-1-1.9 2-2 1.9 1c.5-.3 1.1-.5 1.7-.7l.6-2h2.8ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z" />
     case "paperclip":
@@ -49,6 +53,8 @@ function getIconPath(name: IconName) {
       return <path d="m7 9 5 5 5-5 1.4 1.4L12 16.8l-6.4-6.4L7 9Z" />
     case "check":
       return <path d="M9.5 16.6 4.8 12l1.4-1.4 3.3 3.2 8.3-8.4 1.4 1.4-9.7 9.8Z" />
+    case "share":
+      return <path d="M18 16.1a3 3 0 0 0-2.3 1.1L8.8 13a3.3 3.3 0 0 0 0-2l6.9-4.1A3 3 0 1 0 15 5a3.3 3.3 0 0 0 .1.8L8.2 9.9a3 3 0 1 0 0 4.2l6.9 4.1a3.3 3.3 0 0 0-.1.8 3 3 0 1 0 3-2.9Z" />
     case "warning":
       return <path d="M12 3 22 20H2L12 3Zm-1 6v5h2V9h-2Zm0 7v2h2v-2h-2Z" />
     case "expand":
