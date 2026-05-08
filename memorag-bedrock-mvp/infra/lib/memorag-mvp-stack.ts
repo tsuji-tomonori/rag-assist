@@ -44,6 +44,12 @@ const defaultResourceTags = {
   Repository: "tsuji-tomonori/rag-assist"
 } as const
 
+const defaultBenchmarkSource = {
+  owner: "tsuji-tomonori",
+  repo: "rag-assist",
+  branch: "main"
+} as const
+
 const benchmarkCodeBuildTimeout = Duration.hours(8)
 const benchmarkStateMachineTimeout = Duration.hours(9)
 
@@ -51,10 +57,10 @@ export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
     super(scope, id, props)
 
-    const requireContext = (key: string): string => {
+    const stringContext = (key: string, defaultValue: string): string => {
       const value = this.node.tryGetContext(key)
       if (typeof value !== "string" || value.trim() === "") {
-        throw new Error(`CDK context "${key}" is required.`)
+        return defaultValue
       }
       return value.trim()
     }
@@ -79,9 +85,9 @@ export class MemoRagMvpStack extends Stack {
     const evidenceVectorIndexName = "evidence-index"
     const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
     const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
-    const benchmarkSourceOwner = requireContext("benchmarkSourceOwner")
-    const benchmarkSourceRepo = requireContext("benchmarkSourceRepo")
-    const benchmarkSourceBranch = requireContext("benchmarkSourceBranch")
+    const benchmarkSourceOwner = stringContext("benchmarkSourceOwner", defaultBenchmarkSource.owner)
+    const benchmarkSourceRepo = stringContext("benchmarkSourceRepo", defaultBenchmarkSource.repo)
+    const benchmarkSourceBranch = stringContext("benchmarkSourceBranch", defaultBenchmarkSource.branch)
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
