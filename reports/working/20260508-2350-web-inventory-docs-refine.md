@@ -75,4 +75,4 @@
 - PR: https://github.com/tsuji-tomonori/rag-assist/pull/198
 - rebase 後の push: `git push --force-with-lease origin codex/web-inventory-generator` を承認付きで実行。
 - PR コメント: GitHub Apps で受け入れ条件確認、セルフレビュー、CI 確認コメントを投稿。
-- CI: 最新 commit `cc6bf76` で `validate-semver-label` pass、`Lint, type-check, test, build, and synth` pass。
+- CI: `validate-semver-label` pass、`Lint, type-check, test, build, and synth` pass。API contract test の一時失敗はローカル再実行で pass し、GitHub Actions の failed job rerun でも pass。
