@@ -3,6 +3,7 @@ import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
 import { authMiddleware } from "./auth.js"
 import { createDependencies } from "./dependencies.js"
+import { enrichOpenApiDocument, type OpenApiDocument } from "./openapi-doc-quality.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import { registerApiRoutes } from "./routes/api-routes.js"
 
@@ -52,13 +53,17 @@ for (const path of protectedApiPaths) {
 
 registerApiRoutes(app, deps, service)
 
-app.doc("/openapi.json", {
+const openApiConfig = {
   openapi: "3.0.0",
   info: {
     version: "0.1.0",
     title: "MemoRAG Bedrock QA MVP API",
     description: "Grounded internal-document QA API. Answers only from uploaded documents; otherwise returns a no-answer response."
   }
+}
+
+app.get("/openapi.json", (c) => {
+  return c.json(enrichOpenApiDocument(app.getOpenAPIDocument(openApiConfig) as OpenApiDocument))
 })
 
 app.onError((err, c) => {

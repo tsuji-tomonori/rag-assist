@@ -63,6 +63,11 @@ jobs:
         run: npm run typecheck -w @memorag-mvp/api
         continue-on-error: true
 
+      - name: Check OpenAPI docs
+        id: openapi_docs
+        run: npm run docs:openapi:check
+        continue-on-error: true
+
       - name: Type-check web
         id: web_typecheck
         run: npm run typecheck -w @memorag-mvp/web
@@ -184,6 +189,7 @@ jobs:
               ['infra', 'Lint', '${{ steps.infra_lint.outcome }}', '-', '`npm exec -- eslint infra --cache --cache-location .eslintcache-infra --max-warnings=0`'],
               ['infra', 'Type-check', '${{ steps.infra_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/infra`'],
               ['api', 'Type-check', '${{ steps.api_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/api`'],
+              ['api', 'OpenAPI docs', '${{ steps.openapi_docs.outcome }}', '日本語 summary / description gate', '`npm run docs:openapi:check`'],
               ['web', 'Type-check', '${{ steps.web_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/web`'],
               ['benchmark', 'Type-check', '${{ steps.benchmark_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/benchmark`'],
               ['infra', 'Test', '${{ steps.infra_test.outcome }}', 'C0: 未計測 / C1: 未計測', '`npm test -w @memorag-mvp/infra`'],
@@ -251,5 +257,5 @@ jobs:
           echo "CI result comment was skipped because this PR is from a fork and GITHUB_TOKEN has read-only permissions." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail when CI checks failed
-        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.benchmark_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success') }}
+        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.openapi_docs.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.benchmark_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success') }}
         run: exit 1

@@ -1,0 +1,65 @@
+name: Generate MemoRAG OpenAPI Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/memorag-openapi-docs.yml"
+      - "memorag-bedrock-mvp/apps/api/**"
+      - "memorag-bedrock-mvp/package.json"
+      - "memorag-bedrock-mvp/package-lock.json"
+      - "memorag-bedrock-mvp/Taskfile.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: memorag-openapi-docs-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    name: Generate OpenAPI Markdown
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: memorag-bedrock-mvp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: memorag-bedrock-mvp/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate OpenAPI docs
+        run: npm run docs:openapi
+
+      - name: Check OpenAPI doc quality
+        run: npm run docs:openapi:check
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/memorag-openapi-docs
+          delete-branch: true
+          commit-message: "📝 docs(api): OpenAPI 生成ドキュメントを更新"
+          title: "📝 docs(api): OpenAPI 生成ドキュメントを更新"
+          body: |
+            Hono の OpenAPI 定義から `docs/generated/openapi.md` と API ごとの Markdown を再生成しました。
+
+            ### 生成コマンド
+
+            - `npm run docs:openapi`
+          add-paths: |
+            memorag-bedrock-mvp/docs/generated/openapi.md
+            memorag-bedrock-mvp/docs/generated/openapi

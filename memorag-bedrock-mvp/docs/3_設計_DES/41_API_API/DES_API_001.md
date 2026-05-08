@@ -70,6 +70,26 @@
 
 注: `GET /admin/costs` は運用者向けの概算コスト監査 summary を返す。請求確定用の料金算出 API は現行 MVP では未提供であり、`DES_DATA_001` の `UsageMeter`、`PricingCatalogEntry`、`CostEstimate` を使う将来拡張として扱う。
 
+## OpenAPI 生成ドキュメント
+
+API contract の source of truth は Hono + `@hono/zod-openapi` の route 定義と `GET /openapi.json` とする。Markdown の API reference は手作業で編集せず、次のコマンドで再生成する。
+
+```bash
+npm run docs:openapi
+```
+
+生成物は上位 index の `docs/generated/openapi.md` と、API ごとの詳細ファイルを置く `docs/generated/openapi/` に出力する。生成済み `openapi.json` は commit せず、JSON 仕様は runtime の `GET /openapi.json` を source of truth とする。GitHub Actions では `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で同じコマンドを実行し、Markdown 差分がある場合に更新 PR を作成する。
+
+`docs/generated/openapi.md` は API 一覧と詳細ファイルへのリンクを持つ上位ドキュメントとする。各 API 詳細 Markdown は schema を JSON block としてそのまま記載しない。各 operation の `headers`、`path parameters`、`query parameters`、`data`、`responses` を表形式で出力し、各項目に型、必須、説明、制約を記載する。operation の `summary` / `description` と parameter / request body / response body の field description は日本語であることを必須とする。
+
+OpenAPI 説明品質は次のコマンドで検証する。
+
+```bash
+npm run docs:openapi:check
+```
+
+`.github/workflows/memorag-ci.yml` と `.github/workflows/memorag-openapi-docs.yml` はこの検証を実行し、summary / description / field description の不足がある場合は CI を失敗させる。
+
 ## `POST /chat`
 
 後方互換用の同期 JSON API。新しい UI は、長時間 RAG 処理の進捗を表示するため `POST /chat-runs` と `GET /chat-runs/{runId}/events` を使用する。
