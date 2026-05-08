@@ -97,6 +97,7 @@ export function useChatSession({
   minScore,
   currentConversationId,
   setCurrentConversationId,
+  selectedGroupId,
   loading,
   rememberMessages,
   createConversationId,
@@ -119,10 +120,11 @@ export function useChatSession({
   minScore: number
   currentConversationId: string
   setCurrentConversationId: (conversationId: string) => void
+  selectedGroupId: string
   loading: boolean
   rememberMessages: (id: string, titleCandidate: string, messages: Message[]) => void
   createConversationId: () => string
-  ingestDocument: (file: File) => Promise<void>
+  ingestDocument: (file: File, options?: { purpose?: "document" | "chatAttachment"; groupId?: string; temporaryScopeId?: string }) => Promise<void>
   setDebugRuns: Dispatch<SetStateAction<DebugTrace[]>>
   setSelectedRunId: (runId: string) => void
   setExpandedStepId: (stepId: number | null) => void
@@ -200,11 +202,19 @@ export function useChatSession({
 
     try {
       if (hasAttachment && file && canWriteDocuments) {
-        await ingestDocument(file)
+        await ingestDocument(file, { purpose: "chatAttachment", temporaryScopeId: currentConversationId })
         setFile(null)
       }
 
       if (typedQuestion.length > 0) {
+        const searchScope = selectedGroupId !== "all" || hasAttachment
+          ? {
+              mode: selectedGroupId !== "all" ? "groups" as const : undefined,
+              groupIds: selectedGroupId !== "all" ? [selectedGroupId] : undefined,
+              includeTemporary: hasAttachment,
+              temporaryScopeId: hasAttachment ? currentConversationId : undefined
+            }
+          : undefined
         const started = await startChatRun({
           question: userQuestion,
           clarificationContext,
@@ -213,6 +223,7 @@ export function useChatSession({
           clueModelId: modelId,
           topK: 6,
           minScore,
+          searchScope,
           includeDebug: debugMode && canReadDebugRuns
         })
         let result: ChatResponse | undefined

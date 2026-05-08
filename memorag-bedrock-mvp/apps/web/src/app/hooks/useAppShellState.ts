@@ -67,19 +67,27 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   const {
     documents,
+    documentGroups,
     reindexMigrations,
     selectedDocumentId,
+    selectedGroupId,
+    uploadGroupId,
     file,
     setFile,
     setSelectedDocumentId,
+    setSelectedGroupId,
+    setUploadGroupId,
     refreshDocuments,
+    refreshDocumentGroups,
     refreshReindexMigrations,
     ingestDocument,
     onDelete,
     onUploadDocumentFile,
     onStageReindex,
     onCutoverReindex,
-    onRollbackReindex
+    onRollbackReindex,
+    onCreateDocumentGroup,
+    onShareDocumentGroup
   } = useDocuments({
     modelId,
     embeddingModelId,
@@ -162,6 +170,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     minScore,
     currentConversationId,
     setCurrentConversationId,
+    selectedGroupId,
     loading,
     rememberMessages,
     createConversationId,
@@ -259,7 +268,10 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   useEffect(() => {
     if (!authSession || !currentUser) return
     const loaders: Promise<unknown>[] = []
-    if (canReadDocuments) loaders.push(refreshDocuments().catch((err) => console.warn("Failed to load documents", err)))
+    if (canReadDocuments) {
+      loaders.push(refreshDocuments().catch((err) => console.warn("Failed to load documents", err)))
+      loaders.push(refreshDocumentGroups().catch((err) => console.warn("Failed to load document groups", err)))
+    }
     if (canReindexDocuments) loaders.push(refreshReindexMigrations().catch((err) => console.warn("Failed to load reindex migrations", err)))
     if (canReadDebugRuns) loaders.push(refreshDebugRuns().catch((err) => console.warn("Failed to load debug runs", err)))
     if (canReadBenchmarkRuns) {
@@ -357,7 +369,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const topBarProps: ComponentProps<typeof TopBar> = {
     modelId,
     documents,
+    documentGroups,
     selectedDocumentId,
+    selectedGroupId,
     debugRuns,
     latestTrace,
     selectedRunValue,
@@ -368,6 +382,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     pendingDebugQuestion,
     onModelChange: setModelId,
     onDocumentChange: setSelectedDocumentId,
+    onGroupChange: setSelectedGroupId,
     onRunChange: setSelectedRunId,
     onDebugModeChange: setDebugMode,
     onNewConversation: newConversation
@@ -390,6 +405,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       canAsk,
       canWriteDocuments,
       file,
+      selectedGroupId,
+      documentGroups,
       conversationKey,
       submitShortcut,
       question,
@@ -444,12 +461,17 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     },
     documentProps: {
       documents,
+      documentGroups,
       loading,
       canWrite: canWriteDocuments,
       canDelete: canDeleteDocuments,
       canReindex: canReindexDocuments,
+      uploadGroupId,
       migrations: reindexMigrations,
+      onUploadGroupChange: setUploadGroupId,
       onUpload: onUploadDocumentFile,
+      onCreateGroup: onCreateDocumentGroup,
+      onShareGroup: onShareDocumentGroup,
       onDelete,
       onStageReindex,
       onCutoverReindex,

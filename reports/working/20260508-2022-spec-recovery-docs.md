@@ -23,23 +23,25 @@
 
 - 既存 `FR-001` から `FR-040` は `docs/spec-recovery` の前半要求を多く含んでいたため、重複追加せず、後半の未反映要求を中心に追加した。
 - `REQ-UI-001` は主要操作全般の複合要求だったため、キーボード送信、回答コピー、表示要素の非重なりへ分割した。
-- `REQ-BENCH-003` は benchmark 実行追跡と timeout/cost 運用が混在するため、利用者が確認する進捗・artifact は `FR-047`、運用品質は既存 `SQ-002` との trace で扱った。
+- `REQ-BENCH-003` は benchmark 実行追跡と timeout/cost 運用が混在するため、利用者が確認する進捗・artifact は `FR-048`、運用品質は既存 `SQ-002` との trace で扱った。
+- main 側で `FR-041` がスコープ付き資料グループ管理に追加されたため、今回追加した機能要求は `FR-042` から `FR-048` へ採番を調整した。
 - `GAP-003` と `GAP-008` の未確定値は、確定済み閾値や sanitize 済みとは書かず、未確定リスクを受け入れ条件へ明記した。
 
 ## 4. 実施した作業
 
 - `docs/spec-recovery/03_acceptance_criteria.md`、`06_requirements.md`、`07_specifications.md`、`09_gap_analysis.md` を確認した。
-- `memorag-bedrock-mvp/docs` に `FR-041` から `FR-047`、`NFR-014`、`NFR-015`、`SQ-003`、`SQ-004`、`CHG-002` を追加した。
+- `memorag-bedrock-mvp/docs` に `FR-042` から `FR-048`、`NFR-014`、`NFR-015`、`SQ-003`、`SQ-004`、`CHG-002` を追加した。
 - `memorag-bedrock-mvp/docs/REQUIREMENTS.md`、機能要求分類索引、`REQ_CHANGE_001.md`、`DOCS_STRUCTURE.md` を更新した。
 - 追加した `FR-*` / `NFR-*` に合わせて、`requirements-coverage.test.ts` の trace map を更新した。
 - `task docs:check` 相当の Taskfile target が存在しないことを確認した。
 - `pre-commit run --all-files` は既存スコープ外ファイルを自動修正したため、それらを戻し、対象 staged files に限定して再実行した。
+- PR 作成後に main 側へ追加された `FR-041` と採番が衝突したため、今回追加分を `FR-042` から `FR-048` へ調整して main を merge した。
 
 ## 5. 成果物
 
 | 成果物 | 形式 | 内容 | 指示との対応 |
 |---|---|---|---|
-| `REQ_FUNCTIONAL_041.md` から `REQ_FUNCTIONAL_047.md` | Markdown | UI、履歴表示順、retrieval adoption、debug artifact、dataset adapter、benchmark 実行追跡の機能要求 | 原子的な機能要求追加 |
+| `REQ_FUNCTIONAL_042.md` から `REQ_FUNCTIONAL_048.md` | Markdown | UI、履歴表示順、retrieval adoption、debug artifact、dataset adapter、benchmark 実行追跡の機能要求 | 原子的な機能要求追加 |
 | `REQ_NON_FUNCTIONAL_014.md`, `REQ_NON_FUNCTIONAL_015.md` | Markdown | PDF/OCR 境界状態記録、debug artifact redaction | 非機能要求追加 |
 | `REQ_SERVICE_QUALITY_003.md`, `REQ_SERVICE_QUALITY_004.md` | Markdown | 汎用 answerability policy、chat UI 表示非重なり | サービス品質制約追加 |
 | `REQ_CHANGE_002.md` | Markdown | spec recovery の report trace 維持 | 仕様復元 trace 要求追加 |
@@ -75,3 +77,4 @@
 - E2E テスト追加: 未実施。今回の依頼は docs 更新・追加であり、画面挙動や API 挙動は変更していないため。
 - `pre-commit run --all-files`: 初回実行はスコープ外既存ファイルを自動修正したため、対象ファイル限定で再実行した。
 - CI: 初回は追加した要求 ID が coverage map に未登録だったため失敗した。`requirements-coverage.test.ts` を更新し、同じ API coverage command をローカルで pass させた。
+- main 追従後の CI: ローカルで targeted pre-commit、API coverage、API typecheck を再実行して pass を確認した。

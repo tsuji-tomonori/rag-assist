@@ -1,6 +1,6 @@
 # 要件定義（1要件1ファイル）
 
-- 要件ID: `FR-043`
+- 要件ID: `FR-044`
 - 種別: `REQ_FUNCTIONAL`
 - 状態: Draft
 - 優先度: B
@@ -10,19 +10,19 @@
 - L0: `rag-assist / MemoRAG MVP 機能要件`
 - L1主分類: `5. 会話履歴・お気に入り`
 - L2主機能群: `5.4 履歴表示順`
-- L3要件: `FR-043`
+- L3要件: `FR-044`
 - 関連カテゴリ: なし
 
 ## 要件
 
-- FR-043: 会話履歴画面は、同一時刻の履歴 item を安定した順序で表示できること。
+- FR-044: 会話履歴画面は、同一時刻の履歴 item を安定した順序で表示できること。
 
 ## 受け入れ条件（この要件専用）
 
-- AC-FR043-001: 複数の履歴 item が同じ更新日時を持つ場合でも、一覧の表示順が再描画ごとに入れ替わらないこと。
-- AC-FR043-002: 検索、sort、favorite filter の適用後も、同一 sort key の item には安定した tie-break が適用されること。
-- AC-FR043-003: 表示順の tie-break は認証済み userId の履歴 item 内で完結し、他 userId の履歴を参照しないこと。
-- AC-FR043-004: 安定順序のために debug trace、内部メモ、retrieved full text を sort key として使わないこと。
+- AC-FR044-001: 複数の履歴 item が同じ更新日時を持つ場合でも、一覧の表示順が再描画ごとに入れ替わらないこと。
+- AC-FR044-002: 検索、sort、favorite filter の適用後も、同一 sort key の item には安定した tie-break が適用されること。
+- AC-FR044-003: 表示順の tie-break は認証済み userId の履歴 item 内で完結し、他 userId の履歴を参照しないこと。
+- AC-FR044-004: 安定順序のために debug trace、内部メモ、retrieved full text を sort key として使わないこと。
 
 ## 要件の源泉・背景
 
@@ -40,14 +40,14 @@
 
 | 属性 | 記入内容 |
 |---|---|
-| 識別子 | `FR-043` |
+| 識別子 | `FR-044` |
 | 説明 | 会話履歴の安定表示順 |
 | 根拠 | 履歴検索・sort・favorite filter の結果が再描画で揺れると利用者が対象履歴を追いにくい |
 | 源泉 | `REQ-HIST-002`, `AC-HIST-002`, `SPEC-HIST-003` |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-022`, `FR-028`, `FR-030` |
 | 衝突 | tie-break 用 key の選定が data schema に依存する |
-| 受け入れ基準 | `AC-FR043-001` から `AC-FR043-004` |
+| 受け入れ基準 | `AC-FR044-001` から `AC-FR044-004` |
 | 優先度 | B |
 | 安定性 | Medium |
 | 変更履歴 | 2026-05-08 初版 |

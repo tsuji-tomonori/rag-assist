@@ -18,6 +18,8 @@ const protectedMiddlewarePaths = [
   "/admin/*",
   "/documents",
   "/documents/*",
+  "/document-groups",
+  "/document-groups/*",
   "/document-ingest-runs",
   "/document-ingest-runs/*",
   "/chat",
@@ -57,6 +59,9 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/admin/usage", permission: "usage:read:all_users" },
   { method: "get", path: "/admin/costs", permission: "cost:read:all" },
   { method: "get", path: "/documents", permission: "rag:doc:read", mode: "benchmarkSeedListOrPermission" },
+  { method: "get", path: "/document-groups", permission: "rag:doc:read" },
+  { method: "post", path: "/document-groups", permission: "rag:group:create" },
+  { method: "post", path: "/document-groups/{groupId}/share", permission: "rag:group:assign_manager" },
   { method: "post", path: "/documents", permission: "rag:doc:write:group", mode: "benchmarkSeedOrPermission" },
   { method: "post", path: "/documents/uploads", permission: "rag:doc:write:group", mode: "documentUploadSession" },
   { method: "post", path: "/documents/uploads/{uploadId}/content", permission: "rag:doc:write:group", mode: "documentUploadSession" },
@@ -174,7 +179,7 @@ test("protected API routes keep route-level permission checks", async () => {
     } else if (policy.mode === "documentUploadSession") {
       assert.match(
         block,
-        /authorizeDocumentUploadSession|authorizeUploadedDocumentIngest/,
+        /authorizeDocumentUploadSession|authorizeUploadedDocumentIngest|authorizeScopedIngest/,
         `${policy.method.toUpperCase()} ${policy.path} must use scoped upload-session authorization`
       )
     } else if (policy.mode === "ownedRun") {

@@ -47,7 +47,8 @@ L0. rag-assist / MemoRAG MVP 機能要件
 │  ├─ 02_文書のQA利用可能化/
 │  ├─ 03_文書削除/
 │  ├─ 05_多抽象度メモリ生成/
-│  └─ 06_非同期文書取り込み/
+│  ├─ 06_非同期文書取り込み/
+│  └─ 07_スコープ付き資料グループ管理/
 ├─ 02_チャットQA・根拠提示・回答不能制御/
 │  └─ 06_確認質問・曖昧性解消/
 │  └─ 07_チャットUI操作性/
@@ -71,6 +72,7 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 1.3 文書削除 | [`FR-008`](01_文書・知識ベース管理/03_文書削除/REQ_FUNCTIONAL_008.md) | 文書削除時に紐づく管理情報も削除する。 |
 | 1.5 多抽象度メモリ生成 | [`FR-020`](01_文書・知識ベース管理/05_多抽象度メモリ生成/REQ_FUNCTIONAL_020.md) | raw chunk とは別に section / document / concept memory を生成する。 |
 | 1.6 非同期文書取り込み | [`FR-038`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_038.md) | 長時間の文書取り込みを非同期 run として追跡する。 |
+| 1.7 スコープ付き資料グループ管理 | [`FR-041`](01_文書・知識ベース管理/07_スコープ付き資料グループ管理/REQ_FUNCTIONAL_041.md) | 永続資料グループとチャット内一時添付を区別して質問回答に使う。 |
 
 ### 2. チャットQA・根拠提示・回答不能制御
 
@@ -82,8 +84,8 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 2.4 回答挙動調整 | [`FR-006`](02_チャットQA・根拠提示・回答不能制御/04_回答挙動調整/REQ_FUNCTIONAL_006.md) | 回答精度調整に関わる設定値を指定できる。 |
 | 2.5 統合チャットUI | [`FR-009`](02_チャットQA・根拠提示・回答不能制御/05_統合チャットUI/REQ_FUNCTIONAL_009.md) | 文書アップロード、質問、回答確認を画面上で一連実行する。 |
 | 2.6 確認質問・曖昧性解消 | [`FR-029`](02_チャットQA・根拠提示・回答不能制御/06_確認質問・曖昧性解消/REQ_FUNCTIONAL_029.md) | 曖昧な質問に対し、grounded な候補がある場合だけ回答前に確認質問を返す。 |
-| 2.7 チャットUI操作性 | [`FR-041`](02_チャットQA・根拠提示・回答不能制御/07_チャットUI操作性/REQ_FUNCTIONAL_041.md) | キーボードから質問送信を実行する。 |
-| 2.7 チャットUI操作性 | [`FR-042`](02_チャットQA・根拠提示・回答不能制御/07_チャットUI操作性/REQ_FUNCTIONAL_042.md) | 回答本文を対象としてコピーする。 |
+| 2.7 チャットUI操作性 | [`FR-042`](02_チャットQA・根拠提示・回答不能制御/07_チャットUI操作性/REQ_FUNCTIONAL_042.md) | キーボードから質問送信を実行する。 |
+| 2.7 チャットUI操作性 | [`FR-043`](02_チャットQA・根拠提示・回答不能制御/07_チャットUI操作性/REQ_FUNCTIONAL_043.md) | 回答本文を対象としてコピーする。 |
 
 ### 3. RAG検索品質制御
 
@@ -94,7 +96,7 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 3.3 検索結果統合 | [`FR-018`](03_RAG検索品質制御/03_検索結果統合/REQ_FUNCTIONAL_018.md) | 複数 query / clue の検索結果を順位融合で統合する。 |
 | 3.4 検索結果評価 | [`FR-016`](03_RAG検索品質制御/04_検索結果評価/REQ_FUNCTIONAL_016.md) | 検索結果品質を評価し、追加検索または拒否判断を選ぶ。 |
 | 3.5 検索alias管理 | [`FR-023`](03_RAG検索品質制御/05_検索alias管理/REQ_FUNCTIONAL_023.md) | tenant / source / docType / ACL scope を持つ versioned alias artifact を管理する。 |
-| 3.6 retrieval adoption gate | [`FR-044`](03_RAG検索品質制御/06_retrieval_adoption_gate/REQ_FUNCTIONAL_044.md) | 採用基準を満たす検索根拠だけを回答生成へ渡す。 |
+| 3.6 retrieval adoption gate | [`FR-045`](03_RAG検索品質制御/06_retrieval_adoption_gate/REQ_FUNCTIONAL_045.md) | 採用基準を満たす検索根拠だけを回答生成へ渡す。 |
 
 ### 4. 回答検証・ガードレール
 
@@ -110,7 +112,7 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 5.1 会話履歴管理 | [`FR-022`](05_会話履歴・お気に入り/01_会話履歴管理/REQ_FUNCTIONAL_022.md) | 自分の会話履歴を保存、再表示、削除し、schemaVersion を管理する。 |
 | 5.2 お気に入り管理 | [`FR-028`](05_会話履歴・お気に入り/02_お気に入り管理/REQ_FUNCTIONAL_028.md) | 会話履歴のお気に入り登録、優先表示、抽出表示を行う。 |
 | 5.3 会話履歴検索 | [`FR-030`](05_会話履歴・お気に入り/03_会話履歴検索/REQ_FUNCTIONAL_030.md) | 取得済みの自分の会話履歴を表記ゆれや軽い typo を吸収して検索する。 |
-| 5.4 履歴表示順 | [`FR-043`](05_会話履歴・お気に入り/04_履歴表示順/REQ_FUNCTIONAL_043.md) | 同一時刻の履歴 item を安定した順序で表示する。 |
+| 5.4 履歴表示順 | [`FR-044`](05_会話履歴・お気に入り/04_履歴表示順/REQ_FUNCTIONAL_044.md) | 同一時刻の履歴 item を安定した順序で表示する。 |
 
 ### 6. 問い合わせ・人手対応
 
@@ -136,9 +138,9 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 7.5 benchmark 指標 | [`FR-019`](07_評価・debug・benchmark/05_benchmark指標/REQ_FUNCTIONAL_019.md) | fact coverage、faithfulness、context relevance、不回答精度を評価する。 |
 | 7.6 benchmark corpus seed | [`FR-039`](07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_039.md) | 評価前に corpus を取り込み、抽出不能や OCR timeout を分類する。 |
 | 7.7 benchmark corpus 隔離 | [`FR-040`](07_評価・debug・benchmark/07_benchmark_corpus隔離/REQ_FUNCTIONAL_040.md) | benchmark corpus と通常文書を混在させず scope を強制する。 |
-| 7.8 debug trace artifact | [`FR-045`](07_評価・debug・benchmark/08_debug_trace_artifact/REQ_FUNCTIONAL_045.md) | 管理者が debug trace を時系列 artifact として取得する。 |
-| 7.9 dataset adapter | [`FR-046`](07_評価・debug・benchmark/09_dataset_adapter/REQ_FUNCTIONAL_046.md) | dataset ごとの入力を共通評価形式へ正規化する。 |
-| 7.10 benchmark 実行追跡 | [`FR-047`](07_評価・debug・benchmark/10_benchmark実行追跡/REQ_FUNCTIONAL_047.md) | benchmark run の進捗と成果物生成状態を確認する。 |
+| 7.8 debug trace artifact | [`FR-046`](07_評価・debug・benchmark/08_debug_trace_artifact/REQ_FUNCTIONAL_046.md) | 管理者が debug trace を時系列 artifact として取得する。 |
+| 7.9 dataset adapter | [`FR-047`](07_評価・debug・benchmark/09_dataset_adapter/REQ_FUNCTIONAL_047.md) | dataset ごとの入力を共通評価形式へ正規化する。 |
+| 7.10 benchmark 実行追跡 | [`FR-048`](07_評価・debug・benchmark/10_benchmark実行追跡/REQ_FUNCTIONAL_048.md) | benchmark run の進捗と成果物生成状態を確認する。 |
 
 ### 8. 認証・認可・管理・監査
 
@@ -168,9 +170,10 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | [`FR-038`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_038.md) | 1. 文書・知識ベース管理 | 7. 評価・debug・benchmark |
 | [`FR-039`](07_評価・debug・benchmark/06_benchmark_corpus_seed/REQ_FUNCTIONAL_039.md) | 7. 評価・debug・benchmark | 1. 文書・知識ベース管理 |
 | [`FR-040`](07_評価・debug・benchmark/07_benchmark_corpus隔離/REQ_FUNCTIONAL_040.md) | 7. 評価・debug・benchmark | 3. RAG検索品質制御、8. 認証・認可・管理・監査 |
-| [`FR-044`](03_RAG検索品質制御/06_retrieval_adoption_gate/REQ_FUNCTIONAL_044.md) | 3. RAG検索品質制御 | 4. 回答検証・ガードレール、7. 評価・debug・benchmark |
-| [`FR-045`](07_評価・debug・benchmark/08_debug_trace_artifact/REQ_FUNCTIONAL_045.md) | 7. 評価・debug・benchmark | 8. 認証・認可・管理・監査 |
-| [`FR-047`](07_評価・debug・benchmark/10_benchmark実行追跡/REQ_FUNCTIONAL_047.md) | 7. 評価・debug・benchmark | 運用 |
+| [`FR-041`](01_文書・知識ベース管理/07_スコープ付き資料グループ管理/REQ_FUNCTIONAL_041.md) | 1. 文書・知識ベース管理 | 2. チャットQA・根拠提示・回答不能制御、3. RAG検索品質制御、8. 認証・認可・管理・監査 |
+| [`FR-045`](03_RAG検索品質制御/06_retrieval_adoption_gate/REQ_FUNCTIONAL_045.md) | 3. RAG検索品質制御 | 4. 回答検証・ガードレール、7. 評価・debug・benchmark |
+| [`FR-046`](07_評価・debug・benchmark/08_debug_trace_artifact/REQ_FUNCTIONAL_046.md) | 7. 評価・debug・benchmark | 8. 認証・認可・管理・監査 |
+| [`FR-048`](07_評価・debug・benchmark/10_benchmark実行追跡/REQ_FUNCTIONAL_048.md) | 7. 評価・debug・benchmark | 運用 |
 
 ## 網羅性チェック
 

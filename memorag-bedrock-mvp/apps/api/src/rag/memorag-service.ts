@@ -8,7 +8,7 @@ import type { Dependencies } from "../dependencies.js"
 import { runQaAgent } from "../agent/graph.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
 import type { ChatInput, QaGraphResult } from "../agent/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -44,7 +44,7 @@ type IngestInput = {
 type StartDocumentIngestRunInput = {
   uploadId: string
   objectKey: string
-  purpose: "document" | "benchmarkSeed"
+  purpose: "document" | "benchmarkSeed" | "chatAttachment"
   fileName: string
   mimeType?: string
   metadata?: Record<string, JsonValue>
@@ -110,8 +110,14 @@ type AliasLedger = {
   auditLog: AliasAuditLogItem[]
 }
 
+type DocumentGroupLedger = {
+  schemaVersion: 1
+  groups: DocumentGroup[]
+}
+
 const adminLedgerKey = "admin/admin-ledger.json"
 const aliasLedgerKey = "admin/alias-ledger.json"
+const documentGroupLedgerKey = "document-groups/groups.json"
 const reindexMigrationLedgerKey = "admin/reindex-migrations.json"
 const pricingCatalogUpdatedAt = "2026-05-02T00:00:00.000Z"
 
@@ -456,10 +462,83 @@ export class MemoRagService {
         .filter((key) => key.endsWith(".json"))
         .map(async (key) => JSON.parse(await this.deps.objectStore.getText(key)) as DocumentManifest)
     )
+    const documentGroups = user ? (await this.loadDocumentGroupLedger()).groups : []
     return manifests
       .filter((manifest) => (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active")
-      .filter((manifest) => !user || canAccessManifest(manifest, user))
+      .filter((manifest) => stringValue(manifest.metadata?.scopeType) !== "chat")
+      .filter((manifest) => !user || canAccessManifest(manifest, user, documentGroups))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
+    const ledger = await this.loadDocumentGroupLedger()
+    return ledger.groups
+      .filter((group) => canAccessDocumentGroup(group, user))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  async createDocumentGroup(actor: AppUser, input: {
+    name: string
+    description?: string
+    visibility?: DocumentGroup["visibility"]
+    sharedUserIds?: string[]
+    sharedGroups?: string[]
+    managerUserIds?: string[]
+  }): Promise<DocumentGroup> {
+    const ledger = await this.loadDocumentGroupLedger()
+    const now = new Date().toISOString()
+    const group: DocumentGroup = {
+      groupId: `docgrp_${randomUUID().slice(0, 12)}`,
+      name: input.name.trim(),
+      description: input.description?.trim() || undefined,
+      ownerUserId: actor.userId,
+      visibility: input.visibility ?? "private",
+      sharedUserIds: uniqueStrings(input.sharedUserIds ?? []),
+      sharedGroups: uniqueStrings(input.sharedGroups ?? []),
+      managerUserIds: uniqueStrings([actor.userId, ...(input.managerUserIds ?? [])]),
+      createdAt: now,
+      updatedAt: now
+    }
+    ledger.groups.push(group)
+    await this.saveDocumentGroupLedger(ledger)
+    return group
+  }
+
+  async updateDocumentGroupSharing(actor: AppUser, groupId: string, input: {
+    visibility?: DocumentGroup["visibility"]
+    sharedUserIds?: string[]
+    sharedGroups?: string[]
+    managerUserIds?: string[]
+  }): Promise<DocumentGroup | undefined> {
+    const ledger = await this.loadDocumentGroupLedger()
+    const group = ledger.groups.find((candidate) => candidate.groupId === groupId)
+    if (!group) return undefined
+    if (!canManageDocumentGroup(group, actor)) throw forbiddenError("Forbidden: only group managers can update sharing")
+    if (input.visibility !== undefined) group.visibility = input.visibility
+    if (input.sharedUserIds !== undefined) group.sharedUserIds = uniqueStrings(input.sharedUserIds)
+    if (input.sharedGroups !== undefined) group.sharedGroups = uniqueStrings(input.sharedGroups)
+    if (input.managerUserIds !== undefined) group.managerUserIds = uniqueStrings([group.ownerUserId, ...input.managerUserIds])
+    group.updatedAt = new Date().toISOString()
+    await this.saveDocumentGroupLedger(ledger)
+    return group
+  }
+
+  async assertDocumentGroupsWritable(actor: AppUser, groupIds: string[]): Promise<void> {
+    if (groupIds.length === 0) return
+    const ledger = await this.loadDocumentGroupLedger()
+    for (const groupId of groupIds) {
+      const group = ledger.groups.find((candidate) => candidate.groupId === groupId)
+      if (!group || !canManageDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot write document group ${groupId}`)
+    }
+  }
+
+  async assertSearchScopeReadable(actor: AppUser, scope: ChatInput["searchScope"]): Promise<void> {
+    if (!scope?.groupIds?.length) return
+    const ledger = await this.loadDocumentGroupLedger()
+    for (const groupId of scope.groupIds) {
+      const group = ledger.groups.find((candidate) => candidate.groupId === groupId)
+      if (!group || !canAccessDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot read document group ${groupId}`)
+    }
   }
 
   async deleteDocument(documentId: string): Promise<{ documentId: string; deletedVectorCount: number }> {
@@ -720,10 +799,12 @@ export class MemoRagService {
   }
 
   async chat(input: ChatInput, user?: AppUser): Promise<QaGraphResult> {
+    if (user) await this.assertSearchScopeReadable(user, input.searchScope)
     return runQaAgent(this.deps, input, user)
   }
 
   async startChatRun(input: ChatInput, user: AppUser): Promise<{ runId: string; status: ChatRun["status"]; eventsPath: string }> {
+    await this.assertSearchScopeReadable(user, input.searchScope)
     const now = new Date().toISOString()
     const runId = createChatRunId(now)
     const ttl = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
@@ -744,6 +825,7 @@ export class MemoRagService {
       strictGrounded: input.strictGrounded,
       useMemory: input.useMemory,
       maxIterations: normalizeMaxIterations(input.maxIterations),
+      searchScope: input.searchScope,
       includeDebug: input.includeDebug ?? input.debug ?? false,
       createdAt: now,
       updatedAt: now,
@@ -805,6 +887,7 @@ export class MemoRagService {
           strictGrounded: run.strictGrounded,
           useMemory: run.useMemory,
           maxIterations: run.maxIterations,
+          searchScope: run.searchScope,
           includeDebug: run.includeDebug
         },
         { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["CHAT_USER"] },
@@ -1036,6 +1119,7 @@ export class MemoRagService {
   }
 
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
+    await this.assertSearchScopeReadable(user, input.scope)
     return searchRag(this.deps, input, user)
   }
 
@@ -1178,6 +1262,23 @@ export class MemoRagService {
 
   private async saveAliasLedger(ledger: AliasLedger): Promise<void> {
     await this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")
+  }
+
+  private async loadDocumentGroupLedger(): Promise<DocumentGroupLedger> {
+    try {
+      const raw = JSON.parse(await this.deps.objectStore.getText(documentGroupLedgerKey)) as DocumentGroupLedger
+      return {
+        schemaVersion: 1,
+        groups: Array.isArray(raw.groups) ? raw.groups.map(normalizeDocumentGroup) : []
+      }
+    } catch (err) {
+      if (!isMissingObjectError(err)) throw err
+      return { schemaVersion: 1, groups: [] }
+    }
+  }
+
+  private async saveDocumentGroupLedger(ledger: DocumentGroupLedger): Promise<void> {
+    await this.deps.objectStore.putText(documentGroupLedgerKey, JSON.stringify({ schemaVersion: 1, groups: ledger.groups }, null, 2), "application/json")
   }
 
   private async loadReindexMigrationLedger(): Promise<ReindexMigration[]> {
@@ -1836,12 +1937,17 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (!metadata) return {}
   const aclGroups = stringArray(metadata.aclGroups ?? metadata.allowedGroups) ?? []
   const allowedUsers = stringArray(metadata.allowedUsers ?? metadata.userIds)
+  const groupIds = stringArray(metadata.groupIds ?? metadata.groupId) ?? []
   const filterable: Partial<VectorRecord["metadata"]> = {}
   const tenantId = stringValue(metadata.tenantId)
   const department = stringValue(metadata.department)
   const source = stringValue(metadata.source)
   const docType = stringValue(metadata.docType)
   const benchmarkSuiteId = stringValue(metadata.benchmarkSuiteId)
+  const scopeType = stringValue(metadata.scopeType)
+  const ownerUserId = stringValue(metadata.ownerUserId)
+  const temporaryScopeId = stringValue(metadata.temporaryScopeId)
+  const expiresAt = stringValue(metadata.expiresAt)
   const domainPolicy = stringValue(metadata.domainPolicy)
   const ragPolicy = stringValue(metadata.ragPolicy)
   const answerPolicy = stringValue(metadata.answerPolicy)
@@ -1851,6 +1957,12 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (source) filterable.source = source
   if (docType) filterable.docType = docType
   if (benchmarkSuiteId) filterable.benchmarkSuiteId = benchmarkSuiteId
+  if (scopeType === "personal" || scopeType === "group" || scopeType === "chat" || scopeType === "benchmark") filterable.scopeType = scopeType
+  if (groupIds[0]) filterable.groupId = groupIds[0]
+  if (groupIds.length > 0) filterable.groupIds = groupIds
+  if (ownerUserId) filterable.ownerUserId = ownerUserId
+  if (temporaryScopeId) filterable.temporaryScopeId = temporaryScopeId
+  if (expiresAt) filterable.expiresAt = expiresAt
   if (domainPolicy) filterable.domainPolicy = domainPolicy
   if (ragPolicy) filterable.ragPolicy = ragPolicy
   if (answerPolicy) filterable.answerPolicy = answerPolicy
@@ -1865,15 +1977,49 @@ function lifecycleStatus(metadata: Record<string, JsonValue> | undefined): Vecto
   return value === "staging" || value === "superseded" ? value : "active"
 }
 
-function canAccessManifest(manifest: DocumentManifest, user: AppUser): boolean {
+function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGroups: DocumentGroup[] = []): boolean {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
+  const groupIds = stringArray(metadata.groupIds ?? metadata.groupId) ?? []
+  if (groupIds.some((groupId) => canAccessDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user))) return true
   const groups = new Set(user.cognitoGroups)
   const aclGroups = stringArray(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group) ?? []
   if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   const allowedUsers = stringArray(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId) ?? []
   if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
   return true
+}
+
+function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
+  if (!group) return false
+  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
+  if (group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId) || group.sharedUserIds.includes(user.userId)) return true
+  if (user.email && group.sharedUserIds.includes(user.email)) return true
+  if (group.visibility === "org") return true
+  return group.sharedGroups.some((sharedGroup) => user.cognitoGroups.includes(sharedGroup))
+}
+
+function canManageDocumentGroup(group: DocumentGroup, user: AppUser): boolean {
+  return user.cognitoGroups.includes("SYSTEM_ADMIN") || group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId)
+}
+
+function normalizeDocumentGroup(group: DocumentGroup): DocumentGroup {
+  return {
+    ...group,
+    visibility: group.visibility ?? "private",
+    sharedUserIds: uniqueStrings(group.sharedUserIds ?? []),
+    sharedGroups: uniqueStrings(group.sharedGroups ?? []),
+    managerUserIds: uniqueStrings([group.ownerUserId, ...(group.managerUserIds ?? [])])
+  }
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort()
+}
+
+function forbiddenError(message: string): Error & { status: number } {
+  return Object.assign(new Error(message), { status: 403 })
 }
 
 function stringValue(value: JsonValue | undefined): string | undefined {

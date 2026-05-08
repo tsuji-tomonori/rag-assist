@@ -31,7 +31,8 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
           semanticTopK: ragRuntimePolicy.retrieval.semanticTopK,
           embeddingModelId: state.embeddingModelId,
           semanticVector: item.vector.length > 0 ? item.vector : undefined,
-          filters: state.searchFilters
+          filters: state.searchFilters,
+          scope: state.searchScope
         },
         user
       )

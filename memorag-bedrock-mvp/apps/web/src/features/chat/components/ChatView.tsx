@@ -1,6 +1,7 @@
 import type { FormEvent, RefObject } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { DebugTrace } from "../../debug/types.js"
+import type { DocumentGroup } from "../../documents/types.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import { DebugPanel } from "../../debug/components/DebugPanel.js"
 import type { Message } from "../types.js"
@@ -18,6 +19,8 @@ export function ChatView({
   canAsk,
   canWriteDocuments,
   file,
+  selectedGroupId,
+  documentGroups,
   conversationKey,
   submitShortcut,
   question,
@@ -48,6 +51,8 @@ export function ChatView({
   canAsk: boolean
   canWriteDocuments: boolean
   file: File | null
+  selectedGroupId: string
+  documentGroups: DocumentGroup[]
   conversationKey: number
   submitShortcut: "enter" | "ctrlEnter"
   question: string
@@ -91,6 +96,8 @@ export function ChatView({
           question={question}
           submitShortcut={submitShortcut}
           file={file}
+          selectedGroupId={selectedGroupId}
+          documentGroups={documentGroups}
           canWriteDocuments={canWriteDocuments}
           conversationKey={conversationKey}
           canAsk={canAsk}

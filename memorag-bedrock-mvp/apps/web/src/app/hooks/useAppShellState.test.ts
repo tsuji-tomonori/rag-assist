@@ -7,10 +7,15 @@ import { useAppShellState } from "./useAppShellState.js"
 const currentUserMock = vi.hoisted(() => ({ useCurrentUser: vi.fn() }))
 const documentsMock = vi.hoisted(() => ({
   refreshDocuments: vi.fn(),
+  refreshDocumentGroups: vi.fn(),
   refreshReindexMigrations: vi.fn(),
   setFile: vi.fn(),
   setSelectedDocumentId: vi.fn(),
+  setSelectedGroupId: vi.fn(),
+  setUploadGroupId: vi.fn(),
   onUploadDocumentFile: vi.fn(),
+  onCreateDocumentGroup: vi.fn(),
+  onShareDocumentGroup: vi.fn(),
   onDelete: vi.fn(),
   onStageReindex: vi.fn(),
   onCutoverReindex: vi.fn(),
@@ -84,8 +89,11 @@ vi.mock("./useCurrentUser.js", () => currentUserMock)
 vi.mock("../../features/documents/hooks/useDocuments.js", () => ({
   useDocuments: vi.fn(() => ({
     documents: [{ documentId: "doc-1", fileName: "handbook.md", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }],
+    documentGroups: [],
     reindexMigrations: [],
     selectedDocumentId: "doc-1",
+    selectedGroupId: "all",
+    uploadGroupId: "personal",
     file: { name: "upload.txt" },
     ...documentsMock
   }))
@@ -169,6 +177,8 @@ const allPermissions: Permission[] = [
   "rag:doc:write:group",
   "rag:doc:delete:group",
   "rag:index:rebuild:group",
+  "rag:group:create",
+  "rag:group:assign_manager",
   "rag:alias:read",
   "rag:alias:write:group",
   "rag:alias:review:group",
@@ -202,6 +212,7 @@ describe("useAppShellState", () => {
     })
     for (const fn of [
       documentsMock.refreshDocuments,
+      documentsMock.refreshDocumentGroups,
       documentsMock.refreshReindexMigrations,
       benchmarkMock.refreshBenchmarkRuns,
       benchmarkMock.refreshBenchmarkSuites,

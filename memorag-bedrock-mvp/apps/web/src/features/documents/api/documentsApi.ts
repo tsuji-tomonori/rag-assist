@@ -1,5 +1,5 @@
 import { createHeaders, del, get, post } from "../../../shared/api/http.js"
-import type { DocumentManifest, ReindexMigration } from "../types.js"
+import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 
 export async function uploadDocument(input: {
   fileName: string
@@ -9,6 +9,12 @@ export async function uploadDocument(input: {
   mimeType?: string
   memoryModelId?: string
   embeddingModelId?: string
+  scope?: {
+    scopeType?: "personal" | "group" | "chat" | "benchmark"
+    groupIds?: string[]
+    temporaryScopeId?: string
+    expiresAt?: string
+  }
 }): Promise<DocumentManifest> {
   return post<DocumentManifest>("/documents", input)
 }
@@ -34,7 +40,7 @@ type DocumentIngestRun = {
 export async function createDocumentUpload(input: {
   fileName: string
   mimeType?: string
-  purpose?: "document" | "benchmarkSeed"
+  purpose?: "document" | "benchmarkSeed" | "chatAttachment"
 }): Promise<UploadSession> {
   return post<UploadSession>("/documents/uploads", input)
 }
@@ -44,6 +50,12 @@ export async function ingestUploadedDocument(uploadId: string, input: {
   mimeType?: string
   memoryModelId?: string
   embeddingModelId?: string
+  scope?: {
+    scopeType?: "personal" | "group" | "chat" | "benchmark"
+    groupIds?: string[]
+    temporaryScopeId?: string
+    expiresAt?: string
+  }
 }): Promise<DocumentManifest> {
   return post<DocumentManifest>(`/documents/uploads/${encodeURIComponent(uploadId)}/ingest`, input)
 }
@@ -54,6 +66,12 @@ export async function startDocumentIngestRun(input: {
   mimeType?: string
   memoryModelId?: string
   embeddingModelId?: string
+  scope?: {
+    scopeType?: "personal" | "group" | "chat" | "benchmark"
+    groupIds?: string[]
+    temporaryScopeId?: string
+    expiresAt?: string
+  }
 }): Promise<DocumentIngestRun> {
   return post<DocumentIngestRun>("/document-ingest-runs", input)
 }
@@ -66,12 +84,19 @@ export async function uploadDocumentFile(input: {
   file: File
   memoryModelId?: string
   embeddingModelId?: string
+  purpose?: "document" | "chatAttachment"
+  scope?: {
+    scopeType?: "personal" | "group" | "chat"
+    groupIds?: string[]
+    temporaryScopeId?: string
+    expiresAt?: string
+  }
 }): Promise<DocumentManifest> {
   const mimeType = input.file.type || undefined
   const upload = await createDocumentUpload({
     fileName: input.file.name,
     mimeType,
-    purpose: "document"
+    purpose: input.purpose ?? "document"
   })
   const uploadHeaders = {
     ...upload.headers,
@@ -88,7 +113,8 @@ export async function uploadDocumentFile(input: {
     fileName: input.file.name,
     mimeType,
     memoryModelId: input.memoryModelId,
-    embeddingModelId: input.embeddingModelId
+    embeddingModelId: input.embeddingModelId,
+    scope: input.scope
   })
   return waitForDocumentIngestRun(run)
 }
@@ -112,6 +138,31 @@ function sleep(ms: number): Promise<void> {
 export async function listDocuments(): Promise<DocumentManifest[]> {
   const result = await get<{ documents: DocumentManifest[] }>("/documents")
   return result.documents
+}
+
+export async function listDocumentGroups(): Promise<DocumentGroup[]> {
+  const result = await get<{ groups: DocumentGroup[] }>("/document-groups")
+  return result.groups
+}
+
+export async function createDocumentGroup(input: {
+  name: string
+  description?: string
+  visibility?: "private" | "shared" | "org"
+  sharedUserIds?: string[]
+  sharedGroups?: string[]
+  managerUserIds?: string[]
+}): Promise<DocumentGroup> {
+  return post<DocumentGroup>("/document-groups", input)
+}
+
+export async function shareDocumentGroup(groupId: string, input: {
+  visibility?: "private" | "shared" | "org"
+  sharedUserIds?: string[]
+  sharedGroups?: string[]
+  managerUserIds?: string[]
+}): Promise<DocumentGroup> {
+  return post<DocumentGroup>(`/document-groups/${encodeURIComponent(groupId)}/share`, input)
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {

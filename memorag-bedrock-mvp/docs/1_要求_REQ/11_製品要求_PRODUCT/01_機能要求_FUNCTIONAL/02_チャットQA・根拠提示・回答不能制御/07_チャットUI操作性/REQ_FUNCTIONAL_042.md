@@ -15,25 +15,25 @@
 
 ## 要件
 
-- FR-042: チャット画面は、利用者が回答本文を対象としてコピーできること。
+- FR-042: チャット画面は、利用者がキーボードから質問送信を実行できること。
 
 ## 受け入れ条件（この要件専用）
 
-- AC-FR042-001: 回答本文の copy 操作は、対象回答の本文だけを clipboard へ渡すこと。
-- AC-FR042-002: copy 操作は、debug trace、内部 metadata、未表示の retrieved full text を clipboard に含めないこと。
-- AC-FR042-003: copy 成功または失敗の feedback は、対象回答に紐づく状態として表示されること。
-- AC-FR042-004: 回答不能結果の copy 操作は、回答不能理由または表示済み説明だけを対象にすること。
+- AC-FR042-001: 質問入力欄に focus がある状態で送信ショートカットを実行すると、現在の入力内容で質問送信が開始されること。
+- AC-FR042-002: 入力欄が空または空白のみの場合、送信ショートカットで chat run が作成されないこと。
+- AC-FR042-003: 送信中または streaming 中に同じ入力内容が二重送信されないこと。
+- AC-FR042-004: 送信ショートカットの有効/無効状態は、画面上の送信操作と同じ validation に従うこと。
 
 ## 要件の源泉・背景
 
 - 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-UI-001`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-UI-001`
-- 背景: 復元仕様では copy が対象テキストのみを扱い、不要な feedback action を出さないことが確認されている。
+- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-UI-001`
+- 背景: 復元仕様では chat UI の主要操作として send shortcut が確認されている。
 
 ## 要件の目的・意図
 
-- 目的: 利用者が回答を外部へ転記するとき、表示済みの回答本文だけを安全にコピーできるようにする。
-- 意図: copy 操作に内部情報や debug 情報が混入しない境界を要件として固定する。
+- 目的: チャット質問の入力から送信までを、マウス操作に依存せず実行できるようにする。
+- 意図: UI 操作性の要求を「主要操作全般」ではなく、送信ショートカットという検証可能な単位で管理する。
 - 区分: 機能要求。
 
 ## 要求属性
@@ -41,12 +41,12 @@
 | 属性 | 記入内容 |
 |---|---|
 | 識別子 | `FR-042` |
-| 説明 | チャット回答本文の copy 操作 |
-| 根拠 | UI copy は回答本文を扱うが内部情報を含めてはならない |
+| 説明 | チャット画面のキーボード送信 |
+| 根拠 | chat UI の主要操作を keyboard/mouse で実行できる必要がある |
 | 源泉 | `REQ-UI-001`, `AC-UI-001`, `SPEC-UI-001` |
 | 種類 | 機能要求 |
-| 依存関係 | `FR-004`, `FR-005`, `NFR-010` |
-| 衝突 | 引用や debug 表示の併存時に copy 対象の境界を明確にする必要がある |
+| 依存関係 | `FR-003`, `FR-009` |
+| 衝突 | streaming 中の二重送信防止が必要 |
 | 受け入れ基準 | `AC-FR042-001` から `AC-FR042-004` |
 | 優先度 | B |
 | 安定性 | Medium |
@@ -55,5 +55,5 @@
 ## 関連文書
 
 - `memorag-bedrock-mvp/docs/REQUIREMENTS.md`
-- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/02_チャットQA・根拠提示・回答不能制御/02_根拠提示/REQ_FUNCTIONAL_004.md`
-- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/REQ_NON_FUNCTIONAL_010.md`
+- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/02_チャットQA・根拠提示・回答不能制御/01_質問入力・回答取得/REQ_FUNCTIONAL_003.md`
+- `memorag-bedrock-mvp/docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/02_チャットQA・根拠提示・回答不能制御/05_統合チャットUI/REQ_FUNCTIONAL_009.md`

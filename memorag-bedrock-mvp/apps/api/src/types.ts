@@ -4,6 +4,28 @@ export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue
 export type VectorKind = "chunk" | "memory"
 export type ChunkKind = "text" | "table" | "list" | "code" | "figure"
 export type DocumentLifecycleStatus = "active" | "staging" | "superseded"
+export type DocumentScopeType = "personal" | "group" | "chat" | "benchmark"
+
+export type SearchScope = {
+  mode?: "all" | "groups" | "documents" | "temporary"
+  groupIds?: string[]
+  documentIds?: string[]
+  includeTemporary?: boolean
+  temporaryScopeId?: string
+}
+
+export type DocumentGroup = {
+  groupId: string
+  name: string
+  description?: string
+  ownerUserId: string
+  visibility: "private" | "shared" | "org"
+  sharedUserIds: string[]
+  sharedGroups: string[]
+  managerUserIds: string[]
+  createdAt: string
+  updatedAt: string
+}
 
 export type PipelineVersions = {
   agentWorkflowVersion: string
@@ -58,6 +80,12 @@ export type VectorMetadata = {
   source?: string
   docType?: string
   benchmarkSuiteId?: string
+  scopeType?: DocumentScopeType
+  groupId?: string
+  groupIds?: string[]
+  ownerUserId?: string
+  temporaryScopeId?: string
+  expiresAt?: string
   domainPolicy?: string
   ragPolicy?: string
   answerPolicy?: string
@@ -314,6 +342,7 @@ export type ChatRun = {
   strictGrounded?: boolean
   useMemory?: boolean
   maxIterations?: number
+  searchScope?: SearchScope
   includeDebug?: boolean
   responseType?: "answer" | "refusal" | "clarification"
   answer?: string
@@ -354,7 +383,7 @@ export type DocumentIngestRun = {
   userGroups?: string[]
   uploadId: string
   objectKey: string
-  purpose: "document" | "benchmarkSeed"
+  purpose: "document" | "benchmarkSeed" | "chatAttachment"
   fileName: string
   mimeType?: string
   metadata?: Record<string, JsonValue>
