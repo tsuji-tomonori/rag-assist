@@ -71,3 +71,11 @@
 総合fit: 4.6 / 5.0（約92%）
 
 理由: 主要な要件である画面・機能・コンポーネント・UI 操作要素の自動生成、CI 最新性チェック、日本語 Markdown 生成は満たした。静的解析のみでは実行時条件を完全に断定できないため、その限界を `certainty` とレポートで明示した。
+
+## 9. PR・GitHub 操作
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/198
+- PR 作成: GitHub Apps に PR 作成 tool がなかったため、`gh pr create` を使用。
+- PR コメント: GitHub Apps で受け入れ条件確認コメントとセルフレビューコメントを投稿。
+- 追加 task 完了 commit 後、PR 更新時セルフレビューコメントを投稿。
+- CI: `validate-semver-label` pass、`Lint, type-check, test, build, and synth` pass。
