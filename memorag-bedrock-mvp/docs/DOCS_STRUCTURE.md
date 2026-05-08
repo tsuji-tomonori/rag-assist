@@ -35,12 +35,30 @@ memorag-bedrock-mvp/docs/
         02_チャットQA・根拠提示・回答不能制御/
           01_質問入力・回答取得/
             REQ_FUNCTIONAL_003.md
+          07_チャットUI操作性/
+            REQ_FUNCTIONAL_041.md
+            REQ_FUNCTIONAL_042.md
+        03_RAG検索品質制御/
+          06_retrieval_adoption_gate/
+            REQ_FUNCTIONAL_044.md
+        05_会話履歴・お気に入り/
+          04_履歴表示順/
+            REQ_FUNCTIONAL_043.md
+        07_評価・debug・benchmark/
+          08_debug_trace_artifact/
+            REQ_FUNCTIONAL_045.md
+          09_dataset_adapter/
+            REQ_FUNCTIONAL_046.md
+          10_benchmark実行追跡/
+            REQ_FUNCTIONAL_047.md
       11_非機能要求_NON_FUNCTIONAL/
         REQ_NON_FUNCTIONAL_001.md
+        REQ_NON_FUNCTIONAL_014.md
         01_技術制約_TECHNICAL_CONSTRAINT/
           REQ_TECHNICAL_CONSTRAINT_001.md
         11_サービス品質制約_SERVICE_QUALITY/
           REQ_SERVICE_QUALITY_001.md
+          REQ_SERVICE_QUALITY_003.md
     21_受入基準_ACCEPTANCE/
       REQ_ACCEPTANCE_001.md
     31_変更管理_CHANGE/
