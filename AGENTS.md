@@ -78,6 +78,14 @@
 - ドキュメント更新が必要なら同じ作業範囲で更新する。不要なら最終回答または作業レポートで理由を簡潔に示す。
 - `memorag-bedrock-mvp/docs` を更新する場合は下記 Docs Update Policy を優先する。
 
+## No Mock Product UI
+- 対象: 本番 UI、API レスポンス整形、hooks、stores、ユーザー可視の画面・管理画面・操作部品の実装またはレビュー。
+- 必読: `skills/no-mock-product-ui/SKILL.md`
+- 本番経路では、固定フォルダ、固定件数、固定容量、固定日付、架空ユーザー、架空グループ、demo fallback、未実装操作を実データのように表示しない。
+- 表示値は props、API レスポンス、永続化状態、設定、または明示的な empty/loading/error/permission state に由来させる。
+- テスト fixture、Storybook、visual regression mock、ローカル開発 seed は、本番コンポーネントの fallback と分離されている場合のみ許容する。
+- API や実データが存在しない値は、架空値で埋めず「未設定」「利用不可」などの正直な状態にする。推定値を表示する場合は、推定であることと根拠を UI または PR 本文に明記する。
+
 ## Specification Recovery Skills
 - 対象: 作業レポート、チケット、PR、既存テスト、既存仕様から、要件・仕様・受け入れ条件・E2Eシナリオ・トレーサビリティ・欠落分析を作成または更新する作業。
 - 必読: `skills/rag-assist-spec-completion-orchestrator/SKILL.md`

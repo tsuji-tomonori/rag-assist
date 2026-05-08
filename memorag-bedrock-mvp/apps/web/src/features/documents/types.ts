@@ -1,6 +1,7 @@
 export type DocumentManifest = {
   documentId: string
   fileName: string
+  mimeType?: string
   metadata?: Record<string, unknown>
   chunkCount: number
   memoryCardCount: number

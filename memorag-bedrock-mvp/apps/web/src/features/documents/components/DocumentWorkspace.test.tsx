@@ -10,7 +10,7 @@ const documents = [
 
 const typedDocuments = [
   { documentId: "doc-tex", fileName: "requirements.tex", chunkCount: 30, memoryCardCount: 20, createdAt: "2026-05-02T00:00:00.000Z" },
-  { documentId: "doc-pdf", fileName: "security_policy.pdf", chunkCount: 18, memoryCardCount: 3, createdAt: "2026-05-03T00:00:00.000Z" },
+  { documentId: "doc-pdf", fileName: "security_policy.bin", mimeType: "application/pdf", chunkCount: 18, memoryCardCount: 3, createdAt: "2026-05-03T00:00:00.000Z" },
   { documentId: "doc-word", fileName: "onboarding.docx", chunkCount: 7, memoryCardCount: 2, createdAt: "2026-05-04T00:00:00.000Z" },
   { documentId: "doc-ppt", fileName: "architecture.pptx", chunkCount: 12, memoryCardCount: 4, createdAt: "2026-05-05T00:00:00.000Z" },
   { documentId: "doc-csv", fileName: "inventory.csv", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-06T00:00:00.000Z" }
@@ -179,14 +179,14 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByRole("button", { name: "社内規定1" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /社内規定/ })).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "フォルダ情報 / 共有設定" })).toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByLabelText("保存先フォルダ"), "group-1")
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
 
     await userEvent.type(screen.getByLabelText("新規フォルダ"), "個人メモ")
-    await userEvent.click(screen.getAllByRole("button", { name: "新規フォルダ" })[1]!)
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
     expect(onCreateGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
 
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
@@ -199,7 +199,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it("フォルダ未指定でも補助フォルダとファイル種別を表示し、未選択の再インデックスを通知する", async () => {
+  it("実データのファイル種別とメモリカード数を表示し、再インデックスを通知する", async () => {
     const onStageReindex = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -220,22 +220,20 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByRole("heading", { name: "社内規定 / 2025" })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "すべてのドキュメント" })).toBeInTheDocument()
     expect(screen.getByText("TeX")).toBeInTheDocument()
     expect(screen.getByText("PDF")).toBeInTheDocument()
     expect(screen.getByText("Word")).toBeInTheDocument()
     expect(screen.getByText("PowerPoint")).toBeInTheDocument()
     expect(screen.getByText("CSV")).toBeInTheDocument()
-    expect(screen.getByText("2.1 MB")).toBeInTheDocument()
+    expect(screen.getByText("20")).toBeInTheDocument()
 
-    await userEvent.click(screen.getByLabelText("inventory.csvを再インデックス対象にする"))
+    await userEvent.click(screen.getByTitle("inventory.csvの再インデックスをステージング"))
 
     expect(onStageReindex).toHaveBeenCalledWith("doc-csv")
   })
 
-  it("再インデックス対象のチェックを外した場合はステージングしない", async () => {
-    const onStageReindex = vi.fn().mockResolvedValue(undefined)
-
+  it("本番UI用の固定フォルダ、固定容量、架空共有先を表示しない", () => {
     render(
       <DocumentWorkspace
         documents={documents}
@@ -247,15 +245,19 @@ describe("DocumentWorkspace", () => {
         migrations={[]}
         onUpload={vi.fn()}
         onDelete={vi.fn()}
-        onStageReindex={onStageReindex}
+        onStageReindex={vi.fn()}
         onCutoverReindex={vi.fn()}
         onRollbackReindex={vi.fn()}
         onBack={vi.fn()}
       />
     )
 
-    await userEvent.click(screen.getByLabelText("requirements.mdを再インデックス対象にする"))
-
-    expect(onStageReindex).not.toHaveBeenCalled()
+    expect(screen.queryByText("2025")).not.toBeInTheDocument()
+    expect(screen.queryByText("ガイドライン")).not.toBeInTheDocument()
+    expect(screen.queryByText("12.8 / 550 GB")).not.toBeInTheDocument()
+    expect(screen.queryByText("管理部")).not.toBeInTheDocument()
+    expect(screen.queryByText("名前を変更")).not.toBeInTheDocument()
+    expect(screen.queryByText("移動")).not.toBeInTheDocument()
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
   })
 })
