@@ -21,6 +21,13 @@ export async function get<T>(requestPath: string): Promise<T> {
   return response.json() as Promise<T>
 }
 
+export async function getText(requestPath: string): Promise<string> {
+  const apiBaseUrl = await getApiBaseUrl()
+  const response = await fetch(`${apiBaseUrl}${requestPath}`, { headers: createHeaders() })
+  if (!response.ok) throw new Error(await response.text())
+  return response.text()
+}
+
 export async function post<T>(requestPath: string, body: unknown): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}${requestPath}`, {

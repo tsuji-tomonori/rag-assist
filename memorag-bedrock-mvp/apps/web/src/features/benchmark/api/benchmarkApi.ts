@@ -1,4 +1,4 @@
-import { get, post } from "../../../shared/api/http.js"
+import { get, getText, post } from "../../../shared/api/http.js"
 import type { DebugDownloadResponse } from "../../debug/types.js"
 import type { BenchmarkMode, BenchmarkRun, BenchmarkRunner, BenchmarkSuite } from "../types.js"
 
@@ -34,4 +34,8 @@ export async function cancelBenchmarkRun(runId: string): Promise<BenchmarkRun> {
 
 export async function createBenchmarkDownload(runId: string, artifact: BenchmarkDownloadArtifact = "report"): Promise<DebugDownloadResponse> {
   return post<DebugDownloadResponse>(`/benchmark-runs/${encodeURIComponent(runId)}/download`, { artifact })
+}
+
+export async function getBenchmarkCodeBuildLogs(runId: string): Promise<string> {
+  return getText(`/benchmark-runs/${encodeURIComponent(runId)}/logs`)
 }

@@ -1582,6 +1582,25 @@ export class MemoRagService {
     return { url, expiresInSeconds, objectKey }
   }
 
+  async getBenchmarkCodeBuildLogText(runId: string): Promise<{ text: string; fileName: string; contentDisposition: string } | undefined> {
+    const run = await this.deps.benchmarkRunStore.get(runId)
+    if (!run) return undefined
+
+    const text = await this.deps.codeBuildLogReader?.getText({
+      buildId: run.codeBuildBuildId,
+      logGroupName: run.codeBuildLogGroupName,
+      logStreamName: run.codeBuildLogStreamName
+    })
+    if (text === undefined) return undefined
+
+    const fileName = `benchmark-logs-${runId.replace(/[^a-zA-Z0-9._-]/g, "_")}.txt`
+    return {
+      text,
+      fileName,
+      contentDisposition: `attachment; filename="${fileName}"`
+    }
+  }
+
   private async startBenchmarkExecution(run: BenchmarkRun, outputPrefix: string): Promise<string> {
     const states = new SFNClient({ region: config.region })
     const response = await states.send(

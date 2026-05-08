@@ -809,6 +809,8 @@ export const BenchmarkRunSchema = z.object({
   executionArn: z.string().optional(),
   codeBuildBuildId: z.string().optional(),
   codeBuildLogUrl: z.string().url().optional(),
+  codeBuildLogGroupName: z.string().optional(),
+  codeBuildLogStreamName: z.string().optional(),
   modelId: z.string().optional(),
   embeddingModelId: z.string().optional(),
   topK: z.number().int().optional(),

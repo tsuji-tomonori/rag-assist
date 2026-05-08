@@ -318,6 +318,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   "POST /benchmark-runs/{runId}/download": {
     summary: "benchmark artifact ダウンロード URL を作成する",
     description: "指定した benchmark report / summary / results / logs の署名付き URL を作成します。"
+  },
+  "GET /benchmark-runs/{runId}/logs": {
+    summary: "CodeBuild ログをテキストで取得する",
+    description: "指定した benchmark run の CodeBuild ログ本文を text/plain の添付ファイルとして取得します。"
   }
 }
 

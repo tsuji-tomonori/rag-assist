@@ -97,7 +97,8 @@ const routePolicies: RoutePolicy[] = [
   { method: "get", path: "/benchmark-runs", permission: "benchmark:read" },
   { method: "get", path: "/benchmark-runs/{runId}", permission: "benchmark:read" },
   { method: "post", path: "/benchmark-runs/{runId}/cancel", permission: "benchmark:cancel" },
-  { method: "post", path: "/benchmark-runs/{runId}/download", permission: "benchmark:download" }
+  { method: "post", path: "/benchmark-runs/{runId}/download", permission: "benchmark:download" },
+  { method: "get", path: "/benchmark-runs/{runId}/logs", permission: "benchmark:download" }
 ]
 
 test("protected API paths keep auth middleware coverage", async () => {

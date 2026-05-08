@@ -252,7 +252,7 @@ function artifactKeyForRun(run: BenchmarkRun, artifact: (typeof benchmarkArtifac
   if (artifact === "report") return run.reportS3Key
   if (artifact === "summary") return run.summaryS3Key
   if (artifact === "results") return run.resultsS3Key
-  return run.codeBuildLogUrl
+  return run.codeBuildLogStreamName ?? run.codeBuildBuildId ?? run.codeBuildLogUrl
 }
 
 function canDownloadArtifact(run: BenchmarkRun, artifact: (typeof benchmarkArtifacts)[number]["kind"]): boolean {

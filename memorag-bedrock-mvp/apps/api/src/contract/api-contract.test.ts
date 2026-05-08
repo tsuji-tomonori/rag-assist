@@ -491,6 +491,9 @@ test("benchmark operators can use benchmark run administration without direct qu
       body: JSON.stringify({ artifact: "report" })
     })
     assert.equal(download.status, 403)
+
+    const logs = await fetch(`http://127.0.0.1:${port}/benchmark-runs/${run.runId}/logs`)
+    assert.equal(logs.status, 403)
   } finally {
     server.kill("SIGTERM")
   }
