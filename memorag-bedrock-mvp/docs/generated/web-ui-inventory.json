@@ -126,7 +126,7 @@
         "chat"
       ],
       "componentCount": 10,
-      "interactionCount": 44
+      "interactionCount": 45
     },
     {
       "feature": "debug",
@@ -142,7 +142,7 @@
         "documents"
       ],
       "componentCount": 1,
-      "interactionCount": 25
+      "interactionCount": 44
     },
     {
       "feature": "history",
@@ -627,24 +627,36 @@
         "DocumentWorkspace"
       ],
       "jsxUsages": [
+        "FileIcon",
         "Icon",
         "LoadingSpinner",
         "LoadingStatus",
         "article",
+        "aside",
         "button",
+        "dd",
+        "details",
         "div",
+        "dl",
+        "dt",
+        "footer",
         "form",
         "h2",
         "h3",
         "header",
         "input",
         "label",
+        "li",
+        "nav",
         "option",
+        "progress",
         "section",
         "select",
         "small",
         "span",
-        "strong"
+        "strong",
+        "summary",
+        "ul"
       ],
       "certainty": "confirmed"
     },
@@ -3070,9 +3082,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:80:a",
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:85:a",
       "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 80,
+      "line": 85,
       "feature": "chat",
       "component": "AssistantAnswer",
       "element": "a",
@@ -3087,9 +3099,35 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:89:button",
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:98:button",
       "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 89,
+      "line": 98,
+      "feature": "chat",
+      "component": "AssistantAnswer",
+      "element": "button",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onAdditionalQuestion(followup)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:106:button",
+      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
+      "line": 106,
       "feature": "chat",
       "component": "AssistantAnswer",
       "element": "button",
@@ -3121,9 +3159,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:110:button",
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:127:button",
       "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 110,
+      "line": 127,
       "feature": "chat",
       "component": "AssistantAnswer",
       "element": "button",
@@ -3151,9 +3189,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:120:button",
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:137:button",
       "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 120,
+      "line": 137,
       "feature": "chat",
       "component": "AssistantAnswer",
       "element": "button",
@@ -3177,9 +3215,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:131:QuestionEscalationPanel",
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:148:QuestionEscalationPanel",
       "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 131,
+      "line": 148,
       "feature": "chat",
       "component": "AssistantAnswer",
       "element": "QuestionEscalationPanel",
@@ -3194,9 +3232,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:134:QuestionAnswerPanel",
+      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:151:QuestionAnswerPanel",
       "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 134,
+      "line": 151,
       "feature": "chat",
       "component": "AssistantAnswer",
       "element": "QuestionAnswerPanel",
@@ -3266,9 +3304,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:71:label",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:70:label",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 71,
+      "line": 70,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "label",
@@ -3283,9 +3321,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:73:input",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:72:input",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 73,
+      "line": 72,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "input",
@@ -3309,9 +3347,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:76:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:92:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 76,
+      "line": 92,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",
@@ -4185,9 +4223,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:75:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:128:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 75,
+      "line": 128,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -4211,353 +4249,217 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:88:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:150:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 88,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "form",
-      "label": "保存先フォルダ / フォルダなし / アップロード",
-      "handlers": [
-        {
-          "name": "onSubmit",
-          "value": "onSubmit"
-        }
-      ],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:89:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 89,
+      "line": 150,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
-      "label": "保存先フォルダ / フォルダなし",
+      "label": "フォルダを検索",
       "handlers": [],
       "attributes": [],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:91:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:152:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 91,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "select",
-      "label": "uploadGroupId",
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => onUploadGroupChange(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "disabled",
-          "value": "!canWrite || loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:92:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 92,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "label": "フォルダなし",
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:94:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 94,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "label": "group.groupId",
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:98:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 98,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
-      "label": "未推定",
-      "handlers": [],
-      "attributes": [],
-      "certainty": "unknown"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:101:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 101,
+      "line": 152,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
-      "label": "未推定",
+      "label": "フォルダを検索",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "placeholder",
+          "value": "フォルダを検索"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:154:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 154,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "フォルダを絞り込み",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "フォルダを絞り込み"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:159:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 159,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "すべてのドキュメント",
       "handlers": [
         {
-          "name": "onChange",
-          "value": "(event) => setUploadFile(event.target.files?.[0] ?? null)"
+          "name": "onClick",
+          "value": "() => setSelectedFolderId(\"all\")"
         }
       ],
       "attributes": [
         {
           "name": "type",
-          "value": "file"
-        },
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:165:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 165,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "社内規定",
+      "handlers": [],
+      "attributes": [
         {
-          "name": "disabled",
-          "value": "!canWrite || loading"
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:172:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 172,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => { setSelectedFolderId(folder.id) if (folder.group) onUploadGroupChange(folder.group…"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
         }
       ],
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:103:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:202:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 103,
+      "line": 202,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
-      "label": "アップロード",
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "submit"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || !uploadFile || loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:112:form",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 112,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "form",
-      "label": "新規フォルダ / 作成",
-      "handlers": [
-        {
-          "name": "onSubmit",
-          "value": "onCreateGroupSubmit"
-        }
-      ],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:113:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 113,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
       "label": "新規フォルダ",
       "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:115:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 115,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "input",
-      "label": "社内規定",
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setGroupName(event.target.value)"
-        }
-      ],
       "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "新規フォルダ"
+        },
         {
           "name": "disabled",
           "value": "!canWrite || loading"
-        },
-        {
-          "name": "placeholder",
-          "value": "社内規定"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:117:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:205:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 117,
+      "line": 205,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
-      "label": "作成",
+      "label": "共有設定",
       "handlers": [],
       "attributes": [
         {
           "name": "type",
-          "value": "submit"
+          "value": "button"
         },
         {
-          "name": "disabled",
-          "value": "!canWrite || !groupName.trim() || loading"
+          "name": "title",
+          "value": "共有設定"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:119:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:228:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 119,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "form",
-      "label": "共有フォルダ / 選択してください / 共有 Cognito group / 共有更新",
-      "handlers": [
-        {
-          "name": "onSubmit",
-          "value": "onShareSubmit"
-        }
-      ],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:120:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 120,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
-      "label": "共有フォルダ / 選択してください",
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:122:select",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 122,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "select",
-      "label": "shareGroupId",
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setShareGroupId(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "disabled",
-          "value": "!canWrite || loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:123:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 123,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "label": "選択してください",
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:125:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 125,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "label": "group.groupId",
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:129:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 129,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
-      "label": "共有 Cognito group",
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:131:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 131,
+      "line": 228,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
-      "label": "CHAT_USER,RAG_GROUP_MANAGER",
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setShareGroups(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "disabled",
-          "value": "!canWrite || loading"
-        },
-        {
-          "name": "placeholder",
-          "value": "CHAT_USER,RAG_GROUP_MANAGER"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:133:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 133,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "label": "共有更新",
+      "label": "`${document.fileName}を選択`",
       "handlers": [],
       "attributes": [
         {
           "name": "type",
-          "value": "submit"
+          "value": "checkbox"
         },
         {
-          "name": "disabled",
-          "value": "!canWrite || !shareGroupId || loading"
+          "name": "aria-label",
+          "value": "`${document.fileName}を選択`"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:175:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:239:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 175,
+      "line": 239,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "input",
+      "label": "`${document.fileName}を再インデックス対象にする`",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => { if (event.target.checked) void onStageReindex(document.documentId) }"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "checkbox"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${document.fileName}を再インデックス対象にする`"
+        },
+        {
+          "name": "disabled",
+          "value": "!canReindex || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:250:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 250,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -4585,9 +4487,43 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:183:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:261:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 183,
+      "line": 261,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "名前を変更",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:265:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 265,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "移動",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:269:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 269,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -4615,9 +4551,92 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:217:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:290:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 217,
+      "line": 290,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "前のページ",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "前のページ"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:294:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 294,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "次のページ",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "次のページ"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:298:select",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 298,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "select",
+      "label": "表示件数",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "表示件数"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:299:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 299,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "20 件/ページ",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:300:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 300,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "50 件/ページ",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:310:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 310,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -4641,9 +4660,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:225:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:311:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 225,
+      "line": 311,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -4662,6 +4681,393 @@
         {
           "name": "disabled",
           "value": "loading || migration.status !== \"cutover\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:347:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 347,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "共有を編集",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:349:form",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 349,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "form",
+      "label": "共有フォルダ / 選択してください / 共有 Cognito group / 共有更新",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onShareSubmit"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:350:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 350,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "共有フォルダ / 選択してください",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:352:select",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 352,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "select",
+      "label": "shareGroupId || selectedGroupId",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setShareGroupId(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:353:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 353,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "選択してください",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:355:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 355,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "group.groupId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:359:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 359,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "共有 Cognito group",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:361:input",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 361,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "input",
+      "label": "CHAT_USER,RAG_GROUP",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setShareGroups(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        },
+        {
+          "name": "placeholder",
+          "value": "CHAT_USER,RAG_GROUP"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:363:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 363,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "共有更新",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || (!shareGroupId && !selectedGroupId) || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:378:form",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 378,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "form",
+      "label": "保存先フォルダ / フォルダなし / アップロード",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onSubmit"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:379:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 379,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "保存先フォルダ / フォルダなし",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:381:select",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 381,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "select",
+      "label": "uploadGroupId",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onUploadGroupChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:382:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 382,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "フォルダなし",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:384:option",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 384,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "option",
+      "label": "group.groupId",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:388:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 388,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "文書アップロード",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "文書アップロード"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:391:input",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 391,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "input",
+      "label": "未推定",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setUploadFile(event.target.files?.[0] ?? null)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "file"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:393:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 393,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "アップロード",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || !uploadFile || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:398:form",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 398,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "form",
+      "label": "新規フォルダ / 新規フォルダ",
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onCreateGroupSubmit"
+        }
+      ],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:399:label",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 399,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "label",
+      "label": "新規フォルダ",
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:401:input",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 401,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "input",
+      "label": "2026",
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setGroupName(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading"
+        },
+        {
+          "name": "placeholder",
+          "value": "2026"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:403:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 403,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "新規フォルダ",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || !groupName.trim() || loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:410:button",
+      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
+      "line": 410,
+      "feature": "documents",
+      "component": "DocumentWorkspace",
+      "element": "button",
+      "label": "すべて表示",
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
         }
       ],
       "certainty": "confirmed"

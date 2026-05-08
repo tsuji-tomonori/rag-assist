@@ -114,9 +114,9 @@ task docs:openapi:check
 - [Operations](docs/OPERATIONS.md): ローカル運用、環境変数、AWSデプロイ前チェック。
 - [Local Verification](docs/LOCAL_VERIFICATION.md): ローカル検証手順と確認観点。
 - [GitHub Actions Deploy](docs/GITHUB_ACTIONS_DEPLOY.md): OIDCを使ったGitHub ActionsからのCDK deploy手順。
-- `docs/generated/web-*.md`: Web UI の画面、機能、コンポーネント、主要操作要素の自動生成インベントリ。
+- [Web UI Inventory](docs/generated/web-overview.md): Web UI の画面、機能、コンポーネント、主要操作要素の自動生成インベントリ。機能別詳細は `docs/generated/web-features/*.md` に分割しています。
 
-Web UI インベントリは静的解析で生成します。更新は `npm run docs:web-inventory`、CI と同じ最新性確認は `npm run docs:web-inventory:check` を使います。条件付き表示、権限別表示、実行時データ依存の UI は生成物の `certainty` を確認してください。
+Web UI インベントリは静的解析で生成します。更新は `npm run docs:web-inventory`、CI と同じ最新性確認は `npm run docs:web-inventory:check` を使います。初めて読む場合は `docs/generated/web-overview.md` から画面、機能、コンポーネントの順に辿ってください。条件付き表示、権限別表示、実行時データ依存の UI は生成物の `certainty` を確認してください。
 
 ## ローカル起動
 

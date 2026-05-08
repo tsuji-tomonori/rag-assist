@@ -7,7 +7,9 @@ import * as ts from "typescript"
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const webSrcDir = path.join(repoRoot, "apps/web/src")
 const outputDir = path.join(repoRoot, "docs/generated")
+const featureOutputDir = path.join(outputDir, "web-features")
 const outputFiles = {
+  overview: path.join(outputDir, "web-overview.md"),
   screens: path.join(outputDir, "web-screens.md"),
   features: path.join(outputDir, "web-features.md"),
   components: path.join(outputDir, "web-components.md"),
@@ -38,6 +40,30 @@ const featureLabels = {
   history: "履歴",
   questions: "担当者対応",
   shared: "共通"
+}
+
+const featureDescriptions = {
+  admin: "管理者向けのユーザー、ロール、利用状況、コスト、alias review / publish を扱う領域です。",
+  app: "ログイン後の共通フレーム、ナビゲーション、トップバー、個人設定を扱う領域です。",
+  auth: "ログイン、サインアップ、確認コード、新規パスワード設定などの認証画面を扱う領域です。",
+  benchmark: "ベンチマーク suite の選択、run 起動、履歴、成果物ダウンロードを扱う領域です。",
+  chat: "RAG 質問、回答表示、引用、追加確認、担当者エスカレーション、チャット入力を扱う領域です。",
+  debug: "RAG 実行 trace、検索根拠、support verification、step detail を調査する領域です。",
+  documents: "ドキュメント upload、document group、共有、blue-green reindex 操作を扱う領域です。",
+  history: "会話履歴、検索、並び替え、お気に入り、履歴削除を扱う領域です。",
+  questions: "担当者が問い合わせを確認し、回答作成、下書き保存、回答送信を行う領域です。",
+  shared: "複数領域で再利用される表示部品です。単独の画面ではなく、他の画面から使われます。"
+}
+
+const viewDescriptions = {
+  admin: "管理者設定。文書管理、担当者対応、debug / benchmark、ユーザー管理、alias 管理などの入口になります。",
+  assignee: "担当者対応。問い合わせ一覧から質問を選び、回答本文や参考資料を作成します。",
+  benchmark: "性能テスト。benchmark suite を選択し、run 起動、キャンセル、結果 download を行います。",
+  chat: "チャット。利用者が質問し、RAG 回答、引用、確認質問、担当者への問い合わせ導線を確認します。",
+  documents: "ドキュメント。ファイル upload、フォルダ作成、共有、reindex 切替を行います。",
+  favorites: "お気に入り。会話履歴のうち favorite のものに絞って確認します。",
+  history: "履歴。過去の会話を検索、並び替え、再表示、削除します。",
+  profile: "個人設定。送信ショートカットやサインアウトなど個人単位の設定を扱います。"
 }
 
 const viewFeatures = {
@@ -161,6 +187,41 @@ function getFeature(filePath) {
   if (parts.includes("shared")) return "shared"
   if (parts.includes("app")) return "app"
   return "app"
+}
+
+function featureFileName(feature) {
+  return `${feature}.md`
+}
+
+function featureLink(feature) {
+  return `web-features/${featureFileName(feature)}`
+}
+
+function componentName(component) {
+  return component.exports[0] ?? path.basename(component.file)
+}
+
+function uniq(values) {
+  return [...new Set(values.filter(Boolean))]
+}
+
+function summarizeLabels(items, limit = 8) {
+  const labels = uniq(items.map((item) => item.label).filter((label) => {
+    if (!label || label === "未推定") return false
+    return !/[{}?$`]|=>|\?\?|\.[a-zA-Z]/.test(label)
+  }))
+  if (labels.length === 0) return "-"
+  const visible = labels.slice(0, limit)
+  const suffix = labels.length > limit ? ` ほか ${labels.length - limit} 件` : ""
+  return `${visible.join("、")}${suffix}`
+}
+
+function roleFromComponent(component) {
+  const file = component.file
+  if (file.includes("/components/")) return "画面または画面内 UI コンポーネント"
+  if (file.endsWith("main.tsx")) return "React mount entry"
+  if (file.includes("/app/")) return "アプリケーション共通制御"
+  return "UI 構成要素"
 }
 
 function isExported(node) {
@@ -392,55 +453,205 @@ function markdownTable(headers, rows) {
   ].join("\n")
 }
 
-function renderScreens(inventory) {
-  return `# Web 画面一覧
+function renderHeader(title, inventory) {
+  return `# ${title}
 
 > 自動生成: \`${inventory.generatedBy}\`
 >
 > ${inventory.note}
+>
+> 読み方: \`confirmed\` はコードから直接確認できた情報、\`inferred\` は fallback や構造から推定した情報、\`unknown\` は静的解析だけでは断定できない情報です。
+`
+}
 
-## 画面
+function renderOverview(inventory) {
+  return `${renderHeader("Web UI インベントリ概要", inventory)}
+
+## この資料で分かること
+
+- Web UI にどの画面があるか。
+- 各画面がどの画面コンポーネントに対応するか。
+- 機能領域ごとに、どのコンポーネントと UI 操作要素があるか。
+- ボタン、リンク、フォーム、入力欄、主要 handler がどのファイルにあるか。
+
+## 全体サマリ
 
 ${markdownTable(
-  ["表示名", "view", "route", "画面コンポーネント", "権限条件", "確度"],
+  ["項目", "件数", "参照先"],
+  [
+    ["画面", inventory.screens.length, "[web-screens.md](web-screens.md)"],
+    ["機能領域", inventory.features.length, "[web-features.md](web-features.md)"],
+    ["コンポーネント", inventory.components.length, "[web-components.md](web-components.md)"],
+    ["UI 操作要素", inventory.interactions.length, "[web-features.md](web-features.md)"]
+  ]
+)}
+
+## 初めて見る人向けの導線
+
+1. [画面一覧](web-screens.md) で、ユーザーが見る画面と権限条件を把握する。
+2. [機能一覧](web-features.md) で、機能領域と関連画面の対応を見る。
+3. 気になる機能の詳細ファイルを開き、ボタン、フォーム、handler、実装ファイルを確認する。
+4. [コンポーネント一覧](web-components.md) で、画面を構成する部品と JSX 使用要素を確認する。
+
+## 生成されるファイル
+
+${markdownTable(
+  ["ファイル", "用途"],
+  [
+    ["[web-overview.md](web-overview.md)", "初見向けの入口と全体サマリ"],
+    ["[web-screens.md](web-screens.md)", "画面、view、画面コンポーネント、権限条件、主要操作"],
+    ["[web-features.md](web-features.md)", "機能別詳細ファイルへの索引"],
+    ["[web-features/*.md](web-features/)", "機能ごとの画面、コンポーネント、UI 操作要素"],
+    ["[web-components.md](web-components.md)", "コンポーネント、export、役割、関連画面"],
+    ["web-ui-inventory.json", "CI や将来の可視化に使える機械可読データ"]
+  ]
+)}
+`
+}
+
+function renderScreens(inventory) {
+  return `${renderHeader("Web 画面一覧", inventory)}
+
+## 画面サマリ
+
+${markdownTable(
+  ["表示名", "view", "route", "機能", "画面コンポーネント", "権限条件", "主要操作", "確度"],
   inventory.screens.map((screen) => [
     screen.label,
     screen.view,
     `${screen.routePath} (${screen.routeKind})`,
+    `[${featureLabels[viewFeatures[screen.view]] ?? viewFeatures[screen.view]}](${featureLink(viewFeatures[screen.view])})`,
     screen.screenComponent,
     screen.permissions.length > 0 ? screen.permissions.join(", ") : "-",
+    summarizeLabels(inventory.interactions.filter((item) => item.feature === viewFeatures[screen.view]), 6),
     screen.certainty
+  ])
+)}
+
+## 画面ごとの説明
+
+${inventory.screens.map((screen) => {
+  const interactions = inventory.interactions.filter((item) => item.feature === viewFeatures[screen.view])
+  return `### ${screen.label}
+
+- view: \`${screen.view}\`
+- 機能領域: [${featureLabels[viewFeatures[screen.view]] ?? viewFeatures[screen.view]}](${featureLink(viewFeatures[screen.view])})
+- 画面コンポーネント: \`${screen.screenComponent}\`
+- route: \`${screen.routePath}\` (${screen.routeKind})
+- 権限条件: ${screen.permissions.length > 0 ? screen.permissions.map((permission) => `\`${permission}\``).join(", ") : "なし"}
+- 画面の意味: ${viewDescriptions[screen.view] ?? "静的解析では説明未定義。"}
+- 主要操作: ${summarizeLabels(interactions, 10)}
+`
+}).join("\n")}
+`
+}
+
+function renderFeatures(inventory) {
+  return `${renderHeader("Web 機能一覧", inventory)}
+
+## 機能別ファイル
+
+${markdownTable(
+  ["機能", "feature", "概要", "関連画面", "コンポーネント数", "UI 操作要素数", "詳細"],
+  inventory.features.map((feature) => [
+    feature.label,
+    feature.feature,
+    featureDescriptions[feature.feature] ?? "-",
+    feature.screens.length > 0 ? feature.screens.join(", ") : "-",
+    feature.componentCount,
+    feature.interactionCount,
+    `[${featureFileName(feature.feature)}](${featureLink(feature.feature)})`
   ])
 )}
 `
 }
 
-function renderFeatures(inventory) {
-  return `# Web 機能一覧
+function renderFeatureDetail(inventory, feature) {
+  const screens = inventory.screens.filter((screen) => viewFeatures[screen.view] === feature.feature)
+  const components = inventory.components.filter((component) => component.feature === feature.feature)
+  const interactions = inventory.interactions.filter((item) => item.feature === feature.feature)
+  const buttons = interactions.filter((item) => item.element === "button" || item.element === "a")
+  const forms = interactions.filter((item) => item.element === "form")
+  const fields = interactions.filter((item) => ["input", "select", "textarea"].includes(item.element))
 
-> 自動生成: \`${inventory.generatedBy}\`
->
-> ${inventory.note}
+  return `${renderHeader(`Web 機能詳細: ${feature.label}`, inventory)}
 
-## 機能サマリ
+## 概要
+
+${featureDescriptions[feature.feature] ?? "静的解析では説明未定義です。"}
+
+## 関連画面
+
+${screens.length > 0 ? markdownTable(
+  ["表示名", "view", "画面コンポーネント", "権限条件", "説明"],
+  screens.map((screen) => [
+    screen.label,
+    screen.view,
+    screen.screenComponent,
+    screen.permissions.length > 0 ? screen.permissions.join(", ") : "-",
+    viewDescriptions[screen.view] ?? "-"
+  ])
+) : "関連画面は静的解析では見つかりませんでした。"}
+
+## コンポーネント
 
 ${markdownTable(
-  ["機能", "feature", "関連画面", "コンポーネント数", "UI 操作要素数"],
-  inventory.features.map((feature) => [
-    feature.label,
-    feature.feature,
-    feature.screens.length > 0 ? feature.screens.join(", ") : "-",
-    feature.componentCount,
-    feature.interactionCount
+  ["コンポーネント", "役割", "ファイル", "export", "使用 JSX 要素"],
+  components.map((component) => [
+    componentName(component),
+    roleFromComponent(component),
+    component.file,
+    component.exports.length > 0 ? component.exports.join(", ") : "-",
+    component.jsxUsages.length > 0 ? component.jsxUsages.join(", ") : "-"
   ])
 )}
 
-## UI 操作要素
+## 主なボタン・リンク
+
+${buttons.length > 0 ? markdownTable(
+  ["コンポーネント", "要素", "ラベル", "ハンドラ", "場所", "確度"],
+  buttons.map((item) => [
+    item.component,
+    item.element,
+    item.label,
+    item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
+    `${item.file}:${item.line}`,
+    item.certainty
+  ])
+) : "ボタン・リンクは静的解析では見つかりませんでした。"}
+
+## フォーム
+
+${forms.length > 0 ? markdownTable(
+  ["コンポーネント", "ラベル", "送信ハンドラ", "場所", "確度"],
+  forms.map((item) => [
+    item.component,
+    item.label,
+    item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
+    `${item.file}:${item.line}`,
+    item.certainty
+  ])
+) : "フォームは静的解析では見つかりませんでした。"}
+
+## 入力項目
+
+${fields.length > 0 ? markdownTable(
+  ["コンポーネント", "要素", "ラベル", "ハンドラ", "場所", "確度"],
+  fields.map((item) => [
+    item.component,
+    item.element,
+    item.label,
+    item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
+    `${item.file}:${item.line}`,
+    item.certainty
+  ])
+) : "入力項目は静的解析では見つかりませんでした。"}
+
+## UI 操作要素の全量
 
 ${markdownTable(
-  ["機能", "コンポーネント", "要素", "ラベル", "ハンドラ", "場所", "確度"],
-  inventory.interactions.map((item) => [
-    featureLabels[item.feature] ?? item.feature,
+  ["コンポーネント", "要素", "ラベル", "ハンドラ", "場所", "確度"],
+  interactions.map((item) => [
     item.component,
     item.element,
     item.label,
@@ -453,16 +664,17 @@ ${markdownTable(
 }
 
 function renderComponents(inventory) {
-  return `# Web コンポーネント一覧
+  return `${renderHeader("Web コンポーネント一覧", inventory)}
 
-> 自動生成: \`${inventory.generatedBy}\`
->
-> ${inventory.note}
+## コンポーネントサマリ
 
 ${markdownTable(
-  ["機能", "ファイル", "export", "使用 JSX 要素", "確度"],
+  ["機能", "関連画面", "コンポーネント", "役割", "ファイル", "export", "使用 JSX 要素", "確度"],
   inventory.components.map((component) => [
-    featureLabels[component.feature] ?? component.feature,
+    `[${featureLabels[component.feature] ?? component.feature}](${featureLink(component.feature)})`,
+    inventory.screens.filter((screen) => viewFeatures[screen.view] === component.feature).map((screen) => screen.label).join(", ") || "-",
+    componentName(component),
+    roleFromComponent(component),
     component.file,
     component.exports.length > 0 ? component.exports.join(", ") : "-",
     component.jsxUsages.length > 0 ? component.jsxUsages.join(", ") : "-",
@@ -473,12 +685,20 @@ ${markdownTable(
 }
 
 function renderOutputs(inventory) {
-  return {
+  const outputs = {
+    [outputFiles.overview]: renderOverview(inventory),
     [outputFiles.screens]: renderScreens(inventory),
     [outputFiles.features]: renderFeatures(inventory),
     [outputFiles.components]: renderComponents(inventory),
     [outputFiles.json]: `${JSON.stringify(inventory, null, 2)}\n`
   }
+  for (const feature of inventory.features) {
+    outputs[path.join(featureOutputDir, featureFileName(feature.feature))] = renderFeatureDetail(inventory, feature)
+  }
+  return Object.fromEntries(Object.entries(outputs).map(([filePath, content]) => [
+    filePath,
+    `${content.trimEnd()}\n`
+  ]))
 }
 
 function main() {
@@ -499,6 +719,7 @@ function main() {
   }
 
   fs.mkdirSync(outputDir, { recursive: true })
+  fs.mkdirSync(featureOutputDir, { recursive: true })
   for (const [filePath, content] of Object.entries(outputs)) {
     fs.writeFileSync(filePath, content)
     console.log(`generated ${path.relative(repoRoot, filePath)}`)
