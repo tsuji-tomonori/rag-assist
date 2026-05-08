@@ -1,8 +1,8 @@
 # 個人設定と送信キー設定
 
-保存先: `tasks/do/20260508-2253-account-settings-send-key.md`
+保存先: `tasks/done/20260508-2253-account-settings-send-key.md`
 
-状態: do
+状態: done
 
 ## 背景
 
