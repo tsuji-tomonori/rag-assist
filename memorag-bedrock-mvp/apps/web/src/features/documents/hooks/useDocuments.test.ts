@@ -1,14 +1,17 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { cutoverReindexMigration, deleteDocument, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, uploadDocumentFile } from "../api/documentsApi.js"
+import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, shareDocumentGroup, stageReindexMigration, uploadDocumentFile } from "../api/documentsApi.js"
 import { useDocuments } from "./useDocuments.js"
 
 vi.mock("../api/documentsApi.js", () => ({
+  createDocumentGroup: vi.fn(),
   cutoverReindexMigration: vi.fn(),
   deleteDocument: vi.fn(),
+  listDocumentGroups: vi.fn(),
   listDocuments: vi.fn(),
   listReindexMigrations: vi.fn(),
   rollbackReindexMigration: vi.fn(),
+  shareDocumentGroup: vi.fn(),
   stageReindexMigration: vi.fn(),
   uploadDocumentFile: vi.fn()
 }))
@@ -28,9 +31,42 @@ function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}
 describe("useDocuments", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(listDocumentGroups).mockResolvedValue([{
+      groupId: "group-1",
+      name: "社内規定",
+      visibility: "private",
+      ownerUserId: "user-1",
+      sharedUserIds: [],
+      sharedGroups: [],
+      managerUserIds: ["user-1"],
+      createdAt: "now",
+      updatedAt: "now"
+    }])
     vi.mocked(listDocuments).mockResolvedValue([{ documentId: "doc-1", fileName: "a.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }])
     vi.mocked(listReindexMigrations).mockResolvedValue([])
     vi.mocked(uploadDocumentFile).mockResolvedValue({ documentId: "doc-2", fileName: "b.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+    vi.mocked(createDocumentGroup).mockResolvedValue({
+      groupId: "group-2",
+      name: "個人メモ",
+      visibility: "private",
+      ownerUserId: "user-1",
+      sharedUserIds: [],
+      sharedGroups: [],
+      managerUserIds: ["user-1"],
+      createdAt: "now",
+      updatedAt: "now"
+    })
+    vi.mocked(shareDocumentGroup).mockResolvedValue({
+      groupId: "group-1",
+      name: "社内規定",
+      visibility: "shared",
+      ownerUserId: "user-1",
+      sharedUserIds: [],
+      sharedGroups: ["HR"],
+      managerUserIds: ["user-1"],
+      createdAt: "now",
+      updatedAt: "now"
+    })
     vi.mocked(deleteDocument).mockResolvedValue(undefined)
     vi.mocked(stageReindexMigration).mockResolvedValue({
       migrationId: "migration-1",
@@ -135,6 +171,36 @@ describe("useDocuments", () => {
     expect(deleteDocument).toHaveBeenCalledWith("missing-doc")
     expect(result.current.selectedDocumentId).toBe("all")
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
+  })
+
+  it("資料グループの取得、保存先指定、一時添付、共有更新を扱う", async () => {
+    const props = createProps()
+    const { result } = renderHook(() => useDocuments(props))
+    const file = new File(["body"], "scope.txt", { type: "text/plain" })
+
+    await act(() => result.current.refreshDocumentGroups())
+    expect(result.current.documentGroups).toHaveLength(1)
+
+    act(() => result.current.setUploadGroupId("group-1"))
+    await act(() => result.current.onUploadDocumentFile(file))
+    expect(uploadDocumentFile).toHaveBeenCalledWith(expect.objectContaining({
+      scope: { scopeType: "group", groupIds: ["group-1"] }
+    }))
+
+    act(() => result.current.setSelectedDocumentId("doc-1"))
+    await act(() => result.current.ingestDocument(file, { purpose: "chatAttachment", temporaryScopeId: "conv-1" }))
+    expect(uploadDocumentFile).toHaveBeenLastCalledWith(expect.objectContaining({
+      purpose: "chatAttachment",
+      scope: { scopeType: "chat", temporaryScopeId: "conv-1" }
+    }))
+    expect(result.current.selectedDocumentId).toBe("all")
+
+    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
+    await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared", sharedGroups: ["HR"] }))
+
+    expect(createDocumentGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
+    expect(shareDocumentGroup).toHaveBeenCalledWith("group-1", { visibility: "shared", sharedGroups: ["HR"] })
+    expect(listDocumentGroups).toHaveBeenCalledTimes(3)
   })
 
   it("削除、cutover、rollback の失敗時は文字列エラーも設定する", async () => {

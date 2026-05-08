@@ -1,11 +1,13 @@
 import type { DebugTrace } from "../../features/debug/types.js"
-import type { DocumentManifest } from "../../features/documents/types.js"
+import type { DocumentGroup, DocumentManifest } from "../../features/documents/types.js"
 import { Icon } from "../../shared/components/Icon.js"
 
 export function TopBar({
   modelId,
   documents,
+  documentGroups = [],
   selectedDocumentId,
+  selectedGroupId = "all",
   debugRuns,
   latestTrace,
   selectedRunValue,
@@ -16,13 +18,16 @@ export function TopBar({
   pendingDebugQuestion,
   onModelChange,
   onDocumentChange,
+  onGroupChange,
   onRunChange,
   onDebugModeChange,
   onNewConversation
 }: {
   modelId: string
   documents: DocumentManifest[]
+  documentGroups?: DocumentGroup[]
   selectedDocumentId: string
+  selectedGroupId?: string
   debugRuns: DebugTrace[]
   latestTrace?: DebugTrace
   selectedRunValue: string
@@ -33,6 +38,7 @@ export function TopBar({
   pendingDebugQuestion: string | null
   onModelChange: (modelId: string) => void
   onDocumentChange: (documentId: string) => void
+  onGroupChange: (groupId: string) => void
   onRunChange: (runId: string) => void
   onDebugModeChange: (enabled: boolean) => void
   onNewConversation: () => void
@@ -52,11 +58,19 @@ export function TopBar({
         <div className="top-control document-control">
           <label htmlFor="document-select">ドキュメント</label>
           <div className="document-select-row">
-            <select id="document-select" value={selectedDocumentId} onChange={(event) => onDocumentChange(event.target.value)}>
+            <select id="document-select" value={selectedDocumentId} onChange={(event) => onDocumentChange(event.target.value)} title="デバッグ表示用の文書選択">
               <option value="all">すべての資料</option>
               {documents.map((document) => (
                 <option value={document.documentId} key={document.documentId}>
                   {document.fileName}
+                </option>
+              ))}
+            </select>
+            <select aria-label="参照フォルダ" value={selectedGroupId} onChange={(event) => onGroupChange(event.target.value)}>
+              <option value="all">全フォルダ</option>
+              {documentGroups.map((group) => (
+                <option value={group.groupId} key={group.groupId}>
+                  {group.name}
                 </option>
               ))}
             </select>

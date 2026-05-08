@@ -27,6 +27,7 @@ function createProps(overrides: Partial<Parameters<typeof useChatSession>[0]> = 
     minScore: 0.2,
     currentConversationId: "conv-1",
     setCurrentConversationId: vi.fn(),
+    selectedGroupId: "all",
     loading: false,
     rememberMessages: vi.fn(),
     createConversationId: () => "conv-2",
@@ -389,5 +390,47 @@ describe("useChatSession", () => {
     expect(setDebugRuns).not.toHaveBeenCalled()
     expect(warn).toHaveBeenCalledWith("Failed to load debug trace", expect.any(Error))
     warn.mockRestore()
+  })
+
+  it("選択フォルダと一時添付を chat run の検索スコープに含める", async () => {
+    const file = new File(["社内規定"], "policy.txt", { type: "text/plain" })
+    const ingestDocument = vi.fn().mockResolvedValue(undefined)
+    const setFile = vi.fn()
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    chatApiMock.streamChatRunEvents.mockImplementationOnce(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "社内規定に基づく回答です。",
+          isAnswerable: true,
+          citations: [],
+          retrieved: []
+        }
+      })
+    })
+    const { result } = renderHook(() => useChatSession(createProps({
+      file,
+      ingestDocument,
+      setFile,
+      selectedGroupId: "group-1",
+      currentConversationId: "conv-1"
+    })))
+
+    act(() => result.current.setQuestion("社内規定を確認して"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(ingestDocument).toHaveBeenCalledWith(file, { purpose: "chatAttachment", temporaryScopeId: "conv-1" })
+    expect(setFile).toHaveBeenCalledWith(null)
+    expect(chatApiMock.startChatRun).toHaveBeenCalledWith(expect.objectContaining({
+      searchScope: {
+        mode: "groups",
+        groupIds: ["group-1"],
+        includeTemporary: true,
+        temporaryScopeId: "conv-1"
+      }
+    }))
   })
 })

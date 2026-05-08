@@ -1,5 +1,5 @@
 import type { Dependencies } from "../dependencies.js"
-import type { Citation, DebugTrace } from "../types.js"
+import type { Citation, DebugTrace, SearchScope } from "../types.js"
 import type { Clarification } from "./state.js"
 import type { SearchInput } from "../search/hybrid-search.js"
 
@@ -24,6 +24,7 @@ export type ChatInput = {
   useMemory?: boolean
   maxIterations?: number
   searchFilters?: SearchInput["filters"]
+  searchScope?: SearchScope
   asOfDate?: string
   asOfDateSource?: "benchmark" | "test"
 }
