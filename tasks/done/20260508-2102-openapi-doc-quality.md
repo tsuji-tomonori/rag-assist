@@ -56,3 +56,16 @@ Hono OpenAPI 仕様から生成する Markdown を日本語説明付きの表形
   - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
   - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
   - `git diff --check`: pass
+
+## CI follow-up
+
+- 最新 `origin/main` で追加された `/document-groups` 系 API が CI の OpenAPI quality gate で検出されたため、branch に merge した。
+- `GET /document-groups`、`POST /document-groups`、`POST /document-groups/{groupId}/share` に日本語 summary / description を追加し、生成済み OpenAPI JSON / Markdown を更新した。
+- follow-up 後の検証:
+  - `npm --prefix memorag-bedrock-mvp run docs:openapi:check`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:openapi`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
+  - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
+  - `git diff --check`: pass
+  - `task docs:openapi`: pass
+  - `task docs:openapi:check`: pass

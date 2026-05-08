@@ -72,8 +72,25 @@
 - `git diff --check`: pass
 - `/openapi.json` runtime sanity check via `./node_modules/.bin/tsx -e ...`: pass
 
+## 7.1 CI follow-up
+
+- PR 作成後の GitHub Actions で、最新 `origin/main` に追加されていた `/document-groups` 系 API の operation metadata 未登録により `docs:openapi:check` が fail した。
+- `origin/main` を merge し、以下の operation に日本語 summary / description を追加した。
+  - `GET /document-groups`
+  - `POST /document-groups`
+  - `POST /document-groups/{groupId}/share`
+- `docs/generated/openapi.json` と `docs/generated/openapi.md` を再生成した。
+- follow-up 後の検証:
+  - `npm --prefix memorag-bedrock-mvp run docs:openapi:check`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:openapi`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
+  - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
+  - `git diff --check`: pass
+  - `task docs:openapi`: pass
+  - `task docs:openapi:check`: pass
+
 ## 8. 未対応・制約・リスク
 
-- GitHub Actions の実行結果は push 後の PR checks で確認する。
+- GitHub Actions の再実行結果は follow-up commit push 後の PR checks で確認する。
 - `docs:openapi:check` は enrichment 後の OpenAPI document を検証する。operation metadata は path / method 単位で明示し、新規 API が metadata 未登録の場合は fail する。
 - field description の一部は項目名からの日本語補完であり、必要に応じて個別業務説明を追加できる。

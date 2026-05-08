@@ -215,6 +215,18 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "文書を削除する",
     description: "指定した文書と検索用データを削除します。"
   },
+  "GET /document-groups": {
+    summary: "文書グループ一覧を取得する",
+    description: "ログインユーザーが参照または管理できる文書グループの一覧を返します。"
+  },
+  "POST /document-groups": {
+    summary: "文書グループを作成する",
+    description: "文書をスコープごとに整理するための文書グループを作成します。"
+  },
+  "POST /document-groups/{groupId}/share": {
+    summary: "文書グループ共有設定を更新する",
+    description: "指定した文書グループの共有先や権限範囲を更新します。"
+  },
   "POST /chat": {
     summary: "同期チャット回答を生成する",
     description: "登録済み文書を根拠に RAG 回答、回答不能、確認質問のいずれかを同期的に返します。"

@@ -45,6 +45,9 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/debug-runs` | debug trace 一覧を取得する |
 | `GET` | `/debug-runs/{runId}` | debug trace 詳細を取得する |
 | `POST` | `/debug-runs/{runId}/download` | debug trace ダウンロード URL を作成する |
+| `GET` | `/document-groups` | 文書グループ一覧を取得する |
+| `POST` | `/document-groups` | 文書グループを作成する |
+| `POST` | `/document-groups/{groupId}/share` | 文書グループ共有設定を更新する |
 | `POST` | `/document-ingest-runs` | 非同期文書取り込みを開始する |
 | `GET` | `/document-ingest-runs/{runId}` | 文書取り込み run を取得する |
 | `GET` | `/document-ingest-runs/{runId}/events` | 文書取り込みイベントを購読する |
@@ -1468,6 +1471,12 @@ Media type: `application/json`
 | `includeDebug` | `boolean` | no | レスポンスに debug 情報を含めるかどうか。 | - |
 | `debug` | `boolean` | no | 調査用の内部処理情報。 | - |
 | `useMemory` | `boolean` | no | `data.useMemory` の値。項目名は use memory を表します。 | - |
+| `searchScope` | `object` | no | `data.searchScope` の値。項目名は search scope を表します。 | - |
+| `searchScope.mode` | `enum(all \| groups \| documents \| temporary)` | no | benchmark 実行モード。 | enum=all, groups, documents, temporary |
+| `searchScope.groupIds` | `array<string>` | no | `data.searchScope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
+| `searchScope.documentIds` | `array<string>` | no | `data.searchScope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
+| `searchScope.includeTemporary` | `boolean` | no | `data.searchScope.includeTemporary` の値。項目名は include temporary を表します。 | - |
+| `searchScope.temporaryScopeId` | `string` | no | `data.searchScope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
 | `id` | `string` | no | リソースを一意に識別する ID。 | - |
 | `benchmarkSuiteId` | `string` | no | `data.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 
@@ -1627,6 +1636,12 @@ Media type: `application/json`
 | `filters.docType` | `string` | no | `data.filters.docType` の値。項目名は doc type を表します。 | - |
 | `filters.benchmarkSuiteId` | `string` | no | `data.filters.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 | `filters.documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `scope` | `object` | no | `data.scope` の値。項目名は scope を表します。 | - |
+| `scope.mode` | `enum(all \| groups \| documents \| temporary)` | no | benchmark 実行モード。 | enum=all, groups, documents, temporary |
+| `scope.groupIds` | `array<string>` | no | `data.scope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
+| `scope.documentIds` | `array<string>` | no | `data.scope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
+| `scope.includeTemporary` | `boolean` | no | `data.scope.includeTemporary` の値。項目名は include temporary を表します。 | - |
+| `scope.temporaryScopeId` | `string` | no | `data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
 | `benchmarkSuiteId` | `string` | no | `data.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 | `user` | `object` | no | `data.user` の値。項目名は user を表します。 | - |
 | `user.userId` | `string` | no | 対象ユーザーを一意に識別する ID。 | minLength=1<br>maxLength=160 |
@@ -1730,6 +1745,12 @@ Media type: `application/json`
 | `includeDebug` | `boolean` | no | レスポンスに debug 情報を含めるかどうか。 | - |
 | `debug` | `boolean` | no | 調査用の内部処理情報。 | - |
 | `useMemory` | `boolean` | no | `data.useMemory` の値。項目名は use memory を表します。 | - |
+| `searchScope` | `object` | no | `data.searchScope` の値。項目名は search scope を表します。 | - |
+| `searchScope.mode` | `enum(all \| groups \| documents \| temporary)` | no | benchmark 実行モード。 | enum=all, groups, documents, temporary |
+| `searchScope.groupIds` | `array<string>` | no | `data.searchScope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
+| `searchScope.documentIds` | `array<string>` | no | `data.searchScope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
+| `searchScope.includeTemporary` | `boolean` | no | `data.searchScope.includeTemporary` の値。項目名は include temporary を表します。 | - |
+| `searchScope.temporaryScopeId` | `string` | no | `data.searchScope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
 
 #### Responses
 
@@ -1908,6 +1929,12 @@ Media type: `application/json`
 | `includeDebug` | `boolean` | no | レスポンスに debug 情報を含めるかどうか。 | - |
 | `debug` | `boolean` | no | 調査用の内部処理情報。 | - |
 | `useMemory` | `boolean` | no | `data.useMemory` の値。項目名は use memory を表します。 | - |
+| `searchScope` | `object` | no | `data.searchScope` の値。項目名は search scope を表します。 | - |
+| `searchScope.mode` | `enum(all \| groups \| documents \| temporary)` | no | benchmark 実行モード。 | enum=all, groups, documents, temporary |
+| `searchScope.groupIds` | `array<string>` | no | `data.searchScope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
+| `searchScope.documentIds` | `array<string>` | no | `data.searchScope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
+| `searchScope.includeTemporary` | `boolean` | no | `data.searchScope.includeTemporary` の値。項目名は include temporary を表します。 | - |
+| `searchScope.temporaryScopeId` | `string` | no | `data.searchScope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
 
 #### Responses
 
@@ -2833,6 +2860,190 @@ Media type: `application/json`
 | `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
 | `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
+### GET /document-groups
+
+Summary: 文書グループ一覧を取得する
+
+ログインユーザーが参照または管理できる文書グループの一覧を返します。
+
+#### Headers
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
+
+#### Path Parameters
+
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+_なし_
+
+#### Responses
+
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `groups` | `array<object>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
+| `groups[].groupId` | `string` | yes | `response.groups[].groupId` の値。項目名は group id を表します。 | - |
+| `groups[].name` | `string` | yes | 表示名または項目名。 | - |
+| `groups[].description` | `string` | no | `response.groups[].description` の値。項目名は description を表します。 | - |
+| `groups[].ownerUserId` | `string` | yes | `response.groups[].ownerUserId` の値。項目名は owner user id を表します。 | - |
+| `groups[].visibility` | `enum(private \| shared \| org)` | yes | `response.groups[].visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
+| `groups[].sharedUserIds` | `array<string>` | yes | `response.groups[].sharedUserIds` の値。項目名は shared user ids を表します。 | - |
+| `groups[].sharedGroups` | `array<string>` | yes | `response.groups[].sharedGroups` の値。項目名は shared groups を表します。 | - |
+| `groups[].managerUserIds` | `array<string>` | yes | `response.groups[].managerUserIds` の値。項目名は manager user ids を表します。 | - |
+| `groups[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `groups[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+
+##### `500` サーバー内部で処理エラーが発生しました。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+### POST /document-groups
+
+Summary: 文書グループを作成する
+
+文書をスコープごとに整理するための文書グループを作成します。
+
+#### Headers
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
+
+#### Path Parameters
+
+_なし_
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `name` | `string` | yes | 表示名または項目名。 | minLength=1<br>maxLength=120 |
+| `description` | `string` | no | `data.description` の値。項目名は description を表します。 | maxLength=1000 |
+| `visibility` | `enum(private \| shared \| org)` | no | `data.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
+| `sharedUserIds` | `array<string>` | no | `data.sharedUserIds` の値。項目名は shared user ids を表します。 | maxItems=50 |
+| `sharedGroups` | `array<string>` | no | `data.sharedGroups` の値。項目名は shared groups を表します。 | maxItems=50 |
+| `managerUserIds` | `array<string>` | no | `data.managerUserIds` の値。項目名は manager user ids を表します。 | maxItems=50 |
+
+#### Responses
+
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `groupId` | `string` | yes | `response.groupId` の値。項目名は group id を表します。 | - |
+| `name` | `string` | yes | 表示名または項目名。 | - |
+| `description` | `string` | no | `response.description` の値。項目名は description を表します。 | - |
+| `ownerUserId` | `string` | yes | `response.ownerUserId` の値。項目名は owner user id を表します。 | - |
+| `visibility` | `enum(private \| shared \| org)` | yes | `response.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
+| `sharedUserIds` | `array<string>` | yes | `response.sharedUserIds` の値。項目名は shared user ids を表します。 | - |
+| `sharedGroups` | `array<string>` | yes | `response.sharedGroups` の値。項目名は shared groups を表します。 | - |
+| `managerUserIds` | `array<string>` | yes | `response.managerUserIds` の値。項目名は manager user ids を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+
+##### `403` 対象操作を実行する権限がありません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+### POST /document-groups/{groupId}/share
+
+Summary: 文書グループ共有設定を更新する
+
+指定した文書グループの共有先や権限範囲を更新します。
+
+#### Headers
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `Authorization` | `string` | yes | Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。 | - |
+
+#### Path Parameters
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `groupId` | `string` | yes | `groupId` の値。項目名は group id を表します。 URL path 上で対象リソースを指定します。 | minLength=1 |
+
+#### Query Parameters
+
+_なし_
+
+#### Data
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `visibility` | `enum(private \| shared \| org)` | no | `data.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
+| `sharedUserIds` | `array<string>` | no | `data.sharedUserIds` の値。項目名は shared user ids を表します。 | maxItems=50 |
+| `sharedGroups` | `array<string>` | no | `data.sharedGroups` の値。項目名は shared groups を表します。 | maxItems=50 |
+| `managerUserIds` | `array<string>` | no | `data.managerUserIds` の値。項目名は manager user ids を表します。 | maxItems=50 |
+
+#### Responses
+
+##### `200` リクエストは成功し、レスポンス body に結果を返します。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `groupId` | `string` | yes | `response.groupId` の値。項目名は group id を表します。 | - |
+| `name` | `string` | yes | 表示名または項目名。 | - |
+| `description` | `string` | no | `response.description` の値。項目名は description を表します。 | - |
+| `ownerUserId` | `string` | yes | `response.ownerUserId` の値。項目名は owner user id を表します。 | - |
+| `visibility` | `enum(private \| shared \| org)` | yes | `response.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
+| `sharedUserIds` | `array<string>` | yes | `response.sharedUserIds` の値。項目名は shared user ids を表します。 | - |
+| `sharedGroups` | `array<string>` | yes | `response.sharedGroups` の値。項目名は shared groups を表します。 | - |
+| `managerUserIds` | `array<string>` | yes | `response.managerUserIds` の値。項目名は manager user ids を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+
+##### `403` 対象操作を実行する権限がありません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `404` 指定したリソースが見つかりません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
 ### POST /document-ingest-runs
 
 Summary: 非同期文書取り込みを開始する
@@ -2862,6 +3073,11 @@ Media type: `application/json`
 | `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | minLength=1 |
 | `mimeType` | `string` | no | `data.mimeType` の値。項目名は mime type を表します。 | - |
 | `metadata` | `object` | no | `data.metadata` の値。項目名は metadata を表します。 | - |
+| `scope` | `object` | no | `data.scope` の値。項目名は scope を表します。 | - |
+| `scope.scopeType` | `enum(personal \| group \| chat \| benchmark)` | no | `data.scope.scopeType` の値。項目名は scope type を表します。 | enum=personal, group, chat, benchmark |
+| `scope.groupIds` | `array<string>` | no | `data.scope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
+| `scope.temporaryScopeId` | `string` | no | `data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
+| `scope.expiresAt` | `string` | no | URL または一時リソースの有効期限。 | - |
 | `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
 | `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
 | `skipMemory` | `boolean` | no | `data.skipMemory` の値。項目名は skip memory を表します。 | - |
@@ -2947,7 +3163,7 @@ Media type: `application/json`
 | `userGroups` | `array<string>` | no | `response.userGroups` の値。項目名は user groups を表します。 | - |
 | `uploadId` | `string` | yes | 文書アップロードセッションを識別する ID。 | - |
 | `objectKey` | `string` | yes | `response.objectKey` の値。項目名は object key を表します。 | - |
-| `purpose` | `enum(document \| benchmarkSeed)` | yes | `response.purpose` の値。項目名は purpose を表します。 | enum=document, benchmarkSeed |
+| `purpose` | `enum(document \| benchmarkSeed \| chatAttachment)` | yes | `response.purpose` の値。項目名は purpose を表します。 | enum=document, benchmarkSeed, chatAttachment |
 | `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `mimeType` | `string` | no | `response.mimeType` の値。項目名は mime type を表します。 | - |
 | `metadata` | `object` | no | `response.metadata` の値。項目名は metadata を表します。 | - |
@@ -3174,6 +3390,11 @@ Media type: `application/json`
 | `textractJson` | `string` | no | `data.textractJson` の値。項目名は textract json を表します。 | - |
 | `mimeType` | `string` | no | `data.mimeType` の値。項目名は mime type を表します。 | - |
 | `metadata` | `object` | no | `data.metadata` の値。項目名は metadata を表します。 | - |
+| `scope` | `object` | no | `data.scope` の値。項目名は scope を表します。 | - |
+| `scope.scopeType` | `enum(personal \| group \| chat \| benchmark)` | no | `data.scope.scopeType` の値。項目名は scope type を表します。 | enum=personal, group, chat, benchmark |
+| `scope.groupIds` | `array<string>` | no | `data.scope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
+| `scope.temporaryScopeId` | `string` | no | `data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
+| `scope.expiresAt` | `string` | no | URL または一時リソースの有効期限。 | - |
 | `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
 | `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
 | `skipMemory` | `boolean` | no | `data.skipMemory` の値。項目名は skip memory を表します。 | - |
@@ -3653,7 +3874,7 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | minLength=1 |
 | `mimeType` | `string` | no | `data.mimeType` の値。項目名は mime type を表します。 | - |
-| `purpose` | `enum(document \| benchmarkSeed)` | no | `data.purpose` の値。項目名は purpose を表します。 | enum=document, benchmarkSeed |
+| `purpose` | `enum(document \| benchmarkSeed \| chatAttachment)` | no | `data.purpose` の値。項目名は purpose を表します。 | enum=document, benchmarkSeed, chatAttachment |
 
 #### Responses
 
@@ -3764,6 +3985,11 @@ Media type: `application/json`
 | `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | minLength=1 |
 | `mimeType` | `string` | no | `data.mimeType` の値。項目名は mime type を表します。 | - |
 | `metadata` | `object` | no | `data.metadata` の値。項目名は metadata を表します。 | - |
+| `scope` | `object` | no | `data.scope` の値。項目名は scope を表します。 | - |
+| `scope.scopeType` | `enum(personal \| group \| chat \| benchmark)` | no | `data.scope.scopeType` の値。項目名は scope type を表します。 | enum=personal, group, chat, benchmark |
+| `scope.groupIds` | `array<string>` | no | `data.scope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
+| `scope.temporaryScopeId` | `string` | no | `data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
+| `scope.expiresAt` | `string` | no | URL または一時リソースの有効期限。 | - |
 | `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
 | `memoryModelId` | `string` | no | memory card 生成に利用する model ID。 | - |
 | `skipMemory` | `boolean` | no | `data.skipMemory` の値。項目名は skip memory を表します。 | - |
@@ -4354,6 +4580,12 @@ Media type: `application/json`
 | `filters.docType` | `string` | no | `data.filters.docType` の値。項目名は doc type を表します。 | - |
 | `filters.benchmarkSuiteId` | `string` | no | `data.filters.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 | `filters.documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `scope` | `object` | no | `data.scope` の値。項目名は scope を表します。 | - |
+| `scope.mode` | `enum(all \| groups \| documents \| temporary)` | no | benchmark 実行モード。 | enum=all, groups, documents, temporary |
+| `scope.groupIds` | `array<string>` | no | `data.scope.groupIds` の値。項目名は group ids を表します。 | maxItems=20 |
+| `scope.documentIds` | `array<string>` | no | `data.scope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
+| `scope.includeTemporary` | `boolean` | no | `data.scope.includeTemporary` の値。項目名は include temporary を表します。 | - |
+| `scope.temporaryScopeId` | `string` | no | `data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
 
 #### Responses
 

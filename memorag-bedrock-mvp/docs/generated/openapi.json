@@ -2420,6 +2420,573 @@
         ]
       }
     },
+    "/document-groups": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "リクエストは成功し、レスポンス body に結果を返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string",
+                            "description": "`response.groups[].groupId` の値。項目名は group id を表します。"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "表示名または項目名。"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "`response.groups[].description` の値。項目名は description を表します。"
+                          },
+                          "ownerUserId": {
+                            "type": "string",
+                            "description": "`response.groups[].ownerUserId` の値。項目名は owner user id を表します。"
+                          },
+                          "visibility": {
+                            "type": "string",
+                            "enum": [
+                              "private",
+                              "shared",
+                              "org"
+                            ],
+                            "description": "`response.groups[].visibility` の値。項目名は visibility を表します。"
+                          },
+                          "sharedUserIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "description": "`response.groups[].sharedUserIds[]` の値。項目名は shared user ids[] を表します。"
+                            },
+                            "description": "`response.groups[].sharedUserIds` の値。項目名は shared user ids を表します。"
+                          },
+                          "sharedGroups": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "description": "`response.groups[].sharedGroups[]` の値。項目名は shared groups[] を表します。"
+                            },
+                            "description": "`response.groups[].sharedGroups` の値。項目名は shared groups を表します。"
+                          },
+                          "managerUserIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "description": "`response.groups[].managerUserIds[]` の値。項目名は manager user ids[] を表します。"
+                            },
+                            "description": "`response.groups[].managerUserIds` の値。項目名は manager user ids を表します。"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "description": "レコードを作成した日時。"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "description": "レコードを最後に更新した日時。"
+                          }
+                        },
+                        "required": [
+                          "groupId",
+                          "name",
+                          "ownerUserId",
+                          "visibility",
+                          "sharedUserIds",
+                          "sharedGroups",
+                          "managerUserIds",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "description": "`response.groups[]` の値。項目名は groups[] を表します。"
+                      },
+                      "description": "ユーザーが所属する Cognito group または検証用 group。"
+                    }
+                  },
+                  "required": [
+                    "groups"
+                  ],
+                  "description": "チャット API が返す回答または拒否文。"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "サーバー内部で処理エラーが発生しました。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "エラー内容を表すメッセージ。"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "補足情報または検証エラー詳細。"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "チャット API が返す回答または拒否文。"
+                }
+              }
+            }
+          }
+        },
+        "summary": "文書グループ一覧を取得する",
+        "description": "ログインユーザーが参照または管理できる文書グループの一覧を返します。",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "description": "Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。",
+            "schema": {
+              "type": "string",
+              "description": "Bearer 認証に利用する Authorization header。"
+            }
+          }
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120,
+                    "example": "社内規定",
+                    "description": "表示名または項目名。"
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 1000,
+                    "description": "`data.description` の値。項目名は description を表します。"
+                  },
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "private",
+                      "shared",
+                      "org"
+                    ],
+                    "default": "private",
+                    "description": "`data.visibility` の値。項目名は visibility を表します。"
+                  },
+                  "sharedUserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "`data.sharedUserIds[]` の値。項目名は shared user ids[] を表します。"
+                    },
+                    "maxItems": 50,
+                    "description": "`data.sharedUserIds` の値。項目名は shared user ids を表します。"
+                  },
+                  "sharedGroups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "`data.sharedGroups[]` の値。項目名は shared groups[] を表します。"
+                    },
+                    "maxItems": 50,
+                    "description": "`data.sharedGroups` の値。項目名は shared groups を表します。"
+                  },
+                  "managerUserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "`data.managerUserIds[]` の値。項目名は manager user ids[] を表します。"
+                    },
+                    "maxItems": 50,
+                    "description": "`data.managerUserIds` の値。項目名は manager user ids を表します。"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "description": "`data` の値。項目名は data を表します。"
+              }
+            }
+          },
+          "description": "リクエスト body に指定する data。"
+        },
+        "responses": {
+          "200": {
+            "description": "リクエストは成功し、レスポンス body に結果を返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groupId": {
+                      "type": "string",
+                      "description": "`response.groupId` の値。項目名は group id を表します。"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "表示名または項目名。"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "`response.description` の値。項目名は description を表します。"
+                    },
+                    "ownerUserId": {
+                      "type": "string",
+                      "description": "`response.ownerUserId` の値。項目名は owner user id を表します。"
+                    },
+                    "visibility": {
+                      "type": "string",
+                      "enum": [
+                        "private",
+                        "shared",
+                        "org"
+                      ],
+                      "description": "`response.visibility` の値。項目名は visibility を表します。"
+                    },
+                    "sharedUserIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "`response.sharedUserIds[]` の値。項目名は shared user ids[] を表します。"
+                      },
+                      "description": "`response.sharedUserIds` の値。項目名は shared user ids を表します。"
+                    },
+                    "sharedGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "`response.sharedGroups[]` の値。項目名は shared groups[] を表します。"
+                      },
+                      "description": "`response.sharedGroups` の値。項目名は shared groups を表します。"
+                    },
+                    "managerUserIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "`response.managerUserIds[]` の値。項目名は manager user ids[] を表します。"
+                      },
+                      "description": "`response.managerUserIds` の値。項目名は manager user ids を表します。"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "レコードを作成した日時。"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "description": "レコードを最後に更新した日時。"
+                    }
+                  },
+                  "required": [
+                    "groupId",
+                    "name",
+                    "ownerUserId",
+                    "visibility",
+                    "sharedUserIds",
+                    "sharedGroups",
+                    "managerUserIds",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "description": "チャット API が返す回答または拒否文。"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "対象操作を実行する権限がありません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "エラー内容を表すメッセージ。"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "補足情報または検証エラー詳細。"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "チャット API が返す回答または拒否文。"
+                }
+              }
+            }
+          }
+        },
+        "summary": "文書グループを作成する",
+        "description": "文書をスコープごとに整理するための文書グループを作成します。",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "description": "Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。",
+            "schema": {
+              "type": "string",
+              "description": "Bearer 認証に利用する Authorization header。"
+            }
+          }
+        ]
+      }
+    },
+    "/document-groups/{groupId}/share": {
+      "post": {
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "description": "Cognito JWT またはローカル開発用トークンを Bearer 形式で指定します。",
+            "schema": {
+              "type": "string",
+              "description": "Bearer 認証に利用する Authorization header。"
+            }
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "`groupId` の値。項目名は group id を表します。"
+            },
+            "required": true,
+            "name": "groupId",
+            "in": "path",
+            "description": "`groupId` の値。項目名は group id を表します。 URL path 上で対象リソースを指定します。"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "visibility": {
+                    "type": "string",
+                    "enum": [
+                      "private",
+                      "shared",
+                      "org"
+                    ],
+                    "description": "`data.visibility` の値。項目名は visibility を表します。"
+                  },
+                  "sharedUserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "`data.sharedUserIds[]` の値。項目名は shared user ids[] を表します。"
+                    },
+                    "maxItems": 50,
+                    "description": "`data.sharedUserIds` の値。項目名は shared user ids を表します。"
+                  },
+                  "sharedGroups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "`data.sharedGroups[]` の値。項目名は shared groups[] を表します。"
+                    },
+                    "maxItems": 50,
+                    "description": "`data.sharedGroups` の値。項目名は shared groups を表します。"
+                  },
+                  "managerUserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "`data.managerUserIds[]` の値。項目名は manager user ids[] を表します。"
+                    },
+                    "maxItems": 50,
+                    "description": "`data.managerUserIds` の値。項目名は manager user ids を表します。"
+                  }
+                },
+                "description": "`data` の値。項目名は data を表します。"
+              }
+            }
+          },
+          "description": "リクエスト body に指定する data。"
+        },
+        "responses": {
+          "200": {
+            "description": "リクエストは成功し、レスポンス body に結果を返します。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groupId": {
+                      "type": "string",
+                      "description": "`response.groupId` の値。項目名は group id を表します。"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "表示名または項目名。"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "`response.description` の値。項目名は description を表します。"
+                    },
+                    "ownerUserId": {
+                      "type": "string",
+                      "description": "`response.ownerUserId` の値。項目名は owner user id を表します。"
+                    },
+                    "visibility": {
+                      "type": "string",
+                      "enum": [
+                        "private",
+                        "shared",
+                        "org"
+                      ],
+                      "description": "`response.visibility` の値。項目名は visibility を表します。"
+                    },
+                    "sharedUserIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "`response.sharedUserIds[]` の値。項目名は shared user ids[] を表します。"
+                      },
+                      "description": "`response.sharedUserIds` の値。項目名は shared user ids を表します。"
+                    },
+                    "sharedGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "`response.sharedGroups[]` の値。項目名は shared groups[] を表します。"
+                      },
+                      "description": "`response.sharedGroups` の値。項目名は shared groups を表します。"
+                    },
+                    "managerUserIds": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "`response.managerUserIds[]` の値。項目名は manager user ids[] を表します。"
+                      },
+                      "description": "`response.managerUserIds` の値。項目名は manager user ids を表します。"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "レコードを作成した日時。"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "description": "レコードを最後に更新した日時。"
+                    }
+                  },
+                  "required": [
+                    "groupId",
+                    "name",
+                    "ownerUserId",
+                    "visibility",
+                    "sharedUserIds",
+                    "sharedGroups",
+                    "managerUserIds",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "description": "チャット API が返す回答または拒否文。"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "対象操作を実行する権限がありません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "エラー内容を表すメッセージ。"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "補足情報または検証エラー詳細。"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "チャット API が返す回答または拒否文。"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "指定したリソースが見つかりません。",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "エラー内容を表すメッセージ。"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "補足情報または検証エラー詳細。"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "description": "チャット API が返す回答または拒否文。"
+                }
+              }
+            }
+          }
+        },
+        "summary": "文書グループ共有設定を更新する",
+        "description": "指定した文書グループの共有先や権限範囲を更新します。"
+      }
+    },
     "/documents": {
       "get": {
         "responses": {
@@ -2823,6 +3390,41 @@
                       "nullable": true
                     },
                     "description": "`data.metadata` の値。項目名は metadata を表します。"
+                  },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "scopeType": {
+                        "type": "string",
+                        "enum": [
+                          "personal",
+                          "group",
+                          "chat",
+                          "benchmark"
+                        ],
+                        "description": "`data.scope.scopeType` の値。項目名は scope type を表します。"
+                      },
+                      "groupIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.scope.groupIds[]` の値。項目名は group ids[] を表します。"
+                        },
+                        "maxItems": 20,
+                        "description": "`data.scope.groupIds` の値。項目名は group ids を表します。"
+                      },
+                      "temporaryScopeId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "`data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。"
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "description": "URL または一時リソースの有効期限。"
+                      }
+                    },
+                    "description": "`data.scope` の値。項目名は scope を表します。"
                   },
                   "embeddingModelId": {
                     "type": "string",
@@ -3253,7 +3855,8 @@
                     "type": "string",
                     "enum": [
                       "document",
-                      "benchmarkSeed"
+                      "benchmarkSeed",
+                      "chatAttachment"
                     ],
                     "default": "document",
                     "description": "`data.purpose` の値。項目名は purpose を表します。"
@@ -3526,6 +4129,41 @@
                       "nullable": true
                     },
                     "description": "`data.metadata` の値。項目名は metadata を表します。"
+                  },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "scopeType": {
+                        "type": "string",
+                        "enum": [
+                          "personal",
+                          "group",
+                          "chat",
+                          "benchmark"
+                        ],
+                        "description": "`data.scope.scopeType` の値。項目名は scope type を表します。"
+                      },
+                      "groupIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.scope.groupIds[]` の値。項目名は group ids[] を表します。"
+                        },
+                        "maxItems": 20,
+                        "description": "`data.scope.groupIds` の値。項目名は group ids を表します。"
+                      },
+                      "temporaryScopeId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "`data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。"
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "description": "URL または一時リソースの有効期限。"
+                      }
+                    },
+                    "description": "`data.scope` の値。項目名は scope を表します。"
                   },
                   "embeddingModelId": {
                     "type": "string",
@@ -3947,6 +4585,41 @@
                     },
                     "description": "`data.metadata` の値。項目名は metadata を表します。"
                   },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "scopeType": {
+                        "type": "string",
+                        "enum": [
+                          "personal",
+                          "group",
+                          "chat",
+                          "benchmark"
+                        ],
+                        "description": "`data.scope.scopeType` の値。項目名は scope type を表します。"
+                      },
+                      "groupIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.scope.groupIds[]` の値。項目名は group ids[] を表します。"
+                        },
+                        "maxItems": 20,
+                        "description": "`data.scope.groupIds` の値。項目名は group ids を表します。"
+                      },
+                      "temporaryScopeId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "`data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。"
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "description": "URL または一時リソースの有効期限。"
+                      }
+                    },
+                    "description": "`data.scope` の値。項目名は scope を表します。"
+                  },
                   "embeddingModelId": {
                     "type": "string",
                     "example": "amazon.titan-embed-text-v2:0",
@@ -4198,7 +4871,8 @@
                       "type": "string",
                       "enum": [
                         "document",
-                        "benchmarkSeed"
+                        "benchmarkSeed",
+                        "chatAttachment"
                       ],
                       "description": "`response.purpose` の値。項目名は purpose を表します。"
                     },
@@ -5616,6 +6290,51 @@
                     "type": "boolean",
                     "example": true,
                     "description": "`data.useMemory` の値。項目名は use memory を表します。"
+                  },
+                  "searchScope": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "all",
+                          "groups",
+                          "documents",
+                          "temporary"
+                        ],
+                        "description": "benchmark 実行モード。"
+                      },
+                      "groupIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.searchScope.groupIds[]` の値。項目名は group ids[] を表します。"
+                        },
+                        "maxItems": 20,
+                        "description": "`data.searchScope.groupIds` の値。項目名は group ids を表します。"
+                      },
+                      "documentIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.searchScope.documentIds[]` の値。項目名は document ids[] を表します。"
+                        },
+                        "maxItems": 100,
+                        "description": "`data.searchScope.documentIds` の値。項目名は document ids を表します。"
+                      },
+                      "includeTemporary": {
+                        "type": "boolean",
+                        "description": "`data.searchScope.includeTemporary` の値。項目名は include temporary を表します。"
+                      },
+                      "temporaryScopeId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "`data.searchScope.temporaryScopeId` の値。項目名は temporary scope id を表します。"
+                      }
+                    },
+                    "description": "`data.searchScope` の値。項目名は search scope を表します。"
                   }
                 },
                 "required": [
@@ -6460,6 +7179,51 @@
                     "type": "boolean",
                     "example": true,
                     "description": "`data.useMemory` の値。項目名は use memory を表します。"
+                  },
+                  "searchScope": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "all",
+                          "groups",
+                          "documents",
+                          "temporary"
+                        ],
+                        "description": "benchmark 実行モード。"
+                      },
+                      "groupIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.searchScope.groupIds[]` の値。項目名は group ids[] を表します。"
+                        },
+                        "maxItems": 20,
+                        "description": "`data.searchScope.groupIds` の値。項目名は group ids を表します。"
+                      },
+                      "documentIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.searchScope.documentIds[]` の値。項目名は document ids[] を表します。"
+                        },
+                        "maxItems": 100,
+                        "description": "`data.searchScope.documentIds` の値。項目名は document ids を表します。"
+                      },
+                      "includeTemporary": {
+                        "type": "boolean",
+                        "description": "`data.searchScope.includeTemporary` の値。項目名は include temporary を表します。"
+                      },
+                      "temporaryScopeId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "`data.searchScope.temporaryScopeId` の値。項目名は temporary scope id を表します。"
+                      }
+                    },
+                    "description": "`data.searchScope` の値。項目名は search scope を表します。"
                   }
                 },
                 "required": [
@@ -6788,6 +7552,51 @@
                       }
                     },
                     "description": "検索対象を絞り込む条件。"
+                  },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "all",
+                          "groups",
+                          "documents",
+                          "temporary"
+                        ],
+                        "description": "benchmark 実行モード。"
+                      },
+                      "groupIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.scope.groupIds[]` の値。項目名は group ids[] を表します。"
+                        },
+                        "maxItems": 20,
+                        "description": "`data.scope.groupIds` の値。項目名は group ids を表します。"
+                      },
+                      "documentIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.scope.documentIds[]` の値。項目名は document ids[] を表します。"
+                        },
+                        "maxItems": 100,
+                        "description": "`data.scope.documentIds` の値。項目名は document ids を表します。"
+                      },
+                      "includeTemporary": {
+                        "type": "boolean",
+                        "description": "`data.scope.includeTemporary` の値。項目名は include temporary を表します。"
+                      },
+                      "temporaryScopeId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "`data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。"
+                      }
+                    },
+                    "description": "`data.scope` の値。項目名は scope を表します。"
                   }
                 },
                 "required": [
@@ -12109,6 +12918,51 @@
                     "example": true,
                     "description": "`data.useMemory` の値。項目名は use memory を表します。"
                   },
+                  "searchScope": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "all",
+                          "groups",
+                          "documents",
+                          "temporary"
+                        ],
+                        "description": "benchmark 実行モード。"
+                      },
+                      "groupIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.searchScope.groupIds[]` の値。項目名は group ids[] を表します。"
+                        },
+                        "maxItems": 20,
+                        "description": "`data.searchScope.groupIds` の値。項目名は group ids を表します。"
+                      },
+                      "documentIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.searchScope.documentIds[]` の値。項目名は document ids[] を表します。"
+                        },
+                        "maxItems": 100,
+                        "description": "`data.searchScope.documentIds` の値。項目名は document ids を表します。"
+                      },
+                      "includeTemporary": {
+                        "type": "boolean",
+                        "description": "`data.searchScope.includeTemporary` の値。項目名は include temporary を表します。"
+                      },
+                      "temporaryScopeId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "`data.searchScope.temporaryScopeId` の値。項目名は temporary scope id を表します。"
+                      }
+                    },
+                    "description": "`data.searchScope` の値。項目名は search scope を表します。"
+                  },
                   "id": {
                     "type": "string",
                     "description": "リソースを一意に識別する ID。"
@@ -12879,6 +13733,51 @@
                       }
                     },
                     "description": "検索対象を絞り込む条件。"
+                  },
+                  "scope": {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "all",
+                          "groups",
+                          "documents",
+                          "temporary"
+                        ],
+                        "description": "benchmark 実行モード。"
+                      },
+                      "groupIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.scope.groupIds[]` の値。項目名は group ids[] を表します。"
+                        },
+                        "maxItems": 20,
+                        "description": "`data.scope.groupIds` の値。項目名は group ids を表します。"
+                      },
+                      "documentIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "`data.scope.documentIds[]` の値。項目名は document ids[] を表します。"
+                        },
+                        "maxItems": 100,
+                        "description": "`data.scope.documentIds` の値。項目名は document ids を表します。"
+                      },
+                      "includeTemporary": {
+                        "type": "boolean",
+                        "description": "`data.scope.includeTemporary` の値。項目名は include temporary を表します。"
+                      },
+                      "temporaryScopeId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "`data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。"
+                      }
+                    },
+                    "description": "`data.scope` の値。項目名は scope を表します。"
                   },
                   "benchmarkSuiteId": {
                     "type": "string",
