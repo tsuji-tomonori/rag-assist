@@ -39,6 +39,12 @@ Parameters:
     Description: GitHub workflow_ref claim allowed to assume this role.
     AllowedPattern: "^[A-Za-z0-9_.:/@-]+$"
 
+  AllowedBenchmarkWorkflowRef:
+    Type: String
+    Default: tsuji-tomonori/rag-assist/.github/workflows/memorag-benchmark-run.yml@refs/heads/main
+    Description: GitHub benchmark workflow_ref claim allowed to assume this role.
+    AllowedPattern: "^[A-Za-z0-9_.:/@-]+$"
+
 Conditions:
   CreateGitHubOidcProvider:
     Fn::Equals:
@@ -95,7 +101,8 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
                 token.actions.githubusercontent.com:workflow_ref:
-                  Ref: AllowedWorkflowRef
+                  - Ref: AllowedWorkflowRef
+                  - Ref: AllowedBenchmarkWorkflowRef
               StringLike:
                 token.actions.githubusercontent.com:sub:
                   Fn::Sub: repo:${GitHubOwner}/${GitHubRepository}:environment:${GitHubEnvironment}
