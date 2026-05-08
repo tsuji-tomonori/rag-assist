@@ -29,6 +29,11 @@ export function AssistantAnswer({
   const citations = message.result?.citations ?? []
   const clarification = message.result?.clarification
   const isClarification = message.result?.responseType === "clarification" || message.result?.needsClarification === true
+  const followups = [
+    "根拠を詳しく教えて",
+    "関連する手順はある？",
+    "担当者に確認したい"
+  ]
   const [copyStatus, setCopyStatus] = useState<"idle" | "answer" | "error">("idle")
   const resetTimerRef = useRef<number | null>(null)
   const mountedRef = useRef(true)
@@ -73,15 +78,27 @@ export function AssistantAnswer({
       <p className="answer-text">{message.text || "質問すると、社内ドキュメントに基づく回答と実行トレースが表示されます。"}</p>
       {citations.length > 0 && (
         <div className="answer-sources">
-          <strong>根拠ドキュメント</strong>
+          <strong>参照元</strong>
           <ul>
             {citations.slice(0, 3).map((citation, index) => (
               <li key={`${citation.documentId}-${citation.chunkId ?? index}`}>
-                <a href={`#source-${index}`}>{citation.fileName}</a>
-                <span>score {citation.score}</span>
+                <a href={`#source-${index}`}>
+                  <Icon name="document" />
+                  <span>{citation.fileName}</span>
+                </a>
+                <span>{`score ${citation.score}`}</span>
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {!isClarification && message.result?.isAnswerable && (
+        <div className="answer-followups" aria-label="追加質問の候補">
+          {followups.map((followup) => (
+            <button type="button" key={followup} disabled={loading} onClick={() => onAdditionalQuestion(followup)}>
+              {followup}
+            </button>
+          ))}
         </div>
       )}
       <div className="answer-footer">

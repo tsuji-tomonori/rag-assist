@@ -57,7 +57,7 @@ test('質問送信で回答と citations が表示される @smoke', async ({ pa
   await page.getByRole('button', { name: '送信' }).click()
 
   await expect(page.getByText(/MVP-2026|資料では次のように記載されています。/)).toBeVisible()
-  await expect(page.getByText('根拠ドキュメント')).toBeVisible()
+  await expect(page.getByText('参照元')).toBeVisible()
   await deleteDocumentByName(page, filename)
 })
 
