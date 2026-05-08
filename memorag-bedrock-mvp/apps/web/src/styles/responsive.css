@@ -141,6 +141,19 @@
     height: auto;
   }
 
+  .composer-actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .composer-left-actions {
+    flex-basis: 100%;
+  }
+
+  .composer-shortcut-toggle {
+    margin-left: 0;
+  }
+
   .document-admin-grid {
     grid-template-columns: 1fr;
   }
@@ -263,6 +276,69 @@
     min-height: min(560px, 100%);
     padding-left: 14px;
     padding-right: 14px;
+  }
+
+  .message-row {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .message-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .user-message-line {
+    width: 100%;
+  }
+
+  .user-bubble {
+    max-width: calc(100% - 44px);
+  }
+
+  .answer-sources ul {
+    display: grid;
+    margin-top: 8px;
+  }
+
+  .answer-sources a {
+    max-width: 100%;
+  }
+
+  .answer-followups {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .answer-followups button {
+    justify-content: center;
+  }
+
+  .composer {
+    min-height: 136px;
+    grid-template-rows: minmax(64px, 1fr) auto;
+  }
+
+  .composer textarea {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .composer-actions {
+    gap: 8px;
+    padding: 0 10px 10px;
+  }
+
+  .file-chip {
+    max-width: calc(100vw - 120px);
+  }
+
+  .composer-shortcut-toggle {
+    max-width: calc(100% - 50px);
+  }
+
+  .composer-shortcut-toggle select {
+    max-width: 150px;
   }
 
   .debug-card {

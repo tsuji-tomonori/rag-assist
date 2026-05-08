@@ -65,14 +65,30 @@ export function ChatComposer({
         }}
       />
       <div className="composer-actions">
-        <span className="file-chip">{`参照: ${selectedGroupName}`}</span>
-        {file && <span className="file-chip">{`一時添付: ${file.name}`}</span>}
-        {canWriteDocuments && (
-          <label className="icon-button attach-button" title="資料を添付">
-            <Icon name="paperclip" />
-            <input key={conversationKey} type="file" disabled={loading} onChange={(event) => onSetFile(event.target.files?.[0] ?? null)} />
-          </label>
-        )}
+        <div className="composer-left-actions">
+          {canWriteDocuments && (
+            <label className="icon-button attach-button" title="資料を添付">
+              <Icon name="paperclip" />
+              <input key={conversationKey} type="file" disabled={loading} onChange={(event) => onSetFile(event.target.files?.[0] ?? null)} />
+              <span className="attach-menu" aria-hidden="true">
+                <span>
+                  <Icon name="document" />
+                  フォルダを選ぶ
+                </span>
+                <span>
+                  <Icon name="download" />
+                  ファイルをアップロード
+                </span>
+              </span>
+            </label>
+          )}
+          <span className="file-chip">{`参照: ${selectedGroupName}`}</span>
+          {file && <span className="file-chip">{`一時添付: ${file.name}`}</span>}
+        </div>
+        <div className="composer-shortcut-toggle">
+          <Icon name="settings" />
+          <span>{submitShortcut === "enter" ? "Enterで送信" : "Ctrl+Enterで送信"}</span>
+        </div>
         <button className="send-button" disabled={!canAsk} type="submit" title="送信">
           {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" />}
         </button>

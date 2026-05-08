@@ -3,17 +3,17 @@
   min-width: 0;
   min-height: 0;
   height: 100%;
-  border: 1px solid #d7e0ea;
+  border: 1px solid #dce4ef;
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+  box-shadow: 0 12px 30px rgba(27, 42, 70, 0.06);
 }
 
 .chat-card {
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto auto;
   overflow: hidden;
-  padding: 24px 22px 12px;
+  padding: 20px 28px 14px;
 }
 
 .message-list {
@@ -21,7 +21,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 8px 18px 20px 4px;
+  padding: 6px 8px 22px 4px;
   scroll-behavior: smooth;
   scroll-padding-top: 8px;
 }
@@ -112,7 +112,7 @@
 
 .message-row {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 38px minmax(0, 1fr);
   gap: 14px;
 }
 
@@ -123,17 +123,17 @@
 .message-avatar {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   color: #fff;
-  background: #83a4ee;
+  background: linear-gradient(135deg, #6e90e8, #92b0f3);
   font-weight: 900;
 }
 
 .message-row.assistant .message-avatar {
-  color: #2867df;
-  background: #e9f1ff;
+  color: #2367e5;
+  background: #eef5ff;
 }
 
 .message-avatar .icon {
@@ -150,7 +150,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 34px;
+  min-height: 38px;
 }
 
 .message-meta strong {
@@ -174,10 +174,10 @@
   width: fit-content;
   max-width: min(620px, calc(100% - 48px));
   margin: 0;
-  border-radius: 7px;
-  padding: 16px 18px;
+  border-radius: 8px;
+  padding: 15px 18px;
   color: #15213a;
-  background: #edf3ff;
+  background: #edf4ff;
   line-height: 1.65;
   font-weight: 650;
   white-space: pre-wrap;
@@ -227,10 +227,11 @@
 
 .answer-card {
   max-width: 100%;
-  border: 1px solid #d7e0ea;
+  border: 1px solid #d9e2ee;
   border-radius: 8px;
-  padding: 20px 18px 12px;
+  padding: 20px 18px 14px;
   background: #fff;
+  box-shadow: 0 4px 16px rgba(31, 48, 77, 0.03);
 }
 
 .processing-answer {
@@ -269,45 +270,94 @@
 
 .answer-sources {
   margin-top: 18px;
-  border-top: 1px solid #e3e8f0;
-  padding-top: 14px;
+  border: 1px solid #dfe7f2;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fbfdff;
 }
 
 .answer-sources strong {
-  display: block;
-  margin-bottom: 8px;
+  display: inline-block;
+  margin: 0 12px 0 0;
   color: #243552;
   font-size: 13px;
+  vertical-align: middle;
 }
 
 .answer-sources ul {
-  display: grid;
+  display: inline-flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 0;
   margin: 0;
   list-style: none;
+  vertical-align: middle;
 }
 
 .answer-sources li {
-  display: flex;
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 7px;
 }
 
 .answer-sources a {
+  max-width: 360px;
   min-width: 0;
-  color: #2467e8;
+  min-height: 30px;
+  border: 1px solid #ccd9ea;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  color: #234469;
+  background: #fff;
   font-weight: 800;
-  text-decoration: underline;
-  overflow-wrap: anywhere;
+  text-decoration: none;
 }
 
-.answer-sources span {
+.answer-sources a .icon {
+  width: 16px;
+  height: 16px;
+  color: #d64d5f;
+}
+
+.answer-sources a span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.answer-sources li > span {
   flex: 0 0 auto;
   color: #6b778f;
   font-size: 12px;
   font-weight: 800;
+}
+
+.answer-followups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.answer-followups button {
+  min-height: 38px;
+  border: 1px solid #d8e1ed;
+  border-radius: 999px;
+  padding: 0 18px;
+  color: #334766;
+  background: #fff;
+  font-weight: 800;
+}
+
+.answer-followups button:hover {
+  border-color: #a7bfea;
+  color: #1f60d9;
+  background: #f8fbff;
 }
 
 .answer-footer {
@@ -632,12 +682,13 @@
 }
 
 .composer {
-  min-height: 102px;
-  border: 1px solid #cbd6e5;
+  min-height: 112px;
+  border: 1px solid #ccd8e8;
   border-radius: 8px;
   display: grid;
-  grid-template-rows: 1fr 42px;
+  grid-template-rows: minmax(58px, 1fr) 44px;
   background: #fff;
+  box-shadow: 0 2px 12px rgba(31, 48, 77, 0.04);
 }
 
 .composer textarea {
@@ -663,13 +714,49 @@
   padding: 0 12px 12px;
 }
 
+.composer-left-actions {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+
+.composer-shortcut-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  color: #52647e;
+}
+
+.composer-shortcut-toggle span {
+  min-height: 30px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  color: #5e6e88;
+  background: #f7f9fc;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.composer-shortcut-toggle .icon {
+  width: 17px;
+  height: 17px;
+}
+
 .file-chip {
   min-width: 0;
-  max-width: 46%;
-  border-radius: 999px;
+  max-width: min(320px, 46vw);
+  min-height: 30px;
+  border: 1px solid #dbe4f1;
+  border-radius: 7px;
   padding: 5px 9px;
   color: #31527c;
-  background: #edf3ff;
+  background: #f7faff;
   font-size: 12px;
   font-weight: 800;
   overflow: hidden;
@@ -687,11 +774,19 @@
 }
 
 .attach-button {
-  margin-left: auto;
-  border: 0;
+  position: relative;
+  flex: 0 0 auto;
+  border: 1px solid #d7e1ee;
   color: #6a7890;
-  background: transparent;
+  background: #f8fbff;
   cursor: pointer;
+}
+
+.attach-button:hover,
+.attach-button:focus-within {
+  color: #1f60d9;
+  border-color: #a7bfea;
+  background: #eef5ff;
 }
 
 .attach-button input {
@@ -702,7 +797,45 @@
   pointer-events: none;
 }
 
+.attach-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: 188px;
+  border: 1px solid #d8e1ee;
+  border-radius: 7px;
+  display: none;
+  padding: 8px;
+  color: #2e3f5a;
+  background: #fff;
+  box-shadow: 0 14px 32px rgba(29, 45, 73, 0.14);
+  z-index: 5;
+}
+
+.attach-menu span {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.attach-menu .icon {
+  width: 17px;
+  height: 17px;
+  color: #47617f;
+}
+
+.attach-button:hover .attach-menu,
+.attach-button:focus-within .attach-menu {
+  display: grid;
+}
+
 .send-button {
+  flex: 0 0 auto;
   border: 0;
   color: #fff;
   background: linear-gradient(135deg, #6f96f7, #2f6fed);
