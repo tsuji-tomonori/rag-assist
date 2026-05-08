@@ -20,18 +20,18 @@
 
 ## コンポーネント
 
-| コンポーネント | 役割 | ファイル | export | 使用 JSX 要素 |
-| --- | --- | --- | --- | --- |
-| HistoryWorkspace | 画面または画面内 UI コンポーネント | apps/web/src/features/history/components/HistoryWorkspace.tsx | HistoryWorkspace | HistorySearchSummary, Icon, button, div, h2, h3, header, input, label, option, section, select, small, span, strong |
+| コンポーネント | 説明 | 役割 | ファイル | export | 使用 JSX 要素 |
+| --- | --- | --- | --- | --- | --- |
+| HistoryWorkspace | HistoryWorkspace は 履歴 領域の 画面または画面内 UI コンポーネント です。関連画面: 履歴、お気に入り。 | 画面または画面内 UI コンポーネント | apps/web/src/features/history/components/HistoryWorkspace.tsx | HistoryWorkspace | HistorySearchSummary, Icon, button, div, h2, h3, header, input, label, option, section, select, small, span, strong |
 
 ## 主なボタン・リンク
 
-| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| HistoryWorkspace | button | チャットへ戻る | チャットへ戻る (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onBack | apps/web/src/features/history/components/HistoryWorkspace.tsx:51 | confirmed |
-| HistoryWorkspace | button | item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加` | item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加` (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onToggleFavorite(item) | apps/web/src/features/history/components/HistoryWorkspace.tsx:91 | confirmed |
-| HistoryWorkspace | button | item.title / questionStatus && <span className="history-question-badge">{questi… | item.title / questionStatus && <span className="history-question-badge">{questionStatus.labe… / formatDateTime(item.upd… (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onSelect(item) | apps/web/src/features/history/components/HistoryWorkspace.tsx:100 | confirmed |
-| HistoryWorkspace | button | 削除 | 削除 (visible-text) | - | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => onDelete(item.id) | apps/web/src/features/history/components/HistoryWorkspace.tsx:108 | confirmed |
+| コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| HistoryWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/history/components/HistoryWorkspace.tsx:51 | confirmed |
+| HistoryWorkspace | button | item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加` | 「item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`」を実行するボタン。 | - | onClick=() => onToggleFavorite(item) | apps/web/src/features/history/components/HistoryWorkspace.tsx:91 | confirmed |
+| HistoryWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | onClick=() => onSelect(item) | apps/web/src/features/history/components/HistoryWorkspace.tsx:100 | unknown |
+| HistoryWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | onClick=() => onDelete(item.id) | apps/web/src/features/history/components/HistoryWorkspace.tsx:108 | confirmed |
 
 ## フォーム
 
@@ -39,24 +39,24 @@
 
 ## 入力項目
 
-| コンポーネント | 要素 | ラベル | アクセシブル名 | 説明参照 | 状態 | a11y | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| HistoryWorkspace | input | 履歴を検索 | 履歴を検索 (aria-label) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setQuery(event.target.value) | apps/web/src/features/history/components/HistoryWorkspace.tsx:65 | confirmed |
-| HistoryWorkspace | select | 履歴の並び順 | 履歴の並び順 (aria-label) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setSortOrder(event.target.value as "newest" \| "oldest" \| "messages") | apps/web/src/features/history/components/HistoryWorkspace.tsx:72 | confirmed |
-| HistoryWorkspace | input | お気に入りのみ | お気に入りのみ (label) | - | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setFavoritesOnly(event.target.checked) | apps/web/src/features/history/components/HistoryWorkspace.tsx:78 | confirmed |
+| コンポーネント | 要素 | ラベル | 入力項目の説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| HistoryWorkspace | input | 履歴を検索 | 「履歴を検索」を入力または選択する項目。 | - | onChange=(event) => setQuery(event.target.value) | apps/web/src/features/history/components/HistoryWorkspace.tsx:65 | confirmed |
+| HistoryWorkspace | select | 履歴の並び順 | 「履歴の並び順」を選ぶ選択項目。 | - | onChange=(event) => setSortOrder(event.target.value as "newest" \| "oldest" \| "messages") | apps/web/src/features/history/components/HistoryWorkspace.tsx:72 | confirmed |
+| HistoryWorkspace | input | お気に入りのみ | 「お気に入りのみ」を入力または選択する項目。 | - | onChange=(event) => setFavoritesOnly(event.target.checked) | apps/web/src/features/history/components/HistoryWorkspace.tsx:78 | confirmed |
 
 ## UI 操作要素の全量
 
-| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| HistoryWorkspace | button | チャットへ戻る | チャットへ戻る (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=onBack | apps/web/src/features/history/components/HistoryWorkspace.tsx:51 | confirmed |
-| HistoryWorkspace | input | 履歴を検索 | 履歴を検索 (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setQuery(event.target.value) | apps/web/src/features/history/components/HistoryWorkspace.tsx:65 | confirmed |
-| HistoryWorkspace | select | 履歴の並び順 | 履歴の並び順 (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setSortOrder(event.target.value as "newest" \| "oldest" \| "messages") | apps/web/src/features/history/components/HistoryWorkspace.tsx:72 | confirmed |
-| HistoryWorkspace | option | newest | 新しい順 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:73 | confirmed |
-| HistoryWorkspace | option | oldest | 古い順 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:74 | confirmed |
-| HistoryWorkspace | option | messages | メッセージ数順 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:75 | confirmed |
-| HistoryWorkspace | label | お気に入りのみ | お気に入りのみ (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:77 | confirmed |
-| HistoryWorkspace | input | お気に入りのみ | お気に入りのみ (label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(event) => setFavoritesOnly(event.target.checked) | apps/web/src/features/history/components/HistoryWorkspace.tsx:78 | confirmed |
-| HistoryWorkspace | button | item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加` | item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加` (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onToggleFavorite(item) | apps/web/src/features/history/components/HistoryWorkspace.tsx:91 | confirmed |
-| HistoryWorkspace | button | item.title / questionStatus && <span className="history-question-badge">{questi… | item.title / questionStatus && <span className="history-question-badge">{questionStatus.labe… / formatDateTime(item.upd… (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => onSelect(item) | apps/web/src/features/history/components/HistoryWorkspace.tsx:100 | confirmed |
-| HistoryWorkspace | button | 削除 | 削除 (visible-text) | - | warning: 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。 | onClick=() => onDelete(item.id) | apps/web/src/features/history/components/HistoryWorkspace.tsx:108 | confirmed |
+| コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| HistoryWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/history/components/HistoryWorkspace.tsx:51 | confirmed |
+| HistoryWorkspace | input | 履歴を検索 | 「履歴を検索」を入力または選択する項目。 | - | onChange=(event) => setQuery(event.target.value) | apps/web/src/features/history/components/HistoryWorkspace.tsx:65 | confirmed |
+| HistoryWorkspace | select | 履歴の並び順 | 「履歴の並び順」を選ぶ選択項目。 | - | onChange=(event) => setSortOrder(event.target.value as "newest" \| "oldest" \| "messages") | apps/web/src/features/history/components/HistoryWorkspace.tsx:72 | confirmed |
+| HistoryWorkspace | option | 新しい順 | 「新しい順」を表す option 要素。 | - | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:73 | confirmed |
+| HistoryWorkspace | option | 古い順 | 「古い順」を表す option 要素。 | - | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:74 | confirmed |
+| HistoryWorkspace | option | メッセージ数順 | 「メッセージ数順」を表す option 要素。 | - | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:75 | confirmed |
+| HistoryWorkspace | label | お気に入りのみ | 「お気に入りのみ」に紐づく入力ラベル。 | - | - | apps/web/src/features/history/components/HistoryWorkspace.tsx:77 | confirmed |
+| HistoryWorkspace | input | お気に入りのみ | 「お気に入りのみ」を入力または選択する項目。 | - | onChange=(event) => setFavoritesOnly(event.target.checked) | apps/web/src/features/history/components/HistoryWorkspace.tsx:78 | confirmed |
+| HistoryWorkspace | button | item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加` | 「item.isFavorite ? `${item.title}をお気に入りから外す` : `${item.title}をお気に入りに追加`」を実行するボタン。 | - | onClick=() => onToggleFavorite(item) | apps/web/src/features/history/components/HistoryWorkspace.tsx:91 | confirmed |
+| HistoryWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | onClick=() => onSelect(item) | apps/web/src/features/history/components/HistoryWorkspace.tsx:100 | unknown |
+| HistoryWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | onClick=() => onDelete(item.id) | apps/web/src/features/history/components/HistoryWorkspace.tsx:108 | confirmed |

@@ -17,68 +17,68 @@
 
 ## コンポーネント
 
-| コンポーネント | 役割 | ファイル | export | 使用 JSX 要素 |
-| --- | --- | --- | --- | --- |
-| LoginHeroGraphic | 画面または画面内 UI コンポーネント | apps/web/src/features/auth/components/LoginHeroGraphic.tsx | LoginHeroGraphic | circle, defs, feDropShadow, filter, g, linearGradient, path, radialGradient, rect, stop, svg |
-| LoginPage | 画面または画面内 UI コンポーネント | apps/web/src/features/auth/components/LoginPage.tsx | LoginPage | LoadingSpinner, LoginHeroGraphic, PasswordRequirementList, button, div, form, h1, input, label, li, p, span, strong, ul |
+| コンポーネント | 説明 | 役割 | ファイル | export | 使用 JSX 要素 |
+| --- | --- | --- | --- | --- | --- |
+| LoginHeroGraphic | LoginHeroGraphic は 認証 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/features/auth/components/LoginHeroGraphic.tsx | LoginHeroGraphic | circle, defs, feDropShadow, filter, g, linearGradient, path, radialGradient, rect, stop, svg |
+| LoginPage | LoginPage は 認証 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/features/auth/components/LoginPage.tsx | LoginPage | LoadingSpinner, LoginHeroGraphic, PasswordRequirementList, button, div, form, h1, input, label, li, p, span, strong, ul |
 
 ## 主なボタン・リンク
 
-| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| LoginPage | button | isSubmitting && <LoadingSpinner className="button-spinner" /> / submitLabel | isSubmitting && <LoadingSpinner className="button-spinner" /> / submitLabel (visible-text) | disabled=isSubmitting \|\| !isCurrentPasswordValid | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:285 | confirmed |
-| LoginPage | button | アカウント作成 | アカウント作成 (visible-text) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => switchMode("signUp") | apps/web/src/features/auth/components/LoginPage.tsx:293 | confirmed |
-| LoginPage | button | 確認コード入力 | 確認コード入力 (visible-text) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => switchMode("confirmSignUp") | apps/web/src/features/auth/components/LoginPage.tsx:294 | confirmed |
-| LoginPage | button | サインインへ戻る | サインインへ戻る (visible-text) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => switchMode("signIn") | apps/web/src/features/auth/components/LoginPage.tsx:297 | confirmed |
+| コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| LoginPage | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=isSubmitting \|\| !isCurrentPasswordValid | - | apps/web/src/features/auth/components/LoginPage.tsx:285 | unknown |
+| LoginPage | button | アカウント作成 | 「アカウント作成」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signUp") | apps/web/src/features/auth/components/LoginPage.tsx:293 | confirmed |
+| LoginPage | button | 確認コード入力 | 「確認コード入力」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("confirmSignUp") | apps/web/src/features/auth/components/LoginPage.tsx:294 | confirmed |
+| LoginPage | button | サインインへ戻る | 「サインインへ戻る」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signIn") | apps/web/src/features/auth/components/LoginPage.tsx:297 | confirmed |
 
 ## フォーム
 
-| コンポーネント | ラベル | 説明参照 | a11y | 送信ハンドラ | 場所 | 確度 |
+| コンポーネント | ラベル | フォーム説明 | 状態・補足 | 送信ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- |
-| LoginPage | title | error ? "login-error" : notice ? "login-notice" : undefined | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onSubmit=onSubmit | apps/web/src/features/auth/components/LoginPage.tsx:213 | confirmed |
+| LoginPage | title | 「title」を入力・送信するフォーム。 | 説明参照: error ? "login-error" : notice ? "login-notice" : undefined | onSubmit=onSubmit | apps/web/src/features/auth/components/LoginPage.tsx:213 | confirmed |
 
 ## 入力項目
 
-| コンポーネント | 要素 | ラベル | アクセシブル名 | 説明参照 | 状態 | a11y | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| LoginPage | input | 新しいパスワード | 新しいパスワード (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setNewPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:221 | confirmed |
-| LoginPage | input | 新しいパスワード（確認） | 新しいパスワード（確認） (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setConfirmPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:231 | confirmed |
-| LoginPage | input | メールアドレス | メールアドレス (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:243 | confirmed |
-| LoginPage | input | 確認コード | 確認コード (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setConfirmationCode(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:245 | confirmed |
-| LoginPage | input | メールアドレス | メールアドレス (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:258 | confirmed |
-| LoginPage | input | パスワード | パスワード (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:260 | confirmed |
-| LoginPage | input | パスワード（確認） | パスワード（確認） (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setSignUpPasswordConfirm(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:263 | confirmed |
-| LoginPage | input | メールアドレス | メールアドレス (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:275 | confirmed |
-| LoginPage | input | パスワード | パスワード (aria-label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:277 | confirmed |
-| LoginPage | input | ログイン状態を保持 | ログイン状態を保持 (label) | - | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setRemember(e.target.checked) | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
+| コンポーネント | 要素 | ラベル | 入力項目の説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| LoginPage | input | 新しいパスワード | 「新しいパスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setNewPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:221 | confirmed |
+| LoginPage | input | 新しいパスワード（確認） | 「新しいパスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:231 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:243 | confirmed |
+| LoginPage | input | 確認コード | 「確認コード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmationCode(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:245 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:258 | confirmed |
+| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:260 | confirmed |
+| LoginPage | input | パスワード（確認） | 「パスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setSignUpPasswordConfirm(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:263 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:275 | confirmed |
+| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:277 | confirmed |
+| LoginPage | input | ログイン状態を保持 | 「ログイン状態を保持」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setRemember(e.target.checked) | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
 
 ## UI 操作要素の全量
 
-| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| LoginHeroGraphic | svg | 未推定 | 未推定 (missing) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginHeroGraphic.tsx:3 | unknown |
-| LoginPage | form | title | title (aria-label) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onSubmit=onSubmit | apps/web/src/features/auth/components/LoginPage.tsx:213 | confirmed |
-| LoginPage | label | 新しいパスワード | 新しいパスワード (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:220 | confirmed |
-| LoginPage | input | 新しいパスワード | 新しいパスワード (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setNewPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:221 | confirmed |
-| LoginPage | label | 新しいパスワード（確認） | 新しいパスワード（確認） (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:230 | confirmed |
-| LoginPage | input | 新しいパスワード（確認） | 新しいパスワード（確認） (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setConfirmPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:231 | confirmed |
-| LoginPage | label | メールアドレス | メールアドレス (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:242 | confirmed |
-| LoginPage | input | メールアドレス | メールアドレス (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:243 | confirmed |
-| LoginPage | label | 確認コード | 確認コード (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:244 | confirmed |
-| LoginPage | input | 確認コード | 確認コード (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setConfirmationCode(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:245 | confirmed |
-| LoginPage | label | メールアドレス | メールアドレス (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:257 | confirmed |
-| LoginPage | input | メールアドレス | メールアドレス (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:258 | confirmed |
-| LoginPage | label | パスワード | パスワード (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:259 | confirmed |
-| LoginPage | input | パスワード | パスワード (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:260 | confirmed |
-| LoginPage | label | パスワード（確認） | パスワード（確認） (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:262 | confirmed |
-| LoginPage | input | パスワード（確認） | パスワード（確認） (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setSignUpPasswordConfirm(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:263 | confirmed |
-| LoginPage | label | メールアドレス | メールアドレス (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:274 | confirmed |
-| LoginPage | input | メールアドレス | メールアドレス (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:275 | confirmed |
-| LoginPage | label | パスワード | パスワード (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:276 | confirmed |
-| LoginPage | input | パスワード | パスワード (aria-label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:277 | confirmed |
-| LoginPage | label | ログイン状態を保持 | ログイン状態を保持 (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
-| LoginPage | input | ログイン状態を保持 | ログイン状態を保持 (label) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onChange=(e) => setRemember(e.target.checked) | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
-| LoginPage | button | isSubmitting && <LoadingSpinner className="button-spinner" /> / submitLabel | isSubmitting && <LoadingSpinner className="button-spinner" /> / submitLabel (visible-text) | disabled=isSubmitting \|\| !isCurrentPasswordValid | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/features/auth/components/LoginPage.tsx:285 | confirmed |
-| LoginPage | button | アカウント作成 | アカウント作成 (visible-text) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => switchMode("signUp") | apps/web/src/features/auth/components/LoginPage.tsx:293 | confirmed |
-| LoginPage | button | 確認コード入力 | 確認コード入力 (visible-text) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => switchMode("confirmSignUp") | apps/web/src/features/auth/components/LoginPage.tsx:294 | confirmed |
-| LoginPage | button | サインインへ戻る | サインインへ戻る (visible-text) | disabled=isSubmitting | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | onClick=() => switchMode("signIn") | apps/web/src/features/auth/components/LoginPage.tsx:297 | confirmed |
+| コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| LoginHeroGraphic | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | role: img | - | apps/web/src/features/auth/components/LoginHeroGraphic.tsx:3 | unknown |
+| LoginPage | form | title | 「title」を入力・送信するフォーム。 | 説明参照: error ? "login-error" : notice ? "login-notice" : undefined | onSubmit=onSubmit | apps/web/src/features/auth/components/LoginPage.tsx:213 | confirmed |
+| LoginPage | label | 新しいパスワード | 「新しいパスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:220 | confirmed |
+| LoginPage | input | 新しいパスワード | 「新しいパスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setNewPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:221 | confirmed |
+| LoginPage | label | 新しいパスワード（確認） | 「新しいパスワード（確認）」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:230 | confirmed |
+| LoginPage | input | 新しいパスワード（確認） | 「新しいパスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:231 | confirmed |
+| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:242 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:243 | confirmed |
+| LoginPage | label | 確認コード | 「確認コード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:244 | confirmed |
+| LoginPage | input | 確認コード | 「確認コード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setConfirmationCode(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:245 | confirmed |
+| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:257 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:258 | confirmed |
+| LoginPage | label | パスワード | 「パスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:259 | confirmed |
+| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:260 | confirmed |
+| LoginPage | label | パスワード（確認） | 「パスワード（確認）」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:262 | confirmed |
+| LoginPage | input | パスワード（確認） | 「パスワード（確認）」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setSignUpPasswordConfirm(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:263 | confirmed |
+| LoginPage | label | メールアドレス | 「メールアドレス」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:274 | confirmed |
+| LoginPage | input | メールアドレス | 「メールアドレス」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setEmail(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:275 | confirmed |
+| LoginPage | label | パスワード | 「パスワード」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:276 | confirmed |
+| LoginPage | input | パスワード | 「パスワード」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setPassword(e.target.value) | apps/web/src/features/auth/components/LoginPage.tsx:277 | confirmed |
+| LoginPage | label | ログイン状態を保持 | 「ログイン状態を保持」に紐づく入力ラベル。 | - | - | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
+| LoginPage | input | ログイン状態を保持 | 「ログイン状態を保持」を入力または選択する項目。 | 状態: disabled=isSubmitting | onChange=(e) => setRemember(e.target.checked) | apps/web/src/features/auth/components/LoginPage.tsx:281 | confirmed |
+| LoginPage | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=isSubmitting \|\| !isCurrentPasswordValid | - | apps/web/src/features/auth/components/LoginPage.tsx:285 | unknown |
+| LoginPage | button | アカウント作成 | 「アカウント作成」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signUp") | apps/web/src/features/auth/components/LoginPage.tsx:293 | confirmed |
+| LoginPage | button | 確認コード入力 | 「確認コード入力」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("confirmSignUp") | apps/web/src/features/auth/components/LoginPage.tsx:294 | confirmed |
+| LoginPage | button | サインインへ戻る | 「サインインへ戻る」を実行するボタン。 | 状態: disabled=isSubmitting | onClick=() => switchMode("signIn") | apps/web/src/features/auth/components/LoginPage.tsx:297 | confirmed |

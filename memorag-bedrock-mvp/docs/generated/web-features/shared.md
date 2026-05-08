@@ -17,10 +17,10 @@
 
 ## コンポーネント
 
-| コンポーネント | 役割 | ファイル | export | 使用 JSX 要素 |
-| --- | --- | --- | --- | --- |
-| Icon | 画面または画面内 UI コンポーネント | apps/web/src/shared/components/Icon.tsx | Icon | path, svg |
-| LoadingSpinner | 画面または画面内 UI コンポーネント | apps/web/src/shared/components/LoadingSpinner.tsx | LoadingSpinner, LoadingStatus | LoadingSpinner, div, span |
+| コンポーネント | 説明 | 役割 | ファイル | export | 使用 JSX 要素 |
+| --- | --- | --- | --- | --- | --- |
+| Icon | Icon は 共通 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/shared/components/Icon.tsx | Icon | path, svg |
+| LoadingSpinner | LoadingSpinner は 共通 領域の 画面または画面内 UI コンポーネント です。単独画面ではなく、他の UI から利用されます。 | 画面または画面内 UI コンポーネント | apps/web/src/shared/components/LoadingSpinner.tsx | LoadingSpinner, LoadingStatus | LoadingSpinner, div, span |
 
 ## 主なボタン・リンク
 
@@ -36,6 +36,6 @@
 
 ## UI 操作要素の全量
 
-| コンポーネント | 要素 | ラベル | アクセシブル名 | 状態 | a11y | ハンドラ | 場所 | 確度 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Icon | svg | getIconPath(name) | getIconPath(name) (visible-text) | - | ok: 日本語のアクセシブル名または表示テキストを確認できます。 | - | apps/web/src/shared/components/Icon.tsx:26 | confirmed |
+| コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Icon | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/components/Icon.tsx:26 | unknown |

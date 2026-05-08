@@ -177,7 +177,6 @@ function extractTextFromChildren(children) {
     }
     if (ts.isJsxExpression(child) && child.expression) {
       if (ts.isStringLiteral(child.expression) || ts.isNoSubstitutionTemplateLiteral(child.expression)) values.push(child.expression.text)
-      else values.push(truncate(nodeText(child.expression), 80))
     }
     if (ts.isJsxElement(child)) {
       values.push(...extractTextFromChildren(child.children))
@@ -353,21 +352,72 @@ function summarizeLabels(items, limit = 8) {
   return `${visible.join("、")}${suffix}`
 }
 
-function summarizeA11yStatus(items) {
-  const counts = { ok: 0, warning: 0, missing: 0 }
-  for (const item of items) {
-    if (item.a11y?.status in counts) counts[item.a11y.status] += 1
-  }
-  return `ok ${counts.ok} / warning ${counts.warning} / missing ${counts.missing}`
+function readableText(value) {
+  const text = String(value ?? "").replace(/\s+/g, " ").trim()
+  if (!text || text === "未推定") return ""
+  const quotedJapanese = [...text.matchAll(/"([^"]*[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}][^"]*)"/gu)].map((match) => match[1])
+  if (quotedJapanese.length > 0) return truncate(uniq(quotedJapanese).join(" / "), 100)
+  const parts = text.split(/\s*\/\s*/).map((part) => part.trim()).filter(Boolean)
+  const readable = parts.filter((part) => {
+    if (/[<>{}()[\]`]|=>|&&|\|\||\?\s|===|!==|\.map|\.trim|className|LoadingSpinner|Icon/.test(part)) return false
+    if (/^[a-zA-Z_$][\w$]*(\.[a-zA-Z_$][\w$]*)*$/.test(part)) return false
+    return true
+  })
+  return truncate((readable.length > 0 ? readable : parts).join(" / "), 100)
 }
 
-function a11yStateText(item) {
-  return item.a11y?.state?.length > 0 ? item.a11y.state.join("<br>") : "-"
+function displayLabel(item) {
+  return readableText(item.a11y?.accessibleName) || readableText(item.label) || inferredLabel(item) || "未推定"
 }
 
-function a11yStatusText(item) {
-  if (!item.a11y) return "-"
-  return `${item.a11y.status}: ${item.a11y.reason}`
+function inferredLabel(item) {
+  const handlers = item.handlers.map((handler) => `${handler.name}=${handler.value}`).join(" ")
+  if (item.element === "a" && item.component === "AssistantAnswer") return "参照元"
+  if (/onAdditionalQuestion/.test(handlers)) return "追加質問候補"
+  if (/onSelectPrompt/.test(handlers)) return "質問例"
+  if (/copyText\(message\.text\)/.test(handlers)) return "回答をコピー"
+  if (/copyPrompt/.test(handlers)) return "プロンプトをコピー"
+  return ""
+}
+
+function interactionDescription(item) {
+  const name = displayLabel(item)
+  if (!name || name === "未推定") return `${item.element} 要素。静的解析では具体的な操作名を推定できません。`
+  if (item.element === "button") return `「${name}」を実行するボタン。`
+  if (item.element === "a") return `「${name}」へ移動するリンク。`
+  if (item.element === "form") return `「${name}」を入力・送信するフォーム。`
+  if (item.element === "input") return `「${name}」を入力または選択する項目。`
+  if (item.element === "select") return `「${name}」を選ぶ選択項目。`
+  if (item.element === "textarea") return `「${name}」を複数行で入力する項目。`
+  if (item.element === "summary") return `「${name}」の詳細を開閉する要素。`
+  if (item.element === "label") return `「${name}」に紐づく入力ラベル。`
+  return `「${name}」を表す ${item.element} 要素。`
+}
+
+function interactionSupplement(item) {
+  const parts = []
+  if (item.a11y?.descriptionRefs && item.a11y.descriptionRefs !== "-") parts.push(`説明参照: ${item.a11y.descriptionRefs}`)
+  if (item.a11y?.role && item.a11y.role !== "-") parts.push(`role: ${item.a11y.role}`)
+  if (item.a11y?.state?.length > 0) parts.push(`状態: ${item.a11y.state.join(", ")}`)
+  return parts.length > 0 ? parts.join("<br>") : "-"
+}
+
+function summarizeInteractionDescriptions(items, limit = 6) {
+  const descriptions = uniq(items.map((item) => interactionDescription(item)).filter((description) => {
+    return !/[{}?$`]|=>|\?\?|\.[a-zA-Z]/.test(description) && !description.includes("静的解析では具体的な操作名")
+  }))
+  if (descriptions.length === 0) return "-"
+  const visible = descriptions.slice(0, limit)
+  const suffix = descriptions.length > limit ? ` ほか ${descriptions.length - limit} 件` : ""
+  return `${visible.join("<br>")}${suffix}`
+}
+
+function componentDescription(component, inventory) {
+  const name = componentName(component)
+  const screens = inventory.screens.filter((screen) => viewFeatures[screen.view] === component.feature).map((screen) => screen.label)
+  const feature = featureLabels[component.feature] ?? component.feature
+  const screenText = screens.length > 0 ? `関連画面: ${screens.join("、")}。` : "単独画面ではなく、他の UI から利用されます。"
+  return `${name} は ${feature} 領域の ${roleFromComponent(component)} です。${screenText}`
 }
 
 function roleFromComponent(component) {
@@ -528,7 +578,7 @@ function collectInteractions(sourceFile, filePath) {
     const attrs = getAttributes(jsxNode.attributes)
     const handlers = attrs.filter((attr) => handlerAttribute.test(attr.name))
     const isIntrinsic = intrinsicUiElements.has(tagName)
-    const isCustomAction = /^[A-Z]/.test(tagName) && (handlers.length > 0 || /(Button|Link|Form)$/.test(tagName))
+    const isCustomAction = /^[A-Z]/.test(tagName) && /(Button|Link|Form)$/.test(tagName)
     if (isIntrinsic || isCustomAction) {
       const line = sourceFile.getLineAndCharacterOfPosition(jsxNode.getStart()).line + 1
       const label = getElementLabel(node)
@@ -540,6 +590,7 @@ function collectInteractions(sourceFile, filePath) {
         feature: getFeature(filePath),
         component: findNearestFunctionName(node),
         element: tagName,
+        isIntrinsic,
         label,
         a11y,
         handlers,
@@ -630,7 +681,7 @@ function renderOverview(inventory) {
 - 各画面がどの画面コンポーネントに対応するか。
 - 機能領域ごとに、どのコンポーネントと UI 操作要素があるか。
 - ボタン、リンク、フォーム、入力欄、主要 handler がどのファイルにあるか。
-- アクセシブル名、説明参照、状態属性、アクセシビリティ上の不足候補がどこにあるか。
+- アクセシブル名、説明参照、状態属性から、各操作要素が何をするものか。
 
 ## 全体サマリ
 
@@ -641,7 +692,7 @@ ${markdownTable(
     ["機能領域", inventory.features.length, "[web-features.md](web-features.md)"],
     ["コンポーネント", inventory.components.length, "[web-components.md](web-components.md)"],
     ["UI 操作要素", inventory.interactions.length, "[web-features.md](web-features.md)"],
-    ["a11y 注意/不足", inventory.interactions.filter((item) => item.a11y?.status !== "ok").length, "[web-accessibility.md](web-accessibility.md)"]
+    ["操作説明", inventory.interactions.length, "[web-accessibility.md](web-accessibility.md)"]
   ]
 )}
 
@@ -650,7 +701,7 @@ ${markdownTable(
 1. [画面一覧](web-screens.md) で、ユーザーが見る画面と権限条件を把握する。
 2. [機能一覧](web-features.md) で、機能領域と関連画面の対応を見る。
 3. 気になる機能の詳細ファイルを開き、ボタン、フォーム、handler、実装ファイルを確認する。
-4. [アクセシビリティ一覧](web-accessibility.md) で、アクセシブル名や状態属性の不足候補を確認する。
+4. [操作説明一覧](web-accessibility.md) で、ボタンや入力項目が支援技術にどう説明されるかを確認する。
 5. [コンポーネント一覧](web-components.md) で、画面を構成する部品と JSX 使用要素を確認する。
 
 ## 生成されるファイル
@@ -663,7 +714,7 @@ ${markdownTable(
     ["[web-features.md](web-features.md)", "機能別詳細ファイルへの索引"],
     ["[web-features/*.md](web-features/)", "機能ごとの画面、コンポーネント、UI 操作要素"],
     ["[web-components.md](web-components.md)", "コンポーネント、export、役割、関連画面"],
-    ["[web-accessibility.md](web-accessibility.md)", "アクセシブル名、説明参照、状態属性、注意/不足候補"],
+    ["[web-accessibility.md](web-accessibility.md)", "アクセシブル名、説明参照、状態属性に基づく UI 操作説明"],
     ["web-ui-inventory.json", "CI や将来の可視化に使える機械可読データ"]
   ]
 )}
@@ -713,7 +764,7 @@ function renderFeatures(inventory) {
 ## 機能別ファイル
 
 ${markdownTable(
-  ["機能", "feature", "概要", "関連画面", "コンポーネント数", "UI 操作要素数", "a11y", "詳細"],
+  ["機能", "feature", "概要", "関連画面", "コンポーネント数", "UI 操作要素数", "主な操作説明", "詳細"],
   inventory.features.map((feature) => [
     feature.label,
     feature.feature,
@@ -721,7 +772,7 @@ ${markdownTable(
     feature.screens.length > 0 ? feature.screens.join(", ") : "-",
     feature.componentCount,
     feature.interactionCount,
-    summarizeA11yStatus(inventory.interactions.filter((item) => item.feature === feature.feature)),
+    summarizeInteractionDescriptions(inventory.interactions.filter((item) => item.feature === feature.feature), 3),
     `[${featureFileName(feature.feature)}](${featureLink(feature.feature)})`
   ])
 )}
@@ -758,9 +809,10 @@ ${screens.length > 0 ? markdownTable(
 ## コンポーネント
 
 ${markdownTable(
-  ["コンポーネント", "役割", "ファイル", "export", "使用 JSX 要素"],
+  ["コンポーネント", "説明", "役割", "ファイル", "export", "使用 JSX 要素"],
   components.map((component) => [
     componentName(component),
+    componentDescription(component, inventory),
     roleFromComponent(component),
     component.file,
     component.exports.length > 0 ? component.exports.join(", ") : "-",
@@ -771,14 +823,13 @@ ${markdownTable(
 ## 主なボタン・リンク
 
 ${buttons.length > 0 ? markdownTable(
-  ["コンポーネント", "要素", "ラベル", "アクセシブル名", "状態", "a11y", "ハンドラ", "場所", "確度"],
+  ["コンポーネント", "要素", "ラベル", "操作説明", "状態・補足", "ハンドラ", "場所", "確度"],
   buttons.map((item) => [
     item.component,
     item.element,
-    item.label,
-    `${item.a11y.accessibleName} (${item.a11y.accessibleNameSource})`,
-    a11yStateText(item),
-    a11yStatusText(item),
+    displayLabel(item),
+    interactionDescription(item),
+    interactionSupplement(item),
     item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
     `${item.file}:${item.line}`,
     item.certainty
@@ -788,12 +839,12 @@ ${buttons.length > 0 ? markdownTable(
 ## フォーム
 
 ${forms.length > 0 ? markdownTable(
-  ["コンポーネント", "ラベル", "説明参照", "a11y", "送信ハンドラ", "場所", "確度"],
+  ["コンポーネント", "ラベル", "フォーム説明", "状態・補足", "送信ハンドラ", "場所", "確度"],
   forms.map((item) => [
     item.component,
-    item.label,
-    item.a11y.descriptionRefs,
-    a11yStatusText(item),
+    displayLabel(item),
+    interactionDescription(item),
+    interactionSupplement(item),
     item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
     `${item.file}:${item.line}`,
     item.certainty
@@ -803,15 +854,13 @@ ${forms.length > 0 ? markdownTable(
 ## 入力項目
 
 ${fields.length > 0 ? markdownTable(
-  ["コンポーネント", "要素", "ラベル", "アクセシブル名", "説明参照", "状態", "a11y", "ハンドラ", "場所", "確度"],
+  ["コンポーネント", "要素", "ラベル", "入力項目の説明", "状態・補足", "ハンドラ", "場所", "確度"],
   fields.map((item) => [
     item.component,
     item.element,
-    item.label,
-    `${item.a11y.accessibleName} (${item.a11y.accessibleNameSource})`,
-    item.a11y.descriptionRefs,
-    a11yStateText(item),
-    a11yStatusText(item),
+    displayLabel(item),
+    interactionDescription(item),
+    interactionSupplement(item),
     item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
     `${item.file}:${item.line}`,
     item.certainty
@@ -821,14 +870,13 @@ ${fields.length > 0 ? markdownTable(
 ## UI 操作要素の全量
 
 ${markdownTable(
-  ["コンポーネント", "要素", "ラベル", "アクセシブル名", "状態", "a11y", "ハンドラ", "場所", "確度"],
+  ["コンポーネント", "要素", "ラベル", "UI 説明", "状態・補足", "ハンドラ", "場所", "確度"],
   interactions.map((item) => [
     item.component,
     item.element,
-    item.label,
-    `${item.a11y.accessibleName} (${item.a11y.accessibleNameSource})`,
-    a11yStateText(item),
-    a11yStatusText(item),
+    displayLabel(item),
+    interactionDescription(item),
+    interactionSupplement(item),
     item.handlers.length > 0 ? item.handlers.map((handler) => `${handler.name}=${handler.value}`).join("<br>") : "-",
     `${item.file}:${item.line}`,
     item.certainty
@@ -843,11 +891,12 @@ function renderComponents(inventory) {
 ## コンポーネントサマリ
 
 ${markdownTable(
-  ["機能", "関連画面", "コンポーネント", "役割", "ファイル", "export", "使用 JSX 要素", "確度"],
+  ["機能", "関連画面", "コンポーネント", "説明", "役割", "ファイル", "export", "使用 JSX 要素", "確度"],
   inventory.components.map((component) => [
     `[${featureLabels[component.feature] ?? component.feature}](${featureLink(component.feature)})`,
     inventory.screens.filter((screen) => viewFeatures[screen.view] === component.feature).map((screen) => screen.label).join(", ") || "-",
     componentName(component),
+    componentDescription(component, inventory),
     roleFromComponent(component),
     component.file,
     component.exports.length > 0 ? component.exports.join(", ") : "-",
@@ -859,63 +908,58 @@ ${markdownTable(
 }
 
 function renderAccessibility(inventory) {
-  const findings = inventory.interactions.filter((item) => item.a11y?.status !== "ok")
   const byFeature = inventory.features.map((feature) => {
     const items = inventory.interactions.filter((item) => item.feature === feature.feature)
     return [
       feature.label,
       feature.feature,
       items.length,
-      items.filter((item) => item.a11y?.status === "ok").length,
-      items.filter((item) => item.a11y?.status === "warning").length,
-      items.filter((item) => item.a11y?.status === "missing").length,
+      summarizeInteractionDescriptions(items, 4),
       `[${featureFileName(feature.feature)}](${featureLink(feature.feature)})`
     ]
   })
 
-  return `${renderHeader("Web アクセシビリティメタデータ一覧", inventory)}
+  return `${renderHeader("Web UI 操作説明一覧", inventory)}
 
-## 判定方針
+## この資料で分かること
 
-- 対象: button、link、form、input、select、textarea、summary、img/svg、handler を持つカスタム UI。
-- ok: 日本語の表示テキスト、\`aria-label\`、\`aria-labelledby\`、\`title\`、\`alt\` などからアクセシブル名を推定できる。
-- warning: アイコン中心、削除/停止/公開/切替など影響が大きい操作、または SVG の意味付けに追加説明が望ましい。
-- missing: 操作対象なのにアクセシブル名を推定できない。
-- 静的解析のため、実行時に組み立てる label や CSS による非表示制御は推定を含みます。最終判断は画面確認と支援技術での確認を併用してください。
+- 各ボタン、リンク、フォーム、入力項目が何をする UI なのか。
+- 支援技術へ伝わる名前、説明参照、現在地、展開状態、選択状態、無効状態など。
+- 初めてプロジェクトを見る人が、画面を開かずに主要操作の意味を把握するための一覧。
+
+静的解析のため、実行時に組み立てる label や条件付き表示は推定を含みます。実画面での読み上げ確認が必要な場合は、この一覧を入口にしてください。
 
 ## 機能別サマリ
 
 ${markdownTable(
-  ["機能", "feature", "操作要素", "ok", "warning", "missing", "詳細"],
+  ["機能", "feature", "操作要素", "主な UI 説明", "詳細"],
   byFeature
 )}
 
-## 注意・不足候補
+## UI 操作説明
 
-${findings.length > 0 ? markdownTable(
-  ["機能", "コンポーネント", "要素", "ラベル", "アクセシブル名", "説明参照", "状態", "理由", "場所"],
-  findings.map((item) => [
+${markdownTable(
+  ["機能", "コンポーネント", "要素", "ラベル", "UI 説明", "状態・補足", "場所"],
+  inventory.interactions.map((item) => [
     featureLabels[item.feature] ?? item.feature,
     item.component,
     item.element,
-    item.label,
-    `${item.a11y.accessibleName} (${item.a11y.accessibleNameSource})`,
-    item.a11y.descriptionRefs,
-    a11yStateText(item),
-    a11yStatusText(item),
+    displayLabel(item),
+    interactionDescription(item),
+    interactionSupplement(item),
     `${item.file}:${item.line}`
   ])
-) : "注意・不足候補は静的解析では見つかりませんでした。"}
+)}
 
-## メタデータとして仕様書に使える情報
+## 仕様書での読み替え
 
 ${markdownTable(
-  ["項目", "仕様書での使い方"],
+  ["抽出値", "この資料での意味"],
   [
-    ["アクセシブル名", "ボタンや入力項目を、見た目ではなく操作目的として日本語で説明する。"],
-    ["説明参照", "エラー、補足、リスク説明がどの UI と紐づくかを確認する。"],
-    ["状態属性", "現在地、展開状態、選択状態、処理中、無効状態を画面仕様に記載する。"],
-    ["注意・不足候補", "PR self-review と a11y 修正タスクの入口にする。"]
+    ["アクセシブル名", "ボタンや入力項目が利用者にどう説明されるか。"],
+    ["説明参照", "補足、制約、エラー、リスク説明がどの UI と結びつくか。"],
+    ["状態属性", "現在地、展開状態、選択状態、処理中、無効状態など、操作時の状態。"],
+    ["場所", "説明の元になった JSX のファイルと行番号。"]
   ]
 )}
 `
