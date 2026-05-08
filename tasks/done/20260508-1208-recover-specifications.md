@@ -1,6 +1,6 @@
 # 作業レポート起点の仕様復元
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -34,16 +34,16 @@
 
 ## 受け入れ条件
 
-- [ ] `00_input_inventory.md` に入力ソース ID、種別、日付、信頼度が記録されている。
-- [ ] `01_report_facts.md` と `02_tasks.md` に、根拠付き事実と原子的 task が記録されている。
-- [ ] `03_acceptance_criteria.md` に、各 task の正常系・異常系・権限・境界値・RAG 品質・セキュリティの受け入れ条件または gap がある。
-- [ ] `04_e2e_scenarios.md` と `05_operation_expectation_groups.md` に、日本語 E2E、非UI検証、OP/EXP が記録されている。
-- [ ] `06_requirements.md` と `07_specifications.md` に、画面操作をそのまま要件化しない抽象化済みの要件・仕様がある。
-- [ ] `08_traceability_matrix.md`、`09_gap_analysis.md`、`10_open_questions.md` に双方向トレース、欠落、未確定事項が記録されている。
-- [ ] `scripts/validate_spec_recovery.py docs/spec-recovery` を実行し、警告を解消または意図を記録している。
-- [ ] 変更範囲に対して `git diff --check` と可能な pre-commit 検証を実行している。
-- [ ] 作業完了レポートを `reports/working/` に保存している。
-- [ ] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿している。
+- [x] `00_input_inventory.md` に入力ソース ID、種別、日付、信頼度が記録されている。
+- [x] `01_report_facts.md` と `02_tasks.md` に、根拠付き事実と原子的 task が記録されている。
+- [x] `03_acceptance_criteria.md` に、各 task の正常系・異常系・権限・境界値・RAG 品質・セキュリティの受け入れ条件または gap がある。
+- [x] `04_e2e_scenarios.md` と `05_operation_expectation_groups.md` に、日本語 E2E、非UI検証、OP/EXP が記録されている。
+- [x] `06_requirements.md` と `07_specifications.md` に、画面操作をそのまま要件化しない抽象化済みの要件・仕様がある。
+- [x] `08_traceability_matrix.md`、`09_gap_analysis.md`、`10_open_questions.md` に双方向トレース、欠落、未確定事項が記録されている。
+- [x] `scripts/validate_spec_recovery.py docs/spec-recovery` を実行し、警告を解消または意図を記録している。
+- [x] 変更範囲に対して `git diff --check` と可能な pre-commit 検証を実行している。
+- [x] 作業完了レポートを `reports/working/` に保存している。
+- [x] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿している。
 
 ## 検証計画
 
@@ -62,3 +62,12 @@
 
 - 入力ソースが多いため、初回は全量網羅よりも代表ソースに基づく高信頼な初版を優先する。
 - 実装やテストから推定した仕様は `inferred` とし、確定仕様として扱わない。
+
+## 完了メモ
+
+- 完了日: 2026-05-08
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/189
+- 成果物: `docs/spec-recovery/00_input_inventory.md` から `10_open_questions.md`、`traceability_matrix.csv`
+- 作業レポート: `reports/working/20260508-1217-spec-recovery-initial.md`
+- PR コメント: 受け入れ条件確認コメント、セルフレビューコメントを投稿済み
+- PR 作成方法: GitHub Apps の PR 作成ツールが利用可能一覧に出なかったため、`gh pr create` で代替
