@@ -358,17 +358,6 @@ test("uses default benchmark source when CDK context is omitted", () => {
   assert.equal(project.Properties.SourceVersion, "main")
 })
 
-test("allows CDK context to override benchmark source", () => {
-  const project = getBenchmarkProject(synthesize({
-    benchmarkSourceOwner: "example-owner",
-    benchmarkSourceRepo: "example-repo",
-    benchmarkSourceBranch: "release"
-  }))
-
-  assert.equal(project.Properties.Source.Location, "https://github.com/example-owner/example-repo.git")
-  assert.equal(project.Properties.SourceVersion, "release")
-})
-
 test("keeps bootstrap IAM resources aligned with the tag strategy", () => {
   const bootstrapTemplate = readFileSync(path.join(__dirname, "../bootstrap/github-actions-oidc-role.yaml"), "utf-8")
 

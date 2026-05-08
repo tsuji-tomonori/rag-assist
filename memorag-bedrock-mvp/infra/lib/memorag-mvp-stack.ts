@@ -57,14 +57,6 @@ export class MemoRagMvpStack extends Stack {
   constructor(scope: Construct, id: string, props?: MemoRagMvpStackProps) {
     super(scope, id, props)
 
-    const stringContext = (key: string, defaultValue: string): string => {
-      const value = this.node.tryGetContext(key)
-      if (typeof value !== "string" || value.trim() === "") {
-        return defaultValue
-      }
-      return value.trim()
-    }
-
     const deploymentEnvironment = String(this.node.tryGetContext("deploymentEnvironment") ?? "dev")
     const costCenter = String(this.node.tryGetContext("costCenter") ?? "memorag-mvp")
     const commonResourceTags = {
@@ -85,9 +77,6 @@ export class MemoRagMvpStack extends Stack {
     const evidenceVectorIndexName = "evidence-index"
     const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
     const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
-    const benchmarkSourceOwner = stringContext("benchmarkSourceOwner", defaultBenchmarkSource.owner)
-    const benchmarkSourceRepo = stringContext("benchmarkSourceRepo", defaultBenchmarkSource.repo)
-    const benchmarkSourceBranch = stringContext("benchmarkSourceBranch", defaultBenchmarkSource.branch)
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -691,9 +680,9 @@ export class MemoRagMvpStack extends Stack {
     })
     const benchmarkProject = new codebuild.Project(this, "BenchmarkProject", {
       source: codebuild.Source.gitHub({
-        owner: benchmarkSourceOwner,
-        repo: benchmarkSourceRepo,
-        branchOrRef: benchmarkSourceBranch
+        owner: defaultBenchmarkSource.owner,
+        repo: defaultBenchmarkSource.repo,
+        branchOrRef: defaultBenchmarkSource.branch
       }),
       encryptionKey: benchmarkProjectKey,
       environment: {
