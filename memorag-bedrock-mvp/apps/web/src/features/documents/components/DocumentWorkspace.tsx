@@ -104,7 +104,7 @@ export function DocumentWorkspace({
     <section className="document-workspace" aria-label="ドキュメント管理">
       <header className="document-page-header">
         <div>
-          <button className="document-back-button" type="button" onClick={onBack} title="管理者設定へ戻る">
+          <button className="document-back-button" type="button" onClick={onBack} title="管理者設定へ戻る" aria-label="管理者設定へ戻る">
             <Icon name="chevron" />
           </button>
           <div>
@@ -124,7 +124,7 @@ export function DocumentWorkspace({
       <div className="document-management-layout">
         <aside className="document-folder-panel" aria-label="フォルダツリー">
           <div className="folder-tree">
-            <button className={`folder-tree-row ${selectedFolderId === "all" ? "active" : ""}`} type="button" onClick={() => setSelectedFolderId("all")}>
+            <button className={`folder-tree-row ${selectedFolderId === "all" ? "active" : ""}`} type="button" aria-current={selectedFolderId === "all" ? "true" : undefined} onClick={() => setSelectedFolderId("all")}>
               <Icon name="folder" />
               <span>すべてのドキュメント</span>
               <strong>{documents.length}</strong>
@@ -140,6 +140,7 @@ export function DocumentWorkspace({
                   className={`folder-tree-row child ${selectedFolder?.id === folder.id ? "active" : ""}`}
                   type="button"
                   key={folder.id}
+                  aria-current={selectedFolder?.id === folder.id ? "true" : undefined}
                   onClick={() => {
                     setSelectedFolderId(folder.id)
                     if (folder.group) onUploadGroupChange(folder.group.groupId)
@@ -203,6 +204,7 @@ export function DocumentWorkspace({
                     <button
                       type="button"
                       title={`${document.fileName}の再インデックスをステージング`}
+                      aria-label={`${document.fileName}の再インデックスをステージング`}
                       disabled={!canReindex || loading}
                       onClick={() => void onStageReindex(document.documentId)}
                     >
@@ -212,6 +214,7 @@ export function DocumentWorkspace({
                       type="button"
                       className="delete-document-button"
                       title={`${document.fileName}を削除`}
+                      aria-label={`${document.fileName}を削除`}
                       disabled={!canDelete || loading}
                       onClick={() => onDelete(document.documentId)}
                     >
@@ -321,7 +324,7 @@ export function DocumentWorkspace({
               <label className="compact-file-input" aria-label="文書アップロード">
                 <Icon name="download" />
                 <span>{uploadFile ? uploadFile.name : "ファイルをアップロード"}</span>
-                <input type="file" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
+                <input type="file" aria-label="アップロードする文書を選択" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
               </label>
               <button type="submit" disabled={!canWrite || !uploadFile || loading}>
                 {loading && <LoadingSpinner className="button-spinner" />}

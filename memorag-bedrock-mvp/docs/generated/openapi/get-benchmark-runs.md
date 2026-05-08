@@ -48,7 +48,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 52 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 54 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -73,6 +73,8 @@ Media type: `application/json`
 | `benchmarkRuns[].executionArn` | `string` | no | `response.benchmarkRuns[].executionArn` の値。項目名は execution arn を表します。 | - |
 | `benchmarkRuns[].codeBuildBuildId` | `string` | no | `response.benchmarkRuns[].codeBuildBuildId` の値。項目名は code build build id を表します。 | - |
 | `benchmarkRuns[].codeBuildLogUrl` | `string:uri` | no | `response.benchmarkRuns[].codeBuildLogUrl` の値。項目名は code build log url を表します。 | - |
+| `benchmarkRuns[].codeBuildLogGroupName` | `string` | no | `response.benchmarkRuns[].codeBuildLogGroupName` の値。項目名は code build log group name を表します。 | - |
+| `benchmarkRuns[].codeBuildLogStreamName` | `string` | no | `response.benchmarkRuns[].codeBuildLogStreamName` の値。項目名は code build log stream name を表します。 | - |
 | `benchmarkRuns[].modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
 | `benchmarkRuns[].embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
 | `benchmarkRuns[].topK` | `integer` | no | 検索で取得する上位件数。 | - |

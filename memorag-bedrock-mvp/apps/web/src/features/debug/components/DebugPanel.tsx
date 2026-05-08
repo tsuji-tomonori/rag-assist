@@ -111,9 +111,9 @@ export function DebugPanel({
             </button>
           )}
           {!envelope && (
-            <button type="button" onClick={onToggleAll}>{allExpanded ? "すべて閉じる" : "すべて展開"}</button>
+            <button type="button" aria-expanded={allExpanded} onClick={onToggleAll}>{allExpanded ? "すべて閉じる" : "すべて展開"}</button>
           )}
-          <button type="button" title="拡大表示">
+          <button type="button" title="拡大表示" aria-label="デバッグパネルを拡大表示">
             <Icon name="expand" />
           </button>
         </div>
@@ -151,7 +151,7 @@ export function DebugPanel({
               <article className={`debug-step ${step.status} ${pending ? "processing" : ""}`} key={step.id}>
                 <div className="step-index">{step.id}</div>
                 <div className="step-body">
-                  <button className="step-summary" type="button" onClick={() => onToggleStep(step.id)}>
+                  <button className="step-summary" type="button" aria-expanded={expanded} onClick={() => onToggleStep(step.id)}>
                     <span className="step-state">
                       {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={step.status === "warning" ? "warning" : "check"} />}
                     </span>

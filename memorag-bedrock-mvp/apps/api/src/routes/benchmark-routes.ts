@@ -213,4 +213,29 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
       return c.json(download, 200)
     }
   )
+
+  app.openapi(
+    looseRoute({
+      method: "get",
+      path: "/benchmark-runs/{runId}/logs",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download" }),
+      request: {
+        params: z.object({ runId: z.string().min(1) })
+      },
+      responses: {
+        200: { description: "Download benchmark CodeBuild logs as text", content: { "text/plain": { schema: z.string() } } },
+        404: { description: "Benchmark run or CodeBuild logs not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      requirePermission(c.get("user"), "benchmark:download")
+      const { runId } = (c.req as any).valid("param") as { runId: string }
+      const download = await service.getBenchmarkCodeBuildLogText(runId)
+      if (!download) return c.json({ error: "Benchmark CodeBuild logs not found" }, 404)
+      return c.body(download.text, 200, {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Disposition": download.contentDisposition
+      })
+    }
+  )
 }

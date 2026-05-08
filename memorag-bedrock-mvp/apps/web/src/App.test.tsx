@@ -340,6 +340,12 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       const artifact = JSON.parse(String(init.body ?? "{}")).artifact ?? "report"
       return Promise.resolve(response({ url: `https://signed.example/${artifact}`, expiresInSeconds: 900, objectKey: `runs/bench-1/${artifact}` }))
     }
+    if (requestUrl.includes("/benchmark-runs/") && requestUrl.endsWith("/logs") && isGet(init)) {
+      return Promise.resolve(new Response("install\nbuild\n", {
+        status: 200,
+        headers: { "content-type": "text/plain; charset=utf-8" }
+      }))
+    }
     if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
     if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
       const body = JSON.parse(String(init.body ?? "{}")) as ConversationHistoryItem
@@ -868,6 +874,10 @@ describe("App chat and upload flow", () => {
       }
     ]
     const fetchMock = mockAppFetch(["SYSTEM_ADMIN"], [], runs)
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn(() => "blob:benchmark-logs"),
+      revokeObjectURL: vi.fn()
+    })
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
     await renderAuthenticatedApp()
 
@@ -887,9 +897,7 @@ describe("App chat and upload flow", () => {
 
     await userEvent.click(within(failedRow).getByRole("button", { name: "CodeBuildログをダウンロード" }))
     expect(click).toHaveBeenCalled()
-    expect(requestBodies(fetchMock, "/benchmark-runs/bench-failed/download")).toEqual([
-      { artifact: "logs" }
-    ])
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/benchmark-runs\/bench-failed\/logs$/), expect.objectContaining({ headers: expect.any(Object) }))
   })
 
   it("submits with Enter and sends the selected model", async () => {

@@ -210,7 +210,7 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
       <div className="login-panel">
         <h1>社内QAチャットボット</h1>
         <p>{title}</p>
-        <form onSubmit={onSubmit} className="login-form">
+        <form onSubmit={onSubmit} className="login-form" aria-label={title} aria-describedby={error ? "login-error" : notice ? "login-notice" : undefined}>
           {isChangingPassword ? (
             <>
               <div className="login-challenge-summary">
@@ -220,6 +220,7 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
               <label>新しいパスワード</label>
               <input
                 type="password"
+                aria-label="新しいパスワード"
                 placeholder="新しいパスワードを入力"
                 value={newPassword}
                 disabled={isSubmitting}
@@ -229,6 +230,7 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
               <label>新しいパスワード（確認）</label>
               <input
                 type="password"
+                aria-label="新しいパスワード（確認）"
                 placeholder="新しいパスワードを再入力"
                 value={confirmPassword}
                 disabled={isSubmitting}
@@ -238,11 +240,12 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
           ) : mode === "confirmSignUp" ? (
             <>
               <label>メールアドレス</label>
-              <input type="email" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" aria-label="メールアドレス" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
               <label>確認コード</label>
               <input
                 type="text"
                 inputMode="numeric"
+                aria-label="確認コード"
                 placeholder="確認コードを入力"
                 value={confirmationCode}
                 disabled={isSubmitting}
@@ -252,13 +255,14 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
           ) : mode === "signUp" ? (
             <>
               <label>メールアドレス</label>
-              <input type="email" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" aria-label="メールアドレス" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
               <label>パスワード</label>
-              <input type="password" placeholder="パスワードを入力" value={password} disabled={isSubmitting} onChange={(e) => setPassword(e.target.value)} />
+              <input type="password" aria-label="パスワード" placeholder="パスワードを入力" value={password} disabled={isSubmitting} onChange={(e) => setPassword(e.target.value)} />
               <PasswordRequirementList password={password} />
               <label>パスワード（確認）</label>
               <input
                 type="password"
+                aria-label="パスワード（確認）"
                 placeholder="パスワードを再入力"
                 value={signUpPasswordConfirm}
                 disabled={isSubmitting}
@@ -268,16 +272,16 @@ export default function LoginPage({ onLogin, onSignUp, onConfirmSignUp, onComple
           ) : (
             <>
               <label>メールアドレス</label>
-              <input type="email" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" aria-label="メールアドレス" placeholder="メールアドレスを入力" value={email} disabled={isSubmitting} onChange={(e) => setEmail(e.target.value)} />
               <label>パスワード</label>
-              <input type="password" placeholder="パスワードを入力" value={password} disabled={isSubmitting} onChange={(e) => setPassword(e.target.value)} />
+              <input type="password" aria-label="パスワード" placeholder="パスワードを入力" value={password} disabled={isSubmitting} onChange={(e) => setPassword(e.target.value)} />
             </>
           )}
           {!isChangingPassword && mode === "signIn" ? (
             <label className="remember"><input type="checkbox" checked={remember} disabled={isSubmitting} onChange={(e) => setRemember(e.target.checked)} /> ログイン状態を保持</label>
           ) : null}
-          {notice ? <p className="login-success" role="status">{notice}</p> : null}
-          {error ? <p className="login-error" role="alert">{error}</p> : null}
+          {notice ? <p id="login-notice" className="login-success" role="status">{notice}</p> : null}
+          {error ? <p id="login-error" className="login-error" role="alert">{error}</p> : null}
           <button type="submit" disabled={isSubmitting || !isCurrentPasswordValid}>
             {isSubmitting && <LoadingSpinner className="button-spinner" />}
             <span>{submitLabel}</span>

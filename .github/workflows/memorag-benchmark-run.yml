@@ -1,0 +1,286 @@
+name: Run MemoRAG Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub environment name used for AWS credentials and approvals.
+        required: true
+        type: choice
+        options:
+          - dev
+        default: dev
+      aws-region:
+        description: AWS region of the deployed MemoRAG stack.
+        required: true
+        default: us-east-1
+      stack-name:
+        description: CloudFormation stack name for the deployed MemoRAG app.
+        required: true
+        default: MemoRagMvpStack
+      operator-auth-secret-id:
+        description: Optional Secrets Manager secret ID/ARN for a BENCHMARK_OPERATOR or RAG_GROUP_MANAGER user. Defaults to secret BENCHMARK_OPERATOR_AUTH_SECRET_ID.
+        required: false
+        default: ""
+      suite-id:
+        description: Benchmark suite ID to run.
+        required: true
+        type: choice
+        options:
+          - smoke-agent-v1
+          - standard-agent-v1
+          - clarification-smoke-v1
+          - search-smoke-v1
+          - search-standard-v1
+          - allganize-rag-evaluation-ja-v1
+          - mmrag-docqa-v1
+        default: smoke-agent-v1
+      mode:
+        description: Benchmark mode. Must match the selected suite.
+        required: true
+        type: choice
+        options:
+          - agent
+          - search
+        default: agent
+      model-id:
+        description: Bedrock model ID used for answer generation.
+        required: true
+        default: amazon.nova-lite-v1:0
+      embedding-model-id:
+        description: Bedrock model ID used for embeddings.
+        required: true
+        default: amazon.titan-embed-text-v2:0
+      top-k:
+        description: Retrieval topK.
+        required: true
+        default: "6"
+      memory-top-k:
+        description: Memory retrieval topK.
+        required: true
+        default: "4"
+      min-score:
+        description: Minimum retrieval score.
+        required: true
+        default: "0.2"
+      concurrency:
+        description: Benchmark row concurrency.
+        required: true
+        default: "1"
+      wait-for-completion:
+        description: Poll GET /benchmark-runs/{runId} until terminal status.
+        required: true
+        type: boolean
+        default: true
+      poll-interval-seconds:
+        description: Polling interval when wait-for-completion is enabled.
+        required: true
+        default: "30"
+      timeout-minutes:
+        description: Polling timeout when wait-for-completion is enabled.
+        required: true
+        default: "30"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: memorag-benchmark-${{ inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  run-benchmark:
+    name: Start benchmark run
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}
+    timeout-minutes: 360
+    env:
+      AWS_REGION: ${{ inputs.aws-region || 'us-east-1' }}
+      STACK_NAME: ${{ inputs.stack-name || 'MemoRagMvpStack' }}
+      OPERATOR_AUTH_SECRET_ID: ${{ inputs.operator-auth-secret-id || secrets.BENCHMARK_OPERATOR_AUTH_SECRET_ID }}
+      SUITE_ID: ${{ inputs.suite-id || 'smoke-agent-v1' }}
+      BENCHMARK_MODE: ${{ inputs.mode || 'agent' }}
+      MODEL_ID: ${{ inputs.model-id || 'amazon.nova-lite-v1:0' }}
+      EMBEDDING_MODEL_ID: ${{ inputs.embedding-model-id || 'amazon.titan-embed-text-v2:0' }}
+      TOP_K: ${{ inputs.top-k || '6' }}
+      MEMORY_TOP_K: ${{ inputs.memory-top-k || '4' }}
+      MIN_SCORE: ${{ inputs.min-score || '0.2' }}
+      CONCURRENCY: ${{ inputs.concurrency || '1' }}
+      WAIT_FOR_COMPLETION: ${{ inputs.wait-for-completion }}
+      POLL_INTERVAL_SECONDS: ${{ inputs.poll-interval-seconds || '30' }}
+      TIMEOUT_MINUTES: ${{ inputs.timeout-minutes || '30' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Start benchmark through API
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          require_env() {
+            local name="$1"
+            if [ -z "${!name:-}" ]; then
+              echo "::error::${name} is required"
+              exit 1
+            fi
+          }
+
+          require_env AWS_REGION
+          require_env STACK_NAME
+          require_env OPERATOR_AUTH_SECRET_ID
+
+          case "$BENCHMARK_MODE" in
+            agent|search) ;;
+            *) echo "::error::Invalid mode: $BENCHMARK_MODE"; exit 1 ;;
+          esac
+          [[ "$TOP_K" =~ ^[0-9]+$ ]] || { echo "::error::top-k must be an integer"; exit 1; }
+          [[ "$MEMORY_TOP_K" =~ ^[0-9]+$ ]] || { echo "::error::memory-top-k must be an integer"; exit 1; }
+          [[ "$CONCURRENCY" =~ ^[0-9]+$ ]] || { echo "::error::concurrency must be an integer"; exit 1; }
+          [[ "$MIN_SCORE" =~ ^-?[0-9]+([.][0-9]+)?$ ]] || { echo "::error::min-score must be numeric"; exit 1; }
+          [[ "$POLL_INTERVAL_SECONDS" =~ ^[0-9]+$ ]] || { echo "::error::poll-interval-seconds must be an integer"; exit 1; }
+          [[ "$TIMEOUT_MINUTES" =~ ^[0-9]+$ ]] || { echo "::error::timeout-minutes must be an integer"; exit 1; }
+          if [ "$WAIT_FOR_COMPLETION" = "true" ] && [ "$TIMEOUT_MINUTES" -gt 350 ]; then
+            echo "::error::timeout-minutes must be 350 or less when wait-for-completion is true"
+            exit 1
+          fi
+
+          outputs_json="$(aws cloudformation describe-stacks \
+            --stack-name "$STACK_NAME" \
+            --query 'Stacks[0].Outputs' \
+            --output json)"
+
+          api_url="$(jq -r '.[] | select(.OutputKey=="ApiUrl") | .OutputValue' <<<"$outputs_json")"
+          user_pool_id="$(jq -r '.[] | select(.OutputKey=="CognitoUserPoolId") | .OutputValue' <<<"$outputs_json")"
+          app_client_id="$(jq -r '.[] | select(.OutputKey=="CognitoUserPoolClientId") | .OutputValue' <<<"$outputs_json")"
+          require_env api_url
+          require_env user_pool_id
+          require_env app_client_id
+
+          secret_string="$(aws secretsmanager get-secret-value \
+            --secret-id "$OPERATOR_AUTH_SECRET_ID" \
+            --query SecretString \
+            --output text)"
+          echo "::add-mask::$secret_string"
+          operator_id_token="$(jq -r '.idToken // .token // empty' <<<"$secret_string")"
+          if [ -z "$operator_id_token" ]; then
+            username="$(jq -r '.username // empty' <<<"$secret_string")"
+            password="$(jq -r '.password // empty' <<<"$secret_string")"
+            if [ -z "$username" ] || [ -z "$password" ]; then
+              echo "::error::Operator auth secret must contain idToken/token or username/password"
+              exit 1
+            fi
+            echo "::add-mask::$username"
+            echo "::add-mask::$password"
+            auth_parameters="$(jq -cn --arg username "$username" --arg password "$password" '{USERNAME:$username,PASSWORD:$password}')"
+            auth_response="$(aws cognito-idp initiate-auth \
+              --auth-flow USER_PASSWORD_AUTH \
+              --client-id "$app_client_id" \
+              --auth-parameters "$auth_parameters")"
+            operator_id_token="$(jq -r '.AuthenticationResult.IdToken // empty' <<<"$auth_response")"
+          fi
+
+          if [ -z "$operator_id_token" ]; then
+            echo "::error::Cognito did not return an ID token"
+            exit 1
+          fi
+          echo "::add-mask::$operator_id_token"
+
+          request_body="$(jq -cn \
+            --arg suiteId "$SUITE_ID" \
+            --arg mode "$BENCHMARK_MODE" \
+            --arg runner "codebuild" \
+            --arg modelId "$MODEL_ID" \
+            --arg embeddingModelId "$EMBEDDING_MODEL_ID" \
+            --argjson topK "$TOP_K" \
+            --argjson memoryTopK "$MEMORY_TOP_K" \
+            --argjson minScore "$MIN_SCORE" \
+            --argjson concurrency "$CONCURRENCY" \
+            '{suiteId:$suiteId,mode:$mode,runner:$runner,modelId:$modelId,embeddingModelId:$embeddingModelId,topK:$topK,memoryTopK:$memoryTopK,minScore:$minScore,concurrency:$concurrency}')"
+
+          response_file="$(mktemp)"
+          http_code="$(curl -sS -o "$response_file" -w '%{http_code}' \
+            -X POST "${api_url%/}/benchmark-runs" \
+            -H "Authorization: Bearer ${operator_id_token}" \
+            -H "Content-Type: application/json" \
+            --data "$request_body")"
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::POST /benchmark-runs failed with HTTP ${http_code}"
+            jq -r '.error // .message // "No error body"' "$response_file" || true
+            exit 1
+          fi
+
+          run_id="$(jq -r '.runId' "$response_file")"
+          status="$(jq -r '.status' "$response_file")"
+          codebuild_log_url="$(jq -r '.codeBuildLogUrl // empty' "$response_file")"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## MemoRAG benchmark run"
+            echo
+            echo "- runId: \`$run_id\`"
+            echo "- initial status: \`$status\`"
+            echo "- suite: \`$SUITE_ID\`"
+            echo "- mode: \`$BENCHMARK_MODE\`"
+            echo "- API: \`${api_url%/}\`"
+            if [ -n "$codebuild_log_url" ]; then
+              echo "- CodeBuild logs: $codebuild_log_url"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$WAIT_FOR_COMPLETION" != "true" ]; then
+            exit 0
+          fi
+
+          deadline=$((SECONDS + TIMEOUT_MINUTES * 60))
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            sleep "$POLL_INTERVAL_SECONDS"
+            status_file="$(mktemp)"
+            status_code="$(curl -sS -o "$status_file" -w '%{http_code}' \
+              -H "Authorization: Bearer ${operator_id_token}" \
+              "${api_url%/}/benchmark-runs/${run_id}")"
+            if [ "$status_code" -lt 200 ] || [ "$status_code" -ge 300 ]; then
+              echo "::warning::GET /benchmark-runs/${run_id} returned HTTP ${status_code}"
+              rm -f "$status_file"
+              continue
+            fi
+
+            status="$(jq -r '.status' "$status_file")"
+            codebuild_log_url="$(jq -r '.codeBuildLogUrl // empty' "$status_file")"
+            echo "Benchmark status: ${status}"
+
+            case "$status" in
+              succeeded|failed|cancelled)
+                {
+                  echo
+                  echo "### Final status"
+                  echo
+                  echo "- status: \`$status\`"
+                  if [ -n "$codebuild_log_url" ]; then
+                    echo "- CodeBuild logs: $codebuild_log_url"
+                  fi
+                  if jq -e '.metrics' "$status_file" >/dev/null; then
+                    echo
+                    echo "### Metrics"
+                    echo
+                    echo "\`\`\`json"
+                    jq '.metrics' "$status_file"
+                    echo "\`\`\`"
+                  fi
+                } >> "$GITHUB_STEP_SUMMARY"
+                [ "$status" = "succeeded" ] || exit 1
+                exit 0
+                ;;
+            esac
+            rm -f "$status_file"
+          done
+
+          echo "::error::Timed out waiting for benchmark run ${run_id}"
+          exit 1

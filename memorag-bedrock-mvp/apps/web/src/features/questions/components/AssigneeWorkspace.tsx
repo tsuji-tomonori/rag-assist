@@ -110,7 +110,7 @@ export function AssigneeWorkspace({
   return (
     <section className="assignee-workspace" aria-label="担当者対応">
       <header className="assignee-header">
-        <button type="button" onClick={onBack} title="チャットへ戻る">
+        <button type="button" onClick={onBack} title="チャットへ戻る" aria-label="チャットへ戻る">
           <Icon name="chevron" />
         </button>
         <div>
@@ -163,6 +163,8 @@ export function AssigneeWorkspace({
                           className={`question-kanban-card priority-${question.priority} ${selected?.questionId === question.questionId ? "active" : ""}`}
                           key={question.questionId}
                           onClick={() => onSelect(question.questionId)}
+                          aria-pressed={selected?.questionId === question.questionId}
+                          aria-label={`${question.title}を選択`}
                         >
                           <span className="kanban-card-title">
                             <strong>{question.title}</strong>

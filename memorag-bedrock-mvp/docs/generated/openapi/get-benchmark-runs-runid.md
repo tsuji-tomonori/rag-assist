@@ -50,7 +50,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 51 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 53 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -75,6 +75,8 @@ Media type: `application/json`
 | `executionArn` | `string` | no | `response.executionArn` の値。項目名は execution arn を表します。 | - |
 | `codeBuildBuildId` | `string` | no | `response.codeBuildBuildId` の値。項目名は code build build id を表します。 | - |
 | `codeBuildLogUrl` | `string:uri` | no | `response.codeBuildLogUrl` の値。項目名は code build log url を表します。 | - |
+| `codeBuildLogGroupName` | `string` | no | `response.codeBuildLogGroupName` の値。項目名は code build log group name を表します。 | - |
+| `codeBuildLogStreamName` | `string` | no | `response.codeBuildLogStreamName` の値。項目名は code build log stream name を表します。 | - |
 | `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
 | `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
 | `topK` | `integer` | no | 検索で取得する上位件数。 | - |
