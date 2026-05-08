@@ -18,7 +18,7 @@
 | R3 | 必要な最小修正を行う | 中 | 対応 |
 | R4 | 実施した検証のみを記録する | 高 | 対応 |
 | R5 | 作業レポートを残す | 高 | 対応 |
-| R6 | commit / push / PR / PR コメントまで進める | 高 | PR 作成後に完了予定 |
+| R6 | commit / push / PR / PR コメントまで進める | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -37,6 +37,9 @@
 - `scripts/consolidate_memory.py` の既定 include / exclude を repo 運用に合わせて補正した。
 - `scripts/README.md` に既定走査対象の説明を追記した。
 - `pre-commit` による末尾空白修正を反映した。
+- PR #187 を作成し、受け入れ条件確認コメントとセルフレビューコメントを GitHub Apps で投稿した。
+- 初回 CI で API contract test が失敗したためログを確認し、`origin/main` 取り込み後に対象テストが pass することを確認した。
+- task md を完了状態に更新し、`tasks/done/` へ移動した。
 
 ## 5. 成果物
 
@@ -47,7 +50,7 @@
 | `.agents/skills/agent-dreaming-memory/references/` | Markdown | protocol と memory schema | 参照資料要件に対応 |
 | `.agents/skills/agent-dreaming-memory/assets/templates/dream_report_template.md` | Markdown | dream report テンプレート | assets 要件に対応 |
 | `.agents/skills/agent-dreaming-memory/agents/openai.yaml` | YAML | UI metadata | agents metadata 要件に対応 |
-| `tasks/do/20260508-0912-agent-dreaming-memory-skill.md` | Markdown | task 状態と受け入れ条件 | Worktree Task PR Flow に対応 |
+| `tasks/done/20260508-0912-agent-dreaming-memory-skill.md` | Markdown | task 状態と受け入れ条件 | Worktree Task PR Flow に対応 |
 | `reports/working/20260508-0912-agent-dreaming-memory-skill.md` | Markdown | 本作業レポート | Post Task Work Report に対応 |
 
 ## 6. 指示へのfit評価
@@ -73,9 +76,11 @@
 - `git diff --cached --check`: pass
 - `pre-commit run --files ...`: 初回は trailing whitespace の自動修正で fail、修正後 pass
 - `python3 .agents/skills/agent-dreaming-memory/scripts/consolidate_memory.py --root . --out /tmp/agent-dreaming-memory-scan.md --include AGENTS.md --include tasks/do/20260508-0912-agent-dreaming-memory-skill.md`: pass
+- `npm ci` in `memorag-bedrock-mvp`: pass
+- `npm exec -w @memorag-mvp/api -- tsx --test src/contract/api-contract.test.ts`: pass
 
 ## 8. 未対応・制約・リスク
 
-- PR 作成、受け入れ条件確認コメント、セルフレビューコメント、task done 移動はこのレポート作成後に実施する。
-- GitHub Apps が利用できない場合は `gh` 代替または blocked として記録する。
+- PR 作成は GitHub Apps に該当ツールが見つからなかったため `gh` を使用した。PR コメントは GitHub Apps を使用した。
+- 初回 CI は API contract test で fail したが、最新 `origin/main` へ rebase したうえで対象テストがローカル pass することを確認した。再実行 CI の結果は push 後に確認する。
 - Skill の実運用品質は、実際に `.codex-memory` を更新する dreaming pass で継続確認が必要。
