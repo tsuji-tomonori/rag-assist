@@ -1,6 +1,6 @@
 # docs/spec-recovery から MemoRAG docs への反映
 
-- 状態: in_progress
+- 状態: done
 - 作成日: 2026-05-08
 - ブランチ: `codex/spec-recovery-docs`
 
@@ -61,3 +61,17 @@
 
 - 既存要件の一部はすでに同等内容を含むため、重複を避けるために追加対象を絞る必要がある。
 - `docs/spec-recovery` の gap 項目には未確定値が含まれるため、具体閾値は未確定として扱う。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/193
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
+- 作業レポート: `reports/working/20260508-2022-spec-recovery-docs.md`
+
+## 検証結果
+
+- `git diff --check`: pass
+- `git diff --check --cached`: pass
+- `pre-commit run --files $(git diff --cached --name-only)`: pass
+- `task docs:check`: 未実施。`Taskfile.yaml` と `memorag-bedrock-mvp/Taskfile.yml` に該当 target がないため。
