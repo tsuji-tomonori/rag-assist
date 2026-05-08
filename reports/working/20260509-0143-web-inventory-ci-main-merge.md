@@ -53,5 +53,4 @@
 
 ## 未対応・制約・リスク
 
-- GitHub Actions の再実行結果は push 後に確認が必要。
-- このレポート作成時点では、リモート CI の最新結果はまだ確定していない。
+- 最新 push `c6d3ab6` の GitHub Actions で `validate-semver-label` と `Lint, type-check, test, build, and synth` が pass した。
