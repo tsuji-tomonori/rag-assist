@@ -26,9 +26,9 @@ Use this skill whenever a task is executed through `task`, a repository Taskfile
 
 ## Permission Delegation
 
-Use already approved command prefixes without asking again when they match the needed task.
+Use already approved command prefixes without asking again only for fixed, read-only commands whose resolved bodies were inspected in the current branch.
 
-When a necessary Taskfile command fails because of sandboxing, restricted network access, port/service permissions, or missing permission to start a local service, immediately retry with `sandbox_permissions: "require_escalated"` and a concise `justification`.
+When a necessary Taskfile command fails because of sandboxing, restricted network access, port/service permissions, or missing permission to start a local service, do **not** auto-retry with escalation. First inspect the fully resolved command chain (Taskfile target, called subtasks, and delegated npm/package scripts), then ask the user before any `sandbox_permissions: "require_escalated"` retry.
 
 Include a reusable `prefix_rule` when the command shape is stable and safe to reuse, for example:
 
@@ -39,7 +39,7 @@ Include a reusable `prefix_rule` when the command shape is stable and safe to re
 ["task", "dev:api"]
 ```
 
-Do not provide a broad `prefix_rule` for arbitrary shell, destructive commands, or commands containing heredocs, redirection, wildcard expansion, or environment-specific secrets.
+Do not provide a broad `prefix_rule` for Taskfile aliases that delegate to repository-controlled scripts, arbitrary shell, destructive commands, or commands containing heredocs, redirection, wildcard expansion, or environment-specific secrets.
 
 ## Confirmation Policy
 
@@ -47,13 +47,13 @@ Do not ask the user before:
 
 - running read-only or validation Taskfile commands
 - starting a dev server or smoke dependency that the current task requires
-- retrying a necessary command with escalation after a sandbox-like failure
-- using an approved prefix rule
+- using an approved prefix rule for already-audited fixed commands
 
 Ask before:
 
 - destructive cleanup, deletion, reset, force-recreate, or data migration tasks
 - deploy, bootstrap, release, publish, billing-affecting, or production-impacting tasks
+- any escalation retry (`require_escalated`) for repository-controlled Taskfile/script execution
 - commands that require secrets or would operate on a real external account beyond the requested scope
 
 ## Running Long-Lived Tasks

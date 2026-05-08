@@ -11,12 +11,13 @@ import {
   SearchResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, sleep } from "./route-utils.js"
+import { looseRoute, routeAuthorization, sleep } from "./route-utils.js"
 
 export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
   const chatRoute = looseRoute({
     method: "post",
     path: "/chat",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:create", conditionalPermissions: ["chat:admin:read_all"], notes: ["includeDebug または debug が true の場合は chat:admin:read_all も必要です。"] }),
     request: {
       body: {
         required: true,
@@ -44,6 +45,7 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/chat-runs",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:create", conditionalPermissions: ["chat:admin:read_all"], notes: ["includeDebug または debug が true の場合は chat:admin:read_all も必要です。"] }),
       request: {
         body: {
           required: true,
@@ -71,6 +73,7 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/chat-runs/{runId}/events",
+      "x-memorag-authorization": routeAuthorization({ mode: "ownedRun", permission: "chat:read:own", conditionalPermissions: ["chat:admin:read_all"], notes: ["chat:read:own は自分が作成した run のみ購読できます。chat:admin:read_all は他ユーザーの run も購読できます。"] }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -135,6 +138,7 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/search",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:read" }),
       request: {
         body: {
           required: true,

@@ -28,7 +28,35 @@ _なし_
 
 _なし_
 
+## Authorization
+
+| 項目 | 内容 |
+| --- | --- |
+| 認可モード | `documentUploadSession` |
+| 必須 permission | `rag:doc:write:group` |
+| 条件付き permission | `chat:create`, `benchmark:seed_corpus` |
+| 実行可能 role | `CHAT_USER`, `RAG_GROUP_MANAGER`, `BENCHMARK_RUNNER`, `SYSTEM_ADMIN` |
+| エラーになる role | `ANSWER_EDITOR`, `BENCHMARK_OPERATOR`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| 条件付きでエラーになる role | `RAG_GROUP_MANAGER` |
+
+補足:
+- uploadId の object key が実行者 scope 外の場合は 403 を返します。
+
+認証・認可エラー:
+
+| Status | 発生条件 | Body |
+| --- | --- | --- |
+| `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
+| `403` | 必要 permission (rag:doc:write:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing rag:doc:write:group"}` |
+
 ## Responses
+
+| Status | 説明 | Media type | Body |
+| --- | --- | --- | --- |
+| `204` | リクエストは成功し、レスポンス body はありません。 | `-` | なし |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
+| `401` | 認証が必要です。 | `application/json` | 2 field(s) |
+| `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
 ##### `204` リクエストは成功し、レスポンス body はありません。
 
@@ -37,6 +65,15 @@ Media type: `-`
 _body なし_
 
 ##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `401` 認証が必要です。
 
 Media type: `application/json`
 

@@ -25,7 +25,7 @@ Use this skill when validation must be executed or reported. It complements `ski
    - sandbox/network/permission issue
    - flaky or timeout behavior
 4. Fix real regressions and stale expectations within scope, then re-run the failing check.
-5. For sandbox/network/permission failures on required checks, retry with escalation according to `skills/taskfile-command-runner/SKILL.md`.
+5. For sandbox/network/permission failures on required checks, inspect the resolved command path first and ask the user before any escalation retry according to `skills/taskfile-command-runner/SKILL.md`.
 6. Do not claim a skipped, blocked, timed-out, or interrupted check as passed.
 
 ## Confirmation Policy
@@ -34,10 +34,10 @@ Do not ask the user before:
 
 - running lint, typecheck, unit tests, build checks, docs checks, pre-commit checks, or smoke checks required by the task
 - re-running a failed validation after an in-scope fix
-- escalating a required check that failed due to sandbox-like restrictions
 
 Ask before:
 
+- any escalation retry (`require_escalated`) for repository-controlled checks
 - running tests that require production credentials or mutate production/external state
 - running very expensive benchmarks or destructive integration tests when not required by the task
 - deleting generated artifacts, databases, or caches outside the workspace

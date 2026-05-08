@@ -27,7 +27,7 @@ import {
 } from "../schemas.js"
 import type { DocumentIngestRun, JsonValue } from "../types.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, sleep } from "./route-utils.js"
+import { looseRoute, routeAuthorization, sleep } from "./route-utils.js"
 import {
   authorizeDocumentDelete,
   authorizeDocumentUpload,
@@ -136,6 +136,7 @@ async function scopedMetadata(
 
   if (!scope) return metadata
   const groupIds = scope.groupIds ?? []
+  if (scope.scopeType === "group" && groupIds.length === 0) throw new HTTPException(400, { message: "group scope requires non-empty groupIds" })
   if (groupIds.length > 0) await service.assertDocumentGroupsWritable(user, groupIds)
   if (groupIds.length > 0 || scope.scopeType === "group") {
     return { ...base, scopeType: "group", ownerUserId: user.userId, groupIds }
@@ -167,6 +168,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "get",
       path: "/document-groups",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:read" }),
       responses: {
         200: { description: "List visible document groups", content: { "application/json": { schema: DocumentGroupListResponseSchema } } },
         500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
@@ -183,6 +185,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/document-groups",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:group:create" }),
       request: {
         body: {
           required: true,
@@ -206,6 +209,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/document-groups/{groupId}/share",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:group:assign_manager" }),
       request: {
         params: z.object({ groupId: z.string().min(1) }),
         body: {
@@ -239,6 +243,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "get",
       path: "/documents",
+      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedListOrPermission", permission: "rag:doc:read", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 文書の一覧に限定して実行できます。"] }),
       responses: {
         200: {
           description: "List ingested documents",
@@ -260,6 +265,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents",
+      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedOrPermission", permission: "rag:doc:write:group", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 用 upload body の場合だけ実行できます。"] }),
       request: {
         body: {
           required: true,
@@ -289,6 +295,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/uploads",
+      "x-memorag-authorization": routeAuthorization({ mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["purpose=document は rag:doc:write:group、purpose=chatAttachment は chat:create、purpose=benchmarkSeed は benchmark:seed_corpus が必要です。"] }),
       request: {
         body: {
           required: true,
@@ -328,6 +335,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/uploads/{uploadId}/content",
+      "x-memorag-authorization": routeAuthorization({ mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["uploadId の object key が実行者 scope 外の場合は 403 を返します。"] }),
       request: {
         params: z.object({ uploadId: z.string().min(1) })
       },
@@ -358,6 +366,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/uploads/{uploadId}/ingest",
+      "x-memorag-authorization": routeAuthorization({ mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["upload purpose と scope に応じた permission を確認します。"] }),
       request: {
         params: z.object({ uploadId: z.string().min(1) }),
         body: {
@@ -400,6 +409,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/document-ingest-runs",
+      "x-memorag-authorization": routeAuthorization({ mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["upload purpose と scope に応じた permission を確認します。"] }),
       request: {
         body: {
           required: true,
@@ -428,6 +438,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "get",
       path: "/document-ingest-runs/{runId}",
+      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedRunOrOwnedRun", permission: "chat:read:own", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["chat:read:own は自分が作成した run のみ参照できます。BENCHMARK_RUNNER は自分が作成した benchmark seed run のみ参照できます。"] }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -451,6 +462,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "get",
       path: "/document-ingest-runs/{runId}/events",
+      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedRunOrOwnedRun", permission: "chat:read:own", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["chat:read:own は自分が作成した run のみ購読できます。BENCHMARK_RUNNER は自分が作成した benchmark seed run のみ購読できます。"] }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -511,6 +523,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/{documentId}/reindex",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
       request: {
         params: z.object({ documentId: z.string().min(1) }),
         body: {
@@ -541,6 +554,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "get",
       path: "/documents/reindex-migrations",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
       responses: {
         200: { description: "List blue-green reindex migrations", content: { "application/json": { schema: ReindexMigrationListResponseSchema } } }
       }
@@ -555,6 +569,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/{documentId}/reindex/stage",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
       request: {
         params: z.object({ documentId: z.string().min(1) }),
         body: {
@@ -585,6 +600,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/reindex-migrations/{migrationId}/cutover",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
       request: { params: z.object({ migrationId: z.string().min(1) }) },
       responses: {
         200: { description: "Cut over staged reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
@@ -607,6 +623,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/reindex-migrations/{migrationId}/rollback",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
       request: { params: z.object({ migrationId: z.string().min(1) }) },
       responses: {
         200: { description: "Rolled back reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
@@ -629,6 +646,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "delete",
       path: "/documents/{documentId}",
+      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedDeleteOrPermission", permission: "rag:doc:delete:group", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 文書だけ削除できます。"] }),
       request: {
         params: z.object({ documentId: z.string().min(1) })
       },

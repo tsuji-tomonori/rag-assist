@@ -26,7 +26,31 @@ _なし_
 
 _なし_
 
+## Authorization
+
+| 項目 | 内容 |
+| --- | --- |
+| 認可モード | `required` |
+| 必須 permission | `rag:alias:read` |
+| 条件付き permission | - |
+| 実行可能 role | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
+| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| 条件付きでエラーになる role | なし |
+
+認証・認可エラー:
+
+| Status | 発生条件 | Body |
+| --- | --- | --- |
+| `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
+| `403` | 必要 permission (rag:alias:read) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing rag:alias:read"}` |
+
 ## Responses
+
+| Status | 説明 | Media type | Body |
+| --- | --- | --- | --- |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 7 field(s) |
+| `401` | 認証が必要です。 | `application/json` | 2 field(s) |
+| `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -41,3 +65,21 @@ Media type: `application/json`
 | `auditLog[].actorUserId` | `string` | yes | `response.auditLog[].actorUserId` の値。項目名は actor user id を表します。 | - |
 | `auditLog[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `auditLog[].detail` | `string` | yes | `response.auditLog[].detail` の値。項目名は detail を表します。 | - |
+
+##### `401` 認証が必要です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `403` 対象操作を実行する権限がありません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |

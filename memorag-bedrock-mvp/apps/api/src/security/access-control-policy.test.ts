@@ -2,13 +2,8 @@ import assert from "node:assert/strict"
 import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 import test from "node:test"
-
-type RoutePolicy = {
-  method: string
-  path: string
-  permission?: string
-  mode?: "authenticated" | "required" | "requesterOrPermission" | "ownedRun" | "benchmarkSeedRunOrOwnedRun" | "benchmarkSeedOrPermission" | "benchmarkSeedListOrPermission" | "benchmarkSeedDeleteOrPermission" | "documentUploadSession"
-}
+import app from "../app.js"
+import type { Permission, RouteAuthorizationMode } from "../authorization.js"
 
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
 const routeSourceDir = path.resolve(process.cwd(), "src/routes")
@@ -39,66 +34,12 @@ const protectedMiddlewarePaths = [
   "/benchmark-suites"
 ]
 
-const routePolicies: RoutePolicy[] = [
-  { method: "get", path: "/me", mode: "authenticated" },
-  { method: "post", path: "/admin/users", permission: "user:create" },
-  { method: "get", path: "/admin/users", permission: "user:read" },
-  { method: "get", path: "/admin/audit-log", permission: "access:policy:read" },
-  { method: "post", path: "/admin/users/{userId}/roles", permission: "access:role:assign" },
-  { method: "post", path: "/admin/users/{userId}/suspend", permission: "user:suspend" },
-  { method: "post", path: "/admin/users/{userId}/unsuspend", permission: "user:unsuspend" },
-  { method: "delete", path: "/admin/users/{userId}", permission: "user:delete" },
-  { method: "get", path: "/admin/roles", permission: "access:policy:read" },
-  { method: "get", path: "/admin/aliases", permission: "rag:alias:read" },
-  { method: "post", path: "/admin/aliases", permission: "rag:alias:write:group" },
-  { method: "post", path: "/admin/aliases/{aliasId}/update", permission: "rag:alias:write:group" },
-  { method: "post", path: "/admin/aliases/{aliasId}/review", permission: "rag:alias:review:group" },
-  { method: "post", path: "/admin/aliases/{aliasId}/disable", permission: "rag:alias:disable:group" },
-  { method: "post", path: "/admin/aliases/publish", permission: "rag:alias:publish:group" },
-  { method: "get", path: "/admin/aliases/audit-log", permission: "rag:alias:read" },
-  { method: "get", path: "/admin/usage", permission: "usage:read:all_users" },
-  { method: "get", path: "/admin/costs", permission: "cost:read:all" },
-  { method: "get", path: "/documents", permission: "rag:doc:read", mode: "benchmarkSeedListOrPermission" },
-  { method: "get", path: "/document-groups", permission: "rag:doc:read" },
-  { method: "post", path: "/document-groups", permission: "rag:group:create" },
-  { method: "post", path: "/document-groups/{groupId}/share", permission: "rag:group:assign_manager" },
-  { method: "post", path: "/documents", permission: "rag:doc:write:group", mode: "benchmarkSeedOrPermission" },
-  { method: "post", path: "/documents/uploads", permission: "rag:doc:write:group", mode: "documentUploadSession" },
-  { method: "post", path: "/documents/uploads/{uploadId}/content", permission: "rag:doc:write:group", mode: "documentUploadSession" },
-  { method: "post", path: "/documents/uploads/{uploadId}/ingest", permission: "rag:doc:write:group", mode: "documentUploadSession" },
-  { method: "post", path: "/document-ingest-runs", permission: "rag:doc:write:group", mode: "documentUploadSession" },
-  { method: "get", path: "/document-ingest-runs/{runId}", permission: "chat:read:own", mode: "benchmarkSeedRunOrOwnedRun" },
-  { method: "get", path: "/document-ingest-runs/{runId}/events", permission: "chat:read:own", mode: "benchmarkSeedRunOrOwnedRun" },
-  { method: "post", path: "/documents/{documentId}/reindex", permission: "rag:index:rebuild:group" },
-  { method: "get", path: "/documents/reindex-migrations", permission: "rag:index:rebuild:group" },
-  { method: "post", path: "/documents/{documentId}/reindex/stage", permission: "rag:index:rebuild:group" },
-  { method: "post", path: "/documents/reindex-migrations/{migrationId}/cutover", permission: "rag:index:rebuild:group" },
-  { method: "post", path: "/documents/reindex-migrations/{migrationId}/rollback", permission: "rag:index:rebuild:group" },
-  { method: "delete", path: "/documents/{documentId}", permission: "rag:doc:delete:group", mode: "benchmarkSeedDeleteOrPermission" },
-  { method: "post", path: "/chat", permission: "chat:create" },
-  { method: "post", path: "/chat-runs", permission: "chat:create" },
-  { method: "get", path: "/chat-runs/{runId}/events", permission: "chat:read:own" },
-  { method: "post", path: "/search", permission: "rag:doc:read" },
-  { method: "post", path: "/questions", permission: "chat:create" },
-  { method: "get", path: "/questions", permission: "answer:edit" },
-  { method: "get", path: "/questions/{questionId}", permission: "answer:edit", mode: "requesterOrPermission" },
-  { method: "post", path: "/questions/{questionId}/answer", permission: "answer:publish" },
-  { method: "post", path: "/questions/{questionId}/resolve", permission: "answer:publish", mode: "requesterOrPermission" },
-  { method: "get", path: "/conversation-history", permission: "chat:read:own" },
-  { method: "post", path: "/conversation-history", permission: "chat:create" },
-  { method: "delete", path: "/conversation-history/{id}", permission: "chat:delete:own" },
-  { method: "get", path: "/debug-runs", permission: "chat:admin:read_all" },
-  { method: "get", path: "/debug-runs/{runId}", permission: "chat:admin:read_all" },
-  { method: "post", path: "/debug-runs/{runId}/download", permission: "chat:admin:read_all" },
-  { method: "post", path: "/benchmark/query", permission: "benchmark:query" },
-  { method: "post", path: "/benchmark/search", permission: "benchmark:query" },
-  { method: "get", path: "/benchmark-suites", permission: "benchmark:read" },
-  { method: "post", path: "/benchmark-runs", permission: "benchmark:run" },
-  { method: "get", path: "/benchmark-runs", permission: "benchmark:read" },
-  { method: "get", path: "/benchmark-runs/{runId}", permission: "benchmark:read" },
-  { method: "post", path: "/benchmark-runs/{runId}/cancel", permission: "benchmark:cancel" },
-  { method: "post", path: "/benchmark-runs/{runId}/download", permission: "benchmark:download" }
-]
+type RoutePolicy = {
+  method: string
+  path: string
+  mode: RouteAuthorizationMode
+  permission?: Permission
+}
 
 test("protected API paths keep auth middleware coverage", async () => {
   const source = await readRouteSources()
@@ -115,6 +56,7 @@ test("protected API paths keep auth middleware coverage", async () => {
 
 test("protected API routes keep route-level permission checks", async () => {
   const source = await readRouteSources()
+  const routePolicies = (await openApiRoutePolicies()).filter((policy) => policy.mode !== "public")
 
   for (const policy of routePolicies) {
     const block = findRouteBlock(source, policy)
@@ -190,7 +132,7 @@ test("protected API routes keep route-level permission checks", async () => {
       )
       assert.match(
         block,
-        /canReadOwnedRun[\s\S]*?createdBy/,
+        /canReadOwnedRun[\s\S]*?createdBy|createdBy[\s\S]*?user\.userId/,
         `${policy.method.toUpperCase()} ${policy.path} must check run ownership`
       )
     } else if (policy.mode === "benchmarkSeedRunOrOwnedRun") {
@@ -221,19 +163,22 @@ test("protected API routes keep route-level permission checks", async () => {
 
 test("protected API routes must be explicitly reviewed before they change", async () => {
   const source = await readRouteSources()
-  const expectedProtectedRoutes = routePolicies.map(routeKey).sort()
+  const documentedProtectedRoutes = (await openApiRoutePolicies())
+    .filter((policy) => policy.mode !== "public")
+    .map(routeKey)
+    .sort()
 
   const actualProtectedRoutes = extractRoutes(source)
     .filter((route) => isProtectedRoute(route.path))
     .map(routeKey)
     .sort()
 
-  assert.deepEqual(actualProtectedRoutes, expectedProtectedRoutes)
+  assert.deepEqual(actualProtectedRoutes, documentedProtectedRoutes)
 })
 
 test("question routes must be explicitly reviewed before they change", async () => {
   const source = await readRouteSources()
-  const expectedQuestionRoutes = routePolicies
+  const expectedQuestionRoutes = (await openApiRoutePolicies())
     .filter((policy) => policy.path.startsWith("/questions"))
     .map(routeKey)
     .sort()
@@ -245,6 +190,58 @@ test("question routes must be explicitly reviewed before they change", async () 
 
   assert.deepEqual(actualQuestionRoutes, expectedQuestionRoutes)
 })
+
+test("protected API routes document authorization metadata and auth error responses in OpenAPI", async () => {
+  const policies = await openApiRoutePolicies()
+
+  for (const policy of policies) {
+    const operation = policy.operation
+    assert.ok(operation["x-memorag-authorization"], `${policy.method.toUpperCase()} ${policy.path} must document x-memorag-authorization`)
+    if (policy.mode !== "public") {
+      assert.ok(operation.responses?.["401"], `${policy.method.toUpperCase()} ${policy.path} must document 401`)
+    }
+    if (policy.mode !== "public" && policy.mode !== "authenticated") {
+      assert.ok(operation.responses?.["403"], `${policy.method.toUpperCase()} ${policy.path} must document 403`)
+    }
+  }
+})
+
+async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {
+  operation: {
+    responses?: Record<string, unknown>
+    "x-memorag-authorization"?: {
+      mode?: RouteAuthorizationMode
+      requiredPermissions?: Permission[]
+    }
+  }
+}>> {
+  const response = await app.request("/openapi.json")
+  assert.equal(response.status, 200)
+  const document = await response.json() as {
+    paths?: Record<string, Record<string, {
+      responses?: Record<string, unknown>
+      "x-memorag-authorization"?: {
+        mode?: RouteAuthorizationMode
+        requiredPermissions?: Permission[]
+      }
+    }>>
+  }
+  const policies: Array<RoutePolicy & { operation: NonNullable<NonNullable<typeof document.paths>[string][string]> }> = []
+  for (const [path, pathItem] of Object.entries(document.paths ?? {})) {
+    for (const [method, operation] of Object.entries(pathItem)) {
+      const auth = operation["x-memorag-authorization"]
+      if (!auth?.mode) continue
+      policies.push({
+        method,
+        path,
+        mode: auth.mode,
+        permission: auth.requiredPermissions?.[0],
+        operation
+      })
+    }
+  }
+  return policies
+}
 
 async function readRouteSources(): Promise<string> {
   const routeFiles = (await readdir(routeSourceDir))

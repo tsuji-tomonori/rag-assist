@@ -82,14 +82,12 @@ export class S3ObjectStore implements ObjectStore {
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
-      ContentType: contentType,
-      ...(input.maxBytes ? { ContentLength: input.maxBytes } : {})
+      ContentType: contentType
     })
     return {
       url: await getSignedUrl(this.client, command, { expiresIn: input.expiresInSeconds }),
       headers: {
-        "Content-Type": contentType,
-        ...(input.maxBytes ? { "Content-Length": String(input.maxBytes) } : {})
+        "Content-Type": contentType
       }
     }
   }

@@ -104,9 +104,10 @@
 ## Permission Delegation and Confirmation Suppression
 - 対象: GitHub Apps 操作、Taskfile コマンド、テスト・lint・typecheck・build・docs check・smoke・benchmark の実行。
 - 必読: `skills/github-apps-pr-operator/SKILL.md`、`skills/taskfile-command-runner/SKILL.md`、`skills/repository-test-runner/SKILL.md`
-- 承認済み command prefix がある通常の検証・PR workflow 操作では、追加のユーザー確認を求めずに進める。
-- 必須コマンドが sandbox、network、port、service 権限などで失敗した場合は、`require_escalated` と再利用可能な `prefix_rule` を使って再実行を要求し、確認回数を抑える。
-- 破壊的削除、履歴改変、PR merge/close、deploy/release/bootstrap、production/external state を変更する操作は、確認抑制の対象外とする。
+- repository 内で定義された Taskfile / npm scripts / 検証コマンドを実行する前に、実際に解決されるコマンド本文を確認する。
+- `require_escalated` を使う再実行は自動化しない。必要性・影響範囲・実行コマンド（prefix を含む）を明示して、都度ユーザー確認を取る。
+- 再利用可能な `prefix_rule` は、読み取り専用かつコマンド本文が固定で安全性を確認できるものに限定し、Taskfile や package script に委譲する曖昧な prefix は許可しない。
+- 破壊的削除、履歴改変、PR merge/close、deploy/release/bootstrap、production/external state を変更する操作は、従来どおり確認必須とする。
 
 ## Security Access-Control Review
 - 対象: API route、middleware、認証・認可、RBAC、所有者境界、管理 API、外部公開設定、機微データを返す schema/store の追加・変更。

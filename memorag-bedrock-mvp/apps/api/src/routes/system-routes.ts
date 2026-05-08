@@ -1,13 +1,14 @@
 import { getPermissionsForGroups } from "../authorization.js"
 import { CurrentUserResponseSchema, ErrorResponseSchema, HealthResponseSchema } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute } from "./route-utils.js"
+import { looseRoute, routeAuthorization } from "./route-utils.js"
 
 export function registerSystemRoutes({ app }: ApiRouteContext) {
   app.openapi(
     looseRoute({
       method: "get",
       path: "/health",
+      "x-memorag-authorization": routeAuthorization({ mode: "public", notes: ["認証なしで実行できます。"] }),
       responses: {
         200: { description: "Health check", content: { "application/json": { schema: HealthResponseSchema } } }
       }
@@ -19,6 +20,7 @@ export function registerSystemRoutes({ app }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/me",
+      "x-memorag-authorization": routeAuthorization({ mode: "authenticated", notes: ["認証済みユーザーであれば role に関係なく実行できます。"] }),
       responses: {
         200: {
           description: "Current authenticated user and effective permissions",

@@ -2,13 +2,14 @@ import { z } from "@hono/zod-openapi"
 import { requirePermission } from "../authorization.js"
 import { ConversationHistoryItemSchema, ConversationHistoryListResponseSchema, ErrorResponseSchema } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute } from "./route-utils.js"
+import { looseRoute, routeAuthorization } from "./route-utils.js"
 
 export function registerConversationHistoryRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
     looseRoute({
       method: "get",
       path: "/conversation-history",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:read:own", notes: ["実行者自身の会話履歴だけ返します。"] }),
       responses: {
         200: {
           description: "List persisted conversation history for the current user",
@@ -28,6 +29,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     looseRoute({
       method: "post",
       path: "/conversation-history",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:create", notes: ["実行者自身の会話履歴として保存します。"] }),
       request: {
         body: {
           required: true,
@@ -52,6 +54,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     looseRoute({
       method: "delete",
       path: "/conversation-history/{id}",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:delete:own", notes: ["実行者自身の会話履歴だけ削除できます。"] }),
       request: {
         params: z.object({ id: z.string().min(1) })
       },
