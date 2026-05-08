@@ -78,9 +78,11 @@
 - `python3 .agents/skills/agent-dreaming-memory/scripts/consolidate_memory.py --root . --out /tmp/agent-dreaming-memory-scan.md --include AGENTS.md --include tasks/do/20260508-0912-agent-dreaming-memory-skill.md`: pass
 - `npm ci` in `memorag-bedrock-mvp`: pass
 - `npm exec -w @memorag-mvp/api -- tsx --test src/contract/api-contract.test.ts`: pass
+- GitHub Actions `validate-semver-label`: pass
+- GitHub Actions `Lint, type-check, test, build, and synth`: 初回 fail、最新 `origin/main` rebase 後の再実行で pass
 
 ## 8. 未対応・制約・リスク
 
 - PR 作成は GitHub Apps に該当ツールが見つからなかったため `gh` を使用した。PR コメントは GitHub Apps を使用した。
-- 初回 CI は API contract test で fail したが、最新 `origin/main` へ rebase したうえで対象テストがローカル pass することを確認した。再実行 CI の結果は push 後に確認する。
+- 初回 CI は API contract test で fail したが、最新 `origin/main` へ rebase したうえで対象テストがローカル pass することを確認し、再実行 CI も pass した。
 - Skill の実運用品質は、実際に `.codex-memory` を更新する dreaming pass で継続確認が必要。
