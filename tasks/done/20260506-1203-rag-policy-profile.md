@@ -1,10 +1,10 @@
 # RAG Policy / Profile 基盤の導入
 
-保存先: `tasks/do/20260506-1203-rag-policy-profile.md`
+保存先: `tasks/done/20260506-1203-rag-policy-profile.md`
 
 ## 状態
 
-- do
+- done
 
 ## 着手時チェックリスト
 
@@ -14,8 +14,14 @@
 - [x] profile 型、default profile、resolver、debug trace、benchmark 出力、docs の不足を補完する。
 - [x] API typecheck / test / build / lint と必要な benchmark を実行する。
 - [x] 作業レポートを `reports/working/` に作成する。
-- [ ] commit / push / PR 作成 / 受け入れ条件コメント / セルフレビューコメントを完了する。
-- [ ] PR コメント後に task を `tasks/done/` へ移動して同一 branch に反映する。
+- [x] commit / push / PR 作成 / 受け入れ条件コメント / セルフレビューコメントを完了する。
+- [x] PR コメント後に task を `tasks/done/` へ移動して同一 branch に反映する。
+
+## PR
+
+- https://github.com/tsuji-tomonori/rag-assist/pull/191
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
 
 ## Done 条件
 
