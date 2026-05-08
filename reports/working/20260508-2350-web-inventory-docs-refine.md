@@ -69,3 +69,10 @@
 総合fit: 4.7 / 5.0（約94%）
 
 理由: 競合解決、初見向け Markdown 改善、機能別ファイル分割、CI 生成物チェックとの整合は満たした。実行時 DOM による完全な表示確認は対象外のため満点ではない。
+
+## 9. PR・GitHub 操作
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/198
+- rebase 後の push: `git push --force-with-lease origin codex/web-inventory-generator` を承認付きで実行。
+- PR コメント: GitHub Apps で受け入れ条件確認、セルフレビュー、CI 確認コメントを投稿。
+- CI: 最新 commit `cc6bf76` で `validate-semver-label` pass、`Lint, type-check, test, build, and synth` pass。
