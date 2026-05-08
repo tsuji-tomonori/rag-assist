@@ -1,8 +1,8 @@
 # ドキュメント管理画面の実データ表示化
 
-保存先: `tasks/do/20260509-0158-document-ui-real-data.md`
+保存先: `tasks/done/20260509-0158-document-ui-real-data.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -85,3 +85,13 @@
 - 決定事項: 実ストレージ使用量 API がないため、容量値や使用率は表示しない。
 - 決定事項: テスト内の mock data は、本番 fallback ではなくテスト fixture として明示される限り許容する。
 - リスク: visual regression の既存スクリーンショットは実行環境が重いため、今回の最小検証では unit/component test と typecheck を優先する。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/209
+- 受け入れ条件確認コメント: 投稿済み。
+- セルフレビューコメント: 投稿済み。
+- 実行した検証:
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
+  - `git diff --check`: pass
