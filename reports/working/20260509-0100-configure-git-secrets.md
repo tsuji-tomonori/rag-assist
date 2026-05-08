@@ -11,7 +11,7 @@
 | R1 | 参照元の `git-secrets` 実行ファイルを配置する | 対応 |
 | R2 | pre-commit で `git-secrets` scan が動くようにする | 対応 |
 | R3 | 変更範囲に応じた検証を実行する | 対応 |
-| R4 | worktree task / commit / PR workflow に従う | 対応中 |
+| R4 | worktree task / commit / PR workflow に従う | 対応 |
 
 ## 検討・判断の要約
 
@@ -27,6 +27,8 @@
 - `.pre-commit-config.yaml` に local `git-secrets` hook を追加した。
 - 参照元に合わせて `check-added-large-files` と `debug-statements` hook を追加し、`mixed-line-ending` の args 表記を YAML 文字列配列へ揃えた。
 - `tasks/do/20260509-0054-configure-git-secrets.md` に受け入れ条件と検証計画を記録した。
+- PR #202 を作成し、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
+- 受け入れ条件を満たしたため、task md を `tasks/done/` に移動した。
 
 ## 成果物
 
@@ -35,21 +37,22 @@
 | `.pre-commit-config.yaml` | local `git-secrets` hook と追加 pre-commit hook |
 | `tools/git-secrets/git-secrets` | 参照元と同等の git-secrets 実行ファイル |
 | `tools/git-secrets/pre-commit-scan` | pre-commit から呼ぶ AWS pattern 注入 wrapper |
-| `tasks/do/20260509-0054-configure-git-secrets.md` | 作業 task と受け入れ条件 |
+| `tasks/done/20260509-0054-configure-git-secrets.md` | 完了済み task と受け入れ条件 |
 
 ## 実行した検証
 
 - `git diff --check`: pass
 - `bash -n tools/git-secrets/pre-commit-scan tools/git-secrets/git-secrets`: pass
 - `tools/git-secrets/pre-commit-scan .pre-commit-config.yaml`: pass
-- `pre-commit run --files .pre-commit-config.yaml tools/git-secrets/git-secrets tools/git-secrets/pre-commit-scan tasks/do/20260509-0054-configure-git-secrets.md`: pass
+- `pre-commit run --files .pre-commit-config.yaml tools/git-secrets/git-secrets tools/git-secrets/pre-commit-scan tasks/do/20260509-0054-configure-git-secrets.md reports/working/20260509-0100-configure-git-secrets.md`: pass
+- `pre-commit run --files reports/working/20260509-0100-configure-git-secrets.md tasks/done/20260509-0054-configure-git-secrets.md`: pass
 - `tools/git-secrets/pre-commit-scan /tmp/rag-assist-git-secrets-positive.txt`: expected fail。fake AWS access key を検出することを確認。
 
 ## Fit 評価
 
-総合fit: 4.7 / 5.0（約94%）
+総合fit: 5.0 / 5.0（約100%）
 
-理由: 参照元の構成を取り込みつつ、clone 直後でも AWS pattern が有効になる wrapper を追加して実用性を補った。PR 作成・コメント・task 完了移動はこのレポート作成時点では後続工程として残っているため満点ではない。
+理由: 参照元の構成を取り込みつつ、clone 直後でも AWS pattern が有効になる wrapper を追加して実用性を補った。検証、PR 作成、PR コメント、task 完了移動まで実施した。
 
 ## 未対応・制約・リスク
 

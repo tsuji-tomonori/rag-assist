@@ -1,6 +1,6 @@
 # git-secrets pre-commit 設定
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -30,11 +30,11 @@
 
 ## 受け入れ条件
 
-- [ ] `tools/git-secrets/git-secrets` が配置され、実行可能である。
-- [ ] `.pre-commit-config.yaml` に local `git-secrets` hook が追加され、参照元相当の secret scan が pre-commit で実行される。
-- [ ] 変更範囲に対して選定した検証を実行し、結果または未実施理由を記録する。
-- [ ] 作業レポートを `reports/working/` に保存する。
-- [ ] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] `tools/git-secrets/git-secrets` が配置され、実行可能である。
+- [x] `.pre-commit-config.yaml` に local `git-secrets` hook が追加され、参照元相当の secret scan が pre-commit で実行される。
+- [x] 変更範囲に対して選定した検証を実行し、結果または未実施理由を記録する。
+- [x] 作業レポートを `reports/working/` に保存する。
+- [x] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証計画
 
