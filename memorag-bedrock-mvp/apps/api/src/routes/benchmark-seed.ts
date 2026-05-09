@@ -12,6 +12,7 @@ const benchmarkSeedSuites = new Set([
   "allganize-rag-evaluation-ja-v1",
   "mmrag-docqa-v1",
   "jp-public-pdf-qa-v1",
+  "mlit-pdf-figure-table-rag-seed-v1",
   "architecture-drawing-qarag-v0.1"
 ])
 const maxBenchmarkSeedTextChars = 1_000_000

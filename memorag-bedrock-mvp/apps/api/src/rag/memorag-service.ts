@@ -171,6 +171,14 @@ const benchmarkSuites: BenchmarkSuite[] = [
     defaultConcurrency: 1
   },
   {
+    suiteId: "mlit-pdf-figure-table-rag-seed-v1",
+    label: "MLIT PDF figure/table RAG seed",
+    mode: "agent",
+    datasetS3Key: "datasets/agent/mlit-pdf-figure-table-rag-seed-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
     suiteId: "architecture-drawing-qarag-v0.1",
     label: "建築図面 QARAG v0.1",
     mode: "agent",
