@@ -16,7 +16,9 @@ import {
   DocumentIngestRunSchema,
   DocumentIngestRunStartResponseSchema,
   DocumentListResponseSchema,
+  DocumentListItemSummarySchema,
   DocumentManifestSchema,
+  DocumentManifestSummarySchema,
   DocumentUploadRequestSchema,
   ErrorResponseSchema,
   IngestUploadedDocumentRequestSchema,
@@ -25,7 +27,7 @@ import {
   ShareDocumentGroupRequestSchema,
   StartDocumentIngestRunRequestSchema
 } from "../schemas.js"
-import type { DocumentIngestRun, JsonValue } from "../types.js"
+import type { DocumentIngestRun, DocumentListItemSummary, DocumentManifest, DocumentManifestSummary, JsonValue } from "../types.js"
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, routeAuthorization, sleep } from "./route-utils.js"
 import {
@@ -111,6 +113,32 @@ function localUploadUrl(requestUrl: string, uploadId: string): string {
   url.pathname = `/documents/uploads/${encodeURIComponent(uploadId)}/content`
   url.search = ""
   return url.toString()
+}
+
+function documentManifestSummary(manifest: DocumentManifest): DocumentManifestSummary {
+  return {
+    documentId: manifest.documentId,
+    fileName: manifest.fileName,
+    mimeType: manifest.mimeType,
+    chunkCount: manifest.chunkCount,
+    memoryCardCount: manifest.memoryCardCount,
+    createdAt: manifest.createdAt,
+    lifecycleStatus: manifest.lifecycleStatus,
+    activeDocumentId: manifest.activeDocumentId,
+    stagedFromDocumentId: manifest.stagedFromDocumentId,
+    reindexMigrationId: manifest.reindexMigrationId,
+    chunkerVersion: manifest.chunkerVersion,
+    sourceExtractorVersion: manifest.sourceExtractorVersion
+  }
+}
+
+function documentListItemSummary(manifest: DocumentManifest): DocumentListItemSummary {
+  return {
+    ...documentManifestSummary(manifest),
+    metadata: manifest.metadata,
+    embeddingModelId: manifest.embeddingModelId,
+    embeddingDimensions: manifest.embeddingDimensions
+  }
 }
 
 async function scopedMetadata(
@@ -246,7 +274,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedListOrPermission", permission: "rag:doc:read", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 文書の一覧に限定して実行できます。"] }),
       responses: {
         200: {
-          description: "List ingested documents",
+          description: "List ingested document summaries without full chunk metadata or vector keys",
           content: { "application/json": { schema: DocumentListResponseSchema } }
         },
         500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
@@ -257,7 +285,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       if (!hasPermission(user, "rag:doc:read") && !hasPermission(user, "benchmark:seed_corpus")) {
         throw new HTTPException(403, { message: "Forbidden: missing document list permission" })
       }
-      return c.json({ documents: await service.listDocuments(user) }, 200)
+      const documents = (await service.listDocuments(user)).map(documentListItemSummary)
+      return c.json({ documents }, 200)
     }
   )
 
@@ -273,7 +302,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         }
       },
       responses: {
-        200: { description: "Ingested document", content: { "application/json": { schema: DocumentManifestSchema } } },
+        200: { description: "Ingested document summary. Deprecated for file uploads; use /documents/uploads and /document-ingest-runs for files.", content: { "application/json": { schema: DocumentManifestSummarySchema } } },
         400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
         500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
@@ -287,7 +316,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       authorizeDocumentUpload(user, body)
       if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
       const metadata = await scopedMetadata(service, user, body.metadata, body.scope)
-      return c.json(await service.ingest({ ...body, metadata }), 200)
+      const manifest = await service.ingest({ ...body, metadata })
+      return c.json(documentManifestSummary(manifest), 200)
     }
   )
 
@@ -375,7 +405,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         }
       },
       responses: {
-        200: { description: "Ingested uploaded document", content: { "application/json": { schema: DocumentManifestSchema } } },
+        200: { description: "Ingested uploaded document summary without full chunk metadata or vector keys", content: { "application/json": { schema: DocumentManifestSummarySchema } } },
         400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
@@ -401,7 +431,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const metadata = await scopedMetadata(service, user, body.metadata, body.scope, purpose)
       const manifest = await service.ingest({ ...body, metadata, contentBytes, sourceS3Object })
       await deps.objectStore.deleteObject(objectKey)
-      return c.json(manifest, 200)
+      return c.json(documentManifestSummary(manifest), 200)
     }
   )
 
