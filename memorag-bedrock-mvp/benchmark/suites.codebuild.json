@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "defaults": {
+    "dataset": "./benchmark/.runner-dataset.jsonl",
+    "output": "./benchmark/.runner-results.jsonl",
+    "summary": "./benchmark/.runner-summary.json",
+    "report": "./benchmark/.runner-report.md"
+  },
+  "suites": [
+    {
+      "suiteId": "smoke-agent-v1",
+      "mode": "agent",
+      "runner": "agent",
+      "dataset": { "source": "codebuild-input" },
+      "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
+    },
+    {
+      "suiteId": "standard-agent-v1",
+      "mode": "agent",
+      "runner": "agent",
+      "dataset": { "source": "codebuild-input" },
+      "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
+    },
+    {
+      "suiteId": "clarification-smoke-v1",
+      "mode": "agent",
+      "runner": "agent",
+      "dataset": { "source": "codebuild-input" },
+      "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
+    },
+    {
+      "suiteId": "search-smoke-v1",
+      "mode": "search",
+      "runner": "search",
+      "dataset": { "source": "codebuild-input" },
+      "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
+    },
+    {
+      "suiteId": "search-standard-v1",
+      "mode": "search",
+      "runner": "search",
+      "dataset": { "source": "codebuild-input" },
+      "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
+    },
+    {
+      "suiteId": "allganize-rag-evaluation-ja-v1",
+      "mode": "agent",
+      "runner": "agent",
+      "dataset": { "source": "prepare" },
+      "prepare": {
+        "script": "prepare:allganize-ja",
+        "env": {
+          "ALLGANIZE_RAG_DATASET_OUTPUT": "${DATASET}",
+          "ALLGANIZE_RAG_CORPUS_DIR": "./benchmark/.runner-allganize-corpus",
+          "BENCHMARK_CORPUS_DIR": "./benchmark/.runner-allganize-corpus"
+        }
+      }
+    },
+    {
+      "suiteId": "mmrag-docqa-v1",
+      "mode": "agent",
+      "runner": "agent",
+      "dataset": { "source": "prepare" },
+      "corpus": { "suiteId": "mmrag-docqa-v1" },
+      "prepare": {
+        "script": "prepare:mmrag-docqa",
+        "env": {
+          "MMRAG_DOCQA_DATASET_OUTPUT": "${DATASET}",
+          "MMRAG_DOCQA_CORPUS_DIR": "./benchmark/.runner-mmrag-docqa-corpus",
+          "BENCHMARK_CORPUS_DIR": "./benchmark/.runner-mmrag-docqa-corpus"
+        }
+      }
+    },
+    {
+      "suiteId": "mtrag-v1",
+      "mode": "agent",
+      "runner": "conversation",
+      "dataset": { "source": "codebuild-input" },
+      "corpus": { "dir": "benchmark/corpus/mtrag-v1", "suiteId": "mtrag-v1" }
+    },
+    {
+      "suiteId": "chatrag-bench-v1",
+      "mode": "agent",
+      "runner": "conversation",
+      "dataset": { "source": "codebuild-input" },
+      "corpus": { "dir": "benchmark/corpus/chatrag-bench-v1", "suiteId": "chatrag-bench-v1" }
+    },
+    {
+      "suiteId": "jp-public-pdf-qa-v1",
+      "mode": "agent",
+      "runner": "agent",
+      "dataset": { "source": "prepare" },
+      "corpus": { "suiteId": "jp-public-pdf-qa-v1" },
+      "prepare": {
+        "script": "prepare:jp-public-pdf-qa",
+        "env": {
+          "JP_PUBLIC_PDF_QA_DATASET_OUTPUT": "${DATASET}",
+          "JP_PUBLIC_PDF_QA_CORPUS_DIR": "./benchmark/.runner-jp-public-pdf-qa-corpus",
+          "BENCHMARK_CORPUS_DIR": "./benchmark/.runner-jp-public-pdf-qa-corpus"
+        }
+      }
+    },
+    {
+      "suiteId": "mlit-pdf-figure-table-rag-seed-v1",
+      "mode": "agent",
+      "runner": "agent",
+      "dataset": { "source": "prepare" },
+      "corpus": { "suiteId": "mlit-pdf-figure-table-rag-seed-v1" },
+      "prepare": {
+        "script": "prepare:mlit-pdf-figure-table-rag",
+        "env": {
+          "MLIT_PDF_RAG_DATASET_OUTPUT": "${DATASET}",
+          "MLIT_PDF_RAG_CORPUS_DIR": "./benchmark/.runner-mlit-pdf-figure-table-rag-corpus",
+          "BENCHMARK_CORPUS_DIR": "./benchmark/.runner-mlit-pdf-figure-table-rag-corpus"
+        }
+      }
+    },
+    {
+      "suiteId": "architecture-drawing-qarag-v0.1",
+      "mode": "agent",
+      "runner": "agent",
+      "dataset": { "source": "prepare" },
+      "corpus": { "suiteId": "architecture-drawing-qarag-v0.1" },
+      "prepare": {
+        "script": "prepare:architecture-drawing-qarag",
+        "env": {
+          "ARCHITECTURE_QARAG_DATASET_OUTPUT": "${DATASET}",
+          "ARCHITECTURE_QARAG_CORPUS_DIR": "./benchmark/.runner-architecture-drawing-corpus",
+          "BENCHMARK_CORPUS_DIR": "./benchmark/.runner-architecture-drawing-corpus"
+        }
+      }
+    }
+  ]
+}
