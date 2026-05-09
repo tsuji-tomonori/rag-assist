@@ -1,6 +1,6 @@
 # 建築図面 QARAG ベンチマーク正本の JSON 化
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -18,7 +18,7 @@
 - [x] AC4: JSON から 82 件の dataset row が生成されることを test で確認する。
 - [x] AC5: 変更範囲に見合う検証を実行し、未実施の検証があれば理由を記録する。
 - [x] AC6: 作業完了レポートを `reports/working/` に保存する。
-- [ ] AC7: PR 更新後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] AC7: PR 更新後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証計画
 
@@ -46,3 +46,8 @@
 
 - 実際の外部 PDF download を伴う `npm run prepare:architecture-drawing-qarag -w @memorag-mvp/benchmark` は、ネットワークと公開元 URL の揺らぎに依存するため未実施。runner の JSON 読み取りと corpus download 対象制御は mocked fetch の unit test で確認。
 - API / web / infra の再検証は未実施。今回の差分は benchmark 正本・benchmark runner・説明文書に閉じており、既存 suite ID や UI/API whitelist は変更していないため。
+
+## PR コメント
+
+- 受け入れ条件確認コメントを PR #212 に投稿。
+- セルフレビューコメントを PR #212 に投稿。
