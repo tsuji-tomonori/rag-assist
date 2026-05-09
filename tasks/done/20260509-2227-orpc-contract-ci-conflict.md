@@ -1,6 +1,6 @@
 # oRPC contract PR の競合解消と CI 修正
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -41,7 +41,7 @@ PR branch `codex/orpc-contract` を最新 `origin/main` に追従させ、競合
 - [x] PR branch が `origin/main` と競合しない状態になる。
 - [x] CI failure の主要原因がログから確認され、必要な修正が入る。
 - [x] infra/api/web/benchmark の失敗項目に対応するローカル検証が pass する、または未実施理由が記録される。
-- [ ] PR に競合解消・CI 修正内容と検証結果を日本語でコメントする。
+- [x] PR に競合解消・CI 修正内容と検証結果を日本語でコメントする。
 - [x] 作業レポートを `reports/working/` に残す。
 
 ## 検証計画
