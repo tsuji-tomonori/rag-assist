@@ -1,13 +1,13 @@
 # 建築図面 QARAG ベンチマーク v0.1
 
-この Markdown は、`.workspace/architecture_drawing_qarag_benchmark_v0_1.xlsx` を Excel 管理からリポジトリ内レビュー可能な Markdown 管理へ移すための初期版である。
+この Markdown は、`.workspace/architecture_drawing_qarag_benchmark_v0_1.xlsx` を Excel 管理からリポジトリ内レビュー可能な文書へ移すための説明・レビュー用である。性能テストで runner が読む正本は [`architecture-drawing-qarag-v0.1.json`](architecture-drawing-qarag-v0.1.json) とし、この Markdown を機械的に parse しない。
 
 ## 位置づけ
 
 - 対象: 建築・AEC 図面に対する社内 QARAG の検索、視覚理解、根拠提示、回答不能抑制の評価。
 - seed QA 件数: 82 件。
 - 主な入力: 国土交通省標準図、自治体公開図面、既存ベンチマーク調査メモ。
-- 管理方針: Excel のセル書式や入力規則ではなく、Markdown の差分レビューで評価観点と QA を管理する。
+- 管理方針: 性能テスト用の seed QA / source 正本は JSON で管理し、Markdown では評価観点・運用方針を差分レビューする。
 - 注意: 外部リンクと最新性はこの変換時点で再調査していない。令和4年改定版への差し替えが必要な seed は `notes` に残す。
 
 ## Summary シート相当

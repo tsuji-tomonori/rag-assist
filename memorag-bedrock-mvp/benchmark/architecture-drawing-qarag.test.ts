@@ -3,11 +3,11 @@ import { mkdtemp, readFile, rm } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import { test } from "node:test"
-import { prepareArchitectureDrawingQaragBenchmark, toDatasetRows } from "./architecture-drawing-qarag.js"
+import { parseArchitectureDrawingQaragDefinition, prepareArchitectureDrawingQaragBenchmark, toDatasetRows } from "./architecture-drawing-qarag.js"
 
-test("converts the managed Markdown into benchmark dataset rows", async () => {
-  const markdown = await readFile("architecture-drawing-qarag-v0.1.md", "utf-8")
-  const rows = toDatasetRows(markdown)
+test("converts the managed JSON into benchmark dataset rows", async () => {
+  const definition = parseArchitectureDrawingQaragDefinition(await readFile("architecture-drawing-qarag-v0.1.json", "utf-8"))
+  const rows = toDatasetRows(definition)
 
   assert.equal(rows.length, 82)
   assert.deepEqual(rows[0], {
@@ -46,35 +46,55 @@ test("converts the managed Markdown into benchmark dataset rows", async () => {
 test("prepares a dataset and downloads only sources referenced by seed QA", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "architecture-qarag-"))
   try {
-    const markdownPath = path.join(tempDir, "benchmark.md")
+    const configPath = path.join(tempDir, "benchmark.json")
     const datasetOutput = path.join(tempDir, "dataset.jsonl")
     const corpusDir = path.join(tempDir, "corpus")
-    await import("node:fs/promises").then(({ writeFile }) => writeFile(markdownPath, [
-      "# Sample",
-      "## 公的図面・参照ソース",
-      "",
-      "| source_id | source_name | type | publisher | year/version | primary_use | url | notes |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
-      "| S01 | Sample Drawing | PDF | Publisher | 2026 | test | https://example.com/sample.pdf | note |",
-      "| B01 | Unused Benchmark | PDF | Publisher | 2026 | unused | https://example.com/unused.pdf | note |",
-      "",
-      "## Seed QA",
-      "",
-      "### QA-001 / titleblock/OCR / drawing title",
-      "",
-      "- source_id: `S01`",
-      "- document_name: Sample Drawing",
-      "- page_or_sheet: P1",
-      "- evidence_anchor: title block",
-      "- modality_scope: drawing image+OCR",
-      "- retrieval_setting: single-page",
-      "- question_ja: 図名は何か。",
-      "- expected_answer_ja: サンプル図。",
-      "- acceptable_aliases_or_normalization: 完全一致。",
-      "- scoring_rule: `exact_or_alias`",
-      "- difficulty: `easy`",
-      ""
-    ].join("\n"), "utf-8"))
+    await import("node:fs/promises").then(({ writeFile }) => writeFile(configPath, JSON.stringify({
+      schemaVersion: 1,
+      suiteId: "architecture-drawing-qarag-v0.1",
+      label: "Sample",
+      description: "Sample benchmark definition",
+      sources: [
+        {
+          sourceId: "S01",
+          sourceName: "Sample Drawing",
+          type: "PDF",
+          publisher: "Publisher",
+          yearVersion: "2026",
+          primaryUse: "test",
+          url: "https://example.com/sample.pdf",
+          notes: "note"
+        },
+        {
+          sourceId: "B01",
+          sourceName: "Unused Benchmark",
+          type: "PDF",
+          publisher: "Publisher",
+          yearVersion: "2026",
+          primaryUse: "unused",
+          url: "https://example.com/unused.pdf",
+          notes: "note"
+        }
+      ],
+      seedQa: [
+        {
+          id: "QA-001",
+          taskCategory: "titleblock/OCR",
+          subSkill: "drawing title",
+          sourceId: "S01",
+          documentName: "Sample Drawing",
+          pageOrSheet: "P1",
+          evidenceAnchor: "title block",
+          modalityScope: "drawing image+OCR",
+          retrievalSetting: "single-page",
+          questionJa: "図名は何か。",
+          expectedAnswerJa: "サンプル図。",
+          acceptableAliasesOrNormalization: "完全一致。",
+          scoringRule: "exact_or_alias",
+          difficulty: "easy"
+        }
+      ]
+    }), "utf-8"))
 
     const requested: string[] = []
     const fetcher = (async (url: string | URL | Request) => {
@@ -82,7 +102,7 @@ test("prepares a dataset and downloads only sources referenced by seed QA", asyn
       return new Response(Buffer.from("%PDF-1.4 sample"), { status: 200 })
     }) as typeof fetch
 
-    const result = await prepareArchitectureDrawingQaragBenchmark({ markdownPath, datasetOutput, corpusDir, fetchImpl: fetcher })
+    const result = await prepareArchitectureDrawingQaragBenchmark({ configPath, datasetOutput, corpusDir, fetchImpl: fetcher })
     const dataset = await readFile(datasetOutput, "utf-8")
     const corpus = await readFile(path.join(corpusDir, "s01-sample-drawing.pdf"))
 
