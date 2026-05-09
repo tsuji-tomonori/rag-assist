@@ -1,6 +1,6 @@
 # CodeBuild timeout 3h
 
-保存先: `tasks/do/20260509-1124-codebuild-timeout-3h.md`
+保存先: `tasks/done/20260509-1124-codebuild-timeout-3h.md`
 
 ## 背景
 
@@ -34,7 +34,7 @@ CodeBuild timeout は運用者に見える制約のため、`memorag-bedrock-mvp
 - [x] AC2: infra test が CodeBuild `TimeoutInMinutes: 180` を検証する。
 - [x] AC3: 運用文書が CodeBuild project timeout 3 時間とコスト影響を明記する。
 - [x] AC4: 変更範囲に見合う検証を実行し、未実施の実環境確認を明記する。
-- [ ] AC5: PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] AC5: PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証計画
 
@@ -55,4 +55,4 @@ CodeBuild timeout は運用者に見える制約のため、`memorag-bedrock-mvp
 
 ## 状態
 
-in_progress
+done
