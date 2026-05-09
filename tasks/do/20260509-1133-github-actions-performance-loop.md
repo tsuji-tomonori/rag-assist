@@ -1,6 +1,6 @@
 # GitHub Actions 性能テスト実行ループ
 
-状態: doing
+状態: blocked
 
 ## 背景
 
@@ -33,12 +33,12 @@ GitHub Actions から新しい benchmark suite を実行できる状態にし、
 
 ## 受け入れ条件
 
-- [ ] GitHub Actions の `Run MemoRAG Benchmark` から新 suite を選択できる。
+- [x] GitHub Actions の `Run MemoRAG Benchmark` から新 suite を選択できる。
 - [ ] 少なくとも 1 つの新 suite を GitHub Actions から実行し、run URL / 結果 / artifact 有無を記録する。
-- [ ] 実行結果から確認できる失敗または改善点に対して、修正または未対応理由を記録する。
-- [ ] 変更範囲に見合うローカル検証を実行し、結果を記録する。
+- [x] 実行結果から確認できる失敗または改善点に対して、修正または未対応理由を記録する。
+- [x] 変更範囲に見合うローカル検証を実行し、結果を記録する。
 - [ ] PR #221 に日本語コメントで受け入れ条件確認とセルフレビューを残す。
-- [ ] 作業完了レポートを `reports/working/` に作成する。
+- [x] 作業完了レポートを `reports/working/` に作成する。
 
 ## 検証計画
 
@@ -55,3 +55,36 @@ GitHub Actions から新しい benchmark suite を実行できる状態にし、
 ## リスク
 
 - GitHub Actions の benchmark 実行は AWS 環境・secrets・environment approval に依存するため、リポジトリ権限や環境制約で blocked になる可能性がある。
+
+## 実施結果
+
+- `Run MemoRAG Benchmark` の `suite-id` 選択肢へ `mtrag-v1` / `chatrag-bench-v1` / 既存 API suite を追加した。
+- `mtrag-v1` / `chatrag-bench-v1` の軽量 sample dataset を追加し、CDK deploy で `BenchmarkBucket` の `datasets/agent/` に配置するよう更新した。
+- CodeBuild runner が新 suite でも `standard-agent-v1` corpus を seed するよう更新した。
+- GitHub Actions run `25589515162` を `mtrag-v1` で起動した。
+  - URL: https://github.com/tsuji-tomonori/rag-assist/actions/runs/25589515162
+  - 結果: failed
+  - 失敗理由: `OPERATOR_AUTH_SECRET_ID is required`
+  - artifact: `Start benchmark through API` が secret preflight で終了したため、benchmark API artifact は生成されなかった。
+
+## 検証結果
+
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/benchmark`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: fail。CDK snapshot 差分のみ。
+- `env UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: pass。snapshot 更新。
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra`: pass
+- `git diff --check`: pass
+
+## ブロック事項
+
+- GitHub `dev` environment には `AWS_DEPLOY_ROLE_ARN` のみ存在し、`BENCHMARK_OPERATOR_AUTH_SECRET_ID` が未設定だった。
+- `mtrag-v1` / `chatrag-bench-v1` の dataset 配置と workflow 選択肢はこの PR の変更であり、dev stack に deploy されるまで deployed API / BenchmarkBucket には反映されない。
+- そのため、現時点では新 suite の GitHub Actions 実 benchmark 完走と性能改善値の確認は未達。
+
+## 次に必要な操作
+
+1. `dev` environment に `BENCHMARK_OPERATOR_AUTH_SECRET_ID` を設定する。
+2. PR #221 の CDK / API 変更を dev stack に deploy する。
+3. `Run MemoRAG Benchmark` を `suite-id=mtrag-v1` または `suite-id=chatrag-bench-v1` で再実行する。
+4. artifact の `summary.json` / `report.md` / `results.jsonl` を確認し、失敗行または latency 指標に応じて P2/P3/P4 task へ改善をつなげる。
