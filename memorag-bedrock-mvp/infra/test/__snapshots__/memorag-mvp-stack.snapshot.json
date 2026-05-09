@@ -6720,7 +6720,7 @@
             "Value": "tsuji-tomonori/rag-assist"
           }
         ],
-        "TimeoutInMinutes": 480
+        "TimeoutInMinutes": 180
       }
     },
     "BenchmarkStateMachineLogGroup6D80BBB2": {

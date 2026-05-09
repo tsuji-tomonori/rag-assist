@@ -231,7 +231,7 @@ test("implements the designed serverless resources", () => {
         Match.objectLike({ Name: "BENCHMARK_CODEBUILD_LOG_GROUP_NAME" })
       ])
     }),
-    TimeoutInMinutes: 480
+    TimeoutInMinutes: 180
   })
   const benchmarkProject = getBenchmarkProject(template)
   assert.match(benchmarkProject.Properties.Source.BuildSpec, /codeBuildLogGroupName/)

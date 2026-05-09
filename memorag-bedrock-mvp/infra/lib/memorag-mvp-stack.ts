@@ -50,7 +50,7 @@ const defaultBenchmarkSource = {
   branch: "main"
 } as const
 
-const benchmarkCodeBuildTimeout = Duration.hours(8)
+const benchmarkCodeBuildTimeout = Duration.hours(3)
 const benchmarkStateMachineTimeout = Duration.hours(9)
 
 export class MemoRagMvpStack extends Stack {
