@@ -1,6 +1,6 @@
 # DynamoDB folder hierarchy management
 
-状態: doing
+状態: done
 
 ## 背景
 
@@ -41,11 +41,11 @@
 
 ## 受け入れ条件
 
-- [ ] AC1: S3 upload object key はフォルダ階層を表現せず、物理保存先としてのみ利用される。
-- [ ] AC2: document group / folder の階層・共有情報が DynamoDB backed store で保存・取得・更新できる。
-- [ ] AC3: local 開発では DynamoDB なしでも document group 管理が動く。
-- [ ] AC4: document group への書き込み・読み取り・共有更新の既存認可境界を弱めない。
-- [ ] AC5: API / infra / docs の関連テストと typecheck が pass する、または未実施理由が明記される。
+- [x] AC1: S3 upload object key はフォルダ階層を表現せず、物理保存先としてのみ利用される。
+- [x] AC2: document group / folder の階層・共有情報が DynamoDB backed store で保存・取得・更新できる。
+- [x] AC3: local 開発では DynamoDB なしでも document group 管理が動く。
+- [x] AC4: document group への書き込み・読み取り・共有更新の既存認可境界を弱めない。
+- [x] AC5: API / infra / docs の関連テストと typecheck が pass する、または未実施理由が明記される。
 
 ## 検証計画
 
@@ -68,3 +68,22 @@
 
 - 既存本番環境に `document-groups/groups.json` がある場合、別途 migration が必要。
 - 既存 UI は `groupId` 名称のままなので、API 互換を優先して内部的に folder semantics を持たせる。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/225
+- 受け入れ条件コメント: 投稿済み。
+- セルフレビューコメント: 投稿済み。
+
+## 実行した検証
+
+- `npm ci`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api -- memorag-service.test.ts`: pass（API script の glob により 171 tests 実行）
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/infra`: pass
+- `UPDATE_SNAPSHOTS=1 npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra -- memorag-mvp-stack.test.ts`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/infra -- memorag-mvp-stack.test.ts`: pass
+- `npm --prefix memorag-bedrock-mvp run docs:openapi`: pass
+- `npm --prefix memorag-bedrock-mvp run docs:openapi:check`: pass
+- `git diff --check`: pass
