@@ -271,7 +271,7 @@ async function handleBenchmarkQuery(
   calls.push(body)
   res.setHeader("content-type", "application/json")
 
-  if (req.method !== "POST" || req.url !== "/benchmark/query" || !body.id) {
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query" || !body.id) {
     res.statusCode = 404
     res.end(JSON.stringify({ error: "not found" }))
     return
@@ -286,7 +286,7 @@ async function handleBenchmarkQuery(
 
   const fileName = row.expectedFiles[0]
   const answer = row.expectedContains.join("。")
-  res.end(JSON.stringify({
+  res.end(JSON.stringify({ json: {
     id: row.id,
     responseType: "answer",
     isAnswerable: true,
@@ -295,7 +295,7 @@ async function handleBenchmarkQuery(
     retrieved: [{ fileName, text: answer, score: 0.95 }],
     finalEvidence: [{ fileName, text: answer, score: 0.95 }],
     answerSupport: { unsupportedSentences: [], totalSentences: 1 }
-  }))
+  } }))
 }
 
 function readRequestBody(req: IncomingMessage): Promise<{ id?: string; question?: string }> {
@@ -305,7 +305,8 @@ function readRequestBody(req: IncomingMessage): Promise<{ id?: string; question?
     req.on("error", reject)
     req.on("end", () => {
       const text = Buffer.concat(chunks).toString("utf-8")
-      resolve(text ? (JSON.parse(text) as { id?: string; question?: string }) : {})
+      const body = text ? (JSON.parse(text) as { id?: string; question?: string; json?: { id?: string; question?: string } }) : {}
+      resolve(body.json ?? body)
     })
   })
 }

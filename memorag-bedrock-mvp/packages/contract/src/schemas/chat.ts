@@ -1,0 +1,170 @@
+import { z } from "zod"
+import { RAG_CONTRACT_LIMITS } from "../limits.js"
+
+export const ConversationHistoryTurnSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  text: z.string().min(1).max(4000),
+  turnId: z.string().optional()
+})
+
+export const ClarificationContextSchema = z.object({
+  originalQuestion: z.string().optional(),
+  selectedOptionId: z.string().optional(),
+  selectedValue: z.string().optional()
+})
+
+export const SearchScopeSchema = z.object({
+  mode: z.enum(["all", "groups", "documents", "temporary"]).optional(),
+  groupIds: z.array(z.string().min(1)).max(20).optional(),
+  documentIds: z.array(z.string().min(1)).max(100).optional(),
+  includeTemporary: z.boolean().optional(),
+  temporaryScopeId: z.string().min(1).optional()
+})
+
+export const ChatRequestSchema = z.object({
+  question: z.string().min(1),
+  conversationHistory: z.array(ConversationHistoryTurnSchema).max(20).optional(),
+  clarificationContext: ClarificationContextSchema.optional(),
+  modelId: z.string().optional(),
+  embeddingModelId: z.string().optional(),
+  clueModelId: z.string().optional(),
+  topK: z.number().int().min(1).max(RAG_CONTRACT_LIMITS.maxTopK).optional(),
+  memoryTopK: z.number().int().min(1).max(RAG_CONTRACT_LIMITS.maxMemoryTopK).optional(),
+  minScore: z.number().min(-1).max(1).optional(),
+  maxIterations: z.number().int().min(1).max(RAG_CONTRACT_LIMITS.maxIterations).optional(),
+  strictGrounded: z.boolean().optional(),
+  includeDebug: z.boolean().optional(),
+  debug: z.boolean().optional(),
+  useMemory: z.boolean().optional(),
+  searchScope: SearchScopeSchema.optional()
+})
+
+export const CitationSchema = z.object({
+  documentId: z.string(),
+  fileName: z.string(),
+  chunkId: z.string().optional(),
+  score: z.number(),
+  text: z.string()
+})
+
+export const PipelineVersionsSchema = z.object({
+  agentWorkflowVersion: z.string(),
+  chunkerVersion: z.string(),
+  sourceExtractorVersion: z.string(),
+  memoryPromptVersion: z.string(),
+  promptVersion: z.string(),
+  indexVersion: z.string(),
+  embeddingModelId: z.string(),
+  embeddingDimensions: z.number().int().positive()
+})
+
+export const RagProfileTraceSchema = z.object({
+  id: z.string(),
+  version: z.string(),
+  retrievalProfileId: z.string(),
+  retrievalProfileVersion: z.string(),
+  answerPolicyId: z.string(),
+  answerPolicyVersion: z.string()
+})
+
+export const ClarificationOptionSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  resolvedQuery: z.string(),
+  reason: z.string().optional(),
+  source: z.enum(["memory", "evidence", "aspect", "history"]),
+  grounding: z.array(z.object({
+    documentId: z.string().optional(),
+    fileName: z.string().optional(),
+    chunkId: z.string().optional(),
+    heading: z.string().optional()
+  })).default(() => [])
+})
+
+export const ClarificationSchema = z.object({
+  needsClarification: z.boolean(),
+  reason: z.enum([
+    "ambiguous_target",
+    "missing_scope",
+    "unresolved_reference",
+    "multiple_candidate_intents",
+    "conflicting_scope",
+    "not_needed"
+  ]),
+  question: z.string(),
+  options: z.array(ClarificationOptionSchema).max(RAG_CONTRACT_LIMITS.clarificationOptionLimit),
+  missingSlots: z.array(z.string()).default(() => []),
+  confidence: z.number().min(0).max(1),
+  ambiguityScore: z.number().min(0).max(1).optional(),
+  groundedOptionCount: z.number().int().nonnegative().optional()
+})
+
+export const DebugStepSchema = z.object({
+  id: z.number(),
+  label: z.string(),
+  status: z.enum(["success", "warning", "error"]),
+  latencyMs: z.number(),
+  modelId: z.string().optional(),
+  summary: z.string(),
+  detail: z.string().optional(),
+  output: z.record(z.string(), z.unknown()).optional(),
+  hitCount: z.number().optional(),
+  tokenCount: z.number().optional(),
+  startedAt: z.string(),
+  completedAt: z.string()
+})
+
+export const DebugTraceSchema = z.object({
+  schemaVersion: z.literal(1).default(1),
+  runId: z.string(),
+  question: z.string(),
+  modelId: z.string(),
+  embeddingModelId: z.string(),
+  clueModelId: z.string(),
+  conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
+  clarificationContext: ClarificationContextSchema.optional(),
+  pipelineVersions: PipelineVersionsSchema.optional(),
+  ragProfile: RagProfileTraceSchema.optional(),
+  topK: z.number(),
+  memoryTopK: z.number(),
+  minScore: z.number(),
+  startedAt: z.string(),
+  completedAt: z.string(),
+  totalLatencyMs: z.number(),
+  status: z.enum(["success", "warning", "error"]),
+  answerPreview: z.string(),
+  isAnswerable: z.boolean(),
+  citations: z.array(CitationSchema),
+  retrieved: z.array(CitationSchema),
+  finalEvidence: z.array(CitationSchema).optional(),
+  steps: z.array(DebugStepSchema)
+})
+
+export const ChatResponseSchema = z.object({
+  responseType: z.enum(["answer", "refusal", "clarification"]).optional(),
+  answer: z.string(),
+  isAnswerable: z.boolean(),
+  needsClarification: z.boolean().optional(),
+  clarification: ClarificationSchema.optional(),
+  citations: z.array(CitationSchema),
+  retrieved: z.array(CitationSchema),
+  finalEvidence: z.array(CitationSchema).optional(),
+  debug: DebugTraceSchema.optional()
+})
+
+export const ChatRunStartResponseSchema = z.object({
+  runId: z.string(),
+  status: z.enum(["queued", "running", "succeeded", "failed", "cancelled"]),
+  eventsPath: z.string()
+})
+
+export type ConversationHistoryTurn = z.output<typeof ConversationHistoryTurnSchema>
+export type ClarificationContext = z.output<typeof ClarificationContextSchema>
+export type SearchScope = z.output<typeof SearchScopeSchema>
+export type ChatRequest = z.input<typeof ChatRequestSchema>
+export type Citation = z.output<typeof CitationSchema>
+export type ClarificationOption = z.output<typeof ClarificationOptionSchema>
+export type Clarification = z.output<typeof ClarificationSchema>
+export type DebugTrace = z.output<typeof DebugTraceSchema>
+export type ChatResponse = z.output<typeof ChatResponseSchema>
+export type ChatRunStartResponse = z.output<typeof ChatRunStartResponseSchema>

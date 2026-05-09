@@ -371,10 +371,10 @@ describe("API client", () => {
     await expect(chat({ question: "期限は？", modelId: "model", includeDebug: true })).resolves.toMatchObject({ answer: "ok" })
 
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringMatching(/\/chat$/),
+      expect.stringMatching(/\/rpc\/chat\/create$/),
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ question: "期限は？", modelId: "model", includeDebug: true })
+        body: JSON.stringify({ json: { question: "期限は？", modelId: "model", includeDebug: true } })
       })
     )
 
@@ -389,10 +389,10 @@ describe("API client", () => {
     const startFetchMock = mockFetch({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
     await expect(startChatRun({ question: "期限は？", modelId: "model", includeDebug: true })).resolves.toMatchObject({ runId: "chat-run-1" })
     expect(startFetchMock).toHaveBeenCalledWith(
-      expect.stringMatching(/\/chat-runs$/),
+      expect.stringMatching(/\/rpc\/chat\/startRun$/),
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ question: "期限は？", modelId: "model", includeDebug: true })
+        body: JSON.stringify({ json: { question: "期限は？", modelId: "model", includeDebug: true } })
       })
     )
 
@@ -573,7 +573,7 @@ describe("API client", () => {
     await expect(freshApi.chat({ question: "q", modelId: "m" })).rejects.toThrow("post failed")
 
     expect(fetchMock).toHaveBeenNthCalledWith(1, "http://env-api.test/documents", expect.objectContaining({ headers: {} }))
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://env-api.test/chat", expect.objectContaining({ method: "POST" }))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "http://env-api.test/rpc/chat/create", expect.objectContaining({ method: "POST" }))
   })
 
   it("converts files to base64 payloads", async () => {

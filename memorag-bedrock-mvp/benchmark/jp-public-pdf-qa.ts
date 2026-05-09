@@ -152,7 +152,7 @@ async function downloadBinary(url: string, fetchImpl: typeof fetch): Promise<Buf
   try {
     response = await fetchImpl(url)
   } catch (error) {
-    throw new Error(errorMessage(error))
+    throw new Error(errorMessage(error), { cause: error })
   }
   if (!response.ok) throw new Error(`HTTP ${response.status} ${await response.text()}`)
   return Buffer.from(await response.arrayBuffer())

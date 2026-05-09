@@ -74,7 +74,7 @@ test("benchmark runner skips rows that require unextractable corpus", async () =
       "PUT /upload/image-only.pdf",
       "POST /document-ingest-runs",
       "GET /document-ingest-runs/ingest-image-only",
-      "POST /benchmark/query"
+      "POST /rpc/benchmark/query"
     ])
 
     const summary = readSummary(paths.summary)
@@ -147,9 +147,9 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
     assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), [
-      "POST /benchmark/query",
-      "POST /benchmark/query",
-      "POST /benchmark/query"
+      "POST /rpc/benchmark/query",
+      "POST /rpc/benchmark/query",
+      "POST /rpc/benchmark/query"
     ])
 
     const summary = readSummary(paths.summary)
@@ -247,8 +247,8 @@ async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, ca
     res.end(JSON.stringify({ runId: "ingest-image-only", status: "failed", error: "Uploaded document did not contain extractable text" }))
     return
   }
-  if (req.method === "POST" && req.url === "/benchmark/query") {
-    res.end(JSON.stringify({
+  if (req.method === "POST" && req.url === "/rpc/benchmark/query") {
+    res.end(JSON.stringify({ json: {
       id: "run-001",
       responseType: "answer",
       answer: "経費精算の期限は30日以内です。",
@@ -256,7 +256,7 @@ async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, ca
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
-    }))
+    } }))
     return
   }
   res.statusCode = 404
@@ -267,15 +267,16 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
   const body = await readRequestBody(req)
   calls.push({ method: req.method, path: req.url, body })
   res.setHeader("content-type", "application/json")
-  if (req.method !== "POST" || req.url !== "/benchmark/query") {
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query") {
     res.statusCode = 404
     res.end(JSON.stringify({ error: "not found" }))
     return
   }
 
-  const id = typeof body === "object" && body !== null && "id" in body ? (body as { id?: string }).id : undefined
+  const input = unwrapRpcBody(body)
+  const id = typeof input === "object" && input !== null && "id" in input ? (input as { id?: string }).id : undefined
   if (id === "baseline-answerable-001") {
-    res.end(JSON.stringify({
+    res.end(JSON.stringify({ json: {
       id,
       responseType: "answer",
       answer: "経費精算の期限は30日以内です。",
@@ -284,11 +285,11 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
       answerSupport: { unsupportedSentences: [], totalSentences: 1 },
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
-    }))
+    } }))
     return
   }
   if (id === "baseline-acl-001") {
-    res.end(JSON.stringify({
+    res.end(JSON.stringify({ json: {
       id,
       responseType: "refusal",
       answer: "資料からは回答できません。",
@@ -296,10 +297,10 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
       citations: [],
       retrieved: [],
       debug: { totalLatencyMs: 10, steps: [] }
-    }))
+    } }))
     return
   }
-  res.end(JSON.stringify({
+  res.end(JSON.stringify({ json: {
     id,
     responseType: "answer",
     answer: "限定公開資料には役員賞与の監査メモがあります。",
@@ -307,7 +308,12 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
     citations: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
     retrieved: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
     debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
-  }))
+  } }))
+}
+
+function unwrapRpcBody(body: unknown): unknown {
+  if (typeof body === "object" && body !== null && "json" in body) return (body as { json?: unknown }).json
+  return body
 }
 
 function defaultRagProfile(): {

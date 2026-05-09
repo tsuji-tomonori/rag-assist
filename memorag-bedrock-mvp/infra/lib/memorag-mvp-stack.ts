@@ -20,6 +20,7 @@ import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
 import type { Construct } from "constructs"
+import type { ApiFunctionRuntimeEnv, ApiRuntimeEnv } from "@memorag-mvp/contract"
 
 export interface MemoRagMvpStackProps extends StackProps {
   readonly includeFrontendDeployment?: boolean
@@ -360,12 +361,12 @@ export class MemoRagMvpStack extends Stack {
       COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId,
       DEBUG_DOWNLOAD_BUCKET_NAME: debugDownloadBucket.bucketName,
       DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS: "900"
-    }
+    } satisfies ApiRuntimeEnv
     const apiFunctionEnvironment = {
       ...apiEnvironment,
       PDF_OCR_FALLBACK_ENABLED: "true",
       PDF_OCR_FALLBACK_TIMEOUT_MS: "45000"
-    }
+    } satisfies ApiFunctionRuntimeEnv
     const syncApiTimeout = Duration.seconds(60)
     const apiFn = new lambda.Function(this, "ApiFunction", {
       code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/api")),

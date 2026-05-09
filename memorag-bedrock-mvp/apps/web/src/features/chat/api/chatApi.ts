@@ -1,7 +1,8 @@
-import { createHeaders, post } from "../../../shared/api/http.js"
+import { createHeaders } from "../../../shared/api/http.js"
+import { getOrpcClient } from "../../../shared/api/orpc.js"
 import { getApiBaseUrl } from "../../../shared/api/runtimeConfig.js"
 import type { SearchScope } from "../../documents/types.js"
-import type { ChatResponse, ChatRunEvent, ChatRunStartResponse } from "../types-api.js"
+import type { ChatRequest, ChatResponse, ChatRunEvent, ChatRunStartResponse } from "../types-api.js"
 
 export async function chat(input: {
   question: string
@@ -20,8 +21,8 @@ export async function chat(input: {
   maxIterations?: number
   includeDebug?: boolean
   searchScope?: SearchScope
-}): Promise<ChatResponse> {
-  return post<ChatResponse>("/chat", input)
+} & Pick<ChatRequest, "conversationHistory" | "memoryTopK">): Promise<ChatResponse> {
+  return (await getOrpcClient()).chat.create(input)
 }
 
 export async function startChatRun(input: {
@@ -41,8 +42,8 @@ export async function startChatRun(input: {
   maxIterations?: number
   includeDebug?: boolean
   searchScope?: SearchScope
-}): Promise<ChatRunStartResponse> {
-  return post<ChatRunStartResponse>("/chat-runs", input)
+} & Pick<ChatRequest, "conversationHistory" | "memoryTopK">): Promise<ChatRunStartResponse> {
+  return (await getOrpcClient()).chat.startRun(input)
 }
 
 export async function streamChatRunEvents(

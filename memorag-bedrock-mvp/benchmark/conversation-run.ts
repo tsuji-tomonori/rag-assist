@@ -17,6 +17,7 @@ import {
   type ConversationBenchmarkResponse,
   type ConversationTurnResult
 } from "./metrics/conversation.js"
+import { createBenchmarkApiClient } from "./api-client.js"
 
 type ConversationDatasetRow = {
   conversationId: string
@@ -74,6 +75,7 @@ type SummaryOutput = ReturnType<typeof summarizeConversationResults> & {
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
+const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken })
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "mtrag-v1"
 const datasetPath = process.env.DATASET ?? "benchmark/datasets/conversation/mtrag-v1.jsonl"
@@ -108,21 +110,15 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
 
       for (const [turnIndex, turn] of conversation.turns.entries()) {
         const startedAt = Date.now()
-        const response = await fetch(`${apiBaseUrl}/benchmark/query`, {
-          method: "POST",
-          headers: createHeaders(),
-          body: JSON.stringify({
+        const { status, body } = await runBenchmarkQuery({
             id: turn.turnId,
             question: turn.question,
             conversationHistory: history,
             modelId: defaultModelId,
             benchmarkSuiteId,
             includeDebug: true
-          })
         })
-        const text = await response.text()
-        const body = parseBody(text)
-        const evaluation = evaluateConversationTurn(turn, body, response.status)
+        const evaluation = evaluateConversationTurn(turn, body, status)
         const result: ResultRow = {
           conversationId: conversation.conversationId,
           sourceDataset: conversation.sourceDataset,
@@ -134,7 +130,7 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
           expectedContains: turn.expectedContains,
           expectedFiles: turn.expectedFiles,
           goldStandaloneQuestion: turn.goldStandaloneQuestion,
-          status: response.status,
+          status,
           latencyMs: Date.now() - startedAt,
           evaluation,
           result: body,
@@ -184,19 +180,17 @@ export async function* readConversationDataset(filePath: string): AsyncGenerator
   }
 }
 
-function createHeaders(): Record<string, string> {
-  return {
-    "Content-Type": "application/json",
-    ...(apiAuthToken ? { Authorization: `Bearer ${apiAuthToken}` } : {})
-  }
-}
-
-function parseBody(text: string): ConversationBenchmarkResponse {
-  if (!text) return { error: "Empty response body" }
+async function runBenchmarkQuery(input: Parameters<typeof api.benchmark.query>[0]): Promise<{
+  status: number
+  body: ConversationBenchmarkResponse
+}> {
   try {
-    return JSON.parse(text) as ConversationBenchmarkResponse
-  } catch {
-    return { error: text }
+    return { status: 200, body: await api.benchmark.query(input) }
+  } catch (error) {
+    return {
+      status: 0,
+      body: { error: error instanceof Error ? error.message : String(error) }
+    }
   }
 }
 

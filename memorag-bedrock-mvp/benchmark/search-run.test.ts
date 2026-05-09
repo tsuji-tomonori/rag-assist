@@ -99,9 +99,9 @@ test("search runner seeds benchmark corpus before search rows when configured", 
     })
 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
-    assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), ["GET /documents", "DELETE /documents/stale-seed", "POST /documents", "POST /benchmark/search"])
+    assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), ["GET /documents", "DELETE /documents/stale-seed", "POST /documents", "POST /rpc/benchmark/search"])
     assert.equal((calls[2]?.body as { metadata?: { benchmarkSuiteId?: string } }).metadata?.benchmarkSuiteId, "standard-agent-v1")
-    assert.equal((calls[3]?.body as { benchmarkSuiteId?: string }).benchmarkSuiteId, "standard-agent-v1")
+    assert.equal(unwrapRpcBody(calls[3]?.body)?.benchmarkSuiteId, "standard-agent-v1")
     const summary = readSummary(paths.summary)
     assert.equal(summary.total, 1)
     assert.equal(summary.failures.length, 0)
@@ -201,12 +201,12 @@ async function handleSearchRunnerRequest(req: IncomingMessage, res: ServerRespon
     res.end(JSON.stringify({ fileName: "handbook.md", lifecycleStatus: "active", chunkCount: 1 }))
     return
   }
-  if (req.method === "POST" && req.url === "/benchmark/search") {
-    res.end(JSON.stringify({
+  if (req.method === "POST" && req.url === "/rpc/benchmark/search") {
+    res.end(JSON.stringify({ json: {
       query: "経費精算 期限",
       results: [{ id: "doc-handbook-chunk-0000", documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       diagnostics: { lexicalCount: 1, semanticCount: 0, fusedCount: 1, latencyMs: 12, profileId: "default", profileVersion: "1" }
-    }))
+    } }))
     return
   }
   res.statusCode = 404
@@ -218,4 +218,9 @@ async function readRequestJson(req: IncomingMessage): Promise<unknown> {
   for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
   const text = Buffer.concat(chunks).toString("utf-8")
   return text ? JSON.parse(text) : undefined
+}
+
+function unwrapRpcBody(body: unknown): { benchmarkSuiteId?: string } | undefined {
+  if (typeof body === "object" && body !== null && "json" in body) return (body as { json?: { benchmarkSuiteId?: string } }).json
+  return body as { benchmarkSuiteId?: string } | undefined
 }
