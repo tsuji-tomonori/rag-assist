@@ -1,6 +1,6 @@
 # 建築図面 QARAG ベンチマークの UI 実行対応
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -28,7 +28,7 @@
 - [x] AC5: README に UI 実行方法と制約を明記する。
 - [x] AC6: 変更範囲に見合う検証を実行し、未実施の検証があれば理由を記録する。
 - [x] AC7: 作業完了レポートを `reports/working/` に保存する。
-- [ ] AC8: PR 更新後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] AC8: PR 更新後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証結果
 
@@ -49,6 +49,9 @@
 
 - UI から run 起動はできるが、実際の CodeBuild 実行では国土交通省・自治体の公開 PDF URL への到達性と PDF/OCR 抽出結果に依存する。
 - ローカル検証では外部 PDF の実 download と本番 CodeBuild run は実行していない。
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/212
+- PR 受け入れ条件コメント: posted
+- PR セルフレビューコメント: posted
 
 ## 検証計画
 
