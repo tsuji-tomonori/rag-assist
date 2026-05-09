@@ -9,10 +9,23 @@ import test from "node:test"
 import { fileURLToPath } from "node:url"
 
 type SummaryArtifact = {
+  evaluatorProfile: {
+    id: string
+    version: string
+    retrieval: {
+      recallK: number
+    }
+    thresholds: {
+      retrievalRecallAtK?: number
+      p95LatencyMs?: number
+    }
+  }
   total: number
   skipped: number
   metrics?: {
     queryRewriteAccuracy?: number | null
+    retrievalRecallAtK?: number | null
+    retrievalRecallAt20?: number | null
     retrievalMrrAtK?: number | null
     citationSupportPassRate?: number | null
     noAccessLeakCount?: number
@@ -235,6 +248,59 @@ test("benchmark runner executes conversation rows in turn order and passes histo
   }
 })
 
+test("benchmark runner applies suite evaluator profile to retrieval K and thresholds", async () => {
+  const paths = artifactPaths("strict-profile")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${JSON.stringify({
+    id: "strict-profile-001",
+    question: "経費精算の期限は？",
+    answerable: true,
+    expectedResponseType: "answer",
+    expectedContains: ["30日以内"],
+    expectedFiles: ["handbook.md"]
+  })}\n`, "utf-8")
+
+  const calls: Array<{ method?: string; path?: string; body?: unknown }> = []
+  const server = createServer((req, res) => {
+    void handleStrictProfileRunnerRequest(req, res, calls)
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      EVALUATOR_PROFILE: "strict-ja",
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), ["POST /benchmark/query"])
+
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.evaluatorProfile.id, "strict-ja")
+    assert.equal(summary.evaluatorProfile.version, "1")
+    assert.equal(summary.evaluatorProfile.retrieval.recallK, 10)
+    assert.equal(summary.evaluatorProfile.thresholds.retrievalRecallAtK, 0.05)
+    assert.equal(summary.evaluatorProfile.thresholds.p95LatencyMs, 2000)
+    assert.equal(summary.metrics?.retrievalRecallAtK, 0)
+    assert.equal(summary.metrics?.retrievalRecallAt20, 1)
+    assert.deepEqual(summary.failures[0]?.reasons, ["retrieval_recall_at_10_miss"])
+
+    const resultRow = JSON.parse(readFileSync(paths.output, "utf-8").trim()) as { evaluatorProfile?: string }
+    assert.equal(resultRow.evaluatorProfile, "strict-ja@1")
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /Evaluator profile: strict-ja@1/)
+    assert.match(report, /retrieval_recall_at_k/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
 function artifactPaths(name: string): { dir: string; output: string; summary: string; report: string } {
   const dir = mkdtempSync(path.join(tmpdir(), `memorag-run-${name}-`))
   return {
@@ -411,6 +477,35 @@ async function handleMultiturnRunnerRequest(req: IncomingMessage, res: ServerRes
         }
       }]
     }
+  }))
+}
+
+async function handleStrictProfileRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestBody(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  if (req.method !== "POST" || req.url !== "/benchmark/query") {
+    res.statusCode = 404
+    res.end(JSON.stringify({ error: "not found" }))
+    return
+  }
+
+  const retrieved = Array.from({ length: 10 }, (_, index) => ({
+    documentId: `doc-distractor-${index}`,
+    fileName: `distractor-${index}.md`,
+    chunkId: `distractor-${index}`,
+    score: 0.8 - index * 0.01
+  }))
+  retrieved.push({ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.5 })
+  res.end(JSON.stringify({
+    id: "strict-profile-001",
+    responseType: "answer",
+    answer: "経費精算の期限は30日以内です。",
+    isAnswerable: true,
+    citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
+    retrieved,
+    answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+    debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
   }))
 }
 

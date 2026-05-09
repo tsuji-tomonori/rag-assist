@@ -27,6 +27,7 @@
 - PR #221 の GitHub 状態と `gh` 認証を確認した。
 - clean worktree を作成し、`origin/main` を merge した。
 - workflow、README、agent state/types/schema、MTRAG adapter、OPERATIONS、infra buildspec/test/snapshot の競合を解消した。
+- push 後に `origin/main` がさらに進んだため再 merge し、`benchmark/run.test.ts` の conversation runner test と evaluator profile test の競合を解消した。
 - duplicate suite 定義を除き、MTRAG / ChatRAG Bench の dataset path を `datasets/conversation/*` に統一した。
 - MLIT benchmark suite の CodeBuild dynamic prepare 分岐を維持した。
 - 作業 task を `tasks/do/20260509-2058-pr221-conflict-ci-check.md` に作成した。
@@ -46,6 +47,8 @@
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: pass
 - `git diff --check`: pass
+- 追加 merge 後の `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark`: pass
+- 追加 merge 後の `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/benchmark`: pass
 
 ## 成果物
 
