@@ -44,6 +44,18 @@ python3 tools/convert_mlit_pdf_benchmark_seed.py .workspace/mlit_pdf_figure_tabl
 
 既存 benchmark runner に投入する場合は、`qa.jsonl` を dataset path として使います。`expectedFiles` は `source_doc_id.pdf` 形式、`expectedDocumentIds` は `source_doc_id` を入れています。実際の corpus 側のファイル名や document id が異なる場合は、ingest 時の metadata か評価アダプタで対応させてください。
 
+## UI からの実行
+
+この seed は benchmark suite `mlit-pdf-figure-table-rag-seed-v1` として登録します。UI の「性能テスト」画面では、API の `GET /benchmark-suites` が返す suite 一覧から `MLIT PDF figure/table RAG seed` を選択して CodeBuild runner を起動できます。
+
+実行環境では、benchmark bucket に次の dataset key を配置してください。
+
+```text
+datasets/agent/mlit-pdf-figure-table-rag-seed-v1.jsonl
+```
+
+また、出典 PDF は benchmark seed corpus として投入し、metadata の `benchmarkSuiteId` を `mlit-pdf-figure-table-rag-seed-v1` に揃える必要があります。dataset だけを配置しても、対応する PDF corpus が未投入の場合は検索・引用評価が失敗します。
+
 ## 採点上の注意
 
 - 建築・法令・省エネ系の条件問題では、「以下/超」「未満/以上」「AND/OR」の取り違えを重大誤答として扱います。
