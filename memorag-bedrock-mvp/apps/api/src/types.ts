@@ -18,6 +18,8 @@ export type DocumentGroup = {
   groupId: string
   name: string
   description?: string
+  parentGroupId?: string
+  ancestorGroupIds?: string[]
   ownerUserId: string
   visibility: "private" | "shared" | "org"
   sharedUserIds: string[]

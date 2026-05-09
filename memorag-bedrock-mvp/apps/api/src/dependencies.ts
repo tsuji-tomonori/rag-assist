@@ -29,6 +29,9 @@ import type { DocumentIngestRunStore } from "./adapters/document-ingest-run-stor
 import { DynamoDbDocumentIngestRunEventStore } from "./adapters/dynamodb-document-ingest-run-event-store.js"
 import { LocalDocumentIngestRunEventStore } from "./adapters/local-document-ingest-run-event-store.js"
 import type { DocumentIngestRunEventStore } from "./adapters/document-ingest-run-event-store.js"
+import { DynamoDbDocumentGroupStore } from "./adapters/dynamodb-document-group-store.js"
+import { LocalDocumentGroupStore } from "./adapters/local-document-group-store.js"
+import type { DocumentGroupStore } from "./adapters/document-group-store.js"
 import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
 import { AwsCodeBuildLogReader, type CodeBuildLogReader } from "./adapters/codebuild-log-reader.js"
 
@@ -44,6 +47,7 @@ export type Dependencies = {
   chatRunEventStore: ChatRunEventStore
   documentIngestRunStore: DocumentIngestRunStore
   documentIngestRunEventStore: DocumentIngestRunEventStore
+  documentGroupStore: DocumentGroupStore
   codeBuildLogReader?: CodeBuildLogReader
   userDirectory?: UserDirectory
 }
@@ -87,9 +91,12 @@ export function createDependencies(): Dependencies {
   const documentIngestRunEventStore = config.useLocalDocumentIngestRunStore
     ? new LocalDocumentIngestRunEventStore(config.localDataDir)
     : new DynamoDbDocumentIngestRunEventStore(config.documentIngestRunEventsTableName)
+  const documentGroupStore = config.useLocalDocumentGroupStore
+    ? new LocalDocumentGroupStore(config.localDataDir)
+    : new DynamoDbDocumentGroupStore(config.documentGroupsTableName)
   const codeBuildLogReader = new AwsCodeBuildLogReader()
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, codeBuildLogReader, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, codeBuildLogReader, userDirectory }
   return cached
 }
