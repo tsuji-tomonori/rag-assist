@@ -37,7 +37,7 @@ GitHub Actions から新しい benchmark suite を実行できる状態にし、
 - [ ] 少なくとも 1 つの新 suite を GitHub Actions から実行し、run URL / 結果 / artifact 有無を記録する。
 - [x] 実行結果から確認できる失敗または改善点に対して、修正または未対応理由を記録する。
 - [x] 変更範囲に見合うローカル検証を実行し、結果を記録する。
-- [ ] PR #221 に日本語コメントで受け入れ条件確認とセルフレビューを残す。
+- [x] PR #221 に日本語コメントで受け入れ条件確認とセルフレビューを残す。
 - [x] 作業完了レポートを `reports/working/` に作成する。
 
 ## 検証計画
@@ -81,6 +81,7 @@ GitHub Actions から新しい benchmark suite を実行できる状態にし、
 - GitHub `dev` environment には `AWS_DEPLOY_ROLE_ARN` のみ存在し、`BENCHMARK_OPERATOR_AUTH_SECRET_ID` が未設定だった。
 - `mtrag-v1` / `chatrag-bench-v1` の dataset 配置と workflow 選択肢はこの PR の変更であり、dev stack に deploy されるまで deployed API / BenchmarkBucket には反映されない。
 - そのため、現時点では新 suite の GitHub Actions 実 benchmark 完走と性能改善値の確認は未達。
+- PR #221 には受け入れ条件確認コメント `4411195107` とセルフレビューコメント `4411195928` を投稿済み。
 
 ## 次に必要な操作
 

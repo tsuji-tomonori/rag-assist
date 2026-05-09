@@ -16,7 +16,7 @@
 | R2 | 新 suite の dataset を Actions/CodeBuild で読めるようにする | 高 | 対応 |
 | R3 | GitHub Actions で新 suite を実行する | 高 | 部分対応 |
 | R4 | 実行結果から性能改善ループを回す | 高 | blocked |
-| R5 | 検証と未達理由を PR / task / report に記録する | 高 | 対応中 |
+| R5 | 検証と未達理由を PR / task / report に記録する | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
