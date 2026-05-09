@@ -107,22 +107,37 @@ test("chat run event stream responses include CORS headers", async () => {
   const failed = await invokeStream({
     events: [],
     event: event({ runId: "run-1", userId: "user-1" }),
-    getError: new Error("store unavailable")
+    getError: new Error("AccessDeniedException: arn:aws:logs:us-east-1:111111111111:log-group:secret")
   })
   assert.equal(failed.metadata?.statusCode, 500)
   assert.deepEqual(failed.metadata?.headers, plainResponseHeaders)
+  assert.equal(failed.body, "Internal server error")
+  assert.doesNotMatch(failed.body, /AccessDeniedException|arn:aws|secret/)
+
+  const streamFailed = await invokeStream({
+    run,
+    events: [],
+    event: event({ runId: "run-1", userId: "user-1" }),
+    listError: new Error("AccessDeniedException: arn:aws:logs:us-east-1:111111111111:log-group:secret")
+  })
+  assert.equal(streamFailed.metadata?.statusCode, 200)
+  assert.match(streamFailed.body, /event: error/)
+  assert.match(streamFailed.body, /Internal server error/)
+  assert.doesNotMatch(streamFailed.body, /AccessDeniedException|arn:aws|secret/)
 })
 
 async function invokeStream({
   run,
   events,
   event,
-  getError
+  getError,
+  listError
 }: {
   run?: ChatRun
   events: ChatRunEvent[]
   event: APIGatewayProxyEvent
   getError?: Error
+  listError?: Error
 }) {
   const output = {
     metadata: undefined as { statusCode: number; headers: Record<string, string> } | undefined,
@@ -165,6 +180,7 @@ async function invokeStream({
         return { ...input, seq: 1, createdAt: "2026-05-04T00:00:00.000Z" }
       },
       async listAfter() {
+        if (listError) throw listError
         return events
       }
     }

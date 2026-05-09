@@ -3,7 +3,7 @@ import test from "node:test"
 import { safeUnhandledErrorResponse } from "./error-response.js"
 
 test("safeUnhandledErrorResponse hides raw infrastructure error details", () => {
-  const awsError = new Error("User: arn:aws:sts::713881826246:assumed-role/MemoRagMvpStack-ApiFunctionServiceRole is not authorized to perform: logs:GetLogEvents on resource: arn:aws:logs:us-east-1:713881826246:log-group:MemoRagMvpStack-BenchmarkProjectLogGroup:log-stream:build-stream")
+  const awsError = new Error("User: arn:aws:sts::111111111111:assumed-role/MemoRagMvpStack-ApiFunctionServiceRole is not authorized to perform: logs:GetLogEvents on resource: arn:aws:logs:us-east-1:111111111111:log-group:MemoRagMvpStack-BenchmarkProjectLogGroup:log-stream:build-stream")
 
   const response = safeUnhandledErrorResponse(awsError)
 
