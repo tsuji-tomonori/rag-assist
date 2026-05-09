@@ -4,9 +4,9 @@
 
 [API 一覧へ戻る](../openapi.md)
 
-Summary: 文書を登録する
+Summary: 文書を同期登録する（非推奨）
 
-テキストまたはファイル内容を登録し、RAG 検索用の文書として取り込みます。
+小さなテキスト互換用の同期登録 API です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。
 
 ## Headers
 
@@ -68,7 +68,7 @@ Media type: `application/json`
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 53 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 12 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -83,56 +83,15 @@ Media type: `application/json`
 | `documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `mimeType` | `string` | no | `response.mimeType` の値。項目名は mime type を表します。 | - |
-| `metadata` | `object` | no | `response.metadata` の値。項目名は metadata を表します。 | - |
-| `sourceObjectKey` | `string` | yes | `response.sourceObjectKey` の値。項目名は source object key を表します。 | - |
-| `structuredBlocksObjectKey` | `string` | no | `response.structuredBlocksObjectKey` の値。項目名は structured blocks object key を表します。 | - |
-| `memoryCardsObjectKey` | `string` | no | `response.memoryCardsObjectKey` の値。項目名は memory cards object key を表します。 | - |
-| `manifestObjectKey` | `string` | yes | `response.manifestObjectKey` の値。項目名は manifest object key を表します。 | - |
-| `vectorKeys` | `array<string>` | yes | `response.vectorKeys` の値。項目名は vector keys を表します。 | - |
-| `memoryVectorKeys` | `array<string>` | no | `response.memoryVectorKeys` の値。項目名は memory vector keys を表します。 | - |
-| `evidenceVectorKeys` | `array<string>` | no | `response.evidenceVectorKeys` の値。項目名は evidence vector keys を表します。 | - |
-| `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
-| `embeddingDimensions` | `integer` | no | `response.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
-| `chunkerVersion` | `string` | no | `response.chunkerVersion` の値。項目名は chunker version を表します。 | - |
-| `sourceExtractorVersion` | `string` | no | `response.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
-| `memoryPromptVersion` | `string` | no | `response.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
-| `indexVersion` | `string` | no | `response.indexVersion` の値。項目名は index version を表します。 | - |
-| `pipelineVersions` | `object` | no | `response.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
-| `pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
-| `pipelineVersions.chunkerVersion` | `string` | yes | `response.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
-| `pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
-| `pipelineVersions.memoryPromptVersion` | `string` | yes | `response.pipelineVersions.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
-| `pipelineVersions.promptVersion` | `string` | yes | `response.pipelineVersions.promptVersion` の値。項目名は prompt version を表します。 | - |
-| `pipelineVersions.indexVersion` | `string` | yes | `response.pipelineVersions.indexVersion` の値。項目名は index version を表します。 | - |
-| `pipelineVersions.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
-| `pipelineVersions.embeddingDimensions` | `integer` | yes | `response.pipelineVersions.embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
-| `chunks` | `array<object>` | no | `response.chunks` の値。項目名は chunks を表します。 | - |
-| `chunks[].id` | `string` | yes | リソースを一意に識別する ID。 | - |
-| `chunks[].startChar` | `integer` | yes | `response.chunks[].startChar` の値。項目名は start char を表します。 | minimum=0 |
-| `chunks[].endChar` | `integer` | yes | `response.chunks[].endChar` の値。項目名は end char を表します。 | minimum=0 |
-| `chunks[].sectionPath` | `array<string>` | no | `response.chunks[].sectionPath` の値。項目名は section path を表します。 | - |
-| `chunks[].heading` | `string` | no | `response.chunks[].heading` の値。項目名は heading を表します。 | - |
-| `chunks[].parentSectionId` | `string` | no | `response.chunks[].parentSectionId` の値。項目名は parent section id を表します。 | - |
-| `chunks[].previousChunkId` | `string` | no | `response.chunks[].previousChunkId` の値。項目名は previous chunk id を表します。 | - |
-| `chunks[].nextChunkId` | `string` | no | `response.chunks[].nextChunkId` の値。項目名は next chunk id を表します。 | - |
-| `chunks[].chunkHash` | `string` | no | `response.chunks[].chunkHash` の値。項目名は chunk hash を表します。 | - |
-| `chunks[].pageStart` | `integer` | no | `response.chunks[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
-| `chunks[].pageEnd` | `integer` | no | `response.chunks[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
-| `chunks[].chunkKind` | `enum(text \| table \| list \| code \| figure)` | no | `response.chunks[].chunkKind` の値。項目名は chunk kind を表します。 | enum=text, table, list, code, figure |
-| `chunks[].sourceBlockId` | `string` | no | `response.chunks[].sourceBlockId` の値。項目名は source block id を表します。 | - |
-| `chunks[].normalizedFrom` | `string` | no | `response.chunks[].normalizedFrom` の値。項目名は normalized from を表します。 | - |
-| `chunks[].tableColumnCount` | `integer` | no | `response.chunks[].tableColumnCount` の値。項目名は table column count を表します。 | minimum=0 |
-| `chunks[].listDepth` | `integer` | no | `response.chunks[].listDepth` の値。項目名は list depth を表します。 | minimum=0 |
-| `chunks[].codeLanguage` | `string` | no | `response.chunks[].codeLanguage` の値。項目名は code language を表します。 | - |
-| `chunks[].figureCaption` | `string` | no | `response.chunks[].figureCaption` の値。項目名は figure caption を表します。 | - |
-| `chunks[].extractionMethod` | `string` | no | `response.chunks[].extractionMethod` の値。項目名は extraction method を表します。 | - |
+| `chunkCount` | `number` | yes | `response.chunkCount` の値。項目名は chunk count を表します。 | - |
+| `memoryCardCount` | `number` | yes | `response.memoryCardCount` の値。項目名は memory card count を表します。 | - |
+| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `lifecycleStatus` | `enum(active \| staging \| superseded)` | no | `response.lifecycleStatus` の値。項目名は lifecycle status を表します。 | enum=active, staging, superseded |
 | `activeDocumentId` | `string` | no | `response.activeDocumentId` の値。項目名は active document id を表します。 | - |
 | `stagedFromDocumentId` | `string` | no | `response.stagedFromDocumentId` の値。項目名は staged from document id を表します。 | - |
 | `reindexMigrationId` | `string` | no | `response.reindexMigrationId` の値。項目名は reindex migration id を表します。 | - |
-| `chunkCount` | `number` | yes | `response.chunkCount` の値。項目名は chunk count を表します。 | - |
-| `memoryCardCount` | `number` | yes | `response.memoryCardCount` の値。項目名は memory card count を表します。 | - |
-| `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `chunkerVersion` | `string` | no | `response.chunkerVersion` の値。項目名は chunker version を表します。 | - |
+| `sourceExtractorVersion` | `string` | no | `response.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
 
 ##### `400` リクエスト形式または入力値が不正です。
 
