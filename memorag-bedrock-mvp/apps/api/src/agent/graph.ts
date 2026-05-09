@@ -9,6 +9,7 @@ import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
 import type { DocumentManifest, RetrievedVector } from "../types.js"
 import { analyzeInput } from "./nodes/analyze-input.js"
 import { answerabilityGate } from "./nodes/answerability-gate.js"
+import { buildConversationState, decontextualizeQuery } from "./nodes/build-conversation-state.js"
 import { buildTemporalContext } from "./nodes/build-temporal-context.js"
 import { clarificationGate } from "./nodes/clarification-gate.js"
 import { detectToolIntent } from "./nodes/detect-tool-intent.js"
@@ -234,6 +235,8 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     analyzeInput: tracedNode("analyze_input", analyzeInput),
     buildTemporalContext: tracedNode("build_temporal_context", buildTemporalContext),
     detectToolIntent: tracedNode("detect_tool_intent", detectToolIntent),
+    buildConversationState: tracedNode("build_conversation_state", buildConversationState),
+    decontextualizeQuery: tracedNode("decontextualize_query", decontextualizeQuery),
     normalizeQuery: tracedNode("normalize_query", normalizeQuery),
     retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps, user)),
     generateClues: tracedNode("generate_clues", createGenerateCluesNode(deps)),
@@ -265,6 +268,8 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
         return applyNode(state, "finalize_refusal", nodes.finalizeRefusal, progress)
       }
       state = await applyNode(state, "detect_tool_intent", nodes.detectToolIntent, progress)
+      state = await applyNode(state, "build_conversation_state", nodes.buildConversationState, progress)
+      state = await applyNode(state, "decontextualize_query", nodes.decontextualizeQuery, progress)
 
       if (state.toolIntent?.canAnswerFromQuestionOnly) {
         state = await applyNode(state, "execute_computation_tools", nodes.executeComputationTools, progress)
@@ -603,6 +608,9 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
     minScore,
     strictGrounded: input.strictGrounded !== false,
     clarificationContext: input.clarificationContext,
+    conversation: input.conversation,
+    conversationState: undefined,
+    decontextualizedQuery: undefined,
     iteration: 0,
     referenceQueue: [],
     resolvedReferences: [],
@@ -788,6 +796,9 @@ async function persistDebugTrace(
     memoryTopK: input.memoryTopK,
     minScore: input.minScore,
     clarificationContext: input.state.clarificationContext,
+    conversation: input.state.conversation,
+    conversationState: input.state.conversationState,
+    decontextualizedQuery: input.state.decontextualizedQuery,
     startedAt: input.startedAt.toISOString(),
     completedAt: completedAt.toISOString(),
     totalLatencyMs: Math.max(0, Date.now() - input.startedMs),

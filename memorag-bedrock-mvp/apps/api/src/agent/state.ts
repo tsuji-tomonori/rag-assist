@@ -173,6 +173,56 @@ export const ClarificationContextSchema = z.object({
   selectedValue: z.string().optional()
 })
 
+const ConversationCitationSchema = z.object({
+  documentId: z.string().optional(),
+  fileName: z.string().optional(),
+  chunkId: z.string().optional(),
+  score: z.number().optional(),
+  text: z.string().optional()
+})
+
+export const ConversationTurnSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  text: z.string(),
+  citations: z.array(ConversationCitationSchema).optional(),
+  createdAt: z.string().optional()
+})
+
+export const ConversationInputSchema = z.object({
+  conversationId: z.string(),
+  turnId: z.string().optional(),
+  turnIndex: z.number().int().nonnegative().optional(),
+  turns: z.array(ConversationTurnSchema).default(() => []),
+  turnDependency: z.string().optional(),
+  state: z.object({
+    activeEntities: z.array(z.string()).optional(),
+    activeDocuments: z.array(z.string()).optional(),
+    activeTopics: z.array(z.string()).optional(),
+    constraints: z.array(z.string()).optional()
+  }).optional()
+})
+
+export const ConversationStateSchema = z.object({
+  conversationId: z.string().optional(),
+  turnId: z.string().optional(),
+  turnIndex: z.number().int().nonnegative().optional(),
+  activeEntities: z.array(z.string()).default(() => []),
+  activeDocuments: z.array(z.string()).default(() => []),
+  activeTopics: z.array(z.string()).default(() => []),
+  constraints: z.array(z.string()).default(() => []),
+  previousCitationCount: z.number().int().nonnegative().default(0),
+  turnDependency: z.string().default("standalone")
+})
+
+export const DecontextualizedQuerySchema = z.object({
+  standaloneQuestion: z.string(),
+  retrievalQueries: z.array(z.string()).default(() => []),
+  carriedEntities: z.array(z.string()).default(() => []),
+  carriedDocuments: z.array(z.string()).default(() => []),
+  turnDependency: z.string().default("standalone"),
+  shouldUsePreviousCitations: z.boolean().default(false)
+})
+
 export const DebugStepSchema = z.object({
   id: z.number(),
   label: z.string(),
@@ -478,6 +528,9 @@ export const AgentStateSchema = z.object({
   minScore: z.number().min(-1).max(1).default(ragRuntimePolicy.retrieval.defaultMinScore),
   strictGrounded: z.boolean().default(true),
   clarificationContext: ClarificationContextSchema.optional(),
+  conversation: ConversationInputSchema.optional(),
+  conversationState: ConversationStateSchema.optional(),
+  decontextualizedQuery: DecontextualizedQuerySchema.optional(),
   searchFilters: SearchFiltersSchema.optional(),
   searchScope: SearchScopeSchema.optional(),
 
@@ -606,6 +659,9 @@ export type ComputedFact = z.infer<typeof ComputedFactSchema>
 export type Clarification = z.infer<typeof ClarificationSchema>
 export type ClarificationOption = z.infer<typeof ClarificationOptionSchema>
 export type ClarificationContext = z.infer<typeof ClarificationContextSchema>
+export type ConversationInputState = z.infer<typeof ConversationInputSchema>
+export type ConversationState = z.infer<typeof ConversationStateSchema>
+export type DecontextualizedQuery = z.infer<typeof DecontextualizedQuerySchema>
 
 export function requiredFactNecessity(fact: RequiredFact): RequiredFactNecessity {
   return fact.necessity ?? "primary"

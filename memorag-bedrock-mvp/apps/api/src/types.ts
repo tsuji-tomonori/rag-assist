@@ -287,6 +287,9 @@ export type DebugTrace = {
   embeddingModelId: string
   clueModelId: string
   clarificationContext?: ClarificationContext
+  conversation?: unknown
+  conversationState?: unknown
+  decontextualizedQuery?: unknown
   pipelineVersions?: PipelineVersions
   ragProfile?: {
     id: string

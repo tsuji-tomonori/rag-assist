@@ -4,6 +4,7 @@ import type { Dependencies } from "../../dependencies.js"
 import type { RetrievedVector } from "../../types.js"
 import { MockBedrockTextModel } from "../../adapters/mock-bedrock.js"
 import { answerabilityGate } from "./answerability-gate.js"
+import { buildConversationState, decontextualizeQuery } from "./build-conversation-state.js"
 import { clarificationGate } from "./clarification-gate.js"
 import { createEmbedQueriesNode } from "./embed-queries.js"
 import { finalizeResponse } from "./finalize-response.js"
@@ -49,6 +50,34 @@ test("answerability gate covers no hit, low score, missing fact, and sufficient 
   assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("amount")))
   assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("date")))
   assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("procedure")))
+})
+
+test("conversation state decontextualizes follow-up questions without using expected answers", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "その例外は？",
+    conversation: {
+      conversationId: "conv-1",
+      turnId: "2",
+      turnIndex: 2,
+      turns: [
+        { role: "user", text: "経費精算の期限は？" },
+        {
+          role: "assistant",
+          text: "経費精算の期限は30日以内です。",
+          citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-1", score: 0.9, text: "30日以内" }]
+        }
+      ]
+    }
+  }))
+  const rewriteUpdate = await decontextualizeQuery(state({
+    question: "その例外は？",
+    conversationState: conversationUpdate.conversationState
+  }))
+
+  assert.equal(conversationUpdate.conversationState?.turnDependency, "coreference")
+  assert.equal(rewriteUpdate.decontextualizedQuery?.shouldUsePreviousCitations, true)
+  assert.match(rewriteUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /経費精算/)
+  assert.ok(rewriteUpdate.decontextualizedQuery?.retrievalQueries.some((query) => query.includes("handbook.md")))
 })
 
 test("classification answers require actual requirements classification terms", async () => {

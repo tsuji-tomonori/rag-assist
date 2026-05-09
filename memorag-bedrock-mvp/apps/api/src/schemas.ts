@@ -428,6 +428,35 @@ const ClarificationContextSchema = z.object({
   selectedValue: z.string().optional()
 })
 
+const ConversationCitationSchema = z.object({
+  documentId: z.string().optional(),
+  fileName: z.string().optional(),
+  chunkId: z.string().optional(),
+  score: z.number().optional(),
+  text: z.string().optional()
+})
+
+const ConversationTurnSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  text: z.string(),
+  citations: z.array(ConversationCitationSchema).optional(),
+  createdAt: z.string().optional()
+})
+
+const ConversationInputSchema = z.object({
+  conversationId: z.string(),
+  turnId: z.string().optional(),
+  turnIndex: z.number().int().nonnegative().optional(),
+  turns: z.array(ConversationTurnSchema).default(() => []),
+  turnDependency: z.string().optional(),
+  state: z.object({
+    activeEntities: z.array(z.string()).optional(),
+    activeDocuments: z.array(z.string()).optional(),
+    activeTopics: z.array(z.string()).optional(),
+    constraints: z.array(z.string()).optional()
+  }).optional()
+})
+
 export const SearchScopeSchema = z.object({
   mode: z.enum(["all", "groups", "documents", "temporary"]).optional(),
   groupIds: z.array(z.string().min(1)).max(20).optional(),
@@ -439,6 +468,7 @@ export const SearchScopeSchema = z.object({
 export const ChatRequestSchema = z.object({
   question: z.string().min(1).openapi({ example: "経費精算の期限は？" }),
   clarificationContext: ClarificationContextSchema.optional(),
+  conversation: ConversationInputSchema.optional(),
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
   embeddingModelId: z.string().optional().openapi({ example: "amazon.titan-embed-text-v2:0" }),
   clueModelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
@@ -562,6 +592,9 @@ export const DebugTraceSchema = z.object({
   embeddingModelId: z.string(),
   clueModelId: z.string(),
   clarificationContext: ClarificationContextSchema.optional(),
+  conversation: z.unknown().optional(),
+  conversationState: z.unknown().optional(),
+  decontextualizedQuery: z.unknown().optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   ragProfile: RagProfileTraceSchema.optional(),
   topK: z.number(),

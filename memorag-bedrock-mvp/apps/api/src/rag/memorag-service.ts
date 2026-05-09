@@ -171,6 +171,22 @@ const benchmarkSuites: BenchmarkSuite[] = [
     defaultConcurrency: 1
   },
   {
+    suiteId: "mtrag-v1",
+    label: "MTRAG / mtRAG multi-turn",
+    mode: "agent",
+    datasetS3Key: "datasets/agent/mtrag-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
+    suiteId: "chatrag-bench-v1",
+    label: "ChatRAG Bench",
+    mode: "agent",
+    datasetS3Key: "datasets/agent/chatrag-bench-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
     suiteId: "mlit-pdf-figure-table-rag-seed-v1",
     label: "MLIT PDF figure/table RAG seed",
     mode: "agent",
