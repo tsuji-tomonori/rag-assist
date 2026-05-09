@@ -19,6 +19,30 @@
 python3 tools/convert_mlit_pdf_benchmark_seed.py .workspace/mlit_pdf_figure_table_rag_benchmark_seed.xlsx
 ```
 
+## PDF corpus の自動取得
+
+`source_docs.csv` に記載した国土交通省 PDF は、次の prepare script でローカル corpus として取得できます。
+
+```bash
+npm --prefix memorag-bedrock-mvp run prepare:mlit-pdf-figure-table-rag -w @memorag-mvp/benchmark
+```
+
+既定の出力先は次の通りです。
+
+```text
+memorag-bedrock-mvp/.local-data/mlit-pdf-figure-table-rag-seed-v1/dataset.jsonl
+memorag-bedrock-mvp/.local-data/mlit-pdf-figure-table-rag-seed-v1/corpus/
+```
+
+PDF のファイル名は dataset の `expectedFiles` と合わせ、`MLIT-KIJUN-2024.pdf`、`MLIT-SHOENE-NONRES-2025.pdf`、`MLIT-WOOD-SPEC-2023.pdf` として保存します。既存ファイルは既定で skip します。再取得する場合は `MLIT_PDF_RAG_FORCE_DOWNLOAD=1` を指定してください。
+
+主な環境変数:
+
+- `MLIT_PDF_RAG_DATASET_OUTPUT`: dataset JSONL の出力先。
+- `MLIT_PDF_RAG_CORPUS_DIR`: PDF corpus の出力先。
+- `MLIT_PDF_RAG_DOWNLOAD_DOCUMENTS=0`: PDF download を行わず dataset copy のみにする。
+- `MLIT_PDF_RAG_FORCE_DOWNLOAD=1`: 既存 PDF を上書きして再 download する。
+
 ## 内容
 
 - QA 件数: 36
@@ -55,6 +79,8 @@ datasets/agent/mlit-pdf-figure-table-rag-seed-v1.jsonl
 ```
 
 また、出典 PDF は benchmark seed corpus として投入し、metadata の `benchmarkSuiteId` を `mlit-pdf-figure-table-rag-seed-v1` に揃える必要があります。dataset だけを配置しても、対応する PDF corpus が未投入の場合は検索・引用評価が失敗します。
+
+prepare script はローカルファイルを作るだけです。CodeBuild benchmark で使うには、生成した dataset JSONL と PDF corpus を benchmark bucket / document ingest API へ別途配置してください。
 
 ## 採点上の注意
 
