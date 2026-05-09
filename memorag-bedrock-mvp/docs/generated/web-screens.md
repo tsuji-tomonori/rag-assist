@@ -11,7 +11,7 @@
 
 | 表示名 | view | route | 機能 | 画面コンポーネント | 権限条件 | 主要操作 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| チャット | chat | / (client-state) | [チャット](web-features/chat.md) | ChatView | - | 自分で入力、質問入力、質問、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、モデルを選択 ほか 26 件 | confirmed |
+| チャット | chat | / (client-state) | [チャット](web-features/chat.md) | ChatView | - | 自分で入力、質問入力、質問、ファイルをアップロード、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku ほか 27 件 | confirmed |
 | 担当者対応 | assignee | / (client-state) | [担当者対応](web-features/questions.md) | AssigneeWorkspace | canAnswerQuestions | チャットへ戻る、ステータス / すべて、statusFilter、all、検索、タイトル・名前・部署で検索 ほか 12 件 | confirmed |
 | 履歴 | history | / (client-state) | [履歴](web-features/history.md) | HistoryWorkspace | - | チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages ほか 2 件 | inferred |
 | お気に入り | favorites | / (client-state) | [履歴](web-features/history.md) | HistoryWorkspace | - | チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages ほか 2 件 | inferred |
@@ -30,7 +30,7 @@
 - route: `/` (client-state)
 - 権限条件: なし
 - 画面の意味: チャット。利用者が質問し、RAG 回答、引用、確認質問、担当者への問い合わせ導線を確認します。
-- 主要操作: 自分で入力、質問入力、質問、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、モデルを選択、質問を送信、解決した、追加で質問する、担当者へ質問 ほか 22 件
+- 主要操作: 自分で入力、質問入力、質問、ファイルをアップロード、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、モデルを選択、質問を送信、解決した、追加で質問する ほか 23 件
 
 ### 担当者対応
 
