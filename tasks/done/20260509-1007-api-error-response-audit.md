@@ -1,6 +1,6 @@
 # API error response audit
 
-状態: validation
+状態: done
 
 ## 背景
 
