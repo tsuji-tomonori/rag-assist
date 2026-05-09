@@ -89,7 +89,7 @@ test("benchmark runner skips rows that require unextractable corpus", async () =
       "PUT /upload/image-only.pdf",
       "POST /document-ingest-runs",
       "GET /document-ingest-runs/ingest-image-only",
-      "POST /benchmark/query"
+      "POST /rpc/benchmark/query"
     ])
 
     const summary = readSummary(paths.summary)
@@ -162,9 +162,9 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
     assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), [
-      "POST /benchmark/query",
-      "POST /benchmark/query",
-      "POST /benchmark/query"
+      "POST /rpc/benchmark/query",
+      "POST /rpc/benchmark/query",
+      "POST /rpc/benchmark/query"
     ])
 
     const summary = readSummary(paths.summary)
@@ -229,8 +229,8 @@ test("benchmark runner executes conversation rows in turn order and passes histo
     })
 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
-    assert.deepEqual(calls.map((call) => (call.body as { id?: string }).id), ["conv-1-turn-1", "conv-1-turn-2"])
-    const secondBody = calls[1]?.body as { conversation?: { conversationId?: string; turns?: Array<{ role?: string; text?: string; citations?: unknown[] }> } }
+    assert.deepEqual(calls.map((call) => (unwrapRpcBody(call.body) as { id?: string }).id), ["conv-1-turn-1", "conv-1-turn-2"])
+    const secondBody = unwrapRpcBody(calls[1]?.body) as { conversation?: { conversationId?: string; turns?: Array<{ role?: string; text?: string; citations?: unknown[] }> } }
     assert.equal(secondBody.conversation?.conversationId, "conv-1")
     assert.deepEqual(secondBody.conversation?.turns?.map((turn) => `${turn.role}:${turn.text}`), [
       "user:経費精算の期限は？",
@@ -279,7 +279,7 @@ test("benchmark runner applies suite evaluator profile to retrieval K and thresh
     })
 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
-    assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), ["POST /benchmark/query"])
+    assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), ["POST /rpc/benchmark/query"])
 
     const summary = readSummary(paths.summary)
     assert.equal(summary.evaluatorProfile.id, "strict-ja")
@@ -376,8 +376,8 @@ async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, ca
     res.end(JSON.stringify({ runId: "ingest-image-only", status: "failed", error: "Uploaded document did not contain extractable text" }))
     return
   }
-  if (req.method === "POST" && req.url === "/benchmark/query") {
-    res.end(JSON.stringify({
+  if (req.method === "POST" && req.url === "/rpc/benchmark/query") {
+    res.end(JSON.stringify({ json: {
       id: "run-001",
       responseType: "answer",
       answer: "経費精算の期限は30日以内です。",
@@ -385,7 +385,7 @@ async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, ca
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-0000", score: 0.9 }],
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
-    }))
+    } }))
     return
   }
   res.statusCode = 404
@@ -396,15 +396,16 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
   const body = await readRequestBody(req)
   calls.push({ method: req.method, path: req.url, body })
   res.setHeader("content-type", "application/json")
-  if (req.method !== "POST" || req.url !== "/benchmark/query") {
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query") {
     res.statusCode = 404
     res.end(JSON.stringify({ error: "not found" }))
     return
   }
 
-  const id = typeof body === "object" && body !== null && "id" in body ? (body as { id?: string }).id : undefined
+  const input = unwrapRpcBody(body)
+  const id = typeof input === "object" && input !== null && "id" in input ? (input as { id?: string }).id : undefined
   if (id === "baseline-answerable-001") {
-    res.end(JSON.stringify({
+    res.end(JSON.stringify({ json: {
       id,
       responseType: "answer",
       answer: "経費精算の期限は30日以内です。",
@@ -413,11 +414,11 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
       answerSupport: { unsupportedSentences: [], totalSentences: 1 },
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
-    }))
+    } }))
     return
   }
   if (id === "baseline-acl-001") {
-    res.end(JSON.stringify({
+    res.end(JSON.stringify({ json: {
       id,
       responseType: "refusal",
       answer: "資料からは回答できません。",
@@ -425,10 +426,10 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
       citations: [],
       retrieved: [],
       debug: { totalLatencyMs: 10, steps: [] }
-    }))
+    } }))
     return
   }
-  res.end(JSON.stringify({
+  res.end(JSON.stringify({ json: {
     id,
     responseType: "answer",
     answer: "限定公開資料には役員賞与の監査メモがあります。",
@@ -436,16 +437,28 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
     citations: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
     retrieved: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
     debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
-  }))
+  } }))
+}
+
+function unwrapRpcBody(body: unknown): unknown {
+  if (typeof body === "object" && body !== null && "json" in body) return (body as { json?: unknown }).json
+  return body
 }
 
 async function handleMultiturnRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
   const body = await readRequestBody(req)
   calls.push({ method: req.method, path: req.url, body })
   res.setHeader("content-type", "application/json")
-  const id = typeof body === "object" && body !== null && "id" in body ? (body as { id?: string }).id : undefined
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query") {
+    res.statusCode = 404
+    res.end(JSON.stringify({ error: "not found" }))
+    return
+  }
+
+  const input = unwrapRpcBody(body)
+  const id = typeof input === "object" && input !== null && "id" in input ? (input as { id?: string }).id : undefined
   if (id === "conv-1-turn-1") {
-    res.end(JSON.stringify({
+    res.end(JSON.stringify({ json: {
       id,
       responseType: "answer",
       answer: "経費精算の期限は30日以内です。",
@@ -453,10 +466,10 @@ async function handleMultiturnRunnerRequest(req: IncomingMessage, res: ServerRes
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9, text: "経費精算は30日以内です。" }],
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
-    }))
+    } }))
     return
   }
-  res.end(JSON.stringify({
+  res.end(JSON.stringify({ json: {
     id,
     responseType: "answer",
     answer: "例外は上長承認がある場合です。",
@@ -477,14 +490,14 @@ async function handleMultiturnRunnerRequest(req: IncomingMessage, res: ServerRes
         }
       }]
     }
-  }))
+  } }))
 }
 
 async function handleStrictProfileRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
   const body = await readRequestBody(req)
   calls.push({ method: req.method, path: req.url, body })
   res.setHeader("content-type", "application/json")
-  if (req.method !== "POST" || req.url !== "/benchmark/query") {
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query") {
     res.statusCode = 404
     res.end(JSON.stringify({ error: "not found" }))
     return
@@ -497,7 +510,7 @@ async function handleStrictProfileRunnerRequest(req: IncomingMessage, res: Serve
     score: 0.8 - index * 0.01
   }))
   retrieved.push({ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.5 })
-  res.end(JSON.stringify({
+  res.end(JSON.stringify({ json: {
     id: "strict-profile-001",
     responseType: "answer",
     answer: "経費精算の期限は30日以内です。",
@@ -506,7 +519,7 @@ async function handleStrictProfileRunnerRequest(req: IncomingMessage, res: Serve
     retrieved,
     answerSupport: { unsupportedSentences: [], totalSentences: 1 },
     debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
-  }))
+  } }))
 }
 
 function defaultRagProfile(): {

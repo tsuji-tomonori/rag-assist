@@ -249,7 +249,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     if (requestUrl.endsWith("/admin/aliases") && isGet(init)) return Promise.resolve(response({ aliases }))
     if (requestUrl.endsWith("/admin/aliases/audit-log") && isGet(init)) return Promise.resolve(response({ auditLog: aliasAuditLog }))
     if (requestUrl.endsWith("/admin/aliases") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body ?? "{}"))
+      const body = parseRequestJson(init)
       const alias: AliasDefinition = { aliasId: "alias-2", ...body, status: "draft", createdBy: "local-dev", createdAt: "2026-05-02T00:01:00.000Z", updatedAt: "2026-05-02T00:01:00.000Z" }
       aliases = [alias, ...aliases]
       return Promise.resolve(response(alias))
@@ -264,7 +264,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       return Promise.resolve(response({ version: "aliases-20260502T000300Z", publishedAt: "2026-05-02T00:03:00.000Z", aliasCount: 1 }))
     }
     if (requestUrl.endsWith("/admin/users") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body ?? "{}"))
+      const body = parseRequestJson(init)
       const created = {
         userId: String(body.email).replace(/[^a-z0-9._-]/gi, "-").toLowerCase(),
         email: body.email,
@@ -280,7 +280,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       return Promise.resolve(response(created))
     }
     if (requestUrl.endsWith("/admin/users/local-dev/roles") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body ?? "{}"))
+      const body = parseRequestJson(init)
       managedUsers = managedUsers.map((user) => (user.userId === "local-dev" ? { ...user, groups: body.groups, updatedAt: "2026-05-02T00:01:00.000Z" } : user))
       adminAuditLog = [{ auditId: "audit-role", action: "role:assign", actorUserId: "local-dev", actorEmail: "tester@example.com", targetUserId: "local-dev", targetEmail: "tester@example.com", beforeGroups: groups, afterGroups: body.groups, createdAt: "2026-05-02T00:01:00.000Z" }, ...adminAuditLog]
       return Promise.resolve(response(managedUsers[0]))
@@ -330,7 +330,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     ] }))
     if (requestUrl.endsWith("/benchmark-runs") && isGet(init)) return Promise.resolve(response({ benchmarkRuns }))
     if (requestUrl.endsWith("/benchmark-runs") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body ?? "{}")) as { suiteId?: string; mode?: BenchmarkRun["mode"]; runner?: BenchmarkRun["runner"] }
+      const body = parseRequestJson(init) as { suiteId?: string; mode?: BenchmarkRun["mode"]; runner?: BenchmarkRun["runner"] }
       const suiteId = body.suiteId ?? "standard-agent-v1"
       const datasetS3Key = suiteId === "mmrag-docqa-v1"
         ? "hf://datasets/yubo2333/MMLongBench-Doc"
@@ -342,7 +342,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       return Promise.resolve(response(created))
     }
     if (requestUrl.endsWith("/benchmark-runs/bench-1/download") && init?.method === "POST") {
-      const artifact = JSON.parse(String(init.body ?? "{}")).artifact ?? "report"
+      const artifact = parseRequestJson(init).artifact ?? "report"
       return Promise.resolve(response({ url: `https://signed.example/${artifact}`, expiresInSeconds: 900, objectKey: `runs/bench-1/${artifact}` }))
     }
     if (requestUrl.includes("/benchmark-runs/") && requestUrl.endsWith("/logs") && isGet(init)) {
@@ -353,7 +353,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
     }
     if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
     if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body ?? "{}")) as ConversationHistoryItem
+      const body = parseRequestJson(init) as ConversationHistoryItem
       storedHistory = [body, ...storedHistory.filter((item) => item.id !== body.id)]
       return Promise.resolve(response(body))
     }
@@ -386,8 +386,8 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       return Promise.resolve(response({ documentId: "doc-3", fileName: "upload.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }))
     }
     if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
-    if (requestUrl.endsWith("/chat-runs") && init?.method === "POST") {
-      const body = JSON.parse(String(init.body ?? "{}")) as { includeDebug?: boolean }
+    if (requestUrl.endsWith("/rpc/chat/startRun") && init?.method === "POST") {
+      const body = parseRequestJson(init) as { includeDebug?: boolean }
       lastChatResponse = {
         answer: "ソフトウェア要求は製品要求とプロジェクト要求に分類されます。",
         isAnswerable: true,
@@ -433,12 +433,17 @@ function findRequest(fetchMock: ReturnType<typeof vi.fn>, suffix: string, method
 function requestBodies(fetchMock: ReturnType<typeof vi.fn>, suffix: string, method = "POST") {
   return fetchMock.mock.calls
     .filter(([url, init]) => String(url).endsWith(suffix) && ((init as RequestInit | undefined)?.method ?? "GET") === method)
-    .map(([, init]) => JSON.parse(String((init as RequestInit).body)))
+    .map(([, init]) => parseRequestJson(init as RequestInit))
 }
 
 function requestBody(call: unknown[] | undefined) {
   expect(call).toBeTruthy()
-  return JSON.parse(String((call?.[1] as RequestInit).body))
+  return parseRequestJson(call?.[1] as RequestInit)
+}
+
+function parseRequestJson(init?: RequestInit): any {
+  const payload = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>
+  return payload.json && typeof payload.json === "object" ? payload.json : payload
 }
 
 describe("App document management", () => {
@@ -614,7 +619,7 @@ describe("App chat and upload flow", () => {
 
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
 
-    expect(requestBody(findRequest(fetchMock, "/chat-runs", "POST"))).toEqual({
+    expect(requestBody(findRequest(fetchMock, "/rpc/chat/startRun", "POST"))).toEqual({
       question: "ソフトウェア要求の分類を洗い出して",
       modelId: "amazon.nova-lite-v1:0",
       embeddingModelId: "amazon.titan-embed-text-v2:0",
@@ -635,7 +640,7 @@ describe("App chat and upload flow", () => {
 
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
 
-    expect(requestBody(findRequest(fetchMock, "/chat-runs", "POST"))).toMatchObject({ includeDebug: true })
+    expect(requestBody(findRequest(fetchMock, "/rpc/chat/startRun", "POST"))).toMatchObject({ includeDebug: true })
   })
 
   it("uploads an attached file and answers a question from citations", async () => {
@@ -652,7 +657,7 @@ describe("App chat and upload flow", () => {
     expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(1)
 
     const uploadCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/documents/uploads") && (init as RequestInit | undefined)?.method === "POST")
-    const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/chat-runs") && (init as RequestInit | undefined)?.method === "POST")
+    const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/rpc/chat/startRun") && (init as RequestInit | undefined)?.method === "POST")
     expect(uploadCall).toBeTruthy()
     expect(chatCall).toBeTruthy()
 
@@ -664,12 +669,12 @@ describe("App chat and upload flow", () => {
       .filter((call) => call.method === "POST" && (
         call.url === "http://api.test/documents/uploads" ||
         call.url === "http://api.test/document-ingest-runs" ||
-        call.url === "http://api.test/chat-runs"
+        call.url === "http://api.test/rpc/chat/startRun"
       ))
     expect(writeCalls).toEqual([
       { url: "http://api.test/documents/uploads", method: "POST" },
       { url: "http://api.test/document-ingest-runs", method: "POST" },
-      { url: "http://api.test/chat-runs", method: "POST" }
+      { url: "http://api.test/rpc/chat/startRun", method: "POST" }
     ])
   })
 
@@ -682,7 +687,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("送信"))
 
     expect(await screen.findByText("資料を取り込みました。知りたいことを入力してください。")).toBeInTheDocument()
-    expect(findRequest(fetchMock, "/chat-runs", "POST")).toBeUndefined()
+    expect(findRequest(fetchMock, "/rpc/chat/startRun", "POST")).toBeUndefined()
   })
 
   it("renders debug trace details, downloads JSON, and resets the conversation", async () => {
@@ -744,7 +749,7 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [debugTrace] }))
       if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
-      if (requestUrl.endsWith("/chat-runs") && init?.method === "POST") {
+      if (requestUrl.endsWith("/rpc/chat/startRun") && init?.method === "POST") {
         return Promise.resolve(response({ runId: "chat-run-processing", status: "queued", eventsPath: "/chat-runs/chat-run-processing/events" }))
       }
       if (requestUrl.endsWith("/chat-runs/chat-run-processing/events") && init?.method === "GET") {
@@ -766,7 +771,7 @@ describe("App chat and upload flow", () => {
     expect(screen.getByText("API処理中")).toBeInTheDocument()
     expect(screen.getByTitle("送信")).toBeDisabled()
     await userEvent.click(screen.getByTitle("送信"))
-    expect(requestBodies(fetchMock, "/chat-runs")).toHaveLength(1)
+    expect(requestBodies(fetchMock, "/rpc/chat/startRun")).toHaveLength(1)
     await waitFor(() => expect(screen.getAllByText("処理中").length).toBeGreaterThanOrEqual(1))
     expect(screen.getByLabelText("デバッグパネル")).toHaveAttribute("aria-busy", "true")
 
@@ -825,7 +830,7 @@ describe("App chat and upload flow", () => {
     expect(screen.getByRole("button", { name: "Raw results JSONLをダウンロード" })).toBeDisabled()
     expect(screen.getByRole("button", { name: "CodeBuildログをダウンロード" })).toBeDisabled()
     const startCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/benchmark-runs") && (init as RequestInit | undefined)?.method === "POST")
-    expect(JSON.parse(String((startCall?.[1] as RequestInit).body))).toMatchObject({
+    expect(requestBody(startCall)).toMatchObject({
       suiteId: "mlit-pdf-figure-table-rag-seed-v1",
       mode: "agent",
       runner: "codebuild",
@@ -873,10 +878,10 @@ describe("App chat and upload flow", () => {
       }
     ]
     const fetchMock = mockAppFetch(["SYSTEM_ADMIN"], [], runs)
-    vi.stubGlobal("URL", {
+    vi.stubGlobal("URL", Object.assign(URL, {
       createObjectURL: vi.fn(() => "blob:benchmark-logs"),
       revokeObjectURL: vi.fn()
-    })
+    }))
     const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined)
     await renderAuthenticatedApp()
 
@@ -907,8 +912,8 @@ describe("App chat and upload flow", () => {
     await userEvent.type(screen.getByLabelText("質問"), "分類は？{Enter}")
 
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
-    const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/chat-runs") && (init as RequestInit | undefined)?.method === "POST")
-    expect(JSON.parse(String((chatCall?.[1] as RequestInit).body))).toMatchObject({
+    const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/rpc/chat/startRun") && (init as RequestInit | undefined)?.method === "POST")
+    expect(requestBody(chatCall)).toMatchObject({
       modelId: "anthropic.claude-3-haiku-20240307-v1:0"
     })
   })
@@ -931,7 +936,7 @@ describe("App chat and upload flow", () => {
     await userEvent.keyboard("{Control>}{Enter}{/Control}")
 
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
-    const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/chat-runs") && (init as RequestInit | undefined)?.method === "POST")
+    const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/rpc/chat/startRun") && (init as RequestInit | undefined)?.method === "POST")
     expect(chatCall).toBeTruthy()
   })
 
@@ -947,7 +952,7 @@ describe("App chat and upload flow", () => {
         ([url, init]) => String(url).endsWith("/conversation-history") && (init as RequestInit | undefined)?.method === "POST"
       )
       expect(savedHistory).toBeTruthy()
-      expect(JSON.parse(String((savedHistory?.[1] as RequestInit).body))).toMatchObject({ schemaVersion: 1 })
+      expect(requestBody(savedHistory)).toMatchObject({ schemaVersion: 1 })
     })
     await userEvent.click(screen.getByText("新しい会話"))
     await userEvent.type(screen.getByLabelText("質問"), "分類二")
@@ -964,7 +969,7 @@ describe("App chat and upload flow", () => {
     await waitFor(() => {
       const favoriteSave = fetchMock.mock.calls.find(([url, init]) => {
         if (!String(url).endsWith("/conversation-history") || (init as RequestInit | undefined)?.method !== "POST") return false
-        return JSON.parse(String((init as RequestInit).body)).isFavorite === true
+        return parseRequestJson(init as RequestInit).isFavorite === true
       })
       expect(favoriteSave).toBeTruthy()
     })
@@ -1050,7 +1055,7 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
-      if (requestUrl.endsWith("/chat-runs") && init?.method === "POST") return Promise.resolve(response("chat failed", false))
+      if (requestUrl.endsWith("/rpc/chat/startRun") && init?.method === "POST") return Promise.resolve(response("chat failed", false))
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
@@ -1074,19 +1079,19 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/questions") && isGet(init)) return Promise.resolve(response({ questions: storedQuestions }))
       if (requestUrl.endsWith("/questions/question-1") && isGet(init)) return Promise.resolve(response(storedQuestions[0] ?? humanQuestion))
       if (requestUrl.endsWith("/debug-runs/run-1/download") && init?.method === "POST") return Promise.resolve(response({ url: "https://signed.example/debug.json", expiresInSeconds: 900, objectKey: "downloads/debug.json" }))
-      if (requestUrl.endsWith("/chat-runs") && init?.method === "POST") {
+      if (requestUrl.endsWith("/rpc/chat/startRun") && init?.method === "POST") {
         return Promise.resolve(response({ runId: "chat-run-unanswerable", status: "queued", eventsPath: "/chat-runs/chat-run-unanswerable/events" }))
       }
       if (requestUrl.endsWith("/chat-runs/chat-run-unanswerable/events") && init?.method === "GET") {
         return Promise.resolve(response(sseFinal({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] })))
       }
       if (requestUrl.endsWith("/questions") && init?.method === "POST") {
-        const body = JSON.parse(String(init.body ?? "{}"))
+        const body = parseRequestJson(init)
         storedQuestions = [{ ...humanQuestion, ...body }]
         return Promise.resolve(response(storedQuestions[0]))
       }
       if (requestUrl.endsWith("/questions/question-1/answer") && init?.method === "POST") {
-        const body = JSON.parse(String(init.body ?? "{}"))
+        const body = parseRequestJson(init)
         const current = storedQuestions[0] ?? humanQuestion
         storedQuestions = [{ ...current, ...body, status: "answered", updatedAt: answeredHumanQuestion.updatedAt, answeredAt: answeredHumanQuestion.answeredAt }]
         return Promise.resolve(response(storedQuestions[0]))
@@ -1165,14 +1170,14 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse(["CHAT_USER"])))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: [] }))
-      if (requestUrl.endsWith("/chat-runs") && init?.method === "POST") {
+      if (requestUrl.endsWith("/rpc/chat/startRun") && init?.method === "POST") {
         return Promise.resolve(response({ runId: "chat-run-chat-user", status: "queued", eventsPath: "/chat-runs/chat-run-chat-user/events" }))
       }
       if (requestUrl.endsWith("/chat-runs/chat-run-chat-user/events") && init?.method === "GET") {
         return Promise.resolve(response(sseFinal({ answer: "資料からは回答できません。", isAnswerable: false, citations: [], retrieved: [] })))
       }
       if (requestUrl.endsWith("/questions") && init?.method === "POST") {
-        const body = JSON.parse(String(init.body ?? "{}"))
+        const body = parseRequestJson(init)
         storedQuestion = { ...humanQuestion, ...body }
         return Promise.resolve(response(storedQuestion))
       }
@@ -1236,7 +1241,7 @@ describe("App chat and upload flow", () => {
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
       if (requestUrl.endsWith("/conversation-history") && isGet(init)) return Promise.resolve(response({ history: storedHistory }))
       if (requestUrl.endsWith("/conversation-history") && init?.method === "POST") {
-        const body = JSON.parse(String(init.body ?? "{}")) as ConversationHistoryItem
+        const body = parseRequestJson(init) as ConversationHistoryItem
         storedHistory = [body, ...storedHistory.filter((item) => item.id !== body.id)]
         return Promise.resolve(response(body))
       }

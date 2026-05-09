@@ -18,6 +18,8 @@
     "test:e2e:all:local": "npm run test:e2e:install && npm run test:e2e:all"
   },
   "dependencies": {
+    "@memorag-mvp/contract": "0.1.0",
+    "@orpc/client": "^1.13.14",
     "@vitejs/plugin-react": "^4.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

@@ -19,6 +19,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@memorag-mvp/contract": "0.1.0",
+    "@orpc/client": "^1.13.14",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   },

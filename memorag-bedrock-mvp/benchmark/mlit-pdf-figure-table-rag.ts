@@ -92,7 +92,7 @@ async function downloadPdf(fetchImpl: typeof fetch, url: string, outputPath: str
   try {
     response = await fetchImpl(url)
   } catch (error) {
-    throw new Error(`Failed to download MLIT PDF ${fileName} from ${url}: ${downloadErrorMessage(error)}`)
+    throw new Error(`Failed to download MLIT PDF ${fileName} from ${url}: ${downloadErrorMessage(error)}`, { cause: error })
   }
   if (!response.ok) throw new Error(`Failed to download MLIT PDF ${fileName} from ${url}: HTTP ${response.status}`)
   const body = Buffer.from(await response.arrayBuffer())

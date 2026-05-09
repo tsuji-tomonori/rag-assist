@@ -1,9 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { RPCHandler } from "@orpc/server/fetch"
 import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
 import { authMiddleware } from "./auth.js"
 import { createDependencies } from "./dependencies.js"
 import { logUnhandledApiError, safeUnhandledErrorResponse } from "./error-response.js"
+import { orpcRouter } from "./orpc/router.js"
 import { enrichOpenApiDocument, type OpenApiDocument } from "./openapi-doc-quality.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import { registerApiRoutes } from "./routes/api-routes.js"
@@ -12,6 +14,7 @@ export { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "./ro
 
 const deps = createDependencies()
 const service = new MemoRagService(deps)
+const rpcHandler = new RPCHandler(orpcRouter)
 
 const app = new OpenAPIHono({
   defaultHook: (result, c) => {
@@ -40,6 +43,7 @@ const protectedApiPaths = [
   "/conversation-history/*",
   "/debug-runs",
   "/debug-runs/*",
+  "/rpc/*",
   "/benchmark/query",
   "/benchmark/search",
   "/benchmark-runs",
@@ -53,6 +57,20 @@ for (const path of protectedApiPaths) {
 }
 
 registerApiRoutes(app, deps, service)
+
+app.all("/rpc/*", async (c) => {
+  const result = await rpcHandler.handle(c.req.raw, {
+    prefix: "/rpc",
+    context: {
+      deps,
+      service,
+      user: c.get("user")
+    }
+  })
+
+  if (result.matched) return result.response
+  return c.json({ error: "oRPC procedure not found" }, 404)
+})
 
 const openApiConfig = {
   openapi: "3.0.0",

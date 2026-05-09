@@ -4,6 +4,7 @@ import path from "node:path"
 import readline from "node:readline"
 import { fileURLToPath } from "node:url"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
+import { createBenchmarkApiClient } from "./api-client.js"
 import { createSkippedDatasetRow, skippedCorpusFileNameSet, skippedExpectedFileNames, type SkippedDatasetRow } from "./skipped-corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
 import {
@@ -13,6 +14,7 @@ import {
   resolveEvaluatorProfile,
   type EvaluatorProfile
 } from "./evaluator-profile.js"
+import type { BenchmarkQueryResponse } from "@memorag-mvp/contract"
 
 type DatasetRow = {
   id?: string
@@ -107,43 +109,7 @@ type ConversationInput = {
   }
 }
 
-type BenchmarkResponse = {
-  id?: string
-  responseType?: "answer" | "refusal" | "clarification"
-  answer?: string
-  isAnswerable?: boolean
-  needsClarification?: boolean
-  clarification?: {
-    needsClarification?: boolean
-    reason?: string
-    question?: string
-    options?: Array<{
-      id?: string
-      label?: string
-      resolvedQuery?: string
-      source?: string
-      grounding?: Array<{ documentId?: string; fileName?: string; chunkId?: string; heading?: string }>
-    }>
-    missingSlots?: string[]
-    confidence?: number
-    ambiguityScore?: number
-  }
-  citations?: Citation[]
-  retrieved?: Citation[]
-  finalEvidence?: Citation[]
-  debug?: {
-    runId?: string
-    ragProfile?: {
-      id?: string
-      version?: string
-      retrievalProfileId?: string
-      retrievalProfileVersion?: string
-      answerPolicyId?: string
-      answerPolicyVersion?: string
-    }
-    totalLatencyMs?: number
-    steps?: Array<{ label: string; latencyMs: number; status: string; summary?: string; detail?: string; output?: Record<string, unknown> }>
-  }
+type BenchmarkResponse = Partial<BenchmarkQueryResponse> & {
   answerSupport?: {
     unsupportedSentences?: Array<{ sentence?: string; reason?: string }>
     totalSentences?: number
@@ -338,6 +304,7 @@ type FailureCategory =
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
+const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken })
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = process.env.EMBEDDING_MODEL_ID?.trim() || undefined
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "standard-agent-v1"
@@ -565,29 +532,23 @@ async function runQueryRequest(input: {
   }
 }): Promise<{ status: number; body: BenchmarkResponse }> {
   try {
-    const response = await fetch(`${apiBaseUrl}/benchmark/query`, {
-      method: "POST",
-      headers: createRequestHeaders(),
-      body: JSON.stringify({
-        id: input.id,
-        question: input.question,
-        clarificationContext: input.clarificationContext,
-        conversation: input.conversation,
-        modelId: input.modelId ?? defaultModelId,
-        embeddingModelId: input.embeddingModelId,
-        clueModelId: input.clueModelId,
-        topK: input.topK,
-        memoryTopK: input.memoryTopK,
-        minScore: input.minScore,
-        strictGrounded: input.strictGrounded,
-        useMemory: input.useMemory,
-        benchmarkSuiteId: benchmarkCorpusSuiteId,
-        includeDebug: true
-      })
+    const body = await api.benchmark.query({
+      id: input.id,
+      question: input.question,
+      clarificationContext: input.clarificationContext,
+      conversation: input.conversation,
+      modelId: input.modelId ?? defaultModelId,
+      embeddingModelId: input.embeddingModelId,
+      clueModelId: input.clueModelId,
+      topK: input.topK,
+      memoryTopK: input.memoryTopK,
+      minScore: input.minScore,
+      strictGrounded: input.strictGrounded,
+      useMemory: input.useMemory,
+      benchmarkSuiteId: benchmarkCorpusSuiteId,
+      includeDebug: true
     })
-    const text = await response.text()
-    const body = text ? (JSON.parse(text) as BenchmarkResponse) : { error: "Empty response body" }
-    return { status: response.status, body }
+    return { status: 200, body }
   } catch (error) {
     return {
       status: 0,
@@ -609,13 +570,6 @@ function selectFollowUpOption(
     return options.find((option) => normalize(option.label ?? "").includes(expected))
   }
   return options[0]
-}
-
-function createRequestHeaders(): Record<string, string> {
-  return {
-    "Content-Type": "application/json",
-    ...(apiAuthToken ? { Authorization: `Bearer ${apiAuthToken}` } : {})
-  }
 }
 
 function evaluateRow(

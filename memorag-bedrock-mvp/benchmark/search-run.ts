@@ -20,6 +20,8 @@ import {
   type EvaluatorProfile
 } from "./evaluator-profile.js"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
+import { createBenchmarkApiClient } from "./api-client.js"
+import type { BenchmarkSearchResponse, SearchResult } from "@memorag-mvp/contract"
 
 type SearchDatasetRow = {
   id: string
@@ -46,34 +48,7 @@ type SearchDatasetRow = {
   evaluatorProfile?: string
 }
 
-type SearchResult = {
-  id: string
-  documentId: string
-  fileName: string
-  chunkId?: string
-  score: number
-  sources?: Array<"lexical" | "semantic">
-}
-
-type SearchResponse = {
-  query?: string
-  results?: SearchResult[]
-  diagnostics?: {
-    lexicalCount?: number
-    semanticCount?: number
-    fusedCount?: number
-    latencyMs?: number
-    profileId?: string
-    profileVersion?: string
-    index?: {
-      visibleManifestCount?: number
-      indexedChunkCount?: number
-      cache?: "memory" | "artifact" | "built"
-      loadMs?: number
-    }
-  }
-  error?: string
-}
+type SearchResponse = Partial<BenchmarkSearchResponse> & { error?: string }
 
 type SearchResultRow = {
   id: string
@@ -142,6 +117,7 @@ type SearchSummary = {
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
+const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken })
 const defaultEmbeddingModelId = process.env.EMBEDDING_MODEL_ID?.trim() || undefined
 const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? "standard-agent-v1"
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
@@ -226,26 +202,18 @@ try {
 }
 
 async function runSearch(row: SearchDatasetRow): Promise<{ status: number; body: SearchResponse }> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" }
-  if (apiAuthToken) headers.Authorization = `Bearer ${apiAuthToken}`
-
   try {
-    const response = await fetch(`${apiBaseUrl}/benchmark/search`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        query: row.query,
-        topK: row.topK ?? envInt("TOP_K"),
-        lexicalTopK: row.lexicalTopK ?? envInt("LEXICAL_TOP_K"),
-        semanticTopK: row.semanticTopK ?? envInt("SEMANTIC_TOP_K"),
-        embeddingModelId: row.embeddingModelId ?? process.env.EMBEDDING_MODEL_ID,
-        filters: row.filters,
-        benchmarkSuiteId: benchmarkCorpusSuiteId,
-        user: row.user
-      })
+    const body = await api.benchmark.search({
+      query: row.query,
+      topK: row.topK ?? envInt("TOP_K"),
+      lexicalTopK: row.lexicalTopK ?? envInt("LEXICAL_TOP_K"),
+      semanticTopK: row.semanticTopK ?? envInt("SEMANTIC_TOP_K"),
+      embeddingModelId: row.embeddingModelId ?? process.env.EMBEDDING_MODEL_ID,
+      filters: row.filters,
+      benchmarkSuiteId: benchmarkCorpusSuiteId,
+      user: row.user
     })
-    const text = await response.text()
-    return { status: response.status, body: text ? (JSON.parse(text) as SearchResponse) : { error: "Empty response body" } }
+    return { status: 200, body }
   } catch (error) {
     return { status: 0, body: { error: error instanceof Error ? error.message : String(error) } }
   }

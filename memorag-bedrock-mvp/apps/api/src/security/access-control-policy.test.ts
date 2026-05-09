@@ -27,6 +27,7 @@ const protectedMiddlewarePaths = [
   "/conversation-history/*",
   "/debug-runs",
   "/debug-runs/*",
+  "/rpc/*",
   "/benchmark/query",
   "/benchmark/search",
   "/benchmark-runs",
