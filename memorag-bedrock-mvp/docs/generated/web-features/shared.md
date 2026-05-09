@@ -38,4 +38,4 @@
 
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Icon | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/components/Icon.tsx:26 | unknown |
+| Icon | svg | 未推定 | svg 要素。静的解析では具体的な操作名を推定できません。 | - | - | apps/web/src/shared/components/Icon.tsx:27 | unknown |

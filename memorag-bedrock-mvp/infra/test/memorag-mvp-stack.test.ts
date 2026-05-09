@@ -241,15 +241,7 @@ test("implements the designed serverless resources", () => {
       Statement: Match.arrayWith([
         Match.objectLike({
           Action: "logs:GetLogEvents",
-          Resource: {
-            "Fn::Join": [
-              "",
-              [
-                { "Fn::GetAtt": [Match.stringLikeRegexp("BenchmarkProjectLogGroup"), "Arn"] },
-                ":log-stream:*"
-              ]
-            ]
-          }
+          Resource: Match.anyValue()
         }),
         Match.objectLike({
           Action: "codebuild:BatchGetBuilds",
@@ -258,6 +250,15 @@ test("implements the designed serverless resources", () => {
       ])
     })
   })
+  const managedPolicies = Object.values(template.toJSON().Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::IAM::ManagedPolicy") as any[]
+  const getLogEventsStatement = managedPolicies
+    .flatMap((policy) => policy.Properties?.PolicyDocument?.Statement ?? [])
+    .find((statement) => statement.Action === "logs:GetLogEvents")
+  assert.ok(getLogEventsStatement)
+  const getLogEventsResource = JSON.stringify(getLogEventsStatement.Resource)
+  assert.match(getLogEventsResource, /log-stream:\*/)
+  assert.doesNotMatch(getLogEventsResource, /\*.*log-stream:\*/)
   template.hasResourceProperties("AWS::IAM::Policy", {
     PolicyDocument: Match.objectLike({
       Statement: Match.arrayWith([

@@ -2875,11 +2875,13 @@
                 "Fn::Join": [
                   "",
                   [
+                    "arn:",
                     {
-                      "Fn::GetAtt": [
-                        "BenchmarkProjectLogGroup395F719E",
-                        "Arn"
-                      ]
+                      "Ref": "AWS::Partition"
+                    },
+                    ":logs:ap-northeast-1:111111111111:log-group:",
+                    {
+                      "Ref": "BenchmarkProjectLogGroup395F719E"
                     },
                     ":log-stream:*"
                   ]
