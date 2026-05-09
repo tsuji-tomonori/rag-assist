@@ -438,9 +438,16 @@ const ConversationCitationSchema = z.object({
 
 const ConversationTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  text: z.string(),
+  text: z.string().min(1).max(4000),
+  turnId: z.string().optional(),
   citations: z.array(ConversationCitationSchema).optional(),
   createdAt: z.string().optional()
+})
+
+const ConversationHistoryTurnSchema = ConversationTurnSchema.pick({
+  role: true,
+  text: true,
+  turnId: true
 })
 
 const ConversationInputSchema = z.object({
@@ -467,6 +474,12 @@ export const SearchScopeSchema = z.object({
 
 export const ChatRequestSchema = z.object({
   question: z.string().min(1).openapi({ example: "経費精算の期限は？" }),
+  conversationHistory: z.array(ConversationHistoryTurnSchema).max(20).optional().openapi({
+    example: [
+      { role: "user", text: "経費精算の期限は？", turnId: "turn-1" },
+      { role: "assistant", text: "申請から30日以内です。", turnId: "turn-1:assistant" }
+    ]
+  }),
   clarificationContext: ClarificationContextSchema.optional(),
   conversation: ConversationInputSchema.optional(),
   modelId: z.string().optional().openapi({ example: "amazon.nova-lite-v1:0" }),
@@ -591,6 +604,7 @@ export const DebugTraceSchema = z.object({
   modelId: z.string(),
   embeddingModelId: z.string(),
   clueModelId: z.string(),
+  conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
   clarificationContext: ClarificationContextSchema.optional(),
   conversation: z.unknown().optional(),
   conversationState: z.unknown().optional(),
@@ -631,6 +645,7 @@ export const ChatRunSchema = z.object({
   userEmail: z.string().optional(),
   userGroups: z.array(z.string()).optional(),
   question: z.string(),
+  conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
   clarificationContext: ClarificationContextSchema.optional(),
   modelId: z.string(),
   embeddingModelId: z.string().optional(),
@@ -807,6 +822,9 @@ export const BenchmarkRunMetricsSchema = z.object({
   succeeded: z.number().int().nonnegative(),
   failedHttp: z.number().int().nonnegative(),
   answerableAccuracy: z.number().nullable().optional(),
+  turnAnswerCorrectRate: z.number().nullable().optional(),
+  conversationSuccessRate: z.number().nullable().optional(),
+  historyDependentAccuracy: z.number().nullable().optional(),
   clarificationNeedPrecision: z.number().nullable().optional(),
   clarificationNeedRecall: z.number().nullable().optional(),
   clarificationNeedF1: z.number().nullable().optional(),
@@ -818,9 +836,11 @@ export const BenchmarkRunMetricsSchema = z.object({
   clarificationLatencyOverheadMs: z.number().nullable().optional(),
   postClarificationTaskLatencyMs: z.number().nullable().optional(),
   abstentionRecall: z.number().nullable().optional(),
+  abstentionAccuracy: z.number().nullable().optional(),
   citationHitRate: z.number().nullable().optional(),
   expectedFileHitRate: z.number().nullable().optional(),
   retrievalRecallAt20: z.number().nullable().optional(),
+  retrievalRecallAtK: z.number().nullable().optional(),
   p50LatencyMs: z.number().nullable().optional(),
   p95LatencyMs: z.number().nullable().optional(),
   averageLatencyMs: z.number().nullable().optional(),

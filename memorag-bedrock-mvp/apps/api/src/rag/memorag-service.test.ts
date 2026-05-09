@@ -334,9 +334,9 @@ test("service preserves asynchronous chat run options and can mark worker failur
   assert.equal(jpPublicPdfRun.suiteId, "jp-public-pdf-qa-v1")
   assert.equal(jpPublicPdfRun.datasetS3Key, "benchmark/dataset.jp-public-pdf-qa.jsonl")
   const mtragSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "mtrag-v1")
-  assert.equal(mtragSuite?.datasetS3Key, "datasets/agent/mtrag-v1.jsonl")
+  assert.equal(mtragSuite?.datasetS3Key, "datasets/conversation/mtrag-v1.jsonl")
   const chatragSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "chatrag-bench-v1")
-  assert.equal(chatragSuite?.datasetS3Key, "datasets/agent/chatrag-bench-v1.jsonl")
+  assert.equal(chatragSuite?.datasetS3Key, "datasets/conversation/chatrag-bench-v1.jsonl")
   const mlitSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "mlit-pdf-figure-table-rag-seed-v1")
   assert.deepEqual(mlitSuite, {
     suiteId: "mlit-pdf-figure-table-rag-seed-v1",

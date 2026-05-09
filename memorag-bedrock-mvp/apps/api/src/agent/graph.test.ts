@@ -997,6 +997,7 @@ function state(overrides: Partial<QaAgentState> = {}): QaAgentState {
   return {
     runId: "run-test",
     question: "question",
+    conversationHistory: [],
     modelId: "model",
     embeddingModelId: "embed",
     clueModelId: "clue",

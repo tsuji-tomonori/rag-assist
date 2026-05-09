@@ -6,9 +6,12 @@
   "scripts": {
     "start": "tsx run.ts",
     "start:search": "tsx search-run.ts",
+    "start:conversation": "tsx conversation-run.ts",
     "prepare:architecture-drawing-qarag": "tsx architecture-drawing-qarag.ts",
     "prepare:allganize-ja": "tsx allganize-ja.ts",
+    "prepare:chatrag-bench": "tsx chatrag-bench.ts",
     "prepare:jp-public-pdf-qa": "tsx jp-public-pdf-qa.ts",
+    "prepare:mtrag": "tsx mtrag.ts",
     "prepare:mmrag-docqa": "tsx mmrag-docqa.ts",
     "prepare:mlit-pdf-figure-table-rag": "tsx mlit-pdf-figure-table-rag.ts",
     "test": "tsx --test *.test.ts metrics/**/*.test.ts",

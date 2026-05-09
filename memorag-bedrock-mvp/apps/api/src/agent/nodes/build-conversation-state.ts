@@ -4,10 +4,12 @@ const FOLLOW_UP_CUE = /^(その|それ|これ|あれ|上記|前述|同じ|では
 
 export async function buildConversationState(state: QaAgentState): Promise<QaAgentUpdate> {
   const conversation = state.conversation
-  const turns = conversation?.turns ?? []
+  const turns = conversation?.turns ?? state.conversationHistory
   const previousUserTurns = turns.filter((turn) => turn.role === "user").map((turn) => turn.text.trim()).filter(Boolean)
   const previousAssistantTurns = turns.filter((turn) => turn.role === "assistant").map((turn) => turn.text.trim()).filter(Boolean)
-  const citations = turns.flatMap((turn) => turn.citations ?? [])
+  const citations = turns.flatMap((turn) => "citations" in turn
+    ? (turn.citations ?? []) as Array<{ documentId?: string; fileName?: string }>
+    : [])
   const activeDocuments = unique([
     ...(conversation?.state?.activeDocuments ?? []),
     ...citations.flatMap((citation) => [citation.documentId, citation.fileName]).filter((value): value is string => Boolean(value))

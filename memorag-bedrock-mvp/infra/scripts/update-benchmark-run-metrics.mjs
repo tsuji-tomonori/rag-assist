@@ -43,17 +43,22 @@ export function buildUpdateBenchmarkRunMetricsCommandInput({ TableName, runId, m
 
 export function buildBenchmarkRunMetrics(summary) {
   const metrics = summary?.metrics ?? {}
-  const total = finiteNumber(summary?.total) ?? 0
+  const total = finiteNumber(summary?.total) ?? finiteNumber(summary?.totalTurns) ?? 0
   const failedHttp = finiteNumber(summary?.failedHttp) ?? 0
   return compactObject({
     total,
-    succeeded: finiteNumber(summary?.succeeded) ?? Math.max(0, total - failedHttp),
+    succeeded: finiteNumber(summary?.succeeded) ?? finiteNumber(summary?.succeededTurns) ?? Math.max(0, total - failedHttp),
     failedHttp,
     answerableAccuracy: finiteNumber(metrics.answerableAccuracy),
+    turnAnswerCorrectRate: finiteNumber(metrics.turnAnswerCorrectRate),
+    conversationSuccessRate: finiteNumber(metrics.conversationSuccessRate),
+    historyDependentAccuracy: finiteNumber(metrics.historyDependentAccuracy),
     abstentionRecall: finiteNumber(metrics.abstentionRecall),
+    abstentionAccuracy: finiteNumber(metrics.abstentionAccuracy),
     citationHitRate: finiteNumber(metrics.citationHitRate),
     expectedFileHitRate: finiteNumber(metrics.expectedFileHitRate),
     retrievalRecallAt20: finiteNumber(metrics.retrievalRecallAt20) ?? finiteNumber(metrics.recallAt20),
+    retrievalRecallAtK: finiteNumber(metrics.retrievalRecallAtK),
     p50LatencyMs: finiteNumber(metrics.p50LatencyMs),
     p95LatencyMs: finiteNumber(metrics.p95LatencyMs),
     averageLatencyMs: finiteNumber(metrics.averageLatencyMs),

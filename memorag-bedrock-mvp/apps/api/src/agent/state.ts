@@ -184,8 +184,15 @@ const ConversationCitationSchema = z.object({
 export const ConversationTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
   text: z.string(),
+  turnId: z.string().optional(),
   citations: z.array(ConversationCitationSchema).optional(),
   createdAt: z.string().optional()
+})
+
+const ConversationHistoryTurnSchema = ConversationTurnSchema.pick({
+  role: true,
+  text: true,
+  turnId: true
 })
 
 export const ConversationInputSchema = z.object({
@@ -518,6 +525,7 @@ export const ComputedFactSchema = z.discriminatedUnion("kind", [
 export const AgentStateSchema = z.object({
   runId: z.string(),
   question: z.string(),
+  conversationHistory: z.array(ConversationHistoryTurnSchema).default(() => []),
   modelId: z.string(),
   embeddingModelId: z.string(),
   clueModelId: z.string(),

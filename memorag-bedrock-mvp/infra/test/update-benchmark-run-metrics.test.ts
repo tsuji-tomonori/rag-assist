@@ -71,6 +71,35 @@ test("maps search benchmark recall@20 into run metrics", async () => {
   })
 })
 
+test("maps conversation benchmark summary metrics into run metrics", async () => {
+  const script = await importModule(pathToFileURL(scriptPath).href) as {
+    buildBenchmarkRunMetrics(summary: unknown): Record<string, number>
+  }
+
+  assert.deepEqual(script.buildBenchmarkRunMetrics({
+    totalTurns: 4,
+    succeededTurns: 4,
+    failedHttp: 0,
+    metrics: {
+      turnAnswerCorrectRate: 0.75,
+      conversationSuccessRate: 0.5,
+      historyDependentAccuracy: 0.5,
+      abstentionAccuracy: 1,
+      retrievalRecallAtK: 0.75
+    }
+  }), {
+    total: 4,
+    succeeded: 4,
+    failedHttp: 0,
+    turnAnswerCorrectRate: 0.75,
+    conversationSuccessRate: 0.5,
+    historyDependentAccuracy: 0.5,
+    abstentionAccuracy: 1,
+    retrievalRecallAtK: 0.75,
+    errorRate: 0
+  })
+})
+
 test("uses expression attribute names for DynamoDB reserved attributes", async () => {
   const script = await importModule(pathToFileURL(scriptPath).href) as {
     buildUpdateBenchmarkRunMetricsCommandInput(input: {

@@ -8,9 +8,12 @@ export type PublicClarification = Omit<Clarification, "rejectedOptions">
 export type ConversationTurnInput = {
   role: "user" | "assistant"
   text: string
+  turnId?: string
   citations?: Array<Partial<Citation>>
   createdAt?: string
 }
+
+export type ConversationHistoryTurn = ConversationTurnInput
 
 export type ConversationInput = {
   conversationId: string
@@ -28,6 +31,7 @@ export type ConversationInput = {
 
 export type ChatInput = {
   question: string
+  conversationHistory?: ConversationHistoryTurn[]
   clarificationContext?: {
     originalQuestion?: string
     selectedOptionId?: string
