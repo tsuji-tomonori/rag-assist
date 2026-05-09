@@ -73,6 +73,7 @@ const benchmarkCorpusSource = "benchmark-runner"
 const supportedExtensions = new Set([".md", ".txt", ".pdf"])
 const defaultIngestRunPollIntervalMs = 5000
 const defaultIngestRunTimeoutMs = 30 * 60 * 1000
+const uploadSessionRequestHeaderBlocklist = new Set(["content-length", "host", "transfer-encoding"])
 
 export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<SeededDocument[]> {
   if (!options.corpusDir) return []
@@ -312,10 +313,7 @@ async function uploadDocumentFromUploadSession(input: {
 
   const uploadResponse = await input.fetcher(session.uploadUrl, {
     method: session.method,
-    headers: {
-      ...(session.requiresAuth ? createAuthHeaders(input.authToken) : {}),
-      ...(session.headers ?? {})
-    },
+    headers: createUploadSessionHeaders(session, input.authToken),
     body: new Uint8Array(input.content)
   })
   const uploadText = await uploadResponse.text()
@@ -477,6 +475,17 @@ function createHeaders(authToken: string | undefined): Record<string, string> {
 
 function createAuthHeaders(authToken: string | undefined): Record<string, string> {
   return authToken ? { Authorization: `Bearer ${authToken}` } : {}
+}
+
+function createUploadSessionHeaders(session: UploadSessionResponse, authToken: string | undefined): Record<string, string> {
+  const headers = {
+    ...(session.requiresAuth ? createAuthHeaders(authToken) : {}),
+    ...(session.headers ?? {})
+  }
+  for (const headerName of Object.keys(headers)) {
+    if (uploadSessionRequestHeaderBlocklist.has(headerName.toLowerCase())) delete headers[headerName]
+  }
+  return headers
 }
 
 function sleep(ms: number): Promise<void> {
