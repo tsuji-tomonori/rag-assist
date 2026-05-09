@@ -1,6 +1,6 @@
 # benchmark CodeBuild suite manifest 化
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -34,13 +34,26 @@ CodeBuild benchmark runner の運用・suite 追加手順が変わるため、`m
 
 ## 受け入れ条件
 
-- [ ] CodeBuild buildspec に個別 suite 名を列挙しない。
-- [ ] benchmark suite 追加時は manifest 変更で dataset/corpus/prepare/run 設定を表現できる。
-- [ ] 既存 suite の `BENCHMARK_SUITE_ID` / `BENCHMARK_MODE` 入力から従来相当の dataset、corpus、runner command が解決される。
-- [ ] CDK assertion test が suite 固有分岐の除去を検証する。
-- [ ] benchmark package の resolver/entrypoint に unit test がある。
-- [ ] 関連ドキュメントに suite 追加手順または CodeBuild 固定化方針が記載される。
-- [ ] 変更範囲に応じた検証コマンドを実行し、未実施があれば理由を記録する。
+- [x] CodeBuild buildspec に個別 suite 名を列挙しない。
+- [x] benchmark suite 追加時は manifest 変更で dataset/corpus/prepare/run 設定を表現できる。
+- [x] 既存 suite の `BENCHMARK_SUITE_ID` / `BENCHMARK_MODE` 入力から従来相当の dataset、corpus、runner command が解決される。
+- [x] CDK assertion test が suite 固有分岐の除去を検証する。
+- [x] benchmark package の resolver/entrypoint に unit test がある。
+- [x] 関連ドキュメントに suite 追加手順または CodeBuild 固定化方針が記載される。
+- [x] 変更範囲に応じた検証コマンドを実行し、未実施があれば理由を記録する。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/226
+- 受け入れ条件確認コメント: posted
+- セルフレビューコメント: posted
+- 実行した検証:
+  - `npm ci`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark`: pass
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/benchmark`: pass
+  - `task memorag:cdk:test`: pass
+  - `git diff --check`: pass
+  - `git diff --check --cached`: pass
 
 ## 検証計画
 
