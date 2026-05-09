@@ -158,6 +158,7 @@ Taskfileを使う場合は `task cdk:deploy` でフロントエンドbuild、Lam
 
 GitHub Actionsでは `.github/workflows/memorag-ci.yml` がpull requestで lint、typecheck、test、build、cdk-nag有効状態のCDK synthを実行します。デプロイは `.github/workflows/memorag-deploy.yml` を使います。AWS側のOIDC RoleとGitHub secret `AWS_DEPLOY_ROLE_ARN` を設定してください。
 OpenAPI 生成ドキュメントは `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で `npm run docs:openapi` を実行し、差分がある場合は `docs/generated/openapi.md` と `docs/generated/openapi/` の更新 PR を作成します。生成済み JSON は commit 対象にしません。
+この PR 作成は `OPENAPI_DOCS_PR_TOKEN` secret がある場合はその token を使い、未設定時は `GITHUB_TOKEN` を使います。`GITHUB_TOKEN` を使う場合は repository settings の Actions workflow permissions で `Allow GitHub Actions to create and approve pull requests` を有効にしてください。有効化しない運用では、PR 作成権限を持つ fine-grained PAT または GitHub App installation token を `OPENAPI_DOCS_PR_TOKEN` として設定してください。
 OpenAPI summary / description の品質 gate は `.github/workflows/memorag-ci.yml` と `.github/workflows/memorag-openapi-docs.yml` の両方で `npm run docs:openapi:check` として実行され、不足がある場合は CI を失敗させます。
 デプロイ後の Cognito ユーザー追加は、ログイン画面からのアカウント作成、または `.github/workflows/memorag-create-cognito-user.yml` の手動実行で行えます。管理者設定のユーザー管理一覧は Cognito User Pool の全ユーザーを読み取り、管理台帳とマージして表示します。管理画面上のロール付与は Cognito group へ反映し、管理台帳にも監査用 snapshot として記録します。停止、再開、削除状態は管理台帳を source of truth とし、実際の API 認可はログイン時の Cognito group を含む JWT で判定します。
 

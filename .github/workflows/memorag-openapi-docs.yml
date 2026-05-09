@@ -50,6 +50,7 @@ jobs:
       - name: Create pull request
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.OPENAPI_DOCS_PR_TOKEN || github.token }}
           branch: chore/memorag-openapi-docs
           delete-branch: true
           commit-message: "📝 docs(api): OpenAPI 生成ドキュメントを更新"
