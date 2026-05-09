@@ -6,7 +6,10 @@
   "scripts": {
     "start": "tsx run.ts",
     "start:search": "tsx search-run.ts",
+    "start:conversation": "tsx conversation-run.ts",
     "prepare:allganize-ja": "tsx allganize-ja.ts",
+    "prepare:mtrag": "tsx mtrag.ts",
+    "prepare:chatrag-bench": "tsx chatrag-bench.ts",
     "prepare:mmrag-docqa": "tsx mmrag-docqa.ts",
     "test": "tsx --test *.test.ts metrics/**/*.test.ts",
     "build": "tsc -p tsconfig.json",

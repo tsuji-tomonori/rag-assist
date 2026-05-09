@@ -593,6 +593,7 @@ export async function runQaAgent(deps: Dependencies, input: ChatInput, user: App
   const state = (await graph.invoke({
     runId,
     question: input.question,
+    conversationHistory: input.conversationHistory ?? [],
     modelId,
     embeddingModelId,
     clueModelId,
@@ -787,6 +788,7 @@ async function persistDebugTrace(
     topK: input.topK,
     memoryTopK: input.memoryTopK,
     minScore: input.minScore,
+    conversationHistory: input.state.conversationHistory,
     clarificationContext: input.state.clarificationContext,
     startedAt: input.startedAt.toISOString(),
     completedAt: completedAt.toISOString(),

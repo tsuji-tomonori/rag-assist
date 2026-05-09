@@ -111,6 +111,10 @@ curl -s http://localhost:8787/chat \
   -H 'Content-Type: application/json' \
   -d '{
     "question":"経費精算の期限は？",
+    "conversationHistory":[
+      {"role":"user","text":"経費精算の申請方法は？"},
+      {"role":"assistant","text":"社内ポータルから申請します。"}
+    ],
     "modelId":"amazon.nova-lite-v1:0",
     "topK":6,
     "minScore":0.20,
@@ -374,6 +378,8 @@ curl -s http://localhost:8787/conversation-history "${AUTH_HEADER[@]}" | jq
 
 `POST /benchmark/query` と `POST /benchmark/search` は CodeBuild runner など `benchmark:query` 権限を持つ service token で実行する。管理画面からの非同期実行は `BENCHMARK_OPERATOR` または `RAG_GROUP_MANAGER` の `benchmark:run` 権限で `POST /benchmark-runs` を使う。既存の外部運用 token が `RAG_GROUP_MANAGER` で `/benchmark/query` または `/benchmark/search` を直接呼んでいる場合は、`BENCHMARK_RUNNER` service user へ移行する。`BENCHMARK_RUNNER` は benchmark seed metadata と `aclGroups: ["BENCHMARK_RUNNER"]` で隔離された seed 文書に限り、実行前セットアップのために `/documents` の list / upload / delete、`purpose=benchmarkSeed` の upload session 作成、同じ runner が開始した `document-ingest-runs` の取得を行える。
 
+`POST /benchmark/query` は `/chat` と同じ `conversationHistory` を受け取れる。conversation benchmark runner は、前ターンの user / assistant 発話を渡して照応や省略を解決する。ただし履歴は質問解釈用であり、回答根拠は retrieved chunks / computed facts に限定する。
+
 `POST /benchmark/search` は `BENCHMARK_RUNNER` service user からの呼び出しに限り search benchmark dataset の `user` を任意で受け取り、ACL 評価用の利用者文脈として `user.userId` と `user.groups` を使う。通常利用者向け `/search` は request body の `user` を受け付けず、認証 token の本人だけで検索する。
 
 ```bash
@@ -383,6 +389,10 @@ curl -s http://localhost:8787/benchmark/query \
   -d '{
     "id":"case-001",
     "question":"経費精算の期限は？",
+    "conversationHistory":[
+      {"role":"user","text":"経費精算の申請方法は？"},
+      {"role":"assistant","text":"社内ポータルから申請します。"}
+    ],
     "modelId":"amazon.nova-lite-v1:0",
     "includeDebug":true
   }' | jq

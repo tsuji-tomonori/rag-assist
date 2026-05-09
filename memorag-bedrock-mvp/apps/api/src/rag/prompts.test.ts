@@ -1,7 +1,21 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import type { RetrievedVector } from "../types.js"
-import { buildFinalAnswerPrompt, selectFinalAnswerChunks } from "./prompts.js"
+import { buildCluePrompt, buildFinalAnswerPrompt, formatConversationHistory, selectFinalAnswerChunks } from "./prompts.js"
+
+test("conversation history is formatted and constrained as interpretation context", () => {
+  const history = formatConversationHistory([
+    { role: "user", text: "経費精算の期限は？" },
+    { role: "assistant", text: "申請から30日以内です。" }
+  ])
+  const cluePrompt = buildCluePrompt("海外出張でも同じ？", "海外出張規程", history)
+  const answerPrompt = buildFinalAnswerPrompt("海外出張でも同じ？", [], [], undefined, history)
+
+  assert.match(history, /User: 経費精算の期限は？/)
+  assert.match(cluePrompt, /<conversationHistory>/)
+  assert.match(answerPrompt, /Assistant発話を根拠文書として扱ってはいけない/)
+  assert.match(answerPrompt, /根拠は必ず&lt;context&gt;または&lt;computedFacts&gt;から取る|根拠は必ず<context>または<computedFacts>から取る/)
+})
 
 test("classification questions keep the explicit classification hierarchy in context", () => {
   const prefix = "ソフトウェア要求は満たすべき条件です。".repeat(80)
