@@ -17,7 +17,7 @@
 | R3 | 余分な登録済みドキュメント / チャンク / メモリカード表示を削除する | 高 | 対応 |
 | R4 | 本番UIに固定フォルダ、固定容量、架空共有先、未実装操作を追加しない | 高 | 対応 |
 | R5 | 関連テストと生成UI inventoryを更新する | 高 | 対応 |
-| R6 | worktree task / report / commit / PR workflow を守る | 高 | 途中対応 |
+| R6 | worktree task / report / commit / PR workflow を守る | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -76,4 +76,6 @@
 
 - visual regression screenshot は未実施。理由: 変更範囲は `DocumentWorkspace` の単体挙動と generated UI inventory で確認し、スクリーンショット更新はレビュー時の差分確認対象としたため。
 - 画像にある `メモリ` 列は未追加。理由: 現行 API にファイルサイズ・メモリ容量の実データがなく、架空値を表示しない方針を優先したため。
-- このレポート作成時点では commit / push / PR / PRコメント / task done 移動は未完了。以降の workflow で実施する。
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/211
+- 受け入れ条件確認コメントは GitHub Apps で投稿済み。
+- task は `tasks/done/20260509-0956-document-management-ui.md` へ移動済み。

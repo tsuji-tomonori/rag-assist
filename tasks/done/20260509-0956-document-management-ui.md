@@ -57,6 +57,11 @@
 - 画像にある右ペインの共有編集 UI は現行APIの共有フォーム範囲に合わせるため、見た目の完全一致ではなく既存機能を保つ調整になる。
 - visual regression snapshot が既存基準と差分になる可能性がある。
 
+## PR
+
+- https://github.com/tsuji-tomonori/rag-assist/pull/211
+- 受け入れ条件確認コメント: 投稿済み
+
 ## 状態
 
-in_progress
+done
