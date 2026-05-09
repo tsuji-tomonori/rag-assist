@@ -53,8 +53,11 @@
 ## 成果物
 
 - PR #221 conflict resolution merge commit 対象差分
-- `tasks/do/20260509-2058-pr221-conflict-ci-check.md`
+- `tasks/done/20260509-2058-pr221-conflict-ci-check.md`
 - `reports/working/20260509-2110-pr221-conflict-ci-check.md`
+- PR コメント:
+  - 受け入れ条件確認 comment id `4412572335`
+  - セルフレビュー comment id `4412573133`
 
 ## Fit 評価
 
@@ -64,5 +67,5 @@
 
 ## 未対応・制約・リスク
 
-- 作業前の GitHub reported checks は空だったため、CI エラーは「報告なし」までの確認であり、push 後に再確認する。
+- 作業前の GitHub reported checks は空だったが、push 後に `validate-semver-label` と `Lint, type-check, test, build, and synth` の pass を確認した。
 - PR merge / close / force push は実施しない。
