@@ -893,9 +893,15 @@ export class MemoRagMvpStack extends Stack {
     apiFn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", restApiBaseUrl)
     benchmarkStateMachine.grantStartExecution(apiFn)
     benchmarkStateMachine.grant(apiFn, "states:StopExecution", "states:DescribeExecution")
+    const benchmarkProjectLogStreamArn = cdk.Stack.of(this).formatArn({
+      service: "logs",
+      resource: "log-group",
+      resourceName: `${benchmarkProjectLogGroup.logGroupName}:log-stream:*`,
+      arnFormat: cdk.ArnFormat.COLON_RESOURCE_NAME
+    })
     apiFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ["logs:GetLogEvents"],
-      resources: [`${benchmarkProjectLogGroup.logGroupArn}:log-stream:*`]
+      resources: [benchmarkProjectLogStreamArn]
     }))
     apiFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ["codebuild:BatchGetBuilds"],
