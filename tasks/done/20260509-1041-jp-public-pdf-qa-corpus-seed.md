@@ -41,7 +41,7 @@
 
 ## 状態
 
-in_progress
+done
 
 ## 実施結果
 
