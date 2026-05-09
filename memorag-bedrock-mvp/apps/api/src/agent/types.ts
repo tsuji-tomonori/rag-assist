@@ -5,10 +5,28 @@ import type { SearchInput } from "../search/hybrid-search.js"
 
 export type PublicClarification = Omit<Clarification, "rejectedOptions">
 
-export type ConversationHistoryTurn = {
+export type ConversationTurnInput = {
   role: "user" | "assistant"
   text: string
   turnId?: string
+  citations?: Array<Partial<Citation>>
+  createdAt?: string
+}
+
+export type ConversationHistoryTurn = ConversationTurnInput
+
+export type ConversationInput = {
+  conversationId: string
+  turnId?: string
+  turnIndex?: number
+  turns: ConversationTurnInput[]
+  turnDependency?: string
+  state?: {
+    activeEntities?: string[]
+    activeDocuments?: string[]
+    activeTopics?: string[]
+    constraints?: string[]
+  }
 }
 
 export type ChatInput = {
@@ -19,6 +37,7 @@ export type ChatInput = {
     selectedOptionId?: string
     selectedValue?: string
   }
+  conversation?: ConversationInput
   modelId?: string
   embeddingModelId?: string
   clueModelId?: string

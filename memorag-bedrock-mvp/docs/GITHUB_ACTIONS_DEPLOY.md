@@ -94,6 +94,8 @@
 
 `operator-auth-secret-id` または `BENCHMARK_OPERATOR_AUTH_SECRET_ID` が指す Secrets Manager secret は、`idToken` / `token`、または `username` / `password` を JSON で持つ。`username` / `password` を使う場合、対象 Cognito user は `BENCHMARK_OPERATOR` または `RAG_GROUP_MANAGER` など `benchmark:run` 権限を持つ group に所属している必要がある。workflow は `USER_PASSWORD_AUTH` で都度 ID token を取得し、token / password / secret JSON / Authorization header を log に出さない。
 
+`suite-id` の選択肢には、標準 handbook corpus を使う軽量 agent suite（`smoke-agent-v1`、`standard-agent-v1`、`clarification-smoke-v1`）、multi-turn / conversational RAG suite（`mtrag-v1`、`chatrag-bench-v1`）、動的 prepare を伴う agent suite（`allganize-rag-evaluation-ja-v1`、`mmrag-docqa-v1`、`jp-public-pdf-qa-v1`、`mlit-pdf-figure-table-rag-seed-v1`、`architecture-drawing-qarag-v0.1`）、および search suite（`search-smoke-v1`、`search-standard-v1`）を含める。`mtrag-v1` と `chatrag-bench-v1` は multi-turn / conversational RAG の軽量 sample dataset を `BenchmarkBucket` の `datasets/conversation/` に配置し、CodeBuild runner は suite 固有 corpus を seed して `conversation-run.ts` で実行する。
+
 事前条件:
 
 - CDK deploy済みであること。

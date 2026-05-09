@@ -301,6 +301,9 @@ export type DebugTrace = {
   clueModelId: string
   conversationHistory?: ConversationHistoryTurn[]
   clarificationContext?: ClarificationContext
+  conversation?: unknown
+  conversationState?: unknown
+  decontextualizedQuery?: unknown
   pipelineVersions?: PipelineVersions
   ragProfile?: {
     id: string
