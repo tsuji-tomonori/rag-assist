@@ -38,8 +38,11 @@
 |---|---|---|---|
 | `.github/workflows/memorag-openapi-docs.yml` | YAML | PR 作成 token の明示指定 | R1, R2 |
 | `memorag-bedrock-mvp/README.md` | Markdown | OpenAPI docs PR 作成 token の運用説明 | R3 |
-| `tasks/do/20260509-2204-openapi-pr-token.md` | Markdown | 作業タスクと受け入れ条件 | R5 |
+| `tasks/done/20260509-2204-openapi-pr-token.md` | Markdown | 作業タスク、受け入れ条件、完了記録 | R5 |
 | `reports/working/20260509-2204-openapi-pr-token.md` | Markdown | 作業完了レポート | R5 |
+| https://github.com/tsuji-tomonori/rag-assist/pull/228 | Pull Request | main 向け PR | R1, R2, R3 |
+| PR comment `4412599744` | GitHub comment | セルフレビュー結果 | R4 |
+| PR comment `4412600141` | GitHub comment | 受け入れ条件確認 | R4 |
 
 ## 6. 指示へのfit評価
 
@@ -57,6 +60,7 @@
 
 - `git diff --check`: pass
 - `pre-commit run --files .github/workflows/memorag-openapi-docs.yml memorag-bedrock-mvp/README.md tasks/do/20260509-2204-openapi-pr-token.md reports/working/20260509-2204-openapi-pr-token.md`: pass
+- `pre-commit run --files reports/working/20260509-2204-openapi-pr-token.md tasks/done/20260509-2204-openapi-pr-token.md`: pass
 
 ## 8. 未対応・制約・リスク
 

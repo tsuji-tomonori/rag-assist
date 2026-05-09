@@ -1,6 +1,6 @@
 # OpenAPI docs PR 作成権限エラー対応
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -30,11 +30,11 @@ CI workflow の運用前提が変わるため、`memorag-bedrock-mvp/README.md` 
 
 ## 受け入れ条件
 
-- [ ] `memorag-openapi-docs` workflow が PR 作成 token を明示的に渡す。
-- [ ] `OPENAPI_DOCS_PR_TOKEN` が設定されている場合はその token を使い、未設定時は `github.token` を使う。
-- [ ] `GITHUB_TOKEN` の repository setting 制約が残る場合の設定または secret 方針が README に記載されている。
-- [ ] YAML/Markdown 差分に対して `git diff --check` が通る。
-- [ ] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] `memorag-openapi-docs` workflow が PR 作成 token を明示的に渡す。
+- [x] `OPENAPI_DOCS_PR_TOKEN` が設定されている場合はその token を使い、未設定時は `github.token` を使う。
+- [x] `GITHUB_TOKEN` の repository setting 制約が残る場合の設定または secret 方針が README に記載されている。
+- [x] YAML/Markdown 差分に対して `git diff --check` が通る。
+- [x] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証計画
 
@@ -51,3 +51,9 @@ CI workflow の運用前提が変わるため、`memorag-bedrock-mvp/README.md` 
 
 - repository settings の `Allow GitHub Actions to create and approve pull requests` が無効なまま、かつ `OPENAPI_DOCS_PR_TOKEN` も未設定の場合は PR 作成失敗が継続する。
 - ローカルでは GitHub Actions 上の PR 作成動作そのものは実行できないため、最終確認は workflow 再実行に依存する。
+
+## 完了記録
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/228
+- セルフレビューコメント: `4412599744`
+- 受け入れ条件確認コメント: `4412600141`
