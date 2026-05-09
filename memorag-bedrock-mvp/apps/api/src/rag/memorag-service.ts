@@ -163,6 +163,14 @@ const benchmarkSuites: BenchmarkSuite[] = [
     defaultConcurrency: 1
   },
   {
+    suiteId: "jp-public-pdf-qa-v1",
+    label: "日本語公開PDF QA",
+    mode: "agent",
+    datasetS3Key: "benchmark/dataset.jp-public-pdf-qa.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
     suiteId: "mlit-pdf-figure-table-rag-seed-v1",
     label: "MLIT PDF figure/table RAG seed",
     mode: "agent",
