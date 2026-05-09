@@ -1,6 +1,6 @@
 # Benchmark log error hardening
 
-状態: validation
+状態: done
 
 ## 背景
 
