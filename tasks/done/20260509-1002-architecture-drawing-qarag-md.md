@@ -1,6 +1,6 @@
 # 建築図面 QARAG ベンチマーク v0.1 の Markdown 管理
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -39,13 +39,16 @@
 - [x] AC4: 既存 README などから追加 Markdown への参照を追加する。
 - [x] AC5: 変更範囲に見合う検証を実行し、未実施の検証があれば理由を記録する。
 - [x] AC6: 作業完了レポートを `reports/working/` に保存する。
-- [ ] AC7: PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] AC7: PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証結果
 
 - `git diff --check`: pass
 - `pre-commit run --files memorag-bedrock-mvp/README.md memorag-bedrock-mvp/benchmark/architecture-drawing-qarag-v0.1.md tasks/do/20260509-1002-architecture-drawing-qarag-md.md reports/working/20260509-1006-architecture-drawing-qarag-md.md`: pass
 - `python3` による Markdown 内容確認: seed heading 82 件、主要見出し、README リンク先の存在を確認。
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/212
+- PR 受け入れ条件コメント: posted
+- PR セルフレビューコメント: posted
 
 ## 検証計画
 
