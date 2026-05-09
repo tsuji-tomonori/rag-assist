@@ -108,6 +108,22 @@ describe("useBenchmarkRuns", () => {
     expect(props.setError).toHaveBeenCalledWith("cancel failed")
   })
 
+  it("uses agent mode when the selected suite is missing and reports string start errors", async () => {
+    vi.mocked(startBenchmarkRun).mockRejectedValueOnce("start failed")
+    const props = createProps()
+    const { result } = renderHook(() => useBenchmarkRuns(props))
+
+    act(() => result.current.setBenchmarkSuiteId("missing-suite"))
+    await act(() => result.current.onStartBenchmark())
+
+    expect(startBenchmarkRun).toHaveBeenCalledWith(expect.objectContaining({
+      suiteId: "missing-suite",
+      mode: "agent"
+    }))
+    expect(props.setError).toHaveBeenCalledWith("start failed")
+    expect(props.setLoading).toHaveBeenLastCalledWith(false)
+  })
+
   it("starts the Japanese public PDF QA suite from the UI selection", async () => {
     vi.mocked(listBenchmarkSuites).mockResolvedValueOnce([
       suite(),

@@ -125,6 +125,20 @@ describe("useAdminData", () => {
     expect(result.current.costAudit?.totalEstimatedUsd).toBe(1)
   })
 
+  it("読み取り権限がない admin データは再取得しない", async () => {
+    const { result } = renderHook(() => useAdminData(createProps({ canReadAliases: false })))
+
+    await act(() => result.current.refreshAdminData())
+
+    expect(listManagedUsers).not.toHaveBeenCalled()
+    expect(listAdminAuditLog).not.toHaveBeenCalled()
+    expect(listAccessRoles).not.toHaveBeenCalled()
+    expect(listUsageSummaries).not.toHaveBeenCalled()
+    expect(getCostAuditSummary).not.toHaveBeenCalled()
+    expect(listAliases).not.toHaveBeenCalled()
+    expect(listAliasAuditLog).not.toHaveBeenCalled()
+  })
+
   it("ユーザー管理操作後に一覧と副作用データを更新する", async () => {
     const props = createProps({ canReadAdminAuditLog: true, canReadUsage: true, canReadCosts: true, canReadAliases: true })
     const { result } = renderHook(() => useAdminData(props))
@@ -155,5 +169,84 @@ describe("useAdminData", () => {
 
     expect(props.setError).toHaveBeenCalledWith("assign failed")
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
+  })
+
+  it("管理操作失敗時は文字列エラーも設定する", async () => {
+    const props = createProps()
+    vi.mocked(assignUserRoles).mockRejectedValueOnce("assign failed")
+    vi.mocked(createManagedUser).mockRejectedValueOnce("create user failed")
+    vi.mocked(suspendManagedUser).mockRejectedValueOnce("suspend failed")
+    const { result } = renderHook(() => useAdminData(props))
+
+    await act(() => result.current.onAssignUserRoles("user-1", ["SYSTEM_ADMIN"]))
+    await act(() => result.current.onCreateManagedUser({ email: "c@example.com" }))
+    await act(() => result.current.onSetManagedUserStatus("user-1", "suspend"))
+
+    expect(props.setError).toHaveBeenCalledWith("assign failed")
+    expect(props.setError).toHaveBeenCalledWith("create user failed")
+    expect(props.setError).toHaveBeenCalledWith("suspend failed")
+    expect(props.setLoading).toHaveBeenLastCalledWith(false)
+  })
+
+  it("ユーザー作成と状態変更失敗時は Error の message も設定する", async () => {
+    const props = createProps()
+    vi.mocked(createManagedUser).mockRejectedValueOnce(new Error("create user failed"))
+    vi.mocked(unsuspendManagedUser).mockRejectedValueOnce(new Error("unsuspend failed"))
+    vi.mocked(deleteManagedUser).mockRejectedValueOnce(new Error("delete failed"))
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+    const { result } = renderHook(() => useAdminData(props))
+
+    await act(() => result.current.onCreateManagedUser({ email: "c@example.com" }))
+    await act(() => result.current.onSetManagedUserStatus("user-1", "unsuspend"))
+    await act(() => result.current.onSetManagedUserStatus("user-1", "delete"))
+
+    expect(props.setError).toHaveBeenCalledWith("create user failed")
+    expect(props.setError).toHaveBeenCalledWith("unsuspend failed")
+    expect(props.setError).toHaveBeenCalledWith("delete failed")
+  })
+
+  it("Alias 管理操作失敗時は文字列エラーも設定する", async () => {
+    const props = createProps()
+    vi.mocked(createAlias).mockRejectedValueOnce("create alias failed")
+    vi.mocked(updateAlias).mockRejectedValueOnce("update alias failed")
+    vi.mocked(reviewAlias).mockRejectedValueOnce("review alias failed")
+    vi.mocked(disableAlias).mockRejectedValueOnce("disable alias failed")
+    vi.mocked(publishAliases).mockRejectedValueOnce("publish alias failed")
+    const { result } = renderHook(() => useAdminData(props))
+
+    await act(() => result.current.onCreateAlias({ term: "rto", expansions: ["復旧時間目標"] }))
+    await act(() => result.current.onUpdateAlias("alias-1", { expansions: ["有給休暇"] }))
+    await act(() => result.current.onReviewAlias("alias-1", "reject", "重複"))
+    await act(() => result.current.onDisableAlias("alias-1"))
+    await act(() => result.current.onPublishAliases())
+
+    expect(props.setError).toHaveBeenCalledWith("create alias failed")
+    expect(props.setError).toHaveBeenCalledWith("update alias failed")
+    expect(props.setError).toHaveBeenCalledWith("review alias failed")
+    expect(props.setError).toHaveBeenCalledWith("disable alias failed")
+    expect(props.setError).toHaveBeenCalledWith("publish alias failed")
+    expect(props.setLoading).toHaveBeenLastCalledWith(false)
+  })
+
+  it("Alias 管理操作失敗時は Error の message も設定する", async () => {
+    const props = createProps()
+    vi.mocked(createAlias).mockRejectedValueOnce(new Error("create alias failed"))
+    vi.mocked(updateAlias).mockRejectedValueOnce(new Error("update alias failed"))
+    vi.mocked(reviewAlias).mockRejectedValueOnce(new Error("review alias failed"))
+    vi.mocked(disableAlias).mockRejectedValueOnce(new Error("disable alias failed"))
+    vi.mocked(publishAliases).mockRejectedValueOnce(new Error("publish alias failed"))
+    const { result } = renderHook(() => useAdminData(props))
+
+    await act(() => result.current.onCreateAlias({ term: "rto", expansions: ["復旧時間目標"] }))
+    await act(() => result.current.onUpdateAlias("alias-1", { expansions: ["有給休暇"] }))
+    await act(() => result.current.onReviewAlias("alias-1", "reject"))
+    await act(() => result.current.onDisableAlias("alias-1"))
+    await act(() => result.current.onPublishAliases())
+
+    expect(props.setError).toHaveBeenCalledWith("create alias failed")
+    expect(props.setError).toHaveBeenCalledWith("update alias failed")
+    expect(props.setError).toHaveBeenCalledWith("review alias failed")
+    expect(props.setError).toHaveBeenCalledWith("disable alias failed")
+    expect(props.setError).toHaveBeenCalledWith("publish alias failed")
   })
 })
