@@ -1,6 +1,6 @@
 # CodeBuild benchmark upload Content-Length mismatch 修正
 
-状態: doing
+状態: done
 
 ## 背景
 
@@ -33,12 +33,12 @@ benchmark runner の upload session 転送で、実際の request body byte leng
 
 ## 受け入れ条件
 
-- [ ] CodeBuild 失敗の障害レポートが `reports/bugs/` に保存され、なぜなぜ分析を含む。
-- [ ] upload session 転送時に stale または誤った `Content-Length` header を API から引き継がない。
-- [ ] upload session 転送 body は PDF file content と同じ byte length で送られる。
-- [ ] 追加または更新したテストで header/body の関係を検証している。
-- [ ] 関連する targeted test/typecheck と whitespace check が pass する。
-- [ ] 作業完了レポートが `reports/working/` に保存される。
+- [x] CodeBuild 失敗の障害レポートが `reports/bugs/` に保存され、なぜなぜ分析を含む。
+- [x] upload session 転送時に stale または誤った `Content-Length` header を API から引き継がない。
+- [x] upload session 転送 body は PDF file content と同じ byte length で送られる。
+- [x] 追加または更新したテストで header/body の関係を検証している。
+- [x] 関連する targeted test/typecheck と whitespace check が pass する。
+- [x] 作業完了レポートが `reports/working/` に保存される。
 
 ## Validation plan
 
@@ -55,3 +55,17 @@ benchmark runner の upload session 転送で、実際の request body byte leng
 ## Risks
 
 - 実 CodeBuild / 実 S3 署名 URL の再実行は外部 AWS 環境を必要とするため、この作業内ではローカル unit test で再発防止を確認する。
+
+## 完了記録
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/216
+- 受け入れ条件コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
+- 検証:
+  - `npm ci`: pass
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/benchmark`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/benchmark`: pass
+  - `git diff --check`: pass
+  - failure report JSON block parse check: pass
+- 未実施:
+  - 実 CodeBuild / 実 AWS 環境での `mmrag-docqa-v1` benchmark 再実行は未実施。
