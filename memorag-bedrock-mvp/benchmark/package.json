@@ -6,6 +6,7 @@
   "scripts": {
     "start": "tsx run.ts",
     "start:search": "tsx search-run.ts",
+    "prepare:architecture-drawing-qarag": "tsx architecture-drawing-qarag.ts",
     "prepare:allganize-ja": "tsx allganize-ja.ts",
     "prepare:jp-public-pdf-qa": "tsx jp-public-pdf-qa.ts",
     "prepare:mmrag-docqa": "tsx mmrag-docqa.ts",

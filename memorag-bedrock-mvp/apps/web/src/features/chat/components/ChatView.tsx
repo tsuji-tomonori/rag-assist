@@ -7,6 +7,7 @@ import type { HumanQuestion } from "../../questions/types.js"
 import { DebugPanel } from "../../debug/components/DebugPanel.js"
 import type { Message } from "../types.js"
 import { ChatComposer } from "./ChatComposer.js"
+import { ChatRunIdBar } from "./ChatRunIdBar.js"
 import { MessageList } from "./MessageList.js"
 
 export function ChatView({
@@ -19,6 +20,7 @@ export function ChatView({
   loading,
   canAsk,
   canWriteDocuments,
+  modelId,
   file,
   selectedGroupId,
   documentGroups,
@@ -28,6 +30,7 @@ export function ChatView({
   debugMode,
   canReadDebugRuns,
   selectedTrace,
+  selectedRunValue,
   pendingDebugQuestion,
   allExpanded,
   expandedStepId,
@@ -35,6 +38,7 @@ export function ChatView({
   onSubmitClarificationOption,
   onStartClarificationFreeform,
   onSetQuestion,
+  onModelChange,
   onSetFile,
   onCreateQuestion,
   onResolveQuestion,
@@ -50,6 +54,7 @@ export function ChatView({
   loading: boolean
   canAsk: boolean
   canWriteDocuments: boolean
+  modelId: string
   file: File | null
   selectedGroupId: string
   documentGroups: DocumentGroup[]
@@ -59,6 +64,7 @@ export function ChatView({
   debugMode: boolean
   canReadDebugRuns: boolean
   selectedTrace?: DebugTrace
+  selectedRunValue: string
   pendingDebugQuestion: string | null
   allExpanded: boolean
   expandedStepId: number | null
@@ -66,6 +72,7 @@ export function ChatView({
   onSubmitClarificationOption: Parameters<typeof MessageList>[0]["onSubmitClarificationOption"]
   onStartClarificationFreeform: Parameters<typeof MessageList>[0]["onStartClarificationFreeform"]
   onSetQuestion: (value: string) => void
+  onModelChange: (modelId: string) => void
   onSetFile: (file: File | null) => void
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
@@ -94,6 +101,7 @@ export function ChatView({
           onAsk={onAsk}
           question={question}
           submitShortcut={submitShortcut}
+          modelId={modelId}
           file={file}
           selectedGroupId={selectedGroupId}
           documentGroups={documentGroups}
@@ -102,7 +110,12 @@ export function ChatView({
           canAsk={canAsk}
           loading={loading}
           onSetQuestion={onSetQuestion}
+          onModelChange={onModelChange}
           onSetFile={onSetFile}
+        />
+        <ChatRunIdBar
+          runId={pendingDebugQuestion ? null : selectedTrace?.runId ?? (selectedRunValue && selectedRunValue !== "__processing__" ? selectedRunValue : null)}
+          pending={pendingDebugQuestion !== null}
         />
         <p className="composer-note">本サービスの回答は社内ドキュメントをもとに生成されます。内容の正確性をご確認のうえご利用ください。</p>
       </section>

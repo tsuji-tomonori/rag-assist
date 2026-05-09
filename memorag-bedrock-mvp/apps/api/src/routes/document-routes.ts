@@ -233,7 +233,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         if (!group) return c.json({ error: "Document group not found" }, 404)
         return c.json(group, 200)
       } catch (err) {
-        if (err instanceof Error && err.message.startsWith("Forbidden:")) throw new HTTPException(403, { message: err.message })
+        if (err instanceof Error && err.message.startsWith("Forbidden:")) throw new HTTPException(403, { message: "Forbidden" })
         throw err
       }
     }

@@ -208,12 +208,21 @@ test("seedBenchmarkCorpus uploads markdown files with benchmark metadata", async
 test("seedBenchmarkCorpus uploads PDF files through upload sessions", async () => {
   const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
   await writeFile(path.join(corpusDir, "source.pdf"), Buffer.from("%PDF-1.4 sample"))
-  const requests: Array<{ url: string; method?: string; body?: unknown; authorization?: string; contentType?: string }> = []
+  const requests: Array<{ url: string; method?: string; body?: unknown; authorization?: string; contentLength?: string; contentType?: string; host?: string; transferEncoding?: string }> = []
   const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
     const requestUrl = String(url)
     const headers = init?.headers as Record<string, string> | undefined
     const body = init?.body && typeof init.body === "string" ? JSON.parse(init.body) : init?.body
-    requests.push({ url: requestUrl, method: init?.method, body, authorization: headers?.Authorization, contentType: headers?.["Content-Type"] })
+    requests.push({
+      url: requestUrl,
+      method: init?.method,
+      body,
+      authorization: headers?.Authorization,
+      contentLength: headers?.["Content-Length"] ?? headers?.["content-length"],
+      contentType: headers?.["Content-Type"] ?? headers?.["content-type"],
+      host: headers?.Host ?? headers?.host,
+      transferEncoding: headers?.["Transfer-Encoding"] ?? headers?.["transfer-encoding"]
+    })
     if (init?.method === "GET" && requestUrl.endsWith("/documents")) {
       return new Response(JSON.stringify({ documents: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
@@ -222,7 +231,12 @@ test("seedBenchmarkCorpus uploads PDF files through upload sessions", async () =
         uploadId: "upload-1",
         uploadUrl: "http://upload.local/source.pdf",
         method: "PUT",
-        headers: { "Content-Type": "application/pdf" },
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Length": String(20 * 1024 * 1024),
+          Host: "stale.example.test",
+          "Transfer-Encoding": "chunked"
+        },
         requiresAuth: false
       }), { status: 200, headers: { "Content-Type": "application/json" } })
     }
@@ -262,7 +276,11 @@ test("seedBenchmarkCorpus uploads PDF files through upload sessions", async () =
   ])
   assert.equal((requests[1]?.body as { purpose?: string }).purpose, "benchmarkSeed")
   assert.deepEqual(Buffer.from(requests[2]?.body as Uint8Array), Buffer.from("%PDF-1.4 sample"))
+  assert.equal((requests[2]?.body as Uint8Array).byteLength, Buffer.byteLength("%PDF-1.4 sample"))
+  assert.equal(requests[2]?.contentLength, undefined)
   assert.equal(requests[2]?.contentType, "application/pdf")
+  assert.equal(requests[2]?.host, undefined)
+  assert.equal(requests[2]?.transferEncoding, undefined)
   const ingest = requests[3]?.body as { uploadId?: string; contentBase64?: string; fileName?: string; mimeType?: string; metadata?: { benchmarkSuiteId?: string } } | undefined
   assert.equal(ingest?.uploadId, "upload-1")
   assert.equal(ingest?.contentBase64, undefined)

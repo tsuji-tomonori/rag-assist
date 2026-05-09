@@ -90,7 +90,7 @@
 .document-folder-panel {
   min-height: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   padding: 14px;
 }
 
@@ -135,6 +135,13 @@
 .document-table-footer button .icon {
   width: 17px;
   height: 17px;
+}
+
+.folder-search-row button:disabled,
+.document-file-panel-head button:disabled {
+  color: #9aa8ba;
+  background: #f4f7fb;
+  cursor: not-allowed;
 }
 
 .folder-tree {
@@ -218,26 +225,6 @@
   font-weight: 800;
 }
 
-.storage-summary {
-  border-top: 1px solid #e5ebf3;
-  display: grid;
-  gap: 8px;
-  padding-top: 14px;
-  color: #60708a;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.storage-summary div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.storage-summary strong {
-  color: #485a77;
-}
-
 .document-file-panel {
   min-height: 0;
   display: grid;
@@ -268,17 +255,21 @@
   gap: 8px;
 }
 
+.document-folder-actions {
+  flex: 0 0 auto;
+}
+
 .document-file-table {
   min-width: 0;
   overflow: auto;
 }
 
 .document-file-row {
-  min-width: 820px;
+  min-width: 760px;
   min-height: 58px;
   border-bottom: 1px solid #e5ebf3;
   display: grid;
-  grid-template-columns: minmax(230px, 1.35fr) 120px 132px 86px 118px 102px 96px;
+  grid-template-columns: minmax(230px, 1.35fr) 120px 132px 86px 102px 96px;
   align-items: center;
   gap: 12px;
   padding: 0 16px;
@@ -462,7 +453,7 @@
 
 .folder-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin: 0;
 }

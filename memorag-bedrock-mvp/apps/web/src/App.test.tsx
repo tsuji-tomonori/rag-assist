@@ -410,11 +410,6 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
 }
 
 
-async function selectDocument(documentId: string) {
-  await screen.findByRole("option", { name: "requirements.md" })
-  await userEvent.selectOptions(screen.getByLabelText("ドキュメント"), documentId)
-}
-
 async function renderAuthenticatedApp() {
   vi.stubEnv("VITE_AUTH_MODE", "local")
   render(<App />)
@@ -473,7 +468,7 @@ describe("App document management", () => {
     mockAppFetch()
     await renderAuthenticatedApp()
 
-    await screen.findByRole("option", { name: "requirements.md" })
+    await screen.findByTitle("送信")
     expect(screen.queryByTitle("requirements.mdを削除")).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("ドキュメント"))
@@ -548,7 +543,7 @@ describe("App document management", () => {
     )
   })
 
-  it("resets a selected document when refresh no longer returns it", async () => {
+  it("keeps the attachment-only flow when refreshed documents change", async () => {
     let documentListCalls = 0
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
@@ -586,13 +581,13 @@ describe("App document management", () => {
     vi.stubGlobal("fetch", fetchMock)
     await renderAuthenticatedApp()
 
-    await selectDocument("doc-1")
     const input = (await screen.findByTitle("資料を添付")).querySelector<HTMLInputElement>('input[type="file"]')
     await userEvent.upload(input as HTMLInputElement, new File(["資料"], "refresh.txt", { type: "text/plain" }))
     await userEvent.click(screen.getByTitle("送信"))
 
     await screen.findByText("資料を取り込みました。知りたいことを入力してください。")
-    expect(screen.getByLabelText("ドキュメント")).toHaveValue("all")
+    expect(screen.getByText("参照: 全フォルダ")).toBeInTheDocument()
+    expect(screen.queryByRole("combobox", { name: "ドキュメント" })).not.toBeInTheDocument()
   })
 })
 
@@ -649,7 +644,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("送信"))
 
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
-    expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(1)
 
     const uploadCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/documents/uploads") && (init as RequestInit | undefined)?.method === "POST")
     const chatCall = fetchMock.mock.calls.find(([url, init]) => String(url).endsWith("/chat-runs") && (init as RequestInit | undefined)?.method === "POST")
@@ -758,8 +753,6 @@ describe("App chat and upload flow", () => {
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByRole("checkbox"))
-    await userEvent.selectOptions(await screen.findByLabelText("実行ID"), debugTrace.runId)
-    expect(await screen.findByText("answerability_gate")).toBeInTheDocument()
 
     await userEvent.type(screen.getByLabelText("質問"), "処理中の表示を確認したい")
     await userEvent.click(screen.getByTitle("送信"))
@@ -783,11 +776,12 @@ describe("App chat and upload flow", () => {
     )
     expect(await screen.findByText("処理中表示を確認しました。")).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByText("API処理中")).not.toBeInTheDocument())
-    expect(screen.getByLabelText("実行ID")).toHaveValue("run-processing")
+    expect(screen.getAllByText("run-processing").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByRole("button", { name: "実行IDをコピー" })).toBeEnabled()
     expect(screen.getAllByText("1.25 秒").length).toBeGreaterThanOrEqual(1)
   })
 
-  it("selects a persisted debug run from history", async () => {
+  it("does not render the debug run selector in the top bar", async () => {
     const olderTrace = { ...debugTrace, runId: "run-old", status: "success" as const, isAnswerable: true, totalLatencyMs: 250 }
     const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
       const requestUrl = String(url)
@@ -800,9 +794,9 @@ describe("App chat and upload flow", () => {
     vi.stubGlobal("fetch", fetchMock)
     await renderAuthenticatedApp()
 
-    await screen.findByRole("option", { name: "run-old" })
-    await userEvent.selectOptions(await screen.findByLabelText("実行ID"), "run-old")
-    expect(screen.getByLabelText("実行ID")).toHaveValue("run-old")
+    await userEvent.click(await screen.findByRole("checkbox"))
+
+    expect(screen.queryByRole("combobox", { name: "実行ID" })).not.toBeInTheDocument()
   })
 
   it("starts a benchmark run from the performance test view", async () => {
@@ -814,7 +808,7 @@ describe("App chat and upload flow", () => {
     expect(await screen.findByText("ジョブ起動")).toBeInTheDocument()
     await userEvent.selectOptions(screen.getByLabelText("テスト種別"), "mmrag-docqa-v1")
     expect(screen.getByLabelText("データセット")).toHaveValue("hf://datasets/yubo2333/MMLongBench-Doc")
-    const benchmarkModelSelect = screen.getAllByLabelText("モデル")[1]
+    const benchmarkModelSelect = screen.getByLabelText("モデル")
     expect(benchmarkModelSelect).toBeTruthy()
     await userEvent.selectOptions(benchmarkModelSelect as HTMLElement, "anthropic.claude-3-haiku-20240307-v1:0")
     await userEvent.click(screen.getByRole("button", { name: "性能テストを実行" }))
