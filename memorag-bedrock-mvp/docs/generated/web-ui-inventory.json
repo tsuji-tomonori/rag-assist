@@ -126,7 +126,7 @@
         "chat"
       ],
       "componentCount": 11,
-      "interactionCount": 43
+      "interactionCount": 44
     },
     {
       "feature": "debug",
@@ -4486,9 +4486,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:43:form",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:44:form",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 43,
+      "line": 44,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "form",
@@ -4522,9 +4522,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:44:textarea",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:45:textarea",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 44,
+      "line": 45,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "textarea",
@@ -4584,33 +4584,6 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:75:label",
-      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 75,
-      "feature": "chat",
-      "component": "ChatComposer",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "資料を添付",
-      "a11y": {
-        "accessibleName": "フォルダを選ぶ / ファイルをアップロード",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "title",
-          "value": "資料を添付"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
       "id": "apps/web/src/features/chat/components/ChatComposer.tsx:77:input",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
       "line": 77,
@@ -4618,9 +4591,9 @@
       "component": "ChatComposer",
       "element": "input",
       "isIntrinsic": true,
-      "label": "資料を添付",
+      "label": "ファイルをアップロード",
       "a11y": {
-        "accessibleName": "資料を添付",
+        "accessibleName": "ファイルをアップロード",
         "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
@@ -4643,7 +4616,7 @@
         },
         {
           "name": "aria-label",
-          "value": "資料を添付"
+          "value": "ファイルをアップロード"
         },
         {
           "name": "disabled",
@@ -4657,9 +4630,92 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:90:label",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:86:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 90,
+      "line": 86,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "資料を添付",
+      "a11y": {
+        "accessibleName": "資料を添付",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "資料を添付"
+        },
+        {
+          "name": "aria-label",
+          "value": "資料を添付"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:101:button",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 101,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "ファイルをアップロード",
+      "a11y": {
+        "accessibleName": "ファイルをアップロード",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => fileInputRef.current?.click()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => fileInputRef.current?.click()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:113:label",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 113,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "label",
@@ -4679,9 +4735,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:92:select",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:115:select",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 92,
+      "line": 115,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "select",
@@ -4725,9 +4781,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:93:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:116:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 93,
+      "line": 116,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -4752,9 +4808,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:94:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:117:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 94,
+      "line": 117,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -4779,9 +4835,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:95:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:118:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 95,
+      "line": 118,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -4806,9 +4862,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:105:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:128:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 105,
+      "line": 128,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",

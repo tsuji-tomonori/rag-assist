@@ -73,6 +73,9 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     assert.equal(postDocument.status, 200)
     const created = (await postDocument.json()) as Record<string, unknown>
     assert.equal(created.fileName, fixtures.responses.uploadedDocumentShape.fileName)
+    assert.equal(created.vectorKeys, undefined)
+    assert.equal(created.chunks, undefined)
+    assert.equal(created.sourceObjectKey, undefined)
     validateSchema(created, responseSchema(openapi, "/documents", "post", 200), openapi)
 
     const uploadSessionRes = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
@@ -97,7 +100,11 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
       body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain" })
     })
     assert.equal(ingestUploaded.status, 200)
-    validateSchema(await ingestUploaded.json(), responseSchema(openapi, "/documents/uploads/{uploadId}/ingest", "post", 200), openapi)
+    const ingested = (await ingestUploaded.json()) as Record<string, unknown>
+    assert.equal(ingested.vectorKeys, undefined)
+    assert.equal(ingested.chunks, undefined)
+    assert.equal(ingested.sourceObjectKey, undefined)
+    validateSchema(ingested, responseSchema(openapi, "/documents/uploads/{uploadId}/ingest", "post", 200), openapi)
 
     const postChat = await fetch(`http://127.0.0.1:${port}/chat`, {
       method: "POST",
@@ -676,12 +683,27 @@ test("benchmark runner can list and upload only isolated benchmark seed document
     assert.equal(seedUpload.status, 200)
     const manifest = (await seedUpload.json()) as {
       documentId: string
-      metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]> }
     }
-    assert.deepEqual(manifest.metadata?.aclGroups, ["BENCHMARK_RUNNER"])
-    assert.equal(manifest.metadata?.docType, "benchmark-corpus")
-    assert.equal(manifest.metadata?.source, "benchmark-runner")
-    assert.deepEqual(manifest.metadata?.searchAliases, { "立替": ["経費精算"] })
+    const documentsAfterSeed = await fetch(`http://127.0.0.1:${port}/documents`)
+    assert.equal(documentsAfterSeed.status, 200)
+    const seedList = (await documentsAfterSeed.json()) as {
+      documents?: Array<{
+        documentId?: string
+        vectorKeys?: string[]
+        chunks?: unknown[]
+        sourceObjectKey?: string
+        metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]> }
+      }>
+    }
+    const listedSeed = seedList.documents?.find((document) => document.documentId === manifest.documentId)
+    assert.ok(listedSeed)
+    assert.equal(listedSeed.vectorKeys, undefined)
+    assert.equal(listedSeed.chunks, undefined)
+    assert.equal(listedSeed.sourceObjectKey, undefined)
+    assert.deepEqual(listedSeed.metadata?.aclGroups, ["BENCHMARK_RUNNER"])
+    assert.equal(listedSeed.metadata?.docType, "benchmark-corpus")
+    assert.equal(listedSeed.metadata?.source, "benchmark-runner")
+    assert.deepEqual(listedSeed.metadata?.searchAliases, { "立替": ["経費精算"] })
 
     const seedDelete = await fetch(`http://127.0.0.1:${port}/documents/${encodeURIComponent(manifest.documentId)}`, {
       method: "DELETE"

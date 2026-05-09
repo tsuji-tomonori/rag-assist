@@ -586,8 +586,8 @@ describe("App document management", () => {
     vi.stubGlobal("fetch", fetchMock)
     await renderAuthenticatedApp()
 
-    const input = (await screen.findByTitle("資料を添付")).querySelector<HTMLInputElement>('input[type="file"]')
-    await userEvent.upload(input as HTMLInputElement, new File(["資料"], "refresh.txt", { type: "text/plain" }))
+    const input = await screen.findByLabelText("ファイルをアップロード")
+    await userEvent.upload(input, new File(["資料"], "refresh.txt", { type: "text/plain" }))
     await userEvent.click(screen.getByTitle("送信"))
 
     await screen.findByText("資料を取り込みました。知りたいことを入力してください。")
@@ -642,9 +642,9 @@ describe("App chat and upload flow", () => {
     const fetchMock = mockAppFetch()
     await renderAuthenticatedApp()
 
-    const input = (await screen.findByTitle("資料を添付")).querySelector<HTMLInputElement>('input[type="file"]')
+    const input = await screen.findByLabelText("ファイルをアップロード")
     expect(input).toBeTruthy()
-    await userEvent.upload(input as HTMLInputElement, new File(["要求分類"], "upload.txt", { type: "text/plain" }))
+    await userEvent.upload(input, new File(["要求分類"], "upload.txt", { type: "text/plain" }))
     await userEvent.type(screen.getByLabelText("質問"), "ソフトウェア要求の分類を洗い出して")
     await userEvent.click(screen.getByTitle("送信"))
 
@@ -677,8 +677,8 @@ describe("App chat and upload flow", () => {
     const fetchMock = mockAppFetch()
     await renderAuthenticatedApp()
 
-    const input = (await screen.findByTitle("資料を添付")).querySelector<HTMLInputElement>('input[type="file"]')
-    await userEvent.upload(input as HTMLInputElement, new File(["資料"], "only-upload.txt", { type: "text/plain" }))
+    const input = await screen.findByLabelText("ファイルをアップロード")
+    await userEvent.upload(input, new File(["資料"], "only-upload.txt", { type: "text/plain" }))
     await userEvent.click(screen.getByTitle("送信"))
 
     expect(await screen.findByText("資料を取り込みました。知りたいことを入力してください。")).toBeInTheDocument()

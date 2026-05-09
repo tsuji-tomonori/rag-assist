@@ -53,7 +53,7 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/document-ingest-runs/{runId}` | 文書取り込み run を取得する | [詳細](openapi/get-document-ingest-runs-runid.md) |
 | `GET` | `/document-ingest-runs/{runId}/events` | 文書取り込みイベントを購読する | [詳細](openapi/get-document-ingest-runs-runid-events.md) |
 | `GET` | `/documents` | 登録文書一覧を取得する | [詳細](openapi/get-documents.md) |
-| `POST` | `/documents` | 文書を登録する | [詳細](openapi/post-documents.md) |
+| `POST` | `/documents` | 文書を同期登録する（非推奨） | [詳細](openapi/post-documents.md) |
 | `DELETE` | `/documents/{documentId}` | 文書を削除する | [詳細](openapi/delete-documents-documentid.md) |
 | `POST` | `/documents/{documentId}/reindex` | 文書を再インデックスする | [詳細](openapi/post-documents-documentid-reindex.md) |
 | `POST` | `/documents/{documentId}/reindex/stage` | 再インデックスを stage する | [詳細](openapi/post-documents-documentid-reindex-stage.md) |

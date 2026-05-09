@@ -163,6 +163,13 @@ export type DocumentManifestSummary = Pick<
   | "sourceExtractorVersion"
 >
 
+export type DocumentListItemSummary = DocumentManifestSummary & Pick<
+  DocumentManifest,
+  | "metadata"
+  | "embeddingModelId"
+  | "embeddingDimensions"
+>
+
 export type MemoryCard = {
   id: string
   level?: "document" | "section" | "concept"

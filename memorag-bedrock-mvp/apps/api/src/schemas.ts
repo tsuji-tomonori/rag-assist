@@ -192,8 +192,14 @@ export const DocumentManifestSummarySchema = DocumentManifestSchema.pick({
   sourceExtractorVersion: true
 })
 
+export const DocumentListItemSummarySchema = DocumentManifestSummarySchema.extend({
+  metadata: z.record(MetadataValueSchema).optional(),
+  embeddingModelId: z.string().optional(),
+  embeddingDimensions: z.number().int().positive().optional()
+})
+
 export const DocumentListResponseSchema = z.object({
-  documents: z.array(DocumentManifestSchema)
+  documents: z.array(DocumentListItemSummarySchema)
 })
 
 export const StartDocumentIngestRunRequestSchema = IngestUploadedDocumentRequestSchema.extend({

@@ -177,11 +177,11 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "GET /documents": {
     summary: "登録文書一覧を取得する",
-    description: "ログインユーザーが参照できる登録済み文書の一覧を返します。"
+    description: "ログインユーザーが参照できる登録済み文書の summary 一覧を返します。full manifest、chunk metadata、vector key は返しません。"
   },
   "POST /documents": {
-    summary: "文書を登録する",
-    description: "テキストまたはファイル内容を登録し、RAG 検索用の文書として取り込みます。"
+    summary: "文書を同期登録する（非推奨）",
+    description: "小さなテキスト互換用の同期登録 API です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
   },
   "POST /documents/uploads": {
     summary: "文書アップロード URL を作成する",
@@ -193,7 +193,7 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /documents/uploads/{uploadId}/ingest": {
     summary: "アップロード済み文書を取り込む",
-    description: "アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。"
+    description: "アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。後方互換用の同期 API であり、大きな PDF、OCR fallback、embedding が絡む通常運用では POST /document-ingest-runs を使います。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
   },
   "POST /document-ingest-runs": {
     summary: "非同期文書取り込みを開始する",
