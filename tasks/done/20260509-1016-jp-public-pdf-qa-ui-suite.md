@@ -66,4 +66,4 @@ UI の「性能テスト」画面から `jp-public-pdf-qa-v1` を選択し、非
 
 ## 状態
 
-in_progress
+done
