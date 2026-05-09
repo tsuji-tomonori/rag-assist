@@ -12,6 +12,7 @@ import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
 import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
 import { LocalDocumentIngestRunStore } from "../adapters/local-document-ingest-run-store.js"
 import { LocalDocumentIngestRunEventStore } from "../adapters/local-document-ingest-run-event-store.js"
+import { LocalDocumentGroupStore } from "../adapters/local-document-group-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
@@ -905,7 +906,8 @@ async function createTestDeps(): Promise<Dependencies> {
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
-    documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir)
+    documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
+    documentGroupStore: new LocalDocumentGroupStore(dataDir)
   }
 }
 

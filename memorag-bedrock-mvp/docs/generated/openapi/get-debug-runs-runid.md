@@ -50,7 +50,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 66 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 70 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -67,6 +67,10 @@ Media type: `application/json`
 | `modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
 | `clueModelId` | `string` | yes | `response.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `conversationHistory` | `array<object>` | no | `response.conversationHistory` の値。項目名は conversation history を表します。 | - |
+| `conversationHistory[].role` | `enum(user \| assistant)` | yes | `response.conversationHistory[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `conversationHistory[].text` | `string` | yes | 文書本文またはチャンク本文。 | minLength=1<br>maxLength=4000 |
+| `conversationHistory[].turnId` | `string` | no | `response.conversationHistory[].turnId` の値。項目名は turn id を表します。 | - |
 | `clarificationContext` | `object` | no | `response.clarificationContext` の値。項目名は clarification context を表します。 | - |
 | `clarificationContext.originalQuestion` | `string` | no | `response.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `clarificationContext.selectedOptionId` | `string` | no | `response.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |

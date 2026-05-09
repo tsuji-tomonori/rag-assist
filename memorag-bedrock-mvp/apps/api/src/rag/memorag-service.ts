@@ -110,14 +110,8 @@ type AliasLedger = {
   auditLog: AliasAuditLogItem[]
 }
 
-type DocumentGroupLedger = {
-  schemaVersion: 1
-  groups: DocumentGroup[]
-}
-
 const adminLedgerKey = "admin/admin-ledger.json"
 const aliasLedgerKey = "admin/alias-ledger.json"
-const documentGroupLedgerKey = "document-groups/groups.json"
 const reindexMigrationLedgerKey = "admin/reindex-migrations.json"
 const pricingCatalogUpdatedAt = "2026-05-02T00:00:00.000Z"
 
@@ -502,7 +496,7 @@ export class MemoRagService {
         .filter((key) => key.endsWith(".json"))
         .map(async (key) => JSON.parse(await this.deps.objectStore.getText(key)) as DocumentManifest)
     )
-    const documentGroups = user ? (await this.loadDocumentGroupLedger()).groups : []
+    const documentGroups = user ? (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup) : []
     return manifests
       .filter((manifest) => (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active")
       .filter((manifest) => stringValue(manifest.metadata?.scopeType) !== "chat")
@@ -511,8 +505,8 @@ export class MemoRagService {
   }
 
   async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
-    const ledger = await this.loadDocumentGroupLedger()
-    return ledger.groups
+    const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    return groups
       .filter((group) => canAccessDocumentGroup(group, user))
       .sort((a, b) => a.name.localeCompare(b.name))
   }
@@ -520,17 +514,22 @@ export class MemoRagService {
   async createDocumentGroup(actor: AppUser, input: {
     name: string
     description?: string
+    parentGroupId?: string
     visibility?: DocumentGroup["visibility"]
     sharedUserIds?: string[]
     sharedGroups?: string[]
     managerUserIds?: string[]
   }): Promise<DocumentGroup> {
-    const ledger = await this.loadDocumentGroupLedger()
     const now = new Date().toISOString()
+    const parent = input.parentGroupId ? normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(input.parentGroupId)) : undefined
+    if (input.parentGroupId && !parent) throw new Error("Parent document group not found")
+    if (parent && !canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot create a child group under this parent")
     const group: DocumentGroup = {
       groupId: `docgrp_${randomUUID().slice(0, 12)}`,
       name: input.name.trim(),
       description: input.description?.trim() || undefined,
+      parentGroupId: parent?.groupId,
+      ancestorGroupIds: parent ? [...(parent.ancestorGroupIds ?? []), parent.groupId] : [],
       ownerUserId: actor.userId,
       visibility: input.visibility ?? "private",
       sharedUserIds: uniqueStrings(input.sharedUserIds ?? []),
@@ -539,45 +538,78 @@ export class MemoRagService {
       createdAt: now,
       updatedAt: now
     }
-    ledger.groups.push(group)
-    await this.saveDocumentGroupLedger(ledger)
-    return group
+    return this.deps.documentGroupStore.create(group)
   }
 
   async updateDocumentGroupSharing(actor: AppUser, groupId: string, input: {
     visibility?: DocumentGroup["visibility"]
+    parentGroupId?: string
     sharedUserIds?: string[]
     sharedGroups?: string[]
     managerUserIds?: string[]
   }): Promise<DocumentGroup | undefined> {
-    const ledger = await this.loadDocumentGroupLedger()
-    const group = ledger.groups.find((candidate) => candidate.groupId === groupId)
+    const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
     if (!group) return undefined
     if (!canManageDocumentGroup(group, actor)) throw forbiddenError("Forbidden: only group managers can update sharing")
-    if (input.visibility !== undefined) group.visibility = input.visibility
-    if (input.sharedUserIds !== undefined) group.sharedUserIds = uniqueStrings(input.sharedUserIds)
-    if (input.sharedGroups !== undefined) group.sharedGroups = uniqueStrings(input.sharedGroups)
-    if (input.managerUserIds !== undefined) group.managerUserIds = uniqueStrings([group.ownerUserId, ...input.managerUserIds])
-    group.updatedAt = new Date().toISOString()
-    await this.saveDocumentGroupLedger(ledger)
-    return group
+    const update: Partial<DocumentGroup> = {}
+    if (input.visibility !== undefined) update.visibility = input.visibility
+    if (input.sharedUserIds !== undefined) update.sharedUserIds = uniqueStrings(input.sharedUserIds)
+    if (input.sharedGroups !== undefined) update.sharedGroups = uniqueStrings(input.sharedGroups)
+    if (input.managerUserIds !== undefined) update.managerUserIds = uniqueStrings([group.ownerUserId, ...input.managerUserIds])
+    let parentChanged = false
+    if (input.parentGroupId !== undefined) {
+      parentChanged = true
+      const parentGroupId = input.parentGroupId
+      if (parentGroupId === group.groupId) throw new Error("Document group cannot be its own parent")
+      const parent = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(parentGroupId))
+      if (!parent) throw new Error("Parent document group not found")
+      if ((parent.ancestorGroupIds ?? []).includes(group.groupId)) throw new Error("Document group cannot move under its descendant")
+      if (!canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot move group under this parent")
+      update.parentGroupId = parent.groupId
+      update.ancestorGroupIds = [...(parent.ancestorGroupIds ?? []), parent.groupId]
+    }
+    const updated = await this.deps.documentGroupStore.update(groupId, { ...update, updatedAt: new Date().toISOString() })
+    if (parentChanged) await this.refreshDescendantDocumentGroupAncestors(updated)
+    return updated
   }
 
   async assertDocumentGroupsWritable(actor: AppUser, groupIds: string[]): Promise<void> {
     if (groupIds.length === 0) return
-    const ledger = await this.loadDocumentGroupLedger()
     for (const groupId of groupIds) {
-      const group = ledger.groups.find((candidate) => candidate.groupId === groupId)
+      const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
       if (!group || !canManageDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot write document group ${groupId}`)
     }
   }
 
   async assertSearchScopeReadable(actor: AppUser, scope: ChatInput["searchScope"]): Promise<void> {
     if (!scope?.groupIds?.length) return
-    const ledger = await this.loadDocumentGroupLedger()
     for (const groupId of scope.groupIds) {
-      const group = ledger.groups.find((candidate) => candidate.groupId === groupId)
+      const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
       if (!group || !canAccessDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot read document group ${groupId}`)
+    }
+  }
+
+  private async refreshDescendantDocumentGroupAncestors(root: DocumentGroup): Promise<void> {
+    const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    const byParent = new Map<string, DocumentGroup[]>()
+    for (const group of groups) {
+      if (!group.parentGroupId) continue
+      byParent.set(group.parentGroupId, [...(byParent.get(group.parentGroupId) ?? []), group])
+    }
+    const queue = byParent.get(root.groupId)?.map((group) => ({
+      group,
+      ancestorGroupIds: [...(root.ancestorGroupIds ?? []), root.groupId]
+    })) ?? []
+    while (queue.length > 0) {
+      const next = queue.shift()
+      if (!next) continue
+      const updated = await this.deps.documentGroupStore.update(next.group.groupId, {
+        ancestorGroupIds: next.ancestorGroupIds,
+        updatedAt: new Date().toISOString()
+      })
+      for (const child of byParent.get(updated.groupId) ?? []) {
+        queue.push({ group: child, ancestorGroupIds: [...next.ancestorGroupIds, updated.groupId] })
+      }
     }
   }
 
@@ -1304,23 +1336,6 @@ export class MemoRagService {
 
   private async saveAliasLedger(ledger: AliasLedger): Promise<void> {
     await this.deps.objectStore.putText(aliasLedgerKey, JSON.stringify(ledger, null, 2), "application/json")
-  }
-
-  private async loadDocumentGroupLedger(): Promise<DocumentGroupLedger> {
-    try {
-      const raw = JSON.parse(await this.deps.objectStore.getText(documentGroupLedgerKey)) as DocumentGroupLedger
-      return {
-        schemaVersion: 1,
-        groups: Array.isArray(raw.groups) ? raw.groups.map(normalizeDocumentGroup) : []
-      }
-    } catch (err) {
-      if (!isMissingObjectError(err)) throw err
-      return { schemaVersion: 1, groups: [] }
-    }
-  }
-
-  private async saveDocumentGroupLedger(ledger: DocumentGroupLedger): Promise<void> {
-    await this.deps.objectStore.putText(documentGroupLedgerKey, JSON.stringify({ schemaVersion: 1, groups: ledger.groups }, null, 2), "application/json")
   }
 
   private async loadReindexMigrationLedger(): Promise<ReindexMigration[]> {
@@ -2069,11 +2084,16 @@ function canManageDocumentGroup(group: DocumentGroup, user: AppUser): boolean {
 function normalizeDocumentGroup(group: DocumentGroup): DocumentGroup {
   return {
     ...group,
+    ancestorGroupIds: uniqueStrings(group.ancestorGroupIds ?? []),
     visibility: group.visibility ?? "private",
     sharedUserIds: uniqueStrings(group.sharedUserIds ?? []),
     sharedGroups: uniqueStrings(group.sharedGroups ?? []),
     managerUserIds: uniqueStrings([group.ownerUserId, ...(group.managerUserIds ?? [])])
   }
+}
+
+function normalizeOptionalDocumentGroup(group: DocumentGroup | undefined): DocumentGroup | undefined {
+  return group ? normalizeDocumentGroup(group) : undefined
 }
 
 function uniqueStrings(values: string[]): string[] {

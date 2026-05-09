@@ -197,6 +197,13 @@ export class MemoRagMvpStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     })
 
+    const documentGroupsTable = new dynamodb.Table(this, "DocumentGroupsTable", {
+      partitionKey: { name: "groupId", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
     new s3deploy.BucketDeployment(this, "DeployBenchmarkDatasets", {
       sources: [
         s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
@@ -339,6 +346,7 @@ export class MemoRagMvpStack extends Stack {
       CHAT_RUN_EVENTS_TABLE_NAME: chatRunEventsTable.tableName,
       DOCUMENT_INGEST_RUNS_TABLE_NAME: documentIngestRunsTable.tableName,
       DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME: documentIngestRunEventsTable.tableName,
+      DOCUMENT_GROUPS_TABLE_NAME: documentGroupsTable.tableName,
       BENCHMARK_BUCKET_NAME: benchmarkBucket.bucketName,
       BENCHMARK_DEFAULT_DATASET_KEY: "datasets/agent/standard-v1.jsonl",
       BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
@@ -476,6 +484,9 @@ export class MemoRagMvpStack extends Stack {
     documentIngestRunEventsTable.grantReadWriteData(apiFn)
     documentIngestRunEventsTable.grantReadWriteData(documentIngestRunWorkerFn)
     documentIngestRunEventsTable.grantReadWriteData(documentIngestRunMarkFailedFn)
+    documentGroupsTable.grantReadWriteData(apiFn)
+    documentGroupsTable.grantReadData(chatRunWorkerFn)
+    documentGroupsTable.grantReadData(documentIngestRunWorkerFn)
     for (const fn of [apiFn, chatRunWorkerFn, documentIngestRunWorkerFn]) {
       fn.addToRolePolicy(
         new iam.PolicyStatement({

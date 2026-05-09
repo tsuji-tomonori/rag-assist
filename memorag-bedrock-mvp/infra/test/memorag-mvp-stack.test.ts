@@ -168,6 +168,11 @@ test("implements the designed serverless resources", () => {
     TimeToLiveSpecification: { AttributeName: "ttl", Enabled: true },
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
+  template.hasResourceProperties("AWS::DynamoDB::Table", {
+    KeySchema: [{ AttributeName: "groupId", KeyType: "HASH" }],
+    BillingMode: "PAY_PER_REQUEST",
+    PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+  })
   for (const groupName of [
     "CHAT_USER",
     "ANSWER_EDITOR",
