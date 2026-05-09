@@ -16,7 +16,6 @@ import {
   DocumentIngestRunSchema,
   DocumentIngestRunStartResponseSchema,
   DocumentListResponseSchema,
-  DocumentListItemSummarySchema,
   DocumentManifestSchema,
   DocumentManifestSummarySchema,
   DocumentUploadRequestSchema,
