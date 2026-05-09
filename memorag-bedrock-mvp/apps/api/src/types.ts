@@ -260,6 +260,12 @@ export type ClarificationContext = {
   selectedValue?: string
 }
 
+export type ConversationHistoryTurn = {
+  role: "user" | "assistant"
+  text: string
+  turnId?: string
+}
+
 export type DebugStepStatus = "success" | "warning" | "error"
 
 export type DebugStep = {
@@ -286,6 +292,7 @@ export type DebugTrace = {
   modelId: string
   embeddingModelId: string
   clueModelId: string
+  conversationHistory?: ConversationHistoryTurn[]
   clarificationContext?: ClarificationContext
   pipelineVersions?: PipelineVersions
   ragProfile?: {
@@ -332,6 +339,7 @@ export type ChatRun = {
   userEmail?: string
   userGroups?: string[]
   question: string
+  conversationHistory?: ConversationHistoryTurn[]
   clarificationContext?: ClarificationContext
   modelId: string
   embeddingModelId?: string
@@ -422,6 +430,9 @@ export type BenchmarkRunMetrics = {
   succeeded: number
   failedHttp: number
   answerableAccuracy?: number
+  turnAnswerCorrectRate?: number
+  conversationSuccessRate?: number
+  historyDependentAccuracy?: number
   clarificationNeedPrecision?: number
   clarificationNeedRecall?: number
   clarificationNeedF1?: number
@@ -433,9 +444,11 @@ export type BenchmarkRunMetrics = {
   clarificationLatencyOverheadMs?: number
   postClarificationTaskLatencyMs?: number
   abstentionRecall?: number
+  abstentionAccuracy?: number
   citationHitRate?: number
   expectedFileHitRate?: number
   retrievalRecallAt20?: number
+  retrievalRecallAtK?: number
   p50LatencyMs?: number
   p95LatencyMs?: number
   averageLatencyMs?: number

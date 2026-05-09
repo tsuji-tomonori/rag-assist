@@ -166,6 +166,60 @@ tasks:
       - npm run prepare:allganize-ja -w @memorag-mvp/benchmark
       - npm run start -w @memorag-mvp/benchmark
 
+  benchmark:mtrag:prepare:
+    desc: Convert MTRAG dataset to rag-assist conversation JSONL and corpus
+    env:
+      MTRAG_INPUT: '{{.MTRAG_INPUT}}'
+      MTRAG_DATASET_OUTPUT: '{{.MTRAG_DATASET_OUTPUT | default ".local-data/mtrag/dataset.jsonl"}}'
+      MTRAG_CORPUS_DIR: '{{.MTRAG_CORPUS_DIR | default ".local-data/mtrag/corpus"}}'
+    cmds:
+      - npm run prepare:mtrag -w @memorag-mvp/benchmark
+
+  benchmark:mtrag:
+    desc: Run MTRAG as a multi-turn RAG benchmark
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: '{{.MTRAG_DATASET_OUTPUT | default ".local-data/mtrag/dataset.jsonl"}}'
+      OUTPUT: '{{.OUTPUT | default ".local-data/mtrag/results.jsonl"}}'
+      SUMMARY: '{{.SUMMARY | default ".local-data/mtrag/summary.json"}}'
+      REPORT: '{{.REPORT | default ".local-data/mtrag/report.md"}}'
+      BENCHMARK_SUITE_ID: 'mtrag-v1'
+      BENCHMARK_CORPUS_DIR: '{{.MTRAG_CORPUS_DIR | default ".local-data/mtrag/corpus"}}'
+      BENCHMARK_CORPUS_SUITE_ID: 'mtrag-v1'
+      MTRAG_INPUT: '{{.MTRAG_INPUT}}'
+      MTRAG_DATASET_OUTPUT: '{{.MTRAG_DATASET_OUTPUT | default ".local-data/mtrag/dataset.jsonl"}}'
+      MTRAG_CORPUS_DIR: '{{.MTRAG_CORPUS_DIR | default ".local-data/mtrag/corpus"}}'
+    cmds:
+      - npm run prepare:mtrag -w @memorag-mvp/benchmark
+      - npm run start:conversation -w @memorag-mvp/benchmark
+
+  benchmark:chatrag-bench:prepare:
+    desc: Convert ChatRAG Bench datasets to rag-assist conversation JSONL and corpus
+    env:
+      CHATRAG_INPUT_DIR: '{{.CHATRAG_INPUT_DIR}}'
+      CHATRAG_DATASET_OUTPUT: '{{.CHATRAG_DATASET_OUTPUT | default ".local-data/chatrag-bench/dataset.jsonl"}}'
+      CHATRAG_CORPUS_DIR: '{{.CHATRAG_CORPUS_DIR | default ".local-data/chatrag-bench/corpus"}}'
+    cmds:
+      - npm run prepare:chatrag-bench -w @memorag-mvp/benchmark
+
+  benchmark:chatrag-bench:
+    desc: Run ChatRAG Bench as a multi-turn RAG benchmark
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: '{{.CHATRAG_DATASET_OUTPUT | default ".local-data/chatrag-bench/dataset.jsonl"}}'
+      OUTPUT: '{{.OUTPUT | default ".local-data/chatrag-bench/results.jsonl"}}'
+      SUMMARY: '{{.SUMMARY | default ".local-data/chatrag-bench/summary.json"}}'
+      REPORT: '{{.REPORT | default ".local-data/chatrag-bench/report.md"}}'
+      BENCHMARK_SUITE_ID: 'chatrag-bench-v1'
+      BENCHMARK_CORPUS_DIR: '{{.CHATRAG_CORPUS_DIR | default ".local-data/chatrag-bench/corpus"}}'
+      BENCHMARK_CORPUS_SUITE_ID: 'chatrag-bench-v1'
+      CHATRAG_INPUT_DIR: '{{.CHATRAG_INPUT_DIR}}'
+      CHATRAG_DATASET_OUTPUT: '{{.CHATRAG_DATASET_OUTPUT | default ".local-data/chatrag-bench/dataset.jsonl"}}'
+      CHATRAG_CORPUS_DIR: '{{.CHATRAG_CORPUS_DIR | default ".local-data/chatrag-bench/corpus"}}'
+    cmds:
+      - npm run prepare:chatrag-bench -w @memorag-mvp/benchmark
+      - npm run start:conversation -w @memorag-mvp/benchmark
+
   benchmark:search:sample:
     desc: Run the sample Search API qrels benchmark and generate JSONL/JSON/Markdown reports
     env:

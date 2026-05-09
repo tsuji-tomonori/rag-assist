@@ -10,6 +10,7 @@ import { finalizeResponse } from "./finalize-response.js"
 import { createGenerateCluesNode } from "./generate-clues.js"
 import { createRetrievalEvaluatorNode, retrievalEvaluator } from "./retrieval-evaluator.js"
 import { createRetrieveMemoryNode } from "./retrieve-memory.js"
+import { normalizeQuery } from "./normalize-query.js"
 import { rerankChunks } from "./rerank-chunks.js"
 import { createSearchEvidenceNode } from "./search-evidence.js"
 import { createSufficientContextGateNode } from "./sufficient-context-gate.js"
@@ -31,6 +32,22 @@ const chunk: RetrievedVector = {
     createdAt: "2026-04-30T00:00:00.000Z"
   }
 }
+
+test("normalize query rewrites context-dependent questions with conversation history", async () => {
+  const withoutHistory = await normalizeQuery(state({ question: "海外出張でも同じ？" }))
+  assert.equal(withoutHistory.normalizedQuery, "海外出張でも同じ")
+  assert.deepEqual(withoutHistory.expandedQueries, ["海外出張でも同じ"])
+
+  const withHistory = await normalizeQuery(state({
+    question: "海外出張でも同じ？",
+    conversationHistory: [
+      { role: "user", text: "経費精算の期限は？" },
+      { role: "assistant", text: "申請から30日以内です。" }
+    ]
+  }))
+  assert.equal(withHistory.normalizedQuery, "経費精算の期限について、海外出張でも同じ")
+  assert.deepEqual(withHistory.expandedQueries, ["経費精算の期限について、海外出張でも同じ", "海外出張でも同じ"])
+})
 
 test("answerability gate covers no hit, low score, missing fact, and sufficient evidence branches", async () => {
   assert.equal((await answerabilityGate(state({ selectedChunks: [] }))).answerability?.reason, "no_relevant_chunks")
@@ -1305,6 +1322,7 @@ function state(overrides: Record<string, unknown> = {}): QaAgentState {
   return {
     runId: "run",
     question: "question",
+    conversationHistory: [],
     modelId: "model",
     embeddingModelId: "embed",
     clueModelId: "clue",
