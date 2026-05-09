@@ -1,6 +1,6 @@
 # MLIT 図表 RAG seed の UI 実行対応
 
-状態: doing
+状態: done
 
 ## 背景
 
@@ -37,7 +37,7 @@ dataset README に UI 実行時の suite id、dataset S3 key、必要な corpus 
 - [x] dataset README に UI 実行条件、dataset S3 key、corpus 準備制約を記載している。
 - [x] 関連する API/Web/benchmark テストを更新し、変更範囲に見合う検証を実行している。
 - [x] 作業完了レポートを `reports/working/` に作成している。
-- [ ] PR 更新後、受け入れ条件確認コメントとセルフレビューコメントを日本語で記載している。
+- [x] PR 更新後、受け入れ条件確認コメントとセルフレビューコメントを日本語で記載している。
 
 ## 検証計画
 
