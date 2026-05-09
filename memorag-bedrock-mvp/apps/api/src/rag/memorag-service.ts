@@ -163,6 +163,14 @@ const benchmarkSuites: BenchmarkSuite[] = [
     defaultConcurrency: 1
   },
   {
+    suiteId: "architecture-drawing-qarag-v0.1",
+    label: "建築図面 QARAG v0.1",
+    mode: "agent",
+    datasetS3Key: "generated://architecture-drawing-qarag-v0.1",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
     suiteId: "search-smoke-v1",
     label: "Search smoke",
     mode: "search",

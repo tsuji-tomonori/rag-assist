@@ -222,7 +222,7 @@ npm run start -w @memorag-mvp/benchmark
 
 baseline evaluation set をローカルで測る場合は、`task benchmark:rag-baseline:sample` を使うか、`DATASET=benchmark/dataset.rag-baseline.sample.jsonl`、`BENCHMARK_SUITE_ID=rag-baseline-v1`、`BENCHMARK_CORPUS_DIR=benchmark/corpus/rag-baseline-v1`、`BENCHMARK_CORPUS_SUITE_ID=rag-baseline-v1` を指定します。この dataset は改善前後の比較基準用であり、RAG 実装側に row ID、期待語句、dataset 固有分岐を入れてはいけません。
 
-建築・AEC 図面理解向けの QARAG 評価企画と 82 件の seed QA は [`benchmark/architecture-drawing-qarag-v0.1.md`](benchmark/architecture-drawing-qarag-v0.1.md) で Markdown 管理します。この v0.1 は国土交通省標準図と自治体公開図面を使った初期評価設計であり、現時点では runner 用 JSONL suite には組み込んでいません。
+建築・AEC 図面理解向けの QARAG 評価企画と 82 件の seed QA は [`benchmark/architecture-drawing-qarag-v0.1.md`](benchmark/architecture-drawing-qarag-v0.1.md) で Markdown 管理します。管理画面の suite 一覧には `architecture-drawing-qarag-v0.1` として表示され、CodeBuild runner の pre_build で `npm run prepare:architecture-drawing-qarag -w @memorag-mvp/benchmark` を実行し、Markdown から JSONL dataset を生成して国土交通省・自治体公開 PDF を一時 corpus に download してから `/benchmark/query` を実行します。公開元 URL の変更、外部ネットワーク制約、PDF/OCR 抽出結果によって dataset/corpus 準備または評価結果が変わるため、本番評価セット化前には source URL、令和4年改定版への差し替え、根拠 bbox / crop の確定を別途確認してください。
 
 検索 benchmark は `npm run start:search -w @memorag-mvp/benchmark` または `task benchmark:search:sample` で実行します。sample task は `BENCHMARK_SUITE_ID=search-standard-v1` と同じ corpus seed を指定します。
 

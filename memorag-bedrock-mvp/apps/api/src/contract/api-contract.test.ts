@@ -814,6 +814,7 @@ test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only"
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, contentBase64: "not-base64" }), false)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, extra: "blocked" } }), false)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "unknown-suite" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "architecture-drawing-qarag-v0.1" } }), true)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "application/pdf", metadata }), true)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "text/plain", metadata }), false)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "../source.pdf", mimeType: "application/pdf", metadata }), false)
