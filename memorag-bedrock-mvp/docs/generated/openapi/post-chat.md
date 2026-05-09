@@ -29,6 +29,10 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | minLength=1 |
+| `conversationHistory` | `array<object>` | no | `data.conversationHistory` の値。項目名は conversation history を表します。 | maxItems=20 |
+| `conversationHistory[].role` | `enum(user \| assistant)` | yes | `data.conversationHistory[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `conversationHistory[].text` | `string` | yes | 文書本文またはチャンク本文。 | minLength=1<br>maxLength=4000 |
+| `conversationHistory[].turnId` | `string` | no | `data.conversationHistory[].turnId` の値。項目名は turn id を表します。 | - |
 | `clarificationContext` | `object` | no | `data.clarificationContext` の値。項目名は clarification context を表します。 | - |
 | `clarificationContext.originalQuestion` | `string` | no | `data.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `clarificationContext.selectedOptionId` | `string` | no | `data.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
@@ -76,7 +80,7 @@ Media type: `application/json`
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 108 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 112 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -136,6 +140,10 @@ Media type: `application/json`
 | `debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
 | `debug.clueModelId` | `string` | yes | `response.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `debug.conversationHistory` | `array<object>` | no | `response.debug.conversationHistory` の値。項目名は conversation history を表します。 | - |
+| `debug.conversationHistory[].role` | `enum(user \| assistant)` | yes | `response.debug.conversationHistory[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `debug.conversationHistory[].text` | `string` | yes | 文書本文またはチャンク本文。 | minLength=1<br>maxLength=4000 |
+| `debug.conversationHistory[].turnId` | `string` | no | `response.debug.conversationHistory[].turnId` の値。項目名は turn id を表します。 | - |
 | `debug.clarificationContext` | `object` | no | `response.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
 | `debug.clarificationContext.originalQuestion` | `string` | no | `response.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `debug.clarificationContext.selectedOptionId` | `string` | no | `response.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |

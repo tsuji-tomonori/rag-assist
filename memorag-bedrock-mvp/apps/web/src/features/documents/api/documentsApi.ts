@@ -148,6 +148,7 @@ export async function listDocumentGroups(): Promise<DocumentGroup[]> {
 export async function createDocumentGroup(input: {
   name: string
   description?: string
+  parentGroupId?: string
   visibility?: "private" | "shared" | "org"
   sharedUserIds?: string[]
   sharedGroups?: string[]
@@ -158,6 +159,7 @@ export async function createDocumentGroup(input: {
 
 export async function shareDocumentGroup(groupId: string, input: {
   visibility?: "private" | "shared" | "org"
+  parentGroupId?: string
   sharedUserIds?: string[]
   sharedGroups?: string[]
   managerUserIds?: string[]

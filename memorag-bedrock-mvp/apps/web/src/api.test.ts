@@ -181,6 +181,7 @@ describe("API client", () => {
         body: JSON.stringify({ uploadId: "upload-1", fileName: "handoff.txt", mimeType: "text/plain", memoryModelId: "model", embeddingModelId: "embedding" })
       })
     )
+    expect(fetchMock.mock.calls.some(([url, init]) => String(url) === "http://api.example.test/documents" && (init as RequestInit | undefined)?.method === "POST")).toBe(false)
   })
 
   it("polls document ingest runs until the manifest is available", async () => {

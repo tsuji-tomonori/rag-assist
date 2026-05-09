@@ -87,6 +87,10 @@ Media type: `application/json`
 | `messages[].result.debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `messages[].result.debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
 | `messages[].result.debug.clueModelId` | `string` | yes | `data.messages[].result.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `messages[].result.debug.conversationHistory` | `array<object>` | no | `data.messages[].result.debug.conversationHistory` の値。項目名は conversation history を表します。 | - |
+| `messages[].result.debug.conversationHistory[].role` | `enum(user \| assistant)` | yes | `data.messages[].result.debug.conversationHistory[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `messages[].result.debug.conversationHistory[].text` | `string` | yes | 文書本文またはチャンク本文。 | minLength=1<br>maxLength=4000 |
+| `messages[].result.debug.conversationHistory[].turnId` | `string` | no | `data.messages[].result.debug.conversationHistory[].turnId` の値。項目名は turn id を表します。 | - |
 | `messages[].result.debug.clarificationContext` | `object` | no | `data.messages[].result.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
 | `messages[].result.debug.clarificationContext.originalQuestion` | `string` | no | `data.messages[].result.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `messages[].result.debug.clarificationContext.selectedOptionId` | `string` | no | `data.messages[].result.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
@@ -198,7 +202,7 @@ Media type: `application/json`
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 144 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 148 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -269,6 +273,10 @@ Media type: `application/json`
 | `messages[].result.debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `messages[].result.debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
 | `messages[].result.debug.clueModelId` | `string` | yes | `response.messages[].result.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `messages[].result.debug.conversationHistory` | `array<object>` | no | `response.messages[].result.debug.conversationHistory` の値。項目名は conversation history を表します。 | - |
+| `messages[].result.debug.conversationHistory[].role` | `enum(user \| assistant)` | yes | `response.messages[].result.debug.conversationHistory[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `messages[].result.debug.conversationHistory[].text` | `string` | yes | 文書本文またはチャンク本文。 | minLength=1<br>maxLength=4000 |
+| `messages[].result.debug.conversationHistory[].turnId` | `string` | no | `response.messages[].result.debug.conversationHistory[].turnId` の値。項目名は turn id を表します。 | - |
 | `messages[].result.debug.clarificationContext` | `object` | no | `response.messages[].result.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
 | `messages[].result.debug.clarificationContext.originalQuestion` | `string` | no | `response.messages[].result.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `messages[].result.debug.clarificationContext.selectedOptionId` | `string` | no | `response.messages[].result.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |

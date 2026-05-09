@@ -48,7 +48,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 11 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 13 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
@@ -63,6 +63,8 @@ Media type: `application/json`
 | `groups[].groupId` | `string` | yes | `response.groups[].groupId` の値。項目名は group id を表します。 | - |
 | `groups[].name` | `string` | yes | 表示名または項目名。 | - |
 | `groups[].description` | `string` | no | `response.groups[].description` の値。項目名は description を表します。 | - |
+| `groups[].parentGroupId` | `string` | no | `response.groups[].parentGroupId` の値。項目名は parent group id を表します。 | - |
+| `groups[].ancestorGroupIds` | `array<string>` | no | `response.groups[].ancestorGroupIds` の値。項目名は ancestor group ids を表します。 | - |
 | `groups[].ownerUserId` | `string` | yes | `response.groups[].ownerUserId` の値。項目名は owner user id を表します。 | - |
 | `groups[].visibility` | `enum(private \| shared \| org)` | yes | `response.groups[].visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
 | `groups[].sharedUserIds` | `array<string>` | yes | `response.groups[].sharedUserIds` の値。項目名は shared user ids を表します。 | - |

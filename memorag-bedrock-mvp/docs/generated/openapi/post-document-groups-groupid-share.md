@@ -31,6 +31,7 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `visibility` | `enum(private \| shared \| org)` | no | `data.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
+| `parentGroupId` | `string` | no | `data.parentGroupId` の値。項目名は parent group id を表します。 | minLength=1 |
 | `sharedUserIds` | `array<string>` | no | `data.sharedUserIds` の値。項目名は shared user ids を表します。 | maxItems=50 |
 | `sharedGroups` | `array<string>` | no | `data.sharedGroups` の値。項目名は shared groups を表します。 | maxItems=50 |
 | `managerUserIds` | `array<string>` | no | `data.managerUserIds` の値。項目名は manager user ids を表します。 | maxItems=50 |
@@ -57,7 +58,7 @@ Media type: `application/json`
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 10 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 12 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -71,6 +72,8 @@ Media type: `application/json`
 | `groupId` | `string` | yes | `response.groupId` の値。項目名は group id を表します。 | - |
 | `name` | `string` | yes | 表示名または項目名。 | - |
 | `description` | `string` | no | `response.description` の値。項目名は description を表します。 | - |
+| `parentGroupId` | `string` | no | `response.parentGroupId` の値。項目名は parent group id を表します。 | - |
+| `ancestorGroupIds` | `array<string>` | no | `response.ancestorGroupIds` の値。項目名は ancestor group ids を表します。 | - |
 | `ownerUserId` | `string` | yes | `response.ownerUserId` の値。項目名は owner user id を表します。 | - |
 | `visibility` | `enum(private \| shared \| org)` | yes | `response.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
 | `sharedUserIds` | `array<string>` | yes | `response.sharedUserIds` の値。項目名は shared user ids を表します。 | - |

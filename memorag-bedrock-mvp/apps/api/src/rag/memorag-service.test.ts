@@ -11,6 +11,7 @@ import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.j
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
 import { LocalDocumentIngestRunEventStore } from "../adapters/local-document-ingest-run-event-store.js"
 import { LocalDocumentIngestRunStore } from "../adapters/local-document-ingest-run-store.js"
+import { LocalDocumentGroupStore } from "../adapters/local-document-group-store.js"
 import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
@@ -135,6 +136,45 @@ test("service listDocuments denies group-scoped manifests to non-members without
   assert.deepEqual((await service.listDocuments(outsider)).map((doc) => doc.documentId), [publicDoc.documentId])
   assert.deepEqual((await service.listDocuments(owner)).map((doc) => doc.documentId).sort(), [groupDoc.documentId, publicDoc.documentId].sort())
   assert.deepEqual((await service.listDocuments(member)).map((doc) => doc.documentId).sort(), [groupDoc.documentId, publicDoc.documentId].sort())
+})
+
+test("service stores document group hierarchy outside S3 object keys", async () => {
+  const { service, deps } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const parent = await service.createDocumentGroup(owner, {
+    name: "社内規定",
+    visibility: "shared",
+    sharedGroups: ["HR"]
+  })
+  const child = await service.createDocumentGroup(owner, {
+    name: "人事",
+    parentGroupId: parent.groupId,
+    visibility: "private"
+  })
+  const grandchild = await service.createDocumentGroup(owner, {
+    name: "採用",
+    parentGroupId: child.groupId,
+    visibility: "private"
+  })
+  const anotherParent = await service.createDocumentGroup(owner, {
+    name: "全社共有",
+    visibility: "private"
+  })
+
+  assert.equal(child.parentGroupId, parent.groupId)
+  assert.deepEqual(child.ancestorGroupIds, [parent.groupId])
+  assert.deepEqual(grandchild.ancestorGroupIds, [parent.groupId, child.groupId])
+  assert.equal((await deps.objectStore.listKeys("document-groups/")).length, 0)
+
+  const moved = await service.updateDocumentGroupSharing(owner, child.groupId, {
+    parentGroupId: anotherParent.groupId,
+    visibility: "shared",
+    sharedGroups: ["HR"]
+  })
+  assert.equal(moved?.parentGroupId, anotherParent.groupId)
+  assert.deepEqual(moved?.ancestorGroupIds, [anotherParent.groupId])
+  assert.deepEqual(moved?.sharedGroups, ["HR"])
+  assert.deepEqual((await deps.documentGroupStore.get(grandchild.groupId))?.ancestorGroupIds, [anotherParent.groupId, child.groupId])
 })
 
 test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
@@ -333,6 +373,10 @@ test("service preserves asynchronous chat run options and can mark worker failur
   const jpPublicPdfRun = await service.createBenchmarkRun(user, { suiteId: "jp-public-pdf-qa-v1", mode: "agent" })
   assert.equal(jpPublicPdfRun.suiteId, "jp-public-pdf-qa-v1")
   assert.equal(jpPublicPdfRun.datasetS3Key, "benchmark/dataset.jp-public-pdf-qa.jsonl")
+  const mtragSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "mtrag-v1")
+  assert.equal(mtragSuite?.datasetS3Key, "datasets/conversation/mtrag-v1.jsonl")
+  const chatragSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "chatrag-bench-v1")
+  assert.equal(chatragSuite?.datasetS3Key, "datasets/conversation/chatrag-bench-v1.jsonl")
   const mlitSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "mlit-pdf-figure-table-rag-seed-v1")
   assert.deepEqual(mlitSuite, {
     suiteId: "mlit-pdf-figure-table-rag-seed-v1",
@@ -933,6 +977,7 @@ async function createService(options: {
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
     documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
+    documentGroupStore: new LocalDocumentGroupStore(dataDir),
     codeBuildLogReader: options.codeBuildLogReader ?? { getText: async () => undefined },
     userDirectory: options.userDirectory
   } as unknown as Dependencies

@@ -1,9 +1,44 @@
 import { z } from "zod"
 import { RAG_CONTRACT_LIMITS } from "../limits.js"
 
-export const ConversationHistoryTurnSchema = z.object({
+export const ConversationCitationSchema = z.object({
+  documentId: z.string().optional(),
+  fileName: z.string().optional(),
+  chunkId: z.string().optional(),
+  score: z.number().optional(),
+  text: z.string().optional()
+})
+
+export const ConversationTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
   text: z.string().min(1).max(4000),
+  turnId: z.string().optional(),
+  citations: z.array(ConversationCitationSchema).optional(),
+  createdAt: z.string().optional()
+})
+
+export const ConversationHistoryTurnSchema = ConversationTurnSchema.pick({
+  role: true,
+  text: true,
+  turnId: true
+})
+
+export const ConversationInputSchema = z.object({
+  conversationId: z.string(),
+  turnId: z.string().optional(),
+  turnIndex: z.number().int().nonnegative().optional(),
+  turns: z.array(ConversationTurnSchema).default(() => []),
+  turnDependency: z.string().optional(),
+  state: z.object({
+    activeEntities: z.array(z.string()).optional(),
+    activeDocuments: z.array(z.string()).optional(),
+    activeTopics: z.array(z.string()).optional(),
+    constraints: z.array(z.string()).optional()
+  }).optional()
+})
+
+export const ConversationStateSchema = z.object({
+  conversationId: z.string().optional(),
   turnId: z.string().optional()
 })
 
@@ -25,6 +60,7 @@ export const ChatRequestSchema = z.object({
   question: z.string().min(1),
   conversationHistory: z.array(ConversationHistoryTurnSchema).max(20).optional(),
   clarificationContext: ClarificationContextSchema.optional(),
+  conversation: ConversationInputSchema.optional(),
   modelId: z.string().optional(),
   embeddingModelId: z.string().optional(),
   clueModelId: z.string().optional(),
@@ -123,6 +159,8 @@ export const DebugTraceSchema = z.object({
   clueModelId: z.string(),
   conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
   clarificationContext: ClarificationContextSchema.optional(),
+  conversation: z.unknown().optional(),
+  conversationState: z.unknown().optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   ragProfile: RagProfileTraceSchema.optional(),
   topK: z.number(),
@@ -159,6 +197,8 @@ export const ChatRunStartResponseSchema = z.object({
 })
 
 export type ConversationHistoryTurn = z.output<typeof ConversationHistoryTurnSchema>
+export type ConversationTurn = z.output<typeof ConversationTurnSchema>
+export type ConversationInput = z.input<typeof ConversationInputSchema>
 export type ClarificationContext = z.output<typeof ClarificationContextSchema>
 export type SearchScope = z.output<typeof SearchScopeSchema>
 export type ChatRequest = z.input<typeof ChatRequestSchema>

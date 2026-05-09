@@ -14,11 +14,19 @@ import {
   resolveEvaluatorProfile,
   type EvaluatorProfile
 } from "./evaluator-profile.js"
-import type { BenchmarkQueryResponse, Citation } from "@memorag-mvp/contract"
+import type { BenchmarkQueryResponse } from "@memorag-mvp/contract"
 
 type DatasetRow = {
   id?: string
   question: string
+  conversationId?: string
+  turnId?: string
+  turnIndex?: number
+  history?: ConversationTurn[]
+  conversation?: ConversationInput
+  expectedStandaloneQuestion?: string
+  expectedEvidenceTurns?: Array<string | number>
+  turnDependency?: string
   expected?: string
   expectedAnswer?: string
   referenceAnswer?: string
@@ -72,6 +80,35 @@ type ExpectedFactSlot = {
   expectedDocumentIds?: string[]
 }
 
+type Citation = {
+  documentId?: string
+  fileName?: string
+  chunkId?: string
+  score?: number
+  text?: string
+}
+
+type ConversationTurn = {
+  role: "user" | "assistant"
+  text: string
+  citations?: Citation[]
+  createdAt?: string
+}
+
+type ConversationInput = {
+  conversationId: string
+  turnId?: string
+  turnIndex?: number
+  turns: ConversationTurn[]
+  turnDependency?: string
+  state?: {
+    activeEntities?: string[]
+    activeDocuments?: string[]
+    activeTopics?: string[]
+    constraints?: string[]
+  }
+}
+
 type BenchmarkResponse = Partial<BenchmarkQueryResponse> & {
   answerSupport?: {
     unsupportedSentences?: Array<{ sentence?: string; reason?: string }>
@@ -94,6 +131,7 @@ type RowEvaluation = {
   missingSlotHit: boolean | null
   corpusGroundedOptions: boolean | null
   postClarificationAnswerCorrect: boolean | null
+  queryRewriteHit: boolean | null
   answerContainsExpected: boolean | null
   regexMatched: boolean | null
   answerCorrect: boolean
@@ -133,6 +171,12 @@ type RowEvaluation = {
 type BenchmarkResultRow = {
   id?: string
   question: string
+  conversationId?: string
+  turnId?: string
+  turnIndex?: number
+  expectedStandaloneQuestion?: string
+  expectedEvidenceTurns?: Array<string | number>
+  turnDependency?: string
   expected?: string
   expectedAnswer?: string
   referenceAnswer?: string
@@ -185,6 +229,7 @@ type Summary = {
     missingSlotHitRate: number | null
     corpusGroundedOptionRate: number | null
     postClarificationAccuracy: number | null
+    queryRewriteAccuracy: number | null
     overClarificationRate: number | null
     clarificationLatencyOverheadMs: number | null
     postClarificationTaskLatencyMs: number | null
@@ -216,6 +261,13 @@ type Summary = {
     p95LatencyMs: number | null
     averageLatencyMs: number | null
   }
+  turnDependencyMetrics: Record<string, {
+    total: number
+    answerableAccuracy: number | null
+    retrievalRecallAtK: number | null
+    expectedPageHitRate: number | null
+    citationSupportPassRate: number | null
+  }>
   failures: Array<{
     id?: string
     question: string
@@ -300,6 +352,8 @@ let count = 0
 const results: BenchmarkResultRow[] = []
 const skippedRows: SkippedDatasetRow[] = []
 const skippedCorpusFiles = skippedCorpusFileNameSet(corpusSeed)
+const conversationMemory = new Map<string, ConversationTurn[]>()
+const runnableRows: DatasetRow[] = []
 for await (const line of rl) {
   if (!line.trim()) continue
   const row = JSON.parse(line) as DatasetRow
@@ -309,15 +363,26 @@ for await (const line of rl) {
     console.log(`Benchmark row skipped: ${row.id ?? row.question} (required corpus skipped: ${skippedFiles.join(", ")})`)
     continue
   }
+  runnableRows.push(row)
+}
+
+for (const row of orderRowsForConversationExecution(runnableRows)) {
   const rowEvaluatorProfile = resolveEvaluatorProfile(row.evaluatorProfile ?? profileKey(suiteEvaluatorProfile))
   assertSuiteEvaluatorProfile(rowEvaluatorProfile, suiteEvaluatorProfile, row.id ?? row.question)
   const firstStartedAt = Date.now()
-  const { status, body } = await runQuery(row)
+  const conversation = buildConversationInput(row)
+  const { status, body } = await runQuery(row, conversation)
   const initialLatencyMs = Date.now() - firstStartedAt
   const followUp = await runFollowUp(row, body)
   const result: BenchmarkResultRow = {
     id: row.id,
     question: row.question,
+    conversationId: row.conversationId ?? row.conversation?.conversationId,
+    turnId: row.turnId ?? row.conversation?.turnId,
+    turnIndex: row.turnIndex ?? row.conversation?.turnIndex,
+    expectedStandaloneQuestion: row.expectedStandaloneQuestion,
+    expectedEvidenceTurns: row.expectedEvidenceTurns,
+    turnDependency: row.turnDependency ?? row.conversation?.turnDependency,
     expected: row.expected,
     expectedAnswer: row.expectedAnswer,
     referenceAnswer: row.referenceAnswer,
@@ -338,6 +403,7 @@ for await (const line of rl) {
   }
   out.write(`${JSON.stringify(result)}\n`)
   results.push(result)
+  rememberConversationTurn(row, body)
   count += 1
 }
 
@@ -351,10 +417,53 @@ if (skippedRows.length > 0) console.log(`Skipped ${skippedRows.length} benchmark
 console.log(`Wrote benchmark summary to ${summaryPath}`)
 console.log(`Wrote benchmark report to ${reportPath}`)
 
-async function runQuery(row: DatasetRow): Promise<{ status: number; body: BenchmarkResponse }> {
+function orderRowsForConversationExecution(rows: DatasetRow[]): DatasetRow[] {
+  return rows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const conversationA = a.row.conversationId ?? a.row.conversation?.conversationId
+      const conversationB = b.row.conversationId ?? b.row.conversation?.conversationId
+      if (!conversationA && !conversationB) return a.index - b.index
+      if (!conversationA) return a.index - b.index
+      if (!conversationB) return a.index - b.index
+      if (conversationA !== conversationB) return a.index - b.index
+      return (a.row.turnIndex ?? a.row.conversation?.turnIndex ?? a.index) - (b.row.turnIndex ?? b.row.conversation?.turnIndex ?? b.index)
+    })
+    .map((item) => item.row)
+}
+
+function buildConversationInput(row: DatasetRow): ConversationInput | undefined {
+  const conversationId = row.conversationId ?? row.conversation?.conversationId
+  if (!conversationId) return row.conversation
+  const rememberedTurns = conversationMemory.get(conversationId) ?? []
+  return {
+    conversationId,
+    turnId: row.turnId ?? row.conversation?.turnId ?? (row.turnIndex === undefined ? row.id : String(row.turnIndex)),
+    turnIndex: row.turnIndex ?? row.conversation?.turnIndex,
+    turns: [
+      ...(row.conversation?.turns ?? []),
+      ...(row.history ?? []),
+      ...rememberedTurns
+    ],
+    turnDependency: row.turnDependency ?? row.conversation?.turnDependency,
+    state: row.conversation?.state
+  }
+}
+
+function rememberConversationTurn(row: DatasetRow, body: BenchmarkResponse): void {
+  const conversationId = row.conversationId ?? row.conversation?.conversationId
+  if (!conversationId) return
+  const turns = conversationMemory.get(conversationId) ?? []
+  turns.push({ role: "user", text: row.question })
+  turns.push({ role: "assistant", text: body.answer ?? "", citations: body.citations ?? [] })
+  conversationMemory.set(conversationId, turns)
+}
+
+async function runQuery(row: DatasetRow, conversation?: ConversationInput): Promise<{ status: number; body: BenchmarkResponse }> {
   return runQueryRequest({
     id: row.id,
     question: row.question,
+    conversation,
     modelId: row.modelId ?? defaultModelId,
     embeddingModelId: row.embeddingModelId ?? defaultEmbeddingModelId,
     clueModelId: row.clueModelId,
@@ -415,6 +524,7 @@ async function runQueryRequest(input: {
   minScore?: number
   strictGrounded?: boolean
   useMemory?: boolean
+  conversation?: ConversationInput
   clarificationContext?: {
     originalQuestion?: string
     selectedOptionId?: string
@@ -426,6 +536,7 @@ async function runQueryRequest(input: {
       id: input.id,
       question: input.question,
       clarificationContext: input.clarificationContext,
+      conversation: input.conversation,
       modelId: input.modelId ?? defaultModelId,
       embeddingModelId: input.embeddingModelId,
       clueModelId: input.clueModelId,
@@ -519,6 +630,9 @@ function evaluateRow(
   if (corpusGroundedOptions === false) failureReasons.push("clarification_option_not_grounded")
 
   const postClarificationAnswerCorrect = evaluateFollowUp(row.followUp, followUp, failureReasons, evaluatorProfile)
+  const actualStandaloneQuestion = extractStandaloneQuestion(body)
+  const queryRewriteHit = evaluateQueryRewrite(row.expectedStandaloneQuestion, actualStandaloneQuestion)
+  if (queryRewriteHit === false) failureReasons.push("query_rewrite_miss")
 
   const answerContainsExpected =
     expectedAnswerable && expectedContains.length > 0
@@ -602,6 +716,7 @@ function evaluateRow(
     missingSlotHit,
     corpusGroundedOptions,
     postClarificationAnswerCorrect,
+    queryRewriteHit,
     answerContainsExpected,
     regexMatched,
     answerCorrect,
@@ -687,6 +802,24 @@ function evaluateFollowUp(
   return passed
 }
 
+function extractStandaloneQuestion(body: BenchmarkResponse): string | undefined {
+  for (const step of body.debug?.steps ?? []) {
+    if (step.label !== "decontextualize_query") continue
+    const output = step.output?.decontextualizedQuery
+    if (typeof output === "object" && output !== null && "standaloneQuestion" in output) {
+      const value = (output as { standaloneQuestion?: unknown }).standaloneQuestion
+      return typeof value === "string" ? value : undefined
+    }
+  }
+  return undefined
+}
+
+function evaluateQueryRewrite(expected: string | undefined, actual: string | undefined): boolean | null {
+  if (!expected) return null
+  if (!actual) return false
+  return normalize(actual).includes(normalize(expected)) || normalize(expected).includes(normalize(actual))
+}
+
 function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], skippedRows: SkippedDatasetRow[]): Summary {
   const answerableRows = results.filter((row) => row.evaluation.expectedAnswerable)
   const unanswerableRows = results.filter((row) => !row.evaluation.expectedAnswerable)
@@ -697,6 +830,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   const missingSlotRows = results.filter((row) => row.evaluation.missingSlotHit !== null)
   const groundedOptionRows = results.filter((row) => row.evaluation.corpusGroundedOptions !== null)
   const postClarificationRows = results.filter((row) => row.evaluation.postClarificationAnswerCorrect !== null)
+  const queryRewriteRows = results.filter((row) => row.evaluation.queryRewriteHit !== null)
   const postClarificationTaskLatencies = postClarificationRows
     .filter((row) => row.followUp)
     .map((row) => row.taskLatencyMs)
@@ -774,6 +908,10 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       postClarificationAccuracy: rate(
         postClarificationRows.filter((row) => row.evaluation.postClarificationAnswerCorrect === true).length,
         postClarificationRows.length
+      ),
+      queryRewriteAccuracy: rate(
+        queryRewriteRows.filter((row) => row.evaluation.queryRewriteHit === true).length,
+        queryRewriteRows.length
       ),
       overClarificationRate: rate(
         clearAnswerRows.filter((row) => row.evaluation.actualResponseType === "clarification").length,
@@ -884,6 +1022,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       p95LatencyMs: percentile(latencies, 0.95),
       averageLatencyMs: results.length === 0 ? null : Math.round(results.reduce((sum, row) => sum + row.latencyMs, 0) / results.length)
     },
+    turnDependencyMetrics: summarizeTurnDependencyMetrics(results),
     failures: results
       .filter((row) => row.evaluation.failureReasons.length > 0)
       .map((row) => ({
@@ -908,6 +1047,27 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   }
 }
 
+function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary["turnDependencyMetrics"] {
+  const groups = new Map<string, BenchmarkResultRow[]>()
+  for (const row of results) {
+    const key = row.turnDependency ?? (row.conversationId ? "unspecified" : "standalone")
+    groups.set(key, [...(groups.get(key) ?? []), row])
+  }
+  return Object.fromEntries([...groups.entries()].map(([dependency, rows]) => {
+    const answerableRows = rows.filter((row) => row.evaluation.expectedAnswerable)
+    const retrievalRows = rows.filter((row) => row.evaluation.retrievalRecallAtK !== null)
+    const pageRows = rows.filter((row) => row.evaluation.expectedPageHit !== null)
+    const supportRows = rows.filter((row) => row.evaluation.citationSupportPass !== null)
+    return [dependency, {
+      total: rows.length,
+      answerableAccuracy: rate(answerableRows.filter((row) => row.evaluation.answerCorrect).length, answerableRows.length),
+      retrievalRecallAtK: rate(retrievalRows.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRows.length),
+      expectedPageHitRate: rate(pageRows.filter((row) => row.evaluation.expectedPageHit === true).length, pageRows.length),
+      citationSupportPassRate: rate(supportRows.filter((row) => row.evaluation.citationSupportPass === true).length, supportRows.length)
+    }]
+  }))
+}
+
 type BenchmarkReportMetricName =
   | "answerable_accuracy"
   | "clarification_need_precision"
@@ -917,6 +1077,7 @@ type BenchmarkReportMetricName =
   | "missing_slot_hit_rate"
   | "corpus_grounded_option_rate"
   | "post_clarification_accuracy"
+  | "query_rewrite_accuracy"
   | "over_clarification_rate"
   | "clarification_latency_delta_vs_non_clarification_ms"
   | "post_clarification_task_latency_ms"
@@ -1002,6 +1163,16 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
         )
       ].join("\n")
 
+  const turnDependencyRows = Object.keys(summary.turnDependencyMetrics).length === 0
+    ? "\nNo turn dependency metrics.\n"
+    : [
+        "| dependency | total | answerable_accuracy | retrieval_recall_at_k | expected_page_hit_rate | citation_support_pass_rate |",
+        "| --- | ---: | ---: | ---: | ---: | ---: |",
+        ...Object.entries(summary.turnDependencyMetrics).map(([dependency, metrics]) =>
+          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} |`
+        )
+      ].join("\n")
+
   const detailRows = [
     "| id | category | expected | actual | fact_slots | support | leak | clarification | iterations | retrieval_calls | risk_signals | llm_judge | latency_ms | task_latency_ms | citations | retrieved | result |",
     "| --- | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | --- |",
@@ -1042,6 +1213,10 @@ ${coverageRows.map((row) => `| ${row.item} | ${row.count} | ${escapeMarkdown(row
 | metric | value | status | basis | description | note |
 | --- | ---: | --- | --- | --- | --- |
 ${metricRows.map((row) => `| ${row.metric} | ${row.value} | ${row.status} | ${escapeMarkdown(row.basis)} | ${escapeMarkdown(metricDescription(row.metric))} | ${escapeMarkdown(row.note)} |`).join("\n")}
+
+## Turn Dependency Metrics
+
+${turnDependencyRows}
 
 ## Corpus Seed
 
@@ -1092,6 +1267,8 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "確認質問の選択肢が、memory・evidence・aspect・history などの根拠に紐づいていた割合。"
     case "post_clarification_accuracy":
       return "確認質問後の follow-up 実行で、期待する回答または拒否に到達した割合。"
+    case "query_rewrite_accuracy":
+      return "multi-turn 行で standalone query が expectedStandaloneQuestion と一致した割合。"
     case "over_clarification_rate":
       return "明確に回答すべき行で、不要な確認質問を返した割合。低いほどよい。"
     case "clarification_latency_delta_vs_non_clarification_ms":
@@ -1221,6 +1398,16 @@ function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportR
       note: "post_clarification_accuracy denominator"
     },
     {
+      item: "rows_with_conversation_id",
+      count: results.filter((row) => row.conversationId).length,
+      note: "multi-turn conversation rows"
+    },
+    {
+      item: "rows_with_expected_standalone_question",
+      count: results.filter((row) => row.expectedStandaloneQuestion).length,
+      note: "query rewriting accuracy fixture rows"
+    },
+    {
       item: "rows_with_expected_pages",
       count: results.filter((row) => row.evaluation.expectedPageHit !== null).length,
       note: "expected_page_hit_rate denominator"
@@ -1263,6 +1450,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const missingSlotRows = results.filter((row) => row.evaluation.missingSlotHit !== null)
   const groundedOptionRows = results.filter((row) => row.evaluation.corpusGroundedOptions !== null)
   const postClarificationRows = results.filter((row) => row.evaluation.postClarificationAnswerCorrect !== null)
+  const queryRewriteRows = results.filter((row) => row.evaluation.queryRewriteHit !== null)
   const postClarificationTaskLatencies = postClarificationRows.filter((row) => row.followUp)
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
@@ -1292,6 +1480,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("missing_slot_hit_rate", summary.metrics.missingSlotHitRate, missingSlotRows.filter((row) => row.evaluation.missingSlotHit === true).length, missingSlotRows.length, "`expectedMissingSlots` がある行だけを評価。"),
     metricRateRow("corpus_grounded_option_rate", summary.metrics.corpusGroundedOptionRate, groundedOptionRows.filter((row) => row.evaluation.corpusGroundedOptions === true).length, groundedOptionRows.length, "出してしまった clarification option の grounding を見る指標。clarification 判断の正しさとは別。"),
     metricRateRow("post_clarification_accuracy", summary.metrics.postClarificationAccuracy, postClarificationRows.filter((row) => row.evaluation.postClarificationAnswerCorrect === true).length, postClarificationRows.length, "`followUp` 期待値がある行だけを評価。"),
+    metricRateRow("query_rewrite_accuracy", summary.metrics.queryRewriteAccuracy, queryRewriteRows.filter((row) => row.evaluation.queryRewriteHit === true).length, queryRewriteRows.length, "`expectedStandaloneQuestion` がある行だけを評価。"),
     metricRateRow("over_clarification_rate", summary.metrics.overClarificationRate, clearAnswerRows.filter((row) => row.evaluation.actualResponseType === "clarification").length, clearAnswerRows.length, "回答すべき行で不要な clarification になった割合。"),
     metricNullableRow("clarification_latency_delta_vs_non_clarification_ms", formatNumber(summary.metrics.clarificationLatencyOverheadMs), summary.metrics.clarificationLatencyOverheadMs, `${clarificationActualRows.length} actual clarification rows vs ${nonClarificationRows.length} non-clarification rows`, "同一質問の overhead ではなく、actual clarification 行の平均 latency から non-clarification 行の平均 latency を引いた差分。負値は clarification 行の方が速いことを示す。summary JSON key は clarificationLatencyOverheadMs を維持。"),
     metricNullableRow("post_clarification_task_latency_ms", formatNumber(summary.metrics.postClarificationTaskLatencyMs), summary.metrics.postClarificationTaskLatencyMs, `${postClarificationTaskLatencies.length}/${postClarificationRows.length} follow-up rows with latency`, "確認質問から follow-up 完了までの平均 task latency。"),

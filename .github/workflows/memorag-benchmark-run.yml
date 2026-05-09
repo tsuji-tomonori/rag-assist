@@ -36,6 +36,9 @@ on:
           - mmrag-docqa-v1
           - mtrag-v1
           - chatrag-bench-v1
+          - jp-public-pdf-qa-v1
+          - mlit-pdf-figure-table-rag-seed-v1
+          - architecture-drawing-qarag-v0.1
         default: smoke-agent-v1
       mode:
         description: Benchmark mode. Must match the selected suite.

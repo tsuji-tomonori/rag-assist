@@ -1,17 +1,20 @@
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 
 export async function normalizeQuery(state: QaAgentState): Promise<QaAgentUpdate> {
-  const base = (state.normalizedQuery ?? state.question)
-    .trim()
-    .replace(/[？?]+$/g, "")
-    .replace(/\s+/g, " ")
-  const normalized = state.conversationHistory.length > 0 && looksContextDependent(base)
-    ? deterministicRewriteFromHistory(base, state.conversationHistory)
-    : base
+  const base = (state.normalizedQuery ?? state.question).trim().replace(/[？?]+$/g, "").replace(/\s+/g, " ")
+  const normalized = (state.decontextualizedQuery?.standaloneQuestion
+    ?? (state.conversationHistory.length > 0 && looksContextDependent(base)
+      ? deterministicRewriteFromHistory(base, state.conversationHistory)
+      : base)).trim().replace(/[？?]+$/g, "").replace(/\s+/g, " ")
+  const expandedQueries = [...new Set([
+    normalized,
+    ...(state.decontextualizedQuery?.retrievalQueries ?? []),
+    base
+  ].map((query) => query.trim().replace(/[？?]+$/g, "").replace(/\s+/g, " ")).filter(Boolean))]
 
   return {
     normalizedQuery: normalized,
-    expandedQueries: normalized === base ? [normalized] : [normalized, base]
+    expandedQueries
   }
 }
 

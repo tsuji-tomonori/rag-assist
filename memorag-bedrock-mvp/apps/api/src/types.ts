@@ -18,6 +18,8 @@ export type DocumentGroup = {
   groupId: string
   name: string
   description?: string
+  parentGroupId?: string
+  ancestorGroupIds?: string[]
   ownerUserId: string
   visibility: "private" | "shared" | "org"
   sharedUserIds: string[]
@@ -161,6 +163,13 @@ export type DocumentManifestSummary = Pick<
   | "sourceExtractorVersion"
 >
 
+export type DocumentListItemSummary = DocumentManifestSummary & Pick<
+  DocumentManifest,
+  | "metadata"
+  | "embeddingModelId"
+  | "embeddingDimensions"
+>
+
 export type MemoryCard = {
   id: string
   level?: "document" | "section" | "concept"
@@ -294,6 +303,9 @@ export type DebugTrace = {
   clueModelId: string
   conversationHistory?: ConversationHistoryTurn[]
   clarificationContext?: ClarificationContext
+  conversation?: unknown
+  conversationState?: unknown
+  decontextualizedQuery?: unknown
   pipelineVersions?: PipelineVersions
   ragProfile?: {
     id: string

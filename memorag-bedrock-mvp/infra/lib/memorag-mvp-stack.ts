@@ -20,7 +20,7 @@ import * as tasks from "aws-cdk-lib/aws-stepfunctions-tasks"
 import * as cr from "aws-cdk-lib/custom-resources"
 import { NagSuppressions } from "cdk-nag"
 import type { Construct } from "constructs"
-import type { ApiFunctionRuntimeEnv, ApiRuntimeEnv } from "@memorag-mvp/contract"
+import type { ApiFunctionRuntimeEnv, ApiRuntimeEnv } from "@memorag-mvp/contract/infra"
 
 export interface MemoRagMvpStackProps extends StackProps {
   readonly includeFrontendDeployment?: boolean
@@ -51,7 +51,7 @@ const defaultBenchmarkSource = {
   branch: "main"
 } as const
 
-const benchmarkCodeBuildTimeout = Duration.hours(8)
+const benchmarkCodeBuildTimeout = Duration.hours(3)
 const benchmarkStateMachineTimeout = Duration.hours(9)
 
 export class MemoRagMvpStack extends Stack {
@@ -198,6 +198,13 @@ export class MemoRagMvpStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     })
 
+    const documentGroupsTable = new dynamodb.Table(this, "DocumentGroupsTable", {
+      partitionKey: { name: "groupId", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
     new s3deploy.BucketDeployment(this, "DeployBenchmarkDatasets", {
       sources: [
         s3deploy.Source.data("smoke-v1.jsonl", fs.readFileSync(path.join(__dirname, "../../benchmark/dataset.sample.jsonl"), "utf-8")),
@@ -340,6 +347,7 @@ export class MemoRagMvpStack extends Stack {
       CHAT_RUN_EVENTS_TABLE_NAME: chatRunEventsTable.tableName,
       DOCUMENT_INGEST_RUNS_TABLE_NAME: documentIngestRunsTable.tableName,
       DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME: documentIngestRunEventsTable.tableName,
+      DOCUMENT_GROUPS_TABLE_NAME: documentGroupsTable.tableName,
       BENCHMARK_BUCKET_NAME: benchmarkBucket.bucketName,
       BENCHMARK_DEFAULT_DATASET_KEY: "datasets/agent/standard-v1.jsonl",
       BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
@@ -477,6 +485,9 @@ export class MemoRagMvpStack extends Stack {
     documentIngestRunEventsTable.grantReadWriteData(apiFn)
     documentIngestRunEventsTable.grantReadWriteData(documentIngestRunWorkerFn)
     documentIngestRunEventsTable.grantReadWriteData(documentIngestRunMarkFailedFn)
+    documentGroupsTable.grantReadWriteData(apiFn)
+    documentGroupsTable.grantReadData(chatRunWorkerFn)
+    documentGroupsTable.grantReadData(documentIngestRunWorkerFn)
     for (const fn of [apiFn, chatRunWorkerFn, documentIngestRunWorkerFn]) {
       fn.addToRolePolicy(
         new iam.PolicyStatement({
@@ -742,7 +753,7 @@ export class MemoRagMvpStack extends Stack {
               "export DATASET=./benchmark/.runner-dataset.jsonl",
               "export BENCHMARK_SUITE_ID=\"$SUITE_ID\"",
               "if [ \"$SUITE_ID\" = \"standard-agent-v1\" ] || [ \"$SUITE_ID\" = \"smoke-agent-v1\" ] || [ \"$SUITE_ID\" = \"clarification-smoke-v1\" ] || [ \"$SUITE_ID\" = \"search-standard-v1\" ] || [ \"$SUITE_ID\" = \"search-smoke-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; export BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1; elif [ \"$SUITE_ID\" = \"mtrag-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/mtrag-v1; export BENCHMARK_CORPUS_SUITE_ID=mtrag-v1; elif [ \"$SUITE_ID\" = \"chatrag-bench-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/chatrag-bench-v1; export BENCHMARK_CORPUS_SUITE_ID=chatrag-bench-v1; fi",
-              "if [ \"$SUITE_ID\" = \"allganize-rag-evaluation-ja-v1\" ]; then export ALLGANIZE_RAG_DATASET_OUTPUT=\"$DATASET\"; export ALLGANIZE_RAG_CORPUS_DIR=./benchmark/.runner-allganize-corpus; export BENCHMARK_CORPUS_DIR=\"$ALLGANIZE_RAG_CORPUS_DIR\"; npm run prepare:allganize-ja -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"mmrag-docqa-v1\" ]; then export MMRAG_DOCQA_DATASET_OUTPUT=\"$DATASET\"; export MMRAG_DOCQA_CORPUS_DIR=./benchmark/.runner-mmrag-docqa-corpus; export BENCHMARK_CORPUS_DIR=\"$MMRAG_DOCQA_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=mmrag-docqa-v1; npm run prepare:mmrag-docqa -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"architecture-drawing-qarag-v0.1\" ]; then export ARCHITECTURE_QARAG_DATASET_OUTPUT=\"$DATASET\"; export ARCHITECTURE_QARAG_CORPUS_DIR=./benchmark/.runner-architecture-drawing-corpus; export BENCHMARK_CORPUS_DIR=\"$ARCHITECTURE_QARAG_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=architecture-drawing-qarag-v0.1; npm run prepare:architecture-drawing-qarag -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"jp-public-pdf-qa-v1\" ]; then export JP_PUBLIC_PDF_QA_DATASET_OUTPUT=\"$DATASET\"; export JP_PUBLIC_PDF_QA_CORPUS_DIR=./benchmark/.runner-jp-public-pdf-qa-corpus; export BENCHMARK_CORPUS_DIR=\"$JP_PUBLIC_PDF_QA_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=jp-public-pdf-qa-v1; npm run prepare:jp-public-pdf-qa -w @memorag-mvp/benchmark; else aws s3 cp \"$DATASET_S3_URI\" \"$DATASET\"; fi",
+              "if [ \"$SUITE_ID\" = \"allganize-rag-evaluation-ja-v1\" ]; then export ALLGANIZE_RAG_DATASET_OUTPUT=\"$DATASET\"; export ALLGANIZE_RAG_CORPUS_DIR=./benchmark/.runner-allganize-corpus; export BENCHMARK_CORPUS_DIR=\"$ALLGANIZE_RAG_CORPUS_DIR\"; npm run prepare:allganize-ja -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"mmrag-docqa-v1\" ]; then export MMRAG_DOCQA_DATASET_OUTPUT=\"$DATASET\"; export MMRAG_DOCQA_CORPUS_DIR=./benchmark/.runner-mmrag-docqa-corpus; export BENCHMARK_CORPUS_DIR=\"$MMRAG_DOCQA_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=mmrag-docqa-v1; npm run prepare:mmrag-docqa -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"architecture-drawing-qarag-v0.1\" ]; then export ARCHITECTURE_QARAG_DATASET_OUTPUT=\"$DATASET\"; export ARCHITECTURE_QARAG_CORPUS_DIR=./benchmark/.runner-architecture-drawing-corpus; export BENCHMARK_CORPUS_DIR=\"$ARCHITECTURE_QARAG_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=architecture-drawing-qarag-v0.1; npm run prepare:architecture-drawing-qarag -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"jp-public-pdf-qa-v1\" ]; then export JP_PUBLIC_PDF_QA_DATASET_OUTPUT=\"$DATASET\"; export JP_PUBLIC_PDF_QA_CORPUS_DIR=./benchmark/.runner-jp-public-pdf-qa-corpus; export BENCHMARK_CORPUS_DIR=\"$JP_PUBLIC_PDF_QA_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=jp-public-pdf-qa-v1; npm run prepare:jp-public-pdf-qa -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"mlit-pdf-figure-table-rag-seed-v1\" ]; then export MLIT_PDF_FIGURE_TABLE_RAG_DATASET_OUTPUT=\"$DATASET\"; export MLIT_PDF_FIGURE_TABLE_RAG_CORPUS_DIR=./benchmark/.runner-mlit-pdf-figure-table-rag-corpus; export BENCHMARK_CORPUS_DIR=\"$MLIT_PDF_FIGURE_TABLE_RAG_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=mlit-pdf-figure-table-rag-seed-v1; npm run prepare:mlit-pdf-figure-table-rag -w @memorag-mvp/benchmark; else aws s3 cp \"$DATASET_S3_URI\" \"$DATASET\"; fi",
               "API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\"",
               "export API_AUTH_TOKEN"
             ]
