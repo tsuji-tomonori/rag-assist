@@ -20,6 +20,7 @@ export type IconName =
   | "copy"
   | "gauge"
   | "stop"
+  | "close"
 
 export function Icon({ name }: { name: IconName }) {
   return (
@@ -73,5 +74,7 @@ function getIconPath(name: IconName) {
       return <path d="M12 4a10 10 0 0 1 10 10 9.8 9.8 0 0 1-2 6H4a9.8 9.8 0 0 1-2-6A10 10 0 0 1 12 4Zm0 2a8 8 0 0 0-8 8c0 1.5.4 2.9 1.2 4h13.6c.8-1.1 1.2-2.5 1.2-4a8 8 0 0 0-8-8Zm4.9 4.7-3.8 5.5a2 2 0 1 1-1.6-1.2l3.8-5.5 1.6 1.2Z" />
     case "stop":
       return <path d="M7 7h10v10H7V7Z" />
+    case "close":
+      return <path d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z" />
   }
 }
