@@ -251,7 +251,7 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
 }
 
 export async function getLexicalIndex(
-  deps: Pick<Dependencies, "objectStore">,
+  deps: Pick<Dependencies, "objectStore" | "documentGroupStore">,
   user: AppUser,
   filters?: SearchInput["filters"],
   scope?: SearchScope
@@ -688,7 +688,7 @@ function isActiveManifest(manifest: DocumentManifest): boolean {
 }
 
 async function filterAccessibleVectorHits(
-  deps: Pick<Dependencies, "objectStore">,
+  deps: Pick<Dependencies, "objectStore" | "documentGroupStore">,
   hits: RetrievedVector[],
   user: AppUser,
   scope?: SearchScope
@@ -774,10 +774,9 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
   return true
 }
 
-async function loadDocumentGroups(deps: Pick<Dependencies, "objectStore">): Promise<DocumentGroup[]> {
+async function loadDocumentGroups(deps: Pick<Dependencies, "documentGroupStore">): Promise<DocumentGroup[]> {
   try {
-    const raw = JSON.parse(await deps.objectStore.getText("document-groups/groups.json")) as { groups?: DocumentGroup[] }
-    return Array.isArray(raw.groups) ? raw.groups : []
+    return await deps.documentGroupStore.list()
   } catch {
     return []
   }

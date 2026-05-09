@@ -123,8 +123,12 @@ describe("useDocuments", () => {
     const { result } = renderHook(() => useDocuments(createProps({ canReindexDocuments: false })))
 
     await act(() => result.current.onStageReindex("doc-1"))
+    await act(() => result.current.onCutoverReindex("migration-1"))
+    await act(() => result.current.onRollbackReindex("migration-1"))
 
     expect(stageReindexMigration).not.toHaveBeenCalled()
+    expect(cutoverReindexMigration).not.toHaveBeenCalled()
+    expect(rollbackReindexMigration).not.toHaveBeenCalled()
   })
 
   it("再インデックス失敗時はエラーを設定する", async () => {
@@ -147,6 +151,30 @@ describe("useDocuments", () => {
     expect(result.current.selectedDocumentId).toBe("all")
   })
 
+  it("資料グループ一覧更新時に消えた選択と保存先を初期値へ戻す", async () => {
+    vi.mocked(listDocumentGroups).mockResolvedValueOnce([{
+      groupId: "group-2",
+      name: "公開資料",
+      visibility: "shared",
+      ownerUserId: "user-1",
+      sharedUserIds: [],
+      sharedGroups: ["HR"],
+      managerUserIds: ["user-1"],
+      createdAt: "now",
+      updatedAt: "now"
+    }])
+    const { result } = renderHook(() => useDocuments(createProps()))
+
+    act(() => {
+      result.current.setSelectedGroupId("missing-group")
+      result.current.setUploadGroupId("missing-group")
+    })
+    await act(() => result.current.refreshDocumentGroups())
+
+    expect(result.current.selectedGroupId).toBe("all")
+    expect(result.current.uploadGroupId).toBe("")
+  })
+
   it("アップロード権限と削除確認に応じて API 呼び出しを分岐する", async () => {
     const props = createProps()
     const { result } = renderHook(() => useDocuments(props))
@@ -161,7 +189,11 @@ describe("useDocuments", () => {
 
     const readonly = renderHook(() => useDocuments(createProps({ canWriteDocuments: false })))
     await act(() => readonly.result.current.onUploadDocumentFile(file))
+    await act(() => readonly.result.current.onCreateDocumentGroup({ name: "readonly", visibility: "private" }))
+    await act(() => readonly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
     expect(uploadDocumentFile).toHaveBeenCalledTimes(1)
+    expect(createDocumentGroup).not.toHaveBeenCalled()
+    expect(shareDocumentGroup).not.toHaveBeenCalled()
 
     vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true)
     await act(() => result.current.onDelete(undefined))
@@ -207,15 +239,51 @@ describe("useDocuments", () => {
     const props = createProps()
     vi.spyOn(window, "confirm").mockReturnValue(true)
     vi.mocked(deleteDocument).mockRejectedValueOnce("delete failed")
+    vi.mocked(uploadDocumentFile).mockRejectedValueOnce("upload failed")
+    vi.mocked(createDocumentGroup).mockRejectedValueOnce("create group failed")
+    vi.mocked(shareDocumentGroup).mockRejectedValueOnce("share group failed")
+    vi.mocked(stageReindexMigration).mockRejectedValueOnce("stage failed")
     vi.mocked(cutoverReindexMigration).mockRejectedValueOnce("cutover failed")
     vi.mocked(rollbackReindexMigration).mockRejectedValueOnce("rollback failed")
     const { result } = renderHook(() => useDocuments(props))
+    const file = new File(["body"], "error.txt", { type: "text/plain" })
 
     await act(() => result.current.onDelete("doc-1"))
+    await act(() => result.current.onUploadDocumentFile(file))
+    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
+    await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    await act(() => result.current.onStageReindex("doc-1"))
     await act(() => result.current.onCutoverReindex("migration-1"))
     await act(() => result.current.onRollbackReindex("migration-1"))
 
     expect(props.setError).toHaveBeenCalledWith("delete failed")
+    expect(props.setError).toHaveBeenCalledWith("upload failed")
+    expect(props.setError).toHaveBeenCalledWith("create group failed")
+    expect(props.setError).toHaveBeenCalledWith("share group failed")
+    expect(props.setError).toHaveBeenCalledWith("stage failed")
+    expect(props.setError).toHaveBeenCalledWith("cutover failed")
+    expect(props.setError).toHaveBeenCalledWith("rollback failed")
+  })
+
+  it("資料管理操作失敗時は Error の message も設定する", async () => {
+    const props = createProps()
+    vi.mocked(uploadDocumentFile).mockRejectedValueOnce(new Error("upload failed"))
+    vi.mocked(createDocumentGroup).mockRejectedValueOnce(new Error("create group failed"))
+    vi.mocked(shareDocumentGroup).mockRejectedValueOnce(new Error("share group failed"))
+    vi.mocked(cutoverReindexMigration).mockRejectedValueOnce(new Error("cutover failed"))
+    vi.mocked(rollbackReindexMigration).mockRejectedValueOnce(new Error("rollback failed"))
+    const { result } = renderHook(() => useDocuments(props))
+    const file = new File(["body"], "error.txt", { type: "text/plain" })
+
+    await act(() => result.current.onUploadDocumentFile(file))
+    await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
+    await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    await act(() => result.current.onCutoverReindex("migration-1"))
+    await act(() => result.current.onRollbackReindex("migration-1"))
+
+    expect(props.setError).toHaveBeenCalledWith("upload failed")
+    expect(props.setError).toHaveBeenCalledWith("create group failed")
+    expect(props.setError).toHaveBeenCalledWith("share group failed")
     expect(props.setError).toHaveBeenCalledWith("cutover failed")
     expect(props.setError).toHaveBeenCalledWith("rollback failed")
   })

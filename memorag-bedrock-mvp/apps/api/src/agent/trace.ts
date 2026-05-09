@@ -125,6 +125,8 @@ function summarizeUpdate(label: string, update: QaAgentUpdate): string {
   if (update.computedFacts) return `computed_facts=${update.computedFacts.length}`
   if (update.toolIntent) return `tool_intent search=${update.toolIntent.needsSearch}, temporal=${update.toolIntent.needsTemporalCalculation}, arithmetic=${update.toolIntent.needsArithmeticCalculation}`
   if (update.temporalContext) return `today=${update.temporalContext.today}, source=${update.temporalContext.source}`
+  if (update.conversationState) return `conversation=${update.conversationState.conversationId ?? "none"}, dependency=${update.conversationState.turnDependency}, citations=${update.conversationState.previousCitationCount}`
+  if (update.decontextualizedQuery) return `standalone_query=${update.decontextualizedQuery.standaloneQuestion}, queries=${update.decontextualizedQuery.retrievalQueries.length}`
   if (update.answerSupport) return `answer_support=${update.answerSupport.supported ? "supported" : "unsupported"}, unsupported=${update.answerSupport.unsupportedSentences.length}`
   if (update.retrievalEvaluation) {
     const judge = update.retrievalEvaluation.llmJudge ? `, judge=${update.retrievalEvaluation.llmJudge.label}` : ""
@@ -153,6 +155,8 @@ function detailUpdate(update: QaAgentUpdate): string | undefined {
   if (update.computedFacts) return update.computedFacts.map((fact) => `${fact.id} ${fact.kind}: ${"explanation" in fact ? fact.explanation : "reason" in fact ? fact.reason : ""}`).join("\n")
   if (update.toolIntent) return JSON.stringify(update.toolIntent, null, 2)
   if (update.temporalContext) return JSON.stringify(update.temporalContext, null, 2)
+  if (update.conversationState) return JSON.stringify(update.conversationState, null, 2)
+  if (update.decontextualizedQuery) return JSON.stringify(update.decontextualizedQuery, null, 2)
   if (update.answerSupport) return formatAnswerSupportDetail(update.answerSupport)
   if (update.retrievalEvaluation) return formatRetrievalEvaluationDetail(update.retrievalEvaluation)
   if (update.searchPlan) return formatSearchPlanDetail(update.searchPlan)
@@ -274,6 +278,8 @@ function outputUpdate(update: QaAgentUpdate): Record<string, JsonValue> | undefi
   const keys: Array<keyof QaAgentUpdate> = [
     "normalizedQuery",
     "clarificationContext",
+    "conversationState",
+    "decontextualizedQuery",
     "clues",
     "expandedQueries",
     "searchPlan",

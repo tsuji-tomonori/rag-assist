@@ -29,6 +29,10 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | minLength=1 |
+| `conversationHistory` | `array<object>` | no | `data.conversationHistory` の値。項目名は conversation history を表します。 | maxItems=20 |
+| `conversationHistory[].role` | `enum(user \| assistant)` | yes | `data.conversationHistory[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `conversationHistory[].text` | `string` | yes | 文書本文またはチャンク本文。 | minLength=1<br>maxLength=4000 |
+| `conversationHistory[].turnId` | `string` | no | `data.conversationHistory[].turnId` の値。項目名は turn id を表します。 | - |
 | `clarificationContext` | `object` | no | `data.clarificationContext` の値。項目名は clarification context を表します。 | - |
 | `clarificationContext.originalQuestion` | `string` | no | `data.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `clarificationContext.selectedOptionId` | `string` | no | `data.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |

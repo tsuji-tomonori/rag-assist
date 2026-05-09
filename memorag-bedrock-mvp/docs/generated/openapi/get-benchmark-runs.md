@@ -48,7 +48,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 54 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 59 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -93,6 +93,9 @@ Media type: `application/json`
 | `benchmarkRuns[].metrics.succeeded` | `integer` | yes | `response.benchmarkRuns[].metrics.succeeded` の値。項目名は succeeded を表します。 | minimum=0 |
 | `benchmarkRuns[].metrics.failedHttp` | `integer` | yes | `response.benchmarkRuns[].metrics.failedHttp` の値。項目名は failed http を表します。 | minimum=0 |
 | `benchmarkRuns[].metrics.answerableAccuracy` | `number` | no | `response.benchmarkRuns[].metrics.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | nullable |
+| `benchmarkRuns[].metrics.turnAnswerCorrectRate` | `number` | no | `response.benchmarkRuns[].metrics.turnAnswerCorrectRate` の値。項目名は turn answer correct rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.conversationSuccessRate` | `number` | no | `response.benchmarkRuns[].metrics.conversationSuccessRate` の値。項目名は conversation success rate を表します。 | nullable |
+| `benchmarkRuns[].metrics.historyDependentAccuracy` | `number` | no | `response.benchmarkRuns[].metrics.historyDependentAccuracy` の値。項目名は history dependent accuracy を表します。 | nullable |
 | `benchmarkRuns[].metrics.clarificationNeedPrecision` | `number` | no | `response.benchmarkRuns[].metrics.clarificationNeedPrecision` の値。項目名は clarification need precision を表します。 | nullable |
 | `benchmarkRuns[].metrics.clarificationNeedRecall` | `number` | no | `response.benchmarkRuns[].metrics.clarificationNeedRecall` の値。項目名は clarification need recall を表します。 | nullable |
 | `benchmarkRuns[].metrics.clarificationNeedF1` | `number` | no | `response.benchmarkRuns[].metrics.clarificationNeedF1` の値。項目名は clarification need f1 を表します。 | nullable |
@@ -104,9 +107,11 @@ Media type: `application/json`
 | `benchmarkRuns[].metrics.clarificationLatencyOverheadMs` | `number` | no | `response.benchmarkRuns[].metrics.clarificationLatencyOverheadMs` の値。項目名は clarification latency overhead ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.postClarificationTaskLatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.postClarificationTaskLatencyMs` の値。項目名は post clarification task latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.abstentionRecall` | `number` | no | `response.benchmarkRuns[].metrics.abstentionRecall` の値。項目名は abstention recall を表します。 | nullable |
+| `benchmarkRuns[].metrics.abstentionAccuracy` | `number` | no | `response.benchmarkRuns[].metrics.abstentionAccuracy` の値。項目名は abstention accuracy を表します。 | nullable |
 | `benchmarkRuns[].metrics.citationHitRate` | `number` | no | `response.benchmarkRuns[].metrics.citationHitRate` の値。項目名は citation hit rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.expectedFileHitRate` | `number` | no | `response.benchmarkRuns[].metrics.expectedFileHitRate` の値。項目名は expected file hit rate を表します。 | nullable |
 | `benchmarkRuns[].metrics.retrievalRecallAt20` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
+| `benchmarkRuns[].metrics.retrievalRecallAtK` | `number` | no | `response.benchmarkRuns[].metrics.retrievalRecallAtK` の値。項目名は retrieval recall at k を表します。 | nullable |
 | `benchmarkRuns[].metrics.p50LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p50LatencyMs` の値。項目名は p50 latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.p95LatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
 | `benchmarkRuns[].metrics.averageLatencyMs` | `number` | no | `response.benchmarkRuns[].metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |

@@ -68,7 +68,25 @@ test("resolver supports non-default evaluator profiles with retrieval K", () => 
 
   assert.equal(profileKey(profile), "strict-ja@1")
   assert.equal(profile.retrieval.recallK, 10)
+  assert.equal(profile.thresholds.retrievalRecallAtK, 0.05)
+  assert.equal(profile.thresholds.p95LatencyMs, 2000)
   assert.deepEqual(profile.answerMatching.noAnswerTexts, ["資料からは回答できません"])
+})
+
+test("quality review applies evaluator profile regression thresholds", () => {
+  const defaultReview = createQualityReview({
+    current: { retrievalRecallAtK: 0.96, p95LatencyMs: 1190 },
+    baseline: { retrievalRecallAtK: 1, p95LatencyMs: 1000 },
+    thresholds: defaultEvaluatorProfile.thresholds
+  })
+  const strictJaReview = createQualityReview({
+    current: { retrievalRecallAtK: 0.96, p95LatencyMs: 1190 },
+    baseline: { retrievalRecallAtK: 1, p95LatencyMs: 1000 },
+    thresholds: strictJaEvaluatorProfile.thresholds
+  })
+
+  assert.deepEqual(defaultReview.regressions.map((item) => item.metric), ["retrievalRecallAtK"])
+  assert.equal(strictJaReview.status, "pass")
 })
 
 test("resolver rejects unknown evaluator profiles", () => {

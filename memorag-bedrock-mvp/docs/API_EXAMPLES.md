@@ -9,7 +9,7 @@ AUTH_HEADER=(-H "Authorization: Bearer $TOKEN")
 
 ## Upload text
 
-文書登録は `RAG_GROUP_MANAGER` または `SYSTEM_ADMIN` 相当の権限を持つ token で実行する。
+文書登録は `RAG_GROUP_MANAGER` または `SYSTEM_ADMIN` 相当の権限を持つ token で実行する。`POST /documents` は小さなテキスト互換用の同期 API であり、ファイルアップロード用途では非推奨。ファイルは `POST /documents/uploads` で upload session を作成し、S3 またはローカル upload URL に転送してから `POST /document-ingest-runs` で非同期取り込みを開始する。同期 API と upload ingest API のレスポンスは文書 summary のみで、full manifest、chunk metadata、vector key は返さない。
 
 ```bash
 curl -s http://localhost:8787/documents \
@@ -61,7 +61,7 @@ curl -N "http://localhost:8787/document-ingest-runs/${INGEST_RUN_ID}/events" \
   "${AUTH_HEADER[@]}"
 ```
 
-大きな PDF、OCR fallback、embedding で 60 秒を超える可能性があるため、UI と通常運用では `POST /document-ingest-runs` を使う。既存 `POST /documents/uploads/{uploadId}/ingest` は後方互換の同期 API として残す。
+大きな PDF、OCR fallback、embedding で 60 秒を超える可能性があるため、UI と通常運用では `POST /document-ingest-runs` を使う。既存 `POST /documents/uploads/{uploadId}/ingest` は後方互換の同期 API として残すが、大容量ファイル用途では非推奨。返却は文書 summary のみで、ファイル本体や full manifest は返さない。
 
 ```bash
 curl -s "http://localhost:8787/documents/uploads/${UPLOAD_ID}/ingest" \

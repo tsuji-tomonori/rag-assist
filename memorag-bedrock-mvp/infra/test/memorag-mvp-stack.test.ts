@@ -168,6 +168,11 @@ test("implements the designed serverless resources", () => {
     TimeToLiveSpecification: { AttributeName: "ttl", Enabled: true },
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
+  template.hasResourceProperties("AWS::DynamoDB::Table", {
+    KeySchema: [{ AttributeName: "groupId", KeyType: "HASH" }],
+    BillingMode: "PAY_PER_REQUEST",
+    PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+  })
   for (const groupName of [
     "CHAT_USER",
     "ANSWER_EDITOR",
@@ -231,7 +236,7 @@ test("implements the designed serverless resources", () => {
         Match.objectLike({ Name: "BENCHMARK_CODEBUILD_LOG_GROUP_NAME" })
       ])
     }),
-    TimeoutInMinutes: 480
+    TimeoutInMinutes: 180
   })
   const benchmarkProject = getBenchmarkProject(template)
   assert.match(benchmarkProject.Properties.Source.BuildSpec, /codeBuildLogGroupName/)
@@ -461,7 +466,7 @@ test("keeps benchmark CodeBuild runner generic and fails when auth token resolut
   assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$SUMMARY\" ]; then printf '{\"total\":0,\"succeeded\":0,\"failedHttp\":0,\"metrics\":{\"errorRate\":1}}\\n' > \"$SUMMARY\"; fi"))
   assert.ok(buildSpec.phases.post_build.commands.includes("node infra/scripts/update-benchmark-run-metrics.mjs"))
   assert.ok(buildSpec.phases.build.commands.includes("npm run codebuild:run -w @memorag-mvp/benchmark"))
-  assert.doesNotMatch(JSON.stringify(buildSpec), /standard-agent-v1|allganize-rag-evaluation-ja-v1|mtrag-v1|chatrag-bench-v1/)
+  assert.doesNotMatch(JSON.stringify(buildSpec), /standard-agent-v1|allganize-rag-evaluation-ja-v1|mtrag-v1|chatrag-bench-v1|mlit-pdf-figure-table-rag-seed-v1/)
   assert.equal(
     buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""),
     false

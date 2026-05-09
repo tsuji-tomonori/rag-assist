@@ -64,7 +64,7 @@ Media type: `application/json`
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 53 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 58 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -109,6 +109,9 @@ Media type: `application/json`
 | `metrics.succeeded` | `integer` | yes | `response.metrics.succeeded` の値。項目名は succeeded を表します。 | minimum=0 |
 | `metrics.failedHttp` | `integer` | yes | `response.metrics.failedHttp` の値。項目名は failed http を表します。 | minimum=0 |
 | `metrics.answerableAccuracy` | `number` | no | `response.metrics.answerableAccuracy` の値。項目名は answerable accuracy を表します。 | nullable |
+| `metrics.turnAnswerCorrectRate` | `number` | no | `response.metrics.turnAnswerCorrectRate` の値。項目名は turn answer correct rate を表します。 | nullable |
+| `metrics.conversationSuccessRate` | `number` | no | `response.metrics.conversationSuccessRate` の値。項目名は conversation success rate を表します。 | nullable |
+| `metrics.historyDependentAccuracy` | `number` | no | `response.metrics.historyDependentAccuracy` の値。項目名は history dependent accuracy を表します。 | nullable |
 | `metrics.clarificationNeedPrecision` | `number` | no | `response.metrics.clarificationNeedPrecision` の値。項目名は clarification need precision を表します。 | nullable |
 | `metrics.clarificationNeedRecall` | `number` | no | `response.metrics.clarificationNeedRecall` の値。項目名は clarification need recall を表します。 | nullable |
 | `metrics.clarificationNeedF1` | `number` | no | `response.metrics.clarificationNeedF1` の値。項目名は clarification need f1 を表します。 | nullable |
@@ -120,9 +123,11 @@ Media type: `application/json`
 | `metrics.clarificationLatencyOverheadMs` | `number` | no | `response.metrics.clarificationLatencyOverheadMs` の値。項目名は clarification latency overhead ms を表します。 | nullable |
 | `metrics.postClarificationTaskLatencyMs` | `number` | no | `response.metrics.postClarificationTaskLatencyMs` の値。項目名は post clarification task latency ms を表します。 | nullable |
 | `metrics.abstentionRecall` | `number` | no | `response.metrics.abstentionRecall` の値。項目名は abstention recall を表します。 | nullable |
+| `metrics.abstentionAccuracy` | `number` | no | `response.metrics.abstentionAccuracy` の値。項目名は abstention accuracy を表します。 | nullable |
 | `metrics.citationHitRate` | `number` | no | `response.metrics.citationHitRate` の値。項目名は citation hit rate を表します。 | nullable |
 | `metrics.expectedFileHitRate` | `number` | no | `response.metrics.expectedFileHitRate` の値。項目名は expected file hit rate を表します。 | nullable |
 | `metrics.retrievalRecallAt20` | `number` | no | `response.metrics.retrievalRecallAt20` の値。項目名は retrieval recall at20 を表します。 | nullable |
+| `metrics.retrievalRecallAtK` | `number` | no | `response.metrics.retrievalRecallAtK` の値。項目名は retrieval recall at k を表します。 | nullable |
 | `metrics.p50LatencyMs` | `number` | no | `response.metrics.p50LatencyMs` の値。項目名は p50 latency ms を表します。 | nullable |
 | `metrics.p95LatencyMs` | `number` | no | `response.metrics.p95LatencyMs` の値。項目名は p95 latency ms を表します。 | nullable |
 | `metrics.averageLatencyMs` | `number` | no | `response.metrics.averageLatencyMs` の値。項目名は average latency ms を表します。 | nullable |

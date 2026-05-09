@@ -1370,6 +1370,55 @@
       "UpdateReplacePolicy": "Delete",
       "DeletionPolicy": "Delete"
     },
+    "DocumentGroupsTableA5108040": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "groupId",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "groupId",
+            "KeyType": "HASH"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
     "DeployBenchmarkDatasetsAwsCliLayer634804B4": {
       "Type": "AWS::Lambda::LayerVersion",
       "Properties": {
@@ -2828,6 +2877,44 @@
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
                 "bedrock:InvokeModel",
                 "bedrock:InvokeModelWithResponseStream"
               ],
@@ -2868,7 +2955,25 @@
               ],
               "Effect": "Allow",
               "Resource": "*"
-            },
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
+        "Roles": [
+          {
+            "Ref": "ApiFunctionServiceRole52B9747B"
+          }
+        ]
+      }
+    },
+    "ApiFunctionServiceRoleOverflowPolicy15B8AE146": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "Description": "Part of the policies for MemoRagMvpStackTest/ApiFunction/ServiceRole",
+        "Path": "/",
+        "PolicyDocument": {
+          "Statement": [
             {
               "Action": "states:StartExecution",
               "Effect": "Allow",
@@ -2899,25 +3004,7 @@
               "Resource": {
                 "Ref": "BenchmarkStateMachine8C582B8A"
               }
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "PolicyName": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
-        "Roles": [
-          {
-            "Ref": "ApiFunctionServiceRole52B9747B"
-          }
-        ]
-      }
-    },
-    "ApiFunctionServiceRoleOverflowPolicy15B8AE146": {
-      "Type": "AWS::IAM::ManagedPolicy",
-      "Properties": {
-        "Description": "Part of the policies for MemoRagMvpStackTest/ApiFunction/ServiceRole",
-        "Path": "/",
-        "PolicyDocument": {
-          "Statement": [
+            },
             {
               "Action": "logs:GetLogEvents",
               "Effect": "Allow",
@@ -2996,6 +3083,9 @@
             },
             "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
               "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
             },
             "BENCHMARK_BUCKET_NAME": {
               "Ref": "BenchmarkBucketDD7D1D2F"
@@ -3372,6 +3462,40 @@
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
                 "bedrock:InvokeModel",
                 "bedrock:InvokeModelWithResponseStream"
               ],
@@ -3438,6 +3562,9 @@
             },
             "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
               "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
             },
             "BENCHMARK_BUCKET_NAME": {
               "Ref": "BenchmarkBucketDD7D1D2F"
@@ -3756,6 +3883,9 @@
             "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
               "Ref": "DocumentIngestRunEventsTableF4692EBE"
             },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
+            },
             "BENCHMARK_BUCKET_NAME": {
               "Ref": "BenchmarkBucketDD7D1D2F"
             },
@@ -4065,6 +4195,9 @@
             "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
               "Ref": "DocumentIngestRunEventsTableF4692EBE"
             },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
+            },
             "BENCHMARK_BUCKET_NAME": {
               "Ref": "BenchmarkBucketDD7D1D2F"
             },
@@ -4371,6 +4504,40 @@
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
                 "bedrock:InvokeModel",
                 "bedrock:InvokeModelWithResponseStream"
               ],
@@ -4446,6 +4613,9 @@
             },
             "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
               "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
             },
             "BENCHMARK_BUCKET_NAME": {
               "Ref": "BenchmarkBucketDD7D1D2F"
@@ -4765,6 +4935,9 @@
             },
             "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": {
               "Ref": "DocumentIngestRunEventsTableF4692EBE"
+            },
+            "DOCUMENT_GROUPS_TABLE_NAME": {
+              "Ref": "DocumentGroupsTableA5108040"
             },
             "BENCHMARK_BUCKET_NAME": {
               "Ref": "BenchmarkBucketDD7D1D2F"
@@ -6770,7 +6943,7 @@
             "Value": "tsuji-tomonori/rag-assist"
           }
         ],
-        "TimeoutInMinutes": 480
+        "TimeoutInMinutes": 180
       }
     },
     "BenchmarkStateMachineLogGroup6D80BBB2": {

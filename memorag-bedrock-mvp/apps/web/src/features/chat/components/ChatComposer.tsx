@@ -1,4 +1,4 @@
-import type { FormEvent } from "react"
+import { useRef, type FormEvent } from "react"
 import type { SubmitShortcut } from "../../../app/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
@@ -35,6 +35,7 @@ export function ChatComposer({
   onModelChange: (modelId: string) => void
   onSetFile: (file: File | null) => void
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const selectedGroupName = selectedGroupId === "all"
     ? "全フォルダ"
     : documentGroups.find((group) => group.groupId === selectedGroupId)?.name ?? "選択フォルダ"
@@ -72,20 +73,42 @@ export function ChatComposer({
       <div className="composer-actions">
         <div className="composer-left-actions">
           {canWriteDocuments && (
-            <label className="icon-button attach-button" title="資料を添付">
-              <Icon name="paperclip" />
-              <input key={conversationKey} type="file" aria-label="資料を添付" disabled={loading} onChange={(event) => onSetFile(event.target.files?.[0] ?? null)} />
-              <span className="attach-menu" aria-hidden="true">
-                <span>
+            <div className="attach-control">
+              <input
+                ref={fileInputRef}
+                key={conversationKey}
+                className="attach-file-input"
+                type="file"
+                aria-label="ファイルをアップロード"
+                disabled={loading}
+                onChange={(event) => onSetFile(event.target.files?.[0] ?? null)}
+              />
+              <button
+                className="icon-button attach-button"
+                type="button"
+                title="資料を添付"
+                aria-label="資料を添付"
+                aria-haspopup="menu"
+                disabled={loading}
+              >
+                <Icon name="paperclip" />
+              </button>
+              <div className="attach-menu" aria-label="資料の添付メニュー">
+                <div className="attach-menu-status" role="status">
                   <Icon name="document" />
-                  フォルダを選ぶ
-                </span>
-                <span>
+                  <span>{`参照フォルダ: ${selectedGroupName}`}</span>
+                </div>
+                <button
+                  className="attach-menu-action"
+                  type="button"
+                  disabled={loading}
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <Icon name="download" />
-                  ファイルをアップロード
-                </span>
-              </span>
-            </label>
+                  <span>ファイルをアップロード</span>
+                </button>
+              </div>
+            </div>
           )}
           <label className="composer-model-control">
             <span className="sr-only">モデル</span>

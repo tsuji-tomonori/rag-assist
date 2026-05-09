@@ -9,14 +9,29 @@ import test from "node:test"
 import { fileURLToPath } from "node:url"
 
 type SummaryArtifact = {
+  evaluatorProfile: {
+    id: string
+    version: string
+    retrieval: {
+      recallK: number
+    }
+    thresholds: {
+      retrievalRecallAtK?: number
+      p95LatencyMs?: number
+    }
+  }
   total: number
   skipped: number
   metrics?: {
+    queryRewriteAccuracy?: number | null
+    retrievalRecallAtK?: number | null
+    retrievalRecallAt20?: number | null
     retrievalMrrAtK?: number | null
     citationSupportPassRate?: number | null
     noAccessLeakCount?: number
     noAccessLeakRate?: number | null
   }
+  turnDependencyMetrics?: Record<string, { total: number; queryRewriteAccuracy?: number | null; retrievalRecallAtK?: number | null }>
   corpusSeed: Array<{ fileName: string; status: string; skipReason?: string }>
   skippedRows: Array<{ id?: string; fileNames: string[]; reason: string }>
   failures: Array<{ id?: string; reasons: string[]; categories?: string[] }>
@@ -172,6 +187,120 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
   }
 })
 
+test("benchmark runner executes conversation rows in turn order and passes history", async () => {
+  const paths = artifactPaths("multiturn")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${[
+    {
+      id: "conv-1-turn-2",
+      conversationId: "conv-1",
+      turnIndex: 2,
+      question: "その例外は？",
+      expectedStandaloneQuestion: "経費精算の期限は？ その例外は？",
+      turnDependency: "coreference",
+      expectedContains: ["上長承認"],
+      expectedFiles: ["handbook.md"]
+    },
+    {
+      id: "conv-1-turn-1",
+      conversationId: "conv-1",
+      turnIndex: 1,
+      question: "経費精算の期限は？",
+      expectedContains: ["30日以内"],
+      expectedFiles: ["handbook.md"]
+    }
+  ].map((row) => JSON.stringify(row)).join("\n")}\n`, "utf-8")
+
+  const calls: Array<{ method?: string; path?: string; body?: unknown }> = []
+  const server = createServer((req, res) => {
+    void handleMultiturnRunnerRequest(req, res, calls)
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    assert.deepEqual(calls.map((call) => (call.body as { id?: string }).id), ["conv-1-turn-1", "conv-1-turn-2"])
+    const secondBody = calls[1]?.body as { conversation?: { conversationId?: string; turns?: Array<{ role?: string; text?: string; citations?: unknown[] }> } }
+    assert.equal(secondBody.conversation?.conversationId, "conv-1")
+    assert.deepEqual(secondBody.conversation?.turns?.map((turn) => `${turn.role}:${turn.text}`), [
+      "user:経費精算の期限は？",
+      "assistant:経費精算の期限は30日以内です。"
+    ])
+    assert.equal(secondBody.conversation?.turns?.[1]?.citations?.length, 1)
+
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.total, 2)
+    assert.equal(summary.metrics?.queryRewriteAccuracy, 1)
+    assert.equal(summary.turnDependencyMetrics?.coreference?.total, 1)
+    assert.match(readFileSync(paths.report, "utf-8"), /Turn Dependency Metrics/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner applies suite evaluator profile to retrieval K and thresholds", async () => {
+  const paths = artifactPaths("strict-profile")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${JSON.stringify({
+    id: "strict-profile-001",
+    question: "経費精算の期限は？",
+    answerable: true,
+    expectedResponseType: "answer",
+    expectedContains: ["30日以内"],
+    expectedFiles: ["handbook.md"]
+  })}\n`, "utf-8")
+
+  const calls: Array<{ method?: string; path?: string; body?: unknown }> = []
+  const server = createServer((req, res) => {
+    void handleStrictProfileRunnerRequest(req, res, calls)
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      EVALUATOR_PROFILE: "strict-ja",
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    assert.deepEqual(calls.map((call) => `${call.method} ${call.path}`), ["POST /benchmark/query"])
+
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.evaluatorProfile.id, "strict-ja")
+    assert.equal(summary.evaluatorProfile.version, "1")
+    assert.equal(summary.evaluatorProfile.retrieval.recallK, 10)
+    assert.equal(summary.evaluatorProfile.thresholds.retrievalRecallAtK, 0.05)
+    assert.equal(summary.evaluatorProfile.thresholds.p95LatencyMs, 2000)
+    assert.equal(summary.metrics?.retrievalRecallAtK, 0)
+    assert.equal(summary.metrics?.retrievalRecallAt20, 1)
+    assert.deepEqual(summary.failures[0]?.reasons, ["retrieval_recall_at_10_miss"])
+
+    const resultRow = JSON.parse(readFileSync(paths.output, "utf-8").trim()) as { evaluatorProfile?: string }
+    assert.equal(resultRow.evaluatorProfile, "strict-ja@1")
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /Evaluator profile: strict-ja@1/)
+    assert.match(report, /retrieval_recall_at_k/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
 function artifactPaths(name: string): { dir: string; output: string; summary: string; report: string } {
   const dir = mkdtempSync(path.join(tmpdir(), `memorag-run-${name}-`))
   return {
@@ -306,6 +435,76 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
     isAnswerable: true,
     citations: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
     retrieved: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
+    debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+  }))
+}
+
+async function handleMultiturnRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestBody(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  const id = typeof body === "object" && body !== null && "id" in body ? (body as { id?: string }).id : undefined
+  if (id === "conv-1-turn-1") {
+    res.end(JSON.stringify({
+      id,
+      responseType: "answer",
+      answer: "経費精算の期限は30日以内です。",
+      isAnswerable: true,
+      citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9, text: "経費精算は30日以内です。" }],
+      retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    }))
+    return
+  }
+  res.end(JSON.stringify({
+    id,
+    responseType: "answer",
+    answer: "例外は上長承認がある場合です。",
+    isAnswerable: true,
+    citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_002", score: 0.9, text: "例外は上長承認がある場合です。" }],
+    retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_002", score: 0.9 }],
+    debug: {
+      ragProfile: defaultRagProfile(),
+      totalLatencyMs: 10,
+      steps: [{
+        label: "decontextualize_query",
+        latencyMs: 1,
+        status: "success",
+        output: {
+          decontextualizedQuery: {
+            standaloneQuestion: "経費精算の期限は？ その例外は？"
+          }
+        }
+      }]
+    }
+  }))
+}
+
+async function handleStrictProfileRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestBody(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  if (req.method !== "POST" || req.url !== "/benchmark/query") {
+    res.statusCode = 404
+    res.end(JSON.stringify({ error: "not found" }))
+    return
+  }
+
+  const retrieved = Array.from({ length: 10 }, (_, index) => ({
+    documentId: `doc-distractor-${index}`,
+    fileName: `distractor-${index}.md`,
+    chunkId: `distractor-${index}`,
+    score: 0.8 - index * 0.01
+  }))
+  retrieved.push({ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.5 })
+  res.end(JSON.stringify({
+    id: "strict-profile-001",
+    responseType: "answer",
+    answer: "経費精算の期限は30日以内です。",
+    isAnswerable: true,
+    citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
+    retrieved,
+    answerSupport: { unsupportedSentences: [], totalSentences: 1 },
     debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
   }))
 }

@@ -1,5 +1,19 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
+import { toMultiTurnDatasetRows, type MultiTurnBenchmarkTurn, type MultiTurnDatasetRow } from "./multiturn.js"
+
+export const mtragSuiteId = "mtrag-v1"
+
+export function convertMtragTurns(turns: MultiTurnBenchmarkTurn[]): MultiTurnDatasetRow[] {
+  return toMultiTurnDatasetRows(turns).map((row) => ({
+    ...row,
+    metadata: {
+      ...(row.metadata ?? {}),
+      sourceDataset: "MTRAG/mtRAG",
+      benchmarkFamily: "multi-turn-rag"
+    }
+  }))
+}
 
 type MtragRawConversation = {
   conversation_id?: string

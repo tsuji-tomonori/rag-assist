@@ -51,7 +51,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 145 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 149 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
@@ -122,6 +122,10 @@ Media type: `application/json`
 | `history[].messages[].result.debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `history[].messages[].result.debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
 | `history[].messages[].result.debug.clueModelId` | `string` | yes | `response.history[].messages[].result.debug.clueModelId` の値。項目名は clue model id を表します。 | - |
+| `history[].messages[].result.debug.conversationHistory` | `array<object>` | no | `response.history[].messages[].result.debug.conversationHistory` の値。項目名は conversation history を表します。 | - |
+| `history[].messages[].result.debug.conversationHistory[].role` | `enum(user \| assistant)` | yes | `response.history[].messages[].result.debug.conversationHistory[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `history[].messages[].result.debug.conversationHistory[].text` | `string` | yes | 文書本文またはチャンク本文。 | minLength=1<br>maxLength=4000 |
+| `history[].messages[].result.debug.conversationHistory[].turnId` | `string` | no | `response.history[].messages[].result.debug.conversationHistory[].turnId` の値。項目名は turn id を表します。 | - |
 | `history[].messages[].result.debug.clarificationContext` | `object` | no | `response.history[].messages[].result.debug.clarificationContext` の値。項目名は clarification context を表します。 | - |
 | `history[].messages[].result.debug.clarificationContext.originalQuestion` | `string` | no | `response.history[].messages[].result.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `history[].messages[].result.debug.clarificationContext.selectedOptionId` | `string` | no | `response.history[].messages[].result.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
