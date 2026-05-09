@@ -1,6 +1,6 @@
 # チャット実行メタ情報の配置変更
 
-状態: doing
+状態: done
 
 ## 背景
 
@@ -58,3 +58,21 @@
 
 - 対象コンポーネントの分割状況によって、モデル選択の props 移動でレイアウト以外の副作用が出る可能性がある。
 - ブラウザでの視覚確認が環境制約により限定される可能性がある。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/213
+- 受け入れ条件確認コメント: 投稿済み。
+- セルフレビューコメント: 投稿済み。
+- 作業レポート: `reports/working/20260509-1006-chat-run-meta-layout.md`
+
+## 検証結果
+
+- `npm ci`: pass
+- `npm run docs:web-inventory`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: 初回 fail、テスト更新後 pass
+- `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
+- `git diff --check`: pass
+- `npm --prefix memorag-bedrock-mvp run lint`: pass
+- `npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web`: pass
