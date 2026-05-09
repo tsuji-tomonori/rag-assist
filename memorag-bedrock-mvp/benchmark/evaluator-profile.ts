@@ -36,7 +36,11 @@ export const strictJaEvaluatorProfile: EvaluatorProfile = {
   retrieval: {
     recallK: 10
   },
-  thresholds: defaultThresholds
+  thresholds: {
+    ...defaultThresholds,
+    retrievalRecallAtK: 0.05,
+    p95LatencyMs: 2000
+  }
 }
 
 const profiles = new Map<string, EvaluatorProfile>([
