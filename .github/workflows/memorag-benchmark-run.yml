@@ -123,9 +123,13 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Start benchmark through API
+        id: benchmark
         shell: bash
         run: |
           set -euo pipefail
+
+          artifact_dir="artifacts/memorag-benchmark"
+          mkdir -p "$artifact_dir"
 
           require_env() {
             local name="$1"
@@ -133,6 +137,46 @@ jobs:
               echo "::error::${name} is required"
               exit 1
             fi
+          }
+
+          download_benchmark_artifact() {
+            local run_id="$1"
+            local artifact="$2"
+            local output_file="$3"
+            local metadata_file="$artifact_dir/${artifact}-download.json"
+
+            local download_response_file
+            download_response_file="$(mktemp)"
+            local download_status_code
+            download_status_code="$(curl -sS -o "$download_response_file" -w '%{http_code}' \
+              -X POST "${api_url%/}/benchmark-runs/${run_id}/download" \
+              -H "Authorization: Bearer ${operator_id_token}" \
+              -H "Content-Type: application/json" \
+              --data "$(jq -cn --arg artifact "$artifact" '{artifact:$artifact}')")"
+            if [ "$download_status_code" -lt 200 ] || [ "$download_status_code" -ge 300 ]; then
+              echo "::error::POST /benchmark-runs/${run_id}/download for ${artifact} failed with HTTP ${download_status_code}"
+              jq -r '.error // .message // "No error body"' "$download_response_file" || true
+              rm -f "$download_response_file"
+              return 1
+            fi
+
+            local artifact_url
+            artifact_url="$(jq -r '.url // empty' "$download_response_file")"
+            if [ "$artifact" = "logs" ]; then
+              cp "$download_response_file" "$metadata_file"
+            else
+              jq 'del(.url)' "$download_response_file" > "$metadata_file"
+            fi
+            rm -f "$download_response_file"
+            if [ -z "$artifact_url" ]; then
+              echo "::error::Download response for ${artifact} did not include url"
+              return 1
+            fi
+            if [ "$artifact" = "logs" ]; then
+              return 0
+            fi
+
+            curl -fsSL "$artifact_url" -o "$output_file"
           }
 
           require_env AWS_REGION
@@ -223,6 +267,7 @@ jobs:
           status="$(jq -r '.status' "$response_file")"
           codebuild_log_url="$(jq -r '.codeBuildLogUrl // empty' "$response_file")"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          cp "$response_file" "$artifact_dir/benchmark-run-start.json"
 
           {
             echo "## MemoRAG benchmark run"
@@ -250,6 +295,7 @@ jobs:
               "${api_url%/}/benchmark-runs/${run_id}")"
             if [ "$status_code" -lt 200 ] || [ "$status_code" -ge 300 ]; then
               echo "::warning::GET /benchmark-runs/${run_id} returned HTTP ${status_code}"
+              cp "$status_file" "$artifact_dir/benchmark-run-last-error.json" || true
               rm -f "$status_file"
               continue
             fi
@@ -257,9 +303,11 @@ jobs:
             status="$(jq -r '.status' "$status_file")"
             codebuild_log_url="$(jq -r '.codeBuildLogUrl // empty' "$status_file")"
             echo "Benchmark status: ${status}"
+            cp "$status_file" "$artifact_dir/benchmark-run-latest.json"
 
             case "$status" in
               succeeded|failed|cancelled)
+                cp "$status_file" "$artifact_dir/benchmark-run-final.json"
                 {
                   echo
                   echo "### Final status"
@@ -277,7 +325,15 @@ jobs:
                     echo "\`\`\`"
                   fi
                 } >> "$GITHUB_STEP_SUMMARY"
-                [ "$status" = "succeeded" ] || exit 1
+
+                if [ "$status" != "succeeded" ]; then
+                  download_benchmark_artifact "$run_id" "logs" "$artifact_dir/codebuild-logs.url.json" || true
+                  exit 1
+                fi
+
+                download_benchmark_artifact "$run_id" "summary" "$artifact_dir/summary.json"
+                download_benchmark_artifact "$run_id" "report" "$artifact_dir/report.md"
+                download_benchmark_artifact "$run_id" "results" "$artifact_dir/results.jsonl"
                 exit 0
                 ;;
             esac
@@ -286,3 +342,11 @@ jobs:
 
           echo "::error::Timed out waiting for benchmark run ${run_id}"
           exit 1
+
+      - name: Upload benchmark API artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memorag-benchmark-${{ steps.benchmark.outputs.run_id || github.run_id }}
+          path: artifacts/memorag-benchmark/
+          if-no-files-found: warn

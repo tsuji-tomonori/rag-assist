@@ -181,9 +181,9 @@ button:has(.button-spinner) {
 .topbar {
   min-width: 0;
   min-height: 68px;
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) 164px 184px 174px 72px 142px 120px;
+  display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   border-bottom: 1px solid #dce4ef;
   padding: 0 22px;
@@ -199,6 +199,7 @@ button:has(.button-spinner) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-right: auto;
 }
 
 .top-control {

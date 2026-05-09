@@ -1,0 +1,8 @@
+metric,what_to_score,scoring_rule,recommended_weight,notes
+Document/Page retrieval Recall@k,正しいPDF・ページ・スライドを検索できたか,goldのsource_doc_idとsource_page_or_slideをk件内で含む,0.2,RAGの検索品質を分離して評価する。
+Element retrieval,図・表・注記など、必要な視覚要素に到達したか,evidence_locator相当の要素を引用または利用したら満点,0.15,PDF OCRだけでなくレイアウト/画像参照の評価に使う。
+Answer correctness,gold_answer_jaと意味・数値・条件が一致するか,完全一致または専門家採点。数値は単位・境界条件を確認,0.3,面積の『以下/超』、OR/AND条件の誤りは重大減点。
+Grounded citation quality,回答が根拠に基づき、出典を明示できるか,出典PDF・ページ・図表名を示し、根拠外の主張がなければ満点,0.15,法令系では根拠のない一般化を強く減点。
+Visual reasoning,図表を読み、必要な値・ラベル・関係を使ったか,requires_visual=Yesの設問で図表由来の値/条件を正しく利用,0.1,LLMが本文だけで推測した場合は減点。
+Unanswerable handling,根拠がない設問で捏造せず拒否できたか,negative_or_unanswerable=Yesで『記載なし』等と返す,0.05,実運用では安全性に直結する。
+Response usability,社内QAとして実務的に理解しやすいか,短く、条件・例外・次に確認すべき事項が明確,0.05,文章品質は従評価。
