@@ -1,6 +1,6 @@
 # oRPC contract package 導入
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -53,7 +53,7 @@
 - [x] infra は contract runtime を import せず、env/config 型を `import type` と `satisfies` で使う。
 - [x] OpenAPI 生成経路と関連 docs の影響が確認され、必要な更新または不要理由が記録される。
 - [x] 変更範囲に見合う検証が実行され、未実施項目は理由付きで記録される。
-- [ ] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントが日本語で投稿される。
+- [x] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントが日本語で投稿される。
 
 ## 検証計画
 
