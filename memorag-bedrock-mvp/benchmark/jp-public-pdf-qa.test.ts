@@ -3,10 +3,14 @@ import { spawn } from "node:child_process"
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
 import { tmpdir } from "node:os"
-import { mkdtempSync, readFileSync } from "node:fs"
+import { existsSync, mkdtempSync, readFileSync } from "node:fs"
 import path from "node:path"
 import test from "node:test"
 import { fileURLToPath } from "node:url"
+import {
+  createPdfFromJpegs,
+  prepareJpPublicPdfQaBenchmarkWithOptions
+} from "./jp-public-pdf-qa.js"
 
 type DatasetRow = {
   id: string
@@ -124,6 +128,70 @@ test("jp public PDF QA dataset is readable by the benchmark runner", async () =>
   }
 })
 
+test("jp public PDF QA prepare script copies the dataset and builds a local OCR PDF from source images", async () => {
+  const paths = artifactPaths("jp-public-pdf-qa-prepare")
+  const corpusDir = path.join(paths.dir, "corpus")
+  const fetchedUrls: string[] = []
+  const pdfBody = Buffer.from("%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF\n", "latin1")
+  const jpegBody = sampleJpeg(320, 240)
+
+  await prepareJpPublicPdfQaBenchmarkWithOptions({
+    datasetOutput: path.join(paths.dir, "dataset.jsonl"),
+    corpusDir,
+    forceDownload: true,
+    downloadDocuments: true,
+    fetchImpl: (async (url: string | URL | Request) => {
+      const href = String(url)
+      fetchedUrls.push(href)
+      if (href.endsWith(".pdf")) return binaryResponse(pdfBody, 200)
+      if (href.endsWith(".jpg")) return binaryResponse(jpegBody, 200)
+      return binaryResponse(Buffer.from("not found"), 404)
+    }) as typeof fetch
+  })
+
+  assert.equal(readFileSync(path.join(paths.dir, "dataset.jsonl"), "utf-8"), readFileSync(datasetPath, "utf-8"))
+  assert.ok(existsSync(path.join(corpusDir, "001655176.pdf")))
+  assert.ok(existsSync(path.join(corpusDir, "01zyokan_202603.pdf")))
+
+  const ocrPdf = readFileSync(path.join(corpusDir, "1927-statistical-yearbook-scan.pdf"))
+  assert.equal(ocrPdf.subarray(0, 5).toString("ascii"), "%PDF-")
+  assert.match(ocrPdf.toString("latin1"), /\/Count 26/)
+  assert.match(ocrPdf.toString("latin1"), /\/DCTDecode/)
+  assert.equal(fetchedUrls.filter((url) => url.endsWith(".pdf")).length, 2)
+  assert.equal(fetchedUrls.filter((url) => url.endsWith(".jpg")).length, 26)
+})
+
+test("jp public PDF QA prepare script reports the failed source URL", async () => {
+  const paths = artifactPaths("jp-public-pdf-qa-prepare-failure")
+
+  await assert.rejects(
+    prepareJpPublicPdfQaBenchmarkWithOptions({
+      datasetOutput: path.join(paths.dir, "dataset.jsonl"),
+      corpusDir: path.join(paths.dir, "corpus"),
+      forceDownload: true,
+      downloadDocuments: true,
+      fetchImpl: (async (url: string | URL | Request) => {
+        const href = String(url)
+        if (href.includes("mhlw.go.jp")) return binaryResponse(Buffer.from("missing"), 404)
+        return binaryResponse(Buffer.from("%PDF-1.4\n%%EOF\n", "latin1"), 200)
+      }) as typeof fetch
+    }),
+    /001655176\.pdf.*mhlw\.go\.jp.*HTTP 404/
+  )
+})
+
+test("OCR JPEG PDF builder keeps the page tree object and image objects distinct", () => {
+  const pdf = createPdfFromJpegs([
+    { body: sampleJpeg(10, 20), width: 10, height: 20 },
+    { body: sampleJpeg(30, 40), width: 30, height: 40 }
+  ]).toString("latin1")
+
+  assert.match(pdf, /1 0 obj\n<< \/Type \/Catalog \/Pages 2 0 R >>/)
+  assert.match(pdf, /2 0 obj\n<< \/Type \/Pages \/Count 2 \/Kids \[5 0 R 8 0 R\] >>/)
+  assert.match(pdf, /3 0 obj\n<< \/Type \/XObject \/Subtype \/Image \/Width 10 \/Height 20/)
+  assert.match(pdf, /6 0 obj\n<< \/Type \/XObject \/Subtype \/Image \/Width 30 \/Height 40/)
+})
+
 function readDataset(): DatasetRow[] {
   return readFileSync(datasetPath, "utf-8")
     .trim()
@@ -145,6 +213,27 @@ function artifactPaths(name: string): { dir: string; output: string; summary: st
     summary: path.join(dir, "summary.json"),
     report: path.join(dir, "report.md")
   }
+}
+
+function binaryResponse(body: Buffer, status: number): Response {
+  const arrayBuffer = body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) as ArrayBuffer
+  return new Response(arrayBuffer, {
+    status,
+    statusText: status === 200 ? "OK" : "Not Found"
+  })
+}
+
+function sampleJpeg(width: number, height: number): Buffer {
+  return Buffer.from([
+    0xff, 0xd8,
+    0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00,
+    0xff, 0xc0, 0x00, 0x11, 0x08, (height >> 8) & 0xff, height & 0xff, (width >> 8) & 0xff, width & 0xff, 0x03,
+    0x01, 0x11, 0x00,
+    0x02, 0x11, 0x01,
+    0x03, 0x11, 0x01,
+    0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00,
+    0xff, 0xd9
+  ])
 }
 
 function runBenchmarkRunner(env: Record<string, string>): Promise<{ status: number | null; stdout: string; stderr: string }> {
