@@ -9,6 +9,7 @@
     "prepare:architecture-drawing-qarag": "tsx architecture-drawing-qarag.ts",
     "prepare:allganize-ja": "tsx allganize-ja.ts",
     "prepare:mmrag-docqa": "tsx mmrag-docqa.ts",
+    "prepare:mlit-pdf-figure-table-rag": "tsx mlit-pdf-figure-table-rag.ts",
     "test": "tsx --test *.test.ts metrics/**/*.test.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"

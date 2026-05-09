@@ -1,0 +1,28 @@
+{
+  "negativeOrUnanswerableCount": 1,
+  "qaCount": 36,
+  "requiresVisualCount": 19,
+  "sheets": {
+    "Benchmark_QA": {
+      "columns": 20,
+      "rows": 37
+    },
+    "Rubric": {
+      "columns": 5,
+      "rows": 8
+    },
+    "Source_Docs": {
+      "columns": 7,
+      "rows": 4
+    },
+    "Summary": {
+      "columns": 4,
+      "rows": 19
+    },
+    "Tag_Definitions": {
+      "columns": 3,
+      "rows": 10
+    }
+  },
+  "source": "mlit_pdf_figure_table_rag_benchmark_seed.xlsx"
+}
