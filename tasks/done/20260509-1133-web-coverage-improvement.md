@@ -1,8 +1,8 @@
 # Web coverage 改善
 
-保存先: `tasks/do/20260509-1133-web-coverage-improvement.md`
+保存先: `tasks/done/20260509-1133-web-coverage-improvement.md`
 
-状態: do
+状態: done
 
 ## 背景
 
