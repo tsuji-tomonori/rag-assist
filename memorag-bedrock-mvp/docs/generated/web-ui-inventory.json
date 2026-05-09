@@ -101,7 +101,7 @@
         "profile"
       ],
       "componentCount": 7,
-      "interactionCount": 35
+      "interactionCount": 18
     },
     {
       "feature": "auth",
@@ -125,8 +125,8 @@
       "screens": [
         "chat"
       ],
-      "componentCount": 10,
-      "interactionCount": 37
+      "componentCount": 11,
+      "interactionCount": 43
     },
     {
       "feature": "debug",
@@ -266,16 +266,12 @@
       "jsxUsages": [
         "Icon",
         "button",
-        "div",
         "h1",
         "header",
         "i",
         "input",
         "label",
-        "option",
-        "select",
-        "span",
-        "strong"
+        "span"
       ],
       "certainty": "confirmed"
     },
@@ -430,6 +426,8 @@
         "form",
         "input",
         "label",
+        "option",
+        "select",
         "span",
         "textarea"
       ],
@@ -452,6 +450,21 @@
       "certainty": "confirmed"
     },
     {
+      "file": "apps/web/src/features/chat/components/ChatRunIdBar.tsx",
+      "feature": "chat",
+      "exports": [
+        "ChatRunIdBar"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "code",
+        "div",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
       "file": "apps/web/src/features/chat/components/ChatView.tsx",
       "feature": "chat",
       "exports": [
@@ -459,6 +472,7 @@
       ],
       "jsxUsages": [
         "ChatComposer",
+        "ChatRunIdBar",
         "DebugPanel",
         "MessageList",
         "p",
@@ -1348,512 +1362,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/TopBar.tsx:49:label",
+      "id": "apps/web/src/app/components/TopBar.tsx:18:label",
       "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 49,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku",
-      "a11y": {
-        "accessibleName": "モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:51:select",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 51,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "select",
-      "isIntrinsic": true,
-      "label": "modelId",
-      "a11y": {
-        "accessibleName": "Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => onModelChange(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "modelId"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => onModelChange(event.target.value)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:52:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 52,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "amazon.nova-lite-v1:0",
-      "a11y": {
-        "accessibleName": "Nova Lite v1",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "amazon.nova-lite-v1:0"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:53:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 53,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "anthropic.claude-3-5-sonnet-20240620-v1:0",
-      "a11y": {
-        "accessibleName": "Claude 3.5 Sonnet",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "anthropic.claude-3-5-sonnet-20240620-v1:0"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:54:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 54,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "anthropic.claude-3-haiku-20240307-v1:0",
-      "a11y": {
-        "accessibleName": "Claude 3 Haiku",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "anthropic.claude-3-haiku-20240307-v1:0"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:59:label",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 59,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "ドキュメント",
-      "a11y": {
-        "accessibleName": "ドキュメント",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "htmlFor",
-          "value": "document-select"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:61:select",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 61,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "select",
-      "isIntrinsic": true,
-      "label": "デバッグ表示用の文書選択",
-      "a11y": {
-        "accessibleName": "すべての資料",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => onDocumentChange(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "id",
-          "value": "document-select"
-        },
-        {
-          "name": "value",
-          "value": "selectedDocumentId"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => onDocumentChange(event.target.value)"
-        },
-        {
-          "name": "title",
-          "value": "デバッグ表示用の文書選択"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:62:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 62,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "all",
-      "a11y": {
-        "accessibleName": "すべての資料",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "all"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:64:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 64,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "document.documentId",
-      "a11y": {
-        "accessibleName": "document.documentId",
-        "accessibleNameSource": "value",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "document.documentId"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:69:select",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 69,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "select",
-      "isIntrinsic": true,
-      "label": "参照フォルダ",
-      "a11y": {
-        "accessibleName": "参照フォルダ",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => onGroupChange(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "aria-label",
-          "value": "参照フォルダ"
-        },
-        {
-          "name": "value",
-          "value": "selectedGroupId"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => onGroupChange(event.target.value)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:70:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 70,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "all",
-      "a11y": {
-        "accessibleName": "全フォルダ",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "all"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:72:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 72,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "group.groupId",
-      "a11y": {
-        "accessibleName": "group.groupId",
-        "accessibleNameSource": "value",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "group.groupId"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:82:label",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 82,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "実行ID",
-      "a11y": {
-        "accessibleName": "実行ID",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:84:select",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 84,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "select",
-      "isIntrinsic": true,
-      "label": "selectedRunValue",
-      "a11y": {
-        "accessibleName": "実行ID",
-        "accessibleNameSource": "label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=pendingDebugQuestion !== null || (debugRuns.length === 0 && !latestTrace)"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => onRunChange(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "selectedRunValue"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => onRunChange(event.target.value)"
-        },
-        {
-          "name": "disabled",
-          "value": "pendingDebugQuestion !== null || (debugRuns.length === 0 && !latestTrace)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:89:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 89,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "__processing__",
-      "a11y": {
-        "accessibleName": "処理中",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "__processing__"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:89:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 89,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "未実行",
-      "a11y": {
-        "accessibleName": "未実行",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": ""
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:91:option",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 91,
-      "feature": "app",
-      "component": "TopBar",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "run.runId",
-      "a11y": {
-        "accessibleName": "実行ID",
-        "accessibleNameSource": "label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "run.runId"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/TopBar.tsx:101:label",
-      "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 101,
+      "line": 18,
       "feature": "app",
       "component": "TopBar",
       "element": "label",
@@ -1873,9 +1384,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/TopBar.tsx:103:input",
+      "id": "apps/web/src/app/components/TopBar.tsx:20:input",
       "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 103,
+      "line": 20,
       "feature": "app",
       "component": "TopBar",
       "element": "input",
@@ -1909,9 +1420,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/TopBar.tsx:108:button",
+      "id": "apps/web/src/app/components/TopBar.tsx:24:button",
       "file": "apps/web/src/app/components/TopBar.tsx",
-      "line": 108,
+      "line": 24,
       "feature": "app",
       "component": "TopBar",
       "element": "button",
@@ -4975,9 +4486,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:39:form",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:43:form",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 39,
+      "line": 43,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "form",
@@ -5011,9 +4522,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:40:textarea",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:44:textarea",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 40,
+      "line": 44,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "textarea",
@@ -5073,9 +4584,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:71:label",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:75:label",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 71,
+      "line": 75,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "label",
@@ -5100,9 +4611,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:73:input",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:77:input",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 73,
+      "line": 77,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "input",
@@ -5146,9 +4657,158 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:93:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:90:label",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 90,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku",
+      "a11y": {
+        "accessibleName": "モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:92:select",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 92,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "select",
+      "isIntrinsic": true,
+      "label": "モデルを選択",
+      "a11y": {
+        "accessibleName": "モデルを選択",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onModelChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "modelId"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onModelChange(event.target.value)"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "aria-label",
+          "value": "モデルを選択"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:93:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
       "line": 93,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "amazon.nova-lite-v1:0",
+      "a11y": {
+        "accessibleName": "Nova Lite v1",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "amazon.nova-lite-v1:0"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:94:option",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 94,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+      "a11y": {
+        "accessibleName": "Claude 3.5 Sonnet",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "anthropic.claude-3-5-sonnet-20240620-v1:0"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:95:option",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 95,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "anthropic.claude-3-haiku-20240307-v1:0",
+      "a11y": {
+        "accessibleName": "Claude 3 Haiku",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "anthropic.claude-3-haiku-20240307-v1:0"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:105:button",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 105,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",
@@ -5221,6 +4881,56 @@
         }
       ],
       "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatRunIdBar.tsx:52:button",
+      "file": "apps/web/src/features/chat/components/ChatRunIdBar.tsx",
+      "line": 52,
+      "feature": "chat",
+      "component": "ChatRunIdBar",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "copyStatus === \"copied\" ? \"実行IDをコピー済み\" : \"実行IDをコピー\"",
+      "a11y": {
+        "accessibleName": "copyStatus === \"copied\" ? \"実行IDをコピー済み\" : \"実行IDをコピー\"",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canCopy"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void copyRunId()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canCopy"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void copyRunId()"
+        },
+        {
+          "name": "aria-label",
+          "value": "copyStatus === \"copied\" ? \"実行IDをコピー済み\" : \"実行IDをコピー\""
+        },
+        {
+          "name": "title",
+          "value": "copyStatus === \"copied\" ? \"実行IDをコピー済み\" : \"実行IDをコピー\""
+        }
+      ],
+      "certainty": "confirmed"
     },
     {
       "id": "apps/web/src/features/chat/components/QuestionAnswerPanel.tsx:40:button",

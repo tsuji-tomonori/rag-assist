@@ -116,12 +116,12 @@
 
   .topbar {
     min-height: 0;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex-wrap: wrap;
     padding: 16px;
   }
 
   .topbar h1 {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
   }
 
   .split-workspace {
@@ -218,7 +218,7 @@
   }
 
   .topbar {
-    grid-template-columns: 1fr;
+    align-items: flex-start;
   }
 
   .topbar h1 {
@@ -327,6 +327,10 @@
   .composer-actions {
     gap: 8px;
     padding: 0 10px 10px;
+  }
+
+  .composer-model-control {
+    flex: 1 1 150px;
   }
 
   .file-chip {

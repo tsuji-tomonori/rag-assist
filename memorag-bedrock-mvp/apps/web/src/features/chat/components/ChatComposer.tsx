@@ -8,6 +8,7 @@ export function ChatComposer({
   onAsk,
   question,
   submitShortcut,
+  modelId,
   file,
   selectedGroupId,
   documentGroups,
@@ -16,11 +17,13 @@ export function ChatComposer({
   canAsk,
   loading,
   onSetQuestion,
+  onModelChange,
   onSetFile
 }: {
   onAsk: (event: FormEvent) => Promise<void>
   question: string
   submitShortcut: SubmitShortcut
+  modelId: string
   file: File | null
   selectedGroupId: string
   documentGroups: DocumentGroup[]
@@ -29,6 +32,7 @@ export function ChatComposer({
   canAsk: boolean
   loading: boolean
   onSetQuestion: (value: string) => void
+  onModelChange: (modelId: string) => void
   onSetFile: (file: File | null) => void
 }) {
   const selectedGroupName = selectedGroupId === "all"
@@ -83,6 +87,14 @@ export function ChatComposer({
               </span>
             </label>
           )}
+          <label className="composer-model-control">
+            <span className="sr-only">モデル</span>
+            <select value={modelId} onChange={(event) => onModelChange(event.target.value)} disabled={loading} aria-label="モデルを選択">
+              <option value="amazon.nova-lite-v1:0">Nova Lite v1</option>
+              <option value="anthropic.claude-3-5-sonnet-20240620-v1:0">Claude 3.5 Sonnet</option>
+              <option value="anthropic.claude-3-haiku-20240307-v1:0">Claude 3 Haiku</option>
+            </select>
+          </label>
           <span className="file-chip">{`参照: ${selectedGroupName}`}</span>
           {file && <span className="file-chip">{`一時添付: ${file.name}`}</span>}
         </div>

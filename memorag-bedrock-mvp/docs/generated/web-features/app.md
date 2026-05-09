@@ -26,7 +26,7 @@
 | AppShell | AppShell は アプリケーション枠 領域の アプリケーション共通制御 です。関連画面: 個人設定。 | アプリケーション共通制御 | apps/web/src/app/AppShell.tsx | AppShell | AppRoutes, LoadingStatus, RailNav, TopBar, div, main, section |
 | PersonalSettingsView | PersonalSettingsView は アプリケーション枠 領域の 画面または画面内 UI コンポーネント です。関連画面: 個人設定。 | 画面または画面内 UI コンポーネント | apps/web/src/app/components/PersonalSettingsView.tsx | PersonalSettingsView | button, dd, div, dl, dt, footer, h2, header, label, option, section, select, span |
 | RailNav | RailNav は アプリケーション枠 領域の 画面または画面内 UI コンポーネント です。関連画面: 個人設定。 | 画面または画面内 UI コンポーネント | apps/web/src/app/components/RailNav.tsx | RailNav | Icon, a, aside, button, nav, span |
-| TopBar | TopBar は アプリケーション枠 領域の 画面または画面内 UI コンポーネント です。関連画面: 個人設定。 | 画面または画面内 UI コンポーネント | apps/web/src/app/components/TopBar.tsx | TopBar | Icon, button, div, h1, header, i, input, label, option, select, span, strong |
+| TopBar | TopBar は アプリケーション枠 領域の 画面または画面内 UI コンポーネント です。関連画面: 個人設定。 | 画面または画面内 UI コンポーネント | apps/web/src/app/components/TopBar.tsx | TopBar | Icon, button, h1, header, i, input, label, span |
 | main.tsx | main.tsx は アプリケーション枠 領域の React mount entry です。関連画面: 個人設定。 | React mount entry | apps/web/src/main.tsx | - | App, React.StrictMode |
 
 ## 主なボタン・リンク
@@ -44,7 +44,7 @@
 | RailNav | button | ドキュメント | 「ドキュメント」を実行するボタン。 | 状態: aria-current=activeView === "documents" ? "page" : undefined | onClick=() => onChangeView("documents") | apps/web/src/app/components/RailNav.tsx:53 | confirmed |
 | RailNav | button | 管理者設定 | 「管理者設定」を実行するボタン。 | 状態: aria-current=activeView === "admin" ? "page" : undefined | onClick=() => onChangeView("admin") | apps/web/src/app/components/RailNav.tsx:59 | confirmed |
 | RailNav | button | 個人設定 | 「個人設定」を実行するボタン。 | 状態: aria-current=activeView === "profile" ? "page" : undefined | onClick=() => onChangeView("profile") | apps/web/src/app/components/RailNav.tsx:65 | confirmed |
-| TopBar | button | 新しい会話 | 「新しい会話」を実行するボタン。 | - | onClick=onNewConversation | apps/web/src/app/components/TopBar.tsx:108 | confirmed |
+| TopBar | button | 新しい会話 | 「新しい会話」を実行するボタン。 | - | onClick=onNewConversation | apps/web/src/app/components/TopBar.tsx:24 | confirmed |
 
 ## フォーム
 
@@ -55,11 +55,7 @@
 | コンポーネント | 要素 | ラベル | 入力項目の説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | PersonalSettingsView | select | Enterで送信 / Ctrl+Enterで送信 | 「Enterで送信 / Ctrl+Enterで送信」を選ぶ選択項目。 | - | onChange=(event) => onSetSubmitShortcut(event.target.value as SubmitShortcut) | apps/web/src/app/components/PersonalSettingsView.tsx:37 | confirmed |
-| TopBar | select | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」を選ぶ選択項目。 | - | onChange=(event) => onModelChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:51 | confirmed |
-| TopBar | select | すべての資料 | 「すべての資料」を選ぶ選択項目。 | - | onChange=(event) => onDocumentChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:61 | confirmed |
-| TopBar | select | 参照フォルダ | 「参照フォルダ」を選ぶ選択項目。 | - | onChange=(event) => onGroupChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:69 | confirmed |
-| TopBar | select | 実行ID | 「実行ID」を選ぶ選択項目。 | 状態: disabled=pendingDebugQuestion !== null \|\| (debugRuns.length === 0 && !latestTrace) | onChange=(event) => onRunChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:84 | confirmed |
-| TopBar | input | デバッグモード | 「デバッグモード」を入力または選択する項目。 | - | onChange=(event) => onDebugModeChange(event.target.checked) | apps/web/src/app/components/TopBar.tsx:103 | confirmed |
+| TopBar | input | デバッグモード | 「デバッグモード」を入力または選択する項目。 | - | onChange=(event) => onDebugModeChange(event.target.checked) | apps/web/src/app/components/TopBar.tsx:20 | confirmed |
 
 ## UI 操作要素の全量
 
@@ -80,23 +76,6 @@
 | RailNav | button | ドキュメント | 「ドキュメント」を実行するボタン。 | 状態: aria-current=activeView === "documents" ? "page" : undefined | onClick=() => onChangeView("documents") | apps/web/src/app/components/RailNav.tsx:53 | confirmed |
 | RailNav | button | 管理者設定 | 「管理者設定」を実行するボタン。 | 状態: aria-current=activeView === "admin" ? "page" : undefined | onClick=() => onChangeView("admin") | apps/web/src/app/components/RailNav.tsx:59 | confirmed |
 | RailNav | button | 個人設定 | 「個人設定」を実行するボタン。 | 状態: aria-current=activeView === "profile" ? "page" : undefined | onClick=() => onChangeView("profile") | apps/web/src/app/components/RailNav.tsx:65 | confirmed |
-| TopBar | label | モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」に紐づく入力ラベル。 | - | - | apps/web/src/app/components/TopBar.tsx:49 | confirmed |
-| TopBar | select | Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku | 「Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku」を選ぶ選択項目。 | - | onChange=(event) => onModelChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:51 | confirmed |
-| TopBar | option | Nova Lite v1 | 「Nova Lite v1」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:52 | confirmed |
-| TopBar | option | Claude 3.5 Sonnet | 「Claude 3.5 Sonnet」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:53 | confirmed |
-| TopBar | option | Claude 3 Haiku | 「Claude 3 Haiku」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:54 | confirmed |
-| TopBar | label | ドキュメント | 「ドキュメント」に紐づく入力ラベル。 | - | - | apps/web/src/app/components/TopBar.tsx:59 | confirmed |
-| TopBar | select | すべての資料 | 「すべての資料」を選ぶ選択項目。 | - | onChange=(event) => onDocumentChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:61 | confirmed |
-| TopBar | option | すべての資料 | 「すべての資料」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:62 | confirmed |
-| TopBar | option | document.documentId | 「document.documentId」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:64 | confirmed |
-| TopBar | select | 参照フォルダ | 「参照フォルダ」を選ぶ選択項目。 | - | onChange=(event) => onGroupChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:69 | confirmed |
-| TopBar | option | 全フォルダ | 「全フォルダ」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:70 | confirmed |
-| TopBar | option | group.groupId | 「group.groupId」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:72 | confirmed |
-| TopBar | label | 実行ID | 「実行ID」に紐づく入力ラベル。 | - | - | apps/web/src/app/components/TopBar.tsx:82 | confirmed |
-| TopBar | select | 実行ID | 「実行ID」を選ぶ選択項目。 | 状態: disabled=pendingDebugQuestion !== null \|\| (debugRuns.length === 0 && !latestTrace) | onChange=(event) => onRunChange(event.target.value) | apps/web/src/app/components/TopBar.tsx:84 | confirmed |
-| TopBar | option | 処理中 | 「処理中」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:89 | confirmed |
-| TopBar | option | 未実行 | 「未実行」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:89 | confirmed |
-| TopBar | option | 実行ID | 「実行ID」を表す option 要素。 | - | - | apps/web/src/app/components/TopBar.tsx:91 | confirmed |
-| TopBar | label | デバッグモード | 「デバッグモード」に紐づく入力ラベル。 | - | - | apps/web/src/app/components/TopBar.tsx:101 | confirmed |
-| TopBar | input | デバッグモード | 「デバッグモード」を入力または選択する項目。 | - | onChange=(event) => onDebugModeChange(event.target.checked) | apps/web/src/app/components/TopBar.tsx:103 | confirmed |
-| TopBar | button | 新しい会話 | 「新しい会話」を実行するボタン。 | - | onClick=onNewConversation | apps/web/src/app/components/TopBar.tsx:108 | confirmed |
+| TopBar | label | デバッグモード | 「デバッグモード」に紐づく入力ラベル。 | - | - | apps/web/src/app/components/TopBar.tsx:18 | confirmed |
+| TopBar | input | デバッグモード | 「デバッグモード」を入力または選択する項目。 | - | onChange=(event) => onDebugModeChange(event.target.checked) | apps/web/src/app/components/TopBar.tsx:20 | confirmed |
+| TopBar | button | 新しい会話 | 「新しい会話」を実行するボタン。 | - | onClick=onNewConversation | apps/web/src/app/components/TopBar.tsx:24 | confirmed |
