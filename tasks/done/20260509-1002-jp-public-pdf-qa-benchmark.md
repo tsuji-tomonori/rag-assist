@@ -81,4 +81,4 @@ Excel の `QA_Benchmark` を既存 runner の JSONL schema に変換し、RAG �
 
 ## 状態
 
-in_progress
+done
