@@ -740,8 +740,7 @@ export class MemoRagMvpStack extends Stack {
               "export REPORT=./benchmark/.runner-report.md",
               "export DATASET=./benchmark/.runner-dataset.jsonl",
               "export BENCHMARK_SUITE_ID=\"$SUITE_ID\"",
-              "if [ \"$SUITE_ID\" = \"standard-agent-v1\" ] || [ \"$SUITE_ID\" = \"smoke-agent-v1\" ] || [ \"$SUITE_ID\" = \"clarification-smoke-v1\" ] || [ \"$SUITE_ID\" = \"search-standard-v1\" ] || [ \"$SUITE_ID\" = \"search-smoke-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/standard-agent-v1; export BENCHMARK_CORPUS_SUITE_ID=standard-agent-v1; elif [ \"$SUITE_ID\" = \"mtrag-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/mtrag-v1; export BENCHMARK_CORPUS_SUITE_ID=mtrag-v1; elif [ \"$SUITE_ID\" = \"chatrag-bench-v1\" ]; then export BENCHMARK_CORPUS_DIR=benchmark/corpus/chatrag-bench-v1; export BENCHMARK_CORPUS_SUITE_ID=chatrag-bench-v1; fi",
-              "if [ \"$SUITE_ID\" = \"allganize-rag-evaluation-ja-v1\" ]; then export ALLGANIZE_RAG_DATASET_OUTPUT=\"$DATASET\"; export ALLGANIZE_RAG_CORPUS_DIR=./benchmark/.runner-allganize-corpus; export BENCHMARK_CORPUS_DIR=\"$ALLGANIZE_RAG_CORPUS_DIR\"; npm run prepare:allganize-ja -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"mmrag-docqa-v1\" ]; then export MMRAG_DOCQA_DATASET_OUTPUT=\"$DATASET\"; export MMRAG_DOCQA_CORPUS_DIR=./benchmark/.runner-mmrag-docqa-corpus; export BENCHMARK_CORPUS_DIR=\"$MMRAG_DOCQA_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=mmrag-docqa-v1; npm run prepare:mmrag-docqa -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"architecture-drawing-qarag-v0.1\" ]; then export ARCHITECTURE_QARAG_DATASET_OUTPUT=\"$DATASET\"; export ARCHITECTURE_QARAG_CORPUS_DIR=./benchmark/.runner-architecture-drawing-corpus; export BENCHMARK_CORPUS_DIR=\"$ARCHITECTURE_QARAG_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=architecture-drawing-qarag-v0.1; npm run prepare:architecture-drawing-qarag -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"jp-public-pdf-qa-v1\" ]; then export JP_PUBLIC_PDF_QA_DATASET_OUTPUT=\"$DATASET\"; export JP_PUBLIC_PDF_QA_CORPUS_DIR=./benchmark/.runner-jp-public-pdf-qa-corpus; export BENCHMARK_CORPUS_DIR=\"$JP_PUBLIC_PDF_QA_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=jp-public-pdf-qa-v1; npm run prepare:jp-public-pdf-qa -w @memorag-mvp/benchmark; else aws s3 cp \"$DATASET_S3_URI\" \"$DATASET\"; fi",
+              "npm run codebuild:prepare -w @memorag-mvp/benchmark",
               "API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\"",
               "export API_AUTH_TOKEN"
             ]
@@ -750,7 +749,7 @@ export class MemoRagMvpStack extends Stack {
             commands: [
               "set -euo pipefail",
               "cd \"$CODEBUILD_SRC_DIR/memorag-bedrock-mvp\"",
-              "if [ \"$MODE\" = \"search\" ]; then API_BASE_URL=\"$API_BASE_URL\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" npm run start:search -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"mtrag-v1\" ] || [ \"$SUITE_ID\" = \"chatrag-bench-v1\" ]; then API_BASE_URL=\"$API_BASE_URL\" MODEL_ID=\"$MODEL_ID\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" MEMORY_TOP_K=\"$MEMORY_TOP_K\" MIN_SCORE=\"$MIN_SCORE\" npm run start:conversation -w @memorag-mvp/benchmark; else API_BASE_URL=\"$API_BASE_URL\" MODEL_ID=\"$MODEL_ID\" EMBEDDING_MODEL_ID=\"$EMBEDDING_MODEL_ID\" TOP_K=\"$TOP_K\" MEMORY_TOP_K=\"$MEMORY_TOP_K\" MIN_SCORE=\"$MIN_SCORE\" npm run start -w @memorag-mvp/benchmark; fi"
+              "npm run codebuild:run -w @memorag-mvp/benchmark"
             ]
           },
           post_build: {

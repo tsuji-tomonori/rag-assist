@@ -7,6 +7,8 @@
     "start": "tsx run.ts",
     "start:search": "tsx search-run.ts",
     "start:conversation": "tsx conversation-run.ts",
+    "codebuild:prepare": "tsx codebuild-suite.ts prepare",
+    "codebuild:run": "tsx codebuild-suite.ts run",
     "prepare:architecture-drawing-qarag": "tsx architecture-drawing-qarag.ts",
     "prepare:allganize-ja": "tsx allganize-ja.ts",
     "prepare:chatrag-bench": "tsx chatrag-bench.ts",
