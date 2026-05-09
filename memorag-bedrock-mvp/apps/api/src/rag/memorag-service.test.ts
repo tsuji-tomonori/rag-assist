@@ -321,6 +321,30 @@ test("service preserves asynchronous chat run options and can mark worker failur
   const mmragRun = await service.createBenchmarkRun(user, { suiteId: "mmrag-docqa-v1", mode: "agent" })
   assert.equal(mmragRun.suiteId, "mmrag-docqa-v1")
   assert.equal(mmragRun.datasetS3Key, "hf://datasets/yubo2333/MMLongBench-Doc")
+  const jpPublicPdfSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "jp-public-pdf-qa-v1")
+  assert.deepEqual(jpPublicPdfSuite, {
+    suiteId: "jp-public-pdf-qa-v1",
+    label: "日本語公開PDF QA",
+    mode: "agent",
+    datasetS3Key: "benchmark/dataset.jp-public-pdf-qa.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  })
+  const jpPublicPdfRun = await service.createBenchmarkRun(user, { suiteId: "jp-public-pdf-qa-v1", mode: "agent" })
+  assert.equal(jpPublicPdfRun.suiteId, "jp-public-pdf-qa-v1")
+  assert.equal(jpPublicPdfRun.datasetS3Key, "benchmark/dataset.jp-public-pdf-qa.jsonl")
+  const mlitSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "mlit-pdf-figure-table-rag-seed-v1")
+  assert.deepEqual(mlitSuite, {
+    suiteId: "mlit-pdf-figure-table-rag-seed-v1",
+    label: "MLIT PDF figure/table RAG seed",
+    mode: "agent",
+    datasetS3Key: "datasets/agent/mlit-pdf-figure-table-rag-seed-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  })
+  const mlitRun = await service.createBenchmarkRun(user, { suiteId: "mlit-pdf-figure-table-rag-seed-v1", mode: "agent" })
+  assert.equal(mlitRun.suiteId, "mlit-pdf-figure-table-rag-seed-v1")
+  assert.equal(mlitRun.datasetS3Key, "datasets/agent/mlit-pdf-figure-table-rag-seed-v1.jsonl")
   const architectureSuite = service.listBenchmarkSuites().find((suite) => suite.suiteId === "architecture-drawing-qarag-v0.1")
   assert.deepEqual(architectureSuite, {
     suiteId: "architecture-drawing-qarag-v0.1",

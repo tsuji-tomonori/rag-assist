@@ -163,6 +163,38 @@ const benchmarkSuites: BenchmarkSuite[] = [
     defaultConcurrency: 1
   },
   {
+    suiteId: "mtrag-v1",
+    label: "MTRAG multi-turn RAG",
+    mode: "agent",
+    datasetS3Key: "datasets/conversation/mtrag-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
+    suiteId: "chatrag-bench-v1",
+    label: "ChatRAG Bench multi-turn RAG",
+    mode: "agent",
+    datasetS3Key: "datasets/conversation/chatrag-bench-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
+    suiteId: "jp-public-pdf-qa-v1",
+    label: "日本語公開PDF QA",
+    mode: "agent",
+    datasetS3Key: "benchmark/dataset.jp-public-pdf-qa.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
+    suiteId: "mlit-pdf-figure-table-rag-seed-v1",
+    label: "MLIT PDF figure/table RAG seed",
+    mode: "agent",
+    datasetS3Key: "datasets/agent/mlit-pdf-figure-table-rag-seed-v1.jsonl",
+    preset: "standard",
+    defaultConcurrency: 1
+  },
+  {
     suiteId: "architecture-drawing-qarag-v0.1",
     label: "建築図面 QARAG v0.1",
     mode: "agent",
@@ -823,6 +855,7 @@ export class MemoRagService {
       userEmail: user.email,
       userGroups: user.cognitoGroups,
       question: input.question,
+      conversationHistory: input.conversationHistory,
       clarificationContext: input.clarificationContext,
       modelId: input.modelId ?? config.defaultModelId,
       embeddingModelId: input.embeddingModelId ?? config.embeddingModelId,
@@ -885,6 +918,7 @@ export class MemoRagService {
         this.deps,
         {
           question: run.question,
+          conversationHistory: run.conversationHistory,
           clarificationContext: run.clarificationContext,
           modelId: run.modelId,
           embeddingModelId: run.embeddingModelId,

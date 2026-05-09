@@ -1,6 +1,6 @@
 import type { Dependencies } from "../../dependencies.js"
 import { parseJsonObject } from "../../rag/json.js"
-import { buildCluePrompt } from "../../rag/prompts.js"
+import { buildCluePrompt, formatConversationHistory } from "../../rag/prompts.js"
 import { llmOptions } from "../runtime-policy.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 import type { ClueJson } from "../types.js"
@@ -21,7 +21,8 @@ export function createGenerateCluesNode(deps: Dependencies) {
       }
     }
 
-    const raw = await deps.textModel.generate(buildCluePrompt(state.question, memoryContext), llmOptions("clue", state.clueModelId))
+    const historyContext = formatConversationHistory(state.conversationHistory)
+    const raw = await deps.textModel.generate(buildCluePrompt(state.question, memoryContext, historyContext), llmOptions("clue", state.clueModelId))
 
     const clueJson = parseJsonObject<ClueJson>(raw)
     const clues = buildSearchClues(state.normalizedQuery ?? state.question, clueJson?.clues ?? [])

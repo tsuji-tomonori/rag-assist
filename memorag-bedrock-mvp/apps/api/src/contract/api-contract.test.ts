@@ -470,6 +470,14 @@ test("benchmark operators can use benchmark run administration without direct qu
 
     const suites = await fetch(`http://127.0.0.1:${port}/benchmark-suites`)
     assert.equal(suites.status, 200)
+    const suitesBody = (await suites.json()) as { suites?: Array<{ suiteId?: string; datasetS3Key?: string }> }
+    assert.equal(
+      suitesBody.suites?.some((suite) =>
+        suite.suiteId === "mlit-pdf-figure-table-rag-seed-v1"
+          && suite.datasetS3Key === "datasets/agent/mlit-pdf-figure-table-rag-seed-v1.jsonl"
+      ),
+      true
+    )
 
     const listRuns = await fetch(`http://127.0.0.1:${port}/benchmark-runs`)
     assert.equal(listRuns.status, 200)
@@ -812,7 +820,7 @@ test("benchmark runner can list and upload only isolated benchmark seed document
 test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only", () => {
   const metadata = {
     benchmarkSeed: true,
-    benchmarkSuiteId: "allganize-rag-evaluation-ja-v1",
+    benchmarkSuiteId: "mlit-pdf-figure-table-rag-seed-v1",
     benchmarkSourceHash: "hash",
     benchmarkIngestSignature: "signature",
     benchmarkCorpusSkipMemory: true,

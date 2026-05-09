@@ -107,4 +107,37 @@ describe("useBenchmarkRuns", () => {
     await act(() => result.current.onCancelBenchmark("run-1"))
     expect(props.setError).toHaveBeenCalledWith("cancel failed")
   })
+
+  it("starts the Japanese public PDF QA suite from the UI selection", async () => {
+    vi.mocked(listBenchmarkSuites).mockResolvedValueOnce([
+      suite(),
+      suite({
+        suiteId: "jp-public-pdf-qa-v1",
+        label: "日本語公開PDF QA",
+        datasetS3Key: "benchmark/dataset.jp-public-pdf-qa.jsonl",
+        defaultConcurrency: 1
+      })
+    ])
+    vi.mocked(startBenchmarkRun).mockResolvedValueOnce(run({
+      runId: "run-jp-public-pdf",
+      suiteId: "jp-public-pdf-qa-v1",
+      datasetS3Key: "benchmark/dataset.jp-public-pdf-qa.jsonl"
+    }))
+    const props = createProps()
+    const { result } = renderHook(() => useBenchmarkRuns(props))
+
+    await act(() => result.current.refreshBenchmarkSuites())
+    act(() => result.current.setBenchmarkSuiteId("jp-public-pdf-qa-v1"))
+    await act(() => result.current.onStartBenchmark())
+
+    expect(startBenchmarkRun).toHaveBeenCalledWith(expect.objectContaining({
+      suiteId: "jp-public-pdf-qa-v1",
+      mode: "agent",
+      runner: "codebuild"
+    }))
+    expect(result.current.benchmarkRuns[0]).toMatchObject({
+      runId: "run-jp-public-pdf",
+      suiteId: "jp-public-pdf-qa-v1"
+    })
+  })
 })

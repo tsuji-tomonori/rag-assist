@@ -173,6 +173,12 @@ export const ClarificationContextSchema = z.object({
   selectedValue: z.string().optional()
 })
 
+const ConversationHistoryTurnSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  text: z.string(),
+  turnId: z.string().optional()
+})
+
 export const DebugStepSchema = z.object({
   id: z.number(),
   label: z.string(),
@@ -468,6 +474,7 @@ export const ComputedFactSchema = z.discriminatedUnion("kind", [
 export const AgentStateSchema = z.object({
   runId: z.string(),
   question: z.string(),
+  conversationHistory: z.array(ConversationHistoryTurnSchema).default(() => []),
   modelId: z.string(),
   embeddingModelId: z.string(),
   clueModelId: z.string(),
