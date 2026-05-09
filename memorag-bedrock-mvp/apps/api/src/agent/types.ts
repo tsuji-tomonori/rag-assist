@@ -5,8 +5,15 @@ import type { SearchInput } from "../search/hybrid-search.js"
 
 export type PublicClarification = Omit<Clarification, "rejectedOptions">
 
+export type ConversationHistoryTurn = {
+  role: "user" | "assistant"
+  text: string
+  turnId?: string
+}
+
 export type ChatInput = {
   question: string
+  conversationHistory?: ConversationHistoryTurn[]
   clarificationContext?: {
     originalQuestion?: string
     selectedOptionId?: string

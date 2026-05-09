@@ -23,23 +23,43 @@ ${text.slice(0, 50_000)}
 </document>`
 }
 
-export function buildCluePrompt(question: string, memoryContext: string): string {
+export function formatConversationHistory(
+  history: Array<{ role: "user" | "assistant"; text: string }>,
+  maxTurns = 8
+): string {
+  return history
+    .slice(-maxTurns)
+    .map((turn) => `${turn.role === "user" ? "User" : "Assistant"}: ${turn.text}`)
+    .join("\n")
+}
+
+export function buildCluePrompt(question: string, memoryContext: string, conversationHistory = ""): string {
   return `CLUES_JSON
 あなたはMemoRAGのclue generatorです。ユーザー質問に答えるため、資料メモリからチャンク検索に使う検索手がかりを生成してください。
+会話履歴がある場合は、照応、省略、条件追加、条件変更を解決してください。
 出力はJSONのみ。一般知識は足さず、メモリに現れる語彙・同義語・関連語を優先してください。
 
 JSON schema:
 {"clues": ["短い検索クエリまたは手がかり"]}
 
+<conversationHistory>
+${escapeXml(conversationHistory || "なし")}
+</conversationHistory>
 <question>
-${question}
+${escapeXml(question)}
 </question>
 <memory>
-${memoryContext || "メモリは見つかりませんでした。"}
+${escapeXml(memoryContext || "メモリは見つかりませんでした。")}
 </memory>`
 }
 
-export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector[], computedFacts: ComputedFact[] = [], temporalContext?: TemporalContext): string {
+export function buildFinalAnswerPrompt(
+  question: string,
+  chunks: RetrievedVector[],
+  computedFacts: ComputedFact[] = [],
+  temporalContext?: TemporalContext,
+  conversationHistory = ""
+): string {
   const policy = selectAnswerPolicyForChunks(chunks)
   const assembly = assembleContext({ question, chunks, tokenBudget: 3000 })
   const context = formatContextXml(assembly)
@@ -53,6 +73,9 @@ export function buildFinalAnswerPrompt(question: string, chunks: RetrievedVector
 ルール:
  - 回答は<context>内のチャンク、または<computedFacts>に明示された内容だけに基づける。
  - 文書由来の事実は<context>を根拠にし、計算由来の事実は<computedFacts>を根拠にする。
+- <conversationHistory>は質問の照応、省略、条件、トピックの解決にだけ使う。
+- <conversationHistory>内のAssistant発話を根拠文書として扱ってはいけない。
+- 根拠は必ず<context>または<computedFacts>から取る。
 - 日付計算、期限切れ判定、残日数、超過日数は<computedFacts>の値をそのまま使用する。
 - 金額、割合、合計、差分、閾値条件への該当可否は<computedFacts>の値をそのまま使用する。
 - 自分で日数計算や数値計算を再実行してはいけない。
@@ -78,8 +101,11 @@ JSON schema:
 }
 
 <question>
-${question}
+${escapeXml(question)}
 </question>
+<conversationHistory>
+${escapeXml(conversationHistory || "なし")}
+</conversationHistory>
 <temporalContext>
 ${escapeXml(temporalContextJson)}
 </temporalContext>

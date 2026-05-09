@@ -234,8 +234,13 @@ function BenchmarkMetricChips({ run }: { run: BenchmarkRun }) {
   const chips = [
     run.metrics?.p50LatencyMs == null ? undefined : `p50 ${formatMetricLatency(run.metrics.p50LatencyMs)}`,
     run.metrics?.p95LatencyMs == null ? undefined : `p95 ${formatMetricLatency(run.metrics.p95LatencyMs)}`,
-    run.metrics?.answerableAccuracy == null ? undefined : `accuracy ${formatPercent(run.metrics.answerableAccuracy)}`,
-    run.metrics?.retrievalRecallAt20 == null ? undefined : `recall ${formatPercent(run.metrics.retrievalRecallAt20)}`,
+    run.metrics?.answerableAccuracy == null
+      ? run.metrics?.turnAnswerCorrectRate == null ? undefined : `turn accuracy ${formatPercent(run.metrics.turnAnswerCorrectRate)}`
+      : `accuracy ${formatPercent(run.metrics.answerableAccuracy)}`,
+    run.metrics?.retrievalRecallAt20 == null
+      ? run.metrics?.retrievalRecallAtK == null ? undefined : `recall ${formatPercent(run.metrics.retrievalRecallAtK)}`
+      : `recall ${formatPercent(run.metrics.retrievalRecallAt20)}`,
+    run.metrics?.historyDependentAccuracy == null ? undefined : `history ${formatPercent(run.metrics.historyDependentAccuracy)}`,
     run.metrics?.clarificationNeedF1 == null ? undefined : `質問F1 ${formatPercent(run.metrics.clarificationNeedF1)}`,
     run.metrics?.errorRate == null ? undefined : `error ${formatPercent(run.metrics.errorRate)}`
   ].filter((chip): chip is string => Boolean(chip))
