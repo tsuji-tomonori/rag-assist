@@ -95,12 +95,13 @@ export function createChatRunEventsStreamHandler(runtime: LambdaStreamingRuntime
         nextSeq: afterSeq + 1
       })
     } catch (err) {
+      console.error("Unhandled chat run event stream error", { error: err })
       if (stream) {
         send(stream, "error", undefined, {
-          message: err instanceof Error ? err.message : String(err)
+          message: "Internal server error"
         })
       } else {
-        writePlainResponse(runtime, responseStream, 500, err instanceof Error ? err.message : String(err))
+        writePlainResponse(runtime, responseStream, 500, "Internal server error")
       }
     } finally {
       stream?.end()

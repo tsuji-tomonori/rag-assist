@@ -3,6 +3,7 @@ import { StrictMode } from "react"
 import { describe, expect, it, vi } from "vitest"
 import type { Message } from "../types.js"
 import { AssistantAnswer } from "./AssistantAnswer.js"
+import { ChatRunIdBar } from "./ChatRunIdBar.js"
 import { UserPromptBubble } from "./UserPromptBubble.js"
 
 type CopyScenario = {
@@ -146,6 +147,25 @@ describe("chat copy feedback", () => {
       expect(vi.getTimerCount()).toBe(0)
     } finally {
       vi.useRealTimers()
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it("copies the bottom run id and never copies an ungenerated placeholder", async () => {
+    try {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      vi.stubGlobal("navigator", { clipboard: { writeText } })
+      const { rerender } = render(<ChatRunIdBar runId={null} pending={false} />)
+
+      expect(screen.getByText("未生成")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: "実行IDをコピー" })).toBeDisabled()
+
+      rerender(<ChatRunIdBar runId="debug-run-1" pending={false} />)
+      await clickAndFlush(screen.getByRole("button", { name: "実行IDをコピー" }))
+
+      expect(writeText).toHaveBeenCalledWith("debug-run-1")
+      expect(screen.getByRole("button", { name: "実行IDをコピー済み" }).querySelector(".icon-check")).toBeInTheDocument()
+    } finally {
       vi.unstubAllGlobals()
     }
   })

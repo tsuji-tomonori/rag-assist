@@ -11,7 +11,7 @@
 
 .chat-card {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-rows: minmax(0, 1fr) auto auto auto;
   overflow: hidden;
   padding: 20px 28px 14px;
 }
@@ -722,6 +722,28 @@
   flex: 1 1 auto;
 }
 
+.composer-model-control {
+  min-width: 0;
+  flex: 0 1 178px;
+}
+
+.composer-model-control select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #d7e1ee;
+  border-radius: 7px;
+  padding: 0 32px 0 10px;
+  color: #324761;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.composer-model-control select:disabled {
+  opacity: 0.62;
+  cursor: not-allowed;
+}
+
 .composer-shortcut-toggle {
   display: inline-flex;
   align-items: center;
@@ -843,8 +865,82 @@
 }
 
 .composer-note {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   color: #8a95a9;
   font-size: 12px;
   text-align: center;
+}
+
+.chat-run-id-bar {
+  min-width: 0;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 8px;
+  color: #68758f;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.chat-run-id-label {
+  flex: 0 0 auto;
+}
+
+.chat-run-id-bar code {
+  min-width: 0;
+  max-width: min(460px, 52vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #2c3e5c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.run-id-copy-button {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #cbd8eb;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #52627c;
+  background: #fff;
+}
+
+.run-id-copy-button .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.run-id-copy-button:hover:not(:disabled) {
+  border-color: #8eb0ef;
+  color: #1f60d9;
+  background: #f7fbff;
+}
+
+.run-id-copy-button:focus-visible {
+  outline: none;
+  border-color: #6e98e9;
+  box-shadow: 0 0 0 3px rgba(63, 123, 220, 0.2);
+}
+
+.run-id-copy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.run-id-copy-button.is-copied {
+  border-color: #78b18a;
+  color: #21683b;
+  background: #eaf8ef;
+}
+
+.run-id-copy-feedback {
+  flex: 0 0 auto;
+  color: #9a2f2f;
 }

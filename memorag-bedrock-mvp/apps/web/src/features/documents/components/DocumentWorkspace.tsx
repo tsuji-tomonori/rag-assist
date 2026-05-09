@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from "react"
+import { type FormEvent, useMemo, useRef, useState } from "react"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
@@ -54,6 +54,9 @@ export function DocumentWorkspace({
   const [shareGroupId, setShareGroupId] = useState("")
   const [shareGroups, setShareGroups] = useState("")
   const [selectedFolderId, setSelectedFolderId] = useState("all")
+  const [folderSearch, setFolderSearch] = useState("")
+  const uploadInputRef = useRef<HTMLInputElement | null>(null)
+  const shareSelectRef = useRef<HTMLSelectElement | null>(null)
 
   const folders = useMemo<WorkspaceFolder[]>(() => {
     return documentGroups.map((group) => ({
@@ -66,13 +69,14 @@ export function DocumentWorkspace({
   }, [documentGroups, documents])
 
   const allDocumentsFolder: WorkspaceFolder = { id: "all", name: "すべてのドキュメント", path: "/ すべてのドキュメント", count: documents.length }
+  const normalizedFolderSearch = folderSearch.trim().toLowerCase()
+  const filteredFolders = normalizedFolderSearch
+    ? folders.filter((folder) => `${folder.name} ${folder.path}`.toLowerCase().includes(normalizedFolderSearch))
+    : folders
   const selectedFolder = selectedFolderId === "all" ? allDocumentsFolder : folders.find((folder) => folder.id === selectedFolderId) ?? allDocumentsFolder
   const selectedGroupId = selectedFolder?.group?.groupId ?? uploadGroupId
   const visibleDocuments = selectedFolder?.group ? documents.filter((document) => documentGroupIds(document).includes(selectedFolder.group!.groupId)) : documents
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
-  const visibleMemoryCardCount = visibleDocuments.reduce((sum, document) => sum + document.memoryCardCount, 0)
-  const totalChunks = documents.reduce((sum, document) => sum + document.chunkCount, 0)
-  const totalMemoryCards = documents.reduce((sum, document) => sum + document.memoryCardCount, 0)
   const latestDocuments = [...documents].sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, 3)
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
 
@@ -123,6 +127,20 @@ export function DocumentWorkspace({
 
       <div className="document-management-layout">
         <aside className="document-folder-panel" aria-label="フォルダツリー">
+          <div className="folder-search-row" role="search">
+            <label className="sr-only" htmlFor="document-folder-search">フォルダを検索</label>
+            <input
+              id="document-folder-search"
+              type="search"
+              value={folderSearch}
+              onChange={(event) => setFolderSearch(event.target.value)}
+              placeholder="フォルダを検索"
+              autoComplete="off"
+            />
+            <button type="button" title="フォルダ検索をクリア" aria-label="フォルダ検索をクリア" disabled={!folderSearch} onClick={() => setFolderSearch("")}>
+              <Icon name="close" />
+            </button>
+          </div>
           <div className="folder-tree">
             <button className={`folder-tree-row ${selectedFolderId === "all" ? "active" : ""}`} type="button" aria-current={selectedFolderId === "all" ? "true" : undefined} onClick={() => setSelectedFolderId("all")}>
               <Icon name="folder" />
@@ -135,7 +153,7 @@ export function DocumentWorkspace({
                 <span>ドキュメントグループ</span>
                 <strong>{documentGroups.length}</strong>
               </div>
-              {folders.map((folder) => (
+              {filteredFolders.map((folder) => (
                 <button
                   className={`folder-tree-row child ${selectedFolder?.id === folder.id ? "active" : ""}`}
                   type="button"
@@ -151,21 +169,11 @@ export function DocumentWorkspace({
                   <strong>{folder.count}</strong>
                 </button>
               ))}
-              {folders.length === 0 && <p className="folder-tree-empty">登録済みグループはありません。</p>}
-            </div>
-          </div>
-          <div className="storage-summary" aria-label="登録状況">
-            <div>
-              <span>登録済みドキュメント</span>
-              <strong>{documents.length} 件</strong>
-            </div>
-            <div>
-              <span>チャンク</span>
-              <strong>{totalChunks} 件</strong>
-            </div>
-            <div>
-              <span>メモリカード</span>
-              <strong>{totalMemoryCards} 件</strong>
+              {documentGroups.length === 0 ? (
+                <p className="folder-tree-empty">登録済みグループはありません。</p>
+              ) : filteredFolders.length === 0 ? (
+                <p className="folder-tree-empty">一致するフォルダはありません。</p>
+              ) : null}
             </div>
           </div>
         </aside>
@@ -174,6 +182,26 @@ export function DocumentWorkspace({
           <div className="document-file-panel-head">
             <h3>{selectedFolder.name}</h3>
             <span className="sr-only">登録文書</span>
+            <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
+              <button
+                type="button"
+                title="このフォルダにアップロード"
+                aria-label="このフォルダにアップロード"
+                disabled={!canWrite || loading}
+                onClick={() => uploadInputRef.current?.click()}
+              >
+                <Icon name="plus" />
+              </button>
+              <button
+                type="button"
+                title="共有設定を編集"
+                aria-label="共有設定を編集"
+                disabled={!canWrite || loading}
+                onClick={() => shareSelectRef.current?.focus()}
+              >
+                <Icon name="share" />
+              </button>
+            </div>
           </div>
 
           <div className="document-file-table" role="table" aria-label="登録文書">
@@ -182,7 +210,6 @@ export function DocumentWorkspace({
               <span role="columnheader">種別</span>
               <span role="columnheader">更新日</span>
               <span role="columnheader">チャンク数</span>
-              <span role="columnheader">メモリカード</span>
               <span role="columnheader">状態</span>
               <span role="columnheader">操作</span>
             </div>
@@ -198,7 +225,6 @@ export function DocumentWorkspace({
                   <span role="cell">{fileTypeLabel(document)}</span>
                   <span role="cell">{formatDateTime(document.createdAt)}</span>
                   <span role="cell">{document.chunkCount}</span>
-                  <span role="cell">{document.memoryCardCount}</span>
                   <span role="cell">{document.lifecycleStatus ?? "active"}</span>
                   <span role="cell" className="document-actions-cell">
                     <button
@@ -263,10 +289,6 @@ export function DocumentWorkspace({
                 <dt>総チャンク数</dt>
                 <dd>{visibleChunkCount}</dd>
               </div>
-              <div>
-                <dt>総メモリカード数</dt>
-                <dd>{visibleMemoryCardCount}</dd>
-              </div>
             </dl>
           </section>
 
@@ -277,7 +299,7 @@ export function DocumentWorkspace({
             <form className="compact-form" onSubmit={onShareSubmit}>
               <label>
                 <span>共有フォルダ</span>
-                <select value={shareGroupId || selectedGroupId} disabled={!canWrite || loading} onChange={(event) => setShareGroupId(event.target.value)}>
+                <select ref={shareSelectRef} value={shareGroupId || selectedGroupId} disabled={!canWrite || loading} onChange={(event) => setShareGroupId(event.target.value)}>
                   <option value="">選択してください</option>
                   {documentGroups.map((group) => (
                     <option value={group.groupId} key={group.groupId}>{group.name}</option>
@@ -324,7 +346,7 @@ export function DocumentWorkspace({
               <label className="compact-file-input" aria-label="文書アップロード">
                 <Icon name="download" />
                 <span>{uploadFile ? uploadFile.name : "ファイルをアップロード"}</span>
-                <input type="file" aria-label="アップロードする文書を選択" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
+                <input ref={uploadInputRef} type="file" aria-label="アップロードする文書を選択" disabled={!canWrite || loading} onChange={(event) => setUploadFile(event.target.files?.[0] ?? null)} />
               </label>
               <button type="submit" disabled={!canWrite || !uploadFile || loading}>
                 {loading && <LoadingSpinner className="button-spinner" />}

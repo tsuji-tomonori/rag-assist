@@ -46,7 +46,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
         return c.json(await service.createManagedUser(actor, body), 200)
       } catch (err) {
         if (err instanceof Error && err.message === "Managed user already exists") {
-          return c.json({ error: err.message }, 409)
+          return c.json({ error: "Managed user already exists" }, 409)
         }
         throw err
       }

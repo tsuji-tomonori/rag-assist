@@ -241,15 +241,7 @@ test("implements the designed serverless resources", () => {
       Statement: Match.arrayWith([
         Match.objectLike({
           Action: "logs:GetLogEvents",
-          Resource: {
-            "Fn::Join": [
-              "",
-              [
-                { "Fn::GetAtt": [Match.stringLikeRegexp("BenchmarkProjectLogGroup"), "Arn"] },
-                ":log-stream:*"
-              ]
-            ]
-          }
+          Resource: Match.anyValue()
         }),
         Match.objectLike({
           Action: "codebuild:BatchGetBuilds",
@@ -258,6 +250,15 @@ test("implements the designed serverless resources", () => {
       ])
     })
   })
+  const managedPolicies = Object.values(template.toJSON().Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::IAM::ManagedPolicy") as any[]
+  const getLogEventsStatement = managedPolicies
+    .flatMap((policy) => policy.Properties?.PolicyDocument?.Statement ?? [])
+    .find((statement) => statement.Action === "logs:GetLogEvents")
+  assert.ok(getLogEventsStatement)
+  const getLogEventsResource = JSON.stringify(getLogEventsStatement.Resource)
+  assert.match(getLogEventsResource, /log-stream:\*/)
+  assert.doesNotMatch(getLogEventsResource, /\*.*log-stream:\*/)
   template.hasResourceProperties("AWS::IAM::Policy", {
     PolicyDocument: Match.objectLike({
       Statement: Match.arrayWith([
@@ -459,7 +460,7 @@ test("fails the benchmark CodeBuild runner when auth token resolution fails", ()
   assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$OUTPUT\" ]; then printf '' > \"$OUTPUT\"; fi"))
   assert.ok(buildSpec.phases.post_build.commands.includes("if [ ! -f \"$SUMMARY\" ]; then printf '{\"total\":0,\"succeeded\":0,\"failedHttp\":0,\"metrics\":{\"errorRate\":1}}\\n' > \"$SUMMARY\"; fi"))
   assert.ok(buildSpec.phases.post_build.commands.includes("node infra/scripts/update-benchmark-run-metrics.mjs"))
-  assert.ok(buildSpec.phases.pre_build.commands.includes("if [ \"$SUITE_ID\" = \"allganize-rag-evaluation-ja-v1\" ]; then export ALLGANIZE_RAG_DATASET_OUTPUT=\"$DATASET\"; export ALLGANIZE_RAG_CORPUS_DIR=./benchmark/.runner-allganize-corpus; export BENCHMARK_CORPUS_DIR=\"$ALLGANIZE_RAG_CORPUS_DIR\"; npm run prepare:allganize-ja -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"mmrag-docqa-v1\" ]; then export MMRAG_DOCQA_DATASET_OUTPUT=\"$DATASET\"; export MMRAG_DOCQA_CORPUS_DIR=./benchmark/.runner-mmrag-docqa-corpus; export BENCHMARK_CORPUS_DIR=\"$MMRAG_DOCQA_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=mmrag-docqa-v1; npm run prepare:mmrag-docqa -w @memorag-mvp/benchmark; else aws s3 cp \"$DATASET_S3_URI\" \"$DATASET\"; fi"))
+  assert.ok(buildSpec.phases.pre_build.commands.includes("if [ \"$SUITE_ID\" = \"allganize-rag-evaluation-ja-v1\" ]; then export ALLGANIZE_RAG_DATASET_OUTPUT=\"$DATASET\"; export ALLGANIZE_RAG_CORPUS_DIR=./benchmark/.runner-allganize-corpus; export BENCHMARK_CORPUS_DIR=\"$ALLGANIZE_RAG_CORPUS_DIR\"; npm run prepare:allganize-ja -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"mmrag-docqa-v1\" ]; then export MMRAG_DOCQA_DATASET_OUTPUT=\"$DATASET\"; export MMRAG_DOCQA_CORPUS_DIR=./benchmark/.runner-mmrag-docqa-corpus; export BENCHMARK_CORPUS_DIR=\"$MMRAG_DOCQA_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=mmrag-docqa-v1; npm run prepare:mmrag-docqa -w @memorag-mvp/benchmark; elif [ \"$SUITE_ID\" = \"architecture-drawing-qarag-v0.1\" ]; then export ARCHITECTURE_QARAG_DATASET_OUTPUT=\"$DATASET\"; export ARCHITECTURE_QARAG_CORPUS_DIR=./benchmark/.runner-architecture-drawing-corpus; export BENCHMARK_CORPUS_DIR=\"$ARCHITECTURE_QARAG_CORPUS_DIR\"; export BENCHMARK_CORPUS_SUITE_ID=architecture-drawing-qarag-v0.1; npm run prepare:architecture-drawing-qarag -w @memorag-mvp/benchmark; else aws s3 cp \"$DATASET_S3_URI\" \"$DATASET\"; fi"))
   assert.equal(
     buildSpec.phases.pre_build.commands.includes("export API_AUTH_TOKEN=\"$(node infra/scripts/resolve-benchmark-auth-token.mjs)\""),
     false

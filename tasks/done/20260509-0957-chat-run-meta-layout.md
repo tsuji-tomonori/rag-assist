@@ -1,0 +1,78 @@
+# チャット実行メタ情報の配置変更
+
+状態: done
+
+## 背景
+
+ユーザーから、添付画像のようにチャット画面上部のメタ情報を整理し、モデル選択と実行IDの表示位置を変更する依頼があった。
+
+## 目的
+
+チャット画面の上部を簡素化し、モデル選択を入力操作に近い場所へ移動し、実行IDを下部でコピー可能にする。
+
+## スコープ
+
+- Web UI のチャット画面レイアウト
+- モデル選択ボタンの配置
+- 実行ID表示とコピー操作
+- 関連する最小限のテスト・型検証・ドキュメント影響確認
+
+## 計画
+
+1. 対象コンポーネントと既存の状態管理を特定する。
+2. 上部からモデル選択、ドキュメント、実行ID、総レイテンシ表示を取り除く。
+3. 添付ボタン横にモデル選択ボタンを配置する。
+4. 画面下部に実行IDを表示し、コピー可能な UI を追加する。
+5. 変更範囲に応じてテスト・型チェックを実行する。
+6. 作業レポート、commit、push、PR、受け入れ条件コメント、セルフレビューを行う。
+
+## ドキュメント保守方針
+
+画面上の配置変更が README や docs の操作説明に記載されているか確認する。恒久的な操作説明が存在する場合のみ最小限更新し、該当がなければ作業レポートに「更新不要」と記録する。
+
+## 受け入れ条件
+
+- 画面上部にモデル選択、ドキュメント、実行ID、総レイテンシが表示されない。
+- 添付ボタンの横にモデル選択ボタンが表示される。
+- 実行IDが画面下部に表示される。
+- 画面下部の実行IDをコピーできる。
+- 実行IDがない状態で架空値を表示しない。
+- 既存の添付、モデル選択、チャット実行の主要動作を壊さない。
+- 変更範囲に応じた検証を実行し、未実施の検証は理由を記録する。
+- 作業レポートを `reports/working/` に作成する。
+
+## 検証計画
+
+- `git diff --check`
+- Web UI の型チェックまたはテスト
+- 必要に応じたビルドまたは対象テスト
+
+## PR セルフレビュー観点
+
+- UI 変更が実データ由来の値だけを表示していること。
+- 実行IDがない場合に fake fallback を出していないこと。
+- 変更範囲に見合う検証を実施していること。
+- RAG の根拠性、認可境界、benchmark 固有値の実装混入がないこと。
+
+## リスク
+
+- 対象コンポーネントの分割状況によって、モデル選択の props 移動でレイアウト以外の副作用が出る可能性がある。
+- ブラウザでの視覚確認が環境制約により限定される可能性がある。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/213
+- 受け入れ条件確認コメント: 投稿済み。
+- セルフレビューコメント: 投稿済み。
+- 作業レポート: `reports/working/20260509-1006-chat-run-meta-layout.md`
+
+## 検証結果
+
+- `npm ci`: pass
+- `npm run docs:web-inventory`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: 初回 fail、テスト更新後 pass
+- `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
+- `git diff --check`: pass
+- `npm --prefix memorag-bedrock-mvp run lint`: pass
+- `npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/web`: pass

@@ -3,6 +3,7 @@ import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
 import { authMiddleware } from "./auth.js"
 import { createDependencies } from "./dependencies.js"
+import { logUnhandledApiError, safeUnhandledErrorResponse } from "./error-response.js"
 import { enrichOpenApiDocument, type OpenApiDocument } from "./openapi-doc-quality.js"
 import { MemoRagService } from "./rag/memorag-service.js"
 import { registerApiRoutes } from "./routes/api-routes.js"
@@ -71,13 +72,9 @@ app.onError((err, c) => {
   if (typeof err === "object" && err !== null && "getResponse" in err && typeof (err as { getResponse?: unknown }).getResponse === "function") {
     return (err as { getResponse: () => Response }).getResponse()
   }
-  if (typeof err === "object" && err !== null && "status" in err) {
-    const status = Number((err as { status?: number }).status ?? 500)
-    const message = err instanceof Error ? err.message : "Unknown error"
-    return c.json({ error: message }, status as any)
-  }
-  console.error(err)
-  return c.json({ error: err instanceof Error ? err.message : "Unknown error" }, 500)
+  logUnhandledApiError(err, c)
+  const response = safeUnhandledErrorResponse(err)
+  return c.json(response.body, response.status)
 })
 
 export default app

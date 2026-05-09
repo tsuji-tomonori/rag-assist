@@ -69,13 +69,10 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     documents,
     documentGroups,
     reindexMigrations,
-    selectedDocumentId,
     selectedGroupId,
     uploadGroupId,
     file,
     setFile,
-    setSelectedDocumentId,
-    setSelectedGroupId,
     setUploadGroupId,
     refreshDocuments,
     refreshDocumentGroups,
@@ -240,7 +237,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 
   const latestAssistant = [...messages].reverse().find((message) => message.role === "assistant")
   const latestTrace = latestAssistant?.result?.debug
-  const { selectedTrace, totalLatency, selectedRunValue } = useDebugSelection({
+  const { selectedTrace, selectedRunValue } = useDebugSelection({
     debugRuns,
     selectedRunId,
     latestTrace,
@@ -366,23 +363,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   }
 
   const topBarProps: ComponentProps<typeof TopBar> = {
-    modelId,
-    documents,
-    documentGroups,
-    selectedDocumentId,
-    selectedGroupId,
-    debugRuns,
-    latestTrace,
-    selectedRunValue,
-    totalLatency,
     debugMode,
-    canReadDocuments,
     canReadDebugRuns,
-    pendingDebugQuestion,
-    onModelChange: setModelId,
-    onDocumentChange: setSelectedDocumentId,
-    onGroupChange: setSelectedGroupId,
-    onRunChange: setSelectedRunId,
     onDebugModeChange: setDebugMode,
     onNewConversation: newConversation
   }
@@ -403,6 +385,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       loading,
       canAsk,
       canWriteDocuments,
+      modelId,
       file,
       selectedGroupId,
       documentGroups,
@@ -412,6 +395,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       debugMode,
       canReadDebugRuns,
       selectedTrace,
+      selectedRunValue,
       pendingDebugQuestion,
       allExpanded,
       expandedStepId,
@@ -419,6 +403,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onSubmitClarificationOption: submitClarificationOption,
       onStartClarificationFreeform: startClarificationFreeform,
       onSetQuestion: setQuestion,
+      onModelChange: setModelId,
       onSetFile: setFile,
       onCreateQuestion,
       onResolveQuestion,

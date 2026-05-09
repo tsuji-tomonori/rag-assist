@@ -211,7 +211,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it("実データのファイル種別とメモリカード数を表示し、再インデックスを通知する", async () => {
+  it("実データのファイル種別を表示し、再インデックスを通知する", async () => {
     const onStageReindex = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -238,11 +238,79 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByText("Word")).toBeInTheDocument()
     expect(screen.getByText("PowerPoint")).toBeInTheDocument()
     expect(screen.getByText("CSV")).toBeInTheDocument()
-    expect(screen.getByText("20")).toBeInTheDocument()
+    expect(screen.queryByText("メモリカード")).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("inventory.csvの再インデックスをステージング"))
 
     expect(onStageReindex).toHaveBeenCalledWith("doc-csv")
+  })
+
+  it("フォルダ検索でグループを絞り込み、検索結果なしを表示する", async () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[documentGroups[0]!, organizationGroup]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.type(screen.getByLabelText("フォルダを検索"), "全社")
+
+    expect(screen.getByRole("button", { name: /全社公開/ })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /社内規定/ })).not.toBeInTheDocument()
+
+    await userEvent.clear(screen.getByLabelText("フォルダを検索"))
+    await userEvent.type(screen.getByLabelText("フォルダを検索"), "not-found-folder")
+
+    expect(screen.getByText("一致するフォルダはありません。")).toBeInTheDocument()
+  })
+
+  it("ヘッダーの追加と共有ボタンを既存操作へ接続する", async () => {
+    const inputClick = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByTitle("このフォルダにアップロード"))
+    expect(inputClick).toHaveBeenCalled()
+
+    await userEvent.click(screen.getByTitle("共有設定を編集"))
+    expect(screen.getByLabelText("共有フォルダ")).toHaveFocus()
+
+    inputClick.mockRestore()
   })
 
   it("本番UI用の固定フォルダ、固定容量、架空共有先を表示しない", () => {
@@ -268,6 +336,8 @@ describe("DocumentWorkspace", () => {
     expect(screen.queryByText("ガイドライン")).not.toBeInTheDocument()
     expect(screen.queryByText("12.8 / 550 GB")).not.toBeInTheDocument()
     expect(screen.queryByText("管理部")).not.toBeInTheDocument()
+    expect(screen.queryByText("登録済みドキュメント")).not.toBeInTheDocument()
+    expect(screen.queryByText("メモリカード")).not.toBeInTheDocument()
     expect(screen.queryByText("名前を変更")).not.toBeInTheDocument()
     expect(screen.queryByText("移動")).not.toBeInTheDocument()
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
@@ -300,7 +370,7 @@ describe("DocumentWorkspace", () => {
 
     expect(screen.getByText("登録済みドキュメントはありません。")).toBeInTheDocument()
     expect(screen.getByText("共有先は設定されていません。")).toBeInTheDocument()
-    expect(screen.getAllByText("0 件").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText("0 / 0 件を表示")).toBeInTheDocument()
   })
 
   it("組織公開とユーザー共有先、文字列のgroupId metadataを表示に反映する", async () => {
