@@ -442,6 +442,8 @@ const ConversationCitationSchema = z.object({
   documentId: z.string().optional(),
   fileName: z.string().optional(),
   chunkId: z.string().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
   score: z.number().optional(),
   text: z.string().optional()
 })
@@ -556,6 +558,8 @@ export const CitationSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
   chunkId: z.string().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
   score: z.number(),
   text: z.string()
 })

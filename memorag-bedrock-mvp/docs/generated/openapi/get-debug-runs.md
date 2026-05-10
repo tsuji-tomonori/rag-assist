@@ -48,7 +48,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 71 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 80 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -73,6 +73,9 @@ Media type: `application/json`
 | `debugRuns[].clarificationContext.originalQuestion` | `string` | no | `response.debugRuns[].clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `debugRuns[].clarificationContext.selectedOptionId` | `string` | no | `response.debugRuns[].clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
 | `debugRuns[].clarificationContext.selectedValue` | `string` | no | `response.debugRuns[].clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `debugRuns[].conversation` | `object` | no | `response.debugRuns[].conversation` の値。項目名は conversation を表します。 | nullable |
+| `debugRuns[].conversationState` | `object` | no | `response.debugRuns[].conversationState` の値。項目名は conversation state を表します。 | nullable |
+| `debugRuns[].decontextualizedQuery` | `object` | no | `response.debugRuns[].decontextualizedQuery` の値。項目名は decontextualized query を表します。 | nullable |
 | `debugRuns[].pipelineVersions` | `object` | no | `response.debugRuns[].pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
 | `debugRuns[].pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
 | `debugRuns[].pipelineVersions.chunkerVersion` | `string` | yes | `response.debugRuns[].pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
@@ -102,18 +105,24 @@ Media type: `application/json`
 | `debugRuns[].citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `debugRuns[].citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `debugRuns[].citations[].chunkId` | `string` | no | `response.debugRuns[].citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debugRuns[].citations[].pageStart` | `integer` | no | `response.debugRuns[].citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `debugRuns[].citations[].pageEnd` | `integer` | no | `response.debugRuns[].citations[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `debugRuns[].citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `debugRuns[].citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `debugRuns[].retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
 | `debugRuns[].retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `debugRuns[].retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `debugRuns[].retrieved[].chunkId` | `string` | no | `response.debugRuns[].retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debugRuns[].retrieved[].pageStart` | `integer` | no | `response.debugRuns[].retrieved[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `debugRuns[].retrieved[].pageEnd` | `integer` | no | `response.debugRuns[].retrieved[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `debugRuns[].retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `debugRuns[].retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `debugRuns[].finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
 | `debugRuns[].finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `debugRuns[].finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `debugRuns[].finalEvidence[].chunkId` | `string` | no | `response.debugRuns[].finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `debugRuns[].finalEvidence[].pageStart` | `integer` | no | `response.debugRuns[].finalEvidence[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `debugRuns[].finalEvidence[].pageEnd` | `integer` | no | `response.debugRuns[].finalEvidence[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `debugRuns[].finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `debugRuns[].finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `debugRuns[].steps` | `array<object>` | yes | `response.debugRuns[].steps` の値。項目名は steps を表します。 | - |

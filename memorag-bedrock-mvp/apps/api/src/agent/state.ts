@@ -177,6 +177,8 @@ const ConversationCitationSchema = z.object({
   documentId: z.string().optional(),
   fileName: z.string().optional(),
   chunkId: z.string().optional(),
+  pageStart: z.number().int().min(1).optional(),
+  pageEnd: z.number().int().min(1).optional(),
   score: z.number().optional(),
   text: z.string().optional()
 })
@@ -217,6 +219,7 @@ export const ConversationStateSchema = z.object({
   activeDocuments: z.array(z.string()).default(() => []),
   activeTopics: z.array(z.string()).default(() => []),
   constraints: z.array(z.string()).default(() => []),
+  previousCitations: z.array(ConversationCitationSchema).default(() => []),
   previousCitationCount: z.number().int().nonnegative().default(0),
   turnDependency: z.string().default("standalone")
 })

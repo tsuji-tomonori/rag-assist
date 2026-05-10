@@ -2,13 +2,16 @@ import type { Citation, RetrievedVector } from "../types.js"
 import { ragRuntimePolicy } from "./runtime-policy.js"
 
 export function toCitation(hit: RetrievedVector): Citation {
-  return {
+  const citation: Citation = {
     documentId: hit.metadata.documentId,
     fileName: hit.metadata.fileName,
     chunkId: hit.metadata.chunkId ?? hit.metadata.memoryId,
     score: Number(hit.score.toFixed(4)),
     text: hit.metadata.text ?? ""
   }
+  if (hit.metadata.pageStart) citation.pageStart = hit.metadata.pageStart
+  if (hit.metadata.pageEnd) citation.pageEnd = hit.metadata.pageEnd
+  return citation
 }
 
 export function estimateTokenCount(text: string): number {
