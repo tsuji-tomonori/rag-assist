@@ -35,6 +35,7 @@
 - `DocumentWorkspace` に保存先 chip、アップロード進捗パネル、空状態 CTA、専用確認ダイアログを追加した。
 - 削除、reindex stage、cutover、rollback は confirm 後に実行するよう変更した。
 - `DocumentWorkspace.test.tsx` と `useDocuments.test.ts` に、保存先 reset、confirm dialog、progress、行単位 loading のテストを追加した。
+- CI の web coverage failure を受け、`App.test.tsx` の統合操作を確認ダイアログと保存先選択後のアップロードに合わせて更新した。
 - `npm run docs:web-inventory` で生成 UI docs を同期した。
 
 ## 5. 成果物
@@ -64,6 +65,8 @@
 
 - `npm ci`: pass。worktree に依存関係がなく、初回 test が `vitest: not found` で失敗したため実行。
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- DocumentWorkspace useDocuments`: pass
+- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- App DocumentWorkspace useDocuments`: pass
+- `npm --prefix memorag-bedrock-mvp run test:coverage -w @memorag-mvp/web`: fail -> App 統合テストを修正後 pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
 - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
 - `git diff --check`: pass

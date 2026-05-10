@@ -50,6 +50,8 @@
 - 作業レポート: `reports/working/20260510-1107-document-management-ux-p0.md`
 - 検証:
   - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- DocumentWorkspace useDocuments`: pass
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- App DocumentWorkspace useDocuments`: pass
+  - `npm --prefix memorag-bedrock-mvp run test:coverage -w @memorag-mvp/web`: fail -> App 統合テスト修正後 pass
   - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
   - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
   - `git diff --check`: pass
