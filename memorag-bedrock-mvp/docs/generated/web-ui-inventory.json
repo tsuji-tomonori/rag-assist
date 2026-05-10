@@ -126,7 +126,7 @@
         "chat"
       ],
       "componentCount": 11,
-      "interactionCount": 44
+      "interactionCount": 40
     },
     {
       "feature": "debug",
@@ -3700,9 +3700,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:57:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:58:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 57,
+      "line": 58,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -3744,9 +3744,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:83:label",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:84:label",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 83,
+      "line": 84,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "label",
@@ -3766,20 +3766,22 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:85:select",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86:select",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 85,
+      "line": 86,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "select",
       "isIntrinsic": true,
-      "label": "suiteId",
+      "label": "selectedSuite?.suiteId ?? \"\"",
       "a11y": {
         "accessibleName": "テスト種別",
         "accessibleNameSource": "label",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=!hasSuites"
+        ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
@@ -3792,7 +3794,11 @@
       "attributes": [
         {
           "name": "value",
-          "value": "suiteId"
+          "value": "selectedSuite?.suiteId ?? \"\""
+        },
+        {
+          "name": "disabled",
+          "value": "!hasSuites"
         },
         {
           "name": "onChange",
@@ -3802,16 +3808,16 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:87:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 86,
+      "line": 87,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
       "isIntrinsic": true,
-      "label": "suiteId",
+      "label": "benchmark suite を取得できません",
       "a11y": {
-        "accessibleName": "standard-agent-v1",
+        "accessibleName": "benchmark suite を取得できません",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -3823,15 +3829,15 @@
       "attributes": [
         {
           "name": "value",
-          "value": "suiteId"
+          "value": ""
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:88:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:89:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 88,
+      "line": 89,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -3856,9 +3862,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:104:label",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:105:label",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 104,
+      "line": 105,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "label",
@@ -3878,14 +3884,14 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:106:input",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:107:input",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 106,
+      "line": 107,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "input",
       "isIntrinsic": true,
-      "label": "selectedSuite?.datasetS3Key ?? \"datasets/agent/standard-v1.jsonl\"",
+      "label": "selectedSuite?.datasetS3Key ?? \"suite 未選択\"",
       "a11y": {
         "accessibleName": "データセット",
         "accessibleNameSource": "label",
@@ -3899,15 +3905,15 @@
       "attributes": [
         {
           "name": "value",
-          "value": "selectedSuite?.datasetS3Key ?? \"datasets/agent/standard-v1.jsonl\""
+          "value": "selectedSuite?.datasetS3Key ?? \"suite 未選択\""
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:108:label",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:109:label",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 108,
+      "line": 109,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "label",
@@ -3927,9 +3933,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:110:select",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:111:select",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 110,
+      "line": 111,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "select",
@@ -3963,9 +3969,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:111:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:112:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 111,
+      "line": 112,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -3990,9 +3996,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:112:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:113:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 112,
+      "line": 113,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -4017,9 +4023,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:113:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:114:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 113,
+      "line": 114,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -4044,9 +4050,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:116:label",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:117:label",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 116,
+      "line": 117,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "label",
@@ -4066,9 +4072,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:118:input",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:119:input",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 118,
+      "line": 119,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "input",
@@ -4106,9 +4112,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:127:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:128:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 127,
+      "line": 128,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -4120,7 +4126,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=loading || !canRun"
+          "disabled=loading || !canRun || !selectedSuite"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
@@ -4142,15 +4148,15 @@
         },
         {
           "name": "disabled",
-          "value": "loading || !canRun"
+          "value": "loading || !canRun || !selectedSuite"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:131:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:132:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 131,
+      "line": 132,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -4190,9 +4196,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:183:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:184:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 183,
+      "line": 184,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -4240,9 +4246,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:195:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:196:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 195,
+      "line": 196,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -5537,9 +5543,9 @@
       "component": "QuestionEscalationPanel",
       "element": "label",
       "isIntrinsic": true,
-      "label": "担当部署 / 総務部 / 人事部 / 情報システム部 / 経理部",
+      "label": "担当部署",
       "a11y": {
-        "accessibleName": "担当部署 / 総務部 / 人事部 / 情報システム部 / 経理部",
+        "accessibleName": "担当部署",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -5552,17 +5558,17 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:96:select",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:96:input",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
       "line": 96,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
-      "element": "select",
+      "element": "input",
       "isIntrinsic": true,
-      "label": "assigneeDepartment",
+      "label": "担当部署を入力",
       "a11y": {
-        "accessibleName": "総務部 / 人事部 / 情報システム部 / 経理部",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "担当部署を入力",
+        "accessibleNameSource": "placeholder",
         "descriptionRefs": "-",
         "role": "-",
         "state": [],
@@ -5583,122 +5589,18 @@
         {
           "name": "onChange",
           "value": "(event) => setAssigneeDepartment(event.target.value)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:97:option",
-      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 97,
-      "feature": "chat",
-      "component": "QuestionEscalationPanel",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "総務部",
-      "a11y": {
-        "accessibleName": "総務部",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
+        },
         {
-          "name": "value",
-          "value": "総務部"
+          "name": "placeholder",
+          "value": "担当部署を入力"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:98:option",
-      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 98,
-      "feature": "chat",
-      "component": "QuestionEscalationPanel",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "人事部",
-      "a11y": {
-        "accessibleName": "人事部",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "人事部"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:99:option",
-      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 99,
-      "feature": "chat",
-      "component": "QuestionEscalationPanel",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "情報システム部",
-      "a11y": {
-        "accessibleName": "情報システム部",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "情報システム部"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:100:option",
+      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:100:button",
       "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
       "line": 100,
-      "feature": "chat",
-      "component": "QuestionEscalationPanel",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "経理部",
-      "a11y": {
-        "accessibleName": "経理部",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "経理部"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx:105:button",
-      "file": "apps/web/src/features/chat/components/QuestionEscalationPanel.tsx",
-      "line": 105,
       "feature": "chat",
       "component": "QuestionEscalationPanel",
       "element": "button",

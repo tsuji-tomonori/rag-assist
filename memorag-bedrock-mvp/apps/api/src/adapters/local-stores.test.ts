@@ -106,7 +106,7 @@ test("local question store creates, lists, answers, resolves, and rejects missin
   assert.equal(question.requesterName, "未設定")
   assert.equal(question.requesterUserId, "user-1")
   assert.equal(question.requesterDepartment, "未設定")
-  assert.equal(question.assigneeDepartment, "総務部")
+  assert.equal(question.assigneeDepartment, "未設定")
   assert.equal((await store.get(question.questionId))?.questionId, question.questionId)
   assert.deepEqual((await store.list()).map((item) => item.questionId), [question.questionId])
 
@@ -121,7 +121,7 @@ test("local question store creates, lists, answers, resolves, and rejects missin
   })
   assert.equal(answered.status, "answered")
   assert.equal(answered.responderName, "未設定")
-  assert.equal(answered.responderDepartment, "総務部")
+  assert.equal(answered.responderDepartment, "未設定")
   assert.equal(answered.notifyRequester, false)
 
   const resolved = await store.resolve(question.questionId)
