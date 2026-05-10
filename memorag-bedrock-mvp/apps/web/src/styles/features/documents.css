@@ -2,6 +2,24 @@
   padding: 20px;
   color: #68758f;
   font-weight: 800;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.empty-question-panel strong {
+  color: #13223d;
+}
+
+.empty-question-panel button {
+  justify-self: start;
+  min-height: 34px;
+  border: 1px solid #bdd1f4;
+  border-radius: 7px;
+  padding: 0 11px;
+  color: #1f62dc;
+  background: #f8fbff;
+  font-weight: 900;
 }
 
 .document-workspace {
@@ -255,8 +273,31 @@
   gap: 8px;
 }
 
+.document-file-panel-head > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
 .document-folder-actions {
   flex: 0 0 auto;
+}
+
+.upload-destination-chip {
+  width: fit-content;
+  border: 1px solid #bcd2f6;
+  border-radius: 999px;
+  padding: 3px 9px;
+  color: #1d5ecf;
+  background: #f4f8ff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.upload-destination-chip.missing {
+  border-color: #ead39d;
+  color: #7a5412;
+  background: #fff9eb;
 }
 
 .document-file-table {
@@ -509,6 +550,13 @@
   font-weight: 850;
 }
 
+.field-hint {
+  margin: 0;
+  color: #6c7890;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .compact-file-input {
   min-height: 42px;
   border: 1px solid #dce4ee;
@@ -527,6 +575,186 @@
   height: 1px;
   opacity: 0;
   pointer-events: none;
+}
+
+.upload-progress-panel {
+  border: 1px solid #dce4ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  background: #fbfdff;
+}
+
+.upload-progress-panel > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  color: #253550;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.upload-progress-panel code {
+  width: fit-content;
+  border-radius: 5px;
+  padding: 2px 5px;
+  background: #edf2f8;
+  color: #34465f;
+}
+
+.upload-progress-panel ol {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  list-style: none;
+}
+
+.upload-progress-panel li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+  color: #718098;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.upload-progress-panel li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 2px solid #c6d2e1;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.upload-progress-panel li.done,
+.upload-progress-panel li.active {
+  color: #16396e;
+}
+
+.upload-progress-panel li.done::before {
+  border-color: #1f8f5f;
+  background: #1f8f5f;
+}
+
+.upload-progress-panel li.active::before {
+  border-color: #1267ee;
+  background: #d9e8ff;
+}
+
+.upload-progress-panel li.failed::before {
+  border-color: #d12f2f;
+  background: #ffe9e9;
+}
+
+.upload-error-message {
+  margin: 0;
+  color: #b12222;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.upload-complete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.upload-complete-actions span {
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: #37506f;
+  background: #eef3f8;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(18, 29, 49, 0.42);
+}
+
+.confirm-dialog {
+  width: min(560px, 100%);
+  border: 1px solid #d6e0ee;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  color: #253550;
+  background: #fff;
+  box-shadow: 0 22px 54px rgba(17, 31, 52, 0.22);
+}
+
+.confirm-dialog h3,
+.confirm-dialog p {
+  margin: 0;
+}
+
+.confirm-dialog h3 {
+  color: #111a2e;
+  font-size: 18px;
+}
+
+.confirm-dialog p {
+  color: #53647c;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.confirm-dialog dl {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.confirm-dialog dl div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 10px;
+  font-size: 13px;
+}
+
+.confirm-dialog dt {
+  color: #68758f;
+  font-weight: 850;
+}
+
+.confirm-dialog dd {
+  margin: 0;
+  color: #142540;
+  overflow-wrap: anywhere;
+  font-weight: 900;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirm-dialog-actions button {
+  min-height: 36px;
+  border: 1px solid #cbd8e7;
+  border-radius: 7px;
+  padding: 0 13px;
+  color: #2d415f;
+  background: #fff;
+  font-weight: 900;
+}
+
+.confirm-dialog-actions button.danger {
+  border-color: #e0aaaa;
+  color: #b12222;
+  background: #fff6f6;
 }
 
 .sharing-member-list,
