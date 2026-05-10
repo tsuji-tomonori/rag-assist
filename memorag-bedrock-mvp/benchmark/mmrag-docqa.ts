@@ -40,7 +40,7 @@ type MmragDocqaDatasetRow = {
   topK: 20
   memoryTopK: 6
   minScore: 0.15
-  useMemory: false
+  useMemory: boolean
   metadata: {
     sourceDataset: "yubo2333/MMLongBench-Doc"
     sourceSplit: "train"
@@ -71,13 +71,14 @@ export async function prepareMmragDocqaBenchmark(env: NodeJS.ProcessEnv, fetchIm
   const corpusDir = resolveOutput(env.MMRAG_DOCQA_CORPUS_DIR ?? ".local-data/mmrag-docqa-v1/corpus")
   const expectedRows = positiveInt(env.MMRAG_DOCQA_EXPECTED_TOTAL) ?? expectedFullQuestionCount
   const allowRowCountDrift = env.MMRAG_DOCQA_ALLOW_ROW_COUNT_DRIFT === "1"
+  const useMemory = env.MMRAG_DOCQA_USE_MEMORY === "1"
 
   const sourceRows = await fetchAllRows(fetchImpl)
   if (!allowRowCountDrift && sourceRows.length !== expectedRows) {
     throw new Error(`Expected ${expectedRows} MMLongBench-Doc rows for mmrag-docqa-v1, got ${sourceRows.length}`)
   }
 
-  const datasetRows = sourceRows.map((row, index) => convertMmLongBenchRow(row, index))
+  const datasetRows = sourceRows.map((row, index) => convertMmLongBenchRow(row, index, { useMemory }))
   await mkdir(path.dirname(datasetOutput), { recursive: true })
   await writeJsonl(datasetOutput, datasetRows)
   console.log(`Wrote ${datasetRows.length} MMRAG-DocQA rows to ${datasetOutput}`)
@@ -94,7 +95,7 @@ export async function prepareMmragDocqaBenchmark(env: NodeJS.ProcessEnv, fetchIm
   )
 }
 
-export function convertMmLongBenchRow(row: MmLongBenchRow, index: number): MmragDocqaDatasetRow {
+export function convertMmLongBenchRow(row: MmLongBenchRow, index: number, options: { useMemory?: boolean } = {}): MmragDocqaDatasetRow {
   const docId = safeDocumentFileName(required(row.doc_id, "doc_id"))
   const question = required(row.question, "question")
   const answer = required(row.answer, "answer")
@@ -132,7 +133,7 @@ export function convertMmLongBenchRow(row: MmLongBenchRow, index: number): Mmrag
     topK: 20,
     memoryTopK: 6,
     minScore: 0.15,
-    useMemory: false,
+    useMemory: options.useMemory ?? false,
     metadata: {
       sourceDataset: datasetName,
       sourceSplit: defaultSplit,

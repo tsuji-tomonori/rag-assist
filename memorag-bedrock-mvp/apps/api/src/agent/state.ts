@@ -34,12 +34,13 @@ export const RetrievedChunkSchema = z.object({
     extractionMethod: z.string().optional(),
     lifecycleStatus: z.enum(["active", "staging", "superseded"]).optional(),
     sources: z.array(z.string()).optional(),
+    sourceChunkIds: z.array(z.string()).optional(),
     rrfScore: z.number().optional(),
     lexicalRank: z.number().optional(),
     semanticRank: z.number().optional(),
     crossQueryRrfScore: z.number().optional(),
     crossQueryRank: z.number().optional(),
-    expansionSource: z.enum(["hybrid", "context_window"]).optional(),
+    expansionSource: z.enum(["hybrid", "context_window", "memory_source"]).optional(),
     createdAt: z.string()
   })
 })
@@ -64,6 +65,8 @@ export const CitationSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
   chunkId: z.string().optional(),
+  pageStart: z.number().int().min(1).optional(),
+  pageEnd: z.number().int().min(1).optional(),
   score: z.number(),
   text: z.string()
 })
@@ -360,7 +363,8 @@ export const ActionObservationSchema = z.object({
       sourceCounts: z.object({
         lexical: z.number().int().min(0),
         semantic: z.number().int().min(0),
-        hybrid: z.number().int().min(0)
+        hybrid: z.number().int().min(0),
+        memory: z.number().int().min(0)
       })
     })
     .optional(),
