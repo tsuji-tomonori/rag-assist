@@ -2,7 +2,6 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import type { CreateDocumentGroupInput, DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
-import { documentRouteKey, type DocumentRouteChangeOptions, type DocumentRouteState } from "../routeState.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
 import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
@@ -29,6 +28,17 @@ import {
   type WorkspaceFolder
 } from "./workspace/documentWorkspaceUtils.js"
 
+export type DocumentWorkspaceUrlState = {
+  folderId?: string | undefined
+  documentId?: string | undefined
+  migrationId?: string | undefined
+  query?: string | undefined
+  type?: string | undefined
+  status?: string | undefined
+  groupFilter?: string | undefined
+  sort?: DocumentSortKey | undefined
+}
+
 export function DocumentWorkspace({
   documents,
   documentGroups = [],
@@ -48,9 +58,9 @@ export function DocumentWorkspace({
   onStageReindex,
   onCutoverReindex,
   onRollbackReindex,
-  initialRouteState = {},
-  onRouteStateChange,
-  onBack
+  onBack,
+  urlState,
+  onUrlStateChange
 }: {
   documents: DocumentManifest[]
   documentGroups?: DocumentGroup[]
@@ -70,9 +80,9 @@ export function DocumentWorkspace({
   onStageReindex: (documentId: string) => Promise<void>
   onCutoverReindex: (migrationId: string) => Promise<void>
   onRollbackReindex: (migrationId: string) => Promise<void>
-  initialRouteState?: DocumentRouteState
-  onRouteStateChange?: (state: DocumentRouteState, options?: DocumentRouteChangeOptions) => void
   onBack: () => void
+  urlState?: DocumentWorkspaceUrlState
+  onUrlStateChange?: (state: DocumentWorkspaceUrlState) => void
 }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [groupName, setGroupName] = useState("")
@@ -84,21 +94,21 @@ export function DocumentWorkspace({
   const [moveToCreatedGroup, setMoveToCreatedGroup] = useState(true)
   const [shareGroupId, setShareGroupId] = useState("")
   const [shareGroups, setShareGroups] = useState("")
-  const [selectedFolderId, setSelectedFolderId] = useState(initialRouteState.groupId ?? "all")
+  const [selectedFolderId, setSelectedFolderId] = useState(urlState?.folderId ?? "all")
   const [folderSearch, setFolderSearch] = useState("")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
-  const [documentQuery, setDocumentQuery] = useState(initialRouteState.query ?? "")
-  const [documentTypeFilter, setDocumentTypeFilter] = useState("all")
-  const [documentStatusFilter, setDocumentStatusFilter] = useState(initialRouteState.status ?? "all")
-  const [documentGroupFilter, setDocumentGroupFilter] = useState("all")
-  const [documentSort, setDocumentSort] = useState<DocumentSortKey>("updatedDesc")
-  const [selectedDocument, setSelectedDocument] = useState<DocumentManifest | null>(null)
+  const [documentQuery, setDocumentQuery] = useState(urlState?.query ?? "")
+  const [documentTypeFilter, setDocumentTypeFilter] = useState(urlState?.type ?? "all")
+  const [documentStatusFilter, setDocumentStatusFilter] = useState(urlState?.status ?? "all")
+  const [documentGroupFilter, setDocumentGroupFilter] = useState(urlState?.groupFilter ?? "all")
+  const [documentSort, setDocumentSort] = useState<DocumentSortKey>(urlState?.sort ?? "updatedDesc")
+  const [selectedDocumentId, setSelectedDocumentId] = useState(urlState?.documentId ?? "")
+  const [selectedMigrationId, setSelectedMigrationId] = useState(urlState?.migrationId ?? "")
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
   const operationEventSeqRef = useRef(0)
-  const initialRouteStateKey = documentRouteKey(initialRouteState)
 
   const folders = useMemo<WorkspaceFolder[]>(() => {
     return documentGroups.map((group) => ({
@@ -137,6 +147,7 @@ export function DocumentWorkspace({
       return true
     })
     .sort((left, right) => compareDocuments(left, right, documentSort))
+  const selectedDocument = selectedDocumentId ? documents.find((document) => document.documentId === selectedDocumentId) ?? null : null
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
   const recentOperationEvents = useMemo(
     () => buildOperationEvents({ documents, documentGroups, migrations, uploadState, sessionOperationEvents }),
@@ -161,20 +172,39 @@ export function DocumentWorkspace({
   const createVisibilityLabel = visibilityLabelValue(groupVisibility)
 
   useEffect(() => {
-    setSelectedFolderId(initialRouteState.groupId ?? "all")
-    setDocumentQuery(initialRouteState.query ?? "")
-    setDocumentStatusFilter(initialRouteState.status ?? "all")
-    if (initialRouteState.groupId && documentGroups.some((group) => group.groupId === initialRouteState.groupId)) {
-      onUploadGroupChange(initialRouteState.groupId)
-    } else if (!initialRouteState.groupId) {
-      onUploadGroupChange("")
-    }
-    if (initialRouteState.documentId) {
-      setSelectedDocument(documents.find((document) => document.documentId === initialRouteState.documentId) ?? null)
-    } else {
-      setSelectedDocument(null)
-    }
-  }, [initialRouteStateKey, documents, documentGroups, initialRouteState.groupId, initialRouteState.documentId, initialRouteState.query, initialRouteState.status, onUploadGroupChange])
+    if (!urlState) return
+    setSelectedFolderId(urlState.folderId ?? "all")
+    setDocumentQuery(urlState.query ?? "")
+    setDocumentTypeFilter(urlState.type ?? "all")
+    setDocumentStatusFilter(urlState.status ?? "all")
+    setDocumentGroupFilter(urlState.groupFilter ?? "all")
+    setDocumentSort(urlState.sort ?? "updatedDesc")
+    setSelectedDocumentId(urlState.documentId ?? "")
+    setSelectedMigrationId(urlState.migrationId ?? "")
+  }, [urlState, urlState?.documentId, urlState?.folderId, urlState?.groupFilter, urlState?.migrationId, urlState?.query, urlState?.sort, urlState?.status, urlState?.type])
+
+  useEffect(() => {
+    onUrlStateChange?.({
+      folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
+      documentId: selectedDocumentId || undefined,
+      migrationId: selectedMigrationId || undefined,
+      query: documentQuery.trim() || undefined,
+      type: documentTypeFilter === "all" ? undefined : documentTypeFilter,
+      status: documentStatusFilter === "all" ? undefined : documentStatusFilter,
+      groupFilter: documentGroupFilter === "all" ? undefined : documentGroupFilter,
+      sort: documentSort === "updatedDesc" ? undefined : documentSort
+    })
+  }, [
+    documentGroupFilter,
+    documentQuery,
+    documentSort,
+    documentStatusFilter,
+    documentTypeFilter,
+    onUrlStateChange,
+    selectedDocumentId,
+    selectedMigrationId,
+    selectedFolderId
+  ])
 
   function recordSessionOperation(actionLabel: string, target: string, detail?: string, result: DocumentOperationEvent["result"] = "要求済み") {
     operationEventSeqRef.current += 1
@@ -187,33 +217,6 @@ export function DocumentWorkspace({
       occurredAt: new Date().toISOString()
     }
     setSessionOperationEvents((current) => [event, ...current].slice(0, 8))
-  }
-
-  function routeStateWithFilters(next: DocumentRouteState = {}): DocumentRouteState {
-    return {
-      ...next,
-      ...(documentQuery.trim() ? { query: documentQuery.trim() } : {}),
-      ...(documentStatusFilter !== "all" ? { status: documentStatusFilter } : {})
-    }
-  }
-
-  function updateRouteState(next: DocumentRouteState, options?: DocumentRouteChangeOptions) {
-    onRouteStateChange?.(routeStateWithFilters(next), options)
-  }
-
-  function updateRouteFilters(nextQuery: string, nextStatus: string) {
-    const base: DocumentRouteState = selectedDocument
-      ? { documentId: selectedDocument.documentId }
-      : initialRouteState.migrationId
-        ? { migrationId: initialRouteState.migrationId }
-        : selectedGroupId
-          ? { groupId: selectedGroupId }
-          : {}
-    onRouteStateChange?.({
-      ...base,
-      ...(nextQuery.trim() ? { query: nextQuery.trim() } : {}),
-      ...(nextStatus !== "all" ? { status: nextStatus } : {})
-    }, { replace: true })
   }
 
   async function onSubmit(event: FormEvent) {
@@ -243,7 +246,6 @@ export function DocumentWorkspace({
     if (createdGroup?.groupId && moveToCreatedGroup) {
       setSelectedFolderId(createdGroup.groupId)
       onUploadGroupChange(createdGroup.groupId)
-      updateRouteState({ groupId: createdGroup.groupId })
     }
     setGroupName("")
     setGroupDescription("")
@@ -295,7 +297,6 @@ export function DocumentWorkspace({
   function selectFolder(folderId: string, groupId: string) {
     setSelectedFolderId(folderId)
     onUploadGroupChange(groupId)
-    updateRouteState(groupId ? { groupId } : {})
   }
 
   return (
@@ -352,26 +353,20 @@ export function DocumentWorkspace({
           canReindex={canReindex}
           canUploadToDestination={canUploadToDestination}
           migrations={migrations}
-          selectedMigrationId={initialRouteState.migrationId}
+          selectedMigrationId={selectedMigrationId}
           uploadInputRef={uploadInputRef}
           shareSelectRef={shareSelectRef}
-          onDocumentQueryChange={(value) => {
-            setDocumentQuery(value)
-            updateRouteFilters(value, documentStatusFilter)
-          }}
+          onDocumentQueryChange={setDocumentQuery}
           onDocumentTypeFilterChange={setDocumentTypeFilter}
-          onDocumentStatusFilterChange={(value) => {
-            setDocumentStatusFilter(value)
-            updateRouteFilters(documentQuery, value)
-          }}
+          onDocumentStatusFilterChange={setDocumentStatusFilter}
           onDocumentGroupFilterChange={setDocumentGroupFilter}
           onDocumentSortChange={setDocumentSort}
           onSelectDocument={(document) => {
-            setSelectedDocument(document)
-            updateRouteState({ documentId: document.documentId })
+            setSelectedDocumentId(document.documentId)
+            setSelectedMigrationId("")
           }}
           onConfirmAction={(action) => {
-            if (action.kind === "cutover" || action.kind === "rollback") updateRouteState({ migrationId: action.migration.migrationId })
+            if (action.kind === "cutover" || action.kind === "rollback") setSelectedMigrationId(action.migration.migrationId)
             setConfirmAction(action)
           }}
         />
@@ -444,17 +439,14 @@ export function DocumentWorkspace({
           documentGroups={documentGroups}
           copied={copiedDocumentId === selectedDocument.documentId}
           onCopyDocumentId={() => void copyDocumentId(selectedDocument.documentId)}
-          onClose={() => {
-            setSelectedDocument(null)
-            updateRouteState(selectedGroupId ? { groupId: selectedGroupId } : {})
-          }}
+          onClose={() => setSelectedDocumentId("")}
           onDelete={() => {
             setConfirmAction({ kind: "delete", document: selectedDocument })
-            setSelectedDocument(null)
+            setSelectedDocumentId("")
           }}
           onStageReindex={() => {
             setConfirmAction({ kind: "stage", document: selectedDocument })
-            setSelectedDocument(null)
+            setSelectedDocumentId("")
           }}
           canDelete={canDelete}
           canReindex={canReindex}

@@ -7,6 +7,7 @@ import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkI
 import { createBenchmarkApiClient } from "./api-client.js"
 import { createSkippedDatasetRow, skippedCorpusFileNameSet, skippedExpectedFileNames, type SkippedDatasetRow } from "./skipped-corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
+import { normalizeExpectedDrawingValue, normalizedDrawingValuesMatch, type DrawingValueKind } from "./metrics/drawing-normalization.js"
 import {
   assertComparableProfiles,
   assertSuiteEvaluatorProfile,
@@ -44,9 +45,14 @@ type DatasetRow = {
   expectedFileNames?: string[]
   expectedDocumentIds?: string[]
   expectedPages?: Array<number | string>
+  expectedRegionIds?: string[]
   forbiddenFiles?: string[]
   forbiddenDocumentIds?: string[]
   expectedFactSlots?: ExpectedFactSlot[]
+  expectedNormalizedValues?: ExpectedNormalizedValue[]
+  expectedExtractionValues?: ExpectedNormalizedValue[]
+  expectedCounts?: ExpectedCount[]
+  expectedGraphResolutions?: ExpectedGraphResolution[]
   modelId?: string
   embeddingModelId?: string
   clueModelId?: string
@@ -80,14 +86,34 @@ type ExpectedFactSlot = {
   expectedDocumentIds?: string[]
 }
 
+type ExpectedNormalizedValue = string | {
+  raw?: string
+  canonical?: string
+  kind?: DrawingValueKind
+}
+
+type ExpectedCount = {
+  id?: string
+  label?: string
+  expected: number
+}
+
+type ExpectedGraphResolution = {
+  id?: string
+  target?: string
+}
+
 type Citation = {
   documentId?: string
   fileName?: string
   chunkId?: string
+  regionId?: string
+  regionType?: string
   pageStart?: number
   pageEnd?: number
   score?: number
   text?: string
+  metadata?: Record<string, unknown>
 }
 
 type ConversationTurn = {
@@ -116,7 +142,34 @@ type BenchmarkResponse = Partial<BenchmarkQueryResponse> & {
     unsupportedSentences?: Array<{ sentence?: string; reason?: string }>
     totalSentences?: number
   }
+  diagnostics?: {
+    extractions?: DiagnosticExtraction[]
+    counts?: DiagnosticCount[]
+    graphResolutions?: DiagnosticGraphResolution[]
+  }
   error?: string
+}
+
+type DiagnosticExtraction = {
+  id?: string
+  kind?: DrawingValueKind
+  raw?: string
+  value?: string
+  canonical?: string
+  normalizedValue?: string
+}
+
+type DiagnosticCount = {
+  id?: string
+  label?: string
+  value?: number
+  count?: number
+}
+
+type DiagnosticGraphResolution = {
+  id?: string
+  target?: string
+  resolvedTarget?: string
 }
 
 type ClarificationResponseOption = NonNullable<NonNullable<BenchmarkResponse["clarification"]>["options"]>[number]
@@ -144,10 +197,16 @@ type RowEvaluation = {
   expectedPageHit: boolean | null
   pageRecallAtK: boolean | null
   pageRecallAt20: boolean | null
+  regionRecallAtK: boolean | null
+  regionRecallAt20: boolean | null
   retrievalRecallAtK: boolean | null
   retrievalRecallAt20: boolean | null
   retrievalMrrAtK: number | null
   factSlotCoverage: number | null
+  normalizedAnswerMatch: boolean | null
+  extractionAccuracy: boolean | null
+  countMape: number | null
+  graphResolutionAccuracy: boolean | null
   supportedFactSlots: number | null
   totalFactSlots: number
   citationSupportPass: boolean | null
@@ -244,6 +303,12 @@ type Summary = {
     expectedFileHitRate: number | null
     pageRecallAtK: number | null
     pageRecallAt20: number | null
+    regionRecallAtK: number | null
+    regionRecallAt20: number | null
+    normalizedAnswerAccuracy: number | null
+    extractionAccuracy: number | null
+    countMape: number | null
+    graphResolutionAccuracy: number | null
     retrievalRecallAtK: number | null
     retrievalMrrAtK: number | null
     retrievalRecallAt20: number | null
@@ -287,6 +352,7 @@ type Summary = {
     answerPreview: string
     categories: FailureCategory[]
   }>
+  diagnosticFailureBreakdown: Record<DiagnosticFailureCategory, number>
   qualityReview: QualityReview
 }
 
@@ -310,6 +376,8 @@ type FailureCategory =
   | "chunk_failure"
   | "generation_failure"
   | "refusal_failure"
+
+type DiagnosticFailureCategory = "retrieval" | "ocr" | "grounding" | "reasoning" | "abstention"
 
 const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
 const apiAuthToken = process.env.API_AUTH_TOKEN
@@ -601,6 +669,7 @@ function evaluateRow(
   const expectedFiles = toArray(row.expectedFiles ?? row.expectedFileNames)
   const expectedDocumentIds = toArray(row.expectedDocumentIds)
   const expectedPages = toArray(row.expectedPages).map(String)
+  const expectedRegionIds = toArray(row.expectedRegionIds)
   const forbiddenFiles = toArray(row.forbiddenFiles)
   const forbiddenDocumentIds = toArray(row.forbiddenDocumentIds)
   const failureReasons: string[] = []
@@ -675,6 +744,12 @@ function evaluateRow(
   const pageRecallAt20 =
     expectedPages.length > 0 ? hasExpectedPageRecallAtK(retrieved, expectedPages, 20) : null
 
+  const regionRecallAtK =
+    expectedRegionIds.length > 0 ? hasExpectedRegionRecallAtK(retrieved, expectedRegionIds, evaluatorProfile.retrieval.recallK) : null
+  if (regionRecallAtK === false) failureReasons.push(`region_recall_at_${evaluatorProfile.retrieval.recallK}_miss`)
+  const regionRecallAt20 =
+    expectedRegionIds.length > 0 ? hasExpectedRegionRecallAtK(retrieved, expectedRegionIds, 20) : null
+
   const retrievalRecallAtK =
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
       ? hasRetrievalRecallAtK(retrieved, expectedFiles, expectedDocumentIds, evaluatorProfile.retrieval.recallK)
@@ -691,6 +766,21 @@ function evaluateRow(
 
   const factSlotResult = evaluateFactSlots(row.expectedFactSlots ?? [], answer, [...citations, ...finalEvidence], expectedAnswerable)
   if (factSlotResult.coverage !== null && factSlotResult.coverage < 1) failureReasons.push("fact_slot_not_covered")
+  const expectedNormalizedValues = toNormalizedExpectedValues(row.expectedNormalizedValues ?? [])
+  const normalizedAnswerMatch = expectedAnswerable && expectedNormalizedValues.length > 0
+    ? normalizedDrawingValuesMatch(expectedNormalizedValues, answer, [...citations, ...finalEvidence].map((citation) => citation.text ?? "").join("\n"))
+    : null
+  if (normalizedAnswerMatch === false) failureReasons.push("normalized_answer_mismatch")
+  const extractionAccuracy = expectedAnswerable && (row.expectedExtractionValues?.length ?? 0) > 0
+    ? diagnosticExtractionsMatch(row.expectedExtractionValues ?? [], body)
+    : null
+  if (extractionAccuracy === false) failureReasons.push("extraction_accuracy_mismatch")
+  const countMape = expectedAnswerable && (row.expectedCounts?.length ?? 0) > 0 ? diagnosticCountMape(row.expectedCounts ?? [], body) : null
+  if (countMape !== null && countMape > 0) failureReasons.push("count_mape_nonzero")
+  const graphResolutionAccuracy = expectedAnswerable && (row.expectedGraphResolutions?.length ?? 0) > 0
+    ? diagnosticGraphResolutionsMatch(row.expectedGraphResolutions ?? [], body)
+    : null
+  if (graphResolutionAccuracy === false) failureReasons.push("graph_resolution_mismatch")
 
   const supportResult = evaluateUnsupportedSentences(body)
   if (supportResult.rate !== null && supportResult.rate > 0) failureReasons.push("unsupported_sentence_detected")
@@ -712,6 +802,11 @@ function evaluateRow(
     expectedFileHit !== false &&
     expectedDocumentHit !== false &&
     expectedPageHit !== false &&
+    regionRecallAtK !== false &&
+    normalizedAnswerMatch !== false &&
+    extractionAccuracy !== false &&
+    graphResolutionAccuracy !== false &&
+    (countMape === null || countMape === 0) &&
     status >= 200 &&
     status < 300
 
@@ -741,10 +836,16 @@ function evaluateRow(
     expectedPageHit,
     pageRecallAtK,
     pageRecallAt20,
+    regionRecallAtK,
+    regionRecallAt20,
     retrievalRecallAtK,
     retrievalRecallAt20,
     retrievalMrrAtK,
     factSlotCoverage: factSlotResult.coverage,
+    normalizedAnswerMatch,
+    extractionAccuracy,
+    countMape,
+    graphResolutionAccuracy,
     supportedFactSlots: factSlotResult.supported,
     totalFactSlots: factSlotResult.total,
     citationSupportPass,
@@ -859,8 +960,14 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
   const pageRecallAtKEvaluated = results.filter((row) => row.evaluation.pageRecallAtK !== null)
   const pageRecallAt20Evaluated = results.filter((row) => row.evaluation.pageRecallAt20 !== null)
+  const regionRecallAtKEvaluated = results.filter((row) => row.evaluation.regionRecallAtK !== null)
+  const regionRecallAt20Evaluated = results.filter((row) => row.evaluation.regionRecallAt20 !== null)
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
+  const normalizedAnswerEvaluated = results.filter((row) => row.evaluation.normalizedAnswerMatch !== null)
+  const extractionEvaluated = results.filter((row) => row.evaluation.extractionAccuracy !== null)
+  const countEvaluated = results.filter((row) => row.evaluation.countMape !== null)
+  const graphResolutionEvaluated = results.filter((row) => row.evaluation.graphResolutionAccuracy !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
   const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
   const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
@@ -968,6 +1075,30 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         pageRecallAt20Evaluated.filter((row) => row.evaluation.pageRecallAt20 === true).length,
         pageRecallAt20Evaluated.length
       ),
+      regionRecallAtK: rate(
+        regionRecallAtKEvaluated.filter((row) => row.evaluation.regionRecallAtK === true).length,
+        regionRecallAtKEvaluated.length
+      ),
+      regionRecallAt20: rate(
+        regionRecallAt20Evaluated.filter((row) => row.evaluation.regionRecallAt20 === true).length,
+        regionRecallAt20Evaluated.length
+      ),
+      normalizedAnswerAccuracy: rate(
+        normalizedAnswerEvaluated.filter((row) => row.evaluation.normalizedAnswerMatch === true).length,
+        normalizedAnswerEvaluated.length
+      ),
+      extractionAccuracy: rate(
+        extractionEvaluated.filter((row) => row.evaluation.extractionAccuracy === true).length,
+        extractionEvaluated.length
+      ),
+      countMape:
+        countEvaluated.length === 0
+          ? null
+          : Number((countEvaluated.reduce((sum, row) => sum + (row.evaluation.countMape ?? 0), 0) / countEvaluated.length).toFixed(4)),
+      graphResolutionAccuracy: rate(
+        graphResolutionEvaluated.filter((row) => row.evaluation.graphResolutionAccuracy === true).length,
+        graphResolutionEvaluated.length
+      ),
       retrievalRecallAtK: rate(
         retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length,
         retrievalRecallAtKEvaluated.length
@@ -1060,7 +1191,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         expected: row.expected,
         answerPreview: (row.result.answer ?? row.result.error ?? "").slice(0, 180),
         categories: row.evaluation.failureCategories
-      }))
+      })),
+    diagnosticFailureBreakdown: diagnosticFailureBreakdown(results)
   }
   return {
     ...summary,
@@ -1128,6 +1260,12 @@ type BenchmarkReportMetricName =
   | "expected_file_hit_rate"
   | "page_recall_at_k"
   | "page_recall_at_20"
+  | "region_recall_at_k"
+  | "region_recall_at_20"
+  | "normalized_answer_accuracy"
+  | "extraction_accuracy"
+  | "count_mape"
+  | "graph_resolution_accuracy"
   | "retrieval_recall_at_k"
   | "retrieval_mrr_at_k"
   | "retrieval_recall_at_20"
@@ -1184,6 +1322,12 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
           `| ${escapeMarkdown(failure.id ?? "")} | ${escapeMarkdown(failure.question)} | ${escapeMarkdown(failure.reasons.join(", "))} | ${escapeMarkdown(failure.categories.join(", "))} | ${escapeMarkdown(failure.answerPreview)} |`
         )
       ].join("\n")
+
+  const diagnosticFailureRows = [
+    "| category | count |",
+    "| --- | ---: |",
+    ...Object.entries(summary.diagnosticFailureBreakdown).map(([category, count]) => `| ${category} | ${count} |`)
+  ].join("\n")
 
   const regressionRows = summary.qualityReview.regressions.length === 0
     ? "\nNo benchmark metric regressions detected.\n"
@@ -1281,6 +1425,10 @@ ${aliasCandidateRows}
 
 ${failureRows}
 
+## Diagnostic Failure Breakdown
+
+${diagnosticFailureRows}
+
 ## Skipped Rows
 
 ${skippedRowRows}
@@ -1331,6 +1479,18 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "evaluator profile の retrieval.recallK で期待 page が raw retrieved に含まれた割合。"
     case "page_recall_at_20":
       return "上位 20 件の raw retrieved に期待 page が含まれた割合。visual retrieval の page 到達性能比較に使う。"
+    case "region_recall_at_k":
+      return "evaluator profile の retrieval.recallK で期待 region id が raw retrieved に含まれた割合。"
+    case "region_recall_at_20":
+      return "上位 20 件の raw retrieved に期待 region id が含まれた割合。"
+    case "normalized_answer_accuracy":
+      return "期待値と回答・根拠を同じ図面値正規化に通したうえで一致した割合。"
+    case "extraction_accuracy":
+      return "diagnostics.extractions の正規化値が dataset の期待抽出値と一致した割合。"
+    case "count_mape":
+      return "diagnostics.counts のカウント値と期待カウントの平均絶対パーセント誤差。低いほどよい。"
+    case "graph_resolution_accuracy":
+      return "diagnostics.graphResolutions が期待する参照先・解決先に到達した割合。"
     case "retrieval_recall_at_k":
       return "evaluator profile の retrieval.recallK で期待ファイルまたは期待 document が含まれた割合。"
     case "retrieval_mrr_at_k":
@@ -1459,9 +1619,34 @@ function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportR
       note: "expected_page_hit_rate denominator"
     },
     {
+      item: "rows_with_expected_region_ids",
+      count: results.filter((row) => row.evaluation.regionRecallAtK !== null).length,
+      note: "region_recall_at_k denominator"
+    },
+    {
       item: "rows_with_expected_fact_slots",
       count: results.filter((row) => row.evaluation.factSlotCoverage !== null).length,
       note: "fact_slot_coverage denominator"
+    },
+    {
+      item: "rows_with_expected_normalized_values",
+      count: results.filter((row) => row.evaluation.normalizedAnswerMatch !== null).length,
+      note: "normalized_answer_accuracy denominator"
+    },
+    {
+      item: "rows_with_expected_extraction_values",
+      count: results.filter((row) => row.evaluation.extractionAccuracy !== null).length,
+      note: "extraction_accuracy denominator"
+    },
+    {
+      item: "rows_with_expected_counts",
+      count: results.filter((row) => row.evaluation.countMape !== null).length,
+      note: "count_mape denominator"
+    },
+    {
+      item: "rows_with_expected_graph_resolutions",
+      count: results.filter((row) => row.evaluation.graphResolutionAccuracy !== null).length,
+      note: "graph_resolution_accuracy denominator"
     },
     {
       item: "actual_clarification_rows",
@@ -1507,7 +1692,13 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
   const pageRecallAtKEvaluated = results.filter((row) => row.evaluation.pageRecallAtK !== null)
   const pageRecallAt20Evaluated = results.filter((row) => row.evaluation.pageRecallAt20 !== null)
+  const regionRecallAtKEvaluated = results.filter((row) => row.evaluation.regionRecallAtK !== null)
+  const regionRecallAt20Evaluated = results.filter((row) => row.evaluation.regionRecallAt20 !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
+  const normalizedAnswerEvaluated = results.filter((row) => row.evaluation.normalizedAnswerMatch !== null)
+  const extractionEvaluated = results.filter((row) => row.evaluation.extractionAccuracy !== null)
+  const countEvaluated = results.filter((row) => row.evaluation.countMape !== null)
+  const graphResolutionEvaluated = results.filter((row) => row.evaluation.graphResolutionAccuracy !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
   const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
   const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
@@ -1539,6 +1730,12 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを citation/finalEvidence で評価。"),
     metricRateRow("page_recall_at_k", summary.metrics.pageRecallAtK, pageRecallAtKEvaluated.filter((row) => row.evaluation.pageRecallAtK === true).length, pageRecallAtKEvaluated.length, "`expectedPages` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
     metricRateRow("page_recall_at_20", summary.metrics.pageRecallAt20, pageRecallAt20Evaluated.filter((row) => row.evaluation.pageRecallAt20 === true).length, pageRecallAt20Evaluated.length, "`expectedPages` を raw retrieved の top 20 で評価。"),
+    metricRateRow("region_recall_at_k", summary.metrics.regionRecallAtK, regionRecallAtKEvaluated.filter((row) => row.evaluation.regionRecallAtK === true).length, regionRecallAtKEvaluated.length, "`expectedRegionIds` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
+    metricRateRow("region_recall_at_20", summary.metrics.regionRecallAt20, regionRecallAt20Evaluated.filter((row) => row.evaluation.regionRecallAt20 === true).length, regionRecallAt20Evaluated.length, "`expectedRegionIds` を raw retrieved の top 20 で評価。"),
+    metricRateRow("normalized_answer_accuracy", summary.metrics.normalizedAnswerAccuracy, normalizedAnswerEvaluated.filter((row) => row.evaluation.normalizedAnswerMatch === true).length, normalizedAnswerEvaluated.length, "`expectedNormalizedValues` がある行だけを回答と根拠の正規化値で評価。"),
+    metricRateRow("extraction_accuracy", summary.metrics.extractionAccuracy, extractionEvaluated.filter((row) => row.evaluation.extractionAccuracy === true).length, extractionEvaluated.length, "`expectedExtractionValues` がある行だけを diagnostics.extractions の正規化値で評価。"),
+    metricNullableRow("count_mape", formatNumber(summary.metrics.countMape), summary.metrics.countMape, `${countEvaluated.length} rows with expectedCounts`, "`expectedCounts` がある行の平均 MAPE。"),
+    metricRateRow("graph_resolution_accuracy", summary.metrics.graphResolutionAccuracy, graphResolutionEvaluated.filter((row) => row.evaluation.graphResolutionAccuracy === true).length, graphResolutionEvaluated.length, "`expectedGraphResolutions` がある行だけを diagnostics.graphResolutions で評価。"),
     metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
     metricNullableRow("retrieval_mrr_at_k", formatNumber(summary.metrics.retrievalMrrAtK), summary.metrics.retrievalMrrAtK, `${retrievalMrrAtKEvaluated.length} rows with expectedFiles or expectedDocumentIds`, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK 内の reciprocal rank で評価。"),
     metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の top 20 で評価する後方互換指標。"),
@@ -1649,6 +1846,26 @@ function hasExpectedPageRecallAtK(citations: Citation[], expectedPages: string[]
   return hasExpectedPageHit(citations.slice(0, Math.max(1, Math.trunc(k))), expectedPages)
 }
 
+function hasExpectedRegionRecallAtK(citations: Citation[], expectedRegionIds: string[], k: number): boolean {
+  const topK = citations.slice(0, Math.max(1, Math.trunc(k)))
+  return expectedRegionIds.every((expected) =>
+    topK.some((citation) => citationRegionKeys(citation).some((key) => normalize(key) === normalize(expected)))
+  )
+}
+
+function citationRegionKeys(citation: Citation): string[] {
+  const metadata = citation.metadata ?? {}
+  return [
+    citation.regionId,
+    citation.regionType,
+    stringMetadata(metadata.regionId),
+    stringMetadata(metadata.drawingRegionId),
+    stringMetadata(metadata.regionType),
+    stringMetadata(metadata.expectedRegionId),
+    citation.chunkId
+  ].filter((value): value is string => Boolean(value))
+}
+
 function hasRetrievalRecallAtK(citations: Citation[], expectedFiles: string[], expectedDocumentIds: string[], k: number): boolean {
   const topK = citations.slice(0, Math.max(1, Math.trunc(k)))
   const fileHit = expectedFiles.length === 0 || hasExpectedFileHit(topK, expectedFiles)
@@ -1721,6 +1938,74 @@ function hasSupportedFactSlot(slot: ExpectedFactSlot, answer: string, evidence: 
 
   const evidenceText = evidence.map((citation) => `${citation.fileName ?? ""}\n${citation.documentId ?? ""}\n${citation.text ?? ""}`).join("\n")
   return evidence.length > 0 && (mustContain.length === 0 || mustContain.every((expected) => normalize(evidenceText).includes(normalize(expected))))
+}
+
+function toNormalizedExpectedValues(values: ExpectedNormalizedValue[]): string[] {
+  return values.map((value) => normalizeExpectedDrawingValue(value)).filter((value): value is string => Boolean(value))
+}
+
+function diagnosticExtractionsMatch(expectedValues: ExpectedNormalizedValue[], body: BenchmarkResponse): boolean {
+  const expected = toNormalizedExpectedValues(expectedValues)
+  if (expected.length === 0) return true
+  const observed = new Set(
+    diagnosticExtractions(body).flatMap((extraction) => [
+      extraction.canonical,
+      extraction.normalizedValue,
+      extraction.raw ? normalizeExpectedDrawingValue({ raw: extraction.raw, kind: extraction.kind }) : null,
+      extraction.value ? normalizeExpectedDrawingValue({ raw: extraction.value, kind: extraction.kind }) : null
+    ]).filter((value): value is string => Boolean(value))
+  )
+  return expected.every((value) => observed.has(value))
+}
+
+function diagnosticCountMape(expectedCounts: ExpectedCount[], body: BenchmarkResponse): number | null {
+  if (expectedCounts.length === 0) return null
+  const actual = diagnosticCounts(body)
+  const errors = expectedCounts.map((expected) => {
+    const matched = actual.find((candidate) => diagnosticIdMatches(candidate, expected))
+    const actualValue = matched?.value ?? matched?.count
+    if (typeof actualValue !== "number" || !Number.isFinite(actualValue)) return 1
+    if (expected.expected === 0) return actualValue === 0 ? 0 : 1
+    return Math.abs(actualValue - expected.expected) / Math.abs(expected.expected)
+  })
+  return Number((errors.reduce((sum, value) => sum + value, 0) / errors.length).toFixed(4))
+}
+
+function diagnosticGraphResolutionsMatch(expectedResolutions: ExpectedGraphResolution[], body: BenchmarkResponse): boolean {
+  if (expectedResolutions.length === 0) return true
+  const actual = diagnosticGraphResolutions(body)
+  return expectedResolutions.every((expected) =>
+    actual.some((candidate) => {
+      if (expected.id && candidate.id && normalize(expected.id) !== normalize(candidate.id)) return false
+      const target = candidate.target ?? candidate.resolvedTarget
+      return Boolean(expected.target && target && normalize(expected.target) === normalize(target))
+    })
+  )
+}
+
+function diagnosticExtractions(body: BenchmarkResponse): DiagnosticExtraction[] {
+  const debug = body.debug as { drawingDiagnostics?: { extractions?: DiagnosticExtraction[] } } | undefined
+  return [...(body.diagnostics?.extractions ?? []), ...(debug?.drawingDiagnostics?.extractions ?? [])]
+}
+
+function diagnosticCounts(body: BenchmarkResponse): DiagnosticCount[] {
+  const debug = body.debug as { drawingDiagnostics?: { counts?: DiagnosticCount[] } } | undefined
+  return [...(body.diagnostics?.counts ?? []), ...(debug?.drawingDiagnostics?.counts ?? [])]
+}
+
+function diagnosticGraphResolutions(body: BenchmarkResponse): DiagnosticGraphResolution[] {
+  const debug = body.debug as { drawingDiagnostics?: { graphResolutions?: DiagnosticGraphResolution[] } } | undefined
+  return [...(body.diagnostics?.graphResolutions ?? []), ...(debug?.drawingDiagnostics?.graphResolutions ?? [])]
+}
+
+function diagnosticIdMatches(candidate: { id?: string; label?: string }, expected: { id?: string; label?: string }): boolean {
+  if (expected.id) return normalize(candidate.id ?? "") === normalize(expected.id)
+  if (expected.label) return normalize(candidate.label ?? "") === normalize(expected.label)
+  return false
+}
+
+function stringMetadata(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() ? value : undefined
 }
 
 function evaluateUnsupportedSentences(body: BenchmarkResponse): {
@@ -1950,6 +2235,30 @@ function classifyFailureCategories(reasons: string[]): FailureCategory[] {
     else categories.add("generation_failure")
   }
   return [...categories].sort()
+}
+
+function diagnosticFailureBreakdown(results: BenchmarkResultRow[]): Record<DiagnosticFailureCategory, number> {
+  const counts: Record<DiagnosticFailureCategory, number> = {
+    retrieval: 0,
+    ocr: 0,
+    grounding: 0,
+    reasoning: 0,
+    abstention: 0
+  }
+  for (const row of results) {
+    const categories = new Set(row.evaluation.failureReasons.flatMap(diagnosticFailureCategoriesFor))
+    for (const category of categories) counts[category] += 1
+  }
+  return counts
+}
+
+function diagnosticFailureCategoriesFor(reason: string): DiagnosticFailureCategory[] {
+  if (/retrieval|expected_file|expected_document/i.test(reason)) return ["retrieval"]
+  if (/extraction_accuracy|normalized_answer/i.test(reason)) return ["ocr"]
+  if (/expected_page|region_recall|missing_citation|citation_support|unsupported_sentence|fact_slot/i.test(reason)) return ["grounding"]
+  if (/refus|unsupported_answer|expected_answer_but_refused|expected_refusal_but_answered|no_access_leak/i.test(reason)) return ["abstention"]
+  if (/count_mape|graph_resolution|answer_missing|regex|query_rewrite|clarification/i.test(reason)) return ["reasoning"]
+  return ["reasoning"]
 }
 
 function escapeMarkdown(value: string): string {

@@ -204,7 +204,7 @@ describe("useAppShellState", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
-    window.history.replaceState({}, "", "/")
+    window.history.replaceState(null, "", "/")
     vi.spyOn(console, "warn").mockImplementation(() => undefined)
     debugMock.useDebugSelection.mockReturnValue({ selectedTrace: { steps: [] }, totalLatency: 123, selectedRunValue: "debug-1" })
     currentUserMock.useCurrentUser.mockReturnValue({
@@ -282,47 +282,65 @@ describe("useAppShellState", () => {
     expect(chatMock.setSubmitShortcut).toHaveBeenCalledWith("enter")
   })
 
-  it("opens document deep links and keeps document route state in browser history", () => {
-    window.history.replaceState({}, "", "/documents/groups/group-1?query=経費&status=active")
-
+  it("hydrates and writes document workspace state through URL query parameters", async () => {
+    window.history.replaceState(null, "", "/documents/reindex-migrations/migration-1?view=documents&group=group-1&document=doc-1&query=handbook&sort=fileNameAsc")
     const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
 
-    expect(result.current.railProps.activeView).toBe("documents")
-    expect(result.current.routeProps.documentProps.initialRouteState).toEqual({
-      groupId: "group-1",
-      query: "経費",
-      status: "active"
+    await act(async () => {
+      await Promise.resolve()
     })
 
-    act(() => {
-      result.current.routeProps.documentProps.onRouteStateChange?.({ documentId: "doc-1", query: "規程" })
-    })
-
-    expect(window.location.pathname).toBe("/documents/doc-1")
-    expect(window.location.search).toBe("?query=%E8%A6%8F%E7%A8%8B")
-    expect(result.current.railProps.activeView).toBe("documents")
-  })
-
-  it("restores document route state on browser back and forward events", () => {
-    const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
-
-    act(() => {
-      window.history.pushState({}, "", "/documents/reindex-migrations/migration-1?status=staged")
-      window.dispatchEvent(new PopStateEvent("popstate"))
-    })
-
-    expect(result.current.railProps.activeView).toBe("documents")
-    expect(result.current.routeProps.documentProps.initialRouteState).toEqual({
+    expect(result.current.routeProps.activeView).toBe("documents")
+    expect(result.current.routeProps.documentProps.urlState).toEqual({
+      folderId: "group-1",
+      documentId: "doc-1",
       migrationId: "migration-1",
-      status: "staged"
+      query: "handbook",
+      sort: "fileNameAsc",
+      type: undefined,
+      status: undefined,
+      groupFilter: undefined
     })
 
     act(() => {
-      window.history.pushState({}, "", "/")
+      result.current.routeProps.documentProps.onUrlStateChange?.({
+        folderId: "group-2",
+        documentId: "doc-2",
+        migrationId: "migration-2",
+        query: "policy",
+        type: "PDF",
+        status: "active",
+        groupFilter: "group-2",
+        sort: "chunkDesc"
+      })
+    })
+
+    expect(window.location.search).toContain("view=documents")
+    expect(window.location.search).toContain("group=group-2")
+    expect(window.location.search).toContain("document=doc-2")
+    expect(window.location.search).toContain("migration=migration-2")
+    expect(window.location.search).toContain("query=policy")
+    expect(window.location.search).toContain("type=PDF")
+    expect(window.location.search).toContain("status=active")
+    expect(window.location.search).toContain("documentGroup=group-2")
+    expect(window.location.search).toContain("sort=chunkDesc")
+
+    act(() => {
+      window.history.pushState(null, "", "/?view=documents&query=戻る")
       window.dispatchEvent(new PopStateEvent("popstate"))
     })
 
-    expect(result.current.railProps.activeView).toBe("chat")
+    expect(result.current.routeProps.activeView).toBe("documents")
+    expect(result.current.routeProps.documentProps.urlState).toEqual({
+      folderId: undefined,
+      documentId: undefined,
+      migrationId: undefined,
+      query: "戻る",
+      type: undefined,
+      status: undefined,
+      groupFilter: undefined,
+      sort: undefined
+    })
   })
 
   it("resets inaccessible state and exposes current user errors", async () => {

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { DocumentGroup, ReindexMigration } from "../types.js"
@@ -87,7 +87,7 @@ describe("DocumentWorkspace", () => {
         canWrite={true}
         canDelete={true}
         canReindex={true}
-        migrations={[]}
+        migrations={migrations}
         onUpload={vi.fn()}
         onDelete={onDelete}
         onStageReindex={vi.fn()}
@@ -323,93 +323,6 @@ describe("DocumentWorkspace", () => {
       visibility: "shared",
       sharedGroups: ["HR", "RAG_GROUP_MANAGER"]
     })
-  })
-
-  it("URL由来のフォルダ、検索条件、文書詳細を復元する", () => {
-    const onUploadGroupChange = vi.fn()
-    const groupedDocuments = [
-      {
-        ...documents[0]!,
-        metadata: { groupIds: ["group-1"] },
-        lifecycleStatus: "active" as const
-      }
-    ]
-
-    render(
-      <DocumentWorkspace
-        documents={groupedDocuments}
-        documentGroups={documentGroups}
-        uploadGroupId="group-1"
-        loading={false}
-        canWrite={true}
-        canDelete={true}
-        canReindex={true}
-        migrations={[]}
-        initialRouteState={{ groupId: "group-1", documentId: "doc-1", query: "requirements", status: "active" }}
-        onRouteStateChange={vi.fn()}
-        onUploadGroupChange={onUploadGroupChange}
-        onUpload={vi.fn()}
-        onCreateGroup={vi.fn()}
-        onShareGroup={vi.fn()}
-        onDelete={vi.fn()}
-        onStageReindex={vi.fn()}
-        onCutoverReindex={vi.fn()}
-        onRollbackReindex={vi.fn()}
-        onBack={vi.fn()}
-      />
-    )
-
-    expect(screen.getByRole("heading", { name: "社内規定" })).toBeInTheDocument()
-    expect(screen.getByDisplayValue("requirements")).toBeInTheDocument()
-    expect(screen.getByDisplayValue("active")).toBeInTheDocument()
-    expect(screen.getByRole("dialog", { name: "requirements.md" })).toBeInTheDocument()
-    expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
-  })
-
-  it("画面操作をURL state変更として通知する", async () => {
-    const onRouteStateChange = vi.fn()
-    const groupedDocuments = [
-      {
-        ...documents[0]!,
-        metadata: { groupIds: ["group-1"] },
-        lifecycleStatus: "active" as const
-      }
-    ]
-
-    render(
-      <DocumentWorkspace
-        documents={groupedDocuments}
-        documentGroups={documentGroups}
-        uploadGroupId=""
-        loading={false}
-        canWrite={true}
-        canDelete={true}
-        canReindex={true}
-        migrations={migrations}
-        onRouteStateChange={onRouteStateChange}
-        onUploadGroupChange={vi.fn()}
-        onUpload={vi.fn()}
-        onCreateGroup={vi.fn()}
-        onShareGroup={vi.fn()}
-        onDelete={vi.fn()}
-        onStageReindex={vi.fn()}
-        onCutoverReindex={vi.fn()}
-        onRollbackReindex={vi.fn()}
-        onBack={vi.fn()}
-      />
-    )
-
-    await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
-    expect(onRouteStateChange).toHaveBeenCalledWith({ groupId: "group-1" }, undefined)
-
-    await userEvent.type(screen.getByLabelText("ファイル名検索"), "req")
-    expect(onRouteStateChange).toHaveBeenLastCalledWith({ groupId: "group-1", query: "req" }, { replace: true })
-
-    await userEvent.click(screen.getByRole("row", { name: "requirements.mdの詳細を表示" }))
-    expect(onRouteStateChange).toHaveBeenLastCalledWith({ documentId: "doc-1", query: "req" }, undefined)
-
-    await userEvent.click(screen.getAllByRole("button", { name: "切替" })[0]!)
-    expect(onRouteStateChange).toHaveBeenLastCalledWith({ migrationId: "migration-1", query: "req" }, undefined)
   })
 
   it("設定込みでフォルダを作成し、作成後に保存先へ移動する", async () => {
@@ -673,6 +586,95 @@ describe("DocumentWorkspace", () => {
     await userEvent.selectOptions(screen.getByLabelText("所属フォルダ"), "すべて")
     await userEvent.type(screen.getByLabelText("ファイル名検索"), "not-found-document")
     expect(screen.getByText("条件に一致するドキュメントはありません。")).toBeInTheDocument()
+  })
+
+  it("URL由来のフォルダ、検索条件、文書詳細を初期状態に反映する", () => {
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: ["group-1"] } }]}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={migrations}
+        urlState={{
+          folderId: "group-1",
+          documentId: "doc-1",
+          migrationId: "migration-1",
+          query: "requirements",
+          groupFilter: "group-1",
+          sort: "fileNameAsc"
+        }}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("heading", { name: "社内規定" })).toBeInTheDocument()
+    expect(screen.getByLabelText("ファイル名検索")).toHaveValue("requirements")
+    expect(screen.getByLabelText("所属フォルダ")).toHaveValue("group-1")
+    expect(screen.getByLabelText("並び替え")).toHaveValue("fileNameAsc")
+    expect(screen.getByRole("dialog", { name: "requirements.md" })).toBeInTheDocument()
+    const migrationStrip = screen.getByLabelText("再インデックス移行一覧")
+    expect(within(migrationStrip).getByText("doc-1 → doc-1-staged").closest("article")).toHaveAttribute("aria-current", "true")
+  })
+
+  it("文書管理状態の変更をURL同期コールバックへ通知する", async () => {
+    const onUrlStateChange = vi.fn()
+
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: ["group-1"] } }]}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={migrations}
+        onUrlStateChange={onUrlStateChange}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
+    await userEvent.type(screen.getByLabelText("ファイル名検索"), "requirements")
+    await userEvent.click(screen.getByLabelText("requirements.mdの詳細を表示"))
+
+    await waitFor(() => {
+      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.objectContaining({
+        folderId: "group-1",
+        documentId: "doc-1",
+        query: "requirements"
+      }))
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "文書詳細を閉じる" }))
+    await waitFor(() => {
+      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.not.objectContaining({ documentId: "doc-1" }))
+    })
+
+    await userEvent.click(screen.getAllByRole("button", { name: "切替" })[0]!)
+    await waitFor(() => {
+      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.objectContaining({ migrationId: "migration-1" }))
+    })
   })
 
   it("文書詳細drawerを開き、documentIdをコピーできる", async () => {
