@@ -17,6 +17,7 @@ export function DocumentDetailDrawer({
   copied,
   onCopyDocumentId,
   onClose,
+  onAskDocument,
   onDelete,
   onStageReindex,
   canDelete,
@@ -27,6 +28,7 @@ export function DocumentDetailDrawer({
   copied: boolean
   onCopyDocumentId: () => void
   onClose: () => void
+  onAskDocument?: () => void
   onDelete: () => void
   onStageReindex: () => void
   canDelete: boolean
@@ -75,6 +77,10 @@ export function DocumentDetailDrawer({
           <DetailRow label="エラー履歴" value="利用不可" />
         </dl>
         <div className="document-drawer-actions">
+          <button type="button" disabled={!onAskDocument} onClick={() => onAskDocument?.()}>
+            <Icon name="chat" />
+            <span>この資料に質問する</span>
+          </button>
           <button type="button" onClick={onCopyDocumentId}>
             <Icon name={copied ? "check" : "copy"} />
             <span>{copied ? "コピー済み" : "documentId コピー"}</span>

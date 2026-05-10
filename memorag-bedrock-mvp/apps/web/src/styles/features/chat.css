@@ -786,6 +786,40 @@
   white-space: nowrap;
 }
 
+.scoped-document-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 5px;
+}
+
+.scoped-document-chip > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scoped-document-chip button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  color: #49658a;
+  background: #e8f0fb;
+}
+
+.scoped-document-chip button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.scoped-document-chip .icon {
+  width: 14px;
+  height: 14px;
+}
+
 .icon-button,
 .send-button {
   width: 40px;

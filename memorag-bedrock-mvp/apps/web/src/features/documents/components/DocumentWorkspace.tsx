@@ -58,6 +58,7 @@ export function DocumentWorkspace({
   onStageReindex,
   onCutoverReindex,
   onRollbackReindex,
+  onAskDocument,
   onBack,
   urlState,
   onUrlStateChange
@@ -80,6 +81,7 @@ export function DocumentWorkspace({
   onStageReindex: (documentId: string) => Promise<void>
   onCutoverReindex: (migrationId: string) => Promise<void>
   onRollbackReindex: (migrationId: string) => Promise<void>
+  onAskDocument?: (document: DocumentManifest) => void
   onBack: () => void
   urlState?: DocumentWorkspaceUrlState
   onUrlStateChange?: (state: DocumentWorkspaceUrlState) => void
@@ -477,6 +479,7 @@ export function DocumentWorkspace({
           documentGroups={documentGroups}
           copied={copiedDocumentId === selectedDocument.documentId}
           onCopyDocumentId={() => void copyDocumentId(selectedDocument.documentId)}
+          onAskDocument={() => onAskDocument?.(selectedDocument)}
           onClose={() => setSelectedDocumentId("")}
           onDelete={() => {
             setConfirmAction({ kind: "delete", document: selectedDocument })

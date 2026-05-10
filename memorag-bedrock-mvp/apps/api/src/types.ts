@@ -94,6 +94,7 @@ export type VectorMetadata = {
   drawingSourceType?: "project_drawing" | "standard_detail" | "equipment_standard" | "benchmark_reference" | "external"
   drawingSheetMetadata?: JsonValue[]
   drawingRegionIndex?: JsonValue[]
+  drawingReferenceGraph?: JsonValue
   aclGroup?: string
   aclGroups?: string[]
   allowedUsers?: string[]

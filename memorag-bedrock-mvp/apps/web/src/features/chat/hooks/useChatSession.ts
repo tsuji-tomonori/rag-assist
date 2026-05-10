@@ -7,6 +7,11 @@ import type { ChatResponse } from "../types-api.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
 
+export type ChatDocumentScope = {
+  documentId: string
+  fileName: string
+} | null
+
 type PendingClarificationFreeform = {
   originalQuestion: string
   seedText: string
@@ -99,6 +104,7 @@ export function useChatSession({
   currentConversationId,
   setCurrentConversationId,
   selectedGroupId,
+  documentScope,
   loading,
   rememberMessages,
   createConversationId,
@@ -122,6 +128,7 @@ export function useChatSession({
   currentConversationId: string
   setCurrentConversationId: (conversationId: string) => void
   selectedGroupId: string
+  documentScope?: ChatDocumentScope
   loading: boolean
   rememberMessages: (id: string, titleCandidate: string, messages: Message[]) => void
   createConversationId: () => string
@@ -208,14 +215,21 @@ export function useChatSession({
       }
 
       if (typedQuestion.length > 0) {
-        const searchScope = selectedGroupId !== "all" || hasAttachment
+        const searchScope = documentScope
           ? {
-              mode: selectedGroupId !== "all" ? "groups" as const : undefined,
-              groupIds: selectedGroupId !== "all" ? [selectedGroupId] : undefined,
+              mode: "documents" as const,
+              documentIds: [documentScope.documentId],
               includeTemporary: hasAttachment,
               temporaryScopeId: hasAttachment ? currentConversationId : undefined
             }
-          : undefined
+          : selectedGroupId !== "all" || hasAttachment
+            ? {
+                mode: selectedGroupId !== "all" ? "groups" as const : undefined,
+                groupIds: selectedGroupId !== "all" ? [selectedGroupId] : undefined,
+                includeTemporary: hasAttachment,
+                temporaryScopeId: hasAttachment ? currentConversationId : undefined
+              }
+            : undefined
         const started = await startChatRun({
           question: userQuestion,
           clarificationContext,

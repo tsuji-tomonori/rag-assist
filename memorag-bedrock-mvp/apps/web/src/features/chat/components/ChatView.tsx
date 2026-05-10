@@ -3,6 +3,7 @@ import type { SubmitShortcut } from "../../../app/types.js"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { DebugTrace } from "../../debug/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
+import type { ChatDocumentScope } from "../hooks/useChatSession.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { DebugPanel } from "../../debug/components/DebugPanel.js"
@@ -25,6 +26,7 @@ export function ChatView({
   modelId,
   file,
   selectedGroupId,
+  documentScope,
   documentGroups,
   conversationKey,
   submitShortcut,
@@ -42,6 +44,7 @@ export function ChatView({
   onSetQuestion,
   onModelChange,
   onSetFile,
+  onClearDocumentScope,
   onCreateQuestion,
   onResolveQuestion,
   onToggleAllDebugSteps,
@@ -60,6 +63,7 @@ export function ChatView({
   modelId: string
   file: File | null
   selectedGroupId: string
+  documentScope?: ChatDocumentScope
   documentGroups: DocumentGroup[]
   conversationKey: number
   submitShortcut: SubmitShortcut
@@ -77,6 +81,7 @@ export function ChatView({
   onSetQuestion: (value: string) => void
   onModelChange: (modelId: string) => void
   onSetFile: (file: File | null) => void
+  onClearDocumentScope?: () => void
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
   onToggleAllDebugSteps: () => void
@@ -110,6 +115,7 @@ export function ChatView({
           modelId={modelId}
           file={file}
           selectedGroupId={selectedGroupId}
+          documentScope={documentScope}
           documentGroups={documentGroups}
           canWriteDocuments={canWriteDocuments}
           conversationKey={conversationKey}
@@ -118,6 +124,7 @@ export function ChatView({
           onSetQuestion={onSetQuestion}
           onModelChange={onModelChange}
           onSetFile={onSetFile}
+          onClearDocumentScope={onClearDocumentScope}
         />
         <ChatRunIdBar
           runId={pendingDebugQuestion ? null : selectedTrace?.runId ?? (selectedRunValue && selectedRunValue !== "__processing__" ? selectedRunValue : null)}
