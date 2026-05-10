@@ -1,13 +1,32 @@
 import { useState } from "react"
 import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, shareDocumentGroup, stageReindexMigration, uploadDocumentFile } from "../api/documentsApi.js"
+import type { DocumentUploadProgress } from "../api/documentsApi.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
+
+export type DocumentOperationState = {
+  isUploading: boolean
+  creatingGroup: boolean
+  sharingGroupId: string | null
+  deletingDocumentId: string | null
+  stagingReindexDocumentId: string | null
+  cutoverMigrationId: string | null
+  rollbackMigrationId: string | null
+}
+
+export type DocumentUploadState = {
+  fileName: string
+  groupId?: string
+  phase: DocumentUploadProgress["phase"] | "failed"
+  runId?: string
+  errorKind?: "fileType" | "extraction" | "timeout" | "permission" | "network" | "unknown"
+  errorMessage?: string
+} | null
 
 export function useDocuments({
   modelId,
   embeddingModelId,
   canWriteDocuments,
   canReindexDocuments,
-  setLoading,
   setError
 }: {
   modelId: string
@@ -24,6 +43,20 @@ export function useDocuments({
   const [selectedGroupId, setSelectedGroupId] = useState("all")
   const [uploadGroupId, setUploadGroupId] = useState("")
   const [file, setFile] = useState<File | null>(null)
+  const [operationState, setOperationState] = useState<DocumentOperationState>({
+    isUploading: false,
+    creatingGroup: false,
+    sharingGroupId: null,
+    deletingDocumentId: null,
+    stagingReindexDocumentId: null,
+    cutoverMigrationId: null,
+    rollbackMigrationId: null
+  })
+  const [uploadState, setUploadState] = useState<DocumentUploadState>(null)
+
+  function updateOperationState(next: Partial<DocumentOperationState>) {
+    setOperationState((current) => ({ ...current, ...next }))
+  }
 
   async function refreshDocuments() {
     const nextDocuments = await listDocuments()
@@ -54,7 +87,12 @@ export function useDocuments({
         ? { scopeType: "chat", temporaryScopeId: options.temporaryScopeId }
         : options.groupId
           ? { scopeType: "group", groupIds: [options.groupId] }
-          : undefined
+          : undefined,
+      onProgress: (progress) => {
+        if (options.purpose !== "chatAttachment") {
+          setUploadState({ fileName: uploadFile.name, groupId: options.groupId, phase: progress.phase, runId: progress.runId })
+        }
+      }
     })
     if (options.purpose === "chatAttachment") {
       setSelectedDocumentId("all")
@@ -69,11 +107,8 @@ export function useDocuments({
 
   async function onDelete(documentId?: string) {
     if (!documentId) return
-    const document = documents.find((item) => item.documentId === documentId)
-    const label = document?.fileName ?? documentId
-    if (!window.confirm(`「${label}」を削除します。元資料、manifest、検索ベクトルが削除されます。`)) return
 
-    setLoading(true)
+    updateOperationState({ deletingDocumentId: documentId })
     setError(null)
     try {
       await deleteDocument(documentId)
@@ -82,26 +117,30 @@ export function useDocuments({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      updateOperationState({ deletingDocumentId: null })
     }
   }
 
   async function onUploadDocumentFile(uploadFile: File) {
     if (!canWriteDocuments) return
-    setLoading(true)
+    updateOperationState({ isUploading: true })
+    setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId || undefined, phase: "preparing" })
     setError(null)
     try {
       await ingestDocument(uploadFile, { groupId: uploadGroupId || undefined })
+      setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "complete" } : current)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      const message = err instanceof Error ? err.message : String(err)
+      setError(message)
+      setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "failed", errorKind: classifyUploadError(message), errorMessage: message } : current)
     } finally {
-      setLoading(false)
+      updateOperationState({ isUploading: false })
     }
   }
 
   async function onCreateDocumentGroup(input: { name: string; visibility: "private" | "shared" | "org" }) {
     if (!canWriteDocuments) return
-    setLoading(true)
+    updateOperationState({ creatingGroup: true })
     setError(null)
     try {
       await createDocumentGroup(input)
@@ -109,13 +148,13 @@ export function useDocuments({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      updateOperationState({ creatingGroup: false })
     }
   }
 
   async function onShareDocumentGroup(groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }) {
     if (!canWriteDocuments) return
-    setLoading(true)
+    updateOperationState({ sharingGroupId: groupId })
     setError(null)
     try {
       await shareDocumentGroup(groupId, input)
@@ -123,13 +162,13 @@ export function useDocuments({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      updateOperationState({ sharingGroupId: null })
     }
   }
 
   async function onStageReindex(documentId: string) {
     if (!canReindexDocuments) return
-    setLoading(true)
+    updateOperationState({ stagingReindexDocumentId: documentId })
     setError(null)
     try {
       await stageReindexMigration(documentId)
@@ -137,13 +176,13 @@ export function useDocuments({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      updateOperationState({ stagingReindexDocumentId: null })
     }
   }
 
   async function onCutoverReindex(migrationId: string) {
     if (!canReindexDocuments) return
-    setLoading(true)
+    updateOperationState({ cutoverMigrationId: migrationId })
     setError(null)
     try {
       await cutoverReindexMigration(migrationId)
@@ -151,13 +190,13 @@ export function useDocuments({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      updateOperationState({ cutoverMigrationId: null })
     }
   }
 
   async function onRollbackReindex(migrationId: string) {
     if (!canReindexDocuments) return
-    setLoading(true)
+    updateOperationState({ rollbackMigrationId: migrationId })
     setError(null)
     try {
       await rollbackReindexMigration(migrationId)
@@ -165,7 +204,7 @@ export function useDocuments({
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
-      setLoading(false)
+      updateOperationState({ rollbackMigrationId: null })
     }
   }
 
@@ -177,6 +216,8 @@ export function useDocuments({
     selectedGroupId,
     uploadGroupId,
     file,
+    operationState,
+    uploadState,
     setFile,
     setSelectedDocumentId,
     setSelectedGroupId,
@@ -193,4 +234,14 @@ export function useDocuments({
     onCreateDocumentGroup,
     onShareDocumentGroup
   }
+}
+
+function classifyUploadError(message: string): NonNullable<NonNullable<DocumentUploadState>["errorKind"]> {
+  const normalized = message.toLowerCase()
+  if (normalized.includes("unsupported") || normalized.includes("mime") || normalized.includes("file type") || normalized.includes("format")) return "fileType"
+  if (normalized.includes("extract") || normalized.includes("textract") || normalized.includes("parse")) return "extraction"
+  if (normalized.includes("timeout") || normalized.includes("timed out")) return "timeout"
+  if (normalized.includes("401") || normalized.includes("403") || normalized.includes("permission") || normalized.includes("unauthorized") || normalized.includes("forbidden")) return "permission"
+  if (normalized.includes("network") || normalized.includes("fetch") || normalized.includes("failed to fetch")) return "network"
+  return "unknown"
 }

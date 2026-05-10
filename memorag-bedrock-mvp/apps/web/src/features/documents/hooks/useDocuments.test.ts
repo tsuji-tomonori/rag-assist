@@ -139,7 +139,7 @@ describe("useDocuments", () => {
     await act(() => result.current.onStageReindex("doc-1"))
 
     expect(props.setError).toHaveBeenCalledWith("stage failed")
-    expect(props.setLoading).toHaveBeenLastCalledWith(false)
+    expect(result.current.operationState.stagingReindexDocumentId).toBeNull()
   })
 
   it("文書一覧更新時に消えた選択中文書を all に戻す", async () => {
@@ -175,7 +175,7 @@ describe("useDocuments", () => {
     expect(result.current.uploadGroupId).toBe("")
   })
 
-  it("アップロード権限と削除確認に応じて API 呼び出しを分岐する", async () => {
+  it("アップロード権限と削除操作に応じて API 呼び出しを分岐する", async () => {
     const props = createProps()
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "b.txt", { type: "" })
@@ -195,14 +195,13 @@ describe("useDocuments", () => {
     expect(createDocumentGroup).not.toHaveBeenCalled()
     expect(shareDocumentGroup).not.toHaveBeenCalled()
 
-    vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true)
     await act(() => result.current.onDelete(undefined))
     await act(() => result.current.onDelete("doc-1"))
     await act(() => result.current.onDelete("missing-doc"))
 
     expect(deleteDocument).toHaveBeenCalledWith("missing-doc")
     expect(result.current.selectedDocumentId).toBe("all")
-    expect(props.setLoading).toHaveBeenLastCalledWith(false)
+    expect(result.current.operationState.deletingDocumentId).toBeNull()
   })
 
   it("資料グループの取得、保存先指定、一時添付、共有更新を扱う", async () => {
@@ -233,6 +232,36 @@ describe("useDocuments", () => {
     expect(createDocumentGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
     expect(shareDocumentGroup).toHaveBeenCalledWith("group-1", { visibility: "shared", sharedGroups: ["HR"] })
     expect(listDocumentGroups).toHaveBeenCalledTimes(3)
+  })
+
+  it("アップロード進捗と失敗原因を操作単位の状態に反映する", async () => {
+    const props = createProps()
+    vi.mocked(uploadDocumentFile).mockImplementationOnce(async (input) => {
+      input.onProgress?.({ phase: "transferring" })
+      input.onProgress?.({ phase: "embedding", runId: "run-1" })
+      return { documentId: "doc-progress", fileName: input.file.name, chunkCount: 2, memoryCardCount: 0, createdAt: "now" }
+    })
+    const { result } = renderHook(() => useDocuments(props))
+    const file = new File(["body"], "progress.pdf", { type: "application/pdf" })
+
+    act(() => result.current.setUploadGroupId("group-1"))
+    await act(() => result.current.onUploadDocumentFile(file))
+
+    expect(result.current.uploadState).toEqual(expect.objectContaining({
+      fileName: "progress.pdf",
+      groupId: "group-1",
+      phase: "complete",
+      runId: "run-1"
+    }))
+    expect(result.current.operationState.isUploading).toBe(false)
+
+    vi.mocked(uploadDocumentFile).mockRejectedValueOnce(new Error("document ingest run timed out"))
+    await act(() => result.current.onUploadDocumentFile(file))
+
+    expect(result.current.uploadState).toEqual(expect.objectContaining({
+      phase: "failed",
+      errorKind: "timeout"
+    }))
   })
 
   it("削除、cutover、rollback の失敗時は文字列エラーも設定する", async () => {

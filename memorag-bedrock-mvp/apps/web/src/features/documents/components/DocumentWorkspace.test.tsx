@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { DocumentGroup, ReindexMigration } from "../types.js"
@@ -100,6 +100,9 @@ describe("DocumentWorkspace", () => {
     expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(1)
 
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toBeInTheDocument()
+    expect(screen.getByText("documentId")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
     expect(onDelete).toHaveBeenCalledWith("doc-1")
   })
@@ -150,8 +153,14 @@ describe("DocumentWorkspace", () => {
     )
 
     await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
+    expect(screen.getByRole("dialog", { name: "再インデックスをステージングしますか" })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "ステージング" }))
     await userEvent.click(screen.getAllByRole("button", { name: "切替" })[0]!)
+    expect(screen.getByRole("dialog", { name: "再インデックス結果へ切り替えますか" })).toBeInTheDocument()
+    await userEvent.click(within(screen.getByRole("dialog", { name: "再インデックス結果へ切り替えますか" })).getByRole("button", { name: "切替" }))
     await userEvent.click(screen.getAllByRole("button", { name: "戻す" })[1]!)
+    expect(screen.getByRole("dialog", { name: "再インデックス切替を戻しますか" })).toBeInTheDocument()
+    await userEvent.click(within(screen.getByRole("dialog", { name: "再インデックス切替を戻しますか" })).getByRole("button", { name: "戻す" }))
 
     expect(onStageReindex).toHaveBeenCalledWith("doc-1")
     expect(onCutoverReindex).toHaveBeenCalledWith("migration-1")
@@ -197,6 +206,9 @@ describe("DocumentWorkspace", () => {
     await userEvent.selectOptions(screen.getByLabelText("保存先フォルダ"), "group-1")
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
 
+    await userEvent.click(screen.getByRole("button", { name: /すべてのドキュメント/ }))
+    expect(onUploadGroupChange).toHaveBeenCalledWith("")
+
     await userEvent.type(screen.getByLabelText("新規フォルダ"), "個人メモ")
     await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
     expect(onCreateGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
@@ -241,6 +253,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.queryByText("メモリカード")).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("inventory.csvの再インデックスをステージング"))
+    await userEvent.click(screen.getByRole("button", { name: "ステージング" }))
 
     expect(onStageReindex).toHaveBeenCalledWith("doc-csv")
   })
@@ -282,7 +295,8 @@ describe("DocumentWorkspace", () => {
   it("ヘッダーの追加と共有ボタンを既存操作へ接続する", async () => {
     const inputClick = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => undefined)
 
-    render(
+    const onUploadGroupChange = vi.fn()
+    const { rerender } = render(
       <DocumentWorkspace
         documents={documents}
         documentGroups={documentGroups}
@@ -292,7 +306,7 @@ describe("DocumentWorkspace", () => {
         canDelete={true}
         canReindex={true}
         migrations={[]}
-        onUploadGroupChange={vi.fn()}
+        onUploadGroupChange={onUploadGroupChange}
         onUpload={vi.fn()}
         onCreateGroup={vi.fn()}
         onShareGroup={vi.fn()}
@@ -303,6 +317,34 @@ describe("DocumentWorkspace", () => {
         onBack={vi.fn()}
       />
     )
+
+    expect(screen.getByTitle("保存先を選択してアップロード")).toBeDisabled()
+
+    await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
+    expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
+    rerender(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={onUploadGroupChange}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+    await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
+    expect(screen.getByText((_, element) => element?.textContent === "保存先: 社内規定")).toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("このフォルダにアップロード"))
     expect(inputClick).toHaveBeenCalled()
@@ -453,7 +495,11 @@ describe("DocumentWorkspace", () => {
     render(
       <DocumentWorkspace
         documents={[{ documentId: "doc-text", fileName: "memo.unknown", mimeType: "text/plain", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-07T00:00:00.000Z" }]}
-        {...documentGroupProps}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        onUploadGroupChange={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
         loading={false}
         canWrite={true}
         canDelete={true}
@@ -471,9 +517,56 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByText("Text")).toBeInTheDocument()
 
     await userEvent.upload(screen.getByLabelText("アップロードする文書を選択"), file)
-    expect(screen.getByText("memo.txt")).toBeInTheDocument()
+    expect(screen.getByText("一時選択: memo.txt / 保存先: 社内規定")).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
     expect(onUpload).toHaveBeenCalledWith(file)
+  })
+
+  it("アップロード進捗と対象行だけのloadingを表示する", () => {
+    render(
+      <DocumentWorkspace
+        documents={[
+          documents[0]!,
+          { documentId: "doc-2", fileName: "policy.pdf", mimeType: "application/pdf", chunkCount: 3, memoryCardCount: 0, createdAt: "2026-05-08T00:00:00.000Z" }
+        ]}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        operationState={{
+          isUploading: true,
+          creatingGroup: false,
+          sharingGroupId: null,
+          deletingDocumentId: "doc-2",
+          stagingReindexDocumentId: null,
+          cutoverMigrationId: null,
+          rollbackMigrationId: null
+        }}
+        uploadState={{
+          fileName: "policy.pdf",
+          groupId: "group-1",
+          phase: "embedding",
+          runId: "run-123"
+        }}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText("ベクトル化中")).toBeInTheDocument()
+    expect(screen.getByText("run ID: run-123")).toBeInTheDocument()
+    expect(screen.getByTitle("policy.pdfを削除")).toBeDisabled()
+    expect(screen.getByTitle("requirements.mdを削除")).not.toBeDisabled()
   })
 })
