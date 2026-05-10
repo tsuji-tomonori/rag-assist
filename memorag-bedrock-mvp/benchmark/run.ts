@@ -7,6 +7,7 @@ import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkI
 import { createBenchmarkApiClient } from "./api-client.js"
 import { createSkippedDatasetRow, skippedCorpusFileNameSet, skippedExpectedFileNames, type SkippedDatasetRow } from "./skipped-corpus.js"
 import { createQualityReview, type QualityReview } from "./metrics/quality.js"
+import { normalizeExpectedDrawingValue, normalizedDrawingValuesMatch, type DrawingValueKind } from "./metrics/drawing-normalization.js"
 import {
   assertComparableProfiles,
   assertSuiteEvaluatorProfile,
@@ -47,6 +48,7 @@ type DatasetRow = {
   forbiddenFiles?: string[]
   forbiddenDocumentIds?: string[]
   expectedFactSlots?: ExpectedFactSlot[]
+  expectedNormalizedValues?: ExpectedNormalizedValue[]
   modelId?: string
   embeddingModelId?: string
   clueModelId?: string
@@ -78,6 +80,12 @@ type ExpectedFactSlot = {
   mustContain?: string | string[]
   expectedFiles?: string[]
   expectedDocumentIds?: string[]
+}
+
+type ExpectedNormalizedValue = string | {
+  raw?: string
+  canonical?: string
+  kind?: DrawingValueKind
 }
 
 type Citation = {
@@ -148,6 +156,7 @@ type RowEvaluation = {
   retrievalRecallAt20: boolean | null
   retrievalMrrAtK: number | null
   factSlotCoverage: number | null
+  normalizedAnswerMatch: boolean | null
   supportedFactSlots: number | null
   totalFactSlots: number
   citationSupportPass: boolean | null
@@ -244,6 +253,7 @@ type Summary = {
     expectedFileHitRate: number | null
     pageRecallAtK: number | null
     pageRecallAt20: number | null
+    normalizedAnswerAccuracy: number | null
     retrievalRecallAtK: number | null
     retrievalMrrAtK: number | null
     retrievalRecallAt20: number | null
@@ -691,6 +701,11 @@ function evaluateRow(
 
   const factSlotResult = evaluateFactSlots(row.expectedFactSlots ?? [], answer, [...citations, ...finalEvidence], expectedAnswerable)
   if (factSlotResult.coverage !== null && factSlotResult.coverage < 1) failureReasons.push("fact_slot_not_covered")
+  const expectedNormalizedValues = toNormalizedExpectedValues(row.expectedNormalizedValues ?? [])
+  const normalizedAnswerMatch = expectedAnswerable && expectedNormalizedValues.length > 0
+    ? normalizedDrawingValuesMatch(expectedNormalizedValues, answer, [...citations, ...finalEvidence].map((citation) => citation.text ?? "").join("\n"))
+    : null
+  if (normalizedAnswerMatch === false) failureReasons.push("normalized_answer_mismatch")
 
   const supportResult = evaluateUnsupportedSentences(body)
   if (supportResult.rate !== null && supportResult.rate > 0) failureReasons.push("unsupported_sentence_detected")
@@ -712,6 +727,7 @@ function evaluateRow(
     expectedFileHit !== false &&
     expectedDocumentHit !== false &&
     expectedPageHit !== false &&
+    normalizedAnswerMatch !== false &&
     status >= 200 &&
     status < 300
 
@@ -745,6 +761,7 @@ function evaluateRow(
     retrievalRecallAt20,
     retrievalMrrAtK,
     factSlotCoverage: factSlotResult.coverage,
+    normalizedAnswerMatch,
     supportedFactSlots: factSlotResult.supported,
     totalFactSlots: factSlotResult.total,
     citationSupportPass,
@@ -861,6 +878,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   const pageRecallAt20Evaluated = results.filter((row) => row.evaluation.pageRecallAt20 !== null)
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
+  const normalizedAnswerEvaluated = results.filter((row) => row.evaluation.normalizedAnswerMatch !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
   const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
   const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
@@ -967,6 +985,10 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       pageRecallAt20: rate(
         pageRecallAt20Evaluated.filter((row) => row.evaluation.pageRecallAt20 === true).length,
         pageRecallAt20Evaluated.length
+      ),
+      normalizedAnswerAccuracy: rate(
+        normalizedAnswerEvaluated.filter((row) => row.evaluation.normalizedAnswerMatch === true).length,
+        normalizedAnswerEvaluated.length
       ),
       retrievalRecallAtK: rate(
         retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length,
@@ -1128,6 +1150,7 @@ type BenchmarkReportMetricName =
   | "expected_file_hit_rate"
   | "page_recall_at_k"
   | "page_recall_at_20"
+  | "normalized_answer_accuracy"
   | "retrieval_recall_at_k"
   | "retrieval_mrr_at_k"
   | "retrieval_recall_at_20"
@@ -1331,6 +1354,8 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "evaluator profile の retrieval.recallK で期待 page が raw retrieved に含まれた割合。"
     case "page_recall_at_20":
       return "上位 20 件の raw retrieved に期待 page が含まれた割合。visual retrieval の page 到達性能比較に使う。"
+    case "normalized_answer_accuracy":
+      return "期待値と回答・根拠を同じ図面値正規化に通したうえで一致した割合。"
     case "retrieval_recall_at_k":
       return "evaluator profile の retrieval.recallK で期待ファイルまたは期待 document が含まれた割合。"
     case "retrieval_mrr_at_k":
@@ -1464,6 +1489,11 @@ function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportR
       note: "fact_slot_coverage denominator"
     },
     {
+      item: "rows_with_expected_normalized_values",
+      count: results.filter((row) => row.evaluation.normalizedAnswerMatch !== null).length,
+      note: "normalized_answer_accuracy denominator"
+    },
+    {
       item: "actual_clarification_rows",
       count: actualClarificationRows.length,
       note: "clarification precision and latency delta group"
@@ -1508,6 +1538,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const pageRecallAtKEvaluated = results.filter((row) => row.evaluation.pageRecallAtK !== null)
   const pageRecallAt20Evaluated = results.filter((row) => row.evaluation.pageRecallAt20 !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
+  const normalizedAnswerEvaluated = results.filter((row) => row.evaluation.normalizedAnswerMatch !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
   const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
   const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
@@ -1539,6 +1570,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを citation/finalEvidence で評価。"),
     metricRateRow("page_recall_at_k", summary.metrics.pageRecallAtK, pageRecallAtKEvaluated.filter((row) => row.evaluation.pageRecallAtK === true).length, pageRecallAtKEvaluated.length, "`expectedPages` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
     metricRateRow("page_recall_at_20", summary.metrics.pageRecallAt20, pageRecallAt20Evaluated.filter((row) => row.evaluation.pageRecallAt20 === true).length, pageRecallAt20Evaluated.length, "`expectedPages` を raw retrieved の top 20 で評価。"),
+    metricRateRow("normalized_answer_accuracy", summary.metrics.normalizedAnswerAccuracy, normalizedAnswerEvaluated.filter((row) => row.evaluation.normalizedAnswerMatch === true).length, normalizedAnswerEvaluated.length, "`expectedNormalizedValues` がある行だけを回答と根拠の正規化値で評価。"),
     metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
     metricNullableRow("retrieval_mrr_at_k", formatNumber(summary.metrics.retrievalMrrAtK), summary.metrics.retrievalMrrAtK, `${retrievalMrrAtKEvaluated.length} rows with expectedFiles or expectedDocumentIds`, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK 内の reciprocal rank で評価。"),
     metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の top 20 で評価する後方互換指標。"),
@@ -1721,6 +1753,10 @@ function hasSupportedFactSlot(slot: ExpectedFactSlot, answer: string, evidence: 
 
   const evidenceText = evidence.map((citation) => `${citation.fileName ?? ""}\n${citation.documentId ?? ""}\n${citation.text ?? ""}`).join("\n")
   return evidence.length > 0 && (mustContain.length === 0 || mustContain.every((expected) => normalize(evidenceText).includes(normalize(expected))))
+}
+
+function toNormalizedExpectedValues(values: ExpectedNormalizedValue[]): string[] {
+  return values.map((value) => normalizeExpectedDrawingValue(value)).filter((value): value is string => Boolean(value))
 }
 
 function evaluateUnsupportedSentences(body: BenchmarkResponse): {

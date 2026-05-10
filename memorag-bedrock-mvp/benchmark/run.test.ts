@@ -26,6 +26,7 @@ type SummaryArtifact = {
     queryRewriteAccuracy?: number | null
     pageRecallAtK?: number | null
     pageRecallAt20?: number | null
+    normalizedAnswerAccuracy?: number | null
     retrievalRecallAtK?: number | null
     retrievalRecallAt20?: number | null
     retrievalMrrAtK?: number | null
@@ -194,6 +195,74 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.match(report, /citation_support_pass_rate/)
     assert.match(report, /no_access_leak_count/)
     assert.match(report, /RAG profile: default@1 retrieval=default@1 answer=default-answer-policy@1/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner evaluates normalized drawing values without breaking contains checks", async () => {
+  const paths = artifactPaths("drawing-normalized")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${[
+    {
+      id: "drawing-normalized-pass",
+      question: "縮尺と延長は？",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["延長"],
+      expectedFiles: ["drawing.pdf"],
+      expectedNormalizedValues: [
+        { kind: "scale", raw: "S=1/100" },
+        { kind: "length", raw: "L=12.5m" }
+      ]
+    },
+    {
+      id: "drawing-normalized-fail",
+      question: "管径は？",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["管径"],
+      expectedFiles: ["drawing.pdf"],
+      expectedNormalizedValues: [{ kind: "diameter", raw: "φ75" }]
+    },
+    {
+      id: "plain-contains",
+      question: "通常QA",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["通常回答"],
+      expectedFiles: ["handbook.md"]
+    }
+  ].map((row) => JSON.stringify(row)).join("\n")}\n`, "utf-8")
+
+  const calls: Array<{ method?: string; path?: string; body?: unknown }> = []
+  const server = createServer((req, res) => {
+    void handleNormalizedDrawingRunnerRequest(req, res, calls)
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    assert.equal(calls.length, 3)
+
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.normalizedAnswerAccuracy, 0.5)
+    assert.deepEqual(summary.failures.find((failure) => failure.id === "drawing-normalized-fail")?.reasons, ["normalized_answer_mismatch"])
+    assert.equal(summary.failures.some((failure) => failure.id === "plain-contains"), false)
+
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /normalized_answer_accuracy/)
+    assert.match(report, /rows_with_expected_normalized_values/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -462,6 +531,56 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
     isAnswerable: true,
     citations: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
     retrieved: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
+    debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+  } }))
+}
+
+async function handleNormalizedDrawingRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestBody(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query") {
+    res.statusCode = 404
+    res.end(JSON.stringify({ error: "not found" }))
+    return
+  }
+
+  const input = unwrapRpcBody(body)
+  const id = typeof input === "object" && input !== null && "id" in input ? (input as { id?: string }).id : undefined
+  if (id === "drawing-normalized-pass") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "縮尺は1:100、延長は12500mmです。",
+      isAnswerable: true,
+      citations: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_chunk_001", score: 0.9, text: "タイトル欄 S=1/100。配管表 L=12.5m。" }],
+      retrieved: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_chunk_001", score: 0.9 }],
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  if (id === "drawing-normalized-fail") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "管径はD=50です。",
+      isAnswerable: true,
+      citations: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_chunk_002", score: 0.9, text: "管径 D=50" }],
+      retrieved: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_chunk_002", score: 0.9 }],
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  res.end(JSON.stringify({ json: {
+    id,
+    responseType: "answer",
+    answer: "通常回答です。",
+    isAnswerable: true,
+    citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9, text: "通常回答です。" }],
+    retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
+    answerSupport: { unsupportedSentences: [], totalSentences: 1 },
     debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
   } }))
 }
