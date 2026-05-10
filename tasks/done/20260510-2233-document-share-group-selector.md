@@ -1,6 +1,6 @@
 # ドキュメント共有 group 選択 UI 改善
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -44,12 +44,12 @@ API から独立した架空 group 一覧を出さず、既存 `documentGroups[]
 
 ## 受け入れ条件
 
-- [ ] 共有設定フォームに、実データ由来の shared group 候補が checkbox multi-select として表示される。
-- [ ] 候補 checkbox の選択 / 解除が `shareGroups` 入力、validation、差分 preview、submit payload に反映される。
-- [ ] 候補がない場合は架空候補を出さず、自由入力欄だけで編集できる。
-- [ ] 既存の重複 / 空値 validation と共有差分 preview が維持される。
-- [ ] 本番 UI に固定 group、架空 group、固定ユーザー数などの mock fallback を追加しない。
-- [ ] 対象 web test、typecheck、lint、web inventory check、`git diff --check` が pass する。
+- [x] 共有設定フォームに、実データ由来の shared group 候補が checkbox multi-select として表示される。
+- [x] 候補 checkbox の選択 / 解除が `shareGroups` 入力、validation、差分 preview、submit payload に反映される。
+- [x] 候補がない場合は架空候補を出さず、自由入力欄だけで編集できる。
+- [x] 既存の重複 / 空値 validation と共有差分 preview が維持される。
+- [x] 本番 UI に固定 group、架空 group、固定ユーザー数などの mock fallback を追加しない。
+- [x] 対象 web test、typecheck、lint、web inventory check、`git diff --check` が pass する。
 
 ## 検証計画
 
@@ -68,3 +68,10 @@ API から独立した架空 group 一覧を出さず、既存 `documentGroups[]
 ## リスク
 
 - Cognito group 一覧 API がないため、候補は「既存フォルダに現れている group」と「現在の入力値」に限定する。存在確認は従来どおり API 更新時に委ねる。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/262
+- 受け入れ条件確認コメント: `4415433250`
+- セルフレビューコメント: `4415433845`
+- 作業レポート: `reports/working/20260510-2240-document-share-group-selector.md`
