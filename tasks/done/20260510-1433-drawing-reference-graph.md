@@ -1,8 +1,8 @@
 # 建築図面の部屋・記号・寸法・詳細参照グラフを作る
 
-保存先: `tasks/do/20260510-1433-drawing-reference-graph.md`
+保存先: `tasks/done/20260510-1433-drawing-reference-graph.md`
 
-状態: do
+状態: done
 
 タスク種別: 機能追加
 
@@ -12,7 +12,9 @@
 - [x] 最小 `drawingReferenceGraph` schema を追加する。
 - [x] detail / section / callout QA から node / edge / target を生成する。
 - [x] dataset row に `expectedGraphResolutions` を付与し、benchmark metric に接続する。
-- [ ] docs、test、作業レポートを更新し、PR コメントまで完了する。
+- [x] docs、test、作業レポートを更新し、PR コメントまで完了する。
+
+PR: https://github.com/tsuji-tomonori/rag-assist/pull/261
 
 ## Done 条件
 
