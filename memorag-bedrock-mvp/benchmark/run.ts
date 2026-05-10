@@ -84,6 +84,8 @@ type Citation = {
   documentId?: string
   fileName?: string
   chunkId?: string
+  pageStart?: number
+  pageEnd?: number
   score?: number
   text?: string
 }
@@ -140,6 +142,8 @@ type RowEvaluation = {
   citationHit: boolean | null
   expectedFileHit: boolean | null
   expectedPageHit: boolean | null
+  pageRecallAtK: boolean | null
+  pageRecallAt20: boolean | null
   retrievalRecallAtK: boolean | null
   retrievalRecallAt20: boolean | null
   retrievalMrrAtK: number | null
@@ -238,6 +242,8 @@ type Summary = {
     answerContainsRate: number | null
     citationHitRate: number | null
     expectedFileHitRate: number | null
+    pageRecallAtK: number | null
+    pageRecallAt20: number | null
     retrievalRecallAtK: number | null
     retrievalMrrAtK: number | null
     retrievalRecallAt20: number | null
@@ -663,6 +669,11 @@ function evaluateRow(
   const expectedPageHit =
     expectedPages.length > 0 ? hasExpectedPageHit([...citations, ...finalEvidence], expectedPages) : null
   if (expectedPageHit === false) failureReasons.push("expected_page_not_hit")
+  const pageRecallAtK =
+    expectedPages.length > 0 ? hasExpectedPageRecallAtK(retrieved, expectedPages, evaluatorProfile.retrieval.recallK) : null
+  if (pageRecallAtK === false) failureReasons.push(`page_recall_at_${evaluatorProfile.retrieval.recallK}_miss`)
+  const pageRecallAt20 =
+    expectedPages.length > 0 ? hasExpectedPageRecallAtK(retrieved, expectedPages, 20) : null
 
   const retrievalRecallAtK =
     expectedFiles.length > 0 || expectedDocumentIds.length > 0
@@ -728,6 +739,8 @@ function evaluateRow(
     citationHit,
     expectedFileHit: expectedFileHit ?? expectedDocumentHit,
     expectedPageHit,
+    pageRecallAtK,
+    pageRecallAt20,
     retrievalRecallAtK,
     retrievalRecallAt20,
     retrievalMrrAtK,
@@ -844,6 +857,8 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   const retrievalRecallAt20Evaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
   const retrievalMrrAtKEvaluated = results.filter((row) => row.evaluation.retrievalMrrAtK !== null)
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
+  const pageRecallAtKEvaluated = results.filter((row) => row.evaluation.pageRecallAtK !== null)
+  const pageRecallAt20Evaluated = results.filter((row) => row.evaluation.pageRecallAt20 !== null)
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
@@ -944,6 +959,14 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       expectedFileHitRate: rate(
         fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length,
         fileEvaluated.length
+      ),
+      pageRecallAtK: rate(
+        pageRecallAtKEvaluated.filter((row) => row.evaluation.pageRecallAtK === true).length,
+        pageRecallAtKEvaluated.length
+      ),
+      pageRecallAt20: rate(
+        pageRecallAt20Evaluated.filter((row) => row.evaluation.pageRecallAt20 === true).length,
+        pageRecallAt20Evaluated.length
       ),
       retrievalRecallAtK: rate(
         retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length,
@@ -1103,6 +1126,8 @@ type BenchmarkReportMetricName =
   | "answer_contains_rate"
   | "citation_hit_rate"
   | "expected_file_hit_rate"
+  | "page_recall_at_k"
+  | "page_recall_at_20"
   | "retrieval_recall_at_k"
   | "retrieval_mrr_at_k"
   | "retrieval_recall_at_20"
@@ -1302,6 +1327,10 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "回答可能な行で、少なくとも 1 件の citation を返した割合。"
     case "expected_file_hit_rate":
       return "期待ファイルまたは期待 document が citation/finalEvidence に含まれた割合。"
+    case "page_recall_at_k":
+      return "evaluator profile の retrieval.recallK で期待 page が raw retrieved に含まれた割合。"
+    case "page_recall_at_20":
+      return "上位 20 件の raw retrieved に期待 page が含まれた割合。visual retrieval の page 到達性能比較に使う。"
     case "retrieval_recall_at_k":
       return "evaluator profile の retrieval.recallK で期待ファイルまたは期待 document が含まれた割合。"
     case "retrieval_mrr_at_k":
@@ -1476,6 +1505,8 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const retrievalRecallAt20Evaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
   const retrievalMrrAtKEvaluated = results.filter((row) => row.evaluation.retrievalMrrAtK !== null)
   const pageEvaluated = results.filter((row) => row.evaluation.expectedPageHit !== null)
+  const pageRecallAtKEvaluated = results.filter((row) => row.evaluation.pageRecallAtK !== null)
+  const pageRecallAt20Evaluated = results.filter((row) => row.evaluation.pageRecallAt20 !== null)
   const factSlotEvaluated = results.filter((row) => row.evaluation.factSlotCoverage !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
   const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
@@ -1506,6 +1537,8 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("answer_contains_rate", summary.metrics.answerContainsRate, containsEvaluated.filter((row) => row.evaluation.answerContainsExpected === true).length, containsEvaluated.length, "`expectedContains` / `expectedAnswer` を持つ answerable 行の期待語句一致率。"),
     metricRateRow("citation_hit_rate", summary.metrics.citationHitRate, citationEvaluated.filter((row) => row.evaluation.citationHit === true).length, citationEvaluated.length, "answerable 行で citation が返った割合。"),
     metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを citation/finalEvidence で評価。"),
+    metricRateRow("page_recall_at_k", summary.metrics.pageRecallAtK, pageRecallAtKEvaluated.filter((row) => row.evaluation.pageRecallAtK === true).length, pageRecallAtKEvaluated.length, "`expectedPages` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
+    metricRateRow("page_recall_at_20", summary.metrics.pageRecallAt20, pageRecallAt20Evaluated.filter((row) => row.evaluation.pageRecallAt20 === true).length, pageRecallAt20Evaluated.length, "`expectedPages` を raw retrieved の top 20 で評価。"),
     metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
     metricNullableRow("retrieval_mrr_at_k", formatNumber(summary.metrics.retrievalMrrAtK), summary.metrics.retrievalMrrAtK, `${retrievalMrrAtKEvaluated.length} rows with expectedFiles or expectedDocumentIds`, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK 内の reciprocal rank で評価。"),
     metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の top 20 で評価する後方互換指標。"),
@@ -1593,15 +1626,27 @@ function hasExpectedDocumentHit(citations: Citation[], expectedDocumentIds: stri
 function hasExpectedPageHit(citations: Citation[], expectedPages: string[]): boolean {
   const pagePatterns = expectedPages.flatMap((page) => {
     const escaped = escapeRegExp(page)
+    const numeric = numericPage(page)
     return [
       new RegExp(`(?:^|[^0-9])p(?:age)?[_ -]?0*${escaped}(?:[^0-9]|$)`, "iu"),
-      new RegExp(`(?:^|[^0-9])${escaped}\\s*(?:ページ|頁)(?:[^0-9]|$)`, "iu")
+      new RegExp(`(?:^|[^0-9])${escaped}\\s*(?:ページ|頁)(?:[^0-9]|$)`, "iu"),
+      ...(numeric === null
+        ? []
+        : [
+            new RegExp(`(?:^|[^0-9])p(?:age)?[_ -]?0*${numeric}(?:[^0-9]|$)`, "iu"),
+            new RegExp(`(?:^|[^0-9])${numeric}\\s*(?:ページ|頁)(?:[^0-9]|$)`, "iu")
+          ])
     ]
   })
   return citations.some((citation) => {
+    if (expectedPages.some((page) => citationCoversPage(citation, page))) return true
     const haystack = [citation.chunkId, citation.fileName, citation.text].filter(Boolean).join("\n")
     return pagePatterns.some((pattern) => pattern.test(haystack))
   })
+}
+
+function hasExpectedPageRecallAtK(citations: Citation[], expectedPages: string[], k: number): boolean {
+  return hasExpectedPageHit(citations.slice(0, Math.max(1, Math.trunc(k))), expectedPages)
 }
 
 function hasRetrievalRecallAtK(citations: Citation[], expectedFiles: string[], expectedDocumentIds: string[], k: number): boolean {
@@ -1619,6 +1664,21 @@ function reciprocalRankAtK(citations: Citation[], expectedFiles: string[], expec
       (expectedDocumentIds.length > 0 && hasExpectedDocumentHit([citation], expectedDocumentIds))
   )
   return index === -1 ? 0 : Number((1 / (index + 1)).toFixed(4))
+}
+
+function citationCoversPage(citation: Citation, expectedPage: string): boolean {
+  const numeric = numericPage(expectedPage)
+  if (numeric === null) return false
+  const start = citation.pageStart
+  const end = citation.pageEnd ?? start
+  return typeof start === "number" && typeof end === "number" && numeric >= start && numeric <= end
+}
+
+function numericPage(value: string): number | null {
+  const match = value.normalize("NFKC").match(/\d+/u)
+  if (!match) return null
+  const page = Number(match[0])
+  return Number.isInteger(page) && page > 0 ? page : null
 }
 
 function countForbiddenEvidence(citations: Citation[], forbiddenFiles: string[], forbiddenDocumentIds: string[]): number {

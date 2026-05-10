@@ -24,6 +24,8 @@ type SummaryArtifact = {
   skipped: number
   metrics?: {
     queryRewriteAccuracy?: number | null
+    pageRecallAtK?: number | null
+    pageRecallAt20?: number | null
     retrievalRecallAtK?: number | null
     retrievalRecallAt20?: number | null
     retrievalMrrAtK?: number | null
@@ -177,6 +179,8 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     const summary = readSummary(paths.summary)
     assert.equal(summary.total, 3)
     assert.equal(summary.metrics?.retrievalMrrAtK, 1)
+    assert.equal(summary.metrics?.pageRecallAtK, 1)
+    assert.equal(summary.metrics?.pageRecallAt20, 1)
     assert.equal(summary.metrics?.citationSupportPassRate, 1)
     assert.equal(summary.metrics?.noAccessLeakCount, 1)
     assert.equal(summary.metrics?.noAccessLeakRate, 0.5)
@@ -186,6 +190,7 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.match(report, /evaluation_category_answerable/)
     assert.match(report, /evaluation_category_ACL/)
     assert.match(report, /retrieval_mrr_at_k/)
+    assert.match(report, /page_recall_at_k/)
     assert.match(report, /citation_support_pass_rate/)
     assert.match(report, /no_access_leak_count/)
     assert.match(report, /RAG profile: default@1 retrieval=default@1 answer=default-answer-policy@1/)
