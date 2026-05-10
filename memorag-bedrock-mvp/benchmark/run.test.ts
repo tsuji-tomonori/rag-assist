@@ -26,7 +26,12 @@ type SummaryArtifact = {
     queryRewriteAccuracy?: number | null
     pageRecallAtK?: number | null
     pageRecallAt20?: number | null
+    regionRecallAtK?: number | null
+    regionRecallAt20?: number | null
     normalizedAnswerAccuracy?: number | null
+    extractionAccuracy?: number | null
+    countMape?: number | null
+    graphResolutionAccuracy?: number | null
     retrievalRecallAtK?: number | null
     retrievalRecallAt20?: number | null
     retrievalMrrAtK?: number | null
@@ -45,6 +50,7 @@ type SummaryArtifact = {
   corpusSeed: Array<{ fileName: string; status: string; skipReason?: string }>
   skippedRows: Array<{ id?: string; fileNames: string[]; reason: string }>
   failures: Array<{ id?: string; reasons: string[]; categories?: string[] }>
+  diagnosticFailureBreakdown?: Record<string, number>
 }
 
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
@@ -263,6 +269,93 @@ test("benchmark runner evaluates normalized drawing values without breaking cont
     const report = readFileSync(paths.report, "utf-8")
     assert.match(report, /normalized_answer_accuracy/)
     assert.match(report, /rows_with_expected_normalized_values/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner reports drawing diagnostic metrics only when expected fields exist", async () => {
+  const paths = artifactPaths("drawing-diagnostics")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${[
+    {
+      id: "drawing-diagnostic-pass",
+      question: "図面診断の正常系",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["正常"],
+      expectedFiles: ["drawing.pdf"],
+      expectedRegionIds: ["region-a"],
+      expectedExtractionValues: [{ kind: "diameter", raw: "φ75" }],
+      expectedCounts: [{ label: "door", expected: 2 }],
+      expectedGraphResolutions: [{ id: "detail", target: "A-101" }]
+    },
+    {
+      id: "drawing-diagnostic-fail",
+      question: "図面診断の失敗系",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["失敗"],
+      expectedFiles: ["drawing.pdf"],
+      expectedRegionIds: ["region-missing"],
+      expectedExtractionValues: [{ kind: "diameter", raw: "φ75" }],
+      expectedCounts: [{ label: "door", expected: 4 }],
+      expectedGraphResolutions: [{ id: "detail", target: "A-101" }]
+    },
+    {
+      id: "plain-diagnostic-not-applicable",
+      question: "通常QA",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["通常回答"],
+      expectedFiles: ["handbook.md"]
+    }
+  ].map((row) => JSON.stringify(row)).join("\n")}\n`, "utf-8")
+
+  const calls: Array<{ method?: string; path?: string; body?: unknown }> = []
+  const server = createServer((req, res) => {
+    void handleDrawingDiagnosticsRunnerRequest(req, res, calls)
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    assert.equal(calls.length, 3)
+
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.regionRecallAtK, 0.5)
+    assert.equal(summary.metrics?.regionRecallAt20, 0.5)
+    assert.equal(summary.metrics?.extractionAccuracy, 0.5)
+    assert.equal(summary.metrics?.countMape, 0.25)
+    assert.equal(summary.metrics?.graphResolutionAccuracy, 0.5)
+    assert.deepEqual(summary.failures.find((failure) => failure.id === "drawing-diagnostic-fail")?.reasons, [
+      "region_recall_at_20_miss",
+      "extraction_accuracy_mismatch",
+      "count_mape_nonzero",
+      "graph_resolution_mismatch"
+    ])
+    assert.equal(summary.diagnosticFailureBreakdown?.ocr, 1)
+    assert.equal(summary.diagnosticFailureBreakdown?.grounding, 1)
+    assert.equal(summary.diagnosticFailureBreakdown?.reasoning, 1)
+    assert.equal(summary.failures.some((failure) => failure.id === "plain-diagnostic-not-applicable"), false)
+
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /region_recall_at_k/)
+    assert.match(report, /extraction_accuracy/)
+    assert.match(report, /count_mape/)
+    assert.match(report, /graph_resolution_accuracy/)
+    assert.match(report, /rows_with_expected_region_ids/)
+    assert.match(report, /Diagnostic Failure Breakdown/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -568,6 +661,66 @@ async function handleNormalizedDrawingRunnerRequest(req: IncomingMessage, res: S
       isAnswerable: true,
       citations: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_chunk_002", score: 0.9, text: "管径 D=50" }],
       retrieved: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_chunk_002", score: 0.9 }],
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  res.end(JSON.stringify({ json: {
+    id,
+    responseType: "answer",
+    answer: "通常回答です。",
+    isAnswerable: true,
+    citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9, text: "通常回答です。" }],
+    retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
+    answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+    debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+  } }))
+}
+
+async function handleDrawingDiagnosticsRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestBody(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query") {
+    res.statusCode = 404
+    res.end(JSON.stringify({ error: "not found" }))
+    return
+  }
+
+  const input = unwrapRpcBody(body)
+  const id = typeof input === "object" && input !== null && "id" in input ? (input as { id?: string }).id : undefined
+  if (id === "drawing-diagnostic-pass") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "正常に抽出しました。",
+      isAnswerable: true,
+      citations: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_region_a", regionId: "region-a", score: 0.9, text: "VPφ75。door=2。detail A-101。" }],
+      retrieved: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_region_a", regionId: "region-a", score: 0.9 }],
+      diagnostics: {
+        extractions: [{ kind: "diameter", raw: "VPφ75", canonical: "diameter:phi:75" }],
+        counts: [{ label: "door", value: 2 }],
+        graphResolutions: [{ id: "detail", target: "A-101" }]
+      },
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  if (id === "drawing-diagnostic-fail") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "失敗例を返しました。",
+      isAnswerable: true,
+      citations: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_region_b", regionId: "region-b", score: 0.9, text: "D=50。door=2。detail A-102。" }],
+      retrieved: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_region_b", regionId: "region-b", score: 0.9 }],
+      diagnostics: {
+        extractions: [{ kind: "diameter", raw: "D=50", canonical: "diameter:d:50" }],
+        counts: [{ label: "door", value: 2 }],
+        graphResolutions: [{ id: "detail", target: "A-102" }]
+      },
       answerSupport: { unsupportedSentences: [], totalSentences: 1 },
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
     } }))
