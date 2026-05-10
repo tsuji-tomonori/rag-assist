@@ -1,6 +1,6 @@
 # benchmark runner 初期化失敗と PDF ingest OOM 対応
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - branch: `codex/benchmark-infra-runner-fix`
 - base: `origin/main`
@@ -63,7 +63,7 @@ CodeBuild benchmark の BUILD フェーズが QA 実行前の corpus seed / runn
 - [x] PDF 抽出で stage 別 memory / file size / text length ログが残る。
 - [x] PDF 除外や fixture 化を行っていない。
 - [x] 変更範囲に見合う benchmark / API / infra の検証を実行し、未実施項目は理由を記録する。
-- [ ] 作業レポート、PR 本文、PR コメントに実施内容と未検証事項を正直に記録する。
+- [x] 作業レポート、PR 本文、PR コメントに実施内容と未検証事項を正直に記録する。
 
 ## 検証計画
 
