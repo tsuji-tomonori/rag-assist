@@ -1,6 +1,6 @@
 # API route 別 Lambda 分離
 
-- 状態: ready_for_pr
+- 状態: done
 - タスク種別: 機能追加
 - branch: `codex/split-api-lambda-by-route`
 - base: `origin/main`
