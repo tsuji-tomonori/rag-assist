@@ -415,6 +415,7 @@ export function DocumentWorkspace({
               <span role="columnheader">更新日</span>
               <span role="columnheader">チャンク数</span>
               <span role="columnheader">状態</span>
+              <span role="columnheader">所属フォルダ</span>
               <span role="columnheader">操作</span>
             </div>
             {folderDocuments.length === 0 ? (
@@ -431,58 +432,65 @@ export function DocumentWorkspace({
                 <span>検索語、種別、状態、所属フォルダの条件を変更してください。</span>
               </div>
             ) : (
-              visibleDocuments.map((document) => (
-                <div
-                  className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
-                  role="row"
-                  key={document.documentId}
-                  tabIndex={0}
-                  aria-label={`${document.fileName}の詳細を表示`}
-                  onClick={() => setSelectedDocument(document)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault()
-                      setSelectedDocument(document)
-                    }
-                  }}
-                >
-                  <span role="cell" className="document-name-cell">
-                    <FileIcon document={document} />
-                    <span>{document.fileName}</span>
-                  </span>
-                  <span role="cell">{fileTypeLabel(document)}</span>
-                  <span role="cell">{formatDateTime(document.createdAt)}</span>
-                  <span role="cell">{document.chunkCount}</span>
-                  <span role="cell">{document.lifecycleStatus ?? "active"}</span>
-                  <span role="cell" className="document-actions-cell">
-                    <button
-                      type="button"
-                      title={`${document.fileName}の再インデックスをステージング`}
-                      aria-label={`${document.fileName}の再インデックスをステージング`}
-                      disabled={!canReindex || operationState.stagingReindexDocumentId === document.documentId}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setConfirmAction({ kind: "stage", document })
-                      }}
-                    >
-                      {operationState.stagingReindexDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
-                    </button>
-                    <button
-                      type="button"
-                      className="delete-document-button"
-                      title={`${document.fileName}を削除`}
-                      aria-label={`${document.fileName}を削除`}
-                      disabled={!canDelete || operationState.deletingDocumentId === document.documentId}
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setConfirmAction({ kind: "delete", document })
-                      }}
-                    >
-                      {operationState.deletingDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
-                    </button>
-                  </span>
-                </div>
-              ))
+              visibleDocuments.map((document) => {
+                const groupNames = documentGroupNames(document, documentGroups)
+                const groupLabel = groupNames.join(", ") || "未設定"
+                return (
+                  <div
+                    className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
+                    role="row"
+                    key={document.documentId}
+                    tabIndex={0}
+                    aria-label={`${document.fileName}の詳細を表示`}
+                    onClick={() => setSelectedDocument(document)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault()
+                        setSelectedDocument(document)
+                      }
+                    }}
+                  >
+                    <span role="cell" className="document-name-cell" data-label="ファイル名">
+                      <FileIcon document={document} />
+                      <span title={document.fileName}>{document.fileName}</span>
+                    </span>
+                    <span role="cell" data-label="種別">{fileTypeLabel(document)}</span>
+                    <span role="cell" data-label="更新日">{formatDateTime(document.createdAt)}</span>
+                    <span role="cell" data-label="チャンク数">{document.chunkCount}</span>
+                    <span role="cell" data-label="状態">{document.lifecycleStatus ?? "active"}</span>
+                    <span role="cell" data-label="所属フォルダ">{groupLabel}</span>
+                    <span role="cell" className="document-actions-cell" data-label="操作">
+                      <span className="document-action-buttons">
+                        <button
+                          type="button"
+                          title={`${document.fileName}の再インデックスをステージング`}
+                          aria-label={`${document.fileName}の再インデックスをステージング`}
+                          disabled={!canReindex || operationState.stagingReindexDocumentId === document.documentId}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setConfirmAction({ kind: "stage", document })
+                          }}
+                        >
+                          {operationState.stagingReindexDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
+                        </button>
+                        <button
+                          type="button"
+                          className="delete-document-button"
+                          title={`${document.fileName}を削除`}
+                          aria-label={`${document.fileName}を削除`}
+                          disabled={!canDelete || operationState.deletingDocumentId === document.documentId}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setConfirmAction({ kind: "delete", document })
+                          }}
+                        >
+                          {operationState.deletingDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
+                        </button>
+                      </span>
+                    </span>
+                  </div>
+                )
+              })
             )}
           </div>
 
@@ -970,6 +978,10 @@ function compareDocuments(left: DocumentManifest, right: DocumentManifest, sort:
   if (sort === "chunkDesc") return right.chunkCount - left.chunkCount
   if (sort === "typeAsc") return fileTypeLabel(left).localeCompare(fileTypeLabel(right), "ja") || left.fileName.localeCompare(right.fileName, "ja")
   return right.createdAt.localeCompare(left.createdAt)
+}
+
+function documentGroupNames(document: DocumentManifest, documentGroups: DocumentGroup[]): string[] {
+  return documentGroupIds(document).map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
 }
 
 function buildOperationEvents({
