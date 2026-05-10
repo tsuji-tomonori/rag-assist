@@ -145,8 +145,8 @@ export async function authorizeDocumentDelete(service: MemoRagService, user: App
   if (!hasPermission(user, "benchmark:seed_corpus")) {
     throw new HTTPException(403, { message: "Forbidden: missing document delete permission" })
   }
-  const manifest = (await service.listDocuments(user)).find((document) => document.documentId === documentId)
-  if (!manifest || !isBenchmarkSeedDocumentManifest(manifest)) {
+  const manifest = await service.getDocumentManifest(documentId)
+  if (!isBenchmarkSeedDocumentManifest(manifest)) {
     throw new HTTPException(403, { message: "Forbidden: benchmark seed delete requires isolated benchmark metadata" })
   }
 }

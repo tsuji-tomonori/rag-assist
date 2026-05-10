@@ -116,8 +116,8 @@ test("protected API routes keep route-level permission checks", async () => {
       )
       assert.match(
         source,
-        /function authorizeDocumentDelete[\s\S]*?benchmark:seed_corpus[\s\S]*?isBenchmarkSeedDocumentManifest/,
-        `${policy.method.toUpperCase()} ${policy.path} must restrict benchmark seed deletes`
+        /function authorizeDocumentDelete[\s\S]*?benchmark:seed_corpus[\s\S]*?getDocumentManifest[\s\S]*?isBenchmarkSeedDocumentManifest/,
+        `${policy.method.toUpperCase()} ${policy.path} must restrict benchmark seed deletes to the target manifest`
       )
     } else if (policy.mode === "documentUploadSession") {
       assert.match(
