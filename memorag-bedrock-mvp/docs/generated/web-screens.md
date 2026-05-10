@@ -17,7 +17,7 @@
 | お気に入り | favorites | / (client-state) | [履歴](web-features/history.md) | HistoryWorkspace | - | チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages ほか 2 件 | inferred |
 | 性能テスト | benchmark | / (client-state) | [性能テスト](web-features/benchmark.md) | BenchmarkWorkspace | canReadBenchmarkRuns | チャットへ戻る、テスト種別、benchmark suite を取得できません、データセット、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、modelId ほか 4 件 | confirmed |
 | 管理者設定 | admin | / (client-state) | [管理](web-features/admin.md) | AdminWorkspace | canSeeAdminSettings | チャットへ戻る、ドキュメント管理 / 件、担当者対応 / 件が対応待ち、デバッグ / 評価 / 件の実行履歴、性能テスト / 件の実行履歴、更新 ほか 23 件 | confirmed |
-| ドキュメント | documents | / (client-state) | [ドキュメント](web-features/documents.md) | DocumentWorkspace | canManageDocuments | 管理者設定へ戻る、フォルダを検索、フォルダ検索をクリア、すべてのドキュメント、共有設定を編集、ファイル名検索 ほか 40 件 | confirmed |
+| ドキュメント | documents | / (client-state) | [ドキュメント](web-features/documents.md) | DocumentWorkspace | canManageDocuments | 管理者設定へ戻る、フォルダを検索、フォルダ検索をクリア、すべてのドキュメント、共有設定を編集、ファイル名検索 ほか 55 件 | confirmed |
 | 個人設定 | profile | / (client-state) | [アプリケーション枠](web-features/app.md) | PersonalSettingsView | - | チャットへ戻る、送信キー / Enterで送信 / Ctrl+Enterで送信、submitShortcut、enter、ctrlEnter、サインアウト ほか 11 件 | confirmed |
 
 ## 画面ごとの説明
@@ -90,7 +90,7 @@
 - route: `/` (client-state)
 - 権限条件: `canManageDocuments`
 - 画面の意味: ドキュメント。ファイル upload、フォルダ作成、共有、reindex 切替を行います。
-- 主要操作: 管理者設定へ戻る、フォルダを検索、フォルダ検索をクリア、すべてのドキュメント、共有設定を編集、ファイル名検索、ファイル名 / documentId、種別 / すべて、documentTypeFilter、all ほか 36 件
+- 主要操作: 管理者設定へ戻る、フォルダを検索、フォルダ検索をクリア、すべてのドキュメント、共有設定を編集、ファイル名検索、ファイル名 / documentId、種別 / すべて、documentTypeFilter、all ほか 51 件
 
 ### 個人設定
 

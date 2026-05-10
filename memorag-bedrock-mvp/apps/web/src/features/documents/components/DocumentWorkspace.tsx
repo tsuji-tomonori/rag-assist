@@ -1,6 +1,6 @@
 import { type FormEvent, useMemo, useRef, useState } from "react"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
-import type { DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
+import type { CreateDocumentGroupInput, DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
@@ -64,7 +64,7 @@ export function DocumentWorkspace({
   migrations: ReindexMigration[]
   onUploadGroupChange: (groupId: string) => void
   onUpload: (file: File) => Promise<void>
-  onCreateGroup: (input: { name: string; visibility: "private" | "shared" | "org" }) => Promise<void>
+  onCreateGroup: (input: CreateDocumentGroupInput) => Promise<DocumentGroup | void>
   onShareGroup: (groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }) => Promise<void>
   onDelete: (documentId: string) => Promise<void>
   onStageReindex: (documentId: string) => Promise<void>
@@ -74,6 +74,12 @@ export function DocumentWorkspace({
 }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [groupName, setGroupName] = useState("")
+  const [groupDescription, setGroupDescription] = useState("")
+  const [groupParentId, setGroupParentId] = useState("")
+  const [groupVisibility, setGroupVisibility] = useState<"private" | "shared" | "org">("private")
+  const [groupSharedGroups, setGroupSharedGroups] = useState("")
+  const [groupManagerUserIds, setGroupManagerUserIds] = useState("")
+  const [moveToCreatedGroup, setMoveToCreatedGroup] = useState(true)
   const [shareGroupId, setShareGroupId] = useState("")
   const [shareGroups, setShareGroups] = useState("")
   const [selectedFolderId, setSelectedFolderId] = useState("all")
@@ -131,11 +137,17 @@ export function DocumentWorkspace({
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
   const shareTargetGroupId = shareGroupId || selectedGroupId
   const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
-  const shareDraft = parseSharedGroups(shareGroups)
+  const shareDraft = parseListInput(shareGroups)
   const shareDiff = buildShareDiff(shareTargetGroup?.sharedGroups ?? [], shareDraft.groups)
   const shareHasDuplicate = shareDraft.duplicates.length > 0
   const shareHasEmptyToken = shareDraft.hasEmptyToken
   const shareHasValidationError = shareHasDuplicate || shareHasEmptyToken
+  const createSharedDraft = parseListInput(groupSharedGroups)
+  const createManagerDraft = parseListInput(groupManagerUserIds)
+  const validatesCreateSharedGroups = groupVisibility === "shared"
+  const createHasValidationError = (validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) || createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0
+  const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
+  const createVisibilityLabel = visibilityLabelValue(groupVisibility)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -147,9 +159,26 @@ export function DocumentWorkspace({
   async function onCreateGroupSubmit(event: FormEvent) {
     event.preventDefault()
     const name = groupName.trim()
-    if (!name || !canWrite) return
-    await onCreateGroup({ name, visibility: "private" })
+    if (!name || !canWrite || createHasValidationError) return
+    const input: CreateDocumentGroupInput = {
+      name,
+      visibility: groupVisibility,
+      ...(groupDescription.trim() ? { description: groupDescription.trim() } : {}),
+      ...(groupParentId ? { parentGroupId: groupParentId } : {}),
+      ...(groupVisibility === "shared" && createSharedDraft.groups.length > 0 ? { sharedGroups: createSharedDraft.groups } : {}),
+      ...(createManagerDraft.groups.length > 0 ? { managerUserIds: createManagerDraft.groups } : {})
+    }
+    const createdGroup = await onCreateGroup(input)
+    if (createdGroup?.groupId && moveToCreatedGroup) {
+      setSelectedFolderId(createdGroup.groupId)
+      onUploadGroupChange(createdGroup.groupId)
+    }
     setGroupName("")
+    setGroupDescription("")
+    setGroupParentId("")
+    setGroupVisibility("private")
+    setGroupSharedGroups("")
+    setGroupManagerUserIds("")
   }
 
   async function onShareSubmit(event: FormEvent) {
@@ -536,10 +565,57 @@ export function DocumentWorkspace({
             )}
             <form className="compact-form" onSubmit={onCreateGroupSubmit}>
               <label>
-                <span>新規フォルダ</span>
+                <span>新規フォルダ名</span>
                 <input value={groupName} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => setGroupName(event.target.value)} placeholder="フォルダ名" />
               </label>
-              <button type="submit" disabled={!canWrite || !groupName.trim() || operationState.creatingGroup}>
+              <label>
+                <span>説明</span>
+                <textarea value={groupDescription} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => setGroupDescription(event.target.value)} placeholder="フォルダの用途や対象資料" />
+              </label>
+              <label>
+                <span>親フォルダ</span>
+                <select value={groupParentId} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => setGroupParentId(event.target.value)}>
+                  <option value="">親フォルダなし</option>
+                  {documentGroups.map((group) => (
+                    <option value={group.groupId} key={group.groupId}>{group.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>公開範囲</span>
+                <select value={groupVisibility} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => setGroupVisibility(event.target.value as "private" | "shared" | "org")}>
+                  <option value="private">非公開</option>
+                  <option value="shared">指定 group 共有</option>
+                  <option value="org">組織全体</option>
+                </select>
+              </label>
+              <label>
+                <span>初期 shared groups</span>
+                <input value={groupSharedGroups} disabled={!canWrite || operationState.creatingGroup || groupVisibility !== "shared"} onChange={(event) => setGroupSharedGroups(event.target.value)} placeholder="Cognito group をカンマ区切りで入力" aria-invalid={(validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) || undefined} aria-describedby="create-group-validation create-group-preview" />
+              </label>
+              <label>
+                <span>管理者 user IDs</span>
+                <input value={groupManagerUserIds} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => setGroupManagerUserIds(event.target.value)} placeholder="User ID をカンマ区切りで入力" aria-invalid={(createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0) || undefined} aria-describedby="create-group-validation create-group-preview" />
+              </label>
+              <label className="compact-checkbox">
+                <input type="checkbox" checked={moveToCreatedGroup} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => setMoveToCreatedGroup(event.target.checked)} />
+                <span>作成後にこのフォルダへ移動</span>
+              </label>
+              <div className="share-validation" id="create-group-validation" aria-live="polite">
+                {validatesCreateSharedGroups && createSharedDraft.hasEmptyToken && <p className="error">shared groups に空の指定があります。余分なカンマを削除してください。</p>}
+                {validatesCreateSharedGroups && createSharedDraft.duplicates.length > 0 && <p className="error">重複している shared group: {createSharedDraft.duplicates.join(", ")}</p>}
+                {createManagerDraft.hasEmptyToken && <p className="error">管理者 user IDs に空の指定があります。余分なカンマを削除してください。</p>}
+                {createManagerDraft.duplicates.length > 0 && <p className="error">重複している管理者 user ID: {createManagerDraft.duplicates.join(", ")}</p>}
+                {!createHasValidationError && <p>入力値だけを作成 payload に含めます。group / user の存在確認は API 作成時に行われます。</p>}
+              </div>
+              <div className="share-diff-preview" id="create-group-preview" aria-label="新規フォルダ作成プレビュー">
+                <span>公開範囲: {createVisibilityLabel}</span>
+                <span>親フォルダ: {createParentGroup?.name ?? "なし"}</span>
+                <span>共有先: {groupVisibility === "shared" && createSharedDraft.groups.length > 0 ? createSharedDraft.groups.join(", ") : "なし"}</span>
+                <span>管理者: {createManagerDraft.groups.length > 0 ? createManagerDraft.groups.join(", ") : "未指定"}</span>
+                <span>作成後移動: {moveToCreatedGroup ? "する" : "しない"}</span>
+              </div>
+              <button type="submit" disabled={!canWrite || !groupName.trim() || createHasValidationError || operationState.creatingGroup}>
                 {operationState.creatingGroup && <LoadingSpinner className="button-spinner" />}
                 新規フォルダ
               </button>
@@ -844,7 +920,7 @@ function documentStatusLabel(document: DocumentManifest): string {
   return document.lifecycleStatus ?? "active"
 }
 
-function parseSharedGroups(value: string): { groups: string[]; duplicates: string[]; hasEmptyToken: boolean } {
+function parseListInput(value: string): { groups: string[]; duplicates: string[]; hasEmptyToken: boolean } {
   const raw = value.split(",")
   const hasEmptyToken = raw.length > 1 && raw.some((item) => item.trim().length === 0)
   const groups: string[] = []
@@ -886,6 +962,12 @@ function visibilityLabel(group: DocumentGroup): string {
   if (group.visibility === "org") return `${group.name}: 組織全体`
   if (group.visibility === "shared") return `${group.name}: shared`
   return `${group.name}: private`
+}
+
+function visibilityLabelValue(visibility: "private" | "shared" | "org"): string {
+  if (visibility === "org") return "組織全体"
+  if (visibility === "shared") return "指定 group 共有"
+  return "非公開"
 }
 
 function uploadStepClassName(index: number, activeIndex: number, phase: NonNullable<DocumentUploadState>["phase"]): string {
