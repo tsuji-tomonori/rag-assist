@@ -690,8 +690,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     async (c) => {
       const user = c.get("user")
       const { documentId } = (c.req as any).valid("param") as { documentId: string }
-    await authorizeDocumentDelete(service, user, documentId)
       try {
+        await authorizeDocumentDelete(service, user, documentId)
         return c.json(await service.deleteDocument(documentId), 200)
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
