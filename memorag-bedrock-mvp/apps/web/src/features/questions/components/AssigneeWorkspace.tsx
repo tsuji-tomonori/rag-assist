@@ -3,6 +3,8 @@ import type { answerQuestion } from "../api/questionsApi.js"
 import type { HumanQuestion } from "../types.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
+import type { CurrentUser } from "../../../shared/types/common.js"
+import { currentUserLabel } from "../../../shared/utils/currentUserLabel.js"
 import { formatDateTime, priorityLabel, statusLabel } from "../../../shared/utils/format.js"
 
 type AssigneeLaneId = "unassigned" | "inProgress" | "waitingReview" | "resolved"
@@ -17,6 +19,7 @@ const ASSIGNEE_LANES: { id: AssigneeLaneId; label: string; description: string }
 export function AssigneeWorkspace({
   questions,
   selectedQuestionId,
+  user,
   loading,
   onSelect,
   onAnswer,
@@ -24,6 +27,7 @@ export function AssigneeWorkspace({
 }: {
   questions: HumanQuestion[]
   selectedQuestionId: string
+  user: CurrentUser | null
   loading: boolean
   onSelect: (questionId: string) => void
   onAnswer: (questionId: string, input: Parameters<typeof answerQuestion>[1]) => Promise<void>
@@ -97,7 +101,7 @@ export function AssigneeWorkspace({
     await onAnswer(selected.questionId, {
       answerTitle,
       answerBody,
-      responderName: "佐藤 花子",
+      responderName: currentUserLabel(user),
       responderDepartment: selected.assigneeDepartment,
       references,
       internalMemo,

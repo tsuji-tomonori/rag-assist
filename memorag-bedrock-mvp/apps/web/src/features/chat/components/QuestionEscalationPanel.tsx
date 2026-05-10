@@ -2,6 +2,8 @@ import { type FormEvent, useState } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+import type { CurrentUser } from "../../../shared/types/common.js"
+import { currentUserDepartmentLabel, currentUserLabel } from "../../../shared/utils/currentUserLabel.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import type { Message } from "../types.js"
 import { defaultQuestionBody, defaultQuestionTitle } from "../utils/questionDefaults.js"
@@ -9,11 +11,13 @@ import { defaultQuestionBody, defaultQuestionTitle } from "../utils/questionDefa
 export function QuestionEscalationPanel({
   message,
   questionTicket,
+  currentUser,
   loading,
   onCreateQuestion
 }: {
   message: Message
   questionTicket?: HumanQuestion
+  currentUser: CurrentUser | null
   loading: boolean
   onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
 }) {
@@ -41,8 +45,8 @@ export function QuestionEscalationPanel({
     await onCreateQuestion({
       title,
       question: body,
-      requesterName: "山田 太郎",
-      requesterDepartment: "利用部門",
+      requesterName: currentUserLabel(currentUser),
+      requesterDepartment: currentUserDepartmentLabel(),
       assigneeDepartment,
       category,
       priority,

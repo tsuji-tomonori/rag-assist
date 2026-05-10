@@ -382,6 +382,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       isProcessing,
       pendingActivity,
       latestMessageRef,
+      currentUser,
       loading,
       canAsk,
       canWriteDocuments,
@@ -413,6 +414,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     assigneeProps: {
       questions,
       selectedQuestionId,
+      user: currentUser,
       loading,
       onSelect: setSelectedQuestionId,
       onAnswer: onAnswerQuestion,

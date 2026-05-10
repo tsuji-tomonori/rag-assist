@@ -103,8 +103,9 @@ test("local question store creates, lists, answers, resolves, and rejects missin
   })
 
   assert.equal(question.status, "open")
-  assert.equal(question.requesterName, "山田 太郎")
+  assert.equal(question.requesterName, "未設定")
   assert.equal(question.requesterUserId, "user-1")
+  assert.equal(question.requesterDepartment, "未設定")
   assert.equal(question.assigneeDepartment, "総務部")
   assert.equal((await store.get(question.questionId))?.questionId, question.questionId)
   assert.deepEqual((await store.list()).map((item) => item.questionId), [question.questionId])
@@ -119,7 +120,7 @@ test("local question store creates, lists, answers, resolves, and rejects missin
     notifyRequester: false
   })
   assert.equal(answered.status, "answered")
-  assert.equal(answered.responderName, "佐藤 花子")
+  assert.equal(answered.responderName, "未設定")
   assert.equal(answered.responderDepartment, "総務部")
   assert.equal(answered.notifyRequester, false)
 

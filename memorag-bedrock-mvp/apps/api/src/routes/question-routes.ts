@@ -101,11 +101,12 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "answer:publish")
+      const user = c.get("user")
+      requirePermission(user, "answer:publish")
       try {
         const { questionId } = (c.req as any).valid("param") as { questionId: string }
         const body = (c.req as any).valid("json") as z.infer<typeof AnswerQuestionRequestSchema>
-        return c.json(await service.answerQuestion(questionId, body), 200)
+        return c.json(await service.answerQuestion(questionId, body, user), 200)
       } catch (err) {
         if (err instanceof Error && err.message.includes("Question not found")) return c.json({ error: "Question not found" }, 404)
         throw err

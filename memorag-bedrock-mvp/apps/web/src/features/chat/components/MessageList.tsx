@@ -4,6 +4,7 @@ import type { HumanQuestion } from "../../questions/types.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+import type { CurrentUser } from "../../../shared/types/common.js"
 import { getLinkedQuestion } from "../utils/getLinkedQuestion.js"
 import { ChatEmptyState } from "./ChatEmptyState.js"
 import { MessageItem } from "./MessageItem.js"
@@ -16,6 +17,7 @@ export function MessageList({
   isProcessing,
   pendingActivity,
   latestMessageRef,
+  currentUser,
   loading,
   onSelectPrompt,
   onCreateQuestion,
@@ -29,6 +31,7 @@ export function MessageList({
   isProcessing: boolean
   pendingActivity: string | null
   latestMessageRef: RefObject<HTMLElement | null>
+  currentUser: CurrentUser | null
   loading: boolean
   onSelectPrompt: (value: string) => void
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
@@ -46,6 +49,7 @@ export function MessageList({
           messageIndex={index}
           latestMessageRef={index === messages.length - 1 && !pendingActivity ? latestMessageRef : undefined}
           linkedQuestion={getLinkedQuestion(message, questions)}
+          currentUser={currentUser}
           loading={loading}
           onCreateQuestion={onCreateQuestion}
           onResolveQuestion={onResolveQuestion}

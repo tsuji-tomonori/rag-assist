@@ -44,6 +44,7 @@ const copyScenarios: CopyScenario[] = [
       render(
         <AssistantAnswer
           message={assistantMessage}
+          currentUser={{ userId: "user-1", email: "tester@example.com", groups: ["CHAT_USER"], permissions: ["chat:create"] }}
           loading={false}
           onCreateQuestion={async () => undefined}
           onResolveQuestion={async () => undefined}
@@ -57,6 +58,7 @@ const copyScenarios: CopyScenario[] = [
         <StrictMode>
           <AssistantAnswer
             message={assistantMessage}
+            currentUser={{ userId: "user-1", email: "tester@example.com", groups: ["CHAT_USER"], permissions: ["chat:create"] }}
             loading={false}
             onCreateQuestion={async () => undefined}
             onResolveQuestion={async () => undefined}

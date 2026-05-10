@@ -1139,8 +1139,8 @@ describe("App chat and upload flow", () => {
     expect(questionPayload).toMatchObject({
       title: "今日山田さんは何を食べた?について確認したい",
       question: "今日山田さんは何を食べた?\n\n資料を確認しましたが、該当する情報が見つかりませんでした。ご教示いただけますでしょうか。",
-      requesterName: "山田 太郎",
-      requesterDepartment: "利用部門",
+      requesterName: "tester@example.com",
+      requesterDepartment: "未設定",
       assigneeDepartment: "人事部",
       category: "手続き",
       priority: "high",
@@ -1161,6 +1161,15 @@ describe("App chat and upload flow", () => {
     await userEvent.type(screen.getByLabelText("内部メモ"), "確認済み")
     await userEvent.click(screen.getByLabelText("質問者へ通知する"))
     await userEvent.click(screen.getByText("回答を送信"))
+    const answerPayload = requestBodies(fetchMock, "/questions/question-1/answer").at(-1)
+    expect(answerPayload).toMatchObject({
+      answerBody: "山田さんは本日、社内食堂でカレーを食べました。",
+      responderName: "tester@example.com",
+      responderDepartment: "人事部",
+      references: "社内食堂メニュー表",
+      internalMemo: "確認済み",
+      notifyRequester: false
+    })
 
     await userEvent.click(screen.getByTitle("チャットへ戻る"))
     expect(await screen.findByText("担当者からの回答")).toBeInTheDocument()
