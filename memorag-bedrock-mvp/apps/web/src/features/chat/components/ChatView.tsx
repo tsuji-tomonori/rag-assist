@@ -79,8 +79,10 @@ export function ChatView({
   onToggleAllDebugSteps: () => void
   onToggleDebugStep: (stepId: number) => void
 }) {
+  const canShowDebugPanel = debugMode && canReadDebugRuns
+
   return (
-    <section className={`split-workspace ${debugMode ? "" : "debug-off"}`}>
+    <section className={`split-workspace ${canShowDebugPanel ? "" : "debug-off"}`}>
       <section className="chat-card" aria-label="チャット">
         <MessageList
           messages={messages}
@@ -120,7 +122,7 @@ export function ChatView({
         <p className="composer-note">本サービスの回答は社内ドキュメントをもとに生成されます。内容の正確性をご確認のうえご利用ください。</p>
       </section>
 
-      {debugMode && canReadDebugRuns && (
+      {canShowDebugPanel && (
         <DebugPanel
           trace={selectedTrace}
           pending={pendingDebugQuestion !== null}
