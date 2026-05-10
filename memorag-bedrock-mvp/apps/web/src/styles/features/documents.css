@@ -507,11 +507,88 @@
   border-top: 1px solid #e3e9f2;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 14px;
   padding: 0 20px;
   color: #102344;
   font-size: 13px;
   font-weight: 850;
+}
+
+.document-pagination-summary {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.document-pagination-summary span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-pagination-summary span:last-child {
+  color: #60708a;
+  font-size: 12px;
+}
+
+.document-pagination-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.document-pagination-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #60708a;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.document-pagination-controls select {
+  min-height: 34px;
+  border: 1px solid #ccd8e7;
+  border-radius: 6px;
+  padding: 0 9px;
+  color: #24344f;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.document-pagination-controls button:first-of-type .icon {
+  transform: rotate(90deg);
+}
+
+.document-pagination-controls button:last-of-type .icon {
+  transform: rotate(-90deg);
+}
+
+.document-pagination-controls button:disabled {
+  color: #9aa8ba;
+  background: #f4f7fb;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .document-table-footer {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .document-pagination-controls {
+    justify-content: space-between;
+  }
+
+  .document-pagination-controls label {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
 }
 
 .migration-strip {

@@ -21,13 +21,20 @@ export function DocumentFilePanel({
   selectedFolder,
   uploadGroupId,
   uploadDestinationLabel,
-  visibleDocuments,
+  pagedDocuments,
   folderDocumentsCount,
+  filteredDocumentsCount,
   documentQuery,
   documentTypeFilter,
   documentStatusFilter,
   documentGroupFilter,
   documentSort,
+  documentPage,
+  documentPageCount,
+  documentPageSize,
+  documentPageSizeOptions,
+  documentPageStart,
+  documentPageEnd,
   documentTypeOptions,
   documentStatusOptions,
   selectedDocument,
@@ -44,6 +51,8 @@ export function DocumentFilePanel({
   onDocumentStatusFilterChange,
   onDocumentGroupFilterChange,
   onDocumentSortChange,
+  onDocumentPageChange,
+  onDocumentPageSizeChange,
   onSelectDocument,
   onConfirmAction
 }: {
@@ -52,13 +61,20 @@ export function DocumentFilePanel({
   selectedFolder: WorkspaceFolder
   uploadGroupId: string
   uploadDestinationLabel: string
-  visibleDocuments: DocumentManifest[]
+  pagedDocuments: DocumentManifest[]
   folderDocumentsCount: number
+  filteredDocumentsCount: number
   documentQuery: string
   documentTypeFilter: string
   documentStatusFilter: string
   documentGroupFilter: string
   documentSort: DocumentSortKey
+  documentPage: number
+  documentPageCount: number
+  documentPageSize: number
+  documentPageSizeOptions: number[]
+  documentPageStart: number
+  documentPageEnd: number
   documentTypeOptions: string[]
   documentStatusOptions: string[]
   selectedDocument: DocumentManifest | null
@@ -75,6 +91,8 @@ export function DocumentFilePanel({
   onDocumentStatusFilterChange: (value: string) => void
   onDocumentGroupFilterChange: (value: string) => void
   onDocumentSortChange: (value: DocumentSortKey) => void
+  onDocumentPageChange: (page: number) => void
+  onDocumentPageSizeChange: (pageSize: number) => void
   onSelectDocument: (document: DocumentManifest) => void
   onConfirmAction: (action: ConfirmAction) => void
 }) {
@@ -169,13 +187,13 @@ export function DocumentFilePanel({
             description={documentGroups.length === 0 ? "まずフォルダを作成し、保存先を選択してからファイルをアップロードしてください。" : "保存先フォルダを選択してファイルをアップロードしてください。"}
             action={<button type="button" disabled={!canWrite || !uploadGroupId} onClick={() => uploadInputRef.current?.click()}>ファイルをアップロード</button>}
           />
-        ) : visibleDocuments.length === 0 ? (
+        ) : filteredDocumentsCount === 0 ? (
           <EmptyState
             title="条件に一致するドキュメントはありません。"
             description="検索語、種別、状態、所属フォルダの条件を変更してください。"
           />
         ) : (
-          visibleDocuments.map((document) => {
+          pagedDocuments.map((document) => {
             const groupLabel = documentGroupNames(document, documentGroups).join(", ") || "未設定"
             return (
               <div
@@ -237,7 +255,42 @@ export function DocumentFilePanel({
       </div>
 
       <footer className="document-table-footer">
-        <span>{visibleDocuments.length} / {folderDocumentsCount} 件を表示（全体 {documents.length} 件）</span>
+        <div className="document-pagination-summary" aria-live="polite">
+          <span>
+            {filteredDocumentsCount === 0
+              ? `0 / ${folderDocumentsCount} 件を表示（全体 ${documents.length} 件）`
+              : `${documentPageStart}-${documentPageEnd} / ${filteredDocumentsCount} 件を表示（フォルダ内 ${folderDocumentsCount} 件 / 全体 ${documents.length} 件）`}
+          </span>
+          <span>ページ {documentPage} / {documentPageCount}</span>
+        </div>
+        <div className="document-pagination-controls" aria-label="文書一覧ページ操作">
+          <label>
+            <span>表示件数</span>
+            <select value={documentPageSize} onChange={(event) => onDocumentPageSizeChange(Number(event.target.value))}>
+              {documentPageSizeOptions.map((pageSize) => (
+                <option value={pageSize} key={pageSize}>{pageSize}件</option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            title="前のページ"
+            aria-label="前のページ"
+            disabled={documentPage <= 1 || filteredDocumentsCount === 0}
+            onClick={() => onDocumentPageChange(Math.max(1, documentPage - 1))}
+          >
+            <Icon name="chevron" />
+          </button>
+          <button
+            type="button"
+            title="次のページ"
+            aria-label="次のページ"
+            disabled={documentPage >= documentPageCount || filteredDocumentsCount === 0}
+            onClick={() => onDocumentPageChange(Math.min(documentPageCount, documentPage + 1))}
+          >
+            <Icon name="chevron" />
+          </button>
+        </div>
       </footer>
 
       <ReindexMigrationStrip
