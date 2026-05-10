@@ -201,7 +201,7 @@ test("conversation state decontextualizes follow-up questions without using expe
         {
           role: "assistant",
           text: "経費精算の期限は30日以内です。",
-          citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-1", score: 0.9, text: "30日以内" }]
+          citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-1", pageStart: 12, pageEnd: 12, score: 0.9, text: "30日以内" }]
         }
       ]
     }
@@ -212,9 +212,17 @@ test("conversation state decontextualizes follow-up questions without using expe
   }))
 
   assert.equal(conversationUpdate.conversationState?.turnDependency, "coreference")
+  assert.deepEqual(conversationUpdate.conversationState?.previousCitations, [{
+    documentId: "doc-handbook",
+    fileName: "handbook.md",
+    chunkId: "chunk-1",
+    pageStart: 12,
+    pageEnd: 12
+  }])
   assert.equal(rewriteUpdate.decontextualizedQuery?.shouldUsePreviousCitations, true)
   assert.match(rewriteUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /経費精算/)
   assert.ok(rewriteUpdate.decontextualizedQuery?.retrievalQueries.some((query) => query.includes("handbook.md")))
+  assert.ok(rewriteUpdate.decontextualizedQuery?.retrievalQueries.some((query) => query.includes("chunk-1")))
 })
 
 test("classification answers require actual requirements classification terms", async () => {
@@ -254,6 +262,66 @@ test("classification answers require actual requirements classification terms", 
     ),
     ["doc-1-chunk-0009"]
   )
+})
+
+test("rerank chunks uses page layout metadata and previous citation prior as soft boosts", async () => {
+  const previousPageChunk = {
+    ...chunk,
+    key: "doc-policy-chunk-0012",
+    score: 0.42,
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-policy",
+      fileName: "policy.pdf",
+      chunkId: "chunk-0012",
+      pageStart: 12,
+      pageEnd: 12,
+      heading: "経費精算の例外条件",
+      sectionPath: ["経費精算", "例外"],
+      chunkKind: "table" as const,
+      text: "例外条件 | 上長承認 | システム障害"
+    }
+  }
+  const higherBaseOtherDoc = {
+    ...chunk,
+    key: "doc-other-chunk-0001",
+    score: 0.45,
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-other",
+      fileName: "other.pdf",
+      chunkId: "chunk-0001",
+      pageStart: 3,
+      pageEnd: 3,
+      text: "一般的な申請条件です。"
+    }
+  }
+
+  const reranked = await rerankChunks(state({
+    question: "その例外条件は？",
+    topK: 1,
+    decontextualizedQuery: {
+      standaloneQuestion: "経費精算の例外条件は？",
+      retrievalQueries: ["経費精算 例外 条件 表"],
+      carriedEntities: ["経費精算"],
+      carriedDocuments: ["policy.pdf"],
+      turnDependency: "coreference",
+      shouldUsePreviousCitations: true
+    },
+    conversationState: {
+      activeEntities: ["経費精算"],
+      activeDocuments: ["policy.pdf"],
+      activeTopics: ["経費精算"],
+      constraints: [],
+      previousCitationCount: 1,
+      previousCitations: [{ documentId: "doc-policy", fileName: "policy.pdf", chunkId: "chunk-0011", pageStart: 11, pageEnd: 11 }],
+      turnDependency: "coreference"
+    },
+    retrievedChunks: [higherBaseOtherDoc, previousPageChunk]
+  }))
+
+  assert.deepEqual(reranked.selectedChunks?.map((selected) => selected.key), ["doc-policy-chunk-0012"])
+  assert.ok((reranked.selectedChunks?.[0]?.score ?? 0) > higherBaseOtherDoc.score)
 })
 
 test("default policy keeps requirements classification special cases opt-in", async () => {
@@ -872,8 +940,8 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   const guardedMemory = await createRetrieveMemoryNode(guardedDeps, { userId: "user-a", cognitoGroups: ["GROUP_A"] })(state({ memoryTopK: 3 }))
   assert.deepEqual(guardedMemory.memoryCards?.map((hit) => hit.key), ["active-memory"])
 
-  const noMemoryClues = await createGenerateCluesNode(deps)(state({ memoryCards: [] }))
-  assert.deepEqual(noMemoryClues, { clues: [], expandedQueries: ["question"] })
+  const noMemoryClues = await createGenerateCluesNode(deps)(state({ memoryCards: [], expandedQueries: ["standalone question", "retrieval query"] }))
+  assert.deepEqual(noMemoryClues, { clues: [], expandedQueries: ["standalone question", "retrieval query", "question"] })
 
   const generatedClues = await createGenerateCluesNode(deps)(state({ memoryCards: [{ ...chunk, metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-1" } }] }))
   assert.ok((generatedClues.expandedQueries?.length ?? 0) > 1)

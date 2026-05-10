@@ -58,10 +58,12 @@ task benchmark:sample
 | `USE_LOCAL_QUESTION_STORE` | 担当者問い合わせのローカルstore利用 | production以外は`true` |
 | `USE_LOCAL_CONVERSATION_HISTORY_STORE` | 会話履歴のローカルstore利用 | production以外は`true` |
 | `LOCAL_DATA_DIR` | ローカル保存先 | `.local-data` |
-| `AUTH_ENABLED` | Cognito JWT認証をAPIで有効化 | `false` |
+| `AUTH_ENABLED` | Cognito JWT認証をAPIで有効化。production では `true` 必須 | production以外は`false` |
+| `CORS_ALLOWED_ORIGINS` | API CORS 許可 origin のカンマ区切り allowlist。production では `*` 不可 | production以外は`*` |
+| `DOCS_BUCKET_NAME` | production の文書 S3 bucket 名 | productionでは必須 |
 | `COGNITO_REGION` | Cognito User Pool リージョン | 未設定 |
-| `COGNITO_USER_POOL_ID` | Cognito User Pool ID | 未設定 |
-| `COGNITO_APP_CLIENT_ID` | Cognito App Client ID | 未設定 |
+| `COGNITO_USER_POOL_ID` | Cognito User Pool ID。`AUTH_ENABLED=true` では必須 | 未設定 |
+| `COGNITO_APP_CLIENT_ID` | Cognito App Client ID。`AUTH_ENABLED=true` では必須 | 未設定 |
 | `QUESTION_TABLE_NAME` | 担当者問い合わせ DynamoDB table | `memorag-human-questions` |
 | `CONVERSATION_HISTORY_TABLE_NAME` | 会話履歴 DynamoDB table | `memorag-conversation-history` |
 | `DEFAULT_MODEL_ID` | 回答生成モデル | `amazon.nova-lite-v1:0` |

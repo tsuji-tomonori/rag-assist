@@ -2,7 +2,7 @@ import { z } from "@hono/zod-openapi"
 import { requirePermission } from "../authorization.js"
 import { ConversationHistoryItemSchema, ConversationHistoryListResponseSchema, ErrorResponseSchema } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, routeAuthorization } from "./route-utils.js"
+import { looseRoute, routeAuthorization, validJson, validParam } from "./route-utils.js"
 
 export function registerConversationHistoryRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
@@ -21,7 +21,8 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "chat:read:own")
-      return c.json({ history: await service.listConversationHistory(user.userId) }, 200)
+      const history = (await service.listConversationHistory(user.userId)).map((item) => ConversationHistoryItemSchema.parse(item))
+      return c.json({ history }, 200)
     }
   )
 
@@ -45,8 +46,8 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "chat:create")
-      const body = (c.req as any).valid("json") as z.infer<typeof ConversationHistoryItemSchema>
-      return c.json(await service.saveConversationHistory(user.userId, body), 200)
+      const body = validJson<z.infer<typeof ConversationHistoryItemSchema>>(c)
+      return c.json(ConversationHistoryItemSchema.parse(await service.saveConversationHistory(user.userId, body)), 200)
     }
   )
 
@@ -66,7 +67,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "chat:delete:own")
-      const { id } = (c.req as any).valid("param") as { id: string }
+      const { id } = validParam<{ id: string }>(c)
       await service.deleteConversationHistory(user.userId, id)
       return c.json({ id }, 200)
     }

@@ -9,6 +9,20 @@ const documents = [
   { documentId: "doc-2", fileName: "policy.md", chunkCount: 1, memoryCardCount: 1, createdAt: "2026-04-29T00:00:00.000Z" }
 ]
 
+const documentGroups = [
+  {
+    groupId: "group-1",
+    name: "社内規定",
+    visibility: "private",
+    ownerUserId: "local-dev",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: ["local-dev"],
+    createdAt: "2026-04-30T00:00:00.000Z",
+    updatedAt: "2026-04-30T00:00:00.000Z"
+  }
+]
+
 const longFinalizeResponse = `ソフトウェア要求は製品要求とプロジェクト要求に分類されます。${"分類根拠。".repeat(220)}END_OF_FINALIZE_RESPONSE`
 
 const debugTrace = {
@@ -302,6 +316,7 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       return Promise.resolve(response(deleted))
     }
     if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+    if (requestUrl.endsWith("/document-groups") && isGet(init)) return Promise.resolve(response({ groups: documentGroups }))
     if (requestUrl.endsWith("/documents/reindex-migrations") && isGet(init)) return Promise.resolve(response({ migrations: reindexMigrations }))
     if (requestUrl.endsWith("/documents/doc-1/reindex/stage") && init?.method === "POST") {
       const migration = {
@@ -489,11 +504,12 @@ describe("App document management", () => {
 
   it("deletes selected document only after confirmation and refreshes the list", async () => {
     const fetchMock = mockAppFetch()
-    const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true)
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toHaveTextContent("元資料、manifest、検索ベクトル")
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
@@ -501,16 +517,15 @@ describe("App document management", () => {
         expect.objectContaining({ method: "DELETE", headers: { Authorization: "Bearer local-dev-token" } })
       )
     )
-    expect(confirmMock).toHaveBeenCalledWith("「requirements.md」を削除します。元資料、manifest、検索ベクトルが削除されます。")
   })
 
   it("does not call DELETE when deletion is cancelled", async () => {
     const fetchMock = mockAppFetch()
-    vi.spyOn(window, "confirm").mockReturnValue(false)
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await userEvent.click(screen.getByRole("button", { name: "キャンセル" }))
 
     expect(
       fetchMock.mock.calls.some(([url, init]) => String(url) === "http://api.test/documents/doc-1" && (init as RequestInit | undefined)?.method === "DELETE")
@@ -523,16 +538,17 @@ describe("App document management", () => {
       if (requestUrl === "/config.json") return Promise.resolve(response({ apiBaseUrl: "http://api.test" }))
       if (requestUrl.endsWith("/me") && isGet(init)) return Promise.resolve(response(currentUserResponse()))
       if (requestUrl.endsWith("/documents") && isGet(init)) return Promise.resolve(response({ documents }))
+      if (requestUrl.endsWith("/document-groups") && isGet(init)) return Promise.resolve(response({ groups: documentGroups }))
       if (requestUrl.endsWith("/debug-runs") && isGet(init)) return Promise.resolve(response({ debugRuns: [] }))
       if (requestUrl.endsWith("/documents/doc-1") && init?.method === "DELETE") return Promise.resolve(response("delete failed", false))
       return Promise.resolve(response({}))
     })
     vi.stubGlobal("fetch", fetchMock)
-    vi.spyOn(window, "confirm").mockReturnValue(true)
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
     expect(await screen.findByText("delete failed")).toBeInTheDocument()
   })
@@ -542,6 +558,7 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
+    await userEvent.selectOptions(screen.getByLabelText("保存先フォルダ"), "group-1")
     const input = screen.getByLabelText("文書アップロード").querySelector<HTMLInputElement>('input[type="file"]')
     await userEvent.upload(input as HTMLInputElement, new File(["管理資料"], "admin-upload.txt", { type: "text/plain" }))
     await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
@@ -1129,9 +1146,11 @@ describe("App chat and upload flow", () => {
 
     expect(await screen.findByText("資料からは回答できません。")).toBeInTheDocument()
     expect(await screen.findByLabelText("担当者へ質問")).toBeInTheDocument()
+    expect(screen.getByLabelText("担当部署")).toHaveValue("")
+    expect(screen.queryByText("通常 1 営業日以内に回答予定")).not.toBeInTheDocument()
     await userEvent.selectOptions(screen.getByLabelText("優先度"), "high")
     await userEvent.selectOptions(screen.getByLabelText("カテゴリ"), "手続き")
-    await userEvent.selectOptions(screen.getByLabelText("担当部署"), "人事部")
+    await userEvent.type(screen.getByLabelText("担当部署"), "人事部")
     await userEvent.click(screen.getByText("担当者へ送信"))
 
     await screen.findByText("担当者へ送信済み")
@@ -1139,8 +1158,8 @@ describe("App chat and upload flow", () => {
     expect(questionPayload).toMatchObject({
       title: "今日山田さんは何を食べた?について確認したい",
       question: "今日山田さんは何を食べた?\n\n資料を確認しましたが、該当する情報が見つかりませんでした。ご教示いただけますでしょうか。",
-      requesterName: "山田 太郎",
-      requesterDepartment: "利用部門",
+      requesterName: "tester@example.com",
+      requesterDepartment: "未設定",
       assigneeDepartment: "人事部",
       category: "手続き",
       priority: "high",
@@ -1161,6 +1180,15 @@ describe("App chat and upload flow", () => {
     await userEvent.type(screen.getByLabelText("内部メモ"), "確認済み")
     await userEvent.click(screen.getByLabelText("質問者へ通知する"))
     await userEvent.click(screen.getByText("回答を送信"))
+    const answerPayload = requestBodies(fetchMock, "/questions/question-1/answer").at(-1)
+    expect(answerPayload).toMatchObject({
+      answerBody: "山田さんは本日、社内食堂でカレーを食べました。",
+      responderName: "tester@example.com",
+      responderDepartment: "人事部",
+      references: "社内食堂メニュー表",
+      internalMemo: "確認済み",
+      notifyRequester: false
+    })
 
     await userEvent.click(screen.getByTitle("チャットへ戻る"))
     expect(await screen.findByText("担当者からの回答")).toBeInTheDocument()
@@ -1481,8 +1509,10 @@ describe("App chat and upload flow", () => {
     await userEvent.click(within(adminWorkspace).getByRole("button", { name: /ドキュメント管理/ }))
     expect(await screen.findByLabelText("ドキュメント管理")).toBeInTheDocument()
     await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
+    await userEvent.click(screen.getByRole("button", { name: "ステージング" }))
     expect(await screen.findByLabelText("再インデックス移行一覧")).toHaveTextContent("staged")
     await userEvent.click(screen.getByRole("button", { name: "切替" }))
+    await userEvent.click(within(screen.getByRole("dialog", { name: "再インデックス結果へ切り替えますか" })).getByRole("button", { name: "切替" }))
     expect(await screen.findByLabelText("再インデックス移行一覧")).toHaveTextContent("cutover")
 
     await userEvent.click(screen.getByTitle("管理者設定へ戻る"))

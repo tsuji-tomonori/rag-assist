@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import { Icon } from "../../../shared/components/Icon.js"
+import type { CurrentUser } from "../../../shared/types/common.js"
 import type { Message } from "../types.js"
 import type { ClarificationOption } from "../types-api.js"
 import { QuestionAnswerPanel } from "./QuestionAnswerPanel.js"
@@ -10,6 +11,7 @@ import { QuestionEscalationPanel } from "./QuestionEscalationPanel.js"
 export function AssistantAnswer({
   message,
   linkedQuestion,
+  currentUser,
   loading,
   onCreateQuestion,
   onResolveQuestion,
@@ -19,6 +21,7 @@ export function AssistantAnswer({
 }: {
   message: Message
   linkedQuestion?: HumanQuestion
+  currentUser: CurrentUser | null
   loading: boolean
   onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
@@ -145,7 +148,7 @@ export function AssistantAnswer({
         </div>
       )}
       {message.result && !message.result.isAnswerable && !isClarification && (
-        <QuestionEscalationPanel message={message} questionTicket={linkedQuestion} loading={loading} onCreateQuestion={onCreateQuestion} />
+        <QuestionEscalationPanel message={message} questionTicket={linkedQuestion} currentUser={currentUser} loading={loading} onCreateQuestion={onCreateQuestion} />
       )}
       {linkedQuestion?.status === "answered" || linkedQuestion?.status === "resolved" ? (
         <QuestionAnswerPanel question={linkedQuestion} loading={loading} onResolveQuestion={onResolveQuestion} onAdditionalQuestion={onAdditionalQuestion} />

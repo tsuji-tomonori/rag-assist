@@ -21,6 +21,7 @@ import type { BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
 import { ragRuntimePolicy } from "../agent/runtime-policy.js"
+import { authorizeDocumentDelete } from "../routes/benchmark-seed.js"
 import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
@@ -106,6 +107,56 @@ test("service listDocuments filters manifests by ACL for callers", async () => {
   assert.deepEqual((await service.listDocuments(chatUser)).map((doc) => doc.documentId), [general.documentId])
   assert.deepEqual((await service.listDocuments(benchmarkRunner)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
   assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
+})
+
+test("service listDocuments skips a manifest that disappeared after listing", async () => {
+  const { service } = await createService({ objectListExtraKeys: ["manifests/stale-missing.json"] })
+  const manifest = await service.ingest({
+    fileName: "active.md",
+    text: "active document content",
+    skipMemory: true
+  })
+
+  const listed = await service.listDocuments()
+
+  assert.deepEqual(listed.map((doc) => doc.documentId), [manifest.documentId])
+})
+
+test("benchmark seed delete authorization reads only the target manifest", async () => {
+  const { service } = await createService({ objectListExtraKeys: ["manifests/stale-missing.json"] })
+  const benchmark = await service.ingest({
+    fileName: "benchmark.md",
+    text: "benchmark corpus content",
+    skipMemory: true,
+    metadata: {
+      benchmarkSeed: true,
+      benchmarkSuiteId: "smoke-agent-v1",
+      benchmarkSourceHash: "hash",
+      benchmarkIngestSignature: "signature",
+      benchmarkCorpusSkipMemory: true,
+      benchmarkEmbeddingModelId: "api-default",
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      lifecycleStatus: "active",
+      source: "benchmark-runner"
+    }
+  })
+  const general = await service.ingest({
+    fileName: "general.md",
+    text: "general document content",
+    skipMemory: true
+  })
+  service.listDocuments = async () => {
+    throw new Error("authorizeDocumentDelete must not list all manifests")
+  }
+  const benchmarkRunner = { userId: "runner-1", email: "runner@example.com", cognitoGroups: ["BENCHMARK_RUNNER"] }
+
+  await authorizeDocumentDelete(service, benchmarkRunner, benchmark.documentId)
+  await assert.rejects(() => authorizeDocumentDelete(service, benchmarkRunner, general.documentId), (error) => {
+    assert.equal(typeof error, "object")
+    assert.equal((error as { status?: number }).status, 403)
+    return true
+  })
 })
 
 test("service listDocuments denies group-scoped manifests to non-members without legacy ACLs", async () => {
@@ -369,14 +420,18 @@ test("service manages reviewed alias artifacts and audit log", async () => {
 
 test("service delegates human question lifecycle to the question store", async () => {
   const { service } = await createService()
+  const user = { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] }
 
   const question = await service.createQuestion({
     title: "資料外の質問",
     question: "担当者へ確認してください。",
     sourceQuestion: "資料外の質問は？",
     chatAnswer: "資料からは回答できません。"
-  })
+  }, user)
   assert.equal(question.status, "open")
+  assert.equal(question.requesterName, "requester@example.com")
+  assert.equal(question.requesterDepartment, "未設定")
+  assert.equal(question.requesterUserId, "user-1")
   assert.equal((await service.listQuestions())[0]?.questionId, question.questionId)
   assert.equal((await service.getQuestion(question.questionId))?.questionId, question.questionId)
 
@@ -384,9 +439,10 @@ test("service delegates human question lifecycle to the question store", async (
     answerTitle: "回答",
     answerBody: "担当者の確認結果です。",
     references: "社内確認"
-  })
+  }, { userId: "answerer-1", email: "answerer@example.com", cognitoGroups: ["ANSWER_EDITOR"] })
   assert.equal(answered.status, "answered")
   assert.equal(answered.answerBody, "担当者の確認結果です。")
+  assert.equal(answered.responderName, "answerer@example.com")
 
   const resolved = await service.resolveQuestion(question.questionId)
   assert.equal(resolved.status, "resolved")
@@ -1114,6 +1170,7 @@ async function createService(options: {
   evidencePutErrorAfterWriteWhen?: (records: Parameters<LocalVectorStore["put"]>[0]) => boolean
   objectGetErrorPrefix?: string
   objectGetError?: Error
+  objectListExtraKeys?: string[]
   userDirectory?: UserDirectory
   codeBuildLogReader?: CodeBuildLogReader
 } = {}): Promise<{ service: MemoRagService; dataDir: string; deps: Dependencies }> {
@@ -1132,7 +1189,10 @@ async function createService(options: {
       },
       getBytes: (...args: Parameters<LocalObjectStore["getBytes"]>) => baseObjectStore.getBytes(...args),
       deleteObject: (...args: Parameters<LocalObjectStore["deleteObject"]>) => baseObjectStore.deleteObject(...args),
-      listKeys: (...args: Parameters<LocalObjectStore["listKeys"]>) => baseObjectStore.listKeys(...args)
+      listKeys: async (...args: Parameters<LocalObjectStore["listKeys"]>) => [
+        ...(await baseObjectStore.listKeys(...args)),
+        ...(options.objectListExtraKeys ?? [])
+      ]
     },
     memoryVectorStore: new LocalVectorStore(dataDir, "memory-vectors.json"),
     evidenceVectorStore: {

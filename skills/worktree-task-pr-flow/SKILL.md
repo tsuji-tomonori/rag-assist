@@ -1,6 +1,6 @@
 ---
 name: worktree-task-pr-flow
-description: Use by default for repository work that involves file edits, commands, investigation, validation, docs, commits, or PRs. Carry the work through a dedicated git worktree, task-file creation, acceptance criteria, commit, push, GitHub Apps pull request creation to main, PR acceptance comment, and tasks todo/do/done state updates, including requests to verify and fix whether agents are configured to follow that flow.
+description: Use by default for repository work that involves file edits, commands, investigation, validation, docs, commits, or PRs. Carry the work through a dedicated git worktree, task-file creation with task type classification, root-cause analysis before fix tasks, acceptance criteria, commit, push, GitHub Apps pull request creation to main, PR acceptance comment, and tasks todo/do/done state updates.
 ---
 
 # Worktree Task PR Flow
@@ -15,9 +15,11 @@ Do not force the full workflow for pure question answering, plan-only requests, 
 
 1. Understand the request before editing.
    - Identify deliverables, validations, and risks.
+   - Classify the task before implementation as exactly one primary `タスク種別`: `機能追加`, `修正`, `調査`, or `ドキュメント更新`.
    - State a checklist and Done conditions before implementation.
    - Write acceptance criteria before touching the main deliverables.
    - When the request is a policy/configuration check, inspect `AGENTS.md` and relevant skills first, then change only missing or unclear rules.
+   - If `タスク種別` is `修正`, read `skills/nazenaze-analysis/SKILL.md` and perform root-cause analysis before implementing the fix. Do not start a patch from a symptom-only conclusion; identify the problem statement, confirmed facts, root cause, affected scope, and full remediation plan first.
 2. Create a dedicated worktree.
    - Prefer `git worktree add -b codex/<short-task> .worktrees/<short-task> origin/main` unless the user specifies another base.
    - Keep unrelated changes in the original worktree out of scope.
@@ -27,7 +29,8 @@ Do not force the full workflow for pure question answering, plan-only requests, 
 4. Create a task file before implementation.
    - Put new in-progress work under `tasks/do/`.
    - If a task starts in `tasks/todo/`, move it to `tasks/do/` before editing deliverables.
-   - Include at least: background, purpose, scope, plan, documentation maintenance plan, acceptance criteria, validation plan, PR review points, risks, and `状態`.
+   - Include at least: background, purpose, scope, task type, plan, documentation maintenance plan, acceptance criteria, validation plan, PR review points, risks, and `状態`.
+   - For `タスク種別: 修正`, include the `nazenaze-analysis` summary before the implementation plan. The summary must distinguish confirmed facts, inferred causes, open questions, root cause, and how the planned work covers the full affected scope.
 5. Implement the requested change.
    - Follow repository-local skills and `AGENTS.md`.
    - Update durable docs when behavior or workflow changes require it.
@@ -64,6 +67,8 @@ Do not force the full workflow for pure question answering, plan-only requests, 
 - `tasks/do/`: currently in progress. A task must be here before deliverable edits begin.
 - `tasks/done/`: completed only after implementation, validation, PR creation, and PR acceptance comment are done.
 - Keep one task per file.
+- Every task file must state `タスク種別` as one of `機能追加`, `修正`, `調査`, or `ドキュメント更新`.
+- `修正` task files must include a prior root-cause summary based on `skills/nazenaze-analysis/SKILL.md`; if evidence is insufficient, keep the task blocked or investigative until the root cause can be stated.
 - Do not move a task to `done` when known validation failures or blocked PR actions remain.
 
 ## PR Comment Format

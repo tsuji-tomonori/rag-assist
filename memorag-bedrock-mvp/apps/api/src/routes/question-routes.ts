@@ -8,7 +8,7 @@ import {
   QuestionSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, routeAuthorization } from "./route-utils.js"
+import { looseRoute, routeAuthorization, validJson, validParam } from "./route-utils.js"
 
 function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.infer<typeof QuestionSchema> {
   const visibleQuestion = { ...question }
@@ -37,7 +37,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "chat:create")
-      const body = (c.req as any).valid("json") as z.infer<typeof CreateQuestionRequestSchema>
+      const body = validJson<z.infer<typeof CreateQuestionRequestSchema>>(c)
       return c.json(await service.createQuestion(body, user), 200)
     }
   )
@@ -73,7 +73,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       const user = c.get("user")
-      const { questionId } = (c.req as any).valid("param") as { questionId: string }
+      const { questionId } = validParam<{ questionId: string }>(c)
       const question = await service.getQuestion(questionId)
       if (!question) return c.json({ error: "Question not found" }, 404)
       if (hasPermission(user, "answer:edit")) return c.json(question, 200)
@@ -101,11 +101,12 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "answer:publish")
+      const user = c.get("user")
+      requirePermission(user, "answer:publish")
       try {
-        const { questionId } = (c.req as any).valid("param") as { questionId: string }
-        const body = (c.req as any).valid("json") as z.infer<typeof AnswerQuestionRequestSchema>
-        return c.json(await service.answerQuestion(questionId, body), 200)
+        const { questionId } = validParam<{ questionId: string }>(c)
+        const body = validJson<z.infer<typeof AnswerQuestionRequestSchema>>(c)
+        return c.json(await service.answerQuestion(questionId, body, user), 200)
       } catch (err) {
         if (err instanceof Error && err.message.includes("Question not found")) return c.json({ error: "Question not found" }, 404)
         throw err
@@ -130,7 +131,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       try {
         const user = c.get("user")
-        const { questionId } = (c.req as any).valid("param") as { questionId: string }
+        const { questionId } = validParam<{ questionId: string }>(c)
         const question = await service.getQuestion(questionId)
         if (!question) return c.json({ error: "Question not found" }, 404)
         if (hasPermission(user, "answer:publish")) return c.json(await service.resolveQuestion(questionId), 200)

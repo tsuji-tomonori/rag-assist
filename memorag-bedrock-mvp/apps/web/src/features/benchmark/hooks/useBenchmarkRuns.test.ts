@@ -83,6 +83,7 @@ describe("useBenchmarkRuns", () => {
 
     await act(() => result.current.refreshBenchmarkRuns())
     await act(() => result.current.onCancelBenchmark("run-2"))
+    await act(() => result.current.refreshBenchmarkSuites())
     vi.mocked(startBenchmarkRun).mockRejectedValueOnce(new Error("benchmark failed"))
     await act(() => result.current.onStartBenchmark())
 
@@ -91,7 +92,7 @@ describe("useBenchmarkRuns", () => {
     expect(props.setError).toHaveBeenCalledWith("benchmark failed")
   })
 
-  it("keeps current suite when present, falls back when suites are empty, and reports string cancel errors", async () => {
+  it("keeps current suite when present, clears the selection when suites are empty, and reports string cancel errors", async () => {
     vi.mocked(listBenchmarkSuites).mockResolvedValueOnce([suite()]).mockResolvedValueOnce([])
     vi.mocked(cancelBenchmarkRun).mockRejectedValueOnce("cancel failed")
     const props = createProps()
@@ -102,25 +103,21 @@ describe("useBenchmarkRuns", () => {
 
     act(() => result.current.setBenchmarkSuiteId("custom-suite"))
     await act(() => result.current.refreshBenchmarkSuites())
-    expect(result.current.benchmarkSuiteId).toBe("custom-suite")
+    expect(result.current.benchmarkSuiteId).toBe("")
 
     await act(() => result.current.onCancelBenchmark("run-1"))
     expect(props.setError).toHaveBeenCalledWith("cancel failed")
   })
 
-  it("uses agent mode when the selected suite is missing and reports string start errors", async () => {
-    vi.mocked(startBenchmarkRun).mockRejectedValueOnce("start failed")
+  it("does not start a benchmark when the selected suite is missing", async () => {
     const props = createProps()
     const { result } = renderHook(() => useBenchmarkRuns(props))
 
     act(() => result.current.setBenchmarkSuiteId("missing-suite"))
     await act(() => result.current.onStartBenchmark())
 
-    expect(startBenchmarkRun).toHaveBeenCalledWith(expect.objectContaining({
-      suiteId: "missing-suite",
-      mode: "agent"
-    }))
-    expect(props.setError).toHaveBeenCalledWith("start failed")
+    expect(startBenchmarkRun).not.toHaveBeenCalled()
+    expect(props.setError).toHaveBeenCalledWith("実行可能な benchmark suite を取得できていません。更新後に再実行してください。")
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
   })
 

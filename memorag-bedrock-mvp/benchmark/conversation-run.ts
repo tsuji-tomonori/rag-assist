@@ -47,6 +47,15 @@ type HistoryTurn = {
   role: "user" | "assistant"
   text: string
   turnId?: string
+  citations?: Array<{
+    documentId?: string
+    fileName?: string
+    chunkId?: string
+    pageStart?: number
+    pageEnd?: number
+    score?: number
+    text?: string
+  }>
 }
 
 type ResultRow = ConversationTurnResult & {
@@ -111,12 +120,19 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
       for (const [turnIndex, turn] of conversation.turns.entries()) {
         const startedAt = Date.now()
         const { status, body } = await runBenchmarkQuery({
-            id: turn.turnId,
-            question: turn.question,
-            conversationHistory: history,
-            modelId: defaultModelId,
-            benchmarkSuiteId,
-            includeDebug: true
+          id: turn.turnId,
+          question: turn.question,
+          conversationHistory: history.map(({ role, text, turnId }) => ({ role, text, turnId })),
+          conversation: {
+            conversationId: conversation.conversationId,
+            turnId: turn.turnId,
+            turnIndex,
+            turns: history,
+            turnDependency: (turn.requiresHistory ?? turnIndex > 0) ? "coreference" : "standalone"
+          },
+          modelId: defaultModelId,
+          benchmarkSuiteId,
+          includeDebug: true
         })
         const evaluation = evaluateConversationTurn(turn, body, status)
         const result: ResultRow = {
@@ -144,7 +160,8 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
         history.push({
           role: "assistant",
           text: typeof body.answer === "string" ? body.answer : "",
-          turnId: `${turn.turnId}:assistant`
+          turnId: `${turn.turnId}:assistant`,
+          citations: Array.isArray(body.citations) ? body.citations : undefined
         })
       }
     }

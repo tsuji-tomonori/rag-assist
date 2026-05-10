@@ -817,6 +817,11 @@ test("benchmark runner can list and upload only isolated benchmark seed document
     assert.equal(deleteBody.documentId, manifest.documentId)
     assert.equal(typeof deleteBody.deletedVectorCount, "number")
 
+    const missingDelete = await fetch(`http://127.0.0.1:${port}/documents/missing-benchmark-seed`, {
+      method: "DELETE"
+    })
+    assert.equal(missingDelete.status, 404)
+
     const allganizeSeedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -1066,15 +1071,16 @@ test("question and debug management endpoints enforce Phase 1 role boundaries", 
       body: JSON.stringify({
         title: "担当者へ確認したい",
         question: "この制度の詳細を担当者へ確認してください。",
-        requesterName: "山田 太郎",
-        requesterDepartment: "利用部門",
         assigneeDepartment: "総務部",
         category: "その他の質問",
         priority: "normal"
       })
     })
     assert.equal(createQuestion.status, 200)
-    const question = (await createQuestion.json()) as { questionId: string }
+    const question = (await createQuestion.json()) as { questionId: string; requesterName: string; requesterDepartment: string; requesterUserId?: string }
+    assert.equal(question.requesterName, "local-dev@example.com")
+    assert.equal(question.requesterDepartment, "未設定")
+    assert.equal(question.requesterUserId, "local-dev")
 
     const listQuestions = await fetch(`http://127.0.0.1:${port}/questions`)
     assert.equal(listQuestions.status, 403)
@@ -1164,8 +1170,6 @@ test("answer editors cannot create questions without chat permission", async () 
       body: JSON.stringify({
         title: "担当者へ確認したい",
         question: "この制度の詳細を担当者へ確認してください。",
-        requesterName: "山田 太郎",
-        requesterDepartment: "利用部門",
         assigneeDepartment: "総務部",
         category: "その他の質問",
         priority: "normal"

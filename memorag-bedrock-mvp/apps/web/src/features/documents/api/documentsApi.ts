@@ -37,6 +37,11 @@ type DocumentIngestRun = {
   error?: string
 }
 
+export type DocumentUploadProgress = {
+  phase: "preparing" | "transferring" | "creatingRun" | "extracting" | "chunking" | "embedding" | "indexing" | "complete"
+  runId?: string
+}
+
 export async function createDocumentUpload(input: {
   fileName: string
   mimeType?: string
@@ -91,8 +96,10 @@ export async function uploadDocumentFile(input: {
     temporaryScopeId?: string
     expiresAt?: string
   }
+  onProgress?: (progress: DocumentUploadProgress) => void
 }): Promise<DocumentManifest> {
   const mimeType = input.file.type || undefined
+  input.onProgress?.({ phase: "preparing" })
   const upload = await createDocumentUpload({
     fileName: input.file.name,
     mimeType,
@@ -102,12 +109,14 @@ export async function uploadDocumentFile(input: {
     ...upload.headers,
     ...(upload.requiresAuth ? createHeaders() : {})
   }
+  input.onProgress?.({ phase: "transferring" })
   const uploadResponse = await fetch(upload.uploadUrl, {
     method: upload.method,
     headers: uploadHeaders,
     body: input.file
   })
   if (!uploadResponse.ok) throw new Error(await uploadResponse.text())
+  input.onProgress?.({ phase: "creatingRun" })
   const run = await startDocumentIngestRun({
     uploadId: upload.uploadId,
     fileName: input.file.name,
@@ -116,17 +125,24 @@ export async function uploadDocumentFile(input: {
     embeddingModelId: input.embeddingModelId,
     scope: input.scope
   })
-  return waitForDocumentIngestRun(run)
+  return waitForDocumentIngestRun(run, input.onProgress)
 }
 
-async function waitForDocumentIngestRun(initialRun: DocumentIngestRun): Promise<DocumentManifest> {
+async function waitForDocumentIngestRun(initialRun: DocumentIngestRun, onProgress?: (progress: DocumentUploadProgress) => void): Promise<DocumentManifest> {
   let run = initialRun
   const deadline = Date.now() + 15 * 60 * 1000
+  const pollPhases: DocumentUploadProgress["phase"][] = ["extracting", "chunking", "embedding", "indexing"]
+  let pollCount = 0
   while (Date.now() < deadline) {
-    if (run.status === "succeeded" && run.manifest) return run.manifest
+    if (run.status === "succeeded" && run.manifest) {
+      onProgress?.({ phase: "complete", runId: run.runId })
+      return run.manifest
+    }
     if (run.status === "failed" || run.status === "cancelled") throw new Error(run.error ?? `document ingest run ${run.status}`)
+    onProgress?.({ phase: pollPhases[Math.min(pollCount, pollPhases.length - 1)]!, runId: run.runId })
     await sleep(1000)
     run = await getDocumentIngestRun(run.runId)
+    pollCount += 1
   }
   throw new Error("document ingest run timed out")
 }

@@ -494,14 +494,25 @@ export class MemoRagService {
     const manifests = await Promise.all(
       keys
         .filter((key) => key.endsWith(".json"))
-        .map(async (key) => JSON.parse(await this.deps.objectStore.getText(key)) as DocumentManifest)
+        .map(async (key) => this.getManifestByKey(key).catch((error: unknown) => {
+          if (isMissingObjectError(error)) {
+            console.warn("Skipping missing document manifest listed by object store", { key, error })
+            return undefined
+          }
+          throw error
+        }))
     )
     const documentGroups = user ? (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup) : []
     return manifests
+      .filter((manifest): manifest is DocumentManifest => manifest !== undefined)
       .filter((manifest) => (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active")
       .filter((manifest) => stringValue(manifest.metadata?.scopeType) !== "chat")
       .filter((manifest) => !user || canAccessManifest(manifest, user, documentGroups))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }
+
+  async getDocumentManifest(documentId: string): Promise<DocumentManifest> {
+    return this.getManifest(documentId)
   }
 
   async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
@@ -1198,7 +1209,12 @@ export class MemoRagService {
   }
 
   async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
-    return this.deps.questionStore.create({ ...input, requesterUserId: user?.userId })
+    return this.deps.questionStore.create({
+      ...input,
+      requesterUserId: user?.userId,
+      requesterName: input.requesterName?.trim() || userDisplayName(user),
+      requesterDepartment: input.requesterDepartment?.trim() || "未設定"
+    })
   }
 
   async listQuestions(): Promise<HumanQuestion[]> {
@@ -1209,8 +1225,11 @@ export class MemoRagService {
     return this.deps.questionStore.get(questionId)
   }
 
-  async answerQuestion(questionId: string, input: AnswerQuestionInput): Promise<HumanQuestion> {
-    return this.deps.questionStore.answer(questionId, input)
+  async answerQuestion(questionId: string, input: AnswerQuestionInput, user?: AppUser): Promise<HumanQuestion> {
+    return this.deps.questionStore.answer(questionId, {
+      ...input,
+      responderName: input.responderName?.trim() || userDisplayName(user)
+    })
   }
 
   async resolveQuestion(questionId: string): Promise<HumanQuestion> {
@@ -1353,7 +1372,11 @@ export class MemoRagService {
   }
 
   private async getManifest(documentId: string): Promise<DocumentManifest> {
-    return JSON.parse(await this.deps.objectStore.getText(`manifests/${documentId}.json`)) as DocumentManifest
+    return this.getManifestByKey(`manifests/${documentId}.json`)
+  }
+
+  private async getManifestByKey(key: string): Promise<DocumentManifest> {
+    return JSON.parse(await this.deps.objectStore.getText(key)) as DocumentManifest
   }
 
   private async loadStructuredBlocks(manifest: DocumentManifest): Promise<StructuredBlock[] | undefined> {
@@ -1971,8 +1994,14 @@ function roundCost(value: number): number {
 }
 
 function isMissingObjectError(err: unknown): boolean {
-  const candidate = err as { code?: string; name?: string; message?: string; $metadata?: { httpStatusCode?: number } }
-  return candidate.code === "ENOENT" || candidate.name === "NoSuchKey" || candidate.$metadata?.httpStatusCode === 404 || candidate.message?.includes("NoSuchKey") === true
+  const candidate = err as { Code?: string; code?: string; name?: string; message?: string; $metadata?: { httpStatusCode?: number } }
+  return candidate.Code === "NoSuchKey"
+    || candidate.code === "ENOENT"
+    || candidate.name === "NoSuchKey"
+    || candidate.name === "NotFound"
+    || candidate.$metadata?.httpStatusCode === 404
+    || candidate.message?.includes("NoSuchKey") === true
+    || candidate.message?.includes("ENOENT") === true
 }
 
 
@@ -2098,6 +2127,10 @@ function normalizeOptionalDocumentGroup(group: DocumentGroup | undefined): Docum
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort()
+}
+
+function userDisplayName(user?: AppUser): string {
+  return user?.email?.trim() || user?.userId?.trim() || "未設定"
 }
 
 function forbiddenError(message: string): Error & { status: number } {

@@ -1,6 +1,6 @@
 ---
 name: task-file-writer
-description: リポジトリ内で実装・調査・改善タスクを Markdown ファイルとして分解、作成、更新する。Use when Codex needs to create tasks/todo, tasks/do, or tasks/done task files, convert a report or plan into one-task-per-file work items, or write background, policy, required context, acceptance criteria, execution plan, validation, and risks for future implementation tasks.
+description: リポジトリ内で実装・修正・調査・ドキュメント更新タスクを Markdown ファイルとして分解、作成、更新し、タスク種別、背景、受け入れ条件、実行計画、検証、リスクを書く。修正タスクではなぜなぜ分析に基づく真因と全量対応方針を先に記録する。
 ---
 
 # Task File Writer
@@ -31,17 +31,18 @@ Each task file must include these sections:
 1. `# <task title>`
 2. `保存先`
 3. `状態`
-4. `背景`
-5. `目的`
-6. `対象範囲`
-7. `方針`
-8. `必要情報`
-9. `実行計画`
-10. `ドキュメントメンテナンス計画`
-11. `受け入れ条件`
-12. `検証計画`
-13. `PRレビュー観点`
-14. `未決事項・リスク`
+4. `タスク種別`
+5. `背景`
+6. `目的`
+7. `対象範囲`
+8. `方針`
+9. `必要情報`
+10. `実行計画`
+11. `ドキュメントメンテナンス計画`
+12. `受け入れ条件`
+13. `検証計画`
+14. `PRレビュー観点`
+15. `未決事項・リスク`
 
 Use Japanese prose unless the user requests another language. Keep file paths, commands, API names, type names, and function names in their original spelling.
 
@@ -60,6 +61,13 @@ When converting a report or plan:
 For each task:
 
 - `状態`: Use `todo`, `do`, or `done` consistently with the parent directory.
+- `タスク種別`: Always choose and write exactly one primary type from `機能追加`, `修正`, `調査`, or `ドキュメント更新`.
+  - `機能追加`: A new user, API, workflow, benchmark, infrastructure, or developer capability is added.
+  - `修正`: Existing behavior, output, tests, CI, docs, operations, security boundary, or data handling is wrong and must be corrected.
+  - `調査`: The main deliverable is analysis, diagnosis, review, evidence collection, or a recommendation without directly changing product behavior.
+  - `ドキュメント更新`: The main deliverable is durable documentation, agent instructions, skill instructions, specs, reports, or task metadata.
+  - If multiple labels seem possible, pick the dominant deliverable and record secondary aspects in `背景` or `対象範囲`.
+  - For `修正`, read and apply `skills/nazenaze-analysis/SKILL.md` before planning implementation. Record the problem statement, confirmed facts, root cause, affected scope, and full remediation plan in the task file before editing the fix.
 - `背景`: Explain why the task exists and what concrete problem it addresses.
 - `目的`: State the desired outcome in one or two sentences.
 - `対象範囲`: List files, modules, docs, tests, or behavior likely to be touched.
@@ -160,6 +168,8 @@ Before finishing:
 
 - Inspect changed task files for missing required sections.
 - Ensure `保存先` and `状態` match the file's current state directory.
+- Ensure each task has a `タスク種別` value and that it is one of `機能追加`, `修正`, `調査`, or `ドキュメント更新`.
+- For tasks with `タスク種別: 修正`, ensure the task records prior `nazenaze-analysis` results or explicitly states why the issue is blocked pending evidence.
 - Ensure each task has a `ドキュメントメンテナンス計画` section.
 - Ensure each task has a `PRレビュー観点` section.
 - Ensure `未決事項・リスク` uses explicit `決定事項` where a recommended choice is possible.

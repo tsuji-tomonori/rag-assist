@@ -15,7 +15,7 @@ import {
   SearchResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, routeAuthorization } from "./route-utils.js"
+import { looseRoute, routeAuthorization, validJson, validParam } from "./route-utils.js"
 
 function benchmarkSearchUser(runnerUser: AppUser, requestUser: z.infer<typeof BenchmarkSearchRequestSchema>["user"]): AppUser {
   if (!requestUser) return runnerUser
@@ -40,7 +40,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       requirePermission(c.get("user"), "benchmark:query")
-      const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkQueryRequestSchema>
+      const body = validJson<z.infer<typeof BenchmarkQueryRequestSchema>>(c)
       const result = await service.chat({
         ...body,
         includeDebug: body.includeDebug ?? true,
@@ -74,7 +74,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "benchmark:query")
-      const body = (c.req as any).valid("json") as z.infer<typeof BenchmarkSearchRequestSchema>
+      const body = validJson<z.infer<typeof BenchmarkSearchRequestSchema>>(c)
       const { user: requestUser, benchmarkSuiteId, ...searchInput } = body
       const benchmarkFilterSuiteId = benchmarkSuiteId ?? searchInput.filters?.benchmarkSuiteId
       if (benchmarkFilterSuiteId) {
@@ -123,7 +123,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "benchmark:run")
-      const body = (c.req as any).valid("json") as z.infer<typeof CreateBenchmarkRunRequestSchema>
+      const body = validJson<z.infer<typeof CreateBenchmarkRunRequestSchema>>(c)
       return c.json(await service.createBenchmarkRun(user, body), 200)
     }
   )
@@ -158,7 +158,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       requirePermission(c.get("user"), "benchmark:read")
-      const { runId } = (c.req as any).valid("param") as { runId: string }
+      const { runId } = validParam<{ runId: string }>(c)
       const run = await service.getBenchmarkRun(runId)
       if (!run) return c.json({ error: "Benchmark run not found" }, 404)
       return c.json(run, 200)
@@ -180,7 +180,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       requirePermission(c.get("user"), "benchmark:cancel")
-      const { runId } = (c.req as any).valid("param") as { runId: string }
+      const { runId } = validParam<{ runId: string }>(c)
       const run = await service.cancelBenchmarkRun(runId)
       if (!run) return c.json({ error: "Benchmark run not found" }, 404)
       return c.json(run, 200)
@@ -206,8 +206,8 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       requirePermission(c.get("user"), "benchmark:download")
-      const { runId } = (c.req as any).valid("param") as { runId: string }
-      const body = ((c.req as any).valid("json") ?? {}) as { artifact?: "report" | "summary" | "results" | "logs" }
+      const { runId } = validParam<{ runId: string }>(c)
+      const body = (validJson<{ artifact?: "report" | "summary" | "results" | "logs" } | undefined>(c) ?? {})
       const download = await service.createBenchmarkArtifactDownloadUrl(runId, body.artifact ?? "report")
       if (!download) return c.json({ error: "Benchmark run not found" }, 404)
       return c.json(download, 200)
@@ -229,10 +229,10 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       requirePermission(c.get("user"), "benchmark:download")
-      const { runId } = (c.req as any).valid("param") as { runId: string }
+      const { runId } = validParam<{ runId: string }>(c)
       const download = await service.getBenchmarkCodeBuildLogText(runId)
       if (!download) return c.json({ error: "Benchmark CodeBuild logs not found" }, 404)
-      return c.body(download.text, 200, {
+      return c.text(download.text, 200, {
         "Content-Type": "text/plain; charset=utf-8",
         "Content-Disposition": download.contentDisposition
       })

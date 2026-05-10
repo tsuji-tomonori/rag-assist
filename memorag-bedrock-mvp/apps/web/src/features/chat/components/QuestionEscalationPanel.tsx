@@ -2,6 +2,8 @@ import { type FormEvent, useState } from "react"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
+import type { CurrentUser } from "../../../shared/types/common.js"
+import { currentUserDepartmentLabel, currentUserLabel } from "../../../shared/utils/currentUserLabel.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import type { Message } from "../types.js"
 import { defaultQuestionBody, defaultQuestionTitle } from "../utils/questionDefaults.js"
@@ -9,11 +11,13 @@ import { defaultQuestionBody, defaultQuestionTitle } from "../utils/questionDefa
 export function QuestionEscalationPanel({
   message,
   questionTicket,
+  currentUser,
   loading,
   onCreateQuestion
 }: {
   message: Message
   questionTicket?: HumanQuestion
+  currentUser: CurrentUser | null
   loading: boolean
   onCreateQuestion: (input: Parameters<typeof createQuestion>[0]) => Promise<void>
 }) {
@@ -22,7 +26,7 @@ export function QuestionEscalationPanel({
   const [body, setBody] = useState(defaultQuestionBody(sourceQuestion))
   const [category, setCategory] = useState("その他の質問")
   const [priority, setPriority] = useState<HumanQuestion["priority"]>("normal")
-  const [assigneeDepartment, setAssigneeDepartment] = useState("総務部")
+  const [assigneeDepartment, setAssigneeDepartment] = useState("")
 
   if (questionTicket) {
     return (
@@ -41,9 +45,9 @@ export function QuestionEscalationPanel({
     await onCreateQuestion({
       title,
       question: body,
-      requesterName: "山田 太郎",
-      requesterDepartment: "利用部門",
-      assigneeDepartment,
+      requesterName: currentUserLabel(currentUser),
+      requesterDepartment: currentUserDepartmentLabel(),
+      assigneeDepartment: assigneeDepartment.trim() || undefined,
       category,
       priority,
       sourceQuestion,
@@ -89,15 +93,10 @@ export function QuestionEscalationPanel({
       </div>
       <label>
         <span>担当部署</span>
-        <select value={assigneeDepartment} onChange={(event) => setAssigneeDepartment(event.target.value)}>
-          <option value="総務部">総務部</option>
-          <option value="人事部">人事部</option>
-          <option value="情報システム部">情報システム部</option>
-          <option value="経理部">経理部</option>
-        </select>
+        <input value={assigneeDepartment} onChange={(event) => setAssigneeDepartment(event.target.value)} placeholder="担当部署を入力" />
       </label>
       <div className="question-form-actions">
-        <span>通常 1 営業日以内に回答予定</span>
+        <span>担当部署に送信されます</span>
         <button type="submit" disabled={loading || !title.trim() || !body.trim()}>
           {loading && <LoadingSpinner className="button-spinner" />}
           <span>担当者へ送信</span>

@@ -11,7 +11,7 @@ import {
   SearchResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, routeAuthorization, sleep } from "./route-utils.js"
+import { looseRoute, routeAuthorization, sleep, validJson } from "./route-utils.js"
 
 export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
   const chatRoute = looseRoute({
@@ -34,7 +34,7 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
   app.openapi(chatRoute, async (c) => {
     const user = c.get("user")
     requirePermission(user, "chat:create")
-    const body = (c.req as any).valid("json") as z.infer<typeof ChatRequestSchema>
+    const body = validJson<z.infer<typeof ChatRequestSchema>>(c)
     if ((body.includeDebug ?? body.debug ?? false) === true) {
       requirePermission(user, "chat:admin:read_all")
     }
@@ -61,7 +61,7 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "chat:create")
-      const body = (c.req as any).valid("json") as z.infer<typeof ChatRequestSchema>
+      const body = validJson<z.infer<typeof ChatRequestSchema>>(c)
       if ((body.includeDebug ?? body.debug ?? false) === true) {
         requirePermission(user, "chat:admin:read_all")
       }
@@ -154,7 +154,7 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:doc:read")
-      const body = (c.req as any).valid("json") as z.infer<typeof SearchRequestSchema>
+      const body = validJson<z.infer<typeof SearchRequestSchema>>(c)
       return c.json(await service.search(body, user), 200)
     }
   )

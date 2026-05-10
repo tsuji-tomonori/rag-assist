@@ -8,32 +8,7 @@ import type { Permission, RouteAuthorizationMode } from "../authorization.js"
 const appSourcePath = path.resolve(process.cwd(), "src/app.ts")
 const routeSourceDir = path.resolve(process.cwd(), "src/routes")
 
-const protectedMiddlewarePaths = [
-  "/me",
-  "/admin/*",
-  "/documents",
-  "/documents/*",
-  "/document-groups",
-  "/document-groups/*",
-  "/document-ingest-runs",
-  "/document-ingest-runs/*",
-  "/chat",
-  "/chat-runs",
-  "/chat-runs/*",
-  "/search",
-  "/questions",
-  "/questions/*",
-  "/conversation-history",
-  "/conversation-history/*",
-  "/debug-runs",
-  "/debug-runs/*",
-  "/rpc/*",
-  "/benchmark/query",
-  "/benchmark/search",
-  "/benchmark-runs",
-  "/benchmark-runs/*",
-  "/benchmark-suites"
-]
+const publicMiddlewarePaths = ["/health", "/openapi.json"]
 
 type RoutePolicy = {
   method: string
@@ -42,17 +17,20 @@ type RoutePolicy = {
   permission?: Permission
 }
 
-test("protected API paths keep auth middleware coverage", async () => {
+test("auth middleware uses a public allowlist instead of protected path enumeration", async () => {
   const source = await readRouteSources()
   const middlewareBlock = findAuthMiddlewareBlock(source)
 
-  for (const protectedPath of protectedMiddlewarePaths) {
+  for (const publicPath of publicMiddlewarePaths) {
     assert.match(
       middlewareBlock,
-      new RegExp(`["']${escapeRegex(protectedPath)}["']`),
-      `${protectedPath} must stay covered by authMiddleware`
+      new RegExp(`["']${escapeRegex(publicPath)}["']`),
+      `${publicPath} must stay in the explicit public allowlist`
     )
   }
+  assert.doesNotMatch(middlewareBlock, /protectedApiPaths/, "protected path enumeration must not return")
+  assert.match(middlewareBlock, /publicApiPaths\.has\(c\.req\.path\)/, "auth middleware must bypass only publicApiPaths")
+  assert.match(middlewareBlock, /return authMiddleware\(c, next\)/, "non-public paths must reach authMiddleware")
 })
 
 test("protected API routes keep route-level permission checks", async () => {
@@ -116,8 +94,8 @@ test("protected API routes keep route-level permission checks", async () => {
       )
       assert.match(
         source,
-        /function authorizeDocumentDelete[\s\S]*?benchmark:seed_corpus[\s\S]*?isBenchmarkSeedDocumentManifest/,
-        `${policy.method.toUpperCase()} ${policy.path} must restrict benchmark seed deletes`
+        /function authorizeDocumentDelete[\s\S]*?benchmark:seed_corpus[\s\S]*?getDocumentManifest[\s\S]*?isBenchmarkSeedDocumentManifest/,
+        `${policy.method.toUpperCase()} ${policy.path} must restrict benchmark seed deletes to the target manifest`
       )
     } else if (policy.mode === "documentUploadSession") {
       assert.match(
@@ -170,7 +148,7 @@ test("protected API routes must be explicitly reviewed before they change", asyn
     .sort()
 
   const actualProtectedRoutes = extractRoutes(source)
-    .filter((route) => isProtectedRoute(route.path))
+    .filter((route) => !publicMiddlewarePaths.includes(route.path))
     .map(routeKey)
     .sort()
 
@@ -255,7 +233,7 @@ async function readRouteSources(): Promise<string> {
 }
 
 function findAuthMiddlewareBlock(source: string): string {
-  const start = source.indexOf("const protectedApiPaths = [")
+  const start = source.indexOf("const publicApiPaths = new Set")
   assert.notEqual(start, -1, "authMiddleware path list was not found")
   const end = source.indexOf("registerApiRoutes(app, deps, service)", start)
   assert.notEqual(end, -1, "authMiddleware path list end was not found")
@@ -306,13 +284,6 @@ function findNextOpenApiStart(source: string, startIndex: number): number {
 
 function routeKey(route: Pick<RoutePolicy, "method" | "path">): string {
   return `${route.method.toUpperCase()} ${route.path}`
-}
-
-function isProtectedRoute(routePath: string): boolean {
-  return protectedMiddlewarePaths.some((protectedPath) => {
-    if (!protectedPath.endsWith("/*")) return routePath === protectedPath
-    return routePath.startsWith(protectedPath.slice(0, -1))
-  })
 }
 
 function escapeRegex(value: string): string {

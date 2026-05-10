@@ -3,7 +3,7 @@ import { ragRuntimePolicy } from "./agent/runtime-policy.js"
 import type { JsonValue } from "./types.js"
 
 const MetadataValueSchema = z.custom<JsonValue>(isJsonValue)
-const DebugStepOutputSchema = z.record(z.string(), z.unknown())
+const DebugStepOutputSchema = z.record(z.string(), MetadataValueSchema)
 
 function isJsonValue(value: unknown): value is JsonValue {
   if (value === null) return true
@@ -442,6 +442,8 @@ const ConversationCitationSchema = z.object({
   documentId: z.string().optional(),
   fileName: z.string().optional(),
   chunkId: z.string().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
   score: z.number().optional(),
   text: z.string().optional()
 })
@@ -556,6 +558,8 @@ export const CitationSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
   chunkId: z.string().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
   score: z.number(),
   text: z.string()
 })
@@ -616,9 +620,9 @@ export const DebugTraceSchema = z.object({
   clueModelId: z.string(),
   conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
   clarificationContext: ClarificationContextSchema.optional(),
-  conversation: z.unknown().optional(),
-  conversationState: z.unknown().optional(),
-  decontextualizedQuery: z.unknown().optional(),
+  conversation: MetadataValueSchema.optional(),
+  conversationState: MetadataValueSchema.optional(),
+  decontextualizedQuery: MetadataValueSchema.optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   ragProfile: RagProfileTraceSchema.optional(),
   topK: z.number(),
@@ -784,7 +788,7 @@ export const ConversationHistoryListResponseSchema = z.object({
 export const CreateQuestionRequestSchema = z.object({
   title: z.string().min(1).max(120).openapi({ example: "山田さんの昼食について確認したい" }),
   question: z.string().min(1).max(2000).openapi({ example: "今日山田さんは何を食べたか、担当者に確認してください。" }),
-  requesterName: z.string().optional().openapi({ example: "山田 太郎" }),
+  requesterName: z.string().optional().openapi({ example: "requester@example.com" }),
   requesterDepartment: z.string().optional().openapi({ example: "総務部" }),
   assigneeDepartment: z.string().optional().openapi({ example: "総務部" }),
   category: z.string().optional().openapi({ example: "その他の質問" }),
@@ -797,7 +801,7 @@ export const CreateQuestionRequestSchema = z.object({
 export const AnswerQuestionRequestSchema = z.object({
   answerTitle: z.string().min(1).max(120).openapi({ example: "山田さんの昼食についての回答" }),
   answerBody: z.string().min(1).max(4000).openapi({ example: "山田さんは本日、社内食堂でカレーを食べました。" }),
-  responderName: z.string().optional().openapi({ example: "佐藤 花子" }),
+  responderName: z.string().optional().openapi({ example: "responder@example.com" }),
   responderDepartment: z.string().optional().openapi({ example: "総務部" }),
   references: z.string().optional(),
   internalMemo: z.string().optional(),
