@@ -1,8 +1,25 @@
 # 建築図面の部屋・記号・寸法・詳細参照グラフを作る
 
-保存先: `tasks/todo/20260510-1433-drawing-reference-graph.md`
+保存先: `tasks/do/20260510-1433-drawing-reference-graph.md`
 
-状態: todo
+状態: do
+
+タスク種別: 機能追加
+
+## 作業チェックリスト
+
+- [x] 既存の図面 metadata / region index / graph metric 実装を確認する。
+- [x] 最小 `drawingReferenceGraph` schema を追加する。
+- [x] detail / section / callout QA から node / edge / target を生成する。
+- [x] dataset row に `expectedGraphResolutions` を付与し、benchmark metric に接続する。
+- [ ] docs、test、作業レポートを更新し、PR コメントまで完了する。
+
+## Done 条件
+
+- corpus metadata に detail / section / callout の source / target bbox を含む graph artifact が出力される。
+- cross-reference 系 QA row が `expectedGraphResolutions` を持つ。
+- source hierarchy と根拠不足時の abstention 方針を docs に明記する。
+- benchmark workspace の unit test / typecheck と `git diff --check` が通る。
 
 ## 背景
 
@@ -45,10 +62,21 @@ graph schema、source hierarchy、cross-sheet reasoning、benchmark metric、deb
 
 ## 受け入れ条件
 
-- [ ] AC1: detail / section / callout の source bbox と target bbox を保持できる。
-- [ ] AC2: graph lookup が少なくとも detail reference QA に利用される。
-- [ ] AC3: source hierarchy により案件図面と標準図の矛盾時に案件図面が優先される。
-- [ ] AC4: graph の根拠がない場合は推測回答を出さない。
+- [x] AC1: detail / section / callout の source bbox と target bbox を保持できる。
+- [x] AC2: graph lookup が少なくとも detail reference QA に利用される。
+- [x] AC3: source hierarchy により案件図面と標準図の矛盾時に案件図面が優先される。
+- [x] AC4: graph の根拠がない場合は推測回答を出さない。
+
+## 検証結果
+
+- `npm run test --workspace @memorag-mvp/benchmark`: pass
+- `npm run typecheck --workspace @memorag-mvp/benchmark`: pass
+- `npm run test --workspace @memorag-mvp/api`: pass
+- `npm run typecheck --workspace @memorag-mvp/api`: pass
+- `npm run lint`: pass
+- `git diff --check`: pass
+- `npm run docs:check --workspace @memorag-mvp/api`: script 未定義のため未実施
+- `npm ci`: pass。ただし既存依存関係で 3 vulnerabilities (1 moderate, 2 high) が報告された。
 
 ## 検証計画
 
