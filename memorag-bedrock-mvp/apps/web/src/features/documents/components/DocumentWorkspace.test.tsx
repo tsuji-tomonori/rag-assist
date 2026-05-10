@@ -167,6 +167,74 @@ describe("DocumentWorkspace", () => {
     expect(onRollbackReindex).toHaveBeenCalledWith("migration-2")
   })
 
+  it("最近の操作に実データと現在セッション操作を表示する", async () => {
+    const onDelete = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={migrations}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={onDelete}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const recentOperations = screen.getByRole("list", { name: "最近の操作" })
+    expect(screen.getByRole("heading", { name: "最近の操作" })).toBeInTheDocument()
+    expect(within(recentOperations).getByText("文書更新")).toBeInTheDocument()
+    expect(within(recentOperations).getByText("フォルダ作成")).toBeInTheDocument()
+    expect(within(recentOperations).getByText("reindex stage")).toBeInTheDocument()
+    expect(within(recentOperations).getAllByText("反映済み").length).toBeGreaterThanOrEqual(1)
+    expect(within(recentOperations).getAllByText("user-1").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText(/監査ログ API は未接続です/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
+
+    expect(onDelete).toHaveBeenCalledWith("doc-1")
+    expect(within(recentOperations).getByText("文書削除")).toBeInTheDocument()
+    expect(within(recentOperations).getByText("要求済み")).toBeInTheDocument()
+  })
+
+  it("操作データがない場合は最近の操作の空状態を表示する", () => {
+    render(
+      <DocumentWorkspace
+        documents={[]}
+        documentGroups={[]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("list", { name: "最近の操作" })).toHaveTextContent("最近の操作はありません。")
+  })
+
   it("フォルダ管理と保存先フォルダ選択を通知する", async () => {
     const onUploadGroupChange = vi.fn()
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
@@ -839,7 +907,7 @@ describe("DocumentWorkspace", () => {
     )
 
     expect(screen.getByText("ベクトル化中")).toBeInTheDocument()
-    expect(screen.getByText("run ID: run-123")).toBeInTheDocument()
+    expect(screen.getAllByText("run ID: run-123").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByTitle("policy.pdfを削除")).toBeDisabled()
     expect(screen.getByTitle("requirements.mdを削除")).not.toBeDisabled()
   })

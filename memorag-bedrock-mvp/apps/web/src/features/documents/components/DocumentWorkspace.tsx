@@ -21,6 +21,16 @@ type ConfirmAction =
 
 type DocumentSortKey = "updatedDesc" | "updatedAsc" | "fileNameAsc" | "chunkDesc" | "typeAsc"
 
+type DocumentOperationEvent = {
+  id: string
+  actionLabel: string
+  target: string
+  occurredAt?: string
+  actor?: string
+  result: "反映済み" | "要求済み" | "進行中" | "失敗"
+  detail?: string
+}
+
 const emptyOperationState: DocumentOperationState = {
   isUploading: false,
   creatingGroup: false,
@@ -92,8 +102,10 @@ export function DocumentWorkspace({
   const [documentSort, setDocumentSort] = useState<DocumentSortKey>("updatedDesc")
   const [selectedDocument, setSelectedDocument] = useState<DocumentManifest | null>(null)
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
+  const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
+  const operationEventSeqRef = useRef(0)
 
   const folders = useMemo<WorkspaceFolder[]>(() => {
     return documentGroups.map((group) => ({
@@ -133,7 +145,10 @@ export function DocumentWorkspace({
     })
     .sort((left, right) => compareDocuments(left, right, documentSort))
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
-  const latestDocuments = [...documents].sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, 3)
+  const recentOperationEvents = useMemo(
+    () => buildOperationEvents({ documents, documentGroups, migrations, uploadState, sessionOperationEvents }),
+    [documents, documentGroups, migrations, uploadState, sessionOperationEvents]
+  )
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
   const shareTargetGroupId = shareGroupId || selectedGroupId
   const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
@@ -149,10 +164,26 @@ export function DocumentWorkspace({
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
   const createVisibilityLabel = visibilityLabelValue(groupVisibility)
 
+  function recordSessionOperation(actionLabel: string, target: string, detail?: string, result: DocumentOperationEvent["result"] = "要求済み") {
+    operationEventSeqRef.current += 1
+    const event: DocumentOperationEvent = {
+      id: `session-${operationEventSeqRef.current}`,
+      actionLabel,
+      target,
+      detail,
+      result,
+      occurredAt: new Date().toISOString()
+    }
+    setSessionOperationEvents((current) => [event, ...current].slice(0, 8))
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     if (!uploadFile || !canUploadToDestination) return
+    const fileName = uploadFile.name
+    const destination = uploadDestinationLabel
     await onUpload(uploadFile)
+    recordSessionOperation("アップロード", fileName, `保存先: ${destination}`)
     setUploadFile(null)
   }
 
@@ -169,6 +200,7 @@ export function DocumentWorkspace({
       ...(createManagerDraft.groups.length > 0 ? { managerUserIds: createManagerDraft.groups } : {})
     }
     const createdGroup = await onCreateGroup(input)
+    recordSessionOperation("フォルダ作成", name, `公開範囲: ${createVisibilityLabel}`, createdGroup?.groupId ? "反映済み" : "要求済み")
     if (createdGroup?.groupId && moveToCreatedGroup) {
       setSelectedFolderId(createdGroup.groupId)
       onUploadGroupChange(createdGroup.groupId)
@@ -185,6 +217,7 @@ export function DocumentWorkspace({
     event.preventDefault()
     if (!shareTargetGroupId || !canWrite || shareHasValidationError) return
     await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups })
+    recordSessionOperation("共有更新", shareTargetGroup?.name ?? shareTargetGroupId, `shared groups: ${shareDraft.groups.join(", ") || "なし"}`)
     setShareGroups("")
   }
 
@@ -201,10 +234,22 @@ export function DocumentWorkspace({
     if (!confirmAction) return
     const action = confirmAction
     setConfirmAction(null)
-    if (action.kind === "delete") await onDelete(action.document.documentId)
-    if (action.kind === "stage") await onStageReindex(action.document.documentId)
-    if (action.kind === "cutover") await onCutoverReindex(action.migration.migrationId)
-    if (action.kind === "rollback") await onRollbackReindex(action.migration.migrationId)
+    if (action.kind === "delete") {
+      await onDelete(action.document.documentId)
+      recordSessionOperation("文書削除", action.document.fileName, `documentId: ${action.document.documentId}`)
+    }
+    if (action.kind === "stage") {
+      await onStageReindex(action.document.documentId)
+      recordSessionOperation("reindex stage", action.document.fileName, `documentId: ${action.document.documentId}`)
+    }
+    if (action.kind === "cutover") {
+      await onCutoverReindex(action.migration.migrationId)
+      recordSessionOperation("reindex cutover", action.migration.migrationId, `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`)
+    }
+    if (action.kind === "rollback") {
+      await onRollbackReindex(action.migration.migrationId)
+      recordSessionOperation("reindex rollback", action.migration.migrationId, `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`)
+    }
   }
 
   return (
@@ -624,19 +669,34 @@ export function DocumentWorkspace({
 
           <section className="recent-update-card">
             <div className="card-title-row">
-              <h3>最近の更新</h3>
+              <h3>最近の操作</h3>
             </div>
-            <ul>
-              {latestDocuments.length === 0 ? (
-                <li>最近の更新はありません。</li>
+            <p className="field-hint">監査ログ API は未接続です。表示は文書・フォルダ・reindex 状態と現在セッションの操作要求に基づきます。</p>
+            <ul aria-label="最近の操作">
+              {recentOperationEvents.length === 0 ? (
+                <li>最近の操作はありません。</li>
               ) : (
-                latestDocuments.map((document) => (
-                  <li key={document.documentId}>
-                    <span className="update-avatar">{document.fileName.slice(0, 1).toUpperCase()}</span>
+                recentOperationEvents.map((operation) => (
+                  <li key={operation.id}>
+                    <span className={`update-avatar ${operationResultClassName(operation.result)}`}>{operation.actionLabel.slice(0, 1).toUpperCase()}</span>
                     <div>
-                      <strong>{document.fileName}</strong>
-                      <span>を更新しました</span>
-                      <small>{formatDateTime(document.createdAt)}</small>
+                      <strong>{operation.actionLabel}</strong>
+                      <span>{operation.target}</span>
+                      {operation.detail && <small>{operation.detail}</small>}
+                      <dl className="operation-log-meta">
+                        <div>
+                          <dt>時刻</dt>
+                          <dd>{operation.occurredAt ? formatDateTime(operation.occurredAt) : "未取得"}</dd>
+                        </div>
+                        <div>
+                          <dt>操作者</dt>
+                          <dd>{operation.actor ?? "未取得"}</dd>
+                        </div>
+                        <div>
+                          <dt>状態</dt>
+                          <dd>{operation.result}</dd>
+                        </div>
+                      </dl>
                     </div>
                   </li>
                 ))
@@ -910,6 +970,72 @@ function compareDocuments(left: DocumentManifest, right: DocumentManifest, sort:
   if (sort === "chunkDesc") return right.chunkCount - left.chunkCount
   if (sort === "typeAsc") return fileTypeLabel(left).localeCompare(fileTypeLabel(right), "ja") || left.fileName.localeCompare(right.fileName, "ja")
   return right.createdAt.localeCompare(left.createdAt)
+}
+
+function buildOperationEvents({
+  documents,
+  documentGroups,
+  migrations,
+  uploadState,
+  sessionOperationEvents
+}: {
+  documents: DocumentManifest[]
+  documentGroups: DocumentGroup[]
+  migrations: ReindexMigration[]
+  uploadState: DocumentUploadState
+  sessionOperationEvents: DocumentOperationEvent[]
+}): DocumentOperationEvent[] {
+  const documentEvents = documents.map((document) => ({
+    id: `document-${document.documentId}`,
+    actionLabel: "文書更新",
+    target: document.fileName,
+    occurredAt: metadataString(document, "updatedAt") ?? document.createdAt,
+    result: "反映済み" as const,
+    detail: `documentId: ${document.documentId}`
+  }))
+  const groupEvents = documentGroups.map((group) => ({
+    id: `group-${group.groupId}`,
+    actionLabel: group.updatedAt === group.createdAt ? "フォルダ作成" : "フォルダ更新",
+    target: group.name,
+    occurredAt: group.updatedAt,
+    actor: group.ownerUserId,
+    result: "反映済み" as const,
+    detail: `公開範囲: ${visibilityLabelValue(group.visibility)}`
+  }))
+  const migrationEvents = migrations.map((migration) => ({
+    id: `migration-${migration.migrationId}`,
+    actionLabel: migrationActionLabel(migration.status),
+    target: `${migration.sourceDocumentId} → ${migration.stagedDocumentId}`,
+    occurredAt: migration.updatedAt,
+    actor: migration.createdBy,
+    result: "反映済み" as const,
+    detail: `migrationId: ${migration.migrationId}`
+  }))
+  const uploadEvent = uploadState ? [{
+    id: `upload-${uploadState.fileName}`,
+    actionLabel: "アップロード",
+    target: uploadState.fileName,
+    occurredAt: uploadState.updatedAt,
+    result: uploadState.phase === "failed" ? "失敗" as const : uploadState.phase === "complete" ? "反映済み" as const : "進行中" as const,
+    detail: uploadState.runId ? `run ID: ${uploadState.runId}` : undefined
+  }] : []
+
+  return [...sessionOperationEvents, ...uploadEvent, ...migrationEvents, ...groupEvents, ...documentEvents]
+    .sort((left, right) => (right.occurredAt ?? "").localeCompare(left.occurredAt ?? ""))
+    .slice(0, 8)
+}
+
+function migrationActionLabel(status: ReindexMigration["status"]): string {
+  if (status === "cutover") return "reindex cutover"
+  if (status === "rolled_back") return "reindex rollback"
+  return "reindex stage"
+}
+
+function operationResultClassName(result: DocumentOperationEvent["result"]): string {
+  if (result === "失敗") return "failed"
+  if (result === "進行中") return "active"
+  if (result === "要求済み") return "requested"
+  return "done"
 }
 
 function uniqueSorted(values: string[]): string[] {

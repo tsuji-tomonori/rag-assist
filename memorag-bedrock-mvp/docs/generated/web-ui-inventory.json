@@ -6140,9 +6140,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:214:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:259:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 214,
+      "line": 259,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6184,9 +6184,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:234:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:279:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 234,
+      "line": 279,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -6211,9 +6211,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:235:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:280:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 235,
+      "line": 280,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -6259,9 +6259,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:243:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:288:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 243,
+      "line": 288,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6309,9 +6309,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:248:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:293:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 248,
+      "line": 293,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6351,9 +6351,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:268:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:313:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 268,
+      "line": 313,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6393,9 +6393,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:300:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:345:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 300,
+      "line": 345,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6443,9 +6443,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:309:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:354:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 309,
+      "line": 354,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6493,9 +6493,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:322:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:367:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 322,
+      "line": 367,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -6515,9 +6515,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:324:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:369:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 324,
+      "line": 369,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -6559,9 +6559,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:326:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:371:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 326,
+      "line": 371,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -6581,9 +6581,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:328:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:373:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 328,
+      "line": 373,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -6617,9 +6617,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:329:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:374:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 329,
+      "line": 374,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -6644,9 +6644,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:331:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:376:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 331,
+      "line": 376,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -6671,9 +6671,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:335:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:380:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 335,
+      "line": 380,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -6693,9 +6693,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:337:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:382:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 337,
+      "line": 382,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -6729,9 +6729,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:338:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:383:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 338,
+      "line": 383,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -6756,9 +6756,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:340:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:385:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 340,
+      "line": 385,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -6783,9 +6783,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:344:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:389:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 344,
+      "line": 389,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -6805,9 +6805,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:346:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:391:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 346,
+      "line": 391,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -6841,9 +6841,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:347:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:392:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 347,
+      "line": 392,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -6868,9 +6868,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:348:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:393:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 348,
+      "line": 393,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -6895,9 +6895,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:350:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:395:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 350,
+      "line": 395,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -6922,9 +6922,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:354:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:399:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 354,
+      "line": 399,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -6944,9 +6944,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:356:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:401:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 356,
+      "line": 401,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -6980,9 +6980,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:357:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:402:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 357,
+      "line": 402,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7007,9 +7007,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:358:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:403:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 358,
+      "line": 403,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7034,9 +7034,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:359:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:404:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 359,
+      "line": 404,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7061,9 +7061,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:360:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:405:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 360,
+      "line": 405,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7088,9 +7088,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:361:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:406:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 361,
+      "line": 406,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7115,9 +7115,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:379:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:424:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 379,
+      "line": 424,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7157,9 +7157,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:413:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:458:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 413,
+      "line": 458,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7207,9 +7207,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:425:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:470:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 425,
+      "line": 470,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7257,9 +7257,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:454:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:499:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 454,
+      "line": 499,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7299,9 +7299,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:457:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:502:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 457,
+      "line": 502,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7341,9 +7341,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:492:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:537:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 492,
+      "line": 537,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -7373,9 +7373,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:493:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:538:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 493,
+      "line": 538,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7395,9 +7395,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:495:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:540:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 495,
+      "line": 540,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -7437,9 +7437,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:496:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:541:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 496,
+      "line": 541,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7464,9 +7464,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:498:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:543:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 498,
+      "line": 543,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7491,9 +7491,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:502:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:547:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 502,
+      "line": 547,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7513,9 +7513,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:504:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:549:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 504,
+      "line": 549,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -7568,9 +7568,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:516:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:561:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 516,
+      "line": 561,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7601,9 +7601,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:542:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:587:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 542,
+      "line": 587,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -7633,9 +7633,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:543:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:588:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 543,
+      "line": 588,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7655,9 +7655,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:545:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:590:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 545,
+      "line": 590,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -7697,9 +7697,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:546:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:591:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 546,
+      "line": 591,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7724,9 +7724,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:548:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:593:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 548,
+      "line": 593,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -7751,9 +7751,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:552:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:597:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 552,
+      "line": 597,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7778,9 +7778,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:555:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:600:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 555,
+      "line": 600,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -7824,9 +7824,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:558:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:603:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 558,
+      "line": 603,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7857,9 +7857,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:566:form",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:611:form",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 566,
+      "line": 611,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "form",
@@ -7889,9 +7889,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:567:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:612:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 567,
+      "line": 612,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7911,9 +7911,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:569:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:614:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 569,
+      "line": 614,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -7957,9 +7957,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:571:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:616:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 571,
+      "line": 616,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -7979,9 +7979,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:573:textarea",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:618:textarea",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 573,
+      "line": 618,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "textarea",
@@ -8025,9 +8025,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:575:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:620:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 575,
+      "line": 620,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -8047,9 +8047,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:577:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:622:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 577,
+      "line": 622,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -8089,9 +8089,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:578:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:623:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 578,
+      "line": 623,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -8116,9 +8116,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:580:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:625:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 580,
+      "line": 625,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -8143,9 +8143,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:584:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:629:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 584,
+      "line": 629,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -8165,9 +8165,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:586:select",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:631:select",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 586,
+      "line": 631,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "select",
@@ -8207,9 +8207,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:587:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:632:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 587,
+      "line": 632,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -8234,9 +8234,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:588:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:633:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 588,
+      "line": 633,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -8261,9 +8261,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:589:option",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:634:option",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 589,
+      "line": 634,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "option",
@@ -8288,9 +8288,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:592:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:637:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 592,
+      "line": 637,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -8310,9 +8310,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:594:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:639:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 594,
+      "line": 639,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -8365,9 +8365,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:596:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:641:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 596,
+      "line": 641,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -8387,9 +8387,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:598:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:643:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 598,
+      "line": 643,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -8442,9 +8442,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:600:label",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:645:label",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 600,
+      "line": 645,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "label",
@@ -8464,9 +8464,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:601:input",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:646:input",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 601,
+      "line": 646,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "input",
@@ -8506,9 +8506,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:618:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:663:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 618,
+      "line": 663,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -8539,9 +8539,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:757:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:817:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 757,
+      "line": 817,
       "feature": "documents",
       "component": "ConfirmDialog",
       "element": "button",
@@ -8575,9 +8575,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:758:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:818:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 758,
+      "line": 818,
       "feature": "documents",
       "component": "ConfirmDialog",
       "element": "button",
@@ -8611,9 +8611,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:804:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:864:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 804,
+      "line": 864,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -8655,9 +8655,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:829:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:889:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 829,
+      "line": 889,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -8691,9 +8691,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:833:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:893:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 833,
+      "line": 893,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -8733,9 +8733,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:837:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:897:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 837,
+      "line": 897,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
