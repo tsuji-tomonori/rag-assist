@@ -2,7 +2,7 @@
 
 ## 状態
 
-in_progress
+done
 
 ## タスク種別
 
