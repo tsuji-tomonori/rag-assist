@@ -1,6 +1,6 @@
 # ドキュメント管理ディープリンク化
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -43,15 +43,15 @@ API 追加や server-side routing 設定変更は行わず、既存 SPA の Hist
 
 ## 受け入れ条件
 
-- [ ] `/documents` でドキュメント管理 view を開ける。
-- [ ] `/documents/groups/:groupId` で対象フォルダが選択され、upload destination もその folder に同期される。
-- [ ] `/documents/:documentId` で対象文書の詳細 drawer が開く。
-- [ ] `/documents/reindex-migrations/:migrationId` で対象 migration が確認できる状態になる。
-- [ ] `/documents?query=...` と `/documents?status=...` が文書一覧フィルタへ反映される。
-- [ ] フォルダ選択、文書行クリック、migration 操作対象選択、検索 / 状態変更で URL が更新される。
-- [ ] browser back / forward で document route state が復元される。
-- [ ] 存在しない group / document / migration ID でも架空データを表示せず、壊れない fallback になる。
-- [ ] 対象テスト、web typecheck、web inventory check、`git diff --check` が通る。
+- [x] `/documents` でドキュメント管理 view を開ける。
+- [x] `/documents/groups/:groupId` で対象フォルダが選択され、upload destination もその folder に同期される。
+- [x] `/documents/:documentId` で対象文書の詳細 drawer が開く。
+- [x] `/documents/reindex-migrations/:migrationId` で対象 migration が確認できる状態になる。
+- [x] `/documents?query=...` と `/documents?status=...` が文書一覧フィルタへ反映される。
+- [x] フォルダ選択、文書行クリック、migration 操作対象選択、検索 / 状態変更で URL が更新される。
+- [x] browser back / forward で document route state が復元される。
+- [x] 存在しない group / document / migration ID でも架空データを表示せず、壊れない fallback になる。
+- [x] 対象テスト、web typecheck、web inventory check、`git diff --check` が通る。
 
 ## 検証計画
 
@@ -70,3 +70,17 @@ API 追加や server-side routing 設定変更は行わず、既存 SPA の Hist
 ## リスク
 
 - サーバ側 rewrite が未設定の配信環境では、ブラウザ直打ちの deep path が CDN / hosting 設定に依存する可能性がある。この作業では SPA 内の History API 同期までを対象にする。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/254
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
+- 作業レポート: `reports/working/20260510-1923-document-deeplink-routing.md`
+- 検証:
+  - `npm --prefix memorag-bedrock-mvp ci`: pass
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- DocumentWorkspace useAppShellState`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:web-inventory`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
+  - `git diff --check`: pass
