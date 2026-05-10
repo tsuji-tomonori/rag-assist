@@ -47,9 +47,11 @@
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- App DocumentWorkspace useDocuments`
   - pass。7 files / 77 tests。
 - `npm --prefix memorag-bedrock-mvp run test:coverage -w @memorag-mvp/web`
-  - pass。28 files / 195 tests。Statements 91.49%、Branches 86.16%、Functions 90.55%、Lines 94.99%。
+  - pass。28 files / 195 tests。最終実行では Statements 91.48%、Branches 86.16%、Functions 90.51%、Lines 94.99%。
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`
   - pass。
+- `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`
+  - pass。CI で React hooks の memoization lint が失敗したため、文書フィルタ計算から不要な `useMemo` を外して再確認した。
 - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`
   - pass。
 - `git diff --check`

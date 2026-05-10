@@ -109,25 +109,23 @@ export function DocumentWorkspace({
   const uploadDestination = uploadGroupId ? documentGroups.find((group) => group.groupId === uploadGroupId) : undefined
   const uploadDestinationLabel = uploadDestination?.name ?? "未選択"
   const canUploadToDestination = canWrite && Boolean(uploadGroupId)
-  const folderDocuments = selectedFolder?.group ? documents.filter((document) => documentGroupIds(document).includes(selectedFolder.group!.groupId)) : documents
-  const documentTypeOptions = useMemo(() => uniqueSorted(folderDocuments.map(fileTypeLabel)), [folderDocuments])
-  const documentStatusOptions = useMemo(() => uniqueSorted(folderDocuments.map(documentStatusLabel)), [folderDocuments])
-  const visibleDocuments = useMemo(() => {
-    const normalizedQuery = documentQuery.trim().toLowerCase()
-    return folderDocuments
-      .filter((document) => {
-        const groupIds = documentGroupIds(document)
-        const groupNames = groupIds.map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
-        const searchable = [document.fileName, document.documentId, fileTypeLabel(document), documentStatusLabel(document), ...groupNames].join(" ").toLowerCase()
-        if (normalizedQuery && !searchable.includes(normalizedQuery)) return false
-        if (documentTypeFilter !== "all" && fileTypeLabel(document) !== documentTypeFilter) return false
-        if (documentStatusFilter !== "all" && documentStatusLabel(document) !== documentStatusFilter) return false
-        if (documentGroupFilter === "unassigned" && groupIds.length > 0) return false
-        if (documentGroupFilter !== "all" && documentGroupFilter !== "unassigned" && !groupIds.includes(documentGroupFilter)) return false
-        return true
-      })
-      .sort((left, right) => compareDocuments(left, right, documentSort))
-  }, [documentGroupFilter, documentGroups, documentQuery, documentSort, documentStatusFilter, documentTypeFilter, folderDocuments])
+  const folderDocuments = selectedGroupId ? documents.filter((document) => documentGroupIds(document).includes(selectedGroupId)) : documents
+  const documentTypeOptions = uniqueSorted(folderDocuments.map(fileTypeLabel))
+  const documentStatusOptions = uniqueSorted(folderDocuments.map(documentStatusLabel))
+  const normalizedDocumentQuery = documentQuery.trim().toLowerCase()
+  const visibleDocuments = folderDocuments
+    .filter((document) => {
+      const groupIds = documentGroupIds(document)
+      const groupNames = groupIds.map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
+      const searchable = [document.fileName, document.documentId, fileTypeLabel(document), documentStatusLabel(document), ...groupNames].join(" ").toLowerCase()
+      if (normalizedDocumentQuery && !searchable.includes(normalizedDocumentQuery)) return false
+      if (documentTypeFilter !== "all" && fileTypeLabel(document) !== documentTypeFilter) return false
+      if (documentStatusFilter !== "all" && documentStatusLabel(document) !== documentStatusFilter) return false
+      if (documentGroupFilter === "unassigned" && groupIds.length > 0) return false
+      if (documentGroupFilter !== "all" && documentGroupFilter !== "unassigned" && !groupIds.includes(documentGroupFilter)) return false
+      return true
+    })
+    .sort((left, right) => compareDocuments(left, right, documentSort))
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
   const latestDocuments = [...documents].sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, 3)
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
