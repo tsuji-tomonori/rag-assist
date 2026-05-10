@@ -101,6 +101,8 @@ export function DocumentWorkspace({
   const [documentStatusFilter, setDocumentStatusFilter] = useState(urlState?.status ?? "all")
   const [documentGroupFilter, setDocumentGroupFilter] = useState(urlState?.groupFilter ?? "all")
   const [documentSort, setDocumentSort] = useState<DocumentSortKey>(urlState?.sort ?? "updatedDesc")
+  const [documentPageSize, setDocumentPageSize] = useState(25)
+  const [documentPage, setDocumentPage] = useState(1)
   const [selectedDocumentId, setSelectedDocumentId] = useState(urlState?.documentId ?? "")
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
@@ -147,6 +149,12 @@ export function DocumentWorkspace({
     .sort((left, right) => compareDocuments(left, right, documentSort))
   const selectedDocument = selectedDocumentId ? documents.find((document) => document.documentId === selectedDocumentId) ?? null : null
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
+  const documentPageSizeOptions = [25, 50, 100]
+  const documentPageCount = Math.max(1, Math.ceil(visibleDocuments.length / documentPageSize))
+  const clampedDocumentPage = Math.min(documentPage, documentPageCount)
+  const documentPageStartIndex = visibleDocuments.length === 0 ? 0 : (clampedDocumentPage - 1) * documentPageSize
+  const documentPageEndIndex = Math.min(documentPageStartIndex + documentPageSize, visibleDocuments.length)
+  const pagedDocuments = visibleDocuments.slice(documentPageStartIndex, documentPageEndIndex)
   const recentOperationEvents = useMemo(
     () => buildOperationEvents({ documents, documentGroups, migrations, uploadState, sessionOperationEvents }),
     [documents, documentGroups, migrations, uploadState, sessionOperationEvents]
@@ -200,6 +208,14 @@ export function DocumentWorkspace({
     selectedDocumentId,
     selectedFolderId
   ])
+
+  useEffect(() => {
+    setDocumentPage(1)
+  }, [documentGroupFilter, documentQuery, documentSort, documentStatusFilter, documentTypeFilter, selectedFolderId])
+
+  useEffect(() => {
+    if (documentPage > documentPageCount) setDocumentPage(documentPageCount)
+  }, [documentPage, documentPageCount])
 
   function recordSessionOperation(actionLabel: string, target: string, detail?: string, result: DocumentOperationEvent["result"] = "要求済み") {
     operationEventSeqRef.current += 1
@@ -332,13 +348,20 @@ export function DocumentWorkspace({
           selectedFolder={selectedFolder}
           uploadGroupId={uploadGroupId}
           uploadDestinationLabel={uploadDestinationLabel}
-          visibleDocuments={visibleDocuments}
+          pagedDocuments={pagedDocuments}
           folderDocumentsCount={folderDocuments.length}
+          filteredDocumentsCount={visibleDocuments.length}
           documentQuery={documentQuery}
           documentTypeFilter={documentTypeFilter}
           documentStatusFilter={documentStatusFilter}
           documentGroupFilter={documentGroupFilter}
           documentSort={documentSort}
+          documentPage={clampedDocumentPage}
+          documentPageCount={documentPageCount}
+          documentPageSize={documentPageSize}
+          documentPageSizeOptions={documentPageSizeOptions}
+          documentPageStart={visibleDocuments.length === 0 ? 0 : documentPageStartIndex + 1}
+          documentPageEnd={documentPageEndIndex}
           documentTypeOptions={documentTypeOptions}
           documentStatusOptions={documentStatusOptions}
           selectedDocument={selectedDocument}
@@ -355,6 +378,11 @@ export function DocumentWorkspace({
           onDocumentStatusFilterChange={setDocumentStatusFilter}
           onDocumentGroupFilterChange={setDocumentGroupFilter}
           onDocumentSortChange={setDocumentSort}
+          onDocumentPageChange={setDocumentPage}
+          onDocumentPageSizeChange={(pageSize) => {
+            setDocumentPageSize(pageSize)
+            setDocumentPage(1)
+          }}
           onSelectDocument={(document) => setSelectedDocumentId(document.documentId)}
           onConfirmAction={setConfirmAction}
         />

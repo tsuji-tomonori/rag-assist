@@ -16,6 +16,18 @@ const typedDocuments = [
   { documentId: "doc-csv", fileName: "inventory.csv", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-06T00:00:00.000Z" }
 ]
 
+const paginatedDocuments = Array.from({ length: 30 }, (_, index) => {
+  const serial = String(index + 1).padStart(2, "0")
+  return {
+    documentId: `doc-page-${serial}`,
+    fileName: `policy-${serial}.pdf`,
+    mimeType: "application/pdf",
+    chunkCount: index + 1,
+    memoryCardCount: 0,
+    createdAt: `2026-05-${serial}T00:00:00.000Z`
+  }
+})
+
 const documentGroups: DocumentGroup[] = [
   {
     groupId: "group-1",
@@ -137,6 +149,78 @@ describe("DocumentWorkspace", () => {
     expect(container.querySelector('[data-label="ファイル名"]')).not.toBeNull()
     expect(container.querySelector('[data-label="所属フォルダ"]')).not.toBeNull()
     expect(container.querySelector('[data-label="操作"] .document-action-buttons')).not.toBeNull()
+  })
+
+  it("文書一覧をページ分割し、表示件数とページ移動を操作できる", async () => {
+    render(
+      <DocumentWorkspace
+        documents={paginatedDocuments}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const table = screen.getByRole("table", { name: "登録文書" })
+    expect(screen.getByText("1-25 / 30 件を表示（フォルダ内 30 件 / 全体 30 件）")).toBeInTheDocument()
+    expect(screen.getByText("ページ 1 / 2")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "前のページ" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "次のページ" })).toBeEnabled()
+    expect(within(table).getByText("policy-30.pdf")).toBeInTheDocument()
+    expect(within(table).queryByText("policy-05.pdf")).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "次のページ" }))
+
+    expect(screen.getByText("26-30 / 30 件を表示（フォルダ内 30 件 / 全体 30 件）")).toBeInTheDocument()
+    expect(screen.getByText("ページ 2 / 2")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "次のページ" })).toBeDisabled()
+    expect(within(table).getByText("policy-05.pdf")).toBeInTheDocument()
+    expect(within(table).queryByText("policy-30.pdf")).not.toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByLabelText("表示件数"), "50")
+
+    expect(screen.getByText("1-30 / 30 件を表示（フォルダ内 30 件 / 全体 30 件）")).toBeInTheDocument()
+    expect(screen.getByText("ページ 1 / 1")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "次のページ" })).toBeDisabled()
+    expect(within(table).getByText("policy-30.pdf")).toBeInTheDocument()
+  })
+
+  it("検索条件の変更時に文書一覧ページを先頭へ戻す", async () => {
+    render(
+      <DocumentWorkspace
+        documents={paginatedDocuments}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "次のページ" }))
+    expect(screen.getByText("ページ 2 / 2")).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("ファイル名検索"), "policy-30")
+
+    expect(screen.getByText("1-1 / 1 件を表示（フォルダ内 30 件 / 全体 30 件）")).toBeInTheDocument()
+    expect(screen.getByText("ページ 1 / 1")).toBeInTheDocument()
+    expect(within(screen.getByRole("table", { name: "登録文書" })).getByText("policy-30.pdf")).toBeInTheDocument()
   })
 
   it("削除権限がない場合は削除ボタンを無効化する", () => {
@@ -555,13 +639,13 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByText("3 / 3 件を表示（全体 3 件）")).toBeInTheDocument()
+    expect(screen.getByText("1-3 / 3 件を表示（フォルダ内 3 件 / 全体 3 件）")).toBeInTheDocument()
     const documentTable = screen.getByRole("table", { name: "登録文書" })
 
     await userEvent.type(screen.getByLabelText("ファイル名検索"), "security")
     expect(within(documentTable).getAllByText("security_policy.bin").length).toBeGreaterThanOrEqual(1)
     expect(within(documentTable).queryByText("requirements.tex")).not.toBeInTheDocument()
-    expect(screen.getByText("1 / 3 件を表示（全体 3 件）")).toBeInTheDocument()
+    expect(screen.getByText("1-1 / 1 件を表示（フォルダ内 3 件 / 全体 3 件）")).toBeInTheDocument()
 
     await userEvent.clear(screen.getByLabelText("ファイル名検索"))
     await userEvent.selectOptions(screen.getByLabelText("種別"), "Word")
