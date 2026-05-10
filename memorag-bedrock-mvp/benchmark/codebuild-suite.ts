@@ -1,4 +1,4 @@
-import { copyFile, readFile } from "node:fs/promises"
+import { copyFile, mkdir, readFile, rm } from "node:fs/promises"
 import { spawnSync } from "node:child_process"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
@@ -19,7 +19,7 @@ type CodeBuildSuite = {
   mode: "agent" | "search"
   runner: "agent" | "search" | "conversation"
   dataset: { source: "codebuild-input" | "prepare" | "local"; path?: string }
-  corpus?: { dir?: string; suiteId?: string }
+  corpus?: { dir?: string; suiteId?: string; source?: "local" | "codebuild-bucket"; s3Prefix?: string }
   prepare?: {
     script: string
     env?: Record<string, string>
@@ -84,6 +84,7 @@ export async function prepareCodeBuildSuite(env: NodeJS.ProcessEnv = process.env
 
   if (suite.dataset.source === "codebuild-input") {
     await copyCodeBuildInputDataset(runnerEnv)
+    await copyCodeBuildInputCorpus(suite, runnerEnv)
     return
   }
 
@@ -115,6 +116,28 @@ async function copyCodeBuildInputDataset(env: RunnerEnv): Promise<void> {
     return
   }
   throw new Error("DATASET_S3_URI is required for a codebuild-input benchmark dataset")
+}
+
+async function copyCodeBuildInputCorpus(suite: CodeBuildSuite, env: RunnerEnv): Promise<void> {
+  if (suite.corpus?.source !== "codebuild-bucket") return
+  if (!suite.corpus.dir) throw new Error(`Suite ${suite.suiteId} uses codebuild-bucket corpus without dir`)
+  if (!suite.corpus.s3Prefix) throw new Error(`Suite ${suite.suiteId} uses codebuild-bucket corpus without s3Prefix`)
+  if (!env.DATASET_S3_URI) throw new Error("DATASET_S3_URI is required to resolve a codebuild-bucket benchmark corpus")
+
+  const datasetBucket = parseS3Bucket(env.DATASET_S3_URI)
+  const corpusS3Uri = `s3://${datasetBucket}/${suite.corpus.s3Prefix.replace(/^\/+/, "").replace(/\/+$/, "")}/`
+  const corpusDir = path.resolve(repoRoot, suite.corpus.dir)
+  await rm(corpusDir, { recursive: true, force: true })
+  await mkdir(corpusDir, { recursive: true })
+  runCommand("aws", ["s3", "cp", "--recursive", corpusS3Uri, suite.corpus.dir], env)
+}
+
+function parseS3Bucket(value: string): string {
+  const match = /^s3:\/\/([^/]+)\/(.+)$/.exec(value)
+  if (!match) throw new Error(`Expected S3 URI, got: ${value}`)
+  const bucket = match[1]
+  if (!bucket) throw new Error(`Expected S3 bucket in URI, got: ${value}`)
+  return bucket
 }
 
 function withTemplateEnv(baseEnv: RunnerEnv, extraEnv: Record<string, string>): RunnerEnv {
@@ -158,6 +181,9 @@ function validateManifest(manifest: CodeBuildSuiteManifest): void {
     if (!["agent", "search", "conversation"].includes(suite.runner)) throw new Error(`Suite ${suite.suiteId} has invalid runner`)
     if (suite.dataset.source === "prepare" && !suite.prepare) {
       throw new Error(`Suite ${suite.suiteId} uses prepare dataset source without prepare script`)
+    }
+    if (suite.corpus?.source && !["local", "codebuild-bucket"].includes(suite.corpus.source)) {
+      throw new Error(`Suite ${suite.suiteId} has invalid corpus source`)
     }
   }
 }

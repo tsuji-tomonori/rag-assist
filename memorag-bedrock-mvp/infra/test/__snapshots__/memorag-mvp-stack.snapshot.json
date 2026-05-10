@@ -639,6 +639,10 @@
             "Value": "true"
           },
           {
+            "Key": "aws-cdk:cr-owned:corpus/conversation:8e15bee5",
+            "Value": "true"
+          },
+          {
             "Key": "aws-cdk:cr-owned:datasets/agent:0fed553e",
             "Value": "true"
           },
@@ -1756,6 +1760,52 @@
           "Ref": "BenchmarkBucketDD7D1D2F"
         },
         "DestinationBucketKeyPrefix": "datasets/conversation",
+        "WaitForDistributionInvalidation": true,
+        "Prune": true,
+        "OutputObjectKeys": true
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "DeployConversationBenchmarkCorpusAwsCliLayerCAE6DA8B": {
+      "Type": "AWS::Lambda::LayerVersion",
+      "Properties": {
+        "Content": {
+          "S3Bucket": "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "S3Key": "<asset-hash>.zip"
+        },
+        "Description": "/opt/awscli/aws"
+      }
+    },
+    "DeployConversationBenchmarkCorpusCustomResourceAC06DC7F": {
+      "Type": "Custom::CDKBucketDeployment",
+      "Properties": {
+        "ServiceToken": {
+          "Fn::GetAtt": [
+            "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+            "Arn"
+          ]
+        },
+        "SourceBucketNames": [
+          "cdk-hnb659fds-assets-111111111111-ap-northeast-1",
+          "cdk-hnb659fds-assets-111111111111-ap-northeast-1"
+        ],
+        "SourceObjectKeys": [
+          "<asset-hash>.zip",
+          "<asset-hash>.zip"
+        ],
+        "SourceMarkers": [
+          {},
+          {}
+        ],
+        "SourceMarkersConfig": [
+          {},
+          {}
+        ],
+        "DestinationBucketName": {
+          "Ref": "BenchmarkBucketDD7D1D2F"
+        },
+        "DestinationBucketKeyPrefix": "corpus/conversation",
         "WaitForDistributionInvalidation": true,
         "Prune": true,
         "OutputObjectKeys": true
