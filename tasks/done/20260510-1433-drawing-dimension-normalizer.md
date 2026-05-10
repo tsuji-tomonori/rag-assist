@@ -1,8 +1,8 @@
 # 建築図面の寸法・口径・延長を正規化する
 
-保存先: `tasks/todo/20260510-1433-drawing-dimension-normalizer.md`
+保存先: `tasks/done/20260510-1433-drawing-dimension-normalizer.md`
 
-状態: todo
+状態: done
 
 ## 背景
 
@@ -43,10 +43,10 @@ benchmark 指標、computed fact、answer support、図面 QA の表記正規化
 
 ## 受け入れ条件
 
-- [ ] AC1: scale、dimension、diameter、length、range の正規化関数と unit test がある。
-- [ ] AC2: benchmark evaluator が正規化後一致を評価できる。
-- [ ] AC3: 抽出値と回答値が正規化後に一致しない場合、unsupported または answerability failure として扱える。
-- [ ] AC4: 汎用 RAG の expectedContains 採点を破壊しない。
+- [x] AC1: scale、dimension、diameter、length、range の正規化関数と unit test がある。
+- [x] AC2: benchmark evaluator が正規化後一致を評価できる。
+- [x] AC3: 抽出値と回答値が正規化後に一致しない場合、unsupported または answerability failure として扱える。
+- [x] AC4: 汎用 RAG の expectedContains 採点を破壊しない。
 
 ## 検証計画
 
@@ -54,6 +54,12 @@ benchmark 指標、computed fact、answer support、図面 QA の表記正規化
 - benchmark evaluator test
 - architecture-drawing-qarag の sample run
 - `git diff --check`
+
+## 検証結果
+
+- `npm run test --workspace @memorag-mvp/benchmark`: pass
+- `npm run typecheck --workspace @memorag-mvp/benchmark`: pass
+- `git diff --check`: pass
 
 ## PRレビュー観点
 

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { normalizeExpectedDrawingValue, type DrawingValueKind } from "./metrics/drawing-normalization.js"
 
 export const architectureDrawingQaragSuiteId = "architecture-drawing-qarag-v0.1"
 
@@ -51,11 +52,18 @@ type DatasetRow = {
   expectedResponseType: "answer" | "refusal"
   referenceAnswer: string
   expectedContains?: string[]
+  expectedNormalizedValues?: ExpectedNormalizedValue[]
   expectedFiles: string[]
   expectedPages?: string[]
   complexity: "simple" | "multi_hop" | "comparison" | "procedure" | "out_of_scope"
   unanswerableType?: "missing_fact" | "out_of_scope"
   metadata: Record<string, unknown>
+}
+
+type ExpectedNormalizedValue = {
+  raw: string
+  canonical: string
+  kind: DrawingValueKind
 }
 
 type DrawingSourceType = "project_drawing" | "standard_detail" | "equipment_standard" | "benchmark_reference" | "external"
@@ -236,6 +244,7 @@ function toDatasetRow(
 ): DatasetRow {
   const answerable = qa.taskCategory !== "abstention"
   const expectedEvidenceRegions = corpusMetadata?.drawingRegionIndex.filter((region) => region.sourceQaIds.includes(qa.id)) ?? []
+  const expectedNormalizedValues = expectedNormalizedValuesFor(qa)
   return {
     id: qa.id,
     question: qa.questionJa,
@@ -243,6 +252,7 @@ function toDatasetRow(
     expectedResponseType: answerable ? "answer" : "refusal",
     referenceAnswer: qa.expectedAnswerJa,
     ...(answerable ? { expectedContains: expectedContainsFromAnswer(qa.expectedAnswerJa) } : {}),
+    ...(expectedNormalizedValues.length > 0 ? { expectedNormalizedValues } : {}),
     expectedFiles: [sourceFileNames.get(qa.sourceId) ?? `${qa.sourceId}.pdf`],
     ...(qa.pageOrSheet ? { expectedPages: [qa.pageOrSheet] } : {}),
     complexity: complexityFor(qa),
@@ -279,6 +289,32 @@ function toDatasetRow(
       notes: qa.notes
     }
   }
+}
+
+function expectedNormalizedValuesFor(qa: SeedQa): ExpectedNormalizedValue[] {
+  if (qa.taskCategory === "abstention") return []
+  if (!shouldEvaluateNormalizedValue(qa)) return []
+  const raw = `${qa.expectedAnswerJa} ${qa.acceptableAliasesOrNormalization}`.trim()
+  return normalizedKindsFor(qa).flatMap((kind) => {
+    const canonical = normalizeExpectedDrawingValue({ raw, kind })
+    return canonical ? [{ raw, canonical, kind }] : []
+  })
+}
+
+function shouldEvaluateNormalizedValue(qa: SeedQa): boolean {
+  const text = `${qa.taskCategory} ${qa.subSkill} ${qa.scoringRule} ${qa.questionJa} ${qa.expectedAnswerJa} ${qa.acceptableAliasesOrNormalization}`
+  return /exact_normalized|縮尺|寸法|口径|管径|延長|φ|Φ|D\s*=|\d+\s*A|以上|以下|未満|以内|超/u.test(text)
+}
+
+function normalizedKindsFor(qa: SeedQa): DrawingValueKind[] {
+  const text = `${qa.taskCategory} ${qa.subSkill} ${qa.questionJa} ${qa.expectedAnswerJa} ${qa.acceptableAliasesOrNormalization}`.normalize("NFKC")
+  const kinds: DrawingValueKind[] = []
+  if (/縮尺|scale|1\s*[:/]\s*\d+/iu.test(text)) kinds.push("scale")
+  if (/延長|\bL\s*[=:]?\s*-?\d/iu.test(text)) kinds.push("length")
+  if (/口径|管径|φ|Φ|\bD\s*=|\d+\s*A\b/iu.test(text)) kinds.push("diameter")
+  if (/以上|以下|未満|以内|超|より大きい|より小さい|≧|≦|>=|<=|>|</u.test(text)) kinds.push("range")
+  if (/寸法|dimension|\b-?\d+(?:\.\d+)?\s*(?:mm|cm|m)\b/iu.test(text)) kinds.push("dimension")
+  return [...new Set(kinds)]
 }
 
 function drawingCorpusMetadataMap(definition: ArchitectureDrawingQaragDefinition): Map<string, DrawingCorpusMetadata> {

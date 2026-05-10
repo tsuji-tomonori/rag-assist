@@ -43,6 +43,10 @@ test("converts the managed JSON into benchmark dataset rows", async () => {
   assert.equal(refusal?.answerable, false)
   assert.equal(refusal?.expectedResponseType, "refusal")
   assert.equal(refusal?.unanswerableType, "missing_fact")
+
+  const normalizedRows = rows.filter((row) => Array.isArray((row as { expectedNormalizedValues?: unknown[] }).expectedNormalizedValues))
+  assert.ok(normalizedRows.length > 0)
+  assert.ok(normalizedRows.some((row) => (row as { expectedNormalizedValues?: Array<{ canonical?: string }> }).expectedNormalizedValues?.some((value) => value.canonical?.startsWith("scale:"))))
 })
 
 test("prepares a dataset and downloads only sources referenced by seed QA", async () => {
