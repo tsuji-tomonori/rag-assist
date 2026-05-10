@@ -1,6 +1,6 @@
 # CORS wildcard temporary fix
 
-状態: in_progress
+状態: done
 タスク種別: 修正
 
 ## 背景
