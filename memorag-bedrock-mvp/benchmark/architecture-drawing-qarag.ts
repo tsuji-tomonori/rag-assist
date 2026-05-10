@@ -53,6 +53,7 @@ type DatasetRow = {
   referenceAnswer: string
   expectedContains?: string[]
   expectedNormalizedValues?: ExpectedNormalizedValue[]
+  expectedRegionIds?: string[]
   expectedFiles: string[]
   expectedPages?: string[]
   complexity: "simple" | "multi_hop" | "comparison" | "procedure" | "out_of_scope"
@@ -253,6 +254,7 @@ function toDatasetRow(
     referenceAnswer: qa.expectedAnswerJa,
     ...(answerable ? { expectedContains: expectedContainsFromAnswer(qa.expectedAnswerJa) } : {}),
     ...(expectedNormalizedValues.length > 0 ? { expectedNormalizedValues } : {}),
+    ...(expectedEvidenceRegions.length > 0 ? { expectedRegionIds: expectedEvidenceRegions.map((region) => region.regionId) } : {}),
     expectedFiles: [sourceFileNames.get(qa.sourceId) ?? `${qa.sourceId}.pdf`],
     ...(qa.pageOrSheet ? { expectedPages: [qa.pageOrSheet] } : {}),
     complexity: complexityFor(qa),
