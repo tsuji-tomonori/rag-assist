@@ -1,6 +1,6 @@
 # ドキュメント管理 UI/UX P0 改善
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -35,13 +35,24 @@
 
 ## 受け入れ条件
 
-- [ ] `すべてのドキュメント` 表示へ戻ると、アップロード先フォルダが未選択になり、以前のフォルダへ無自覚にアップロードできない。
-- [ ] アップロード UI に保存先フォルダが明示され、未選択時は保存先選択を促す表示になる。
-- [ ] アップロード中に準備、ファイル転送、ingest run 作成、ingest polling、完了または失敗が段階表示される。
-- [ ] 削除、reindex stage、cutover、rollback の前に対象と影響範囲を示す専用確認ダイアログが表示される。
-- [ ] 行単位操作では対象行または対象 migration のみ loading / disabled になり、画面全体が不要に停止しない。
-- [ ] ドキュメントなし、グループなし、保存先未選択の空状態で次の操作が分かる CTA が表示される。
-- [ ] 本番 UI に架空フォルダ、架空文書、固定ユーザー、固定件数などの mock fallback を追加しない。
+- [x] `すべてのドキュメント` 表示へ戻ると、アップロード先フォルダが未選択になり、以前のフォルダへ無自覚にアップロードできない。
+- [x] アップロード UI に保存先フォルダが明示され、未選択時は保存先選択を促す表示になる。
+- [x] アップロード中に準備、ファイル転送、ingest run 作成、ingest polling、完了または失敗が段階表示される。
+- [x] 削除、reindex stage、cutover、rollback の前に対象と影響範囲を示す専用確認ダイアログが表示される。
+- [x] 行単位操作では対象行または対象 migration のみ loading / disabled になり、画面全体が不要に停止しない。
+- [x] ドキュメントなし、グループなし、保存先未選択の空状態で次の操作が分かる CTA が表示される。
+- [x] 本番 UI に架空フォルダ、架空文書、固定ユーザー、固定件数などの mock fallback を追加しない。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/231
+- 受け入れ条件確認コメント: 投稿済み
+- 作業レポート: `reports/working/20260510-1107-document-management-ux-p0.md`
+- 検証:
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- DocumentWorkspace useDocuments`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
+  - `git diff --check`: pass
 
 ## 検証計画
 
