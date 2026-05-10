@@ -1,8 +1,8 @@
 # 建築図面の寸法・口径・延長を正規化する
 
-保存先: `tasks/do/20260510-1433-drawing-dimension-normalizer.md`
+保存先: `tasks/done/20260510-1433-drawing-dimension-normalizer.md`
 
-状態: do
+状態: done
 
 ## 背景
 
