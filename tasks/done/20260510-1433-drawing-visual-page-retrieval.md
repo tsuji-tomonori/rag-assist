@@ -1,8 +1,8 @@
 # 建築図面向け visual page retrieval を導入候補として評価する
 
-保存先: `tasks/do/20260510-1433-drawing-visual-page-retrieval.md`
+保存先: `tasks/done/20260510-1433-drawing-visual-page-retrieval.md`
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -44,10 +44,10 @@
 
 ## 受け入れ条件
 
-- [ ] AC1: visual page retrieval を feature flag または profile で有効化できる。
-- [ ] AC2: architecture-drawing-qarag で page_recall@k、answer accuracy、unsupported rate、latency を baseline と比較できる。
-- [ ] AC3: default path に入れない場合も、採用しない理由が report に残る。
-- [ ] AC4: ACL / benchmark corpus isolation を弱めていない。
+- [x] AC1: visual page retrieval を feature flag または profile で有効化できる。
+- [x] AC2: architecture-drawing-qarag で page_recall@k、answer accuracy、unsupported rate、latency を baseline と比較できる。
+- [x] AC3: default path に入れない場合も、採用しない理由が report に残る。
+- [x] AC4: ACL / benchmark corpus isolation を弱めていない。
 
 ## 検証計画
 
