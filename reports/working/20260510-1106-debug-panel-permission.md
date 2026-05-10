@@ -40,7 +40,7 @@
 | `memorag-bedrock-mvp/apps/web/src/features/chat/components/ChatView.tsx` | TypeScript/React | debug panel 表示判定と layout 判定の一元化 | R1-R3 |
 | `memorag-bedrock-mvp/apps/web/src/features/chat/components/ChatView.test.tsx` | Vitest | 権限あり/なしの直接テスト | R1-R5 |
 | `memorag-bedrock-mvp/apps/web/src/App.test.tsx` | Vitest | `CHAT_USER` で debug UI/API が露出しない統合テスト | R2-R5 |
-| `tasks/do/20260510-1102-debug-panel-permission.md` | Markdown | 受け入れ条件付き task md | workflow |
+| `tasks/done/20260510-1102-debug-panel-permission.md` | Markdown | 受け入れ条件付き task md | workflow |
 
 ## 6. 指示への fit 評価
 
