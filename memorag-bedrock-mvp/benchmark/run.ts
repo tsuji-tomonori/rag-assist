@@ -267,6 +267,9 @@ type Summary = {
     retrievalRecallAtK: number | null
     expectedPageHitRate: number | null
     citationSupportPassRate: number | null
+    refusalPrecision: number | null
+    refusalRecall: number | null
+    unsupportedSentenceRate: number | null
   }>
   failures: Array<{
     id?: string
@@ -1058,12 +1061,26 @@ function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary[
     const retrievalRows = rows.filter((row) => row.evaluation.retrievalRecallAtK !== null)
     const pageRows = rows.filter((row) => row.evaluation.expectedPageHit !== null)
     const supportRows = rows.filter((row) => row.evaluation.citationSupportPass !== null)
+    const refusedRows = rows.filter((row) => row.evaluation.refused)
+    const unanswerableRows = rows.filter((row) => !row.evaluation.expectedAnswerable)
+    const unsupportedRows = rows.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
     return [dependency, {
       total: rows.length,
       answerableAccuracy: rate(answerableRows.filter((row) => row.evaluation.answerCorrect).length, answerableRows.length),
       retrievalRecallAtK: rate(retrievalRows.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRows.length),
       expectedPageHitRate: rate(pageRows.filter((row) => row.evaluation.expectedPageHit === true).length, pageRows.length),
-      citationSupportPassRate: rate(supportRows.filter((row) => row.evaluation.citationSupportPass === true).length, supportRows.length)
+      citationSupportPassRate: rate(supportRows.filter((row) => row.evaluation.citationSupportPass === true).length, supportRows.length),
+      refusalPrecision: rate(refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length),
+      refusalRecall: rate(unanswerableRows.filter((row) => row.evaluation.refused).length, unanswerableRows.length),
+      unsupportedSentenceRate:
+        unsupportedRows.length === 0
+          ? null
+          : Number(
+              (
+                unsupportedRows.reduce((sum, row) => sum + (row.evaluation.unsupportedSentenceRate ?? 0), 0) /
+                unsupportedRows.length
+              ).toFixed(4)
+            )
     }]
   }))
 }
@@ -1166,10 +1183,10 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
   const turnDependencyRows = Object.keys(summary.turnDependencyMetrics).length === 0
     ? "\nNo turn dependency metrics.\n"
     : [
-        "| dependency | total | answerable_accuracy | retrieval_recall_at_k | expected_page_hit_rate | citation_support_pass_rate |",
-        "| --- | ---: | ---: | ---: | ---: | ---: |",
+        "| dependency | total | answerable_accuracy | retrieval_recall_at_k | expected_page_hit_rate | citation_support_pass_rate | refusal_precision | refusal_recall | unsupported_sentence_rate |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ...Object.entries(summary.turnDependencyMetrics).map(([dependency, metrics]) =>
-          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} |`
+          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} | ${formatRate(metrics.refusalPrecision)} | ${formatRate(metrics.refusalRecall)} | ${formatRate(metrics.unsupportedSentenceRate)} |`
         )
       ].join("\n")
 

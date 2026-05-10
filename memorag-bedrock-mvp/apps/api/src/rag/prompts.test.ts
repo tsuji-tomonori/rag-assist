@@ -17,6 +17,17 @@ test("conversation history is formatted and constrained as interpretation contex
   assert.match(answerPrompt, /根拠は必ず&lt;context&gt;または&lt;computedFacts&gt;から取る|根拠は必ず<context>または<computedFacts>から取る/)
 })
 
+test("benchmark final answer policy requires short grounded answers", () => {
+  const prompt = buildFinalAnswerPrompt("その例外は？", [], [], undefined, "Assistant: 例外は部長承認です。", {
+    style: "benchmark_grounded_short"
+  })
+
+  assert.match(prompt, /benchmark_grounded_short answer policy/)
+  assert.match(prompt, /根拠にない背景説明/)
+  assert.match(prompt, /会話履歴由来の補足を追加しない/)
+  assert.match(prompt, /資料からは回答できません。/)
+})
+
 test("classification questions keep the explicit classification hierarchy in context", () => {
   const prefix = "ソフトウェア要求は満たすべき条件です。".repeat(80)
   const classification = `

@@ -4,6 +4,10 @@ import { assembleContext, formatContextXml, textAnswerRelevanceScore } from "./c
 import { ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { selectAnswerPolicyForMetadata, type AnswerPolicy } from "./profiles.js"
 
+type FinalAnswerPromptOptions = {
+  style?: "benchmark_grounded_short"
+}
+
 export function buildMemoryCardPrompt(fileName: string, text: string): string {
   return `MEMORY_CARD_JSON
 あなたは社内QA用RAGのインデックス作成担当です。以下の資料全体を検索のためのメモリカードに変換してください。
@@ -58,7 +62,8 @@ export function buildFinalAnswerPrompt(
   chunks: RetrievedVector[],
   computedFacts: ComputedFact[] = [],
   temporalContext?: TemporalContext,
-  conversationHistory = ""
+  conversationHistory = "",
+  options: FinalAnswerPromptOptions = {}
 ): string {
   const policy = selectAnswerPolicyForChunks(chunks)
   const assembly = assembleContext({ question, chunks, tokenBudget: 3000 })
@@ -82,6 +87,7 @@ export function buildFinalAnswerPrompt(
 - computedFacts に必要な値がない場合は、推測で補完せず、計算できない理由を説明する。
 - threshold_comparison がある場合は、effect、satisfiesCondition、explanation に基づいて、質問された金額が資料内条件に該当するかを答える。
 ${thresholdEffectRules}
+${formatFinalAnswerStyleRules(options)}
 - computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。
@@ -115,6 +121,18 @@ ${escapeXml(computedFactsJson)}
 <context>
 ${context}
 </context>`
+}
+
+function formatFinalAnswerStyleRules(options: FinalAnswerPromptOptions): string {
+  if (options.style !== "benchmark_grounded_short") return ""
+  return [
+    "- benchmark_grounded_short answer policy が有効です。",
+    "- 回答は reference answer 型の短答に寄せ、根拠にない背景説明、注意書き、一般論、前置き、会話履歴由来の補足を追加しない。",
+    "- 根拠 chunk が支持する最小限の事実だけで答える。根拠文にない例外、条件、比較観点、因果説明を補わない。",
+    "- list answer は根拠 chunk に現れる項目だけを過不足なく列挙する。",
+    "- comparison answer は比較対象ごとに根拠 chunk で確認できた値・条件だけを書く。",
+    "- unanswerable の場合は推測せず、answer を「資料からは回答できません。」だけにする。"
+  ].join("\n")
 }
 
 export function buildSufficientContextPrompt(question: string, requiredFacts: string[], chunks: RetrievedVector[], computedFacts: ComputedFact[] = []): string {
