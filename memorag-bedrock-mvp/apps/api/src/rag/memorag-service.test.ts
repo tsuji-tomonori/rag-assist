@@ -17,7 +17,7 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import type { DebugTrace, ManagedUser } from "../types.js"
+import type { BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
 import { ragRuntimePolicy } from "../agent/runtime-policy.js"
@@ -175,6 +175,73 @@ test("service stores document group hierarchy outside S3 object keys", async () 
   assert.deepEqual(moved?.ancestorGroupIds, [anotherParent.groupId])
   assert.deepEqual(moved?.sharedGroups, ["HR"])
   assert.deepEqual((await deps.documentGroupStore.get(grandchild.groupId))?.ancestorGroupIds, [anotherParent.groupId, child.groupId])
+})
+
+test("service enforces document group management and search scope boundaries", async () => {
+  const { service } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const manager = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["CHAT_USER"] }
+  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
+  const admin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+
+  assert.equal(await service.updateDocumentGroupSharing(owner, "missing-group", { visibility: "shared" }), undefined)
+  await service.assertDocumentGroupsWritable(owner, [])
+  await service.assertSearchScopeReadable(owner, undefined)
+  await assert.rejects(
+    () => service.createDocumentGroup(owner, { name: "missing child", parentGroupId: "missing-parent" }),
+    /Parent document group not found/
+  )
+
+  const parent = await service.createDocumentGroup(owner, {
+    name: "Parent",
+    visibility: "private",
+    managerUserIds: [manager.userId],
+    sharedUserIds: [manager.userId]
+  })
+  const child = await service.createDocumentGroup(manager, {
+    name: "Child",
+    parentGroupId: parent.groupId,
+    description: "  shared child  ",
+    sharedUserIds: [owner.userId, owner.userId],
+    sharedGroups: ["HR", "HR"],
+    managerUserIds: [manager.userId, manager.userId]
+  })
+  const privateParent = await service.createDocumentGroup(owner, {
+    name: "Private parent"
+  })
+
+  assert.equal(child.description, "shared child")
+  assert.deepEqual(child.sharedUserIds, [owner.userId])
+  assert.deepEqual(child.sharedGroups, ["HR"])
+  assert.deepEqual(child.managerUserIds, [manager.userId])
+  await assert.rejects(
+    () => service.createDocumentGroup(outsider, { name: "Forbidden child", parentGroupId: parent.groupId }),
+    /Forbidden: cannot create a child group/
+  )
+  await assert.rejects(
+    () => service.updateDocumentGroupSharing(owner, parent.groupId, { parentGroupId: parent.groupId }),
+    /cannot be its own parent/
+  )
+  await assert.rejects(
+    () => service.updateDocumentGroupSharing(owner, parent.groupId, { parentGroupId: child.groupId }),
+    /cannot move under its descendant/
+  )
+  await assert.rejects(
+    () => service.updateDocumentGroupSharing(owner, parent.groupId, { parentGroupId: "missing-parent" }),
+    /Parent document group not found/
+  )
+  await assert.rejects(
+    () => service.updateDocumentGroupSharing(outsider, parent.groupId, { visibility: "shared" }),
+    /only group managers/
+  )
+  await assert.rejects(
+    () => service.updateDocumentGroupSharing(manager, child.groupId, { parentGroupId: privateParent.groupId }),
+    /cannot move group under this parent/
+  )
+  await assert.rejects(() => service.assertDocumentGroupsWritable(outsider, [parent.groupId]), /cannot write document group/)
+  await service.assertDocumentGroupsWritable(admin, [parent.groupId])
+  await assert.rejects(() => service.assertSearchScopeReadable(outsider, { groupIds: [parent.groupId] }), /cannot read document group/)
+  await service.assertSearchScopeReadable(manager, { groupIds: [parent.groupId] })
 })
 
 test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
@@ -929,6 +996,116 @@ test("service ingest falls back when memory JSON parse fails and surfaces genera
     () => timeoutService.ingest({ fileName: "doc.txt", text: "これは要件定義の本文です。" }),
     /Bedrock generate timeout/
   )
+})
+
+test("service covers admin defaults, alias misses, terminal async runs, and benchmark edge cases", async () => {
+  const { service, deps } = await createService()
+  const admin = { userId: "admin-1", cognitoGroups: ["SYSTEM_ADMIN"] }
+  const chatUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  const managed = await service.createManagedUser(admin, {
+    email: "  Worker@Example.COM  ",
+    displayName: "   ",
+    groups: []
+  })
+  assert.equal(managed.email, "worker@example.com")
+  assert.equal(managed.displayName, "worker")
+  assert.deepEqual(managed.groups, ["CHAT_USER"])
+  await assert.rejects(
+    () => service.createManagedUser(admin, { email: "worker@example.com", groups: ["CHAT_USER"] }),
+    /already exists/
+  )
+  assert.equal(await service.assignUserRoles(admin, "missing-user", ["CHAT_USER"]), undefined)
+  assert.deepEqual((await service.assignUserRoles(admin, managed.userId, []))?.groups, ["CHAT_USER"])
+  assert.equal(await service.suspendManagedUser(admin, "missing-user"), undefined)
+  assert.equal(await service.deleteManagedUser(admin, "missing-user"), undefined)
+  assert.ok((await service.listAdminAuditLog(admin)).some((entry) => entry.action === "role:assign"))
+
+  const usage = await service.listUsageSummaries(admin)
+  assert.equal(usage.find((item) => item.userId === managed.userId)?.chatMessages, 0)
+  const cost = await service.getCostAuditSummary(admin)
+  assert.equal(cost.currency, "USD")
+  assert.ok(cost.items.some((item) => item.category === "document chunks"))
+
+  const alias = await service.createAlias(admin, {
+    term: "  PTO  ",
+    expansions: [" 有給休暇 ", "有給休暇", ""],
+    scope: { tenantId: " tenant-a ", department: "" }
+  })
+  assert.deepEqual(alias.expansions, ["有給休暇"])
+  assert.deepEqual(alias.scope, { tenantId: "tenant-a" })
+  assert.equal(await service.updateAlias(admin, "missing-alias", { term: "x" }), undefined)
+  assert.equal(await service.reviewAlias(admin, "missing-alias", { decision: "approve" }), undefined)
+  assert.equal(await service.disableAlias(admin, "missing-alias"), undefined)
+  assert.equal((await service.reviewAlias(admin, alias.aliasId, { decision: "reject", comment: "未承認" }))?.status, "draft")
+  assert.equal((await service.disableAlias(admin, alias.aliasId))?.status, "disabled")
+  assert.equal((await service.updateAlias(admin, alias.aliasId, { term: "paid-time-off" }))?.status, "disabled")
+  assert.equal((await service.publishAliases(admin)).aliasCount, 0)
+  assert.equal((await service.listAliases())[0]?.status, "disabled")
+
+  await assert.rejects(() => service.cutoverReindexMigration("missing-migration"), /not found/)
+  await assert.rejects(() => service.rollbackReindexMigration("missing-migration"), /not found/)
+
+  await assert.rejects(() => service.executeChatRun("missing-run"), /Chat run not found/)
+  await assert.rejects(() => service.markChatRunFailed("missing-run", "timeout"), /Chat run not found/)
+  await deps.chatRunStore.create({
+    runId: "run-terminal",
+    status: "succeeded",
+    createdBy: chatUser.userId,
+    question: "done",
+    modelId: "model-a",
+    createdAt: "2026-05-04T00:00:00.000Z",
+    updatedAt: "2026-05-04T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+  assert.equal((await service.markChatRunFailed("run-terminal", "ignored")).status, "succeeded")
+
+  await assert.rejects(() => service.executeDocumentIngestRun("missing-ingest"), /Document ingest run not found/)
+  await assert.rejects(() => service.markDocumentIngestRunFailed("missing-ingest", "timeout"), /Document ingest run not found/)
+	  await deps.documentIngestRunStore.create({
+	    runId: "ingest-terminal",
+	    status: "cancelled",
+	    createdBy: chatUser.userId,
+	    uploadId: "upload-terminal",
+	    objectKey: "uploads/cancelled.txt",
+	    purpose: "document",
+	    fileName: "cancelled.txt",
+    createdAt: "2026-05-04T00:00:00.000Z",
+    updatedAt: "2026-05-04T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+  assert.equal((await service.markDocumentIngestRunFailed("ingest-terminal", "ignored")).status, "cancelled")
+  await deps.objectStore.putBytes("uploads/empty.txt", Buffer.from(""))
+	  await deps.documentIngestRunStore.create({
+	    runId: "ingest-empty",
+	    status: "queued",
+	    createdBy: chatUser.userId,
+	    userEmail: chatUser.email,
+	    userGroups: chatUser.cognitoGroups,
+	    uploadId: "upload-empty",
+	    objectKey: "uploads/empty.txt",
+	    purpose: "document",
+    fileName: "empty.txt",
+    mimeType: "text/plain",
+    createdAt: "2026-05-04T00:00:00.000Z",
+    updatedAt: "2026-05-04T00:00:00.000Z",
+    ttl: 1_800_000_000
+  })
+  const failedIngest = await service.executeDocumentIngestRun("ingest-empty")
+  assert.equal(failedIngest.status, "failed")
+  assert.match(failedIngest.error ?? "", /Uploaded object is empty/)
+
+  await assert.rejects(() => service.createBenchmarkRun(chatUser, { suiteId: "missing-suite" }), /Unknown benchmark suite/)
+  await assert.rejects(() => service.createBenchmarkRun(chatUser, { suiteId: "search-smoke-v1", mode: "agent" }), /does not support mode/)
+	  await assert.rejects(() => service.createBenchmarkRun(chatUser, { runner: "local" as BenchmarkRunner }), /Only codebuild runner/)
+  const searchRun = await service.createBenchmarkRun(chatUser, { suiteId: "search-smoke-v1", mode: "search", topK: 999 })
+  assert.equal(searchRun.mode, "search")
+  assert.equal(searchRun.topK, ragRuntimePolicy.retrieval.searchRagMaxTopK)
+  assert.equal(await service.cancelBenchmarkRun("missing-benchmark-run"), undefined)
+  assert.equal((await service.cancelBenchmarkRun(searchRun.runId))?.status, "cancelled")
+  assert.equal(await service.createBenchmarkArtifactDownloadUrl(searchRun.runId, "logs"), undefined)
+  await assert.rejects(() => service.createBenchmarkArtifactDownloadUrl(searchRun.runId, "summary"), /BENCHMARK_BUCKET_NAME/)
+  assert.equal(await service.getBenchmarkCodeBuildLogText(searchRun.runId), undefined)
 })
 
 async function createService(options: {

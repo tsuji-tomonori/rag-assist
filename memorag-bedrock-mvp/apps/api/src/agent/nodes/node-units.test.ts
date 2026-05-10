@@ -3,10 +3,12 @@ import test from "node:test"
 import type { Dependencies } from "../../dependencies.js"
 import type { RetrievedVector } from "../../types.js"
 import { MockBedrockTextModel } from "../../adapters/mock-bedrock.js"
+import { analyzeInput } from "./analyze-input.js"
 import { answerabilityGate } from "./answerability-gate.js"
 import { buildConversationState, decontextualizeQuery } from "./build-conversation-state.js"
 import { clarificationGate } from "./clarification-gate.js"
 import { createEmbedQueriesNode } from "./embed-queries.js"
+import { executeComputationTools } from "./execute-computation-tools.js"
 import { finalizeResponse } from "./finalize-response.js"
 import { createGenerateCluesNode } from "./generate-clues.js"
 import { createRetrievalEvaluatorNode, retrievalEvaluator } from "./retrieval-evaluator.js"
@@ -17,7 +19,7 @@ import { createSearchEvidenceNode } from "./search-evidence.js"
 import { createSufficientContextGateNode } from "./sufficient-context-gate.js"
 import { validateCitations } from "./validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./verify-answer-support.js"
-import { NO_ANSWER, type QaAgentState } from "../state.js"
+import { NO_ANSWER, type QaAgentState, type QaAgentUpdate } from "../state.js"
 import { tracedNode } from "../trace.js"
 import type { DebugStep } from "../../types.js"
 
@@ -33,6 +35,124 @@ const chunk: RetrievedVector = {
     createdAt: "2026-04-30T00:00:00.000Z"
   }
 }
+
+test("analyze input combines unresolved clarification context without duplicating selected values", async () => {
+  assert.deepEqual(await analyzeInput(state({ question: "  期限   は？  " })), {
+    question: "期限 は？",
+    normalizedQuery: "期限 は？",
+    clarificationContext: undefined
+  })
+
+  const unresolved = await analyzeInput(state({
+    question: "海外出張です",
+    clarificationContext: {
+      originalQuestion: "経費精算の期限は？",
+      options: [],
+      selectedValue: "旅費規程"
+    }
+  }))
+  assert.equal(unresolved.question, "経費精算の期限は？ 旅費規程 海外出張です")
+  assert.equal(unresolved.normalizedQuery, "経費精算の期限は？ 旅費規程 海外出張です")
+
+  const sameValue = await analyzeInput(state({
+    question: "旅費規程",
+    clarificationContext: {
+      originalQuestion: "経費精算の期限は？",
+      options: [],
+      selectedValue: "旅費規程"
+    }
+  }))
+  assert.equal(sameValue.question, "経費精算の期限は？ 旅費規程")
+
+  const resolved = await analyzeInput(state({
+    question: "海外出張です",
+    clarificationContext: {
+      originalQuestion: "経費精算の期限は？",
+      options: [],
+      selectedOptionId: "option-1",
+      selectedValue: "旅費規程"
+    }
+  }))
+  assert.equal(resolved.question, "海外出張です")
+})
+
+test("computation tools skip unavailable intents and derive relative policy deadline facts from evidence", async () => {
+  assert.deepEqual(await executeComputationTools(state({})), { computedFacts: [] })
+  assert.deepEqual(
+    await executeComputationTools(state({
+      temporalContext: { today: "2026-05-10", timezone: "Asia/Tokyo" },
+      toolIntent: {
+        needsArithmeticCalculation: false,
+        needsTemporalCalculation: false,
+        needsAggregation: false,
+        needsTaskDeadlineIndex: false,
+        temporalOperation: "none",
+        arithmeticOperation: "none",
+        confidence: 0.9,
+        reason: "document question"
+      }
+    })),
+    { computedFacts: [] }
+  )
+
+  const derived = await executeComputationTools(state({
+    question: "育休を7/1に開始する場合の申請期限は？",
+    temporalContext: { today: "2026-05-10", timezone: "Asia/Tokyo" },
+    toolIntent: {
+      needsArithmeticCalculation: false,
+      needsTemporalCalculation: true,
+      needsAggregation: false,
+      needsTaskDeadlineIndex: false,
+      temporalOperation: "relative_policy_deadline",
+      arithmeticOperation: "none",
+      confidence: 0.9,
+      reason: "relative deadline"
+    },
+    selectedChunks: [
+      {
+        ...chunk,
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "rule-1",
+          text: "申請期限は開始日の１か月前までに申請してください。"
+        }
+      }
+    ],
+    computedFacts: [
+      {
+        id: "today-001",
+        kind: "current_date",
+        inputFactIds: [],
+        today: "2026-05-10",
+        timezone: "Asia/Tokyo",
+        explanation: "基準日"
+      }
+    ]
+  }))
+
+  assert.equal(derived.computedFacts?.length, 2)
+  assert.equal(derived.computedFacts?.[1]?.kind, "relative_policy_deadline")
+  assert.equal(derived.computedFacts?.[1]?.sourceChunkId, "rule-1")
+  assert.equal(derived.computedFacts?.[1]?.baseDate, "2026-07-01")
+  assert.equal(derived.computedFacts?.[1]?.resultDate, "2026-06-01")
+
+  const invalidDate = await executeComputationTools(state({
+    question: "育休を13/40に開始する場合の申請期限は？",
+    temporalContext: { today: "2026-05-10", timezone: "Asia/Tokyo" },
+    toolIntent: {
+      needsArithmeticCalculation: false,
+      needsTemporalCalculation: true,
+      needsAggregation: false,
+      needsTaskDeadlineIndex: false,
+      temporalOperation: "relative_policy_deadline",
+      arithmeticOperation: "none",
+      confidence: 0.9,
+      reason: "relative deadline"
+    },
+    retrievedChunks: [chunk]
+  }))
+  assert.deepEqual(invalidDate.computedFacts, [])
+})
 
 test("normalize query rewrites context-dependent questions with conversation history", async () => {
   const withoutHistory = await normalizeQuery(state({ question: "海外出張でも同じ？" }))
@@ -465,6 +585,84 @@ test("sufficient context gate refuses partial evidence when primary facts are mi
   assert.equal(result.answerability?.isAnswerable, false)
   assert.equal(result.answerability?.reason, "missing_required_fact")
   assert.equal(result.answer, NO_ANSWER)
+})
+
+test("sufficient context gate normalizes judge output and guards partial evidence boundaries", async () => {
+  const requiredFact = { id: "deadline", description: "申請期限", priority: 1, necessity: "primary" as const, status: "missing" as const, supportingChunkKeys: [] }
+  const baseState = state({
+    answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.1 },
+    selectedChunks: [chunk],
+    retrievalEvaluation: {
+      retrievalQuality: "partial",
+      missingFactIds: [],
+      conflictingFactIds: [],
+      supportedFactIds: ["deadline"],
+      claims: [],
+      conflictCandidates: [],
+      nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+      reason: ""
+    },
+    searchPlan: {
+      complexity: "simple",
+      intent: "申請期限",
+      requiredFacts: [requiredFact],
+      actions: [],
+      stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 1, maxNoNewEvidenceStreak: 1 }
+    }
+  })
+  const nodeFor = (payload: Record<string, unknown>) => createSufficientContextGateNode({
+    ...createDeps(),
+    textModel: {
+      embed: async () => [1, 0],
+      generate: async () => JSON.stringify(payload)
+    }
+  })
+
+  const answerable = await nodeFor({
+    label: "ANSWERABLE",
+    confidence: 2,
+    requiredFacts: ["申請期限", "", 42],
+    supportedFacts: ["申請期限"],
+    missingFacts: ["ignored"],
+    conflictingFacts: [],
+    supportingChunkIds: ["chunk-0001", "unknown", "chunk-0001"],
+    reason: ""
+  })(baseState)
+  assert.equal(answerable.answerability?.confidence, 1)
+  assert.deepEqual(answerable.sufficientContext?.missingFacts, [])
+  assert.deepEqual(answerable.sufficientContext?.supportingChunkIds, ["doc-1-chunk-0001"])
+
+  const partialPayload = {
+    label: "PARTIAL",
+    confidence: Number.NaN,
+    requiredFacts: ["申請期限"],
+    supportedFacts: ["申請期限"],
+    missingFacts: [],
+    conflictingFacts: [],
+    supportingChunkIds: ["chunk-0001"]
+  }
+  assert.equal((await nodeFor(partialPayload)(state({ ...baseState, selectedChunks: [] }))).answerability?.isAnswerable, false)
+  assert.equal((await nodeFor(partialPayload)(state({ ...baseState, answerability: { isAnswerable: false, reason: "no_relevant_chunks", confidence: 0 } }))).answerability?.isAnswerable, false)
+  assert.equal((await nodeFor({ ...partialPayload, supportedFacts: [], supportingChunkIds: [] })(baseState)).answerability?.isAnswerable, false)
+  assert.equal(
+    (await nodeFor(partialPayload)(state({
+      ...baseState,
+      retrievalEvaluation: { ...(baseState.retrievalEvaluation as QaAgentState["retrievalEvaluation"]), retrievalQuality: "irrelevant" }
+    }))).answerability?.isAnswerable,
+    false
+  )
+  assert.equal(
+    (await nodeFor({ ...partialPayload, conflictingFacts: ["deadline"] })(state({
+      ...baseState,
+      retrievalEvaluation: { ...(baseState.retrievalEvaluation as QaAgentState["retrievalEvaluation"]), retrievalQuality: "conflicting", conflictingFactIds: ["deadline"] }
+    }))).answerability?.reason,
+    "conflicting_evidence"
+  )
+  assert.equal((await nodeFor(partialPayload)(state({ ...baseState, selectedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))).answerability?.isAnswerable, false)
+
+  const invalid = await createSufficientContextGateNode({ ...createDeps(), textModel: new MockBedrockTextModel({ invalidJsonOnGenerate: true }) })(baseState)
+  assert.equal(invalid.sufficientContext?.label, "UNANSWERABLE")
+  assert.deepEqual(invalid.sufficientContext?.requiredFacts, ["申請期限"])
 })
 
 test("citation validation accepts used ids and rejects invalid or ungrounded answers", async () => {
@@ -1031,6 +1229,64 @@ test("retrieval evaluator routes fact coverage conservatively", async () => {
   assert.deepEqual(lowScoreTermMatch.retrievalEvaluation?.supportedFactIds, [])
 })
 
+test("retrieval evaluator supports non-date fact types and judge fallback paths", async () => {
+  const multiType = await retrievalEvaluator(
+    state({
+      question: "運用規程の頻度、状態、版、条件、担当、分類は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "ops-all",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "ops-all",
+            text: "運用規程の点検頻度は毎月1回です。運用規程の状態は現行で有効です。運用規程の版はv2.3です。運用規程の適用範囲は正社員と契約社員です。運用規程の担当は人事部です。運用規程の分類は社内規程です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "運用規程",
+        requiredFacts: [
+          { id: "count", description: "運用規程 頻度", factType: "count", subject: "運用規程", priority: 1, status: "missing", supportingChunkKeys: [] },
+          { id: "status", description: "運用規程 状態", factType: "status", subject: "運用規程", priority: 2, status: "missing", supportingChunkKeys: [] },
+          { id: "version", description: "運用規程 版", factType: "version", subject: "運用規程", priority: 3, status: "missing", supportingChunkKeys: [] },
+          { id: "condition", description: "運用規程 条件", factType: "condition", subject: "運用規程", priority: 4, status: "missing", supportingChunkKeys: [] },
+          { id: "person", description: "運用規程 担当", factType: "person", subject: "運用規程", priority: 5, status: "missing", supportingChunkKeys: [] },
+          { id: "classification", description: "運用規程 分類", factType: "classification", subject: "運用規程", priority: 6, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(multiType.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(new Set(multiType.retrievalEvaluation?.supportedFactIds), new Set(["count", "status", "version", "condition", "person", "classification"]))
+
+  const invalidJudge = createRetrievalEvaluatorNode({
+    ...createDeps(),
+    textModel: new MockBedrockTextModel({ invalidJsonOnGenerate: true })
+  })
+  const judged = await invalidJudge(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        { ...chunk, key: "a", metadata: { ...chunk.metadata, chunkId: "a", text: "現行制度の申請期限は翌月5営業日です。" } },
+        { ...chunk, key: "b", metadata: { ...chunk.metadata, chunkId: "b", text: "現行制度の申請期限は翌月10営業日です。" } }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "deadline", description: "現行制度 申請期限", factType: "date", subject: "制度", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(judged.retrievalEvaluation?.llmJudge?.label, "UNCLEAR")
+  assert.deepEqual(judged.retrievalEvaluation?.llmJudge?.factIds, ["deadline"])
+})
+
 test("clarification gate asks only with grounded options and leaves clear queries alone", async () => {
   const expense = {
     ...chunk,
@@ -1278,6 +1534,339 @@ test("traced node records success, warning, model ids, details, and thrown error
   assert.equal(errorTrace.status, "error")
   assert.equal(errorTrace.modelId, undefined)
   assert.equal(errorTrace.output?.answer, NO_ANSWER)
+})
+
+test("traced node formats debug trace details for major agent updates", async () => {
+  const updates = [
+    {
+      label: "clarification_gate",
+      update: {
+        clarification: {
+          needsClarification: true,
+          reason: "multiple_candidates",
+          question: "どの規程ですか？",
+          options: [{ id: "opt-1", label: "旅費規程", value: "travel", source: "retrieval", grounding: ["doc-1-chunk-0001"] }],
+          missingSlots: ["規程名"],
+          confidence: 0.72,
+          ambiguityScore: 0.81,
+          groundedOptionCount: 1,
+          rejectedOptions: ["候補外"]
+        }
+      },
+      expected: /clarification=true/
+    },
+    {
+      label: "sufficient_context_gate",
+      update: {
+        sufficientContext: {
+          label: "PARTIAL",
+          confidence: 0.66,
+          requiredFacts: ["期限", "承認者"],
+          supportedFacts: ["期限"],
+          missingFacts: ["承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "承認者が不足"
+        }
+      },
+      expected: /sufficient_context=PARTIAL/
+    },
+    {
+      label: "detect_tool_intent",
+      update: {
+        toolIntent: {
+          needsSearch: false,
+          needsTemporalCalculation: true,
+          needsArithmeticCalculation: false,
+          needsAggregation: false,
+          needsTaskDeadlineIndex: false,
+          temporalOperation: "current_date",
+          arithmeticOperation: "none",
+          confidence: 0.9,
+          reason: "current date"
+        }
+      },
+      expected: /tool_intent/
+    },
+    {
+      label: "build_temporal_context",
+      update: {
+        temporalContext: { today: "2026-05-10", timezone: "Asia/Tokyo", source: "injected" }
+      },
+      expected: /today=2026-05-10/
+    },
+    {
+      label: "build_conversation_state",
+      update: {
+        conversationState: {
+          conversationId: "conv-1",
+          turnIndex: 2,
+          turnDependency: "coreference",
+          previousCitationCount: 1,
+          contextText: "前回の文脈"
+        }
+      },
+      expected: /conversation=conv-1/
+    },
+    {
+      label: "normalize_query",
+      update: {
+        decontextualizedQuery: {
+          standaloneQuestion: "経費精算の期限は？",
+          retrievalQueries: ["経費精算の期限", "期限"],
+          shouldUsePreviousCitations: true,
+          reason: "前回文脈を参照"
+        }
+      },
+      expected: /standalone_query=経費精算/
+    },
+    {
+      label: "retrieval_evaluator",
+      update: {
+        retrievalEvaluation: {
+          retrievalQuality: "conflicting",
+          missingFactIds: [],
+          conflictingFactIds: ["deadline"],
+          supportedFactIds: [],
+          claims: [],
+          conflictCandidates: [],
+          riskSignals: [
+            {
+              type: "typed_claim_conflict",
+              factId: "deadline",
+              values: ["翌月5営業日", "翌月10営業日"],
+              chunkKeys: ["doc-1-chunk-0001", "doc-1-chunk-0002"],
+              reason: "期限値が競合",
+              conflictCandidate: {
+                subject: "現行制度",
+                predicate: "申請期限",
+                value: "翌月10営業日",
+                scope: "現行",
+                chunkKey: "doc-1-chunk-0002"
+              }
+            }
+          ],
+          llmJudge: {
+            label: "CONFLICT",
+            confidence: 0.8,
+            factIds: ["deadline"],
+            supportingChunkIds: ["doc-1-chunk-0001"],
+            contradictionChunkIds: ["doc-1-chunk-0002"],
+            reason: "LLM judge conflict"
+          },
+          nextAction: { type: "evidence_search", query: "現行 最新 期限", topK: 8 },
+          reason: "conflict"
+        }
+      },
+      expected: /retrieval=conflicting/
+    },
+    {
+      label: "extract_references",
+      update: {
+        searchPlan: {
+          complexity: "multi_hop",
+          intent: "現行制度の期限",
+          requiredFacts: [{ id: "deadline", description: "期限", priority: 1, necessity: "primary", status: "missing", supportingChunkKeys: [] }],
+          actions: [
+            { type: "query_rewrite", strategy: "keyword", input: "期限" },
+            { type: "expand_context", chunkKey: "doc-1-chunk-0001", window: 1 },
+            { type: "rerank", objective: "answer_with_supported_evidence" },
+            { type: "finalize_refusal", reason: "insufficient_evidence" }
+          ],
+          stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+        }
+      },
+      expected: /plan actions=4/
+    },
+    {
+      label: "evaluate_search_progress",
+      update: {
+        actionHistory: [
+          {
+            action: { type: "query_rewrite", strategy: "keyword", input: "期限" },
+            hitCount: 2,
+            newEvidenceCount: 1,
+            topScore: 0.91,
+            summary: "追加根拠を取得",
+            retrievalDiagnostics: {
+              queryCount: 2,
+              indexVersions: ["idx-1"],
+              aliasVersions: [],
+              lexicalCount: 1,
+              semanticCount: 1,
+              fusedCount: 2,
+              sourceCounts: { lexical: 1, semantic: 1, hybrid: 0 }
+            }
+          }
+        ]
+      },
+      expected: /action=query_rewrite/
+    },
+    {
+      label: "generate_clues",
+      update: { clues: ["期限"], expandedQueries: ["申請期限", "提出期限"] },
+      expected: /expanded queries=2/
+    },
+    {
+      label: "embed_queries",
+      update: { queryEmbeddings: [{ query: "申請期限", vector: [1, 0] }] },
+      expected: /embedded queries=1/
+    },
+    {
+      label: "rerank_chunks",
+      update: { selectedChunks: [chunk] },
+      expected: /selected=1/
+    },
+    {
+      label: "validate_citations",
+      update: { citations: [{ documentId: "doc-1", fileName: "doc.txt", chunkId: "chunk-0001", score: 0.9, text: "根拠" }] },
+      expected: /citations=1/
+    },
+    {
+      label: "validate_citations",
+      update: { rawAnswer: "{\"answer\":\"ok\"}" },
+      expected: /validate_citations completed/
+    }
+  ]
+
+  for (const item of updates) {
+    const result = await tracedNode(item.label, async () => item.update as unknown as QaAgentUpdate)(state({ trace: [] }))
+    const trace = result.trace as unknown as DebugStep
+    assert.match(trace.summary, item.expected)
+    assert.ok(trace.detail === undefined || trace.detail.length > 0)
+    assert.ok(trace.output === undefined || Object.keys(trace.output).length > 0)
+  }
+
+  const emptyActionHistory = await tracedNode("evaluate_search_progress", async () => ({ actionHistory: [] }))(state({ trace: [] }))
+  const emptyTrace = emptyActionHistory.trace as unknown as DebugStep
+  assert.equal(emptyTrace.detail, "なし")
+
+  const temporalError = await tracedNode("build_temporal_context", async () => {
+    throw "invalid date"
+  })(state({ trace: [] }))
+  assert.equal(temporalError.answerability?.reason, "invalid_temporal_context")
+  assert.match((temporalError.trace as unknown as DebugStep).detail ?? "", /invalid date/)
+})
+
+test("traced node covers fallback summaries and empty detail branches", async () => {
+  const cases = [
+    {
+      label: "noop",
+      update: {},
+      summary: /noop completed/,
+      detail: undefined
+    },
+    {
+      label: "answerability_gate",
+      update: { answerability: { isAnswerable: false, reason: "no_relevant_chunks", confidence: 0 } },
+      summary: /answerable=false/,
+      detail: /判定に使った文:\nなし/
+    },
+    {
+      label: "sufficient_context_gate",
+      update: { sufficientContext: { label: "SUFFICIENT", confidence: 1, reason: "ok" } },
+      summary: /missing=0/,
+      detail: /requiredFacts:\nなし/
+    },
+    {
+      label: "clarification_gate",
+      update: {
+        clarification: {
+          needsClarification: false,
+          reason: "not_needed",
+          question: "",
+          options: [],
+          missingSlots: [],
+          confidence: 1,
+          groundedOptionCount: 0,
+          rejectedOptions: []
+        }
+      },
+      summary: /clarification=false/,
+      detail: /question:\nなし/
+    },
+    {
+      label: "verify_answer_support",
+      update: {
+        answerSupport: {
+          supported: true,
+          unsupportedSentences: [],
+          supportingChunkIds: [],
+          supportingComputedFactIds: [],
+          contradictionChunkIds: [],
+          confidence: 0.9,
+          totalSentences: 1,
+          reason: "supported"
+        }
+      },
+      summary: /answer_support=supported/,
+      detail: /unsupportedSentences:\nなし/
+    },
+    {
+      label: "extract_references",
+      update: {
+        searchPlan: {
+          complexity: "simple",
+          intent: "empty",
+          requiredFacts: [],
+          actions: [],
+          stopCriteria: { maxIterations: 1, minTopScore: 0.2, minEvidenceCount: 1, maxNoNewEvidenceStreak: 1 }
+        }
+      },
+      summary: /plan actions=0/,
+      detail: /actions:\nなし/
+    },
+    {
+      label: "evaluate_search_progress",
+      update: {
+        actionHistory: [
+          {
+            action: { type: "finalize_refusal", reason: "insufficient_evidence" },
+            hitCount: 0,
+            newEvidenceCount: 0,
+            summary: "stop",
+            retrievalDiagnostics: {
+              queryCount: 0,
+              indexVersions: [],
+              aliasVersions: [],
+              lexicalCount: 0,
+              semanticCount: 0,
+              fusedCount: 0,
+              sourceCounts: { lexical: 0, semantic: 0, hybrid: 0 }
+            }
+          }
+        ]
+      },
+      summary: /action=finalize_refusal/,
+      detail: /indexVersions=none/
+    },
+    {
+      label: "retrieve_memory",
+      update: { memoryCards: [{ ...chunk, metadata: { ...chunk.metadata, kind: "memory" as const } }] },
+      summary: /memory hits=1/,
+      detail: /doc.txt/
+    },
+    {
+      label: "generate_answer",
+      update: { answer: "ok" },
+      summary: /finalized/,
+      detail: /ok/
+    }
+  ]
+
+  for (const item of cases) {
+    const result = await tracedNode(item.label, async () => item.update as unknown as QaAgentUpdate)(state({ trace: [] }))
+    const trace = result.trace as unknown as DebugStep
+    assert.match(trace.summary, item.summary)
+    if (item.detail === undefined) assert.equal(trace.detail, undefined)
+    else assert.match(trace.detail ?? "", item.detail)
+  }
+
+  const symbolError = await tracedNode("validate_citations", async () => {
+    throw Symbol("bad")
+  })(state({ trace: [] }))
+  assert.equal(symbolError.answerability?.reason, "citation_validation_failed")
+  assert.match((symbolError.trace as unknown as DebugStep).detail ?? "", /Symbol\(bad\)/)
 })
 
 function createDeps(): Dependencies {

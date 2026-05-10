@@ -96,7 +96,7 @@ jobs:
       - name: Test api with coverage
         id: api_test
         run: |
-          npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 0 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts
+          npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts
           node -e 'const fs = require("fs"); const s = require("./apps/api/coverage/coverage-summary.json").total; fs.appendFileSync(process.env.GITHUB_OUTPUT, `c0=${s.statements.pct}%\nc1=${s.branches.pct}%\n`)'
         continue-on-error: true
 

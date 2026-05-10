@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { buildSearchClues, clamp, compactDetail, estimateTokenCount, toCitation, unique } from "../agent/utils.js"
-import { chunkStructuredBlocks, chunkText } from "./chunk.js"
+import { chunkStructuredBlocks, chunkText, summarizeDocumentStatistics } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
 import { extractDocumentFromUpload, extractTextFromUpload } from "./text-extract.js"
 
@@ -48,6 +48,84 @@ test("chunking records section metadata and neighboring chunk links", () => {
   assert.ok(chunks[0]?.chunkHash)
   assert.equal(chunks[0]?.nextChunkId, chunks[1]?.id)
   assert.equal(chunks[1]?.previousChunkId, chunks[0]?.id)
+})
+
+test("chunking covers heading variants, empty segments, figures, code fences, tables, and statistics", () => {
+  assert.deepEqual(summarizeDocumentStatistics([]), {
+    chunkCount: 0,
+    sectionCount: 0,
+    tableCount: 0,
+    listCount: 0,
+    codeCount: 0,
+    figureCount: 0,
+    averageChunkChars: 0,
+    headingDensity: 0
+  })
+
+  const chunks = chunkText([
+    "第1章 概要",
+    "概要本文です。",
+    "\f",
+    "注意:",
+    "Figure: 承認フロー",
+    "\f",
+    "```",
+    "const approved = true",
+    "```",
+    "\f",
+    "| 項目 | 期限 |",
+    "| --- | --- |",
+    "| 申請 | 翌月5営業日 |"
+  ].join("\n"), 80, 10)
+
+  assert.ok(chunks.some((chunk) => chunk.heading === "概要"))
+  assert.ok(chunks.some((chunk) => chunk.heading === "注意"))
+  assert.ok(chunks.some((chunk) => chunk.chunkKind === "figure"))
+  assert.ok(chunks.some((chunk) => chunk.chunkKind === "code"))
+  assert.ok(chunks.some((chunk) => chunk.chunkKind === "table"))
+  const stats = summarizeDocumentStatistics(chunks)
+  assert.equal(stats.chunkCount, chunks.length)
+  assert.ok(stats.sectionCount >= 1)
+  assert.equal(stats.figureCount, 1)
+  assert.equal(stats.codeCount, 1)
+  assert.equal(stats.tableCount, 1)
+  assert.ok(stats.headingDensity > 0)
+})
+
+test("structured chunking keeps explicit section paths, page ranges, and fallback breaks", () => {
+  const chunks = chunkStructuredBlocks(
+    [
+      {
+        id: "heading-1",
+        kind: "text",
+        text: "明細",
+        heading: "明細",
+        sectionPath: ["規程", "明細"],
+        pageStart: 2,
+        pageEnd: 3,
+        sourceBlockId: "source-heading",
+        normalizedFrom: "test-heading",
+        extractionMethod: "test-v1"
+      },
+      {
+        id: "long-1",
+        kind: "text",
+        text: "A".repeat(30) + "、" + "B".repeat(30) + "、" + "C".repeat(30),
+        pageStart: 4
+      }
+    ],
+    32,
+    100
+  )
+
+  assert.equal(chunks[0]?.sectionPath?.join(">"), "規程>明細")
+  assert.equal(chunks[0]?.pageStart, 2)
+  assert.equal(chunks[0]?.pageEnd, 3)
+  assert.equal(chunks[0]?.sourceBlockId, "source-heading")
+  assert.equal(chunks[0]?.normalizedFrom, "test-heading")
+  assert.equal(chunks[0]?.extractionMethod, "test-v1")
+  assert.ok(chunks.length > 2)
+  assert.ok(chunks.every((chunk) => chunk.text.length <= 32 || chunk.id === "chunk-0000"))
 })
 
 test("chunking keeps list items intact and falls back only for oversized units", () => {
@@ -100,6 +178,14 @@ test("chunking keeps atomic structured blocks unsplit", () => {
 test("upload text extraction handles direct text, base64, limits, and missing payloads", async () => {
   assert.equal(await extractTextFromUpload({ fileName: "a.txt", text: "\u0000 body \u0000" }), "body")
   assert.equal(await extractTextFromUpload({ fileName: "a.txt", contentBase64: Buffer.from("hello").toString("base64") }), "hello")
+  assert.equal(await extractTextFromUpload({ fileName: "a.bin", contentBytes: Buffer.from("bytes body") }), "bytes body")
+  assert.equal(
+    await extractTextFromUpload({
+      fileName: "layout.textract.json",
+      contentBytes: Buffer.from(JSON.stringify({ blocks: [{ Id: "line-1", BlockType: "LINE", Text: "本文", Page: 1 }] }))
+    }),
+    "本文"
+  )
   await assert.rejects(() => extractTextFromUpload({ fileName: "missing.txt" }), /Either text or contentBase64/)
 })
 
@@ -107,7 +193,10 @@ test("upload extraction parses Textract JSON tables and lines into structured bl
   const textractJson = JSON.stringify({
     Blocks: [
       { Id: "line-1", BlockType: "LINE", Text: "1. 申請手順", Page: 1 },
+      { Id: "line-2", BlockType: "LINE", Text: "Figure: 承認フロー", Page: 1 },
+      { Id: "line-3", BlockType: "LINE", Text: "# 見出し", Page: 1 },
       { Id: "table-1", BlockType: "TABLE", Page: 1, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2", "cell-3", "cell-4"] }] },
+      { Id: "table-empty", BlockType: "TABLE", Page: 1 },
       { Id: "cell-1", BlockType: "CELL", RowIndex: 1, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-1"] }] },
       { Id: "cell-2", BlockType: "CELL", RowIndex: 1, ColumnIndex: 2, Relationships: [{ Type: "CHILD", Ids: ["word-2"] }] },
       { Id: "cell-3", BlockType: "CELL", RowIndex: 2, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-3"] }] },
@@ -123,9 +212,33 @@ test("upload extraction parses Textract JSON tables and lines into structured bl
   assert.equal(extracted.sourceExtractorVersion, "textract-json-v1")
   assert.ok(extracted.blocks?.some((block) => block.kind === "table" && block.text.includes("| 項目 | 期限 |")))
   assert.ok(extracted.blocks?.some((block) => block.kind === "list" && block.text.includes("- 申請手順")))
+  assert.ok(extracted.blocks?.some((block) => block.kind === "figure" && block.text === "Figure: 承認フロー"))
+  assert.ok(extracted.blocks?.some((block) => block.heading === "見出し"))
 })
 
-test("upload extraction uses OCR fallback when PDF has no embedded text", async () => {
+test("upload extraction handles PDF embedded text and OCR fallback outcomes", async () => {
+  const embedded = await extractDocumentFromUpload({
+    fileName: "policy.pdf",
+    contentBytes: Buffer.from("%PDF-1.4 text sample"),
+    mimeType: "application/pdf",
+    pdfTextExtractor: async () => "申請期限は翌月5営業日です。",
+    ocrDetector: async () => {
+      throw new Error("OCR should not run when embedded text is usable")
+    }
+  })
+  assert.equal(embedded.sourceExtractorVersion, "pdf-layout-v2")
+  assert.equal(embedded.text, "申請期限は翌月5営業日です。")
+
+  const noFallback = await extractDocumentFromUpload({
+    fileName: "policy.pdf",
+    contentBytes: Buffer.from("%PDF-1.4 scanned sample"),
+    mimeType: "application/pdf",
+    pdfTextExtractor: async () => "   ",
+    ocrDetector: async () => undefined
+  })
+  assert.equal(noFallback.sourceExtractorVersion, "pdf-layout-v2")
+  assert.equal(noFallback.text, "")
+
   let fallbackCalled = false
   const extracted = await extractDocumentFromUpload({
     fileName: "foodkaku5.pdf",
@@ -161,6 +274,19 @@ test("upload extraction uses OCR fallback when PDF has no embedded text", async 
   assert.equal(extracted.sourceExtractorVersion, "textract-detect-document-text-v1")
   assert.equal(extracted.text, "食品表示基準について")
   assert.equal(extracted.blocks?.[0]?.pageStart, 1)
+
+  await assert.rejects(
+    () => extractDocumentFromUpload({
+      fileName: "failed.pdf",
+      contentBytes: Buffer.from("%PDF-1.4 scanned sample"),
+      mimeType: "application/pdf",
+      pdfTextExtractor: async () => "   ",
+      ocrDetector: async () => {
+        throw new Error("textract unavailable")
+      }
+    }),
+    /textract unavailable/
+  )
 })
 
 test("json parser accepts raw JSON, fenced JSON, embedded JSON, and invalid inputs", () => {
@@ -185,6 +311,84 @@ test("mock model generates embeddings, memory cards, clues, final answers, and f
   ])}</computedFacts>`), /2026-07-01/)
   assert.match(await model.generate("FINAL_ANSWER_JSON"), /資料からは回答できません/)
   assert.equal(await model.generate("other prompt"), "{}")
+})
+
+test("mock model covers failure modes, support judgement, retrieval judge, and computed fact answer variants", async () => {
+  await assert.rejects(() => new MockBedrockTextModel({ embed: new Error("embed failed") }).embed("text"), /embed failed/)
+  await assert.rejects(() => new MockBedrockTextModel({ generate: new Error("generate failed") }).generate("FINAL_ANSWER_JSON"), /generate failed/)
+  assert.equal(await new MockBedrockTextModel({ invalidJsonOnGenerate: true }).generate("FINAL_ANSWER_JSON"), "not-json")
+
+  const model = new MockBedrockTextModel()
+  assert.equal((await model.embed("default dimensions")).length > 0, true)
+  assert.deepEqual(await model.embed("", { dimensions: 4 }), [0, 0, 0, 0])
+  assert.match(await model.generate("MEMORY_CARD_JSON <document></document>"), /ローカルモック/)
+  assert.match(await model.generate("CLUES_JSON <question>"), /clues/)
+  assert.match(await model.generate("CLUES_JSON <question></question>"), /clues/)
+  assert.match(await model.generate("SUFFICIENT_CONTEXT_JSON <question>期限は？</question>"), /UNANSWERABLE/)
+  assert.match(await model.generate('SUFFICIENT_CONTEXT_JSON <question>期限は？</question><chunk id="c1">   </chunk>'), /UNANSWERABLE/)
+  assert.match(
+    await model.generate('SUFFICIENT_CONTEXT_JSON <question>期限は？</question><chunk id="c1">申請期限は翌月5営業日です。</chunk>'),
+    /ANSWERABLE/
+  )
+
+  assert.match(await model.generate("ANSWER_SUPPORT_JSON <answer></answer>"), /根拠チャンクがありません/)
+  assert.match(await model.generate('ANSWER_SUPPORT_JSON <answer></answer><chunk id="c1">根拠</chunk>'), /unsupportedSentences/)
+  assert.match(await model.generate('ANSWER_SUPPORT_JSON <answer>根拠あり。</answer><chunk id="c1">   </chunk>'), /0.4/)
+  assert.match(await model.generate('ANSWER_SUPPORT_JSON <answer>計算済みです。</answer><computedFacts>[{"id":"fact-1"}]</computedFacts>'), /fact-1/)
+  assert.match(
+    await model.generate('ANSWER_SUPPORT_JSON <answer>期限は翌月5営業日です。</answer><chunk id="c1">申請期限は翌月5営業日です。</chunk>'),
+    /supported/
+  )
+
+  assert.match(
+    await model.generate('RETRIEVAL_JUDGE_JSON - deadline: 期限\n<chunk id="old">旧制度の期限は翌月10日です。</chunk><chunk id="current">現行制度の期限は翌月5営業日です。</chunk>'),
+    /NO_CONFLICT/
+  )
+  assert.match(await model.generate('RETRIEVAL_JUDGE_JSON - deadline: 期限\n<chunk id="c1">期限は未確認です。</chunk>'), /UNCLEAR/)
+  assert.match(await model.generate('RETRIEVAL_JUDGE_JSON <chunk id="c1">旧制度と現行制度です。</chunk>'), /NO_CONFLICT/)
+
+  const computedFacts = [
+    { id: "not-due", kind: "deadline_status", today: "2026-05-10", dueDate: "2026-05-12", status: "not_due", daysRemaining: 2 },
+    { id: "due-today", kind: "deadline_status", today: "2026-05-10", dueDate: "2026-05-10", status: "due_today" },
+    { id: "overdue", kind: "deadline_status", today: "2026-05-10", dueDate: "2026-05-08", status: "overdue", overdueDays: 2 },
+    { id: "days", kind: "days_until", today: "2026-05-10", dueDate: "2026-05-20", daysRemaining: 10 },
+    { id: "today", kind: "current_date", today: "2026-05-10" },
+    { id: "add", kind: "add_days", resultDate: "2026-05-17" },
+    { id: "arith", kind: "arithmetic", result: 42, unit: "円" },
+    { id: "arith-no-unit", kind: "arithmetic", result: 42 },
+    { id: "threshold-yes", kind: "threshold_comparison", effect: "required", satisfiesCondition: true, explanation: "1万円以上です。" },
+    { id: "threshold-no", kind: "threshold_comparison", effect: "required", satisfiesCondition: false, explanation: "1万円未満です。" },
+    { id: "threshold-no-explanation", kind: "threshold_comparison", effect: "required", satisfiesCondition: true },
+    { id: "threshold-unknown", kind: "threshold_comparison", effect: "unknown", satisfiesCondition: true, explanation: "対象外です。" },
+    { id: "task-unavailable", kind: "task_deadline_query_unavailable" },
+    { id: "calc-unavailable", kind: "calculation_unavailable", reason: "日付が不足しています。" },
+    { id: "calc-unavailable-default", kind: "calculation_unavailable" },
+    { id: "unknown", kind: "unknown" }
+  ]
+  for (const fact of computedFacts) {
+    const response = await model.generate(`FINAL_ANSWER_JSON <computedFacts>${JSON.stringify([fact])}</computedFacts>`)
+    assert.match(response, /answer/)
+  }
+  assert.match(await model.generate('FINAL_ANSWER_JSON <computedFacts>[{"id":123,"kind":"current_date","today":"2026-05-10"}]</computedFacts>'), /usedComputedFactIds/)
+  assert.match(await model.generate('FINAL_ANSWER_JSON <computedFacts>[null,[],{"kind":"calculation_unavailable"}]</computedFacts>'), /計算できません/)
+  assert.match(await model.generate("FINAL_ANSWER_JSON <computedFacts>[]</computedFacts>"), /資料からは回答できません/)
+  assert.match(await model.generate("FINAL_ANSWER_JSON <computedFacts>{bad</computedFacts>"), /資料からは回答できません/)
+  assert.match(await model.generate('FINAL_ANSWER_JSON <question>期限</question><chunk id="c1"></chunk>'), /資料からは回答できません/)
+  assert.match(await model.generate('FINAL_ANSWER_JSON <question>期限</question><chunk id="c1">対象外です。\n申請期限は翌月5営業日です。</chunk>'), /申請期限/)
+
+  const policyExtraction = await model.generate(
+    'POLICY_COMPUTATION_EXTRACTION_JSON <question>5200円の領収書添付は必要ですか？</question><context><chunk id="c1">1万円以上の経費精算では領収書が必要です。1万円未満の経費精算では領収書は不要です。</chunk></context>'
+  )
+  assert.match(policyExtraction, /questionTarget/)
+  assert.match(
+    await model.generate('POLICY_COMPUTATION_EXTRACTION_JSON <question>5200円の領収書添付は必要ですか？</question><context><chunk id="c&amp;1">経費精算の説明のみです。</chunk></context>'),
+    /比較可能な条件はありません/
+  )
+  assert.match(
+    await model.generate('POLICY_COMPUTATION_EXTRACTION_JSON <question>5200円の領収書添付は必要ですか？</question><context><chunk id="c1">1万円以上では必要です。</chunk></context>'),
+    /candidates/
+  )
+  assert.match(await model.generate("POLICY_COMPUTATION_EXTRACTION_JSON <question>期限は？</question><context></context>"), /canExtract/)
 })
 
 test("agent utility helpers normalize citations, clues, tokens, ranges, and trace details", () => {
