@@ -1,6 +1,6 @@
 # 文書削除時の欠損 manifest 500 修正
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -39,12 +39,23 @@
 
 ## 受け入れ条件
 
-- [ ] `reports/bugs/` に障害レポートがあり、直接原因・根本原因・なぜなぜ分析・再発防止策が記載されている。
-- [ ] benchmark seed 権限での `DELETE /documents/{documentId}` が、無関係な欠損 manifest によって 500 にならない。
-- [ ] `listDocuments()` が list 直後に消えた manifest object を skip し、他の manifest を返す。
-- [ ] 対象 document の manifest が欠損している場合、DELETE API は 500 ではなく 404 を返す。
-- [ ] 認可境界として、通常 document を benchmark seed 権限だけで削除できない。
-- [ ] 関連する API test と security access-control test が通る。
+- [x] `reports/bugs/` に障害レポートがあり、直接原因・根本原因・なぜなぜ分析・再発防止策が記載されている。
+- [x] benchmark seed 権限での `DELETE /documents/{documentId}` が、無関係な欠損 manifest によって 500 にならない。
+- [x] `listDocuments()` が list 直後に消えた manifest object を skip し、他の manifest を返す。
+- [x] 対象 document の manifest が欠損している場合、DELETE API は 500 ではなく 404 を返す。
+- [x] 認可境界として、通常 document を benchmark seed 権限だけで削除できない。
+- [x] 関連する API test と security access-control test が通る。
+
+## 完了確認
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/234
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
+- 検証:
+  - `npm ci`: pass
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
+  - `git diff --check`: pass
 
 ## 検証計画
 
