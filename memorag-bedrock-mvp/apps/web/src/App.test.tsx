@@ -1146,9 +1146,11 @@ describe("App chat and upload flow", () => {
 
     expect(await screen.findByText("資料からは回答できません。")).toBeInTheDocument()
     expect(await screen.findByLabelText("担当者へ質問")).toBeInTheDocument()
+    expect(screen.getByLabelText("担当部署")).toHaveValue("")
+    expect(screen.queryByText("通常 1 営業日以内に回答予定")).not.toBeInTheDocument()
     await userEvent.selectOptions(screen.getByLabelText("優先度"), "high")
     await userEvent.selectOptions(screen.getByLabelText("カテゴリ"), "手続き")
-    await userEvent.selectOptions(screen.getByLabelText("担当部署"), "人事部")
+    await userEvent.type(screen.getByLabelText("担当部署"), "人事部")
     await userEvent.click(screen.getByText("担当者へ送信"))
 
     await screen.findByText("担当者へ送信済み")

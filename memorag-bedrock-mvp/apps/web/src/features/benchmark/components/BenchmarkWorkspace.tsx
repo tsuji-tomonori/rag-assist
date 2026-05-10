@@ -50,6 +50,7 @@ export function BenchmarkWorkspace({
   const summary = summarizeBenchmarkRuns(runs)
   const runningCount = runs.filter((run) => run.status === "queued" || run.status === "running").length
   const failedCount = runs.filter((run) => run.status === "failed").length
+  const hasSuites = suites.length > 0
 
   return (
     <section className="benchmark-workspace" aria-label="性能テスト">
@@ -82,8 +83,8 @@ export function BenchmarkWorkspace({
           <p className="benchmark-run-panel-note">ワンクリックで選択 suite を実行します。</p>
           <label>
             <span>テスト種別</span>
-            <select value={suiteId} onChange={(event) => onSuiteChange(event.target.value)}>
-              {suites.length === 0 && <option value={suiteId}>standard-agent-v1</option>}
+            <select value={selectedSuite?.suiteId ?? ""} disabled={!hasSuites} onChange={(event) => onSuiteChange(event.target.value)}>
+              {!hasSuites && <option value="">benchmark suite を取得できません</option>}
               {suites.map((suite) => (
                 <option value={suite.suiteId} key={suite.suiteId}>
                   {suite.label}
@@ -94,7 +95,7 @@ export function BenchmarkWorkspace({
           <div className="benchmark-mode-grid">
             <div>
               <span>対象</span>
-              <strong>{selectedSuite?.mode === "agent" ? "エージェント" : selectedSuite?.mode ?? "agent"}</strong>
+              <strong>{selectedSuite ? selectedSuite.mode === "agent" ? "エージェント" : selectedSuite.mode : "未選択"}</strong>
             </div>
             <div>
               <span>Runner</span>
@@ -103,7 +104,7 @@ export function BenchmarkWorkspace({
           </div>
           <label>
             <span>データセット</span>
-            <input value={selectedSuite?.datasetS3Key ?? "datasets/agent/standard-v1.jsonl"} readOnly />
+            <input value={selectedSuite?.datasetS3Key ?? "suite 未選択"} readOnly />
           </label>
           <label>
             <span>モデル</span>
@@ -124,7 +125,7 @@ export function BenchmarkWorkspace({
             />
           </label>
           <div className="benchmark-actions">
-            <button type="button" onClick={onStart} disabled={loading || !canRun}>
+            <button type="button" onClick={onStart} disabled={loading || !canRun || !selectedSuite}>
               {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" />}
               <span>性能テストを実行</span>
             </button>
