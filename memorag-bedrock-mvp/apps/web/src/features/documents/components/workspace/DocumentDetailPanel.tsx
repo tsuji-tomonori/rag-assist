@@ -12,6 +12,12 @@ export function DocumentDetailPanel({
   selectedFolder,
   selectedGroupId,
   selectedSharedEntries,
+  shareTargetGroupId,
+  shareHasValidationError,
+  shareHasEmptyToken,
+  shareHasDuplicate,
+  shareDuplicates,
+  shareDiff,
   visibleDocuments,
   visibleChunkCount,
   uploadGroupId,
@@ -40,6 +46,12 @@ export function DocumentDetailPanel({
   selectedFolder: WorkspaceFolder
   selectedGroupId: string
   selectedSharedEntries: ReturnType<typeof sharedEntries>
+  shareTargetGroupId: string
+  shareHasValidationError: boolean
+  shareHasEmptyToken: boolean
+  shareHasDuplicate: boolean
+  shareDuplicates: string[]
+  shareDiff: { added: string[]; removed: string[]; unchanged: string[] }
   visibleDocuments: DocumentManifest[]
   visibleChunkCount: number
   uploadGroupId: string
@@ -103,9 +115,26 @@ export function DocumentDetailPanel({
           </label>
           <label>
             <span>共有 Cognito group</span>
-            <input value={shareGroups} disabled={!canWrite || operationState.sharingGroupId !== null} onChange={(event) => onShareGroupsChange(event.target.value)} placeholder="Cognito group をカンマ区切りで入力" />
+            <input
+              value={shareGroups}
+              disabled={!canWrite || operationState.sharingGroupId !== null}
+              onChange={(event) => onShareGroupsChange(event.target.value)}
+              placeholder="Cognito group をカンマ区切りで入力"
+              aria-invalid={shareHasValidationError || undefined}
+              aria-describedby="share-groups-validation share-groups-diff"
+            />
           </label>
-          <button type="submit" disabled={!canWrite || (!shareGroupId && !selectedGroupId) || operationState.sharingGroupId !== null}>
+          <div className="share-validation" id="share-groups-validation" aria-live="polite">
+            {shareHasEmptyToken && <p className="error">空の group 指定があります。余分なカンマを削除してください。</p>}
+            {shareHasDuplicate && <p className="error">重複している group: {shareDuplicates.join(", ")}</p>}
+            {!shareHasValidationError && <p>入力された group 名だけを共有先として送信します。存在確認は API 更新時に行われます。</p>}
+          </div>
+          <div className="share-diff-preview" id="share-groups-diff" aria-label="共有変更差分">
+            <span>追加: {shareDiff.added.length > 0 ? shareDiff.added.join(", ") : "なし"}</span>
+            <span>削除: {shareDiff.removed.length > 0 ? shareDiff.removed.join(", ") : "なし"}</span>
+            <span>変更なし: {shareDiff.unchanged.length > 0 ? shareDiff.unchanged.join(", ") : "なし"}</span>
+          </div>
+          <button type="submit" disabled={!canWrite || !shareTargetGroupId || shareHasValidationError || operationState.sharingGroupId !== null}>
             {operationState.sharingGroupId !== null && <LoadingSpinner className="button-spinner" />}
             共有更新
           </button>

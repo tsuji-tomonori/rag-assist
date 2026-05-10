@@ -4,15 +4,23 @@ import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import type { DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
+import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
 import { DocumentDetailPanel } from "./workspace/DocumentDetailPanel.js"
 import { DocumentFilePanel } from "./workspace/DocumentFilePanel.js"
 import { DocumentFolderTree } from "./workspace/DocumentFolderTree.js"
 import {
+  buildShareDiff,
+  compareDocuments,
   countDocumentsForGroup,
   documentGroupIds,
+  documentStatusLabel,
   emptyOperationState,
+  fileTypeLabel,
+  parseSharedGroups,
   sharedEntries,
+  uniqueSorted,
   type ConfirmAction,
+  type DocumentSortKey,
   type WorkspaceFolder
 } from "./workspace/documentWorkspaceUtils.js"
 
@@ -64,6 +72,13 @@ export function DocumentWorkspace({
   const [selectedFolderId, setSelectedFolderId] = useState("all")
   const [folderSearch, setFolderSearch] = useState("")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
+  const [documentQuery, setDocumentQuery] = useState("")
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("all")
+  const [documentStatusFilter, setDocumentStatusFilter] = useState("all")
+  const [documentGroupFilter, setDocumentGroupFilter] = useState("all")
+  const [documentSort, setDocumentSort] = useState<DocumentSortKey>("updatedDesc")
+  const [selectedDocument, setSelectedDocument] = useState<DocumentManifest | null>(null)
+  const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
 
@@ -87,10 +102,33 @@ export function DocumentWorkspace({
   const uploadDestination = uploadGroupId ? documentGroups.find((group) => group.groupId === uploadGroupId) : undefined
   const uploadDestinationLabel = uploadDestination?.name ?? "未選択"
   const canUploadToDestination = canWrite && Boolean(uploadGroupId)
-  const visibleDocuments = selectedFolder.group ? documents.filter((document) => documentGroupIds(document).includes(selectedFolder.group!.groupId)) : documents
+  const folderDocuments = selectedGroupId ? documents.filter((document) => documentGroupIds(document).includes(selectedGroupId)) : documents
+  const documentTypeOptions = uniqueSorted(folderDocuments.map(fileTypeLabel))
+  const documentStatusOptions = uniqueSorted(folderDocuments.map(documentStatusLabel))
+  const normalizedDocumentQuery = documentQuery.trim().toLowerCase()
+  const visibleDocuments = folderDocuments
+    .filter((document) => {
+      const groupIds = documentGroupIds(document)
+      const groupNames = groupIds.map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
+      const searchable = [document.fileName, document.documentId, fileTypeLabel(document), documentStatusLabel(document), ...groupNames].join(" ").toLowerCase()
+      if (normalizedDocumentQuery && !searchable.includes(normalizedDocumentQuery)) return false
+      if (documentTypeFilter !== "all" && fileTypeLabel(document) !== documentTypeFilter) return false
+      if (documentStatusFilter !== "all" && documentStatusLabel(document) !== documentStatusFilter) return false
+      if (documentGroupFilter === "unassigned" && groupIds.length > 0) return false
+      if (documentGroupFilter !== "all" && documentGroupFilter !== "unassigned" && !groupIds.includes(documentGroupFilter)) return false
+      return true
+    })
+    .sort((left, right) => compareDocuments(left, right, documentSort))
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
   const latestDocuments = [...documents].sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, 3)
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
+  const shareTargetGroupId = shareGroupId || selectedGroupId
+  const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
+  const shareDraft = parseSharedGroups(shareGroups)
+  const shareDiff = buildShareDiff(shareTargetGroup?.sharedGroups ?? [], shareDraft.groups)
+  const shareHasDuplicate = shareDraft.duplicates.length > 0
+  const shareHasEmptyToken = shareDraft.hasEmptyToken
+  const shareHasValidationError = shareHasDuplicate || shareHasEmptyToken
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -109,11 +147,18 @@ export function DocumentWorkspace({
 
   async function onShareSubmit(event: FormEvent) {
     event.preventDefault()
-    const targetGroupId = shareGroupId || selectedGroupId
-    if (!targetGroupId || !canWrite) return
-    const groups = shareGroups.split(",").map((item) => item.trim()).filter(Boolean)
-    await onShareGroup(targetGroupId, { visibility: groups.length > 0 ? "shared" : "private", sharedGroups: groups })
+    if (!shareTargetGroupId || !canWrite || shareHasValidationError) return
+    await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups })
     setShareGroups("")
+  }
+
+  async function copyDocumentId(documentId: string) {
+    try {
+      await navigator.clipboard.writeText(documentId)
+      setCopiedDocumentId(documentId)
+    } catch {
+      setCopiedDocumentId(null)
+    }
   }
 
   async function runConfirmedAction() {
@@ -170,6 +215,15 @@ export function DocumentWorkspace({
           uploadGroupId={uploadGroupId}
           uploadDestinationLabel={uploadDestinationLabel}
           visibleDocuments={visibleDocuments}
+          folderDocumentsCount={folderDocuments.length}
+          documentQuery={documentQuery}
+          documentTypeFilter={documentTypeFilter}
+          documentStatusFilter={documentStatusFilter}
+          documentGroupFilter={documentGroupFilter}
+          documentSort={documentSort}
+          documentTypeOptions={documentTypeOptions}
+          documentStatusOptions={documentStatusOptions}
+          selectedDocument={selectedDocument}
           operationState={operationState}
           canWrite={canWrite}
           canDelete={canDelete}
@@ -178,6 +232,12 @@ export function DocumentWorkspace({
           migrations={migrations}
           uploadInputRef={uploadInputRef}
           shareSelectRef={shareSelectRef}
+          onDocumentQueryChange={setDocumentQuery}
+          onDocumentTypeFilterChange={setDocumentTypeFilter}
+          onDocumentStatusFilterChange={setDocumentStatusFilter}
+          onDocumentGroupFilterChange={setDocumentGroupFilter}
+          onDocumentSortChange={setDocumentSort}
+          onSelectDocument={setSelectedDocument}
           onConfirmAction={setConfirmAction}
         />
         <DocumentDetailPanel
@@ -185,6 +245,12 @@ export function DocumentWorkspace({
           selectedFolder={selectedFolder}
           selectedGroupId={selectedGroupId}
           selectedSharedEntries={selectedSharedEntries}
+          shareTargetGroupId={shareTargetGroupId}
+          shareHasValidationError={shareHasValidationError}
+          shareHasEmptyToken={shareHasEmptyToken}
+          shareHasDuplicate={shareHasDuplicate}
+          shareDuplicates={shareDraft.duplicates}
+          shareDiff={shareDiff}
           visibleDocuments={visibleDocuments}
           visibleChunkCount={visibleChunkCount}
           uploadGroupId={uploadGroupId}
@@ -217,6 +283,25 @@ export function DocumentWorkspace({
           documentGroups={documentGroups}
           onCancel={() => setConfirmAction(null)}
           onConfirm={() => void runConfirmedAction()}
+        />
+      )}
+      {selectedDocument && (
+        <DocumentDetailDrawer
+          document={selectedDocument}
+          documentGroups={documentGroups}
+          copied={copiedDocumentId === selectedDocument.documentId}
+          onCopyDocumentId={() => void copyDocumentId(selectedDocument.documentId)}
+          onClose={() => setSelectedDocument(null)}
+          onDelete={() => {
+            setConfirmAction({ kind: "delete", document: selectedDocument })
+            setSelectedDocument(null)
+          }}
+          onStageReindex={() => {
+            setConfirmAction({ kind: "stage", document: selectedDocument })
+            setSelectedDocument(null)
+          }}
+          canDelete={canDelete}
+          canReindex={canReindex}
         />
       )}
     </section>

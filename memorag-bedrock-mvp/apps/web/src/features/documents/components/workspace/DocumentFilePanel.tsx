@@ -5,7 +5,14 @@ import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../../types.js"
 import type { DocumentOperationState } from "../../hooks/useDocuments.js"
-import { fileTypeClassName, fileTypeLabel, type ConfirmAction, type WorkspaceFolder } from "./documentWorkspaceUtils.js"
+import {
+  documentStatusLabel,
+  fileTypeClassName,
+  fileTypeLabel,
+  type ConfirmAction,
+  type DocumentSortKey,
+  type WorkspaceFolder
+} from "./documentWorkspaceUtils.js"
 
 export function DocumentFilePanel({
   documents,
@@ -14,6 +21,15 @@ export function DocumentFilePanel({
   uploadGroupId,
   uploadDestinationLabel,
   visibleDocuments,
+  folderDocumentsCount,
+  documentQuery,
+  documentTypeFilter,
+  documentStatusFilter,
+  documentGroupFilter,
+  documentSort,
+  documentTypeOptions,
+  documentStatusOptions,
+  selectedDocument,
   operationState,
   canWrite,
   canDelete,
@@ -22,6 +38,12 @@ export function DocumentFilePanel({
   migrations,
   uploadInputRef,
   shareSelectRef,
+  onDocumentQueryChange,
+  onDocumentTypeFilterChange,
+  onDocumentStatusFilterChange,
+  onDocumentGroupFilterChange,
+  onDocumentSortChange,
+  onSelectDocument,
   onConfirmAction
 }: {
   documents: DocumentManifest[]
@@ -30,6 +52,15 @@ export function DocumentFilePanel({
   uploadGroupId: string
   uploadDestinationLabel: string
   visibleDocuments: DocumentManifest[]
+  folderDocumentsCount: number
+  documentQuery: string
+  documentTypeFilter: string
+  documentStatusFilter: string
+  documentGroupFilter: string
+  documentSort: DocumentSortKey
+  documentTypeOptions: string[]
+  documentStatusOptions: string[]
+  selectedDocument: DocumentManifest | null
   operationState: DocumentOperationState
   canWrite: boolean
   canDelete: boolean
@@ -38,6 +69,12 @@ export function DocumentFilePanel({
   migrations: ReindexMigration[]
   uploadInputRef: RefObject<HTMLInputElement | null>
   shareSelectRef: RefObject<HTMLSelectElement | null>
+  onDocumentQueryChange: (value: string) => void
+  onDocumentTypeFilterChange: (value: string) => void
+  onDocumentStatusFilterChange: (value: string) => void
+  onDocumentGroupFilterChange: (value: string) => void
+  onDocumentSortChange: (value: DocumentSortKey) => void
+  onSelectDocument: (document: DocumentManifest) => void
   onConfirmAction: (action: ConfirmAction) => void
 }) {
   return (
@@ -70,6 +107,51 @@ export function DocumentFilePanel({
         </div>
       </div>
 
+      <div className="document-filter-bar" aria-label="文書検索と絞り込み">
+        <label>
+          <span>ファイル名検索</span>
+          <input type="search" value={documentQuery} onChange={(event) => onDocumentQueryChange(event.target.value)} placeholder="ファイル名 / documentId" autoComplete="off" />
+        </label>
+        <label>
+          <span>種別</span>
+          <select value={documentTypeFilter} onChange={(event) => onDocumentTypeFilterChange(event.target.value)}>
+            <option value="all">すべて</option>
+            {documentTypeOptions.map((type) => (
+              <option value={type} key={type}>{type}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>状態</span>
+          <select value={documentStatusFilter} onChange={(event) => onDocumentStatusFilterChange(event.target.value)}>
+            <option value="all">すべて</option>
+            {documentStatusOptions.map((status) => (
+              <option value={status} key={status}>{status}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>所属フォルダ</span>
+          <select value={documentGroupFilter} onChange={(event) => onDocumentGroupFilterChange(event.target.value)}>
+            <option value="all">すべて</option>
+            <option value="unassigned">未設定</option>
+            {documentGroups.map((group) => (
+              <option value={group.groupId} key={group.groupId}>{group.name}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>並び替え</span>
+          <select value={documentSort} onChange={(event) => onDocumentSortChange(event.target.value as DocumentSortKey)}>
+            <option value="updatedDesc">更新日 新しい順</option>
+            <option value="updatedAsc">更新日 古い順</option>
+            <option value="fileNameAsc">ファイル名順</option>
+            <option value="chunkDesc">チャンク数順</option>
+            <option value="typeAsc">種別順</option>
+          </select>
+        </label>
+      </div>
+
       <div className="document-file-table" role="table" aria-label="登録文書">
         <div className="document-file-row document-file-head" role="row">
           <span role="columnheader">ファイル名</span>
@@ -79,15 +161,33 @@ export function DocumentFilePanel({
           <span role="columnheader">状態</span>
           <span role="columnheader">操作</span>
         </div>
-        {visibleDocuments.length === 0 ? (
+        {folderDocumentsCount === 0 ? (
           <EmptyState
             title="登録済みドキュメントはありません。"
             description={documentGroups.length === 0 ? "まずフォルダを作成し、保存先を選択してからファイルをアップロードしてください。" : "保存先フォルダを選択してファイルをアップロードしてください。"}
             action={<button type="button" disabled={!canWrite || !uploadGroupId} onClick={() => uploadInputRef.current?.click()}>ファイルをアップロード</button>}
           />
+        ) : visibleDocuments.length === 0 ? (
+          <EmptyState
+            title="条件に一致するドキュメントはありません。"
+            description="検索語、種別、状態、所属フォルダの条件を変更してください。"
+          />
         ) : (
           visibleDocuments.map((document) => (
-            <div className="document-file-row" role="row" key={document.documentId}>
+            <div
+              className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
+              role="row"
+              key={document.documentId}
+              tabIndex={0}
+              aria-label={`${document.fileName}の詳細を表示`}
+              onClick={() => onSelectDocument(document)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  onSelectDocument(document)
+                }
+              }}
+            >
               <span role="cell" className="document-name-cell">
                 <FileIcon document={document} />
                 <span>{document.fileName}</span>
@@ -95,14 +195,17 @@ export function DocumentFilePanel({
               <span role="cell">{fileTypeLabel(document)}</span>
               <span role="cell">{formatDateTime(document.createdAt)}</span>
               <span role="cell">{document.chunkCount}</span>
-              <span role="cell">{document.lifecycleStatus ?? "active"}</span>
+              <span role="cell">{documentStatusLabel(document)}</span>
               <span role="cell" className="document-actions-cell">
                 <button
                   type="button"
                   title={`${document.fileName}の再インデックスをステージング`}
                   aria-label={`${document.fileName}の再インデックスをステージング`}
                   disabled={!canReindex || operationState.stagingReindexDocumentId === document.documentId}
-                  onClick={() => onConfirmAction({ kind: "stage", document })}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onConfirmAction({ kind: "stage", document })
+                  }}
                 >
                   {operationState.stagingReindexDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
                 </button>
@@ -112,7 +215,10 @@ export function DocumentFilePanel({
                   title={`${document.fileName}を削除`}
                   aria-label={`${document.fileName}を削除`}
                   disabled={!canDelete || operationState.deletingDocumentId === document.documentId}
-                  onClick={() => onConfirmAction({ kind: "delete", document })}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onConfirmAction({ kind: "delete", document })
+                  }}
                 >
                   {operationState.deletingDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
                 </button>
@@ -123,7 +229,7 @@ export function DocumentFilePanel({
       </div>
 
       <footer className="document-table-footer">
-        <span>{visibleDocuments.length} / {documents.length} 件を表示</span>
+        <span>{visibleDocuments.length} / {folderDocumentsCount} 件を表示（全体 {documents.length} 件）</span>
       </footer>
 
       <ReindexMigrationStrip

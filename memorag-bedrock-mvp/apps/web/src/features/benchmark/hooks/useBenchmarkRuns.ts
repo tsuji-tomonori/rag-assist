@@ -22,7 +22,7 @@ export function useBenchmarkRuns({
 }) {
   const [benchmarkRuns, setBenchmarkRuns] = useState<BenchmarkRun[]>([])
   const [benchmarkSuites, setBenchmarkSuites] = useState<BenchmarkSuite[]>([])
-  const [benchmarkSuiteId, setBenchmarkSuiteId] = useState("standard-agent-v1")
+  const [benchmarkSuiteId, setBenchmarkSuiteId] = useState("")
   const [benchmarkModelId, setBenchmarkModelId] = useState(defaultModelId)
   const [benchmarkConcurrency, setBenchmarkConcurrency] = useState(1)
 
@@ -33,7 +33,7 @@ export function useBenchmarkRuns({
   const refreshBenchmarkSuites = useCallback(async () => {
     const suites = await listBenchmarkSuites()
     setBenchmarkSuites(suites)
-    setBenchmarkSuiteId((current) => suites.find((suite) => suite.suiteId === current)?.suiteId ?? suites[0]?.suiteId ?? current)
+    setBenchmarkSuiteId((current) => suites.find((suite) => suite.suiteId === current)?.suiteId ?? suites[0]?.suiteId ?? "")
   }, [])
 
   async function onStartBenchmark() {
@@ -41,9 +41,13 @@ export function useBenchmarkRuns({
     setError(null)
     try {
       const selectedSuite = benchmarkSuites.find((suite) => suite.suiteId === benchmarkSuiteId)
+      if (!selectedSuite) {
+        setError("実行可能な benchmark suite を取得できていません。更新後に再実行してください。")
+        return
+      }
       const created = await startBenchmarkRun({
         suiteId: benchmarkSuiteId,
-        mode: selectedSuite?.mode ?? "agent",
+        mode: selectedSuite.mode,
         runner: "codebuild",
         modelId: benchmarkModelId,
         embeddingModelId,
