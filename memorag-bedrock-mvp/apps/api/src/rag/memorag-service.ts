@@ -1198,7 +1198,12 @@ export class MemoRagService {
   }
 
   async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
-    return this.deps.questionStore.create({ ...input, requesterUserId: user?.userId })
+    return this.deps.questionStore.create({
+      ...input,
+      requesterUserId: user?.userId,
+      requesterName: input.requesterName?.trim() || userDisplayName(user),
+      requesterDepartment: input.requesterDepartment?.trim() || "未設定"
+    })
   }
 
   async listQuestions(): Promise<HumanQuestion[]> {
@@ -1209,8 +1214,11 @@ export class MemoRagService {
     return this.deps.questionStore.get(questionId)
   }
 
-  async answerQuestion(questionId: string, input: AnswerQuestionInput): Promise<HumanQuestion> {
-    return this.deps.questionStore.answer(questionId, input)
+  async answerQuestion(questionId: string, input: AnswerQuestionInput, user?: AppUser): Promise<HumanQuestion> {
+    return this.deps.questionStore.answer(questionId, {
+      ...input,
+      responderName: input.responderName?.trim() || userDisplayName(user)
+    })
   }
 
   async resolveQuestion(questionId: string): Promise<HumanQuestion> {
@@ -2098,6 +2106,10 @@ function normalizeOptionalDocumentGroup(group: DocumentGroup | undefined): Docum
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort()
+}
+
+function userDisplayName(user?: AppUser): string {
+  return user?.email?.trim() || user?.userId?.trim() || "未設定"
 }
 
 function forbiddenError(message: string): Error & { status: number } {

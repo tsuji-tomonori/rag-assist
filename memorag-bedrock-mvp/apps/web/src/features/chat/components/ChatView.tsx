@@ -4,6 +4,7 @@ import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { DebugTrace } from "../../debug/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
 import type { HumanQuestion } from "../../questions/types.js"
+import type { CurrentUser } from "../../../shared/types/common.js"
 import { DebugPanel } from "../../debug/components/DebugPanel.js"
 import type { Message } from "../types.js"
 import { ChatComposer } from "./ChatComposer.js"
@@ -17,6 +18,7 @@ export function ChatView({
   isProcessing,
   pendingActivity,
   latestMessageRef,
+  currentUser,
   loading,
   canAsk,
   canWriteDocuments,
@@ -51,6 +53,7 @@ export function ChatView({
   isProcessing: boolean
   pendingActivity: string | null
   latestMessageRef: RefObject<HTMLElement | null>
+  currentUser: CurrentUser | null
   loading: boolean
   canAsk: boolean
   canWriteDocuments: boolean
@@ -91,6 +94,7 @@ export function ChatView({
           isProcessing={isProcessing}
           pendingActivity={pendingActivity}
           latestMessageRef={latestMessageRef}
+          currentUser={currentUser}
           loading={loading}
           onSelectPrompt={onSetQuestion}
           onCreateQuestion={onCreateQuestion}

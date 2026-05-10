@@ -9,6 +9,7 @@ const defaultProps: Parameters<typeof ChatView>[0] = {
   isProcessing: false,
   pendingActivity: null,
   latestMessageRef: { current: null },
+  currentUser: { userId: "user-1", email: "tester@example.com", groups: ["CHAT_USER"], permissions: ["chat:create"] },
   loading: false,
   canAsk: true,
   canWriteDocuments: false,

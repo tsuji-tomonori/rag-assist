@@ -302,14 +302,18 @@ test("service manages reviewed alias artifacts and audit log", async () => {
 
 test("service delegates human question lifecycle to the question store", async () => {
   const { service } = await createService()
+  const user = { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] }
 
   const question = await service.createQuestion({
     title: "資料外の質問",
     question: "担当者へ確認してください。",
     sourceQuestion: "資料外の質問は？",
     chatAnswer: "資料からは回答できません。"
-  })
+  }, user)
   assert.equal(question.status, "open")
+  assert.equal(question.requesterName, "requester@example.com")
+  assert.equal(question.requesterDepartment, "未設定")
+  assert.equal(question.requesterUserId, "user-1")
   assert.equal((await service.listQuestions())[0]?.questionId, question.questionId)
   assert.equal((await service.getQuestion(question.questionId))?.questionId, question.questionId)
 
@@ -317,9 +321,10 @@ test("service delegates human question lifecycle to the question store", async (
     answerTitle: "回答",
     answerBody: "担当者の確認結果です。",
     references: "社内確認"
-  })
+  }, { userId: "answerer-1", email: "answerer@example.com", cognitoGroups: ["ANSWER_EDITOR"] })
   assert.equal(answered.status, "answered")
   assert.equal(answered.answerBody, "担当者の確認結果です。")
+  assert.equal(answered.responderName, "answerer@example.com")
 
   const resolved = await service.resolveQuestion(question.questionId)
   assert.equal(resolved.status, "resolved")
