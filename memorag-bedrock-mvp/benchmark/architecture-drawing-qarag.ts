@@ -96,6 +96,39 @@ type DrawingCorpusMetadata = {
   drawingRegionIndex: DrawingRegionMetadata[]
 }
 
+type VisualPageRetrievalOptions = {
+  enabled: boolean
+  indexOutput?: string
+  reportOutput?: string
+  profileId?: string
+}
+
+type VisualPageIndexEntry = {
+  sourceId: string
+  fileName: string
+  pageOrSheet: string
+  sourceQaIds: string[]
+  regionIds: string[]
+  visualText: string
+  pageImageArtifact: string
+}
+
+type VisualPageIndexArtifact = {
+  schemaVersion: 1
+  suiteId: typeof architectureDrawingQaragSuiteId
+  profileId: string
+  status: "candidate"
+  enabledBy: "ARCHITECTURE_QARAG_VISUAL_PAGE_RETRIEVAL"
+  defaultPath: false
+  generatedAt: string
+  pages: VisualPageIndexEntry[]
+  adoptionGate: {
+    requiredMetrics: string[]
+    decision: "not_adopted_pending_ablation"
+    reason: string
+  }
+}
+
 type BenchmarkDefinitionSources = {
   sources: SourceRow[]
   seedQa: SeedQa[]
@@ -105,6 +138,7 @@ type PrepareOptions = {
   configPath: string
   datasetOutput: string
   corpusDir: string
+  visualPageRetrieval?: VisualPageRetrievalOptions
   fetchImpl?: typeof fetch
 }
 
@@ -117,11 +151,21 @@ export async function prepareArchitectureDrawingQaragBenchmark(options: PrepareO
   const definition = parseArchitectureDrawingQaragDefinition(await readFile(options.configPath, "utf-8"))
   const sourceFileNames = sourceFileNameMap(definition)
   const corpusMetadataBySource = drawingCorpusMetadataMap(definition)
-  const datasetRows = definition.seedQa.map((qa) => toDatasetRow(qa, sourceFileNames, corpusMetadataBySource.get(qa.sourceId)))
+  const visualPageIndex = visualPageIndexArtifact(definition, sourceFileNames, corpusMetadataBySource, options.visualPageRetrieval)
+  const visualPageCandidates = visualPageIndex ? visualPageCandidatesByQa(visualPageIndex) : undefined
+  const datasetRows = definition.seedQa.map((qa) => toDatasetRow(qa, sourceFileNames, corpusMetadataBySource.get(qa.sourceId), visualPageCandidates?.get(qa.id), visualPageIndex?.profileId))
 
   await mkdir(path.dirname(options.datasetOutput), { recursive: true })
   await mkdir(options.corpusDir, { recursive: true })
   await writeFile(options.datasetOutput, datasetRows.map((row) => JSON.stringify(row)).join("\n") + "\n", "utf-8")
+  if (visualPageIndex && options.visualPageRetrieval?.indexOutput) {
+    await mkdir(path.dirname(options.visualPageRetrieval.indexOutput), { recursive: true })
+    await writeFile(options.visualPageRetrieval.indexOutput, JSON.stringify(visualPageIndex, null, 2) + "\n", "utf-8")
+  }
+  if (visualPageIndex && options.visualPageRetrieval?.reportOutput) {
+    await mkdir(path.dirname(options.visualPageRetrieval.reportOutput), { recursive: true })
+    await writeFile(options.visualPageRetrieval.reportOutput, renderVisualPageRetrievalReport(visualPageIndex), "utf-8")
+  }
 
   const usedSourceIds = new Set(definition.seedQa.map((qa) => qa.sourceId))
   const corpusFiles: string[] = []
@@ -183,7 +227,13 @@ function extensionFromUrl(rawUrl: string): string | undefined {
   return undefined
 }
 
-function toDatasetRow(qa: SeedQa, sourceFileNames: Map<string, string>, corpusMetadata?: DrawingCorpusMetadata): DatasetRow {
+function toDatasetRow(
+  qa: SeedQa,
+  sourceFileNames: Map<string, string>,
+  corpusMetadata?: DrawingCorpusMetadata,
+  visualPageCandidates?: VisualPageIndexEntry[],
+  visualPageProfileId?: string
+): DatasetRow {
   const answerable = qa.taskCategory !== "abstention"
   const expectedEvidenceRegions = corpusMetadata?.drawingRegionIndex.filter((region) => region.sourceQaIds.includes(qa.id)) ?? []
   return {
@@ -204,6 +254,20 @@ function toDatasetRow(qa: SeedQa, sourceFileNames: Map<string, string>, corpusMe
       pageOrSheet: qa.pageOrSheet,
       evidenceAnchor: qa.evidenceAnchor,
       expectedEvidenceRegions,
+      ...(visualPageCandidates && visualPageCandidates.length > 0
+        ? {
+            visualPageRetrieval: {
+              profileId: visualPageProfileId,
+              defaultPath: false,
+              expectedPageCandidates: visualPageCandidates.map((candidate) => ({
+                sourceId: candidate.sourceId,
+                fileName: candidate.fileName,
+                pageOrSheet: candidate.pageOrSheet,
+                regionIds: candidate.regionIds
+              }))
+            }
+          }
+        : {}),
       drawingSourceType: corpusMetadata?.drawingSourceType,
       modalityScope: qa.modalityScope,
       taskCategory: qa.taskCategory,
@@ -226,6 +290,110 @@ function drawingCorpusMetadataMap(definition: ArchitectureDrawingQaragDefinition
       drawingRegionIndex: drawingRegionIndexFor(source.sourceId, qaRows)
     }]
   }))
+}
+
+function visualPageIndexArtifact(
+  definition: ArchitectureDrawingQaragDefinition,
+  sourceFileNames: Map<string, string>,
+  corpusMetadataBySource: Map<string, DrawingCorpusMetadata>,
+  options?: VisualPageRetrievalOptions
+): VisualPageIndexArtifact | undefined {
+  if (!options?.enabled) return undefined
+  const pages: VisualPageIndexEntry[] = []
+  for (const source of definition.sources) {
+    const fileName = sourceFileNames.get(source.sourceId)
+    const corpusMetadata = corpusMetadataBySource.get(source.sourceId)
+    if (!fileName || !corpusMetadata) continue
+    const qaRows = definition.seedQa.filter((qa) => qa.sourceId === source.sourceId)
+    const pageGroups = new Map<string, SeedQa[]>()
+    for (const qa of qaRows) pageGroups.set(qa.pageOrSheet, [...(pageGroups.get(qa.pageOrSheet) ?? []), qa])
+    for (const [pageOrSheet, pageQaRows] of pageGroups) {
+      const regions = corpusMetadata.drawingRegionIndex.filter((region) => region.pageOrSheet === pageOrSheet)
+      const sheet = corpusMetadata.drawingSheetMetadata.find((candidate) => candidate.pageOrSheet === pageOrSheet)
+      pages.push({
+        sourceId: source.sourceId,
+        fileName,
+        pageOrSheet,
+        sourceQaIds: pageQaRows.map((qa) => qa.id),
+        regionIds: regions.map((region) => region.regionId),
+        visualText: [
+          source.sourceName,
+          pageOrSheet,
+          sheet?.drawingNo,
+          sheet?.sheetTitle,
+          sheet?.scale,
+          ...pageQaRows.flatMap((qa) => [qa.evidenceAnchor, qa.modalityScope, qa.subSkill])
+        ].filter(Boolean).join(" | "),
+        pageImageArtifact: `${fileName}.pages/${safePageSlug(pageOrSheet)}.png`
+      })
+    }
+  }
+
+  return {
+    schemaVersion: 1,
+    suiteId: architectureDrawingQaragSuiteId,
+    profileId: options.profileId ?? "drawing-visual-page-candidate@1",
+    status: "candidate",
+    enabledBy: "ARCHITECTURE_QARAG_VISUAL_PAGE_RETRIEVAL",
+    defaultPath: false,
+    generatedAt: new Date().toISOString(),
+    pages,
+    adoptionGate: {
+      requiredMetrics: ["page_recall_at_k", "answerable_accuracy", "unsupported_answer_rate", "p95_latency_ms", "no_access_leak_count"],
+      decision: "not_adopted_pending_ablation",
+      reason: "CI-reproducible visual embedding model and page rendering are not wired yet; this artifact defines the gated candidate index for ablation."
+    }
+  }
+}
+
+function visualPageCandidatesByQa(index: VisualPageIndexArtifact): Map<string, VisualPageIndexEntry[]> {
+  const byQa = new Map<string, VisualPageIndexEntry[]>()
+  for (const page of index.pages) {
+    for (const qaId of page.sourceQaIds) byQa.set(qaId, [...(byQa.get(qaId) ?? []), page])
+  }
+  return byQa
+}
+
+function renderVisualPageRetrievalReport(index: VisualPageIndexArtifact): string {
+  const bySource = new Map<string, number>()
+  for (const page of index.pages) bySource.set(page.sourceId, (bySource.get(page.sourceId) ?? 0) + 1)
+  return `# Architecture Drawing Visual Page Retrieval Candidate
+
+- Suite: ${index.suiteId}
+- Profile: ${index.profileId}
+- Status: ${index.status}
+- Default path: ${index.defaultPath ? "yes" : "no"}
+- Enabled by: ${index.enabledBy}=1
+- Indexed page candidates: ${index.pages.length}
+
+## Adoption Decision
+
+Not adopted as default yet.
+
+Reason: ${index.adoptionGate.reason}
+
+## Required Comparison Metrics
+
+| metric | purpose |
+| --- | --- |
+${index.adoptionGate.requiredMetrics.map((metric) => `| ${metric} | baseline と visual candidate の比較 |`).join("\n")}
+
+## Source Coverage
+
+| source | page candidates |
+| --- | ---: |
+${[...bySource.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([sourceId, count]) => `| ${sourceId} | ${count} |`).join("\n")}
+
+## Evaluation Notes
+
+- Compare the baseline run summary with the visual candidate run summary.
+- Keep \`no_access_leak_count=0\` as a hard gate.
+- Promote to default only after page recall and answer quality improve without unacceptable latency, cost, or index-size growth.
+`
+}
+
+function safePageSlug(pageOrSheet: string): string {
+  return pageOrSheet.normalize("NFKC").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "page"
 }
 
 function drawingSourceTypeFor(source: SourceRow): DrawingSourceType {
@@ -347,9 +515,19 @@ async function main() {
   const configPath = process.env.ARCHITECTURE_QARAG_CONFIG ?? defaultConfigPath
   const datasetOutput = process.env.ARCHITECTURE_QARAG_DATASET_OUTPUT ?? defaultDatasetOutput
   const corpusDir = process.env.ARCHITECTURE_QARAG_CORPUS_DIR ?? defaultCorpusDir
-  const result = await prepareArchitectureDrawingQaragBenchmark({ configPath, datasetOutput, corpusDir })
+  const visualPageRetrieval = process.env.ARCHITECTURE_QARAG_VISUAL_PAGE_RETRIEVAL === "1"
+    ? {
+        enabled: true,
+        indexOutput: process.env.ARCHITECTURE_QARAG_VISUAL_PAGE_INDEX_OUTPUT ?? path.join(path.dirname(datasetOutput), "visual-page-index.json"),
+        reportOutput: process.env.ARCHITECTURE_QARAG_VISUAL_PAGE_REPORT_OUTPUT ?? path.join(path.dirname(datasetOutput), "visual-page-retrieval-report.md"),
+        profileId: process.env.ARCHITECTURE_QARAG_VISUAL_PAGE_PROFILE_ID
+      }
+    : undefined
+  const result = await prepareArchitectureDrawingQaragBenchmark({ configPath, datasetOutput, corpusDir, visualPageRetrieval })
   const fingerprint = createHash("sha256").update(`${result.datasetRows}:${result.corpusFiles.join(",")}`).digest("hex").slice(0, 12)
   console.log(`Prepared ${architectureDrawingQaragSuiteId}: datasetRows=${result.datasetRows} corpusFiles=${result.corpusFiles.length} fingerprint=${fingerprint}`)
+  if (visualPageRetrieval?.indexOutput) console.log(`Prepared visual page retrieval candidate index: ${visualPageRetrieval.indexOutput}`)
+  if (visualPageRetrieval?.reportOutput) console.log(`Prepared visual page retrieval adoption report: ${visualPageRetrieval.reportOutput}`)
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

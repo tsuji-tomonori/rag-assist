@@ -1,8 +1,8 @@
 # 建築図面向け visual page retrieval を導入候補として評価する
 
-保存先: `tasks/todo/20260510-1433-drawing-visual-page-retrieval.md`
+保存先: `tasks/do/20260510-1433-drawing-visual-page-retrieval.md`
 
-状態: todo
+状態: do
 
 ## 背景
 
