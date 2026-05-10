@@ -4722,13 +4722,16 @@
             "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000"
           }
         },
+        "EphemeralStorage": {
+          "Size": 4096
+        },
         "Handler": "index.handler",
         "LoggingConfig": {
           "LogGroup": {
             "Ref": "DocumentIngestRunWorkerLogGroup2B1C84D3"
           }
         },
-        "MemorySize": 1024,
+        "MemorySize": 4096,
         "Role": {
           "Fn::GetAtt": [
             "DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED",
@@ -4762,7 +4765,7 @@
             "Value": "tsuji-tomonori/rag-assist"
           }
         ],
-        "Timeout": 900
+        "Timeout": 1800
       },
       "DependsOn": [
         "DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE",
