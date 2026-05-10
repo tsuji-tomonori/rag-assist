@@ -17,7 +17,7 @@ import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
 import { MemoRagService } from "../rag/memorag-service.js"
-import { adaptiveEffectiveMinScore, bm25Search, buildLexicalIndex, rrfFuse, tokenizeQuery } from "./hybrid-search.js"
+import { adaptiveEffectiveMinScore, bm25Score, bm25Search, buildLexicalIndex, getLexicalIndex, rrfFuse, searchRag, tokenizeQuery } from "./hybrid-search.js"
 
 test("tokenizeQuery normalizes Japanese and ASCII terms with n-grams", () => {
   const tokens = tokenizeQuery("  申請承認 Workflow  ")
@@ -90,6 +90,136 @@ test("adaptive score floor does not reuse MIN_RETRIEVAL_SCORE for fused scores",
 
   assert.equal(adaptiveEffectiveMinScore(lowSemanticOnlyScores, 0, 0.25), 0.011)
   assert.equal(adaptiveEffectiveMinScore([0.0159], 0, 0.25), 0.0159)
+  assert.equal(adaptiveEffectiveMinScore([], 0.25, 0.5), 0.25)
+  assert.equal(bm25Score({ tf: 2, df: 1, docLen: 10, avgDocLen: 5, nDocs: 3 }) > 0, true)
+})
+
+test("lexical index and search handle empty inputs, scoped manifests, artifact misses, and semantic metadata fallback", async () => {
+  assert.deepEqual(bm25Search(buildLexicalIndex([], "empty"), tokenizeQuery("申請"), 3), [])
+  assert.deepEqual(bm25Search(buildLexicalIndex([lexicalDoc("doc-1-chunk-0000", "doc-1", "a.md", "本文")], "one"), [], 3), [])
+  assert.deepEqual(rrfFuse([[{ id: "a" }]], { k: 10, weights: [] }), [{ id: "a", score: 1 / 11 }])
+
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-hybrid-branches-"))
+  const deps = createLocalDeps(dataDir)
+  const objectStore = deps.objectStore as LocalObjectStore
+  await objectStore.putText("lexical-index/latest.json", JSON.stringify({ signature: "stale", objectKey: "lexical-index/stale.json" }))
+  await objectStore.putText("documents/active/source.txt", "休暇申請は3日前までです。")
+  await objectStore.putText("documents/expired/source.txt", "期限切れ資料です。")
+  await objectStore.putText("manifests/active.json", JSON.stringify({
+    documentId: "active",
+    fileName: "active.md",
+    sourceObjectKey: "documents/active/source.txt",
+    manifestObjectKey: "manifests/active.json",
+    vectorKeys: ["active-chunk-0000"],
+    evidenceVectorKeys: ["active-chunk-0000"],
+    memoryVectorKeys: [],
+    chunkCount: 1,
+    memoryCardCount: 0,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    lifecycleStatus: "active",
+    metadata: {
+      tenantId: "tenant-a",
+      scopeType: "chat",
+      temporaryScopeId: "tmp-1",
+      expiresAt: "2999-01-01T00:00:00.000Z",
+      allowedUsers: ["user@example.com"],
+      aliases: { PTO: ["休暇"] }
+    },
+    chunks: [{ id: "chunk-0000", text: "休暇申請は3日前までです。" }]
+  }))
+  await objectStore.putText("manifests/expired.json", JSON.stringify({
+    documentId: "expired",
+    fileName: "expired.md",
+    sourceObjectKey: "documents/expired/source.txt",
+    manifestObjectKey: "manifests/expired.json",
+    vectorKeys: ["expired-chunk-0000"],
+    chunkCount: 1,
+    memoryCardCount: 0,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    lifecycleStatus: "active",
+    metadata: { expiresAt: "2000-01-01T00:00:00.000Z" },
+    chunks: [{ id: "chunk-0000", text: "期限切れ資料です。" }]
+  }))
+
+  const index = await getLexicalIndex(
+    deps,
+    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] },
+    { tenantId: "tenant-a" },
+    { mode: "temporary", temporaryScopeId: "tmp-1", includeTemporary: true }
+  )
+  assert.equal(index.docs.length, 1)
+  assert.equal(index.docs[0]?.documentId, "active")
+  assert.equal(index.diagnostics?.cache, "built")
+  assert.match(index.aliasVersion, /^alias:/)
+
+  const memoryIndex = await getLexicalIndex(
+    deps,
+    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] },
+    { tenantId: "tenant-a" },
+    { mode: "temporary", temporaryScopeId: "tmp-1", includeTemporary: true }
+  )
+  assert.equal(memoryIndex.diagnostics?.cache, "memory")
+
+  const semanticDeps = {
+    ...deps,
+    evidenceVectorStore: {
+      put: async () => undefined,
+      delete: async () => undefined,
+      query: async () => [
+        {
+          key: "semantic-only",
+          score: 0.8,
+          metadata: {
+            kind: "chunk",
+            documentId: "active",
+            fileName: "active.md",
+            chunkId: "chunk-0000",
+            text: "休暇申請は3日前までです。",
+            createdAt: "2026-05-01T00:00:00.000Z",
+            lifecycleStatus: "active",
+            scopeType: "chat",
+            allowedUsers: ["user@example.com"],
+            tenantId: "tenant-a",
+            internalSecret: "hidden"
+          }
+        },
+        {
+          key: "staging",
+          score: 0.9,
+          metadata: {
+            kind: "chunk",
+            documentId: "active",
+            fileName: "active.md",
+            chunkId: "chunk-0001",
+            text: "staging should be hidden",
+            createdAt: "2026-05-01T00:00:00.000Z",
+            lifecycleStatus: "staging"
+          }
+        },
+        {
+          key: "missing-manifest",
+          score: 0.7,
+          metadata: {
+            kind: "chunk",
+            documentId: "missing",
+            fileName: "missing.md",
+            chunkId: "chunk-0000",
+            text: "missing manifest should be hidden",
+            createdAt: "2026-05-01T00:00:00.000Z"
+          }
+        }
+      ]
+    }
+  } as unknown as Dependencies
+  const semanticOnly = await searchRag(
+    semanticDeps,
+    { query: "休暇", topK: 5, lexicalTopK: 0, semanticTopK: 5, semanticVector: [1, 0], filters: { tenantId: "tenant-a" }, scope: { mode: "temporary", temporaryScopeId: "tmp-1", includeTemporary: true } },
+    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  )
+  assert.equal(semanticOnly.results.length, 1)
+  assert.equal(semanticOnly.results[0]?.id, "semantic-only")
+  assert.deepEqual(semanticOnly.results[0]?.sources, ["semantic"])
+  assert.deepEqual(semanticOnly.results[0]?.metadata, { tenantId: "tenant-a" })
 })
 
 test("service search applies ACL and metadata filters across lexical and vector results", async () => {

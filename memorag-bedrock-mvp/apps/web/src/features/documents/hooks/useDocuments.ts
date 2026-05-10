@@ -22,6 +22,15 @@ export type DocumentUploadState = {
   errorMessage?: string
 } | null
 
+export type CreateDocumentGroupInput = {
+  name: string
+  description?: string
+  parentGroupId?: string
+  visibility: "private" | "shared" | "org"
+  sharedGroups?: string[]
+  managerUserIds?: string[]
+}
+
 export function useDocuments({
   modelId,
   embeddingModelId,
@@ -138,15 +147,17 @@ export function useDocuments({
     }
   }
 
-  async function onCreateDocumentGroup(input: { name: string; visibility: "private" | "shared" | "org" }) {
-    if (!canWriteDocuments) return
+  async function onCreateDocumentGroup(input: CreateDocumentGroupInput): Promise<DocumentGroup | undefined> {
+    if (!canWriteDocuments) return undefined
     updateOperationState({ creatingGroup: true })
     setError(null)
     try {
-      await createDocumentGroup(input)
+      const group = await createDocumentGroup(input)
       await refreshDocumentGroups()
+      return group
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
+      return undefined
     } finally {
       updateOperationState({ creatingGroup: false })
     }

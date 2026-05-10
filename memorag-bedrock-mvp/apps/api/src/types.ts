@@ -98,12 +98,13 @@ export type VectorMetadata = {
   aclGroups?: string[]
   allowedUsers?: string[]
   sources?: string[]
+  sourceChunkIds?: string[]
   rrfScore?: number
   lexicalRank?: number
   semanticRank?: number
   crossQueryRrfScore?: number
   crossQueryRank?: number
-  expansionSource?: "hybrid" | "context_window"
+  expansionSource?: "hybrid" | "context_window" | "memory_source"
   createdAt: string
 }
 
@@ -182,6 +183,8 @@ export type MemoryCard = {
   constraints: string[]
   text: string
   sourceChunkIds?: string[]
+  pageStart?: number
+  pageEnd?: number
   sectionPath?: string[]
 }
 

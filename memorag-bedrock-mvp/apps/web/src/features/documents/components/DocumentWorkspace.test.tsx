@@ -209,7 +209,7 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /すべてのドキュメント/ }))
     expect(onUploadGroupChange).toHaveBeenCalledWith("")
 
-    await userEvent.type(screen.getByLabelText("新規フォルダ"), "個人メモ")
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "個人メモ")
     await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
     expect(onCreateGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
 
@@ -223,6 +223,106 @@ describe("DocumentWorkspace", () => {
       visibility: "shared",
       sharedGroups: ["HR", "RAG_GROUP_MANAGER"]
     })
+  })
+
+  it("設定込みでフォルダを作成し、作成後に保存先へ移動する", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue({
+      groupId: "group-new",
+      name: "人事規程",
+      visibility: "shared",
+      ownerUserId: "user-1",
+      sharedUserIds: [],
+      sharedGroups: ["HR"],
+      managerUserIds: ["manager-1"],
+      createdAt: "2026-05-10T00:00:00.000Z",
+      updatedAt: "2026-05-10T00:00:00.000Z"
+    } satisfies DocumentGroup)
+    const onUploadGroupChange = vi.fn()
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={onUploadGroupChange}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "人事規程")
+    await userEvent.type(screen.getByLabelText("説明"), "人事部門の就業規則")
+    await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), "group-1")
+    await userEvent.selectOptions(screen.getByLabelText("公開範囲"), "shared")
+    await userEvent.type(screen.getByLabelText("初期 shared groups"), "HR, RAG_GROUP_MANAGER")
+    await userEvent.type(screen.getByLabelText("管理者 user IDs"), "manager-1, manager-2")
+
+    expect(screen.getByText("公開範囲: 指定 group 共有")).toBeInTheDocument()
+    expect(screen.getByText("親フォルダ: 社内規定")).toBeInTheDocument()
+    expect(screen.getByText("共有先: HR, RAG_GROUP_MANAGER")).toBeInTheDocument()
+    expect(screen.getByText("管理者: manager-1, manager-2")).toBeInTheDocument()
+    expect(screen.getByText("作成後移動: する")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+
+    expect(onCreateGroup).toHaveBeenCalledWith({
+      name: "人事規程",
+      description: "人事部門の就業規則",
+      parentGroupId: "group-1",
+      visibility: "shared",
+      sharedGroups: ["HR", "RAG_GROUP_MANAGER"],
+      managerUserIds: ["manager-1", "manager-2"]
+    })
+    expect(onUploadGroupChange).toHaveBeenCalledWith("group-new")
+  })
+
+  it("フォルダ作成のshared groupsと管理者IDをvalidationする", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "監査資料")
+    await userEvent.selectOptions(screen.getByLabelText("公開範囲"), "shared")
+    await userEvent.type(screen.getByLabelText("初期 shared groups"), "AUDIT,,AUDIT")
+    await userEvent.type(screen.getByLabelText("管理者 user IDs"), "manager-1,,manager-1")
+
+    expect(screen.getByText("shared groups に空の指定があります。余分なカンマを削除してください。")).toBeInTheDocument()
+    expect(screen.getByText("重複している shared group: AUDIT")).toBeInTheDocument()
+    expect(screen.getByText("管理者 user IDs に空の指定があります。余分なカンマを削除してください。")).toBeInTheDocument()
+    expect(screen.getByText("重複している管理者 user ID: manager-1")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeDisabled()
+    expect(onCreateGroup).not.toHaveBeenCalled()
   })
 
   it("共有group入力の重複と空値をvalidationする", async () => {
@@ -621,8 +721,8 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /全社公開/ }))
 
-    expect(screen.getByText("組織全体")).toBeInTheDocument()
-    expect(screen.getByText("公開範囲")).toBeInTheDocument()
+    expect(screen.getAllByText("組織全体").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("公開範囲").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText("user-2")).toBeInTheDocument()
     expect(screen.getByText("User ID")).toBeInTheDocument()
     expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(1)
