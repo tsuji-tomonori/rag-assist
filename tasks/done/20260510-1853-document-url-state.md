@@ -1,6 +1,6 @@
 # ドキュメント管理 URL 状態同期
 
-状態: do
+状態: done
 タスク種別: 機能追加
 作成日: 2026-05-10
 
@@ -28,6 +28,19 @@
 
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState`
 - 必要に応じて追加の targeted test を実行する。
+
+## 完了時の検証
+
+- `npm ci`: pass
+- `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState`: pass
+- `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
+- `npm --prefix memorag-bedrock-mvp run lint`: pass
+- `git diff --check`: pass
+
+## PR コメント
+
+- 受け入れ条件確認コメントを PR #253 に追加済み。
+- セルフレビューコメントを PR #253 に追加済み。
 
 ## リスク
 
