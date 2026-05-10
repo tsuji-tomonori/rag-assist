@@ -167,6 +167,7 @@ export function DocumentWorkspace({
   const shareTargetGroupId = shareGroupId || selectedGroupId
   const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
   const shareDraft = parseSharedGroups(shareGroups)
+  const shareGroupOptions = uniqueSorted([...documentGroups.flatMap((group) => group.sharedGroups), ...shareDraft.groups])
   const shareDiff = buildShareDiff(shareTargetGroup?.sharedGroups ?? [], shareDraft.groups)
   const shareHasDuplicate = shareDraft.duplicates.length > 0
   const shareHasEmptyToken = shareDraft.hasEmptyToken
@@ -279,6 +280,13 @@ export function DocumentWorkspace({
     await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups })
     recordSessionOperation("共有更新", shareTargetGroup?.name ?? shareTargetGroupId, `shared groups: ${shareDraft.groups.join(", ") || "なし"}`)
     setShareGroups("")
+  }
+
+  function toggleShareGroupOption(groupName: string, checked: boolean) {
+    const nextGroups = checked
+      ? uniqueSorted([...shareDraft.groups, groupName])
+      : shareDraft.groups.filter((group) => group !== groupName)
+    setShareGroups(nextGroups.join(", "))
   }
 
   async function copyDocumentId(documentId: string) {
@@ -411,6 +419,7 @@ export function DocumentWorkspace({
           shareHasDuplicate={shareHasDuplicate}
           shareDuplicates={shareDraft.duplicates}
           shareDiff={shareDiff}
+          shareGroupOptions={shareGroupOptions}
           visibleDocuments={visibleDocuments}
           visibleChunkCount={visibleChunkCount}
           uploadGroupId={uploadGroupId}
@@ -448,6 +457,7 @@ export function DocumentWorkspace({
           onMoveToCreatedGroupChange={setMoveToCreatedGroup}
           onShareGroupIdChange={setShareGroupId}
           onShareGroupsChange={setShareGroups}
+          onShareGroupOptionChange={toggleShareGroupOption}
           onUploadGroupChange={onUploadGroupChange}
           onUploadSubmit={(event) => void onSubmit(event)}
           onCreateGroupSubmit={(event) => void onCreateGroupSubmit(event)}

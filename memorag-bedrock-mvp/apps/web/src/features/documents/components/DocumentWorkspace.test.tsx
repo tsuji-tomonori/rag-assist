@@ -543,6 +543,85 @@ describe("DocumentWorkspace", () => {
     expect(onShareGroup).not.toHaveBeenCalled()
   })
 
+  it("実データ由来の共有group候補を選択して共有差分とpayloadに反映する", async () => {
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={onShareGroup}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
+
+    const selector = screen.getByRole("group", { name: "共有 group 候補" })
+    const hrOption = within(selector).getByRole("checkbox", { name: "HR" })
+    expect(hrOption).not.toBeChecked()
+
+    await userEvent.click(hrOption)
+    expect(screen.getByLabelText("共有 Cognito group")).toHaveValue("HR")
+    expect(screen.getByText("変更なし: HR")).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("共有 Cognito group"), ", RAG_GROUP_MANAGER")
+    const ragOption = within(selector).getByRole("checkbox", { name: "RAG_GROUP_MANAGER" })
+    expect(ragOption).toBeChecked()
+
+    await userEvent.click(hrOption)
+    expect(screen.getByLabelText("共有 Cognito group")).toHaveValue("RAG_GROUP_MANAGER")
+    expect(screen.getByText("追加: RAG_GROUP_MANAGER")).toBeInTheDocument()
+    expect(screen.getByText("削除: HR")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "共有更新" }))
+    expect(onShareGroup).toHaveBeenCalledWith("group-1", {
+      visibility: "shared",
+      sharedGroups: ["RAG_GROUP_MANAGER"]
+    })
+  })
+
+  it("共有group候補がない場合は架空候補を表示しない", () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[{ ...documentGroups[0]!, sharedGroups: [] }]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("group", { name: "共有 group 候補" })).toHaveTextContent("候補はありません。必要な group 名を入力してください。")
+    expect(screen.queryByRole("checkbox", { name: "CHAT_USER" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox", { name: "RAG_GROUP_MANAGER" })).not.toBeInTheDocument()
+  })
+
   it("実データのファイル種別を表示し、再インデックスを通知する", async () => {
     const onStageReindex = vi.fn().mockResolvedValue(undefined)
 

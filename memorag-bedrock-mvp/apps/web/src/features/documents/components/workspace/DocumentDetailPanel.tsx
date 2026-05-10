@@ -18,6 +18,7 @@ export function DocumentDetailPanel({
   shareHasDuplicate,
   shareDuplicates,
   shareDiff,
+  shareGroupOptions,
   visibleDocuments,
   visibleChunkCount,
   uploadGroupId,
@@ -55,6 +56,7 @@ export function DocumentDetailPanel({
   onMoveToCreatedGroupChange,
   onShareGroupIdChange,
   onShareGroupsChange,
+  onShareGroupOptionChange,
   onUploadGroupChange,
   onUploadSubmit,
   onCreateGroupSubmit,
@@ -70,6 +72,7 @@ export function DocumentDetailPanel({
   shareHasDuplicate: boolean
   shareDuplicates: string[]
   shareDiff: { added: string[]; removed: string[]; unchanged: string[] }
+  shareGroupOptions: string[]
   visibleDocuments: DocumentManifest[]
   visibleChunkCount: number
   uploadGroupId: string
@@ -107,6 +110,7 @@ export function DocumentDetailPanel({
   onMoveToCreatedGroupChange: (value: boolean) => void
   onShareGroupIdChange: (value: string) => void
   onShareGroupsChange: (value: string) => void
+  onShareGroupOptionChange: (groupName: string, checked: boolean) => void
   onUploadGroupChange: (groupId: string) => void
   onUploadSubmit: (event: FormEvent) => void
   onCreateGroupSubmit: (event: FormEvent) => void
@@ -165,6 +169,29 @@ export function DocumentDetailPanel({
             {shareHasDuplicate && <p className="error">重複している group: {shareDuplicates.join(", ")}</p>}
             {!shareHasValidationError && <p>入力された group 名だけを共有先として送信します。存在確認は API 更新時に行われます。</p>}
           </div>
+          <fieldset className="share-group-selector" aria-label="共有 group 候補">
+            <legend>既存 shared group 候補</legend>
+            {shareGroupOptions.length === 0 ? (
+              <p>候補はありません。必要な group 名を入力してください。</p>
+            ) : (
+              <div className="share-group-options">
+                {shareGroupOptions.map((groupName) => {
+                  const checked = shareGroups.split(",").map((item) => item.trim()).includes(groupName)
+                  return (
+                    <label key={groupName}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={!canWrite || operationState.sharingGroupId !== null}
+                        onChange={(event) => onShareGroupOptionChange(groupName, event.target.checked)}
+                      />
+                      <span>{groupName}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </fieldset>
           <div className="share-diff-preview" id="share-groups-diff" aria-label="共有変更差分">
             <span>追加: {shareDiff.added.length > 0 ? shareDiff.added.join(", ") : "なし"}</span>
             <span>削除: {shareDiff.removed.length > 0 ? shareDiff.removed.join(", ") : "なし"}</span>
