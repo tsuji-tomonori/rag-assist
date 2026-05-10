@@ -1,8 +1,8 @@
 # 建築図面 QA の evidence sufficiency と abstention を強化する
 
-保存先: `tasks/do/20260510-1433-drawing-abstention-evidence-gate.md`
+保存先: `tasks/done/20260510-1433-drawing-abstention-evidence-gate.md`
 
-状態: do
+状態: done
 
 タスク種別: 機能追加
 
@@ -12,7 +12,7 @@
 - [x] 図面 QA 用の evidence sufficiency rule を runner に追加する。
 - [x] source hierarchy と normalized value mismatch を評価できる入力・判定を追加する。
 - [x] abstain / unsupported metric と report 出力をテストで固定する。
-- [ ] docs と作業レポートを更新し、検証後に PR コメントまで完了する。
+- [x] docs と作業レポートを更新し、検証後に PR コメントまで完了する。
 
 ## Done 条件
 
