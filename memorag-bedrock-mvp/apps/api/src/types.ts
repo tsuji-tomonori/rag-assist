@@ -91,6 +91,9 @@ export type VectorMetadata = {
   domainPolicy?: string
   ragPolicy?: string
   answerPolicy?: string
+  drawingSourceType?: "project_drawing" | "standard_detail" | "equipment_standard" | "benchmark_reference" | "external"
+  drawingSheetMetadata?: JsonValue[]
+  drawingRegionIndex?: JsonValue[]
   aclGroup?: string
   aclGroups?: string[]
   allowedUsers?: string[]

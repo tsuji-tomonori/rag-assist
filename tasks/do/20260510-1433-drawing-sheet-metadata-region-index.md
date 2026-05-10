@@ -1,8 +1,8 @@
 # 建築図面のタイトル欄・凡例・領域 index を構造化する
 
-保存先: `tasks/todo/20260510-1433-drawing-sheet-metadata-region-index.md`
+保存先: `tasks/do/20260510-1433-drawing-sheet-metadata-region-index.md`
 
-状態: todo
+状態: do
 
 ## 背景
 

@@ -32,7 +32,10 @@ const benchmarkSeedMetadataKeys = new Set([
   "docType",
   "lifecycleStatus",
   "source",
-  "searchAliases"
+  "searchAliases",
+  "drawingSourceType",
+  "drawingSheetMetadata",
+  "drawingRegionIndex"
 ])
 
 type UploadPurpose = "document" | "benchmarkSeed" | "chatAttachment"
@@ -89,6 +92,9 @@ function isBenchmarkSeedUploadMetadata(body: {
   if (metadata.lifecycleStatus !== "active") return false
   if (!Array.isArray(metadata.aclGroups) || metadata.aclGroups.length !== 1 || metadata.aclGroups[0] !== "BENCHMARK_RUNNER") return false
   if (metadata.searchAliases !== undefined && !isBenchmarkSearchAliases(metadata.searchAliases)) return false
+  if (metadata.drawingSourceType !== undefined && !isBenchmarkDrawingSourceType(metadata.drawingSourceType)) return false
+  if (metadata.drawingSheetMetadata !== undefined && !isBenchmarkDrawingSheetMetadata(metadata.drawingSheetMetadata)) return false
+  if (metadata.drawingRegionIndex !== undefined && !isBenchmarkDrawingRegionIndex(metadata.drawingRegionIndex)) return false
   if (!isSafeBenchmarkSeedFileName(body.fileName)) return false
   return true
 }
@@ -108,6 +114,75 @@ function isBenchmarkSearchAliases(value: unknown): boolean {
       && expansions.length > 0
       && expansions.every((item) => typeof item === "string" && item.trim().length > 0)
   )
+}
+
+function isBenchmarkDrawingSourceType(value: unknown): boolean {
+  return value === "project_drawing"
+    || value === "standard_detail"
+    || value === "equipment_standard"
+    || value === "benchmark_reference"
+    || value === "external"
+}
+
+function isBenchmarkDrawingSheetMetadata(value: unknown): boolean {
+  if (!Array.isArray(value)) return false
+  return value.every((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return false
+    const metadata = item as Record<string, unknown>
+    return typeof metadata.pageOrSheet === "string"
+      && metadata.pageOrSheet.length > 0
+      && optionalString(metadata.drawingNo)
+      && optionalString(metadata.sheetTitle)
+      && optionalString(metadata.scale)
+      && isStringArray(metadata.sourceQaIds)
+      && typeof metadata.confidence === "number"
+      && metadata.confidence >= 0
+      && metadata.confidence <= 1
+  })
+}
+
+function isBenchmarkDrawingRegionIndex(value: unknown): boolean {
+  if (!Array.isArray(value)) return false
+  return value.every((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return false
+    const region = item as Record<string, unknown>
+    return typeof region.regionId === "string"
+      && region.regionId.length > 0
+      && (region.regionType === "titleblock" || region.regionType === "legend" || region.regionType === "table" || region.regionType === "note" || region.regionType === "detail")
+      && typeof region.pageOrSheet === "string"
+      && region.pageOrSheet.length > 0
+      && isNormalizedBbox(region.bbox)
+      && (region.bboxSource === "heuristic_region_candidate" || region.bboxSource === "page_extent")
+      && typeof region.evidenceAnchor === "string"
+      && isStringArray(region.sourceQaIds)
+      && typeof region.confidence === "number"
+      && region.confidence >= 0
+      && region.confidence <= 1
+  })
+}
+
+function isNormalizedBbox(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const bbox = value as Record<string, unknown>
+  return bbox.unit === "normalized_page"
+    && normalizedCoordinate(bbox.x)
+    && normalizedCoordinate(bbox.y)
+    && normalizedCoordinate(bbox.width)
+    && normalizedCoordinate(bbox.height)
+    && Number(bbox.x) + Number(bbox.width) <= 1
+    && Number(bbox.y) + Number(bbox.height) <= 1
+}
+
+function normalizedCoordinate(value: unknown): boolean {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1
+}
+
+function optionalString(value: unknown): boolean {
+  return value === undefined || typeof value === "string"
+}
+
+function isStringArray(value: unknown): boolean {
+  return Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === "string" && item.length > 0)
 }
 
 function isBenchmarkSeedPdfUpload(body: z.infer<typeof DocumentUploadRequestSchema>): boolean {

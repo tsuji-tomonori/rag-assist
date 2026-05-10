@@ -26,6 +26,8 @@ test("converts the managed JSON into benchmark dataset rows", async () => {
       documentName: "建築工事標準詳細図（令和4年改定）概要・表示記号及び略号",
       pageOrSheet: "P1",
       evidenceAnchor: "lines 12-15",
+      expectedEvidenceRegions: [],
+      drawingSourceType: "standard_detail",
       modalityScope: "text+layout",
       taskCategory: "metadata/policy",
       subSkill: "purpose",
@@ -105,11 +107,21 @@ test("prepares a dataset and downloads only sources referenced by seed QA", asyn
     const result = await prepareArchitectureDrawingQaragBenchmark({ configPath, datasetOutput, corpusDir, fetchImpl: fetcher })
     const dataset = await readFile(datasetOutput, "utf-8")
     const corpus = await readFile(path.join(corpusDir, "s01-sample-drawing.pdf"))
+    const corpusMetadata = JSON.parse(await readFile(path.join(corpusDir, "s01-sample-drawing.pdf.metadata.json"), "utf-8")) as {
+      drawingSourceType?: string
+      drawingSheetMetadata?: Array<{ pageOrSheet?: string; sheetTitle?: string; sourceQaIds?: string[] }>
+      drawingRegionIndex?: Array<{ regionType?: string; pageOrSheet?: string; bbox?: { unit?: string }; sourceQaIds?: string[] }>
+    }
 
     assert.equal(result.datasetRows, 1)
     assert.deepEqual(result.corpusFiles, ["s01-sample-drawing.pdf"])
     assert.deepEqual(requested, ["https://example.com/sample.pdf"])
     assert.match(dataset, /"id":"QA-001"/)
+    assert.match(dataset, /"expectedEvidenceRegions":/)
+    assert.equal(corpusMetadata.drawingSourceType, "external")
+    assert.deepEqual(corpusMetadata.drawingSheetMetadata?.[0]?.sourceQaIds, ["QA-001"])
+    assert.equal(corpusMetadata.drawingRegionIndex?.[0]?.regionType, "titleblock")
+    assert.equal(corpusMetadata.drawingRegionIndex?.[0]?.bbox?.unit, "normalized_page")
     assert.equal(corpus.toString(), "%PDF-1.4 sample")
   } finally {
     await rm(tempDir, { recursive: true, force: true })
