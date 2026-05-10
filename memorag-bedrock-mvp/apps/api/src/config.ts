@@ -4,29 +4,66 @@ import { config as loadDotEnv } from "dotenv"
 loadDotEnv({ path: path.resolve(process.cwd(), ".env") })
 loadDotEnv({ path: path.resolve(process.cwd(), "../../.env"), override: false })
 
+const nodeEnv = process.env.NODE_ENV ?? "development"
+const isProduction = nodeEnv === "production"
 const region = process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? "ap-northeast-1"
 
 function boolEnv(name: string, defaultValue = false): boolean {
   const value = process.env[name]
   if (value === undefined) return defaultValue
-  return ["1", "true", "yes", "on"].includes(value.toLowerCase())
+  const normalized = value.toLowerCase()
+  if (["1", "true", "yes", "on"].includes(normalized)) return true
+  if (["0", "false", "no", "off"].includes(normalized)) return false
+  if (isProduction) throw new Error(`${name} must be a boolean value in production`)
+  return defaultValue
 }
 
 function numberEnv(name: string, defaultValue: number): number {
   const raw = process.env[name]
   if (!raw) return defaultValue
   const parsed = Number(raw)
-  return Number.isFinite(parsed) ? parsed : defaultValue
+  if (Number.isFinite(parsed)) return parsed
+  if (isProduction) throw new Error(`${name} must be a finite number in production`)
+  return defaultValue
 }
 
 function intEnv(name: string, defaultValue: number): number {
   return Math.trunc(numberEnv(name, defaultValue))
 }
 
+function csvEnv(name: string, defaultValue: readonly string[] = []): readonly string[] {
+  const raw = process.env[name]
+  if (!raw) return defaultValue
+  return raw.split(",").map((value) => value.trim()).filter(Boolean)
+}
+
+function requireProductionValue(name: string, value: string): void {
+  if (isProduction && value.trim().length === 0) throw new Error(`${name} is required in production`)
+}
+
+const authEnabled = boolEnv("AUTH_ENABLED", isProduction)
+const corsAllowedOrigins = csvEnv("CORS_ALLOWED_ORIGINS", isProduction ? [] : ["*"])
+const docsBucketName = process.env.DOCS_BUCKET_NAME ?? ""
+const cognitoRegion = process.env.COGNITO_REGION ?? region
+const cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID ?? ""
+const cognitoAppClientId = process.env.COGNITO_APP_CLIENT_ID ?? ""
+
+if (isProduction && !authEnabled) throw new Error("AUTH_ENABLED must be true in production")
+if (isProduction && corsAllowedOrigins.length === 0) throw new Error("CORS_ALLOWED_ORIGINS is required in production")
+if (isProduction && corsAllowedOrigins.includes("*")) throw new Error("CORS_ALLOWED_ORIGINS cannot include * in production")
+requireProductionValue("DOCS_BUCKET_NAME", docsBucketName)
+if (authEnabled) {
+  requireProductionValue("COGNITO_REGION", cognitoRegion)
+  requireProductionValue("COGNITO_USER_POOL_ID", cognitoUserPoolId)
+  requireProductionValue("COGNITO_APP_CLIENT_ID", cognitoAppClientId)
+}
+
 export const config = {
+  nodeEnv,
   region,
   port: numberEnv("PORT", 8787),
-  authEnabled: boolEnv("AUTH_ENABLED", false),
+  authEnabled,
+  corsAllowedOrigins,
   mockBedrock: boolEnv("MOCK_BEDROCK", false),
   useLocalVectorStore: boolEnv("USE_LOCAL_VECTOR_STORE", process.env.NODE_ENV !== "production"),
   useLocalQuestionStore: boolEnv("USE_LOCAL_QUESTION_STORE", process.env.NODE_ENV !== "production"),
@@ -36,7 +73,7 @@ export const config = {
   useLocalDocumentIngestRunStore: boolEnv("USE_LOCAL_DOCUMENT_INGEST_RUN_STORE", process.env.NODE_ENV !== "production"),
   useLocalDocumentGroupStore: boolEnv("USE_LOCAL_DOCUMENT_GROUP_STORE", process.env.NODE_ENV !== "production"),
   localDataDir: process.env.LOCAL_DATA_DIR ?? ".local-data",
-  docsBucketName: process.env.DOCS_BUCKET_NAME ?? "",
+  docsBucketName,
   questionTableName: process.env.QUESTION_TABLE_NAME ?? "memorag-human-questions",
   conversationHistoryTableName: process.env.CONVERSATION_HISTORY_TABLE_NAME ?? "memorag-conversation-history",
   benchmarkRunsTableName: process.env.BENCHMARK_RUNS_TABLE_NAME ?? "memorag-benchmark-runs",
@@ -163,7 +200,7 @@ export const config = {
   publishLexicalIndexOnSearch: boolEnv("PUBLISH_LEXICAL_INDEX_ON_SEARCH", process.env.NODE_ENV !== "production"),
   debugDownloadBucketName: process.env.DEBUG_DOWNLOAD_BUCKET_NAME ?? "",
   debugDownloadExpiresInSeconds: numberEnv("DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS", 900),
-  cognitoRegion: process.env.COGNITO_REGION ?? region,
-  cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID ?? "",
-  cognitoAppClientId: process.env.COGNITO_APP_CLIENT_ID ?? ""
+  cognitoRegion,
+  cognitoUserPoolId,
+  cognitoAppClientId
 } as const

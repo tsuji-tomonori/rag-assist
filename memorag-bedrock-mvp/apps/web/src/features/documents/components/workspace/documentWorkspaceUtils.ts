@@ -92,7 +92,7 @@ export function documentStatusLabel(document: DocumentManifest): string {
   return document.lifecycleStatus ?? "active"
 }
 
-export function parseSharedGroups(value: string): { groups: string[]; duplicates: string[]; hasEmptyToken: boolean } {
+export function parseListInput(value: string): { groups: string[]; duplicates: string[]; hasEmptyToken: boolean } {
   const raw = value.split(",")
   const hasEmptyToken = raw.length > 1 && raw.some((item) => item.trim().length === 0)
   const groups: string[] = []
@@ -104,6 +104,10 @@ export function parseSharedGroups(value: string): { groups: string[]; duplicates
     else groups.push(group)
   }
   return { groups, duplicates: [...duplicates], hasEmptyToken }
+}
+
+export function parseSharedGroups(value: string): { groups: string[]; duplicates: string[]; hasEmptyToken: boolean } {
+  return parseListInput(value)
 }
 
 export function buildShareDiff(currentGroups: string[], draftGroups: string[]): { added: string[]; removed: string[]; unchanged: string[] } {
@@ -134,6 +138,12 @@ export function visibilityLabel(group: DocumentGroup): string {
   if (group.visibility === "org") return `${group.name}: 組織全体`
   if (group.visibility === "shared") return `${group.name}: shared`
   return `${group.name}: private`
+}
+
+export function visibilityLabelValue(visibility: "private" | "shared" | "org"): string {
+  if (visibility === "org") return "組織全体"
+  if (visibility === "shared") return "指定 group 共有"
+  return "非公開"
 }
 
 function mimeTypeLabel(mimeType: string): string {

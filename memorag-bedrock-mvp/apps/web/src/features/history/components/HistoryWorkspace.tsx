@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import type { ConversationHistoryItem } from "../types.js"
+import { ConfirmDialog } from "../../../shared/components/ConfirmDialog.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../shared/utils/format.js"
 import { searchConversationHistory, type ConversationHistorySearchResult } from "../utils/conversationHistorySearch.js"
@@ -22,6 +23,7 @@ export function HistoryWorkspace({
   const [query, setQuery] = useState("")
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest" | "messages">("newest")
   const [favoritesOnly, setFavoritesOnly] = useState(favoriteOnly)
+  const [deleteCandidate, setDeleteCandidate] = useState<ConversationHistoryItem | null>(null)
   const favoriteCount = history.filter((item) => item.isFavorite).length
 
   useEffect(() => {
@@ -105,7 +107,7 @@ export function HistoryWorkspace({
                     <span>{formatDateTime(item.updatedAt)}</span>
                     <HistorySearchSummary result={result} />
                   </button>
-                  <button className="history-delete-button" type="button" onClick={() => onDelete(item.id)}>
+                  <button className="history-delete-button" type="button" onClick={() => setDeleteCandidate(item)}>
                     削除
                   </button>
                 </div>
@@ -114,6 +116,23 @@ export function HistoryWorkspace({
           )}
         </div>
       </div>
+      {deleteCandidate && (
+        <ConfirmDialog
+          title="この会話履歴を削除しますか？"
+          description="削除した会話履歴はこの画面から復元できません。必要な内容が残っていないか確認してください。"
+          confirmLabel="削除"
+          details={[
+            `対象:${deleteCandidate.title}`,
+            `更新日時:${formatDateTime(deleteCandidate.updatedAt)}`,
+            `メッセージ数:${deleteCandidate.messages.length}`
+          ]}
+          onCancel={() => setDeleteCandidate(null)}
+          onConfirm={() => {
+            onDelete(deleteCandidate.id)
+            setDeleteCandidate(null)
+          }}
+        />
+      )}
     </section>
   )
 }

@@ -121,7 +121,8 @@
 
 .folder-search-row input,
 .compact-form input,
-.compact-form select {
+.compact-form select,
+.compact-form textarea {
   width: 100%;
   min-height: 36px;
   border: 1px solid #ccd8e7;
@@ -131,6 +132,12 @@
   background: var(--color-surface);
   font-size: 13px;
   font-weight: 750;
+}
+
+.compact-form textarea {
+  min-height: 70px;
+  padding: 9px 11px;
+  resize: vertical;
 }
 
 .folder-search-row button,
@@ -590,6 +597,18 @@
   color: #60708a;
   font-size: 12px;
   font-weight: 850;
+}
+
+.compact-form .compact-checkbox {
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  color: #31445f;
+}
+
+.compact-form .compact-checkbox input {
+  width: 16px;
+  min-height: 16px;
+  padding: 0;
 }
 
 .compact-form input[aria-invalid="true"] {

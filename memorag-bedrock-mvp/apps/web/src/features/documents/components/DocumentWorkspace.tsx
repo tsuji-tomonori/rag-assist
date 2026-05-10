@@ -1,7 +1,7 @@
 import { type FormEvent, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
-import type { DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
+import type { CreateDocumentGroupInput, DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
 import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
@@ -16,9 +16,11 @@ import {
   documentStatusLabel,
   emptyOperationState,
   fileTypeLabel,
+  parseListInput,
   parseSharedGroups,
   sharedEntries,
   uniqueSorted,
+  visibilityLabelValue,
   type ConfirmAction,
   type DocumentSortKey,
   type WorkspaceFolder
@@ -57,7 +59,7 @@ export function DocumentWorkspace({
   migrations: ReindexMigration[]
   onUploadGroupChange: (groupId: string) => void
   onUpload: (file: File) => Promise<void>
-  onCreateGroup: (input: { name: string; visibility: "private" | "shared" | "org" }) => Promise<void>
+  onCreateGroup: (input: CreateDocumentGroupInput) => Promise<DocumentGroup | void>
   onShareGroup: (groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }) => Promise<void>
   onDelete: (documentId: string) => Promise<void>
   onStageReindex: (documentId: string) => Promise<void>
@@ -67,6 +69,12 @@ export function DocumentWorkspace({
 }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [groupName, setGroupName] = useState("")
+  const [groupDescription, setGroupDescription] = useState("")
+  const [groupParentId, setGroupParentId] = useState("")
+  const [groupVisibility, setGroupVisibility] = useState<"private" | "shared" | "org">("private")
+  const [groupSharedGroups, setGroupSharedGroups] = useState("")
+  const [groupManagerUserIds, setGroupManagerUserIds] = useState("")
+  const [moveToCreatedGroup, setMoveToCreatedGroup] = useState(true)
   const [shareGroupId, setShareGroupId] = useState("")
   const [shareGroups, setShareGroups] = useState("")
   const [selectedFolderId, setSelectedFolderId] = useState("all")
@@ -129,6 +137,15 @@ export function DocumentWorkspace({
   const shareHasDuplicate = shareDraft.duplicates.length > 0
   const shareHasEmptyToken = shareDraft.hasEmptyToken
   const shareHasValidationError = shareHasDuplicate || shareHasEmptyToken
+  const createSharedDraft = parseListInput(groupSharedGroups)
+  const createManagerDraft = parseListInput(groupManagerUserIds)
+  const validatesCreateSharedGroups = groupVisibility === "shared"
+  const createHasValidationError =
+    (validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) ||
+    createManagerDraft.hasEmptyToken ||
+    createManagerDraft.duplicates.length > 0
+  const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
+  const createVisibilityLabel = visibilityLabelValue(groupVisibility)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -140,9 +157,26 @@ export function DocumentWorkspace({
   async function onCreateGroupSubmit(event: FormEvent) {
     event.preventDefault()
     const name = groupName.trim()
-    if (!name || !canWrite) return
-    await onCreateGroup({ name, visibility: "private" })
+    if (!name || !canWrite || createHasValidationError) return
+    const input: CreateDocumentGroupInput = {
+      name,
+      visibility: groupVisibility,
+      ...(groupDescription.trim() ? { description: groupDescription.trim() } : {}),
+      ...(groupParentId ? { parentGroupId: groupParentId } : {}),
+      ...(groupVisibility === "shared" && createSharedDraft.groups.length > 0 ? { sharedGroups: createSharedDraft.groups } : {}),
+      ...(createManagerDraft.groups.length > 0 ? { managerUserIds: createManagerDraft.groups } : {})
+    }
+    const createdGroup = await onCreateGroup(input)
+    if (createdGroup?.groupId && moveToCreatedGroup) {
+      setSelectedFolderId(createdGroup.groupId)
+      onUploadGroupChange(createdGroup.groupId)
+    }
     setGroupName("")
+    setGroupDescription("")
+    setGroupParentId("")
+    setGroupVisibility("private")
+    setGroupSharedGroups("")
+    setGroupManagerUserIds("")
   }
 
   async function onShareSubmit(event: FormEvent) {
@@ -259,6 +293,18 @@ export function DocumentWorkspace({
           uploadState={uploadState}
           latestDocuments={latestDocuments}
           groupName={groupName}
+          groupDescription={groupDescription}
+          groupParentId={groupParentId}
+          groupVisibility={groupVisibility}
+          groupSharedGroups={groupSharedGroups}
+          groupManagerUserIds={groupManagerUserIds}
+          moveToCreatedGroup={moveToCreatedGroup}
+          createSharedDraft={createSharedDraft}
+          createManagerDraft={createManagerDraft}
+          validatesCreateSharedGroups={validatesCreateSharedGroups}
+          createHasValidationError={createHasValidationError}
+          createParentGroup={createParentGroup}
+          createVisibilityLabel={createVisibilityLabel}
           shareGroupId={shareGroupId}
           shareGroups={shareGroups}
           canWrite={canWrite}
@@ -268,6 +314,12 @@ export function DocumentWorkspace({
           shareSelectRef={shareSelectRef}
           onUploadFileChange={setUploadFile}
           onGroupNameChange={setGroupName}
+          onGroupDescriptionChange={setGroupDescription}
+          onGroupParentIdChange={setGroupParentId}
+          onGroupVisibilityChange={setGroupVisibility}
+          onGroupSharedGroupsChange={setGroupSharedGroups}
+          onGroupManagerUserIdsChange={setGroupManagerUserIds}
+          onMoveToCreatedGroupChange={setMoveToCreatedGroup}
           onShareGroupIdChange={setShareGroupId}
           onShareGroupsChange={setShareGroups}
           onUploadGroupChange={onUploadGroupChange}

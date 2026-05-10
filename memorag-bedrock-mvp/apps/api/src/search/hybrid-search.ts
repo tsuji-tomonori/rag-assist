@@ -463,6 +463,7 @@ function cheapRerank(query: string, results: SearchResult[]): SearchResult[] {
       const textTokens = new Set(tokenizeQuery(result.text))
       const covered = [...queryTokens].filter((token) => textTokens.has(token)).length
       score += covered * ragRuntimePolicy.profile.retrieval.scoring.tokenCoverageBonus
+      score += searchLayoutBoost(result, queryTokens)
       if (result.createdAt) {
         const ageDays = (Date.now() - new Date(result.createdAt).getTime()) / 86_400_000
         if (Number.isFinite(ageDays) && ageDays < 90) score += ragRuntimePolicy.profile.retrieval.scoring.recencyBonus
@@ -470,6 +471,34 @@ function cheapRerank(query: string, results: SearchResult[]): SearchResult[] {
       return { ...result, score }
     })
     .sort((a, b) => b.score - a.score)
+}
+
+function searchLayoutBoost(result: SearchResult, queryTokens: Set<string>): number {
+  const metadata = result.metadata ?? {}
+  const heading = stringMetadata(metadata.heading)
+  const sectionPath = Array.isArray(metadata.sectionPath) ? metadata.sectionPath.filter((item): item is string => typeof item === "string") : []
+  const figureCaption = stringMetadata(metadata.figureCaption)
+  const chunkKind = stringMetadata(metadata.chunkKind)
+  const layoutText = [heading, sectionPath.join(" "), figureCaption].filter(Boolean).join(" ")
+  const layoutTokens = new Set(tokenizeQuery(layoutText))
+  const layoutCoverage = [...queryTokens].filter((token) => layoutTokens.has(token)).length
+  let boost = Math.min(0.06, layoutCoverage * 0.015)
+  const queryText = [...queryTokens].join(" ")
+  if (heading && containsAnyToken(heading, queryTokens)) boost += 0.03
+  if (sectionPath.some((section) => containsAnyToken(section, queryTokens))) boost += 0.025
+  if (chunkKind === "table" && /table|表|一覧|金額|上限|比較/u.test(queryText)) boost += 0.025
+  if (chunkKind === "list" && /list|一覧|手順|項目|条件/u.test(queryText)) boost += 0.02
+  if (chunkKind === "figure" && /figure|図|画像|チャート|スライド/u.test(queryText)) boost += 0.02
+  return boost
+}
+
+function containsAnyToken(text: string, queryTokens: Set<string>): boolean {
+  const normalized = normalize(text)
+  return [...queryTokens].some((token) => normalized.includes(token))
+}
+
+function stringMetadata(value: JsonValue | undefined): string | undefined {
+  return typeof value === "string" ? value : undefined
 }
 
 function buildSearchDiagnostics(input: {

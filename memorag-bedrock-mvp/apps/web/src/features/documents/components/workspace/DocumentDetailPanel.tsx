@@ -26,6 +26,18 @@ export function DocumentDetailPanel({
   uploadState,
   latestDocuments,
   groupName,
+  groupDescription,
+  groupParentId,
+  groupVisibility,
+  groupSharedGroups,
+  groupManagerUserIds,
+  moveToCreatedGroup,
+  createSharedDraft,
+  createManagerDraft,
+  validatesCreateSharedGroups,
+  createHasValidationError,
+  createParentGroup,
+  createVisibilityLabel,
   shareGroupId,
   shareGroups,
   canWrite,
@@ -35,6 +47,12 @@ export function DocumentDetailPanel({
   shareSelectRef,
   onUploadFileChange,
   onGroupNameChange,
+  onGroupDescriptionChange,
+  onGroupParentIdChange,
+  onGroupVisibilityChange,
+  onGroupSharedGroupsChange,
+  onGroupManagerUserIdsChange,
+  onMoveToCreatedGroupChange,
   onShareGroupIdChange,
   onShareGroupsChange,
   onUploadGroupChange,
@@ -60,6 +78,18 @@ export function DocumentDetailPanel({
   uploadState: DocumentUploadState
   latestDocuments: DocumentManifest[]
   groupName: string
+  groupDescription: string
+  groupParentId: string
+  groupVisibility: "private" | "shared" | "org"
+  groupSharedGroups: string
+  groupManagerUserIds: string
+  moveToCreatedGroup: boolean
+  createSharedDraft: { groups: string[]; duplicates: string[]; hasEmptyToken: boolean }
+  createManagerDraft: { groups: string[]; duplicates: string[]; hasEmptyToken: boolean }
+  validatesCreateSharedGroups: boolean
+  createHasValidationError: boolean
+  createParentGroup?: DocumentGroup
+  createVisibilityLabel: string
   shareGroupId: string
   shareGroups: string
   canWrite: boolean
@@ -69,6 +99,12 @@ export function DocumentDetailPanel({
   shareSelectRef: RefObject<HTMLSelectElement | null>
   onUploadFileChange: (file: File | null) => void
   onGroupNameChange: (value: string) => void
+  onGroupDescriptionChange: (value: string) => void
+  onGroupParentIdChange: (value: string) => void
+  onGroupVisibilityChange: (value: "private" | "shared" | "org") => void
+  onGroupSharedGroupsChange: (value: string) => void
+  onGroupManagerUserIdsChange: (value: string) => void
+  onMoveToCreatedGroupChange: (value: boolean) => void
   onShareGroupIdChange: (value: string) => void
   onShareGroupsChange: (value: string) => void
   onUploadGroupChange: (groupId: string) => void
@@ -186,10 +222,71 @@ export function DocumentDetailPanel({
         )}
         <form className="compact-form" onSubmit={onCreateGroupSubmit}>
           <label>
-            <span>新規フォルダ</span>
+            <span>新規フォルダ名</span>
             <input value={groupName} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onGroupNameChange(event.target.value)} placeholder="フォルダ名" />
           </label>
-          <button type="submit" disabled={!canWrite || !groupName.trim() || operationState.creatingGroup}>
+          <label>
+            <span>説明</span>
+            <textarea value={groupDescription} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onGroupDescriptionChange(event.target.value)} placeholder="フォルダの用途や対象資料" />
+          </label>
+          <label>
+            <span>親フォルダ</span>
+            <select value={groupParentId} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onGroupParentIdChange(event.target.value)}>
+              <option value="">親フォルダなし</option>
+              {documentGroups.map((group) => (
+                <option value={group.groupId} key={group.groupId}>{group.name}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>公開範囲</span>
+            <select value={groupVisibility} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onGroupVisibilityChange(event.target.value as "private" | "shared" | "org")}>
+              <option value="private">非公開</option>
+              <option value="shared">指定 group 共有</option>
+              <option value="org">組織全体</option>
+            </select>
+          </label>
+          <label>
+            <span>初期 shared groups</span>
+            <input
+              value={groupSharedGroups}
+              disabled={!canWrite || operationState.creatingGroup || groupVisibility !== "shared"}
+              onChange={(event) => onGroupSharedGroupsChange(event.target.value)}
+              placeholder="Cognito group をカンマ区切りで入力"
+              aria-invalid={(validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) || undefined}
+              aria-describedby="create-group-validation create-group-preview"
+            />
+          </label>
+          <label>
+            <span>管理者 user IDs</span>
+            <input
+              value={groupManagerUserIds}
+              disabled={!canWrite || operationState.creatingGroup}
+              onChange={(event) => onGroupManagerUserIdsChange(event.target.value)}
+              placeholder="User ID をカンマ区切りで入力"
+              aria-invalid={(createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0) || undefined}
+              aria-describedby="create-group-validation create-group-preview"
+            />
+          </label>
+          <label className="compact-checkbox">
+            <input type="checkbox" checked={moveToCreatedGroup} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onMoveToCreatedGroupChange(event.target.checked)} />
+            <span>作成後にこのフォルダへ移動</span>
+          </label>
+          <div className="share-validation" id="create-group-validation" aria-live="polite">
+            {validatesCreateSharedGroups && createSharedDraft.hasEmptyToken && <p className="error">shared groups に空の指定があります。余分なカンマを削除してください。</p>}
+            {validatesCreateSharedGroups && createSharedDraft.duplicates.length > 0 && <p className="error">重複している shared group: {createSharedDraft.duplicates.join(", ")}</p>}
+            {createManagerDraft.hasEmptyToken && <p className="error">管理者 user IDs に空の指定があります。余分なカンマを削除してください。</p>}
+            {createManagerDraft.duplicates.length > 0 && <p className="error">重複している管理者 user ID: {createManagerDraft.duplicates.join(", ")}</p>}
+            {!createHasValidationError && <p>入力値だけを作成 payload に含めます。group / user の存在確認は API 作成時に行われます。</p>}
+          </div>
+          <div className="share-diff-preview" id="create-group-preview" aria-label="新規フォルダ作成プレビュー">
+            <span>公開範囲: {createVisibilityLabel}</span>
+            <span>親フォルダ: {createParentGroup?.name ?? "なし"}</span>
+            <span>共有先: {groupVisibility === "shared" && createSharedDraft.groups.length > 0 ? createSharedDraft.groups.join(", ") : "なし"}</span>
+            <span>管理者: {createManagerDraft.groups.length > 0 ? createManagerDraft.groups.join(", ") : "未指定"}</span>
+            <span>作成後移動: {moveToCreatedGroup ? "する" : "しない"}</span>
+          </div>
+          <button type="submit" disabled={!canWrite || !groupName.trim() || createHasValidationError || operationState.creatingGroup}>
             {operationState.creatingGroup && <LoadingSpinner className="button-spinner" />}
             新規フォルダ
           </button>

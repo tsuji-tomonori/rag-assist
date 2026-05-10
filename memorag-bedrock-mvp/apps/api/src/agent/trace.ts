@@ -427,7 +427,7 @@ function formatRetrievalDiagnostics(diagnostics: NonNullable<QaAgentUpdate["acti
     `lexicalCount=${diagnostics.lexicalCount}`,
     `semanticCount=${diagnostics.semanticCount}`,
     `fusedCount=${diagnostics.fusedCount}`,
-    `sources=lexical:${diagnostics.sourceCounts.lexical}, semantic:${diagnostics.sourceCounts.semantic}, hybrid:${diagnostics.sourceCounts.hybrid}`
+    `sources=lexical:${diagnostics.sourceCounts.lexical}, semantic:${diagnostics.sourceCounts.semantic}, hybrid:${diagnostics.sourceCounts.hybrid}, memory:${diagnostics.sourceCounts.memory}`
   ]
 }
 

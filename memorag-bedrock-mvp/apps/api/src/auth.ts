@@ -1,6 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from "jose"
 import type { MiddlewareHandler } from "hono"
 import { HTTPException } from "hono/http-exception"
+import type { AppEnv } from "./app-env.js"
 import { config } from "./config.js"
 
 export type AppUser = {
@@ -19,7 +20,7 @@ const jwks =
     ? createRemoteJWKSet(new URL(`https://cognito-idp.${cognitoRegion}.amazonaws.com/${cognitoUserPoolId}/.well-known/jwks.json`))
     : null
 
-export const authMiddleware: MiddlewareHandler = async (c, next) => {
+export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
   if (!config.authEnabled) {
     c.set("user", {
       userId: process.env.LOCAL_AUTH_USER_ID ?? "local-dev",

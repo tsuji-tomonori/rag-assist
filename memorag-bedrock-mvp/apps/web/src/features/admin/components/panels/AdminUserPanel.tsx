@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react"
+import { ConfirmDialog } from "../../../../shared/components/ConfirmDialog.js"
 import { EmptyState } from "../../../../shared/ui/index.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { managedUserStatusLabel } from "../../../../shared/utils/format.js"
@@ -153,6 +154,7 @@ function ManagedUserRow({
   onSetStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
 }) {
   const [selectedRole, setSelectedRole] = useState(user.groups[0] ?? "CHAT_USER")
+  const [statusCandidate, setStatusCandidate] = useState<"suspend" | "delete" | null>(null)
 
   useEffect(() => {
     setSelectedRole(user.groups[0] ?? "CHAT_USER")
@@ -189,17 +191,32 @@ function ManagedUserRow({
               <span>再開</span>
             </button>
           ) : (
-            <button type="button" disabled={!canSuspend || loading} onClick={() => void onSetStatus(user.userId, "suspend")}>
+            <button type="button" disabled={!canSuspend || loading} onClick={() => setStatusCandidate("suspend")}>
               {loading && <LoadingSpinner className="button-spinner" />}
               <span>停止</span>
             </button>
           )}
-          <button type="button" disabled={!canDelete || loading} onClick={() => void onSetStatus(user.userId, "delete")}>
+          <button type="button" disabled={!canDelete || loading} onClick={() => setStatusCandidate("delete")}>
             {loading && <LoadingSpinner className="button-spinner" />}
             <span>削除</span>
           </button>
         </div>
       </span>
+      {statusCandidate && (
+        <ConfirmDialog
+          title={statusCandidate === "suspend" ? "このユーザーを停止しますか？" : "このユーザーを削除状態にしますか？"}
+          description={statusCandidate === "suspend" ? "停止するとこのユーザーはアプリを利用できなくなります。" : "削除するとこのユーザーの管理対象レコードを削除します。"}
+          details={[`ユーザー: ${user.displayName || user.email}`, `メール: ${user.email}`, `現在の状態: ${managedUserStatusLabel(user.status)}`]}
+          confirmLabel={statusCandidate === "suspend" ? "停止" : "削除"}
+          tone="danger"
+          loading={loading}
+          onCancel={() => setStatusCandidate(null)}
+          onConfirm={async () => {
+            await onSetStatus(user.userId, statusCandidate)
+            setStatusCandidate(null)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -17,7 +17,7 @@
 | 性能テスト | benchmark | ベンチマーク suite の選択、run 起動、履歴、成果物ダウンロードを扱う領域です。 | benchmark | 1 | 18 | 「チャットへ戻る」を実行するボタン。<br>「テスト種別」に紐づく入力ラベル。<br>「テスト種別」を選ぶ選択項目。 ほか 13 件 | [benchmark.md](web-features/benchmark.md) |
 | チャット | chat | RAG 質問、回答表示、引用、追加確認、担当者エスカレーション、チャット入力を扱う領域です。 | chat | 16 | 40 | 「回答をコピー済み / 回答をコピー」を実行するボタン。<br>「この候補で質問する」を実行するボタン。<br>「自分で入力」を実行するボタン。 ほか 36 件 | [chat.md](web-features/chat.md) |
 | デバッグ | debug | RAG 実行 trace、検索根拠、support verification、step detail を調査する領域です。 | - | 5 | 11 | 「拡大デバッグパネルを閉じる」を実行するボタン。<br>「保存JSON」を実行するボタン。<br>「可視化JSON」を実行するボタン。 ほか 4 件 | [debug.md](web-features/debug.md) |
-| ドキュメント | documents | ドキュメント upload、document group、共有、blue-green reindex 操作を扱う領域です。 | documents | 6 | 59 | 「管理者設定へ戻る」を実行するボタン。<br>「文書詳細を閉じる」を実行するボタン。<br>「再インデックス」を実行するボタン。 ほか 47 件 | [documents.md](web-features/documents.md) |
+| ドキュメント | documents | ドキュメント upload、document group、共有、blue-green reindex 操作を扱う領域です。 | documents | 6 | 76 | 「管理者設定へ戻る」を実行するボタン。<br>「文書詳細を閉じる」を実行するボタン。<br>「再インデックス」を実行するボタン。 ほか 63 件 | [documents.md](web-features/documents.md) |
 | 履歴 | history | 会話履歴、検索、並び替え、お気に入り、履歴削除を扱う領域です。 | history, favorites | 1 | 11 | 「チャットへ戻る」を実行するボタン。<br>「履歴を検索」を入力または選択する項目。<br>「履歴の並び順」を選ぶ選択項目。 ほか 6 件 | [history.md](web-features/history.md) |
 | 担当者対応 | questions | 担当者が問い合わせを確認し、回答作成、下書き保存、回答送信を行う領域です。 | assignee | 1 | 21 | 「チャットへ戻る」を実行するボタン。<br>「ステータス / すべて」に紐づく入力ラベル。<br>「すべて」を選ぶ選択項目。 ほか 17 件 | [questions.md](web-features/questions.md) |
-| 共通 | shared | 複数領域で再利用される表示部品です。単独の画面ではなく、他の画面から使われます。 | - | 8 | 5 | 「キャンセル」を実行するボタン。<br>「label」を実行するボタン。 | [shared.md](web-features/shared.md) |
+| 共通 | shared | 複数領域で再利用される表示部品です。単独の画面ではなく、他の画面から使われます。 | - | 9 | 7 | 「キャンセル」を実行するボタン。<br>「label」を実行するボタン。 | [shared.md](web-features/shared.md) |

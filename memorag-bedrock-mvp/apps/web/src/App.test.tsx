@@ -857,6 +857,8 @@ describe("App chat and upload flow", () => {
     expect(benchmarkModelSelect).toBeTruthy()
     await userEvent.selectOptions(benchmarkModelSelect as HTMLElement, "anthropic.claude-3-haiku-20240307-v1:0")
     await userEvent.click(screen.getByRole("button", { name: "性能テストを実行" }))
+    const startDialog = await screen.findByRole("dialog", { name: "性能テストを実行しますか？" })
+    await userEvent.click(within(startDialog).getByRole("button", { name: "実行" }))
 
     expect(await screen.findByText("bench-1")).toBeInTheDocument()
     expect(screen.getAllByText("完了後に集計").length).toBeGreaterThanOrEqual(1)
@@ -1023,6 +1025,8 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("履歴"))
     await userEvent.type(screen.getByLabelText("履歴を検索"), "分類一")
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
+    const deleteDialog = await screen.findByRole("dialog", { name: "この会話履歴を削除しますか？" })
+    await userEvent.click(within(deleteDialog).getByRole("button", { name: "削除" }))
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some(
@@ -1462,6 +1466,8 @@ describe("App chat and upload flow", () => {
     )
 
     await userEvent.click(screen.getByRole("button", { name: "停止" }))
+    const suspendDialog = await screen.findByRole("dialog", { name: "このユーザーを停止しますか？" })
+    await userEvent.click(within(suspendDialog).getByRole("button", { name: "停止" }))
     expect(await screen.findByText("停止中")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "再開" }))
     expect(await screen.findByText("有効")).toBeInTheDocument()
@@ -1474,13 +1480,15 @@ describe("App chat and upload flow", () => {
     assertElement(approveButton)
     await userEvent.click(approveButton)
     await userEvent.click(screen.getByRole("button", { name: "公開" }))
+    const publishDialog = await screen.findByRole("dialog", { name: "Alias を公開しますか？" })
+    await userEvent.click(within(publishDialog).getByRole("button", { name: "公開" }))
     await waitFor(() =>
       expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/aliases/publish") && (init as RequestInit | undefined)?.method === "POST")).toBe(true)
     )
 
-    const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true)
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
-    expect(confirmMock).toHaveBeenCalled()
+    const userDeleteDialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
+    await userEvent.click(within(userDeleteDialog).getByRole("button", { name: "削除" }))
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/users/local-dev") && (init as RequestInit | undefined)?.method === "DELETE")

@@ -108,21 +108,7 @@ export class MockBedrockTextModel implements TextModel {
       if (contexts.length === 0) {
         return JSON.stringify({ isAnswerable: false, answer: "資料からは回答できません。", usedChunkIds: [] })
       }
-      const first = contexts[0]
-      if (!first) {
-        return JSON.stringify({ isAnswerable: false, answer: "資料からは回答できません。", usedChunkIds: [] })
-      }
-      const thresholdFact = computedFacts.find((fact) => fact.kind === "threshold_comparison")
-      if (thresholdFact) {
-        const selected = selectAnswerEvidence(question, contexts)
-        const chunkId = selected.chunkId ?? first[1] ?? "chunk-unknown"
-        return JSON.stringify({
-          isAnswerable: true,
-          answer: answerFromComputedFact(thresholdFact),
-          usedChunkIds: [chunkId],
-          usedComputedFactIds: typeof thresholdFact.id === "string" ? [thresholdFact.id] : []
-        })
-      }
+      const first = contexts[0]!
       const selected = selectAnswerEvidence(question, contexts)
       const chunkId = selected.chunkId ?? first[1] ?? "chunk-unknown"
       const text = selected.text || first[2]?.trim() || ""

@@ -28,7 +28,7 @@ import {
 } from "../schemas.js"
 import type { DocumentIngestRun, DocumentListItemSummary, DocumentManifest, DocumentManifestSummary, JsonValue } from "../types.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, routeAuthorization, sleep } from "./route-utils.js"
+import { looseRoute, routeAuthorization, sleep, validJson, validParam } from "./route-utils.js"
 import {
   authorizeDocumentDelete,
   authorizeDocumentUpload,
@@ -227,7 +227,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:group:create")
-      const body = (c.req as any).valid("json") as z.infer<typeof CreateDocumentGroupRequestSchema>
+      const body = validJson<z.infer<typeof CreateDocumentGroupRequestSchema>>(c)
       return c.json(await service.createDocumentGroup(user, body), 200)
     }
   )
@@ -253,8 +253,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:group:assign_manager")
-      const { groupId } = (c.req as any).valid("param") as { groupId: string }
-      const body = (c.req as any).valid("json") as z.infer<typeof ShareDocumentGroupRequestSchema>
+      const { groupId } = validParam<{ groupId: string }>(c)
+      const body = validJson<z.infer<typeof ShareDocumentGroupRequestSchema>>(c)
       try {
         const group = await service.updateDocumentGroupSharing(user, groupId, body)
         if (!group) return c.json({ error: "Document group not found" }, 404)
@@ -307,7 +307,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
     }),
     async (c) => {
-      const body = (c.req as any).valid("json") as z.infer<typeof DocumentUploadRequestSchema>
+      const body = validJson<z.infer<typeof DocumentUploadRequestSchema>>(c)
       const user = c.get("user")
       if (!hasPermission(user, "rag:doc:write:group") && !hasPermission(user, "benchmark:seed_corpus")) {
         throw new HTTPException(403, { message: "Forbidden: missing document upload permission" })
@@ -338,7 +338,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     }),
     async (c) => {
       const user = c.get("user")
-      const body = (c.req as any).valid("json") as z.infer<typeof CreateDocumentUploadRequestSchema>
+      const body = validJson<z.infer<typeof CreateDocumentUploadRequestSchema>>(c)
       authorizeDocumentUploadSession(user, body.purpose)
       const objectKey = buildUploadObjectKey(user, body.purpose, body.fileName)
       const uploadId = encodeUploadId(objectKey)
@@ -351,7 +351,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         uploadId,
         objectKey,
         uploadUrl: s3Upload?.url ?? localUploadUrl(c.req.url, uploadId),
-        method: s3Upload ? "PUT" : "POST",
+        method: s3Upload ? "PUT" as const : "POST" as const,
         headers: s3Upload?.headers ?? { "Content-Type": contentType },
         expiresInSeconds,
         requiresAuth: !s3Upload,
@@ -376,7 +376,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     }),
     async (c) => {
       const user = c.get("user")
-      const { uploadId } = (c.req as any).valid("param") as { uploadId: string }
+      const { uploadId } = validParam<{ uploadId: string }>(c)
       const objectKey = decodeUploadId(uploadId)
       const purpose = uploadPurposeForKey(user, objectKey)
       authorizeDocumentUploadSession(user, purpose)
@@ -411,8 +411,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     }),
     async (c) => {
       const user = c.get("user")
-      const { uploadId } = (c.req as any).valid("param") as { uploadId: string }
-      const body = (c.req as any).valid("json") as z.infer<typeof IngestUploadedDocumentRequestSchema>
+      const { uploadId } = validParam<{ uploadId: string }>(c)
+      const body = validJson<z.infer<typeof IngestUploadedDocumentRequestSchema>>(c)
       const objectKey = decodeUploadId(uploadId)
       const purpose = uploadPurposeForKey(user, objectKey)
       await authorizeScopedIngest(service, user, purpose, body)
@@ -454,7 +454,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     }),
     async (c) => {
       const user = c.get("user")
-      const body = (c.req as any).valid("json") as z.infer<typeof StartDocumentIngestRunRequestSchema>
+      const body = validJson<z.infer<typeof StartDocumentIngestRunRequestSchema>>(c)
       const objectKey = decodeUploadId(body.uploadId)
       const purpose = uploadPurposeForKey(user, objectKey)
       await authorizeScopedIngest(service, user, purpose, body)
@@ -568,8 +568,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:index:rebuild:group")
-      const { documentId } = (c.req as any).valid("param") as { documentId: string }
-      const body = ((c.req as any).valid("json") ?? {}) as { embeddingModelId?: string; memoryModelId?: string }
+      const { documentId } = validParam<{ documentId: string }>(c)
+      const body = (validJson<{ embeddingModelId?: string; memoryModelId?: string } | undefined>(c) ?? {})
       try {
         return c.json(await service.reindexDocument(user, documentId, body), 200)
       } catch (err) {
@@ -614,8 +614,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:index:rebuild:group")
-      const { documentId } = (c.req as any).valid("param") as { documentId: string }
-      const body = ((c.req as any).valid("json") ?? {}) as { embeddingModelId?: string; memoryModelId?: string }
+      const { documentId } = validParam<{ documentId: string }>(c)
+      const body = (validJson<{ embeddingModelId?: string; memoryModelId?: string } | undefined>(c) ?? {})
       try {
         return c.json(await service.stageReindexMigration(user, documentId, body), 200)
       } catch (err) {
@@ -638,7 +638,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     }),
     async (c) => {
       requirePermission(c.get("user"), "rag:index:rebuild:group")
-      const { migrationId } = (c.req as any).valid("param") as { migrationId: string }
+      const { migrationId } = validParam<{ migrationId: string }>(c)
       try {
         return c.json(await service.cutoverReindexMigration(migrationId), 200)
       } catch (err) {
@@ -661,7 +661,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     }),
     async (c) => {
       requirePermission(c.get("user"), "rag:index:rebuild:group")
-      const { migrationId } = (c.req as any).valid("param") as { migrationId: string }
+      const { migrationId } = validParam<{ migrationId: string }>(c)
       try {
         return c.json(await service.rollbackReindexMigration(migrationId), 200)
       } catch (err) {
@@ -689,7 +689,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     }),
     async (c) => {
       const user = c.get("user")
-      const { documentId } = (c.req as any).valid("param") as { documentId: string }
+      const { documentId } = validParam<{ documentId: string }>(c)
       try {
         await authorizeDocumentDelete(service, user, documentId)
         return c.json(await service.deleteDocument(documentId), 200)

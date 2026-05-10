@@ -3,7 +3,7 @@ import { ragRuntimePolicy } from "./agent/runtime-policy.js"
 import type { JsonValue } from "./types.js"
 
 const MetadataValueSchema = z.custom<JsonValue>(isJsonValue)
-const DebugStepOutputSchema = z.record(z.string(), z.unknown())
+const DebugStepOutputSchema = z.record(z.string(), MetadataValueSchema)
 
 function isJsonValue(value: unknown): value is JsonValue {
   if (value === null) return true
@@ -442,6 +442,8 @@ const ConversationCitationSchema = z.object({
   documentId: z.string().optional(),
   fileName: z.string().optional(),
   chunkId: z.string().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
   score: z.number().optional(),
   text: z.string().optional()
 })
@@ -556,6 +558,8 @@ export const CitationSchema = z.object({
   documentId: z.string(),
   fileName: z.string(),
   chunkId: z.string().optional(),
+  pageStart: z.number().int().positive().optional(),
+  pageEnd: z.number().int().positive().optional(),
   score: z.number(),
   text: z.string()
 })
@@ -616,9 +620,9 @@ export const DebugTraceSchema = z.object({
   clueModelId: z.string(),
   conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
   clarificationContext: ClarificationContextSchema.optional(),
-  conversation: z.unknown().optional(),
-  conversationState: z.unknown().optional(),
-  decontextualizedQuery: z.unknown().optional(),
+  conversation: MetadataValueSchema.optional(),
+  conversationState: MetadataValueSchema.optional(),
+  decontextualizedQuery: MetadataValueSchema.optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   ragProfile: RagProfileTraceSchema.optional(),
   topK: z.number(),

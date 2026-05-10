@@ -147,8 +147,6 @@ describe("useAdminData", () => {
     await act(() => result.current.onCreateManagedUser({ email: "c@example.com", groups: ["CHAT_USER"] }))
     await act(() => result.current.onSetManagedUserStatus("user-1", "suspend"))
     await act(() => result.current.onSetManagedUserStatus("user-1", "unsuspend"))
-    vi.spyOn(window, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true)
-    await act(() => result.current.onSetManagedUserStatus("user-1", "delete"))
     await act(() => result.current.onSetManagedUserStatus("user-1", "delete"))
 
     expect(assignUserRoles).toHaveBeenCalledWith("user-1", ["SYSTEM_ADMIN"])
@@ -193,7 +191,6 @@ describe("useAdminData", () => {
     vi.mocked(createManagedUser).mockRejectedValueOnce(new Error("create user failed"))
     vi.mocked(unsuspendManagedUser).mockRejectedValueOnce(new Error("unsuspend failed"))
     vi.mocked(deleteManagedUser).mockRejectedValueOnce(new Error("delete failed"))
-    vi.spyOn(window, "confirm").mockReturnValue(true)
     const { result } = renderHook(() => useAdminData(props))
 
     await act(() => result.current.onCreateManagedUser({ email: "c@example.com" }))

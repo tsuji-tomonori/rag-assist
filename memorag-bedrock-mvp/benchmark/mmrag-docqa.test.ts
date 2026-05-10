@@ -51,6 +51,20 @@ test("convertMmLongBenchRow maps Not answerable rows to expected refusal", () =>
   assert.deepEqual(row.expectedFactSlots, [])
 })
 
+test("convertMmLongBenchRow can enable memory ablation explicitly", () => {
+  const row = convertMmLongBenchRow({
+    doc_id: "example.pdf",
+    doc_type: "Tutorial",
+    question: "What is listed?",
+    answer: "Answer",
+    evidence_pages: "[1]",
+    evidence_sources: "['Text']",
+    answer_format: "Str"
+  }, 2, { useMemory: true })
+
+  assert.equal(row.useMemory, true)
+})
+
 test("prepareMmragDocqaBenchmark writes all 1091 rows by default", async () => {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), "mmrag-docqa-"))
   const datasetOutput = path.join(tempDir, "dataset.jsonl")
@@ -84,6 +98,38 @@ test("prepareMmragDocqaBenchmark writes all 1091 rows by default", async () => {
     const lines = (await readFile(datasetOutput, "utf-8")).trim().split("\n")
     assert.equal(lines.length, 1091)
     assert.deepEqual(requestedOffsets, [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000])
+  } finally {
+    await rm(tempDir, { force: true, recursive: true })
+  }
+})
+
+test("prepareMmragDocqaBenchmark writes memory-enabled rows when requested", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "mmrag-docqa-memory-"))
+  const datasetOutput = path.join(tempDir, "dataset.jsonl")
+  const sourceRows = [{
+    doc_id: "doc-00.pdf",
+    doc_type: "Research report",
+    question: "Question?",
+    answer: "Answer",
+    evidence_pages: "[1]",
+    evidence_sources: "['Pure-text (Plain-text)']",
+    answer_format: "Str"
+  }]
+  const fakeFetch = (async () => Response.json({
+    rows: sourceRows.map((row, index) => ({ row_idx: index, row })),
+    num_rows_total: sourceRows.length
+  })) as typeof fetch
+
+  try {
+    await prepareMmragDocqaBenchmark({
+      MMRAG_DOCQA_DATASET_OUTPUT: datasetOutput,
+      MMRAG_DOCQA_DOWNLOAD_DOCUMENTS: "0",
+      MMRAG_DOCQA_EXPECTED_TOTAL: "1",
+      MMRAG_DOCQA_USE_MEMORY: "1"
+    }, fakeFetch)
+
+    const [line] = (await readFile(datasetOutput, "utf-8")).trim().split("\n")
+    assert.equal(JSON.parse(line ?? "{}").useMemory, true)
   } finally {
     await rm(tempDir, { force: true, recursive: true })
   }

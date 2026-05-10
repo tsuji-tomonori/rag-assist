@@ -331,6 +331,9 @@ export class MemoRagService {
           objectKey: sourceObjectKey,
           text: card.text,
           sectionPath: card.sectionPath,
+          pageStart: card.pageStart,
+          pageEnd: card.pageEnd,
+          sourceChunkIds: card.sourceChunkIds,
           lifecycleStatus: lifecycleStatus(input.metadata),
           ...filterableMetadata,
           createdAt
@@ -1464,6 +1467,9 @@ export class MemoRagService {
         objectKey: manifest.sourceObjectKey,
         text: card.text,
         sectionPath: card.sectionPath,
+        pageStart: card.pageStart,
+        pageEnd: card.pageEnd,
+        sourceChunkIds: card.sourceChunkIds,
         lifecycleStatus: status,
         ...filterableMetadata,
         createdAt: manifest.createdAt
@@ -1781,6 +1787,7 @@ export class MemoRagService {
       likelyQuestions: parsed?.likelyQuestions?.slice(0, ragRuntimePolicy.limits.memoryQuestionLimit) ?? [],
       constraints: parsed?.constraints?.slice(0, ragRuntimePolicy.limits.memoryConstraintLimit) ?? [],
       sourceChunkIds: input.chunks.map((chunk) => chunk.id),
+      ...chunkPageRange(input.chunks),
       text: ""
     }
     const text = [
@@ -1813,6 +1820,7 @@ function createSectionMemoryCards(chunks: Chunk[], statistics?: DocumentManifest
       likelyQuestions: [`${section}について教えてください。`],
       constraints: [],
       sourceChunkIds: sectionChunks.map((chunk) => chunk.id),
+      ...chunkPageRange(sectionChunks),
       sectionPath: sectionChunks[0]?.sectionPath,
       text: ""
     }
@@ -1850,6 +1858,8 @@ function createConceptMemoryCards(chunks: Chunk[], keywords: string[], statistic
       likelyQuestions: [`${term}とは？`, `${term}の条件は？`],
       constraints: ["最終回答の引用は raw evidence chunk に限定する。"],
       sourceChunkIds: sourceChunks.map((chunk) => chunk.id),
+      ...chunkPageRange(sourceChunks),
+      sectionPath: sourceChunks[0]?.sectionPath,
       text: ""
     }
     card.text = [
@@ -1860,6 +1870,15 @@ function createConceptMemoryCards(chunks: Chunk[], keywords: string[], statistic
     ].join("\n")
     return card
   })
+}
+
+function chunkPageRange(chunks: Chunk[]): Pick<MemoryCard, "pageStart" | "pageEnd"> {
+  const starts = chunks.map((chunk) => chunk.pageStart).filter((page): page is number => typeof page === "number" && Number.isFinite(page))
+  const ends = chunks.map((chunk) => chunk.pageEnd ?? chunk.pageStart).filter((page): page is number => typeof page === "number" && Number.isFinite(page))
+  return {
+    ...(starts.length > 0 ? { pageStart: Math.min(...starts) } : {}),
+    ...(ends.length > 0 ? { pageEnd: Math.max(...ends) } : {})
+  }
 }
 
 function createBenchmarkRunId(now: string): string {
