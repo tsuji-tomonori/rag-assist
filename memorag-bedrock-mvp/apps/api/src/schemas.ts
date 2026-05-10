@@ -3,7 +3,7 @@ import { ragRuntimePolicy } from "./agent/runtime-policy.js"
 import type { JsonValue } from "./types.js"
 
 const MetadataValueSchema = z.custom<JsonValue>(isJsonValue)
-const DebugStepOutputSchema = z.record(z.string(), z.unknown())
+const DebugStepOutputSchema = z.record(z.string(), MetadataValueSchema)
 
 function isJsonValue(value: unknown): value is JsonValue {
   if (value === null) return true
@@ -616,9 +616,9 @@ export const DebugTraceSchema = z.object({
   clueModelId: z.string(),
   conversationHistory: z.array(ConversationHistoryTurnSchema).optional(),
   clarificationContext: ClarificationContextSchema.optional(),
-  conversation: z.unknown().optional(),
-  conversationState: z.unknown().optional(),
-  decontextualizedQuery: z.unknown().optional(),
+  conversation: MetadataValueSchema.optional(),
+  conversationState: MetadataValueSchema.optional(),
+  decontextualizedQuery: MetadataValueSchema.optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   ragProfile: RagProfileTraceSchema.optional(),
   topK: z.number(),

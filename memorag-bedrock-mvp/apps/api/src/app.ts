@@ -2,7 +2,9 @@ import { OpenAPIHono } from "@hono/zod-openapi"
 import { RPCHandler } from "@orpc/server/fetch"
 import { cors } from "hono/cors"
 import { HTTPException } from "hono/http-exception"
+import type { AppEnv } from "./app-env.js"
 import { authMiddleware } from "./auth.js"
+import { config } from "./config.js"
 import { createDependencies } from "./dependencies.js"
 import { logUnhandledApiError, safeUnhandledErrorResponse } from "./error-response.js"
 import { orpcRouter } from "./orpc/router.js"
@@ -16,7 +18,7 @@ const deps = createDependencies()
 const service = new MemoRagService(deps)
 const rpcHandler = new RPCHandler(orpcRouter)
 
-const app = new OpenAPIHono({
+const app = new OpenAPIHono<AppEnv>({
   defaultHook: (result, c) => {
     if (!result.success) {
       return c.json({ error: "Validation failed", details: result.error.flatten() }, 400)
@@ -24,37 +26,23 @@ const app = new OpenAPIHono({
   }
 })
 
-const protectedApiPaths = [
-  "/me",
-  "/admin/*",
-  "/documents",
-  "/documents/*",
-  "/document-groups",
-  "/document-groups/*",
-  "/document-ingest-runs",
-  "/document-ingest-runs/*",
-  "/chat",
-  "/chat-runs",
-  "/chat-runs/*",
-  "/search",
-  "/questions",
-  "/questions/*",
-  "/conversation-history",
-  "/conversation-history/*",
-  "/debug-runs",
-  "/debug-runs/*",
-  "/rpc/*",
-  "/benchmark/query",
-  "/benchmark/search",
-  "/benchmark-runs",
-  "/benchmark-runs/*",
-  "/benchmark-suites"
-]
+const publicApiPaths = new Set(["/health", "/openapi.json"])
 
-app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization", "Last-Event-ID"], allowMethods: ["GET", "POST", "DELETE", "OPTIONS"] }))
-for (const path of protectedApiPaths) {
-  app.use(path, authMiddleware)
-}
+app.use(
+  "*",
+  cors({
+    origin: (origin) => {
+      if (config.corsAllowedOrigins.includes("*")) return origin
+      return config.corsAllowedOrigins.includes(origin) ? origin : ""
+    },
+    allowHeaders: ["Content-Type", "Authorization", "Last-Event-ID"],
+    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"]
+  })
+)
+app.use("*", async (c, next) => {
+  if (c.req.method === "OPTIONS" || publicApiPaths.has(c.req.path)) return next()
+  return authMiddleware(c, next)
+})
 
 registerApiRoutes(app, deps, service)
 
@@ -86,7 +74,7 @@ app.get("/openapi.json", (c) => {
 })
 
 app.onError((err, c) => {
-  if (err instanceof HTTPException) return err.getResponse()
+  if (err instanceof HTTPException) return c.json({ error: err.message || "Request failed" }, err.status)
   if (typeof err === "object" && err !== null && "getResponse" in err && typeof (err as { getResponse?: unknown }).getResponse === "function") {
     return (err as { getResponse: () => Response }).getResponse()
   }
@@ -94,5 +82,7 @@ app.onError((err, c) => {
   const response = safeUnhandledErrorResponse(err)
   return c.json(response.body, response.status)
 })
+
+app.notFound((c) => c.json({ error: "Not found" }, 404))
 
 export default app
