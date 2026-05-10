@@ -1,6 +1,7 @@
 import { useRef, type FormEvent } from "react"
 import type { SubmitShortcut } from "../../../app/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
+import type { ChatDocumentScope } from "../hooks/useChatSession.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 
@@ -11,6 +12,7 @@ export function ChatComposer({
   modelId,
   file,
   selectedGroupId,
+  documentScope,
   documentGroups,
   canWriteDocuments,
   conversationKey,
@@ -18,7 +20,8 @@ export function ChatComposer({
   loading,
   onSetQuestion,
   onModelChange,
-  onSetFile
+  onSetFile,
+  onClearDocumentScope
 }: {
   onAsk: (event: FormEvent) => Promise<void>
   question: string
@@ -26,6 +29,7 @@ export function ChatComposer({
   modelId: string
   file: File | null
   selectedGroupId: string
+  documentScope?: ChatDocumentScope
   documentGroups: DocumentGroup[]
   canWriteDocuments: boolean
   conversationKey: number
@@ -34,11 +38,13 @@ export function ChatComposer({
   onSetQuestion: (value: string) => void
   onModelChange: (modelId: string) => void
   onSetFile: (file: File | null) => void
+  onClearDocumentScope?: () => void
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const selectedGroupName = selectedGroupId === "all"
     ? "全フォルダ"
     : documentGroups.find((group) => group.groupId === selectedGroupId)?.name ?? "選択フォルダ"
+  const referenceLabel = documentScope ? `対象文書: ${documentScope.fileName}` : `参照フォルダ: ${selectedGroupName}`
 
   return (
     <form className="composer" onSubmit={onAsk} aria-label="質問入力">
@@ -96,7 +102,7 @@ export function ChatComposer({
               <div className="attach-menu" aria-label="資料の添付メニュー">
                 <div className="attach-menu-status" role="status">
                   <Icon name="document" />
-                  <span>{`参照フォルダ: ${selectedGroupName}`}</span>
+                  <span>{referenceLabel}</span>
                 </div>
                 <button
                   className="attach-menu-action"
@@ -118,7 +124,18 @@ export function ChatComposer({
               <option value="anthropic.claude-3-haiku-20240307-v1:0">Claude 3 Haiku</option>
             </select>
           </label>
-          <span className="file-chip">{`参照: ${selectedGroupName}`}</span>
+          {documentScope ? (
+            <span className="file-chip scoped-document-chip">
+              <span>{`対象文書: ${documentScope.fileName}`}</span>
+              {onClearDocumentScope && (
+                <button type="button" aria-label="対象文書を解除" title="対象文書を解除" disabled={loading} onClick={onClearDocumentScope}>
+                  <Icon name="close" />
+                </button>
+              )}
+            </span>
+          ) : (
+            <span className="file-chip">{`参照: ${selectedGroupName}`}</span>
+          )}
           {file && <span className="file-chip">{`一時添付: ${file.name}`}</span>}
         </div>
         <div className="composer-shortcut-toggle">
