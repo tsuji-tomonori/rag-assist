@@ -2,7 +2,7 @@ import { z } from "@hono/zod-openapi"
 import { requirePermission } from "../authorization.js"
 import { DebugDownloadResponseSchema, DebugTraceListResponseSchema, DebugTraceSchema, ErrorResponseSchema } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, routeAuthorization } from "./route-utils.js"
+import { looseRoute, routeAuthorization, validParam } from "./route-utils.js"
 
 export function registerDebugRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
@@ -38,7 +38,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       requirePermission(c.get("user"), "chat:admin:read_all")
-      const { runId } = (c.req as any).valid("param") as { runId: string }
+      const { runId } = validParam<{ runId: string }>(c)
       const trace = await service.getDebugRun(runId)
       if (!trace) return c.json({ error: "Debug run not found" }, 404)
       return c.json(trace, 200)
@@ -59,7 +59,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       requirePermission(c.get("user"), "chat:admin:read_all")
-      const { runId } = (c.req as any).valid("param") as { runId: string }
+      const { runId } = validParam<{ runId: string }>(c)
       const download = await service.createDebugTraceDownloadUrl(runId)
       if (!download) return c.json({ error: "Debug run not found" }, 404)
       return c.json(download, 200)

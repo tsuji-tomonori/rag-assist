@@ -19,7 +19,7 @@ import {
   UsageSummaryListResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
-import { looseRoute, routeAuthorization } from "./route-utils.js"
+import { looseRoute, routeAuthorization, validJson, validParam } from "./route-utils.js"
 
 export function registerAdminRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
@@ -41,7 +41,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const actor = c.get("user")
       requirePermission(actor, "user:create")
-      const body = (c.req as any).valid("json") as z.infer<typeof CreateManagedUserRequestSchema>
+      const body = validJson<z.infer<typeof CreateManagedUserRequestSchema>>(c)
       try {
         return c.json(await service.createManagedUser(actor, body), 200)
       } catch (err) {
@@ -100,14 +100,15 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       },
       responses: {
         200: { description: "Assigned user roles", content: { "application/json": { schema: ManagedUserSchema } } },
+        403: { description: "Forbidden role assignment", content: { "application/json": { schema: ErrorResponseSchema } } },
         404: { description: "User not found", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),
     async (c) => {
       const actor = c.get("user")
       requirePermission(actor, "access:role:assign")
-      const { userId } = (c.req as any).valid("param") as { userId: string }
-      const body = (c.req as any).valid("json") as z.infer<typeof AssignUserRolesRequestSchema>
+      const { userId } = validParam<{ userId: string }>(c)
+      const body = validJson<z.infer<typeof AssignUserRolesRequestSchema>>(c)
       if (actor.userId === userId) return c.json({ error: "Self role assignment is forbidden" }, 403)
       const wantsSystemAdmin = body.groups.some((group) => group.trim() === "SYSTEM_ADMIN")
       const isSystemAdmin = actor.cognitoGroups.includes("SYSTEM_ADMIN")
@@ -132,7 +133,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const actor = c.get("user")
       requirePermission(actor, "user:suspend")
-      const { userId } = (c.req as any).valid("param") as { userId: string }
+      const { userId } = validParam<{ userId: string }>(c)
       const user = await service.suspendManagedUser(actor, userId)
       if (!user) return c.json({ error: "User not found" }, 404)
       return c.json(user, 200)
@@ -153,7 +154,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const actor = c.get("user")
       requirePermission(actor, "user:unsuspend")
-      const { userId } = (c.req as any).valid("param") as { userId: string }
+      const { userId } = validParam<{ userId: string }>(c)
       const user = await service.unsuspendManagedUser(actor, userId)
       if (!user) return c.json({ error: "User not found" }, 404)
       return c.json(user, 200)
@@ -174,7 +175,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const actor = c.get("user")
       requirePermission(actor, "user:delete")
-      const { userId } = (c.req as any).valid("param") as { userId: string }
+      const { userId } = validParam<{ userId: string }>(c)
       const user = await service.deleteManagedUser(actor, userId)
       if (!user) return c.json({ error: "User not found" }, 404)
       return c.json(user, 200)
@@ -229,7 +230,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:alias:write:group")
-      const body = (c.req as any).valid("json") as z.infer<typeof CreateAliasRequestSchema>
+      const body = validJson<z.infer<typeof CreateAliasRequestSchema>>(c)
       return c.json(await service.createAlias(user, body), 200)
     }
   )
@@ -254,8 +255,8 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:alias:write:group")
-      const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
-      const body = (c.req as any).valid("json") as z.infer<typeof UpdateAliasRequestSchema>
+      const { aliasId } = validParam<{ aliasId: string }>(c)
+      const body = validJson<z.infer<typeof UpdateAliasRequestSchema>>(c)
       const alias = await service.updateAlias(user, aliasId, body)
       if (!alias) return c.json({ error: "Alias not found" }, 404)
       return c.json(alias, 200)
@@ -282,8 +283,8 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:alias:review:group")
-      const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
-      const body = (c.req as any).valid("json") as z.infer<typeof ReviewAliasRequestSchema>
+      const { aliasId } = validParam<{ aliasId: string }>(c)
+      const body = validJson<z.infer<typeof ReviewAliasRequestSchema>>(c)
       const alias = await service.reviewAlias(user, aliasId, body)
       if (!alias) return c.json({ error: "Alias not found" }, 404)
       return c.json(alias, 200)
@@ -304,7 +305,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "rag:alias:disable:group")
-      const { aliasId } = (c.req as any).valid("param") as { aliasId: string }
+      const { aliasId } = validParam<{ aliasId: string }>(c)
       const alias = await service.disableAlias(user, aliasId)
       if (!alias) return c.json({ error: "Alias not found" }, 404)
       return c.json(alias, 200)

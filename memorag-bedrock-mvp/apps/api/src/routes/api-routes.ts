@@ -1,4 +1,5 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
+import type { AppEnv } from "../app-env.js"
 import type { Dependencies } from "../dependencies.js"
 import type { MemoRagService } from "../rag/memorag-service.js"
 import { registerAdminRoutes } from "./admin-routes.js"
@@ -12,7 +13,7 @@ import { registerSystemRoutes } from "./system-routes.js"
 
 export { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "./benchmark-seed.js"
 
-export function registerApiRoutes(app: OpenAPIHono, deps: Dependencies, service: MemoRagService) {
+export function registerApiRoutes(app: OpenAPIHono<AppEnv>, deps: Dependencies, service: MemoRagService) {
   const context = { app, deps, service }
   registerSystemRoutes(context)
   registerAdminRoutes(context)
