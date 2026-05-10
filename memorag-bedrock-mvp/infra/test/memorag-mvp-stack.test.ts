@@ -206,6 +206,7 @@ test("implements the designed serverless resources", () => {
         USE_LOCAL_BENCHMARK_RUN_STORE: "false",
         USE_LOCAL_CHAT_RUN_STORE: "false",
         AUTH_ENABLED: "true",
+        CORS_ALLOWED_ORIGINS: "*",
         COGNITO_USER_POOL_ID: Match.anyValue(),
         COGNITO_APP_CLIENT_ID: Match.anyValue(),
         DEBUG_DOWNLOAD_BUCKET_NAME: Match.anyValue(),

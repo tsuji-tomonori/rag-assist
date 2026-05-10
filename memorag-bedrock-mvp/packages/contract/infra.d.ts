@@ -29,6 +29,7 @@ export type ApiRuntimeEnv = {
   EMBEDDING_DIMENSIONS: string
   MIN_RETRIEVAL_SCORE: string
   AUTH_ENABLED: BooleanEnv
+  CORS_ALLOWED_ORIGINS: string
   COGNITO_REGION: string
   COGNITO_USER_POOL_ID: string
   COGNITO_APP_CLIENT_ID: string

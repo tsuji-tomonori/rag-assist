@@ -50,7 +50,6 @@ const cognitoAppClientId = process.env.COGNITO_APP_CLIENT_ID ?? ""
 
 if (isProduction && !authEnabled) throw new Error("AUTH_ENABLED must be true in production")
 if (isProduction && corsAllowedOrigins.length === 0) throw new Error("CORS_ALLOWED_ORIGINS is required in production")
-if (isProduction && corsAllowedOrigins.includes("*")) throw new Error("CORS_ALLOWED_ORIGINS cannot include * in production")
 requireProductionValue("DOCS_BUCKET_NAME", docsBucketName)
 if (authEnabled) {
   requireProductionValue("COGNITO_REGION", cognitoRegion)

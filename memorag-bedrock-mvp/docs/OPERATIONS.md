@@ -59,7 +59,7 @@ task benchmark:sample
 | `USE_LOCAL_CONVERSATION_HISTORY_STORE` | 会話履歴のローカルstore利用 | production以外は`true` |
 | `LOCAL_DATA_DIR` | ローカル保存先 | `.local-data` |
 | `AUTH_ENABLED` | Cognito JWT認証をAPIで有効化。production では `true` 必須 | production以外は`false` |
-| `CORS_ALLOWED_ORIGINS` | API CORS 許可 origin のカンマ区切り allowlist。production では `*` 不可 | production以外は`*` |
+| `CORS_ALLOWED_ORIGINS` | API CORS 許可 origin のカンマ区切り allowlist。独自ドメイン未確定期間は一時的に production でも `*` を許容する。ドメイン確定後は具体 origin に戻す | production以外は`*` |
 | `DOCS_BUCKET_NAME` | production の文書 S3 bucket 名 | productionでは必須 |
 | `COGNITO_REGION` | Cognito User Pool リージョン | 未設定 |
 | `COGNITO_USER_POOL_ID` | Cognito User Pool ID。`AUTH_ENABLED=true` では必須 | 未設定 |
