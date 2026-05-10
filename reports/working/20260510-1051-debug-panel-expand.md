@@ -43,7 +43,7 @@
 | `memorag-bedrock-mvp/apps/web/src/styles/features/debug.css` | CSS | 拡大 dialog のレイアウト | R1-R4 |
 | `memorag-bedrock-mvp/apps/web/src/features/debug/components/DebugPanel.test.tsx` | Vitest | 拡大表示の開閉テスト | R1-R3, R6 |
 | `memorag-bedrock-mvp/docs/generated/*` | Markdown/JSON | Web UI インベントリ再生成 | R5 |
-| `tasks/do/20260510-1046-debug-panel-expand.md` | Markdown | 受け入れ条件付き task md | workflow |
+| `tasks/done/20260510-1046-debug-panel-expand.md` | Markdown | 受け入れ条件付き task md | workflow |
 
 ## 6. 指示への fit 評価
 
