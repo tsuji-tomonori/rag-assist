@@ -32,6 +32,7 @@
 ## 完了時の検証
 
 - `npm ci`: pass
+- `npm --prefix memorag-bedrock-mvp/apps/web test -- App`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
 - `npm --prefix memorag-bedrock-mvp run lint`: pass

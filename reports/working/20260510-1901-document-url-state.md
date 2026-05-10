@@ -32,6 +32,7 @@
 - `useAppShellState` に URL query の読み取り、書き込み、`popstate` 反映を追加した。
 - `DocumentWorkspace.test.tsx` に URL 初期化と URL 同期 callback のテストを追加した。
 - `useAppShellState.test.ts` に query parameter からの hydrate / write / popstate 反映テストを追加した。
+- CI の web coverage で `App.test.tsx` に URL 状態が漏れる失敗を確認し、各 test 前に `window.history` を `/` へ戻すよう修正した。
 
 ## 5. 成果物
 
@@ -41,6 +42,7 @@
 | `memorag-bedrock-mvp/apps/web/src/app/hooks/useAppShellState.ts` | TS | `?view=documents` と各 query parameter の同期 | R2, R3 |
 | `memorag-bedrock-mvp/apps/web/src/features/documents/components/DocumentWorkspace.test.tsx` | Test | URL 初期状態と通知の UI テスト | R5 |
 | `memorag-bedrock-mvp/apps/web/src/app/hooks/useAppShellState.test.ts` | Test | shell hook の URL 同期テスト | R5 |
+| `memorag-bedrock-mvp/apps/web/src/App.test.tsx` | Test | URL 状態漏れを防ぐ test setup | R5 |
 | `tasks/do/20260510-1853-document-url-state.md` | Markdown | タスクと受け入れ条件 | R1 |
 
 ## 6. 指示へのfit評価
@@ -58,6 +60,7 @@
 ## 7. 検証
 
 - `npm ci`: pass
+- `npm --prefix memorag-bedrock-mvp/apps/web test -- App`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
 - `npm --prefix memorag-bedrock-mvp run lint`: pass
@@ -65,5 +68,6 @@
 ## 8. 未対応・制約・リスク
 
 - 完全な path router 導入は未対応。現行の client-state 構成に合わせ、URL 書き込みは query parameter 形式にした。
+- CI 初回実行で `App.test.tsx` の URL 状態漏れにより web coverage が失敗したが、テスト setup を修正しローカルで再検証済み。
 - `npm ci` により ignored の `node_modules/` が生成されたが、コミット対象には含めない。
 - API / 認可 / RAG 検索処理は変更していない。
