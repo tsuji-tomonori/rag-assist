@@ -713,6 +713,11 @@ test("benchmark runner can list and upload only isolated benchmark seed document
     assert.equal(deleteBody.documentId, manifest.documentId)
     assert.equal(typeof deleteBody.deletedVectorCount, "number")
 
+    const missingDelete = await fetch(`http://127.0.0.1:${port}/documents/missing-benchmark-seed`, {
+      method: "DELETE"
+    })
+    assert.equal(missingDelete.status, 404)
+
     const allganizeSeedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
       method: "POST",
       headers: { "content-type": "application/json" },
