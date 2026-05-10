@@ -24,6 +24,28 @@ function getBenchmarkProject(template: Template) {
   return projects[0] as any
 }
 
+function resourcePathById(resources: Record<string, any>, logicalId: string): string {
+  const resource = resources[logicalId]
+  assert.ok(resource, `API Gateway resource missing: ${logicalId}`)
+  if (resource.Type !== "AWS::ApiGateway::Resource") return "/"
+  const parentId = resource.Properties.ParentId?.Ref
+  const parentPath = typeof parentId === "string" ? resourcePathById(resources, parentId) : ""
+  return `${parentPath}/${resource.Properties.PathPart}`.replace(/\/+/g, "/")
+}
+
+function methodTargets(template: Template): Record<string, string> {
+  const resources = template.toJSON().Resources ?? {}
+  const targets: Record<string, string> = {}
+  for (const resource of Object.values(resources) as any[]) {
+    if (resource.Type !== "AWS::ApiGateway::Method") continue
+    const method = resource.Properties.HttpMethod
+    const resourceId = resource.Properties.ResourceId?.Ref
+    const pathName = typeof resourceId === "string" ? resourcePathById(resources, resourceId) : "/"
+    targets[`${method} ${pathName}`] = JSON.stringify(resource.Properties.Integration?.Uri ?? "")
+  }
+  return targets
+}
+
 test("implements the designed serverless resources", () => {
   const template = synthesize()
 
@@ -84,6 +106,16 @@ test("implements the designed serverless resources", () => {
     Handler: "index.handler",
     Runtime: "nodejs22.x",
     Timeout: 60,
+    MemorySize: 1024,
+    Environment: Match.objectLike({
+      Variables: Match.objectLike({ BENCHMARK_BUCKET_NAME: Match.anyValue() })
+    })
+  })
+  template.hasResourceProperties("AWS::Lambda::Function", {
+    Handler: "index.handler",
+    Runtime: "nodejs22.x",
+    Timeout: 60,
+    MemorySize: 4096,
     Environment: Match.objectLike({
       Variables: Match.objectLike({ BENCHMARK_BUCKET_NAME: Match.anyValue() })
     })
@@ -335,6 +367,37 @@ test("implements the designed serverless resources", () => {
   for (const stateMachine of stateMachines) {
     assert.equal((stateMachine as any).Properties.TracingConfiguration, undefined)
   }
+})
+
+test("routes heavy synchronous API paths to the heavyweight API Lambda", () => {
+  const template = synthesize()
+  const targets = methodTargets(template)
+  const heavyRoutes = [
+    "POST /chat",
+    "POST /search",
+    "POST /benchmark/query",
+    "POST /benchmark/search",
+    "POST /documents",
+    "POST /documents/uploads/{uploadId}/content",
+    "POST /documents/uploads/{uploadId}/ingest",
+    "POST /documents/{documentId}/reindex",
+    "POST /documents/{documentId}/reindex/stage",
+    "POST /documents/reindex-migrations/{migrationId}/cutover",
+    "POST /documents/reindex-migrations/{migrationId}/rollback"
+  ]
+
+  for (const route of heavyRoutes) {
+    assert.match(targets[route] ?? "", /HeavyApiFunction/)
+  }
+  assert.match(targets["ANY /{proxy+}"] ?? "", /ApiFunction/)
+  assert.doesNotMatch(targets["ANY /{proxy+}"] ?? "", /HeavyApiFunction/)
+  assert.match(targets["POST /chat-runs"] ?? "", /ApiFunction/)
+  assert.doesNotMatch(targets["POST /chat-runs"] ?? "", /HeavyApiFunction/)
+  assert.match(targets["GET /chat-runs/{runId}/events"] ?? "", /ChatRunEventsStreamFunction/)
+  assert.match(targets["GET /documents"] ?? "", /ApiFunction/)
+  assert.match(targets["POST /documents/uploads"] ?? "", /ApiFunction/)
+  assert.match(targets["DELETE /documents/{documentId}"] ?? "", /ApiFunction/)
+  assert.match(targets["GET /documents/reindex-migrations"] ?? "", /ApiFunction/)
 })
 
 test("applies mandatory ownership and cost allocation tags", () => {

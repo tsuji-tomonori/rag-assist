@@ -395,6 +395,21 @@ export class MemoRagMvpStack extends Stack {
       logGroup: apiLogGroup,
       environment: apiFunctionEnvironment
     })
+    const heavyApiLogGroup = new logs.LogGroup(this, "HeavyApiFunctionLogGroup", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+    const heavyApiFn = new lambda.Function(this, "HeavyApiFunction", {
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda-dist/api")),
+      handler: "index.handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 4096,
+      timeout: syncApiTimeout,
+      logGroup: heavyApiLogGroup,
+      environment: apiFunctionEnvironment
+    })
+    const apiFns = [apiFn, heavyApiFn]
 
     const chatRunWorkerLogGroup = new logs.LogGroup(this, "ChatRunWorkerLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,
@@ -472,33 +487,35 @@ export class MemoRagMvpStack extends Stack {
       environment: apiEnvironment
     })
 
-    docsBucket.grantReadWrite(apiFn)
+    for (const fn of apiFns) {
+      docsBucket.grantReadWrite(fn)
+      debugDownloadBucket.grantReadWrite(fn)
+      benchmarkBucket.grantRead(fn)
+      questionsTable.grantReadWriteData(fn)
+      conversationHistoryTable.grantReadWriteData(fn)
+      benchmarkRunsTable.grantReadWriteData(fn)
+      chatRunsTable.grantReadWriteData(fn)
+      chatRunEventsTable.grantReadWriteData(fn)
+      documentIngestRunsTable.grantReadWriteData(fn)
+      documentIngestRunEventsTable.grantReadWriteData(fn)
+      documentGroupsTable.grantReadWriteData(fn)
+    }
     docsBucket.grantReadWrite(chatRunWorkerFn)
     docsBucket.grantReadWrite(documentIngestRunWorkerFn)
-    debugDownloadBucket.grantReadWrite(apiFn)
     debugDownloadBucket.grantReadWrite(chatRunWorkerFn)
-    benchmarkBucket.grantRead(apiFn)
-    questionsTable.grantReadWriteData(apiFn)
-    conversationHistoryTable.grantReadWriteData(apiFn)
-    benchmarkRunsTable.grantReadWriteData(apiFn)
-    chatRunsTable.grantReadWriteData(apiFn)
     chatRunsTable.grantReadWriteData(chatRunWorkerFn)
     chatRunsTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunsTable.grantReadData(chatRunEventsFn)
-    chatRunEventsTable.grantReadWriteData(apiFn)
     chatRunEventsTable.grantReadWriteData(chatRunWorkerFn)
     chatRunEventsTable.grantReadWriteData(chatRunMarkFailedFn)
     chatRunEventsTable.grantReadData(chatRunEventsFn)
-    documentIngestRunsTable.grantReadWriteData(apiFn)
     documentIngestRunsTable.grantReadWriteData(documentIngestRunWorkerFn)
     documentIngestRunsTable.grantReadWriteData(documentIngestRunMarkFailedFn)
-    documentIngestRunEventsTable.grantReadWriteData(apiFn)
     documentIngestRunEventsTable.grantReadWriteData(documentIngestRunWorkerFn)
     documentIngestRunEventsTable.grantReadWriteData(documentIngestRunMarkFailedFn)
-    documentGroupsTable.grantReadWriteData(apiFn)
     documentGroupsTable.grantReadData(chatRunWorkerFn)
     documentGroupsTable.grantReadData(documentIngestRunWorkerFn)
-    for (const fn of [apiFn, chatRunWorkerFn, documentIngestRunWorkerFn]) {
+    for (const fn of [...apiFns, chatRunWorkerFn, documentIngestRunWorkerFn]) {
       fn.addToRolePolicy(
         new iam.PolicyStatement({
           actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
@@ -512,18 +529,20 @@ export class MemoRagMvpStack extends Stack {
         })
       )
     }
-    apiFn.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminRemoveUserFromGroup"],
-        resources: [userPool.userPoolArn]
-      })
-    )
-    apiFn.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["textract:DetectDocumentText", "textract:StartDocumentTextDetection", "textract:GetDocumentTextDetection"],
-        resources: ["*"]
-      })
-    )
+    for (const fn of apiFns) {
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ["cognito-idp:ListUsers", "cognito-idp:AdminListGroupsForUser", "cognito-idp:AdminAddUserToGroup", "cognito-idp:AdminRemoveUserFromGroup"],
+          resources: [userPool.userPoolArn]
+        })
+      )
+      fn.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ["textract:DetectDocumentText", "textract:StartDocumentTextDetection", "textract:GetDocumentTextDetection"],
+          resources: ["*"]
+        })
+      )
+    }
     documentIngestRunWorkerFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["textract:DetectDocumentText", "textract:StartDocumentTextDetection", "textract:GetDocumentTextDetection"],
@@ -594,9 +613,28 @@ export class MemoRagMvpStack extends Stack {
       proxy: true,
       timeout: syncApiTimeout
     })
+    const heavyApiIntegration = new apigw.LambdaIntegration(heavyApiFn, {
+      proxy: true,
+      timeout: syncApiTimeout
+    })
     restApi.root.addMethod("ANY", apiIntegration, apiMethodOptions)
     const proxy = restApi.root.addResource("{proxy+}")
     proxy.addMethod("ANY", apiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/chat", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/search", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/benchmark/query", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/benchmark/search", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "GET", "/documents", apiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/documents", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/documents/uploads", apiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/documents/uploads/{uploadId}/content", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/documents/uploads/{uploadId}/ingest", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "DELETE", "/documents/{documentId}", apiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/documents/{documentId}/reindex", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "GET", "/documents/reindex-migrations", apiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/documents/{documentId}/reindex/stage", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/documents/reindex-migrations/{migrationId}/cutover", heavyApiIntegration, apiMethodOptions)
+    addApiMethod(restApi, "POST", "/documents/reindex-migrations/{migrationId}/rollback", heavyApiIntegration, apiMethodOptions)
 
     const chatRuns = restApi.root.addResource("chat-runs")
     chatRuns.addMethod("POST", apiIntegration, apiMethodOptions)
@@ -645,8 +683,10 @@ export class MemoRagMvpStack extends Stack {
     })
     chatRunWorkerFn.grantInvoke(chatRunStateMachine)
     chatRunMarkFailedFn.grantInvoke(chatRunStateMachine)
-    chatRunStateMachine.grantStartExecution(apiFn)
-    apiFn.addEnvironment("CHAT_RUN_STATE_MACHINE_ARN", chatRunStateMachine.stateMachineArn)
+    for (const fn of apiFns) {
+      chatRunStateMachine.grantStartExecution(fn)
+      fn.addEnvironment("CHAT_RUN_STATE_MACHINE_ARN", chatRunStateMachine.stateMachineArn)
+    }
     NagSuppressions.addResourceSuppressions(
       chatRunStateMachine,
       [
@@ -691,8 +731,10 @@ export class MemoRagMvpStack extends Stack {
     })
     documentIngestRunWorkerFn.grantInvoke(documentIngestRunStateMachine)
     documentIngestRunMarkFailedFn.grantInvoke(documentIngestRunStateMachine)
-    documentIngestRunStateMachine.grantStartExecution(apiFn)
-    apiFn.addEnvironment("DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN", documentIngestRunStateMachine.stateMachineArn)
+    for (const fn of apiFns) {
+      documentIngestRunStateMachine.grantStartExecution(fn)
+      fn.addEnvironment("DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN", documentIngestRunStateMachine.stateMachineArn)
+    }
     NagSuppressions.addResourceSuppressions(
       documentIngestRunStateMachine,
       [
@@ -918,24 +960,28 @@ export class MemoRagMvpStack extends Stack {
       actions: ["events:PutTargets", "events:PutRule", "events:DescribeRule"],
       resources: ["*"]
     }))
-    apiFn.addEnvironment("BENCHMARK_STATE_MACHINE_ARN", benchmarkStateMachine.stateMachineArn)
-    apiFn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", restApiBaseUrl)
-    benchmarkStateMachine.grantStartExecution(apiFn)
-    benchmarkStateMachine.grant(apiFn, "states:StopExecution", "states:DescribeExecution")
+    for (const fn of apiFns) {
+      fn.addEnvironment("BENCHMARK_STATE_MACHINE_ARN", benchmarkStateMachine.stateMachineArn)
+      fn.addEnvironment("BENCHMARK_TARGET_API_BASE_URL", restApiBaseUrl)
+      benchmarkStateMachine.grantStartExecution(fn)
+      benchmarkStateMachine.grant(fn, "states:StopExecution", "states:DescribeExecution")
+    }
     const benchmarkProjectLogStreamArn = cdk.Stack.of(this).formatArn({
       service: "logs",
       resource: "log-group",
       resourceName: `${benchmarkProjectLogGroup.logGroupName}:log-stream:*`,
       arnFormat: cdk.ArnFormat.COLON_RESOURCE_NAME
     })
-    apiFn.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["logs:GetLogEvents"],
-      resources: [benchmarkProjectLogStreamArn]
-    }))
-    apiFn.addToRolePolicy(new iam.PolicyStatement({
-      actions: ["codebuild:BatchGetBuilds"],
-      resources: [benchmarkProject.projectArn]
-    }))
+    for (const fn of apiFns) {
+      fn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ["logs:GetLogEvents"],
+        resources: [benchmarkProjectLogStreamArn]
+      }))
+      fn.addToRolePolicy(new iam.PolicyStatement({
+        actions: ["codebuild:BatchGetBuilds"],
+        resources: [benchmarkProject.projectArn]
+      }))
+    }
 
     const distribution = new cloudfront.Distribution(this, "FrontendDistribution", {
       defaultRootObject: "index.html",
@@ -1023,4 +1069,15 @@ export class MemoRagMvpStack extends Stack {
     new cdk.CfnOutput(this, "EvidenceVectorIndexName", { value: evidenceVectorIndexName })
     new cdk.CfnOutput(this, "DocumentsBucketName", { value: docsBucket.bucketName })
   }
+}
+
+function addApiMethod(
+  restApi: apigw.RestApi,
+  method: string,
+  routePath: string,
+  integration: apigw.Integration,
+  options: apigw.MethodOptions
+): apigw.Method {
+  const resource = restApi.root.resourceForPath(routePath.replace(/^\//, ""))
+  return resource.addMethod(method, integration, options)
 }
