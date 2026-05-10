@@ -15,6 +15,7 @@
 ## 実施作業
 
 - `benchmark/metrics/drawing-normalization.ts` を追加し、縮尺、寸法、口径、延長、範囲条件の正規化と比較処理を実装した。
+- レビュー指摘を受け、範囲条件の巨大な個別 regex を廃止し、数値 token、単位 token、operator lexicon の近接関係から range を組み立てる実装に変更した。
 - `benchmark/run.ts` に `expectedNormalizedValues`、`normalized_answer_accuracy`、`normalized_answer_mismatch` を追加した。
 - `architecture-drawing-qarag.ts` で seed QA の内容から正規化期待値を生成し、dataset row に出力できるようにした。
 - `run.test.ts` と `drawing-normalization.test.ts` に、正常一致、不一致、通常 `expectedContains` 併用の regression test を追加した。

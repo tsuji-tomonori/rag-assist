@@ -38,6 +38,7 @@ test("normalizes range operators to millimeters", () => {
   assert.equal(normalizeRange("1000mm以上")?.canonical, "range:>=:mm:1000")
   assert.equal(normalizeRange("1.2m以下")?.canonical, "range:<=:mm:1200")
   assert.equal(normalizeRange("75未満")?.canonical, "range:<:mm:75")
+  assert.equal(normalizeRange(">= 10cm")?.canonical, "range:>=:mm:100")
 })
 
 test("extracts multiple drawing values and compares expected values", () => {

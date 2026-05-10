@@ -10,6 +10,49 @@ export type NormalizedDrawingValue = {
   diameterClass?: "phi" | "d" | "a"
 }
 
+const unitsToMillimeters = new Map([
+  ["mm", 1],
+  ["cm", 10],
+  ["m", 1000]
+])
+
+const unitsToMeters = new Map([
+  ["m", 1],
+  ["cm", 0.01],
+  ["mm", 0.001]
+])
+
+const rangeOperatorLexicon = new Map<string, NonNullable<NormalizedDrawingValue["operator"]>>([
+  ["以上", ">="],
+  ["≧", ">="],
+  [">=", ">="],
+  ["超", ">"],
+  ["より大きい", ">"],
+  [">", ">"],
+  ["以下", "<="],
+  ["以内", "<="],
+  ["≦", "<="],
+  ["<=", "<="],
+  ["未満", "<"],
+  ["より小さい", "<"],
+  ["<", "<"]
+])
+
+type QuantityToken = {
+  value: number
+  unit?: string
+  raw: string
+  start: number
+  end: number
+}
+
+type OperatorToken = {
+  operator: NonNullable<NormalizedDrawingValue["operator"]>
+  raw: string
+  start: number
+  end: number
+}
+
 export function normalizeScale(text: string): NormalizedDrawingValue | null {
   const normalized = normalizeText(text)
   const ratio = normalized.match(/(?:縮尺|S)\s*[:=]?\s*1\s*[/：:]\s*(\d{1,5})/iu) ?? normalized.match(/\b1\s*[/：:]\s*(\d{1,5})\b/u)
@@ -85,20 +128,17 @@ export function normalizeLength(text: string): NormalizedDrawingValue | null {
 
 export function normalizeRange(text: string): NormalizedDrawingValue | null {
   const normalized = normalizeText(text)
-  const match = normalized.match(/(-?\d+(?:\.\d+)?)\s*(mm|m|cm)?\s*(以上|以下|未満|以内|超|より大きい|より小さい|≧|≦|>=|<=|>|<)/u)
-  if (!match) return null
-  const value = Number(match[1])
-  const unit = (match[2] ?? "mm").toLowerCase()
-  const millimeters = toMillimeters(value, unit)
-  const operator = match[3] ? operatorFor(match[3]) : undefined
-  if (millimeters === null || !operator) return null
+  const candidate = firstRangeCandidate(normalized)
+  if (!candidate) return null
+  const millimeters = toMillimeters(candidate.quantity.value, candidate.quantity.unit ?? "mm")
+  if (millimeters === null) return null
   return {
     kind: "range",
-    raw: match[0],
-    canonical: `range:${operator}:mm:${formatNumber(millimeters)}`,
+    raw: candidate.raw,
+    canonical: `range:${candidate.operator.operator}:mm:${formatNumber(millimeters)}`,
     value: millimeters,
     unit: "mm",
-    operator
+    operator: candidate.operator.operator
   }
 }
 
@@ -156,26 +196,70 @@ function normalizeText(text: string): string {
 
 function toMillimeters(value: number, unit: string | undefined): number | null {
   if (!Number.isFinite(value)) return null
-  if (unit === "mm") return value
-  if (unit === "cm") return value * 10
-  if (unit === "m") return value * 1000
-  return null
+  const factor = unitsToMillimeters.get(unit ?? "")
+  return factor === undefined ? null : value * factor
 }
 
 function toMeters(value: number, unit: string | undefined): number | null {
   if (!Number.isFinite(value)) return null
-  if (unit === "m") return value
-  if (unit === "cm") return value / 100
-  if (unit === "mm") return value / 1000
-  return null
+  const factor = unitsToMeters.get(unit ?? "")
+  return factor === undefined ? null : value * factor
 }
 
-function operatorFor(value: string): NormalizedDrawingValue["operator"] | undefined {
-  if (value === "以上" || value === "≧" || value === ">=") return ">="
-  if (value === "超" || value === "より大きい" || value === ">") return ">"
-  if (value === "以下" || value === "以内" || value === "≦" || value === "<=") return "<="
-  if (value === "未満" || value === "より小さい" || value === "<") return "<"
+function firstRangeCandidate(text: string): { quantity: QuantityToken; operator: OperatorToken; raw: string } | undefined {
+  const quantities = quantityTokens(text)
+  const operators = operatorTokens(text, rangeOperatorLexicon)
+  for (const quantity of quantities) {
+    const after = operators.find((operator) => operator.start >= quantity.end && isConnectorOnly(text.slice(quantity.end, operator.start)))
+    if (after) return { quantity, operator: after, raw: text.slice(quantity.start, after.end) }
+    const before = operators.find((operator) => operator.end <= quantity.start && isConnectorOnly(text.slice(operator.end, quantity.start)))
+    if (before) return { quantity, operator: before, raw: text.slice(before.start, quantity.end) }
+  }
   return undefined
+}
+
+function quantityTokens(text: string): QuantityToken[] {
+  const tokens: QuantityToken[] = []
+  const matcher = /-?\d+(?:\.\d+)?/gu
+  for (const match of text.matchAll(matcher)) {
+    const rawNumber = match[0]
+    const start = match.index
+    if (start === undefined) continue
+    const numericEnd = start + rawNumber.length
+    const unit = unitAfter(text, numericEnd)
+    const end = unit ? unit.end : numericEnd
+    const value = Number(rawNumber)
+    if (Number.isFinite(value)) tokens.push({ value, unit: unit?.unit, raw: text.slice(start, end), start, end })
+  }
+  return tokens
+}
+
+function operatorTokens(text: string, lexicon: Map<string, NonNullable<NormalizedDrawingValue["operator"]>>): OperatorToken[] {
+  const tokens: OperatorToken[] = []
+  const surfaces = [...lexicon.keys()].sort((left, right) => right.length - left.length)
+  for (const surface of surfaces) {
+    const operator = lexicon.get(surface)
+    if (!operator) continue
+    let start = text.indexOf(surface)
+    while (start >= 0) {
+      tokens.push({ operator, raw: surface, start, end: start + surface.length })
+      start = text.indexOf(surface, start + surface.length)
+    }
+  }
+  return tokens.sort((left, right) => left.start - right.start || right.raw.length - left.raw.length)
+}
+
+function unitAfter(text: string, offset: number): { unit: string; end: number } | undefined {
+  const rest = text.slice(offset).trimStart()
+  const whitespace = text.slice(offset).length - rest.length
+  const units = [...unitsToMillimeters.keys()].sort((left, right) => right.length - left.length)
+  const unit = units.find((candidate) => rest.toLowerCase().startsWith(candidate))
+  return unit ? { unit, end: offset + whitespace + unit.length } : undefined
+}
+
+function isConnectorOnly(value: string): boolean {
+  const trimmed = value.trim()
+  return trimmed === "" || trimmed === "=" || trimmed === ":" || trimmed === "は"
 }
 
 function formatNumber(value: number): string {
