@@ -35,6 +35,7 @@ export function DebugPanel({
 }) {
   const [replayEnvelope, setReplayEnvelope] = useState<DebugReplayEnvelope | null>(null)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const envelope = useMemo(() => (pending ? null : replayEnvelope ?? (trace ? buildDebugReplayEnvelope(trace) : null)), [pending, replayEnvelope, trace])
   const activeTrace = envelope?.rawTrace ?? trace
@@ -61,6 +62,17 @@ export function DebugPanel({
     setSelectedNodeId(null)
   }, [trace?.runId, replayEnvelope?.runSummary.runId])
 
+  useEffect(() => {
+    if (!expanded) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setExpanded(false)
+    }
+
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [expanded])
+
   async function onUploadDebugJson(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0]
     event.currentTarget.value = ""
@@ -83,94 +95,62 @@ export function DebugPanel({
     setSelectedNodeId(null)
   }
 
-  return (
-    <aside className={`debug-card ${pending ? "processing" : ""}`} aria-label="デバッグパネル" aria-busy={pending}>
-      <header className="debug-head">
-        <div>
-          <h2>デバッグパネル</h2>
-          <span>{pending ? "実行中" : envelope ? `${envelope.graph.nodes.length} ノード` : `${steps.length} ステップ`}</span>
-          {replayEnvelope && <span className="debug-source-chip">ローカルJSON</span>}
-        </div>
-        <div className="debug-head-actions">
-          <button type="button" onClick={() => void downloadDebugTrace(activeTrace)} disabled={!activeTrace || pending || Boolean(replayEnvelope)} title="保存済みJSONをダウンロード">
-            <Icon name="download" />
-            <span>保存JSON</span>
-          </button>
-          <button type="button" onClick={() => downloadDebugReplayEnvelope(envelope)} disabled={!envelope || pending} title="可視化JSONをダウンロード">
-            <Icon name="download" />
-            <span>可視化JSON</span>
-          </button>
-          <label className="debug-upload-button" title="JSONをアップロード">
-            <Icon name="plus" />
-            <span>JSONをアップロード</span>
-            <input type="file" accept="application/json,.json" onChange={(event) => void onUploadDebugJson(event)} />
-          </label>
-          {replayEnvelope && (
-            <button type="button" onClick={clearReplay} title="アップロード表示を解除">
-              解除
-            </button>
-          )}
-          {!envelope && (
-            <button type="button" aria-expanded={allExpanded} onClick={onToggleAll}>{allExpanded ? "すべて閉じる" : "すべて展開"}</button>
-          )}
-          <button type="button" title="拡大表示" aria-label="デバッグパネルを拡大表示">
-            <Icon name="expand" />
-          </button>
-        </div>
-      </header>
-
-      {envelope ? (
-        <div className="debug-console">
-          <DebugRunSummaryView envelope={envelope} uploadError={uploadError} />
-          <div className="debug-flow-layout">
-            <div className="debug-flow-board" aria-label="RAG実行フローチャート">
-              {envelope.graph.nodes.map((node, index) => (
-                <DebugFlowNodeButton
-                  key={node.id}
-                  node={node}
-                  selected={selectedNode?.id === node.id}
-                  edgeLabel={index > 0 ? envelope.graph.edges[index - 1]?.label : undefined}
-                  onSelect={() => setSelectedNodeId(node.id)}
-                />
-              ))}
-            </div>
-            <DebugNodeDetailPanel node={selectedNode} detail={selectedDetail} />
+  function renderDebugBody() {
+    return envelope ? (
+      <div className="debug-console">
+        <DebugRunSummaryView envelope={envelope} uploadError={uploadError} />
+        <div className="debug-flow-layout">
+          <div className="debug-flow-board" aria-label="RAG実行フローチャート">
+            {envelope.graph.nodes.map((node, index) => (
+              <DebugFlowNodeButton
+                key={node.id}
+                node={node}
+                selected={selectedNode?.id === node.id}
+                edgeLabel={index > 0 ? envelope.graph.edges[index - 1]?.label : undefined}
+                onSelect={() => setSelectedNodeId(node.id)}
+              />
+            ))}
           </div>
-          <div className="debug-diagnostics-grid">
-            <FactCoverageTable rows={factCoverage} />
-            <EvidenceDebugTable rows={evidenceRows} citationsCount={activeTrace?.citations.length ?? 0} />
-            <AnswerSupportPanel support={answerSupport} />
-            <ContextAssemblyPanel contextAssembly={contextAssembly} />
-          </div>
+          <DebugNodeDetailPanel node={selectedNode} detail={selectedDetail} />
         </div>
-      ) : (
-        <div className="debug-steps">
-          {steps.map((step) => {
-            const expanded = allExpanded || expandedStepId === step.id
-            return (
-              <article className={`debug-step ${step.status} ${pending ? "processing" : ""}`} key={step.id}>
-                <div className="step-index">{step.id}</div>
-                <div className="step-body">
-                  <button className="step-summary" type="button" aria-expanded={expanded} onClick={() => onToggleStep(step.id)}>
-                    <span className="step-state">
-                      {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={step.status === "warning" ? "warning" : "check"} />}
-                    </span>
-                    <strong>{step.label}</strong>
-                    <span className="step-latency">{formatLatency(step.latencyMs)}</span>
-                    {step.modelId && <span className="model-chip">{step.modelId}</span>}
-                    {step.hitCount !== undefined && <span className="sub-chip">ヒット数: {step.hitCount}件</span>}
-                    {step.tokenCount !== undefined && <span className="sub-chip">トークン: {step.tokenCount}</span>}
-                    <span className="step-description">{step.summary}</span>
-                    <Icon name="chevron" />
-                  </button>
-                  {expanded && step.detail && <pre className="step-detail">{step.detail}</pre>}
-                </div>
-              </article>
-            )
-          })}
+        <div className="debug-diagnostics-grid">
+          <FactCoverageTable rows={factCoverage} />
+          <EvidenceDebugTable rows={evidenceRows} citationsCount={activeTrace?.citations.length ?? 0} />
+          <AnswerSupportPanel support={answerSupport} />
+          <ContextAssemblyPanel contextAssembly={contextAssembly} />
         </div>
-      )}
+      </div>
+    ) : (
+      <div className="debug-steps">
+        {steps.map((step) => {
+          const expandedStep = allExpanded || expandedStepId === step.id
+          return (
+            <article className={`debug-step ${step.status} ${pending ? "processing" : ""}`} key={step.id}>
+              <div className="step-index">{step.id}</div>
+              <div className="step-body">
+                <button className="step-summary" type="button" aria-expanded={expandedStep} onClick={() => onToggleStep(step.id)}>
+                  <span className="step-state">
+                    {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={step.status === "warning" ? "warning" : "check"} />}
+                  </span>
+                  <strong>{step.label}</strong>
+                  <span className="step-latency">{formatLatency(step.latencyMs)}</span>
+                  {step.modelId && <span className="model-chip">{step.modelId}</span>}
+                  {step.hitCount !== undefined && <span className="sub-chip">ヒット数: {step.hitCount}件</span>}
+                  {step.tokenCount !== undefined && <span className="sub-chip">トークン: {step.tokenCount}</span>}
+                  <span className="step-description">{step.summary}</span>
+                  <Icon name="chevron" />
+                </button>
+                {expandedStep && step.detail && <pre className="step-detail">{step.detail}</pre>}
+              </div>
+            </article>
+          )
+        })}
+      </div>
+    )
+  }
 
+  function renderDebugFooter() {
+    return (
       <footer className={`debug-footer ${pending ? "processing" : activeTrace?.status ?? "idle"}`}>
         <span className="footer-status">
           {pending ? <span className="loading-spinner" aria-hidden="true" /> : <Icon name={activeTrace?.status === "warning" ? "warning" : "check"} />}
@@ -179,7 +159,68 @@ export function DebugPanel({
         <span>{pending ? "検索と回答生成を実行しています" : activeTrace ? (activeTrace.isAnswerable ? "正常に完了しました" : "回答拒否として完了しました") : "質問すると実行トレースを保存します"}</span>
         <span className="footer-latency">合計レイテンシ <strong>{pending ? "計測中" : activeTrace ? formatLatency(activeTrace.totalLatencyMs) : "-"}</strong></span>
       </footer>
-    </aside>
+    )
+  }
+
+  return (
+    <>
+      <aside className={`debug-card ${pending ? "processing" : ""}`} aria-label="デバッグパネル" aria-busy={pending}>
+        <header className="debug-head">
+          <div>
+            <h2>デバッグパネル</h2>
+            <span>{pending ? "実行中" : envelope ? `${envelope.graph.nodes.length} ノード` : `${steps.length} ステップ`}</span>
+            {replayEnvelope && <span className="debug-source-chip">ローカルJSON</span>}
+          </div>
+          <div className="debug-head-actions">
+            <button type="button" onClick={() => void downloadDebugTrace(activeTrace)} disabled={!activeTrace || pending || Boolean(replayEnvelope)} title="保存済みJSONをダウンロード">
+              <Icon name="download" />
+              <span>保存JSON</span>
+            </button>
+            <button type="button" onClick={() => downloadDebugReplayEnvelope(envelope)} disabled={!envelope || pending} title="可視化JSONをダウンロード">
+              <Icon name="download" />
+              <span>可視化JSON</span>
+            </button>
+            <label className="debug-upload-button" title="JSONをアップロード">
+              <Icon name="plus" />
+              <span>JSONをアップロード</span>
+              <input type="file" accept="application/json,.json" onChange={(event) => void onUploadDebugJson(event)} />
+            </label>
+            {replayEnvelope && (
+              <button type="button" onClick={clearReplay} title="アップロード表示を解除">
+                解除
+              </button>
+            )}
+            {!envelope && (
+              <button type="button" aria-expanded={allExpanded} onClick={onToggleAll}>{allExpanded ? "すべて閉じる" : "すべて展開"}</button>
+            )}
+            <button type="button" className="debug-expand-button" title="拡大表示" aria-label="デバッグパネルを拡大表示" onClick={() => setExpanded(true)}>
+              <Icon name="expand" />
+            </button>
+          </div>
+        </header>
+
+        {renderDebugBody()}
+        {renderDebugFooter()}
+      </aside>
+      {expanded && (
+        <div className="debug-expanded-backdrop" role="presentation">
+          <section className={`debug-expanded-panel ${pending ? "processing" : ""}`} role="dialog" aria-modal="true" aria-label="拡大デバッグパネル" aria-busy={pending}>
+            <header className="debug-expanded-head">
+              <div>
+                <h2>デバッグパネル</h2>
+                <span>{pending ? "実行中" : envelope ? `${envelope.graph.nodes.length} ノード` : `${steps.length} ステップ`}</span>
+                {replayEnvelope && <span className="debug-source-chip">ローカルJSON</span>}
+              </div>
+              <button type="button" aria-label="拡大デバッグパネルを閉じる" onClick={() => setExpanded(false)}>
+                <Icon name="close" />
+              </button>
+            </header>
+            {renderDebugBody()}
+            {renderDebugFooter()}
+          </section>
+        </div>
+      )}
+    </>
   )
 }
 
