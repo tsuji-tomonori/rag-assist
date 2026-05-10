@@ -1,6 +1,6 @@
 # 本番 UI のモックデータ表示監査
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -30,12 +30,29 @@ PR #233 では、担当者問い合わせ・担当者回答で固定の架空ユ
 
 ## 受け入れ条件
 
-- [ ] PR #233 と同種の本番モック表示候補を検索・確認している。
-- [ ] 本番 UI/API 表示に残るモックデータが見つかった場合、実データ由来または明示的な empty/unavailable 表示へ修正している。
-- [ ] 該当修正に対するテストを追加または更新している。
-- [ ] `git diff --check` と変更範囲に見合う web 検証を実行し、結果を記録している。
-- [ ] 作業レポートを `reports/working/` に残している。
-- [ ] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿している。
+- [x] PR #233 と同種の本番モック表示候補を検索・確認している。
+- [x] 本番 UI/API 表示に残るモックデータが見つかった場合、実データ由来または明示的な empty/unavailable 表示へ修正している。
+- [x] 該当修正に対するテストを追加または更新している。
+- [x] `git diff --check` と変更範囲に見合う web 検証を実行し、結果を記録している。
+- [x] 作業レポートを `reports/working/` に残している。
+- [x] PR 作成後、受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿している。
+
+## 完了時の確認
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/237
+- 受け入れ条件確認コメント: posted
+- セルフレビューコメント: posted
+- 作業レポート: `reports/working/20260510-1223-no-mock-display-audit.md`
+- 検証:
+  - `npm ci`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:web-inventory`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api`: pass
+  - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`: fail -> 修正後 pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
+  - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass
+  - `npm --prefix memorag-bedrock-mvp run lint`: pass
+  - `git diff --check`: pass
 
 ## 検証計画
 
