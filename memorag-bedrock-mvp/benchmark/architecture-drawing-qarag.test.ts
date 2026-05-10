@@ -26,6 +26,8 @@ test("converts the managed JSON into benchmark dataset rows", async () => {
       documentName: "建築工事標準詳細図（令和4年改定）概要・表示記号及び略号",
       pageOrSheet: "P1",
       evidenceAnchor: "lines 12-15",
+      expectedEvidenceRegions: [],
+      drawingSourceType: "standard_detail",
       modalityScope: "text+layout",
       taskCategory: "metadata/policy",
       subSkill: "purpose",
@@ -105,12 +107,107 @@ test("prepares a dataset and downloads only sources referenced by seed QA", asyn
     const result = await prepareArchitectureDrawingQaragBenchmark({ configPath, datasetOutput, corpusDir, fetchImpl: fetcher })
     const dataset = await readFile(datasetOutput, "utf-8")
     const corpus = await readFile(path.join(corpusDir, "s01-sample-drawing.pdf"))
+    const corpusMetadata = JSON.parse(await readFile(path.join(corpusDir, "s01-sample-drawing.pdf.metadata.json"), "utf-8")) as {
+      drawingSourceType?: string
+      drawingSheetMetadata?: Array<{ pageOrSheet?: string; sheetTitle?: string; sourceQaIds?: string[] }>
+      drawingRegionIndex?: Array<{ regionType?: string; pageOrSheet?: string; bbox?: { unit?: string }; sourceQaIds?: string[] }>
+    }
 
     assert.equal(result.datasetRows, 1)
     assert.deepEqual(result.corpusFiles, ["s01-sample-drawing.pdf"])
     assert.deepEqual(requested, ["https://example.com/sample.pdf"])
     assert.match(dataset, /"id":"QA-001"/)
+    assert.match(dataset, /"expectedEvidenceRegions":/)
+    assert.equal(corpusMetadata.drawingSourceType, "external")
+    assert.deepEqual(corpusMetadata.drawingSheetMetadata?.[0]?.sourceQaIds, ["QA-001"])
+    assert.equal(corpusMetadata.drawingRegionIndex?.[0]?.regionType, "titleblock")
+    assert.equal(corpusMetadata.drawingRegionIndex?.[0]?.bbox?.unit, "normalized_page")
     assert.equal(corpus.toString(), "%PDF-1.4 sample")
+  } finally {
+    await rm(tempDir, { recursive: true, force: true })
+  }
+})
+
+test("prepares visual page retrieval candidate artifacts behind a feature flag", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "architecture-qarag-visual-"))
+  try {
+    const configPath = path.join(tempDir, "benchmark.json")
+    const datasetOutput = path.join(tempDir, "dataset.jsonl")
+    const corpusDir = path.join(tempDir, "corpus")
+    const visualIndexOutput = path.join(tempDir, "visual-page-index.json")
+    const visualReportOutput = path.join(tempDir, "visual-page-report.md")
+    await import("node:fs/promises").then(({ writeFile }) => writeFile(configPath, JSON.stringify({
+      schemaVersion: 1,
+      suiteId: "architecture-drawing-qarag-v0.1",
+      label: "Sample",
+      description: "Sample benchmark definition",
+      sources: [
+        {
+          sourceId: "A01",
+          sourceName: "Project Drawing",
+          type: "PDF",
+          publisher: "Publisher",
+          yearVersion: "2026",
+          primaryUse: "public procurement drawing",
+          url: "https://example.com/project.pdf",
+          notes: "note"
+        }
+      ],
+      seedQa: [
+        {
+          id: "QA-001",
+          taskCategory: "legend/abbreviation",
+          subSkill: "legend lookup",
+          sourceId: "A01",
+          documentName: "Project Drawing",
+          pageOrSheet: "A-01",
+          evidenceAnchor: "凡例表",
+          modalityScope: "drawing image+OCR",
+          retrievalSetting: "single-page",
+          questionJa: "凡例の意味は何か。",
+          expectedAnswerJa: "凡例の意味。",
+          acceptableAliasesOrNormalization: "要旨一致。",
+          scoringRule: "semantic_exact",
+          difficulty: "medium"
+        }
+      ]
+    }), "utf-8"))
+
+    const fetcher = (async () => new Response(Buffer.from("%PDF-1.4 sample"), { status: 200 })) as typeof fetch
+
+    await prepareArchitectureDrawingQaragBenchmark({
+      configPath,
+      datasetOutput,
+      corpusDir,
+      fetchImpl: fetcher,
+      visualPageRetrieval: {
+        enabled: true,
+        indexOutput: visualIndexOutput,
+        reportOutput: visualReportOutput,
+        profileId: "drawing-visual-page-test@1"
+      }
+    })
+
+    const dataset = JSON.parse((await readFile(datasetOutput, "utf-8")).trim()) as { metadata?: { visualPageRetrieval?: { profileId?: string; expectedPageCandidates?: unknown[] } } }
+    const visualIndex = JSON.parse(await readFile(visualIndexOutput, "utf-8")) as {
+      profileId?: string
+      defaultPath?: boolean
+      pages?: Array<{ sourceId?: string; pageOrSheet?: string; regionIds?: string[] }>
+      adoptionGate?: { decision?: string; requiredMetrics?: string[] }
+    }
+    const report = await readFile(visualReportOutput, "utf-8")
+
+    assert.equal(dataset.metadata?.visualPageRetrieval?.profileId, "drawing-visual-page-test@1")
+    assert.equal(dataset.metadata?.visualPageRetrieval?.expectedPageCandidates?.length, 1)
+    assert.equal(visualIndex.profileId, "drawing-visual-page-test@1")
+    assert.equal(visualIndex.defaultPath, false)
+    assert.equal(visualIndex.pages?.[0]?.sourceId, "A01")
+    assert.equal(visualIndex.pages?.[0]?.pageOrSheet, "A-01")
+    assert.equal(visualIndex.pages?.[0]?.regionIds?.length, 1)
+    assert.equal(visualIndex.adoptionGate?.decision, "not_adopted_pending_ablation")
+    assert.ok(visualIndex.adoptionGate?.requiredMetrics?.includes("page_recall_at_k"))
+    assert.match(report, /Not adopted as default yet/)
+    assert.match(report, /no_access_leak_count=0/)
   } finally {
     await rm(tempDir, { recursive: true, force: true })
   }

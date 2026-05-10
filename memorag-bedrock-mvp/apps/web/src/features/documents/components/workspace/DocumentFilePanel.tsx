@@ -7,6 +7,7 @@ import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../../ty
 import type { DocumentOperationState } from "../../hooks/useDocuments.js"
 import {
   documentStatusLabel,
+  documentGroupNames,
   fileTypeClassName,
   fileTypeLabel,
   type ConfirmAction,
@@ -159,6 +160,7 @@ export function DocumentFilePanel({
           <span role="columnheader">更新日</span>
           <span role="columnheader">チャンク数</span>
           <span role="columnheader">状態</span>
+          <span role="columnheader">所属フォルダ</span>
           <span role="columnheader">操作</span>
         </div>
         {folderDocumentsCount === 0 ? (
@@ -173,58 +175,64 @@ export function DocumentFilePanel({
             description="検索語、種別、状態、所属フォルダの条件を変更してください。"
           />
         ) : (
-          visibleDocuments.map((document) => (
-            <div
-              className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
-              role="row"
-              key={document.documentId}
-              tabIndex={0}
-              aria-label={`${document.fileName}の詳細を表示`}
-              onClick={() => onSelectDocument(document)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault()
-                  onSelectDocument(document)
-                }
-              }}
-            >
-              <span role="cell" className="document-name-cell">
-                <FileIcon document={document} />
-                <span>{document.fileName}</span>
-              </span>
-              <span role="cell">{fileTypeLabel(document)}</span>
-              <span role="cell">{formatDateTime(document.createdAt)}</span>
-              <span role="cell">{document.chunkCount}</span>
-              <span role="cell">{documentStatusLabel(document)}</span>
-              <span role="cell" className="document-actions-cell">
-                <button
-                  type="button"
-                  title={`${document.fileName}の再インデックスをステージング`}
-                  aria-label={`${document.fileName}の再インデックスをステージング`}
-                  disabled={!canReindex || operationState.stagingReindexDocumentId === document.documentId}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    onConfirmAction({ kind: "stage", document })
-                  }}
-                >
-                  {operationState.stagingReindexDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
-                </button>
-                <button
-                  type="button"
-                  className="delete-document-button"
-                  title={`${document.fileName}を削除`}
-                  aria-label={`${document.fileName}を削除`}
-                  disabled={!canDelete || operationState.deletingDocumentId === document.documentId}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    onConfirmAction({ kind: "delete", document })
-                  }}
-                >
-                  {operationState.deletingDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
-                </button>
-              </span>
-            </div>
-          ))
+          visibleDocuments.map((document) => {
+            const groupLabel = documentGroupNames(document, documentGroups).join(", ") || "未設定"
+            return (
+              <div
+                className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
+                role="row"
+                key={document.documentId}
+                tabIndex={0}
+                aria-label={`${document.fileName}の詳細を表示`}
+                onClick={() => onSelectDocument(document)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault()
+                    onSelectDocument(document)
+                  }
+                }}
+              >
+                <span role="cell" className="document-name-cell" data-label="ファイル名">
+                  <FileIcon document={document} />
+                  <span title={document.fileName}>{document.fileName}</span>
+                </span>
+                <span role="cell" data-label="種別">{fileTypeLabel(document)}</span>
+                <span role="cell" data-label="更新日">{formatDateTime(document.createdAt)}</span>
+                <span role="cell" data-label="チャンク数">{document.chunkCount}</span>
+                <span role="cell" data-label="状態">{documentStatusLabel(document)}</span>
+                <span role="cell" data-label="所属フォルダ">{groupLabel}</span>
+                <span role="cell" className="document-actions-cell" data-label="操作">
+                  <span className="document-action-buttons">
+                    <button
+                      type="button"
+                      title={`${document.fileName}の再インデックスをステージング`}
+                      aria-label={`${document.fileName}の再インデックスをステージング`}
+                      disabled={!canReindex || operationState.stagingReindexDocumentId === document.documentId}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onConfirmAction({ kind: "stage", document })
+                      }}
+                    >
+                      {operationState.stagingReindexDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
+                    </button>
+                    <button
+                      type="button"
+                      className="delete-document-button"
+                      title={`${document.fileName}を削除`}
+                      aria-label={`${document.fileName}を削除`}
+                      disabled={!canDelete || operationState.deletingDocumentId === document.documentId}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onConfirmAction({ kind: "delete", document })
+                      }}
+                    >
+                      {operationState.deletingDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
+                    </button>
+                  </span>
+                </span>
+              </div>
+            )
+          })
         )}
       </div>
 

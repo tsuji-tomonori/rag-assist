@@ -10,8 +10,10 @@ import { DocumentFilePanel } from "./workspace/DocumentFilePanel.js"
 import { DocumentFolderTree } from "./workspace/DocumentFolderTree.js"
 import {
   buildShareDiff,
+  buildOperationEvents,
   compareDocuments,
   countDocumentsForGroup,
+  type DocumentOperationEvent,
   documentGroupIds,
   documentStatusLabel,
   emptyOperationState,
@@ -87,8 +89,10 @@ export function DocumentWorkspace({
   const [documentSort, setDocumentSort] = useState<DocumentSortKey>("updatedDesc")
   const [selectedDocument, setSelectedDocument] = useState<DocumentManifest | null>(null)
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
+  const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
+  const operationEventSeqRef = useRef(0)
 
   const folders = useMemo<WorkspaceFolder[]>(() => {
     return documentGroups.map((group) => ({
@@ -128,7 +132,10 @@ export function DocumentWorkspace({
     })
     .sort((left, right) => compareDocuments(left, right, documentSort))
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
-  const latestDocuments = [...documents].sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, 3)
+  const recentOperationEvents = useMemo(
+    () => buildOperationEvents({ documents, documentGroups, migrations, uploadState, sessionOperationEvents }),
+    [documents, documentGroups, migrations, uploadState, sessionOperationEvents]
+  )
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
   const shareTargetGroupId = shareGroupId || selectedGroupId
   const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
@@ -147,10 +154,26 @@ export function DocumentWorkspace({
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
   const createVisibilityLabel = visibilityLabelValue(groupVisibility)
 
+  function recordSessionOperation(actionLabel: string, target: string, detail?: string, result: DocumentOperationEvent["result"] = "要求済み") {
+    operationEventSeqRef.current += 1
+    const event: DocumentOperationEvent = {
+      id: `session-${operationEventSeqRef.current}`,
+      actionLabel,
+      target,
+      detail,
+      result,
+      occurredAt: new Date().toISOString()
+    }
+    setSessionOperationEvents((current) => [event, ...current].slice(0, 8))
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     if (!uploadFile || !canUploadToDestination) return
+    const fileName = uploadFile.name
+    const destination = uploadDestinationLabel
     await onUpload(uploadFile)
+    recordSessionOperation("アップロード", fileName, `保存先: ${destination}`)
     setUploadFile(null)
   }
 
@@ -167,6 +190,7 @@ export function DocumentWorkspace({
       ...(createManagerDraft.groups.length > 0 ? { managerUserIds: createManagerDraft.groups } : {})
     }
     const createdGroup = await onCreateGroup(input)
+    recordSessionOperation("フォルダ作成", name, `公開範囲: ${createVisibilityLabel}`, createdGroup?.groupId ? "反映済み" : "要求済み")
     if (createdGroup?.groupId && moveToCreatedGroup) {
       setSelectedFolderId(createdGroup.groupId)
       onUploadGroupChange(createdGroup.groupId)
@@ -183,6 +207,7 @@ export function DocumentWorkspace({
     event.preventDefault()
     if (!shareTargetGroupId || !canWrite || shareHasValidationError) return
     await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups })
+    recordSessionOperation("共有更新", shareTargetGroup?.name ?? shareTargetGroupId, `shared groups: ${shareDraft.groups.join(", ") || "なし"}`)
     setShareGroups("")
   }
 
@@ -199,10 +224,22 @@ export function DocumentWorkspace({
     if (!confirmAction) return
     const action = confirmAction
     setConfirmAction(null)
-    if (action.kind === "delete") await onDelete(action.document.documentId)
-    if (action.kind === "stage") await onStageReindex(action.document.documentId)
-    if (action.kind === "cutover") await onCutoverReindex(action.migration.migrationId)
-    if (action.kind === "rollback") await onRollbackReindex(action.migration.migrationId)
+    if (action.kind === "delete") {
+      await onDelete(action.document.documentId)
+      recordSessionOperation("文書削除", action.document.fileName, `documentId: ${action.document.documentId}`)
+    }
+    if (action.kind === "stage") {
+      await onStageReindex(action.document.documentId)
+      recordSessionOperation("reindex stage", action.document.fileName, `documentId: ${action.document.documentId}`)
+    }
+    if (action.kind === "cutover") {
+      await onCutoverReindex(action.migration.migrationId)
+      recordSessionOperation("reindex cutover", action.migration.migrationId, `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`)
+    }
+    if (action.kind === "rollback") {
+      await onRollbackReindex(action.migration.migrationId)
+      recordSessionOperation("reindex rollback", action.migration.migrationId, `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`)
+    }
   }
 
   function selectFolder(folderId: string, groupId: string) {
@@ -291,7 +328,7 @@ export function DocumentWorkspace({
           uploadFile={uploadFile}
           uploadDestinationLabel={uploadDestinationLabel}
           uploadState={uploadState}
-          latestDocuments={latestDocuments}
+          recentOperationEvents={recentOperationEvents}
           groupName={groupName}
           groupDescription={groupDescription}
           groupParentId={groupParentId}

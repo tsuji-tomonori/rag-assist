@@ -17,6 +17,16 @@ export type ConfirmAction =
 
 export type DocumentSortKey = "updatedDesc" | "updatedAsc" | "fileNameAsc" | "chunkDesc" | "typeAsc"
 
+export type DocumentOperationEvent = {
+  id: string
+  actionLabel: string
+  target: string
+  occurredAt?: string
+  actor?: string
+  result: "反映済み" | "要求済み" | "進行中" | "失敗"
+  detail?: string
+}
+
 export const emptyOperationState: DocumentOperationState = {
   isUploading: false,
   creatingGroup: false,
@@ -57,6 +67,10 @@ export function countDocumentsForGroup(documents: DocumentManifest[], groupId: s
 export function documentGroupIds(document: DocumentManifest): string[] {
   const raw = document.metadata?.groupIds ?? document.metadata?.groupId
   return typeof raw === "string" ? [raw] : Array.isArray(raw) ? raw.filter((item): item is string => typeof item === "string") : []
+}
+
+export function documentGroupNames(document: DocumentManifest, documentGroups: DocumentGroup[]): string[] {
+  return documentGroupIds(document).map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
 }
 
 export function sharedEntries(group: DocumentGroup): Array<{ kind: string; value: string }> {
@@ -144,6 +158,72 @@ export function visibilityLabelValue(visibility: "private" | "shared" | "org"): 
   if (visibility === "org") return "組織全体"
   if (visibility === "shared") return "指定 group 共有"
   return "非公開"
+}
+
+export function buildOperationEvents({
+  documents,
+  documentGroups,
+  migrations,
+  uploadState,
+  sessionOperationEvents
+}: {
+  documents: DocumentManifest[]
+  documentGroups: DocumentGroup[]
+  migrations: ReindexMigration[]
+  uploadState: DocumentUploadState
+  sessionOperationEvents: DocumentOperationEvent[]
+}): DocumentOperationEvent[] {
+  const documentEvents = documents.map((document) => ({
+    id: `document-${document.documentId}`,
+    actionLabel: "文書更新",
+    target: document.fileName,
+    occurredAt: metadataString(document, "updatedAt") ?? document.createdAt,
+    result: "反映済み" as const,
+    detail: `documentId: ${document.documentId}`
+  }))
+  const groupEvents = documentGroups.map((group) => ({
+    id: `group-${group.groupId}`,
+    actionLabel: group.updatedAt === group.createdAt ? "フォルダ作成" : "フォルダ更新",
+    target: group.name,
+    occurredAt: group.updatedAt,
+    actor: group.ownerUserId,
+    result: "反映済み" as const,
+    detail: `公開範囲: ${visibilityLabelValue(group.visibility)}`
+  }))
+  const migrationEvents = migrations.map((migration) => ({
+    id: `migration-${migration.migrationId}`,
+    actionLabel: migrationActionLabel(migration.status),
+    target: `${migration.sourceDocumentId} → ${migration.stagedDocumentId}`,
+    occurredAt: migration.updatedAt,
+    actor: migration.createdBy,
+    result: "反映済み" as const,
+    detail: `migrationId: ${migration.migrationId}`
+  }))
+  const uploadEvent = uploadState ? [{
+    id: `upload-${uploadState.fileName}`,
+    actionLabel: "アップロード",
+    target: uploadState.fileName,
+    occurredAt: uploadState.updatedAt,
+    result: uploadState.phase === "failed" ? "失敗" as const : uploadState.phase === "complete" ? "反映済み" as const : "進行中" as const,
+    detail: uploadState.runId ? `run ID: ${uploadState.runId}` : undefined
+  }] : []
+
+  return [...sessionOperationEvents, ...uploadEvent, ...migrationEvents, ...groupEvents, ...documentEvents]
+    .sort((left, right) => (right.occurredAt ?? "").localeCompare(left.occurredAt ?? ""))
+    .slice(0, 8)
+}
+
+export function operationResultClassName(result: DocumentOperationEvent["result"]): string {
+  if (result === "失敗") return "failed"
+  if (result === "進行中") return "active"
+  if (result === "要求済み") return "requested"
+  return "done"
+}
+
+function migrationActionLabel(status: ReindexMigration["status"]): string {
+  if (status === "cutover") return "reindex cutover"
+  if (status === "rolled_back") return "reindex rollback"
+  return "reindex stage"
 }
 
 function mimeTypeLabel(mimeType: string): string {

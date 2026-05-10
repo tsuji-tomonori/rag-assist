@@ -441,7 +441,19 @@ test("seedBenchmarkCorpus includes optional per-file search aliases in seed meta
     searchAliases: {
       "立替": ["経費精算"],
       empty: []
-    }
+    },
+    drawingSourceType: "project_drawing",
+    drawingSheetMetadata: [{ pageOrSheet: "P1", drawingNo: "A-001", sheetTitle: "配置図", scale: "1/100", sourceQaIds: ["QA-001"], confidence: 0.75 }],
+    drawingRegionIndex: [{
+      regionId: "s01-titleblock-001",
+      regionType: "titleblock",
+      pageOrSheet: "P1",
+      bbox: { unit: "normalized_page", x: 0.55, y: 0.72, width: 0.45, height: 0.28 },
+      bboxSource: "heuristic_region_candidate",
+      evidenceAnchor: "title block",
+      sourceQaIds: ["QA-001"],
+      confidence: 0.55
+    }]
   }), "utf-8")
   const requests: Array<{ body?: unknown }> = []
   const fetchImpl = async (_url: string | URL | Request, init?: RequestInit) => {
@@ -464,7 +476,10 @@ test("seedBenchmarkCorpus includes optional per-file search aliases in seed meta
     fetchImpl
   })
 
-  const upload = requests.at(-1)?.body as { metadata?: { searchAliases?: Record<string, string[]>; benchmarkIngestSignature?: string } }
+  const upload = requests.at(-1)?.body as { metadata?: { searchAliases?: Record<string, string[]>; benchmarkIngestSignature?: string; drawingSourceType?: string; drawingSheetMetadata?: unknown[]; drawingRegionIndex?: unknown[] } }
   assert.deepEqual(upload.metadata?.searchAliases, { "立替": ["経費精算"] })
+  assert.equal(upload.metadata?.drawingSourceType, "project_drawing")
+  assert.equal(upload.metadata?.drawingSheetMetadata?.length, 1)
+  assert.equal(upload.metadata?.drawingRegionIndex?.length, 1)
   assert.equal(typeof upload.metadata?.benchmarkIngestSignature, "string")
 })

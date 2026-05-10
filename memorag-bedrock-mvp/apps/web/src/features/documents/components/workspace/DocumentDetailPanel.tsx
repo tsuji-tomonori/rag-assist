@@ -4,7 +4,7 @@ import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"
 import type { DocumentOperationState, DocumentUploadState } from "../../hooks/useDocuments.js"
-import { uploadErrorLabel, uploadStepClassName, type WorkspaceFolder } from "./documentWorkspaceUtils.js"
+import { operationResultClassName, uploadErrorLabel, uploadStepClassName, type DocumentOperationEvent, type WorkspaceFolder } from "./documentWorkspaceUtils.js"
 import type { sharedEntries } from "./documentWorkspaceUtils.js"
 
 export function DocumentDetailPanel({
@@ -24,7 +24,7 @@ export function DocumentDetailPanel({
   uploadFile,
   uploadDestinationLabel,
   uploadState,
-  latestDocuments,
+  recentOperationEvents,
   groupName,
   groupDescription,
   groupParentId,
@@ -76,7 +76,7 @@ export function DocumentDetailPanel({
   uploadFile: File | null
   uploadDestinationLabel: string
   uploadState: DocumentUploadState
-  latestDocuments: DocumentManifest[]
+  recentOperationEvents: DocumentOperationEvent[]
   groupName: string
   groupDescription: string
   groupParentId: string
@@ -295,19 +295,34 @@ export function DocumentDetailPanel({
 
       <section className="recent-update-card">
         <div className="card-title-row">
-          <h3>最近の更新</h3>
+          <h3>最近の操作</h3>
         </div>
-        <ul>
-          {latestDocuments.length === 0 ? (
-            <li>最近の更新はありません。</li>
+        <p className="field-hint">監査ログ API は未接続です。表示は文書・フォルダ・reindex 状態と現在セッションの操作要求に基づきます。</p>
+        <ul aria-label="最近の操作">
+          {recentOperationEvents.length === 0 ? (
+            <li>最近の操作はありません。</li>
           ) : (
-            latestDocuments.map((document) => (
-              <li key={document.documentId}>
-                <span className="update-avatar">{document.fileName.slice(0, 1).toUpperCase()}</span>
+            recentOperationEvents.map((operation) => (
+              <li key={operation.id}>
+                <span className={`update-avatar ${operationResultClassName(operation.result)}`}>{operation.actionLabel.slice(0, 1).toUpperCase()}</span>
                 <div>
-                  <strong>{document.fileName}</strong>
-                  <span>を更新しました</span>
-                  <small>{formatDateTime(document.createdAt)}</small>
+                  <strong>{operation.actionLabel}</strong>
+                  <span>{operation.target}</span>
+                  {operation.detail && <small>{operation.detail}</small>}
+                  <dl className="operation-log-meta">
+                    <div>
+                      <dt>時刻</dt>
+                      <dd>{operation.occurredAt ? formatDateTime(operation.occurredAt) : "未取得"}</dd>
+                    </div>
+                    <div>
+                      <dt>操作者</dt>
+                      <dd>{operation.actor ?? "未取得"}</dd>
+                    </div>
+                    <div>
+                      <dt>状態</dt>
+                      <dd>{operation.result}</dd>
+                    </div>
+                  </dl>
                 </div>
               </li>
             ))

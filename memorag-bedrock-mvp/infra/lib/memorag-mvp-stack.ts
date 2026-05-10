@@ -372,6 +372,7 @@ export class MemoRagMvpStack extends Stack {
       EMBEDDING_DIMENSIONS: String(embeddingDimensions),
       MIN_RETRIEVAL_SCORE: "0.20",
       AUTH_ENABLED: "true",
+      CORS_ALLOWED_ORIGINS: "*",
       COGNITO_REGION: cdk.Aws.REGION,
       COGNITO_USER_POOL_ID: userPool.userPoolId,
       COGNITO_APP_CLIENT_ID: userPoolClient.userPoolClientId,
