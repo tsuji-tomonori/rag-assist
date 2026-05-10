@@ -1027,7 +1027,7 @@
 .recent-update-card li > div {
   min-width: 0;
   display: grid;
-  gap: 2px;
+  gap: 4px;
 }
 
 .update-avatar {
@@ -1040,4 +1040,44 @@
   background: #eaf2ff;
   font-size: 12px;
   font-weight: 950;
+}
+
+.update-avatar.done {
+  color: #146542;
+  background: #e6f5ee;
+}
+
+.update-avatar.active,
+.update-avatar.requested {
+  color: #1c5ebd;
+  background: #eaf2ff;
+}
+
+.update-avatar.failed {
+  color: #b12222;
+  background: #ffe9e9;
+}
+
+.operation-log-meta {
+  margin: 3px 0 0;
+  display: grid;
+  gap: 3px;
+  color: #66758c;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.operation-log-meta div {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.operation-log-meta dt,
+.operation-log-meta dd {
+  margin: 0;
+}
+
+.operation-log-meta dt {
+  color: #8795a8;
 }

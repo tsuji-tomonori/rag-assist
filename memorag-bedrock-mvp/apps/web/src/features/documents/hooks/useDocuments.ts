@@ -18,6 +18,7 @@ export type DocumentUploadState = {
   groupId?: string
   phase: DocumentUploadProgress["phase"] | "failed"
   runId?: string
+  updatedAt?: string
   errorKind?: "fileType" | "extraction" | "timeout" | "permission" | "network" | "unknown"
   errorMessage?: string
 } | null
@@ -99,7 +100,7 @@ export function useDocuments({
           : undefined,
       onProgress: (progress) => {
         if (options.purpose !== "chatAttachment") {
-          setUploadState({ fileName: uploadFile.name, groupId: options.groupId, phase: progress.phase, runId: progress.runId })
+          setUploadState({ fileName: uploadFile.name, groupId: options.groupId, phase: progress.phase, runId: progress.runId, updatedAt: new Date().toISOString() })
         }
       }
     })
@@ -133,15 +134,15 @@ export function useDocuments({
   async function onUploadDocumentFile(uploadFile: File) {
     if (!canWriteDocuments) return
     updateOperationState({ isUploading: true })
-    setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId || undefined, phase: "preparing" })
+    setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId || undefined, phase: "preparing", updatedAt: new Date().toISOString() })
     setError(null)
     try {
       await ingestDocument(uploadFile, { groupId: uploadGroupId || undefined })
-      setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "complete" } : current)
+      setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "complete", updatedAt: new Date().toISOString() } : current)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
-      setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "failed", errorKind: classifyUploadError(message), errorMessage: message } : current)
+      setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "failed", updatedAt: new Date().toISOString(), errorKind: classifyUploadError(message), errorMessage: message } : current)
     } finally {
       updateOperationState({ isUploading: false })
     }
