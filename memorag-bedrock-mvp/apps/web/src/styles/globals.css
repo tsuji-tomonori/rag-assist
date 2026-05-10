@@ -1,7 +1,28 @@
 :root {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #17233f;
-  background: #f5f7fb;
+  --color-text: #17233f;
+  --color-text-strong: #111a2e;
+  --color-text-muted: #68758f;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f5f7fb;
+  --color-surface-subtle: #f8fbff;
+  --color-border: #dce4ef;
+  --color-border-strong: #c9d4e3;
+  --color-primary: #2f6fed;
+  --color-primary-strong: #1d66ee;
+  --color-primary-soft: #edf4ff;
+  --color-success: #20a486;
+  --color-warning: #b17810;
+  --color-warning-soft: #fff9eb;
+  --color-danger: #b32626;
+  --color-danger-soft: #fff8f8;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --shadow-card: 0 10px 26px rgba(28, 42, 68, 0.05);
+  --shadow-floating: 0 16px 40px rgba(24, 34, 55, 0.16);
+  color: var(--color-text);
+  background: var(--color-surface-muted);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -13,7 +34,7 @@
 body {
   min-width: 320px;
   margin: 0;
-  background: #f5f7fb;
+  background: var(--color-surface-muted);
 }
 
 button,
@@ -30,4 +51,109 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.ui-button,
+.ui-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xs);
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.ui-button-sm {
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.ui-button-md {
+  min-height: 2.4rem;
+  padding: 0.55rem 0.85rem;
+}
+
+.ui-button-primary {
+  border-color: var(--color-primary);
+  color: #fff;
+  background: var(--color-primary);
+}
+
+.ui-button-secondary {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.ui-button-ghost {
+  border-color: transparent;
+  color: var(--color-primary-strong);
+  background: transparent;
+}
+
+.ui-button-danger {
+  border-color: #ffb5b5;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.ui-icon-button {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+}
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ui-badge-neutral {
+  color: var(--color-text-muted);
+  background: var(--color-surface-muted);
+}
+
+.ui-badge-success {
+  border-color: #b9eadf;
+  color: #12725f;
+  background: #effbf8;
+}
+
+.ui-badge-warning {
+  border-color: #ead39d;
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.ui-badge-danger {
+  border-color: #ffb5b5;
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.ui-badge-info {
+  border-color: #bcd2f6;
+  color: var(--color-primary-strong);
+  background: var(--color-primary-soft);
+}
+
+.ui-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.ui-empty-state {
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  background: var(--color-surface-subtle);
 }

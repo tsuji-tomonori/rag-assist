@@ -33,10 +33,17 @@
 
 - `npm ci`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- App`: pass
+- `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState App`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
 - `npm --prefix memorag-bedrock-mvp run lint`: pass
 - `git diff --check`: pass
+
+## 競合解消
+
+- PR mergeability 回復のため `origin/main` を merge。
+- `DocumentWorkspace` は main 側の小コンポーネント分割構造を採用し、URL 状態同期 props / effects / selectedDocumentId 管理を再適用。
+- `useAppShellState` は main 側の `buildDocumentRouteProps` 構成を採用し、`urlState` / `onUrlStateChange` を追加。
 
 ## PR コメント
 

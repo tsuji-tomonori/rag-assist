@@ -33,6 +33,7 @@
 - `DocumentWorkspace.test.tsx` に URL 初期化と URL 同期 callback のテストを追加した。
 - `useAppShellState.test.ts` に query parameter からの hydrate / write / popstate 反映テストを追加した。
 - CI の web coverage で `App.test.tsx` に URL 状態が漏れる失敗を確認し、各 test 前に `window.history` を `/` へ戻すよう修正した。
+- PR が `origin/main` に対して dirty になったため、main 側の Web atomic refactor を merge し、`DocumentWorkspace` の小コンポーネント分割構造へ URL 状態同期を再適用した。
 
 ## 5. 成果物
 
@@ -61,6 +62,7 @@
 
 - `npm ci`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- App`: pass
+- `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState App`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
 - `npm --prefix memorag-bedrock-mvp run lint`: pass
@@ -69,5 +71,6 @@
 
 - 完全な path router 導入は未対応。現行の client-state 構成に合わせ、URL 書き込みは query parameter 形式にした。
 - CI 初回実行で `App.test.tsx` の URL 状態漏れにより web coverage が失敗したが、テスト setup を修正しローカルで再検証済み。
+- `origin/main` 取り込み時に Web atomic refactor の差分が merge commit に含まれる。URL 状態同期は main 側の分割構造に合わせて統合済み。
 - `npm ci` により ignored の `node_modules/` が生成されたが、コミット対象には含めない。
 - API / 認可 / RAG 検索処理は変更していない。

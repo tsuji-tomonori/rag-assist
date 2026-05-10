@@ -1,6 +1,6 @@
 .empty-question-panel {
   padding: 20px;
-  color: #68758f;
+  color: var(--color-text-muted);
   font-weight: 800;
   display: grid;
   gap: 10px;
@@ -15,10 +15,10 @@
   justify-self: start;
   min-height: 34px;
   border: 1px solid #bdd1f4;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 11px;
   color: #1f62dc;
-  background: #f8fbff;
+  background: var(--color-surface-subtle);
   font-weight: 900;
 }
 
@@ -53,11 +53,11 @@
   width: 32px;
   height: 32px;
   border: 1px solid #d6e0ee;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   display: grid;
   place-items: center;
   color: #51617c;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .document-back-button .icon {
@@ -68,7 +68,7 @@
 
 .document-page-header h2 {
   margin: 0 0 8px;
-  color: #111a2e;
+  color: var(--color-text-strong);
   font-size: 25px;
   letter-spacing: 0;
 }
@@ -100,9 +100,9 @@
 .document-detail-panel > section {
   min-width: 0;
   border: 1px solid #dce4ee;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 .document-folder-panel {
@@ -129,7 +129,7 @@
   border-radius: 6px;
   padding: 0 11px;
   color: #24344f;
-  background: #fff;
+  background: var(--color-surface);
   font-size: 13px;
   font-weight: 750;
 }
@@ -147,11 +147,11 @@
   width: 36px;
   height: 36px;
   border: 1px solid #d4deeb;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   display: grid;
   place-items: center;
   color: #314769;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .folder-search-row button .icon,
@@ -187,7 +187,7 @@
   min-width: 0;
   min-height: 38px;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr) auto;
   align-items: center;
@@ -235,7 +235,7 @@
 
 .folder-tree-row.active {
   color: #1267ee;
-  background: #edf4ff;
+  background: var(--color-primary-soft);
 }
 
 .folder-tree-row.active .icon,
@@ -407,7 +407,7 @@
   display: grid;
   place-items: center;
   color: #536276;
-  background: #fff;
+  background: var(--color-surface);
   font-size: 11px;
   font-weight: 950;
 }
@@ -525,7 +525,7 @@
 .migration-chip {
   flex: 0 0 auto;
   border: 1px solid #dce4ee;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -541,7 +541,7 @@
   border: 1px solid #cbd9f0;
   border-radius: 6px;
   color: #2f4f7f;
-  background: #f8fbff;
+  background: var(--color-surface-subtle);
   font-weight: 900;
 }
 
@@ -567,7 +567,7 @@
 
 .folder-info-box {
   border: 1px solid #dce4ee;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   align-items: center;
@@ -643,10 +643,10 @@
 .compact-form button {
   min-height: 34px;
   border: 1px solid #bdd1f4;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 11px;
   color: #1f62dc;
-  background: #f8fbff;
+  background: var(--color-surface-subtle);
   font-size: 12px;
   font-weight: 900;
 }
@@ -691,7 +691,7 @@
 .compact-file-input {
   min-height: 42px;
   border: 1px solid #dce4ee;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   grid-template-columns: 22px minmax(0, 1fr);
   align-items: center;
   padding: 0 10px;
@@ -710,7 +710,7 @@
 
 .upload-progress-panel {
   border: 1px solid #dce4ee;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: grid;
   gap: 12px;
   padding: 12px;
@@ -758,7 +758,7 @@
   height: 10px;
   border: 2px solid #c6d2e1;
   border-radius: 50%;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .upload-progress-panel li.done,
@@ -816,12 +816,12 @@
 .confirm-dialog {
   width: min(560px, 100%);
   border: 1px solid #d6e0ee;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: grid;
   gap: 14px;
   padding: 18px;
   color: #253550;
-  background: #fff;
+  background: var(--color-surface);
   box-shadow: 0 22px 54px rgba(17, 31, 52, 0.22);
 }
 
@@ -831,7 +831,7 @@
 }
 
 .confirm-dialog h3 {
-  color: #111a2e;
+  color: var(--color-text-strong);
   font-size: 18px;
 }
 
@@ -855,7 +855,7 @@
 }
 
 .confirm-dialog dt {
-  color: #68758f;
+  color: var(--color-text-muted);
   font-weight: 850;
 }
 
@@ -875,10 +875,10 @@
 .confirm-dialog-actions button {
   min-height: 36px;
   border: 1px solid #cbd8e7;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 13px;
   color: #2d415f;
-  background: #fff;
+  background: var(--color-surface);
   font-weight: 900;
 }
 

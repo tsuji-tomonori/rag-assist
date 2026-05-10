@@ -1,3 +1,11 @@
+.admin-workspace {
+  grid-row: 3;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  padding: 28px 20px;
+}
+
 .admin-overview-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(180px, 1fr));
@@ -6,23 +14,23 @@
 
 .admin-overview-tile {
   min-height: 148px;
-  border: 1px solid #d7e0ea;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   display: grid;
   align-content: center;
   justify-items: start;
   gap: 10px;
   padding: 22px;
   color: #233756;
-  background: #fff;
+  background: var(--color-surface);
   text-align: left;
-  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+  box-shadow: var(--shadow-card);
 }
 
 .admin-overview-tile .icon {
   width: 28px;
   height: 28px;
-  color: #2f6fed;
+  color: var(--color-primary);
 }
 
 .admin-overview-tile strong {
@@ -31,23 +39,23 @@
 }
 
 .admin-overview-tile span {
-  color: #68758f;
+  color: var(--color-text-muted);
   font-size: 13px;
   font-weight: 850;
 }
 
 .admin-overview-tile:hover {
   border-color: #9eb9ec;
-  background: #f8fbff;
+  background: var(--color-surface-subtle);
 }
 
 .disabled-tile {
-  color: #68758f;
+  color: var(--color-text-muted);
   background: #f8fafc;
 }
 
 .disabled-tile:hover {
-  border-color: #d7e0ea;
+  border-color: var(--color-border);
   background: #f8fafc;
 }
 
@@ -61,11 +69,11 @@
 
 .admin-section-panel {
   min-width: 0;
-  border: 1px solid #d7e0ea;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   padding: 18px;
-  background: #fff;
-  box-shadow: 0 10px 26px rgba(28, 42, 68, 0.05);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 .admin-section-panel h3 {
@@ -77,10 +85,10 @@
 .document-list-head button {
   min-height: 32px;
   border: 1px solid #cbd9f0;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 12px;
   color: #2f4f7f;
-  background: #f8fbff;
+  background: var(--color-surface-subtle);
   font-weight: 900;
 }
 
@@ -99,7 +107,7 @@
   margin-bottom: 14px;
   padding: 12px;
   border: 1px solid #dce4ee;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: #fbfdff;
 }
 
@@ -110,7 +118,7 @@
 }
 
 .admin-create-user-form label span {
-  color: #68758f;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 900;
 }
@@ -135,10 +143,10 @@
   min-width: 0;
   min-height: 38px;
   border: 1px solid #cfd8e6;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 10px;
   color: #182842;
-  background: #fff;
+  background: var(--color-surface);
   font-weight: 800;
 }
 
@@ -146,10 +154,10 @@
   align-self: end;
   min-height: 38px;
   border: 1px solid #aac3f4;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 14px;
-  color: #fff;
-  background: #2f6fed;
+  color: var(--color-surface);
+  background: var(--color-primary);
   font-weight: 900;
 }
 
@@ -162,7 +170,7 @@
 .alias-card,
 .alias-audit-list div {
   border: 1px solid #dce4ee;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: grid;
   gap: 8px;
   padding: 12px;
@@ -192,7 +200,7 @@
 
 .alias-card small,
 .alias-audit-list span {
-  color: #68758f;
+  color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 850;
 }
@@ -202,7 +210,7 @@
 }
 
 .alias-card.disabled {
-  color: #68758f;
+  color: var(--color-text-muted);
   background: #f4f6f9;
 }
 
@@ -216,10 +224,10 @@
 .inline-action-group button {
   min-height: 32px;
   border: 1px solid #cbd9f0;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 10px;
   color: #2f4f7f;
-  background: #f8fbff;
+  background: var(--color-surface-subtle);
   font-weight: 900;
 }
 
@@ -229,10 +237,10 @@
   min-width: 0;
   min-height: 34px;
   border: 1px solid #cbd9f0;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 10px;
   color: #2f4f7f;
-  background: #fff;
+  background: var(--color-surface);
   font-weight: 900;
 }
 
@@ -241,7 +249,7 @@
   min-width: 0;
   overflow: auto;
   border: 1px solid #dce4ee;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 .admin-user-row,
@@ -272,7 +280,7 @@
 
 .admin-user-head,
 .usage-head {
-  color: #68758f;
+  color: var(--color-text-muted);
   background: #f8fafc;
   font-size: 12px;
   font-weight: 900;
@@ -287,7 +295,7 @@
 .admin-user-row small {
   display: block;
   margin-top: 4px;
-  color: #68758f;
+  color: var(--color-text-muted);
   font-weight: 800;
 }
 
@@ -325,10 +333,10 @@
 .user-row-actions button {
   min-height: 34px;
   border: 1px solid #cbd9f0;
-  border-radius: 7px;
+  border-radius: var(--radius-xs);
   padding: 0 10px;
   color: #2f4f7f;
-  background: #fff;
+  background: var(--color-surface);
   font-weight: 900;
 }
 
@@ -346,7 +354,7 @@
 .role-definition-card,
 .cost-item {
   border: 1px solid #e1e8f2;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 12px;
   background: #fbfdff;
 }
@@ -361,7 +369,7 @@
 .cost-summary-line,
 .cost-item span,
 .cost-item i {
-  color: #68758f;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 850;
 }
@@ -397,7 +405,7 @@
   border-radius: 999px;
   padding: 4px 10px;
   font-style: normal;
-  background: #f8fbff;
+  background: var(--color-surface-subtle);
 }
 
 .admin-audit-list {
@@ -411,7 +419,7 @@
   align-items: center;
   gap: 12px;
   border: 1px solid #e1e8f2;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 12px;
   background: #fbfdff;
 }
@@ -430,7 +438,7 @@
 .admin-audit-entry time,
 .admin-audit-entry small {
   min-width: 0;
-  color: #68758f;
+  color: var(--color-text-muted);
   font-size: 12px;
   font-weight: 850;
   overflow-wrap: anywhere;
