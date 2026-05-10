@@ -107,6 +107,38 @@ describe("DocumentWorkspace", () => {
     expect(onDelete).toHaveBeenCalledWith("doc-1")
   })
 
+  it("文書行にモバイルカード用の表示情報を持たせる", () => {
+    const { container } = render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: ["group-1"] } }]}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const row = screen.getByRole("row", { name: "requirements.mdの詳細を表示" })
+    expect(screen.getByRole("columnheader", { name: "所属フォルダ" })).toBeInTheDocument()
+    expect(within(row).getByText("社内規定")).toBeInTheDocument()
+    expect(screen.getByTitle("requirements.md")).toBeInTheDocument()
+    expect(container.querySelector('[data-label="ファイル名"]')).not.toBeNull()
+    expect(container.querySelector('[data-label="所属フォルダ"]')).not.toBeNull()
+    expect(container.querySelector('[data-label="操作"] .document-action-buttons')).not.toBeNull()
+  })
+
   it("削除権限がない場合は削除ボタンを無効化する", () => {
     render(
       <DocumentWorkspace
