@@ -12,10 +12,10 @@
 
 | 要件ID | 指示・要件 | 重要度 | 対応状況 |
 |---|---|---:|---|
-| R1 | GitHub 上の conflict 判定を解消する | 高 | 対応中 |
+| R1 | GitHub 上の conflict 判定を解消する | 高 | 対応 |
 | R2 | main 側変更と PR 側変更を両立する | 高 | 対応 |
 | R3 | 検証を実行する | 高 | 対応 |
-| R4 | PR に結果をコメントする | 中 | push 後対応 |
+| R4 | PR に結果をコメントする | 中 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -31,6 +31,9 @@
 - PR branch を `origin/main` に reset し、機能 commit と task 完了 commit を cherry-pick した。
 - `BenchmarkWorkspace.tsx` と `BenchmarkWorkspace.test.tsx` の競合を解消した。
 - `docs:web-inventory` を再実行して生成 docs の競合を解消した。
+- `git push --force-with-lease origin codex/confirm-risky-actions` で PR branch を差し替えた。
+- GitHub PR #236 の `mergeable: MERGEABLE` を確認した。
+- PR に競合解消結果コメントとセルフレビューコメントを投稿した。
 
 ## 5. 成果物
 
@@ -45,12 +48,12 @@
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4 | GitHub 判定確認と PR コメントは push 後に確定する |
+| 指示網羅性 | 5 | GitHub 判定確認と PR コメントまで完了した |
 | 制約遵守 | 5 | 履歴書き換え前にバックアップ branch を作成した |
 | 成果物品質 | 5 | benchmark 競合は両変更を残して解消し、web 系検証も通過した |
 | 説明責任 | 5 | 判断理由と残作業を明記した |
 
-総合fit: 4.7 / 5.0（約94%）
+総合fit: 4.9 / 5.0（約98%）
 
 ## 7. 実行した検証
 
@@ -65,5 +68,5 @@
 
 ## 8. 未対応・制約・リスク
 
-- 未対応: push 後の GitHub mergeable 判定確認と PR コメント投稿。
 - 制約: API/infra/benchmark の full CI 相当検証は未実施。競合箇所が Web UI と生成 inventory だったため、Web 中心の検証に絞った。
+- GitHub 判定: PR #236 は `mergeable: MERGEABLE`、`mergeStateStatus: UNSTABLE`。

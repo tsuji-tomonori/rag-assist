@@ -23,8 +23,8 @@ PR branch を最新 `origin/main` 起点にリニア化し、GitHub 側の confl
 - [x] benchmark の main 側変更と確認ダイアログ変更が両方残っている。
 - [x] web inventory を再生成し、check が pass する。
 - [x] web test / typecheck / lint / build が pass する。
-- [ ] force-with-lease push 後、GitHub PR の mergeable 判定を確認する。
-- [ ] PR に競合解消結果をコメントする。
+- [x] force-with-lease push 後、GitHub PR の mergeable 判定を確認する。
+- [x] PR に競合解消結果をコメントする。
 
 ## 実施内容
 
@@ -33,6 +33,9 @@ PR branch を最新 `origin/main` 起点にリニア化し、GitHub 側の confl
 - PR branch を `origin/main` に reset し、PR #236 の機能 commit と task 完了 commit を replay した。
 - `BenchmarkWorkspace` の suite 未取得時 disabled 表示と、benchmark 起動確認ダイアログを両立させた。
 - 生成 inventory は `docs:web-inventory` で再生成した。
+- `git push --force-with-lease origin codex/confirm-risky-actions` で PR branch を差し替えた。
+- GitHub PR #236 の `mergeable: MERGEABLE` を確認した。
+- PR に競合解消結果コメントとセルフレビューコメントを投稿した。
 
 ## 検証
 
