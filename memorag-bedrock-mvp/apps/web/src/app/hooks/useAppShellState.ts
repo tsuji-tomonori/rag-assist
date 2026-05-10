@@ -16,6 +16,7 @@ import { useCurrentUser } from "./useCurrentUser.js"
 import { usePermissions } from "./usePermissions.js"
 import { useAdminData } from "../../features/admin/hooks/useAdminData.js"
 import { useBenchmarkRuns } from "../../features/benchmark/hooks/useBenchmarkRuns.js"
+import type { ChatDocumentScope } from "../../features/chat/hooks/useChatSession.js"
 import { useChatSession } from "../../features/chat/hooks/useChatSession.js"
 import { useDebugRuns, useDebugSelection } from "../../features/debug/hooks/useDebugRuns.js"
 import type { DocumentWorkspaceUrlState } from "../../features/documents/components/DocumentWorkspace.js"
@@ -30,6 +31,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const { currentUser, currentUserError } = useCurrentUser(authSession)
   const [activeView, setActiveViewState] = useState<AppView>(() => readInitialAppViewFromLocation())
   const [documentUrlState, setDocumentUrlState] = useState<DocumentWorkspaceUrlState>(() => readDocumentWorkspaceUrlStateFromLocation())
+  const [chatDocumentScope, setChatDocumentScope] = useState<ChatDocumentScope>(null)
   const setActiveView = useCallback((nextView: AppView) => {
     setActiveViewState(nextView)
     if (nextView !== "documents") writeNonDocumentViewToLocation(nextView)
@@ -198,6 +200,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     currentConversationId,
     setCurrentConversationId,
     selectedGroupId,
+    documentScope: chatDocumentScope,
     loading,
     rememberMessages,
     createConversationId,
@@ -333,6 +336,11 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   }, [canReadDebugRuns, canWriteDocuments, debugMode, file, setFile])
 
   useEffect(() => {
+    if (!chatDocumentScope) return
+    if (!documents.some((document) => document.documentId === chatDocumentScope.documentId)) setChatDocumentScope(null)
+  }, [chatDocumentScope, documents])
+
+  useEffect(() => {
     if (activeView !== "benchmark" || !canReadBenchmarkRuns) return
     const timer = window.setInterval(() => {
       refreshBenchmarkRuns().catch((err) => console.warn("Failed to poll benchmark runs", err))
@@ -397,7 +405,10 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     debugMode,
     canReadDebugRuns,
     onDebugModeChange: setDebugMode,
-    onNewConversation: newConversation
+    onNewConversation: () => {
+      setChatDocumentScope(null)
+      newConversation()
+    }
   }
 
   const routeProps: AppRoutesProps = {
@@ -420,6 +431,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       modelId,
       file,
       selectedGroupId,
+      documentScope: chatDocumentScope,
       documentGroups,
       conversationKey,
       submitShortcut,
@@ -437,6 +449,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onSetQuestion: setQuestion,
       onModelChange: setModelId,
       onSetFile: setFile,
+      onClearDocumentScope: () => setChatDocumentScope(null),
       onCreateQuestion,
       onResolveQuestion,
       onToggleAllDebugSteps: () => setAllExpanded((value) => !value),
@@ -494,6 +507,11 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onStageReindex,
       onCutoverReindex,
       onRollbackReindex,
+      onAskDocument: (document) => {
+        setChatDocumentScope({ documentId: document.documentId, fileName: document.fileName })
+        setQuestion(`この資料について質問する: ${document.fileName}`)
+        setActiveView("chat")
+      },
       onBack: () => setActiveView("admin"),
       urlState: documentUrlState,
       onUrlStateChange: onDocumentUrlStateChange

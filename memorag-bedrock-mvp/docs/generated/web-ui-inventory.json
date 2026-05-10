@@ -126,7 +126,7 @@
         "chat"
       ],
       "componentCount": 16,
-      "interactionCount": 40
+      "interactionCount": 41
     },
     {
       "feature": "debug",
@@ -142,7 +142,7 @@
         "documents"
       ],
       "componentCount": 6,
-      "interactionCount": 81
+      "interactionCount": 82
     },
     {
       "feature": "history",
@@ -4936,9 +4936,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:44:form",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:50:form",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 44,
+      "line": 50,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "form",
@@ -4972,9 +4972,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:45:textarea",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:51:textarea",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 45,
+      "line": 51,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "textarea",
@@ -5034,9 +5034,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:77:input",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:83:input",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 77,
+      "line": 83,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "input",
@@ -5080,9 +5080,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:86:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:92:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 86,
+      "line": 92,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",
@@ -5121,9 +5121,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:101:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:107:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 101,
+      "line": 107,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",
@@ -5163,9 +5163,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:113:label",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:119:label",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 113,
+      "line": 119,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "label",
@@ -5185,9 +5185,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:115:select",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:121:select",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 115,
+      "line": 121,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "select",
@@ -5231,9 +5231,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:116:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:122:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 116,
+      "line": 122,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -5258,9 +5258,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:117:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:123:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 117,
+      "line": 123,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -5285,9 +5285,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:118:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:124:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 118,
+      "line": 124,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -5312,9 +5312,59 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:128:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:131:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 128,
+      "line": 131,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "対象文書を解除",
+      "a11y": {
+        "accessibleName": "対象文書を解除",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onClearDocumentScope"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-label",
+          "value": "対象文書を解除"
+        },
+        {
+          "name": "title",
+          "value": "対象文書を解除"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "onClearDocumentScope"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:145:button",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 145,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",
@@ -6556,9 +6606,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:317:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:319:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 317,
+      "line": 319,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6600,9 +6650,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:53:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:55:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 53,
+      "line": 55,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -6644,9 +6694,51 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:78:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:80:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 78,
+      "line": 80,
+      "feature": "documents",
+      "component": "DocumentDetailDrawer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "この資料に質問する",
+      "a11y": {
+        "accessibleName": "この資料に質問する",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!onAskDocument"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onAskDocument?.()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!onAskDocument"
+        },
+        {
+          "name": "onClick",
+          "value": "() => onAskDocument?.()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:84:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
+      "line": 84,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -6680,9 +6772,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:82:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:88:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 82,
+      "line": 88,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -6722,9 +6814,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:86:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:92:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 86,
+      "line": 92,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",

@@ -755,6 +755,7 @@ describe("DocumentWorkspace", () => {
 
   it("文書詳細drawerを開き、documentIdをコピーできる", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
+    const onAskDocument = vi.fn()
     vi.stubGlobal("navigator", { clipboard: { writeText } })
 
     render(
@@ -787,6 +788,7 @@ describe("DocumentWorkspace", () => {
         onStageReindex={vi.fn()}
         onCutoverReindex={vi.fn()}
         onRollbackReindex={vi.fn()}
+        onAskDocument={onAskDocument}
         onBack={vi.fn()}
       />
     )
@@ -803,6 +805,9 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "documentId コピー" }))
     expect(writeText).toHaveBeenCalledWith("doc-1")
     expect(screen.getByRole("button", { name: "コピー済み" })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "この資料に質問する" }))
+    expect(onAskDocument).toHaveBeenCalledWith(expect.objectContaining({ documentId: "doc-1", fileName: "requirements.md" }))
 
     vi.unstubAllGlobals()
   })
