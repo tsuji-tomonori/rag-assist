@@ -167,8 +167,8 @@
       "feature": "shared",
       "label": "共通",
       "screens": [],
-      "componentCount": 2,
-      "interactionCount": 1
+      "componentCount": 3,
+      "interactionCount": 3
     }
   ],
   "components": [
@@ -284,6 +284,7 @@
       "jsxUsages": [
         "AdminCreateUserForm",
         "AliasAdminPanel",
+        "ConfirmDialog",
         "Icon",
         "LoadingSpinner",
         "LoadingStatus",
@@ -363,6 +364,7 @@
       "jsxUsages": [
         "BenchmarkMetricCard",
         "BenchmarkMetricChips",
+        "ConfirmDialog",
         "Icon",
         "LoadingSpinner",
         "LoadingStatus",
@@ -685,6 +687,7 @@
         "HistoryWorkspace"
       ],
       "jsxUsages": [
+        "ConfirmDialog",
         "HistorySearchSummary",
         "Icon",
         "button",
@@ -746,6 +749,24 @@
         "React.StrictMode"
       ],
       "certainty": "inferred"
+    },
+    {
+      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
+      "feature": "shared",
+      "exports": [
+        "ConfirmDialog"
+      ],
+      "jsxUsages": [
+        "button",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "h2",
+        "p",
+        "section"
+      ],
+      "certainty": "confirmed"
     },
     {
       "file": "apps/web/src/shared/components/Icon.tsx",
@@ -1462,9 +1483,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:108:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:109:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 108,
+      "line": 109,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -1506,9 +1527,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:120:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:121:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 120,
+      "line": 121,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -1542,9 +1563,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:127:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:128:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 127,
+      "line": 128,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -1578,9 +1599,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:134:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:135:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 134,
+      "line": 135,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -1614,9 +1635,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:141:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:142:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 141,
+      "line": 142,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -1650,9 +1671,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:206:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:207:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 206,
+      "line": 207,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -1692,9 +1713,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:212:AdminCreateUserForm",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:213:AdminCreateUserForm",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 212,
+      "line": 213,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "AdminCreateUserForm",
@@ -1724,9 +1745,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:405:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:408:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 405,
+      "line": 408,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -1746,7 +1767,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onPublish()"
+          "value": "() => setPublishConfirmOpen(true)"
         }
       ],
       "attributes": [
@@ -1760,15 +1781,15 @@
         },
         {
           "name": "onClick",
-          "value": "() => void onPublish()"
+          "value": "() => setPublishConfirmOpen(true)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:413:form",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:416:form",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 413,
+      "line": 416,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "form",
@@ -1798,9 +1819,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:414:label",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:417:label",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 414,
+      "line": 417,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
@@ -1820,9 +1841,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:416:input",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:419:input",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 416,
+      "line": 419,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "input",
@@ -1866,9 +1887,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:418:label",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:421:label",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 418,
+      "line": 421,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
@@ -1888,9 +1909,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:420:input",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:423:input",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 420,
+      "line": 423,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "input",
@@ -1934,9 +1955,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:422:label",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:425:label",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 422,
+      "line": 425,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
@@ -1956,9 +1977,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:424:input",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:427:input",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 424,
+      "line": 427,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "input",
@@ -2002,9 +2023,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:426:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:429:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 426,
+      "line": 429,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -2035,9 +2056,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:445:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:448:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 445,
+      "line": 448,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -2077,9 +2098,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:449:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:452:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 449,
+      "line": 452,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -2119,9 +2140,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:453:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:456:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 453,
+      "line": 456,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -2161,9 +2182,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:457:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:460:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 457,
+      "line": 460,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -2183,7 +2204,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onDisable(alias.aliasId)"
+          "value": "() => setDisableCandidate(alias)"
         }
       ],
       "attributes": [
@@ -2197,15 +2218,15 @@
         },
         {
           "name": "onClick",
-          "value": "() => void onDisable(alias.aliasId)"
+          "value": "() => setDisableCandidate(alias)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:513:form",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:554:form",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 513,
+      "line": 554,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "form",
@@ -2239,9 +2260,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:514:label",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:555:label",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 514,
+      "line": 555,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2261,9 +2282,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:516:input",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:557:input",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 516,
+      "line": 557,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "input",
@@ -2305,9 +2326,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:518:label",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:559:label",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 518,
+      "line": 559,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2327,9 +2348,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:520:input",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:561:input",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 520,
+      "line": 561,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "input",
@@ -2367,9 +2388,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:522:label",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:563:label",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 522,
+      "line": 563,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2389,9 +2410,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:524:select",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:565:select",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 524,
+      "line": 565,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "select",
@@ -2425,9 +2446,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:526:option",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:567:option",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 526,
+      "line": 567,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "option",
@@ -2452,9 +2473,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:530:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:571:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 530,
+      "line": 571,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "button",
@@ -2485,9 +2506,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:576:select",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:618:select",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 576,
+      "line": 618,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "select",
@@ -2531,9 +2552,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:578:option",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:620:option",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 578,
+      "line": 620,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "option",
@@ -2558,9 +2579,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:581:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:623:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 581,
+      "line": 623,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2600,9 +2621,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:591:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:633:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 591,
+      "line": 633,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2642,9 +2663,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:596:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:638:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 596,
+      "line": 638,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2664,7 +2685,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onSetStatus(user.userId, \"suspend\")"
+          "value": "() => setStatusCandidate(\"suspend\")"
         }
       ],
       "attributes": [
@@ -2678,15 +2699,15 @@
         },
         {
           "name": "onClick",
-          "value": "() => void onSetStatus(user.userId, \"suspend\")"
+          "value": "() => setStatusCandidate(\"suspend\")"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:601:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:643:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 601,
+      "line": 643,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2706,7 +2727,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onSetStatus(user.userId, \"delete\")"
+          "value": "() => setStatusCandidate(\"delete\")"
         }
       ],
       "attributes": [
@@ -2720,7 +2741,7 @@
         },
         {
           "name": "onClick",
-          "value": "() => void onSetStatus(user.userId, \"delete\")"
+          "value": "() => setStatusCandidate(\"delete\")"
         }
       ],
       "certainty": "confirmed"
@@ -3700,9 +3721,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:58:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:61:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 58,
+      "line": 61,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -3744,9 +3765,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:84:label",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:87:label",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 84,
+      "line": 87,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "label",
@@ -3766,9 +3787,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:86:select",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:89:select",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 86,
+      "line": 89,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "select",
@@ -3808,9 +3829,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:87:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:90:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 87,
+      "line": 90,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -3835,9 +3856,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:89:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:92:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 89,
+      "line": 92,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -3862,9 +3883,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:105:label",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:108:label",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 105,
+      "line": 108,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "label",
@@ -3884,9 +3905,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:107:input",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:110:input",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 107,
+      "line": 110,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "input",
@@ -3911,9 +3932,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:109:label",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:112:label",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 109,
+      "line": 112,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "label",
@@ -3933,9 +3954,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:111:select",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:114:select",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 111,
+      "line": 114,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "select",
@@ -3969,9 +3990,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:112:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:115:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 112,
+      "line": 115,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -3996,9 +4017,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:113:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:116:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 113,
+      "line": 116,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -4023,9 +4044,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:114:option",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:117:option",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 114,
+      "line": 117,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "option",
@@ -4050,9 +4071,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:117:label",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:120:label",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 117,
+      "line": 120,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "label",
@@ -4072,9 +4093,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:119:input",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:122:input",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 119,
+      "line": 122,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "input",
@@ -4112,9 +4133,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:128:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:131:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 128,
+      "line": 131,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -4134,7 +4155,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "onStart"
+          "value": "() => setConfirmStartOpen(true)"
         }
       ],
       "attributes": [
@@ -4144,7 +4165,7 @@
         },
         {
           "name": "onClick",
-          "value": "onStart"
+          "value": "() => setConfirmStartOpen(true)"
         },
         {
           "name": "disabled",
@@ -4154,9 +4175,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:132:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:135:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 132,
+      "line": 135,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -4196,9 +4217,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:184:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:187:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 184,
+      "line": 187,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -4246,9 +4267,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:196:button",
+      "id": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx:199:button",
       "file": "apps/web/src/features/benchmark/components/BenchmarkWorkspace.tsx",
-      "line": 196,
+      "line": 199,
       "feature": "benchmark",
       "component": "BenchmarkWorkspace",
       "element": "button",
@@ -8204,9 +8225,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:51:button",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:53:button",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 51,
+      "line": 53,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "button",
@@ -8248,9 +8269,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:65:input",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:67:input",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 65,
+      "line": 67,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "input",
@@ -8296,9 +8317,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:72:select",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:74:select",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 72,
+      "line": 74,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "select",
@@ -8336,9 +8357,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:73:option",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:75:option",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 73,
+      "line": 75,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "option",
@@ -8363,9 +8384,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:74:option",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:76:option",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 74,
+      "line": 76,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "option",
@@ -8390,9 +8411,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:75:option",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:77:option",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 75,
+      "line": 77,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "option",
@@ -8417,9 +8438,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:77:label",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:79:label",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 77,
+      "line": 79,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "label",
@@ -8439,9 +8460,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:78:input",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:80:input",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 78,
+      "line": 80,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "input",
@@ -8475,9 +8496,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:91:button",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:93:button",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 91,
+      "line": 93,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "button",
@@ -8519,9 +8540,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:100:button",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:102:button",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 100,
+      "line": 102,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "button",
@@ -8555,9 +8576,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:108:button",
+      "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:110:button",
       "file": "apps/web/src/features/history/components/HistoryWorkspace.tsx",
-      "line": 108,
+      "line": 110,
       "feature": "history",
       "component": "HistoryWorkspace",
       "element": "button",
@@ -8575,7 +8596,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => onDelete(item.id)"
+          "value": "() => setDeleteCandidate(item)"
         }
       ],
       "attributes": [
@@ -8585,7 +8606,7 @@
         },
         {
           "name": "onClick",
-          "value": "() => onDelete(item.id)"
+          "value": "() => setDeleteCandidate(item)"
         }
       ],
       "certainty": "confirmed"
@@ -9258,6 +9279,90 @@
         }
       ],
       "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/shared/components/ConfirmDialog.tsx:67:button",
+      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
+      "line": 67,
+      "feature": "shared",
+      "component": "ConfirmDialog",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=busy"
+        ],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。 削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onCancel"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onCancel"
+        },
+        {
+          "name": "disabled",
+          "value": "busy"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/shared/components/ConfirmDialog.tsx:68:button",
+      "file": "apps/web/src/shared/components/ConfirmDialog.tsx",
+      "line": 68,
+      "feature": "shared",
+      "component": "ConfirmDialog",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=busy"
+        ],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void confirm()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void confirm()"
+        },
+        {
+          "name": "disabled",
+          "value": "busy"
+        }
+      ],
+      "certainty": "unknown"
     },
     {
       "id": "apps/web/src/shared/components/Icon.tsx:27:svg",

@@ -1,4 +1,6 @@
+import { useState } from "react"
 import type { BenchmarkRun, BenchmarkSuite } from "../types.js"
+import { ConfirmDialog } from "../../../shared/components/ConfirmDialog.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { downloadBenchmarkArtifact } from "../../../shared/utils/downloads.js"
@@ -51,6 +53,7 @@ export function BenchmarkWorkspace({
   const runningCount = runs.filter((run) => run.status === "queued" || run.status === "running").length
   const failedCount = runs.filter((run) => run.status === "failed").length
   const hasSuites = suites.length > 0
+  const [confirmStartOpen, setConfirmStartOpen] = useState(false)
 
   return (
     <section className="benchmark-workspace" aria-label="性能テスト">
@@ -125,7 +128,7 @@ export function BenchmarkWorkspace({
             />
           </label>
           <div className="benchmark-actions">
-            <button type="button" onClick={onStart} disabled={loading || !canRun || !selectedSuite}>
+            <button type="button" onClick={() => setConfirmStartOpen(true)} disabled={loading || !canRun || !selectedSuite}>
               {loading ? <LoadingSpinner className="button-spinner" /> : <Icon name="send" />}
               <span>性能テストを実行</span>
             </button>
@@ -207,6 +210,26 @@ export function BenchmarkWorkspace({
           </div>
         </section>
       </div>
+      {confirmStartOpen && (
+        <ConfirmDialog
+          title="性能テストを実行しますか？"
+          description="CodeBuild runner を起動します。実行中はコストと待ち時間が発生するため、選択内容を確認してください。"
+          confirmLabel="実行"
+          tone="warning"
+          loading={loading}
+          details={[
+            `suite:${selectedSuite?.label ?? suiteId}`,
+            `dataset:${selectedSuite?.datasetS3Key ?? "未設定"}`,
+            `model:${modelId}`,
+            `concurrency:${concurrency}`
+          ]}
+          onCancel={() => setConfirmStartOpen(false)}
+          onConfirm={async () => {
+            await onStart()
+            setConfirmStartOpen(false)
+          }}
+        />
+      )}
     </section>
   )
 }

@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from "react"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
+import { ConfirmDialog } from "../../../shared/components/ConfirmDialog.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner, LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import { adminAuditActionLabel, adminAuditSummary, costConfidenceLabel, formatCurrency, formatDate, formatDateTime, managedUserStatusLabel } from "../../../shared/utils/format.js"
@@ -379,6 +380,8 @@ function AliasAdminPanel({
   const [term, setTerm] = useState("")
   const [expansions, setExpansions] = useState("")
   const [department, setDepartment] = useState("")
+  const [disableCandidate, setDisableCandidate] = useState<AliasDefinition | null>(null)
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -402,7 +405,7 @@ function AliasAdminPanel({
         <h3>Alias管理</h3>
         <div className="inline-action-group">
           <span>{aliases.length} 件</span>
-          <button type="button" disabled={!canPublish || loading} onClick={() => void onPublish()}>
+          <button type="button" disabled={!canPublish || loading} onClick={() => setPublishConfirmOpen(true)}>
             {loading && <LoadingSpinner className="button-spinner" />}
             <span>公開</span>
           </button>
@@ -454,7 +457,7 @@ function AliasAdminPanel({
                   {loading && <LoadingSpinner className="button-spinner" />}
                   <span>差戻</span>
                 </button>
-                <button type="button" disabled={!canDisable || loading || alias.status === "disabled"} onClick={() => void onDisable(alias.aliasId)}>
+                <button type="button" disabled={!canDisable || loading || alias.status === "disabled"} onClick={() => setDisableCandidate(alias)}>
                   {loading && <LoadingSpinner className="button-spinner" />}
                   <span>無効</span>
                 </button>
@@ -463,6 +466,44 @@ function AliasAdminPanel({
           ))
         )}
       </div>
+
+      {publishConfirmOpen && (
+        <ConfirmDialog
+          title="Alias を公開しますか？"
+          description="承認済み alias を検索時の展開候補として公開します。公開後は検索結果の解釈に影響します。"
+          confirmLabel="公開"
+          tone="warning"
+          loading={loading}
+          details={[
+            `登録件数:${aliases.length}`,
+            `承認済み:${aliases.filter((alias) => alias.status === "approved").length}`,
+            "影響:検索時の alias 展開設定を更新"
+          ]}
+          onCancel={() => setPublishConfirmOpen(false)}
+          onConfirm={async () => {
+            await onPublish()
+            setPublishConfirmOpen(false)
+          }}
+        />
+      )}
+      {disableCandidate && (
+        <ConfirmDialog
+          title="この alias を無効化しますか？"
+          description="無効化した alias は公開候補から外れます。必要な展開語でないことを確認してください。"
+          confirmLabel="無効化"
+          loading={loading}
+          details={[
+            `対象:${disableCandidate.term}`,
+            `展開語:${disableCandidate.expansions.join(", ")}`,
+            `状態:${disableCandidate.status}`
+          ]}
+          onCancel={() => setDisableCandidate(null)}
+          onConfirm={async () => {
+            await onDisable(disableCandidate.aliasId)
+            setDisableCandidate(null)
+          }}
+        />
+      )}
 
       <div className="alias-audit-list" aria-label="Alias監査ログ">
         {auditLog.slice(0, 8).map((item) => (
@@ -557,6 +598,7 @@ function ManagedUserRow({
   onSetStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
 }) {
   const [selectedRole, setSelectedRole] = useState(user.groups[0] ?? "CHAT_USER")
+  const [statusCandidate, setStatusCandidate] = useState<"suspend" | "delete" | null>(null)
 
   useEffect(() => {
     setSelectedRole(user.groups[0] ?? "CHAT_USER")
@@ -593,17 +635,39 @@ function ManagedUserRow({
               <span>再開</span>
             </button>
           ) : (
-            <button type="button" disabled={!canSuspend || loading} onClick={() => void onSetStatus(user.userId, "suspend")}>
+            <button type="button" disabled={!canSuspend || loading} onClick={() => setStatusCandidate("suspend")}>
               {loading && <LoadingSpinner className="button-spinner" />}
               <span>停止</span>
             </button>
           )}
-          <button type="button" disabled={!canDelete || loading} onClick={() => void onSetStatus(user.userId, "delete")}>
+          <button type="button" disabled={!canDelete || loading} onClick={() => setStatusCandidate("delete")}>
             {loading && <LoadingSpinner className="button-spinner" />}
             <span>削除</span>
           </button>
         </div>
       </span>
+      {statusCandidate && (
+        <ConfirmDialog
+          title={statusCandidate === "delete" ? "このユーザーを削除状態にしますか？" : "このユーザーを停止しますか？"}
+          description={
+            statusCandidate === "delete"
+              ? "管理台帳から削除状態にします。対象ユーザーは一覧から除外され、復元には管理操作が必要です。"
+              : "対象ユーザーを停止状態にします。再開するまで通常利用に影響します。"
+          }
+          confirmLabel={statusCandidate === "delete" ? "削除" : "停止"}
+          loading={loading}
+          details={[
+            `対象:${user.displayName || user.email}`,
+            `メール:${user.email}`,
+            `現在の状態:${managedUserStatusLabel(user.status)}`
+          ]}
+          onCancel={() => setStatusCandidate(null)}
+          onConfirm={async () => {
+            await onSetStatus(user.userId, statusCandidate)
+            setStatusCandidate(null)
+          }}
+        />
+      )}
     </div>
   )
 }
