@@ -1,8 +1,8 @@
 # 建築図面 QARAG の診断用サブスコアを追加する
 
-保存先: `tasks/do/20260510-1433-drawing-benchmark-diagnostic-metrics.md`
+保存先: `tasks/done/20260510-1433-drawing-benchmark-diagnostic-metrics.md`
 
-状態: do
+状態: done
 
 タスク種別: 機能追加
 
@@ -12,7 +12,7 @@
 - [x] optional input field ベースの診断 metric を実装する。
 - [x] architecture-drawing-qarag 由来の分類で failure taxonomy を確認できるようにする。
 - [x] docs と test を更新する。
-- [ ] 検証を実行し、PR 作成後に受け入れ条件コメントを残す。
+- [x] 検証を実行し、PR 作成後に受け入れ条件コメントを残す。
 
 ## Done 条件
 
