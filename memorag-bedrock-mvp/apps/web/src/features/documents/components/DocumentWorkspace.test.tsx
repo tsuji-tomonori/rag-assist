@@ -325,6 +325,93 @@ describe("DocumentWorkspace", () => {
     })
   })
 
+  it("URL由来のフォルダ、検索条件、文書詳細を復元する", () => {
+    const onUploadGroupChange = vi.fn()
+    const groupedDocuments = [
+      {
+        ...documents[0]!,
+        metadata: { groupIds: ["group-1"] },
+        lifecycleStatus: "active" as const
+      }
+    ]
+
+    render(
+      <DocumentWorkspace
+        documents={groupedDocuments}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        initialRouteState={{ groupId: "group-1", documentId: "doc-1", query: "requirements", status: "active" }}
+        onRouteStateChange={vi.fn()}
+        onUploadGroupChange={onUploadGroupChange}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("heading", { name: "社内規定" })).toBeInTheDocument()
+    expect(screen.getByDisplayValue("requirements")).toBeInTheDocument()
+    expect(screen.getByDisplayValue("active")).toBeInTheDocument()
+    expect(screen.getByRole("dialog", { name: "requirements.md" })).toBeInTheDocument()
+    expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
+  })
+
+  it("画面操作をURL state変更として通知する", async () => {
+    const onRouteStateChange = vi.fn()
+    const groupedDocuments = [
+      {
+        ...documents[0]!,
+        metadata: { groupIds: ["group-1"] },
+        lifecycleStatus: "active" as const
+      }
+    ]
+
+    render(
+      <DocumentWorkspace
+        documents={groupedDocuments}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={migrations}
+        onRouteStateChange={onRouteStateChange}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
+    expect(onRouteStateChange).toHaveBeenCalledWith({ groupId: "group-1" }, undefined)
+
+    await userEvent.type(screen.getByLabelText("ファイル名検索"), "req")
+    expect(onRouteStateChange).toHaveBeenLastCalledWith({ groupId: "group-1", query: "req" }, { replace: true })
+
+    await userEvent.click(screen.getByRole("row", { name: "requirements.mdの詳細を表示" }))
+    expect(onRouteStateChange).toHaveBeenLastCalledWith({ documentId: "doc-1", query: "req" }, undefined)
+
+    await userEvent.click(screen.getAllByRole("button", { name: "切替" })[0]!)
+    expect(onRouteStateChange).toHaveBeenLastCalledWith({ migrationId: "migration-1", query: "req" }, undefined)
+  })
+
   it("設定込みでフォルダを作成し、作成後に保存先へ移動する", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue({
       groupId: "group-new",

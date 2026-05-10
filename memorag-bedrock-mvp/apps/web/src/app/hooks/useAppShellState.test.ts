@@ -204,6 +204,7 @@ describe("useAppShellState", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
+    window.history.replaceState({}, "", "/")
     vi.spyOn(console, "warn").mockImplementation(() => undefined)
     debugMock.useDebugSelection.mockReturnValue({ selectedTrace: { steps: [] }, totalLatency: 123, selectedRunValue: "debug-1" })
     currentUserMock.useCurrentUser.mockReturnValue({
@@ -279,6 +280,49 @@ describe("useAppShellState", () => {
     expect(result.current.routeProps.profileProps.authSession.email).toBe("user@example.com")
     result.current.routeProps.profileProps.onSetSubmitShortcut("enter")
     expect(chatMock.setSubmitShortcut).toHaveBeenCalledWith("enter")
+  })
+
+  it("opens document deep links and keeps document route state in browser history", () => {
+    window.history.replaceState({}, "", "/documents/groups/group-1?query=経費&status=active")
+
+    const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
+
+    expect(result.current.railProps.activeView).toBe("documents")
+    expect(result.current.routeProps.documentProps.initialRouteState).toEqual({
+      groupId: "group-1",
+      query: "経費",
+      status: "active"
+    })
+
+    act(() => {
+      result.current.routeProps.documentProps.onRouteStateChange?.({ documentId: "doc-1", query: "規程" })
+    })
+
+    expect(window.location.pathname).toBe("/documents/doc-1")
+    expect(window.location.search).toBe("?query=%E8%A6%8F%E7%A8%8B")
+    expect(result.current.railProps.activeView).toBe("documents")
+  })
+
+  it("restores document route state on browser back and forward events", () => {
+    const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
+
+    act(() => {
+      window.history.pushState({}, "", "/documents/reindex-migrations/migration-1?status=staged")
+      window.dispatchEvent(new PopStateEvent("popstate"))
+    })
+
+    expect(result.current.railProps.activeView).toBe("documents")
+    expect(result.current.routeProps.documentProps.initialRouteState).toEqual({
+      migrationId: "migration-1",
+      status: "staged"
+    })
+
+    act(() => {
+      window.history.pushState({}, "", "/")
+      window.dispatchEvent(new PopStateEvent("popstate"))
+    })
+
+    expect(result.current.railProps.activeView).toBe("chat")
   })
 
   it("resets inaccessible state and exposes current user errors", async () => {

@@ -1,7 +1,8 @@
-import { type FormEvent, useMemo, useRef, useState } from "react"
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
 import type { CreateDocumentGroupInput, DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
+import { documentRouteKey, type DocumentRouteChangeOptions, type DocumentRouteState } from "../routeState.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
 import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
@@ -47,6 +48,8 @@ export function DocumentWorkspace({
   onStageReindex,
   onCutoverReindex,
   onRollbackReindex,
+  initialRouteState = {},
+  onRouteStateChange,
   onBack
 }: {
   documents: DocumentManifest[]
@@ -67,6 +70,8 @@ export function DocumentWorkspace({
   onStageReindex: (documentId: string) => Promise<void>
   onCutoverReindex: (migrationId: string) => Promise<void>
   onRollbackReindex: (migrationId: string) => Promise<void>
+  initialRouteState?: DocumentRouteState
+  onRouteStateChange?: (state: DocumentRouteState, options?: DocumentRouteChangeOptions) => void
   onBack: () => void
 }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
@@ -79,12 +84,12 @@ export function DocumentWorkspace({
   const [moveToCreatedGroup, setMoveToCreatedGroup] = useState(true)
   const [shareGroupId, setShareGroupId] = useState("")
   const [shareGroups, setShareGroups] = useState("")
-  const [selectedFolderId, setSelectedFolderId] = useState("all")
+  const [selectedFolderId, setSelectedFolderId] = useState(initialRouteState.groupId ?? "all")
   const [folderSearch, setFolderSearch] = useState("")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
-  const [documentQuery, setDocumentQuery] = useState("")
+  const [documentQuery, setDocumentQuery] = useState(initialRouteState.query ?? "")
   const [documentTypeFilter, setDocumentTypeFilter] = useState("all")
-  const [documentStatusFilter, setDocumentStatusFilter] = useState("all")
+  const [documentStatusFilter, setDocumentStatusFilter] = useState(initialRouteState.status ?? "all")
   const [documentGroupFilter, setDocumentGroupFilter] = useState("all")
   const [documentSort, setDocumentSort] = useState<DocumentSortKey>("updatedDesc")
   const [selectedDocument, setSelectedDocument] = useState<DocumentManifest | null>(null)
@@ -93,6 +98,7 @@ export function DocumentWorkspace({
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
   const operationEventSeqRef = useRef(0)
+  const initialRouteStateKey = documentRouteKey(initialRouteState)
 
   const folders = useMemo<WorkspaceFolder[]>(() => {
     return documentGroups.map((group) => ({
@@ -154,6 +160,22 @@ export function DocumentWorkspace({
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
   const createVisibilityLabel = visibilityLabelValue(groupVisibility)
 
+  useEffect(() => {
+    setSelectedFolderId(initialRouteState.groupId ?? "all")
+    setDocumentQuery(initialRouteState.query ?? "")
+    setDocumentStatusFilter(initialRouteState.status ?? "all")
+    if (initialRouteState.groupId && documentGroups.some((group) => group.groupId === initialRouteState.groupId)) {
+      onUploadGroupChange(initialRouteState.groupId)
+    } else if (!initialRouteState.groupId) {
+      onUploadGroupChange("")
+    }
+    if (initialRouteState.documentId) {
+      setSelectedDocument(documents.find((document) => document.documentId === initialRouteState.documentId) ?? null)
+    } else {
+      setSelectedDocument(null)
+    }
+  }, [initialRouteStateKey, documents, documentGroups, initialRouteState.groupId, initialRouteState.documentId, initialRouteState.query, initialRouteState.status, onUploadGroupChange])
+
   function recordSessionOperation(actionLabel: string, target: string, detail?: string, result: DocumentOperationEvent["result"] = "要求済み") {
     operationEventSeqRef.current += 1
     const event: DocumentOperationEvent = {
@@ -165,6 +187,33 @@ export function DocumentWorkspace({
       occurredAt: new Date().toISOString()
     }
     setSessionOperationEvents((current) => [event, ...current].slice(0, 8))
+  }
+
+  function routeStateWithFilters(next: DocumentRouteState = {}): DocumentRouteState {
+    return {
+      ...next,
+      ...(documentQuery.trim() ? { query: documentQuery.trim() } : {}),
+      ...(documentStatusFilter !== "all" ? { status: documentStatusFilter } : {})
+    }
+  }
+
+  function updateRouteState(next: DocumentRouteState, options?: DocumentRouteChangeOptions) {
+    onRouteStateChange?.(routeStateWithFilters(next), options)
+  }
+
+  function updateRouteFilters(nextQuery: string, nextStatus: string) {
+    const base: DocumentRouteState = selectedDocument
+      ? { documentId: selectedDocument.documentId }
+      : initialRouteState.migrationId
+        ? { migrationId: initialRouteState.migrationId }
+        : selectedGroupId
+          ? { groupId: selectedGroupId }
+          : {}
+    onRouteStateChange?.({
+      ...base,
+      ...(nextQuery.trim() ? { query: nextQuery.trim() } : {}),
+      ...(nextStatus !== "all" ? { status: nextStatus } : {})
+    }, { replace: true })
   }
 
   async function onSubmit(event: FormEvent) {
@@ -194,6 +243,7 @@ export function DocumentWorkspace({
     if (createdGroup?.groupId && moveToCreatedGroup) {
       setSelectedFolderId(createdGroup.groupId)
       onUploadGroupChange(createdGroup.groupId)
+      updateRouteState({ groupId: createdGroup.groupId })
     }
     setGroupName("")
     setGroupDescription("")
@@ -245,6 +295,7 @@ export function DocumentWorkspace({
   function selectFolder(folderId: string, groupId: string) {
     setSelectedFolderId(folderId)
     onUploadGroupChange(groupId)
+    updateRouteState(groupId ? { groupId } : {})
   }
 
   return (
@@ -301,15 +352,28 @@ export function DocumentWorkspace({
           canReindex={canReindex}
           canUploadToDestination={canUploadToDestination}
           migrations={migrations}
+          selectedMigrationId={initialRouteState.migrationId}
           uploadInputRef={uploadInputRef}
           shareSelectRef={shareSelectRef}
-          onDocumentQueryChange={setDocumentQuery}
+          onDocumentQueryChange={(value) => {
+            setDocumentQuery(value)
+            updateRouteFilters(value, documentStatusFilter)
+          }}
           onDocumentTypeFilterChange={setDocumentTypeFilter}
-          onDocumentStatusFilterChange={setDocumentStatusFilter}
+          onDocumentStatusFilterChange={(value) => {
+            setDocumentStatusFilter(value)
+            updateRouteFilters(documentQuery, value)
+          }}
           onDocumentGroupFilterChange={setDocumentGroupFilter}
           onDocumentSortChange={setDocumentSort}
-          onSelectDocument={setSelectedDocument}
-          onConfirmAction={setConfirmAction}
+          onSelectDocument={(document) => {
+            setSelectedDocument(document)
+            updateRouteState({ documentId: document.documentId })
+          }}
+          onConfirmAction={(action) => {
+            if (action.kind === "cutover" || action.kind === "rollback") updateRouteState({ migrationId: action.migration.migrationId })
+            setConfirmAction(action)
+          }}
         />
         <DocumentDetailPanel
           documentGroups={documentGroups}
@@ -380,7 +444,10 @@ export function DocumentWorkspace({
           documentGroups={documentGroups}
           copied={copiedDocumentId === selectedDocument.documentId}
           onCopyDocumentId={() => void copyDocumentId(selectedDocument.documentId)}
-          onClose={() => setSelectedDocument(null)}
+          onClose={() => {
+            setSelectedDocument(null)
+            updateRouteState(selectedGroupId ? { groupId: selectedGroupId } : {})
+          }}
           onDelete={() => {
             setConfirmAction({ kind: "delete", document: selectedDocument })
             setSelectedDocument(null)

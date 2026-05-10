@@ -19,6 +19,7 @@ import { useBenchmarkRuns } from "../../features/benchmark/hooks/useBenchmarkRun
 import { useChatSession } from "../../features/chat/hooks/useChatSession.js"
 import { useDebugRuns, useDebugSelection } from "../../features/debug/hooks/useDebugRuns.js"
 import { useDocuments } from "../../features/documents/hooks/useDocuments.js"
+import { buildDocumentRoutePath, readDocumentRoute, type DocumentRouteChangeOptions, type DocumentRouteState } from "../../features/documents/routeState.js"
 import { useConversationHistory } from "../../features/history/hooks/useConversationHistory.js"
 import { useQuestions } from "../../features/questions/hooks/useQuestions.js"
 
@@ -27,7 +28,9 @@ const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
 export function useAppShellState({ authSession, onSignOut }: { authSession: AuthSession; onSignOut: () => void }) {
   const { currentUser, currentUserError } = useCurrentUser(authSession)
-  const [activeView, setActiveView] = useState<AppView>("chat")
+  const initialDocumentRoute = getCurrentDocumentRoute()
+  const [activeView, setActiveView] = useState<AppView>(initialDocumentRoute.isDocumentRoute ? "documents" : "chat")
+  const [documentRouteState, setDocumentRouteState] = useState<DocumentRouteState>(initialDocumentRoute.state)
   const [modelId, setModelId] = useState(defaultModelId)
   const [embeddingModelId] = useState(defaultEmbeddingModelId)
   const [minScore] = useState(0.2)
@@ -39,6 +42,20 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     setPendingApiCalls((current) => nextLoading ? current + 1 : Math.max(0, current - 1))
   }, [])
   const loading = pendingApiCalls > 0
+
+  const navigateToView = useCallback((view: AppView, options: { replace?: boolean } = {}) => {
+    setActiveView(view)
+    if (typeof window === "undefined") return
+    const nextPath = view === "documents" ? buildDocumentRoutePath(documentRouteState) : "/"
+    updateBrowserLocation(nextPath, options.replace)
+  }, [documentRouteState])
+
+  const navigateDocumentRoute = useCallback((nextState: DocumentRouteState, options: DocumentRouteChangeOptions = {}) => {
+    setDocumentRouteState(nextState)
+    setActiveView("documents")
+    if (typeof window === "undefined") return
+    updateBrowserLocation(buildDocumentRoutePath(nextState), options.replace)
+  }, [])
 
   const {
     canCreateChat,
@@ -273,6 +290,21 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   }, [currentUserError])
 
   useEffect(() => {
+    if (typeof window === "undefined") return
+    const onPopState = () => {
+      const nextDocumentRoute = readDocumentRoute(window.location)
+      if (nextDocumentRoute.isDocumentRoute) {
+        setDocumentRouteState(nextDocumentRoute.state)
+        setActiveView("documents")
+      } else {
+        setActiveView("chat")
+      }
+    }
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [])
+
+  useEffect(() => {
     if (!authSession || !currentUser) return
     const loaders: Promise<unknown>[] = []
     if (canReadDocuments) {
@@ -300,11 +332,12 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   }, [authSession, currentUser])
 
   useEffect(() => {
-    if (activeView === "assignee" && !canAnswerQuestions) setActiveView("chat")
-    if (activeView === "benchmark" && !canReadBenchmarkRuns) setActiveView("chat")
-    if (activeView === "documents" && !canManageDocuments) setActiveView("chat")
-    if (activeView === "admin" && !canSeeAdminSettings) setActiveView("chat")
-  }, [activeView, canAnswerQuestions, canManageDocuments, canReadBenchmarkRuns, canSeeAdminSettings])
+    if (!currentUser) return
+    if (activeView === "assignee" && !canAnswerQuestions) navigateToView("chat", { replace: true })
+    if (activeView === "benchmark" && !canReadBenchmarkRuns) navigateToView("chat", { replace: true })
+    if (activeView === "documents" && !canManageDocuments) navigateToView("chat", { replace: true })
+    if (activeView === "admin" && !canSeeAdminSettings) navigateToView("chat", { replace: true })
+  }, [activeView, canAnswerQuestions, canManageDocuments, canReadBenchmarkRuns, canSeeAdminSettings, currentUser, navigateToView])
 
   useEffect(() => {
     if (!canReadDebugRuns && debugMode) setDebugMode(false)
@@ -369,7 +402,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canReadBenchmarkRuns,
     canManageDocuments,
     canSeeAdminSettings,
-    onChangeView: setActiveView
+    onChangeView: navigateToView
   }
 
   const topBarProps: ComponentProps<typeof TopBar> = {
@@ -428,7 +461,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       loading,
       onSelect: setSelectedQuestionId,
       onAnswer: onAnswerQuestion,
-      onBack: () => setActiveView("chat")
+      onBack: () => navigateToView("chat")
     }),
     benchmarkProps: buildBenchmarkRouteProps({
       runs: benchmarkRuns,
@@ -452,7 +485,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
           .finally(() => setLoading(false))
       },
       onCancel: onCancelBenchmark,
-      onBack: () => setActiveView("chat")
+      onBack: () => navigateToView("chat")
     }),
     documentProps: buildDocumentRouteProps({
       documents,
@@ -473,7 +506,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onStageReindex,
       onCutoverReindex,
       onRollbackReindex,
-      onBack: () => setActiveView("admin")
+      initialRouteState: documentRouteState,
+      onRouteStateChange: navigateDocumentRoute,
+      onBack: () => navigateToView("admin")
     }),
     adminProps: buildAdminRouteProps({
       user: currentUser,
@@ -509,13 +544,13 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       canReviewAliases,
       canDisableAliases,
       canPublishAliases,
-      onOpenDocuments: () => setActiveView("documents"),
-      onOpenAssignee: () => setActiveView("assignee"),
+      onOpenDocuments: () => navigateDocumentRoute({}),
+      onOpenAssignee: () => navigateToView("assignee"),
       onOpenDebug: () => {
         setDebugMode(true)
-        setActiveView("chat")
+        navigateToView("chat")
       },
-      onOpenBenchmark: () => setActiveView("benchmark"),
+      onOpenBenchmark: () => navigateToView("benchmark"),
       onCreateUser: onCreateManagedUser,
       onAssignRoles: onAssignUserRoles,
       onSetUserStatus: onSetManagedUserStatus,
@@ -539,14 +574,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onReviewAlias,
       onDisableAlias,
       onPublishAliases,
-      onBack: () => setActiveView("chat")
+      onBack: () => navigateToView("chat")
     }),
     historyProps: buildHistoryRouteProps({
       history,
       onSelect: (item) => {
         setCurrentConversationId(item.id)
         setMessages(item.messages)
-        setActiveView("chat")
+        navigateToView("chat")
         setError(null)
         setSelectedRunId("")
         setPendingActivity(null)
@@ -554,14 +589,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       },
       onDelete: deleteHistoryItem,
       onToggleFavorite: toggleFavorite,
-      onBack: () => setActiveView("chat")
+      onBack: () => navigateToView("chat")
     }),
     profileProps: buildProfileRouteProps({
       authSession,
       submitShortcut,
       onSetSubmitShortcut: setSubmitShortcut,
       onSignOut,
-      onBack: () => setActiveView("chat")
+      onBack: () => navigateToView("chat")
     })
   }
 
@@ -572,4 +607,16 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     topBarProps,
     routeProps
   }
+}
+
+function getCurrentDocumentRoute(): { isDocumentRoute: boolean; state: DocumentRouteState } {
+  if (typeof window === "undefined") return { isDocumentRoute: false, state: {} }
+  return readDocumentRoute(window.location)
+}
+
+function updateBrowserLocation(path: string, replace = false) {
+  const current = `${window.location.pathname}${window.location.search}`
+  if (current === path) return
+  const method = replace ? "replaceState" : "pushState"
+  window.history[method]({}, "", path)
 }
