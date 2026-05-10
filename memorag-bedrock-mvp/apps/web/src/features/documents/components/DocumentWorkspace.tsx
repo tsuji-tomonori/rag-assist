@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useRef, useState } from "react"
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import type { CreateDocumentGroupInput, DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
 import { Icon } from "../../../shared/components/Icon.js"
@@ -20,6 +20,16 @@ type ConfirmAction =
   | { kind: "rollback"; migration: ReindexMigration }
 
 type DocumentSortKey = "updatedDesc" | "updatedAsc" | "fileNameAsc" | "chunkDesc" | "typeAsc"
+
+export type DocumentWorkspaceUrlState = {
+  folderId?: string | undefined
+  documentId?: string | undefined
+  query?: string | undefined
+  type?: string | undefined
+  status?: string | undefined
+  groupFilter?: string | undefined
+  sort?: DocumentSortKey | undefined
+}
 
 type DocumentOperationEvent = {
   id: string
@@ -60,7 +70,9 @@ export function DocumentWorkspace({
   onStageReindex,
   onCutoverReindex,
   onRollbackReindex,
-  onBack
+  onBack,
+  urlState,
+  onUrlStateChange
 }: {
   documents: DocumentManifest[]
   documentGroups?: DocumentGroup[]
@@ -81,6 +93,8 @@ export function DocumentWorkspace({
   onCutoverReindex: (migrationId: string) => Promise<void>
   onRollbackReindex: (migrationId: string) => Promise<void>
   onBack: () => void
+  urlState?: DocumentWorkspaceUrlState
+  onUrlStateChange?: (state: DocumentWorkspaceUrlState) => void
 }) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [groupName, setGroupName] = useState("")
@@ -92,15 +106,15 @@ export function DocumentWorkspace({
   const [moveToCreatedGroup, setMoveToCreatedGroup] = useState(true)
   const [shareGroupId, setShareGroupId] = useState("")
   const [shareGroups, setShareGroups] = useState("")
-  const [selectedFolderId, setSelectedFolderId] = useState("all")
+  const [selectedFolderId, setSelectedFolderId] = useState(urlState?.folderId ?? "all")
   const [folderSearch, setFolderSearch] = useState("")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
-  const [documentQuery, setDocumentQuery] = useState("")
-  const [documentTypeFilter, setDocumentTypeFilter] = useState("all")
-  const [documentStatusFilter, setDocumentStatusFilter] = useState("all")
-  const [documentGroupFilter, setDocumentGroupFilter] = useState("all")
-  const [documentSort, setDocumentSort] = useState<DocumentSortKey>("updatedDesc")
-  const [selectedDocument, setSelectedDocument] = useState<DocumentManifest | null>(null)
+  const [documentQuery, setDocumentQuery] = useState(urlState?.query ?? "")
+  const [documentTypeFilter, setDocumentTypeFilter] = useState(urlState?.type ?? "all")
+  const [documentStatusFilter, setDocumentStatusFilter] = useState(urlState?.status ?? "all")
+  const [documentGroupFilter, setDocumentGroupFilter] = useState(urlState?.groupFilter ?? "all")
+  const [documentSort, setDocumentSort] = useState<DocumentSortKey>(urlState?.sort ?? "updatedDesc")
+  const [selectedDocumentId, setSelectedDocumentId] = useState(urlState?.documentId ?? "")
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
@@ -144,6 +158,7 @@ export function DocumentWorkspace({
       return true
     })
     .sort((left, right) => compareDocuments(left, right, documentSort))
+  const selectedDocument = selectedDocumentId ? documents.find((document) => document.documentId === selectedDocumentId) ?? null : null
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
   const recentOperationEvents = useMemo(
     () => buildOperationEvents({ documents, documentGroups, migrations, uploadState, sessionOperationEvents }),
@@ -163,6 +178,38 @@ export function DocumentWorkspace({
   const createHasValidationError = (validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) || createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
   const createVisibilityLabel = visibilityLabelValue(groupVisibility)
+
+  useEffect(() => {
+    if (!urlState) return
+    setSelectedFolderId(urlState.folderId ?? "all")
+    setDocumentQuery(urlState.query ?? "")
+    setDocumentTypeFilter(urlState.type ?? "all")
+    setDocumentStatusFilter(urlState.status ?? "all")
+    setDocumentGroupFilter(urlState.groupFilter ?? "all")
+    setDocumentSort(urlState.sort ?? "updatedDesc")
+    setSelectedDocumentId(urlState.documentId ?? "")
+  }, [urlState, urlState?.documentId, urlState?.folderId, urlState?.groupFilter, urlState?.query, urlState?.sort, urlState?.status, urlState?.type])
+
+  useEffect(() => {
+    onUrlStateChange?.({
+      folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
+      documentId: selectedDocumentId || undefined,
+      query: documentQuery.trim() || undefined,
+      type: documentTypeFilter === "all" ? undefined : documentTypeFilter,
+      status: documentStatusFilter === "all" ? undefined : documentStatusFilter,
+      groupFilter: documentGroupFilter === "all" ? undefined : documentGroupFilter,
+      sort: documentSort === "updatedDesc" ? undefined : documentSort
+    })
+  }, [
+    documentGroupFilter,
+    documentQuery,
+    documentSort,
+    documentStatusFilter,
+    documentTypeFilter,
+    onUrlStateChange,
+    selectedDocumentId,
+    selectedFolderId
+  ])
 
   function recordSessionOperation(actionLabel: string, target: string, detail?: string, result: DocumentOperationEvent["result"] = "要求済み") {
     operationEventSeqRef.current += 1
@@ -442,11 +489,11 @@ export function DocumentWorkspace({
                     key={document.documentId}
                     tabIndex={0}
                     aria-label={`${document.fileName}の詳細を表示`}
-                    onClick={() => setSelectedDocument(document)}
+                    onClick={() => setSelectedDocumentId(document.documentId)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault()
-                        setSelectedDocument(document)
+                        setSelectedDocumentId(document.documentId)
                       }
                     }}
                   >
@@ -728,14 +775,14 @@ export function DocumentWorkspace({
           documentGroups={documentGroups}
           copied={copiedDocumentId === selectedDocument.documentId}
           onCopyDocumentId={() => void copyDocumentId(selectedDocument.documentId)}
-          onClose={() => setSelectedDocument(null)}
+          onClose={() => setSelectedDocumentId("")}
           onDelete={() => {
             setConfirmAction({ kind: "delete", document: selectedDocument })
-            setSelectedDocument(null)
+            setSelectedDocumentId("")
           }}
           onStageReindex={() => {
             setConfirmAction({ kind: "stage", document: selectedDocument })
-            setSelectedDocument(null)
+            setSelectedDocumentId("")
           }}
           canDelete={canDelete}
           canReindex={canReindex}

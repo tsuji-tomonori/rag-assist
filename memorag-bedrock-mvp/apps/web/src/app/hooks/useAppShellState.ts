@@ -10,6 +10,7 @@ import { useAdminData } from "../../features/admin/hooks/useAdminData.js"
 import { useBenchmarkRuns } from "../../features/benchmark/hooks/useBenchmarkRuns.js"
 import { useChatSession } from "../../features/chat/hooks/useChatSession.js"
 import { useDebugRuns, useDebugSelection } from "../../features/debug/hooks/useDebugRuns.js"
+import type { DocumentWorkspaceUrlState } from "../../features/documents/components/DocumentWorkspace.js"
 import { useDocuments } from "../../features/documents/hooks/useDocuments.js"
 import { useConversationHistory } from "../../features/history/hooks/useConversationHistory.js"
 import { useQuestions } from "../../features/questions/hooks/useQuestions.js"
@@ -19,7 +20,16 @@ const defaultEmbeddingModelId = "amazon.titan-embed-text-v2:0"
 
 export function useAppShellState({ authSession, onSignOut }: { authSession: AuthSession; onSignOut: () => void }) {
   const { currentUser, currentUserError } = useCurrentUser(authSession)
-  const [activeView, setActiveView] = useState<AppView>("chat")
+  const [activeView, setActiveViewState] = useState<AppView>(() => readInitialAppViewFromLocation())
+  const [documentUrlState, setDocumentUrlState] = useState<DocumentWorkspaceUrlState>(() => readDocumentWorkspaceUrlStateFromLocation())
+  const setActiveView = useCallback((nextView: AppView) => {
+    setActiveViewState(nextView)
+    if (nextView !== "documents") writeNonDocumentViewToLocation(nextView)
+  }, [])
+  const onDocumentUrlStateChange = useCallback((nextState: DocumentWorkspaceUrlState) => {
+    setDocumentUrlState(nextState)
+    writeDocumentWorkspaceUrlStateToLocation(nextState)
+  }, [])
   const [modelId, setModelId] = useState(defaultModelId)
   const [embeddingModelId] = useState(defaultEmbeddingModelId)
   const [minScore] = useState(0.2)
@@ -31,6 +41,16 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     setPendingApiCalls((current) => nextLoading ? current + 1 : Math.max(0, current - 1))
   }, [])
   const loading = pendingApiCalls > 0
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const onPopState = () => {
+      setActiveViewState(readInitialAppViewFromLocation())
+      setDocumentUrlState(readDocumentWorkspaceUrlStateFromLocation())
+    }
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
+  }, [])
 
   const {
     canCreateChat,
@@ -292,11 +312,12 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   }, [authSession, currentUser])
 
   useEffect(() => {
+    if (!currentUser) return
     if (activeView === "assignee" && !canAnswerQuestions) setActiveView("chat")
     if (activeView === "benchmark" && !canReadBenchmarkRuns) setActiveView("chat")
     if (activeView === "documents" && !canManageDocuments) setActiveView("chat")
     if (activeView === "admin" && !canSeeAdminSettings) setActiveView("chat")
-  }, [activeView, canAnswerQuestions, canManageDocuments, canReadBenchmarkRuns, canSeeAdminSettings])
+  }, [activeView, canAnswerQuestions, canManageDocuments, canReadBenchmarkRuns, canSeeAdminSettings, currentUser, setActiveView])
 
   useEffect(() => {
     if (!canReadDebugRuns && debugMode) setDebugMode(false)
@@ -465,7 +486,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onStageReindex,
       onCutoverReindex,
       onRollbackReindex,
-      onBack: () => setActiveView("admin")
+      onBack: () => setActiveView("admin"),
+      urlState: documentUrlState,
+      onUrlStateChange: onDocumentUrlStateChange
     },
     adminProps: {
       user: currentUser,
@@ -564,4 +587,77 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     topBarProps,
     routeProps
   }
+}
+
+const documentSortKeys = new Set(["updatedDesc", "updatedAsc", "fileNameAsc", "chunkDesc", "typeAsc"])
+const appViews = new Set(["chat", "assignee", "history", "favorites", "benchmark", "admin", "documents", "profile"])
+
+function readInitialAppViewFromLocation(): AppView {
+  if (typeof window === "undefined") return "chat"
+  const view = new URLSearchParams(window.location.search).get("view")
+  if (view && appViews.has(view)) return view as AppView
+  if (window.location.pathname === "/documents" || window.location.pathname.startsWith("/documents/")) return "documents"
+  return "chat"
+}
+
+function readDocumentWorkspaceUrlStateFromLocation(): DocumentWorkspaceUrlState {
+  if (typeof window === "undefined") return {}
+  const params = new URLSearchParams(window.location.search)
+  const pathState = readDocumentWorkspacePathState(window.location.pathname)
+  const sort = params.get("sort")
+  return {
+    ...pathState,
+    folderId: params.get("group") || pathState.folderId,
+    documentId: params.get("document") || pathState.documentId,
+    query: params.get("query") || undefined,
+    type: params.get("type") || undefined,
+    status: params.get("status") || undefined,
+    groupFilter: params.get("documentGroup") || undefined,
+    sort: sort && documentSortKeys.has(sort) ? sort as DocumentWorkspaceUrlState["sort"] : undefined
+  }
+}
+
+function readDocumentWorkspacePathState(pathname: string): Pick<DocumentWorkspaceUrlState, "folderId" | "documentId"> {
+  const groupsMatch = pathname.match(/^\/documents\/groups\/([^/]+)$/)
+  if (groupsMatch?.[1]) return { folderId: decodeURIComponent(groupsMatch[1]) }
+  const documentMatch = pathname.match(/^\/documents\/([^/]+)$/)
+  if (documentMatch?.[1] && documentMatch[1] !== "reindex-migrations") return { documentId: decodeURIComponent(documentMatch[1]) }
+  return {}
+}
+
+function writeDocumentWorkspaceUrlStateToLocation(state: DocumentWorkspaceUrlState) {
+  if (typeof window === "undefined") return
+  const url = new URL(window.location.href)
+  url.searchParams.set("view", "documents")
+  setSearchParam(url, "group", state.folderId)
+  setSearchParam(url, "document", state.documentId)
+  setSearchParam(url, "query", state.query)
+  setSearchParam(url, "type", state.type)
+  setSearchParam(url, "status", state.status)
+  setSearchParam(url, "documentGroup", state.groupFilter)
+  setSearchParam(url, "sort", state.sort)
+  replaceBrowserUrl(url)
+}
+
+function writeNonDocumentViewToLocation(view: AppView) {
+  if (typeof window === "undefined") return
+  const url = new URL(window.location.href)
+  if (url.pathname === "/documents" || url.pathname.startsWith("/documents/")) url.pathname = "/"
+  if (view === "chat") url.searchParams.delete("view")
+  else url.searchParams.set("view", view)
+  for (const param of ["group", "document", "query", "type", "status", "documentGroup", "sort"]) {
+    url.searchParams.delete(param)
+  }
+  replaceBrowserUrl(url)
+}
+
+function setSearchParam(url: URL, key: string, value?: string) {
+  if (value) url.searchParams.set(key, value)
+  else url.searchParams.delete(key)
+}
+
+function replaceBrowserUrl(url: URL) {
+  const nextUrl = `${url.pathname}${url.search}${url.hash}`
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  if (nextUrl !== currentUrl) window.history.replaceState(window.history.state, "", nextUrl)
 }
