@@ -9,7 +9,7 @@
     "docs:openapi": "tsx src/generate-openapi-docs.ts",
     "docs:openapi:check": "tsx src/validate-openapi-docs.ts",
     "test": "tsx --test src/**/*.test.ts src/**/**/*.test.ts",
-    "test:coverage": "c8 --check-coverage --statements 90 --branches 0 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts",
+    "test:coverage": "c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

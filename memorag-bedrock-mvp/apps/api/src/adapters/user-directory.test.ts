@@ -136,3 +136,84 @@ test("Cognito user directory syncs managed role groups while preserving external
   assert.deepEqual(removeCommands.map((command) => (command as any).input.GroupName), ["CHAT_USER"])
   assert.equal(removeCommands.some((command) => (command as any).input.GroupName === "EXTERNAL_GROUP"), false)
 })
+
+test("Cognito user directory handles empty pools, fallback attributes, and empty usernames", async () => {
+  const emptyPool = new CognitoUserDirectory("", {
+    send: async () => {
+      throw new Error("client should not be called without a pool")
+    }
+  })
+  assert.deepEqual(await emptyPool.listUsers(), [])
+  await emptyPool.setUserGroups?.("user@example.com", ["CHAT_USER"])
+
+  const warn = console.warn
+  const warnings: unknown[][] = []
+  console.warn = (...args: unknown[]) => warnings.push(args)
+  try {
+    const commands: unknown[] = []
+    const directory = new CognitoUserDirectory("pool-1", {
+      send: async (command) => {
+        commands.push(command)
+        if (command instanceof ListUsersCommand) {
+          return {
+            Users: [
+              {
+                Username: "",
+                Attributes: [],
+                Enabled: false
+              },
+              {
+                Attributes: [{ Name: "sub", Value: "sub-only" }],
+                Enabled: true,
+                UserCreateDate: new Date("2026-05-03T00:00:00.000Z")
+              }
+            ]
+          }
+        }
+        if (command instanceof AdminListGroupsForUserCommand) {
+          return { Groups: [{}, { GroupName: "" }, { GroupName: "CHAT_USER" }] }
+        }
+        throw new Error("unexpected command")
+      }
+    })
+
+    const users = await directory.listUsers()
+    assert.equal(users[0]?.userId, "unknown@example.local")
+    assert.equal(users[0]?.email, "unknown@example.local")
+    assert.equal(users[0]?.displayName, "unknown")
+    assert.equal(users[0]?.status, "suspended")
+    assert.deepEqual(users[0]?.groups, [])
+    assert.equal(users[1]?.userId, "sub-only")
+    assert.equal(users[1]?.email, "sub-only")
+    assert.equal(users[1]?.updatedAt, users[1]?.createdAt)
+    assert.deepEqual(users[1]?.groups, [])
+    assert.equal(warnings.length, 0)
+    assert.equal(commands.some((command) => command instanceof AdminListGroupsForUserCommand && (command as any).input.Username === ""), false)
+  } finally {
+    console.warn = warn
+  }
+})
+
+test("Cognito user directory skips existing desired groups and unmanaged removals", async () => {
+  const commands: unknown[] = []
+  const directory = new CognitoUserDirectory("pool-1", {
+    send: async (command) => {
+      commands.push(command)
+      if (command instanceof AdminListGroupsForUserCommand) {
+        return {
+          Groups: [
+            { GroupName: "CHAT_USER" },
+            { GroupName: "EXTERNAL_GROUP" }
+          ]
+        }
+      }
+      if (command instanceof AdminAddUserToGroupCommand || command instanceof AdminRemoveUserFromGroupCommand) return {}
+      throw new Error("unexpected command")
+    }
+  })
+
+  await directory.setUserGroups("user@example.com", ["CHAT_USER", "EXTERNAL_GROUP"])
+
+  assert.equal(commands.some((command) => command instanceof AdminAddUserToGroupCommand), false)
+  assert.equal(commands.some((command) => command instanceof AdminRemoveUserFromGroupCommand), false)
+})
