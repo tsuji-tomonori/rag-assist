@@ -51,6 +51,9 @@ export type SeededDocument = {
 
 type CorpusFileMetadata = {
   searchAliases?: Record<string, string[]>
+  drawingSourceType?: string
+  drawingSheetMetadata?: unknown[]
+  drawingRegionIndex?: unknown[]
 }
 
 type SeedCorpusOptions = {
@@ -401,7 +404,15 @@ async function readCorpusFileMetadata(filePath: string): Promise<CorpusFileMetad
   try {
     const raw = JSON.parse(await readFile(`${filePath}.metadata.json`, "utf-8")) as CorpusFileMetadata
     const searchAliases = normalizeSearchAliases(raw.searchAliases)
-    return searchAliases ? { searchAliases } : {}
+    const drawingSourceType = typeof raw.drawingSourceType === "string" ? raw.drawingSourceType : undefined
+    const drawingSheetMetadata = Array.isArray(raw.drawingSheetMetadata) ? raw.drawingSheetMetadata : undefined
+    const drawingRegionIndex = Array.isArray(raw.drawingRegionIndex) ? raw.drawingRegionIndex : undefined
+    return {
+      ...(searchAliases ? { searchAliases } : {}),
+      ...(drawingSourceType ? { drawingSourceType } : {}),
+      ...(drawingSheetMetadata ? { drawingSheetMetadata } : {}),
+      ...(drawingRegionIndex ? { drawingRegionIndex } : {})
+    }
   } catch (error) {
     if (isMissingFileError(error)) return {}
     throw error

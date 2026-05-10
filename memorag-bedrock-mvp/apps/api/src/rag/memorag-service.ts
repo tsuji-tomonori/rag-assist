@@ -2075,6 +2075,9 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   const domainPolicy = stringValue(metadata.domainPolicy)
   const ragPolicy = stringValue(metadata.ragPolicy)
   const answerPolicy = stringValue(metadata.answerPolicy)
+  const drawingSourceType = drawingSourceTypeValue(metadata.drawingSourceType)
+  const drawingSheetMetadata = jsonArray(metadata.drawingSheetMetadata)
+  const drawingRegionIndex = jsonArray(metadata.drawingRegionIndex)
   const aclGroup = stringValue(metadata.aclGroup) ?? aclGroups[0]
   if (tenantId) filterable.tenantId = tenantId
   if (department) filterable.department = department
@@ -2090,10 +2093,22 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (domainPolicy) filterable.domainPolicy = domainPolicy
   if (ragPolicy) filterable.ragPolicy = ragPolicy
   if (answerPolicy) filterable.answerPolicy = answerPolicy
+  if (drawingSourceType) filterable.drawingSourceType = drawingSourceType
+  if (drawingSheetMetadata) filterable.drawingSheetMetadata = drawingSheetMetadata
+  if (drawingRegionIndex) filterable.drawingRegionIndex = drawingRegionIndex
   if (aclGroup) filterable.aclGroup = aclGroup
   if (aclGroups.length > 0) filterable.aclGroups = aclGroups
   if (allowedUsers && allowedUsers.length > 0) filterable.allowedUsers = allowedUsers
   return filterable
+}
+
+function drawingSourceTypeValue(value: JsonValue | undefined): VectorRecord["metadata"]["drawingSourceType"] | undefined {
+  if (value === "project_drawing" || value === "standard_detail" || value === "equipment_standard" || value === "benchmark_reference" || value === "external") return value
+  return undefined
+}
+
+function jsonArray(value: JsonValue | undefined): JsonValue[] | undefined {
+  return Array.isArray(value) ? value : undefined
 }
 
 function lifecycleStatus(metadata: Record<string, JsonValue> | undefined): VectorRecord["metadata"]["lifecycleStatus"] {
