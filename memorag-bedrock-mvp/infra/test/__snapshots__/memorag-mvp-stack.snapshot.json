@@ -4765,7 +4765,7 @@
             "Value": "tsuji-tomonori/rag-assist"
           }
         ],
-        "Timeout": 1800
+        "Timeout": 900
       },
       "DependsOn": [
         "DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE",

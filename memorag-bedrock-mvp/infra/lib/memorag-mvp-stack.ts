@@ -451,7 +451,7 @@ export class MemoRagMvpStack extends Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       memorySize: 4096,
-      timeout: Duration.minutes(30),
+      timeout: Duration.minutes(15),
       ephemeralStorageSize: Size.gibibytes(4),
       logGroup: documentIngestRunWorkerLogGroup,
       environment: apiFunctionEnvironment
