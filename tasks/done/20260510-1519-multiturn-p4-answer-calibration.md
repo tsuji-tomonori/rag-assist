@@ -1,6 +1,6 @@
 # Multi-turn benchmark P4 answer / refusal calibration
 
-状態: do
+状態: done
 
 ## 背景
 
