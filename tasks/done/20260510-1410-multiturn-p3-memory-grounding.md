@@ -1,6 +1,6 @@
 # Multi-turn benchmark P3 memory grounding 強化
 
-状態: do
+状態: done
 
 ## 背景
 
