@@ -990,6 +990,38 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
     docType: "benchmark-corpus",
     benchmarkSuiteId: undefined
   })
+
+  const memoryExpansionDeps = createDeps()
+  memoryExpansionDeps.evidenceVectorStore = {
+    put: async () => undefined,
+    query: async () => [],
+    delete: async () => undefined
+  }
+  const memoryExpanded = await createSearchEvidenceNode(memoryExpansionDeps, user())(
+    state({
+      normalizedQuery: "not-in-document",
+      queryEmbeddings: [{ query: "not-in-document", vector: [1, 0] }],
+      memoryCards: [{
+        ...chunk,
+        key: "doc-1-memory-section-0001",
+        score: 0.82,
+        metadata: {
+          ...chunk.metadata,
+          kind: "memory",
+          chunkId: undefined,
+          memoryId: "memory-section-0001",
+          sourceChunkIds: ["chunk-0000"],
+          pageStart: 3,
+          pageEnd: 3,
+          text: "Level: section\nSource chunks: chunk-0000"
+        }
+      }]
+    })
+  )
+  assert.deepEqual(memoryExpanded.retrievedChunks?.map((hit) => hit.metadata.kind), ["chunk"])
+  assert.equal(memoryExpanded.retrievedChunks?.[0]?.metadata.sources?.includes("memory"), true)
+  assert.equal(memoryExpanded.retrievedChunks?.[0]?.metadata.chunkId, "chunk-0000")
+  assert.equal(memoryExpanded.retrievalDiagnostics?.sourceCounts.memory, 1)
 })
 
 test("retrieval evaluator routes fact coverage conservatively", async () => {
