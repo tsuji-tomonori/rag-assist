@@ -1,6 +1,6 @@
 # ドキュメント一覧 pagination
 
-状態: doing
+状態: done
 タスク種別: 機能追加
 作成日: 2026-05-10
 
@@ -67,6 +67,11 @@
 - pagination が検索・フィルタ済み件数に対して適用されること。
 - 行操作、詳細 drawer、削除 / reindex の対象が paged documents でも正しく維持されること。
 - page size / page controls が accessible name を持ち、モバイルカード表示を壊さないこと。
+
+## PR コメント
+
+- 受け入れ条件確認コメントを PR #256 に追加済み。
+- セルフレビューコメントを PR #256 に追加済み。
 
 ## リスク
 
