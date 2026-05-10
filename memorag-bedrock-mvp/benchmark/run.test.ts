@@ -31,7 +31,14 @@ type SummaryArtifact = {
     noAccessLeakCount?: number
     noAccessLeakRate?: number | null
   }
-  turnDependencyMetrics?: Record<string, { total: number; queryRewriteAccuracy?: number | null; retrievalRecallAtK?: number | null }>
+  turnDependencyMetrics?: Record<string, {
+    total: number
+    queryRewriteAccuracy?: number | null
+    retrievalRecallAtK?: number | null
+    refusalPrecision?: number | null
+    refusalRecall?: number | null
+    unsupportedSentenceRate?: number | null
+  }>
   corpusSeed: Array<{ fileName: string; status: string; skipReason?: string }>
   skippedRows: Array<{ id?: string; fileNames: string[]; reason: string }>
   failures: Array<{ id?: string; reasons: string[]; categories?: string[] }>
@@ -208,6 +215,16 @@ test("benchmark runner executes conversation rows in turn order and passes histo
       question: "経費精算の期限は？",
       expectedContains: ["30日以内"],
       expectedFiles: ["handbook.md"]
+    },
+    {
+      id: "conv-1-turn-3",
+      conversationId: "conv-1",
+      turnIndex: 3,
+      question: "資料にない例外もある？",
+      answerable: false,
+      expectedResponseType: "refusal",
+      turnDependency: "coreference",
+      expectedFiles: ["handbook.md"]
     }
   ].map((row) => JSON.stringify(row)).join("\n")}\n`, "utf-8")
 
@@ -229,7 +246,7 @@ test("benchmark runner executes conversation rows in turn order and passes histo
     })
 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
-    assert.deepEqual(calls.map((call) => (unwrapRpcBody(call.body) as { id?: string }).id), ["conv-1-turn-1", "conv-1-turn-2"])
+    assert.deepEqual(calls.map((call) => (unwrapRpcBody(call.body) as { id?: string }).id), ["conv-1-turn-1", "conv-1-turn-2", "conv-1-turn-3"])
     const secondBody = unwrapRpcBody(calls[1]?.body) as { conversation?: { conversationId?: string; turns?: Array<{ role?: string; text?: string; citations?: unknown[] }> } }
     assert.equal(secondBody.conversation?.conversationId, "conv-1")
     assert.deepEqual(secondBody.conversation?.turns?.map((turn) => `${turn.role}:${turn.text}`), [
@@ -239,10 +256,14 @@ test("benchmark runner executes conversation rows in turn order and passes histo
     assert.equal(secondBody.conversation?.turns?.[1]?.citations?.length, 1)
 
     const summary = readSummary(paths.summary)
-    assert.equal(summary.total, 2)
+    assert.equal(summary.total, 3)
     assert.equal(summary.metrics?.queryRewriteAccuracy, 1)
-    assert.equal(summary.turnDependencyMetrics?.coreference?.total, 1)
-    assert.match(readFileSync(paths.report, "utf-8"), /Turn Dependency Metrics/)
+    assert.equal(summary.turnDependencyMetrics?.coreference?.total, 2)
+    assert.equal(summary.turnDependencyMetrics?.coreference?.refusalPrecision, 1)
+    assert.equal(summary.turnDependencyMetrics?.coreference?.refusalRecall, 1)
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /Turn Dependency Metrics/)
+    assert.match(report, /refusal_precision/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -465,6 +486,19 @@ async function handleMultiturnRunnerRequest(req: IncomingMessage, res: ServerRes
       isAnswerable: true,
       citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9, text: "経費精算は30日以内です。" }],
       retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  if (id === "conv-1-turn-3") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "refusal",
+      answer: "資料からは回答できません。",
+      isAnswerable: false,
+      citations: [],
+      retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_002", score: 0.9 }],
+      answerSupport: { unsupportedSentences: [], totalSentences: 0 },
       debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
     } }))
     return
