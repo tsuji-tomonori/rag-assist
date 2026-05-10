@@ -37,6 +37,29 @@ Media type: `application/json`
 | `clarificationContext.originalQuestion` | `string` | no | `data.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `clarificationContext.selectedOptionId` | `string` | no | `data.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
 | `clarificationContext.selectedValue` | `string` | no | `data.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `conversation` | `object` | no | `data.conversation` の値。項目名は conversation を表します。 | - |
+| `conversation.conversationId` | `string` | yes | `data.conversation.conversationId` の値。項目名は conversation id を表します。 | - |
+| `conversation.turnId` | `string` | no | `data.conversation.turnId` の値。項目名は turn id を表します。 | - |
+| `conversation.turnIndex` | `integer` | no | `data.conversation.turnIndex` の値。項目名は turn index を表します。 | minimum=0 |
+| `conversation.turns` | `array<object>` | no | `data.conversation.turns` の値。項目名は turns を表します。 | - |
+| `conversation.turns[].role` | `enum(user \| assistant)` | yes | `data.conversation.turns[].role` の値。項目名は role を表します。 | enum=user, assistant |
+| `conversation.turns[].text` | `string` | yes | 文書本文またはチャンク本文。 | minLength=1<br>maxLength=4000 |
+| `conversation.turns[].turnId` | `string` | no | `data.conversation.turns[].turnId` の値。項目名は turn id を表します。 | - |
+| `conversation.turns[].citations` | `array<object>` | no | 回答根拠として提示する引用情報。 | - |
+| `conversation.turns[].citations[].documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `conversation.turns[].citations[].fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `conversation.turns[].citations[].chunkId` | `string` | no | `data.conversation.turns[].citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `conversation.turns[].citations[].pageStart` | `integer` | no | `data.conversation.turns[].citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `conversation.turns[].citations[].pageEnd` | `integer` | no | `data.conversation.turns[].citations[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `conversation.turns[].citations[].score` | `number` | no | 検索または評価で算出した関連度 score。 | - |
+| `conversation.turns[].citations[].text` | `string` | no | 文書本文またはチャンク本文。 | - |
+| `conversation.turns[].createdAt` | `string` | no | レコードを作成した日時。 | - |
+| `conversation.turnDependency` | `string` | no | `data.conversation.turnDependency` の値。項目名は turn dependency を表します。 | - |
+| `conversation.state` | `object` | no | `data.conversation.state` の値。項目名は state を表します。 | - |
+| `conversation.state.activeEntities` | `array<string>` | no | `data.conversation.state.activeEntities` の値。項目名は active entities を表します。 | - |
+| `conversation.state.activeDocuments` | `array<string>` | no | `data.conversation.state.activeDocuments` の値。項目名は active documents を表します。 | - |
+| `conversation.state.activeTopics` | `array<string>` | no | `data.conversation.state.activeTopics` の値。項目名は active topics を表します。 | - |
+| `conversation.state.constraints` | `array<string>` | no | `data.conversation.state.constraints` の値。項目名は constraints を表します。 | - |
 | `modelId` | `string` | no | 回答生成に利用する Bedrock model ID。 | - |
 | `embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
 | `clueModelId` | `string` | no | `data.clueModelId` の値。項目名は clue model id を表します。 | - |

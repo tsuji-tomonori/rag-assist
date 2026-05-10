@@ -8,8 +8,9 @@ export async function buildConversationState(state: QaAgentState): Promise<QaAge
   const previousUserTurns = turns.filter((turn) => turn.role === "user").map((turn) => turn.text.trim()).filter(Boolean)
   const previousAssistantTurns = turns.filter((turn) => turn.role === "assistant").map((turn) => turn.text.trim()).filter(Boolean)
   const citations = turns.flatMap((turn) => "citations" in turn
-    ? (turn.citations ?? []) as Array<{ documentId?: string; fileName?: string }>
+    ? (turn.citations ?? []) as Array<{ documentId?: string; fileName?: string; chunkId?: string; pageStart?: number; pageEnd?: number }>
     : [])
+  const previousCitations = uniqueCitations(citations).slice(0, 12)
   const activeDocuments = unique([
     ...(conversation?.state?.activeDocuments ?? []),
     ...citations.flatMap((citation) => [citation.documentId, citation.fileName]).filter((value): value is string => Boolean(value))
@@ -34,6 +35,7 @@ export async function buildConversationState(state: QaAgentState): Promise<QaAge
       activeDocuments,
       activeTopics,
       constraints: unique(conversation?.state?.constraints ?? []).slice(0, 6),
+      previousCitations,
       previousCitationCount: citations.length,
       turnDependency
     }
@@ -53,7 +55,11 @@ export async function decontextualizeQuery(state: QaAgentState): Promise<QaAgent
     standaloneQuestion,
     question,
     ...(conversationState?.activeDocuments ?? []).slice(0, 3).map((document) => `${standaloneQuestion} ${document}`),
-    ...(conversationState?.activeEntities ?? []).slice(0, 4).map((entity) => `${standaloneQuestion} ${entity}`)
+    ...(conversationState?.activeEntities ?? []).slice(0, 4).map((entity) => `${standaloneQuestion} ${entity}`),
+    ...(conversationState?.previousCitations ?? []).slice(0, 3).flatMap((citation) => {
+      const anchors = [citation.fileName, citation.documentId, citation.chunkId].filter((value): value is string => Boolean(value))
+      return anchors.map((anchor) => `${standaloneQuestion} ${anchor}`)
+    })
   ]).slice(0, 8)
 
   return {
@@ -95,4 +101,23 @@ function extractEntities(text: string): string[] {
 
 function unique<T>(items: T[]): T[] {
   return [...new Set(items)]
+}
+
+function uniqueCitations(citations: Array<{ documentId?: string; fileName?: string; chunkId?: string; pageStart?: number; pageEnd?: number }>) {
+  const seen = new Set<string>()
+  const result: Array<{ documentId?: string; fileName?: string; chunkId?: string; pageStart?: number; pageEnd?: number }> = []
+  for (const citation of citations) {
+    if (!citation.documentId && !citation.fileName && !citation.chunkId) continue
+    const key = [citation.documentId, citation.fileName, citation.chunkId, citation.pageStart, citation.pageEnd].join(":")
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push({
+      documentId: citation.documentId,
+      fileName: citation.fileName,
+      chunkId: citation.chunkId,
+      pageStart: citation.pageStart,
+      pageEnd: citation.pageEnd
+    })
+  }
+  return result
 }

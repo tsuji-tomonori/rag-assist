@@ -66,18 +66,24 @@ Media type: `application/json`
 | `messages[].result.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.citations[].chunkId` | `string` | no | `data.messages[].result.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.citations[].pageStart` | `integer` | no | `data.messages[].result.citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.citations[].pageEnd` | `integer` | no | `data.messages[].result.citations[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
 | `messages[].result.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.retrieved[].chunkId` | `string` | no | `data.messages[].result.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.retrieved[].pageStart` | `integer` | no | `data.messages[].result.retrieved[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.retrieved[].pageEnd` | `integer` | no | `data.messages[].result.retrieved[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
 | `messages[].result.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.finalEvidence[].chunkId` | `string` | no | `data.messages[].result.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.finalEvidence[].pageStart` | `integer` | no | `data.messages[].result.finalEvidence[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.finalEvidence[].pageEnd` | `integer` | no | `data.messages[].result.finalEvidence[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.debug` | `object` | no | 調査用の内部処理情報。 | - |
@@ -95,6 +101,9 @@ Media type: `application/json`
 | `messages[].result.debug.clarificationContext.originalQuestion` | `string` | no | `data.messages[].result.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `messages[].result.debug.clarificationContext.selectedOptionId` | `string` | no | `data.messages[].result.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
 | `messages[].result.debug.clarificationContext.selectedValue` | `string` | no | `data.messages[].result.debug.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `messages[].result.debug.conversation` | `object` | no | `data.messages[].result.debug.conversation` の値。項目名は conversation を表します。 | nullable |
+| `messages[].result.debug.conversationState` | `object` | no | `data.messages[].result.debug.conversationState` の値。項目名は conversation state を表します。 | nullable |
+| `messages[].result.debug.decontextualizedQuery` | `object` | no | `data.messages[].result.debug.decontextualizedQuery` の値。項目名は decontextualized query を表します。 | nullable |
 | `messages[].result.debug.pipelineVersions` | `object` | no | `data.messages[].result.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
 | `messages[].result.debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
 | `messages[].result.debug.pipelineVersions.chunkerVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
@@ -124,18 +133,24 @@ Media type: `application/json`
 | `messages[].result.debug.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.debug.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.debug.citations[].chunkId` | `string` | no | `data.messages[].result.debug.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.citations[].pageStart` | `integer` | no | `data.messages[].result.debug.citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.debug.citations[].pageEnd` | `integer` | no | `data.messages[].result.debug.citations[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.debug.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.debug.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.debug.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
 | `messages[].result.debug.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.debug.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.debug.retrieved[].chunkId` | `string` | no | `data.messages[].result.debug.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.retrieved[].pageStart` | `integer` | no | `data.messages[].result.debug.retrieved[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.debug.retrieved[].pageEnd` | `integer` | no | `data.messages[].result.debug.retrieved[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.debug.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.debug.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.debug.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
 | `messages[].result.debug.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.debug.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.debug.finalEvidence[].chunkId` | `string` | no | `data.messages[].result.debug.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.finalEvidence[].pageStart` | `integer` | no | `data.messages[].result.debug.finalEvidence[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.debug.finalEvidence[].pageEnd` | `integer` | no | `data.messages[].result.debug.finalEvidence[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.debug.steps` | `array<object>` | yes | `data.messages[].result.debug.steps` の値。項目名は steps を表します。 | - |
@@ -202,7 +217,7 @@ Media type: `application/json`
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 148 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 163 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -252,18 +267,24 @@ Media type: `application/json`
 | `messages[].result.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.citations[].chunkId` | `string` | no | `response.messages[].result.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.citations[].pageStart` | `integer` | no | `response.messages[].result.citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.citations[].pageEnd` | `integer` | no | `response.messages[].result.citations[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
 | `messages[].result.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.retrieved[].chunkId` | `string` | no | `response.messages[].result.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.retrieved[].pageStart` | `integer` | no | `response.messages[].result.retrieved[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.retrieved[].pageEnd` | `integer` | no | `response.messages[].result.retrieved[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
 | `messages[].result.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.finalEvidence[].chunkId` | `string` | no | `response.messages[].result.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.finalEvidence[].pageStart` | `integer` | no | `response.messages[].result.finalEvidence[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.finalEvidence[].pageEnd` | `integer` | no | `response.messages[].result.finalEvidence[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.debug` | `object` | no | 調査用の内部処理情報。 | - |
@@ -281,6 +302,9 @@ Media type: `application/json`
 | `messages[].result.debug.clarificationContext.originalQuestion` | `string` | no | `response.messages[].result.debug.clarificationContext.originalQuestion` の値。項目名は original question を表します。 | - |
 | `messages[].result.debug.clarificationContext.selectedOptionId` | `string` | no | `response.messages[].result.debug.clarificationContext.selectedOptionId` の値。項目名は selected option id を表します。 | - |
 | `messages[].result.debug.clarificationContext.selectedValue` | `string` | no | `response.messages[].result.debug.clarificationContext.selectedValue` の値。項目名は selected value を表します。 | - |
+| `messages[].result.debug.conversation` | `object` | no | `response.messages[].result.debug.conversation` の値。項目名は conversation を表します。 | nullable |
+| `messages[].result.debug.conversationState` | `object` | no | `response.messages[].result.debug.conversationState` の値。項目名は conversation state を表します。 | nullable |
+| `messages[].result.debug.decontextualizedQuery` | `object` | no | `response.messages[].result.debug.decontextualizedQuery` の値。項目名は decontextualized query を表します。 | nullable |
 | `messages[].result.debug.pipelineVersions` | `object` | no | `response.messages[].result.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
 | `messages[].result.debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
 | `messages[].result.debug.pipelineVersions.chunkerVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
@@ -310,18 +334,24 @@ Media type: `application/json`
 | `messages[].result.debug.citations[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.debug.citations[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.debug.citations[].chunkId` | `string` | no | `response.messages[].result.debug.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.citations[].pageStart` | `integer` | no | `response.messages[].result.debug.citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.debug.citations[].pageEnd` | `integer` | no | `response.messages[].result.debug.citations[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.debug.citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.debug.citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.debug.retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
 | `messages[].result.debug.retrieved[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.debug.retrieved[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.debug.retrieved[].chunkId` | `string` | no | `response.messages[].result.debug.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.retrieved[].pageStart` | `integer` | no | `response.messages[].result.debug.retrieved[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.debug.retrieved[].pageEnd` | `integer` | no | `response.messages[].result.debug.retrieved[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.debug.retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.debug.retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.debug.finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
 | `messages[].result.debug.finalEvidence[].documentId` | `string` | yes | 対象文書を一意に識別する ID。 | - |
 | `messages[].result.debug.finalEvidence[].fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `messages[].result.debug.finalEvidence[].chunkId` | `string` | no | `response.messages[].result.debug.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `messages[].result.debug.finalEvidence[].pageStart` | `integer` | no | `response.messages[].result.debug.finalEvidence[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `messages[].result.debug.finalEvidence[].pageEnd` | `integer` | no | `response.messages[].result.debug.finalEvidence[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
 | `messages[].result.debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `messages[].result.debug.steps` | `array<object>` | yes | `response.messages[].result.debug.steps` の値。項目名は steps を表します。 | - |

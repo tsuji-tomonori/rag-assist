@@ -228,6 +228,8 @@ export type Citation = {
   documentId: string
   fileName: string
   chunkId?: string
+  pageStart?: number
+  pageEnd?: number
   score: number
   text: string
 }

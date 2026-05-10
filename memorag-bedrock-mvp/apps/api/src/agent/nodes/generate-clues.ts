@@ -17,7 +17,7 @@ export function createGenerateCluesNode(deps: Dependencies) {
       const query = state.normalizedQuery ?? state.question
       return {
         clues: [],
-        expandedQueries: [query]
+        expandedQueries: mergeQueries(state.expandedQueries, [query])
       }
     }
 
@@ -29,7 +29,11 @@ export function createGenerateCluesNode(deps: Dependencies) {
 
     return {
       clues,
-      expandedQueries: clues
+      expandedQueries: mergeQueries(state.expandedQueries, clues)
     }
   }
+}
+
+function mergeQueries(existing: string[], next: string[]): string[] {
+  return [...new Set([...existing, ...next].map((query) => query.trim()).filter(Boolean))]
 }

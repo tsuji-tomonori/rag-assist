@@ -13,7 +13,7 @@ export type ConversationBenchmarkResponse = {
   responseType?: "answer" | "refusal" | "clarification"
   answer?: string
   isAnswerable?: boolean
-  citations?: Array<{ fileName?: string; documentId?: string }>
+  citations?: Array<{ fileName?: string; documentId?: string; chunkId?: string; pageStart?: number; pageEnd?: number; score?: number; text?: string }>
   retrieved?: Array<{ fileName?: string; documentId?: string }>
   error?: string
 }
