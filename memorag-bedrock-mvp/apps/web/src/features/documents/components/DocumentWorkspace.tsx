@@ -31,6 +31,7 @@ import {
 export type DocumentWorkspaceUrlState = {
   folderId?: string | undefined
   documentId?: string | undefined
+  migrationId?: string | undefined
   query?: string | undefined
   type?: string | undefined
   status?: string | undefined
@@ -104,6 +105,7 @@ export function DocumentWorkspace({
   const [documentPageSize, setDocumentPageSize] = useState(25)
   const [documentPage, setDocumentPage] = useState(1)
   const [selectedDocumentId, setSelectedDocumentId] = useState(urlState?.documentId ?? "")
+  const [selectedMigrationId, setSelectedMigrationId] = useState(urlState?.migrationId ?? "")
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
@@ -186,12 +188,14 @@ export function DocumentWorkspace({
     setDocumentGroupFilter(urlState.groupFilter ?? "all")
     setDocumentSort(urlState.sort ?? "updatedDesc")
     setSelectedDocumentId(urlState.documentId ?? "")
-  }, [urlState, urlState?.documentId, urlState?.folderId, urlState?.groupFilter, urlState?.query, urlState?.sort, urlState?.status, urlState?.type])
+    setSelectedMigrationId(urlState.migrationId ?? "")
+  }, [urlState, urlState?.documentId, urlState?.folderId, urlState?.groupFilter, urlState?.migrationId, urlState?.query, urlState?.sort, urlState?.status, urlState?.type])
 
   useEffect(() => {
     onUrlStateChange?.({
       folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
       documentId: selectedDocumentId || undefined,
+      migrationId: selectedMigrationId || undefined,
       query: documentQuery.trim() || undefined,
       type: documentTypeFilter === "all" ? undefined : documentTypeFilter,
       status: documentStatusFilter === "all" ? undefined : documentStatusFilter,
@@ -206,6 +210,7 @@ export function DocumentWorkspace({
     documentTypeFilter,
     onUrlStateChange,
     selectedDocumentId,
+    selectedMigrationId,
     selectedFolderId
   ])
 
@@ -371,6 +376,7 @@ export function DocumentWorkspace({
           canReindex={canReindex}
           canUploadToDestination={canUploadToDestination}
           migrations={migrations}
+          selectedMigrationId={selectedMigrationId}
           uploadInputRef={uploadInputRef}
           shareSelectRef={shareSelectRef}
           onDocumentQueryChange={setDocumentQuery}
@@ -383,8 +389,14 @@ export function DocumentWorkspace({
             setDocumentPageSize(pageSize)
             setDocumentPage(1)
           }}
-          onSelectDocument={(document) => setSelectedDocumentId(document.documentId)}
-          onConfirmAction={setConfirmAction}
+          onSelectDocument={(document) => {
+            setSelectedDocumentId(document.documentId)
+            setSelectedMigrationId("")
+          }}
+          onConfirmAction={(action) => {
+            if (action.kind === "cutover" || action.kind === "rollback") setSelectedMigrationId(action.migration.migrationId)
+            setConfirmAction(action)
+          }}
         />
         <DocumentDetailPanel
           documentGroups={documentGroups}

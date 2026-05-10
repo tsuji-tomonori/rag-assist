@@ -99,7 +99,7 @@ describe("DocumentWorkspace", () => {
         canWrite={true}
         canDelete={true}
         canReindex={true}
-        migrations={[]}
+        migrations={migrations}
         onUpload={vi.fn()}
         onDelete={onDelete}
         onStageReindex={vi.fn()}
@@ -682,10 +682,11 @@ describe("DocumentWorkspace", () => {
         canWrite={true}
         canDelete={true}
         canReindex={true}
-        migrations={[]}
+        migrations={migrations}
         urlState={{
           folderId: "group-1",
           documentId: "doc-1",
+          migrationId: "migration-1",
           query: "requirements",
           groupFilter: "group-1",
           sort: "fileNameAsc"
@@ -707,6 +708,8 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByLabelText("所属フォルダ")).toHaveValue("group-1")
     expect(screen.getByLabelText("並び替え")).toHaveValue("fileNameAsc")
     expect(screen.getByRole("dialog", { name: "requirements.md" })).toBeInTheDocument()
+    const migrationStrip = screen.getByLabelText("再インデックス移行一覧")
+    expect(within(migrationStrip).getByText("doc-1 → doc-1-staged").closest("article")).toHaveAttribute("aria-current", "true")
   })
 
   it("文書管理状態の変更をURL同期コールバックへ通知する", async () => {
@@ -721,7 +724,7 @@ describe("DocumentWorkspace", () => {
         canWrite={true}
         canDelete={true}
         canReindex={true}
-        migrations={[]}
+        migrations={migrations}
         onUrlStateChange={onUrlStateChange}
         onUploadGroupChange={vi.fn()}
         onUpload={vi.fn()}
@@ -750,6 +753,11 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "文書詳細を閉じる" }))
     await waitFor(() => {
       expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.not.objectContaining({ documentId: "doc-1" }))
+    })
+
+    await userEvent.click(screen.getAllByRole("button", { name: "切替" })[0]!)
+    await waitFor(() => {
+      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.objectContaining({ migrationId: "migration-1" }))
     })
   })
 

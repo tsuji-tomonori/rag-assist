@@ -6556,9 +6556,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:317:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:322:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 317,
+      "line": 322,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -7962,9 +7962,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:108:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:110:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 108,
+      "line": 110,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -8012,9 +8012,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:117:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:119:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 117,
+      "line": 119,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -8062,9 +8062,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:130:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:132:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 130,
+      "line": 132,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -8084,9 +8084,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:132:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:134:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 132,
+      "line": 134,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "input",
@@ -8128,9 +8128,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:134:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:136:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 134,
+      "line": 136,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -8150,9 +8150,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:136:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:138:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 136,
+      "line": 138,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -8186,9 +8186,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:137:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:139:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 137,
+      "line": 139,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8213,9 +8213,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:139:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:141:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 139,
+      "line": 141,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8240,9 +8240,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:143:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:145:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 143,
+      "line": 145,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -8262,9 +8262,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:145:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:147:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 145,
+      "line": 147,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -8298,9 +8298,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:146:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:148:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 146,
+      "line": 148,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8325,9 +8325,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:148:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:150:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 148,
+      "line": 150,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8352,9 +8352,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:152:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:154:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 152,
+      "line": 154,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -8374,9 +8374,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:154:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:156:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 154,
+      "line": 156,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -8410,9 +8410,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:155:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:157:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 155,
+      "line": 157,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8437,9 +8437,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:156:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:158:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 156,
+      "line": 158,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8464,9 +8464,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:158:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:160:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 158,
+      "line": 160,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8491,9 +8491,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:162:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:164:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 162,
+      "line": 164,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -8513,9 +8513,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:164:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:166:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 164,
+      "line": 166,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -8549,9 +8549,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:165:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:167:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 165,
+      "line": 167,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8576,9 +8576,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:166:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:168:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 166,
+      "line": 168,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8603,9 +8603,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:167:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:169:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 167,
+      "line": 169,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8630,9 +8630,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:168:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:170:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 168,
+      "line": 170,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8657,9 +8657,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:169:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:171:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 169,
+      "line": 171,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8684,9 +8684,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:188:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:190:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 188,
+      "line": 190,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -8726,9 +8726,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:224:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:226:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 224,
+      "line": 226,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -8776,9 +8776,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:236:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:238:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 236,
+      "line": 238,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -8826,9 +8826,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:267:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:269:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 267,
+      "line": 269,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "label",
@@ -8848,9 +8848,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:269:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:271:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 269,
+      "line": 271,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "select",
@@ -8884,9 +8884,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:271:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:273:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 271,
+      "line": 273,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "option",
@@ -8911,9 +8911,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:275:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:277:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 275,
+      "line": 277,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -8961,9 +8961,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:284:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:286:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 284,
+      "line": 286,
       "feature": "documents",
       "component": "DocumentFilePanel",
       "element": "button",
@@ -9011,9 +9011,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:330:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:335:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 330,
+      "line": 335,
       "feature": "documents",
       "component": "ReindexMigrationStrip",
       "element": "button",
@@ -9053,9 +9053,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:333:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:338:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
-      "line": 333,
+      "line": 338,
       "feature": "documents",
       "component": "ReindexMigrationStrip",
       "element": "button",
