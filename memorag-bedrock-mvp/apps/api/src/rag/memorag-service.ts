@@ -221,6 +221,7 @@ export class MemoRagService {
     const documentId = randomUUID()
     const createdAt = new Date().toISOString()
     const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
+    logIngestStage({ stage: "extract", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length })
     const extracted = input.structuredBlocks?.length
       ? {
           text: input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n"),
@@ -228,6 +229,17 @@ export class MemoRagService {
           sourceExtractorVersion: input.sourceExtractorVersion ?? "structured-blocks-ledger-v1"
         }
       : await extractDocumentFromUpload(input)
+    logIngestStage({
+      stage: "extract",
+      phase: "end",
+      documentId,
+      fileName: input.fileName,
+      mimeType: input.mimeType,
+      fileSizeBytes: input.contentBytes?.length,
+      textLength: extracted.text.length,
+      blockCount: extracted.blocks?.length,
+      sourceExtractorVersion: extracted.sourceExtractorVersion
+    })
     const pipelineVersions = buildPipelineVersions({
       embeddingModelId,
       embeddingDimensions: config.embeddingDimensions,
@@ -236,10 +248,12 @@ export class MemoRagService {
     const text = extracted.text
     if (!text) throw new Error("Uploaded document did not contain extractable text")
 
+    logIngestStage({ stage: "chunk", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, textLength: text.length })
     const chunks = extracted.blocks?.length
       ? chunkStructuredBlocks(extracted.blocks, config.chunkSizeChars, config.chunkOverlapChars)
       : chunkText(text, config.chunkSizeChars, config.chunkOverlapChars)
     if (chunks.length === 0) throw new Error("No chunks were produced from the uploaded document")
+    logIngestStage({ stage: "chunk", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, textLength: text.length, chunkCount: chunks.length })
 
     const sourceObjectKey = `documents/${documentId}/source.txt`
     const structuredBlocksObjectKey = extracted.blocks?.length ? `documents/${documentId}/structured-blocks.json` : undefined
@@ -270,6 +284,7 @@ export class MemoRagService {
     const memoryRecords: VectorRecord[] = []
     const filterableMetadata = toFilterableVectorMetadata(input.metadata)
 
+    logIngestStage({ stage: "embedding", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length })
     const evidenceRows = await mapWithConcurrency(chunks, config.embeddingConcurrency, async (chunk) => {
       const vector = await embedWithCache(this.deps, {
         text: chunk.text,
@@ -341,9 +356,12 @@ export class MemoRagService {
       } satisfies VectorRecord
     })
     memoryRecords.push(...memoryRows)
+    logIngestStage({ stage: "embedding", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length, memoryCardCount: memoryCards.length })
 
+    logIngestStage({ stage: "vector_put", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: evidenceRecords.length, memoryCardCount: memoryRecords.length })
     await this.deps.evidenceVectorStore.put(evidenceRecords)
     await this.deps.memoryVectorStore.put(memoryRecords)
+    logIngestStage({ stage: "vector_put", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: evidenceRecords.length, memoryCardCount: memoryRecords.length })
 
     const manifest: DocumentManifest = {
       documentId,
@@ -1131,8 +1149,10 @@ export class MemoRagService {
     })
 
     try {
+      logIngestStage({ stage: "s3_read", phase: "start", runId, fileName: run.fileName, mimeType: run.mimeType })
       const contentBytes = await this.deps.objectStore.getBytes(run.objectKey)
       if (contentBytes.length === 0) throw new Error("Uploaded object is empty")
+      logIngestStage({ stage: "s3_read", phase: "end", runId, fileName: run.fileName, mimeType: run.mimeType, fileSizeBytes: contentBytes.length })
       const sourceS3Object = config.docsBucketName
         ? { bucketName: config.docsBucketName, key: run.objectKey }
         : undefined
@@ -2169,6 +2189,49 @@ function userDisplayName(user?: AppUser): string {
 
 function forbiddenError(message: string): Error & { status: number } {
   return Object.assign(new Error(message), { status: 403 })
+}
+
+function logIngestStage(input: {
+  stage: "s3_read" | "extract" | "chunk" | "embedding" | "vector_put"
+  phase: "start" | "end"
+  runId?: string
+  documentId?: string
+  fileName?: string
+  mimeType?: string
+  fileSizeBytes?: number
+  textLength?: number
+  blockCount?: number
+  chunkCount?: number
+  memoryCardCount?: number
+  sourceExtractorVersion?: string
+}): void {
+  console.info(JSON.stringify({
+    event: "document_ingest_stage",
+    stage: input.stage,
+    phase: input.phase,
+    runId: input.runId,
+    documentId: input.documentId,
+    fileName: input.fileName,
+    mimeType: input.mimeType,
+    fileSizeBytes: input.fileSizeBytes,
+    textLength: input.textLength,
+    blockCount: input.blockCount,
+    chunkCount: input.chunkCount,
+    memoryCardCount: input.memoryCardCount,
+    sourceExtractorVersion: input.sourceExtractorVersion,
+    memory: memoryUsageSnapshot()
+  }))
+}
+
+function memoryUsageSnapshot(): Record<string, number> {
+  const usage = process.memoryUsage()
+  return {
+    rssBytes: usage.rss,
+    heapUsedBytes: usage.heapUsed,
+    heapTotalBytes: usage.heapTotal,
+    externalBytes: usage.external,
+    arrayBuffersBytes: usage.arrayBuffers
+  }
 }
 
 function stringValue(value: JsonValue | undefined): string | undefined {

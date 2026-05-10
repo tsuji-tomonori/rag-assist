@@ -62,6 +62,11 @@
 - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
 - `npm exec --prefix memorag-bedrock-mvp -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: pass
 - `git diff --check`: pass
+- 競合解消後:
+  - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace ChatView useChatSession useAppShellState`: pass
+  - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
+  - `git diff --check`: pass
 
 ## PR レビュー観点
 
@@ -74,6 +79,7 @@
 
 - 受け入れ条件確認コメントを PR #259 に追加済み。
 - セルフレビューコメントを PR #259 に追加済み。
+- `origin/main` 取り込み後の generated Web UI inventory 競合解消結果を PR #259 に追記予定。
 
 ## リスク
 

@@ -98,25 +98,41 @@ async function extractDocxDocument(buffer: Buffer): Promise<ExtractedDocument> {
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
+  logPdfExtractStage({ stage: "pdf-parse", phase: "start", fileSizeBytes: buffer.length })
   const pdfParse = (await import("pdf-parse")).default
   const parsed = await pdfParse(buffer)
   const parsedText = parsed.text ?? ""
+  logPdfExtractStage({ stage: "pdf-parse", phase: "end", fileSizeBytes: buffer.length, textLength: parsedText.length })
+  logPdfExtractStage({ stage: "pdftotext", phase: "start", fileSizeBytes: buffer.length })
   const pdftotextText = await extractWithPdftotext(buffer)
+  logPdfExtractStage({ stage: "pdftotext", phase: "end", fileSizeBytes: buffer.length, textLength: pdftotextText?.length ?? 0 })
 
   if (!pdftotextText) return parsedText
   return pdfTextQualityScore(pdftotextText) > pdfTextQualityScore(parsedText) ? pdftotextText : parsedText
 }
 
 async function extractPdfDocument(input: UploadLike, buffer: Buffer): Promise<ExtractedDocument> {
+  logPdfExtractStage({ stage: "pdf-extract", phase: "start", fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: buffer.length })
   const extractedText = await (input.pdfTextExtractor ?? extractPdfText)(buffer)
+  logPdfExtractStage({ stage: "pdf-extract", phase: "end", fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: buffer.length, textLength: extractedText.length })
   if (pdfTextQualityScore(extractedText) > 0) return textDocument(extractedText, "pdf-layout-v2")
 
   const ocrDetector = input.ocrDetector ?? detectTextWithTextract
+  logPdfExtractStage({ stage: "textract", phase: "start", fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: buffer.length })
   const ocrDocument = await ocrDetector({
     fileName: input.fileName,
     mimeType: input.mimeType,
     bytes: buffer,
     sourceS3Object: input.sourceS3Object
+  })
+  logPdfExtractStage({
+    stage: "textract",
+    phase: "end",
+    fileName: input.fileName,
+    mimeType: input.mimeType,
+    fileSizeBytes: buffer.length,
+    textLength: ocrDocument?.text.length ?? 0,
+    sourceExtractorVersion: ocrDocument?.sourceExtractorVersion
   })
   return ocrDocument ?? textDocument(extractedText, "pdf-layout-v2")
 }
@@ -437,4 +453,37 @@ function sleep(ms: number): Promise<void> {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
+}
+
+function logPdfExtractStage(input: {
+  stage: "pdf-extract" | "pdf-parse" | "pdftotext" | "textract"
+  phase: "start" | "end"
+  fileName?: string
+  mimeType?: string
+  fileSizeBytes: number
+  textLength?: number
+  sourceExtractorVersion?: string
+}): void {
+  console.info(JSON.stringify({
+    event: "document_extract_stage",
+    stage: input.stage,
+    phase: input.phase,
+    fileName: input.fileName,
+    mimeType: input.mimeType,
+    fileSizeBytes: input.fileSizeBytes,
+    textLength: input.textLength,
+    sourceExtractorVersion: input.sourceExtractorVersion,
+    memory: memoryUsageSnapshot()
+  }))
+}
+
+function memoryUsageSnapshot(): Record<string, number> {
+  const usage = process.memoryUsage()
+  return {
+    rssBytes: usage.rss,
+    heapUsedBytes: usage.heapUsed,
+    heapTotalBytes: usage.heapTotal,
+    externalBytes: usage.external,
+    arrayBuffersBytes: usage.arrayBuffers
+  }
 }

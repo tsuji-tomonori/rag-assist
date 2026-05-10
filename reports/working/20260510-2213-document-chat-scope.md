@@ -37,6 +37,7 @@
 - `ChatComposer` / `ChatView` に対象文書 chip と解除ボタンを追加した。
 - `DocumentWorkspace`、`ChatView`、`useChatSession`、`useAppShellState` のテストを追加・更新した。
 - UI 変更に伴い Web UI inventory を再生成した。
+- PR が `origin/main` 更新後に DIRTY になったため、`origin/main` を merge し、generated Web UI inventory の競合を再生成で解消した。
 
 ## 5. 成果物
 
@@ -73,6 +74,11 @@
 - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
 - `npm exec --prefix memorag-bedrock-mvp -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: pass
 - `git diff --check`: pass
+- 競合解消後の追加検証:
+  - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace ChatView useChatSession useAppShellState`: pass
+  - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
+  - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
+  - `git diff --check`: pass
 
 ## 8. 未対応・制約・リスク
 
@@ -80,3 +86,4 @@
 - document scope は URL query に含めていない。チャット中の一時スコープとして扱う。
 - `npm ci` により ignored の `node_modules/` が生成されたが、コミット対象には含めない。
 - API / 認可 / RAG backend は変更していない。
+- 競合解消 commit には `origin/main` の取り込み差分が含まれる。文書質問導線としての追加変更は generated docs の再生成とレポート追記に限定した。

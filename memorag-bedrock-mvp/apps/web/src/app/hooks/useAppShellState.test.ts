@@ -293,7 +293,7 @@ describe("useAppShellState", () => {
   })
 
   it("hydrates and writes document workspace state through URL query parameters", async () => {
-    window.history.replaceState(null, "", "/?view=documents&group=group-1&document=doc-1&query=handbook&sort=fileNameAsc")
+    window.history.replaceState(null, "", "/documents/reindex-migrations/migration-1?view=documents&group=group-1&document=doc-1&query=handbook&sort=fileNameAsc")
     const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
 
     await act(async () => {
@@ -304,6 +304,7 @@ describe("useAppShellState", () => {
     expect(result.current.routeProps.documentProps.urlState).toEqual({
       folderId: "group-1",
       documentId: "doc-1",
+      migrationId: "migration-1",
       query: "handbook",
       sort: "fileNameAsc",
       type: undefined,
@@ -315,6 +316,7 @@ describe("useAppShellState", () => {
       result.current.routeProps.documentProps.onUrlStateChange?.({
         folderId: "group-2",
         documentId: "doc-2",
+        migrationId: "migration-2",
         query: "policy",
         type: "PDF",
         status: "active",
@@ -326,6 +328,7 @@ describe("useAppShellState", () => {
     expect(window.location.search).toContain("view=documents")
     expect(window.location.search).toContain("group=group-2")
     expect(window.location.search).toContain("document=doc-2")
+    expect(window.location.search).toContain("migration=migration-2")
     expect(window.location.search).toContain("query=policy")
     expect(window.location.search).toContain("type=PDF")
     expect(window.location.search).toContain("status=active")
@@ -341,6 +344,7 @@ describe("useAppShellState", () => {
     expect(result.current.routeProps.documentProps.urlState).toEqual({
       folderId: undefined,
       documentId: undefined,
+      migrationId: undefined,
       query: "戻る",
       type: undefined,
       status: undefined,

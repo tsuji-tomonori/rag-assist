@@ -1,7 +1,9 @@
 import { createReadStream, createWriteStream } from "node:fs"
+import { existsSync } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import path from "node:path"
 import readline from "node:readline"
+import { fileURLToPath } from "node:url"
 import {
   benchmarkCorpusDirFromEnv,
   benchmarkCorpusSkipMemoryFromEnv,
@@ -87,10 +89,16 @@ const apiAuthToken = process.env.API_AUTH_TOKEN
 const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken })
 const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "mtrag-v1"
-const datasetPath = process.env.DATASET ?? "benchmark/datasets/conversation/mtrag-v1.jsonl"
-const outputPath = process.env.OUTPUT ?? ".local-data/conversation-results.jsonl"
-const summaryPath = process.env.SUMMARY ?? ".local-data/conversation-summary.json"
-const reportPath = process.env.REPORT ?? ".local-data/conversation-report.md"
+const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
+const repoRoot = path.resolve(benchmarkDir, "..")
+const datasetPath = resolveExistingPath(process.env.DATASET ?? "benchmark/datasets/conversation/mtrag-v1.jsonl", [process.cwd(), benchmarkDir, repoRoot])
+const outputPath = resolveOutputPath(process.env.OUTPUT ?? ".local-data/conversation-results.jsonl")
+const summaryPath = resolveOutputPath(process.env.SUMMARY ?? ".local-data/conversation-summary.json")
+const reportPath = resolveOutputPath(process.env.REPORT ?? ".local-data/conversation-report.md")
+const benchmarkCorpusDir = benchmarkCorpusDirFromEnv(process.env)
+const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
+  ? resolveExistingPath(benchmarkCorpusDir, [process.cwd(), benchmarkDir, repoRoot])
+  : undefined
 
 if (isMainModule()) {
   await runConversationBenchmark()
@@ -100,7 +108,7 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
   const corpusSeed = await seedBenchmarkCorpus({
     apiBaseUrl,
     authToken: apiAuthToken,
-    corpusDir: benchmarkCorpusDirFromEnv(process.env),
+    corpusDir: resolvedBenchmarkCorpusDir,
     suiteId: process.env.BENCHMARK_CORPUS_SUITE_ID ?? benchmarkSuiteId,
     skipMemory: benchmarkCorpusSkipMemoryFromEnv(process.env),
     embeddingModelId: process.env.EMBEDDING_MODEL_ID,
@@ -110,6 +118,8 @@ export async function runConversationBenchmark(): Promise<SummaryOutput> {
   })
 
   await mkdir(path.dirname(outputPath), { recursive: true })
+  await mkdir(path.dirname(summaryPath), { recursive: true })
+  await mkdir(path.dirname(reportPath), { recursive: true })
   const out = createWriteStream(outputPath, { encoding: "utf-8" })
   const results: ResultRow[] = []
 
@@ -213,4 +223,17 @@ async function runBenchmarkQuery(input: Parameters<typeof api.benchmark.query>[0
 
 function isMainModule(): boolean {
   return process.argv[1] ? import.meta.url === new URL(`file://${process.argv[1]}`).href : false
+}
+
+export function resolveExistingPath(input: string, bases: string[]): string {
+  if (path.isAbsolute(input)) return input
+  for (const base of bases) {
+    const candidate = path.resolve(base, input)
+    if (existsSync(candidate)) return candidate
+  }
+  return path.resolve(process.cwd(), input)
+}
+
+export function resolveOutputPath(input: string): string {
+  return path.isAbsolute(input) ? input : path.resolve(repoRoot, input)
 }

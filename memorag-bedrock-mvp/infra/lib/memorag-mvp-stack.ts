@@ -1,7 +1,7 @@
 import * as fs from "node:fs"
 import * as path from "node:path"
 import * as cdk from "aws-cdk-lib"
-import { Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib"
+import { Duration, RemovalPolicy, Size, Stack, type StackProps } from "aws-cdk-lib"
 import * as apigw from "aws-cdk-lib/aws-apigateway"
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront"
 import * as codebuild from "aws-cdk-lib/aws-codebuild"
@@ -450,8 +450,9 @@ export class MemoRagMvpStack extends Stack {
       handler: "index.handler",
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
-      memorySize: 1024,
-      timeout: Duration.minutes(15),
+      memorySize: 4096,
+      timeout: Duration.minutes(30),
+      ephemeralStorageSize: Size.gibibytes(4),
       logGroup: documentIngestRunWorkerLogGroup,
       environment: apiFunctionEnvironment
     })

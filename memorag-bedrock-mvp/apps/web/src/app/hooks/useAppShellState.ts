@@ -635,6 +635,7 @@ function readDocumentWorkspaceUrlStateFromLocation(): DocumentWorkspaceUrlState 
     ...pathState,
     folderId: params.get("group") || pathState.folderId,
     documentId: params.get("document") || pathState.documentId,
+    migrationId: params.get("migration") || pathState.migrationId,
     query: params.get("query") || undefined,
     type: params.get("type") || undefined,
     status: params.get("status") || undefined,
@@ -643,9 +644,11 @@ function readDocumentWorkspaceUrlStateFromLocation(): DocumentWorkspaceUrlState 
   }
 }
 
-function readDocumentWorkspacePathState(pathname: string): Pick<DocumentWorkspaceUrlState, "folderId" | "documentId"> {
+function readDocumentWorkspacePathState(pathname: string): Pick<DocumentWorkspaceUrlState, "folderId" | "documentId" | "migrationId"> {
   const groupsMatch = pathname.match(/^\/documents\/groups\/([^/]+)$/)
   if (groupsMatch?.[1]) return { folderId: decodeURIComponent(groupsMatch[1]) }
+  const migrationMatch = pathname.match(/^\/documents\/reindex-migrations\/([^/]+)$/)
+  if (migrationMatch?.[1]) return { migrationId: decodeURIComponent(migrationMatch[1]) }
   const documentMatch = pathname.match(/^\/documents\/([^/]+)$/)
   if (documentMatch?.[1] && documentMatch[1] !== "reindex-migrations") return { documentId: decodeURIComponent(documentMatch[1]) }
   return {}
@@ -657,6 +660,7 @@ function writeDocumentWorkspaceUrlStateToLocation(state: DocumentWorkspaceUrlSta
   url.searchParams.set("view", "documents")
   setSearchParam(url, "group", state.folderId)
   setSearchParam(url, "document", state.documentId)
+  setSearchParam(url, "migration", state.migrationId)
   setSearchParam(url, "query", state.query)
   setSearchParam(url, "type", state.type)
   setSearchParam(url, "status", state.status)
@@ -671,7 +675,7 @@ function writeNonDocumentViewToLocation(view: AppView) {
   if (url.pathname === "/documents" || url.pathname.startsWith("/documents/")) url.pathname = "/"
   if (view === "chat") url.searchParams.delete("view")
   else url.searchParams.set("view", view)
-  for (const param of ["group", "document", "query", "type", "status", "documentGroup", "sort"]) {
+  for (const param of ["group", "document", "migration", "query", "type", "status", "documentGroup", "sort"]) {
     url.searchParams.delete(param)
   }
   replaceBrowserUrl(url)

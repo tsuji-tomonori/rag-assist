@@ -44,6 +44,7 @@ export function DocumentFilePanel({
   canReindex,
   canUploadToDestination,
   migrations,
+  selectedMigrationId,
   uploadInputRef,
   shareSelectRef,
   onDocumentQueryChange,
@@ -84,6 +85,7 @@ export function DocumentFilePanel({
   canReindex: boolean
   canUploadToDestination: boolean
   migrations: ReindexMigration[]
+  selectedMigrationId?: string
   uploadInputRef: RefObject<HTMLInputElement | null>
   shareSelectRef: RefObject<HTMLSelectElement | null>
   onDocumentQueryChange: (value: string) => void
@@ -296,6 +298,7 @@ export function DocumentFilePanel({
       <ReindexMigrationStrip
         canReindex={canReindex}
         migrations={migrations}
+        selectedMigrationId={selectedMigrationId}
         operationState={operationState}
         onConfirmAction={onConfirmAction}
       />
@@ -311,11 +314,13 @@ function FileIcon({ document }: { document: DocumentManifest }) {
 function ReindexMigrationStrip({
   canReindex,
   migrations,
+  selectedMigrationId,
   operationState,
   onConfirmAction
 }: {
   canReindex: boolean
   migrations: ReindexMigration[]
+  selectedMigrationId?: string
   operationState: DocumentOperationState
   onConfirmAction: (action: ConfirmAction) => void
 }) {
@@ -324,7 +329,7 @@ function ReindexMigrationStrip({
   return (
     <div className="migration-strip" aria-label="再インデックス移行一覧">
       {migrations.map((migration) => (
-        <article className="migration-chip" key={migration.migrationId}>
+        <article className={`migration-chip ${selectedMigrationId === migration.migrationId ? "selected" : ""}`} key={migration.migrationId} aria-current={selectedMigrationId === migration.migrationId ? "true" : undefined}>
           <strong>{migration.status}</strong>
           <span>{migration.sourceDocumentId} → {migration.stagedDocumentId}</span>
           <button type="button" disabled={operationState.cutoverMigrationId === migration.migrationId || migration.status !== "staged"} onClick={() => onConfirmAction({ kind: "cutover", migration })}>
