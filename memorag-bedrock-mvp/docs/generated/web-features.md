@@ -20,4 +20,4 @@
 | ドキュメント | documents | ドキュメント upload、document group、共有、blue-green reindex 操作を扱う領域です。 | documents | 1 | 61 | 「管理者設定へ戻る」を実行するボタン。<br>「フォルダを検索」に紐づく入力ラベル。<br>「フォルダを検索」を入力または選択する項目。 ほか 48 件 | [documents.md](web-features/documents.md) |
 | 履歴 | history | 会話履歴、検索、並び替え、お気に入り、履歴削除を扱う領域です。 | history, favorites | 1 | 11 | 「チャットへ戻る」を実行するボタン。<br>「履歴を検索」を入力または選択する項目。<br>「履歴の並び順」を選ぶ選択項目。 ほか 6 件 | [history.md](web-features/history.md) |
 | 担当者対応 | questions | 担当者が問い合わせを確認し、回答作成、下書き保存、回答送信を行う領域です。 | assignee | 1 | 21 | 「チャットへ戻る」を実行するボタン。<br>「ステータス / すべて」に紐づく入力ラベル。<br>「すべて」を選ぶ選択項目。 ほか 17 件 | [questions.md](web-features/questions.md) |
-| 共通 | shared | 複数領域で再利用される表示部品です。単独の画面ではなく、他の画面から使われます。 | - | 2 | 1 | - | [shared.md](web-features/shared.md) |
+| 共通 | shared | 複数領域で再利用される表示部品です。単独の画面ではなく、他の画面から使われます。 | - | 3 | 3 | - | [shared.md](web-features/shared.md) |

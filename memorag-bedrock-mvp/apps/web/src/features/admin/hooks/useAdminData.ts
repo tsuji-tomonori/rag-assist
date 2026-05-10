@@ -117,7 +117,6 @@ export function useAdminData({
   }
 
   async function onSetManagedUserStatus(userId: string, action: "suspend" | "unsuspend" | "delete") {
-    if (action === "delete" && !window.confirm("このユーザーを管理台帳から削除状態にします。続行しますか？")) return
     setLoading(true)
     setError(null)
     try {
