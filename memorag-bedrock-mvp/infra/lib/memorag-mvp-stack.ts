@@ -230,6 +230,14 @@ export class MemoRagMvpStack extends Stack {
       destinationBucket: benchmarkBucket,
       destinationKeyPrefix: "datasets/conversation"
     })
+    new s3deploy.BucketDeployment(this, "DeployConversationBenchmarkCorpus", {
+      sources: [
+        s3deploy.Source.data("mtrag-v1/mtrag_sample_policy.md", fs.readFileSync(path.join(__dirname, "../../benchmark/corpus/mtrag-v1/mtrag_sample_policy.md"), "utf-8")),
+        s3deploy.Source.data("chatrag-bench-v1/chatrag_sample_it.md", fs.readFileSync(path.join(__dirname, "../../benchmark/corpus/chatrag-bench-v1/chatrag_sample_it.md"), "utf-8"))
+      ],
+      destinationBucket: benchmarkBucket,
+      destinationKeyPrefix: "corpus/conversation"
+    })
 
     const s3VectorsProviderLogGroup = new logs.LogGroup(this, "S3VectorsProviderLogGroup", {
       retention: logs.RetentionDays.ONE_WEEK,

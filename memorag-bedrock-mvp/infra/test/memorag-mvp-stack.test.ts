@@ -473,6 +473,14 @@ test("keeps benchmark CodeBuild runner generic and fails when auth token resolut
   )
 })
 
+test("deploys conversation benchmark corpus to the benchmark bucket", () => {
+  const template = synthesize()
+
+  template.hasResourceProperties("Custom::CDKBucketDeployment", {
+    DestinationBucketKeyPrefix: "corpus/conversation"
+  })
+})
+
 test("matches the synthesized CloudFormation snapshot", () => {
   const actual = `${JSON.stringify(stabilizeTemplate(synthesize().toJSON()), null, 2)}\n`
   const snapshotPath = path.join(__dirname, "__snapshots__", "memorag-mvp-stack.snapshot.json")

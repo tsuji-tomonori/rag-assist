@@ -76,14 +76,24 @@
       "mode": "agent",
       "runner": "conversation",
       "dataset": { "source": "codebuild-input" },
-      "corpus": { "dir": "benchmark/corpus/mtrag-v1", "suiteId": "mtrag-v1" }
+      "corpus": {
+        "source": "codebuild-bucket",
+        "dir": "./benchmark/.runner-mtrag-corpus",
+        "suiteId": "mtrag-v1",
+        "s3Prefix": "corpus/conversation/mtrag-v1"
+      }
     },
     {
       "suiteId": "chatrag-bench-v1",
       "mode": "agent",
       "runner": "conversation",
       "dataset": { "source": "codebuild-input" },
-      "corpus": { "dir": "benchmark/corpus/chatrag-bench-v1", "suiteId": "chatrag-bench-v1" }
+      "corpus": {
+        "source": "codebuild-bucket",
+        "dir": "./benchmark/.runner-chatrag-bench-corpus",
+        "suiteId": "chatrag-bench-v1",
+        "s3Prefix": "corpus/conversation/chatrag-bench-v1"
+      }
     },
     {
       "suiteId": "jp-public-pdf-qa-v1",

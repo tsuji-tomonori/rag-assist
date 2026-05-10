@@ -33,6 +33,37 @@ test("resolves dynamic prepare suites from manifest", async () => {
   assert.equal(env.BENCHMARK_CORPUS_SUITE_ID, "mmrag-docqa-v1")
 })
 
+test("resolves conversation corpus from the CodeBuild bucket", async () => {
+  const manifest = await loadCodeBuildSuiteManifest()
+  const cases = [
+    {
+      suiteId: "mtrag-v1",
+      dir: "./benchmark/.runner-mtrag-corpus",
+      s3Prefix: "corpus/conversation/mtrag-v1"
+    },
+    {
+      suiteId: "chatrag-bench-v1",
+      dir: "./benchmark/.runner-chatrag-bench-corpus",
+      s3Prefix: "corpus/conversation/chatrag-bench-v1"
+    }
+  ]
+
+  for (const expected of cases) {
+    const suite = resolveCodeBuildSuite(manifest, expected.suiteId)
+    const env = createRunnerEnv(manifest, suite, {})
+
+    assert.equal(suite.runner, "conversation")
+    assert.deepEqual(suite.corpus, {
+      source: "codebuild-bucket",
+      dir: expected.dir,
+      suiteId: expected.suiteId,
+      s3Prefix: expected.s3Prefix
+    })
+    assert.equal(env.BENCHMARK_CORPUS_DIR, expected.dir)
+    assert.equal(env.BENCHMARK_CORPUS_SUITE_ID, expected.suiteId)
+  }
+})
+
 test("fails unknown CodeBuild benchmark suites before running shell commands", async () => {
   const manifest = await loadCodeBuildSuiteManifest()
 

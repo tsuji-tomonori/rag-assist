@@ -116,6 +116,26 @@ describe("DebugPanel", () => {
     expect(screen.getByRole("region", { name: "ノード詳細" })).toHaveTextContent("retrieval_evaluator")
   })
 
+  it("拡大ボタンから debug panel dialog を開閉できる", () => {
+    renderDebugPanel()
+
+    fireEvent.click(screen.getByRole("button", { name: "デバッグパネルを拡大表示" }))
+
+    const dialog = screen.getByRole("dialog", { name: "拡大デバッグパネル" })
+    expect(dialog).toBeInTheDocument()
+    expect(dialog).toHaveTextContent("run-1")
+    expect(dialog).toHaveTextContent("Fact coverage")
+
+    fireEvent.click(screen.getByRole("button", { name: "拡大デバッグパネルを閉じる" }))
+
+    expect(screen.queryByRole("dialog", { name: "拡大デバッグパネル" })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "デバッグパネルを拡大表示" }))
+    fireEvent.keyDown(document, { key: "Escape" })
+
+    expect(screen.queryByRole("dialog", { name: "拡大デバッグパネル" })).not.toBeInTheDocument()
+  })
+
   it("pending 中は処理中 step と footer を優先する", () => {
     const onToggleStep = vi.fn()
     renderDebugPanel({ pending: true, pendingQuestion: "  社内規程  を   確認して  ", trace: undefined, onToggleStep })

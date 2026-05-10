@@ -660,6 +660,24 @@ describe("App chat and upload flow", () => {
     expect(requestBody(findRequest(fetchMock, "/rpc/chat/startRun", "POST"))).toMatchObject({ includeDebug: true })
   })
 
+  it("hides debug controls and traces from users without debug permission", async () => {
+    const fetchMock = mockAppFetch(["CHAT_USER"])
+    await renderAuthenticatedApp()
+
+    expect(screen.queryByText("デバッグモード")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("デバッグパネル")).not.toBeInTheDocument()
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/debug-runs"))).toBe(false)
+
+    await userEvent.type(screen.getByLabelText("質問"), "分類を教えて")
+    await userEvent.click(screen.getByTitle("送信"))
+
+    await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
+
+    expect(requestBody(findRequest(fetchMock, "/rpc/chat/startRun", "POST"))).toMatchObject({ includeDebug: false })
+    expect(screen.queryByText("answerability_gate")).not.toBeInTheDocument()
+    expect(screen.queryByLabelText("デバッグパネル")).not.toBeInTheDocument()
+  })
+
   it("uploads an attached file and answers a question from citations", async () => {
     const fetchMock = mockAppFetch()
     await renderAuthenticatedApp()

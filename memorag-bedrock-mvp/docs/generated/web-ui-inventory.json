@@ -133,7 +133,7 @@
       "label": "デバッグ",
       "screens": [],
       "componentCount": 1,
-      "interactionCount": 10
+      "interactionCount": 11
     },
     {
       "feature": "documents",
@@ -5777,9 +5777,83 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:95:button",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:105:DebugFlowNodeButton",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 95,
+      "line": 105,
+      "feature": "debug",
+      "component": "renderDebugBody",
+      "element": "DebugFlowNodeButton",
+      "isIntrinsic": false,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSelect",
+          "value": "() => setSelectedNodeId(node.id)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onSelect",
+          "value": "() => setSelectedNodeId(node.id)"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:131:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 131,
+      "feature": "debug",
+      "component": "renderDebugBody",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "aria-expanded=expandedStep"
+        ],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。 アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onToggleStep(step.id)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-expanded",
+          "value": "expandedStep"
+        },
+        {
+          "name": "onClick",
+          "value": "() => onToggleStep(step.id)"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:175:button",
+      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
+      "line": 175,
       "feature": "debug",
       "component": "DebugPanel",
       "element": "button",
@@ -5823,9 +5897,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:99:button",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:179:button",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 99,
+      "line": 179,
       "feature": "debug",
       "component": "DebugPanel",
       "element": "button",
@@ -5869,9 +5943,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:103:label",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:183:label",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 103,
+      "line": 183,
       "feature": "debug",
       "component": "DebugPanel",
       "element": "label",
@@ -5896,9 +5970,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:106:input",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:186:input",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 106,
+      "line": 186,
       "feature": "debug",
       "component": "DebugPanel",
       "element": "input",
@@ -5932,9 +6006,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:109:button",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:189:button",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 109,
+      "line": 189,
       "feature": "debug",
       "component": "DebugPanel",
       "element": "button",
@@ -5972,9 +6046,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:114:button",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:194:button",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 114,
+      "line": 194,
       "feature": "debug",
       "component": "DebugPanel",
       "element": "button",
@@ -6014,9 +6088,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:116:button",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:196:button",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 116,
+      "line": 196,
       "feature": "debug",
       "component": "DebugPanel",
       "element": "button",
@@ -6031,7 +6105,12 @@
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
-      "handlers": [],
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => setExpanded(true)"
+        }
+      ],
       "attributes": [
         {
           "name": "type",
@@ -6044,22 +6123,26 @@
         {
           "name": "aria-label",
           "value": "デバッグパネルを拡大表示"
+        },
+        {
+          "name": "onClick",
+          "value": "() => setExpanded(true)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:128:DebugFlowNodeButton",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:214:button",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 128,
+      "line": 214,
       "feature": "debug",
       "component": "DebugPanel",
-      "element": "DebugFlowNodeButton",
-      "isIntrinsic": false,
-      "label": "未推定",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "拡大デバッグパネルを閉じる",
       "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
+        "accessibleName": "拡大デバッグパネルを閉じる",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [],
@@ -6068,42 +6151,8 @@
       },
       "handlers": [
         {
-          "name": "onSelect",
-          "value": "() => setSelectedNodeId(node.id)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "onSelect",
-          "value": "() => setSelectedNodeId(node.id)"
-        }
-      ],
-      "certainty": "unknown"
-    },
-    {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:154:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 154,
-      "feature": "debug",
-      "component": "DebugPanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "未推定",
-      "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-expanded=expanded"
-        ],
-        "status": "missing",
-        "reason": "アクセシブル名が静的解析で確認できません。 アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
-      },
-      "handlers": [
-        {
           "name": "onClick",
-          "value": "() => onToggleStep(step.id)"
+          "value": "() => setExpanded(false)"
         }
       ],
       "attributes": [
@@ -6112,20 +6161,20 @@
           "value": "button"
         },
         {
-          "name": "aria-expanded",
-          "value": "expanded"
+          "name": "aria-label",
+          "value": "拡大デバッグパネルを閉じる"
         },
         {
           "name": "onClick",
-          "value": "() => onToggleStep(step.id)"
+          "value": "() => setExpanded(false)"
         }
       ],
-      "certainty": "unknown"
+      "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:234:button",
+      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:275:button",
       "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 234,
+      "line": 275,
       "feature": "debug",
       "component": "DebugFlowNodeButton",
       "element": "button",
