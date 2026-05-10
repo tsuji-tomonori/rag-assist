@@ -1,6 +1,6 @@
 # CodeBuild conversation benchmark corpus fix
 
-状態: in_progress
+状態: done
 
 ## 背景
 
