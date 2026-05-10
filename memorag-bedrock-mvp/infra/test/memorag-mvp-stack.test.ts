@@ -24,6 +24,19 @@ function getBenchmarkProject(template: Template) {
   return projects[0] as any
 }
 
+function getResourceByLogicalIdPrefix(template: Template, logicalIdPrefix: string) {
+  const resources = template.toJSON().Resources ?? {}
+  const matchingEntries = Object.entries(resources)
+    .filter(([logicalId, resource]) => (
+      logicalId.startsWith(logicalIdPrefix) &&
+      (resource as any).Type === "AWS::Lambda::Function"
+    ))
+  assert.equal(matchingEntries.length, 1)
+  const matchingEntry = matchingEntries[0]
+  assert.ok(matchingEntry)
+  return matchingEntry[1] as any
+}
+
 test("implements the designed serverless resources", () => {
   const template = synthesize()
 
@@ -480,6 +493,14 @@ test("deploys conversation benchmark corpus to the benchmark bucket", () => {
   template.hasResourceProperties("Custom::CDKBucketDeployment", {
     DestinationBucketKeyPrefix: "corpus/conversation"
   })
+})
+
+test("keeps document ingest worker within Lambda deployment limits", () => {
+  const template = synthesize()
+  const workerFunction = getResourceByLogicalIdPrefix(template, "DocumentIngestRunWorkerFunction")
+
+  assert.equal(workerFunction.Properties.MemorySize, 3008)
+  assert.equal(workerFunction.Properties.Timeout, 900)
 })
 
 test("matches the synthesized CloudFormation snapshot", () => {

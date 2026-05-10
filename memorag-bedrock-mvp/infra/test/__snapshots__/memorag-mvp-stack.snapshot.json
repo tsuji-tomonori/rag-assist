@@ -4731,7 +4731,7 @@
             "Ref": "DocumentIngestRunWorkerLogGroup2B1C84D3"
           }
         },
-        "MemorySize": 4096,
+        "MemorySize": 3008,
         "Role": {
           "Fn::GetAtt": [
             "DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED",
@@ -4765,7 +4765,7 @@
             "Value": "tsuji-tomonori/rag-assist"
           }
         ],
-        "Timeout": 1800
+        "Timeout": 900
       },
       "DependsOn": [
         "DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE",
