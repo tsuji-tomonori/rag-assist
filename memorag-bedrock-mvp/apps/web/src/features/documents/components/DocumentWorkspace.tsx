@@ -19,6 +19,8 @@ type ConfirmAction =
   | { kind: "cutover"; migration: ReindexMigration }
   | { kind: "rollback"; migration: ReindexMigration }
 
+type DocumentSortKey = "updatedDesc" | "updatedAsc" | "fileNameAsc" | "chunkDesc" | "typeAsc"
+
 const emptyOperationState: DocumentOperationState = {
   isUploading: false,
   creatingGroup: false,
@@ -77,6 +79,13 @@ export function DocumentWorkspace({
   const [selectedFolderId, setSelectedFolderId] = useState("all")
   const [folderSearch, setFolderSearch] = useState("")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
+  const [documentQuery, setDocumentQuery] = useState("")
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("all")
+  const [documentStatusFilter, setDocumentStatusFilter] = useState("all")
+  const [documentGroupFilter, setDocumentGroupFilter] = useState("all")
+  const [documentSort, setDocumentSort] = useState<DocumentSortKey>("updatedDesc")
+  const [selectedDocument, setSelectedDocument] = useState<DocumentManifest | null>(null)
+  const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
 
@@ -100,10 +109,33 @@ export function DocumentWorkspace({
   const uploadDestination = uploadGroupId ? documentGroups.find((group) => group.groupId === uploadGroupId) : undefined
   const uploadDestinationLabel = uploadDestination?.name ?? "未選択"
   const canUploadToDestination = canWrite && Boolean(uploadGroupId)
-  const visibleDocuments = selectedFolder?.group ? documents.filter((document) => documentGroupIds(document).includes(selectedFolder.group!.groupId)) : documents
+  const folderDocuments = selectedGroupId ? documents.filter((document) => documentGroupIds(document).includes(selectedGroupId)) : documents
+  const documentTypeOptions = uniqueSorted(folderDocuments.map(fileTypeLabel))
+  const documentStatusOptions = uniqueSorted(folderDocuments.map(documentStatusLabel))
+  const normalizedDocumentQuery = documentQuery.trim().toLowerCase()
+  const visibleDocuments = folderDocuments
+    .filter((document) => {
+      const groupIds = documentGroupIds(document)
+      const groupNames = groupIds.map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
+      const searchable = [document.fileName, document.documentId, fileTypeLabel(document), documentStatusLabel(document), ...groupNames].join(" ").toLowerCase()
+      if (normalizedDocumentQuery && !searchable.includes(normalizedDocumentQuery)) return false
+      if (documentTypeFilter !== "all" && fileTypeLabel(document) !== documentTypeFilter) return false
+      if (documentStatusFilter !== "all" && documentStatusLabel(document) !== documentStatusFilter) return false
+      if (documentGroupFilter === "unassigned" && groupIds.length > 0) return false
+      if (documentGroupFilter !== "all" && documentGroupFilter !== "unassigned" && !groupIds.includes(documentGroupFilter)) return false
+      return true
+    })
+    .sort((left, right) => compareDocuments(left, right, documentSort))
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
   const latestDocuments = [...documents].sort((left, right) => right.createdAt.localeCompare(left.createdAt)).slice(0, 3)
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
+  const shareTargetGroupId = shareGroupId || selectedGroupId
+  const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
+  const shareDraft = parseSharedGroups(shareGroups)
+  const shareDiff = buildShareDiff(shareTargetGroup?.sharedGroups ?? [], shareDraft.groups)
+  const shareHasDuplicate = shareDraft.duplicates.length > 0
+  const shareHasEmptyToken = shareDraft.hasEmptyToken
+  const shareHasValidationError = shareHasDuplicate || shareHasEmptyToken
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -122,11 +154,18 @@ export function DocumentWorkspace({
 
   async function onShareSubmit(event: FormEvent) {
     event.preventDefault()
-    const targetGroupId = shareGroupId || selectedGroupId
-    if (!targetGroupId || !canWrite) return
-    const groups = shareGroups.split(",").map((item) => item.trim()).filter(Boolean)
-    await onShareGroup(targetGroupId, { visibility: groups.length > 0 ? "shared" : "private", sharedGroups: groups })
+    if (!shareTargetGroupId || !canWrite || shareHasValidationError) return
+    await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups })
     setShareGroups("")
+  }
+
+  async function copyDocumentId(documentId: string) {
+    try {
+      await navigator.clipboard.writeText(documentId)
+      setCopiedDocumentId(documentId)
+    } catch {
+      setCopiedDocumentId(null)
+    }
   }
 
   async function runConfirmedAction() {
@@ -250,6 +289,51 @@ export function DocumentWorkspace({
             </div>
           </div>
 
+          <div className="document-filter-bar" aria-label="文書検索と絞り込み">
+            <label>
+              <span>ファイル名検索</span>
+              <input type="search" value={documentQuery} onChange={(event) => setDocumentQuery(event.target.value)} placeholder="ファイル名 / documentId" autoComplete="off" />
+            </label>
+            <label>
+              <span>種別</span>
+              <select value={documentTypeFilter} onChange={(event) => setDocumentTypeFilter(event.target.value)}>
+                <option value="all">すべて</option>
+                {documentTypeOptions.map((type) => (
+                  <option value={type} key={type}>{type}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>状態</span>
+              <select value={documentStatusFilter} onChange={(event) => setDocumentStatusFilter(event.target.value)}>
+                <option value="all">すべて</option>
+                {documentStatusOptions.map((status) => (
+                  <option value={status} key={status}>{status}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>所属フォルダ</span>
+              <select value={documentGroupFilter} onChange={(event) => setDocumentGroupFilter(event.target.value)}>
+                <option value="all">すべて</option>
+                <option value="unassigned">未設定</option>
+                {documentGroups.map((group) => (
+                  <option value={group.groupId} key={group.groupId}>{group.name}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>並び替え</span>
+              <select value={documentSort} onChange={(event) => setDocumentSort(event.target.value as DocumentSortKey)}>
+                <option value="updatedDesc">更新日 新しい順</option>
+                <option value="updatedAsc">更新日 古い順</option>
+                <option value="fileNameAsc">ファイル名順</option>
+                <option value="chunkDesc">チャンク数順</option>
+                <option value="typeAsc">種別順</option>
+              </select>
+            </label>
+          </div>
+
           <div className="document-file-table" role="table" aria-label="登録文書">
             <div className="document-file-row document-file-head" role="row">
               <span role="columnheader">ファイル名</span>
@@ -259,7 +343,7 @@ export function DocumentWorkspace({
               <span role="columnheader">状態</span>
               <span role="columnheader">操作</span>
             </div>
-            {visibleDocuments.length === 0 ? (
+            {folderDocuments.length === 0 ? (
               <div className="empty-question-panel">
                 <strong>登録済みドキュメントはありません。</strong>
                 <span>{documentGroups.length === 0 ? "まずフォルダを作成し、保存先を選択してからファイルをアップロードしてください。" : "保存先フォルダを選択してファイルをアップロードしてください。"}</span>
@@ -267,9 +351,27 @@ export function DocumentWorkspace({
                   ファイルをアップロード
                 </button>
               </div>
+            ) : visibleDocuments.length === 0 ? (
+              <div className="empty-question-panel">
+                <strong>条件に一致するドキュメントはありません。</strong>
+                <span>検索語、種別、状態、所属フォルダの条件を変更してください。</span>
+              </div>
             ) : (
               visibleDocuments.map((document) => (
-                <div className="document-file-row" role="row" key={document.documentId}>
+                <div
+                  className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
+                  role="row"
+                  key={document.documentId}
+                  tabIndex={0}
+                  aria-label={`${document.fileName}の詳細を表示`}
+                  onClick={() => setSelectedDocument(document)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault()
+                      setSelectedDocument(document)
+                    }
+                  }}
+                >
                   <span role="cell" className="document-name-cell">
                     <FileIcon document={document} />
                     <span>{document.fileName}</span>
@@ -284,7 +386,10 @@ export function DocumentWorkspace({
                       title={`${document.fileName}の再インデックスをステージング`}
                       aria-label={`${document.fileName}の再インデックスをステージング`}
                       disabled={!canReindex || operationState.stagingReindexDocumentId === document.documentId}
-                      onClick={() => setConfirmAction({ kind: "stage", document })}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setConfirmAction({ kind: "stage", document })
+                      }}
                     >
                       {operationState.stagingReindexDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="gauge" />}
                     </button>
@@ -294,7 +399,10 @@ export function DocumentWorkspace({
                       title={`${document.fileName}を削除`}
                       aria-label={`${document.fileName}を削除`}
                       disabled={!canDelete || operationState.deletingDocumentId === document.documentId}
-                      onClick={() => setConfirmAction({ kind: "delete", document })}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setConfirmAction({ kind: "delete", document })
+                      }}
                     >
                       {operationState.deletingDocumentId === document.documentId ? <LoadingSpinner className="button-spinner" /> : <Icon name="trash" />}
                     </button>
@@ -305,7 +413,7 @@ export function DocumentWorkspace({
           </div>
 
           <footer className="document-table-footer">
-            <span>{visibleDocuments.length} / {documents.length} 件を表示</span>
+            <span>{visibleDocuments.length} / {folderDocuments.length} 件を表示（全体 {documents.length} 件）</span>
           </footer>
 
           {canReindex && migrations.length > 0 && (
@@ -364,9 +472,19 @@ export function DocumentWorkspace({
               </label>
               <label>
                 <span>共有 Cognito group</span>
-                <input value={shareGroups} disabled={!canWrite || operationState.sharingGroupId !== null} onChange={(event) => setShareGroups(event.target.value)} placeholder="Cognito group をカンマ区切りで入力" />
+                <input value={shareGroups} disabled={!canWrite || operationState.sharingGroupId !== null} onChange={(event) => setShareGroups(event.target.value)} placeholder="Cognito group をカンマ区切りで入力" aria-invalid={shareHasValidationError || undefined} aria-describedby="share-groups-validation share-groups-diff" />
               </label>
-              <button type="submit" disabled={!canWrite || (!shareGroupId && !selectedGroupId) || operationState.sharingGroupId !== null}>
+              <div className="share-validation" id="share-groups-validation" aria-live="polite">
+                {shareHasEmptyToken && <p className="error">空の group 指定があります。余分なカンマを削除してください。</p>}
+                {shareHasDuplicate && <p className="error">重複している group: {shareDraft.duplicates.join(", ")}</p>}
+                {!shareHasValidationError && <p>入力された group 名だけを共有先として送信します。存在確認は API 更新時に行われます。</p>}
+              </div>
+              <div className="share-diff-preview" id="share-groups-diff" aria-label="共有変更差分">
+                <span>追加: {shareDiff.added.length > 0 ? shareDiff.added.join(", ") : "なし"}</span>
+                <span>削除: {shareDiff.removed.length > 0 ? shareDiff.removed.join(", ") : "なし"}</span>
+                <span>変更なし: {shareDiff.unchanged.length > 0 ? shareDiff.unchanged.join(", ") : "なし"}</span>
+              </div>
+              <button type="submit" disabled={!canWrite || !shareTargetGroupId || shareHasValidationError || operationState.sharingGroupId !== null}>
                 {operationState.sharingGroupId !== null && <LoadingSpinner className="button-spinner" />}
                 共有更新
               </button>
@@ -460,6 +578,25 @@ export function DocumentWorkspace({
           onConfirm={() => void runConfirmedAction()}
         />
       )}
+      {selectedDocument && (
+        <DocumentDetailDrawer
+          document={selectedDocument}
+          documentGroups={documentGroups}
+          copied={copiedDocumentId === selectedDocument.documentId}
+          onCopyDocumentId={() => void copyDocumentId(selectedDocument.documentId)}
+          onClose={() => setSelectedDocument(null)}
+          onDelete={() => {
+            setConfirmAction({ kind: "delete", document: selectedDocument })
+            setSelectedDocument(null)
+          }}
+          onStageReindex={() => {
+            setConfirmAction({ kind: "stage", document: selectedDocument })
+            setSelectedDocument(null)
+          }}
+          canDelete={canDelete}
+          canReindex={canReindex}
+        />
+      )}
     </section>
   )
 }
@@ -549,6 +686,97 @@ function ConfirmDialog({
   )
 }
 
+function DocumentDetailDrawer({
+  document,
+  documentGroups,
+  copied,
+  onCopyDocumentId,
+  onClose,
+  onDelete,
+  onStageReindex,
+  canDelete,
+  canReindex
+}: {
+  document: DocumentManifest
+  documentGroups: DocumentGroup[]
+  copied: boolean
+  onCopyDocumentId: () => void
+  onClose: () => void
+  onDelete: () => void
+  onStageReindex: () => void
+  canDelete: boolean
+  canReindex: boolean
+}) {
+  const groupIds = documentGroupIds(document)
+  const owningGroups = groupIds.map((groupId) => documentGroups.find((group) => group.groupId === groupId)).filter((group): group is DocumentGroup => Boolean(group))
+  const groupNames = groupIds.map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
+  const latestMigrationStatus = document.reindexMigrationId ? document.lifecycleStatus ?? "利用不可" : "利用不可"
+  const ingestRunId = metadataString(document, "ingestRunId") ?? metadataString(document, "runId")
+  const embeddingModel = metadataString(document, "embeddingModelId") ?? metadataString(document, "embeddingModel")
+  const memoryModel = metadataString(document, "memoryModelId") ?? metadataString(document, "memoryModel")
+  const fileSize = metadataNumber(document, "fileSizeBytes") ?? metadataNumber(document, "fileSize")
+  const updatedAt = metadataString(document, "updatedAt")
+
+  return (
+    <div className="document-drawer-backdrop" role="presentation">
+      <aside className="document-detail-drawer" role="dialog" aria-modal="true" aria-labelledby="document-detail-title">
+        <header>
+          <div>
+            <span className="upload-destination-chip">{fileTypeLabel(document)}</span>
+            <h3 id="document-detail-title">{document.fileName}</h3>
+          </div>
+          <button type="button" title="文書詳細を閉じる" aria-label="文書詳細を閉じる" onClick={onClose}>
+            <Icon name="close" />
+          </button>
+        </header>
+        <dl className="document-detail-list">
+          <DetailRow label="documentId" value={document.documentId} />
+          <DetailRow label="所属フォルダ" value={groupNames.join(", ") || "未設定"} />
+          <DetailRow label="visibility" value={owningGroups.map(visibilityLabel).join(", ") || "利用不可"} />
+          <DetailRow label="shared groups" value={owningGroups.flatMap((group) => group.sharedGroups).join(", ") || "未設定"} />
+          <DetailRow label="mime type" value={document.mimeType ?? "利用不可"} />
+          <DetailRow label="ファイルサイズ" value={fileSize === undefined ? "利用不可" : formatFileSize(fileSize)} />
+          <DetailRow label="作成日時" value={formatDateTime(document.createdAt)} />
+          <DetailRow label="更新日時" value={updatedAt ? formatDateTime(updatedAt) : "利用不可"} />
+          <DetailRow label="chunk count" value={String(document.chunkCount)} />
+          <DetailRow label="memory card count" value={String(document.memoryCardCount)} />
+          <DetailRow label="lifecycle status" value={documentStatusLabel(document)} />
+          <DetailRow label="ingest run ID" value={ingestRunId ?? "利用不可"} />
+          <DetailRow label="embedding model" value={embeddingModel ?? "利用不可"} />
+          <DetailRow label="memory model" value={memoryModel ?? "利用不可"} />
+          <DetailRow label="最新 reindex 状態" value={latestMigrationStatus} />
+          <DetailRow label="抽出テキスト preview" value="利用不可" />
+          <DetailRow label="代表チャンク preview" value="利用不可" />
+          <DetailRow label="エラー履歴" value="利用不可" />
+        </dl>
+        <div className="document-drawer-actions">
+          <button type="button" onClick={onCopyDocumentId}>
+            <Icon name={copied ? "check" : "copy"} />
+            <span>{copied ? "コピー済み" : "documentId コピー"}</span>
+          </button>
+          <button type="button" disabled={!canReindex} onClick={onStageReindex}>
+            <Icon name="gauge" />
+            <span>再インデックス</span>
+          </button>
+          <button type="button" className="danger" disabled={!canDelete} onClick={onDelete}>
+            <Icon name="trash" />
+            <span>削除</span>
+          </button>
+        </div>
+      </aside>
+    </div>
+  )
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  )
+}
+
 function confirmDetails(action: ConfirmAction, documents: DocumentManifest[], documentGroups: DocumentGroup[]) {
   if (action.kind === "delete") {
     return {
@@ -598,6 +826,66 @@ function documentRows(document: DocumentManifest, documentGroups: DocumentGroup[
     { label: "所属フォルダ", value: groupNames || "未設定" },
     { label: "lifecycle", value: document.lifecycleStatus ?? "active" }
   ]
+}
+
+function compareDocuments(left: DocumentManifest, right: DocumentManifest, sort: DocumentSortKey): number {
+  if (sort === "updatedAsc") return left.createdAt.localeCompare(right.createdAt)
+  if (sort === "fileNameAsc") return left.fileName.localeCompare(right.fileName, "ja")
+  if (sort === "chunkDesc") return right.chunkCount - left.chunkCount
+  if (sort === "typeAsc") return fileTypeLabel(left).localeCompare(fileTypeLabel(right), "ja") || left.fileName.localeCompare(right.fileName, "ja")
+  return right.createdAt.localeCompare(left.createdAt)
+}
+
+function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values)].sort((left, right) => left.localeCompare(right, "ja"))
+}
+
+function documentStatusLabel(document: DocumentManifest): string {
+  return document.lifecycleStatus ?? "active"
+}
+
+function parseSharedGroups(value: string): { groups: string[]; duplicates: string[]; hasEmptyToken: boolean } {
+  const raw = value.split(",")
+  const hasEmptyToken = raw.length > 1 && raw.some((item) => item.trim().length === 0)
+  const groups: string[] = []
+  const duplicates = new Set<string>()
+  for (const item of raw) {
+    const group = item.trim()
+    if (!group) continue
+    if (groups.includes(group)) duplicates.add(group)
+    else groups.push(group)
+  }
+  return { groups, duplicates: [...duplicates], hasEmptyToken }
+}
+
+function buildShareDiff(currentGroups: string[], draftGroups: string[]): { added: string[]; removed: string[]; unchanged: string[] } {
+  return {
+    added: draftGroups.filter((group) => !currentGroups.includes(group)),
+    removed: currentGroups.filter((group) => !draftGroups.includes(group)),
+    unchanged: draftGroups.filter((group) => currentGroups.includes(group))
+  }
+}
+
+function metadataString(document: DocumentManifest, key: string): string | undefined {
+  const value = document.metadata?.[key]
+  return typeof value === "string" && value.trim() ? value : undefined
+}
+
+function metadataNumber(document: DocumentManifest, key: string): number | undefined {
+  const value = document.metadata?.[key]
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function visibilityLabel(group: DocumentGroup): string {
+  if (group.visibility === "org") return `${group.name}: 組織全体`
+  if (group.visibility === "shared") return `${group.name}: shared`
+  return `${group.name}: private`
 }
 
 function uploadStepClassName(index: number, activeIndex: number, phase: NonNullable<DocumentUploadState>["phase"]): string {
