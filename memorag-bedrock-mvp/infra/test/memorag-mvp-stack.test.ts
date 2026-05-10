@@ -495,10 +495,11 @@ test("deploys conversation benchmark corpus to the benchmark bucket", () => {
   })
 })
 
-test("keeps document ingest worker within Lambda timeout limit", () => {
+test("keeps document ingest worker within Lambda deployment limits", () => {
   const template = synthesize()
   const workerFunction = getResourceByLogicalIdPrefix(template, "DocumentIngestRunWorkerFunction")
 
+  assert.equal(workerFunction.Properties.MemorySize, 3008)
   assert.equal(workerFunction.Properties.Timeout, 900)
 })
 

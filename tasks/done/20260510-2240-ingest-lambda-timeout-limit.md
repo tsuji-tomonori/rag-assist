@@ -4,11 +4,11 @@
 
 ## 背景
 
-CDK deploy で `DocumentIngestRunWorkerFunction` の Lambda 設定が AWS Lambda の制約に抵触した。ユーザーから `Duration.minutes` を 15 分にする指示を受けた。
+CDK deploy で `DocumentIngestRunWorkerFunction` の Lambda 設定が AWS Lambda の制約に抵触した。ユーザーから `Duration.minutes` を 15 分にし、Service Quotas で memory 上限を上げずに `memorySize` を 3008 にする指示を受けた。
 
 ## 目的
 
-`DocumentIngestRunWorkerFunction` の Lambda timeout を Lambda の上限内である 15 分に戻し、同じ設定が CDK テストで確認できるようにする。
+`DocumentIngestRunWorkerFunction` の Lambda timeout と memory size を対象 AWS 環境の上限内に戻し、同じ設定が CDK テストで確認できるようにする。
 
 ## タスク種別
 
@@ -20,9 +20,9 @@ CDK deploy で `DocumentIngestRunWorkerFunction` の Lambda 設定が AWS Lambda
 - confirmed: Lambda の timeout は 15 分以下にする必要がある。
 - confirmed: ユーザーは `Duration.minutes` を 15 分にすることを指示した。
 - inferred: PDF ingest OOM 対策の一部として timeout が 30 分に拡張されたが、Lambda の実行時間上限を超えていた。
-- open_question: `memorySize: 4096` は対象 AWS 環境の `<= 3008` 制約に引き続き抵触する可能性があるが、今回の指示対象は timeout の修正である。
+- confirmed: `memorySize: 4096` は対象 AWS 環境の `<= 3008` 制約に引き続き抵触する。
 - root cause: CDK 定義で Lambda サービス上限を超える timeout が指定され、テストで対象 worker の timeout 上限を明示的に検出していなかった。
-- remediation: CDK 定義を `Duration.minutes(15)` に戻し、対象 worker の `Timeout: 900` を assertion で確認する。
+- remediation: CDK 定義を `Duration.minutes(15)` と `memorySize: 3008` に戻し、対象 worker の `Timeout: 900` と `MemorySize: 3008` を assertion で確認する。
 
 ## 作業範囲
 
@@ -37,10 +37,11 @@ CDK deploy で `DocumentIngestRunWorkerFunction` の Lambda 設定が AWS Lambda
 ## 受け入れ条件
 
 - `DocumentIngestRunWorkerFunction` の CDK 定義が `timeout: Duration.minutes(15)` である。
-- CDK テンプレート上で対象 Lambda の `Timeout` が `900` 秒であることをテストで確認できる。
+- `DocumentIngestRunWorkerFunction` の CDK 定義が `memorySize: 3008` である。
+- CDK テンプレート上で対象 Lambda の `Timeout` が `900` 秒、`MemorySize` が `3008` MB であることをテストで確認できる。
 - `task memorag:cdk:test` または同等の CDK test が pass する。
 - deploy は実行していない場合、実施済みとして報告しない。
-- `memorySize: 4096` の残リスクを最終報告に明記する。
+- `cdk deploy` は未実施の場合、実施済みとして報告しない。
 
 ## 検証計画
 
@@ -51,17 +52,18 @@ CDK deploy で `DocumentIngestRunWorkerFunction` の Lambda 設定が AWS Lambda
 
 - Lambda timeout が 15 分を超えていないこと。
 - snapshot と assertion が同じ期待値を示すこと。
-- memory size の未対応リスクが隠されていないこと。
+- memory size が対象 AWS 環境の上限内に収まっていること。
 
 ## リスク
 
-`memorySize: 4096` はユーザー指示外として残すため、対象 AWS 環境で deploy する場合は引き続き `MemorySize <= 3008` の制約で失敗する可能性がある。
+`cdk deploy` は実環境更新を伴うため、このタスクでは未実施とする。
 
 ## 実施結果
 
 - `DocumentIngestRunWorkerFunction` の timeout を `Duration.minutes(15)` に変更した。
+- `DocumentIngestRunWorkerFunction` の memory size を `3008` に変更した。
 - CDK assertion test と snapshot を更新した。
-- `memorag-bedrock-mvp/docs/OPERATIONS.md` を 15 分 timeout に同期した。
+- `memorag-bedrock-mvp/docs/OPERATIONS.md` を 3008MB memory / 15 分 timeout に同期した。
 - `task memorag:cdk:test`: pass。
 - `git diff --check`: pass。
 - `cdk deploy`: 未実施。
