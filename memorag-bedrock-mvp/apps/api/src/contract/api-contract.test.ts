@@ -953,10 +953,26 @@ test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only"
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, contentBase64: "not-base64" }), false)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, extra: "blocked" } }), false)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "unknown-suite" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: undefined }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSeed: false } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkIngestSignature: "" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkEmbeddingModelId: "" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, source: "manual" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, docType: "general" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, lifecycleStatus: "archived" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, aclGroups: "BENCHMARK_RUNNER" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, aclGroups: ["CHAT_USER"] } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, fileName: "nested\\source.pdf" }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, contentBase64: "" }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, contentBase64: "AAA" }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, fileName: "source.txt" }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, textractJson: "{}" }), false)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "architecture-drawing-qarag-v0.1" } }), true)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "application/pdf", metadata }), true)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "text/plain", metadata }), false)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "../source.pdf", mimeType: "application/pdf", metadata }), false)
+  assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "application/pdf" }), false)
+  assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", metadata }), false)
 
   const textSeed = {
     fileName: "source.md",
@@ -977,9 +993,11 @@ test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only"
   assert.equal(isBenchmarkSeedUpload({ ...textSeed, metadata: { ...metadata, benchmarkSourceHash: "" } }), false)
   assert.equal(isBenchmarkSeedUpload({ ...textSeed, metadata: { ...metadata, benchmarkCorpusSkipMemory: "true" } }), false)
   assert.equal(isBenchmarkSeedUpload({ ...textSeed, metadata: { ...metadata, aclGroups: ["BENCHMARK_RUNNER", "EXTRA"] } }), false)
+  assert.equal(isBenchmarkSeedUpload({ fileName: "source.txt", metadata }), false)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.md", mimeType: "text/markdown", metadata }), true)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.txt", metadata }), true)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.csv", metadata }), false)
+  assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.txt", mimeType: "application/json", metadata }), false)
 })
 
 test("benchmark seed authorization rejects non-isolated document operations", async () => {
@@ -1010,27 +1028,28 @@ test("benchmark seed authorization rejects non-isolated document operations", as
   assert.throws(() => authorizeUploadedDocumentIngest(runner, "document", { fileName: "note.txt", mimeType: "text/plain" }), /missing rag:doc:write:group/)
   assert.throws(() => authorizeUploadedDocumentIngest(runner, "benchmarkSeed", { fileName: "source.txt", mimeType: "text/plain", metadata: { ...seedBody.metadata, docType: "general" } }), /benchmark seed upload/)
 
+  const documentManifests = {
+    "seed-1": {
+      documentId: "seed-1",
+      fileName: "source.txt",
+      chunkCount: 1,
+      memoryCardCount: 0,
+      createdAt: "2026-05-01T00:00:00.000Z",
+      lifecycleStatus: "active",
+      metadata: seedBody.metadata
+    },
+    "general-1": {
+      documentId: "general-1",
+      fileName: "general.txt",
+      chunkCount: 1,
+      memoryCardCount: 0,
+      createdAt: "2026-05-01T00:00:00.000Z",
+      lifecycleStatus: "active",
+      metadata: { docType: "general" }
+    }
+  }
   const service = {
-    listDocuments: async () => [
-      {
-        documentId: "seed-1",
-        fileName: "source.txt",
-        chunkCount: 1,
-        memoryCardCount: 0,
-        createdAt: "2026-05-01T00:00:00.000Z",
-        lifecycleStatus: "active",
-        metadata: seedBody.metadata
-      },
-      {
-        documentId: "general-1",
-        fileName: "general.txt",
-        chunkCount: 1,
-        memoryCardCount: 0,
-        createdAt: "2026-05-01T00:00:00.000Z",
-        lifecycleStatus: "active",
-        metadata: { docType: "general" }
-      }
-    ]
+    getDocumentManifest: async (documentId: string) => documentManifests[documentId as keyof typeof documentManifests]
   } as any
   await assert.doesNotReject(() => authorizeDocumentDelete(service, runner, "seed-1"))
   await assert.rejects(() => authorizeDocumentDelete(service, runner, "general-1"), /benchmark seed delete/)

@@ -29,6 +29,38 @@ test("chat run event payload preserves stage and message when data exists", () =
     }),
     { stage: "queued", message: "リクエストを受け付けました" }
   )
+
+  assert.deepEqual(
+    eventPayload({
+      runId: "run-1",
+      seq: 3,
+      type: "status",
+      data: ["queued"],
+      createdAt: "2026-05-04T00:00:00.000Z"
+    }),
+    { data: ["queued"] }
+  )
+
+  assert.deepEqual(
+    eventPayload({
+      runId: "run-1",
+      seq: 4,
+      type: "status",
+      data: "raw",
+      createdAt: "2026-05-04T00:00:00.000Z"
+    }),
+    { data: "raw" }
+  )
+
+  assert.deepEqual(
+    eventPayload({
+      runId: "run-1",
+      seq: 5,
+      type: "status",
+      createdAt: "2026-05-04T00:00:00.000Z"
+    }),
+    {}
+  )
 })
 
 test("chat run event stream responses include CORS headers", async () => {
@@ -124,6 +156,73 @@ test("chat run event stream responses include CORS headers", async () => {
   assert.match(streamFailed.body, /event: error/)
   assert.match(streamFailed.body, /Internal server error/)
   assert.doesNotMatch(streamFailed.body, /AccessDeniedException|arn:aws|secret/)
+
+  const missingRunId = await invokeStream({
+    events: [],
+    event: event({ runId: "", userId: "user-1" })
+  })
+  assert.equal(missingRunId.metadata?.statusCode, 400)
+  assert.deepEqual(missingRunId.metadata?.headers, plainResponseHeaders)
+
+  const arrayGroupsAndLastEventId = await invokeStream({
+    run,
+    events: [
+      {
+        runId: "run-1",
+        seq: 3,
+        type: "error",
+        stage: "failed",
+        message: "failed",
+        createdAt: "2026-05-04T00:00:03.000Z"
+      }
+    ],
+    event: event({ runId: "run-1", userId: "user-1", groups: ["CHAT_USER"], groupClaimFormat: "array", headers: { "Last-Event-ID": "2" } })
+  })
+  assert.equal(arrayGroupsAndLastEventId.metadata?.statusCode, 200)
+  assert.match(arrayGroupsAndLastEventId.body, /id: 3/)
+  assert.match(arrayGroupsAndLastEventId.body, /event: error/)
+
+  const lowercaseLastEventId = await invokeStream({
+    run,
+    events: [
+      {
+        runId: "run-1",
+        seq: 4,
+        type: "final",
+        stage: "done",
+        message: "done",
+        createdAt: "2026-05-04T00:00:04.000Z"
+      }
+    ],
+    event: event({ runId: "run-1", userId: "user-1", headers: { "last-event-id": "3" } })
+  })
+  assert.equal(lowercaseLastEventId.metadata?.statusCode, 200)
+  assert.match(lowercaseLastEventId.body, /id: 4/)
+
+  const invalidLastEventId = await invokeStream({
+    run,
+    events: [
+      {
+        runId: "run-1",
+        seq: 1,
+        type: "final",
+        stage: "done",
+        message: "done",
+        createdAt: "2026-05-04T00:00:01.000Z"
+      }
+    ],
+    event: event({ runId: "run-1", userId: "user-1", headers: { "Last-Event-ID": "not-a-number" } })
+  })
+  assert.equal(invalidLastEventId.metadata?.statusCode, 200)
+  assert.match(invalidLastEventId.body, /id: 1/)
+
+  const noClaims = await invokeStream({
+    run,
+    events: [],
+    event: event({ runId: "run-1", userId: "", claims: false })
+  })
+  assert.equal(noClaims.metadata?.statusCode, 403)
+  assert.deepEqual(noClaims.metadata?.headers, plainResponseHeaders)
 })
 
 async function invokeStream({
@@ -190,17 +289,33 @@ async function invokeStream({
   return output
 }
 
-function event({ runId, userId, groups = ["CHAT_USER"] }: { runId: string; userId: string; groups?: string[] }): APIGatewayProxyEvent {
+function event({
+  runId,
+  userId,
+  groups = ["CHAT_USER"],
+  groupClaimFormat = "csv",
+  headers,
+  claims = true
+}: {
+  runId: string
+  userId: string
+  groups?: string[]
+  groupClaimFormat?: "array" | "csv"
+  headers?: Record<string, string> | undefined
+  claims?: boolean
+}): APIGatewayProxyEvent {
   return {
-    headers: {},
+    headers,
     pathParameters: { runId },
     requestContext: {
-      authorizer: {
-        claims: {
-          sub: userId,
-          "cognito:groups": groups.join(",")
-        }
-      }
+      authorizer: claims
+        ? {
+            claims: {
+              sub: userId,
+              "cognito:groups": groupClaimFormat === "array" ? groups : groups.join(",")
+            }
+          }
+        : undefined
     }
   } as unknown as APIGatewayProxyEvent
 }
