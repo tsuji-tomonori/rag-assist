@@ -3,6 +3,14 @@ import type { AuthSession } from "../../authClient.js"
 import type { AppRoutesProps } from "../AppRoutes.js"
 import type { RailNav } from "../components/RailNav.js"
 import type { TopBar } from "../components/TopBar.js"
+import {
+  buildAdminRouteProps,
+  buildAssigneeRouteProps,
+  buildBenchmarkRouteProps,
+  buildDocumentRouteProps,
+  buildHistoryRouteProps,
+  buildProfileRouteProps
+} from "../routeProps/featureRouteProps.js"
 import type { AppView } from "../types.js"
 import { useCurrentUser } from "./useCurrentUser.js"
 import { usePermissions } from "./usePermissions.js"
@@ -413,7 +421,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onToggleAllDebugSteps: () => setAllExpanded((value) => !value),
       onToggleDebugStep: (stepId) => setExpandedStepId((current) => (current === stepId ? null : stepId))
     },
-    assigneeProps: {
+    assigneeProps: buildAssigneeRouteProps({
       questions,
       selectedQuestionId,
       user: currentUser,
@@ -421,8 +429,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onSelect: setSelectedQuestionId,
       onAnswer: onAnswerQuestion,
       onBack: () => setActiveView("chat")
-    },
-    benchmarkProps: {
+    }),
+    benchmarkProps: buildBenchmarkRouteProps({
       runs: benchmarkRuns,
       suites: benchmarkSuites,
       suiteId: benchmarkSuiteId,
@@ -445,8 +453,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       },
       onCancel: onCancelBenchmark,
       onBack: () => setActiveView("chat")
-    },
-    documentProps: {
+    }),
+    documentProps: buildDocumentRouteProps({
       documents,
       documentGroups,
       loading,
@@ -466,8 +474,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onCutoverReindex,
       onRollbackReindex,
       onBack: () => setActiveView("admin")
-    },
-    adminProps: {
+    }),
+    adminProps: buildAdminRouteProps({
       user: currentUser,
       documentsCount: documents.length,
       openQuestionsCount: questions.filter((questionItem) => questionItem.status === "open").length,
@@ -532,8 +540,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onDisableAlias,
       onPublishAliases,
       onBack: () => setActiveView("chat")
-    },
-    historyProps: {
+    }),
+    historyProps: buildHistoryRouteProps({
       history,
       onSelect: (item) => {
         setCurrentConversationId(item.id)
@@ -547,14 +555,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onDelete: deleteHistoryItem,
       onToggleFavorite: toggleFavorite,
       onBack: () => setActiveView("chat")
-    },
-    profileProps: {
+    }),
+    profileProps: buildProfileRouteProps({
       authSession,
       submitShortcut,
       onSetSubmitShortcut: setSubmitShortcut,
       onSignOut,
       onBack: () => setActiveView("chat")
-    }
+    })
   }
 
   return {

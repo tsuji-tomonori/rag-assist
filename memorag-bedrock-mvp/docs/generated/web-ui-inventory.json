@@ -91,7 +91,7 @@
       "screens": [
         "admin"
       ],
-      "componentCount": 1,
+      "componentCount": 8,
       "interactionCount": 35
     },
     {
@@ -125,14 +125,14 @@
       "screens": [
         "chat"
       ],
-      "componentCount": 11,
+      "componentCount": 16,
       "interactionCount": 44
     },
     {
       "feature": "debug",
       "label": "デバッグ",
       "screens": [],
-      "componentCount": 1,
+      "componentCount": 5,
       "interactionCount": 11
     },
     {
@@ -141,8 +141,8 @@
       "screens": [
         "documents"
       ],
-      "componentCount": 1,
-      "interactionCount": 35
+      "componentCount": 5,
+      "interactionCount": 33
     },
     {
       "feature": "history",
@@ -167,8 +167,8 @@
       "feature": "shared",
       "label": "共通",
       "screens": [],
-      "componentCount": 2,
-      "interactionCount": 1
+      "componentCount": 8,
+      "interactionCount": 5
     }
   ],
   "components": [
@@ -282,30 +282,153 @@
         "AdminWorkspace"
       ],
       "jsxUsages": [
-        "AdminCreateUserForm",
+        "AdminAuditPanel",
+        "AdminCostPanel",
+        "AdminOverviewGrid",
+        "AdminRolePanel",
+        "AdminUsagePanel",
+        "AdminUserPanel",
         "AliasAdminPanel",
         "Icon",
-        "LoadingSpinner",
         "LoadingStatus",
-        "ManagedUserRow",
-        "article",
         "button",
         "div",
-        "form",
         "h2",
-        "h3",
         "header",
-        "i",
-        "input",
-        "label",
-        "option",
-        "p",
         "section",
-        "select",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "feature": "admin",
+      "exports": [
+        "AdminAuditPanel"
+      ],
+      "jsxUsages": [
+        "EmptyState",
+        "article",
+        "div",
+        "h3",
+        "section",
         "small",
         "span",
         "strong",
         "time"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "feature": "admin",
+      "exports": [
+        "AdminCostPanel"
+      ],
+      "jsxUsages": [
+        "article",
+        "div",
+        "h3",
+        "i",
+        "section",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
+      "feature": "admin",
+      "exports": [
+        "AdminOverviewGrid"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "div",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/admin/components/panels/AdminRolePanel.tsx",
+      "feature": "admin",
+      "exports": [
+        "AdminRolePanel"
+      ],
+      "jsxUsages": [
+        "article",
+        "div",
+        "h3",
+        "p",
+        "section",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx",
+      "feature": "admin",
+      "exports": [
+        "AdminUsagePanel"
+      ],
+      "jsxUsages": [
+        "div",
+        "h3",
+        "section",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "feature": "admin",
+      "exports": [
+        "AdminUserPanel"
+      ],
+      "jsxUsages": [
+        "AdminCreateUserForm",
+        "EmptyState",
+        "LoadingSpinner",
+        "ManagedUserRow",
+        "button",
+        "div",
+        "form",
+        "h3",
+        "i",
+        "input",
+        "label",
+        "option",
+        "section",
+        "select",
+        "small",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "feature": "admin",
+      "exports": [
+        "AliasAdminPanel"
+      ],
+      "jsxUsages": [
+        "EmptyState",
+        "LoadingSpinner",
+        "article",
+        "button",
+        "div",
+        "form",
+        "h3",
+        "input",
+        "label",
+        "section",
+        "small",
+        "span",
+        "strong"
       ],
       "certainty": "confirmed"
     },
@@ -392,23 +515,87 @@
       "certainty": "confirmed"
     },
     {
+      "file": "apps/web/src/features/chat/components/answer/AnswerCopyAction.tsx",
+      "feature": "chat",
+      "exports": [
+        "AnswerCopyAction"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "div",
+        "p",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/answer/AnswerText.tsx",
+      "feature": "chat",
+      "exports": [
+        "AnswerText"
+      ],
+      "jsxUsages": [
+        "p"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/answer/CitationList.tsx",
+      "feature": "chat",
+      "exports": [
+        "CitationList"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "a",
+        "div",
+        "li",
+        "span",
+        "strong",
+        "ul"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/answer/ClarificationOptions.tsx",
+      "feature": "chat",
+      "exports": [
+        "ClarificationOptions"
+      ],
+      "jsxUsages": [
+        "button",
+        "div"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/chat/components/answer/FollowupSuggestions.tsx",
+      "feature": "chat",
+      "exports": [
+        "FollowupSuggestions"
+      ],
+      "jsxUsages": [
+        "button",
+        "div"
+      ],
+      "certainty": "confirmed"
+    },
+    {
       "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
       "feature": "chat",
       "exports": [
         "AssistantAnswer"
       ],
       "jsxUsages": [
-        "Icon",
+        "AnswerCopyAction",
+        "AnswerText",
+        "CitationList",
+        "ClarificationOptions",
+        "FollowupSuggestions",
         "QuestionAnswerPanel",
         "QuestionEscalationPanel",
-        "a",
-        "button",
-        "div",
-        "li",
-        "p",
-        "span",
-        "strong",
-        "ul"
+        "div"
       ],
       "certainty": "confirmed"
     },
@@ -598,28 +785,57 @@
         "DebugPanel"
       ],
       "jsxUsages": [
+        "DebugExpandedDialog",
+        "DebugPanelBody",
+        "DebugPanelFooter",
+        "DebugPanelHeader",
+        "aside",
+        "p"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/debug/components/panel/DebugExpandedDialog.tsx",
+      "feature": "debug",
+      "exports": [
+        "DebugExpandedDialog"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "div",
+        "h2",
+        "header",
+        "section",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
+      "feature": "debug",
+      "exports": [
+        "DebugPanelBody"
+      ],
+      "jsxUsages": [
         "AnswerSupportPanel",
         "ContextAssemblyPanel",
+        "DebugDiagnosticsGrid",
         "DebugFlowNodeButton",
         "DebugNodeDetailPanel",
         "DebugRunSummaryView",
+        "DebugStepList",
         "EvidenceDebugTable",
         "FactCoverageTable",
         "Icon",
         "article",
-        "aside",
         "button",
         "dd",
         "div",
         "dl",
         "dt",
         "em",
-        "footer",
-        "h2",
         "h3",
-        "header",
-        "input",
-        "label",
         "p",
         "pre",
         "section",
@@ -635,19 +851,82 @@
       "certainty": "confirmed"
     },
     {
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelFooter.tsx",
+      "feature": "debug",
+      "exports": [
+        "DebugPanelFooter"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "footer",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx",
+      "feature": "debug",
+      "exports": [
+        "DebugPanelHeader"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "div",
+        "h2",
+        "header",
+        "input",
+        "label",
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
       "feature": "documents",
       "exports": [
         "DocumentWorkspace"
       ],
       "jsxUsages": [
-        "ConfirmDialog",
-        "FileIcon",
+        "DocumentConfirmDialog",
+        "DocumentDetailPanel",
+        "DocumentFilePanel",
+        "DocumentFolderTree",
+        "Icon",
+        "LoadingStatus",
+        "button",
+        "div",
+        "h2",
+        "header",
+        "nav",
+        "section",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/documents/components/workspace/DocumentConfirmDialog.tsx",
+      "feature": "documents",
+      "exports": [
+        "DocumentConfirmDialog"
+      ],
+      "jsxUsages": [
+        "ConfirmDialog"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "feature": "documents",
+      "exports": [
+        "DocumentDetailPanel"
+      ],
+      "jsxUsages": [
         "Icon",
         "LoadingSpinner",
-        "LoadingStatus",
         "UploadProgressPanel",
-        "article",
         "aside",
         "button",
         "code",
@@ -655,15 +934,11 @@
         "div",
         "dl",
         "dt",
-        "footer",
         "form",
-        "h2",
         "h3",
-        "header",
         "input",
         "label",
         "li",
-        "nav",
         "ol",
         "option",
         "p",
@@ -673,6 +948,48 @@
         "span",
         "strong",
         "ul"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "feature": "documents",
+      "exports": [
+        "DocumentFilePanel"
+      ],
+      "jsxUsages": [
+        "EmptyState",
+        "FileIcon",
+        "Icon",
+        "LoadingSpinner",
+        "ReindexMigrationStrip",
+        "article",
+        "button",
+        "div",
+        "footer",
+        "h3",
+        "section",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx",
+      "feature": "documents",
+      "exports": [
+        "DocumentFolderTree"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "aside",
+        "button",
+        "div",
+        "input",
+        "label",
+        "p",
+        "span",
+        "strong"
       ],
       "certainty": "confirmed"
     },
@@ -768,6 +1085,80 @@
         "LoadingSpinner",
         "div",
         "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/Badge.tsx",
+      "feature": "shared",
+      "exports": [
+        "Badge"
+      ],
+      "jsxUsages": [
+        "span"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/Button.tsx",
+      "feature": "shared",
+      "exports": [
+        "Button"
+      ],
+      "jsxUsages": [
+        "button"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
+      "feature": "shared",
+      "exports": [
+        "ConfirmDialog"
+      ],
+      "jsxUsages": [
+        "button",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "h3",
+        "p"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/EmptyState.tsx",
+      "feature": "shared",
+      "exports": [
+        "EmptyState"
+      ],
+      "jsxUsages": [
+        "div",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/IconButton.tsx",
+      "feature": "shared",
+      "exports": [
+        "IconButton"
+      ],
+      "jsxUsages": [
+        "button"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/shared/ui/Panel.tsx",
+      "feature": "shared",
+      "exports": [
+        "Panel"
+      ],
+      "jsxUsages": [
+        "Element"
       ],
       "certainty": "confirmed"
     }
@@ -1460,9 +1851,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:108:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:113:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 108,
+      "line": 113,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -1504,11 +1895,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:120:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 120,
+      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:55:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
+      "line": 55,
       "feature": "admin",
-      "component": "AdminWorkspace",
+      "component": "AdminOverviewGrid",
       "element": "button",
       "isIntrinsic": true,
       "label": "ドキュメント管理 / 件",
@@ -1540,11 +1931,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:127:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 127,
+      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:62:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
+      "line": 62,
       "feature": "admin",
-      "component": "AdminWorkspace",
+      "component": "AdminOverviewGrid",
       "element": "button",
       "isIntrinsic": true,
       "label": "担当者対応 / 件が対応待ち",
@@ -1576,11 +1967,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:134:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 134,
+      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:69:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
+      "line": 69,
       "feature": "admin",
-      "component": "AdminWorkspace",
+      "component": "AdminOverviewGrid",
       "element": "button",
       "isIntrinsic": true,
       "label": "デバッグ / 評価 / 件の実行履歴",
@@ -1612,11 +2003,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:141:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 141,
+      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:76:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
+      "line": 76,
       "feature": "admin",
-      "component": "AdminWorkspace",
+      "component": "AdminOverviewGrid",
       "element": "button",
       "isIntrinsic": true,
       "label": "性能テスト / 件の実行履歴",
@@ -1648,11 +2039,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:206:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 206,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:38:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 38,
       "feature": "admin",
-      "component": "AdminWorkspace",
+      "component": "AdminUserPanel",
       "element": "button",
       "isIntrinsic": true,
       "label": "更新",
@@ -1690,11 +2081,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:212:AdminCreateUserForm",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 212,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:44:AdminCreateUserForm",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 44,
       "feature": "admin",
-      "component": "AdminWorkspace",
+      "component": "AdminUserPanel",
       "element": "AdminCreateUserForm",
       "isIntrinsic": false,
       "label": "未推定",
@@ -1722,488 +2113,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:405:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 405,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "公開",
-      "a11y": {
-        "accessibleName": "公開",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canPublish || loading"
-        ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => void onPublish()"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "disabled",
-          "value": "!canPublish || loading"
-        },
-        {
-          "name": "onClick",
-          "value": "() => void onPublish()"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:413:form",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 413,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "form",
-      "isIntrinsic": true,
-      "label": "用語 / 展開語 / 部署 scope / 追加",
-      "a11y": {
-        "accessibleName": "用語 / 展開語 / 部署 scope / 追加",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onSubmit",
-          "value": "(event) => void onSubmit(event)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "onSubmit",
-          "value": "(event) => void onSubmit(event)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:414:label",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 414,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "用語",
-      "a11y": {
-        "accessibleName": "用語",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:416:input",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 416,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "input",
-      "isIntrinsic": true,
-      "label": "pto",
-      "a11y": {
-        "accessibleName": "pto",
-        "accessibleNameSource": "placeholder",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=loading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setTerm(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "term"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => setTerm(event.target.value)"
-        },
-        {
-          "name": "placeholder",
-          "value": "pto"
-        },
-        {
-          "name": "disabled",
-          "value": "loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:418:label",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 418,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "展開語",
-      "a11y": {
-        "accessibleName": "展開語",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:420:input",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 420,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "input",
-      "isIntrinsic": true,
-      "label": "有給休暇, 休暇申請",
-      "a11y": {
-        "accessibleName": "有給休暇, 休暇申請",
-        "accessibleNameSource": "placeholder",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=loading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setExpansions(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "expansions"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => setExpansions(event.target.value)"
-        },
-        {
-          "name": "placeholder",
-          "value": "有給休暇, 休暇申請"
-        },
-        {
-          "name": "disabled",
-          "value": "loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:422:label",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 422,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "部署 scope",
-      "a11y": {
-        "accessibleName": "部署 scope",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:424:input",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 424,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "input",
-      "isIntrinsic": true,
-      "label": "任意",
-      "a11y": {
-        "accessibleName": "任意",
-        "accessibleNameSource": "placeholder",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=loading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setDepartment(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "department"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => setDepartment(event.target.value)"
-        },
-        {
-          "name": "placeholder",
-          "value": "任意"
-        },
-        {
-          "name": "disabled",
-          "value": "loading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:426:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 426,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "追加",
-      "a11y": {
-        "accessibleName": "追加",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=loading || !term.trim() || parseExpansionList(expansions).length === 0"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "submit"
-        },
-        {
-          "name": "disabled",
-          "value": "loading || !term.trim() || parseExpansionList(expansions).length === 0"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:445:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 445,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "下書き化",
-      "a11y": {
-        "accessibleName": "下書き化",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canWrite || loading || alias.status === \"disabled\""
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => void onUpdate(alias.aliasId, { expansions: alias.expansions })"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || loading || alias.status === \"disabled\""
-        },
-        {
-          "name": "onClick",
-          "value": "() => void onUpdate(alias.aliasId, { expansions: alias.expansions })"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:449:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 449,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "承認",
-      "a11y": {
-        "accessibleName": "承認",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canReview || loading || alias.status === \"disabled\""
-        ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => void onReview(alias.aliasId, \"approve\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "disabled",
-          "value": "!canReview || loading || alias.status === \"disabled\""
-        },
-        {
-          "name": "onClick",
-          "value": "() => void onReview(alias.aliasId, \"approve\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:453:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 453,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "差戻",
-      "a11y": {
-        "accessibleName": "差戻",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canReview || loading || alias.status === \"disabled\""
-        ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => void onReview(alias.aliasId, \"reject\", \"Rejected from UI\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "disabled",
-          "value": "!canReview || loading || alias.status === \"disabled\""
-        },
-        {
-          "name": "onClick",
-          "value": "() => void onReview(alias.aliasId, \"reject\", \"Rejected from UI\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:457:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 457,
-      "feature": "admin",
-      "component": "AliasAdminPanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "無効",
-      "a11y": {
-        "accessibleName": "無効",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canDisable || loading || alias.status === \"disabled\""
-        ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => void onDisable(alias.aliasId)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "disabled",
-          "value": "!canDisable || loading || alias.status === \"disabled\""
-        },
-        {
-          "name": "onClick",
-          "value": "() => void onDisable(alias.aliasId)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:513:form",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 513,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:109:form",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 109,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "form",
@@ -2237,9 +2149,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:514:label",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 514,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:110:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 110,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2259,9 +2171,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:516:input",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 516,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:112:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 112,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "input",
@@ -2303,9 +2215,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:518:label",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 518,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:114:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 114,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2325,9 +2237,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:520:input",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 520,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:116:input",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 116,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "input",
@@ -2365,9 +2277,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:522:label",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 522,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:118:label",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 118,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2387,9 +2299,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:524:select",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 524,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:120:select",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 120,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "select",
@@ -2423,9 +2335,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:526:option",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 526,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:122:option",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 122,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "option",
@@ -2450,9 +2362,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:530:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 530,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:126:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 126,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "button",
@@ -2483,9 +2395,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:576:select",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 576,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:172:select",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 172,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "select",
@@ -2529,9 +2441,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:578:option",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 578,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:174:option",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 174,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "option",
@@ -2556,9 +2468,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:581:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 581,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:177:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 177,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2598,9 +2510,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:591:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 591,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:187:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 187,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2640,9 +2552,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:596:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 596,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:192:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 192,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2682,9 +2594,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:601:button",
-      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 601,
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:197:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
+      "line": 197,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2719,6 +2631,485 @@
         {
           "name": "onClick",
           "value": "() => void onSetStatus(user.userId, \"delete\")"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:60:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 60,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "公開",
+      "a11y": {
+        "accessibleName": "公開",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canPublish || loading"
+        ],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onPublish()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canPublish || loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onPublish()"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:68:form",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 68,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "用語 / 展開語 / 部署 scope / 追加",
+      "a11y": {
+        "accessibleName": "用語 / 展開語 / 部署 scope / 追加",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "(event) => void onSubmit(event)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onSubmit",
+          "value": "(event) => void onSubmit(event)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:69:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 69,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "用語",
+      "a11y": {
+        "accessibleName": "用語",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:71:input",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 71,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "pto",
+      "a11y": {
+        "accessibleName": "pto",
+        "accessibleNameSource": "placeholder",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setTerm(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "term"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setTerm(event.target.value)"
+        },
+        {
+          "name": "placeholder",
+          "value": "pto"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:73:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 73,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "展開語",
+      "a11y": {
+        "accessibleName": "展開語",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:75:input",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 75,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "有給休暇, 休暇申請",
+      "a11y": {
+        "accessibleName": "有給休暇, 休暇申請",
+        "accessibleNameSource": "placeholder",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setExpansions(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "expansions"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setExpansions(event.target.value)"
+        },
+        {
+          "name": "placeholder",
+          "value": "有給休暇, 休暇申請"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:77:label",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 77,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "部署 scope",
+      "a11y": {
+        "accessibleName": "部署 scope",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:79:input",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 79,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "任意",
+      "a11y": {
+        "accessibleName": "任意",
+        "accessibleNameSource": "placeholder",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => setDepartment(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "department"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => setDepartment(event.target.value)"
+        },
+        {
+          "name": "placeholder",
+          "value": "任意"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:81:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 81,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "追加",
+      "a11y": {
+        "accessibleName": "追加",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading || !term.trim() || parseExpansionList(expansions).length === 0"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "loading || !term.trim() || parseExpansionList(expansions).length === 0"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:100:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 100,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "下書き化",
+      "a11y": {
+        "accessibleName": "下書き化",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canWrite || loading || alias.status === \"disabled\""
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onUpdate(alias.aliasId, { expansions: alias.expansions })"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || loading || alias.status === \"disabled\""
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onUpdate(alias.aliasId, { expansions: alias.expansions })"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:104:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 104,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "承認",
+      "a11y": {
+        "accessibleName": "承認",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canReview || loading || alias.status === \"disabled\""
+        ],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onReview(alias.aliasId, \"approve\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canReview || loading || alias.status === \"disabled\""
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onReview(alias.aliasId, \"approve\")"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:108:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 108,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "差戻",
+      "a11y": {
+        "accessibleName": "差戻",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canReview || loading || alias.status === \"disabled\""
+        ],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onReview(alias.aliasId, \"reject\", \"Rejected from UI\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canReview || loading || alias.status === \"disabled\""
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onReview(alias.aliasId, \"reject\", \"Rejected from UI\")"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:112:button",
+      "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
+      "line": 112,
+      "feature": "admin",
+      "component": "AliasAdminPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "無効",
+      "a11y": {
+        "accessibleName": "無効",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canDisable || loading || alias.status === \"disabled\""
+        ],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onDisable(alias.aliasId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canDisable || loading || alias.status === \"disabled\""
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onDisable(alias.aliasId)"
         }
       ],
       "certainty": "confirmed"
@@ -4288,11 +4679,61 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:88:a",
-      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 88,
+      "id": "apps/web/src/features/chat/components/answer/AnswerCopyAction.tsx:18:button",
+      "file": "apps/web/src/features/chat/components/answer/AnswerCopyAction.tsx",
+      "line": 18,
       "feature": "chat",
-      "component": "AssistantAnswer",
+      "component": "AnswerCopyAction",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\"",
+      "a11y": {
+        "accessibleName": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\"",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canCopy"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onCopy"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onCopy"
+        },
+        {
+          "name": "disabled",
+          "value": "!canCopy"
+        },
+        {
+          "name": "aria-label",
+          "value": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\""
+        },
+        {
+          "name": "title",
+          "value": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/answer/CitationList.tsx:13:a",
+      "file": "apps/web/src/features/chat/components/answer/CitationList.tsx",
+      "line": 13,
+      "feature": "chat",
+      "component": "CitationList",
       "element": "a",
       "isIntrinsic": true,
       "label": "未推定",
@@ -4310,11 +4751,99 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:101:button",
-      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 101,
+      "id": "apps/web/src/features/chat/components/answer/ClarificationOptions.tsx:19:button",
+      "file": "apps/web/src/features/chat/components/answer/ClarificationOptions.tsx",
+      "line": 19,
       "feature": "chat",
-      "component": "AssistantAnswer",
+      "component": "ClarificationOptions",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "option.reason ?? \"この候補で質問する\"",
+      "a11y": {
+        "accessibleName": "option.reason ?? \"この候補で質問する\"",
+        "accessibleNameSource": "title",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=disabled"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onSubmitClarificationOption(option, originalQuestion)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "disabled"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onSubmitClarificationOption(option, originalQuestion)"
+        },
+        {
+          "name": "title",
+          "value": "option.reason ?? \"この候補で質問する\""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/answer/ClarificationOptions.tsx:29:button",
+      "file": "apps/web/src/features/chat/components/answer/ClarificationOptions.tsx",
+      "line": 29,
+      "feature": "chat",
+      "component": "ClarificationOptions",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "自分で入力",
+      "a11y": {
+        "accessibleName": "自分で入力",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=disabled"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onStartClarificationFreeform(originalQuestion, \"例: 経費精算の申請期限は？\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "disabled"
+        },
+        {
+          "name": "onClick",
+          "value": "() => onStartClarificationFreeform(originalQuestion, \"例: 経費精算の申請期限は？\")"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/answer/FollowupSuggestions.tsx:17:button",
+      "file": "apps/web/src/features/chat/components/answer/FollowupSuggestions.tsx",
+      "line": 17,
+      "feature": "chat",
+      "component": "FollowupSuggestions",
       "element": "button",
       "isIntrinsic": true,
       "label": "未推定",
@@ -4324,7 +4853,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=loading"
+          "disabled=disabled"
         ],
         "status": "missing",
         "reason": "アクセシブル名が静的解析で確認できません。"
@@ -4342,7 +4871,7 @@
         },
         {
           "name": "disabled",
-          "value": "loading"
+          "value": "disabled"
         },
         {
           "name": "onClick",
@@ -4350,144 +4879,6 @@
         }
       ],
       "certainty": "unknown"
-    },
-    {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:109:button",
-      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 109,
-      "feature": "chat",
-      "component": "AssistantAnswer",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\"",
-      "a11y": {
-        "accessibleName": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\"",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canCopyAnswer"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => copyText(message.text)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "onClick",
-          "value": "() => copyText(message.text)"
-        },
-        {
-          "name": "disabled",
-          "value": "!canCopyAnswer"
-        },
-        {
-          "name": "aria-label",
-          "value": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\""
-        },
-        {
-          "name": "title",
-          "value": "copyStatus === \"answer\" ? \"回答をコピー済み\" : \"回答をコピー\""
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:130:button",
-      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 130,
-      "feature": "chat",
-      "component": "AssistantAnswer",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "option.reason ?? \"この候補で質問する\"",
-      "a11y": {
-        "accessibleName": "option.reason ?? \"この候補で質問する\"",
-        "accessibleNameSource": "title",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=loading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => void onSubmitClarificationOption(option, message.sourceQuestion ?? message.text)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "disabled",
-          "value": "loading"
-        },
-        {
-          "name": "onClick",
-          "value": "() => void onSubmitClarificationOption(option, message.sourceQuestion ?? message.text)"
-        },
-        {
-          "name": "title",
-          "value": "option.reason ?? \"この候補で質問する\""
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/chat/components/AssistantAnswer.tsx:140:button",
-      "file": "apps/web/src/features/chat/components/AssistantAnswer.tsx",
-      "line": 140,
-      "feature": "chat",
-      "component": "AssistantAnswer",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "自分で入力",
-      "a11y": {
-        "accessibleName": "自分で入力",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=loading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => onStartClarificationFreeform(message.sourceQuestion ?? message.text, \"例: 経費精算の申請期限は…"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "disabled",
-          "value": "loading"
-        },
-        {
-          "name": "onClick",
-          "value": "() => onStartClarificationFreeform(message.sourceQuestion ?? message.text, \"例: 経費精算の申請期限は…"
-        }
-      ],
-      "certainty": "confirmed"
     },
     {
       "id": "apps/web/src/features/chat/components/ChatComposer.tsx:44:form",
@@ -5777,11 +6168,51 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:105:DebugFlowNodeButton",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 105,
+      "id": "apps/web/src/features/debug/components/panel/DebugExpandedDialog.tsx:32:button",
+      "file": "apps/web/src/features/debug/components/panel/DebugExpandedDialog.tsx",
+      "line": 32,
       "feature": "debug",
-      "component": "renderDebugBody",
+      "component": "DebugExpandedDialog",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "拡大デバッグパネルを閉じる",
+      "a11y": {
+        "accessibleName": "拡大デバッグパネルを閉じる",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onClose"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-label",
+          "value": "拡大デバッグパネルを閉じる"
+        },
+        {
+          "name": "onClick",
+          "value": "onClose"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:50:DebugFlowNodeButton",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
+      "line": 50,
+      "feature": "debug",
+      "component": "DebugPanelBody",
       "element": "DebugFlowNodeButton",
       "isIntrinsic": false,
       "label": "未推定",
@@ -5797,23 +6228,65 @@
       "handlers": [
         {
           "name": "onSelect",
-          "value": "() => setSelectedNodeId(node.id)"
+          "value": "() => onSelectNode(node.id)"
         }
       ],
       "attributes": [
         {
           "name": "onSelect",
-          "value": "() => setSelectedNodeId(node.id)"
+          "value": "() => onSelectNode(node.id)"
         }
       ],
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:131:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 131,
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:127:button",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
+      "line": 127,
       "feature": "debug",
-      "component": "renderDebugBody",
+      "component": "DebugFlowNodeButton",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "aria-pressed=selected"
+        ],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onSelect"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onSelect"
+        },
+        {
+          "name": "aria-pressed",
+          "value": "selected"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:200:button",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
+      "line": 200,
+      "feature": "debug",
+      "component": "DebugStepList",
       "element": "button",
       "isIntrinsic": true,
       "label": "未推定",
@@ -5851,11 +6324,11 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:175:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 175,
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:39:button",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx",
+      "line": 39,
       "feature": "debug",
-      "component": "DebugPanel",
+      "component": "DebugPanelHeader",
       "element": "button",
       "isIntrinsic": true,
       "label": "保存済みJSONをダウンロード",
@@ -5897,11 +6370,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:179:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 179,
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:43:button",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx",
+      "line": 43,
       "feature": "debug",
-      "component": "DebugPanel",
+      "component": "DebugPanelHeader",
       "element": "button",
       "isIntrinsic": true,
       "label": "可視化JSONをダウンロード",
@@ -5943,11 +6416,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:183:label",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 183,
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:47:label",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx",
+      "line": 47,
       "feature": "debug",
-      "component": "DebugPanel",
+      "component": "DebugPanelHeader",
       "element": "label",
       "isIntrinsic": true,
       "label": "JSONをアップロード",
@@ -5970,11 +6443,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:186:input",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 186,
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:50:input",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx",
+      "line": 50,
       "feature": "debug",
-      "component": "DebugPanel",
+      "component": "DebugPanelHeader",
       "element": "input",
       "isIntrinsic": true,
       "label": "JSONをアップロード",
@@ -6006,11 +6479,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:189:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 189,
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:53:button",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx",
+      "line": 53,
       "feature": "debug",
-      "component": "DebugPanel",
+      "component": "DebugPanelHeader",
       "element": "button",
       "isIntrinsic": true,
       "label": "アップロード表示を解除",
@@ -6026,7 +6499,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "clearReplay"
+          "value": "onClearReplay"
         }
       ],
       "attributes": [
@@ -6036,7 +6509,7 @@
         },
         {
           "name": "onClick",
-          "value": "clearReplay"
+          "value": "onClearReplay"
         },
         {
           "name": "title",
@@ -6046,11 +6519,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:194:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 194,
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:58:button",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx",
+      "line": 58,
       "feature": "debug",
-      "component": "DebugPanel",
+      "component": "DebugPanelHeader",
       "element": "button",
       "isIntrinsic": true,
       "label": "未推定",
@@ -6088,11 +6561,11 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:196:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 196,
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx:60:button",
+      "file": "apps/web/src/features/debug/components/panel/DebugPanelHeader.tsx",
+      "line": 60,
       "feature": "debug",
-      "component": "DebugPanel",
+      "component": "DebugPanelHeader",
       "element": "button",
       "isIntrinsic": true,
       "label": "デバッグパネルを拡大表示",
@@ -6108,7 +6581,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => setExpanded(true)"
+          "value": "onExpand"
         }
       ],
       "attributes": [
@@ -6126,97 +6599,15 @@
         },
         {
           "name": "onClick",
-          "value": "() => setExpanded(true)"
+          "value": "onExpand"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:214:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 214,
-      "feature": "debug",
-      "component": "DebugPanel",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "拡大デバッグパネルを閉じる",
-      "a11y": {
-        "accessibleName": "拡大デバッグパネルを閉じる",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => setExpanded(false)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "aria-label",
-          "value": "拡大デバッグパネルを閉じる"
-        },
-        {
-          "name": "onClick",
-          "value": "() => setExpanded(false)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/debug/components/DebugPanel.tsx:275:button",
-      "file": "apps/web/src/features/debug/components/DebugPanel.tsx",
-      "line": 275,
-      "feature": "debug",
-      "component": "DebugFlowNodeButton",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "未推定",
-      "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-pressed=selected"
-        ],
-        "status": "missing",
-        "reason": "アクセシブル名が静的解析で確認できません。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "onSelect"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "onClick",
-          "value": "onSelect"
-        },
-        {
-          "name": "aria-pressed",
-          "value": "selected"
-        }
-      ],
-      "certainty": "unknown"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:146:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:138:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 146,
+      "line": 138,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6258,16 +6649,112 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:166:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 166,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:93:form",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 93,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentDetailPanel",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "共有フォルダ / 選択してください / 共有 Cognito group / 共有更新",
+      "a11y": {
+        "accessibleName": "共有フォルダ / 選択してください / 共有 Cognito group / 共有更新",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onShareSubmit"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onSubmit",
+          "value": "onShareSubmit"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:94:label",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 94,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
       "element": "label",
       "isIntrinsic": true,
-      "label": "フォルダを検索",
+      "label": "共有フォルダ / 選択してください",
       "a11y": {
-        "accessibleName": "フォルダを検索",
+        "accessibleName": "共有フォルダ / 選択してください",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:96:select",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 96,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "select",
+      "isIntrinsic": true,
+      "label": "shareGroupId || selectedGroupId",
+      "a11y": {
+        "accessibleName": "選択してください",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canWrite || operationState.sharingGroupId !== null"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onShareGroupIdChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "shareGroupId || selectedGroupId"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || operationState.sharingGroupId !== null"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onShareGroupIdChange(event.target.value)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:97:option",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 97,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "選択してください",
+      "a11y": {
+        "accessibleName": "選択してください",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -6278,24 +6765,152 @@
       "handlers": [],
       "attributes": [
         {
-          "name": "htmlFor",
-          "value": "document-folder-search"
+          "name": "value",
+          "value": ""
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:167:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 167,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:99:option",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 99,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentDetailPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "group.groupId",
+      "a11y": {
+        "accessibleName": "共有フォルダ / 選択してください",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "group.groupId"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:103:label",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 103,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "共有 Cognito group",
+      "a11y": {
+        "accessibleName": "共有 Cognito group",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:105:input",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 105,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
       "element": "input",
       "isIntrinsic": true,
-      "label": "フォルダを検索",
+      "label": "Cognito group をカンマ区切りで入力",
       "a11y": {
-        "accessibleName": "フォルダを検索",
+        "accessibleName": "Cognito group をカンマ区切りで入力",
         "accessibleNameSource": "placeholder",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canWrite || operationState.sharingGroupId !== null"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onShareGroupsChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "shareGroups"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || operationState.sharingGroupId !== null"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onShareGroupsChange(event.target.value)"
+        },
+        {
+          "name": "placeholder",
+          "value": "Cognito group をカンマ区切りで入力"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:107:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 107,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "共有更新",
+      "a11y": {
+        "accessibleName": "共有更新",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canWrite || (!shareGroupId && !selectedGroupId) || operationState.sharingGroupId !== null"
+        ],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || (!shareGroupId && !selectedGroupId) || operationState.sharingGroupId !== null"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:133:form",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 133,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "保存先フォルダ / 保存先を選択 / アップロード",
+      "a11y": {
+        "accessibleName": "保存先フォルダ / 保存先を選択 / アップロード",
+        "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
         "state": [],
@@ -6304,174 +6919,381 @@
       },
       "handlers": [
         {
-          "name": "onChange",
-          "value": "(event) => setFolderSearch(event.target.value)"
+          "name": "onSubmit",
+          "value": "onUploadSubmit"
         }
       ],
       "attributes": [
         {
-          "name": "id",
-          "value": "document-folder-search"
-        },
-        {
-          "name": "type",
-          "value": "search"
-        },
-        {
-          "name": "value",
-          "value": "folderSearch"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => setFolderSearch(event.target.value)"
-        },
-        {
-          "name": "placeholder",
-          "value": "フォルダを検索"
+          "name": "onSubmit",
+          "value": "onUploadSubmit"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:175:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 175,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:134:label",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 134,
       "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
+      "component": "DocumentDetailPanel",
+      "element": "label",
       "isIntrinsic": true,
-      "label": "フォルダ検索をクリア",
+      "label": "保存先フォルダ / 保存先を選択",
       "a11y": {
-        "accessibleName": "フォルダ検索をクリア",
-        "accessibleNameSource": "aria-label",
+        "accessibleName": "保存先フォルダ / 保存先を選択",
+        "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [
-          "disabled=!folderSearch"
-        ],
+        "state": [],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => setFolderSearch(\"\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "フォルダ検索をクリア"
-        },
-        {
-          "name": "aria-label",
-          "value": "フォルダ検索をクリア"
-        },
-        {
-          "name": "disabled",
-          "value": "!folderSearch"
-        },
-        {
-          "name": "onClick",
-          "value": "() => setFolderSearch(\"\")"
-        }
-      ],
+      "handlers": [],
+      "attributes": [],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:180:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 180,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:136:select",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 136,
       "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
+      "component": "DocumentDetailPanel",
+      "element": "select",
       "isIntrinsic": true,
-      "label": "すべてのドキュメント",
+      "label": "uploadGroupId",
       "a11y": {
-        "accessibleName": "すべてのドキュメント",
+        "accessibleName": "保存先を選択",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "aria-current=selectedFolderId === \"all\" ? \"true\" : undefined"
+          "disabled=!canWrite || operationState.isUploading"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
-          "name": "onClick",
-          "value": "() => { setSelectedFolderId(\"all\") onUploadGroupChange(\"\") }"
+          "name": "onChange",
+          "value": "(event) => onUploadGroupChange(event.target.value)"
         }
       ],
       "attributes": [
         {
-          "name": "type",
-          "value": "button"
+          "name": "value",
+          "value": "uploadGroupId"
         },
         {
-          "name": "aria-current",
-          "value": "selectedFolderId === \"all\" ? \"true\" : undefined"
+          "name": "disabled",
+          "value": "!canWrite || operationState.isUploading"
         },
         {
-          "name": "onClick",
-          "value": "() => { setSelectedFolderId(\"all\") onUploadGroupChange(\"\") }"
+          "name": "onChange",
+          "value": "(event) => onUploadGroupChange(event.target.value)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:200:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 200,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:137:option",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 137,
       "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
+      "component": "DocumentDetailPanel",
+      "element": "option",
       "isIntrinsic": true,
-      "label": "未推定",
+      "label": "保存先を選択",
       "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
+        "accessibleName": "保存先を選択",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": ""
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:139:option",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 139,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "option",
+      "isIntrinsic": true,
+      "label": "group.groupId",
+      "a11y": {
+        "accessibleName": "保存先フォルダ / 保存先を選択",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "group.groupId"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:143:label",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 143,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "文書アップロード",
+      "a11y": {
+        "accessibleName": "文書アップロード",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "文書アップロード"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:146:input",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 146,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "アップロードする文書を選択",
+      "a11y": {
+        "accessibleName": "アップロードする文書を選択",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "aria-current=selectedFolder?.id === folder.id ? \"true\" : undefined"
+          "disabled=!canUploadToDestination || operationState.isUploading"
         ],
-        "status": "missing",
-        "reason": "アクセシブル名が静的解析で確認できません。 アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
-          "name": "onClick",
-          "value": "() => { setSelectedFolderId(folder.id) if (folder.group) onUploadGroupChange(folder.group…"
+          "name": "onChange",
+          "value": "(event) => onUploadFileChange(event.target.files?.[0] ?? null)"
         }
       ],
       "attributes": [
         {
           "name": "type",
-          "value": "button"
+          "value": "file"
         },
         {
-          "name": "aria-current",
-          "value": "selectedFolder?.id === folder.id ? \"true\" : undefined"
+          "name": "aria-label",
+          "value": "アップロードする文書を選択"
         },
         {
-          "name": "onClick",
-          "value": "() => { setSelectedFolderId(folder.id) if (folder.group) onUploadGroupChange(folder.group…"
+          "name": "disabled",
+          "value": "!canUploadToDestination || operationState.isUploading"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onUploadFileChange(event.target.files?.[0] ?? null)"
         }
       ],
-      "certainty": "unknown"
+      "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:232:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 232,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:149:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 149,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentDetailPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "アップロード",
+      "a11y": {
+        "accessibleName": "アップロード",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canUploadToDestination || !uploadFile || operationState.isUploading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canUploadToDestination || !uploadFile || operationState.isUploading"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:157:form",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 157,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "form",
+      "isIntrinsic": true,
+      "label": "新規フォルダ / 新規フォルダ",
+      "a11y": {
+        "accessibleName": "新規フォルダ / 新規フォルダ",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onSubmit",
+          "value": "onCreateGroupSubmit"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "onSubmit",
+          "value": "onCreateGroupSubmit"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:158:label",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 158,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "新規フォルダ",
+      "a11y": {
+        "accessibleName": "新規フォルダ",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:160:input",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 160,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "フォルダ名",
+      "a11y": {
+        "accessibleName": "フォルダ名",
+        "accessibleNameSource": "placeholder",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canWrite || operationState.creatingGroup"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onGroupNameChange(event.target.value)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "value",
+          "value": "groupName"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || operationState.creatingGroup"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onGroupNameChange(event.target.value)"
+        },
+        {
+          "name": "placeholder",
+          "value": "フォルダ名"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:162:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 162,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "新規フォルダ",
+      "a11y": {
+        "accessibleName": "新規フォルダ",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canWrite || !groupName.trim() || operationState.creatingGroup"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "submit"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || !groupName.trim() || operationState.creatingGroup"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:52:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "line": 52,
+      "feature": "documents",
+      "component": "DocumentFilePanel",
       "element": "button",
       "isIntrinsic": true,
       "label": "selectedFolder.group ? \"このフォルダにアップロード\" : \"保存先を選択してアップロード\"",
@@ -6517,11 +7339,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:241:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 241,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:61:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "line": 61,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentFilePanel",
       "element": "button",
       "isIntrinsic": true,
       "label": "共有設定を編集",
@@ -6567,11 +7389,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:266:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 266,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:86:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "line": 86,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentFilePanel",
       "element": "button",
       "isIntrinsic": true,
       "label": "ファイルをアップロード",
@@ -6609,11 +7431,11 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:282:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 282,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:100:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "line": 100,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentFilePanel",
       "element": "button",
       "isIntrinsic": true,
       "label": "`${document.fileName}の再インデックスをステージング`",
@@ -6631,7 +7453,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => setConfirmAction({ kind: \"stage\", document })"
+          "value": "() => onConfirmAction({ kind: \"stage\", document })"
         }
       ],
       "attributes": [
@@ -6653,17 +7475,17 @@
         },
         {
           "name": "onClick",
-          "value": "() => setConfirmAction({ kind: \"stage\", document })"
+          "value": "() => onConfirmAction({ kind: \"stage\", document })"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:291:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 291,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:109:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "line": 109,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentFilePanel",
       "element": "button",
       "isIntrinsic": true,
       "label": "`${document.fileName}を削除`",
@@ -6681,7 +7503,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => setConfirmAction({ kind: \"delete\", document })"
+          "value": "() => onConfirmAction({ kind: \"delete\", document })"
         }
       ],
       "attributes": [
@@ -6703,17 +7525,17 @@
         },
         {
           "name": "onClick",
-          "value": "() => setConfirmAction({ kind: \"delete\", document })"
+          "value": "() => onConfirmAction({ kind: \"delete\", document })"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:317:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 317,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:163:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "line": 163,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "ReindexMigrationStrip",
       "element": "button",
       "isIntrinsic": true,
       "label": "未推定",
@@ -6731,7 +7553,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => setConfirmAction({ kind: \"cutover\", migration })"
+          "value": "() => onConfirmAction({ kind: \"cutover\", migration })"
         }
       ],
       "attributes": [
@@ -6745,17 +7567,17 @@
         },
         {
           "name": "onClick",
-          "value": "() => setConfirmAction({ kind: \"cutover\", migration })"
+          "value": "() => onConfirmAction({ kind: \"cutover\", migration })"
         }
       ],
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:320:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 320,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:166:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx",
+      "line": 166,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "ReindexMigrationStrip",
       "element": "button",
       "isIntrinsic": true,
       "label": "未推定",
@@ -6773,7 +7595,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => setConfirmAction({ kind: \"rollback\", migration })"
+          "value": "() => onConfirmAction({ kind: \"rollback\", migration })"
         }
       ],
       "attributes": [
@@ -6787,118 +7609,22 @@
         },
         {
           "name": "onClick",
-          "value": "() => setConfirmAction({ kind: \"rollback\", migration })"
+          "value": "() => onConfirmAction({ kind: \"rollback\", migration })"
         }
       ],
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:355:form",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 355,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:27:label",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx",
+      "line": 27,
       "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "form",
-      "isIntrinsic": true,
-      "label": "共有フォルダ / 選択してください / 共有 Cognito group / 共有更新",
-      "a11y": {
-        "accessibleName": "共有フォルダ / 選択してください / 共有 Cognito group / 共有更新",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
-      },
-      "handlers": [
-        {
-          "name": "onSubmit",
-          "value": "onShareSubmit"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "onSubmit",
-          "value": "onShareSubmit"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:356:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 356,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentFolderTree",
       "element": "label",
       "isIntrinsic": true,
-      "label": "共有フォルダ / 選択してください",
+      "label": "フォルダを検索",
       "a11y": {
-        "accessibleName": "共有フォルダ / 選択してください",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:358:select",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 358,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "select",
-      "isIntrinsic": true,
-      "label": "shareGroupId || selectedGroupId",
-      "a11y": {
-        "accessibleName": "選択してください",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canWrite || operationState.sharingGroupId !== null"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setShareGroupId(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "shareGroupId || selectedGroupId"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || operationState.sharingGroupId !== null"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => setShareGroupId(event.target.value)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:359:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 359,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "選択してください",
-      "a11y": {
-        "accessibleName": "選択してください",
+        "accessibleName": "フォルダを検索",
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
@@ -6909,551 +7635,84 @@
       "handlers": [],
       "attributes": [
         {
-          "name": "value",
-          "value": ""
+          "name": "htmlFor",
+          "value": "document-folder-search"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:361:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 361,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:28:input",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx",
+      "line": 28,
       "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "group.groupId",
-      "a11y": {
-        "accessibleName": "共有フォルダ / 選択してください",
-        "accessibleNameSource": "label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "group.groupId"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:365:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 365,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "共有 Cognito group",
-      "a11y": {
-        "accessibleName": "共有 Cognito group",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:367:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 367,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentFolderTree",
       "element": "input",
       "isIntrinsic": true,
-      "label": "Cognito group をカンマ区切りで入力",
+      "label": "フォルダを検索",
       "a11y": {
-        "accessibleName": "Cognito group をカンマ区切りで入力",
+        "accessibleName": "フォルダを検索",
         "accessibleNameSource": "placeholder",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [
-          "disabled=!canWrite || operationState.sharingGroupId !== null"
-        ],
+        "state": [],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
           "name": "onChange",
-          "value": "(event) => setShareGroups(event.target.value)"
+          "value": "(event) => onFolderSearchChange(event.target.value)"
         }
       ],
       "attributes": [
         {
-          "name": "value",
-          "value": "shareGroups"
+          "name": "id",
+          "value": "document-folder-search"
         },
         {
-          "name": "disabled",
-          "value": "!canWrite || operationState.sharingGroupId !== null"
+          "name": "type",
+          "value": "search"
+        },
+        {
+          "name": "value",
+          "value": "folderSearch"
         },
         {
           "name": "onChange",
-          "value": "(event) => setShareGroups(event.target.value)"
+          "value": "(event) => onFolderSearchChange(event.target.value)"
         },
         {
           "name": "placeholder",
-          "value": "Cognito group をカンマ区切りで入力"
+          "value": "フォルダを検索"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:369:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 369,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:36:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx",
+      "line": 36,
       "feature": "documents",
-      "component": "DocumentWorkspace",
+      "component": "DocumentFolderTree",
       "element": "button",
       "isIntrinsic": true,
-      "label": "共有更新",
+      "label": "フォルダ検索をクリア",
       "a11y": {
-        "accessibleName": "共有更新",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canWrite || (!shareGroupId && !selectedGroupId) || operationState.sharingGroupId !== null"
-        ],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "submit"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || (!shareGroupId && !selectedGroupId) || operationState.sharingGroupId !== null"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:395:form",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 395,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "form",
-      "isIntrinsic": true,
-      "label": "保存先フォルダ / 保存先を選択 / アップロード",
-      "a11y": {
-        "accessibleName": "保存先フォルダ / 保存先を選択 / アップロード",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onSubmit",
-          "value": "onSubmit"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "onSubmit",
-          "value": "onSubmit"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:396:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 396,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "保存先フォルダ / 保存先を選択",
-      "a11y": {
-        "accessibleName": "保存先フォルダ / 保存先を選択",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:398:select",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 398,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "select",
-      "isIntrinsic": true,
-      "label": "uploadGroupId",
-      "a11y": {
-        "accessibleName": "保存先を選択",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canWrite || operationState.isUploading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => onUploadGroupChange(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "uploadGroupId"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || operationState.isUploading"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => onUploadGroupChange(event.target.value)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:399:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 399,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "保存先を選択",
-      "a11y": {
-        "accessibleName": "保存先を選択",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": ""
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:401:option",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 401,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "option",
-      "isIntrinsic": true,
-      "label": "group.groupId",
-      "a11y": {
-        "accessibleName": "保存先フォルダ / 保存先を選択",
-        "accessibleNameSource": "label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "group.groupId"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:405:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 405,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "文書アップロード",
-      "a11y": {
-        "accessibleName": "文書アップロード",
-        "accessibleNameSource": "aria-label",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "aria-label",
-          "value": "文書アップロード"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:408:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 408,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "input",
-      "isIntrinsic": true,
-      "label": "アップロードする文書を選択",
-      "a11y": {
-        "accessibleName": "アップロードする文書を選択",
+        "accessibleName": "フォルダ検索をクリア",
         "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canUploadToDestination || operationState.isUploading"
+          "disabled=!folderSearch"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setUploadFile(event.target.files?.[0] ?? null)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "file"
-        },
-        {
-          "name": "aria-label",
-          "value": "アップロードする文書を選択"
-        },
-        {
-          "name": "disabled",
-          "value": "!canUploadToDestination || operationState.isUploading"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => setUploadFile(event.target.files?.[0] ?? null)"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:411:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 411,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "アップロード",
-      "a11y": {
-        "accessibleName": "アップロード",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canUploadToDestination || !uploadFile || operationState.isUploading"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "submit"
-        },
-        {
-          "name": "disabled",
-          "value": "!canUploadToDestination || !uploadFile || operationState.isUploading"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:419:form",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 419,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "form",
-      "isIntrinsic": true,
-      "label": "新規フォルダ / 新規フォルダ",
-      "a11y": {
-        "accessibleName": "新規フォルダ / 新規フォルダ",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onSubmit",
-          "value": "onCreateGroupSubmit"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "onSubmit",
-          "value": "onCreateGroupSubmit"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:420:label",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 420,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "label",
-      "isIntrinsic": true,
-      "label": "新規フォルダ",
-      "a11y": {
-        "accessibleName": "新規フォルダ",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:422:input",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 422,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "input",
-      "isIntrinsic": true,
-      "label": "フォルダ名",
-      "a11y": {
-        "accessibleName": "フォルダ名",
-        "accessibleNameSource": "placeholder",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canWrite || operationState.creatingGroup"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onChange",
-          "value": "(event) => setGroupName(event.target.value)"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "value",
-          "value": "groupName"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || operationState.creatingGroup"
-        },
-        {
-          "name": "onChange",
-          "value": "(event) => setGroupName(event.target.value)"
-        },
-        {
-          "name": "placeholder",
-          "value": "フォルダ名"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:424:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 424,
-      "feature": "documents",
-      "component": "DocumentWorkspace",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "新規フォルダ",
-      "a11y": {
-        "accessibleName": "新規フォルダ",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "disabled=!canWrite || !groupName.trim() || operationState.creatingGroup"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "submit"
-        },
-        {
-          "name": "disabled",
-          "value": "!canWrite || !groupName.trim() || operationState.creatingGroup"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:544:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 544,
-      "feature": "documents",
-      "component": "ConfirmDialog",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "キャンセル",
-      "a11y": {
-        "accessibleName": "キャンセル",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "warning",
-        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "onCancel"
+          "value": "() => onFolderSearchChange(\"\")"
         }
       ],
       "attributes": [
@@ -7462,18 +7721,72 @@
           "value": "button"
         },
         {
+          "name": "title",
+          "value": "フォルダ検索をクリア"
+        },
+        {
+          "name": "aria-label",
+          "value": "フォルダ検索をクリア"
+        },
+        {
+          "name": "disabled",
+          "value": "!folderSearch"
+        },
+        {
           "name": "onClick",
-          "value": "onCancel"
+          "value": "() => onFolderSearchChange(\"\")"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:545:button",
-      "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 545,
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:41:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx",
+      "line": 41,
       "feature": "documents",
-      "component": "ConfirmDialog",
+      "component": "DocumentFolderTree",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "すべてのドキュメント",
+      "a11y": {
+        "accessibleName": "すべてのドキュメント",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "aria-current=selectedFolderId === \"all\" ? \"true\" : undefined"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onSelectFolder(\"all\", \"\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-current",
+          "value": "selectedFolderId === \"all\" ? \"true\" : undefined"
+        },
+        {
+          "name": "onClick",
+          "value": "() => onSelectFolder(\"all\", \"\")"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:58:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx",
+      "line": 58,
+      "feature": "documents",
+      "component": "DocumentFolderTree",
       "element": "button",
       "isIntrinsic": true,
       "label": "未推定",
@@ -7482,14 +7795,16 @@
         "accessibleNameSource": "missing",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "aria-current=selectedFolder.id === folder.id ? \"true\" : undefined"
+        ],
         "status": "missing",
-        "reason": "アクセシブル名が静的解析で確認できません。"
+        "reason": "アクセシブル名が静的解析で確認できません。 アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "onConfirm"
+          "value": "() => onSelectFolder(folder.id, folder.group?.groupId ?? \"\")"
         }
       ],
       "attributes": [
@@ -7498,8 +7813,12 @@
           "value": "button"
         },
         {
+          "name": "aria-current",
+          "value": "selectedFolder.id === folder.id ? \"true\" : undefined"
+        },
+        {
           "name": "onClick",
-          "value": "onConfirm"
+          "value": "() => onSelectFolder(folder.id, folder.group?.groupId ?? \"\")"
         }
       ],
       "certainty": "unknown"
@@ -8586,6 +8905,131 @@
         }
       ],
       "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/shared/ui/Button.tsx:19:button",
+      "file": "apps/web/src/shared/ui/Button.tsx",
+      "line": 19,
+      "feature": "shared",
+      "component": "Button",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:39:button",
+      "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
+      "line": 39,
+      "feature": "shared",
+      "component": "ConfirmDialog",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "キャンセル",
+      "a11y": {
+        "accessibleName": "キャンセル",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onCancel"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onCancel"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:40:button",
+      "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
+      "line": 40,
+      "feature": "shared",
+      "component": "ConfirmDialog",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "未推定",
+      "a11y": {
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onConfirm"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onConfirm"
+        }
+      ],
+      "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/shared/ui/IconButton.tsx:14:button",
+      "file": "apps/web/src/shared/ui/IconButton.tsx",
+      "line": 14,
+      "feature": "shared",
+      "component": "IconButton",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "label",
+      "a11y": {
+        "accessibleName": "label",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [],
+      "attributes": [
+        {
+          "name": "aria-label",
+          "value": "label"
+        },
+        {
+          "name": "title",
+          "value": "props.title ?? label"
+        }
+      ],
+      "certainty": "confirmed"
     }
   ]
 }
