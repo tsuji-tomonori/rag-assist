@@ -18,7 +18,7 @@
 | R4 | package/CI gate を `--branches 85` にする | 高 | 対応 |
 | R5 | 認可・RAG・benchmark 境界を弱めない | 高 | 対応 |
 | R6 | 実施した検証を正直に記録する | 高 | 対応 |
-| R7 | PR 作成、受け入れ条件コメント、task done 移動まで完了する | 高 | PR 作成前時点では未対応 |
+| R7 | PR 作成、受け入れ条件コメント、task done 移動まで完了する | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -34,6 +34,8 @@
 - `text-processing.test.ts` に text extraction、mock Bedrock model、computed fact、support judgement、policy extraction fallback の分岐 test を追加した。
 - `user-directory.test.ts`、`memorag-service.test.ts`、`hybrid-search.test.ts`、`api-contract.test.ts` に API/service/search/benchmark 境界の追加 test を入れた。
 - `memorag-bedrock-mvp/apps/api/package.json` と `.github/workflows/memorag-ci.yml` の API coverage branch gate を `--branches 85` に更新した。
+- PR #241 を作成し、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
+- 受け入れ条件を満たしたため、task を `tasks/done/` に移動した。
 
 ## 5. 成果物
 
@@ -43,20 +45,20 @@
 | `memorag-bedrock-mvp/apps/api/src/adapters/mock-bedrock.ts` | TypeScript | 到達不能 defensive branch の整理 | coverage gate 安定化 |
 | `memorag-bedrock-mvp/apps/api/package.json` | JSON | `test:coverage` を `--branches 85` に変更 | gate 化 |
 | `.github/workflows/memorag-ci.yml` | YAML | CI の API coverage command を `--branches 85` に変更 | CI gate 化 |
-| `tasks/do/20260507-2012-api-c1-coverage-improvement.md` | Markdown | 進捗と検証結果 | workflow 対応 |
+| `tasks/done/20260507-2012-api-c1-coverage-improvement.md` | Markdown | 完了状態と検証結果 | workflow 対応 |
 
 ## 6. 指示へのfit評価
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4 | 実装、gate 化、検証は対応済み。PR コメントと task done 移動は PR 作成後に実施予定。 |
+| 指示網羅性 | 5 | 実装、gate 化、検証、PR コメント、task done 移動まで対応済み。 |
 | 制約遵守 | 5 | worktree、task state、未実施検証の明記、認可/RAG/benchmark 境界の維持を守った。 |
 | 成果物品質 | 4 | C1 85% gate を実測 pass し、型チェックも通した。 |
 | 説明責任 | 5 | coverage 実測値、検証コマンド、残作業を記録した。 |
 | 検収容易性 | 5 | 変更ファイルと検証結果を task/report に明記した。 |
 
-総合fit: 4.4 / 5.0（約88%）
-理由: coverage 改善と gate 化は完了したが、worktree task PR flow 上の PR コメントと task done 移動は PR 作成後に残るため。
+総合fit: 4.8 / 5.0（約96%）
+理由: coverage 改善、gate 化、検証、PR 作成、PR コメント、task done 移動まで完了した。C1 は 85.01% と閾値に近いため、今後の API 分岐追加時は同時に test 追加が必要。
 
 ## 7. 実行した検証
 
@@ -69,6 +71,6 @@
 
 ## 8. 未対応・制約・リスク
 
-- PR 作成、受け入れ条件コメント、セルフレビューコメント、task done 移動は、このレポート更新時点では未実施。
 - coverage は C1 85.01% と閾値に近いため、今後の分岐追加時は gate 維持のために同時に test 追加が必要。
 - API route 実装は変更していないが、contract test で認可・scope 境界を追加確認した。
+- GitHub PR は `https://github.com/tsuji-tomonori/rag-assist/pull/241`。PR 作成は `gh`、PR コメントは GitHub Apps tool を使用した。
