@@ -48,6 +48,7 @@ test("converts the managed JSON into benchmark dataset rows", async () => {
   assert.ok(normalizedRows.length > 0)
   assert.ok(normalizedRows.some((row) => (row as { expectedNormalizedValues?: Array<{ canonical?: string }> }).expectedNormalizedValues?.some((value) => value.canonical?.startsWith("scale:"))))
   assert.ok(rows.some((row) => (row as { expectedRegionIds?: string[] }).expectedRegionIds?.length))
+  assert.ok(rows.some((row) => (row as { expectedGraphResolutions?: Array<{ target?: string }> }).expectedGraphResolutions?.some((resolution) => resolution.target)))
 })
 
 test("prepares a dataset and downloads only sources referenced by seed QA", async () => {
@@ -116,6 +117,7 @@ test("prepares a dataset and downloads only sources referenced by seed QA", asyn
       drawingSourceType?: string
       drawingSheetMetadata?: Array<{ pageOrSheet?: string; sheetTitle?: string; sourceQaIds?: string[] }>
       drawingRegionIndex?: Array<{ regionType?: string; pageOrSheet?: string; bbox?: { unit?: string }; sourceQaIds?: string[] }>
+      drawingReferenceGraph?: { schemaVersion?: number; nodes?: unknown[]; edges?: unknown[]; calloutEdges?: unknown[] }
     }
 
     assert.equal(result.datasetRows, 1)
@@ -127,7 +129,83 @@ test("prepares a dataset and downloads only sources referenced by seed QA", asyn
     assert.deepEqual(corpusMetadata.drawingSheetMetadata?.[0]?.sourceQaIds, ["QA-001"])
     assert.equal(corpusMetadata.drawingRegionIndex?.[0]?.regionType, "titleblock")
     assert.equal(corpusMetadata.drawingRegionIndex?.[0]?.bbox?.unit, "normalized_page")
+    assert.equal(corpusMetadata.drawingReferenceGraph?.schemaVersion, 1)
+    assert.ok((corpusMetadata.drawingReferenceGraph?.nodes?.length ?? 0) > 0)
+    assert.equal(corpusMetadata.drawingReferenceGraph?.calloutEdges?.length, 0)
     assert.equal(corpus.toString(), "%PDF-1.4 sample")
+  } finally {
+    await rm(tempDir, { recursive: true, force: true })
+  }
+})
+
+test("prepares drawing reference graph metadata for detail callout QA", async () => {
+  const tempDir = await mkdtemp(path.join(os.tmpdir(), "architecture-qarag-graph-"))
+  try {
+    const configPath = path.join(tempDir, "benchmark.json")
+    const datasetOutput = path.join(tempDir, "dataset.jsonl")
+    const corpusDir = path.join(tempDir, "corpus")
+    await import("node:fs/promises").then(({ writeFile }) => writeFile(configPath, JSON.stringify({
+      schemaVersion: 1,
+      suiteId: "architecture-drawing-qarag-v0.1",
+      label: "Graph Sample",
+      description: "Graph benchmark definition",
+      sources: [
+        {
+          sourceId: "D01",
+          sourceName: "Detail Drawing",
+          type: "PDF",
+          publisher: "Publisher",
+          yearVersion: "2026",
+          primaryUse: "test",
+          url: "https://example.com/detail.pdf",
+          notes: "note"
+        }
+      ],
+      seedQa: [
+        {
+          id: "QA-REF-001",
+          taskCategory: "detail extraction",
+          subSkill: "detail reference",
+          sourceId: "D01",
+          documentName: "Detail Drawing",
+          pageOrSheet: "A-02",
+          evidenceAnchor: "詳細図 1-02 呼出",
+          modalityScope: "drawing image+OCR",
+          retrievalSetting: "cross-sheet",
+          questionJa: "平面図の詳細図 1-02 はどの参照先を示すか。",
+          expectedAnswerJa: "詳細図 1-02 を参照する。",
+          acceptableAliasesOrNormalization: "1-02",
+          scoringRule: "exact_or_alias",
+          difficulty: "medium"
+        }
+      ]
+    }), "utf-8"))
+
+    const fetcher = (async () => new Response(Buffer.from("%PDF-1.4 graph"), { status: 200 })) as typeof fetch
+
+    await prepareArchitectureDrawingQaragBenchmark({ configPath, datasetOutput, corpusDir, fetchImpl: fetcher })
+    const datasetRow = JSON.parse((await readFile(datasetOutput, "utf-8")).trim()) as {
+      expectedGraphResolutions?: Array<{ target?: string }>
+      metadata?: { expectedGraphEdges?: Array<{ sourceBbox?: unknown; targetBbox?: unknown }> }
+    }
+    const corpusMetadata = JSON.parse(await readFile(path.join(corpusDir, "d01-detail-drawing.pdf.metadata.json"), "utf-8")) as {
+      drawingReferenceGraph?: {
+        schemaVersion?: number
+        detailIndex?: Array<{ detailNo?: string; bbox?: unknown }>
+        calloutEdges?: Array<{ refDetailNo?: string; sourceBbox?: unknown; targetBbox?: unknown }>
+        edges?: Array<{ edgeType?: string; sourceBbox?: unknown; targetBbox?: unknown }>
+      }
+    }
+
+    assert.equal(datasetRow.expectedGraphResolutions?.[0]?.target, "1-02")
+    assert.ok(datasetRow.metadata?.expectedGraphEdges?.[0]?.sourceBbox)
+    assert.ok(datasetRow.metadata?.expectedGraphEdges?.[0]?.targetBbox)
+    assert.equal(corpusMetadata.drawingReferenceGraph?.schemaVersion, 1)
+    assert.equal(corpusMetadata.drawingReferenceGraph?.detailIndex?.[0]?.detailNo, "1-02")
+    assert.equal(corpusMetadata.drawingReferenceGraph?.calloutEdges?.[0]?.refDetailNo, "1-02")
+    assert.ok(corpusMetadata.drawingReferenceGraph?.calloutEdges?.[0]?.sourceBbox)
+    assert.ok(corpusMetadata.drawingReferenceGraph?.calloutEdges?.[0]?.targetBbox)
+    assert.ok(corpusMetadata.drawingReferenceGraph?.edges?.some((edge) => edge.edgeType === "references"))
   } finally {
     await rm(tempDir, { recursive: true, force: true })
   }

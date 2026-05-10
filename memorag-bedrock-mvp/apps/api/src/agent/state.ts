@@ -44,6 +44,7 @@ export const RetrievedChunkSchema = z.object({
     drawingSourceType: z.enum(["project_drawing", "standard_detail", "equipment_standard", "benchmark_reference", "external"]).optional(),
     drawingSheetMetadata: z.array(z.any()).optional(),
     drawingRegionIndex: z.array(z.any()).optional(),
+    drawingReferenceGraph: z.any().optional(),
     createdAt: z.string()
   })
 })
