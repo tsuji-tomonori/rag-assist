@@ -204,6 +204,7 @@ describe("useAppShellState", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useFakeTimers()
+    window.history.replaceState(null, "", "/")
     vi.spyOn(console, "warn").mockImplementation(() => undefined)
     debugMock.useDebugSelection.mockReturnValue({ selectedTrace: { steps: [] }, totalLatency: 123, selectedRunValue: "debug-1" })
     currentUserMock.useCurrentUser.mockReturnValue({
@@ -279,6 +280,63 @@ describe("useAppShellState", () => {
     expect(result.current.routeProps.profileProps.authSession.email).toBe("user@example.com")
     result.current.routeProps.profileProps.onSetSubmitShortcut("enter")
     expect(chatMock.setSubmitShortcut).toHaveBeenCalledWith("enter")
+  })
+
+  it("hydrates and writes document workspace state through URL query parameters", async () => {
+    window.history.replaceState(null, "", "/?view=documents&group=group-1&document=doc-1&query=handbook&sort=fileNameAsc")
+    const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(result.current.routeProps.activeView).toBe("documents")
+    expect(result.current.routeProps.documentProps.urlState).toEqual({
+      folderId: "group-1",
+      documentId: "doc-1",
+      query: "handbook",
+      sort: "fileNameAsc",
+      type: undefined,
+      status: undefined,
+      groupFilter: undefined
+    })
+
+    act(() => {
+      result.current.routeProps.documentProps.onUrlStateChange?.({
+        folderId: "group-2",
+        documentId: "doc-2",
+        query: "policy",
+        type: "PDF",
+        status: "active",
+        groupFilter: "group-2",
+        sort: "chunkDesc"
+      })
+    })
+
+    expect(window.location.search).toContain("view=documents")
+    expect(window.location.search).toContain("group=group-2")
+    expect(window.location.search).toContain("document=doc-2")
+    expect(window.location.search).toContain("query=policy")
+    expect(window.location.search).toContain("type=PDF")
+    expect(window.location.search).toContain("status=active")
+    expect(window.location.search).toContain("documentGroup=group-2")
+    expect(window.location.search).toContain("sort=chunkDesc")
+
+    act(() => {
+      window.history.pushState(null, "", "/?view=documents&query=戻る")
+      window.dispatchEvent(new PopStateEvent("popstate"))
+    })
+
+    expect(result.current.routeProps.activeView).toBe("documents")
+    expect(result.current.routeProps.documentProps.urlState).toEqual({
+      folderId: undefined,
+      documentId: undefined,
+      query: "戻る",
+      type: undefined,
+      status: undefined,
+      groupFilter: undefined,
+      sort: undefined
+    })
   })
 
   it("resets inaccessible state and exposes current user errors", async () => {

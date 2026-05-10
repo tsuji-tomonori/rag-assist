@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { DocumentGroup, ReindexMigration } from "../types.js"
@@ -586,6 +586,87 @@ describe("DocumentWorkspace", () => {
     await userEvent.selectOptions(screen.getByLabelText("所属フォルダ"), "すべて")
     await userEvent.type(screen.getByLabelText("ファイル名検索"), "not-found-document")
     expect(screen.getByText("条件に一致するドキュメントはありません。")).toBeInTheDocument()
+  })
+
+  it("URL由来のフォルダ、検索条件、文書詳細を初期状態に反映する", () => {
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: ["group-1"] } }]}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        urlState={{
+          folderId: "group-1",
+          documentId: "doc-1",
+          query: "requirements",
+          groupFilter: "group-1",
+          sort: "fileNameAsc"
+        }}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("heading", { name: "社内規定" })).toBeInTheDocument()
+    expect(screen.getByLabelText("ファイル名検索")).toHaveValue("requirements")
+    expect(screen.getByLabelText("所属フォルダ")).toHaveValue("group-1")
+    expect(screen.getByLabelText("並び替え")).toHaveValue("fileNameAsc")
+    expect(screen.getByRole("dialog", { name: "requirements.md" })).toBeInTheDocument()
+  })
+
+  it("文書管理状態の変更をURL同期コールバックへ通知する", async () => {
+    const onUrlStateChange = vi.fn()
+
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: ["group-1"] } }]}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUrlStateChange={onUrlStateChange}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
+    await userEvent.type(screen.getByLabelText("ファイル名検索"), "requirements")
+    await userEvent.click(screen.getByLabelText("requirements.mdの詳細を表示"))
+
+    await waitFor(() => {
+      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.objectContaining({
+        folderId: "group-1",
+        documentId: "doc-1",
+        query: "requirements"
+      }))
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "文書詳細を閉じる" }))
+    await waitFor(() => {
+      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.not.objectContaining({ documentId: "doc-1" }))
+    })
   })
 
   it("文書詳細drawerを開き、documentIdをコピーできる", async () => {

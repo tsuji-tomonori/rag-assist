@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import App from "./App.js"
 import type { AliasAuditLogItem, AliasDefinition, BenchmarkRun, ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
 
@@ -460,6 +460,10 @@ function parseRequestJson(init?: RequestInit): any {
   const payload = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>
   return payload.json && typeof payload.json === "object" ? payload.json : payload
 }
+
+beforeEach(() => {
+  window.history.replaceState(null, "", "/")
+})
 
 describe("App document management", () => {
   it("shows copy buttons and copies prompt/answer text", async () => {
