@@ -1,6 +1,6 @@
 # 文書詳細からこの資料に質問する導線
 
-状態: doing
+状態: done
 タスク種別: 機能追加
 作成日: 2026-05-10
 
@@ -69,6 +69,11 @@
 - searchScope の優先順位が document > group > temporary attachment で明確なこと。
 - 対象文書解除ボタンに accessible name があること。
 - API / 認可 / RAG backend の境界を変更していないこと。
+
+## PR コメント
+
+- 受け入れ条件確認コメントを PR #259 に追加済み。
+- セルフレビューコメントを PR #259 に追加済み。
 
 ## リスク
 
