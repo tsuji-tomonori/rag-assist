@@ -6556,9 +6556,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:254:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:301:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 254,
+      "line": 301,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",

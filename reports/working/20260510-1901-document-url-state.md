@@ -34,6 +34,7 @@
 - `useAppShellState.test.ts` に query parameter からの hydrate / write / popstate 反映テストを追加した。
 - CI の web coverage で `App.test.tsx` に URL 状態が漏れる失敗を確認し、各 test 前に `window.history` を `/` へ戻すよう修正した。
 - PR が `origin/main` に対して dirty になったため、main 側の Web atomic refactor を merge し、`DocumentWorkspace` の小コンポーネント分割構造へ URL 状態同期を再適用した。
+- PR コメントの CI 結果で `docs:web-inventory:check` の失敗を確認し、生成済み Web UI inventory を URL 状態同期後の行番号へ更新した。
 
 ## 5. 成果物
 
@@ -44,6 +45,9 @@
 | `memorag-bedrock-mvp/apps/web/src/features/documents/components/DocumentWorkspace.test.tsx` | Test | URL 初期状態と通知の UI テスト | R5 |
 | `memorag-bedrock-mvp/apps/web/src/app/hooks/useAppShellState.test.ts` | Test | shell hook の URL 同期テスト | R5 |
 | `memorag-bedrock-mvp/apps/web/src/App.test.tsx` | Test | URL 状態漏れを防ぐ test setup | R5 |
+| `memorag-bedrock-mvp/docs/generated/web-accessibility.md` | Markdown | Web UI inventory 生成物の更新 | R5 |
+| `memorag-bedrock-mvp/docs/generated/web-features/documents.md` | Markdown | ドキュメント画面 inventory の更新 | R5 |
+| `memorag-bedrock-mvp/docs/generated/web-ui-inventory.json` | JSON | Web UI inventory の更新 | R5 |
 | `tasks/do/20260510-1853-document-url-state.md` | Markdown | タスクと受け入れ条件 | R1 |
 
 ## 6. 指示へのfit評価
@@ -66,11 +70,14 @@
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
 - `npm --prefix memorag-bedrock-mvp run lint`: pass
+- `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: fail -> inventory 生成後 pass
+- `git diff --check`: pass
 
 ## 8. 未対応・制約・リスク
 
 - 完全な path router 導入は未対応。現行の client-state 構成に合わせ、URL 書き込みは query parameter 形式にした。
 - CI 初回実行で `App.test.tsx` の URL 状態漏れにより web coverage が失敗したが、テスト setup を修正しローカルで再検証済み。
+- PR コメントの CI 結果で `docs:web-inventory:check` の失敗を確認したが、生成物を更新し、同コマンドの再実行で pass を確認済み。
 - `origin/main` 取り込み時に Web atomic refactor の差分が merge commit に含まれる。URL 状態同期は main 側の分割構造に合わせて統合済み。
 - `npm ci` により ignored の `node_modules/` が生成されたが、コミット対象には含めない。
 - API / 認可 / RAG 検索処理は変更していない。

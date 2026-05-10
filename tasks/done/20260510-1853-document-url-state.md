@@ -37,6 +37,7 @@
 - `npm --prefix memorag-bedrock-mvp/apps/web test -- DocumentWorkspace useAppShellState`: pass
 - `npm --prefix memorag-bedrock-mvp/apps/web run typecheck`: pass
 - `npm --prefix memorag-bedrock-mvp run lint`: pass
+- `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: fail -> inventory 生成後 pass
 - `git diff --check`: pass
 
 ## 競合解消
@@ -49,6 +50,7 @@
 
 - 受け入れ条件確認コメントを PR #253 に追加済み。
 - セルフレビューコメントを PR #253 に追加済み。
+- CI コメントで `Generated inventory check` の失敗を確認し、生成済み inventory 更新後に再検証結果を追加予定。
 
 ## リスク
 
