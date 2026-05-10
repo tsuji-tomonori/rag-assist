@@ -24,7 +24,7 @@ export class LocalQuestionStore implements QuestionStore {
       requesterName: input.requesterName?.trim() || "未設定",
       requesterUserId: input.requesterUserId,
       requesterDepartment: input.requesterDepartment?.trim() || "未設定",
-      assigneeDepartment: input.assigneeDepartment?.trim() || "総務部",
+      assigneeDepartment: input.assigneeDepartment?.trim() || "未設定",
       category: input.category?.trim() || "その他の質問",
       priority: input.priority ?? "normal",
       status: "open",
