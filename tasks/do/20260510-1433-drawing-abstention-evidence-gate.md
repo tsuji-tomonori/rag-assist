@@ -1,8 +1,25 @@
 # 建築図面 QA の evidence sufficiency と abstention を強化する
 
-保存先: `tasks/todo/20260510-1433-drawing-abstention-evidence-gate.md`
+保存先: `tasks/do/20260510-1433-drawing-abstention-evidence-gate.md`
 
-状態: todo
+状態: do
+
+タスク種別: 機能追加
+
+## 作業チェックリスト
+
+- [x] 既存 answerability / support / benchmark metric の実装を確認する。
+- [x] 図面 QA 用の evidence sufficiency rule を runner に追加する。
+- [x] source hierarchy と normalized value mismatch を評価できる入力・判定を追加する。
+- [x] abstain / unsupported metric と report 出力をテストで固定する。
+- [ ] docs と作業レポートを更新し、検証後に PR コメントまで完了する。
+
+## Done 条件
+
+- 根拠 bbox、source hierarchy、normalized value match の不足を通常回答 failure として検出できる。
+- 回答不能行では refusal を正しく評価し、unsupported answer と分けて集計できる。
+- 既存 benchmark dataset で新フィールド未設定時の互換性を壊さない。
+- benchmark workspace の unit test / typecheck と `git diff --check` が通る。
 
 ## 背景
 
@@ -45,10 +62,10 @@
 
 ## 受け入れ条件
 
-- [ ] AC1: 根拠 bbox がない回答値は通常回答として返らない。
-- [ ] AC2: 案件図面と標準図の優先順位が score ではなく rule で適用される。
-- [ ] AC3: normalized extracted value と generated answer の不一致を検出できる。
-- [ ] AC4: benchmark summary が abstain_accuracy と unsupported_answer_rate を分けて出す。
+- [x] AC1: 根拠 bbox がない回答値は通常回答として正解扱いされない。
+- [x] AC2: 案件図面と標準図の優先順位が score ではなく rule で適用される。
+- [x] AC3: normalized extracted value と generated answer の不一致を検出できる。
+- [x] AC4: benchmark summary が abstain_accuracy と unsupported_answer_rate を分けて出す。
 
 ## 検証計画
 
@@ -56,6 +73,13 @@
 - benchmark evaluator test
 - unanswerable / conflicting evidence sample
 - `git diff --check`
+
+## 検証結果
+
+- `npm ci`: pass。ただし既存の npm audit 脆弱性 3件（moderate 1、高 2）が報告された。
+- `npm run test --workspace @memorag-mvp/benchmark`: pass
+- `npm run typecheck --workspace @memorag-mvp/benchmark`: pass
+- `git diff --check`: pass
 
 ## PRレビュー観点
 

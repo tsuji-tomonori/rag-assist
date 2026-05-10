@@ -32,12 +32,15 @@ type SummaryArtifact = {
     extractionAccuracy?: number | null
     countMape?: number | null
     graphResolutionAccuracy?: number | null
+    evidenceSufficiencyPassRate?: number | null
     retrievalRecallAtK?: number | null
     retrievalRecallAt20?: number | null
     retrievalMrrAtK?: number | null
     citationSupportPassRate?: number | null
     noAccessLeakCount?: number
     noAccessLeakRate?: number | null
+    abstainAccuracy?: number | null
+    unsupportedAnswerRate?: number | null
   }
   turnDependencyMetrics?: Record<string, {
     total: number
@@ -356,6 +359,138 @@ test("benchmark runner reports drawing diagnostic metrics only when expected fie
     assert.match(report, /graph_resolution_accuracy/)
     assert.match(report, /rows_with_expected_region_ids/)
     assert.match(report, /Diagnostic Failure Breakdown/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner applies drawing evidence sufficiency gates", async () => {
+  const paths = artifactPaths("drawing-evidence-gate")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${[
+    {
+      id: "drawing-gate-pass",
+      question: "根拠bbox付きで縮尺を答える",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["縮尺"],
+      expectedFiles: ["drawing.pdf"],
+      expectedNormalizedValues: [{ kind: "scale", raw: "S=1/100" }],
+      evidenceSufficiency: {
+        requireBbox: true,
+        expectedSourceTypes: ["project_drawing"],
+        sourcePriority: ["project_drawing", "standard_detail"]
+      }
+    },
+    {
+      id: "drawing-gate-missing-bbox",
+      question: "bboxなしの回答",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["縮尺"],
+      expectedFiles: ["drawing.pdf"],
+      evidenceSufficiency: {
+        requireBbox: true,
+        expectedSourceTypes: ["project_drawing"],
+        sourcePriority: ["project_drawing", "standard_detail"]
+      }
+    },
+    {
+      id: "drawing-gate-source-priority",
+      question: "標準図より案件図面を優先する",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["案件図面"],
+      evidenceSufficiency: {
+        expectedSourceTypes: ["project_drawing"],
+        sourcePriority: ["project_drawing", "standard_detail"]
+      }
+    },
+    {
+      id: "drawing-gate-source-mismatch",
+      question: "標準図だけで答えてしまう",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["案件図面"],
+      evidenceSufficiency: {
+        expectedSourceTypes: ["project_drawing"],
+        sourcePriority: ["project_drawing", "standard_detail"]
+      }
+    },
+    {
+      id: "drawing-gate-normalized-mismatch",
+      question: "正規化値が違う回答",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["管径"],
+      expectedFiles: ["drawing.pdf"],
+      expectedNormalizedValues: [{ kind: "diameter", raw: "φ75" }],
+      evidenceSufficiency: {
+        requireBbox: true,
+        expectedSourceTypes: ["project_drawing"],
+        sourcePriority: ["project_drawing", "standard_detail"]
+      }
+    },
+    {
+      id: "drawing-gate-refusal-ok",
+      question: "根拠がない場合",
+      answerable: false,
+      expectedResponseType: "refusal"
+    },
+    {
+      id: "drawing-gate-unsupported",
+      question: "根拠がないのに回答",
+      answerable: false,
+      expectedResponseType: "refusal"
+    }
+  ].map((row) => JSON.stringify(row)).join("\n")}\n`, "utf-8")
+
+  const calls: Array<{ method?: string; path?: string; body?: unknown }> = []
+  const server = createServer((req, res) => {
+    void handleDrawingEvidenceGateRunnerRequest(req, res, calls)
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    assert.equal(calls.length, 7)
+
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.evidenceSufficiencyPassRate, 0.4)
+    assert.equal(summary.metrics?.normalizedAnswerAccuracy, 0.5)
+    assert.equal(summary.metrics?.abstainAccuracy, 0.5)
+    assert.equal(summary.metrics?.unsupportedAnswerRate, 0.5)
+    assert.deepEqual(summary.failures.find((failure) => failure.id === "drawing-gate-missing-bbox")?.reasons, ["missing_evidence_bbox"])
+    assert.equal(summary.failures.some((failure) => failure.id === "drawing-gate-source-priority"), false)
+    assert.deepEqual(summary.failures.find((failure) => failure.id === "drawing-gate-source-mismatch")?.reasons, ["source_priority_mismatch"])
+    assert.deepEqual(summary.failures.find((failure) => failure.id === "drawing-gate-normalized-mismatch")?.reasons, [
+      "normalized_answer_mismatch",
+      "evidence_normalized_value_mismatch"
+    ])
+    assert.deepEqual(summary.failures.find((failure) => failure.id === "drawing-gate-unsupported")?.reasons, [
+      "expected_refusal_but_answered",
+      "expected_refusal_but_answer",
+      "unsupported_answer"
+    ])
+    assert.equal(summary.diagnosticFailureBreakdown?.grounding, 2)
+    assert.equal(summary.diagnosticFailureBreakdown?.ocr, 1)
+    assert.equal(summary.diagnosticFailureBreakdown?.abstention, 1)
+
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /abstain_accuracy/)
+    assert.match(report, /unsupported_answer_rate/)
+    assert.match(report, /evidence_sufficiency_pass_rate/)
+    assert.match(report, /rows_with_evidence_sufficiency/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -733,6 +868,156 @@ async function handleDrawingDiagnosticsRunnerRequest(req: IncomingMessage, res: 
     isAnswerable: true,
     citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9, text: "通常回答です。" }],
     retrieved: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "handbook_p1_chunk_001", score: 0.9 }],
+    answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+    debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+  } }))
+}
+
+async function handleDrawingEvidenceGateRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestBody(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query") {
+    res.statusCode = 404
+    res.end(JSON.stringify({ error: "not found" }))
+    return
+  }
+
+  const input = unwrapRpcBody(body)
+  const id = typeof input === "object" && input !== null && "id" in input ? (input as { id?: string }).id : undefined
+  if (id === "drawing-gate-pass") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "縮尺は1:100です。",
+      isAnswerable: true,
+      citations: [{
+        documentId: "doc-drawing",
+        fileName: "drawing.pdf",
+        chunkId: "drawing_p1_title",
+        score: 0.9,
+        text: "タイトル欄 S=1/100。",
+        metadata: { drawingSourceType: "project_drawing", bbox: [10, 20, 120, 40] }
+      }],
+      retrieved: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_title", score: 0.9 }],
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  if (id === "drawing-gate-missing-bbox") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "縮尺は1:100です。",
+      isAnswerable: true,
+      citations: [{
+        documentId: "doc-drawing",
+        fileName: "drawing.pdf",
+        chunkId: "drawing_p1_title",
+        score: 0.9,
+        text: "タイトル欄 S=1/100。",
+        metadata: { drawingSourceType: "project_drawing" }
+      }],
+      retrieved: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_p1_title", score: 0.9 }],
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  if (id === "drawing-gate-source-priority") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "案件図面の記載を優先します。",
+      isAnswerable: true,
+      citations: [
+        {
+          documentId: "doc-standard",
+          fileName: "standard.pdf",
+          chunkId: "standard_detail",
+          score: 0.99,
+          text: "標準図の一般記載。",
+          metadata: { drawingSourceType: "standard_detail", bbox: [1, 2, 3, 4] }
+        },
+        {
+          documentId: "doc-drawing",
+          fileName: "drawing.pdf",
+          chunkId: "project_note",
+          score: 0.1,
+          text: "案件図面の個別記載。",
+          metadata: { drawingSourceType: "project_drawing", bbox: [10, 20, 120, 40] }
+        }
+      ],
+      retrieved: [
+        { documentId: "doc-standard", fileName: "standard.pdf", chunkId: "standard_detail", score: 0.99 },
+        { documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "project_note", score: 0.1 }
+      ],
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  if (id === "drawing-gate-source-mismatch") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "案件図面の記載として回答します。",
+      isAnswerable: true,
+      citations: [{
+        documentId: "doc-standard",
+        fileName: "standard.pdf",
+        chunkId: "standard_detail",
+        score: 0.99,
+        text: "標準図の一般記載。",
+        metadata: { drawingSourceType: "standard_detail", bbox: [1, 2, 3, 4] }
+      }],
+      retrieved: [{ documentId: "doc-standard", fileName: "standard.pdf", chunkId: "standard_detail", score: 0.99 }],
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  if (id === "drawing-gate-normalized-mismatch") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "answer",
+      answer: "管径はD=50です。",
+      isAnswerable: true,
+      citations: [{
+        documentId: "doc-drawing",
+        fileName: "drawing.pdf",
+        chunkId: "drawing_pipe",
+        score: 0.9,
+        text: "管径 D=50。",
+        metadata: { drawingSourceType: "project_drawing", bbox: [10, 20, 120, 40] }
+      }],
+      retrieved: [{ documentId: "doc-drawing", fileName: "drawing.pdf", chunkId: "drawing_pipe", score: 0.9 }],
+      answerSupport: { unsupportedSentences: [], totalSentences: 1 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  if (id === "drawing-gate-refusal-ok") {
+    res.end(JSON.stringify({ json: {
+      id,
+      responseType: "refusal",
+      answer: "根拠がないため回答できません。",
+      isAnswerable: false,
+      citations: [],
+      retrieved: [],
+      answerSupport: { unsupportedSentences: [], totalSentences: 0 },
+      debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+    } }))
+    return
+  }
+  res.end(JSON.stringify({ json: {
+    id,
+    responseType: "answer",
+    answer: "根拠はありませんが回答します。",
+    isAnswerable: true,
+    citations: [],
+    retrieved: [],
     answerSupport: { unsupportedSentences: [], totalSentences: 1 },
     debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
   } }))

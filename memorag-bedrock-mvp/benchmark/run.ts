@@ -53,6 +53,7 @@ type DatasetRow = {
   expectedExtractionValues?: ExpectedNormalizedValue[]
   expectedCounts?: ExpectedCount[]
   expectedGraphResolutions?: ExpectedGraphResolution[]
+  evidenceSufficiency?: EvidenceSufficiencyExpectation
   modelId?: string
   embeddingModelId?: string
   clueModelId?: string
@@ -103,12 +104,20 @@ type ExpectedGraphResolution = {
   target?: string
 }
 
+type EvidenceSufficiencyExpectation = {
+  requireBbox?: boolean
+  expectedSourceTypes?: string | string[]
+  sourcePriority?: string[]
+}
+
 type Citation = {
   documentId?: string
   fileName?: string
   chunkId?: string
   regionId?: string
   regionType?: string
+  sourceType?: string
+  bbox?: unknown
   pageStart?: number
   pageEnd?: number
   score?: number
@@ -207,6 +216,9 @@ type RowEvaluation = {
   extractionAccuracy: boolean | null
   countMape: number | null
   graphResolutionAccuracy: boolean | null
+  evidenceSufficiencyPass: boolean | null
+  evidenceBboxPresent: boolean | null
+  sourcePriorityCorrect: boolean | null
   supportedFactSlots: number | null
   totalFactSlots: number
   citationSupportPass: boolean | null
@@ -297,6 +309,7 @@ type Summary = {
     clarificationLatencyOverheadMs: number | null
     postClarificationTaskLatencyMs: number | null
     abstentionRecall: number | null
+    abstainAccuracy: number | null
     unsupportedAnswerRate: number | null
     answerContainsRate: number | null
     citationHitRate: number | null
@@ -309,6 +322,7 @@ type Summary = {
     extractionAccuracy: number | null
     countMape: number | null
     graphResolutionAccuracy: number | null
+    evidenceSufficiencyPassRate: number | null
     retrievalRecallAtK: number | null
     retrievalMrrAtK: number | null
     retrievalRecallAt20: number | null
@@ -781,6 +795,13 @@ function evaluateRow(
     ? diagnosticGraphResolutionsMatch(row.expectedGraphResolutions ?? [], body)
     : null
   if (graphResolutionAccuracy === false) failureReasons.push("graph_resolution_mismatch")
+  const evidenceSufficiency = evaluateEvidenceSufficiency(
+    row.evidenceSufficiency,
+    [...citations, ...finalEvidence],
+    normalizedAnswerMatch,
+    expectedAnswerable
+  )
+  for (const reason of evidenceSufficiency.failureReasons) failureReasons.push(reason)
 
   const supportResult = evaluateUnsupportedSentences(body)
   if (supportResult.rate !== null && supportResult.rate > 0) failureReasons.push("unsupported_sentence_detected")
@@ -806,6 +827,7 @@ function evaluateRow(
     normalizedAnswerMatch !== false &&
     extractionAccuracy !== false &&
     graphResolutionAccuracy !== false &&
+    evidenceSufficiency.pass !== false &&
     (countMape === null || countMape === 0) &&
     status >= 200 &&
     status < 300
@@ -846,6 +868,9 @@ function evaluateRow(
     extractionAccuracy,
     countMape,
     graphResolutionAccuracy,
+    evidenceSufficiencyPass: evidenceSufficiency.pass,
+    evidenceBboxPresent: evidenceSufficiency.bboxPresent,
+    sourcePriorityCorrect: evidenceSufficiency.sourcePriorityCorrect,
     supportedFactSlots: factSlotResult.supported,
     totalFactSlots: factSlotResult.total,
     citationSupportPass,
@@ -968,6 +993,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   const extractionEvaluated = results.filter((row) => row.evaluation.extractionAccuracy !== null)
   const countEvaluated = results.filter((row) => row.evaluation.countMape !== null)
   const graphResolutionEvaluated = results.filter((row) => row.evaluation.graphResolutionAccuracy !== null)
+  const evidenceSufficiencyEvaluated = results.filter((row) => row.evaluation.evidenceSufficiencyPass !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
   const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
   const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
@@ -1051,6 +1077,10 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length,
         unanswerableRows.length
       ),
+      abstainAccuracy: rate(
+        unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length,
+        unanswerableRows.length
+      ),
       unsupportedAnswerRate: rate(
         unanswerableRows.filter((row) => row.evaluation.unsupportedAnswer).length,
         unanswerableRows.length
@@ -1098,6 +1128,10 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       graphResolutionAccuracy: rate(
         graphResolutionEvaluated.filter((row) => row.evaluation.graphResolutionAccuracy === true).length,
         graphResolutionEvaluated.length
+      ),
+      evidenceSufficiencyPassRate: rate(
+        evidenceSufficiencyEvaluated.filter((row) => row.evaluation.evidenceSufficiencyPass === true).length,
+        evidenceSufficiencyEvaluated.length
       ),
       retrievalRecallAtK: rate(
         retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length,
@@ -1254,6 +1288,7 @@ type BenchmarkReportMetricName =
   | "clarification_latency_delta_vs_non_clarification_ms"
   | "post_clarification_task_latency_ms"
   | "abstention_recall"
+  | "abstain_accuracy"
   | "unsupported_answer_rate"
   | "answer_contains_rate"
   | "citation_hit_rate"
@@ -1266,6 +1301,7 @@ type BenchmarkReportMetricName =
   | "extraction_accuracy"
   | "count_mape"
   | "graph_resolution_accuracy"
+  | "evidence_sufficiency_pass_rate"
   | "retrieval_recall_at_k"
   | "retrieval_mrr_at_k"
   | "retrieval_recall_at_20"
@@ -1467,6 +1503,8 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "確認質問の初回応答から follow-up 完了までを含めた task latency の平均。"
     case "abstention_recall":
       return "回答不能な行のうち、回答せず拒否できた割合。"
+    case "abstain_accuracy":
+      return "回答不能な行で、通常回答に進まず refusal / no-answer として評価できた割合。unsupported answer とは別に見る。"
     case "unsupported_answer_rate":
       return "回答不能な行で、根拠なしに回答してしまった割合。低いほどよい。"
     case "answer_contains_rate":
@@ -1491,6 +1529,8 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "diagnostics.counts のカウント値と期待カウントの平均絶対パーセント誤差。低いほどよい。"
     case "graph_resolution_accuracy":
       return "diagnostics.graphResolutions が期待する参照先・解決先に到達した割合。"
+    case "evidence_sufficiency_pass_rate":
+      return "図面 QA の evidenceSufficiency 条件に対し、bbox・source priority・正規化値一致を満たした割合。"
     case "retrieval_recall_at_k":
       return "evaluator profile の retrieval.recallK で期待ファイルまたは期待 document が含まれた割合。"
     case "retrieval_mrr_at_k":
@@ -1649,6 +1689,11 @@ function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportR
       note: "graph_resolution_accuracy denominator"
     },
     {
+      item: "rows_with_evidence_sufficiency",
+      count: results.filter((row) => row.evaluation.evidenceSufficiencyPass !== null).length,
+      note: "evidence_sufficiency_pass_rate denominator"
+    },
+    {
       item: "actual_clarification_rows",
       count: actualClarificationRows.length,
       note: "clarification precision and latency delta group"
@@ -1699,6 +1744,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const extractionEvaluated = results.filter((row) => row.evaluation.extractionAccuracy !== null)
   const countEvaluated = results.filter((row) => row.evaluation.countMape !== null)
   const graphResolutionEvaluated = results.filter((row) => row.evaluation.graphResolutionAccuracy !== null)
+  const evidenceSufficiencyEvaluated = results.filter((row) => row.evaluation.evidenceSufficiencyPass !== null)
   const supportEvaluated = results.filter((row) => row.evaluation.unsupportedSentenceRate !== null)
   const citationSupportEvaluated = results.filter((row) => row.evaluation.citationSupportPass !== null)
   const noAccessLeakEvaluated = results.filter((row) => row.evaluation.noAccessLeak !== null)
@@ -1724,6 +1770,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricNullableRow("clarification_latency_delta_vs_non_clarification_ms", formatNumber(summary.metrics.clarificationLatencyOverheadMs), summary.metrics.clarificationLatencyOverheadMs, `${clarificationActualRows.length} actual clarification rows vs ${nonClarificationRows.length} non-clarification rows`, "同一質問の overhead ではなく、actual clarification 行の平均 latency から non-clarification 行の平均 latency を引いた差分。負値は clarification 行の方が速いことを示す。summary JSON key は clarificationLatencyOverheadMs を維持。"),
     metricNullableRow("post_clarification_task_latency_ms", formatNumber(summary.metrics.postClarificationTaskLatencyMs), summary.metrics.postClarificationTaskLatencyMs, `${postClarificationTaskLatencies.length}/${postClarificationRows.length} follow-up rows with latency`, "確認質問から follow-up 完了までの平均 task latency。"),
     metricRateRow("abstention_recall", summary.metrics.abstentionRecall, unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
+    metricRateRow("abstain_accuracy", summary.metrics.abstainAccuracy, unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。abstention_recall と同じ分母で、unsupported_answer_rate と分けて表示。"),
     metricRateRow("unsupported_answer_rate", summary.metrics.unsupportedAnswerRate, unanswerableRows.filter((row) => row.evaluation.unsupportedAnswer).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
     metricRateRow("answer_contains_rate", summary.metrics.answerContainsRate, containsEvaluated.filter((row) => row.evaluation.answerContainsExpected === true).length, containsEvaluated.length, "`expectedContains` / `expectedAnswer` を持つ answerable 行の期待語句一致率。"),
     metricRateRow("citation_hit_rate", summary.metrics.citationHitRate, citationEvaluated.filter((row) => row.evaluation.citationHit === true).length, citationEvaluated.length, "answerable 行で citation が返った割合。"),
@@ -1736,6 +1783,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("extraction_accuracy", summary.metrics.extractionAccuracy, extractionEvaluated.filter((row) => row.evaluation.extractionAccuracy === true).length, extractionEvaluated.length, "`expectedExtractionValues` がある行だけを diagnostics.extractions の正規化値で評価。"),
     metricNullableRow("count_mape", formatNumber(summary.metrics.countMape), summary.metrics.countMape, `${countEvaluated.length} rows with expectedCounts`, "`expectedCounts` がある行の平均 MAPE。"),
     metricRateRow("graph_resolution_accuracy", summary.metrics.graphResolutionAccuracy, graphResolutionEvaluated.filter((row) => row.evaluation.graphResolutionAccuracy === true).length, graphResolutionEvaluated.length, "`expectedGraphResolutions` がある行だけを diagnostics.graphResolutions で評価。"),
+    metricRateRow("evidence_sufficiency_pass_rate", summary.metrics.evidenceSufficiencyPassRate, evidenceSufficiencyEvaluated.filter((row) => row.evaluation.evidenceSufficiencyPass === true).length, evidenceSufficiencyEvaluated.length, "`evidenceSufficiency` がある行だけを bbox / source priority / normalized value gate で評価。"),
     metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
     metricNullableRow("retrieval_mrr_at_k", formatNumber(summary.metrics.retrievalMrrAtK), summary.metrics.retrievalMrrAtK, `${retrievalMrrAtKEvaluated.length} rows with expectedFiles or expectedDocumentIds`, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK 内の reciprocal rank で評価。"),
     metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の top 20 で評価する後方互換指標。"),
@@ -1981,6 +2029,106 @@ function diagnosticGraphResolutionsMatch(expectedResolutions: ExpectedGraphResol
       return Boolean(expected.target && target && normalize(expected.target) === normalize(target))
     })
   )
+}
+
+function evaluateEvidenceSufficiency(
+  expectation: EvidenceSufficiencyExpectation | undefined,
+  evidence: Citation[],
+  normalizedAnswerMatch: boolean | null,
+  expectedAnswerable: boolean
+): {
+  pass: boolean | null
+  bboxPresent: boolean | null
+  sourcePriorityCorrect: boolean | null
+  failureReasons: string[]
+} {
+  if (!expectedAnswerable || !expectation) {
+    return { pass: null, bboxPresent: null, sourcePriorityCorrect: null, failureReasons: [] }
+  }
+
+  const failureReasons: string[] = []
+  const requireBbox = expectation.requireBbox === true
+  const bboxPresent = requireBbox ? evidence.some(hasEvidenceBbox) : null
+  if (bboxPresent === false) failureReasons.push("missing_evidence_bbox")
+
+  const expectedSourceTypes = toArray(expectation.expectedSourceTypes).map(normalize).filter(Boolean)
+  const sourcePriorityCorrect =
+    expectedSourceTypes.length === 0
+      ? null
+      : evidenceSourcePriorityMatches(evidence, expectedSourceTypes, expectation.sourcePriority)
+  if (sourcePriorityCorrect === false) failureReasons.push("source_priority_mismatch")
+
+  if (normalizedAnswerMatch === false) failureReasons.push("evidence_normalized_value_mismatch")
+
+  const pass =
+    bboxPresent === false || sourcePriorityCorrect === false || normalizedAnswerMatch === false
+      ? false
+      : bboxPresent !== null || sourcePriorityCorrect !== null || normalizedAnswerMatch !== null
+        ? true
+        : null
+
+  return {
+    pass,
+    bboxPresent,
+    sourcePriorityCorrect,
+    failureReasons
+  }
+}
+
+function evidenceSourcePriorityMatches(evidence: Citation[], expectedSourceTypes: string[], sourcePriority: string[] | undefined): boolean {
+  const actualTypes = evidence.flatMap(evidenceSourceTypes).map(normalize).filter(Boolean)
+  if (actualTypes.length === 0) return false
+  const priority = (sourcePriority && sourcePriority.length > 0 ? sourcePriority : defaultDrawingSourcePriority).map(normalize)
+  const ranked = actualTypes
+    .map((type) => ({ type, rank: sourceTypeRank(type, priority) }))
+    .sort((left, right) => left.rank - right.rank)
+  const best = ranked[0]?.type
+  if (!best) return false
+  return expectedSourceTypes.includes(best)
+}
+
+const defaultDrawingSourcePriority = [
+  "project_drawing",
+  "standard_detail",
+  "equipment_standard",
+  "benchmark_reference",
+  "external"
+]
+
+function sourceTypeRank(sourceType: string, sourcePriority: string[]): number {
+  const index = sourcePriority.indexOf(sourceType)
+  return index === -1 ? sourcePriority.length : index
+}
+
+function evidenceSourceTypes(citation: Citation): string[] {
+  const metadata = citation.metadata ?? {}
+  return [
+    citation.sourceType,
+    stringMetadata(metadata.sourceType),
+    stringMetadata(metadata.source_type),
+    stringMetadata(metadata.drawingSourceType),
+    stringMetadata(metadata.docType)
+  ].filter((value): value is string => Boolean(value))
+}
+
+function hasEvidenceBbox(citation: Citation): boolean {
+  const metadata = citation.metadata ?? {}
+  const candidates = [
+    citation.bbox,
+    metadata.bbox,
+    metadata.boundingBox,
+    metadata.regionBbox,
+    metadata.region_bbox,
+    metadata.polygon
+  ]
+  return candidates.some((candidate) => {
+    if (Array.isArray(candidate)) return candidate.length >= 4
+    if (!isRecord(candidate)) return false
+    return (
+      ("x" in candidate && "y" in candidate && ("width" in candidate || "w" in candidate) && ("height" in candidate || "h" in candidate)) ||
+      ("left" in candidate && "top" in candidate && ("width" in candidate || "right" in candidate) && ("height" in candidate || "bottom" in candidate))
+    )
+  })
 }
 
 function diagnosticExtractions(body: BenchmarkResponse): DiagnosticExtraction[] {
@@ -2229,7 +2377,7 @@ function classifyFailureCategories(reasons: string[]): FailureCategory[] {
   const categories = new Set<FailureCategory>()
   for (const reason of reasons) {
     if (/retrieval|expected_file|expected_document/i.test(reason)) categories.add("search_failure")
-    else if (/expected_page|missing_citation/i.test(reason)) categories.add("extraction_failure")
+    else if (/expected_page|missing_citation|missing_evidence_bbox|source_priority/i.test(reason)) categories.add("extraction_failure")
     else if (/fact_slot|chunk/i.test(reason)) categories.add("chunk_failure")
     else if (/refus|unsupported_answer|expected_answer_but_refused|expected_refusal_but_answered|no_access_leak/i.test(reason)) categories.add("refusal_failure")
     else categories.add("generation_failure")
@@ -2254,8 +2402,8 @@ function diagnosticFailureBreakdown(results: BenchmarkResultRow[]): Record<Diagn
 
 function diagnosticFailureCategoriesFor(reason: string): DiagnosticFailureCategory[] {
   if (/retrieval|expected_file|expected_document/i.test(reason)) return ["retrieval"]
-  if (/extraction_accuracy|normalized_answer/i.test(reason)) return ["ocr"]
-  if (/expected_page|region_recall|missing_citation|citation_support|unsupported_sentence|fact_slot/i.test(reason)) return ["grounding"]
+  if (/extraction_accuracy|normalized_answer|evidence_normalized/i.test(reason)) return ["ocr"]
+  if (/expected_page|region_recall|missing_citation|citation_support|unsupported_sentence|fact_slot|missing_evidence_bbox|source_priority/i.test(reason)) return ["grounding"]
   if (/refus|unsupported_answer|expected_answer_but_refused|expected_refusal_but_answered|no_access_leak/i.test(reason)) return ["abstention"]
   if (/count_mape|graph_resolution|answer_missing|regex|query_rewrite|clarification/i.test(reason)) return ["reasoning"]
   return ["reasoning"]
