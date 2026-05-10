@@ -1,6 +1,6 @@
 # web Atomic Design リファクタリング
 
-状態: ready_for_pr
+状態: done
 
 ## 背景
 
@@ -55,7 +55,13 @@ MVP の既存挙動を維持しながら、共通 UI primitive、CSS design toke
 - [x] `useAppShellState` の責務が縮小され、feature props assembly が別 module または container 側へ分離されている。
 - [x] 本番 UI に固定の架空データや未実装操作の見せかけを追加していない。
 - [x] web の関連テスト、typecheck、build が pass している、または未実施理由が明記されている。
-- [ ] 作業レポート、PR の受け入れ条件コメント、セルフレビューコメントが日本語で作成されている。
+- [x] 作業レポート、PR の受け入れ条件コメント、セルフレビューコメントが日本語で作成されている。
+
+## PR
+
+- Pull Request: https://github.com/tsuji-tomonori/rag-assist/pull/239
+- 受け入れ条件コメント: 投稿済み。
+- セルフレビューコメント: 投稿済み。
 
 ## 実施結果
 
