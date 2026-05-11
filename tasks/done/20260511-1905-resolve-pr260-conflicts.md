@@ -1,6 +1,6 @@
 # PR #260 競合解決
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - branch: `codex/split-api-lambda-by-route`
 - base: `origin/main`
@@ -63,7 +63,7 @@ PR #260 の変更意図を維持したまま `origin/main` の最新内容を取
 - [x] PR #260 の API source 非変更方針が維持されている。
 - [x] lightweight / heavyweight API Lambda の route 分離意図が維持されている。
 - [x] 変更範囲に見合う検証が実行され、結果が記録されている。
-- [ ] PR に日本語で受け入れ条件確認とセルフレビューがコメントされている。
+- [x] PR に日本語で受け入れ条件確認とセルフレビューがコメントされている。
 
 ## 検証計画
 
@@ -91,3 +91,8 @@ PR #260 の変更意図を維持したまま `origin/main` の最新内容を取
 - pass: `npm --prefix memorag-bedrock-mvp run lint`
 - pass: `git diff --check`
 - pass: `git diff --name-only origin/main...HEAD -- memorag-bedrock-mvp/apps/api/src` が空であることを確認
+
+## PR コメント
+
+- 受け入れ条件確認コメント: GitHub Apps で投稿済み。
+- セルフレビューコメント: GitHub Apps で投稿済み。
