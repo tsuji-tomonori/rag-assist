@@ -404,7 +404,7 @@ async function expandContextWindow(
   if (!source?.metadata.documentId || !source.metadata.chunkId) return []
   const manifest = await loadManifest(deps, source.metadata.documentId)
   if (!manifest) return []
-  const chunks = await loadChunksForManifest(deps, manifest)
+  const chunks = await loadChunksForManifestSafely(deps, manifest)
   const center = chunks.findIndex((chunk) => chunk.id === source.metadata.chunkId)
   if (center < 0) return []
 
@@ -436,6 +436,15 @@ async function expandContextWindow(
     })
   }
   return expanded
+}
+
+async function loadChunksForManifestSafely(deps: Dependencies, manifest: DocumentManifest) {
+  try {
+    return await loadChunksForManifest(deps, manifest)
+  } catch (error) {
+    if (isMissingObjectError(error)) return []
+    throw error
+  }
 }
 
 function findChunkForExpansion(chunks: RetrievedVector[], chunkKey: string): RetrievedVector | undefined {
@@ -570,9 +579,46 @@ function inferFactScope(question: string): string | undefined {
 
 function isUsefulFactReference(ref: string): boolean {
   const normalized = ref.toLowerCase()
-  if (["clues_json", "memorag", "clue", "generator", "json", "question", "what", "when", "where", "which", "how"].includes(normalized)) return false
+  if (USELESS_FACT_REFERENCES.has(normalized)) return false
   return true
 }
+
+function isMissingObjectError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  return error.name === "NoSuchKey" || error.message.includes("NoSuchKey") || error.message.includes("not found") || error.message.includes("specified key does not exist")
+}
+
+const USELESS_FACT_REFERENCES = new Set([
+  "about",
+  "and",
+  "are",
+  "can",
+  "clue",
+  "clues_json",
+  "could",
+  "does",
+  "generator",
+  "how",
+  "json",
+  "memorag",
+  "need",
+  "needs",
+  "question",
+  "required",
+  "requires",
+  "that",
+  "the",
+  "then",
+  "they",
+  "those",
+  "what",
+  "when",
+  "where",
+  "which",
+  "who",
+  "why",
+  "would"
+])
 
 function inferSearchComplexity(question: string): QaAgentState["searchPlan"]["complexity"] {
   if (/比較|違い|差分|どちら/.test(question)) return "comparison"

@@ -899,6 +899,85 @@ test("fixed workflow continues when sufficient context judge returns partial wit
   assert.match(gateStep?.summary ?? "", /sufficient_context=PARTIAL/)
 })
 
+test("fixed workflow answers English ChatRAG VPN follow-up without refusal contamination", async () => {
+  const service = new MemoRagService(await createTestDeps())
+
+  await service.ingest({
+    fileName: "chatrag_sample_it.md",
+    text: [
+      "Employees with manager approval can request VPN access.",
+      "Contractors need both manager approval and a sponsor review before VPN access is issued."
+    ].join("\n"),
+    skipMemory: true,
+    metadata: {
+      benchmarkSeed: true,
+      benchmarkSuiteId: "chatrag-bench-v1",
+      benchmarkSourceHash: "hash",
+      benchmarkIngestSignature: "signature",
+      benchmarkCorpusSkipMemory: true,
+      benchmarkEmbeddingModelId: "api-default",
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      lifecycleStatus: "active",
+      source: "benchmark-runner"
+    }
+  })
+
+  const runner = { userId: "benchmark-runner", cognitoGroups: ["BENCHMARK_RUNNER"] }
+  const first = await service.chat(
+    {
+      question: "Who can request VPN access?",
+      includeDebug: true,
+      useMemory: false,
+      minScore: 0.05,
+      maxIterations: 2,
+      searchFilters: {
+        source: "benchmark-runner",
+        docType: "benchmark-corpus",
+        benchmarkSuiteId: "chatrag-bench-v1"
+      }
+    },
+    runner
+  )
+
+  assert.equal(first.isAnswerable, true)
+  assert.match(first.answer, /Employees with manager approval can request VPN access/)
+  assert.equal(first.citations.some((item) => item.fileName === "chatrag_sample_it.md"), true)
+
+  const second = await service.chat(
+    {
+      question: "What about contractors?",
+      includeDebug: true,
+      useMemory: false,
+      minScore: 0.05,
+      maxIterations: 2,
+      conversation: {
+        conversationId: "chatrag-vpn",
+        turnId: "turn-2",
+        turnIndex: 2,
+        turns: [
+          { role: "user", text: "Who can request VPN access?" },
+          { role: "assistant", text: first.answer, citations: first.citations }
+        ]
+      },
+      searchFilters: {
+        source: "benchmark-runner",
+        docType: "benchmark-corpus",
+        benchmarkSuiteId: "chatrag-bench-v1"
+      }
+    },
+    runner
+  )
+
+  assert.equal(second.isAnswerable, true)
+  assert.match(second.answer, /Contractors need both manager approval and a sponsor review/)
+  assert.equal(second.retrieved.some((item) => item.fileName === "chatrag_sample_it.md"), true)
+  const rewriteStep = second.debug?.steps.find((step) => step.label === "decontextualize_query")
+  assert.match(rewriteStep?.detail ?? "", /contractors/i)
+  assert.match(rewriteStep?.detail ?? "", /VPN access/i)
+  assert.doesNotMatch(rewriteStep?.detail ?? "", /資料からは回答できません|Who can/)
+})
+
 async function createTestDeps(): Promise<Dependencies> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-agent-test-"))
   return {

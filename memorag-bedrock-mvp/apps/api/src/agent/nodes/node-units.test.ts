@@ -76,6 +76,34 @@ test("analyze input combines unresolved clarification context without duplicatin
   assert.equal(resolved.question, "海外出張です")
 })
 
+test("conversation query rewrite ignores refusal text and weak English function words", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "What about contractors?",
+    conversation: {
+      conversationId: "conv-vpn",
+      turnId: "turn-2",
+      turnIndex: 2,
+      turns: [
+        { role: "user", text: "Who can request VPN access?" },
+        { role: "assistant", text: "資料からは回答できません。" }
+      ]
+    }
+  }))
+
+  const queryUpdate = await decontextualizeQuery(state({
+    question: "What about contractors?",
+    conversationState: conversationUpdate.conversationState
+  }))
+
+  assert.equal(queryUpdate.conversationState, undefined)
+  assert.equal(queryUpdate.decontextualizedQuery?.turnDependency, "coreference")
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /contractors/i)
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /VPN access/i)
+  assert.doesNotMatch(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /資料|回答できません|Who can/i)
+  assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("Who"), false)
+  assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("can"), false)
+})
+
 test("computation tools skip unavailable intents and derive relative policy deadline facts from evidence", async () => {
   assert.deepEqual(await executeComputationTools(state({})), { computedFacts: [] })
   assert.deepEqual(
