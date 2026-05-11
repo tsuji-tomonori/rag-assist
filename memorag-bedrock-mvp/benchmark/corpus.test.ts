@@ -4,7 +4,7 @@ import { createHash } from "node:crypto"
 import { mkdtemp, writeFile } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
-import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, createBenchmarkIngestSignature, seedBenchmarkCorpus } from "./corpus.js"
+import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, compactBenchmarkCorpusMetadata, createBenchmarkIngestSignature, seedBenchmarkCorpus } from "./corpus.js"
 
 test("benchmark corpus env helpers resolve optional corpus settings", () => {
   assert.equal(benchmarkCorpusDirFromEnv({}, "benchmark/corpus/standard-agent-v1"), "benchmark/corpus/standard-agent-v1")
@@ -434,7 +434,7 @@ test("seedBenchmarkCorpus still fails on non-extractability ingest errors", asyn
   )
 })
 
-test("seedBenchmarkCorpus includes optional per-file search aliases in seed metadata", async () => {
+test("seedBenchmarkCorpus compacts optional per-file metadata before upload", async () => {
   const corpusDir = await mkdtemp(path.join(os.tmpdir(), "benchmark-corpus-"))
   await writeFile(path.join(corpusDir, "handbook.md"), "# Handbook\n\n経費精算は30日以内です。\n", "utf-8")
   await writeFile(path.join(corpusDir, "handbook.md.metadata.json"), JSON.stringify({
@@ -479,7 +479,28 @@ test("seedBenchmarkCorpus includes optional per-file search aliases in seed meta
   const upload = requests.at(-1)?.body as { metadata?: { searchAliases?: Record<string, string[]>; benchmarkIngestSignature?: string; drawingSourceType?: string; drawingSheetMetadata?: unknown[]; drawingRegionIndex?: unknown[] } }
   assert.deepEqual(upload.metadata?.searchAliases, { "立替": ["経費精算"] })
   assert.equal(upload.metadata?.drawingSourceType, "project_drawing")
-  assert.equal(upload.metadata?.drawingSheetMetadata?.length, 1)
-  assert.equal(upload.metadata?.drawingRegionIndex?.length, 1)
+  assert.equal(upload.metadata?.drawingSheetMetadata, undefined)
+  assert.equal(upload.metadata?.drawingRegionIndex, undefined)
   assert.equal(typeof upload.metadata?.benchmarkIngestSignature, "string")
+})
+
+test("compactBenchmarkCorpusMetadata drops rich drawing metadata and enforces preflight budget", () => {
+  const compact = compactBenchmarkCorpusMetadata({
+    searchAliases: { "立替": ["経費精算"] },
+    drawingSourceType: "standard_detail",
+    drawingSheetMetadata: [{ pageOrSheet: "P1", sheetTitle: "A".repeat(2048) }],
+    drawingRegionIndex: [{ regionId: "r1", raw: "B".repeat(2048) }],
+    drawingReferenceGraph: { schemaVersion: 1, nodes: ["C".repeat(2048)] },
+    drawingExtractionArtifacts: [{ rawText: "D".repeat(2048) }]
+  })
+
+  assert.deepEqual(compact, {
+    searchAliases: { "立替": ["経費精算"] },
+    drawingSourceType: "standard_detail"
+  })
+
+  assert.throws(
+    () => compactBenchmarkCorpusMetadata({ searchAliases: { ["A".repeat(1600)]: ["経費精算"] } }),
+    /Benchmark corpus metadata exceeds 1500 bytes/
+  )
 })
