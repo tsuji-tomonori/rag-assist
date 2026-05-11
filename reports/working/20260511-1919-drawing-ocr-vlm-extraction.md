@@ -16,7 +16,7 @@
 | R2 | crop region 単位の OCR / VLM-OCR adapter を mock / fixture で呼べるようにする | 高 | 対応 |
 | R3 | VLM-OCR が使えない場合に架空値で埋めず failure reason を残す | 高 | 対応 |
 | R4 | titleblock / legend / dimension QA が共通 artifact を参照できるようにする | 高 | 対応 |
-| R5 | docs、test、作業レポート、PR コメントまで完了する | 高 | PR 作成後に完了予定 |
+| R5 | docs、test、作業レポート、PR コメントまで完了する | 高 | 対応 |
 
 ## 3. 検討・判断したこと
 
@@ -42,7 +42,8 @@
 | `memorag-bedrock-mvp/benchmark/architecture-drawing-qarag.ts` | TypeScript | benchmark metadata への artifact 接続 | R4 |
 | `memorag-bedrock-mvp/apps/api/src/routes/benchmark-seed.ts` ほか | TypeScript | seed upload / vector metadata への optional metadata 伝播 | R4 |
 | `memorag-bedrock-mvp/README.md`, `memorag-bedrock-mvp/docs/OPERATIONS.md`, `REQ_FUNCTIONAL_019.md` | Markdown | 運用・要件ドキュメント更新 | R5 |
-| `tasks/do/20260510-1433-drawing-ocr-vlm-extraction-pipeline.md` | Markdown | task 状態、受け入れ条件、検証結果 | R5 |
+| `tasks/done/20260510-1433-drawing-ocr-vlm-extraction-pipeline.md` | Markdown | task 状態、受け入れ条件、検証結果 | R5 |
+| PR #265 | GitHub Pull Request | PR 本文、受け入れ条件確認コメント、セルフレビューコメント | R5 |
 
 ## 6. 検証結果
 
