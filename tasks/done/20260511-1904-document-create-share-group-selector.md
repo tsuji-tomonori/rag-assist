@@ -1,6 +1,6 @@
 # 新規フォルダ作成の shared groups 選択 UI 改善
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -77,3 +77,10 @@
 - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: pass
 - `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0` in `memorag-bedrock-mvp`: pass
 - `git diff --check`: pass
+
+## PR
+
+- https://github.com/tsuji-tomonori/rag-assist/pull/264
+- 受け入れ条件確認コメント: `4419677077`
+- セルフレビューコメント: `4419677316`
+- semver label: `semver:minor`
