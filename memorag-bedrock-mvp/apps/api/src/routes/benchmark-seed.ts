@@ -36,7 +36,8 @@ const benchmarkSeedMetadataKeys = new Set([
   "drawingSourceType",
   "drawingSheetMetadata",
   "drawingRegionIndex",
-  "drawingReferenceGraph"
+  "drawingReferenceGraph",
+  "drawingExtractionArtifacts"
 ])
 
 type UploadPurpose = "document" | "benchmarkSeed" | "chatAttachment"
@@ -97,6 +98,7 @@ function isBenchmarkSeedUploadMetadata(body: {
   if (metadata.drawingSheetMetadata !== undefined && !isBenchmarkDrawingSheetMetadata(metadata.drawingSheetMetadata)) return false
   if (metadata.drawingRegionIndex !== undefined && !isBenchmarkDrawingRegionIndex(metadata.drawingRegionIndex)) return false
   if (metadata.drawingReferenceGraph !== undefined && !isBenchmarkDrawingReferenceGraph(metadata.drawingReferenceGraph)) return false
+  if (metadata.drawingExtractionArtifacts !== undefined && !isBenchmarkDrawingExtractionArtifacts(metadata.drawingExtractionArtifacts)) return false
   if (!isSafeBenchmarkSeedFileName(body.fileName)) return false
   return true
 }
@@ -177,6 +179,61 @@ function isBenchmarkDrawingReferenceGraph(value: unknown): boolean {
     && graph.calloutEdges.every(isBenchmarkDrawingGraphCalloutEdge)
     && Array.isArray(graph.conflicts)
     && graph.conflicts.every(isBenchmarkDrawingGraphConflict)
+}
+
+function isBenchmarkDrawingExtractionArtifacts(value: unknown): boolean {
+  if (!Array.isArray(value)) return false
+  return value.every((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return false
+    const artifact = item as Record<string, unknown>
+    return typeof artifact.artifactId === "string"
+      && artifact.artifactId.length > 0
+      && typeof artifact.regionId === "string"
+      && artifact.regionId.length > 0
+      && typeof artifact.regionType === "string"
+      && artifact.regionType.length > 0
+      && typeof artifact.pageOrSheet === "string"
+      && artifact.pageOrSheet.length > 0
+      && isNormalizedBbox(artifact.bbox)
+      && isBenchmarkDrawingExtractionSourceMethod(artifact.sourceMethod)
+      && Array.isArray(artifact.attemptedMethods)
+      && artifact.attemptedMethods.length > 0
+      && artifact.attemptedMethods.every(isBenchmarkDrawingExtractionAttempt)
+      && (artifact.status === "succeeded" || artifact.status === "failed")
+      && optionalString(artifact.rawText)
+      && Array.isArray(artifact.normalizedValues)
+      && artifact.normalizedValues.every(isBenchmarkDrawingNormalizedValue)
+      && typeof artifact.confidence === "number"
+      && artifact.confidence >= 0
+      && artifact.confidence <= 1
+      && typeof artifact.parserVersion === "string"
+      && artifact.parserVersion.length > 0
+      && isStringArray(artifact.sourceQaIds)
+      && optionalString(artifact.failureReason)
+  })
+}
+
+function isBenchmarkDrawingExtractionAttempt(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const attempt = value as Record<string, unknown>
+  return isBenchmarkDrawingExtractionSourceMethod(attempt.sourceMethod)
+    && (attempt.status === "succeeded" || attempt.status === "failed" || attempt.status === "skipped")
+    && optionalString(attempt.failureReason)
+}
+
+function isBenchmarkDrawingNormalizedValue(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const normalized = value as Record<string, unknown>
+  return typeof normalized.raw === "string"
+    && normalized.raw.length > 0
+    && typeof normalized.canonical === "string"
+    && normalized.canonical.length > 0
+    && typeof normalized.kind === "string"
+    && normalized.kind.length > 0
+}
+
+function isBenchmarkDrawingExtractionSourceMethod(value: unknown): boolean {
+  return value === "pdf_text" || value === "ocr" || value === "vlm_ocr"
 }
 
 function isBenchmarkDrawingGraphNode(value: unknown): boolean {

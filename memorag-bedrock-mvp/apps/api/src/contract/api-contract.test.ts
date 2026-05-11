@@ -808,7 +808,22 @@ test("benchmark runner can list and upload only isolated benchmark seed document
             detailIndex: [],
             calloutEdges: [],
             conflicts: []
-          }
+          },
+          drawingExtractionArtifacts: [{
+            artifactId: "s01-titleblock-001-extract-pdf-text",
+            regionId: "s01-titleblock-001",
+            regionType: "titleblock",
+            pageOrSheet: "P1",
+            bbox: { unit: "normalized_page", x: 0.55, y: 0.72, width: 0.45, height: 0.28 },
+            sourceMethod: "pdf_text",
+            attemptedMethods: [{ sourceMethod: "pdf_text", status: "succeeded" }],
+            status: "succeeded",
+            rawText: "縮尺 1/100",
+            normalizedValues: [{ kind: "scale", raw: "1/100", canonical: "scale:1/100" }],
+            confidence: 0.55,
+            parserVersion: "drawing-local-extraction-v1",
+            sourceQaIds: ["QA-001"]
+          }]
         }
       })
     })
@@ -824,7 +839,7 @@ test("benchmark runner can list and upload only isolated benchmark seed document
         vectorKeys?: string[]
         chunks?: unknown[]
         sourceObjectKey?: string
-        metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]>; drawingSourceType?: string; drawingSheetMetadata?: unknown[]; drawingRegionIndex?: unknown[]; drawingReferenceGraph?: { schemaVersion?: number } }
+        metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]>; drawingSourceType?: string; drawingSheetMetadata?: unknown[]; drawingRegionIndex?: unknown[]; drawingReferenceGraph?: { schemaVersion?: number }; drawingExtractionArtifacts?: unknown[] }
       }>
     }
     const listedSeed = seedList.documents?.find((document) => document.documentId === manifest.documentId)
@@ -840,6 +855,7 @@ test("benchmark runner can list and upload only isolated benchmark seed document
     assert.equal(listedSeed.metadata?.drawingSheetMetadata?.length, 1)
     assert.equal(listedSeed.metadata?.drawingRegionIndex?.length, 1)
     assert.equal(listedSeed.metadata?.drawingReferenceGraph?.schemaVersion, 1)
+    assert.equal(listedSeed.metadata?.drawingExtractionArtifacts?.length, 1)
 
     const seedDelete = await fetch(`http://127.0.0.1:${port}/documents/${encodeURIComponent(manifest.documentId)}`, {
       method: "DELETE"
@@ -1032,11 +1048,27 @@ test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only"
         detailIndex: [],
         calloutEdges: [],
         conflicts: []
-      }
+      },
+      drawingExtractionArtifacts: [{
+        artifactId: "s01-titleblock-001-extract-pdf-text",
+        regionId: "s01-titleblock-001",
+        regionType: "titleblock",
+        pageOrSheet: "P1",
+        bbox: { unit: "normalized_page", x: 0.55, y: 0.72, width: 0.45, height: 0.28 },
+        sourceMethod: "pdf_text",
+        attemptedMethods: [{ sourceMethod: "pdf_text", status: "succeeded" }],
+        status: "succeeded",
+        rawText: "縮尺 1/100",
+        normalizedValues: [{ kind: "scale", raw: "1/100", canonical: "scale:1/100" }],
+        confidence: 0.55,
+        parserVersion: "drawing-local-extraction-v1",
+        sourceQaIds: ["QA-001"]
+      }]
     }
   }), true)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "architecture-drawing-qarag-v0.1", drawingSourceType: "unsafe" } }), false)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "architecture-drawing-qarag-v0.1", drawingReferenceGraph: { schemaVersion: 2 } } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "architecture-drawing-qarag-v0.1", drawingExtractionArtifacts: [{ artifactId: "bad", sourceMethod: "fake" }] } }), false)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "application/pdf", metadata }), true)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "text/plain", metadata }), false)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "../source.pdf", mimeType: "application/pdf", metadata }), false)

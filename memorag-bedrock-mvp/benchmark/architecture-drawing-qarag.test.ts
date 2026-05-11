@@ -47,6 +47,19 @@ test("converts the managed JSON into benchmark dataset rows", async () => {
   const normalizedRows = rows.filter((row) => Array.isArray((row as { expectedNormalizedValues?: unknown[] }).expectedNormalizedValues))
   assert.ok(normalizedRows.length > 0)
   assert.ok(normalizedRows.some((row) => (row as { expectedNormalizedValues?: Array<{ canonical?: string }> }).expectedNormalizedValues?.some((value) => value.canonical?.startsWith("scale:"))))
+  assert.ok(rows.some((row) => (row as { expectedExtractionValues?: Array<{ canonical?: string }> }).expectedExtractionValues?.some((value) => value.canonical)))
+  assert.ok(rows.some((row) => {
+    const metadata = row.metadata as { expectedExtractionArtifacts?: Array<{ regionType?: string }> }
+    return row.metadata.taskCategory === "legend/abbreviation" && metadata.expectedExtractionArtifacts?.some((artifact) => artifact.regionType === "legend")
+  }))
+  assert.ok(rows.some((row) => {
+    const metadata = row.metadata as { expectedExtractionArtifacts?: Array<{ normalizedValues?: unknown[] }> }
+    return row.metadata.taskCategory === "titleblock/OCR" && metadata.expectedExtractionArtifacts?.some((artifact) => (artifact.normalizedValues?.length ?? 0) > 0)
+  }))
+  assert.ok(rows.some((row) => {
+    const metadata = row.metadata as { expectedExtractionArtifacts?: Array<{ regionType?: string }> }
+    return row.metadata.taskCategory === "dimension rule" && metadata.expectedExtractionArtifacts?.some((artifact) => artifact.regionType === "table")
+  }))
   assert.ok(rows.some((row) => (row as { expectedRegionIds?: string[] }).expectedRegionIds?.length))
   assert.ok(rows.some((row) => (row as { expectedGraphResolutions?: Array<{ target?: string }> }).expectedGraphResolutions?.some((resolution) => resolution.target)))
 })
@@ -118,6 +131,7 @@ test("prepares a dataset and downloads only sources referenced by seed QA", asyn
       drawingSheetMetadata?: Array<{ pageOrSheet?: string; sheetTitle?: string; sourceQaIds?: string[] }>
       drawingRegionIndex?: Array<{ regionType?: string; pageOrSheet?: string; bbox?: { unit?: string }; sourceQaIds?: string[] }>
       drawingReferenceGraph?: { schemaVersion?: number; nodes?: unknown[]; edges?: unknown[]; calloutEdges?: unknown[] }
+      drawingExtractionArtifacts?: Array<{ sourceMethod?: string; bbox?: { unit?: string }; parserVersion?: string; sourceQaIds?: string[] }>
     }
 
     assert.equal(result.datasetRows, 1)
@@ -132,6 +146,10 @@ test("prepares a dataset and downloads only sources referenced by seed QA", asyn
     assert.equal(corpusMetadata.drawingReferenceGraph?.schemaVersion, 1)
     assert.ok((corpusMetadata.drawingReferenceGraph?.nodes?.length ?? 0) > 0)
     assert.equal(corpusMetadata.drawingReferenceGraph?.calloutEdges?.length, 0)
+    assert.equal(corpusMetadata.drawingExtractionArtifacts?.[0]?.sourceMethod, "pdf_text")
+    assert.equal(corpusMetadata.drawingExtractionArtifacts?.[0]?.bbox?.unit, "normalized_page")
+    assert.equal(corpusMetadata.drawingExtractionArtifacts?.[0]?.parserVersion, "drawing-local-extraction-v1")
+    assert.deepEqual(corpusMetadata.drawingExtractionArtifacts?.[0]?.sourceQaIds, ["QA-001"])
     assert.equal(corpus.toString(), "%PDF-1.4 sample")
   } finally {
     await rm(tempDir, { recursive: true, force: true })
@@ -186,7 +204,10 @@ test("prepares drawing reference graph metadata for detail callout QA", async ()
     await prepareArchitectureDrawingQaragBenchmark({ configPath, datasetOutput, corpusDir, fetchImpl: fetcher })
     const datasetRow = JSON.parse((await readFile(datasetOutput, "utf-8")).trim()) as {
       expectedGraphResolutions?: Array<{ target?: string }>
-      metadata?: { expectedGraphEdges?: Array<{ sourceBbox?: unknown; targetBbox?: unknown }> }
+      metadata?: {
+        expectedGraphEdges?: Array<{ sourceBbox?: unknown; targetBbox?: unknown }>
+        expectedExtractionArtifacts?: Array<{ sourceMethod?: string; attemptedMethods?: unknown[] }>
+      }
     }
     const corpusMetadata = JSON.parse(await readFile(path.join(corpusDir, "d01-detail-drawing.pdf.metadata.json"), "utf-8")) as {
       drawingReferenceGraph?: {
@@ -195,17 +216,21 @@ test("prepares drawing reference graph metadata for detail callout QA", async ()
         calloutEdges?: Array<{ refDetailNo?: string; sourceBbox?: unknown; targetBbox?: unknown }>
         edges?: Array<{ edgeType?: string; sourceBbox?: unknown; targetBbox?: unknown }>
       }
+      drawingExtractionArtifacts?: Array<{ sourceMethod?: string; attemptedMethods?: unknown[] }>
     }
 
     assert.equal(datasetRow.expectedGraphResolutions?.[0]?.target, "1-02")
     assert.ok(datasetRow.metadata?.expectedGraphEdges?.[0]?.sourceBbox)
     assert.ok(datasetRow.metadata?.expectedGraphEdges?.[0]?.targetBbox)
+    assert.equal(datasetRow.metadata?.expectedExtractionArtifacts?.[0]?.sourceMethod, "ocr")
     assert.equal(corpusMetadata.drawingReferenceGraph?.schemaVersion, 1)
     assert.equal(corpusMetadata.drawingReferenceGraph?.detailIndex?.[0]?.detailNo, "1-02")
     assert.equal(corpusMetadata.drawingReferenceGraph?.calloutEdges?.[0]?.refDetailNo, "1-02")
     assert.ok(corpusMetadata.drawingReferenceGraph?.calloutEdges?.[0]?.sourceBbox)
     assert.ok(corpusMetadata.drawingReferenceGraph?.calloutEdges?.[0]?.targetBbox)
     assert.ok(corpusMetadata.drawingReferenceGraph?.edges?.some((edge) => edge.edgeType === "references"))
+    assert.equal(corpusMetadata.drawingExtractionArtifacts?.[0]?.sourceMethod, "ocr")
+    assert.equal(corpusMetadata.drawingExtractionArtifacts?.[0]?.attemptedMethods?.length, 2)
   } finally {
     await rm(tempDir, { recursive: true, force: true })
   }
