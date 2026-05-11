@@ -433,4 +433,38 @@ describe("useChatSession", () => {
       }
     }))
   })
+
+  it("対象文書スコープを chat run の検索スコープに含める", async () => {
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    chatApiMock.streamChatRunEvents.mockImplementationOnce(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "対象文書に基づく回答です。",
+          isAnswerable: true,
+          citations: [],
+          retrieved: []
+        }
+      })
+    })
+    const { result } = renderHook(() => useChatSession(createProps({
+      selectedGroupId: "group-1",
+      documentScope: { documentId: "doc-1", fileName: "requirements.md" }
+    })))
+
+    act(() => result.current.setQuestion("この資料の要点は？"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(chatApiMock.startChatRun).toHaveBeenCalledWith(expect.objectContaining({
+      searchScope: {
+        mode: "documents",
+        documentIds: ["doc-1"],
+        includeTemporary: false,
+        temporaryScopeId: undefined
+      }
+    }))
+  })
 })

@@ -11,13 +11,13 @@
 
 | 表示名 | view | route | 機能 | 画面コンポーネント | 権限条件 | 主要操作 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| チャット | chat | / (client-state) | [チャット](web-features/chat.md) | ChatView | - | 自分で入力、質問入力、質問、ファイルをアップロード、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku ほか 23 件 | confirmed |
+| チャット | chat | / (client-state) | [チャット](web-features/chat.md) | ChatView | - | 自分で入力、質問入力、質問、ファイルをアップロード、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku ほか 24 件 | confirmed |
 | 担当者対応 | assignee | / (client-state) | [担当者対応](web-features/questions.md) | AssigneeWorkspace | canAnswerQuestions | チャットへ戻る、ステータス / すべて、statusFilter、all、検索、タイトル・名前・部署で検索 ほか 12 件 | confirmed |
 | 履歴 | history | / (client-state) | [履歴](web-features/history.md) | HistoryWorkspace | - | チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages ほか 2 件 | inferred |
 | お気に入り | favorites | / (client-state) | [履歴](web-features/history.md) | HistoryWorkspace | - | チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages ほか 2 件 | inferred |
 | 性能テスト | benchmark | / (client-state) | [性能テスト](web-features/benchmark.md) | BenchmarkWorkspace | canReadBenchmarkRuns | チャットへ戻る、テスト種別、benchmark suite を取得できません、データセット、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、modelId ほか 4 件 | confirmed |
 | 管理者設定 | admin | / (client-state) | [管理](web-features/admin.md) | AdminWorkspace | canSeeAdminSettings | チャットへ戻る、ドキュメント管理 / 件、担当者対応 / 件が対応待ち、デバッグ / 評価 / 件の実行履歴、性能テスト / 件の実行履歴、更新 ほか 23 件 | confirmed |
-| ドキュメント | documents | / (client-state) | [ドキュメント](web-features/documents.md) | DocumentWorkspace | canManageDocuments | 管理者設定へ戻る、文書詳細を閉じる、再インデックス、削除、共有フォルダ / 選択してください / 共有 Cognito group / 追加: / 削除: / 変更なし: / 共有更新、共有フォルダ / 選択してください ほか 59 件 | confirmed |
+| ドキュメント | documents | / (client-state) | [ドキュメント](web-features/documents.md) | DocumentWorkspace | canManageDocuments | 管理者設定へ戻る、文書詳細を閉じる、この資料に質問する、再インデックス、削除、共有フォルダ / 選択してください / 共有 Cognito group / 既存 shared group 候補 / 追加: / 削除: / 変更なし: /… ほか 60 件 | confirmed |
 | 個人設定 | profile | / (client-state) | [アプリケーション枠](web-features/app.md) | PersonalSettingsView | - | チャットへ戻る、送信キー / Enterで送信 / Ctrl+Enterで送信、submitShortcut、enter、ctrlEnter、サインアウト ほか 11 件 | confirmed |
 
 ## 画面ごとの説明
@@ -30,7 +30,7 @@
 - route: `/` (client-state)
 - 権限条件: なし
 - 画面の意味: チャット。利用者が質問し、RAG 回答、引用、確認質問、担当者への問い合わせ導線を確認します。
-- 主要操作: 自分で入力、質問入力、質問、ファイルをアップロード、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、モデルを選択、質問を送信、解決した、追加で質問する ほか 19 件
+- 主要操作: 自分で入力、質問入力、質問、ファイルをアップロード、資料を添付、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、モデルを選択、対象文書を解除、質問を送信、解決した ほか 20 件
 
 ### 担当者対応
 
@@ -90,7 +90,7 @@
 - route: `/` (client-state)
 - 権限条件: `canManageDocuments`
 - 画面の意味: ドキュメント。ファイル upload、フォルダ作成、共有、reindex 切替を行います。
-- 主要操作: 管理者設定へ戻る、文書詳細を閉じる、再インデックス、削除、共有フォルダ / 選択してください / 共有 Cognito group / 追加: / 削除: / 変更なし: / 共有更新、共有フォルダ / 選択してください、shareGroupId || selectedGroupId、選択してください、共有 Cognito group、Cognito group をカンマ区切りで入力 ほか 55 件
+- 主要操作: 管理者設定へ戻る、文書詳細を閉じる、この資料に質問する、再インデックス、削除、共有フォルダ / 選択してください / 共有 Cognito group / 既存 shared group 候補 / 追加: / 削除: / 変更なし: /…、共有フォルダ / 選択してください、shareGroupId || selectedGroupId、選択してください、共有 Cognito group ほか 56 件
 
 ### 個人設定
 

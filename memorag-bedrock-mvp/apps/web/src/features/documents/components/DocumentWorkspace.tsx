@@ -31,6 +31,7 @@ import {
 export type DocumentWorkspaceUrlState = {
   folderId?: string | undefined
   documentId?: string | undefined
+  migrationId?: string | undefined
   query?: string | undefined
   type?: string | undefined
   status?: string | undefined
@@ -57,6 +58,7 @@ export function DocumentWorkspace({
   onStageReindex,
   onCutoverReindex,
   onRollbackReindex,
+  onAskDocument,
   onBack,
   urlState,
   onUrlStateChange
@@ -79,6 +81,7 @@ export function DocumentWorkspace({
   onStageReindex: (documentId: string) => Promise<void>
   onCutoverReindex: (migrationId: string) => Promise<void>
   onRollbackReindex: (migrationId: string) => Promise<void>
+  onAskDocument?: (document: DocumentManifest) => void
   onBack: () => void
   urlState?: DocumentWorkspaceUrlState
   onUrlStateChange?: (state: DocumentWorkspaceUrlState) => void
@@ -104,6 +107,7 @@ export function DocumentWorkspace({
   const [documentPageSize, setDocumentPageSize] = useState(25)
   const [documentPage, setDocumentPage] = useState(1)
   const [selectedDocumentId, setSelectedDocumentId] = useState(urlState?.documentId ?? "")
+  const [selectedMigrationId, setSelectedMigrationId] = useState(urlState?.migrationId ?? "")
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
@@ -163,6 +167,7 @@ export function DocumentWorkspace({
   const shareTargetGroupId = shareGroupId || selectedGroupId
   const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
   const shareDraft = parseSharedGroups(shareGroups)
+  const shareGroupOptions = uniqueSorted([...documentGroups.flatMap((group) => group.sharedGroups), ...shareDraft.groups])
   const shareDiff = buildShareDiff(shareTargetGroup?.sharedGroups ?? [], shareDraft.groups)
   const shareHasDuplicate = shareDraft.duplicates.length > 0
   const shareHasEmptyToken = shareDraft.hasEmptyToken
@@ -186,12 +191,14 @@ export function DocumentWorkspace({
     setDocumentGroupFilter(urlState.groupFilter ?? "all")
     setDocumentSort(urlState.sort ?? "updatedDesc")
     setSelectedDocumentId(urlState.documentId ?? "")
-  }, [urlState, urlState?.documentId, urlState?.folderId, urlState?.groupFilter, urlState?.query, urlState?.sort, urlState?.status, urlState?.type])
+    setSelectedMigrationId(urlState.migrationId ?? "")
+  }, [urlState, urlState?.documentId, urlState?.folderId, urlState?.groupFilter, urlState?.migrationId, urlState?.query, urlState?.sort, urlState?.status, urlState?.type])
 
   useEffect(() => {
     onUrlStateChange?.({
       folderId: selectedFolderId === "all" ? undefined : selectedFolderId,
       documentId: selectedDocumentId || undefined,
+      migrationId: selectedMigrationId || undefined,
       query: documentQuery.trim() || undefined,
       type: documentTypeFilter === "all" ? undefined : documentTypeFilter,
       status: documentStatusFilter === "all" ? undefined : documentStatusFilter,
@@ -206,6 +213,7 @@ export function DocumentWorkspace({
     documentTypeFilter,
     onUrlStateChange,
     selectedDocumentId,
+    selectedMigrationId,
     selectedFolderId
   ])
 
@@ -272,6 +280,13 @@ export function DocumentWorkspace({
     await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups })
     recordSessionOperation("共有更新", shareTargetGroup?.name ?? shareTargetGroupId, `shared groups: ${shareDraft.groups.join(", ") || "なし"}`)
     setShareGroups("")
+  }
+
+  function toggleShareGroupOption(groupName: string, checked: boolean) {
+    const nextGroups = checked
+      ? uniqueSorted([...shareDraft.groups, groupName])
+      : shareDraft.groups.filter((group) => group !== groupName)
+    setShareGroups(nextGroups.join(", "))
   }
 
   async function copyDocumentId(documentId: string) {
@@ -371,6 +386,7 @@ export function DocumentWorkspace({
           canReindex={canReindex}
           canUploadToDestination={canUploadToDestination}
           migrations={migrations}
+          selectedMigrationId={selectedMigrationId}
           uploadInputRef={uploadInputRef}
           shareSelectRef={shareSelectRef}
           onDocumentQueryChange={setDocumentQuery}
@@ -383,8 +399,14 @@ export function DocumentWorkspace({
             setDocumentPageSize(pageSize)
             setDocumentPage(1)
           }}
-          onSelectDocument={(document) => setSelectedDocumentId(document.documentId)}
-          onConfirmAction={setConfirmAction}
+          onSelectDocument={(document) => {
+            setSelectedDocumentId(document.documentId)
+            setSelectedMigrationId("")
+          }}
+          onConfirmAction={(action) => {
+            if (action.kind === "cutover" || action.kind === "rollback") setSelectedMigrationId(action.migration.migrationId)
+            setConfirmAction(action)
+          }}
         />
         <DocumentDetailPanel
           documentGroups={documentGroups}
@@ -397,6 +419,7 @@ export function DocumentWorkspace({
           shareHasDuplicate={shareHasDuplicate}
           shareDuplicates={shareDraft.duplicates}
           shareDiff={shareDiff}
+          shareGroupOptions={shareGroupOptions}
           visibleDocuments={visibleDocuments}
           visibleChunkCount={visibleChunkCount}
           uploadGroupId={uploadGroupId}
@@ -434,6 +457,7 @@ export function DocumentWorkspace({
           onMoveToCreatedGroupChange={setMoveToCreatedGroup}
           onShareGroupIdChange={setShareGroupId}
           onShareGroupsChange={setShareGroups}
+          onShareGroupOptionChange={toggleShareGroupOption}
           onUploadGroupChange={onUploadGroupChange}
           onUploadSubmit={(event) => void onSubmit(event)}
           onCreateGroupSubmit={(event) => void onCreateGroupSubmit(event)}
@@ -455,6 +479,7 @@ export function DocumentWorkspace({
           documentGroups={documentGroups}
           copied={copiedDocumentId === selectedDocument.documentId}
           onCopyDocumentId={() => void copyDocumentId(selectedDocument.documentId)}
+          onAskDocument={() => onAskDocument?.(selectedDocument)}
           onClose={() => setSelectedDocumentId("")}
           onDelete={() => {
             setConfirmAction({ kind: "delete", document: selectedDocument })

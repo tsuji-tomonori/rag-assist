@@ -35,7 +35,8 @@ const benchmarkSeedMetadataKeys = new Set([
   "searchAliases",
   "drawingSourceType",
   "drawingSheetMetadata",
-  "drawingRegionIndex"
+  "drawingRegionIndex",
+  "drawingReferenceGraph"
 ])
 
 type UploadPurpose = "document" | "benchmarkSeed" | "chatAttachment"
@@ -95,6 +96,7 @@ function isBenchmarkSeedUploadMetadata(body: {
   if (metadata.drawingSourceType !== undefined && !isBenchmarkDrawingSourceType(metadata.drawingSourceType)) return false
   if (metadata.drawingSheetMetadata !== undefined && !isBenchmarkDrawingSheetMetadata(metadata.drawingSheetMetadata)) return false
   if (metadata.drawingRegionIndex !== undefined && !isBenchmarkDrawingRegionIndex(metadata.drawingRegionIndex)) return false
+  if (metadata.drawingReferenceGraph !== undefined && !isBenchmarkDrawingReferenceGraph(metadata.drawingReferenceGraph)) return false
   if (!isSafeBenchmarkSeedFileName(body.fileName)) return false
   return true
 }
@@ -161,6 +163,100 @@ function isBenchmarkDrawingRegionIndex(value: unknown): boolean {
   })
 }
 
+function isBenchmarkDrawingReferenceGraph(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const graph = value as Record<string, unknown>
+  return graph.schemaVersion === 1
+    && Array.isArray(graph.nodes)
+    && graph.nodes.every(isBenchmarkDrawingGraphNode)
+    && Array.isArray(graph.edges)
+    && graph.edges.every(isBenchmarkDrawingGraphEdge)
+    && Array.isArray(graph.detailIndex)
+    && graph.detailIndex.every(isBenchmarkDrawingGraphDetail)
+    && Array.isArray(graph.calloutEdges)
+    && graph.calloutEdges.every(isBenchmarkDrawingGraphCalloutEdge)
+    && Array.isArray(graph.conflicts)
+    && graph.conflicts.every(isBenchmarkDrawingGraphConflict)
+}
+
+function isBenchmarkDrawingGraphNode(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const node = value as Record<string, unknown>
+  return typeof node.nodeId === "string"
+    && node.nodeId.length > 0
+    && (node.nodeType === "page" || node.nodeType === "region" || node.nodeType === "detail" || node.nodeType === "section" || node.nodeType === "callout")
+    && typeof node.pageOrSheet === "string"
+    && node.pageOrSheet.length > 0
+    && isNormalizedBbox(node.bbox)
+    && typeof node.label === "string"
+    && isStringArrayAllowEmpty(node.sourceQaIds)
+    && typeof node.confidence === "number"
+    && node.confidence >= 0
+    && node.confidence <= 1
+}
+
+function isBenchmarkDrawingGraphEdge(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const edge = value as Record<string, unknown>
+  return typeof edge.edgeId === "string"
+    && edge.edgeId.length > 0
+    && (edge.edgeType === "contains" || edge.edgeType === "references" || edge.edgeType === "same_as")
+    && typeof edge.sourceNodeId === "string"
+    && edge.sourceNodeId.length > 0
+    && typeof edge.targetNodeId === "string"
+    && edge.targetNodeId.length > 0
+    && isNormalizedBbox(edge.sourceBbox)
+    && isNormalizedBbox(edge.targetBbox)
+    && typeof edge.label === "string"
+    && isStringArrayAllowEmpty(edge.sourceQaIds)
+    && typeof edge.confidence === "number"
+    && edge.confidence >= 0
+    && edge.confidence <= 1
+}
+
+function isBenchmarkDrawingGraphDetail(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const detail = value as Record<string, unknown>
+  return typeof detail.detailNo === "string"
+    && detail.detailNo.length > 0
+    && optionalString(detail.detailTitle)
+    && typeof detail.pageOrSheet === "string"
+    && detail.pageOrSheet.length > 0
+    && typeof detail.nodeId === "string"
+    && detail.nodeId.length > 0
+    && isNormalizedBbox(detail.bbox)
+    && isStringArray(detail.sourceQaIds)
+}
+
+function isBenchmarkDrawingGraphCalloutEdge(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const edge = value as Record<string, unknown>
+  return typeof edge.sourceNodeId === "string"
+    && edge.sourceNodeId.length > 0
+    && isNormalizedBbox(edge.sourceBbox)
+    && typeof edge.refDetailNo === "string"
+    && edge.refDetailNo.length > 0
+    && typeof edge.targetNodeId === "string"
+    && edge.targetNodeId.length > 0
+    && isNormalizedBbox(edge.targetBbox)
+    && typeof edge.confidence === "number"
+    && edge.confidence >= 0
+    && edge.confidence <= 1
+    && isStringArray(edge.sourceQaIds)
+}
+
+function isBenchmarkDrawingGraphConflict(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const conflict = value as Record<string, unknown>
+  return typeof conflict.sourceNodeId === "string"
+    && conflict.sourceNodeId.length > 0
+    && typeof conflict.targetNodeId === "string"
+    && conflict.targetNodeId.length > 0
+    && conflict.conflictType === "source_priority"
+    && typeof conflict.evidence === "string"
+    && conflict.evidence.length > 0
+}
+
 function isNormalizedBbox(value: unknown): boolean {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false
   const bbox = value as Record<string, unknown>
@@ -183,6 +279,10 @@ function optionalString(value: unknown): boolean {
 
 function isStringArray(value: unknown): boolean {
   return Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === "string" && item.length > 0)
+}
+
+function isStringArrayAllowEmpty(value: unknown): boolean {
+  return Array.isArray(value) && value.every((item) => typeof item === "string" && item.length > 0)
 }
 
 function isBenchmarkSeedPdfUpload(body: z.infer<typeof DocumentUploadRequestSchema>): boolean {

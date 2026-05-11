@@ -792,7 +792,23 @@ test("benchmark runner can list and upload only isolated benchmark seed document
             evidenceAnchor: "title block",
             sourceQaIds: ["QA-001"],
             confidence: 0.55
-          }]
+          }],
+          drawingReferenceGraph: {
+            schemaVersion: 1,
+            nodes: [{
+              nodeId: "s01-page-p1",
+              nodeType: "page",
+              pageOrSheet: "P1",
+              bbox: { unit: "normalized_page", x: 0, y: 0, width: 1, height: 1 },
+              label: "P1",
+              sourceQaIds: [],
+              confidence: 0.6
+            }],
+            edges: [],
+            detailIndex: [],
+            calloutEdges: [],
+            conflicts: []
+          }
         }
       })
     })
@@ -808,7 +824,7 @@ test("benchmark runner can list and upload only isolated benchmark seed document
         vectorKeys?: string[]
         chunks?: unknown[]
         sourceObjectKey?: string
-        metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]>; drawingSourceType?: string; drawingSheetMetadata?: unknown[]; drawingRegionIndex?: unknown[] }
+        metadata?: { aclGroups?: string[]; docType?: string; source?: string; searchAliases?: Record<string, string[]>; drawingSourceType?: string; drawingSheetMetadata?: unknown[]; drawingRegionIndex?: unknown[]; drawingReferenceGraph?: { schemaVersion?: number } }
       }>
     }
     const listedSeed = seedList.documents?.find((document) => document.documentId === manifest.documentId)
@@ -823,6 +839,7 @@ test("benchmark runner can list and upload only isolated benchmark seed document
     assert.equal(listedSeed.metadata?.drawingSourceType, "project_drawing")
     assert.equal(listedSeed.metadata?.drawingSheetMetadata?.length, 1)
     assert.equal(listedSeed.metadata?.drawingRegionIndex?.length, 1)
+    assert.equal(listedSeed.metadata?.drawingReferenceGraph?.schemaVersion, 1)
 
     const seedDelete = await fetch(`http://127.0.0.1:${port}/documents/${encodeURIComponent(manifest.documentId)}`, {
       method: "DELETE"
@@ -999,10 +1016,27 @@ test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only"
         evidenceAnchor: "title block",
         sourceQaIds: ["QA-001"],
         confidence: 0.55
-      }]
+      }],
+      drawingReferenceGraph: {
+        schemaVersion: 1,
+        nodes: [{
+          nodeId: "s01-page-p1",
+          nodeType: "page",
+          pageOrSheet: "P1",
+          bbox: { unit: "normalized_page", x: 0, y: 0, width: 1, height: 1 },
+          label: "P1",
+          sourceQaIds: [],
+          confidence: 0.6
+        }],
+        edges: [],
+        detailIndex: [],
+        calloutEdges: [],
+        conflicts: []
+      }
     }
   }), true)
   assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "architecture-drawing-qarag-v0.1", drawingSourceType: "unsafe" } }), false)
+  assert.equal(isBenchmarkSeedUpload({ ...pdfSeed, metadata: { ...metadata, benchmarkSuiteId: "architecture-drawing-qarag-v0.1", drawingReferenceGraph: { schemaVersion: 2 } } }), false)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "application/pdf", metadata }), true)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "source.pdf", mimeType: "text/plain", metadata }), false)
   assert.equal(isBenchmarkSeedUploadedObjectIngest({ fileName: "../source.pdf", mimeType: "application/pdf", metadata }), false)

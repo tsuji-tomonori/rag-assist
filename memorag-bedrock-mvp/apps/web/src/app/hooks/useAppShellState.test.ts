@@ -48,6 +48,7 @@ const debugMock = vi.hoisted(() => ({
   useDebugSelection: vi.fn()
 }))
 const chatMock = vi.hoisted(() => ({
+  useChatSession: vi.fn(),
   setQuestion: vi.fn(),
   setMessages: vi.fn(),
   setPendingActivity: vi.fn(),
@@ -132,16 +133,7 @@ vi.mock("../../features/debug/hooks/useDebugRuns.js", () => ({
   useDebugSelection: debugMock.useDebugSelection
 }))
 vi.mock("../../features/chat/hooks/useChatSession.js", () => ({
-  useChatSession: vi.fn(() => ({
-    question: "",
-    messages: [{ role: "user", text: "質問", createdAt: "now" }, { role: "assistant", text: "回答", createdAt: "later", result: { answer: "回答", isAnswerable: true, citations: [], retrieved: [], debug: { steps: [] } } }],
-    pendingActivity: null,
-    pendingDebugQuestion: null,
-    conversationKey: "conv-1",
-    submitShortcut: "ctrlEnter",
-    canAsk: true,
-    ...chatMock
-  }))
+  useChatSession: chatMock.useChatSession
 }))
 vi.mock("../../features/questions/hooks/useQuestions.js", () => ({
   useQuestions: vi.fn(() => ({
@@ -232,6 +224,24 @@ describe("useAppShellState", () => {
     ]) {
       fn.mockResolvedValue([])
     }
+    chatMock.useChatSession.mockImplementation(() => ({
+      question: "",
+      messages: [{ role: "user", text: "質問", createdAt: "now" }, { role: "assistant", text: "回答", createdAt: "later", result: { answer: "回答", isAnswerable: true, citations: [], retrieved: [], debug: { steps: [] } } }],
+      pendingActivity: null,
+      pendingDebugQuestion: null,
+      conversationKey: "conv-1",
+      submitShortcut: "ctrlEnter",
+      canAsk: true,
+      setQuestion: chatMock.setQuestion,
+      setMessages: chatMock.setMessages,
+      setPendingActivity: chatMock.setPendingActivity,
+      setPendingDebugQuestion: chatMock.setPendingDebugQuestion,
+      setSubmitShortcut: chatMock.setSubmitShortcut,
+      onAsk: chatMock.onAsk,
+      submitClarificationOption: chatMock.submitClarificationOption,
+      startClarificationFreeform: chatMock.startClarificationFreeform,
+      newConversation: chatMock.newConversation
+    }))
   })
 
   it("wires navigation callbacks, admin refresh, history selection, and debug toggles", async () => {
@@ -283,7 +293,7 @@ describe("useAppShellState", () => {
   })
 
   it("hydrates and writes document workspace state through URL query parameters", async () => {
-    window.history.replaceState(null, "", "/?view=documents&group=group-1&document=doc-1&query=handbook&sort=fileNameAsc")
+    window.history.replaceState(null, "", "/documents/reindex-migrations/migration-1?view=documents&group=group-1&document=doc-1&query=handbook&sort=fileNameAsc")
     const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
 
     await act(async () => {
@@ -294,6 +304,7 @@ describe("useAppShellState", () => {
     expect(result.current.routeProps.documentProps.urlState).toEqual({
       folderId: "group-1",
       documentId: "doc-1",
+      migrationId: "migration-1",
       query: "handbook",
       sort: "fileNameAsc",
       type: undefined,
@@ -305,6 +316,7 @@ describe("useAppShellState", () => {
       result.current.routeProps.documentProps.onUrlStateChange?.({
         folderId: "group-2",
         documentId: "doc-2",
+        migrationId: "migration-2",
         query: "policy",
         type: "PDF",
         status: "active",
@@ -316,6 +328,7 @@ describe("useAppShellState", () => {
     expect(window.location.search).toContain("view=documents")
     expect(window.location.search).toContain("group=group-2")
     expect(window.location.search).toContain("document=doc-2")
+    expect(window.location.search).toContain("migration=migration-2")
     expect(window.location.search).toContain("query=policy")
     expect(window.location.search).toContain("type=PDF")
     expect(window.location.search).toContain("status=active")
@@ -331,12 +344,35 @@ describe("useAppShellState", () => {
     expect(result.current.routeProps.documentProps.urlState).toEqual({
       folderId: undefined,
       documentId: undefined,
+      migrationId: undefined,
       query: "戻る",
       type: undefined,
       status: undefined,
       groupFilter: undefined,
       sort: undefined
     })
+  })
+
+  it("document workspace から対象文書スコープで chat へ移動する", async () => {
+    const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    act(() => {
+      result.current.routeProps.documentProps.onAskDocument?.({
+        documentId: "doc-1",
+        fileName: "handbook.md",
+        chunkCount: 1,
+        memoryCardCount: 1,
+        createdAt: "now"
+      })
+    })
+
+    expect(result.current.routeProps.activeView).toBe("chat")
+    expect(result.current.routeProps.chatProps.documentScope).toEqual({ documentId: "doc-1", fileName: "handbook.md" })
+    expect(chatMock.setQuestion).toHaveBeenCalledWith("この資料について質問する: handbook.md")
   })
 
   it("resets inaccessible state and exposes current user errors", async () => {

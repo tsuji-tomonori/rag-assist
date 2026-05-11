@@ -99,7 +99,7 @@ describe("DocumentWorkspace", () => {
         canWrite={true}
         canDelete={true}
         canReindex={true}
-        migrations={[]}
+        migrations={migrations}
         onUpload={vi.fn()}
         onDelete={onDelete}
         onStageReindex={vi.fn()}
@@ -543,6 +543,85 @@ describe("DocumentWorkspace", () => {
     expect(onShareGroup).not.toHaveBeenCalled()
   })
 
+  it("実データ由来の共有group候補を選択して共有差分とpayloadに反映する", async () => {
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={onShareGroup}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
+
+    const selector = screen.getByRole("group", { name: "共有 group 候補" })
+    const hrOption = within(selector).getByRole("checkbox", { name: "HR" })
+    expect(hrOption).not.toBeChecked()
+
+    await userEvent.click(hrOption)
+    expect(screen.getByLabelText("共有 Cognito group")).toHaveValue("HR")
+    expect(screen.getByText("変更なし: HR")).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("共有 Cognito group"), ", RAG_GROUP_MANAGER")
+    const ragOption = within(selector).getByRole("checkbox", { name: "RAG_GROUP_MANAGER" })
+    expect(ragOption).toBeChecked()
+
+    await userEvent.click(hrOption)
+    expect(screen.getByLabelText("共有 Cognito group")).toHaveValue("RAG_GROUP_MANAGER")
+    expect(screen.getByText("追加: RAG_GROUP_MANAGER")).toBeInTheDocument()
+    expect(screen.getByText("削除: HR")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "共有更新" }))
+    expect(onShareGroup).toHaveBeenCalledWith("group-1", {
+      visibility: "shared",
+      sharedGroups: ["RAG_GROUP_MANAGER"]
+    })
+  })
+
+  it("共有group候補がない場合は架空候補を表示しない", () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[{ ...documentGroups[0]!, sharedGroups: [] }]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("group", { name: "共有 group 候補" })).toHaveTextContent("候補はありません。必要な group 名を入力してください。")
+    expect(screen.queryByRole("checkbox", { name: "CHAT_USER" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("checkbox", { name: "RAG_GROUP_MANAGER" })).not.toBeInTheDocument()
+  })
+
   it("実データのファイル種別を表示し、再インデックスを通知する", async () => {
     const onStageReindex = vi.fn().mockResolvedValue(undefined)
 
@@ -682,10 +761,11 @@ describe("DocumentWorkspace", () => {
         canWrite={true}
         canDelete={true}
         canReindex={true}
-        migrations={[]}
+        migrations={migrations}
         urlState={{
           folderId: "group-1",
           documentId: "doc-1",
+          migrationId: "migration-1",
           query: "requirements",
           groupFilter: "group-1",
           sort: "fileNameAsc"
@@ -707,6 +787,8 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByLabelText("所属フォルダ")).toHaveValue("group-1")
     expect(screen.getByLabelText("並び替え")).toHaveValue("fileNameAsc")
     expect(screen.getByRole("dialog", { name: "requirements.md" })).toBeInTheDocument()
+    const migrationStrip = screen.getByLabelText("再インデックス移行一覧")
+    expect(within(migrationStrip).getByText("doc-1 → doc-1-staged").closest("article")).toHaveAttribute("aria-current", "true")
   })
 
   it("文書管理状態の変更をURL同期コールバックへ通知する", async () => {
@@ -721,7 +803,7 @@ describe("DocumentWorkspace", () => {
         canWrite={true}
         canDelete={true}
         canReindex={true}
-        migrations={[]}
+        migrations={migrations}
         onUrlStateChange={onUrlStateChange}
         onUploadGroupChange={vi.fn()}
         onUpload={vi.fn()}
@@ -751,10 +833,16 @@ describe("DocumentWorkspace", () => {
     await waitFor(() => {
       expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.not.objectContaining({ documentId: "doc-1" }))
     })
+
+    await userEvent.click(screen.getAllByRole("button", { name: "切替" })[0]!)
+    await waitFor(() => {
+      expect(onUrlStateChange).toHaveBeenLastCalledWith(expect.objectContaining({ migrationId: "migration-1" }))
+    })
   })
 
   it("文書詳細drawerを開き、documentIdをコピーできる", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
+    const onAskDocument = vi.fn()
     vi.stubGlobal("navigator", { clipboard: { writeText } })
 
     render(
@@ -787,6 +875,7 @@ describe("DocumentWorkspace", () => {
         onStageReindex={vi.fn()}
         onCutoverReindex={vi.fn()}
         onRollbackReindex={vi.fn()}
+        onAskDocument={onAskDocument}
         onBack={vi.fn()}
       />
     )
@@ -803,6 +892,9 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "documentId コピー" }))
     expect(writeText).toHaveBeenCalledWith("doc-1")
     expect(screen.getByRole("button", { name: "コピー済み" })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "この資料に質問する" }))
+    expect(onAskDocument).toHaveBeenCalledWith(expect.objectContaining({ documentId: "doc-1", fileName: "requirements.md" }))
 
     vi.unstubAllGlobals()
   })

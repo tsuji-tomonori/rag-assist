@@ -54,6 +54,7 @@ type DatasetRow = {
   expectedContains?: string[]
   expectedNormalizedValues?: ExpectedNormalizedValue[]
   expectedRegionIds?: string[]
+  expectedGraphResolutions?: ExpectedGraphResolution[]
   expectedFiles: string[]
   expectedPages?: string[]
   complexity: "simple" | "multi_hop" | "comparison" | "procedure" | "out_of_scope"
@@ -65,6 +66,11 @@ type ExpectedNormalizedValue = {
   raw: string
   canonical: string
   kind: DrawingValueKind
+}
+
+type ExpectedGraphResolution = {
+  id: string
+  target: string
 }
 
 type DrawingSourceType = "project_drawing" | "standard_detail" | "equipment_standard" | "benchmark_reference" | "external"
@@ -90,6 +96,61 @@ type DrawingRegionMetadata = {
   confidence: number
 }
 
+type DrawingGraphNodeType = "page" | "region" | "detail" | "section" | "callout"
+
+type DrawingGraphNode = {
+  nodeId: string
+  nodeType: DrawingGraphNodeType
+  pageOrSheet: string
+  bbox: NormalizedBbox
+  label: string
+  sourceQaIds: string[]
+  confidence: number
+}
+
+type DrawingGraphEdgeType = "contains" | "references" | "same_as"
+
+type DrawingGraphEdge = {
+  edgeId: string
+  edgeType: DrawingGraphEdgeType
+  sourceNodeId: string
+  targetNodeId: string
+  sourceBbox: NormalizedBbox
+  targetBbox: NormalizedBbox
+  label: string
+  sourceQaIds: string[]
+  confidence: number
+}
+
+type DrawingReferenceGraph = {
+  schemaVersion: 1
+  nodes: DrawingGraphNode[]
+  edges: DrawingGraphEdge[]
+  detailIndex: Array<{
+    detailNo: string
+    detailTitle?: string
+    pageOrSheet: string
+    nodeId: string
+    bbox: NormalizedBbox
+    sourceQaIds: string[]
+  }>
+  calloutEdges: Array<{
+    sourceNodeId: string
+    sourceBbox: NormalizedBbox
+    refDetailNo: string
+    targetNodeId: string
+    targetBbox: NormalizedBbox
+    confidence: number
+    sourceQaIds: string[]
+  }>
+  conflicts: Array<{
+    sourceNodeId: string
+    targetNodeId: string
+    conflictType: "source_priority"
+    evidence: string
+  }>
+}
+
 type DrawingSheetMetadata = {
   pageOrSheet: string
   drawingNo?: string
@@ -103,6 +164,7 @@ type DrawingCorpusMetadata = {
   drawingSourceType: DrawingSourceType
   drawingSheetMetadata: DrawingSheetMetadata[]
   drawingRegionIndex: DrawingRegionMetadata[]
+  drawingReferenceGraph: DrawingReferenceGraph
 }
 
 type VisualPageRetrievalOptions = {
@@ -245,6 +307,8 @@ function toDatasetRow(
 ): DatasetRow {
   const answerable = qa.taskCategory !== "abstention"
   const expectedEvidenceRegions = corpusMetadata?.drawingRegionIndex.filter((region) => region.sourceQaIds.includes(qa.id)) ?? []
+  const expectedGraphResolutions = expectedGraphResolutionsFor(qa, corpusMetadata)
+  const expectedGraphEdges = expectedGraphEdgesFor(qa, corpusMetadata)
   const expectedNormalizedValues = expectedNormalizedValuesFor(qa)
   return {
     id: qa.id,
@@ -255,6 +319,7 @@ function toDatasetRow(
     ...(answerable ? { expectedContains: expectedContainsFromAnswer(qa.expectedAnswerJa) } : {}),
     ...(expectedNormalizedValues.length > 0 ? { expectedNormalizedValues } : {}),
     ...(expectedEvidenceRegions.length > 0 ? { expectedRegionIds: expectedEvidenceRegions.map((region) => region.regionId) } : {}),
+    ...(expectedGraphResolutions.length > 0 ? { expectedGraphResolutions } : {}),
     expectedFiles: [sourceFileNames.get(qa.sourceId) ?? `${qa.sourceId}.pdf`],
     ...(qa.pageOrSheet ? { expectedPages: [qa.pageOrSheet] } : {}),
     complexity: complexityFor(qa),
@@ -266,6 +331,7 @@ function toDatasetRow(
       pageOrSheet: qa.pageOrSheet,
       evidenceAnchor: qa.evidenceAnchor,
       expectedEvidenceRegions,
+      ...(expectedGraphEdges.length > 0 ? { expectedGraphEdges } : {}),
       ...(visualPageCandidates && visualPageCandidates.length > 0
         ? {
             visualPageRetrieval: {
@@ -322,10 +388,12 @@ function normalizedKindsFor(qa: SeedQa): DrawingValueKind[] {
 function drawingCorpusMetadataMap(definition: ArchitectureDrawingQaragDefinition): Map<string, DrawingCorpusMetadata> {
   return new Map(definition.sources.map((source) => {
     const qaRows = definition.seedQa.filter((qa) => qa.sourceId === source.sourceId)
+    const drawingRegionIndex = drawingRegionIndexFor(source.sourceId, qaRows)
     return [source.sourceId, {
       drawingSourceType: drawingSourceTypeFor(source),
       drawingSheetMetadata: drawingSheetMetadataFor(qaRows),
-      drawingRegionIndex: drawingRegionIndexFor(source.sourceId, qaRows)
+      drawingRegionIndex,
+      drawingReferenceGraph: drawingReferenceGraphFor(source.sourceId, qaRows, drawingRegionIndex)
     }]
   }))
 }
@@ -484,6 +552,231 @@ function drawingRegionIndexFor(sourceId: string, qaRows: SeedQa[]): DrawingRegio
       evidenceAnchor: first.evidenceAnchor,
       sourceQaIds: rows.map((row) => row.id),
       confidence: bbox.width === 1 && bbox.height === 1 ? 0.35 : 0.55
+    }]
+  })
+}
+
+function drawingReferenceGraphFor(sourceId: string, qaRows: SeedQa[], regions: DrawingRegionMetadata[]): DrawingReferenceGraph {
+  const nodes: DrawingGraphNode[] = []
+  const edges: DrawingGraphEdge[] = []
+  const detailIndex: DrawingReferenceGraph["detailIndex"] = []
+  const calloutEdges: DrawingReferenceGraph["calloutEdges"] = []
+  const nodeIds = new Set<string>()
+  const pageNodes = new Map<string, DrawingGraphNode>()
+
+  for (const qa of qaRows) {
+    const relatedRegions = regions.filter((region) => region.sourceQaIds.includes(qa.id))
+    const sourceRegion = relatedRegions[0] ?? pageExtentRegion(sourceId, qa)
+    const pageNode = ensurePageNode(sourceId, qa.pageOrSheet, pageNodes)
+    if (!nodeIds.has(pageNode.nodeId)) {
+      nodes.push(pageNode)
+      nodeIds.add(pageNode.nodeId)
+    }
+
+    for (const region of relatedRegions) {
+      const regionNode = regionGraphNode(region)
+      if (!nodeIds.has(regionNode.nodeId)) {
+        nodes.push(regionNode)
+        nodeIds.add(regionNode.nodeId)
+      }
+      edges.push({
+        edgeId: `${pageNode.nodeId}->${regionNode.nodeId}:contains`,
+        edgeType: "contains",
+        sourceNodeId: pageNode.nodeId,
+        targetNodeId: regionNode.nodeId,
+        sourceBbox: pageNode.bbox,
+        targetBbox: regionNode.bbox,
+        label: "page contains region",
+        sourceQaIds: region.sourceQaIds,
+        confidence: Math.min(pageNode.confidence, region.confidence)
+      })
+    }
+
+    const reference = referenceTargetFor(qa)
+    if (!reference) continue
+    const sourceNode = calloutGraphNode(sourceId, qa, sourceRegion.bbox)
+    const targetNode = referenceGraphNode(sourceId, qa, reference, sourceRegion.bbox)
+    for (const node of [sourceNode, targetNode]) {
+      if (!nodeIds.has(node.nodeId)) {
+        nodes.push(node)
+        nodeIds.add(node.nodeId)
+      }
+    }
+    const edge: DrawingGraphEdge = {
+      edgeId: `${sourceNode.nodeId}->${targetNode.nodeId}:references`,
+      edgeType: "references",
+      sourceNodeId: sourceNode.nodeId,
+      targetNodeId: targetNode.nodeId,
+      sourceBbox: sourceNode.bbox,
+      targetBbox: targetNode.bbox,
+      label: reference.target,
+      sourceQaIds: [qa.id],
+      confidence: reference.confidence
+    }
+    edges.push(edge)
+    detailIndex.push({
+      detailNo: reference.target,
+      ...(reference.title ? { detailTitle: reference.title } : {}),
+      pageOrSheet: qa.pageOrSheet,
+      nodeId: targetNode.nodeId,
+      bbox: targetNode.bbox,
+      sourceQaIds: [qa.id]
+    })
+    calloutEdges.push({
+      sourceNodeId: sourceNode.nodeId,
+      sourceBbox: sourceNode.bbox,
+      refDetailNo: reference.target,
+      targetNodeId: targetNode.nodeId,
+      targetBbox: targetNode.bbox,
+      confidence: reference.confidence,
+      sourceQaIds: [qa.id]
+    })
+  }
+
+  return {
+    schemaVersion: 1,
+    nodes: dedupeNodes(nodes),
+    edges: dedupeEdges(edges),
+    detailIndex: dedupeDetailIndex(detailIndex),
+    calloutEdges: dedupeCalloutEdges(calloutEdges),
+    conflicts: sourcePriorityConflictsFor(sourceId, qaRows, nodes)
+  }
+}
+
+function expectedGraphResolutionsFor(qa: SeedQa, corpusMetadata?: DrawingCorpusMetadata): ExpectedGraphResolution[] {
+  const edges = expectedGraphEdgesFor(qa, corpusMetadata)
+  return edges.map((edge) => ({
+    id: edge.edgeId,
+    target: edge.label
+  }))
+}
+
+function expectedGraphEdgesFor(qa: SeedQa, corpusMetadata?: DrawingCorpusMetadata): DrawingGraphEdge[] {
+  return corpusMetadata?.drawingReferenceGraph.edges.filter((edge) => edge.edgeType === "references" && edge.sourceQaIds.includes(qa.id)) ?? []
+}
+
+function ensurePageNode(sourceId: string, pageOrSheet: string, pageNodes: Map<string, DrawingGraphNode>): DrawingGraphNode {
+  const key = `${sourceId}:${pageOrSheet}`
+  const existing = pageNodes.get(key)
+  if (existing) return existing
+  const node = {
+    nodeId: `${sourceId.toLowerCase()}-page-${safePageSlug(pageOrSheet)}`,
+    nodeType: "page" as const,
+    pageOrSheet,
+    bbox: pageExtentBbox(),
+    label: pageOrSheet,
+    sourceQaIds: [],
+    confidence: 0.6
+  }
+  pageNodes.set(key, node)
+  return node
+}
+
+function regionGraphNode(region: DrawingRegionMetadata): DrawingGraphNode {
+  return {
+    nodeId: region.regionId,
+    nodeType: "region",
+    pageOrSheet: region.pageOrSheet,
+    bbox: region.bbox,
+    label: region.evidenceAnchor,
+    sourceQaIds: region.sourceQaIds,
+    confidence: region.confidence
+  }
+}
+
+function calloutGraphNode(sourceId: string, qa: SeedQa, bbox: NormalizedBbox): DrawingGraphNode {
+  return {
+    nodeId: `${sourceId.toLowerCase()}-callout-${qa.id.toLowerCase()}`,
+    nodeType: "callout",
+    pageOrSheet: qa.pageOrSheet,
+    bbox,
+    label: qa.evidenceAnchor,
+    sourceQaIds: [qa.id],
+    confidence: 0.55
+  }
+}
+
+function referenceGraphNode(sourceId: string, qa: SeedQa, reference: { target: string; title?: string; kind: "detail" | "section"; confidence: number }, bbox: NormalizedBbox): DrawingGraphNode {
+  return {
+    nodeId: `${sourceId.toLowerCase()}-${reference.kind}-${safeGraphId(reference.target)}`,
+    nodeType: reference.kind,
+    pageOrSheet: qa.pageOrSheet,
+    bbox,
+    label: reference.title ? `${reference.target}: ${reference.title}` : reference.target,
+    sourceQaIds: [qa.id],
+    confidence: reference.confidence
+  }
+}
+
+function referenceTargetFor(qa: SeedQa): { target: string; title?: string; kind: "detail" | "section"; confidence: number } | undefined {
+  const text = `${qa.taskCategory} ${qa.subSkill} ${qa.questionJa} ${qa.expectedAnswerJa} ${qa.acceptableAliasesOrNormalization}`.normalize("NFKC")
+  const isReferenceQa = qa.taskCategory.includes("detail") || qa.taskCategory.includes("cross-section") || qa.subSkill.includes("section") || /詳細|断面|参照|No\./iu.test(text)
+  if (!isReferenceQa) return undefined
+  const target =
+    firstDefined([
+      text.match(/\b\d{1,2}-\d{2}(?:-\d+)?\b/u)?.[0],
+      text.match(/\b[A-Z]-\d{2,3}\b/u)?.[0],
+      text.match(/\bNo\.?\s*\d+\b/iu)?.[0],
+      text.match(/\bW[12]\b/iu)?.[0],
+      text.match(/\b[A-Z]{1,4}\d{0,3}\b/u)?.[0]
+    ])?.replace(/\s+/g, "")
+  if (!target) return undefined
+  const title = qa.expectedAnswerJa.split(/[。．]/u)[0]?.trim().normalize("NFKC")
+  return {
+    target,
+    ...(title ? { title } : {}),
+    kind: /断面|section|No\./iu.test(text) ? "section" : "detail",
+    confidence: qa.taskCategory.includes("cross-section") || qa.taskCategory.includes("detail") ? 0.7 : 0.55
+  }
+}
+
+function pageExtentRegion(sourceId: string, qa: SeedQa): DrawingRegionMetadata {
+  return {
+    regionId: `${sourceId.toLowerCase()}-page-${safePageSlug(qa.pageOrSheet)}-extent`,
+    regionType: "note",
+    pageOrSheet: qa.pageOrSheet,
+    bbox: pageExtentBbox(),
+    bboxSource: "page_extent",
+    evidenceAnchor: qa.evidenceAnchor,
+    sourceQaIds: [qa.id],
+    confidence: 0.35
+  }
+}
+
+function pageExtentBbox(): NormalizedBbox {
+  return { unit: "normalized_page", x: 0, y: 0, width: 1, height: 1 }
+}
+
+function safeGraphId(value: string): string {
+  return value.normalize("NFKC").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "ref"
+}
+
+function dedupeNodes(nodes: DrawingGraphNode[]): DrawingGraphNode[] {
+  return [...new Map(nodes.map((node) => [node.nodeId, node])).values()]
+}
+
+function dedupeEdges(edges: DrawingGraphEdge[]): DrawingGraphEdge[] {
+  return [...new Map(edges.map((edge) => [edge.edgeId, edge])).values()]
+}
+
+function dedupeDetailIndex(detailIndex: DrawingReferenceGraph["detailIndex"]): DrawingReferenceGraph["detailIndex"] {
+  return [...new Map(detailIndex.map((detail) => [`${detail.detailNo}:${detail.nodeId}`, detail])).values()]
+}
+
+function dedupeCalloutEdges(calloutEdges: DrawingReferenceGraph["calloutEdges"]): DrawingReferenceGraph["calloutEdges"] {
+  return [...new Map(calloutEdges.map((edge) => [`${edge.sourceNodeId}:${edge.targetNodeId}`, edge])).values()]
+}
+
+function sourcePriorityConflictsFor(sourceId: string, qaRows: SeedQa[], nodes: DrawingGraphNode[]): DrawingReferenceGraph["conflicts"] {
+  const conflictRows = qaRows.filter((qa) => qa.subSkill.includes("precedence") || /相違|優先|標準詳細図.*図面/u.test(`${qa.questionJa} ${qa.expectedAnswerJa}`))
+  return conflictRows.flatMap((qa) => {
+    const node = nodes.find((candidate) => candidate.sourceQaIds.includes(qa.id))
+    if (!node) return []
+    return [{
+      sourceNodeId: node.nodeId,
+      targetNodeId: `${sourceId.toLowerCase()}-source-hierarchy-project-drawing`,
+      conflictType: "source_priority" as const,
+      evidence: "案件図面に特記・寸法がある場合は標準詳細図より案件図面を優先する。"
     }]
   })
 }

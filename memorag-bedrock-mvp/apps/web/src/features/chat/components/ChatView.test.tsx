@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { ChatView } from "./ChatView.js"
 
@@ -75,5 +76,19 @@ describe("ChatView debug permission", () => {
 
     expect(screen.queryByLabelText("デバッグパネル")).not.toBeInTheDocument()
     expect(screen.getByLabelText("チャット").parentElement).toHaveClass("debug-off")
+  })
+
+  it("対象文書スコープを composer に表示し、解除できる", async () => {
+    const onClearDocumentScope = vi.fn()
+
+    renderChatView({
+      debugMode: false,
+      documentScope: { documentId: "doc-1", fileName: "requirements.md" },
+      onClearDocumentScope
+    })
+
+    expect(screen.getByText("対象文書: requirements.md")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "対象文書を解除" }))
+    expect(onClearDocumentScope).toHaveBeenCalledTimes(1)
   })
 })
