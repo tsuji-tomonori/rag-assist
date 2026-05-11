@@ -1,6 +1,6 @@
 # Heavy API Lambda quota 調整
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - branch: `codex/split-api-lambda-by-route`
 - base: `main`
@@ -65,7 +65,7 @@ Heavy API Lambda の memory を 3008MB に下げ、30分 timeout が存在する
 - [x] 30分 timeout が存在しない、または存在する場合は15分へ下げている。
 - [x] CDK assertion / snapshot / docs が 3008MB に揃っている。
 - [x] 変更範囲に見合う検証が pass している。
-- [ ] PR に日本語で受け入れ条件確認とセルフレビューがコメントされている。
+- [x] PR に日本語で受け入れ条件確認とセルフレビューがコメントされている。
 
 ## 検証計画
 
@@ -87,3 +87,9 @@ Heavy API Lambda の memory を 3008MB に下げ、30分 timeout が存在する
 - pass: `npm --prefix memorag-bedrock-mvp run lint`
 - pass: `git diff --check`
 - pass: `rg -n "MemorySize\\\": 4096|memorySize: 4096|Duration\\.minutes\\(30\\)|Timeout: 1800|TimeoutSeconds\\\\?\\\":1800|1800000" memorag-bedrock-mvp/infra/lib memorag-bedrock-mvp/infra/test memorag-bedrock-mvp/docs/OPERATIONS.md` が空であることを確認
+
+## PR コメント
+
+- follow-up PR: https://github.com/tsuji-tomonori/rag-assist/pull/266
+- 受け入れ条件確認コメント: GitHub Apps で投稿済み。
+- セルフレビューコメント: GitHub Apps で投稿済み。
