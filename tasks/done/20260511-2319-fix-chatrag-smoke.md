@@ -1,6 +1,6 @@
 # chatrag bench smoke failure 修正
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - ブランチ: `codex/fix-chatrag-smoke`
 - 作業開始: 2026-05-11 23:19 JST
