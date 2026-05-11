@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { extractDrawingRegionArtifact, type DrawingExtractionArtifact } from "./drawing-local-extraction.js"
 import { normalizeExpectedDrawingValue, type DrawingValueKind } from "./metrics/drawing-normalization.js"
 
 export const architectureDrawingQaragSuiteId = "architecture-drawing-qarag-v0.1"
@@ -53,6 +54,7 @@ type DatasetRow = {
   referenceAnswer: string
   expectedContains?: string[]
   expectedNormalizedValues?: ExpectedNormalizedValue[]
+  expectedExtractionValues?: ExpectedNormalizedValue[]
   expectedRegionIds?: string[]
   expectedGraphResolutions?: ExpectedGraphResolution[]
   expectedFiles: string[]
@@ -165,6 +167,7 @@ type DrawingCorpusMetadata = {
   drawingSheetMetadata: DrawingSheetMetadata[]
   drawingRegionIndex: DrawingRegionMetadata[]
   drawingReferenceGraph: DrawingReferenceGraph
+  drawingExtractionArtifacts: DrawingExtractionArtifact[]
 }
 
 type VisualPageRetrievalOptions = {
@@ -310,6 +313,8 @@ function toDatasetRow(
   const expectedGraphResolutions = expectedGraphResolutionsFor(qa, corpusMetadata)
   const expectedGraphEdges = expectedGraphEdgesFor(qa, corpusMetadata)
   const expectedNormalizedValues = expectedNormalizedValuesFor(qa)
+  const expectedExtractionArtifacts = corpusMetadata?.drawingExtractionArtifacts.filter((artifact) => artifact.sourceQaIds.includes(qa.id)) ?? []
+  const expectedExtractionValues = expectedExtractionValuesFor(expectedExtractionArtifacts, expectedNormalizedValues)
   return {
     id: qa.id,
     question: qa.questionJa,
@@ -318,6 +323,7 @@ function toDatasetRow(
     referenceAnswer: qa.expectedAnswerJa,
     ...(answerable ? { expectedContains: expectedContainsFromAnswer(qa.expectedAnswerJa) } : {}),
     ...(expectedNormalizedValues.length > 0 ? { expectedNormalizedValues } : {}),
+    ...(expectedExtractionValues.length > 0 ? { expectedExtractionValues } : {}),
     ...(expectedEvidenceRegions.length > 0 ? { expectedRegionIds: expectedEvidenceRegions.map((region) => region.regionId) } : {}),
     ...(expectedGraphResolutions.length > 0 ? { expectedGraphResolutions } : {}),
     expectedFiles: [sourceFileNames.get(qa.sourceId) ?? `${qa.sourceId}.pdf`],
@@ -331,6 +337,7 @@ function toDatasetRow(
       pageOrSheet: qa.pageOrSheet,
       evidenceAnchor: qa.evidenceAnchor,
       expectedEvidenceRegions,
+      ...(expectedExtractionArtifacts.length > 0 ? { expectedExtractionArtifacts } : {}),
       ...(expectedGraphEdges.length > 0 ? { expectedGraphEdges } : {}),
       ...(visualPageCandidates && visualPageCandidates.length > 0
         ? {
@@ -369,6 +376,21 @@ function expectedNormalizedValuesFor(qa: SeedQa): ExpectedNormalizedValue[] {
   })
 }
 
+function expectedExtractionValuesFor(artifacts: DrawingExtractionArtifact[], fallback: ExpectedNormalizedValue[]): ExpectedNormalizedValue[] {
+  if (artifacts.length === 0) return []
+  const values = artifacts.flatMap((artifact) => artifact.normalizedValues.map((value) => ({
+    raw: value.raw,
+    canonical: value.canonical,
+    kind: value.kind
+  })))
+  if (values.length > 0) return dedupeExpectedNormalizedValues(values)
+  return fallback
+}
+
+function dedupeExpectedNormalizedValues(values: ExpectedNormalizedValue[]): ExpectedNormalizedValue[] {
+  return [...new Map(values.map((value) => [`${value.kind}:${value.canonical}`, value])).values()]
+}
+
 function shouldEvaluateNormalizedValue(qa: SeedQa): boolean {
   const text = `${qa.taskCategory} ${qa.subSkill} ${qa.scoringRule} ${qa.questionJa} ${qa.expectedAnswerJa} ${qa.acceptableAliasesOrNormalization}`
   return /exact_normalized|縮尺|寸法|口径|管径|延長|φ|Φ|D\s*=|\d+\s*A|以上|以下|未満|以内|超/u.test(text)
@@ -389,11 +411,13 @@ function drawingCorpusMetadataMap(definition: ArchitectureDrawingQaragDefinition
   return new Map(definition.sources.map((source) => {
     const qaRows = definition.seedQa.filter((qa) => qa.sourceId === source.sourceId)
     const drawingRegionIndex = drawingRegionIndexFor(source.sourceId, qaRows)
+    const drawingExtractionArtifacts = drawingExtractionArtifactsFor(source.sourceId, qaRows, drawingRegionIndex)
     return [source.sourceId, {
       drawingSourceType: drawingSourceTypeFor(source),
       drawingSheetMetadata: drawingSheetMetadataFor(qaRows),
       drawingRegionIndex,
-      drawingReferenceGraph: drawingReferenceGraphFor(source.sourceId, qaRows, drawingRegionIndex)
+      drawingReferenceGraph: drawingReferenceGraphFor(source.sourceId, qaRows, drawingRegionIndex),
+      drawingExtractionArtifacts
     }]
   }))
 }
@@ -554,6 +578,36 @@ function drawingRegionIndexFor(sourceId: string, qaRows: SeedQa[]): DrawingRegio
       confidence: bbox.width === 1 && bbox.height === 1 ? 0.35 : 0.55
     }]
   })
+}
+
+function drawingExtractionArtifactsFor(sourceId: string, qaRows: SeedQa[], regions: DrawingRegionMetadata[]): DrawingExtractionArtifact[] {
+  return regions.map((region) => {
+    const rows = qaRows.filter((qa) => region.sourceQaIds.includes(qa.id))
+    const text = extractionTextForRows(rows)
+    const expectedKinds = [...new Set(rows.flatMap(normalizedKindsFor))]
+    return extractDrawingRegionArtifact({
+      sourceId,
+      region,
+      expectedKinds,
+      ...extractionCandidateTextFor(region, text)
+    })
+  })
+}
+
+function extractionCandidateTextFor(region: DrawingRegionMetadata, text: string | undefined): { pdfText?: string; ocrText?: string; vlmOcrText?: string; vlmOcrEnabled?: boolean } {
+  if (!text) return { vlmOcrEnabled: false }
+  if (region.regionType === "titleblock" || region.regionType === "note") return { pdfText: text, vlmOcrEnabled: false }
+  if (region.regionType === "legend" || region.regionType === "detail" || region.regionType === "table") return { ocrText: text, vlmOcrEnabled: false }
+  return { pdfText: text, vlmOcrEnabled: false }
+}
+
+function extractionTextForRows(rows: SeedQa[]): string | undefined {
+  const text = rows.flatMap((row) => [
+    row.evidenceAnchor,
+    row.expectedAnswerJa,
+    row.acceptableAliasesOrNormalization
+  ]).filter(Boolean).join(" ").normalize("NFKC").trim()
+  return text || undefined
 }
 
 function drawingReferenceGraphFor(sourceId: string, qaRows: SeedQa[], regions: DrawingRegionMetadata[]): DrawingReferenceGraph {

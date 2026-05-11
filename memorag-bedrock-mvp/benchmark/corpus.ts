@@ -55,6 +55,7 @@ type CorpusFileMetadata = {
   drawingSheetMetadata?: unknown[]
   drawingRegionIndex?: unknown[]
   drawingReferenceGraph?: unknown
+  drawingExtractionArtifacts?: unknown[]
 }
 
 type SeedCorpusOptions = {
@@ -409,12 +410,14 @@ async function readCorpusFileMetadata(filePath: string): Promise<CorpusFileMetad
     const drawingSheetMetadata = Array.isArray(raw.drawingSheetMetadata) ? raw.drawingSheetMetadata : undefined
     const drawingRegionIndex = Array.isArray(raw.drawingRegionIndex) ? raw.drawingRegionIndex : undefined
     const drawingReferenceGraph = raw.drawingReferenceGraph && typeof raw.drawingReferenceGraph === "object" ? raw.drawingReferenceGraph : undefined
+    const drawingExtractionArtifacts = Array.isArray(raw.drawingExtractionArtifacts) ? raw.drawingExtractionArtifacts : undefined
     return {
       ...(searchAliases ? { searchAliases } : {}),
       ...(drawingSourceType ? { drawingSourceType } : {}),
       ...(drawingSheetMetadata ? { drawingSheetMetadata } : {}),
       ...(drawingRegionIndex ? { drawingRegionIndex } : {}),
-      ...(drawingReferenceGraph ? { drawingReferenceGraph } : {})
+      ...(drawingReferenceGraph ? { drawingReferenceGraph } : {}),
+      ...(drawingExtractionArtifacts ? { drawingExtractionArtifacts } : {})
     }
   } catch (error) {
     if (isMissingFileError(error)) return {}

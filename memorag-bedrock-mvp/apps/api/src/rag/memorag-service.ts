@@ -2099,6 +2099,7 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   const drawingSheetMetadata = jsonArray(metadata.drawingSheetMetadata)
   const drawingRegionIndex = jsonArray(metadata.drawingRegionIndex)
   const drawingReferenceGraph = jsonObject(metadata.drawingReferenceGraph)
+  const drawingExtractionArtifacts = jsonArray(metadata.drawingExtractionArtifacts)
   const aclGroup = stringValue(metadata.aclGroup) ?? aclGroups[0]
   if (tenantId) filterable.tenantId = tenantId
   if (department) filterable.department = department
@@ -2118,6 +2119,7 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (drawingSheetMetadata) filterable.drawingSheetMetadata = drawingSheetMetadata
   if (drawingRegionIndex) filterable.drawingRegionIndex = drawingRegionIndex
   if (drawingReferenceGraph) filterable.drawingReferenceGraph = drawingReferenceGraph
+  if (drawingExtractionArtifacts) filterable.drawingExtractionArtifacts = drawingExtractionArtifacts
   if (aclGroup) filterable.aclGroup = aclGroup
   if (aclGroups.length > 0) filterable.aclGroups = aclGroups
   if (allowedUsers && allowedUsers.length > 0) filterable.allowedUsers = allowedUsers
