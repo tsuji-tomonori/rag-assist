@@ -230,7 +230,7 @@ baseline evaluation set をローカルで測る場合は、`task benchmark:rag-
 
 conversation benchmark は `npm run start:conversation -w @memorag-mvp/benchmark` または `task benchmark:mtrag` / `task benchmark:chatrag-bench` で実行します。MTRAG / ChatRAG Bench の外部 raw dataset は、それぞれ `npm run prepare:mtrag -w @memorag-mvp/benchmark`、`npm run prepare:chatrag-bench -w @memorag-mvp/benchmark` で conversation JSONL と `.md` corpus に変換します。
 
-`OUTPUT` には行ごとのAPI応答と評価結果、`SUMMARY` には集計JSON、`REPORT` にはMarkdownレポートが出力されます。agent benchmark report には `retrieval_mrr_at_k`、`citation_support_pass_rate`、`no_access_leak_count`、`no_access_leak_rate`、失敗行の failure category も出力されます。conversation benchmark report には `turnAnswerCorrectRate`、`conversationSuccessRate`、`historyDependentAccuracy`、`abstentionAccuracy`、`retrievalRecallAtK` が出力されます。
+`OUTPUT` には行ごとのAPI応答と評価結果、`SUMMARY` には集計JSON、`REPORT` にはMarkdownレポートが出力されます。agent benchmark report には `retrieval_mrr_at_k`、`citation_support_pass_rate`、`no_access_leak_count`、`no_access_leak_rate`、失敗行の failure category と `debug signals` も出力されます。`debug signals` は `response_type:refusal`、`expected_contains_miss`、`citation_validation_failed`、`sufficient_context_missing_fact`、`decontextualization_bad_query` など、HTTP 成功後の回答失敗を切り分ける補助情報です。conversation benchmark report には `turnAnswerCorrectRate`、`conversationSuccessRate`、`historyDependentAccuracy`、`abstentionAccuracy`、`retrievalRecallAtK` が出力されます。
 
 Allganize の日本語公開データセット `allganize/RAG-Evaluation-Dataset-JA` は、CSV を既存 runner 用 JSONL へ変換し、`documents.csv` に含まれる source PDF を corpus として download してから実行します。既定では `target_answer` は `referenceAnswer` として results に残し、完全一致の正答判定には使いません。保守的な完全包含判定も行う場合は `ALLGANIZE_RAG_EXPECTED_MODE=strict-contains` を指定してください。
 
