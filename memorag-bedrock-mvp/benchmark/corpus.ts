@@ -79,6 +79,7 @@ const supportedExtensions = new Set([".md", ".txt", ".pdf"])
 const defaultIngestRunPollIntervalMs = 5000
 const defaultIngestRunTimeoutMs = 30 * 60 * 1000
 const uploadSessionRequestHeaderBlocklist = new Set(["content-length", "host", "transfer-encoding"])
+const benchmarkCorpusMetadataBudgetBytes = 1500
 
 export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<SeededDocument[]> {
   if (!options.corpusDir) return []
@@ -185,6 +186,17 @@ export function createBenchmarkIngestSignature(input: {
   }))
 }
 
+export function compactBenchmarkCorpusMetadata(metadata: CorpusFileMetadata): Record<string, unknown> {
+  const compact: Record<string, unknown> = {}
+  if (metadata.searchAliases) compact.searchAliases = metadata.searchAliases
+  if (metadata.drawingSourceType) compact.drawingSourceType = metadata.drawingSourceType
+  const bytes = Buffer.byteLength(JSON.stringify(compact), "utf-8")
+  if (bytes > benchmarkCorpusMetadataBudgetBytes) {
+    throw new Error(`Benchmark corpus metadata exceeds ${benchmarkCorpusMetadataBudgetBytes} bytes after compaction: ${bytes} bytes`)
+  }
+  return compact
+}
+
 async function listCorpusFiles(corpusDir: string): Promise<string[]> {
   const entries = await readdir(corpusDir)
   const files: string[] = []
@@ -275,7 +287,7 @@ async function uploadDocument(input: {
         docType: benchmarkCorpusDocType,
         lifecycleStatus: "active",
         source: benchmarkCorpusSource,
-        ...input.metadata
+        ...compactBenchmarkCorpusMetadata(input.metadata)
       }
     })
   })
@@ -344,7 +356,7 @@ async function uploadDocumentFromUploadSession(input: {
         docType: benchmarkCorpusDocType,
         lifecycleStatus: "active",
         source: benchmarkCorpusSource,
-        ...input.metadata
+        ...compactBenchmarkCorpusMetadata(input.metadata)
       }
     })
   })

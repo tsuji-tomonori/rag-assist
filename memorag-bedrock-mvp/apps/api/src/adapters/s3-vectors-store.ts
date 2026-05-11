@@ -9,6 +9,9 @@ import { config } from "../config.js"
 import type { RetrievedVector, VectorRecord } from "../types.js"
 import type { VectorFilter, VectorStore } from "./vector-store.js"
 
+const filterableMetadataMaxBytes = 2048
+const nonFilterableMetadataKeys = new Set(["text"])
+
 export class S3VectorsStore implements VectorStore {
   private readonly client = new S3VectorsClient({ region: config.region })
 
@@ -20,6 +23,7 @@ export class S3VectorsStore implements VectorStore {
   async put(records: VectorRecord[]): Promise<void> {
     for (const batch of chunk(records, 100)) {
       if (batch.length === 0) continue
+      for (const record of batch) assertFilterableMetadataBudget(record.key, record.metadata)
       await this.client.send(
         new PutVectorsCommand({
           vectorBucketName: this.vectorBucketName,
@@ -71,6 +75,35 @@ export class S3VectorsStore implements VectorStore {
       )
     }
   }
+}
+
+export function assertFilterableMetadataBudget(key: string, metadata: Record<string, unknown>): void {
+  const bytes = filterableMetadataBytes(metadata)
+  if (bytes <= filterableMetadataMaxBytes) return
+  const fieldSizes = Object.entries(metadata)
+    .filter(([field]) => !nonFilterableMetadataKeys.has(field))
+    .map(([field, value]) => ({
+      key: field,
+      bytes: jsonByteLength(value)
+    }))
+    .sort((a, b) => b.bytes - a.bytes)
+    .slice(0, 10)
+
+  throw new Error(
+    `Vector filterable metadata exceeds ${filterableMetadataMaxBytes} bytes for ${key}: ${bytes} bytes; largest fields=${JSON.stringify(fieldSizes)}`
+  )
+}
+
+function filterableMetadataBytes(metadata: Record<string, unknown>): number {
+  const filterable = Object.fromEntries(
+    Object.entries(metadata).filter(([key]) => !nonFilterableMetadataKeys.has(key))
+  )
+  return Buffer.byteLength(JSON.stringify(filterable), "utf-8")
+}
+
+function jsonByteLength(value: unknown): number {
+  const json = JSON.stringify(value)
+  return json === undefined ? 0 : Buffer.byteLength(json, "utf-8")
 }
 
 function toS3Filter(filter: VectorFilter): QueryVectorsCommandInput["filter"] {

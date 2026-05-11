@@ -159,6 +159,41 @@ test("benchmark seed delete authorization reads only the target manifest", async
   })
 })
 
+test("service keeps rich drawing metadata out of vector filter metadata", async () => {
+  const { service, dataDir } = await createService()
+  const manifest = await service.ingest({
+    fileName: "drawing.md",
+    text: "建築標準詳細図の表示記号と略号について説明する benchmark corpus content.",
+    skipMemory: true,
+    metadata: {
+      benchmarkSeed: true,
+      benchmarkSuiteId: "architecture-drawing-qarag-v0.1",
+      benchmarkSourceHash: "hash",
+      benchmarkIngestSignature: "signature",
+      benchmarkCorpusSkipMemory: true,
+      benchmarkEmbeddingModelId: "api-default",
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      lifecycleStatus: "active",
+      source: "benchmark-runner",
+      drawingSourceType: "standard_detail",
+      drawingSheetMetadata: [{ pageOrSheet: "P1", sheetTitle: "表示記号及び略号", sourceQaIds: ["QA-001"] }],
+      drawingRegionIndex: [{ regionId: "s01-titleblock-001", regionType: "titleblock", sourceQaIds: ["QA-001"] }],
+      drawingReferenceGraph: { schemaVersion: 1, nodes: [{ nodeId: "n1" }], edges: [] },
+      drawingExtractionArtifacts: [{ artifactId: "a1", sourceMethod: "pdf_text" }]
+    }
+  })
+
+  assert.equal(manifest.metadata?.drawingSheetMetadata instanceof Array, true)
+  const evidenceDb = JSON.parse(await readFile(path.join(dataDir, "evidence-vectors.json"), "utf-8")) as { records: Array<{ metadata: Record<string, unknown> }> }
+  const vectorMetadata = evidenceDb.records[0]?.metadata
+  assert.equal(vectorMetadata?.drawingSourceType, "standard_detail")
+  assert.equal(vectorMetadata?.drawingSheetMetadata, undefined)
+  assert.equal(vectorMetadata?.drawingRegionIndex, undefined)
+  assert.equal(vectorMetadata?.drawingReferenceGraph, undefined)
+  assert.equal(vectorMetadata?.drawingExtractionArtifacts, undefined)
+})
+
 test("service listDocuments denies group-scoped manifests to non-members without legacy ACLs", async () => {
   const { service } = await createService()
   const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }

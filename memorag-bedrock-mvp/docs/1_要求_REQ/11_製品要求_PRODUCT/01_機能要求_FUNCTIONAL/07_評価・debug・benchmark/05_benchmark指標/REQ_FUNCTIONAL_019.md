@@ -28,8 +28,8 @@
 - AC-FR019-006: Markdown report の Metrics 表は `metric`、`value`、`説明` の列を持ち、各 metric の意味を日本語で説明すること。
 - AC-FR019-007: 図面 benchmark は optional field がある場合に限り、region recall、extraction accuracy、count MAPE、graph resolution accuracy を出力し、未指定の場合は未評価として扱うこと。
 - AC-FR019-008: 図面 benchmark は optional `evidenceSufficiency` により、根拠 bbox、source hierarchy、正規化値一致を通常回答の gate として評価できること。
-- AC-FR019-009: 図面 benchmark の corpus metadata は、detail / section / callout の source bbox と target bbox を含む `drawingReferenceGraph` を保持し、graph evidence がない detail / section QA を推測回答として扱わないこと。
-- AC-FR019-010: 図面 benchmark の corpus metadata は、region 単位の `drawingExtractionArtifacts` に `sourceMethod`、bbox、confidence、parser version、raw text、normalized value lineage、failure reason を保持し、VLM-OCR が利用できない場合に架空値を作らないこと。
+- AC-FR019-009: 図面 benchmark の prepare artifact / corpus metadata は、detail / section / callout の source bbox と target bbox を含む `drawingReferenceGraph` を保持し、graph evidence がない detail / section QA を推測回答として扱わないこと。
+- AC-FR019-010: 図面 benchmark の prepare artifact / corpus metadata は、region 単位の `drawingExtractionArtifacts` に `sourceMethod`、bbox、confidence、parser version、raw text、normalized value lineage、failure reason を保持し、VLM-OCR が利用できない場合に架空値を作らないこと。
 
 ## Markdown report 指標説明
 
