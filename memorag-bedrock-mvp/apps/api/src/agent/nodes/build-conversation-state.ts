@@ -1,6 +1,7 @@
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
+import { buildSignalPhrase, extractSignalTerms } from "../text-signals.js"
 
-const FOLLOW_UP_CUE = /^(その|それ|これ|あれ|上記|前述|同じ|では|じゃあ|あと|例外|期限|条件|手順|2つ目|二つ目|比較|違い|差分|what about|how about|and |then |that |those |it |they )/iu
+const FOLLOW_UP_CUE = /^(その|それ|これ|あれ|上記|前述|同じ|では|じゃあ|あと|例外|期限|条件|手順|2つ目|二つ目|比較|違い|差分)/u
 
 export async function buildConversationState(state: QaAgentState): Promise<QaAgentUpdate> {
   const conversation = state.conversation
@@ -84,46 +85,34 @@ function inferTurnDependency(question: string, historyCount: number, explicit?: 
   if (historyCount === 0) return "standalone"
   const normalized = question.trim()
   if (FOLLOW_UP_CUE.test(normalized)) return "coreference"
+  if (isShortFollowUpQuestion(normalized)) return "coreference"
   if (/比較|違い|差分|compare|difference/i.test(normalized)) return "comparison"
   if (/例外|条件|それ|これ|その|that|those|it/i.test(normalized)) return "ellipsis"
   return "standalone"
+}
+
+function isShortFollowUpQuestion(question: string): boolean {
+  const tokens = question.normalize("NFKC").match(/[A-Za-z][A-Za-z0-9_-]*|[\p{Script=Han}\p{Script=Katakana}ー]{2,}|[\p{Script=Hiragana}]{3,}/gu) ?? []
+  const signalCount = extractSignalTerms(question, 4).length
+  return tokens.length > 0 && tokens.length <= 5 && signalCount > 0 && signalCount <= 2
 }
 
 function extractTopic(text: string): string {
   const normalized = text
     .replace(/[?？。.!！]/g, "")
     .trim()
-  if (/[A-Za-z]/.test(normalized)) return extractEnglishTopic(normalized).slice(0, 80)
-  return normalized.replace(/(について|教えて|ください|ですか|ますか|とは|は|を).*/u, "").trim().slice(0, 80)
+  const signalPhrase = buildSignalPhrase([normalized], normalized, 5)
+  return signalPhrase.slice(0, 80)
 }
 
 function extractEntities(text: string): string[] {
-  const normalized = text.normalize("NFKC")
-  const ascii = normalized.match(/[A-Za-z][A-Za-z0-9_-]{2,}/g) ?? []
-  const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}(?:規程|制度|申請|期限|条件|例外|手当|精算|承認)?/gu) ?? []
-  return unique([...ascii, ...japanese].map((item) => item.trim()).filter(isUsefulEntity)).slice(0, 8)
+  return extractSignalTerms(text, 8)
 }
 
 function buildStandaloneQuestion(question: string, topicPrefix: string): string {
-  const followUp = question.match(/^(?:what|how)\s+about\s+(.+?)\??$/iu)
-  if (followUp?.[1]) return `${followUp[1].trim()} ${topicPrefix} ${question}`.trim()
-  return `${topicPrefix} ${question}`.trim()
-}
-
-function extractEnglishTopic(text: string): string {
-  const normalized = text
-    .replace(/\b(?:who|what|when|where|which|how|why)\b/giu, " ")
-    .replace(/\b(?:can|could|should|would|do|does|did|is|are|was|were|the|a|an|about)\b/giu, " ")
-    .replace(/\b(?:request|need|needs|required|require|requires|issued|tell|show|explain)\b/giu, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-  return normalized || text
-}
-
-function isUsefulEntity(item: string): boolean {
-  if (item.length < 2) return false
-  const normalized = item.normalize("NFKC").toLowerCase()
-  return !ENGLISH_ENTITY_STOP_WORDS.has(normalized) && !JAPANESE_ENTITY_STOP_WORDS.has(item.normalize("NFKC"))
+  const subject = buildSignalPhrase([question], "", 4)
+  const prefixes = unique([subject, topicPrefix].map((item) => item.trim()).filter(Boolean)).join(" ")
+  return `${prefixes} ${question}`.trim()
 }
 
 function isGenericAssistantText(text: string): boolean {
@@ -155,34 +144,3 @@ function uniqueCitations(citations: Array<{ documentId?: string; fileName?: stri
   }
   return result
 }
-
-const ENGLISH_ENTITY_STOP_WORDS = new Set([
-  "and",
-  "are",
-  "about",
-  "can",
-  "could",
-  "did",
-  "does",
-  "how",
-  "need",
-  "needs",
-  "request",
-  "required",
-  "requires",
-  "should",
-  "that",
-  "the",
-  "then",
-  "they",
-  "those",
-  "what",
-  "when",
-  "where",
-  "which",
-  "who",
-  "why",
-  "would"
-])
-
-const JAPANESE_ENTITY_STOP_WORDS = new Set(["資料", "回答"])

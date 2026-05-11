@@ -31,6 +31,7 @@ import { validateCitations } from "./nodes/validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
 import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeTopK, ragRuntimePolicy } from "./runtime-policy.js"
 import { NO_ANSWER, isPrimaryRequiredFact, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
+import { buildSignalPhrase } from "./text-signals.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, QaGraphResult } from "./types.js"
 import { toCitation } from "./utils.js"
@@ -474,40 +475,21 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
   const planned = planStructuredFacts(question)
   if (planned.length > 0) return planned
 
-  const questionRefs = question.match(/[A-Za-z0-9_-]{3,}/g) ?? []
-  const clueRefs = /[\p{Script=Han}\p{Script=Katakana}\p{Script=Hiragana}]/u.test(question)
-    ? []
-    : clues.flatMap((clue) => clue.match(/[A-Za-z0-9_-]{3,}/g) ?? [])
-  const refs = questionRefs.length > 0 ? questionRefs : clueRefs
-  const uniqueRefs = [...new Set(refs.filter(isUsefulFactReference))].slice(0, ragRuntimePolicy.limits.factReferenceLimit)
-  if (uniqueRefs.length === 0) {
-    return [
-      {
+  const fallbackDescription = buildFallbackFactDescription(question, clues)
+  return [
+    {
       id: "fact-1",
-      description: question,
+      description: fallbackDescription,
       factType: "unknown",
       necessity: "primary",
-      subject: inferFactSubject(question),
+      subject: inferFallbackFactSubject(question, fallbackDescription),
       confidence: 0.45,
       plannerSource: "legacy_fallback",
       priority: 1,
       status: "missing",
       supportingChunkKeys: []
-      }
-    ]
-  }
-  return uniqueRefs.map((ref, index) => ({
-    id: `fact-${index + 1}`,
-    description: ref,
-    factType: "unknown",
-    necessity: "primary",
-    subject: ref,
-    confidence: 0.5,
-    plannerSource: "legacy_fallback",
-    priority: index + 1,
-    status: "missing",
-    supportingChunkKeys: []
-  }))
+    }
+  ]
 }
 
 function planStructuredFacts(question: string): RequiredFact[] {
@@ -562,6 +544,20 @@ function inferFactSubject(question: string): string {
   return cleanFactSubject(question).slice(0, 80) || question.slice(0, 80)
 }
 
+function buildFallbackFactDescription(question: string, clues: string[]): string {
+  const candidateTexts = /[\p{Script=Han}\p{Script=Katakana}\p{Script=Hiragana}]/u.test(question)
+    ? [question]
+    : [question, ...clues.slice(0, 2)]
+  const phrase = buildSignalPhrase(candidateTexts, question, ragRuntimePolicy.limits.factReferenceLimit)
+  return phrase.slice(0, 120) || question.slice(0, 120)
+}
+
+function inferFallbackFactSubject(question: string, fallbackDescription: string): string {
+  const subject = inferFactSubject(question)
+  if (subject && subject !== question.slice(0, 80)) return subject
+  return fallbackDescription.slice(0, 80)
+}
+
 function cleanFactSubject(value: string): string {
   return value
     .normalize("NFKC")
@@ -577,48 +573,10 @@ function inferFactScope(question: string): string | undefined {
   return match?.[0]
 }
 
-function isUsefulFactReference(ref: string): boolean {
-  const normalized = ref.toLowerCase()
-  if (USELESS_FACT_REFERENCES.has(normalized)) return false
-  return true
-}
-
 function isMissingObjectError(error: unknown): boolean {
   if (!(error instanceof Error)) return false
   return error.name === "NoSuchKey" || error.message.includes("NoSuchKey") || error.message.includes("not found") || error.message.includes("specified key does not exist")
 }
-
-const USELESS_FACT_REFERENCES = new Set([
-  "about",
-  "and",
-  "are",
-  "can",
-  "clue",
-  "clues_json",
-  "could",
-  "does",
-  "generator",
-  "how",
-  "json",
-  "memorag",
-  "need",
-  "needs",
-  "question",
-  "required",
-  "requires",
-  "that",
-  "the",
-  "then",
-  "they",
-  "those",
-  "what",
-  "when",
-  "where",
-  "which",
-  "who",
-  "why",
-  "would"
-])
 
 function inferSearchComplexity(question: string): QaAgentState["searchPlan"]["complexity"] {
   if (/比較|違い|差分|どちら/.test(question)) return "comparison"

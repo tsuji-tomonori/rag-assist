@@ -20,6 +20,7 @@ import { createSufficientContextGateNode } from "./sufficient-context-gate.js"
 import { validateCitations } from "./validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./verify-answer-support.js"
 import { NO_ANSWER, type QaAgentState, type QaAgentUpdate } from "../state.js"
+import { buildSignalPhrase, extractSignalTerms } from "../text-signals.js"
 import { tracedNode } from "../trace.js"
 import type { DebugStep } from "../../types.js"
 
@@ -76,6 +77,12 @@ test("analyze input combines unresolved clarification context without duplicatin
   assert.equal(resolved.question, "海外出張です")
 })
 
+test("signal terms suppress low-information question tokens across domains", () => {
+  assert.deepEqual(extractSignalTerms("Who can request VPN access?"), ["request", "VPN", "access"])
+  assert.deepEqual(extractSignalTerms("Can vendors renew SOC2 access?"), ["vendors", "SOC2", "access"])
+  assert.equal(buildSignalPhrase(["What about auditors?", "Can vendors renew SOC2 access?"], "fallback"), "auditors vendors SOC2 access")
+})
+
 test("conversation query rewrite ignores refusal text and weak English function words", async () => {
   const conversationUpdate = await buildConversationState(state({
     question: "What about contractors?",
@@ -102,6 +109,31 @@ test("conversation query rewrite ignores refusal text and weak English function 
   assert.doesNotMatch(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /資料|回答できません|Who can/i)
   assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("Who"), false)
   assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("can"), false)
+})
+
+test("conversation rewrite carries domain signals without fixed benchmark vocabulary", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "And auditors?",
+    conversation: {
+      conversationId: "conv-soc2",
+      turnId: "turn-2",
+      turnIndex: 2,
+      turns: [
+        { role: "user", text: "Can vendors renew SOC2 access?" },
+        { role: "assistant", text: "I cannot answer from the provided material." }
+      ]
+    }
+  }))
+
+  const queryUpdate = await decontextualizeQuery(state({
+    question: "And auditors?",
+    conversationState: conversationUpdate.conversationState
+  }))
+
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /auditors/i)
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /vendors SOC2 access/i)
+  assert.doesNotMatch(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /cannot answer|Can vendors/i)
+  assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("Can"), false)
 })
 
 test("computation tools skip unavailable intents and derive relative policy deadline facts from evidence", async () => {
