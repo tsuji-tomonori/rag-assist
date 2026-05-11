@@ -52,7 +52,7 @@ type SummaryArtifact = {
   }>
   corpusSeed: Array<{ fileName: string; status: string; skipReason?: string }>
   skippedRows: Array<{ id?: string; fileNames: string[]; reason: string }>
-  failures: Array<{ id?: string; reasons: string[]; categories?: string[] }>
+  failures: Array<{ id?: string; reasons: string[]; debugSignals?: string[]; categories?: string[] }>
   diagnosticFailureBreakdown?: Record<string, number>
 }
 
@@ -204,6 +204,84 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.match(report, /citation_support_pass_rate/)
     assert.match(report, /no_access_leak_count/)
     assert.match(report, /RAG profile: default@1 retrieval=default@1 answer=default-answer-policy@1/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark report includes diagnostic signals for answerable refusals", async () => {
+  const paths = artifactPaths("failure-debug-signals")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${JSON.stringify({
+    id: "answerable-refused-001",
+    question: "Who can request VPN access?",
+    answerable: true,
+    expectedResponseType: "answer",
+    expectedContains: ["Employees with manager approval"],
+    expectedFiles: ["chatrag_sample_it.md"]
+  })}\n`, "utf-8")
+
+  const server = createServer((req, res) => {
+    res.setHeader("content-type", "application/json")
+    res.end(JSON.stringify({ json: {
+      id: "answerable-refused-001",
+      responseType: "refusal",
+      answer: "資料からは回答できません。",
+      isAnswerable: false,
+      citations: [],
+      retrieved: [{ documentId: "doc-vpn", fileName: "chatrag_sample_it.md", chunkId: "vpn-001", score: 0.9 }],
+      debug: {
+        ragProfile: defaultRagProfile(),
+        totalLatencyMs: 10,
+        steps: [
+          {
+            label: "sufficient_context_gate",
+            status: "warning",
+            summary: "sufficient_context=PARTIAL, missing=1",
+            detail: "missingFacts:\nWho"
+          },
+          {
+            label: "validate_citations",
+            status: "warning",
+            output: {
+              answerability: {
+                isAnswerable: false,
+                reason: "citation_validation_failed",
+                confidence: 0
+              }
+            }
+          }
+        ]
+      }
+    } }))
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    const summary = readSummary(paths.summary)
+    const failure = summary.failures.find((item) => item.id === "answerable-refused-001")
+    assert.deepEqual(new Set(failure?.debugSignals), new Set([
+      "response_type:refusal",
+      "expected_contains_miss",
+      "citation_file_miss",
+      "citation_validation_failed",
+      "sufficient_context_missing_fact"
+    ]))
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /debug signals/)
+    assert.match(report, /citation_validation_failed/)
+    assert.match(report, /sufficient_context_missing_fact/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }

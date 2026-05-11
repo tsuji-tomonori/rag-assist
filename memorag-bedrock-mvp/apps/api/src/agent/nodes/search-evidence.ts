@@ -239,9 +239,18 @@ async function loadManifest(
 async function loadManifestChunks(deps: Dependencies, cache: Map<string, Chunk[]>, manifest: DocumentManifest): Promise<Chunk[]> {
   const cached = cache.get(manifest.documentId)
   if (cached) return cached
-  const chunks = await loadChunksForManifest(deps, manifest)
+  const chunks = await loadChunksForManifestSafely(deps, manifest)
   cache.set(manifest.documentId, chunks)
   return chunks
+}
+
+async function loadChunksForManifestSafely(deps: Dependencies, manifest: DocumentManifest): Promise<Chunk[]> {
+  try {
+    return await loadChunksForManifest(deps, manifest)
+  } catch (error) {
+    if (isMissingObjectError(error)) return []
+    throw error
+  }
 }
 
 function candidateChunksForMemory(memoryHit: RetrievedVector, chunks: Chunk[]): Chunk[] {
@@ -279,6 +288,11 @@ function rankMemorySourceChunks(chunks: Chunk[], memoryHit: RetrievedVector, que
 function parseSourceChunkIds(text: string | undefined): string[] {
   const match = text?.match(/^Source chunks:\s*(.+)$/im)
   return match?.[1]?.split(",").map((item) => item.trim()).filter(Boolean) ?? []
+}
+
+function isMissingObjectError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  return error.name === "NoSuchKey" || error.message.includes("NoSuchKey") || error.message.includes("not found") || error.message.includes("specified key does not exist")
 }
 
 function pageOverlapsMemory(chunk: Chunk, metadata: VectorMetadata): boolean {

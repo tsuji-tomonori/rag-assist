@@ -240,6 +240,7 @@ type RowEvaluation = {
   retrievedCount: number
   citationCount: number
   failureReasons: string[]
+  failureDebugSignals: string[]
   failureCategories: FailureCategory[]
 }
 
@@ -364,6 +365,7 @@ type Summary = {
     expectedAnswer?: string
     expected?: string
     answerPreview: string
+    debugSignals: string[]
     categories: FailureCategory[]
   }>
   diagnosticFailureBreakdown: Record<DiagnosticFailureCategory, number>
@@ -812,8 +814,6 @@ function evaluateRow(
   if (noAccessLeak === false) failureReasons.push("no_access_leak")
 
   if (status < 200 || status >= 300) failureReasons.push(`http_${status}`)
-  const failureCategories = classifyFailureCategories(failureReasons)
-
   const answerCorrect =
     expectedAnswerable &&
     answerabilityCorrect &&
@@ -834,6 +834,16 @@ function evaluateRow(
 
   const abstentionCorrect = expectedAnswerable ? null : !actualAnswerable || isNoAnswerText(answer, evaluatorProfile)
   if (abstentionCorrect === false) failureReasons.push("unsupported_answer")
+  const failureCategories = classifyFailureCategories(failureReasons)
+  const failureDebugSignals = summarizeFailureDebugSignals({
+    expectedAnswerable,
+    actualResponseType,
+    answerContainsExpected,
+    expectedFileHit: expectedFileHit ?? expectedDocumentHit,
+    retrievalRecallAtK,
+    queryRewriteHit,
+    body
+  })
 
   return {
     expectedAnswerable,
@@ -892,6 +902,7 @@ function evaluateRow(
     retrievedCount: retrieved.length,
     citationCount: citations.length,
     failureReasons,
+    failureDebugSignals,
     failureCategories
   }
 }
@@ -960,6 +971,38 @@ function evaluateQueryRewrite(expected: string | undefined, actual: string | und
   if (!expected) return null
   if (!actual) return false
   return normalize(actual).includes(normalize(expected)) || normalize(expected).includes(normalize(actual))
+}
+
+function summarizeFailureDebugSignals(input: {
+  expectedAnswerable: boolean
+  actualResponseType: "answer" | "refusal" | "clarification"
+  answerContainsExpected: boolean | null
+  expectedFileHit: boolean | null
+  retrievalRecallAtK: boolean | null
+  queryRewriteHit: boolean | null
+  body: BenchmarkResponse
+}): string[] {
+  const signals: string[] = []
+  if (input.expectedAnswerable && input.actualResponseType === "refusal") signals.push("response_type:refusal")
+  if (input.answerContainsExpected === false) signals.push("expected_contains_miss")
+  if (input.expectedFileHit === false) signals.push("citation_file_miss")
+  if (input.retrievalRecallAtK === false) signals.push("retrieval_file_miss")
+  if (input.queryRewriteHit === false) signals.push("decontextualization_bad_query")
+
+  for (const step of input.body.debug?.steps ?? []) {
+    const outputText = JSON.stringify(step.output ?? {})
+    const detail = step.detail ?? ""
+    const combined = `${step.label}\n${step.status ?? ""}\n${step.summary ?? ""}\n${detail}\n${outputText}`
+    if (/citation_validation_failed/.test(combined)) signals.push("citation_validation_failed")
+    if (step.label === "sufficient_context_gate" && /missing_required_fact|missingFacts|missing=/.test(combined)) {
+      signals.push("sufficient_context_missing_fact")
+    }
+    if (step.label === "execute_search_action" && step.status === "error") {
+      signals.push("execute_search_action_error")
+    }
+  }
+
+  return [...new Set(signals)]
 }
 
 function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], skippedRows: SkippedDatasetRow[]): Summary {
@@ -1224,6 +1267,7 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         expectedAnswer: row.expectedAnswer,
         expected: row.expected,
         answerPreview: (row.result.answer ?? row.result.error ?? "").slice(0, 180),
+        debugSignals: row.evaluation.failureDebugSignals,
         categories: row.evaluation.failureCategories
       })),
     diagnosticFailureBreakdown: diagnosticFailureBreakdown(results)
@@ -1352,10 +1396,10 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
   const failureRows = summary.failures.length === 0
     ? "\nNo failed benchmark rows.\n"
     : [
-        "| id | question | reasons | categories | answer preview |",
-        "| --- | --- | --- | --- | --- |",
+        "| id | question | reasons | debug signals | categories | answer preview |",
+        "| --- | --- | --- | --- | --- | --- |",
         ...summary.failures.map((failure) =>
-          `| ${escapeMarkdown(failure.id ?? "")} | ${escapeMarkdown(failure.question)} | ${escapeMarkdown(failure.reasons.join(", "))} | ${escapeMarkdown(failure.categories.join(", "))} | ${escapeMarkdown(failure.answerPreview)} |`
+          `| ${escapeMarkdown(failure.id ?? "")} | ${escapeMarkdown(failure.question)} | ${escapeMarkdown(failure.reasons.join(", "))} | ${escapeMarkdown(failure.debugSignals.join(", "))} | ${escapeMarkdown(failure.categories.join(", "))} | ${escapeMarkdown(failure.answerPreview)} |`
         )
       ].join("\n")
 
