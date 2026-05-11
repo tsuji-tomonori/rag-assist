@@ -471,6 +471,86 @@ describe("DocumentWorkspace", () => {
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-new")
   })
 
+  it("新規フォルダ作成で実データ由来のshared group候補を選択してpayloadへ反映する", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "共有資料")
+    await userEvent.selectOptions(screen.getByLabelText("公開範囲"), "shared")
+
+    const selector = screen.getByRole("group", { name: "初期 shared group 候補" })
+    const hrOption = within(selector).getByRole("checkbox", { name: "HR" })
+    expect(hrOption).not.toBeChecked()
+
+    await userEvent.click(hrOption)
+    expect(screen.getByLabelText("初期 shared groups")).toHaveValue("HR")
+    expect(screen.getByText("共有先: HR")).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("初期 shared groups"), ", RAG_GROUP_MANAGER")
+    expect(within(selector).getByRole("checkbox", { name: "RAG_GROUP_MANAGER" })).toBeChecked()
+
+    await userEvent.click(hrOption)
+    expect(screen.getByLabelText("初期 shared groups")).toHaveValue("RAG_GROUP_MANAGER")
+    expect(screen.getByText("共有先: RAG_GROUP_MANAGER")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+    expect(onCreateGroup).toHaveBeenCalledWith({
+      name: "共有資料",
+      visibility: "shared",
+      sharedGroups: ["RAG_GROUP_MANAGER"]
+    })
+  })
+
+  it("新規フォルダ作成のshared group候補がない場合は架空候補を表示しない", () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[{ ...documentGroups[0]!, sharedGroups: [] }]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const selector = screen.getByRole("group", { name: "初期 shared group 候補" })
+    expect(selector).toHaveTextContent("候補はありません。必要な group 名を入力してください。")
+    expect(within(selector).queryByRole("checkbox", { name: "CHAT_USER" })).not.toBeInTheDocument()
+    expect(within(selector).queryByRole("checkbox", { name: "RAG_GROUP_MANAGER" })).not.toBeInTheDocument()
+  })
+
   it("フォルダ作成のshared groupsと管理者IDをvalidationする", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
 
