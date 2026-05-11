@@ -60,6 +60,13 @@
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: pass。
 - `git diff --check`: pass。
 
+## 7.1 CI follow-up
+
+- 追加で共有された MemoRAG CI result では、API test のみ failure だった。
+- ローカルで CI 相当の `npm --prefix memorag-bedrock-mvp exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts` を実行し、test は全件 pass するが branch coverage が `84.98%` で `85%` に届かないことを確認した。
+- `memorag-service.test.ts` の rich drawing metadata regression に、既存 filterable field (`expiresAt`、`domainPolicy`、`ragPolicy`、`answerPolicy`) が維持される確認を追加した。
+- 同じ API coverage command を再実行し、branch coverage `85.06%` で pass することを確認した。
+
 ## 8. 未対応・制約・リスク
 
 - `npm run codebuild:run -w @memorag-mvp/benchmark` は未実行。AWS / CodeBuild / S3 Vectors 環境に依存するため。

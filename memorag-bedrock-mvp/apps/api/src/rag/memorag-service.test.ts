@@ -176,6 +176,10 @@ test("service keeps rich drawing metadata out of vector filter metadata", async 
       docType: "benchmark-corpus",
       lifecycleStatus: "active",
       source: "benchmark-runner",
+      expiresAt: "2026-06-01T00:00:00.000Z",
+      domainPolicy: "architecture-drawing",
+      ragPolicy: "drawing-qarag",
+      answerPolicy: "grounded-only",
       drawingSourceType: "standard_detail",
       drawingSheetMetadata: [{ pageOrSheet: "P1", sheetTitle: "表示記号及び略号", sourceQaIds: ["QA-001"] }],
       drawingRegionIndex: [{ regionId: "s01-titleblock-001", regionType: "titleblock", sourceQaIds: ["QA-001"] }],
@@ -188,6 +192,10 @@ test("service keeps rich drawing metadata out of vector filter metadata", async 
   const evidenceDb = JSON.parse(await readFile(path.join(dataDir, "evidence-vectors.json"), "utf-8")) as { records: Array<{ metadata: Record<string, unknown> }> }
   const vectorMetadata = evidenceDb.records[0]?.metadata
   assert.equal(vectorMetadata?.drawingSourceType, "standard_detail")
+  assert.equal(vectorMetadata?.expiresAt, "2026-06-01T00:00:00.000Z")
+  assert.equal(vectorMetadata?.domainPolicy, "architecture-drawing")
+  assert.equal(vectorMetadata?.ragPolicy, "drawing-qarag")
+  assert.equal(vectorMetadata?.answerPolicy, "grounded-only")
   assert.equal(vectorMetadata?.drawingSheetMetadata, undefined)
   assert.equal(vectorMetadata?.drawingRegionIndex, undefined)
   assert.equal(vectorMetadata?.drawingReferenceGraph, undefined)
