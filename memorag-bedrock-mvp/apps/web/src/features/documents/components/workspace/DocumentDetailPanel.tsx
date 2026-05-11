@@ -34,6 +34,7 @@ export function DocumentDetailPanel({
   groupManagerUserIds,
   moveToCreatedGroup,
   createSharedDraft,
+  createShareGroupOptions,
   createManagerDraft,
   validatesCreateSharedGroups,
   createHasValidationError,
@@ -57,6 +58,7 @@ export function DocumentDetailPanel({
   onShareGroupIdChange,
   onShareGroupsChange,
   onShareGroupOptionChange,
+  onCreateShareGroupOptionChange,
   onUploadGroupChange,
   onUploadSubmit,
   onCreateGroupSubmit,
@@ -88,6 +90,7 @@ export function DocumentDetailPanel({
   groupManagerUserIds: string
   moveToCreatedGroup: boolean
   createSharedDraft: { groups: string[]; duplicates: string[]; hasEmptyToken: boolean }
+  createShareGroupOptions: string[]
   createManagerDraft: { groups: string[]; duplicates: string[]; hasEmptyToken: boolean }
   validatesCreateSharedGroups: boolean
   createHasValidationError: boolean
@@ -111,6 +114,7 @@ export function DocumentDetailPanel({
   onShareGroupIdChange: (value: string) => void
   onShareGroupsChange: (value: string) => void
   onShareGroupOptionChange: (groupName: string, checked: boolean) => void
+  onCreateShareGroupOptionChange: (groupName: string, checked: boolean) => void
   onUploadGroupChange: (groupId: string) => void
   onUploadSubmit: (event: FormEvent) => void
   onCreateGroupSubmit: (event: FormEvent) => void
@@ -284,6 +288,29 @@ export function DocumentDetailPanel({
               aria-describedby="create-group-validation create-group-preview"
             />
           </label>
+          <fieldset className="share-group-selector" aria-label="初期 shared group 候補">
+            <legend>既存 shared group 候補</legend>
+            {createShareGroupOptions.length === 0 ? (
+              <p>候補はありません。必要な group 名を入力してください。</p>
+            ) : (
+              <div className="share-group-options">
+                {createShareGroupOptions.map((groupName) => {
+                  const checked = createSharedDraft.groups.includes(groupName)
+                  return (
+                    <label key={groupName}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={!canWrite || operationState.creatingGroup || groupVisibility !== "shared"}
+                        onChange={(event) => onCreateShareGroupOptionChange(groupName, event.target.checked)}
+                      />
+                      <span>{groupName}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </fieldset>
           <label>
             <span>管理者 user IDs</span>
             <input

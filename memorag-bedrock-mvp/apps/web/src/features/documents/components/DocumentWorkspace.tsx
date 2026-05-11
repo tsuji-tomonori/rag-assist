@@ -173,6 +173,7 @@ export function DocumentWorkspace({
   const shareHasEmptyToken = shareDraft.hasEmptyToken
   const shareHasValidationError = shareHasDuplicate || shareHasEmptyToken
   const createSharedDraft = parseListInput(groupSharedGroups)
+  const createShareGroupOptions = uniqueSorted([...documentGroups.flatMap((group) => group.sharedGroups), ...createSharedDraft.groups])
   const createManagerDraft = parseListInput(groupManagerUserIds)
   const validatesCreateSharedGroups = groupVisibility === "shared"
   const createHasValidationError =
@@ -287,6 +288,13 @@ export function DocumentWorkspace({
       ? uniqueSorted([...shareDraft.groups, groupName])
       : shareDraft.groups.filter((group) => group !== groupName)
     setShareGroups(nextGroups.join(", "))
+  }
+
+  function toggleCreateShareGroupOption(groupName: string, checked: boolean) {
+    const nextGroups = checked
+      ? uniqueSorted([...createSharedDraft.groups, groupName])
+      : createSharedDraft.groups.filter((group) => group !== groupName)
+    setGroupSharedGroups(nextGroups.join(", "))
   }
 
   async function copyDocumentId(documentId: string) {
@@ -435,6 +443,7 @@ export function DocumentWorkspace({
           groupManagerUserIds={groupManagerUserIds}
           moveToCreatedGroup={moveToCreatedGroup}
           createSharedDraft={createSharedDraft}
+          createShareGroupOptions={createShareGroupOptions}
           createManagerDraft={createManagerDraft}
           validatesCreateSharedGroups={validatesCreateSharedGroups}
           createHasValidationError={createHasValidationError}
@@ -458,6 +467,7 @@ export function DocumentWorkspace({
           onShareGroupIdChange={setShareGroupId}
           onShareGroupsChange={setShareGroups}
           onShareGroupOptionChange={toggleShareGroupOption}
+          onCreateShareGroupOptionChange={toggleCreateShareGroupOption}
           onUploadGroupChange={onUploadGroupChange}
           onUploadSubmit={(event) => void onSubmit(event)}
           onCreateGroupSubmit={(event) => void onCreateGroupSubmit(event)}
