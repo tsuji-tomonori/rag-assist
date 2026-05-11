@@ -151,7 +151,7 @@ Cognito group 取得が一部ユーザーで失敗した場合、一覧取得は
 
 - Bedrockの利用モデルを対象リージョンで有効化する。
 - `EMBEDDING_DIMENSIONS` とS3 Vectors indexのdimensionを一致させる。
-- 同期APIの API Gateway integration timeout は 60 秒に設定している。デプロイ前に、デプロイ先アカウント / リージョンの API Gateway quota `Maximum integration timeout in milliseconds` を 60,000ms 以上へ引き上げる。未設定の場合、CloudFormation は `Timeout should be between 50 ms and 29000 ms` で `AWS::ApiGateway::Method` の更新に失敗する。Regional REST API で 29 秒を超える timeout を使うため、quota 引き上げ時は account-level throttle quota への影響も確認する。API Gateway は同じ API source bundle を軽量 `ApiFunction` と重量 `HeavyApiFunction` に分け、catch-all は 1024MB の軽量 Lambda、同期 RAG / search / benchmark query / 同期 ingest / reindex 系の明示 route は 4096MB の重量 Lambda に接続する。route 分離は CDK の API Gateway integration だけで行い、API handler source は共通である。重量 Lambda の route は高単価だが軽量 API の通常呼び出しを巻き込まない。cold start は Lambda ごとに別々に発生する。
+- 同期APIの API Gateway integration timeout は 60 秒に設定している。デプロイ前に、デプロイ先アカウント / リージョンの API Gateway quota `Maximum integration timeout in milliseconds` を 60,000ms 以上へ引き上げる。未設定の場合、CloudFormation は `Timeout should be between 50 ms and 29000 ms` で `AWS::ApiGateway::Method` の更新に失敗する。Regional REST API で 29 秒を超える timeout を使うため、quota 引き上げ時は account-level throttle quota への影響も確認する。API Gateway は同じ API source bundle を軽量 `ApiFunction` と重量 `HeavyApiFunction` に分け、catch-all は 1024MB の軽量 Lambda、同期 RAG / search / benchmark query / 同期 ingest / reindex 系の明示 route は 3008MB の重量 Lambda に接続する。route 分離は CDK の API Gateway integration だけで行い、API handler source は共通である。重量 Lambda の route は高単価だが軽量 API の通常呼び出しを巻き込まない。cold start は Lambda ごとに別々に発生する。
 - 文書データに社外秘や個人情報が含まれる場合、S3 bucket policy、KMS、ログ出力方針を本番基準に更新する。
 - MVPのCDKはRAG動作検証用なので、SSO、WAF、詳細監査ログは本番化時に追加する。
 

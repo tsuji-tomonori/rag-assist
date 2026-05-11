@@ -128,7 +128,7 @@ test("implements the designed serverless resources", () => {
     Handler: "index.handler",
     Runtime: "nodejs22.x",
     Timeout: 60,
-    MemorySize: 4096,
+    MemorySize: 3008,
     Environment: Match.objectLike({
       Variables: Match.objectLike({ BENCHMARK_BUCKET_NAME: Match.anyValue() })
     })
