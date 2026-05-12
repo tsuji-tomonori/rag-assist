@@ -1,6 +1,6 @@
 # ChatRAG post-merge duplicate fix
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -50,7 +50,13 @@ PR #270 / #271 merge 後の `graph.ts` 重複定義を解消し、main の API t
 - [x] API typecheck が pass する、または依存不足などの未実施理由を記録する。
 - [x] 対象 API test が pass する、または依存不足などの未実施理由を記録する。
 - [x] 作業レポートを `reports/working/` に保存する。
-- [ ] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+
+## PR
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/272
+- 受け入れ条件確認コメント: https://github.com/tsuji-tomonori/rag-assist/pull/272#issuecomment-4427485140
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/272#issuecomment-4427486191
 
 ## 検証結果
 
