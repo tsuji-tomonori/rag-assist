@@ -2,6 +2,7 @@ import { parseJsonObject } from "../../rag/json.js"
 import { hasInvalidRequirementsClassificationAnswer, isRequirementsClassificationQuestion } from "../../rag/prompts.js"
 import { selectAnswerPolicyForMetadata } from "../../rag/profiles.js"
 import { ragRuntimePolicy } from "../runtime-policy.js"
+import { validateAnswerRequirements } from "../question-requirements.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
 import { NO_ANSWER } from "../state.js"
 import type { AnswerJson } from "../types.js"
@@ -32,6 +33,13 @@ export async function validateCitations(state: QaAgentState): Promise<QaAgentUpd
   if (isRequirementsClassificationQuestion(state.question) && hasInvalidRequirementsClassificationAnswer(answerJson.answer, answerPolicy)) {
     return citationFailure(state.rawAnswer)
   }
+  const requirementIssues = validateAnswerRequirements(state.question, answerJson.answer)
+  if (requirementIssues.length > 0) {
+    return citationFailure(
+      state.rawAnswer,
+      `answer_requirement_coverage_failed: ${requirementIssues.map((issue) => issue.reason).join(" / ")}`
+    )
+  }
 
   return {
     answer: answerJson.answer.trim(),
@@ -45,14 +53,14 @@ function validComputedFactIds(ids: string[], state: QaAgentState): string[] {
   return [...new Set(ids.map((id) => id.trim()).filter((id) => validIds.has(id)))]
 }
 
-function citationFailure(rawAnswer?: string): QaAgentUpdate {
+function citationFailure(rawAnswer?: string, reasonDetail?: string): QaAgentUpdate {
   return {
     answerability: {
       isAnswerable: false,
       reason: "citation_validation_failed",
       confidence: 0
     },
-    rawAnswer,
+    rawAnswer: reasonDetail ? `${rawAnswer ?? ""}\n${reasonDetail}` : rawAnswer,
     answer: NO_ANSWER,
     citations: []
   }

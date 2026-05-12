@@ -93,6 +93,9 @@ test("tool intent routes explicit temporal, arithmetic, and exhaustive deadline 
   assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").needsArithmeticCalculation, false)
   assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").needsSearch, true)
   assert.equal(detectToolIntent("5200円の経費精算では領収書いる?").canAnswerFromQuestionOnly, false)
+  assert.equal(detectToolIntent("円滑な入退院の実現に含まれる項目を4つ挙げてください。").needsArithmeticCalculation, false)
+  assert.equal(detectToolIntent("円滑な入退院の実現に含まれる項目を4つ挙げてください。").needsAggregation, false)
+  assert.equal(detectToolIntent("円滑な入退院の実現に含まれる項目を4つ挙げてください。").needsSearch, true)
 
   const taskList = detectToolIntent("期限切れのタスクを全部出して")
   assert.equal(taskList.needsTaskDeadlineIndex, true)

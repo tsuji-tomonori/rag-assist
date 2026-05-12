@@ -360,7 +360,7 @@ function stripFactFacets(value: string): string {
   return value
     .normalize("NFKC")
     .replace(/(現行|旧制度|新制度|最新版|現在|過去|[0-9０-９]{4}年)/gu, "")
-    .replace(/(金額|費用|料金|価格|単価|上限|下限|円|期限|期日|締切|締め切り|開始日|終了日|日付|期間|日数|頻度|回数|方法|手順|やり方|フロー|申請|提出|担当|承認者|責任者|部署|報告先|依頼先|条件|対象|例外|適用範囲|分類|種類|区分)/gu, "")
+    .replace(/(金額|費用|料金|価格|単価|上限|下限|いくら|期限|期日|締切|締め切り|開始日|終了日|日付|期間|日数|頻度|回数|方法|手順|やり方|フロー|申請|提出|担当|承認者|責任者|部署|報告先|依頼先|条件|対象|例外|適用範囲|分類|種類|区分)/gu, "")
     .replace(/(と|および|及び|かつ|または|又は|、|,|\/)+/gu, " ")
     .replace(/の\s*$/u, "")
     .replace(/\s+/g, " ")
@@ -478,7 +478,7 @@ function factValueKinds(fact: RequiredFact | string): Claim["valueType"][] {
   if (factType === "version") kinds.push("version")
   if (factType === "condition") kinds.push("condition")
   if (/期限|期日|締切|締め切り|開始日|終了日|日付/.test(normalized)) kinds.push("date")
-  if (/金額|費用|料金|価格|単価|上限|下限|円/.test(normalized)) kinds.push("money")
+  if (/金額|費用|料金|価格|単価|上限|下限|いくら|(?:\d[\d,]*(?:\.\d+)?|[一二三四五六七八九十百千万億兆]+)\s*(?:円|万円|千円)/.test(normalized)) kinds.push("money")
   if (/期間|日数|何日|何営業日/.test(normalized)) kinds.push("duration")
   if (/回数|頻度|何回/.test(normalized)) kinds.push("count")
   if (/状態|ステータス|有効|無効|現行/.test(normalized)) kinds.push("status")

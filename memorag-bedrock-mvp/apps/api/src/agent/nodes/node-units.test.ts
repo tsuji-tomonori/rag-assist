@@ -22,6 +22,7 @@ import { createVerifyAnswerSupportNode } from "./verify-answer-support.js"
 import { NO_ANSWER, type QaAgentState, type QaAgentUpdate } from "../state.js"
 import { buildSignalPhrase, extractSignalTerms } from "../text-signals.js"
 import { tracedNode } from "../trace.js"
+import { detectQuestionRequirements, validateAnswerRequirements } from "../question-requirements.js"
 import type { DebugStep } from "../../types.js"
 
 const chunk: RetrievedVector = {
@@ -81,6 +82,28 @@ test("signal terms suppress low-information question tokens across domains", () 
   assert.deepEqual(extractSignalTerms("Who can request VPN access?"), ["request", "VPN", "access"])
   assert.deepEqual(extractSignalTerms("Can vendors renew SOC2 access?"), ["vendors", "SOC2", "access"])
   assert.equal(buildSignalPhrase(["What about auditors?", "Can vendors renew SOC2 access?"], "fallback"), "auditors vendors SOC2 access")
+})
+
+test("question requirements detect Japanese QA slots without benchmark expected text", () => {
+  const founding = detectQuestionRequirements("前身組織はいつ・どこに・何という組織として置かれましたか？")
+  assert.deepEqual(
+    founding.filter((requirement) => requirement.type === "slot").map((requirement) => requirement.type === "slot" ? requirement.slot : "").sort(),
+    ["date", "organization", "place"].sort()
+  )
+
+  const list = detectQuestionRequirements("円滑な入退院の実現に含まれる項目を4つ挙げてください。")
+  assert.equal(list.find((requirement) => requirement.type === "list_count")?.type, "list_count")
+  assert.equal(list.some((requirement) => requirement.type === "list_count" && requirement.count === 4), true)
+  assert.equal(list.some((requirement) => requirement.type === "slot" && requirement.slot === "item"), true)
+
+  assert.equal(validateAnswerRequirements("円滑な入退院の実現に含まれる項目を4つ挙げてください。", "① 入退院支援加算等の見直し、② 介護支援等連携指導料の見直し").length > 0, true)
+  assert.equal(
+    validateAnswerRequirements(
+      "円滑な入退院の実現に含まれる項目を4つ挙げてください。",
+      "① 入退院支援加算等の見直し、② 介護支援等連携指導料の見直し、③ 高次脳機能障害者への退院支援、④ 感染対策向上加算等における専従要件の見直し"
+    ).length,
+    0
+  )
 })
 
 test("conversation query rewrite ignores refusal text and weak English function words", async () => {
@@ -491,6 +514,69 @@ test("sufficient context gate does not override unanswerable judgement", async (
   assert.equal(result.answerability?.isAnswerable, false)
   assert.equal(result.answer, NO_ANSWER)
   assert.deepEqual(result.citations, [])
+})
+
+test("sufficient context gate proceeds on anchored unanswerable judgement with retrieved evidence", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "UNANSWERABLE",
+          confidence: 0.6,
+          requiredFacts: ["fact-1"],
+          supportedFacts: [],
+          missingFacts: ["追加の具体化"],
+          conflictingFacts: [],
+          supportingChunkIds: [],
+          reason: "一部情報が不足していると判断しました。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "円滑な入退院の実現に含まれる項目を4つ挙げてください。",
+      selectedChunks: [
+        {
+          ...chunk,
+          metadata: {
+            ...chunk.metadata,
+            heading: "II-2-2 円滑な入退院の実現",
+            text: "II-2-2 円滑な入退院の実現 ① 入退院支援加算等の見直し ② 介護支援等連携指導料の見直し ③ 回復期リハビリテーション病棟における高次脳機能障害者への退院支援 ④ 感染対策向上加算等における専従要件の見直し"
+          }
+        }
+      ],
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "円滑な入退院の実現",
+        requiredFacts: [
+          { id: "fact-1", description: "円滑な入退院の実現 項目名", factType: "classification", necessity: "primary", priority: 1, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      },
+      retrievalEvaluation: {
+        retrievalQuality: "partial",
+        missingFactIds: [],
+        conflictingFactIds: [],
+        supportedFactIds: [],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "heading anchored evidence"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "UNANSWERABLE")
+  assert.equal(result.answerability?.isAnswerable, true)
+  assert.equal(result.answer, undefined)
 })
 
 test("sufficient context gate keeps generic partial questions refused without a subject cue", async () => {

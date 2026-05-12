@@ -29,6 +29,7 @@ import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
+import { asksForMoney, detectQuestionRequirements } from "./question-requirements.js"
 import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeTopK, ragRuntimePolicy } from "./runtime-policy.js"
 import { NO_ANSWER, isPrimaryRequiredFact, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { buildSignalPhrase } from "./text-signals.js"
@@ -310,7 +311,9 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
       }
 
       state = await applyNode(state, "rerank_chunks", nodes.rerankChunks, progress)
-      state = await applyNode(state, "extract_policy_computations", nodes.extractPolicyComputations, progress)
+      if (shouldExtractPolicyComputations(state)) {
+        state = await applyNode(state, "extract_policy_computations", nodes.extractPolicyComputations, progress)
+      }
       if (state.toolIntent && (state.toolIntent.needsArithmeticCalculation || state.toolIntent.needsTemporalCalculation || state.toolIntent.needsAggregation || state.toolIntent.needsTaskDeadlineIndex)) {
         state = await applyNode(state, "execute_computation_tools", nodes.executeComputationTools, progress)
       }
@@ -373,6 +376,21 @@ function selectNextSearchAction(state: QaAgentState, fallbackQuery: string): Sea
     query: fallbackQuery,
     topK: state.topK
   }
+}
+
+function shouldExtractPolicyComputations(state: QaAgentState): boolean {
+  if (state.selectedChunks.length === 0) return false
+  if (!state.toolIntent) return true
+  if (state.toolIntent.needsArithmeticCalculation || state.toolIntent.needsAggregation) return true
+  if (state.toolIntent.needsTemporalCalculation || state.toolIntent.needsTaskDeadlineIndex) return false
+  return isDocumentThresholdComparisonQuestion(state.question, state.selectedChunks)
+}
+
+function isDocumentThresholdComparisonQuestion(question: string, chunks: RetrievedVector[]): boolean {
+  const normalizedQuestion = question.normalize("NFKC")
+  if (!asksForMoney(normalizedQuestion)) return false
+  if (!/(必要|不要|該当|対象|領収|承認|条件|以上|以下|未満|超過)/u.test(normalizedQuestion)) return false
+  return chunks.some((chunk) => /(?:\d[\d,]*(?:\.\d+)?|[一二三四五六七八九十百千万億兆]+)\s*(?:円|万円|千円).{0,40}(?:必要|不要|対象|条件|以上|以下|未満|超過|承認)/u.test((chunk.metadata.text ?? "").normalize("NFKC")))
 }
 
 function withRewrittenQuery(state: QaAgentState, action: Extract<SearchAction, { type: "query_rewrite" }>): QaAgentState {
@@ -495,7 +513,7 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
 function planStructuredFacts(question: string): RequiredFact[] {
   const subject = inferFactSubject(question)
   const candidates: Array<Pick<RequiredFact, "factType" | "description" | "expectedValueType">> = []
-  if (/金額|費用|料金|価格|単価|上限|下限|円|いくら/.test(question)) {
+  if (asksForMoney(question)) {
     candidates.push({ factType: "amount", description: `${subject} 金額`, expectedValueType: "money" })
   }
   if (/いつ|期限|期日|締切|開始日|終了日|何日|何営業日/.test(question)) {
@@ -516,8 +534,23 @@ function planStructuredFacts(question: string): RequiredFact[] {
   if (/分類|種類|区分/.test(question)) {
     candidates.push({ factType: "classification", description: `${subject} 分類`, expectedValueType: "classification_items" })
   }
+  for (const requirement of detectQuestionRequirements(question)) {
+    if (requirement.type === "list_count") {
+      candidates.push({ factType: "classification", description: `${subject} ${requirement.count}項目`, expectedValueType: `list_count:${requirement.count}` })
+    } else if (requirement.slot === "date") {
+      candidates.push({ factType: "date", description: `${subject} 日付・時期`, expectedValueType: "date_or_era" })
+    } else if (requirement.slot === "place") {
+      candidates.push({ factType: "scope", description: `${subject} 場所`, expectedValueType: "place" })
+    } else if (requirement.slot === "organization") {
+      candidates.push({ factType: "person", description: `${subject} 組織名`, expectedValueType: "person_or_org" })
+    } else if (requirement.slot === "section") {
+      candidates.push({ factType: "scope", description: `${subject} 節番号・節名`, expectedValueType: "section" })
+    } else if (requirement.slot === "item") {
+      candidates.push({ factType: "classification", description: `${subject} 項目名`, expectedValueType: "list_items" })
+    }
+  }
 
-  return candidates.slice(0, ragRuntimePolicy.limits.requiredFactLimit).map((candidate, index) => ({
+  return dedupeFactCandidates(candidates).slice(0, ragRuntimePolicy.limits.requiredFactLimit).map((candidate, index) => ({
     id: `fact-${index + 1}`,
     description: candidate.description,
     factType: candidate.factType,
@@ -561,11 +594,21 @@ function inferFallbackFactSubject(question: string, fallbackDescription: string)
 function cleanFactSubject(value: string): string {
   return value
     .normalize("NFKC")
-    .replace(/(金額|費用|料金|価格|単価|上限|下限|円|期限|期日|締切|締め切り|開始日|終了日|何日|何営業日|頻度|何回|何度|方法|手順|やり方|フロー|申請|提出|担当|承認者|責任者|部署|報告先|依頼先|条件|対象|例外|適用範囲|分類|種類|区分)/gu, "")
+    .replace(/(金額|費用|料金|価格|単価|上限|下限|いくら|期限|期日|締切|締め切り|開始日|終了日|何日|何営業日|頻度|何回|何度|方法|手順|やり方|フロー|申請|提出|担当|承認者|責任者|部署|報告先|依頼先|条件|対象|例外|適用範囲|分類|種類|区分)/gu, "")
     .replace(/(と|および|及び|かつ|または|又は|、|,|\/)+/gu, " ")
     .replace(/の\s*$/u, "")
     .replace(/\s+/g, " ")
     .trim()
+}
+
+function dedupeFactCandidates<T extends Pick<RequiredFact, "factType" | "description" | "expectedValueType">>(candidates: T[]): T[] {
+  const seen = new Set<string>()
+  return candidates.filter((candidate) => {
+    const key = `${candidate.factType ?? ""}:${candidate.description}:${candidate.expectedValueType ?? ""}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 function inferFactScope(question: string): string | undefined {
