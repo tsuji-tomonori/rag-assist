@@ -34,6 +34,7 @@
 - 未変更時の補足文、全解除確認 checkbox、関連スタイルを追加した。
 - `DocumentWorkspace.test.tsx` に hydrate、未変更 disabled、全解除確認の回帰テストを追加した。
 - `docs:web-inventory` で生成済み web UI inventory を更新した。
+- PR 作成後の CI 失敗を確認し、`main` 由来の `shouldExtractPolicyComputations` 重複定義を統合して API/infra CI 失敗を解消した。
 
 ## 5. 成果物
 
@@ -43,6 +44,7 @@
 | `memorag-bedrock-mvp/apps/web/src/features/documents/components/DocumentWorkspace.tsx` | TSX | hydrate、dirty、全解除確認 state | R1-R3 |
 | `memorag-bedrock-mvp/apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx` | TSX | 表示・submit 条件・確認 checkbox | R1-R3 |
 | `memorag-bedrock-mvp/apps/web/src/features/documents/components/DocumentWorkspace.test.tsx` | TSX test | 共有設定の回帰テスト | R5 |
+| `memorag-bedrock-mvp/apps/api/src/agent/graph.ts` | TypeScript | CI 失敗していた policy computation helper の重複定義統合 | CI 復旧 |
 | `memorag-bedrock-mvp/docs/generated/*` | Markdown/JSON | web inventory 同期 | docs 同期 |
 
 ## 6. 指示への fit 評価
@@ -65,9 +67,17 @@
 - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: 初回 fail。生成 docs が古かったため `npm --prefix memorag-bedrock-mvp run docs:web-inventory` を実行後 pass。
 - `npm --prefix memorag-bedrock-mvp run lint`: pass
 - `git diff --check`: pass
+- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/api`: 初回 fail。`shouldExtractPolicyComputations` 重複定義を統合後 pass。
+- `npm --prefix memorag-bedrock-mvp run docs:openapi:check`: 初回 fail。上記統合後 pass。
+- `npm --prefix memorag-bedrock-mvp test -w @memorag-mvp/infra`: 初回 fail。上記統合後 pass。
+- `npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/api`: pass
+- `npm --prefix memorag-bedrock-mvp run build -w @memorag-mvp/infra`: pass
+- `npm --prefix memorag-bedrock-mvp run cdk -w @memorag-mvp/infra -- synth`: pass
+- `npm --prefix memorag-bedrock-mvp exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 npm test`: pass
 
 ## 8. 未対応・制約・リスク
 
 - 実ブラウザ操作、モバイル screenshot、AWS 実環境操作は未実施。
 - `npm audit` の 3 vulnerabilities は既存依存の監査結果として記録し、この PR では扱わない。
 - ConfirmDialog async/busy 対応、操作結果ログの成功/失敗化、更新日ソート修正は後続 PR 対象。
+- API/RAG helper の重複定義統合は CI 復旧のため同一 PR に含めた。UI 共有設定の主目的とは別の main 由来不具合だが、PR 必須 CI を通すための最小修正として扱った。

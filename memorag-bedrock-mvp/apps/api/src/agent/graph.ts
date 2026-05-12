@@ -349,7 +349,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
 function shouldExtractPolicyComputations(state: QaAgentState): boolean {
   if (state.selectedChunks.length === 0) return false
   if (state.toolIntent?.needsArithmeticCalculation || state.toolIntent?.needsTemporalCalculation || state.toolIntent?.needsAggregation || state.toolIntent?.needsTaskDeadlineIndex) return true
-  return hasPolicyComputationCue(state.question)
+  return hasPolicyComputationCue(state.question) || isDocumentThresholdComparisonQuestion(state.question, state.selectedChunks)
 }
 
 function hasPolicyComputationCue(question: string): boolean {
@@ -399,14 +399,6 @@ function selectNextSearchAction(state: QaAgentState, fallbackQuery: string): Sea
     query: fallbackQuery,
     topK: state.topK
   }
-}
-
-function shouldExtractPolicyComputations(state: QaAgentState): boolean {
-  if (state.selectedChunks.length === 0) return false
-  if (!state.toolIntent) return true
-  if (state.toolIntent.needsArithmeticCalculation || state.toolIntent.needsAggregation) return true
-  if (state.toolIntent.needsTemporalCalculation || state.toolIntent.needsTaskDeadlineIndex) return false
-  return isDocumentThresholdComparisonQuestion(state.question, state.selectedChunks)
 }
 
 function isDocumentThresholdComparisonQuestion(question: string, chunks: RetrievedVector[]): boolean {
