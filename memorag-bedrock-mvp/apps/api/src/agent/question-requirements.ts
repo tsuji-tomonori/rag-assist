@@ -44,7 +44,7 @@ export function detectQuestionRequirements(question: string): QuestionRequiremen
   if (/項目|含まれる|挙げ|列挙|一覧|洗い出/u.test(normalized)) {
     requirements.push({ type: "slot", slot: "item", label: "項目名" })
   }
-  if (/(?:^|[^A-Za-z0-9])(?:DPC[\/／]?PDPS|SDDS|EBPM|AI)(?:$|[^A-Za-z0-9])/i.test(normalized)) {
+  if (/(?:^|[^A-Za-z0-9])(?:DPC[/／]?PDPS|SDDS|EBPM|AI)(?:$|[^A-Za-z0-9])/i.test(normalized)) {
     requirements.push({ type: "slot", slot: "term", label: "正規化語句" })
   }
   if (/理由|なぜ|趣旨|合うか|適合|該当/u.test(normalized)) {

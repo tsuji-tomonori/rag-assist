@@ -37,6 +37,7 @@
 
 ## 検証
 
+- `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
 - `./node_modules/.bin/tsc -p apps/api/tsconfig.json --noEmit`: pass
 - `./node_modules/.bin/tsx --test apps/api/src/agent/computation.test.ts apps/api/src/agent/nodes/node-units.test.ts apps/api/src/agent/graph.test.ts apps/api/src/rag/prompts.test.ts apps/api/src/rag/text-processing.test.ts`: pass, 106 tests
 - `git diff --check`: pass
