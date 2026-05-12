@@ -28,11 +28,12 @@
 - `prompts.ts` と `validate-citations.ts` に質問要求スロットのプロンプト指示と coverage validation を追加した。
 - `context-assembler.ts` でリスト・節項目系の短いチャンクを丸ごと保持するようにした。
 - Mock と agent / rag テストを更新し、今回の regression case を追加した。
+- PR CI の API Test が branch coverage 84.83% で失敗したため、質問要求検出の一般分岐テストを追加し、coverage 閾値を再達成した。
 
 ## 成果物
 
 - コード変更: `memorag-bedrock-mvp/apps/api/src/agent/`, `memorag-bedrock-mvp/apps/api/src/rag/`, `memorag-bedrock-mvp/apps/api/src/adapters/mock-bedrock.ts`
-- タスク管理: `tasks/do/20260512-0906-jp-public-pdf-qa-p0.md`
+- タスク管理: `tasks/done/20260512-0906-jp-public-pdf-qa-p0.md`
 - 作業レポート: `reports/working/20260512-0926-jp-public-pdf-qa-p0.md`
 
 ## 検証
@@ -40,6 +41,7 @@
 - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
 - `./node_modules/.bin/tsc -p apps/api/tsconfig.json --noEmit`: pass
 - `./node_modules/.bin/tsx --test apps/api/src/agent/computation.test.ts apps/api/src/agent/nodes/node-units.test.ts apps/api/src/agent/graph.test.ts apps/api/src/rag/prompts.test.ts apps/api/src/rag/text-processing.test.ts`: pass, 106 tests
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass, 220 tests, statements 92.64%, branches 85.18%, functions 92.85%, lines 92.64%
 - `git diff --check`: pass
 
 ## fit 評価

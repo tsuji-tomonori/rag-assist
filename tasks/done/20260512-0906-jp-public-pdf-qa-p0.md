@@ -81,6 +81,7 @@
 - [x] 「3項目」「4つ」「いつ・どこ・何」「節・項目」系の質問要求スロットを検出できる。
 - [x] スロット不足時に再生成または補正判断へつながる coverage check がある。
 - [x] 追加・更新した unit test が通る。
+- [x] API coverage CI の branch 閾値を満たす。
 - [x] `git diff --check` が通る。
 
 ## 検証計画
@@ -117,6 +118,7 @@
 - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
 - `./node_modules/.bin/tsc -p apps/api/tsconfig.json --noEmit`: pass
 - `./node_modules/.bin/tsx --test apps/api/src/agent/computation.test.ts apps/api/src/agent/nodes/node-units.test.ts apps/api/src/agent/graph.test.ts apps/api/src/rag/prompts.test.ts apps/api/src/rag/text-processing.test.ts`: pass, 106 tests
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass, 220 tests, statements 92.64%, branches 85.18%, functions 92.85%, lines 92.64%
 - `git diff --check`: pass
 
 ## ドキュメント影響

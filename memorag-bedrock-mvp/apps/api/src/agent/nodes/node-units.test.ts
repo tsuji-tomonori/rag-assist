@@ -22,7 +22,7 @@ import { createVerifyAnswerSupportNode } from "./verify-answer-support.js"
 import { NO_ANSWER, type QaAgentState, type QaAgentUpdate } from "../state.js"
 import { buildSignalPhrase, extractSignalTerms } from "../text-signals.js"
 import { tracedNode } from "../trace.js"
-import { detectQuestionRequirements, validateAnswerRequirements } from "../question-requirements.js"
+import { asksForMoney, detectQuestionRequirements, formatQuestionRequirementsForPrompt, validateAnswerRequirements } from "../question-requirements.js"
 import type { DebugStep } from "../../types.js"
 
 const chunk: RetrievedVector = {
@@ -104,6 +104,41 @@ test("question requirements detect Japanese QA slots without benchmark expected 
     ).length,
     0
   )
+})
+
+test("question requirements cover money, section, term, reason, and validation branches", () => {
+  assert.equal(asksForMoney("円滑な入退院を実現する項目は？"), false)
+  assert.equal(asksForMoney("費用はいくらですか？"), true)
+  assert.equal(asksForMoney("上限は5,000円ですか？"), true)
+  assert.equal(formatQuestionRequirementsForPrompt("要点を説明してください。"), "")
+  assert.match(formatQuestionRequirementsForPrompt("どの節に該当しますか？理由も答えてください。"), /節番号・節名/)
+
+  const section = detectQuestionRequirements("DPC／PDPS はどの節・項目に該当しますか？理由は何ですか？")
+  assert.equal(section.some((requirement) => requirement.type === "slot" && requirement.slot === "section"), true)
+  assert.equal(section.some((requirement) => requirement.type === "slot" && requirement.slot === "term"), true)
+  assert.equal(section.some((requirement) => requirement.type === "slot" && requirement.slot === "reason"), true)
+  assert.equal(section.some((requirement) => requirement.type === "slot" && requirement.slot === "yes_no"), true)
+  assert.equal(detectQuestionRequirements("三つ挙げてください。").some((requirement) => requirement.type === "list_count" && requirement.count === 3), true)
+
+  assert.deepEqual(validateAnswerRequirements("要点を説明してください。", "短い回答です。"), [])
+
+  const missingFounding = validateAnswerRequirements("いつ・どこに・何という組織ですか？", "不明です。")
+  assert.equal(missingFounding.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "date"), true)
+  assert.equal(missingFounding.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "place"), true)
+  assert.equal(missingFounding.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "organization"), true)
+
+  const missingSection = validateAnswerRequirements("DPC/PDPS はどの節・項目に該当しますか？理由は？", "答えだけです。")
+  assert.equal(missingSection.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "section"), true)
+  assert.equal(missingSection.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "item"), true)
+  assert.equal(missingSection.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "term"), true)
+  assert.equal(missingSection.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "reason"), true)
+  assert.equal(validateAnswerRequirements("申請できますか？", "未確認").some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "yes_no"), true)
+
+  const complete = validateAnswerRequirements(
+    "DPC/PDPS はどの節・項目に該当しますか？理由は？",
+    "はい、II-1-1 の項目です。DPC/PDPS の見直し、算定要件の整理に該当します。本文の趣旨に基づくためです。"
+  )
+  assert.deepEqual(complete, [])
 })
 
 test("conversation query rewrite ignores refusal text and weak English function words", async () => {
