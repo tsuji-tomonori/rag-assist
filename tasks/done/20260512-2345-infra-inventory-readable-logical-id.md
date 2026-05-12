@@ -1,6 +1,6 @@
 # infra inventory readable logical id
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 作成日時: 2026-05-12 23:45 JST
 
@@ -14,10 +14,10 @@ resource type 別詳細ファイルでは、設定章タイトルが CloudFormat
 
 ## 受け入れ条件
 
-- [ ] `Logical ID 一覧` が `論理ID` と `Logical ID` を示す。
-- [ ] 各種設定値の章タイトルが論理IDになっている。
-- [ ] 章内に実際の `Logical ID` が確認できる。
-- [ ] `npm run docs:infra-inventory:check` が pass する。
+- [x] `Logical ID 一覧` が `論理ID` と `Logical ID` を示す。
+- [x] 各種設定値の章タイトルが論理IDになっている。
+- [x] 章内に実際の `Logical ID` が確認できる。
+- [x] `npm run docs:infra-inventory:check` が pass する。
 
 ## 検証計画
 
