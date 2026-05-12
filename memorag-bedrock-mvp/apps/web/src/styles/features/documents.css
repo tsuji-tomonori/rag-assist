@@ -949,6 +949,14 @@
   font-weight: 900;
 }
 
+.confirm-dialog .confirm-dialog-error {
+  border: 1px solid #f2b7b7;
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  color: #9d1c1c;
+  background: #fff3f3;
+}
+
 .confirm-dialog-actions {
   display: flex;
   justify-content: flex-end;

@@ -107,13 +107,16 @@ describe("useDocuments", () => {
     const props = createProps()
     const { result } = renderHook(() => useDocuments(props))
 
-    await act(() => result.current.onStageReindex("doc-1"))
-    await act(() => result.current.onCutoverReindex("migration-1"))
-    await act(() => result.current.onRollbackReindex("migration-1"))
+    const stageResult = await act(() => result.current.onStageReindex("doc-1"))
+    const cutoverResult = await act(() => result.current.onCutoverReindex("migration-1"))
+    const rollbackResult = await act(() => result.current.onRollbackReindex("migration-1"))
 
     expect(stageReindexMigration).toHaveBeenCalledWith("doc-1")
     expect(cutoverReindexMigration).toHaveBeenCalledWith("migration-1")
     expect(rollbackReindexMigration).toHaveBeenCalledWith("migration-1")
+    expect(stageResult).toEqual({ ok: true })
+    expect(cutoverResult).toEqual({ ok: true })
+    expect(rollbackResult).toEqual({ ok: true })
     expect(listDocuments).toHaveBeenCalledTimes(3)
     expect(listReindexMigrations).toHaveBeenCalledTimes(3)
     expect(props.setError).toHaveBeenCalledWith(null)
@@ -122,13 +125,16 @@ describe("useDocuments", () => {
   it("権限がない場合は再インデックス API を呼ばない", async () => {
     const { result } = renderHook(() => useDocuments(createProps({ canReindexDocuments: false })))
 
-    await act(() => result.current.onStageReindex("doc-1"))
-    await act(() => result.current.onCutoverReindex("migration-1"))
-    await act(() => result.current.onRollbackReindex("migration-1"))
+    const stageResult = await act(() => result.current.onStageReindex("doc-1"))
+    const cutoverResult = await act(() => result.current.onCutoverReindex("migration-1"))
+    const rollbackResult = await act(() => result.current.onRollbackReindex("migration-1"))
 
     expect(stageReindexMigration).not.toHaveBeenCalled()
     expect(cutoverReindexMigration).not.toHaveBeenCalled()
     expect(rollbackReindexMigration).not.toHaveBeenCalled()
+    expect(stageResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
+    expect(cutoverResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
+    expect(rollbackResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
   })
 
   it("再インデックス失敗時はエラーを設定する", async () => {
@@ -136,8 +142,9 @@ describe("useDocuments", () => {
     vi.mocked(stageReindexMigration).mockRejectedValueOnce(new Error("stage failed"))
     const { result } = renderHook(() => useDocuments(props))
 
-    await act(() => result.current.onStageReindex("doc-1"))
+    const operationResult = await act(() => result.current.onStageReindex("doc-1"))
 
+    expect(operationResult).toEqual({ ok: false, error: "stage failed" })
     expect(props.setError).toHaveBeenCalledWith("stage failed")
     expect(result.current.operationState.stagingReindexDocumentId).toBeNull()
   })
@@ -188,18 +195,22 @@ describe("useDocuments", () => {
     }))
 
     const readonly = renderHook(() => useDocuments(createProps({ canWriteDocuments: false })))
-    await act(() => readonly.result.current.onUploadDocumentFile(file))
+    const readonlyUploadResult = await act(() => readonly.result.current.onUploadDocumentFile(file))
     await act(() => readonly.result.current.onCreateDocumentGroup({ name: "readonly", visibility: "private" }))
-    await act(() => readonly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    const readonlyShareResult = await act(() => readonly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
     expect(uploadDocumentFile).toHaveBeenCalledTimes(1)
     expect(createDocumentGroup).not.toHaveBeenCalled()
     expect(shareDocumentGroup).not.toHaveBeenCalled()
+    expect(readonlyUploadResult).toEqual({ ok: false, error: "文書をアップロードする権限がありません" })
+    expect(readonlyShareResult).toEqual({ ok: false, error: "共有設定を更新する権限がありません" })
 
-    await act(() => result.current.onDelete(undefined))
-    await act(() => result.current.onDelete("doc-1"))
+    const missingTargetResult = await act(() => result.current.onDelete(undefined))
+    const deleteResult = await act(() => result.current.onDelete("doc-1"))
     await act(() => result.current.onDelete("missing-doc"))
 
     expect(deleteDocument).toHaveBeenCalledWith("missing-doc")
+    expect(missingTargetResult).toEqual({ ok: false, error: "削除対象の documentId が未指定です" })
+    expect(deleteResult).toEqual({ ok: true })
     expect(result.current.selectedDocumentId).toBe("all")
     expect(result.current.operationState.deletingDocumentId).toBeNull()
   })
@@ -213,7 +224,7 @@ describe("useDocuments", () => {
     expect(result.current.documentGroups).toHaveLength(1)
 
     act(() => result.current.setUploadGroupId("group-1"))
-    await act(() => result.current.onUploadDocumentFile(file))
+    const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
     expect(uploadDocumentFile).toHaveBeenCalledWith(expect.objectContaining({
       scope: { scopeType: "group", groupIds: ["group-1"] }
     }))
@@ -245,7 +256,7 @@ describe("useDocuments", () => {
     const file = new File(["body"], "progress.pdf", { type: "application/pdf" })
 
     act(() => result.current.setUploadGroupId("group-1"))
-    await act(() => result.current.onUploadDocumentFile(file))
+    const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
 
     expect(result.current.uploadState).toEqual(expect.objectContaining({
       fileName: "progress.pdf",
@@ -253,15 +264,17 @@ describe("useDocuments", () => {
       phase: "complete",
       runId: "run-1"
     }))
+    expect(uploadResult).toEqual({ ok: true })
     expect(result.current.operationState.isUploading).toBe(false)
 
     vi.mocked(uploadDocumentFile).mockRejectedValueOnce(new Error("document ingest run timed out"))
-    await act(() => result.current.onUploadDocumentFile(file))
+    const failedUploadResult = await act(() => result.current.onUploadDocumentFile(file))
 
     expect(result.current.uploadState).toEqual(expect.objectContaining({
       phase: "failed",
       errorKind: "timeout"
     }))
+    expect(failedUploadResult).toEqual({ ok: false, error: "document ingest run timed out" })
   })
 
   it("削除、cutover、rollback の失敗時は文字列エラーも設定する", async () => {
@@ -277,14 +290,20 @@ describe("useDocuments", () => {
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "error.txt", { type: "text/plain" })
 
-    await act(() => result.current.onDelete("doc-1"))
-    await act(() => result.current.onUploadDocumentFile(file))
+    const deleteResult = await act(() => result.current.onDelete("doc-1"))
+    const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
     await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
-    await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
-    await act(() => result.current.onStageReindex("doc-1"))
-    await act(() => result.current.onCutoverReindex("migration-1"))
-    await act(() => result.current.onRollbackReindex("migration-1"))
+    const shareResult = await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    const stageResult = await act(() => result.current.onStageReindex("doc-1"))
+    const cutoverResult = await act(() => result.current.onCutoverReindex("migration-1"))
+    const rollbackResult = await act(() => result.current.onRollbackReindex("migration-1"))
 
+    expect(deleteResult).toEqual({ ok: false, error: "delete failed" })
+    expect(uploadResult).toEqual({ ok: false, error: "upload failed" })
+    expect(shareResult).toEqual({ ok: false, error: "share group failed" })
+    expect(stageResult).toEqual({ ok: false, error: "stage failed" })
+    expect(cutoverResult).toEqual({ ok: false, error: "cutover failed" })
+    expect(rollbackResult).toEqual({ ok: false, error: "rollback failed" })
     expect(props.setError).toHaveBeenCalledWith("delete failed")
     expect(props.setError).toHaveBeenCalledWith("upload failed")
     expect(props.setError).toHaveBeenCalledWith("create group failed")

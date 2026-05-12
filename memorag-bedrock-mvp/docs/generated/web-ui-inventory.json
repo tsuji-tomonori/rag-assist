@@ -6608,9 +6608,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:363:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:391:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 363,
+      "line": 391,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -10779,9 +10779,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:39:button",
+      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:105:button",
       "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
-      "line": 39,
+      "line": 105,
       "feature": "shared",
       "component": "ConfirmDialog",
       "element": "button",
@@ -10792,7 +10792,9 @@
         "accessibleNameSource": "visible-text",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=busy"
+        ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
       },
@@ -10810,14 +10812,18 @@
         {
           "name": "onClick",
           "value": "onCancel"
+        },
+        {
+          "name": "disabled",
+          "value": "busy"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:40:button",
+      "id": "apps/web/src/shared/ui/ConfirmDialog.tsx:106:button",
       "file": "apps/web/src/shared/ui/ConfirmDialog.tsx",
-      "line": 40,
+      "line": 106,
       "feature": "shared",
       "component": "ConfirmDialog",
       "element": "button",
@@ -10828,14 +10834,16 @@
         "accessibleNameSource": "missing",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
+        "state": [
+          "disabled=busy"
+        ],
         "status": "missing",
         "reason": "アクセシブル名が静的解析で確認できません。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "onConfirm"
+          "value": "() => void confirm()"
         }
       ],
       "attributes": [
@@ -10845,7 +10853,11 @@
         },
         {
           "name": "onClick",
-          "value": "onConfirm"
+          "value": "() => void confirm()"
+        },
+        {
+          "name": "disabled",
+          "value": "busy"
         }
       ],
       "certainty": "unknown"
