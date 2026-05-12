@@ -204,6 +204,49 @@ describe("DocumentWorkspace", () => {
     expect(within(table).getByText("policy-30.pdf")).toBeInTheDocument()
   })
 
+  it("更新日列と更新日ソートは文書更新日時を優先する", async () => {
+    render(
+      <DocumentWorkspace
+        documents={[
+          { documentId: "doc-created", fileName: "created-only.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-01T00:00:00.000Z" },
+          { documentId: "doc-top-level", fileName: "top-level-updated.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-01T00:00:00.000Z", updatedAt: "2026-05-08T00:00:00.000Z" },
+          { documentId: "doc-metadata", fileName: "metadata-updated.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-01T00:00:00.000Z", updatedAt: "2026-05-02T00:00:00.000Z", metadata: { updatedAt: "2026-05-09T00:00:00.000Z" } }
+        ]}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const table = screen.getByRole("table", { name: "登録文書" })
+    const documentRows = within(table).getAllByRole("row").slice(1)
+    expect(documentRows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("metadata-updated.md"),
+      expect.stringContaining("top-level-updated.md"),
+      expect.stringContaining("created-only.md")
+    ])
+    expect(within(documentRows[0]!).getByText(/2026\/05\/09/)).toBeInTheDocument()
+    expect(within(documentRows[1]!).getByText(/2026\/05\/08/)).toBeInTheDocument()
+    expect(within(documentRows[2]!).getByText(/2026\/05\/01/)).toBeInTheDocument()
+
+    await userEvent.selectOptions(screen.getByLabelText("並び替え"), "updatedAsc")
+
+    expect(within(table).getAllByRole("row").slice(1).map((row) => row.textContent)).toEqual([
+      expect.stringContaining("created-only.md"),
+      expect.stringContaining("top-level-updated.md"),
+      expect.stringContaining("metadata-updated.md")
+    ])
+  })
+
   it("検索条件の変更時に文書一覧ページを先頭へ戻す", async () => {
     render(
       <DocumentWorkspace

@@ -53,11 +53,17 @@ export function fileTypeClassName(type: string): string {
 }
 
 export function compareDocuments(left: DocumentManifest, right: DocumentManifest, sort: DocumentSortKey): number {
-  if (sort === "updatedAsc") return left.createdAt.localeCompare(right.createdAt)
+  if (sort === "updatedAsc") return compareDocumentUpdatedAt(left, right) || left.fileName.localeCompare(right.fileName, "ja")
   if (sort === "fileNameAsc") return left.fileName.localeCompare(right.fileName, "ja")
   if (sort === "chunkDesc") return right.chunkCount - left.chunkCount
   if (sort === "typeAsc") return fileTypeLabel(left).localeCompare(fileTypeLabel(right), "ja") || left.fileName.localeCompare(right.fileName, "ja")
-  return right.createdAt.localeCompare(left.createdAt)
+  return compareDocumentUpdatedAt(right, left) || left.fileName.localeCompare(right.fileName, "ja")
+}
+
+export function documentUpdatedAt(document: DocumentManifest): string {
+  const metadataUpdatedAt = metadataString(document, "updatedAt")
+  if (metadataUpdatedAt) return metadataUpdatedAt
+  return typeof document.updatedAt === "string" && document.updatedAt.trim() ? document.updatedAt : document.createdAt
 }
 
 export function countDocumentsForGroup(documents: DocumentManifest[], groupId: string): number {
@@ -177,7 +183,7 @@ export function buildOperationEvents({
     id: `document-${document.documentId}`,
     actionLabel: "文書更新",
     target: document.fileName,
-    occurredAt: metadataString(document, "updatedAt") ?? document.createdAt,
+    occurredAt: documentUpdatedAt(document),
     result: "反映済み" as const,
     detail: `documentId: ${document.documentId}`
   }))
@@ -224,6 +230,10 @@ function migrationActionLabel(status: ReindexMigration["status"]): string {
   if (status === "cutover") return "reindex cutover"
   if (status === "rolled_back") return "reindex rollback"
   return "reindex stage"
+}
+
+function compareDocumentUpdatedAt(left: DocumentManifest, right: DocumentManifest): number {
+  return documentUpdatedAt(left).localeCompare(documentUpdatedAt(right))
 }
 
 function mimeTypeLabel(mimeType: string): string {

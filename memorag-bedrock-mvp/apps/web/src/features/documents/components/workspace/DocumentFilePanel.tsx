@@ -7,6 +7,7 @@ import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../../ty
 import type { DocumentOperationState } from "../../hooks/useDocuments.js"
 import {
   documentStatusLabel,
+  documentUpdatedAt,
   documentGroupNames,
   fileTypeClassName,
   fileTypeLabel,
@@ -217,7 +218,7 @@ export function DocumentFilePanel({
                   <span title={document.fileName}>{document.fileName}</span>
                 </span>
                 <span role="cell" data-label="種別">{fileTypeLabel(document)}</span>
-                <span role="cell" data-label="更新日">{formatDateTime(document.createdAt)}</span>
+                <span role="cell" data-label="更新日">{formatDateTime(documentUpdatedAt(document))}</span>
                 <span role="cell" data-label="チャンク数">{document.chunkCount}</span>
                 <span role="cell" data-label="状態">{documentStatusLabel(document)}</span>
                 <span role="cell" data-label="所属フォルダ">{groupLabel}</span>
