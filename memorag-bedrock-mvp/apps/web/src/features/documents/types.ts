@@ -6,6 +6,7 @@ export type DocumentManifest = {
   chunkCount: number
   memoryCardCount: number
   createdAt: string
+  updatedAt?: string
   lifecycleStatus?: "active" | "staging" | "superseded"
   activeDocumentId?: string
   stagedFromDocumentId?: string
