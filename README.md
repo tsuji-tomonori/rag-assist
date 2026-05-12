@@ -1,6 +1,6 @@
 # rag-assist
 
-社内QAチャットボットMVPと、開発補助用のagents/skillsを管理するリポジトリです。
+社内QAチャットボットMVPと、開発補助用の agents と skills を管理するリポジトリです。
 
 ## 構成
 
@@ -10,6 +10,8 @@
 - `skills/`: 要件定義、設計レビュー、ドキュメント生成などのローカルskill定義
 - `docs/spec-recovery/`: 作業レポート起点の要件・仕様復元テンプレートとトレーサビリティ成果物の置き場
 - `scripts/validate_spec_recovery.py`: 仕様復元成果物の軽量検証スクリプト
+
+Repository-local skill の実体は `skills/<skill-name>/SKILL.md` に集約します。Codex に確実に読ませたい適用条件や必読 skill の索引は `AGENTS.md` に記載し、`agents/` は agent 設定用途に限定します。
 
 MVPの詳細は [memorag-bedrock-mvp/README.md](memorag-bedrock-mvp/README.md) を参照してください。
 

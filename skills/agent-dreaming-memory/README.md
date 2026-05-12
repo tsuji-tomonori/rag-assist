@@ -7,15 +7,15 @@ Codexで「セッション間の作業記憶」を整理するためのAgent Ski
 Repo単位で使う場合:
 
 ```bash
-mkdir -p .agents/skills
-cp -R agent-dreaming-memory .agents/skills/
+mkdir -p skills
+cp -R agent-dreaming-memory skills/
 ```
 
 個人環境全体で使う場合:
 
 ```bash
-mkdir -p "$HOME/.agents/skills"
-cp -R agent-dreaming-memory "$HOME/.agents/skills/"
+mkdir -p "$HOME/.codex/skills"
+cp -R agent-dreaming-memory "$HOME/.codex/skills/"
 ```
 
 ## Invoke

@@ -8,13 +8,13 @@ By default it scans common documentation plus `tasks/**/*.md`, `reports/**/*.md`
 Usage from a repository root after installing the skill:
 
 ```bash
-python .agents/skills/agent-dreaming-memory/scripts/consolidate_memory.py --root .
+python skills/agent-dreaming-memory/scripts/consolidate_memory.py --root .
 ```
 
 Optional flags:
 
 ```bash
-python .agents/skills/agent-dreaming-memory/scripts/consolidate_memory.py \
+python skills/agent-dreaming-memory/scripts/consolidate_memory.py \
   --root . \
   --out .codex-memory/dream-reports/manual-scan.md \
   --include "docs/**/*.md" \
