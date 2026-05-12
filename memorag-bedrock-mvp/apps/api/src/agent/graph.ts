@@ -392,21 +392,39 @@ function shouldExtractPolicyComputations(state: QaAgentState): boolean {
   if (state.selectedChunks.length === 0) return false
   if (state.toolIntent?.needsArithmeticCalculation || state.toolIntent?.needsAggregation) return true
   if (state.toolIntent?.needsTemporalCalculation || state.toolIntent?.needsTaskDeadlineIndex) return false
-  return hasPolicyComputationCue(state.question) || isDocumentThresholdComparisonQuestion(state.question, state.selectedChunks)
+  return hasStructuredPolicyComputationSignal(state)
 }
 
-function hasPolicyComputationCue(question: string): boolean {
-  const normalized = question.normalize("NFKC")
-  const hasNumericThreshold = /[0-9][0-9,]*(?:\.\d+)?\s*(?:円|万円|千円|%|割|人|名|件|回|日|月|年)|以上|以下|未満|超|以内|以降|以前/u.test(normalized)
-  const asksDecision = /必要|不要|対象|対象外|該当|非該当|可|不可|いる|要る|できますか|できる|allowed|required|eligible|need/i.test(normalized)
-  return hasNumericThreshold && asksDecision
+function hasStructuredPolicyComputationSignal(state: QaAgentState): boolean {
+  if (!hasComputationOrientedRequirement(state.searchPlan.requiredFacts)) return false
+  const questionValueKinds = extractComparableValueKinds(state.question)
+  if (questionValueKinds.size === 0) return false
+  return state.selectedChunks.some((chunk) => hasCompatibleValueKind(questionValueKinds, extractComparableValueKinds(chunk.metadata.text ?? "")))
 }
 
-function isDocumentThresholdComparisonQuestion(question: string, chunks: RetrievedVector[]): boolean {
-  const normalizedQuestion = question.normalize("NFKC")
-  if (!asksForMoney(normalizedQuestion)) return false
-  if (!/(必要|不要|該当|対象|領収|承認|条件|以上|以下|未満|超過)/u.test(normalizedQuestion)) return false
-  return chunks.some((chunk) => /(?:\d[\d,]*(?:\.\d+)?|[一二三四五六七八九十百千万億兆]+)\s*(?:円|万円|千円).{0,40}(?:必要|不要|対象|条件|以上|以下|未満|超過|承認)/u.test((chunk.metadata.text ?? "").normalize("NFKC")))
+function hasComputationOrientedRequirement(requiredFacts: RequiredFact[]): boolean {
+  return requiredFacts.some((fact) => {
+    if (fact.factType === "amount" || fact.factType === "condition") return true
+    return false
+  })
+}
+
+function extractComparableValueKinds(text: string): Set<string> {
+  const normalized = text.normalize("NFKC")
+  const kinds = new Set<string>()
+  if (/\p{Number}/u.test(normalized)) kinds.add("number")
+  if (/%/.test(normalized)) kinds.add("ratio")
+  if (/[¥$€£]/u.test(normalized)) kinds.add("currency")
+  if (/[<>]=?|[≤≥≦≧=]/u.test(normalized)) kinds.add("comparator")
+  return kinds
+}
+
+function hasCompatibleValueKind(left: Set<string>, right: Set<string>): boolean {
+  if (left.has("number") && right.has("number")) return true
+  if (left.has("ratio") && right.has("ratio")) return true
+  if (left.has("currency") && right.has("currency")) return true
+  if (left.has("comparator") && right.has("comparator")) return true
+  return false
 }
 
 function withRewrittenQuery(state: QaAgentState, action: Extract<SearchAction, { type: "query_rewrite" }>): QaAgentState {
