@@ -6,7 +6,15 @@ export type QuestionRequirement =
     }
   | {
       type: "slot"
-      slot: "date" | "place" | "organization" | "section" | "item" | "term" | "reason" | "yes_no"
+      slot:
+        | "date"
+        | "place"
+        | "organization"
+        | "section"
+        | "item"
+        | "term"
+        | "reason"
+        | "yes_no"
       label: string
     }
 
@@ -29,7 +37,9 @@ export function detectQuestionRequirements(question: string): QuestionRequiremen
   if (listCount !== undefined) {
     requirements.push({ type: "list_count", count: listCount, label: `${listCount}項目` })
   }
-  if (/いつ|何年|何月|何日|時期|起点|開始|発足|設置/u.test(normalized)) {
+  if (/期限|期日|締切|締め切り|開始日|終了日|何営業日/u.test(normalized)) {
+    requirements.push({ type: "slot", slot: "date", label: "期限" })
+  } else if (/いつ|何年|何月|何日|時期|起点|開始|発足|設置/u.test(normalized)) {
     requirements.push({ type: "slot", slot: "date", label: "日付・時期" })
   }
   if (/どこ|場所|所在地|設置先|置かれた|どこに/u.test(normalized)) {
