@@ -28,7 +28,7 @@ export function createSufficientContextGateNode(deps: Dependencies) {
       }
     }
 
-    if (canProceedWithGroundedPartialEvidence(state, judgement)) {
+    if (canProceedWithGroundedEvidence(state, judgement)) {
       return {
         sufficientContext: {
           ...judgement,
@@ -62,18 +62,29 @@ export function createSufficientContextGateNode(deps: Dependencies) {
   }
 }
 
-function canProceedWithGroundedPartialEvidence(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
-  if (judgement.label !== "PARTIAL") return false
+function canProceedWithGroundedEvidence(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
+  if (judgement.label !== "PARTIAL" && judgement.label !== "UNANSWERABLE") return false
   if (!state.answerability.isAnswerable) return false
   if (state.selectedChunks.length === 0) return false
-  if (judgement.supportedFacts.length === 0 && judgement.supportingChunkIds.length === 0) return false
-  if (!hasSupportedPrimaryEvidence(state, judgement)) return false
+  if (judgement.supportedFacts.length === 0 && judgement.supportingChunkIds.length === 0 && (judgement.label !== "UNANSWERABLE" || !hasQuestionAnchoredEvidence(state))) return false
   if (hasUnresolvedPrimaryMissingFact(state, judgement)) return false
+  if (!hasSupportedPrimaryEvidence(state, judgement)) return false
   if (hasPrimaryConflict(state, judgement)) return false
   if (state.retrievalEvaluation.retrievalQuality === "irrelevant") return false
   if (state.retrievalEvaluation.retrievalQuality === "conflicting" && hasPrimaryFactId(state, state.retrievalEvaluation.conflictingFactIds)) return false
   if (state.selectedChunks[0]?.score !== undefined && state.selectedChunks[0].score < state.minScore) return false
   return true
+}
+
+function hasQuestionAnchoredEvidence(state: QaAgentState): boolean {
+  if (state.retrievalEvaluation.supportedFactIds.length > 0) return true
+  const queryTerms = significantQuestionTerms(state.question)
+  if (queryTerms.length === 0) return false
+  return state.selectedChunks.some((chunk) => {
+    const text = `${chunk.metadata.heading ?? ""}\n${chunk.metadata.sectionPath?.join("\n") ?? ""}\n${chunk.metadata.text ?? ""}`.normalize("NFKC").toLowerCase()
+    const hitCount = queryTerms.filter((term) => text.includes(term)).length
+    return hitCount >= Math.min(2, queryTerms.length)
+  })
 }
 
 function hasUnresolvedPrimaryMissingFact(state: QaAgentState, judgement: SufficientContextJudgement): boolean {
@@ -102,7 +113,7 @@ function hasSupportedPrimaryEvidence(state: QaAgentState, judgement: SufficientC
   const primaryFacts = primaryRequiredFacts(state.searchPlan.requiredFacts)
   const supportedFacts = judgement.supportedFacts.map(normalize)
   if (primaryFacts.length === 0) return false
-  return primaryFacts.some((fact) => primaryFactSupportedByEvidence(state, fact, supportedFacts))
+  return primaryFacts.some((fact) => primaryFactSupportedByEvidence(state, fact, supportedFacts)) || hasQuestionAnchoredEvidence(state)
 }
 
 function primaryRequiredFacts(facts: RequiredFact[]): RequiredFact[] {
@@ -216,6 +227,14 @@ function validSupportingChunkIds(ids: string[], state: QaAgentState): string[] {
 
 function normalize(value: string): string {
   return value.normalize("NFKC").replace(/\s+/g, "").toLowerCase()
+}
+
+function significantQuestionTerms(question: string): string[] {
+  const normalized = question.normalize("NFKC")
+  const ascii = normalized.match(/[A-Za-z0-9][A-Za-z0-9/_-]{1,}/g) ?? []
+  const japanese = normalized.match(/[\p{Script=Han}\p{Script=Katakana}ー]{2,}/gu) ?? []
+  const stopTerms = new Set(["資料", "回答", "質問", "項目", "何", "どこ", "いつ", "ください", "教えて"])
+  return [...new Set([...ascii, ...japanese].map((term) => term.toLowerCase()).filter((term) => !stopTerms.has(term) && term.length >= 2))].slice(0, 8)
 }
 
 function clamp(value: number): number {

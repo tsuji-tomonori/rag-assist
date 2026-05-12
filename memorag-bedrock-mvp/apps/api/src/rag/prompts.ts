@@ -3,6 +3,7 @@ import type { ComputedFact, RetrievalRiskSignal, TemporalContext } from "../agen
 import { assembleContext, formatContextXml, textAnswerRelevanceScore } from "./context-assembler.js"
 import { ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { selectAnswerPolicyForMetadata, type AnswerPolicy } from "./profiles.js"
+import { formatQuestionRequirementsForPrompt } from "../agent/question-requirements.js"
 
 type FinalAnswerPromptOptions = {
   style?: "benchmark_grounded_short"
@@ -71,6 +72,7 @@ export function buildFinalAnswerPrompt(
   const computedFactsJson = JSON.stringify(computedFacts, null, 2)
   const temporalContextJson = JSON.stringify(temporalContext ?? null, null, 2)
   const thresholdEffectRules = formatThresholdEffectRules(policy)
+  const questionRequirementRules = formatQuestionRequirementsForPrompt(question)
 
   return `FINAL_ANSWER_JSON
 あなたは社内資料QAボットです。必ず以下のルールを守ってください。
@@ -88,6 +90,7 @@ export function buildFinalAnswerPrompt(
 - threshold_comparison がある場合は、effect、satisfiesCondition、explanation に基づいて、質問された金額が資料内条件に該当するかを答える。
 ${thresholdEffectRules}
 ${formatFinalAnswerStyleRules(options)}
+${questionRequirementRules}
 - computedFacts は system-derived evidence として扱い、文書 citation と混同しない。
 - 推測、一般知識、資料外の補完は禁止。
 - <context>と<computedFacts>のどちらからも判断できない場合は isAnswerable=false とし、answer は「資料からは回答できません。」だけにする。

@@ -109,7 +109,8 @@ export class MockBedrockTextModel implements TextModel {
         return JSON.stringify({ isAnswerable: false, answer: "資料からは回答できません。", usedChunkIds: [] })
       }
       const first = contexts[0]!
-      const selected = selectAnswerEvidence(question, contexts)
+      const pairedListEvidence = selectPairedListEvidence(contexts)
+      const selected = pairedListEvidence ?? (shouldUseFullChunkAnswer(prompt) ? { chunkId: first[1], text: first[2]?.trim() ?? "" } : selectAnswerEvidence(question, contexts))
       const chunkId = selected.chunkId ?? first[1] ?? "chunk-unknown"
       const text = selected.text || first[2]?.trim() || ""
       const answer = text.length > 0 ? `資料では次のように記載されています。${text.slice(0, 260)}` : "資料からは回答できません。"
@@ -190,8 +191,21 @@ function selectAnswerEvidence(question: string, contexts: RegExpMatchArray[]): {
   return { chunkId: first?.[1], text: first?.[2]?.trim() ?? "" }
 }
 
+function selectPairedListEvidence(contexts: RegExpMatchArray[]): { chunkId?: string; text: string } | undefined {
+  for (const match of contexts) {
+    const sentence = splitSentences(match[2]?.trim() ?? "").find((item) => /both\s+.+\s+and\s+.+|.+\s+and\s+.+/iu.test(item))
+    if (sentence) return { chunkId: match[1], text: sentence }
+  }
+  return undefined
+}
+
+function shouldUseFullChunkAnswer(prompt: string): boolean {
+  return /項目の列挙|質問要求スロットを省略しない|どの\s*[0-9０-９一二三四五六七八九十]+\s*つ/u.test(prompt)
+}
+
 function scoreAnswerSentence(question: string, sentence: string, contextIndex: number, sentenceIndex: number): number {
-  return textAnswerRelevanceScore(question, sentence) - contextIndex * 0.1 - sentenceIndex * 0.01
+  const listBoost = /[0-9０-９一二三四五六七八九十]+\s*(?:つ|項目|点|件)|どの/u.test(question) && /both\s+.+\s+and\s+.+|.+\s+and\s+.+|.+と.+/iu.test(sentence) ? 10 : 0
+  return textAnswerRelevanceScore(question, sentence) + listBoost - contextIndex * 0.1 - sentenceIndex * 0.01
 }
 
 function splitSentences(text: string): string[] {

@@ -4,6 +4,7 @@ import { hasUnavailableComputedFact, hasUsableComputedFact } from "../computatio
 import { hasUsableRequirementsClassificationEvidence, isRequirementsClassificationQuestion } from "../../rag/prompts.js"
 import { selectAnswerPolicyForMetadata } from "../../rag/profiles.js"
 import { ragRuntimePolicy } from "../runtime-policy.js"
+import { asksForMoney } from "../question-requirements.js"
 
 type SelectedChunk = QaAgentState["selectedChunks"][number]
 type SentenceAssessment = NonNullable<QaAgentState["answerability"]["sentenceAssessments"]>[number]
@@ -102,7 +103,7 @@ function estimateRequiredFactCoverage(state: QaAgentState, chunks: SelectedChunk
     return { ok: false, confidence: ragRuntimePolicy.confidence.missingClassificationFact, sentenceAssessments }
   }
 
-  const asksAmount = /金額|費用|いくら|円|上限/.test(question)
+  const asksAmount = asksForMoney(question)
   const asksDate = /いつ|期限|日数|何日|何営業日|開始日|終了日/.test(question)
   const asksHow = /方法|手順|申請|やり方|フロー/.test(question)
 
@@ -116,7 +117,7 @@ function estimateRequiredFactCoverage(state: QaAgentState, chunks: SelectedChunk
 function requiredFactChecks(question: string, requiredFacts: QaAgentState["searchPlan"]["requiredFacts"] = []): FactCheck[] {
   const checks: FactCheck[] = []
   if (isRequirementsClassificationQuestion(question) && ragRuntimePolicy.profile.answerPolicy.id === "swebok-requirements-policy") checks.push("requirements_classification")
-  if (/金額|費用|いくら|円|上限/.test(question)) checks.push("amount")
+  if (asksForMoney(question)) checks.push("amount")
   if (/いつ|期限|日数|何日|何営業日|開始日|終了日/.test(question)) checks.push("date")
   if (/方法|手順|申請|やり方|フロー/.test(question)) checks.push("procedure")
   for (const fact of requiredFacts) {

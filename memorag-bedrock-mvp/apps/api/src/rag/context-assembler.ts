@@ -1,5 +1,6 @@
 import type { RetrievedVector } from "../types.js"
 import { ragRuntimePolicy } from "../agent/runtime-policy.js"
+import { detectQuestionRequirements } from "../agent/question-requirements.js"
 
 export type ContextBlock = {
   id: string
@@ -74,6 +75,7 @@ export function escapeXml(input: string): string {
 
 export function buildRelevantSnippet(question: string, text: string, maxChars = 1800): string {
   const index = findBestNeedleIndex(question, text)
+  if (shouldPreserveStructuredSnippet(question) && text.length <= maxChars) return text
   const focused = buildFocusedSentenceSnippet(question, text, maxChars)
   if (focused) return focused
   if (text.length <= maxChars && !(isRequirementsClassificationQuestion(question) && index >= 0)) return text
@@ -83,6 +85,12 @@ export function buildRelevantSnippet(question: string, text: string, maxChars = 
   const start = Math.max(0, index - prefix)
   const end = Math.min(text.length, start + maxChars)
   return text.slice(start, end)
+}
+
+function shouldPreserveStructuredSnippet(question: string): boolean {
+  return detectQuestionRequirements(question).some(
+    (requirement) => requirement.type === "list_count" || (requirement.type === "slot" && ["section", "item"].includes(requirement.slot))
+  )
 }
 
 function buildFocusedSentenceSnippet(question: string, text: string, maxChars: number): string | undefined {
