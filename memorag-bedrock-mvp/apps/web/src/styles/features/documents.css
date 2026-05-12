@@ -877,13 +877,21 @@
   gap: 6px;
 }
 
-.upload-complete-actions span {
-  border-radius: 999px;
+.upload-complete-actions button {
+  min-height: 30px;
+  border: 1px solid #cfd9e6;
+  border-radius: 6px;
   padding: 4px 8px;
-  color: #37506f;
-  background: #eef3f8;
+  color: #1d385a;
+  background: #fff;
   font-size: 12px;
   font-weight: 850;
+}
+
+.upload-complete-actions button:first-child {
+  border-color: #1267ee;
+  color: #fff;
+  background: #1267ee;
 }
 
 .confirm-dialog-backdrop {

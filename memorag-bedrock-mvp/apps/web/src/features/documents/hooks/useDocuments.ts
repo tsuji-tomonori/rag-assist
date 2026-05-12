@@ -27,6 +27,10 @@ export type DocumentOperationResult =
   | { ok: true }
   | { ok: false; error: string }
 
+export type DocumentUploadResult =
+  | { ok: true; document: DocumentManifest }
+  | { ok: false; error: string }
+
 export type CreateDocumentGroupInput = {
   name: string
   description?: string
@@ -91,8 +95,8 @@ export function useDocuments({
     purpose?: "document" | "chatAttachment"
     groupId?: string
     temporaryScopeId?: string
-  } = {}) {
-    await uploadDocumentFile({
+  } = {}): Promise<DocumentManifest> {
+    const document = await uploadDocumentFile({
       file: uploadFile,
       memoryModelId: modelId,
       embeddingModelId,
@@ -110,9 +114,10 @@ export function useDocuments({
     })
     if (options.purpose === "chatAttachment") {
       setSelectedDocumentId("all")
-      return
+      return document
     }
     await refreshDocuments()
+    return document
   }
 
   async function refreshReindexMigrations() {
@@ -142,15 +147,15 @@ export function useDocuments({
     }
   }
 
-  async function onUploadDocumentFile(uploadFile: File): Promise<DocumentOperationResult> {
+  async function onUploadDocumentFile(uploadFile: File): Promise<DocumentUploadResult> {
     if (!canWriteDocuments) return { ok: false, error: "文書をアップロードする権限がありません" }
     updateOperationState({ isUploading: true })
     setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId || undefined, phase: "preparing", updatedAt: new Date().toISOString() })
     setError(null)
     try {
-      await ingestDocument(uploadFile, { groupId: uploadGroupId || undefined })
+      const document = await ingestDocument(uploadFile, { groupId: uploadGroupId || undefined })
       setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "complete", updatedAt: new Date().toISOString() } : current)
-      return { ok: true }
+      return { ok: true, document }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)

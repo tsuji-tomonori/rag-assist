@@ -264,7 +264,13 @@ describe("useDocuments", () => {
       phase: "complete",
       runId: "run-1"
     }))
-    expect(uploadResult).toEqual({ ok: true })
+    expect(uploadResult).toEqual({
+      ok: true,
+      document: expect.objectContaining({
+        documentId: "doc-progress",
+        fileName: "progress.pdf"
+      })
+    })
     expect(result.current.operationState.isUploading).toBe(false)
 
     vi.mocked(uploadDocumentFile).mockRejectedValueOnce(new Error("document ingest run timed out"))

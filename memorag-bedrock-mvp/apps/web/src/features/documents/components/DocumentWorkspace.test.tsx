@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
-import type { DocumentGroup, ReindexMigration } from "../types.js"
+import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentWorkspace } from "./DocumentWorkspace.js"
 
 const documents = [
@@ -1452,6 +1452,100 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
     expect(onUpload).toHaveBeenCalledWith(file)
+  })
+
+  it("アップロード完了後に返却された文書の操作ボタンを表示する", async () => {
+    const uploadedDocument: DocumentManifest = {
+      documentId: "doc-uploaded",
+      fileName: "memo.txt",
+      mimeType: "text/plain",
+      metadata: { groupIds: ["group-1"] },
+      chunkCount: 2,
+      memoryCardCount: 0,
+      createdAt: "2026-05-09T00:00:00.000Z"
+    }
+    const onUpload = vi.fn().mockResolvedValue({ ok: true, document: uploadedDocument })
+    const onUploadGroupChange = vi.fn()
+    const onAskDocument = vi.fn()
+    const file = new File(["hello"], "memo.txt", { type: "text/plain" })
+
+    const baseProps = {
+      documents: [uploadedDocument],
+      documentGroups,
+      uploadGroupId: "group-1",
+      onUploadGroupChange,
+      onCreateGroup: vi.fn(),
+      onShareGroup: vi.fn(),
+      loading: false,
+      canWrite: true,
+      canDelete: true,
+      canReindex: true,
+      migrations: [],
+      onUpload,
+      onDelete: vi.fn(),
+      onStageReindex: vi.fn(),
+      onCutoverReindex: vi.fn(),
+      onRollbackReindex: vi.fn(),
+      onAskDocument,
+      onBack: vi.fn()
+    }
+
+    const { rerender } = render(<DocumentWorkspace {...baseProps} uploadState={null} />)
+
+    await userEvent.upload(screen.getByLabelText("アップロードする文書を選択"), file)
+    await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+
+    rerender(
+      <DocumentWorkspace
+        {...baseProps}
+        uploadState={{
+          fileName: "memo.txt",
+          groupId: "group-1",
+          phase: "complete",
+          runId: "run-uploaded"
+        }}
+      />
+    )
+
+    const completeActions = screen.getByLabelText("アップロード完了後の操作")
+    await userEvent.click(within(completeActions).getByRole("button", { name: "詳細を開く" }))
+    expect(screen.getByRole("dialog", { name: "memo.txt" })).toBeInTheDocument()
+
+    await userEvent.click(within(completeActions).getByRole("button", { name: "この資料に質問する" }))
+    expect(onAskDocument).toHaveBeenCalledWith(uploadedDocument)
+
+    await userEvent.click(within(completeActions).getByRole("button", { name: "フォルダ内で表示" }))
+    expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
+    expect(screen.getByRole("heading", { name: "社内規定" })).toBeInTheDocument()
+  })
+
+  it("返却文書がない完了状態では文書操作ボタンを表示しない", () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        uploadState={{ fileName: "memo.txt", groupId: "group-1", phase: "complete" }}
+        onUploadGroupChange={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.queryByRole("button", { name: "詳細を開く" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "この資料に質問する" })).not.toBeInTheDocument()
+    expect(screen.getByText("アップロードは完了しました。文書一覧の更新後に詳細を開けます。")).toBeInTheDocument()
   })
 
   it("アップロード進捗と対象行だけのloadingを表示する", () => {

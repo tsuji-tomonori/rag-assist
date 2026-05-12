@@ -29,6 +29,8 @@ export function DocumentDetailPanel({
   uploadFile,
   uploadDestinationLabel,
   uploadState,
+  uploadedDocument,
+  uploadedDocumentGroupId,
   recentOperationEvents,
   groupName,
   groupDescription,
@@ -66,6 +68,9 @@ export function DocumentDetailPanel({
   onCreateShareGroupOptionChange,
   onUploadGroupChange,
   onUploadSubmit,
+  onOpenUploadedDocument,
+  onAskUploadedDocument,
+  onShowUploadedFolder,
   onCreateGroupSubmit,
   onShareSubmit
 }: {
@@ -90,6 +95,8 @@ export function DocumentDetailPanel({
   uploadFile: File | null
   uploadDestinationLabel: string
   uploadState: DocumentUploadState
+  uploadedDocument: DocumentManifest | null
+  uploadedDocumentGroupId: string
   recentOperationEvents: DocumentOperationEvent[]
   groupName: string
   groupDescription: string
@@ -127,6 +134,9 @@ export function DocumentDetailPanel({
   onCreateShareGroupOptionChange: (groupName: string, checked: boolean) => void
   onUploadGroupChange: (groupId: string) => void
   onUploadSubmit: (event: FormEvent) => void
+  onOpenUploadedDocument: (document: DocumentManifest) => void
+  onAskUploadedDocument?: (document: DocumentManifest) => void
+  onShowUploadedFolder: (groupId: string) => void
   onCreateGroupSubmit: (event: FormEvent) => void
   onShareSubmit: (event: FormEvent) => void
 }) {
@@ -271,7 +281,15 @@ export function DocumentDetailPanel({
           </button>
         </form>
         {uploadState && (
-          <UploadProgressPanel uploadState={uploadState} destinationLabel={uploadState.groupId ? documentGroups.find((group) => group.groupId === uploadState.groupId)?.name ?? uploadState.groupId : "未選択"} />
+          <UploadProgressPanel
+            uploadState={uploadState}
+            destinationLabel={uploadState.groupId ? documentGroups.find((group) => group.groupId === uploadState.groupId)?.name ?? uploadState.groupId : "未選択"}
+            uploadedDocument={uploadedDocument}
+            uploadedDocumentGroupId={uploadedDocumentGroupId}
+            onOpenUploadedDocument={onOpenUploadedDocument}
+            onAskUploadedDocument={onAskUploadedDocument}
+            onShowUploadedFolder={onShowUploadedFolder}
+          />
         )}
         <form className="compact-form" onSubmit={onCreateGroupSubmit}>
           <label>
@@ -409,7 +427,23 @@ export function DocumentDetailPanel({
   )
 }
 
-function UploadProgressPanel({ uploadState, destinationLabel }: { uploadState: NonNullable<DocumentUploadState>; destinationLabel: string }) {
+function UploadProgressPanel({
+  uploadState,
+  destinationLabel,
+  uploadedDocument,
+  uploadedDocumentGroupId,
+  onOpenUploadedDocument,
+  onAskUploadedDocument,
+  onShowUploadedFolder
+}: {
+  uploadState: NonNullable<DocumentUploadState>
+  destinationLabel: string
+  uploadedDocument: DocumentManifest | null
+  uploadedDocumentGroupId: string
+  onOpenUploadedDocument: (document: DocumentManifest) => void
+  onAskUploadedDocument?: (document: DocumentManifest) => void
+  onShowUploadedFolder: (groupId: string) => void
+}) {
   const steps: Array<{ phase: NonNullable<DocumentUploadState>["phase"]; label: string }> = [
     { phase: "preparing", label: "アップロード準備中" },
     { phase: "transferring", label: "ファイル転送中" },
@@ -443,11 +477,15 @@ function UploadProgressPanel({ uploadState, destinationLabel }: { uploadState: N
         <p className="field-hint">取り込み run の詳細ステップは API status から推定しています。</p>
       )}
       {uploadState.phase === "complete" && (
-        <div className="upload-complete-actions" aria-label="アップロード完了後の操作">
-          <span>この資料に質問できます</span>
-          <span>アップロード先フォルダを確認できます</span>
-          <span>再インデックス状況を確認できます</span>
-        </div>
+        uploadedDocument ? (
+          <div className="upload-complete-actions" aria-label="アップロード完了後の操作">
+            <button type="button" onClick={() => onOpenUploadedDocument(uploadedDocument)}>詳細を開く</button>
+            {onAskUploadedDocument && <button type="button" onClick={() => onAskUploadedDocument(uploadedDocument)}>この資料に質問する</button>}
+            {uploadedDocumentGroupId && <button type="button" onClick={() => onShowUploadedFolder(uploadedDocumentGroupId)}>フォルダ内で表示</button>}
+          </div>
+        ) : (
+          <p className="field-hint">アップロードは完了しました。文書一覧の更新後に詳細を開けます。</p>
+        )
       )}
     </div>
   )
