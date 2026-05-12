@@ -1,6 +1,6 @@
 # citation 図面メタデータ返却
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 作業ブランチ: `codex/citation-drawing-metadata`
 - 作成日時: 2026-05-12 21:54 JST
