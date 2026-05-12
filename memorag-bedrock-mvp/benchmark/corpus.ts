@@ -80,6 +80,7 @@ const defaultIngestRunPollIntervalMs = 5000
 const defaultIngestRunTimeoutMs = 30 * 60 * 1000
 const uploadSessionRequestHeaderBlocklist = new Set(["content-length", "host", "transfer-encoding"])
 const benchmarkCorpusMetadataBudgetBytes = 1500
+const compactDrawingStringMaxLength = 200
 
 export async function seedBenchmarkCorpus(options: SeedCorpusOptions): Promise<SeededDocument[]> {
   if (!options.corpusDir) return []
@@ -190,11 +191,113 @@ export function compactBenchmarkCorpusMetadata(metadata: CorpusFileMetadata): Re
   const compact: Record<string, unknown> = {}
   if (metadata.searchAliases) compact.searchAliases = metadata.searchAliases
   if (metadata.drawingSourceType) compact.drawingSourceType = metadata.drawingSourceType
+  Object.assign(compact, compactDrawingCitationMetadata(metadata))
   const bytes = Buffer.byteLength(JSON.stringify(compact), "utf-8")
   if (bytes > benchmarkCorpusMetadataBudgetBytes) {
     throw new Error(`Benchmark corpus metadata exceeds ${benchmarkCorpusMetadataBudgetBytes} bytes after compaction: ${bytes} bytes`)
   }
   return compact
+}
+
+function compactDrawingCitationMetadata(metadata: CorpusFileMetadata): Record<string, unknown> {
+  const compact: Record<string, unknown> = {}
+  const sheets = metadata.drawingSheetMetadata
+    ?.map(normalizeDrawingSheetMetadata)
+    .filter((sheet): sheet is DrawingSheetCompact => Boolean(sheet))
+  const regions = metadata.drawingRegionIndex
+    ?.map(normalizeDrawingRegionMetadata)
+    .filter((region): region is DrawingRegionCompact => Boolean(region))
+  const uniqueSheets = uniqueBy(sheets ?? [], (sheet) => sheet.pageOrSheet)
+  const sheet = uniqueSheets[0]
+  if (uniqueSheets.length === 1 && sheet) {
+    compact.pageOrSheet = sheet.pageOrSheet
+    const drawingNo = uniqueNonEmpty(sheets?.map((item) => item.drawingNo))
+    const sheetTitle = uniqueNonEmpty(sheets?.map((item) => item.sheetTitle))
+    const scale = uniqueNonEmpty(sheets?.map((item) => item.scale))
+    if (drawingNo) compact.drawingNo = drawingNo
+    if (sheetTitle) compact.sheetTitle = sheetTitle
+    if (scale) compact.scale = scale
+  }
+  const uniqueRegions = uniqueBy(regions ?? [], (region) => region.regionId)
+  const region = uniqueRegions[0]
+  if (uniqueSheets.length === 1 && uniqueRegions.length === 1 && region) {
+    compact.regionId = region.regionId
+    if (region.regionType) compact.regionType = region.regionType
+    if (region.bbox !== undefined) compact.bbox = region.bbox
+  }
+  return compact
+}
+
+type DrawingSheetCompact = {
+  pageOrSheet: string
+  drawingNo?: string
+  sheetTitle?: string
+  scale?: string
+}
+
+type DrawingRegionCompact = {
+  regionId: string
+  regionType?: string
+  pageOrSheet?: string
+  bbox?: unknown
+}
+
+function normalizeDrawingSheetMetadata(value: unknown): DrawingSheetCompact | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
+  const record = value as Record<string, unknown>
+  const pageOrSheet = stringMetadata(record.pageOrSheet)
+  if (!pageOrSheet) return undefined
+  return {
+    pageOrSheet,
+    ...(stringMetadata(record.drawingNo) ? { drawingNo: stringMetadata(record.drawingNo) } : {}),
+    ...(stringMetadata(record.sheetTitle) ? { sheetTitle: stringMetadata(record.sheetTitle) } : {}),
+    ...(stringMetadata(record.scale) ? { scale: stringMetadata(record.scale) } : {})
+  }
+}
+
+function normalizeDrawingRegionMetadata(value: unknown): DrawingRegionCompact | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined
+  const record = value as Record<string, unknown>
+  const regionId = stringMetadata(record.regionId)
+  if (!regionId) return undefined
+  return {
+    regionId,
+    ...(stringMetadata(record.regionType) ? { regionType: stringMetadata(record.regionType) } : {}),
+    ...(stringMetadata(record.pageOrSheet) ? { pageOrSheet: stringMetadata(record.pageOrSheet) } : {}),
+    ...(isJsonLike(record.bbox) ? { bbox: record.bbox } : {})
+  }
+}
+
+function uniqueBy<T>(items: T[], keyOf: (item: T) => string): T[] {
+  const seen = new Set<string>()
+  const unique: T[] = []
+  for (const item of items) {
+    const key = keyOf(item)
+    if (seen.has(key)) continue
+    seen.add(key)
+    unique.push(item)
+  }
+  return unique
+}
+
+function uniqueNonEmpty(values: Array<string | undefined> | undefined): string | undefined {
+  const unique = [...new Set((values ?? []).filter((value): value is string => Boolean(value?.trim())))]
+  return unique.length === 1 ? unique[0] : undefined
+}
+
+function stringMetadata(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined
+  const trimmed = value.trim()
+  if (!trimmed || trimmed.length > compactDrawingStringMaxLength) return undefined
+  return trimmed
+}
+
+function isJsonLike(value: unknown): boolean {
+  if (value === null) return true
+  if (["string", "number", "boolean"].includes(typeof value)) return true
+  if (Array.isArray(value)) return value.every(isJsonLike)
+  if (!value || typeof value !== "object") return false
+  return Object.values(value).every(isJsonLike)
 }
 
 async function listCorpusFiles(corpusDir: string): Promise<string[]> {
