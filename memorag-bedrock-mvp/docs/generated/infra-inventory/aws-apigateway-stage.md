@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`RestApiDeploymentStageprod3855DE66`](#restapideploymentstageprod3855de66) | Rest Api Deployment Stageprod (API Gateway stage) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Rest Api Deployment Stageprod](#rest-api-deployment-stageprod) | `RestApiDeploymentStageprod3855DE66` | Rest Api Deployment Stageprod (API Gateway stage) |
 
 ## Logical ID 別設定
 
-### RestApiDeploymentStageprod3855DE66
+### Rest Api Deployment Stageprod
+
+Logical ID: `RestApiDeploymentStageprod3855DE66`
 
 用途推定: Rest Api Deployment Stageprod (API Gateway stage)
 

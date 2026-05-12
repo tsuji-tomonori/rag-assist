@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`RestApiRequestValidatorAAF760FF`](#restapirequestvalidatoraaf760ff) | Rest Api Request Validator (API Gateway request validator) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Rest Api Request Validator](#rest-api-request-validator) | `RestApiRequestValidatorAAF760FF` | Rest Api Request Validator (API Gateway request validator) |
 
 ## Logical ID 別設定
 
-### RestApiRequestValidatorAAF760FF
+### Rest Api Request Validator
+
+Logical ID: `RestApiRequestValidatorAAF760FF`
 
 用途推定: Rest Api Request Validator (API Gateway request validator)
 

@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`UserPool6BA7E5F2`](#userpool6ba7e5f2) | User Pool (Cognito user pool) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [User Pool](#user-pool) | `UserPool6BA7E5F2` | User Pool (Cognito user pool) |
 
 ## Logical ID 別設定
 
-### UserPool6BA7E5F2
+### User Pool
+
+Logical ID: `UserPool6BA7E5F2`
 
 用途推定: User Pool (Cognito user pool)
 

@@ -14,23 +14,25 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`ApiFunctionCE271BD4`](#apifunctionce271bd4) | Api Function (Lambda function) |
-| [`ChatRunEventsStreamFunctionA12E11AC`](#chatruneventsstreamfunctiona12e11ac) | Chat Run Events Stream Function (Lambda function) |
-| [`ChatRunMarkFailedFunction23223E28`](#chatrunmarkfailedfunction23223e28) | Chat Run Mark Failed Function (Lambda function) |
-| [`ChatRunWorkerFunction3C85A553`](#chatrunworkerfunction3c85a553) | Chat Run Worker Function (Lambda function) |
-| [`CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536`](#customcdkbucketdeployment8693bb64968944b69aafb0cc9eb8756c81c01536) | Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536 (Lambda function) |
-| [`CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F`](#customs3autodeleteobjectscustomresourceproviderhandler9d90184f) | Custom S3Auto Delete Objects Custom Resource Provider Handler (Lambda function) |
-| [`DocumentIngestRunMarkFailedFunction41F16DD3`](#documentingestrunmarkfailedfunction41f16dd3) | Document Ingest Run Mark Failed Function (Lambda function) |
-| [`DocumentIngestRunWorkerFunctionBBDBF694`](#documentingestrunworkerfunctionbbdbf694) | Document Ingest Run Worker Function (Lambda function) |
-| [`HeavyApiFunction4BC152A5`](#heavyapifunction4bc152a5) | Heavy Api Function (Lambda function) |
-| [`S3VectorsProviderFn215E3A4E`](#s3vectorsproviderfn215e3a4e) | S3Vectors Provider Fn (Lambda function) |
-| [`S3VectorsProviderframeworkonEventEB240CE8`](#s3vectorsproviderframeworkoneventeb240ce8) | S3Vectors Providerframeworkon Event (Lambda function) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Api Function](#api-function) | `ApiFunctionCE271BD4` | Api Function (Lambda function) |
+| [Chat Run Events Stream Function](#chat-run-events-stream-function) | `ChatRunEventsStreamFunctionA12E11AC` | Chat Run Events Stream Function (Lambda function) |
+| [Chat Run Mark Failed Function](#chat-run-mark-failed-function) | `ChatRunMarkFailedFunction23223E28` | Chat Run Mark Failed Function (Lambda function) |
+| [Chat Run Worker Function](#chat-run-worker-function) | `ChatRunWorkerFunction3C85A553` | Chat Run Worker Function (Lambda function) |
+| [Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536](#custom-cdk-bucket-deployment8693bb64968944b69aafb0cc9eb8756c81c01536) | `CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536` | Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536 (Lambda function) |
+| [Custom S3Auto Delete Objects Custom Resource Provider Handler](#custom-s3auto-delete-objects-custom-resource-provider-handler) | `CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F` | Custom S3Auto Delete Objects Custom Resource Provider Handler (Lambda function) |
+| [Document Ingest Run Mark Failed Function](#document-ingest-run-mark-failed-function) | `DocumentIngestRunMarkFailedFunction41F16DD3` | Document Ingest Run Mark Failed Function (Lambda function) |
+| [Document Ingest Run Worker Function](#document-ingest-run-worker-function) | `DocumentIngestRunWorkerFunctionBBDBF694` | Document Ingest Run Worker Function (Lambda function) |
+| [Heavy Api Function](#heavy-api-function) | `HeavyApiFunction4BC152A5` | Heavy Api Function (Lambda function) |
+| [S3Vectors Provider Fn](#s3vectors-provider-fn) | `S3VectorsProviderFn215E3A4E` | S3Vectors Provider Fn (Lambda function) |
+| [S3Vectors Providerframeworkon Event](#s3vectors-providerframeworkon-event) | `S3VectorsProviderframeworkonEventEB240CE8` | S3Vectors Providerframeworkon Event (Lambda function) |
 
 ## Logical ID 別設定
 
-### ApiFunctionCE271BD4
+### Api Function
+
+Logical ID: `ApiFunctionCE271BD4`
 
 用途推定: Api Function (Lambda function)
 
@@ -44,7 +46,9 @@
 | `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","BENCHMARK_STATE_MACHINE_ARN":"Ref:BenchmarkStateMachine8C582B8A","BENCHMARK_TARGET_API_BASE_URL":"Join:[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"},\"/prod/\"]]","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUN_STATE_MACHINE_ARN":"Ref:ChatRunStateMachine52CAF7BA","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN":"Ref:DocumentIngestRunStateMachine2FD7D3D3","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","PDF_OCR_FALLBACK_ENABLED":"true","PDF_OCR_FALLBACK_TIMEOUT_MS":"45000","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
 | `role` | GetAtt:ApiFunctionServiceRole52B9747B.Arn |
 
-### ChatRunEventsStreamFunctionA12E11AC
+### Chat Run Events Stream Function
+
+Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 
 用途推定: Chat Run Events Stream Function (Lambda function)
 
@@ -58,7 +62,9 @@
 | `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
 | `role` | GetAtt:ChatRunEventsStreamFunctionServiceRole41BBFB5A.Arn |
 
-### ChatRunMarkFailedFunction23223E28
+### Chat Run Mark Failed Function
+
+Logical ID: `ChatRunMarkFailedFunction23223E28`
 
 用途推定: Chat Run Mark Failed Function (Lambda function)
 
@@ -72,7 +78,9 @@
 | `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
 | `role` | GetAtt:ChatRunMarkFailedFunctionServiceRoleAAD50CA8.Arn |
 
-### ChatRunWorkerFunction3C85A553
+### Chat Run Worker Function
+
+Logical ID: `ChatRunWorkerFunction3C85A553`
 
 用途推定: Chat Run Worker Function (Lambda function)
 
@@ -86,7 +94,9 @@
 | `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
 | `role` | GetAtt:ChatRunWorkerFunctionServiceRoleBED42CDB.Arn |
 
-### CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536
+### Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536
+
+Logical ID: `CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536`
 
 用途推定: Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536 (Lambda function)
 
@@ -99,7 +109,9 @@
 | `layers` | [Ref:DeployBenchmarkDatasetsAwsCliLayer634804B4] |
 | `role` | GetAtt:CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265.Arn |
 
-### CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F
+### Custom S3Auto Delete Objects Custom Resource Provider Handler
+
+Logical ID: `CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F`
 
 用途推定: Custom S3Auto Delete Objects Custom Resource Provider Handler (Lambda function)
 
@@ -111,7 +123,9 @@
 | `timeoutSeconds` | 900 |
 | `role` | GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092.Arn |
 
-### DocumentIngestRunMarkFailedFunction41F16DD3
+### Document Ingest Run Mark Failed Function
+
+Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 
 用途推定: Document Ingest Run Mark Failed Function (Lambda function)
 
@@ -125,7 +139,9 @@
 | `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
 | `role` | GetAtt:DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D.Arn |
 
-### DocumentIngestRunWorkerFunctionBBDBF694
+### Document Ingest Run Worker Function
+
+Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 
 用途推定: Document Ingest Run Worker Function (Lambda function)
 
@@ -140,7 +156,9 @@
 | `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","PDF_OCR_FALLBACK_ENABLED":"true","PDF_OCR_FALLBACK_TIMEOUT_MS":"45000","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
 | `role` | GetAtt:DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED.Arn |
 
-### HeavyApiFunction4BC152A5
+### Heavy Api Function
+
+Logical ID: `HeavyApiFunction4BC152A5`
 
 用途推定: Heavy Api Function (Lambda function)
 
@@ -154,7 +172,9 @@
 | `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","BENCHMARK_STATE_MACHINE_ARN":"Ref:BenchmarkStateMachine8C582B8A","BENCHMARK_TARGET_API_BASE_URL":"Join:[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"},\"/prod/\"]]","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUN_STATE_MACHINE_ARN":"Ref:ChatRunStateMachine52CAF7BA","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN":"Ref:DocumentIngestRunStateMachine2FD7D3D3","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","PDF_OCR_FALLBACK_ENABLED":"true","PDF_OCR_FALLBACK_TIMEOUT_MS":"45000","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
 | `role` | GetAtt:HeavyApiFunctionServiceRole25A7AE5E.Arn |
 
-### S3VectorsProviderFn215E3A4E
+### S3Vectors Provider Fn
+
+Logical ID: `S3VectorsProviderFn215E3A4E`
 
 用途推定: S3Vectors Provider Fn (Lambda function)
 
@@ -166,7 +186,9 @@
 | `timeoutSeconds` | 120 |
 | `role` | GetAtt:S3VectorsProviderFnServiceRoleFEC97124.Arn |
 
-### S3VectorsProviderframeworkonEventEB240CE8
+### S3Vectors Providerframeworkon Event
+
+Logical ID: `S3VectorsProviderframeworkonEventEB240CE8`
 
 用途推定: S3Vectors Providerframeworkon Event (Lambda function)
 

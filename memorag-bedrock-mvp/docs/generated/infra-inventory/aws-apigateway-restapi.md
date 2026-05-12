@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`RestApi0C43BF4B`](#restapi0c43bf4b) | Rest Api (API Gateway REST API) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Rest Api](#rest-api) | `RestApi0C43BF4B` | Rest Api (API Gateway REST API) |
 
 ## Logical ID 別設定
 
-### RestApi0C43BF4B
+### Rest Api
+
+Logical ID: `RestApi0C43BF4B`
 
 用途推定: Rest Api (API Gateway REST API)
 

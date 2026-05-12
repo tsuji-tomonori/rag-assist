@@ -127,6 +127,7 @@ function buildInventory(resources) {
   const resourceEntries = Object.entries(resources)
     .map(([logicalId, resource]) => ({
       logicalId,
+      logicalName: inferLogicalName(logicalId),
       type: resource.Type,
       purpose: inferPurpose(logicalId, resource.Type),
       settings: summarizeResource(logicalId, resource, resources)
@@ -632,16 +633,18 @@ function renderTypeDetailMarkdown(inventory, type, resources) {
     "",
     "## Logical ID 一覧",
     "",
-    "| Logical ID | 用途推定 |",
-    "| --- | --- |",
-    ...resources.map((resource) => `| [\`${resource.logicalId}\`](#${anchorFor(resource.logicalId)}) | ${escapeMd(resource.purpose)} |`),
+    "| 論理ID | Logical ID | 用途推定 |",
+    "| --- | --- | --- |",
+    ...resources.map((resource) => `| [${escapeMd(resource.logicalName)}](#${anchorFor(resource.logicalName)}) | \`${resource.logicalId}\` | ${escapeMd(resource.purpose)} |`),
     "",
     "## Logical ID 別設定",
     ""
   ]
 
   for (const resource of resources) {
-    lines.push(`### ${resource.logicalId}`)
+    lines.push(`### ${resource.logicalName}`)
+    lines.push("")
+    lines.push(`Logical ID: \`${resource.logicalId}\``)
     lines.push("")
     lines.push(`用途推定: ${escapeMd(resource.purpose)}`)
     lines.push("")
@@ -686,12 +689,16 @@ function compactObject(object) {
 }
 
 function inferPurpose(logicalId, type) {
-  const base = logicalId
+  const base = inferLogicalName(logicalId)
+  return `${base || logicalId} (${typeLabels[type] ?? type})`
+}
+
+function inferLogicalName(logicalId) {
+  return logicalId
     .replace(/(?<![A-F0-9])[A-F0-9]{8}$/g, "")
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
     .trim()
-  return `${base || logicalId} (${typeLabels[type] ?? type})`
 }
 
 function compareTypeThenId(a, b) {

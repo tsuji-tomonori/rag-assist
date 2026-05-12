@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`UserPoolUserPoolDomain9F01E991`](#userpooluserpooldomain9f01e991) | User Pool User Pool Domain (Cognito hosted domain) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [User Pool User Pool Domain](#user-pool-user-pool-domain) | `UserPoolUserPoolDomain9F01E991` | User Pool User Pool Domain (Cognito hosted domain) |
 
 ## Logical ID 別設定
 
-### UserPoolUserPoolDomain9F01E991
+### User Pool User Pool Domain
+
+Logical ID: `UserPoolUserPoolDomain9F01E991`
 
 用途推定: User Pool User Pool Domain (Cognito hosted domain)
 

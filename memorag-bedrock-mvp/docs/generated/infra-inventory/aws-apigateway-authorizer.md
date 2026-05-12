@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`RestApiCognitoAuthorizerF1518B6A`](#restapicognitoauthorizerf1518b6a) | Rest Api Cognito Authorizer (API Gateway Cognito authorizer) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Rest Api Cognito Authorizer](#rest-api-cognito-authorizer) | `RestApiCognitoAuthorizerF1518B6A` | Rest Api Cognito Authorizer (API Gateway Cognito authorizer) |
 
 ## Logical ID 別設定
 
-### RestApiCognitoAuthorizerF1518B6A
+### Rest Api Cognito Authorizer
+
+Logical ID: `RestApiCognitoAuthorizerF1518B6A`
 
 用途推定: Rest Api Cognito Authorizer (API Gateway Cognito authorizer)
 

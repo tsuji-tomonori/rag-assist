@@ -14,26 +14,28 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`ApiFunctionServiceRoleDefaultPolicy20A32B8D`](#apifunctionserviceroledefaultpolicy20a32b8d) | Api Function Service Role Default Policy (IAM inline policy) |
-| [`BenchmarkProjectRoleDefaultPolicyCFB0FA8E`](#benchmarkprojectroledefaultpolicycfb0fa8e) | Benchmark Project Role Default Policy (IAM inline policy) |
-| [`BenchmarkStateMachineRoleDefaultPolicyED2C1461`](#benchmarkstatemachineroledefaultpolicyed2c1461) | Benchmark State Machine Role Default Policy (IAM inline policy) |
-| [`ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2`](#chatruneventsstreamfunctionserviceroledefaultpolicya6ad23f2) | Chat Run Events Stream Function Service Role Default Policy (IAM inline policy) |
-| [`ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617`](#chatrunmarkfailedfunctionserviceroledefaultpolicydccb4617) | Chat Run Mark Failed Function Service Role Default Policy (IAM inline policy) |
-| [`ChatRunStateMachineRoleDefaultPolicyC3BFD137`](#chatrunstatemachineroledefaultpolicyc3bfd137) | Chat Run State Machine Role Default Policy (IAM inline policy) |
-| [`ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3`](#chatrunworkerfunctionserviceroledefaultpolicy17eaa0d3) | Chat Run Worker Function Service Role Default Policy (IAM inline policy) |
-| [`CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF`](#customcdkbucketdeployment8693bb64968944b69aafb0cc9eb8756cserviceroledefaultpolicy88902fdf) | Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role Default Policy (IAM inline policy) |
-| [`DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B`](#documentingestrunmarkfailedfunctionserviceroledefaultpolicy6b2c079b) | Document Ingest Run Mark Failed Function Service Role Default Policy (IAM inline policy) |
-| [`DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F`](#documentingestrunstatemachineroledefaultpolicy40421b5f) | Document Ingest Run State Machine Role Default Policy (IAM inline policy) |
-| [`DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE`](#documentingestrunworkerfunctionserviceroledefaultpolicye7c95fce) | Document Ingest Run Worker Function Service Role Default Policy (IAM inline policy) |
-| [`HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE`](#heavyapifunctionserviceroledefaultpolicyc207d4de) | Heavy Api Function Service Role Default Policy (IAM inline policy) |
-| [`S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7`](#s3vectorsproviderfnserviceroledefaultpolicy0de2afb7) | S3Vectors Provider Fn Service Role Default Policy (IAM inline policy) |
-| [`S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756`](#s3vectorsproviderframeworkoneventserviceroledefaultpolicy486c3756) | S3Vectors Providerframeworkon Event Service Role Default Policy (IAM inline policy) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Api Function Service Role Default Policy](#api-function-service-role-default-policy) | `ApiFunctionServiceRoleDefaultPolicy20A32B8D` | Api Function Service Role Default Policy (IAM inline policy) |
+| [Benchmark Project Role Default Policy](#benchmark-project-role-default-policy) | `BenchmarkProjectRoleDefaultPolicyCFB0FA8E` | Benchmark Project Role Default Policy (IAM inline policy) |
+| [Benchmark State Machine Role Default Policy](#benchmark-state-machine-role-default-policy) | `BenchmarkStateMachineRoleDefaultPolicyED2C1461` | Benchmark State Machine Role Default Policy (IAM inline policy) |
+| [Chat Run Events Stream Function Service Role Default Policy](#chat-run-events-stream-function-service-role-default-policy) | `ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2` | Chat Run Events Stream Function Service Role Default Policy (IAM inline policy) |
+| [Chat Run Mark Failed Function Service Role Default Policy](#chat-run-mark-failed-function-service-role-default-policy) | `ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617` | Chat Run Mark Failed Function Service Role Default Policy (IAM inline policy) |
+| [Chat Run State Machine Role Default Policy](#chat-run-state-machine-role-default-policy) | `ChatRunStateMachineRoleDefaultPolicyC3BFD137` | Chat Run State Machine Role Default Policy (IAM inline policy) |
+| [Chat Run Worker Function Service Role Default Policy](#chat-run-worker-function-service-role-default-policy) | `ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3` | Chat Run Worker Function Service Role Default Policy (IAM inline policy) |
+| [Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role Default Policy](#custom-cdk-bucket-deployment8693bb64968944b69aafb0cc9eb8756c-service-role-default-policy) | `CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF` | Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role Default Policy (IAM inline policy) |
+| [Document Ingest Run Mark Failed Function Service Role Default Policy](#document-ingest-run-mark-failed-function-service-role-default-policy) | `DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B` | Document Ingest Run Mark Failed Function Service Role Default Policy (IAM inline policy) |
+| [Document Ingest Run State Machine Role Default Policy](#document-ingest-run-state-machine-role-default-policy) | `DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F` | Document Ingest Run State Machine Role Default Policy (IAM inline policy) |
+| [Document Ingest Run Worker Function Service Role Default Policy](#document-ingest-run-worker-function-service-role-default-policy) | `DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE` | Document Ingest Run Worker Function Service Role Default Policy (IAM inline policy) |
+| [Heavy Api Function Service Role Default Policy](#heavy-api-function-service-role-default-policy) | `HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE` | Heavy Api Function Service Role Default Policy (IAM inline policy) |
+| [S3Vectors Provider Fn Service Role Default Policy](#s3vectors-provider-fn-service-role-default-policy) | `S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7` | S3Vectors Provider Fn Service Role Default Policy (IAM inline policy) |
+| [S3Vectors Providerframeworkon Event Service Role Default Policy](#s3vectors-providerframeworkon-event-service-role-default-policy) | `S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756` | S3Vectors Providerframeworkon Event Service Role Default Policy (IAM inline policy) |
 
 ## Logical ID 別設定
 
-### ApiFunctionServiceRoleDefaultPolicy20A32B8D
+### Api Function Service Role Default Policy
+
+Logical ID: `ApiFunctionServiceRoleDefaultPolicy20A32B8D`
 
 用途推定: Api Function Service Role Default Policy (IAM inline policy)
 
@@ -45,7 +47,9 @@
 | `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, cognito-idp:AdminAddUserToGroup, cognito-idp:AdminListGroupsForUser, cognito-idp:AdminRemoveUserFromGroup, cognito-idp:ListUsers, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors, textract:DetectDocumentText, textract:GetDocumentTextDetection, textract:StartDocumentTextDetection] |
 | `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:ConversationHistoryTable59A3534C.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:HumanQuestionsTable5DA9688B.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]]] |
 
-### BenchmarkProjectRoleDefaultPolicyCFB0FA8E
+### Benchmark Project Role Default Policy
+
+Logical ID: `BenchmarkProjectRoleDefaultPolicyCFB0FA8E`
 
 用途推定: Benchmark Project Role Default Policy (IAM inline policy)
 
@@ -57,7 +61,9 @@
 | `actions` | [codebuild:BatchPutCodeCoverages, codebuild:BatchPutTestCases, codebuild:CreateReport, codebuild:CreateReportGroup, codebuild:UpdateReport, cognito-idp:AdminAddUserToGroup, cognito-idp:AdminCreateUser, cognito-idp:AdminGetUser, cognito-idp:AdminSetUserPassword, cognito-idp:InitiateAuth, dynamodb:UpdateItem, kms:Decrypt, kms:Encrypt, kms:GenerateDataKey*, kms:ReEncrypt*, logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, secretsmanager:DescribeSecret, secretsmanager:GetSecretValue] |
 | `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkProjectKeyB840011B.Arn, GetAtt:BenchmarkProjectLogGroup395F719E.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":codebuild:ap-northeast-1:111111111111:report-group/",{"Ref":"BenchmarkProject1593465D"},"-*"]], Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/",{"Ref":"BenchmarkProject1593465D"},":*"]], Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/",{"Ref":"BenchmarkProject1593465D"}]], Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Ref:BenchmarkRunnerAuthSecret035EF8F2] |
 
-### BenchmarkStateMachineRoleDefaultPolicyED2C1461
+### Benchmark State Machine Role Default Policy
+
+Logical ID: `BenchmarkStateMachineRoleDefaultPolicyED2C1461`
 
 用途推定: Benchmark State Machine Role Default Policy (IAM inline policy)
 
@@ -69,7 +75,9 @@
 | `actions` | [codebuild:BatchGetBuilds, codebuild:StartBuild, codebuild:StopBuild, dynamodb:BatchWriteItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:PutItem, dynamodb:UpdateItem, events:DescribeRule, events:PutRule, events:PutTargets, logs:CreateLogDelivery, logs:DeleteLogDelivery, logs:DescribeLogGroups, logs:DescribeResourcePolicies, logs:GetLogDelivery, logs:ListLogDeliveries, logs:PutResourcePolicy, logs:UpdateLogDelivery] |
 | `resources` | [*, GetAtt:BenchmarkProject1593465D.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn] |
 
-### ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2
+### Chat Run Events Stream Function Service Role Default Policy
+
+Logical ID: `ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2`
 
 用途推定: Chat Run Events Stream Function Service Role Default Policy (IAM inline policy)
 
@@ -81,7 +89,9 @@
 | `actions` | [dynamodb:BatchGetItem, dynamodb:ConditionCheckItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:Query, dynamodb:Scan] |
 | `resources` | [GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn] |
 
-### ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617
+### Chat Run Mark Failed Function Service Role Default Policy
+
+Logical ID: `ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617`
 
 用途推定: Chat Run Mark Failed Function Service Role Default Policy (IAM inline policy)
 
@@ -93,7 +103,9 @@
 | `actions` | [dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem] |
 | `resources` | [GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn] |
 
-### ChatRunStateMachineRoleDefaultPolicyC3BFD137
+### Chat Run State Machine Role Default Policy
+
+Logical ID: `ChatRunStateMachineRoleDefaultPolicyC3BFD137`
 
 用途推定: Chat Run State Machine Role Default Policy (IAM inline policy)
 
@@ -105,7 +117,9 @@
 | `actions` | [lambda:InvokeFunction, logs:CreateLogDelivery, logs:DeleteLogDelivery, logs:DescribeLogGroups, logs:DescribeResourcePolicies, logs:GetLogDelivery, logs:ListLogDeliveries, logs:PutResourcePolicy, logs:UpdateLogDelivery] |
 | `resources` | [*, GetAtt:ChatRunMarkFailedFunction23223E28.Arn, GetAtt:ChatRunWorkerFunction3C85A553.Arn, Join:["",[{"Fn::GetAtt":["ChatRunMarkFailedFunction23223E28","Arn"]},":*"]], Join:["",[{"Fn::GetAtt":["ChatRunWorkerFunction3C85A553","Arn"]},":*"]]] |
 
-### ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3
+### Chat Run Worker Function Service Role Default Policy
+
+Logical ID: `ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3`
 
 用途推定: Chat Run Worker Function Service Role Default Policy (IAM inline policy)
 
@@ -117,7 +131,9 @@
 | `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors] |
 | `resources` | [*, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]]] |
 
-### CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF
+### Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role Default Policy
+
+Logical ID: `CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF`
 
 用途推定: Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role Default Policy (IAM inline policy)
 
@@ -129,7 +145,9 @@
 | `actions` | [s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging] |
 | `resources` | [GetAtt:BenchmarkBucketDD7D1D2F.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":s3:::cdk-hnb659fds-assets-111111111111-ap-northeast-1"]], Join:["",["arn:",{"Ref":"AWS::Partition"},":s3:::cdk-hnb659fds-assets-111111111111-ap-northeast-1/*"]], Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]]] |
 
-### DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B
+### Document Ingest Run Mark Failed Function Service Role Default Policy
+
+Logical ID: `DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B`
 
 用途推定: Document Ingest Run Mark Failed Function Service Role Default Policy (IAM inline policy)
 
@@ -141,7 +159,9 @@
 | `actions` | [dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem] |
 | `resources` | [GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn] |
 
-### DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F
+### Document Ingest Run State Machine Role Default Policy
+
+Logical ID: `DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F`
 
 用途推定: Document Ingest Run State Machine Role Default Policy (IAM inline policy)
 
@@ -153,7 +173,9 @@
 | `actions` | [lambda:InvokeFunction, logs:CreateLogDelivery, logs:DeleteLogDelivery, logs:DescribeLogGroups, logs:DescribeResourcePolicies, logs:GetLogDelivery, logs:ListLogDeliveries, logs:PutResourcePolicy, logs:UpdateLogDelivery] |
 | `resources` | [*, GetAtt:DocumentIngestRunMarkFailedFunction41F16DD3.Arn, GetAtt:DocumentIngestRunWorkerFunctionBBDBF694.Arn, Join:["",[{"Fn::GetAtt":["DocumentIngestRunMarkFailedFunction41F16DD3","Arn"]},":*"]], Join:["",[{"Fn::GetAtt":["DocumentIngestRunWorkerFunctionBBDBF694","Arn"]},":*"]]] |
 
-### DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE
+### Document Ingest Run Worker Function Service Role Default Policy
+
+Logical ID: `DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE`
 
 用途推定: Document Ingest Run Worker Function Service Role Default Policy (IAM inline policy)
 
@@ -165,7 +187,9 @@
 | `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors, textract:DetectDocumentText, textract:GetDocumentTextDetection, textract:StartDocumentTextDetection] |
 | `resources` | [*, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]]] |
 
-### HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE
+### Heavy Api Function Service Role Default Policy
+
+Logical ID: `HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE`
 
 用途推定: Heavy Api Function Service Role Default Policy (IAM inline policy)
 
@@ -177,7 +201,9 @@
 | `actions` | [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream, cognito-idp:AdminAddUserToGroup, cognito-idp:AdminListGroupsForUser, cognito-idp:AdminRemoveUserFromGroup, cognito-idp:ListUsers, dynamodb:BatchGetItem, dynamodb:BatchWriteItem, dynamodb:ConditionCheckItem, dynamodb:DeleteItem, dynamodb:DescribeTable, dynamodb:GetItem, dynamodb:GetRecords, dynamodb:GetShardIterator, dynamodb:PutItem, dynamodb:Query, dynamodb:Scan, dynamodb:UpdateItem, s3:Abort*, s3:DeleteObject*, s3:GetBucket*, s3:GetObject*, s3:List*, s3:PutObject, s3:PutObjectLegalHold, s3:PutObjectRetention, s3:PutObjectTagging, s3:PutObjectVersionTagging, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors, textract:DetectDocumentText, textract:GetDocumentTextDetection, textract:StartDocumentTextDetection] |
 | `resources` | [*, GetAtt:BenchmarkBucketDD7D1D2F.Arn, GetAtt:BenchmarkRunsTableD0841636.Arn, GetAtt:ChatRunEventsTable7455A50E.Arn, GetAtt:ChatRunsTable8446CD95.Arn, GetAtt:ConversationHistoryTable59A3534C.Arn, GetAtt:DebugDownloadBucketAB6A16BE.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn, GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn, GetAtt:DocumentsBucket9EC9DEB9.Arn, GetAtt:HumanQuestionsTable5DA9688B.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",[{"Fn::GetAtt":["BenchmarkBucketDD7D1D2F","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DebugDownloadBucketAB6A16BE","Arn"]},"/*"]], Join:["",[{"Fn::GetAtt":["DocumentsBucket9EC9DEB9","Arn"]},"/*"]]] |
 
-### S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7
+### S3Vectors Provider Fn Service Role Default Policy
+
+Logical ID: `S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7`
 
 用途推定: S3Vectors Provider Fn Service Role Default Policy (IAM inline policy)
 
@@ -189,7 +215,9 @@
 | `actions` | [s3vectors:*] |
 | `resources` | [*] |
 
-### S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756
+### S3Vectors Providerframeworkon Event Service Role Default Policy
+
+Logical ID: `S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756`
 
 用途推定: S3Vectors Providerframeworkon Event Service Role Default Policy (IAM inline policy)
 

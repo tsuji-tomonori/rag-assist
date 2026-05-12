@@ -14,15 +14,17 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`BenchmarkStateMachine8C582B8A`](#benchmarkstatemachine8c582b8a) | Benchmark State Machine (Step Functions state machine) |
-| [`ChatRunStateMachine52CAF7BA`](#chatrunstatemachine52caf7ba) | Chat Run State Machine (Step Functions state machine) |
-| [`DocumentIngestRunStateMachine2FD7D3D3`](#documentingestrunstatemachine2fd7d3d3) | Document Ingest Run State Machine (Step Functions state machine) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Benchmark State Machine](#benchmark-state-machine) | `BenchmarkStateMachine8C582B8A` | Benchmark State Machine (Step Functions state machine) |
+| [Chat Run State Machine](#chat-run-state-machine) | `ChatRunStateMachine52CAF7BA` | Chat Run State Machine (Step Functions state machine) |
+| [Document Ingest Run State Machine](#document-ingest-run-state-machine) | `DocumentIngestRunStateMachine2FD7D3D3` | Document Ingest Run State Machine (Step Functions state machine) |
 
 ## Logical ID 別設定
 
-### BenchmarkStateMachine8C582B8A
+### Benchmark State Machine
+
+Logical ID: `BenchmarkStateMachine8C582B8A`
 
 用途推定: Benchmark State Machine (Step Functions state machine)
 
@@ -32,7 +34,9 @@
 | `loggingLevel` | ALL |
 | `definitionSummary` | [BenchmarkStartCodeBuild] |
 
-### ChatRunStateMachine52CAF7BA
+### Chat Run State Machine
+
+Logical ID: `ChatRunStateMachine52CAF7BA`
 
 用途推定: Chat Run State Machine (Step Functions state machine)
 
@@ -42,7 +46,9 @@
 | `loggingLevel` | ALL |
 | `definitionSummary` | [ChatRunWorkerTask, ChatRunMarkFailedTask] |
 
-### DocumentIngestRunStateMachine2FD7D3D3
+### Document Ingest Run State Machine
+
+Logical ID: `DocumentIngestRunStateMachine2FD7D3D3`
 
 用途推定: Document Ingest Run State Machine (Step Functions state machine)
 

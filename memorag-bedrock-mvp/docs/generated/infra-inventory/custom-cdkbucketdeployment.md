@@ -14,16 +14,18 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`DeployBenchmarkDatasetsCustomResource7C791D40`](#deploybenchmarkdatasetscustomresource7c791d40) | Deploy Benchmark Datasets Custom Resource (CDK bucket deployment) |
-| [`DeployConversationBenchmarkCorpusCustomResourceAC06DC7F`](#deployconversationbenchmarkcorpuscustomresourceac06dc7f) | Deploy Conversation Benchmark Corpus Custom Resource (CDK bucket deployment) |
-| [`DeployConversationBenchmarkDatasetsCustomResource0681BCBB`](#deployconversationbenchmarkdatasetscustomresource0681bcbb) | Deploy Conversation Benchmark Datasets Custom Resource (CDK bucket deployment) |
-| [`DeploySearchBenchmarkDatasetsCustomResourceDFC997D1`](#deploysearchbenchmarkdatasetscustomresourcedfc997d1) | Deploy Search Benchmark Datasets Custom Resource (CDK bucket deployment) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Deploy Benchmark Datasets Custom Resource](#deploy-benchmark-datasets-custom-resource) | `DeployBenchmarkDatasetsCustomResource7C791D40` | Deploy Benchmark Datasets Custom Resource (CDK bucket deployment) |
+| [Deploy Conversation Benchmark Corpus Custom Resource](#deploy-conversation-benchmark-corpus-custom-resource) | `DeployConversationBenchmarkCorpusCustomResourceAC06DC7F` | Deploy Conversation Benchmark Corpus Custom Resource (CDK bucket deployment) |
+| [Deploy Conversation Benchmark Datasets Custom Resource](#deploy-conversation-benchmark-datasets-custom-resource) | `DeployConversationBenchmarkDatasetsCustomResource0681BCBB` | Deploy Conversation Benchmark Datasets Custom Resource (CDK bucket deployment) |
+| [Deploy Search Benchmark Datasets Custom Resource](#deploy-search-benchmark-datasets-custom-resource) | `DeploySearchBenchmarkDatasetsCustomResourceDFC997D1` | Deploy Search Benchmark Datasets Custom Resource (CDK bucket deployment) |
 
 ## Logical ID 別設定
 
-### DeployBenchmarkDatasetsCustomResource7C791D40
+### Deploy Benchmark Datasets Custom Resource
+
+Logical ID: `DeployBenchmarkDatasetsCustomResource7C791D40`
 
 用途推定: Deploy Benchmark Datasets Custom Resource (CDK bucket deployment)
 
@@ -34,7 +36,9 @@
 | `sourceObjectKeys` | [<asset-hash>.zip, <asset-hash>.zip, <asset-hash>.zip] |
 | `prune` | true |
 
-### DeployConversationBenchmarkCorpusCustomResourceAC06DC7F
+### Deploy Conversation Benchmark Corpus Custom Resource
+
+Logical ID: `DeployConversationBenchmarkCorpusCustomResourceAC06DC7F`
 
 用途推定: Deploy Conversation Benchmark Corpus Custom Resource (CDK bucket deployment)
 
@@ -45,7 +49,9 @@
 | `sourceObjectKeys` | [<asset-hash>.zip, <asset-hash>.zip] |
 | `prune` | true |
 
-### DeployConversationBenchmarkDatasetsCustomResource0681BCBB
+### Deploy Conversation Benchmark Datasets Custom Resource
+
+Logical ID: `DeployConversationBenchmarkDatasetsCustomResource0681BCBB`
 
 用途推定: Deploy Conversation Benchmark Datasets Custom Resource (CDK bucket deployment)
 
@@ -56,7 +62,9 @@
 | `sourceObjectKeys` | [<asset-hash>.zip, <asset-hash>.zip] |
 | `prune` | true |
 
-### DeploySearchBenchmarkDatasetsCustomResourceDFC997D1
+### Deploy Search Benchmark Datasets Custom Resource
+
+Logical ID: `DeploySearchBenchmarkDatasetsCustomResourceDFC997D1`
 
 用途推定: Deploy Search Benchmark Datasets Custom Resource (CDK bucket deployment)
 

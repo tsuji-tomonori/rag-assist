@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`RestApiDeployment180EC5032ef45d9fea11e79ee1d6401947564acb`](#restapideployment180ec5032ef45d9fea11e79ee1d6401947564acb) | Rest Api Deployment180EC5032ef45d9fea11e79ee1d6401947564acb (API Gateway deployment) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Rest Api Deployment180EC5032ef45d9fea11e79ee1d6401947564acb](#rest-api-deployment180ec5032ef45d9fea11e79ee1d6401947564acb) | `RestApiDeployment180EC5032ef45d9fea11e79ee1d6401947564acb` | Rest Api Deployment180EC5032ef45d9fea11e79ee1d6401947564acb (API Gateway deployment) |
 
 ## Logical ID 別設定
 
-### RestApiDeployment180EC5032ef45d9fea11e79ee1d6401947564acb
+### Rest Api Deployment180EC5032ef45d9fea11e79ee1d6401947564acb
+
+Logical ID: `RestApiDeployment180EC5032ef45d9fea11e79ee1d6401947564acb`
 
 用途推定: Rest Api Deployment180EC5032ef45d9fea11e79ee1d6401947564acb (API Gateway deployment)
 

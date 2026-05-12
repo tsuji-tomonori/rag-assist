@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`UserPoolWebClient4C9370B0`](#userpoolwebclient4c9370b0) | User Pool Web Client (Cognito app client) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [User Pool Web Client](#user-pool-web-client) | `UserPoolWebClient4C9370B0` | User Pool Web Client (Cognito app client) |
 
 ## Logical ID 別設定
 
-### UserPoolWebClient4C9370B0
+### User Pool Web Client
+
+Logical ID: `UserPoolWebClient4C9370B0`
 
 用途推定: User Pool Web Client (Cognito app client)
 

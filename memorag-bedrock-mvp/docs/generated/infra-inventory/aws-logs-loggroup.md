@@ -14,26 +14,28 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`ApiFunctionLogGroup00D1AC73`](#apifunctionloggroup00d1ac73) | Api Function Log Group (CloudWatch Logs log group) |
-| [`BenchmarkProjectLogGroup395F719E`](#benchmarkprojectloggroup395f719e) | Benchmark Project Log Group (CloudWatch Logs log group) |
-| [`BenchmarkStateMachineLogGroup6D80BBB2`](#benchmarkstatemachineloggroup6d80bbb2) | Benchmark State Machine Log Group (CloudWatch Logs log group) |
-| [`ChatRunEventsStreamLogGroupDB3F86F0`](#chatruneventsstreamloggroupdb3f86f0) | Chat Run Events Stream Log Group (CloudWatch Logs log group) |
-| [`ChatRunMarkFailedLogGroup7848AD59`](#chatrunmarkfailedloggroup7848ad59) | Chat Run Mark Failed Log Group (CloudWatch Logs log group) |
-| [`ChatRunStateMachineLogGroup6AD4AA67`](#chatrunstatemachineloggroup6ad4aa67) | Chat Run State Machine Log Group (CloudWatch Logs log group) |
-| [`ChatRunWorkerLogGroup5ACB3363`](#chatrunworkerloggroup5acb3363) | Chat Run Worker Log Group (CloudWatch Logs log group) |
-| [`DocumentIngestRunMarkFailedLogGroupF2BA4346`](#documentingestrunmarkfailedloggroupf2ba4346) | Document Ingest Run Mark Failed Log Group (CloudWatch Logs log group) |
-| [`DocumentIngestRunStateMachineLogGroup94B2F1DE`](#documentingestrunstatemachineloggroup94b2f1de) | Document Ingest Run State Machine Log Group (CloudWatch Logs log group) |
-| [`DocumentIngestRunWorkerLogGroup2B1C84D3`](#documentingestrunworkerloggroup2b1c84d3) | Document Ingest Run Worker Log Group (CloudWatch Logs log group) |
-| [`HeavyApiFunctionLogGroupF418C95A`](#heavyapifunctionloggroupf418c95a) | Heavy Api Function Log Group (CloudWatch Logs log group) |
-| [`RestApiAccessLogGroup246D1CE0`](#restapiaccessloggroup246d1ce0) | Rest Api Access Log Group (CloudWatch Logs log group) |
-| [`S3VectorsProviderFrameworkLogGroupB49A141A`](#s3vectorsproviderframeworkloggroupb49a141a) | S3Vectors Provider Framework Log Group (CloudWatch Logs log group) |
-| [`S3VectorsProviderLogGroupE19D8C96`](#s3vectorsproviderloggroupe19d8c96) | S3Vectors Provider Log Group (CloudWatch Logs log group) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Api Function Log Group](#api-function-log-group) | `ApiFunctionLogGroup00D1AC73` | Api Function Log Group (CloudWatch Logs log group) |
+| [Benchmark Project Log Group](#benchmark-project-log-group) | `BenchmarkProjectLogGroup395F719E` | Benchmark Project Log Group (CloudWatch Logs log group) |
+| [Benchmark State Machine Log Group](#benchmark-state-machine-log-group) | `BenchmarkStateMachineLogGroup6D80BBB2` | Benchmark State Machine Log Group (CloudWatch Logs log group) |
+| [Chat Run Events Stream Log Group](#chat-run-events-stream-log-group) | `ChatRunEventsStreamLogGroupDB3F86F0` | Chat Run Events Stream Log Group (CloudWatch Logs log group) |
+| [Chat Run Mark Failed Log Group](#chat-run-mark-failed-log-group) | `ChatRunMarkFailedLogGroup7848AD59` | Chat Run Mark Failed Log Group (CloudWatch Logs log group) |
+| [Chat Run State Machine Log Group](#chat-run-state-machine-log-group) | `ChatRunStateMachineLogGroup6AD4AA67` | Chat Run State Machine Log Group (CloudWatch Logs log group) |
+| [Chat Run Worker Log Group](#chat-run-worker-log-group) | `ChatRunWorkerLogGroup5ACB3363` | Chat Run Worker Log Group (CloudWatch Logs log group) |
+| [Document Ingest Run Mark Failed Log Group](#document-ingest-run-mark-failed-log-group) | `DocumentIngestRunMarkFailedLogGroupF2BA4346` | Document Ingest Run Mark Failed Log Group (CloudWatch Logs log group) |
+| [Document Ingest Run State Machine Log Group](#document-ingest-run-state-machine-log-group) | `DocumentIngestRunStateMachineLogGroup94B2F1DE` | Document Ingest Run State Machine Log Group (CloudWatch Logs log group) |
+| [Document Ingest Run Worker Log Group](#document-ingest-run-worker-log-group) | `DocumentIngestRunWorkerLogGroup2B1C84D3` | Document Ingest Run Worker Log Group (CloudWatch Logs log group) |
+| [Heavy Api Function Log Group](#heavy-api-function-log-group) | `HeavyApiFunctionLogGroupF418C95A` | Heavy Api Function Log Group (CloudWatch Logs log group) |
+| [Rest Api Access Log Group](#rest-api-access-log-group) | `RestApiAccessLogGroup246D1CE0` | Rest Api Access Log Group (CloudWatch Logs log group) |
+| [S3Vectors Provider Framework Log Group](#s3vectors-provider-framework-log-group) | `S3VectorsProviderFrameworkLogGroupB49A141A` | S3Vectors Provider Framework Log Group (CloudWatch Logs log group) |
+| [S3Vectors Provider Log Group](#s3vectors-provider-log-group) | `S3VectorsProviderLogGroupE19D8C96` | S3Vectors Provider Log Group (CloudWatch Logs log group) |
 
 ## Logical ID 別設定
 
-### ApiFunctionLogGroup00D1AC73
+### Api Function Log Group
+
+Logical ID: `ApiFunctionLogGroup00D1AC73`
 
 用途推定: Api Function Log Group (CloudWatch Logs log group)
 
@@ -41,7 +43,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### BenchmarkProjectLogGroup395F719E
+### Benchmark Project Log Group
+
+Logical ID: `BenchmarkProjectLogGroup395F719E`
 
 用途推定: Benchmark Project Log Group (CloudWatch Logs log group)
 
@@ -49,7 +53,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### BenchmarkStateMachineLogGroup6D80BBB2
+### Benchmark State Machine Log Group
+
+Logical ID: `BenchmarkStateMachineLogGroup6D80BBB2`
 
 用途推定: Benchmark State Machine Log Group (CloudWatch Logs log group)
 
@@ -57,7 +63,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### ChatRunEventsStreamLogGroupDB3F86F0
+### Chat Run Events Stream Log Group
+
+Logical ID: `ChatRunEventsStreamLogGroupDB3F86F0`
 
 用途推定: Chat Run Events Stream Log Group (CloudWatch Logs log group)
 
@@ -65,7 +73,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### ChatRunMarkFailedLogGroup7848AD59
+### Chat Run Mark Failed Log Group
+
+Logical ID: `ChatRunMarkFailedLogGroup7848AD59`
 
 用途推定: Chat Run Mark Failed Log Group (CloudWatch Logs log group)
 
@@ -73,7 +83,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### ChatRunStateMachineLogGroup6AD4AA67
+### Chat Run State Machine Log Group
+
+Logical ID: `ChatRunStateMachineLogGroup6AD4AA67`
 
 用途推定: Chat Run State Machine Log Group (CloudWatch Logs log group)
 
@@ -81,7 +93,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### ChatRunWorkerLogGroup5ACB3363
+### Chat Run Worker Log Group
+
+Logical ID: `ChatRunWorkerLogGroup5ACB3363`
 
 用途推定: Chat Run Worker Log Group (CloudWatch Logs log group)
 
@@ -89,7 +103,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### DocumentIngestRunMarkFailedLogGroupF2BA4346
+### Document Ingest Run Mark Failed Log Group
+
+Logical ID: `DocumentIngestRunMarkFailedLogGroupF2BA4346`
 
 用途推定: Document Ingest Run Mark Failed Log Group (CloudWatch Logs log group)
 
@@ -97,7 +113,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### DocumentIngestRunStateMachineLogGroup94B2F1DE
+### Document Ingest Run State Machine Log Group
+
+Logical ID: `DocumentIngestRunStateMachineLogGroup94B2F1DE`
 
 用途推定: Document Ingest Run State Machine Log Group (CloudWatch Logs log group)
 
@@ -105,7 +123,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### DocumentIngestRunWorkerLogGroup2B1C84D3
+### Document Ingest Run Worker Log Group
+
+Logical ID: `DocumentIngestRunWorkerLogGroup2B1C84D3`
 
 用途推定: Document Ingest Run Worker Log Group (CloudWatch Logs log group)
 
@@ -113,7 +133,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### HeavyApiFunctionLogGroupF418C95A
+### Heavy Api Function Log Group
+
+Logical ID: `HeavyApiFunctionLogGroupF418C95A`
 
 用途推定: Heavy Api Function Log Group (CloudWatch Logs log group)
 
@@ -121,7 +143,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### RestApiAccessLogGroup246D1CE0
+### Rest Api Access Log Group
+
+Logical ID: `RestApiAccessLogGroup246D1CE0`
 
 用途推定: Rest Api Access Log Group (CloudWatch Logs log group)
 
@@ -129,7 +153,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### S3VectorsProviderFrameworkLogGroupB49A141A
+### S3Vectors Provider Framework Log Group
+
+Logical ID: `S3VectorsProviderFrameworkLogGroupB49A141A`
 
 用途推定: S3Vectors Provider Framework Log Group (CloudWatch Logs log group)
 
@@ -137,7 +163,9 @@
 | --- | --- |
 | `retentionInDays` | 7 |
 
-### S3VectorsProviderLogGroupE19D8C96
+### S3Vectors Provider Log Group
+
+Logical ID: `S3VectorsProviderLogGroupE19D8C96`
 
 用途推定: S3Vectors Provider Log Group (CloudWatch Logs log group)
 

@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6`](#frontenddistributionorigin1s3originaccesscontrol51a3efc6) | Frontend Distribution Origin1S3Origin Access Control (CloudFront origin access control) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Frontend Distribution Origin1S3Origin Access Control](#frontend-distribution-origin1s3origin-access-control) | `FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6` | Frontend Distribution Origin1S3Origin Access Control (CloudFront origin access control) |
 
 ## Logical ID 別設定
 
-### FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6
+### Frontend Distribution Origin1S3Origin Access Control
+
+Logical ID: `FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6`
 
 用途推定: Frontend Distribution Origin1S3Origin Access Control (CloudFront origin access control)
 

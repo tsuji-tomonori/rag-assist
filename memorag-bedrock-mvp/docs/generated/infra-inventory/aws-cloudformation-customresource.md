@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`S3VectorsResources`](#s3vectorsresources) | S3Vectors Resources (CloudFormation custom resource) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [S3Vectors Resources](#s3vectors-resources) | `S3VectorsResources` | S3Vectors Resources (CloudFormation custom resource) |
 
 ## Logical ID 別設定
 
-### S3VectorsResources
+### S3Vectors Resources
+
+Logical ID: `S3VectorsResources`
 
 用途推定: S3Vectors Resources (CloudFormation custom resource)
 

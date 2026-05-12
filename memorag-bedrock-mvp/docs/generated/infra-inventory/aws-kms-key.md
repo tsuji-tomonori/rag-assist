@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`BenchmarkProjectKeyB840011B`](#benchmarkprojectkeyb840011b) | Benchmark Project Key (KMS key) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Benchmark Project Key](#benchmark-project-key) | `BenchmarkProjectKeyB840011B` | Benchmark Project Key (KMS key) |
 
 ## Logical ID 別設定
 
-### BenchmarkProjectKeyB840011B
+### Benchmark Project Key
+
+Logical ID: `BenchmarkProjectKeyB840011B`
 
 用途推定: Benchmark Project Key (KMS key)
 

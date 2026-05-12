@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`BenchmarkProject1593465D`](#benchmarkproject1593465d) | Benchmark Project (CodeBuild benchmark runner) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Benchmark Project](#benchmark-project) | `BenchmarkProject1593465D` | Benchmark Project (CodeBuild benchmark runner) |
 
 ## Logical ID 別設定
 
-### BenchmarkProject1593465D
+### Benchmark Project
+
+Logical ID: `BenchmarkProject1593465D`
 
 用途推定: Benchmark Project (CodeBuild benchmark runner)
 

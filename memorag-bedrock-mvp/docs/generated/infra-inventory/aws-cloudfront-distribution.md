@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`FrontendDistributionE6EAF405`](#frontenddistributione6eaf405) | Frontend Distribution (CloudFront distribution) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Frontend Distribution](#frontend-distribution) | `FrontendDistributionE6EAF405` | Frontend Distribution (CloudFront distribution) |
 
 ## Logical ID 別設定
 
-### FrontendDistributionE6EAF405
+### Frontend Distribution
+
+Logical ID: `FrontendDistributionE6EAF405`
 
 用途推定: Frontend Distribution (CloudFront distribution)
 

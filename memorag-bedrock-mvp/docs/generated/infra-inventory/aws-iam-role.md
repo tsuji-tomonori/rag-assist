@@ -14,28 +14,30 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`ApiFunctionServiceRole52B9747B`](#apifunctionservicerole52b9747b) | Api Function Service Role (IAM role) |
-| [`BenchmarkProjectRole31C9ABBD`](#benchmarkprojectrole31c9abbd) | Benchmark Project Role (IAM role) |
-| [`BenchmarkStateMachineRole9EC7E298`](#benchmarkstatemachinerole9ec7e298) | Benchmark State Machine Role (IAM role) |
-| [`ChatRunEventsStreamFunctionServiceRole41BBFB5A`](#chatruneventsstreamfunctionservicerole41bbfb5a) | Chat Run Events Stream Function Service Role (IAM role) |
-| [`ChatRunMarkFailedFunctionServiceRoleAAD50CA8`](#chatrunmarkfailedfunctionserviceroleaad50ca8) | Chat Run Mark Failed Function Service Role (IAM role) |
-| [`ChatRunStateMachineRoleE7E4F7A4`](#chatrunstatemachinerolee7e4f7a4) | Chat Run State Machine Role (IAM role) |
-| [`ChatRunWorkerFunctionServiceRoleBED42CDB`](#chatrunworkerfunctionservicerolebed42cdb) | Chat Run Worker Function Service Role (IAM role) |
-| [`CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265`](#customcdkbucketdeployment8693bb64968944b69aafb0cc9eb8756cservicerole89a01265) | Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role (IAM role) |
-| [`CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092`](#customs3autodeleteobjectscustomresourceproviderrole3b1bd092) | Custom S3Auto Delete Objects Custom Resource Provider Role (IAM role) |
-| [`DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D`](#documentingestrunmarkfailedfunctionservicerole8a5f469d) | Document Ingest Run Mark Failed Function Service Role (IAM role) |
-| [`DocumentIngestRunStateMachineRole10EA8277`](#documentingestrunstatemachinerole10ea8277) | Document Ingest Run State Machine Role (IAM role) |
-| [`DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED`](#documentingestrunworkerfunctionservicerole7beac0ed) | Document Ingest Run Worker Function Service Role (IAM role) |
-| [`HeavyApiFunctionServiceRole25A7AE5E`](#heavyapifunctionservicerole25a7ae5e) | Heavy Api Function Service Role (IAM role) |
-| [`RestApiCloudWatchRoleE3ED6605`](#restapicloudwatchrolee3ed6605) | Rest Api Cloud Watch Role (IAM role) |
-| [`S3VectorsProviderFnServiceRoleFEC97124`](#s3vectorsproviderfnservicerolefec97124) | S3Vectors Provider Fn Service Role (IAM role) |
-| [`S3VectorsProviderframeworkonEventServiceRole5255E58B`](#s3vectorsproviderframeworkoneventservicerole5255e58b) | S3Vectors Providerframeworkon Event Service Role (IAM role) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Api Function Service Role](#api-function-service-role) | `ApiFunctionServiceRole52B9747B` | Api Function Service Role (IAM role) |
+| [Benchmark Project Role](#benchmark-project-role) | `BenchmarkProjectRole31C9ABBD` | Benchmark Project Role (IAM role) |
+| [Benchmark State Machine Role](#benchmark-state-machine-role) | `BenchmarkStateMachineRole9EC7E298` | Benchmark State Machine Role (IAM role) |
+| [Chat Run Events Stream Function Service Role](#chat-run-events-stream-function-service-role) | `ChatRunEventsStreamFunctionServiceRole41BBFB5A` | Chat Run Events Stream Function Service Role (IAM role) |
+| [Chat Run Mark Failed Function Service Role](#chat-run-mark-failed-function-service-role) | `ChatRunMarkFailedFunctionServiceRoleAAD50CA8` | Chat Run Mark Failed Function Service Role (IAM role) |
+| [Chat Run State Machine Role](#chat-run-state-machine-role) | `ChatRunStateMachineRoleE7E4F7A4` | Chat Run State Machine Role (IAM role) |
+| [Chat Run Worker Function Service Role](#chat-run-worker-function-service-role) | `ChatRunWorkerFunctionServiceRoleBED42CDB` | Chat Run Worker Function Service Role (IAM role) |
+| [Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role](#custom-cdk-bucket-deployment8693bb64968944b69aafb0cc9eb8756c-service-role) | `CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265` | Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role (IAM role) |
+| [Custom S3Auto Delete Objects Custom Resource Provider Role](#custom-s3auto-delete-objects-custom-resource-provider-role) | `CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092` | Custom S3Auto Delete Objects Custom Resource Provider Role (IAM role) |
+| [Document Ingest Run Mark Failed Function Service Role](#document-ingest-run-mark-failed-function-service-role) | `DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D` | Document Ingest Run Mark Failed Function Service Role (IAM role) |
+| [Document Ingest Run State Machine Role](#document-ingest-run-state-machine-role) | `DocumentIngestRunStateMachineRole10EA8277` | Document Ingest Run State Machine Role (IAM role) |
+| [Document Ingest Run Worker Function Service Role](#document-ingest-run-worker-function-service-role) | `DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED` | Document Ingest Run Worker Function Service Role (IAM role) |
+| [Heavy Api Function Service Role](#heavy-api-function-service-role) | `HeavyApiFunctionServiceRole25A7AE5E` | Heavy Api Function Service Role (IAM role) |
+| [Rest Api Cloud Watch Role](#rest-api-cloud-watch-role) | `RestApiCloudWatchRoleE3ED6605` | Rest Api Cloud Watch Role (IAM role) |
+| [S3Vectors Provider Fn Service Role](#s3vectors-provider-fn-service-role) | `S3VectorsProviderFnServiceRoleFEC97124` | S3Vectors Provider Fn Service Role (IAM role) |
+| [S3Vectors Providerframeworkon Event Service Role](#s3vectors-providerframeworkon-event-service-role) | `S3VectorsProviderframeworkonEventServiceRole5255E58B` | S3Vectors Providerframeworkon Event Service Role (IAM role) |
 
 ## Logical ID 別設定
 
-### ApiFunctionServiceRole52B9747B
+### Api Function Service Role
+
+Logical ID: `ApiFunctionServiceRole52B9747B`
 
 用途推定: Api Function Service Role (IAM role)
 
@@ -45,7 +47,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### BenchmarkProjectRole31C9ABBD
+### Benchmark Project Role
+
+Logical ID: `BenchmarkProjectRole31C9ABBD`
 
 用途推定: Benchmark Project Role (IAM role)
 
@@ -54,7 +58,9 @@
 | `assumedBy` | [Service:codebuild.amazonaws.com] |
 | `inlinePolicyCount` | 0 |
 
-### BenchmarkStateMachineRole9EC7E298
+### Benchmark State Machine Role
+
+Logical ID: `BenchmarkStateMachineRole9EC7E298`
 
 用途推定: Benchmark State Machine Role (IAM role)
 
@@ -63,7 +69,9 @@
 | `assumedBy` | [Service:states.amazonaws.com] |
 | `inlinePolicyCount` | 0 |
 
-### ChatRunEventsStreamFunctionServiceRole41BBFB5A
+### Chat Run Events Stream Function Service Role
+
+Logical ID: `ChatRunEventsStreamFunctionServiceRole41BBFB5A`
 
 用途推定: Chat Run Events Stream Function Service Role (IAM role)
 
@@ -73,7 +81,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### ChatRunMarkFailedFunctionServiceRoleAAD50CA8
+### Chat Run Mark Failed Function Service Role
+
+Logical ID: `ChatRunMarkFailedFunctionServiceRoleAAD50CA8`
 
 用途推定: Chat Run Mark Failed Function Service Role (IAM role)
 
@@ -83,7 +93,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### ChatRunStateMachineRoleE7E4F7A4
+### Chat Run State Machine Role
+
+Logical ID: `ChatRunStateMachineRoleE7E4F7A4`
 
 用途推定: Chat Run State Machine Role (IAM role)
 
@@ -92,7 +104,9 @@
 | `assumedBy` | [Service:states.amazonaws.com] |
 | `inlinePolicyCount` | 0 |
 
-### ChatRunWorkerFunctionServiceRoleBED42CDB
+### Chat Run Worker Function Service Role
+
+Logical ID: `ChatRunWorkerFunctionServiceRoleBED42CDB`
 
 用途推定: Chat Run Worker Function Service Role (IAM role)
 
@@ -102,7 +116,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265
+### Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role
+
+Logical ID: `CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265`
 
 用途推定: Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role (IAM role)
 
@@ -112,7 +128,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092
+### Custom S3Auto Delete Objects Custom Resource Provider Role
+
+Logical ID: `CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092`
 
 用途推定: Custom S3Auto Delete Objects Custom Resource Provider Role (IAM role)
 
@@ -122,7 +140,9 @@
 | `managedPolicyArns` | [Sub:arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole] |
 | `inlinePolicyCount` | 0 |
 
-### DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D
+### Document Ingest Run Mark Failed Function Service Role
+
+Logical ID: `DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D`
 
 用途推定: Document Ingest Run Mark Failed Function Service Role (IAM role)
 
@@ -132,7 +152,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### DocumentIngestRunStateMachineRole10EA8277
+### Document Ingest Run State Machine Role
+
+Logical ID: `DocumentIngestRunStateMachineRole10EA8277`
 
 用途推定: Document Ingest Run State Machine Role (IAM role)
 
@@ -141,7 +163,9 @@
 | `assumedBy` | [Service:states.amazonaws.com] |
 | `inlinePolicyCount` | 0 |
 
-### DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED
+### Document Ingest Run Worker Function Service Role
+
+Logical ID: `DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED`
 
 用途推定: Document Ingest Run Worker Function Service Role (IAM role)
 
@@ -151,7 +175,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### HeavyApiFunctionServiceRole25A7AE5E
+### Heavy Api Function Service Role
+
+Logical ID: `HeavyApiFunctionServiceRole25A7AE5E`
 
 用途推定: Heavy Api Function Service Role (IAM role)
 
@@ -161,7 +187,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### RestApiCloudWatchRoleE3ED6605
+### Rest Api Cloud Watch Role
+
+Logical ID: `RestApiCloudWatchRoleE3ED6605`
 
 用途推定: Rest Api Cloud Watch Role (IAM role)
 
@@ -171,7 +199,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"]]] |
 | `inlinePolicyCount` | 0 |
 
-### S3VectorsProviderFnServiceRoleFEC97124
+### S3Vectors Provider Fn Service Role
+
+Logical ID: `S3VectorsProviderFnServiceRoleFEC97124`
 
 用途推定: S3Vectors Provider Fn Service Role (IAM role)
 
@@ -181,7 +211,9 @@
 | `managedPolicyArns` | [Join:["",["arn:",{"Ref":"AWS::Partition"},":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]]] |
 | `inlinePolicyCount` | 0 |
 
-### S3VectorsProviderframeworkonEventServiceRole5255E58B
+### S3Vectors Providerframeworkon Event Service Role
+
+Logical ID: `S3VectorsProviderframeworkonEventServiceRole5255E58B`
 
 用途推定: S3Vectors Providerframeworkon Event Service Role (IAM role)
 

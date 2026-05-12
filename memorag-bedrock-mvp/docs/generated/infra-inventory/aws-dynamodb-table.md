@@ -14,20 +14,22 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`BenchmarkRunsTableD0841636`](#benchmarkrunstabled0841636) | Benchmark Runs Table (DynamoDB table) |
-| [`ChatRunEventsTable7455A50E`](#chatruneventstable7455a50e) | Chat Run Events Table (DynamoDB table) |
-| [`ChatRunsTable8446CD95`](#chatrunstable8446cd95) | Chat Runs Table (DynamoDB table) |
-| [`ConversationHistoryTable59A3534C`](#conversationhistorytable59a3534c) | Conversation History Table (DynamoDB table) |
-| [`DocumentGroupsTableA5108040`](#documentgroupstablea5108040) | Document Groups Table (DynamoDB table) |
-| [`DocumentIngestRunEventsTableF4692EBE`](#documentingestruneventstablef4692ebe) | Document Ingest Run Events Table (DynamoDB table) |
-| [`DocumentIngestRunsTableEA8F8CCA`](#documentingestrunstableea8f8cca) | Document Ingest Runs Table (DynamoDB table) |
-| [`HumanQuestionsTable5DA9688B`](#humanquestionstable5da9688b) | Human Questions Table (DynamoDB table) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Benchmark Runs Table](#benchmark-runs-table) | `BenchmarkRunsTableD0841636` | Benchmark Runs Table (DynamoDB table) |
+| [Chat Run Events Table](#chat-run-events-table) | `ChatRunEventsTable7455A50E` | Chat Run Events Table (DynamoDB table) |
+| [Chat Runs Table](#chat-runs-table) | `ChatRunsTable8446CD95` | Chat Runs Table (DynamoDB table) |
+| [Conversation History Table](#conversation-history-table) | `ConversationHistoryTable59A3534C` | Conversation History Table (DynamoDB table) |
+| [Document Groups Table](#document-groups-table) | `DocumentGroupsTableA5108040` | Document Groups Table (DynamoDB table) |
+| [Document Ingest Run Events Table](#document-ingest-run-events-table) | `DocumentIngestRunEventsTableF4692EBE` | Document Ingest Run Events Table (DynamoDB table) |
+| [Document Ingest Runs Table](#document-ingest-runs-table) | `DocumentIngestRunsTableEA8F8CCA` | Document Ingest Runs Table (DynamoDB table) |
+| [Human Questions Table](#human-questions-table) | `HumanQuestionsTable5DA9688B` | Human Questions Table (DynamoDB table) |
 
 ## Logical ID 別設定
 
-### BenchmarkRunsTableD0841636
+### Benchmark Runs Table
+
+Logical ID: `BenchmarkRunsTableD0841636`
 
 用途推定: Benchmark Runs Table (DynamoDB table)
 
@@ -38,7 +40,9 @@
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 
-### ChatRunEventsTable7455A50E
+### Chat Run Events Table
+
+Logical ID: `ChatRunEventsTable7455A50E`
 
 用途推定: Chat Run Events Table (DynamoDB table)
 
@@ -50,7 +54,9 @@
 | `pointInTimeRecoveryEnabled` | true |
 | `timeToLive` | {"AttributeName":"ttl","Enabled":true} |
 
-### ChatRunsTable8446CD95
+### Chat Runs Table
+
+Logical ID: `ChatRunsTable8446CD95`
 
 用途推定: Chat Runs Table (DynamoDB table)
 
@@ -62,7 +68,9 @@
 | `pointInTimeRecoveryEnabled` | true |
 | `timeToLive` | {"AttributeName":"ttl","Enabled":true} |
 
-### ConversationHistoryTable59A3534C
+### Conversation History Table
+
+Logical ID: `ConversationHistoryTable59A3534C`
 
 用途推定: Conversation History Table (DynamoDB table)
 
@@ -73,7 +81,9 @@
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 
-### DocumentGroupsTableA5108040
+### Document Groups Table
+
+Logical ID: `DocumentGroupsTableA5108040`
 
 用途推定: Document Groups Table (DynamoDB table)
 
@@ -84,7 +94,9 @@
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 
-### DocumentIngestRunEventsTableF4692EBE
+### Document Ingest Run Events Table
+
+Logical ID: `DocumentIngestRunEventsTableF4692EBE`
 
 用途推定: Document Ingest Run Events Table (DynamoDB table)
 
@@ -96,7 +108,9 @@
 | `pointInTimeRecoveryEnabled` | true |
 | `timeToLive` | {"AttributeName":"ttl","Enabled":true} |
 
-### DocumentIngestRunsTableEA8F8CCA
+### Document Ingest Runs Table
+
+Logical ID: `DocumentIngestRunsTableEA8F8CCA`
 
 用途推定: Document Ingest Runs Table (DynamoDB table)
 
@@ -108,7 +122,9 @@
 | `pointInTimeRecoveryEnabled` | true |
 | `timeToLive` | {"AttributeName":"ttl","Enabled":true} |
 
-### HumanQuestionsTable5DA9688B
+### Human Questions Table
+
+Logical ID: `HumanQuestionsTable5DA9688B`
 
 用途推定: Human Questions Table (DynamoDB table)
 

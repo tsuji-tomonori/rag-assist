@@ -14,14 +14,16 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`RestApiDefault4xxGatewayResponse52322928`](#restapidefault4xxgatewayresponse52322928) | Rest Api Default4xx Gateway Response (API Gateway error response) |
-| [`RestApiDefault5xxGatewayResponse8E1119C1`](#restapidefault5xxgatewayresponse8e1119c1) | Rest Api Default5xx Gateway Response (API Gateway error response) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Rest Api Default4xx Gateway Response](#rest-api-default4xx-gateway-response) | `RestApiDefault4xxGatewayResponse52322928` | Rest Api Default4xx Gateway Response (API Gateway error response) |
+| [Rest Api Default5xx Gateway Response](#rest-api-default5xx-gateway-response) | `RestApiDefault5xxGatewayResponse8E1119C1` | Rest Api Default5xx Gateway Response (API Gateway error response) |
 
 ## Logical ID 別設定
 
-### RestApiDefault4xxGatewayResponse52322928
+### Rest Api Default4xx Gateway Response
+
+Logical ID: `RestApiDefault4xxGatewayResponse52322928`
 
 用途推定: Rest Api Default4xx Gateway Response (API Gateway error response)
 
@@ -30,7 +32,9 @@
 | `responseType` | DEFAULT_4XX |
 | `responseHeaders` | {"gatewayresponse.header.Access-Control-Allow-Origin":"'*'","gatewayresponse.header.Access-Control-Allow-Headers":"'Content-Type, Authorization, Last-Event-ID'","gatewayresponse.header.Access-Control-Allow-Methods":"'GET, POST, DELETE, OPTIONS'"} |
 
-### RestApiDefault5xxGatewayResponse8E1119C1
+### Rest Api Default5xx Gateway Response
+
+Logical ID: `RestApiDefault5xxGatewayResponse8E1119C1`
 
 用途推定: Rest Api Default5xx Gateway Response (API Gateway error response)
 

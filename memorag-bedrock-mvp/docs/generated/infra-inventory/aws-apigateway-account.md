@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`RestApiAccount7C83CF5A`](#restapiaccount7c83cf5a) | Rest Api Account (API Gateway account settings) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Rest Api Account](#rest-api-account) | `RestApiAccount7C83CF5A` | Rest Api Account (API Gateway account settings) |
 
 ## Logical ID 別設定
 
-### RestApiAccount7C83CF5A
+### Rest Api Account
+
+Logical ID: `RestApiAccount7C83CF5A`
 
 用途推定: Rest Api Account (API Gateway account settings)
 

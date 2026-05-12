@@ -14,53 +14,55 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`RestApiANYA7C1DC94`](#restapianya7c1dc94) | Rest Api ANY (API Gateway method) |
-| [`RestApibenchmarkOPTIONS98E5C5B2`](#restapibenchmarkoptions98e5c5b2) | Rest Apibenchmark OPTIONS (API Gateway method) |
-| [`RestApibenchmarkqueryOPTIONS35F1C45A`](#restapibenchmarkqueryoptions35f1c45a) | Rest Apibenchmarkquery OPTIONS (API Gateway method) |
-| [`RestApibenchmarkqueryPOSTDA41A31E`](#restapibenchmarkquerypostda41a31e) | Rest Apibenchmarkquery POST (API Gateway method) |
-| [`RestApibenchmarksearchOPTIONS2B9A6F31`](#restapibenchmarksearchoptions2b9a6f31) | Rest Apibenchmarksearch OPTIONS (API Gateway method) |
-| [`RestApibenchmarksearchPOSTD62C84E5`](#restapibenchmarksearchpostd62c84e5) | Rest Apibenchmarksearch POST (API Gateway method) |
-| [`RestApichatOPTIONS0617E40B`](#restapichatoptions0617e40b) | Rest Apichat OPTIONS (API Gateway method) |
-| [`RestApichatPOST4DAC6FEC`](#restapichatpost4dac6fec) | Rest Apichat POST (API Gateway method) |
-| [`RestApichatrunsOPTIONS7EE1D56A`](#restapichatrunsoptions7ee1d56a) | Rest Apichatruns OPTIONS (API Gateway method) |
-| [`RestApichatrunsPOST78780797`](#restapichatrunspost78780797) | Rest Apichatruns POST (API Gateway method) |
-| [`RestApichatrunsrunIdeventsGETA659C870`](#restapichatrunsrunideventsgeta659c870) | Rest Apichatrunsrun Idevents GET (API Gateway method) |
-| [`RestApichatrunsrunIdeventsOPTIONSC49B5D8A`](#restapichatrunsrunideventsoptionsc49b5d8a) | Rest Apichatrunsrun Idevents OPTIONS (API Gateway method) |
-| [`RestApichatrunsrunIdOPTIONS3E839889`](#restapichatrunsrunidoptions3e839889) | Rest Apichatrunsrun Id OPTIONS (API Gateway method) |
-| [`RestApidocumentsdocumentIdDELETEB97E741B`](#restapidocumentsdocumentiddeleteb97e741b) | Rest Apidocumentsdocument Id DELETEB97E741B (API Gateway method) |
-| [`RestApidocumentsdocumentIdOPTIONS430739B2`](#restapidocumentsdocumentidoptions430739b2) | Rest Apidocumentsdocument Id OPTIONS (API Gateway method) |
-| [`RestApidocumentsdocumentIdreindexOPTIONSF984D30B`](#restapidocumentsdocumentidreindexoptionsf984d30b) | Rest Apidocumentsdocument Idreindex OPTIONS (API Gateway method) |
-| [`RestApidocumentsdocumentIdreindexPOSTF324AB1F`](#restapidocumentsdocumentidreindexpostf324ab1f) | Rest Apidocumentsdocument Idreindex POST (API Gateway method) |
-| [`RestApidocumentsdocumentIdreindexstageOPTIONS6A784B49`](#restapidocumentsdocumentidreindexstageoptions6a784b49) | Rest Apidocumentsdocument Idreindexstage OPTIONS (API Gateway method) |
-| [`RestApidocumentsdocumentIdreindexstagePOST300E1BE4`](#restapidocumentsdocumentidreindexstagepost300e1be4) | Rest Apidocumentsdocument Idreindexstage POST (API Gateway method) |
-| [`RestApidocumentsGETAB791FA6`](#restapidocumentsgetab791fa6) | Rest Apidocuments GET (API Gateway method) |
-| [`RestApidocumentsOPTIONSA31F374B`](#restapidocumentsoptionsa31f374b) | Rest Apidocuments OPTIONS (API Gateway method) |
-| [`RestApidocumentsPOST60E2D532`](#restapidocumentspost60e2d532) | Rest Apidocuments POST (API Gateway method) |
-| [`RestApidocumentsreindexmigrationsGET376D3592`](#restapidocumentsreindexmigrationsget376d3592) | Rest Apidocumentsreindexmigrations GET (API Gateway method) |
-| [`RestApidocumentsreindexmigrationsmigrationIdcutoverOPTIONS9DBE3D16`](#restapidocumentsreindexmigrationsmigrationidcutoveroptions9dbe3d16) | Rest Apidocumentsreindexmigrationsmigration Idcutover OPTIONS (API Gateway method) |
-| [`RestApidocumentsreindexmigrationsmigrationIdcutoverPOST242FBD39`](#restapidocumentsreindexmigrationsmigrationidcutoverpost242fbd39) | Rest Apidocumentsreindexmigrationsmigration Idcutover POST (API Gateway method) |
-| [`RestApidocumentsreindexmigrationsmigrationIdOPTIONS6554167F`](#restapidocumentsreindexmigrationsmigrationidoptions6554167f) | Rest Apidocumentsreindexmigrationsmigration Id OPTIONS (API Gateway method) |
-| [`RestApidocumentsreindexmigrationsmigrationIdrollbackOPTIONSCCBBB98F`](#restapidocumentsreindexmigrationsmigrationidrollbackoptionsccbbb98f) | Rest Apidocumentsreindexmigrationsmigration Idrollback OPTIONS (API Gateway method) |
-| [`RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTA581B992`](#restapidocumentsreindexmigrationsmigrationidrollbackposta581b992) | Rest Apidocumentsreindexmigrationsmigration Idrollback POST (API Gateway method) |
-| [`RestApidocumentsreindexmigrationsOPTIONS5E0EF276`](#restapidocumentsreindexmigrationsoptions5e0ef276) | Rest Apidocumentsreindexmigrations OPTIONS (API Gateway method) |
-| [`RestApidocumentsuploadsOPTIONS4FAAFC51`](#restapidocumentsuploadsoptions4faafc51) | Rest Apidocumentsuploads OPTIONS (API Gateway method) |
-| [`RestApidocumentsuploadsPOSTB3672B01`](#restapidocumentsuploadspostb3672b01) | Rest Apidocumentsuploads POST (API Gateway method) |
-| [`RestApidocumentsuploadsuploadIdcontentOPTIONS46B7EF2B`](#restapidocumentsuploadsuploadidcontentoptions46b7ef2b) | Rest Apidocumentsuploadsupload Idcontent OPTIONS (API Gateway method) |
-| [`RestApidocumentsuploadsuploadIdcontentPOST10F2C896`](#restapidocumentsuploadsuploadidcontentpost10f2c896) | Rest Apidocumentsuploadsupload Idcontent POST (API Gateway method) |
-| [`RestApidocumentsuploadsuploadIdingestOPTIONS50AD773E`](#restapidocumentsuploadsuploadidingestoptions50ad773e) | Rest Apidocumentsuploadsupload Idingest OPTIONS (API Gateway method) |
-| [`RestApidocumentsuploadsuploadIdingestPOSTC9699490`](#restapidocumentsuploadsuploadidingestpostc9699490) | Rest Apidocumentsuploadsupload Idingest POST (API Gateway method) |
-| [`RestApidocumentsuploadsuploadIdOPTIONSED0C4A5A`](#restapidocumentsuploadsuploadidoptionsed0c4a5a) | Rest Apidocumentsuploadsupload Id OPTIONS (API Gateway method) |
-| [`RestApiOPTIONS6AA64D2D`](#restapioptions6aa64d2d) | Rest Api OPTIONS (API Gateway method) |
-| [`RestApiproxyANY1786B242`](#restapiproxyany1786b242) | Rest Apiproxy ANY (API Gateway method) |
-| [`RestApiproxyOPTIONS32C4B154`](#restapiproxyoptions32c4b154) | Rest Apiproxy OPTIONS (API Gateway method) |
-| [`RestApisearchOPTIONSDF398734`](#restapisearchoptionsdf398734) | Rest Apisearch OPTIONS (API Gateway method) |
-| [`RestApisearchPOST5D2A9A4A`](#restapisearchpost5d2a9a4a) | Rest Apisearch POST (API Gateway method) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Rest Api ANY](#rest-api-any) | `RestApiANYA7C1DC94` | Rest Api ANY (API Gateway method) |
+| [Rest Apibenchmark OPTIONS](#rest-apibenchmark-options) | `RestApibenchmarkOPTIONS98E5C5B2` | Rest Apibenchmark OPTIONS (API Gateway method) |
+| [Rest Apibenchmarkquery OPTIONS](#rest-apibenchmarkquery-options) | `RestApibenchmarkqueryOPTIONS35F1C45A` | Rest Apibenchmarkquery OPTIONS (API Gateway method) |
+| [Rest Apibenchmarkquery POST](#rest-apibenchmarkquery-post) | `RestApibenchmarkqueryPOSTDA41A31E` | Rest Apibenchmarkquery POST (API Gateway method) |
+| [Rest Apibenchmarksearch OPTIONS](#rest-apibenchmarksearch-options) | `RestApibenchmarksearchOPTIONS2B9A6F31` | Rest Apibenchmarksearch OPTIONS (API Gateway method) |
+| [Rest Apibenchmarksearch POST](#rest-apibenchmarksearch-post) | `RestApibenchmarksearchPOSTD62C84E5` | Rest Apibenchmarksearch POST (API Gateway method) |
+| [Rest Apichat OPTIONS](#rest-apichat-options) | `RestApichatOPTIONS0617E40B` | Rest Apichat OPTIONS (API Gateway method) |
+| [Rest Apichat POST](#rest-apichat-post) | `RestApichatPOST4DAC6FEC` | Rest Apichat POST (API Gateway method) |
+| [Rest Apichatruns OPTIONS](#rest-apichatruns-options) | `RestApichatrunsOPTIONS7EE1D56A` | Rest Apichatruns OPTIONS (API Gateway method) |
+| [Rest Apichatruns POST](#rest-apichatruns-post) | `RestApichatrunsPOST78780797` | Rest Apichatruns POST (API Gateway method) |
+| [Rest Apichatrunsrun Idevents GET](#rest-apichatrunsrun-idevents-get) | `RestApichatrunsrunIdeventsGETA659C870` | Rest Apichatrunsrun Idevents GET (API Gateway method) |
+| [Rest Apichatrunsrun Idevents OPTIONS](#rest-apichatrunsrun-idevents-options) | `RestApichatrunsrunIdeventsOPTIONSC49B5D8A` | Rest Apichatrunsrun Idevents OPTIONS (API Gateway method) |
+| [Rest Apichatrunsrun Id OPTIONS](#rest-apichatrunsrun-id-options) | `RestApichatrunsrunIdOPTIONS3E839889` | Rest Apichatrunsrun Id OPTIONS (API Gateway method) |
+| [Rest Apidocumentsdocument Id DELETEB97E741B](#rest-apidocumentsdocument-id-deleteb97e741b) | `RestApidocumentsdocumentIdDELETEB97E741B` | Rest Apidocumentsdocument Id DELETEB97E741B (API Gateway method) |
+| [Rest Apidocumentsdocument Id OPTIONS](#rest-apidocumentsdocument-id-options) | `RestApidocumentsdocumentIdOPTIONS430739B2` | Rest Apidocumentsdocument Id OPTIONS (API Gateway method) |
+| [Rest Apidocumentsdocument Idreindex OPTIONS](#rest-apidocumentsdocument-idreindex-options) | `RestApidocumentsdocumentIdreindexOPTIONSF984D30B` | Rest Apidocumentsdocument Idreindex OPTIONS (API Gateway method) |
+| [Rest Apidocumentsdocument Idreindex POST](#rest-apidocumentsdocument-idreindex-post) | `RestApidocumentsdocumentIdreindexPOSTF324AB1F` | Rest Apidocumentsdocument Idreindex POST (API Gateway method) |
+| [Rest Apidocumentsdocument Idreindexstage OPTIONS](#rest-apidocumentsdocument-idreindexstage-options) | `RestApidocumentsdocumentIdreindexstageOPTIONS6A784B49` | Rest Apidocumentsdocument Idreindexstage OPTIONS (API Gateway method) |
+| [Rest Apidocumentsdocument Idreindexstage POST](#rest-apidocumentsdocument-idreindexstage-post) | `RestApidocumentsdocumentIdreindexstagePOST300E1BE4` | Rest Apidocumentsdocument Idreindexstage POST (API Gateway method) |
+| [Rest Apidocuments GET](#rest-apidocuments-get) | `RestApidocumentsGETAB791FA6` | Rest Apidocuments GET (API Gateway method) |
+| [Rest Apidocuments OPTIONS](#rest-apidocuments-options) | `RestApidocumentsOPTIONSA31F374B` | Rest Apidocuments OPTIONS (API Gateway method) |
+| [Rest Apidocuments POST](#rest-apidocuments-post) | `RestApidocumentsPOST60E2D532` | Rest Apidocuments POST (API Gateway method) |
+| [Rest Apidocumentsreindexmigrations GET](#rest-apidocumentsreindexmigrations-get) | `RestApidocumentsreindexmigrationsGET376D3592` | Rest Apidocumentsreindexmigrations GET (API Gateway method) |
+| [Rest Apidocumentsreindexmigrationsmigration Idcutover OPTIONS](#rest-apidocumentsreindexmigrationsmigration-idcutover-options) | `RestApidocumentsreindexmigrationsmigrationIdcutoverOPTIONS9DBE3D16` | Rest Apidocumentsreindexmigrationsmigration Idcutover OPTIONS (API Gateway method) |
+| [Rest Apidocumentsreindexmigrationsmigration Idcutover POST](#rest-apidocumentsreindexmigrationsmigration-idcutover-post) | `RestApidocumentsreindexmigrationsmigrationIdcutoverPOST242FBD39` | Rest Apidocumentsreindexmigrationsmigration Idcutover POST (API Gateway method) |
+| [Rest Apidocumentsreindexmigrationsmigration Id OPTIONS](#rest-apidocumentsreindexmigrationsmigration-id-options) | `RestApidocumentsreindexmigrationsmigrationIdOPTIONS6554167F` | Rest Apidocumentsreindexmigrationsmigration Id OPTIONS (API Gateway method) |
+| [Rest Apidocumentsreindexmigrationsmigration Idrollback OPTIONS](#rest-apidocumentsreindexmigrationsmigration-idrollback-options) | `RestApidocumentsreindexmigrationsmigrationIdrollbackOPTIONSCCBBB98F` | Rest Apidocumentsreindexmigrationsmigration Idrollback OPTIONS (API Gateway method) |
+| [Rest Apidocumentsreindexmigrationsmigration Idrollback POST](#rest-apidocumentsreindexmigrationsmigration-idrollback-post) | `RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTA581B992` | Rest Apidocumentsreindexmigrationsmigration Idrollback POST (API Gateway method) |
+| [Rest Apidocumentsreindexmigrations OPTIONS](#rest-apidocumentsreindexmigrations-options) | `RestApidocumentsreindexmigrationsOPTIONS5E0EF276` | Rest Apidocumentsreindexmigrations OPTIONS (API Gateway method) |
+| [Rest Apidocumentsuploads OPTIONS](#rest-apidocumentsuploads-options) | `RestApidocumentsuploadsOPTIONS4FAAFC51` | Rest Apidocumentsuploads OPTIONS (API Gateway method) |
+| [Rest Apidocumentsuploads POST](#rest-apidocumentsuploads-post) | `RestApidocumentsuploadsPOSTB3672B01` | Rest Apidocumentsuploads POST (API Gateway method) |
+| [Rest Apidocumentsuploadsupload Idcontent OPTIONS](#rest-apidocumentsuploadsupload-idcontent-options) | `RestApidocumentsuploadsuploadIdcontentOPTIONS46B7EF2B` | Rest Apidocumentsuploadsupload Idcontent OPTIONS (API Gateway method) |
+| [Rest Apidocumentsuploadsupload Idcontent POST](#rest-apidocumentsuploadsupload-idcontent-post) | `RestApidocumentsuploadsuploadIdcontentPOST10F2C896` | Rest Apidocumentsuploadsupload Idcontent POST (API Gateway method) |
+| [Rest Apidocumentsuploadsupload Idingest OPTIONS](#rest-apidocumentsuploadsupload-idingest-options) | `RestApidocumentsuploadsuploadIdingestOPTIONS50AD773E` | Rest Apidocumentsuploadsupload Idingest OPTIONS (API Gateway method) |
+| [Rest Apidocumentsuploadsupload Idingest POST](#rest-apidocumentsuploadsupload-idingest-post) | `RestApidocumentsuploadsuploadIdingestPOSTC9699490` | Rest Apidocumentsuploadsupload Idingest POST (API Gateway method) |
+| [Rest Apidocumentsuploadsupload Id OPTIONS](#rest-apidocumentsuploadsupload-id-options) | `RestApidocumentsuploadsuploadIdOPTIONSED0C4A5A` | Rest Apidocumentsuploadsupload Id OPTIONS (API Gateway method) |
+| [Rest Api OPTIONS](#rest-api-options) | `RestApiOPTIONS6AA64D2D` | Rest Api OPTIONS (API Gateway method) |
+| [Rest Apiproxy ANY](#rest-apiproxy-any) | `RestApiproxyANY1786B242` | Rest Apiproxy ANY (API Gateway method) |
+| [Rest Apiproxy OPTIONS](#rest-apiproxy-options) | `RestApiproxyOPTIONS32C4B154` | Rest Apiproxy OPTIONS (API Gateway method) |
+| [Rest Apisearch OPTIONS](#rest-apisearch-options) | `RestApisearchOPTIONSDF398734` | Rest Apisearch OPTIONS (API Gateway method) |
+| [Rest Apisearch POST](#rest-apisearch-post) | `RestApisearchPOST5D2A9A4A` | Rest Apisearch POST (API Gateway method) |
 
 ## Logical ID 別設定
 
-### RestApiANYA7C1DC94
+### Rest Api ANY
+
+Logical ID: `RestApiANYA7C1DC94`
 
 用途推定: Rest Api ANY (API Gateway method)
 
@@ -75,7 +77,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApibenchmarkOPTIONS98E5C5B2
+### Rest Apibenchmark OPTIONS
+
+Logical ID: `RestApibenchmarkOPTIONS98E5C5B2`
 
 用途推定: Rest Apibenchmark OPTIONS (API Gateway method)
 
@@ -86,7 +90,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApibenchmarkqueryOPTIONS35F1C45A
+### Rest Apibenchmarkquery OPTIONS
+
+Logical ID: `RestApibenchmarkqueryOPTIONS35F1C45A`
 
 用途推定: Rest Apibenchmarkquery OPTIONS (API Gateway method)
 
@@ -97,7 +103,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApibenchmarkqueryPOSTDA41A31E
+### Rest Apibenchmarkquery POST
+
+Logical ID: `RestApibenchmarkqueryPOSTDA41A31E`
 
 用途推定: Rest Apibenchmarkquery POST (API Gateway method)
 
@@ -112,7 +120,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApibenchmarksearchOPTIONS2B9A6F31
+### Rest Apibenchmarksearch OPTIONS
+
+Logical ID: `RestApibenchmarksearchOPTIONS2B9A6F31`
 
 用途推定: Rest Apibenchmarksearch OPTIONS (API Gateway method)
 
@@ -123,7 +133,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApibenchmarksearchPOSTD62C84E5
+### Rest Apibenchmarksearch POST
+
+Logical ID: `RestApibenchmarksearchPOSTD62C84E5`
 
 用途推定: Rest Apibenchmarksearch POST (API Gateway method)
 
@@ -138,7 +150,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApichatOPTIONS0617E40B
+### Rest Apichat OPTIONS
+
+Logical ID: `RestApichatOPTIONS0617E40B`
 
 用途推定: Rest Apichat OPTIONS (API Gateway method)
 
@@ -149,7 +163,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApichatPOST4DAC6FEC
+### Rest Apichat POST
+
+Logical ID: `RestApichatPOST4DAC6FEC`
 
 用途推定: Rest Apichat POST (API Gateway method)
 
@@ -164,7 +180,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApichatrunsOPTIONS7EE1D56A
+### Rest Apichatruns OPTIONS
+
+Logical ID: `RestApichatrunsOPTIONS7EE1D56A`
 
 用途推定: Rest Apichatruns OPTIONS (API Gateway method)
 
@@ -175,7 +193,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApichatrunsPOST78780797
+### Rest Apichatruns POST
+
+Logical ID: `RestApichatrunsPOST78780797`
 
 用途推定: Rest Apichatruns POST (API Gateway method)
 
@@ -190,7 +210,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApichatrunsrunIdeventsGETA659C870
+### Rest Apichatrunsrun Idevents GET
+
+Logical ID: `RestApichatrunsrunIdeventsGETA659C870`
 
 用途推定: Rest Apichatrunsrun Idevents GET (API Gateway method)
 
@@ -206,7 +228,9 @@
 | `integrationTimeoutMs` | 900000 |
 | `responseTransferMode` | STREAM |
 
-### RestApichatrunsrunIdeventsOPTIONSC49B5D8A
+### Rest Apichatrunsrun Idevents OPTIONS
+
+Logical ID: `RestApichatrunsrunIdeventsOPTIONSC49B5D8A`
 
 用途推定: Rest Apichatrunsrun Idevents OPTIONS (API Gateway method)
 
@@ -217,7 +241,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApichatrunsrunIdOPTIONS3E839889
+### Rest Apichatrunsrun Id OPTIONS
+
+Logical ID: `RestApichatrunsrunIdOPTIONS3E839889`
 
 用途推定: Rest Apichatrunsrun Id OPTIONS (API Gateway method)
 
@@ -228,7 +254,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsdocumentIdDELETEB97E741B
+### Rest Apidocumentsdocument Id DELETEB97E741B
+
+Logical ID: `RestApidocumentsdocumentIdDELETEB97E741B`
 
 用途推定: Rest Apidocumentsdocument Id DELETEB97E741B (API Gateway method)
 
@@ -243,7 +271,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsdocumentIdOPTIONS430739B2
+### Rest Apidocumentsdocument Id OPTIONS
+
+Logical ID: `RestApidocumentsdocumentIdOPTIONS430739B2`
 
 用途推定: Rest Apidocumentsdocument Id OPTIONS (API Gateway method)
 
@@ -254,7 +284,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsdocumentIdreindexOPTIONSF984D30B
+### Rest Apidocumentsdocument Idreindex OPTIONS
+
+Logical ID: `RestApidocumentsdocumentIdreindexOPTIONSF984D30B`
 
 用途推定: Rest Apidocumentsdocument Idreindex OPTIONS (API Gateway method)
 
@@ -265,7 +297,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsdocumentIdreindexPOSTF324AB1F
+### Rest Apidocumentsdocument Idreindex POST
+
+Logical ID: `RestApidocumentsdocumentIdreindexPOSTF324AB1F`
 
 用途推定: Rest Apidocumentsdocument Idreindex POST (API Gateway method)
 
@@ -280,7 +314,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsdocumentIdreindexstageOPTIONS6A784B49
+### Rest Apidocumentsdocument Idreindexstage OPTIONS
+
+Logical ID: `RestApidocumentsdocumentIdreindexstageOPTIONS6A784B49`
 
 用途推定: Rest Apidocumentsdocument Idreindexstage OPTIONS (API Gateway method)
 
@@ -291,7 +327,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsdocumentIdreindexstagePOST300E1BE4
+### Rest Apidocumentsdocument Idreindexstage POST
+
+Logical ID: `RestApidocumentsdocumentIdreindexstagePOST300E1BE4`
 
 用途推定: Rest Apidocumentsdocument Idreindexstage POST (API Gateway method)
 
@@ -306,7 +344,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsGETAB791FA6
+### Rest Apidocuments GET
+
+Logical ID: `RestApidocumentsGETAB791FA6`
 
 用途推定: Rest Apidocuments GET (API Gateway method)
 
@@ -321,7 +361,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsOPTIONSA31F374B
+### Rest Apidocuments OPTIONS
+
+Logical ID: `RestApidocumentsOPTIONSA31F374B`
 
 用途推定: Rest Apidocuments OPTIONS (API Gateway method)
 
@@ -332,7 +374,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsPOST60E2D532
+### Rest Apidocuments POST
+
+Logical ID: `RestApidocumentsPOST60E2D532`
 
 用途推定: Rest Apidocuments POST (API Gateway method)
 
@@ -347,7 +391,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsreindexmigrationsGET376D3592
+### Rest Apidocumentsreindexmigrations GET
+
+Logical ID: `RestApidocumentsreindexmigrationsGET376D3592`
 
 用途推定: Rest Apidocumentsreindexmigrations GET (API Gateway method)
 
@@ -362,7 +408,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsreindexmigrationsmigrationIdcutoverOPTIONS9DBE3D16
+### Rest Apidocumentsreindexmigrationsmigration Idcutover OPTIONS
+
+Logical ID: `RestApidocumentsreindexmigrationsmigrationIdcutoverOPTIONS9DBE3D16`
 
 用途推定: Rest Apidocumentsreindexmigrationsmigration Idcutover OPTIONS (API Gateway method)
 
@@ -373,7 +421,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsreindexmigrationsmigrationIdcutoverPOST242FBD39
+### Rest Apidocumentsreindexmigrationsmigration Idcutover POST
+
+Logical ID: `RestApidocumentsreindexmigrationsmigrationIdcutoverPOST242FBD39`
 
 用途推定: Rest Apidocumentsreindexmigrationsmigration Idcutover POST (API Gateway method)
 
@@ -388,7 +438,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsreindexmigrationsmigrationIdOPTIONS6554167F
+### Rest Apidocumentsreindexmigrationsmigration Id OPTIONS
+
+Logical ID: `RestApidocumentsreindexmigrationsmigrationIdOPTIONS6554167F`
 
 用途推定: Rest Apidocumentsreindexmigrationsmigration Id OPTIONS (API Gateway method)
 
@@ -399,7 +451,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsreindexmigrationsmigrationIdrollbackOPTIONSCCBBB98F
+### Rest Apidocumentsreindexmigrationsmigration Idrollback OPTIONS
+
+Logical ID: `RestApidocumentsreindexmigrationsmigrationIdrollbackOPTIONSCCBBB98F`
 
 用途推定: Rest Apidocumentsreindexmigrationsmigration Idrollback OPTIONS (API Gateway method)
 
@@ -410,7 +464,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTA581B992
+### Rest Apidocumentsreindexmigrationsmigration Idrollback POST
+
+Logical ID: `RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTA581B992`
 
 用途推定: Rest Apidocumentsreindexmigrationsmigration Idrollback POST (API Gateway method)
 
@@ -425,7 +481,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsreindexmigrationsOPTIONS5E0EF276
+### Rest Apidocumentsreindexmigrations OPTIONS
+
+Logical ID: `RestApidocumentsreindexmigrationsOPTIONS5E0EF276`
 
 用途推定: Rest Apidocumentsreindexmigrations OPTIONS (API Gateway method)
 
@@ -436,7 +494,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsuploadsOPTIONS4FAAFC51
+### Rest Apidocumentsuploads OPTIONS
+
+Logical ID: `RestApidocumentsuploadsOPTIONS4FAAFC51`
 
 用途推定: Rest Apidocumentsuploads OPTIONS (API Gateway method)
 
@@ -447,7 +507,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsuploadsPOSTB3672B01
+### Rest Apidocumentsuploads POST
+
+Logical ID: `RestApidocumentsuploadsPOSTB3672B01`
 
 用途推定: Rest Apidocumentsuploads POST (API Gateway method)
 
@@ -462,7 +524,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsuploadsuploadIdcontentOPTIONS46B7EF2B
+### Rest Apidocumentsuploadsupload Idcontent OPTIONS
+
+Logical ID: `RestApidocumentsuploadsuploadIdcontentOPTIONS46B7EF2B`
 
 用途推定: Rest Apidocumentsuploadsupload Idcontent OPTIONS (API Gateway method)
 
@@ -473,7 +537,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsuploadsuploadIdcontentPOST10F2C896
+### Rest Apidocumentsuploadsupload Idcontent POST
+
+Logical ID: `RestApidocumentsuploadsuploadIdcontentPOST10F2C896`
 
 用途推定: Rest Apidocumentsuploadsupload Idcontent POST (API Gateway method)
 
@@ -488,7 +554,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsuploadsuploadIdingestOPTIONS50AD773E
+### Rest Apidocumentsuploadsupload Idingest OPTIONS
+
+Logical ID: `RestApidocumentsuploadsuploadIdingestOPTIONS50AD773E`
 
 用途推定: Rest Apidocumentsuploadsupload Idingest OPTIONS (API Gateway method)
 
@@ -499,7 +567,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApidocumentsuploadsuploadIdingestPOSTC9699490
+### Rest Apidocumentsuploadsupload Idingest POST
+
+Logical ID: `RestApidocumentsuploadsuploadIdingestPOSTC9699490`
 
 用途推定: Rest Apidocumentsuploadsupload Idingest POST (API Gateway method)
 
@@ -514,7 +584,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApidocumentsuploadsuploadIdOPTIONSED0C4A5A
+### Rest Apidocumentsuploadsupload Id OPTIONS
+
+Logical ID: `RestApidocumentsuploadsuploadIdOPTIONSED0C4A5A`
 
 用途推定: Rest Apidocumentsuploadsupload Id OPTIONS (API Gateway method)
 
@@ -525,7 +597,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApiOPTIONS6AA64D2D
+### Rest Api OPTIONS
+
+Logical ID: `RestApiOPTIONS6AA64D2D`
 
 用途推定: Rest Api OPTIONS (API Gateway method)
 
@@ -536,7 +610,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApiproxyANY1786B242
+### Rest Apiproxy ANY
+
+Logical ID: `RestApiproxyANY1786B242`
 
 用途推定: Rest Apiproxy ANY (API Gateway method)
 
@@ -551,7 +627,9 @@
 | `integrationHttpMethod` | POST |
 | `integrationTimeoutMs` | 60000 |
 
-### RestApiproxyOPTIONS32C4B154
+### Rest Apiproxy OPTIONS
+
+Logical ID: `RestApiproxyOPTIONS32C4B154`
 
 用途推定: Rest Apiproxy OPTIONS (API Gateway method)
 
@@ -562,7 +640,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApisearchOPTIONSDF398734
+### Rest Apisearch OPTIONS
+
+Logical ID: `RestApisearchOPTIONSDF398734`
 
 用途推定: Rest Apisearch OPTIONS (API Gateway method)
 
@@ -573,7 +653,9 @@
 | `authorizationType` | NONE |
 | `integrationType` | MOCK |
 
-### RestApisearchPOST5D2A9A4A
+### Rest Apisearch POST
+
+Logical ID: `RestApisearchPOST5D2A9A4A`
 
 用途推定: Rest Apisearch POST (API Gateway method)
 

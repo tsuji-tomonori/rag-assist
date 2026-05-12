@@ -14,21 +14,23 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`ACCESSADMINGroup`](#accessadmingroup) | ACCESSADMIN Group (Cognito role group) |
-| [`ANSWEREDITORGroup`](#answereditorgroup) | ANSWEREDITOR Group (Cognito role group) |
-| [`BENCHMARKOPERATORGroup`](#benchmarkoperatorgroup) | BENCHMARKOPERATOR Group (Cognito role group) |
-| [`BENCHMARKRUNNERGroup`](#benchmarkrunnergroup) | BENCHMARKRUNNER Group (Cognito role group) |
-| [`CHATUSERGroup`](#chatusergroup) | CHATUSER Group (Cognito role group) |
-| [`COSTAUDITORGroup`](#costauditorgroup) | COSTAUDITOR Group (Cognito role group) |
-| [`RAGGROUPMANAGERGroup`](#raggroupmanagergroup) | RAGGROUPMANAGER Group (Cognito role group) |
-| [`SYSTEMADMINGroup`](#systemadmingroup) | SYSTEMADMIN Group (Cognito role group) |
-| [`USERADMINGroup`](#useradmingroup) | USERADMIN Group (Cognito role group) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [ACCESSADMIN Group](#accessadmin-group) | `ACCESSADMINGroup` | ACCESSADMIN Group (Cognito role group) |
+| [ANSWEREDITOR Group](#answereditor-group) | `ANSWEREDITORGroup` | ANSWEREDITOR Group (Cognito role group) |
+| [BENCHMARKOPERATOR Group](#benchmarkoperator-group) | `BENCHMARKOPERATORGroup` | BENCHMARKOPERATOR Group (Cognito role group) |
+| [BENCHMARKRUNNER Group](#benchmarkrunner-group) | `BENCHMARKRUNNERGroup` | BENCHMARKRUNNER Group (Cognito role group) |
+| [CHATUSER Group](#chatuser-group) | `CHATUSERGroup` | CHATUSER Group (Cognito role group) |
+| [COSTAUDITOR Group](#costauditor-group) | `COSTAUDITORGroup` | COSTAUDITOR Group (Cognito role group) |
+| [RAGGROUPMANAGER Group](#raggroupmanager-group) | `RAGGROUPMANAGERGroup` | RAGGROUPMANAGER Group (Cognito role group) |
+| [SYSTEMADMIN Group](#systemadmin-group) | `SYSTEMADMINGroup` | SYSTEMADMIN Group (Cognito role group) |
+| [USERADMIN Group](#useradmin-group) | `USERADMINGroup` | USERADMIN Group (Cognito role group) |
 
 ## Logical ID 別設定
 
-### ACCESSADMINGroup
+### ACCESSADMIN Group
+
+Logical ID: `ACCESSADMINGroup`
 
 用途推定: ACCESSADMIN Group (Cognito role group)
 
@@ -37,7 +39,9 @@
 | `groupName` | ACCESS_ADMIN |
 | `description` | MemoRAG role: ACCESS_ADMIN |
 
-### ANSWEREDITORGroup
+### ANSWEREDITOR Group
+
+Logical ID: `ANSWEREDITORGroup`
 
 用途推定: ANSWEREDITOR Group (Cognito role group)
 
@@ -46,7 +50,9 @@
 | `groupName` | ANSWER_EDITOR |
 | `description` | MemoRAG role: ANSWER_EDITOR |
 
-### BENCHMARKOPERATORGroup
+### BENCHMARKOPERATOR Group
+
+Logical ID: `BENCHMARKOPERATORGroup`
 
 用途推定: BENCHMARKOPERATOR Group (Cognito role group)
 
@@ -55,7 +61,9 @@
 | `groupName` | BENCHMARK_OPERATOR |
 | `description` | MemoRAG role: BENCHMARK_OPERATOR |
 
-### BENCHMARKRUNNERGroup
+### BENCHMARKRUNNER Group
+
+Logical ID: `BENCHMARKRUNNERGroup`
 
 用途推定: BENCHMARKRUNNER Group (Cognito role group)
 
@@ -64,7 +72,9 @@
 | `groupName` | BENCHMARK_RUNNER |
 | `description` | MemoRAG role: BENCHMARK_RUNNER |
 
-### CHATUSERGroup
+### CHATUSER Group
+
+Logical ID: `CHATUSERGroup`
 
 用途推定: CHATUSER Group (Cognito role group)
 
@@ -73,7 +83,9 @@
 | `groupName` | CHAT_USER |
 | `description` | MemoRAG role: CHAT_USER |
 
-### COSTAUDITORGroup
+### COSTAUDITOR Group
+
+Logical ID: `COSTAUDITORGroup`
 
 用途推定: COSTAUDITOR Group (Cognito role group)
 
@@ -82,7 +94,9 @@
 | `groupName` | COST_AUDITOR |
 | `description` | MemoRAG role: COST_AUDITOR |
 
-### RAGGROUPMANAGERGroup
+### RAGGROUPMANAGER Group
+
+Logical ID: `RAGGROUPMANAGERGroup`
 
 用途推定: RAGGROUPMANAGER Group (Cognito role group)
 
@@ -91,7 +105,9 @@
 | `groupName` | RAG_GROUP_MANAGER |
 | `description` | MemoRAG role: RAG_GROUP_MANAGER |
 
-### SYSTEMADMINGroup
+### SYSTEMADMIN Group
+
+Logical ID: `SYSTEMADMINGroup`
 
 用途推定: SYSTEMADMIN Group (Cognito role group)
 
@@ -100,7 +116,9 @@
 | `groupName` | SYSTEM_ADMIN |
 | `description` | MemoRAG role: SYSTEM_ADMIN |
 
-### USERADMINGroup
+### USERADMIN Group
+
+Logical ID: `USERADMINGroup`
 
 用途推定: USERADMIN Group (Cognito role group)
 

@@ -14,13 +14,15 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`BenchmarkRunnerAuthSecret035EF8F2`](#benchmarkrunnerauthsecret035ef8f2) | Benchmark Runner Auth Secret (Secrets Manager secret) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Benchmark Runner Auth Secret](#benchmark-runner-auth-secret) | `BenchmarkRunnerAuthSecret035EF8F2` | Benchmark Runner Auth Secret (Secrets Manager secret) |
 
 ## Logical ID 別設定
 
-### BenchmarkRunnerAuthSecret035EF8F2
+### Benchmark Runner Auth Secret
+
+Logical ID: `BenchmarkRunnerAuthSecret035EF8F2`
 
 用途推定: Benchmark Runner Auth Secret (Secrets Manager secret)
 

@@ -14,14 +14,16 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`ApiFunctionServiceRoleOverflowPolicy15B8AE146`](#apifunctionserviceroleoverflowpolicy15b8ae146) | Api Function Service Role Overflow Policy15B8AE146 (IAM managed policy) |
-| [`HeavyApiFunctionServiceRoleOverflowPolicy13079BA64`](#heavyapifunctionserviceroleoverflowpolicy13079ba64) | Heavy Api Function Service Role Overflow Policy13079BA64 (IAM managed policy) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Api Function Service Role Overflow Policy15B8AE146](#api-function-service-role-overflow-policy15b8ae146) | `ApiFunctionServiceRoleOverflowPolicy15B8AE146` | Api Function Service Role Overflow Policy15B8AE146 (IAM managed policy) |
+| [Heavy Api Function Service Role Overflow Policy13079BA64](#heavy-api-function-service-role-overflow-policy13079ba64) | `HeavyApiFunctionServiceRoleOverflowPolicy13079BA64` | Heavy Api Function Service Role Overflow Policy13079BA64 (IAM managed policy) |
 
 ## Logical ID 別設定
 
-### ApiFunctionServiceRoleOverflowPolicy15B8AE146
+### Api Function Service Role Overflow Policy15B8AE146
+
+Logical ID: `ApiFunctionServiceRoleOverflowPolicy15B8AE146`
 
 用途推定: Api Function Service Role Overflow Policy15B8AE146 (IAM managed policy)
 
@@ -32,7 +34,9 @@
 | `actions` | [codebuild:BatchGetBuilds, logs:GetLogEvents, states:DescribeExecution, states:StartExecution, states:StopExecution] |
 | `resources` | [GetAtt:BenchmarkProject1593465D.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:",{"Ref":"BenchmarkProjectLogGroup395F719E"},":log-stream…, Ref:BenchmarkStateMachine8C582B8A, Ref:ChatRunStateMachine52CAF7BA, Ref:DocumentIngestRunStateMachine2FD7D3D3] |
 
-### HeavyApiFunctionServiceRoleOverflowPolicy13079BA64
+### Heavy Api Function Service Role Overflow Policy13079BA64
+
+Logical ID: `HeavyApiFunctionServiceRoleOverflowPolicy13079BA64`
 
 用途推定: Heavy Api Function Service Role Overflow Policy13079BA64 (IAM managed policy)
 

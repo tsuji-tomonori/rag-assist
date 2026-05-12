@@ -14,17 +14,19 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`AccessLogsBucketPolicy7F77476F`](#accesslogsbucketpolicy7f77476f) | Access Logs Bucket Policy (S3 bucket policy) |
-| [`BenchmarkBucketPolicyF16DB7DA`](#benchmarkbucketpolicyf16db7da) | Benchmark Bucket Policy (S3 bucket policy) |
-| [`DebugDownloadBucketPolicy961A4DDF`](#debugdownloadbucketpolicy961a4ddf) | Debug Download Bucket Policy (S3 bucket policy) |
-| [`DocumentsBucketPolicy1F991BD4`](#documentsbucketpolicy1f991bd4) | Documents Bucket Policy (S3 bucket policy) |
-| [`FrontendBucketPolicy1DFF75D9`](#frontendbucketpolicy1dff75d9) | Frontend Bucket Policy (S3 bucket policy) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Access Logs Bucket Policy](#access-logs-bucket-policy) | `AccessLogsBucketPolicy7F77476F` | Access Logs Bucket Policy (S3 bucket policy) |
+| [Benchmark Bucket Policy](#benchmark-bucket-policy) | `BenchmarkBucketPolicyF16DB7DA` | Benchmark Bucket Policy (S3 bucket policy) |
+| [Debug Download Bucket Policy](#debug-download-bucket-policy) | `DebugDownloadBucketPolicy961A4DDF` | Debug Download Bucket Policy (S3 bucket policy) |
+| [Documents Bucket Policy](#documents-bucket-policy) | `DocumentsBucketPolicy1F991BD4` | Documents Bucket Policy (S3 bucket policy) |
+| [Frontend Bucket Policy](#frontend-bucket-policy) | `FrontendBucketPolicy1DFF75D9` | Frontend Bucket Policy (S3 bucket policy) |
 
 ## Logical ID 別設定
 
-### AccessLogsBucketPolicy7F77476F
+### Access Logs Bucket Policy
+
+Logical ID: `AccessLogsBucketPolicy7F77476F`
 
 用途推定: Access Logs Bucket Policy (S3 bucket policy)
 
@@ -34,7 +36,9 @@
 | `statementCount` | 2 |
 | `actions` | [s3:*, s3:DeleteObject*, s3:GetBucket*, s3:List*, s3:PutBucketPolicy] |
 
-### BenchmarkBucketPolicyF16DB7DA
+### Benchmark Bucket Policy
+
+Logical ID: `BenchmarkBucketPolicyF16DB7DA`
 
 用途推定: Benchmark Bucket Policy (S3 bucket policy)
 
@@ -44,7 +48,9 @@
 | `statementCount` | 2 |
 | `actions` | [s3:*, s3:DeleteObject*, s3:GetBucket*, s3:List*, s3:PutBucketPolicy] |
 
-### DebugDownloadBucketPolicy961A4DDF
+### Debug Download Bucket Policy
+
+Logical ID: `DebugDownloadBucketPolicy961A4DDF`
 
 用途推定: Debug Download Bucket Policy (S3 bucket policy)
 
@@ -54,7 +60,9 @@
 | `statementCount` | 2 |
 | `actions` | [s3:*, s3:DeleteObject*, s3:GetBucket*, s3:List*, s3:PutBucketPolicy] |
 
-### DocumentsBucketPolicy1F991BD4
+### Documents Bucket Policy
+
+Logical ID: `DocumentsBucketPolicy1F991BD4`
 
 用途推定: Documents Bucket Policy (S3 bucket policy)
 
@@ -64,7 +72,9 @@
 | `statementCount` | 2 |
 | `actions` | [s3:*, s3:DeleteObject*, s3:GetBucket*, s3:List*, s3:PutBucketPolicy] |
 
-### FrontendBucketPolicy1DFF75D9
+### Frontend Bucket Policy
+
+Logical ID: `FrontendBucketPolicy1DFF75D9`
 
 用途推定: Frontend Bucket Policy (S3 bucket policy)
 

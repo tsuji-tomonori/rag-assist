@@ -14,16 +14,18 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`DeployBenchmarkDatasetsAwsCliLayer634804B4`](#deploybenchmarkdatasetsawsclilayer634804b4) | Deploy Benchmark Datasets Aws Cli Layer (Lambda layer) |
-| [`DeployConversationBenchmarkCorpusAwsCliLayerCAE6DA8B`](#deployconversationbenchmarkcorpusawsclilayercae6da8b) | Deploy Conversation Benchmark Corpus Aws Cli Layer (Lambda layer) |
-| [`DeployConversationBenchmarkDatasetsAwsCliLayer8941B84A`](#deployconversationbenchmarkdatasetsawsclilayer8941b84a) | Deploy Conversation Benchmark Datasets Aws Cli Layer (Lambda layer) |
-| [`DeploySearchBenchmarkDatasetsAwsCliLayer63B30B23`](#deploysearchbenchmarkdatasetsawsclilayer63b30b23) | Deploy Search Benchmark Datasets Aws Cli Layer (Lambda layer) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Deploy Benchmark Datasets Aws Cli Layer](#deploy-benchmark-datasets-aws-cli-layer) | `DeployBenchmarkDatasetsAwsCliLayer634804B4` | Deploy Benchmark Datasets Aws Cli Layer (Lambda layer) |
+| [Deploy Conversation Benchmark Corpus Aws Cli Layer](#deploy-conversation-benchmark-corpus-aws-cli-layer) | `DeployConversationBenchmarkCorpusAwsCliLayerCAE6DA8B` | Deploy Conversation Benchmark Corpus Aws Cli Layer (Lambda layer) |
+| [Deploy Conversation Benchmark Datasets Aws Cli Layer](#deploy-conversation-benchmark-datasets-aws-cli-layer) | `DeployConversationBenchmarkDatasetsAwsCliLayer8941B84A` | Deploy Conversation Benchmark Datasets Aws Cli Layer (Lambda layer) |
+| [Deploy Search Benchmark Datasets Aws Cli Layer](#deploy-search-benchmark-datasets-aws-cli-layer) | `DeploySearchBenchmarkDatasetsAwsCliLayer63B30B23` | Deploy Search Benchmark Datasets Aws Cli Layer (Lambda layer) |
 
 ## Logical ID 別設定
 
-### DeployBenchmarkDatasetsAwsCliLayer634804B4
+### Deploy Benchmark Datasets Aws Cli Layer
+
+Logical ID: `DeployBenchmarkDatasetsAwsCliLayer634804B4`
 
 用途推定: Deploy Benchmark Datasets Aws Cli Layer (Lambda layer)
 
@@ -31,7 +33,9 @@
 | --- | --- |
 | `content` | {"S3Bucket":"cdk-hnb659fds-assets-111111111111-ap-northeast-1","S3Key":"<asset-hash>.zip"} |
 
-### DeployConversationBenchmarkCorpusAwsCliLayerCAE6DA8B
+### Deploy Conversation Benchmark Corpus Aws Cli Layer
+
+Logical ID: `DeployConversationBenchmarkCorpusAwsCliLayerCAE6DA8B`
 
 用途推定: Deploy Conversation Benchmark Corpus Aws Cli Layer (Lambda layer)
 
@@ -39,7 +43,9 @@
 | --- | --- |
 | `content` | {"S3Bucket":"cdk-hnb659fds-assets-111111111111-ap-northeast-1","S3Key":"<asset-hash>.zip"} |
 
-### DeployConversationBenchmarkDatasetsAwsCliLayer8941B84A
+### Deploy Conversation Benchmark Datasets Aws Cli Layer
+
+Logical ID: `DeployConversationBenchmarkDatasetsAwsCliLayer8941B84A`
 
 用途推定: Deploy Conversation Benchmark Datasets Aws Cli Layer (Lambda layer)
 
@@ -47,7 +53,9 @@
 | --- | --- |
 | `content` | {"S3Bucket":"cdk-hnb659fds-assets-111111111111-ap-northeast-1","S3Key":"<asset-hash>.zip"} |
 
-### DeploySearchBenchmarkDatasetsAwsCliLayer63B30B23
+### Deploy Search Benchmark Datasets Aws Cli Layer
+
+Logical ID: `DeploySearchBenchmarkDatasetsAwsCliLayer63B30B23`
 
 用途推定: Deploy Search Benchmark Datasets Aws Cli Layer (Lambda layer)
 

@@ -14,17 +14,19 @@
 
 ## Logical ID 一覧
 
-| Logical ID | 用途推定 |
-| --- | --- |
-| [`AccessLogsBucket83982689`](#accesslogsbucket83982689) | Access Logs Bucket (S3 bucket) |
-| [`BenchmarkBucketDD7D1D2F`](#benchmarkbucketdd7d1d2f) | Benchmark Bucket (S3 bucket) |
-| [`DebugDownloadBucketAB6A16BE`](#debugdownloadbucketab6a16be) | Debug Download Bucket (S3 bucket) |
-| [`DocumentsBucket9EC9DEB9`](#documentsbucket9ec9deb9) | Documents Bucket (S3 bucket) |
-| [`FrontendBucketEFE2E19C`](#frontendbucketefe2e19c) | Frontend Bucket (S3 bucket) |
+| 論理ID | Logical ID | 用途推定 |
+| --- | --- | --- |
+| [Access Logs Bucket](#access-logs-bucket) | `AccessLogsBucket83982689` | Access Logs Bucket (S3 bucket) |
+| [Benchmark Bucket](#benchmark-bucket) | `BenchmarkBucketDD7D1D2F` | Benchmark Bucket (S3 bucket) |
+| [Debug Download Bucket](#debug-download-bucket) | `DebugDownloadBucketAB6A16BE` | Debug Download Bucket (S3 bucket) |
+| [Documents Bucket](#documents-bucket) | `DocumentsBucket9EC9DEB9` | Documents Bucket (S3 bucket) |
+| [Frontend Bucket](#frontend-bucket) | `FrontendBucketEFE2E19C` | Frontend Bucket (S3 bucket) |
 
 ## Logical ID 別設定
 
-### AccessLogsBucket83982689
+### Access Logs Bucket
+
+Logical ID: `AccessLogsBucket83982689`
 
 用途推定: Access Logs Bucket (S3 bucket)
 
@@ -36,7 +38,9 @@
 | `objectOwnership` | [ObjectWriter] |
 | `lifecycleRules` | [{"expirationInDays":90,"status":"Enabled"}] |
 
-### BenchmarkBucketDD7D1D2F
+### Benchmark Bucket
+
+Logical ID: `BenchmarkBucketDD7D1D2F`
 
 用途推定: Benchmark Bucket (S3 bucket)
 
@@ -48,7 +52,9 @@
 | `loggingPrefix` | s3/benchmark/ |
 | `lifecycleRules` | [{"prefix":"runs/","expirationInDays":30,"status":"Enabled"},{"prefix":"downloads/","expirationInDays":7,"status":"Enabled"}] |
 
-### DebugDownloadBucketAB6A16BE
+### Debug Download Bucket
+
+Logical ID: `DebugDownloadBucketAB6A16BE`
 
 用途推定: Debug Download Bucket (S3 bucket)
 
@@ -60,7 +66,9 @@
 | `loggingPrefix` | s3/debug-downloads/ |
 | `lifecycleRules` | [{"expirationInDays":7,"status":"Enabled"}] |
 
-### DocumentsBucket9EC9DEB9
+### Documents Bucket
+
+Logical ID: `DocumentsBucket9EC9DEB9`
 
 用途推定: Documents Bucket (S3 bucket)
 
@@ -73,7 +81,9 @@
 | `lifecycleRules` | [{"prefix":"uploads/","expirationInDays":7,"status":"Enabled"}] |
 | `corsRules` | [{"allowedMethods":["PUT"],"allowedOrigins":["*"],"allowedHeaders":["content-type"],"exposedHeaders":["ETag"],"maxAge":900}] |
 
-### FrontendBucketEFE2E19C
+### Frontend Bucket
+
+Logical ID: `FrontendBucketEFE2E19C`
 
 用途推定: Frontend Bucket (S3 bucket)
 
