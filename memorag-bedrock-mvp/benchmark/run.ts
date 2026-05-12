@@ -198,6 +198,9 @@ type RowEvaluation = {
   queryRewriteHit: boolean | null
   answerContainsExpected: boolean | null
   regexMatched: boolean | null
+  answerContentCorrect: boolean
+  groundedFileCorrect: boolean | null
+  groundedPageCorrect: boolean | null
   answerCorrect: boolean
   abstentionCorrect: boolean | null
   unsupportedAnswer: boolean
@@ -312,7 +315,10 @@ type Summary = {
     abstentionRecall: number | null
     abstainAccuracy: number | null
     unsupportedAnswerRate: number | null
+    answerContentAccuracy: number | null
     answerContainsRate: number | null
+    groundedFileAccuracy: number | null
+    groundedPageAccuracy: number | null
     citationHitRate: number | null
     expectedFileHitRate: number | null
     pageRecallAtK: number | null
@@ -350,6 +356,9 @@ type Summary = {
   turnDependencyMetrics: Record<string, {
     total: number
     answerableAccuracy: number | null
+    answerContentAccuracy: number | null
+    groundedFileAccuracy: number | null
+    groundedPageAccuracy: number | null
     retrievalRecallAtK: number | null
     expectedPageHitRate: number | null
     citationSupportPassRate: number | null
@@ -752,7 +761,9 @@ function evaluateRow(
   if (expectedDocumentHit === false) failureReasons.push("expected_document_not_hit")
 
   const expectedPageHit =
-    expectedPages.length > 0 ? hasExpectedPageHit([...citations, ...finalEvidence], expectedPages) : null
+    expectedPages.length > 0 && hasObservablePageMetadata([...citations, ...finalEvidence, ...retrieved])
+      ? hasExpectedPageHit([...citations, ...finalEvidence], expectedPages)
+      : null
   if (expectedPageHit === false) failureReasons.push("expected_page_not_hit")
   const pageRecallAtK =
     expectedPages.length > 0 ? hasExpectedPageRecallAtK(retrieved, expectedPages, evaluatorProfile.retrieval.recallK) : null
@@ -814,9 +825,30 @@ function evaluateRow(
   if (noAccessLeak === false) failureReasons.push("no_access_leak")
 
   if (status < 200 || status >= 300) failureReasons.push(`http_${status}`)
+  const answerContentCorrect =
+    expectedAnswerable &&
+    answerabilityCorrect &&
+    responseTypeCorrect &&
+    answerContainsExpected !== false &&
+    regexMatched !== false &&
+    normalizedAnswerMatch !== false &&
+    status >= 200 &&
+    status < 300
+  const groundedFileCorrect =
+    expectedAnswerable && (citationHit !== null || expectedFileHit !== null || expectedDocumentHit !== null)
+      ? answerContentCorrect &&
+        citationHit !== false &&
+        expectedFileHit !== false &&
+        expectedDocumentHit !== false
+      : null
+  const groundedPageCorrect =
+    expectedAnswerable && expectedPageHit !== null
+      ? groundedFileCorrect !== false && groundedFileCorrect !== null && expectedPageHit === true
+      : null
   const answerCorrect =
     expectedAnswerable &&
     answerabilityCorrect &&
+    responseTypeCorrect &&
     answerContainsExpected !== false &&
     regexMatched !== false &&
     citationHit !== false &&
@@ -860,6 +892,9 @@ function evaluateRow(
     queryRewriteHit,
     answerContainsExpected,
     regexMatched,
+    answerContentCorrect,
+    groundedFileCorrect,
+    groundedPageCorrect,
     answerCorrect,
     abstentionCorrect,
     unsupportedAnswer: !expectedAnswerable && actualAnswerable && !isNoAnswerText(answer, evaluatorProfile),
@@ -1022,6 +1057,9 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
   const latencies = results.map((row) => row.latencyMs).sort((a, b) => a - b)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
+  const answerContentEvaluated = results.filter((row) => row.evaluation.expectedAnswerable)
+  const groundedFileEvaluated = results.filter((row) => row.evaluation.groundedFileCorrect !== null)
+  const groundedPageEvaluated = results.filter((row) => row.evaluation.groundedPageCorrect !== null)
   const retrievalRecallAtKEvaluated = results.filter((row) => row.evaluation.retrievalRecallAtK !== null)
   const retrievalRecallAt20Evaluated = results.filter((row) => row.evaluation.retrievalRecallAt20 !== null)
   const retrievalMrrAtKEvaluated = results.filter((row) => row.evaluation.retrievalMrrAtK !== null)
@@ -1128,9 +1166,21 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
         unanswerableRows.filter((row) => row.evaluation.unsupportedAnswer).length,
         unanswerableRows.length
       ),
+      answerContentAccuracy: rate(
+        answerContentEvaluated.filter((row) => row.evaluation.answerContentCorrect).length,
+        answerContentEvaluated.length
+      ),
       answerContainsRate: rate(
         containsEvaluated.filter((row) => row.evaluation.answerContainsExpected === true).length,
         containsEvaluated.length
+      ),
+      groundedFileAccuracy: rate(
+        groundedFileEvaluated.filter((row) => row.evaluation.groundedFileCorrect === true).length,
+        groundedFileEvaluated.length
+      ),
+      groundedPageAccuracy: rate(
+        groundedPageEvaluated.filter((row) => row.evaluation.groundedPageCorrect === true).length,
+        groundedPageEvaluated.length
       ),
       citationHitRate: rate(
         citationEvaluated.filter((row) => row.evaluation.citationHit === true).length,
@@ -1291,6 +1341,8 @@ function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary[
   }
   return Object.fromEntries([...groups.entries()].map(([dependency, rows]) => {
     const answerableRows = rows.filter((row) => row.evaluation.expectedAnswerable)
+    const groundedFileRows = rows.filter((row) => row.evaluation.groundedFileCorrect !== null)
+    const groundedPageRows = rows.filter((row) => row.evaluation.groundedPageCorrect !== null)
     const retrievalRows = rows.filter((row) => row.evaluation.retrievalRecallAtK !== null)
     const pageRows = rows.filter((row) => row.evaluation.expectedPageHit !== null)
     const supportRows = rows.filter((row) => row.evaluation.citationSupportPass !== null)
@@ -1300,6 +1352,9 @@ function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary[
     return [dependency, {
       total: rows.length,
       answerableAccuracy: rate(answerableRows.filter((row) => row.evaluation.answerCorrect).length, answerableRows.length),
+      answerContentAccuracy: rate(answerableRows.filter((row) => row.evaluation.answerContentCorrect).length, answerableRows.length),
+      groundedFileAccuracy: rate(groundedFileRows.filter((row) => row.evaluation.groundedFileCorrect === true).length, groundedFileRows.length),
+      groundedPageAccuracy: rate(groundedPageRows.filter((row) => row.evaluation.groundedPageCorrect === true).length, groundedPageRows.length),
       retrievalRecallAtK: rate(retrievalRows.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRows.length),
       expectedPageHitRate: rate(pageRows.filter((row) => row.evaluation.expectedPageHit === true).length, pageRows.length),
       citationSupportPassRate: rate(supportRows.filter((row) => row.evaluation.citationSupportPass === true).length, supportRows.length),
@@ -1334,7 +1389,10 @@ type BenchmarkReportMetricName =
   | "abstention_recall"
   | "abstain_accuracy"
   | "unsupported_answer_rate"
+  | "answer_content_accuracy"
   | "answer_contains_rate"
+  | "grounded_file_accuracy"
+  | "grounded_page_accuracy"
   | "citation_hit_rate"
   | "expected_file_hit_rate"
   | "page_recall_at_k"
@@ -1432,10 +1490,10 @@ function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): 
   const turnDependencyRows = Object.keys(summary.turnDependencyMetrics).length === 0
     ? "\nNo turn dependency metrics.\n"
     : [
-        "| dependency | total | answerable_accuracy | retrieval_recall_at_k | expected_page_hit_rate | citation_support_pass_rate | refusal_precision | refusal_recall | unsupported_sentence_rate |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| dependency | total | answerable_accuracy | answer_content_accuracy | grounded_file_accuracy | grounded_page_accuracy | retrieval_recall_at_k | expected_page_hit_rate | citation_support_pass_rate | refusal_precision | refusal_recall | unsupported_sentence_rate |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
         ...Object.entries(summary.turnDependencyMetrics).map(([dependency, metrics]) =>
-          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} | ${formatRate(metrics.refusalPrecision)} | ${formatRate(metrics.refusalRecall)} | ${formatRate(metrics.unsupportedSentenceRate)} |`
+          `| ${escapeMarkdown(dependency)} | ${metrics.total} | ${formatRate(metrics.answerableAccuracy)} | ${formatRate(metrics.answerContentAccuracy)} | ${formatRate(metrics.groundedFileAccuracy)} | ${formatRate(metrics.groundedPageAccuracy)} | ${formatRate(metrics.retrievalRecallAtK)} | ${formatRate(metrics.expectedPageHitRate)} | ${formatRate(metrics.citationSupportPassRate)} | ${formatRate(metrics.refusalPrecision)} | ${formatRate(metrics.refusalRecall)} | ${formatRate(metrics.unsupportedSentenceRate)} |`
         )
       ].join("\n")
 
@@ -1522,7 +1580,7 @@ ${detailRows}
 function metricDescription(metric: BenchmarkReportMetricName): string {
   switch (metric) {
     case "answerable_accuracy":
-      return "回答可能な行で、期待語句・正規表現・引用・期待資料などの判定をすべて満たした割合。"
+      return "回答可能な行で、期待語句・正規表現・引用・期待資料などの判定を満たした割合。page metadata が観測できない場合の page hit は gate から外す。"
     case "clarification_need_precision":
       return "実際に確認質問を返した行のうち、dataset でも確認質問を期待していた割合。"
     case "clarification_need_recall":
@@ -1551,8 +1609,14 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "回答不能な行で、通常回答に進まず refusal / no-answer として評価できた割合。unsupported answer とは別に見る。"
     case "unsupported_answer_rate":
       return "回答不能な行で、根拠なしに回答してしまった割合。低いほどよい。"
+    case "answer_content_accuracy":
+      return "回答可能な行で、回答種別・期待語句・正規表現・正規化値が満たされた割合。citation / file / page grounding とは分けて見る。"
     case "answer_contains_rate":
       return "回答可能な行で、期待語句または期待回答文字列を回答に含められた割合。"
+    case "grounded_file_accuracy":
+      return "回答内容が正しく、citation / finalEvidence に期待ファイルまたは期待 document が含まれた割合。"
+    case "grounded_page_accuracy":
+      return "回答内容と期待ファイル grounding が正しく、citation / finalEvidence に期待 page が含まれた割合。page metadata が観測できる行だけを評価する。"
     case "citation_hit_rate":
       return "回答可能な行で、少なくとも 1 件の citation を返した割合。"
     case "expected_file_hit_rate":
@@ -1582,7 +1646,7 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
     case "retrieval_recall_at_20":
       return "上位 20 件の raw retrieved に期待ファイルまたは期待 document が含まれた割合。"
     case "expected_page_hit_rate":
-      return "期待 page が citation/finalEvidence に含まれた割合。"
+      return "期待 page が citation/finalEvidence に含まれた割合。citation / finalEvidence / retrieved に page metadata が観測できる行だけを評価する。"
     case "fact_slot_coverage":
       return "dataset の expectedFactSlots のうち、回答文または取得根拠で支持できた fact slot の平均割合。"
     case "citation_support_pass_rate":
@@ -1700,7 +1764,7 @@ function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportR
     {
       item: "rows_with_expected_pages",
       count: results.filter((row) => row.evaluation.expectedPageHit !== null).length,
-      note: "expected_page_hit_rate denominator"
+      note: "expected_page_hit_rate denominator after observable page metadata check"
     },
     {
       item: "rows_with_expected_region_ids",
@@ -1773,6 +1837,9 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const queryRewriteRows = results.filter((row) => row.evaluation.queryRewriteHit !== null)
   const postClarificationTaskLatencies = postClarificationRows.filter((row) => row.followUp)
   const containsEvaluated = results.filter((row) => row.evaluation.answerContainsExpected !== null)
+  const answerContentEvaluated = results.filter((row) => row.evaluation.expectedAnswerable)
+  const groundedFileEvaluated = results.filter((row) => row.evaluation.groundedFileCorrect !== null)
+  const groundedPageEvaluated = results.filter((row) => row.evaluation.groundedPageCorrect !== null)
   const citationEvaluated = results.filter((row) => row.evaluation.citationHit !== null)
   const fileEvaluated = results.filter((row) => row.evaluation.expectedFileHit !== null)
   const retrievalRecallAtKEvaluated = results.filter((row) => row.evaluation.retrievalRecallAtK !== null)
@@ -1816,7 +1883,10 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("abstention_recall", summary.metrics.abstentionRecall, unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
     metricRateRow("abstain_accuracy", summary.metrics.abstainAccuracy, unanswerableRows.filter((row) => row.evaluation.abstentionCorrect === true).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。abstention_recall と同じ分母で、unsupported_answer_rate と分けて表示。"),
     metricRateRow("unsupported_answer_rate", summary.metrics.unsupportedAnswerRate, unanswerableRows.filter((row) => row.evaluation.unsupportedAnswer).length, unanswerableRows.length, "unanswerable 行がない場合は評価対象外。"),
+    metricRateRow("answer_content_accuracy", summary.metrics.answerContentAccuracy, answerContentEvaluated.filter((row) => row.evaluation.answerContentCorrect).length, answerContentEvaluated.length, "answerable 行で回答種別・期待語句・正規表現・正規化値だけを見る。citation / file / page grounding は別指標。"),
     metricRateRow("answer_contains_rate", summary.metrics.answerContainsRate, containsEvaluated.filter((row) => row.evaluation.answerContainsExpected === true).length, containsEvaluated.length, "`expectedContains` / `expectedAnswer` を持つ answerable 行の期待語句一致率。"),
+    metricRateRow("grounded_file_accuracy", summary.metrics.groundedFileAccuracy, groundedFileEvaluated.filter((row) => row.evaluation.groundedFileCorrect === true).length, groundedFileEvaluated.length, "回答内容に加え、citation / finalEvidence の期待ファイルまたは期待 document hit を見る。"),
+    metricRateRow("grounded_page_accuracy", summary.metrics.groundedPageAccuracy, groundedPageEvaluated.filter((row) => row.evaluation.groundedPageCorrect === true).length, groundedPageEvaluated.length, "回答内容・期待ファイル・期待 page hit を見る。page metadata が観測できる行だけを分母にする。"),
     metricRateRow("citation_hit_rate", summary.metrics.citationHitRate, citationEvaluated.filter((row) => row.evaluation.citationHit === true).length, citationEvaluated.length, "answerable 行で citation が返った割合。"),
     metricRateRow("expected_file_hit_rate", summary.metrics.expectedFileHitRate, fileEvaluated.filter((row) => row.evaluation.expectedFileHit === true).length, fileEvaluated.length, "`expectedFiles` または `expectedDocumentIds` がある行だけを citation/finalEvidence で評価。"),
     metricRateRow("page_recall_at_k", summary.metrics.pageRecallAtK, pageRecallAtKEvaluated.filter((row) => row.evaluation.pageRecallAtK === true).length, pageRecallAtKEvaluated.length, "`expectedPages` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
@@ -1831,7 +1901,7 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("retrieval_recall_at_k", summary.metrics.retrievalRecallAtK, retrievalRecallAtKEvaluated.filter((row) => row.evaluation.retrievalRecallAtK === true).length, retrievalRecallAtKEvaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK で評価。"),
     metricNullableRow("retrieval_mrr_at_k", formatNumber(summary.metrics.retrievalMrrAtK), summary.metrics.retrievalMrrAtK, `${retrievalMrrAtKEvaluated.length} rows with expectedFiles or expectedDocumentIds`, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の evaluator profile retrieval.recallK 内の reciprocal rank で評価。"),
     metricRateRow("retrieval_recall_at_20", summary.metrics.retrievalRecallAt20, retrievalRecallAt20Evaluated.filter((row) => row.evaluation.retrievalRecallAt20 === true).length, retrievalRecallAt20Evaluated.length, "`expectedFiles` または `expectedDocumentIds` を raw retrieved の top 20 で評価する後方互換指標。"),
-    metricRateRow("expected_page_hit_rate", summary.metrics.expectedPageHitRate, pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length, pageEvaluated.length, "`expectedPages` がある行だけを citation/finalEvidence で評価。"),
+    metricRateRow("expected_page_hit_rate", summary.metrics.expectedPageHitRate, pageEvaluated.filter((row) => row.evaluation.expectedPageHit === true).length, pageEvaluated.length, "`expectedPages` があり、page metadata が観測できる行だけを citation/finalEvidence で評価。"),
     metricNullableRow("fact_slot_coverage", formatRate(summary.metrics.factSlotCoverage), summary.metrics.factSlotCoverage, `${factSlotEvaluated.length} rows with expectedFactSlots`, "`expectedFactSlots` がある行の平均 coverage。"),
     metricRateRow("citation_support_pass_rate", summary.metrics.citationSupportPassRate, citationSupportEvaluated.filter((row) => row.evaluation.citationSupportPass === true).length, citationSupportEvaluated.length, "answerSupport 出力がある行だけを評価。"),
     metricRateRow("refusal_precision", summary.metrics.refusalPrecision, refusedRows.filter((row) => !row.evaluation.expectedAnswerable).length, refusedRows.length, "実際に refusal した行のうち、期待値も unanswerable/refusal だった割合。0.0% は answer-only dataset での false positive を示す。"),
@@ -1934,6 +2004,10 @@ function hasExpectedPageHit(citations: Citation[], expectedPages: string[]): boo
   })
 }
 
+function hasObservablePageMetadata(citations: Citation[]): boolean {
+  return citations.some((citation) => citationPageKeys(citation).length > 0)
+}
+
 function hasExpectedPageRecallAtK(citations: Citation[], expectedPages: string[], k: number): boolean {
   return hasExpectedPageHit(citations.slice(0, Math.max(1, Math.trunc(k))), expectedPages)
 }
@@ -1976,11 +2050,33 @@ function reciprocalRankAtK(citations: Citation[], expectedFiles: string[], expec
 }
 
 function citationCoversPage(citation: Citation, expectedPage: string): boolean {
+  if (citationPageKeys(citation).some((page) => normalize(page) === normalize(expectedPage))) return true
   const numeric = numericPage(expectedPage)
   if (numeric === null) return false
   const start = citation.pageStart
   const end = citation.pageEnd ?? start
   return typeof start === "number" && typeof end === "number" && numeric >= start && numeric <= end
+}
+
+function citationPageKeys(citation: Citation): string[] {
+  const metadata = citation.metadata ?? {}
+  return [
+    citation.pageStart,
+    citation.pageEnd,
+    stringMetadata(metadata.pageStart),
+    stringMetadata(metadata.pageEnd),
+    stringMetadata(metadata.pageNumber),
+    stringMetadata(metadata.pageNo),
+    stringMetadata(metadata.page),
+    stringMetadata(metadata.pageOrSheet),
+    stringMetadata(metadata.sheetNo),
+    stringMetadata(metadata.sheetNumber),
+    stringMetadata(metadata.drawingNo)
+  ].flatMap((value) => {
+    if (typeof value === "number" && Number.isFinite(value)) return [String(value)]
+    if (typeof value === "string" && value.trim()) return [value]
+    return []
+  })
 }
 
 function numericPage(value: string): number | null {

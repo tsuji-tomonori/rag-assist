@@ -23,6 +23,7 @@ type SummaryArtifact = {
   total: number
   skipped: number
   metrics?: {
+    answerableAccuracy?: number | null
     queryRewriteAccuracy?: number | null
     pageRecallAtK?: number | null
     pageRecallAt20?: number | null
@@ -41,6 +42,10 @@ type SummaryArtifact = {
     noAccessLeakRate?: number | null
     abstainAccuracy?: number | null
     unsupportedAnswerRate?: number | null
+    answerContentAccuracy?: number | null
+    groundedFileAccuracy?: number | null
+    groundedPageAccuracy?: number | null
+    expectedPageHitRate?: number | null
   }
   turnDependencyMetrics?: Record<string, {
     total: number
@@ -204,6 +209,88 @@ test("benchmark runner reports baseline categories, support, MRR, and ACL leak m
     assert.match(report, /citation_support_pass_rate/)
     assert.match(report, /no_access_leak_count/)
     assert.match(report, /RAG profile: default@1 retrieval=default@1 answer=default-answer-policy@1/)
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
+  }
+})
+
+test("benchmark runner treats expected pages without page metadata as not applicable", async () => {
+  const paths = artifactPaths("page-metadata-gate")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${[
+    {
+      id: "page-metadata-absent",
+      question: "page metadata がないが内容とファイルは合っている",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["正しい回答"],
+      expectedFiles: ["drawing.pdf"],
+      expectedPages: ["1-01"]
+    },
+    {
+      id: "page-metadata-hit",
+      question: "page metadata があり期待 sheet に当たる",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["正しい回答"],
+      expectedFiles: ["drawing.pdf"],
+      expectedPages: ["1-01"]
+    },
+    {
+      id: "page-metadata-miss",
+      question: "page metadata があり期待 sheet に当たらない",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["正しい回答"],
+      expectedFiles: ["drawing.pdf"],
+      expectedPages: ["1-01"]
+    }
+  ].map((row) => JSON.stringify(row)).join("\n")}\n`, "utf-8")
+
+  const calls: Array<{ method?: string; path?: string; body?: unknown }> = []
+  const server = createServer((req, res) => {
+    void handlePageMetadataGateRunnerRequest(req, res, calls)
+  })
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+  const address = server.address() as AddressInfo | null
+  assert.ok(address)
+
+  try {
+    const result = await runBenchmarkRunner({
+      API_BASE_URL: `http://127.0.0.1:${address.port}`,
+      DATASET: datasetPath,
+      OUTPUT: paths.output,
+      SUMMARY: paths.summary,
+      REPORT: paths.report
+    })
+
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+    assert.equal(calls.length, 3)
+
+    const rows = readResultRows(paths.output)
+    assert.equal(rows.find((row) => row.id === "page-metadata-absent")?.evaluation.expectedPageHit, null)
+    assert.equal(rows.find((row) => row.id === "page-metadata-absent")?.evaluation.answerCorrect, true)
+    assert.equal(rows.find((row) => row.id === "page-metadata-hit")?.evaluation.expectedPageHit, true)
+    assert.equal(rows.find((row) => row.id === "page-metadata-miss")?.evaluation.expectedPageHit, false)
+    assert.deepEqual(rows.find((row) => row.id === "page-metadata-miss")?.evaluation.failureReasons, [
+      "expected_page_not_hit",
+      "page_recall_at_20_miss"
+    ])
+
+    const summary = readSummary(paths.summary)
+    assert.equal(summary.metrics?.answerableAccuracy, 0.6667)
+    assert.equal(summary.metrics?.answerContentAccuracy, 1)
+    assert.equal(summary.metrics?.groundedFileAccuracy, 1)
+    assert.equal(summary.metrics?.expectedPageHitRate, 0.5)
+    assert.equal(summary.metrics?.groundedPageAccuracy, 0.5)
+
+    const report = readFileSync(paths.report, "utf-8")
+    assert.match(report, /answer_content_accuracy/)
+    assert.match(report, /grounded_file_accuracy/)
+    assert.match(report, /grounded_page_accuracy/)
+    assert.match(report, /expected_page_hit_rate/)
+    assert.match(report, /rows_with_expected_pages/)
+    assert.match(report, /1\/2/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -743,6 +830,14 @@ function readSummary(summaryPath: string): SummaryArtifact {
   return JSON.parse(readFileSync(summaryPath, "utf-8")) as SummaryArtifact
 }
 
+function readResultRows(outputPath: string): Array<{ id?: string; evaluation: { expectedPageHit?: boolean | null; answerCorrect?: boolean; failureReasons?: string[] } }> {
+  return readFileSync(outputPath, "utf-8")
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as { id?: string; evaluation: { expectedPageHit?: boolean | null; answerCorrect?: boolean; failureReasons?: string[] } })
+}
+
 async function handleRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
   const body = await readRequestBody(req)
   calls.push({ method: req.method, path: req.url, body })
@@ -837,6 +932,44 @@ async function handleBaselineRunnerRequest(req: IncomingMessage, res: ServerResp
     isAnswerable: true,
     citations: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
     retrieved: [{ documentId: "doc-restricted", fileName: "restricted-payroll.md", chunkId: "restricted_p1_chunk_001", score: 0.8 }],
+    debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
+  } }))
+}
+
+async function handlePageMetadataGateRunnerRequest(req: IncomingMessage, res: ServerResponse, calls: Array<{ method?: string; path?: string; body?: unknown }>): Promise<void> {
+  const body = await readRequestBody(req)
+  calls.push({ method: req.method, path: req.url, body })
+  res.setHeader("content-type", "application/json")
+  if (req.method !== "POST" || req.url !== "/rpc/benchmark/query") {
+    res.statusCode = 404
+    res.end(JSON.stringify({ error: "not found" }))
+    return
+  }
+
+  const input = unwrapRpcBody(body)
+  const id = typeof input === "object" && input !== null && "id" in input ? (input as { id?: string }).id : undefined
+  const pageMetadata =
+    id === "page-metadata-hit"
+      ? { pageOrSheet: "1-01" }
+      : id === "page-metadata-miss"
+        ? { pageOrSheet: "2-01" }
+        : undefined
+  const evidence = {
+    documentId: "doc-drawing",
+    fileName: "drawing.pdf",
+    chunkId: `${id ?? "row"}-chunk`,
+    score: 0.9,
+    text: "正しい回答の根拠です。",
+    ...(pageMetadata ? { metadata: pageMetadata } : {})
+  }
+  res.end(JSON.stringify({ json: {
+    id,
+    responseType: "answer",
+    answer: "正しい回答です。",
+    isAnswerable: true,
+    citations: [evidence],
+    finalEvidence: [evidence],
+    retrieved: [evidence],
     debug: { ragProfile: defaultRagProfile(), totalLatencyMs: 10, steps: [] }
   } }))
 }
