@@ -29,7 +29,7 @@ import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
-import { asksForMoney, detectQuestionRequirements } from "./question-requirements.js"
+import { detectQuestionRequirements, type QuestionRequirement } from "./question-requirements.js"
 import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeTopK, ragRuntimePolicy } from "./runtime-policy.js"
 import { NO_ANSWER, isPrimaryRequiredFact, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { buildSignalPhrase } from "./text-signals.js"
@@ -547,41 +547,9 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
 function planStructuredFacts(question: string): RequiredFact[] {
   const subject = inferFactSubject(question)
   const candidates: Array<Pick<RequiredFact, "factType" | "description" | "expectedValueType">> = []
-  if (asksForMoney(question)) {
-    candidates.push({ factType: "amount", description: `${subject} 金額`, expectedValueType: "money" })
-  }
-  if (/いつ|期限|期日|締切|開始日|終了日|何日|何営業日/.test(question)) {
-    candidates.push({ factType: "date", description: `${subject} 期限`, expectedValueType: "date_or_duration" })
-  }
-  if (/頻度|何回|何度|ごと|毎月|毎年/.test(question)) {
-    candidates.push({ factType: "count", description: `${subject} 頻度`, expectedValueType: "count_or_frequency" })
-  }
-  if (/方法|手順|やり方|フロー|提出/.test(question) || (/申請/.test(question) && !/申請期限|申請期日|申請締切/.test(question))) {
-    candidates.push({ factType: "procedure", description: `${subject} 手順`, expectedValueType: "procedure" })
-  }
-  if (/誰|担当|承認者|責任者|部署|報告先|依頼先/.test(question)) {
-    candidates.push({ factType: "person", description: `${subject} 担当`, expectedValueType: "person_or_org" })
-  }
-  if (/条件|対象|例外|適用範囲/.test(question)) {
-    candidates.push({ factType: "condition", description: `${subject} 条件`, expectedValueType: "condition" })
-  }
-  if (/分類|種類|区分/.test(question)) {
-    candidates.push({ factType: "classification", description: `${subject} 分類`, expectedValueType: "classification_items" })
-  }
   for (const requirement of detectQuestionRequirements(question)) {
-    if (requirement.type === "list_count") {
-      candidates.push({ factType: "classification", description: `${subject} ${requirement.count}項目`, expectedValueType: `list_count:${requirement.count}` })
-    } else if (requirement.slot === "date") {
-      candidates.push({ factType: "date", description: `${subject} 日付・時期`, expectedValueType: "date_or_era" })
-    } else if (requirement.slot === "place") {
-      candidates.push({ factType: "scope", description: `${subject} 場所`, expectedValueType: "place" })
-    } else if (requirement.slot === "organization") {
-      candidates.push({ factType: "person", description: `${subject} 組織名`, expectedValueType: "person_or_org" })
-    } else if (requirement.slot === "section") {
-      candidates.push({ factType: "scope", description: `${subject} 節番号・節名`, expectedValueType: "section" })
-    } else if (requirement.slot === "item") {
-      candidates.push({ factType: "classification", description: `${subject} 項目名`, expectedValueType: "list_items" })
-    }
+    const candidate = factCandidateForRequirement(requirement, subject)
+    if (candidate) candidates.push(candidate)
   }
 
   return dedupeFactCandidates(candidates).slice(0, ragRuntimePolicy.limits.requiredFactLimit).map((candidate, index) => ({
@@ -598,6 +566,24 @@ function planStructuredFacts(question: string): RequiredFact[] {
     status: "missing",
     supportingChunkKeys: []
   }))
+}
+
+function factCandidateForRequirement(requirement: QuestionRequirement, subject: string): Pick<RequiredFact, "factType" | "description" | "expectedValueType"> | undefined {
+  if (requirement.type === "list_count") return { factType: "classification", description: `${subject} ${requirement.count}項目`, expectedValueType: `list_count:${requirement.count}` }
+  if (requirement.slot === "amount") return { factType: "amount", description: `${subject} 数量・金額`, expectedValueType: "quantity_or_amount" }
+  if (requirement.slot === "date") return { factType: "date", description: `${subject} ${requirement.label}`, expectedValueType: "date_or_duration" }
+  if (requirement.slot === "count") return { factType: "count", description: `${subject} 回数・頻度`, expectedValueType: "count_or_frequency" }
+  if (requirement.slot === "procedure") return { factType: "procedure", description: `${subject} 手順`, expectedValueType: "procedure" }
+  if (requirement.slot === "person") return { factType: "person", description: `${subject} 担当者・組織`, expectedValueType: "person_or_org" }
+  if (requirement.slot === "condition") return { factType: "condition", description: `${subject} 条件`, expectedValueType: "condition" }
+  if (requirement.slot === "classification") return { factType: "classification", description: `${subject} 分類`, expectedValueType: "classification_items" }
+  if (requirement.slot === "place") return { factType: "scope", description: `${subject} 場所`, expectedValueType: "place" }
+  if (requirement.slot === "organization") return { factType: "person", description: `${subject} 組織名`, expectedValueType: "person_or_org" }
+  if (requirement.slot === "section") return { factType: "scope", description: `${subject} 節番号・節名`, expectedValueType: "section" }
+  if (requirement.slot === "item") return { factType: "classification", description: `${subject} 項目名`, expectedValueType: "list_items" }
+  if (requirement.slot === "reason") return { factType: "condition", description: `${subject} 理由・根拠`, expectedValueType: "reason" }
+  if (requirement.slot === "yes_no") return { factType: "condition", description: `${subject} 可否`, expectedValueType: "boolean" }
+  return undefined
 }
 
 function inferFactSubject(question: string): string {
