@@ -1,6 +1,6 @@
 # jp-public-pdf-qa-v1 P0 精度・誤拒否修正
 
-状態: review
+状態: done
 
 ## 背景
 
