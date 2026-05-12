@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url"
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const snapshotPath = path.join(repoRoot, "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json")
 const outputDir = path.join(repoRoot, "docs/generated")
+const detailOutputDir = path.join(outputDir, "infra-inventory")
 const markdownOutputPath = path.join(outputDir, "infra-inventory.md")
 const jsonOutputPath = path.join(outputDir, "infra-resource-inventory.json")
 const args = new Set(process.argv.slice(2))
@@ -87,13 +88,19 @@ function main() {
   const template = JSON.parse(fs.readFileSync(snapshotPath, "utf8"))
   const resources = template.Resources ?? {}
   const inventory = buildInventory(resources)
-  const markdown = renderMarkdown(inventory)
+  const markdownOutputs = renderMarkdownOutputs(inventory)
   const json = `${JSON.stringify(inventory, null, 2)}\n`
 
   if (checkOnly) {
     const mismatches = []
-    if (readIfExists(markdownOutputPath) !== markdown) mismatches.push(path.relative(repoRoot, markdownOutputPath))
+    for (const [filePath, content] of markdownOutputs) {
+      if (readIfExists(filePath) !== content) mismatches.push(path.relative(repoRoot, filePath))
+    }
     if (readIfExists(jsonOutputPath) !== json) mismatches.push(path.relative(repoRoot, jsonOutputPath))
+    const expectedMarkdownFiles = new Set(markdownOutputs.keys())
+    for (const existingFile of listMarkdownFiles(detailOutputDir)) {
+      if (!expectedMarkdownFiles.has(existingFile)) mismatches.push(path.relative(repoRoot, existingFile))
+    }
     if (mismatches.length > 0) {
       console.error("Infra inventory docs are out of date:")
       for (const file of mismatches) console.error(`- ${file}`)
@@ -105,9 +112,14 @@ function main() {
   }
 
   fs.mkdirSync(outputDir, { recursive: true })
-  fs.writeFileSync(markdownOutputPath, markdown)
+  fs.rmSync(detailOutputDir, { recursive: true, force: true })
+  fs.mkdirSync(detailOutputDir, { recursive: true })
+  for (const [filePath, content] of markdownOutputs) {
+    fs.writeFileSync(filePath, content)
+  }
   fs.writeFileSync(jsonOutputPath, json)
   console.log(`Wrote ${path.relative(repoRoot, markdownOutputPath)}`)
+  console.log(`Wrote ${path.relative(repoRoot, detailOutputDir)}`)
   console.log(`Wrote ${path.relative(repoRoot, jsonOutputPath)}`)
 }
 
@@ -171,7 +183,10 @@ function buildInventory(resources) {
     totalResources: resourceEntries.length,
     totalsByDomain,
     countsByType,
-    resources: resourceEntries
+    resources: resourceEntries.map((resource) => ({
+      ...resource,
+      detailFilePath: `infra-inventory/${resourceTypeFileName(resource.type)}`
+    }))
   }
 }
 
@@ -538,7 +553,20 @@ function resourcePathByLogicalId(resources, logicalId) {
   return `${parentPath}/${resource.Properties?.PathPart ?? ""}`.replace(/\/+/g, "/")
 }
 
-function renderMarkdown(inventory) {
+function renderMarkdownOutputs(inventory) {
+  const outputs = new Map()
+  outputs.set(markdownOutputPath, renderIndexMarkdown(inventory))
+
+  const resourcesByType = groupBy(inventory.resources, (resource) => resource.type)
+  for (const type of [...resourcesByType.keys()].sort(compareType)) {
+    const filePath = path.join(detailOutputDir, resourceTypeFileName(type))
+    outputs.set(filePath, renderTypeDetailMarkdown(inventory, type, resourcesByType.get(type) ?? []))
+  }
+
+  return outputs
+}
+
+function renderIndexMarkdown(inventory) {
   const lines = [
     "# AWS リソースインベントリ",
     "",
@@ -561,43 +589,71 @@ function renderMarkdown(inventory) {
     "",
     "## CloudFormation Type 別リソース数",
     "",
-    "| Resource type | 個数 | 用途概要 |",
-    "| --- | ---: | --- |",
-    ...inventory.countsByType.map((item) => `| \`${item.type}\` | ${item.count} | ${escapeMd(item.purpose)} |`),
+    "| Resource type | 個数 | 用途概要 | 詳細 |",
+    "| --- | ---: | --- | --- |",
+    ...inventory.countsByType.map((item) => {
+      const detailFilePath = `infra-inventory/${resourceTypeFileName(item.type)}`
+      return `| \`${item.type}\` | ${item.count} | ${escapeMd(item.purpose)} | [詳細](${detailFilePath}) |`
+    }),
     "",
     "## リソース別主要設定",
-    ""
+    "",
+    "リソース別主要設定は、CloudFormation resource type ごとに分割した詳細ファイルに記載しています。",
+    "",
+    "| Resource type | 詳細ファイル |",
+    "| --- | --- |",
+    ...inventory.countsByType.map((item) => `| \`${item.type}\` | [${resourceTypeFileName(item.type)}](infra-inventory/${resourceTypeFileName(item.type)}) |`),
+    "",
+    "## 注意事項",
+    "",
+    "- `Secret`、`Password`、`Token`、`Credential` などを含む値は生成時に masked 表記へ寄せています。",
+    "- IAM policy は action と resource の要約です。condition や intrinsic function の完全な評価は CloudFormation template を確認してください。",
+    "- 実リソース数の根拠は CDK snapshot です。CDK 実装を変えた場合は infra test / snapshot 更新と合わせて再生成してください。"
   ]
-
-  const resourcesByType = groupBy(inventory.resources, (resource) => resource.type)
-  for (const type of [...resourcesByType.keys()].sort(compareType)) {
-    const resources = resourcesByType.get(type) ?? []
-    lines.push(`### ${type}`)
-    lines.push("")
-    lines.push(`用途概要: ${typeLabels[type] ?? "CloudFormation resource"}`)
-    lines.push("")
-    lines.push("| Logical ID | 用途推定 | 主要設定 |")
-    lines.push("| --- | --- | --- |")
-    for (const resource of resources) {
-      lines.push(`| \`${resource.logicalId}\` | ${escapeMd(resource.purpose)} | ${formatSettings(resource.settings)} |`)
-    }
-    lines.push("")
-  }
-
-  lines.push("## 注意事項")
-  lines.push("")
-  lines.push("- `Secret`、`Password`、`Token`、`Credential` などを含む値は生成時に masked 表記へ寄せています。")
-  lines.push("- IAM policy は action と resource の要約です。condition や intrinsic function の完全な評価は CloudFormation template を確認してください。")
-  lines.push("- 実リソース数の根拠は CDK snapshot です。CDK 実装を変えた場合は infra test / snapshot 更新と合わせて再生成してください。")
 
   return `${lines.join("\n")}\n`
 }
 
-function formatSettings(settings) {
-  if (!settings || Object.keys(settings).length === 0) return "-"
-  return escapeMd(Object.entries(settings)
-    .map(([key, value]) => `**${key}**=${formatValue(value)}`)
-    .join("<br>"))
+function renderTypeDetailMarkdown(inventory, type, resources) {
+  const lines = [
+    `# ${type}`,
+    "",
+    "<!-- This file is generated by npm run docs:infra-inventory. Do not edit manually. -->",
+    "",
+    "[AWS リソースインベントリへ戻る](../infra-inventory.md)",
+    "",
+    `> 自動生成: \`${inventory.generatedBy}\``,
+    ">",
+    `> 入力: \`${inventory.source}\``,
+    "",
+    `用途概要: ${typeLabels[type] ?? "CloudFormation resource"}`,
+    "",
+    `リソース数: ${resources.length}`,
+    "",
+    "## Logical ID 一覧",
+    "",
+    "| Logical ID | 用途推定 |",
+    "| --- | --- |",
+    ...resources.map((resource) => `| [\`${resource.logicalId}\`](#${anchorFor(resource.logicalId)}) | ${escapeMd(resource.purpose)} |`),
+    "",
+    "## Logical ID 別設定",
+    ""
+  ]
+
+  for (const resource of resources) {
+    lines.push(`### ${resource.logicalId}`)
+    lines.push("")
+    lines.push(`用途推定: ${escapeMd(resource.purpose)}`)
+    lines.push("")
+    lines.push("| 設定項目 | 値 |")
+    lines.push("| --- | --- |")
+    for (const [key, value] of settingsEntries(resource.settings)) {
+      lines.push(`| \`${escapeMd(key)}\` | ${formatSettingValue(value)} |`)
+    }
+    if (resource !== resources.at(-1)) lines.push("")
+  }
+
+  return `${lines.join("\n")}\n`
 }
 
 function formatValue(value) {
@@ -609,6 +665,15 @@ function formatValue(value) {
   }
   if (typeof value === "object") return JSON.stringify(value)
   return String(value)
+}
+
+function formatSettingValue(value) {
+  return escapeMd(formatValue(value))
+}
+
+function settingsEntries(settings) {
+  const entries = Object.entries(settings ?? {})
+  return entries.length > 0 ? entries : [["-", "-"]]
 }
 
 function compactObject(object) {
@@ -653,6 +718,29 @@ function groupBy(values, keyFn) {
     groups.set(key, [...(groups.get(key) ?? []), value])
   }
   return groups
+}
+
+function resourceTypeFileName(type) {
+  return `${type.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.md`
+}
+
+function anchorFor(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9 _-]+/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+}
+
+function listMarkdownFiles(dir) {
+  if (!fs.existsSync(dir)) return []
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
+  return entries.flatMap((entry) => {
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) return listMarkdownFiles(fullPath)
+    if (entry.isFile() && entry.name.endsWith(".md")) return [fullPath]
+    return []
+  })
 }
 
 function asArray(value) {

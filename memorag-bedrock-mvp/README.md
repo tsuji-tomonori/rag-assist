@@ -121,7 +121,7 @@ task docs:openapi:check
 
 Web UI インベントリは静的解析で生成します。更新は `npm run docs:web-inventory`、CI と同じ最新性確認は `npm run docs:web-inventory:check` を使います。初めて読む場合は `docs/generated/web-overview.md` から画面、機能、コンポーネントの順に辿ってください。条件付き表示、権限別表示、実行時データ依存の UI は生成物の `certainty` を確認してください。
 
-AWS リソースインベントリは CDK snapshot の CloudFormation template を静的解析して生成します。更新は `npm run docs:infra-inventory`、CI と同じ最新性確認は `npm run docs:infra-inventory:check` を使います。生成先は `docs/generated/infra-inventory.md` と、機械可読な `docs/generated/infra-resource-inventory.json` です。CDK 実装を変えた場合は infra test / snapshot 更新と合わせて再生成してください。
+AWS リソースインベントリは CDK snapshot の CloudFormation template を静的解析して生成します。更新は `npm run docs:infra-inventory`、CI と同じ最新性確認は `npm run docs:infra-inventory:check` を使います。生成先は入口の `docs/generated/infra-inventory.md`、resource type ごとの詳細を置く `docs/generated/infra-inventory/*.md`、機械可読な `docs/generated/infra-resource-inventory.json` です。CDK 実装を変えた場合は infra test / snapshot 更新と合わせて再生成してください。
 
 ## ローカル起動
 

@@ -232,7 +232,8 @@
             "status": "Enabled"
           }
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
     },
     {
       "logicalId": "BenchmarkBucketDD7D1D2F",
@@ -262,7 +263,8 @@
             "status": "Enabled"
           }
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
     },
     {
       "logicalId": "DebugDownloadBucketAB6A16BE",
@@ -286,7 +288,8 @@
             "status": "Enabled"
           }
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
     },
     {
       "logicalId": "DocumentsBucket9EC9DEB9",
@@ -328,7 +331,8 @@
             "maxAge": 900
           }
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
     },
     {
       "logicalId": "FrontendBucketEFE2E19C",
@@ -346,7 +350,8 @@
         },
         "enforceSSLPolicy": "BucketPolicy を参照",
         "loggingPrefix": "s3/frontend/"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
     },
     {
       "logicalId": "BenchmarkRunsTableD0841636",
@@ -367,7 +372,8 @@
         ],
         "billingMode": "PAY_PER_REQUEST",
         "pointInTimeRecoveryEnabled": true
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
       "logicalId": "ChatRunEventsTable7455A50E",
@@ -400,7 +406,8 @@
           "AttributeName": "ttl",
           "Enabled": true
         }
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
       "logicalId": "ChatRunsTable8446CD95",
@@ -425,7 +432,8 @@
           "AttributeName": "ttl",
           "Enabled": true
         }
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
       "logicalId": "ConversationHistoryTable59A3534C",
@@ -454,7 +462,8 @@
         ],
         "billingMode": "PAY_PER_REQUEST",
         "pointInTimeRecoveryEnabled": true
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
       "logicalId": "DocumentGroupsTableA5108040",
@@ -475,7 +484,8 @@
         ],
         "billingMode": "PAY_PER_REQUEST",
         "pointInTimeRecoveryEnabled": true
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
       "logicalId": "DocumentIngestRunEventsTableF4692EBE",
@@ -508,7 +518,8 @@
           "AttributeName": "ttl",
           "Enabled": true
         }
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
       "logicalId": "DocumentIngestRunsTableEA8F8CCA",
@@ -533,7 +544,8 @@
           "AttributeName": "ttl",
           "Enabled": true
         }
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
       "logicalId": "HumanQuestionsTable5DA9688B",
@@ -554,7 +566,8 @@
         ],
         "billingMode": "PAY_PER_REQUEST",
         "pointInTimeRecoveryEnabled": true
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
       "logicalId": "ApiFunctionCE271BD4",
@@ -611,7 +624,8 @@
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
         "role": "GetAtt:ApiFunctionServiceRole52B9747B.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "ChatRunEventsStreamFunctionA12E11AC",
@@ -662,7 +676,8 @@
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
         "role": "GetAtt:ChatRunEventsStreamFunctionServiceRole41BBFB5A.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "ChatRunMarkFailedFunction23223E28",
@@ -713,7 +728,8 @@
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
         "role": "GetAtt:ChatRunMarkFailedFunctionServiceRoleAAD50CA8.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "ChatRunWorkerFunction3C85A553",
@@ -764,7 +780,8 @@
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
         "role": "GetAtt:ChatRunWorkerFunctionServiceRoleBED42CDB.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
@@ -781,7 +798,8 @@
           "Ref:DeployBenchmarkDatasetsAwsCliLayer634804B4"
         ],
         "role": "GetAtt:CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
@@ -793,7 +811,8 @@
         "memorySize": 128,
         "timeoutSeconds": 900,
         "role": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "DocumentIngestRunMarkFailedFunction41F16DD3",
@@ -844,7 +863,8 @@
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
         "role": "GetAtt:DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "DocumentIngestRunWorkerFunctionBBDBF694",
@@ -898,7 +918,8 @@
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
         "role": "GetAtt:DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "HeavyApiFunction4BC152A5",
@@ -955,7 +976,8 @@
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
         "role": "GetAtt:HeavyApiFunctionServiceRole25A7AE5E.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "S3VectorsProviderFn215E3A4E",
@@ -969,7 +991,8 @@
         ],
         "timeoutSeconds": 120,
         "role": "GetAtt:S3VectorsProviderFnServiceRoleFEC97124.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "S3VectorsProviderframeworkonEventEB240CE8",
@@ -983,7 +1006,8 @@
           "USER_ON_EVENT_FUNCTION_ARN": "GetAtt:S3VectorsProviderFn215E3A4E.Arn"
         },
         "role": "GetAtt:S3VectorsProviderframeworkonEventServiceRole5255E58B.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
     },
     {
       "logicalId": "RestApi0C43BF4B",
@@ -994,7 +1018,8 @@
         "endpointTypes": [
           "REGIONAL"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-restapi.md"
     },
     {
       "logicalId": "RestApiDeploymentStageprod3855DE66",
@@ -1006,7 +1031,8 @@
         "metricsEnabled": true,
         "dataTraceEnabled": false,
         "accessLogDestination": "GetAtt:RestApiAccessLogGroup246D1CE0.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-stage.md"
     },
     {
       "logicalId": "RestApibenchmark0687AE3D",
@@ -1015,7 +1041,8 @@
       "settings": {
         "path": "/benchmark",
         "pathPart": "benchmark"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApibenchmarkqueryABD4E6D7",
@@ -1024,7 +1051,8 @@
       "settings": {
         "path": "/benchmark/query",
         "pathPart": "query"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApibenchmarksearchEAD28036",
@@ -1033,7 +1061,8 @@
       "settings": {
         "path": "/benchmark/search",
         "pathPart": "search"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApichat40D4BF8B",
@@ -1042,7 +1071,8 @@
       "settings": {
         "path": "/chat",
         "pathPart": "chat"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApichatruns60F0DD77",
@@ -1051,7 +1081,8 @@
       "settings": {
         "path": "/chat-runs",
         "pathPart": "chat-runs"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApichatrunsrunId67B06C02",
@@ -1060,7 +1091,8 @@
       "settings": {
         "path": "/chat-runs/{runId}",
         "pathPart": "{runId}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApichatrunsrunIdevents5BAC3B9E",
@@ -1069,7 +1101,8 @@
       "settings": {
         "path": "/chat-runs/{runId}/events",
         "pathPart": "events"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsA82097B4",
@@ -1078,7 +1111,8 @@
       "settings": {
         "path": "/documents",
         "pathPart": "documents"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentId13B24DA0",
@@ -1087,7 +1121,8 @@
       "settings": {
         "path": "/documents/{documentId}",
         "pathPart": "{documentId}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexC5BDC2A8",
@@ -1096,7 +1131,8 @@
       "settings": {
         "path": "/documents/{documentId}/reindex",
         "pathPart": "reindex"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexstageA598443E",
@@ -1105,7 +1141,8 @@
       "settings": {
         "path": "/documents/{documentId}/reindex/stage",
         "pathPart": "stage"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsD613331E",
@@ -1114,7 +1151,8 @@
       "settings": {
         "path": "/documents/reindex-migrations",
         "pathPart": "reindex-migrations"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationId6339E170",
@@ -1123,7 +1161,8 @@
       "settings": {
         "path": "/documents/reindex-migrations/{migrationId}",
         "pathPart": "{migrationId}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverA30516C7",
@@ -1132,7 +1171,8 @@
       "settings": {
         "path": "/documents/reindex-migrations/{migrationId}/cutover",
         "pathPart": "cutover"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackE6A0A906",
@@ -1141,7 +1181,8 @@
       "settings": {
         "path": "/documents/reindex-migrations/{migrationId}/rollback",
         "pathPart": "rollback"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsA497AFA8",
@@ -1150,7 +1191,8 @@
       "settings": {
         "path": "/documents/uploads",
         "pathPart": "uploads"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadId05DE8EA3",
@@ -1159,7 +1201,8 @@
       "settings": {
         "path": "/documents/uploads/{uploadId}",
         "pathPart": "{uploadId}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdcontent9FB57E1D",
@@ -1168,7 +1211,8 @@
       "settings": {
         "path": "/documents/uploads/{uploadId}/content",
         "pathPart": "content"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdingestA823F650",
@@ -1177,7 +1221,8 @@
       "settings": {
         "path": "/documents/uploads/{uploadId}/ingest",
         "pathPart": "ingest"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApiproxyC95856DD",
@@ -1186,7 +1231,8 @@
       "settings": {
         "path": "/{proxy+}",
         "pathPart": "{proxy+}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApisearchA0D22340",
@@ -1195,7 +1241,8 @@
       "settings": {
         "path": "/search",
         "pathPart": "search"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
     },
     {
       "logicalId": "RestApiANYA7C1DC94",
@@ -1210,7 +1257,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApibenchmarkOPTIONS98E5C5B2",
@@ -1221,7 +1269,8 @@
         "path": "/benchmark",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApibenchmarkqueryOPTIONS35F1C45A",
@@ -1232,7 +1281,8 @@
         "path": "/benchmark/query",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApibenchmarkqueryPOSTDA41A31E",
@@ -1247,7 +1297,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApibenchmarksearchOPTIONS2B9A6F31",
@@ -1258,7 +1309,8 @@
         "path": "/benchmark/search",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApibenchmarksearchPOSTD62C84E5",
@@ -1273,7 +1325,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApichatOPTIONS0617E40B",
@@ -1284,7 +1337,8 @@
         "path": "/chat",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApichatPOST4DAC6FEC",
@@ -1299,7 +1353,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApichatrunsOPTIONS7EE1D56A",
@@ -1310,7 +1365,8 @@
         "path": "/chat-runs",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApichatrunsPOST78780797",
@@ -1325,7 +1381,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApichatrunsrunIdeventsGETA659C870",
@@ -1341,7 +1398,8 @@
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 900000,
         "responseTransferMode": "STREAM"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApichatrunsrunIdeventsOPTIONSC49B5D8A",
@@ -1352,7 +1410,8 @@
         "path": "/chat-runs/{runId}/events",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApichatrunsrunIdOPTIONS3E839889",
@@ -1363,7 +1422,8 @@
         "path": "/chat-runs/{runId}",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdDELETEB97E741B",
@@ -1378,7 +1438,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdOPTIONS430739B2",
@@ -1389,7 +1450,8 @@
         "path": "/documents/{documentId}",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexOPTIONSF984D30B",
@@ -1400,7 +1462,8 @@
         "path": "/documents/{documentId}/reindex",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexPOSTF324AB1F",
@@ -1415,7 +1478,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexstageOPTIONS6A784B49",
@@ -1426,7 +1490,8 @@
         "path": "/documents/{documentId}/reindex/stage",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexstagePOST300E1BE4",
@@ -1441,7 +1506,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsGETAB791FA6",
@@ -1456,7 +1522,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsOPTIONSA31F374B",
@@ -1467,7 +1534,8 @@
         "path": "/documents",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsPOST60E2D532",
@@ -1482,7 +1550,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsGET376D3592",
@@ -1497,7 +1566,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverOPTIONS9DBE3D16",
@@ -1508,7 +1578,8 @@
         "path": "/documents/reindex-migrations/{migrationId}/cutover",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverPOST242FBD39",
@@ -1523,7 +1594,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdOPTIONS6554167F",
@@ -1534,7 +1606,8 @@
         "path": "/documents/reindex-migrations/{migrationId}",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackOPTIONSCCBBB98F",
@@ -1545,7 +1618,8 @@
         "path": "/documents/reindex-migrations/{migrationId}/rollback",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTA581B992",
@@ -1560,7 +1634,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsOPTIONS5E0EF276",
@@ -1571,7 +1646,8 @@
         "path": "/documents/reindex-migrations",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsOPTIONS4FAAFC51",
@@ -1582,7 +1658,8 @@
         "path": "/documents/uploads",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsPOSTB3672B01",
@@ -1597,7 +1674,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdcontentOPTIONS46B7EF2B",
@@ -1608,7 +1686,8 @@
         "path": "/documents/uploads/{uploadId}/content",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdcontentPOST10F2C896",
@@ -1623,7 +1702,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdingestOPTIONS50AD773E",
@@ -1634,7 +1714,8 @@
         "path": "/documents/uploads/{uploadId}/ingest",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdingestPOSTC9699490",
@@ -1649,7 +1730,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdOPTIONSED0C4A5A",
@@ -1660,7 +1742,8 @@
         "path": "/documents/uploads/{uploadId}",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApiOPTIONS6AA64D2D",
@@ -1671,7 +1754,8 @@
         "path": "/",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApiproxyANY1786B242",
@@ -1686,7 +1770,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApiproxyOPTIONS32C4B154",
@@ -1697,7 +1782,8 @@
         "path": "/{proxy+}",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApisearchOPTIONSDF398734",
@@ -1708,7 +1794,8 @@
         "path": "/search",
         "authorizationType": "NONE",
         "integrationType": "MOCK"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "RestApisearchPOST5D2A9A4A",
@@ -1723,7 +1810,8 @@
         "integrationType": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "integrationTimeoutMs": 60000
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
     },
     {
       "logicalId": "UserPool6BA7E5F2",
@@ -1754,7 +1842,8 @@
           "RequireSymbols": true,
           "RequireUppercase": true
         }
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpool.md"
     },
     {
       "logicalId": "UserPoolWebClient4C9370B0",
@@ -1771,7 +1860,8 @@
         "accessTokenValidity": 60,
         "idTokenValidity": 60,
         "refreshTokenValidity": 43200
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolclient.md"
     },
     {
       "logicalId": "UserPoolUserPoolDomain9F01E991",
@@ -1780,7 +1870,8 @@
       "settings": {
         "domain": "memorag-c85f22a0",
         "userPoolId": "Ref:UserPool6BA7E5F2"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpooldomain.md"
     },
     {
       "logicalId": "ACCESSADMINGroup",
@@ -1789,7 +1880,8 @@
       "settings": {
         "groupName": "ACCESS_ADMIN",
         "description": "MemoRAG role: ACCESS_ADMIN"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "ANSWEREDITORGroup",
@@ -1798,7 +1890,8 @@
       "settings": {
         "groupName": "ANSWER_EDITOR",
         "description": "MemoRAG role: ANSWER_EDITOR"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "BENCHMARKOPERATORGroup",
@@ -1807,7 +1900,8 @@
       "settings": {
         "groupName": "BENCHMARK_OPERATOR",
         "description": "MemoRAG role: BENCHMARK_OPERATOR"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "BENCHMARKRUNNERGroup",
@@ -1816,7 +1910,8 @@
       "settings": {
         "groupName": "BENCHMARK_RUNNER",
         "description": "MemoRAG role: BENCHMARK_RUNNER"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "CHATUSERGroup",
@@ -1825,7 +1920,8 @@
       "settings": {
         "groupName": "CHAT_USER",
         "description": "MemoRAG role: CHAT_USER"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "COSTAUDITORGroup",
@@ -1834,7 +1930,8 @@
       "settings": {
         "groupName": "COST_AUDITOR",
         "description": "MemoRAG role: COST_AUDITOR"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "RAGGROUPMANAGERGroup",
@@ -1843,7 +1940,8 @@
       "settings": {
         "groupName": "RAG_GROUP_MANAGER",
         "description": "MemoRAG role: RAG_GROUP_MANAGER"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "SYSTEMADMINGroup",
@@ -1852,7 +1950,8 @@
       "settings": {
         "groupName": "SYSTEM_ADMIN",
         "description": "MemoRAG role: SYSTEM_ADMIN"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "USERADMINGroup",
@@ -1861,7 +1960,8 @@
       "settings": {
         "groupName": "USER_ADMIN",
         "description": "MemoRAG role: USER_ADMIN"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
     },
     {
       "logicalId": "FrontendDistributionE6EAF405",
@@ -1900,7 +2000,8 @@
             "ResponsePagePath": "/index.html"
           }
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cloudfront-distribution.md"
     },
     {
       "logicalId": "FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6",
@@ -1911,7 +2012,8 @@
         "originType": "s3",
         "signingBehavior": "always",
         "signingProtocol": "sigv4"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cloudfront-originaccesscontrol.md"
     },
     {
       "logicalId": "BenchmarkProject1593465D",
@@ -1967,7 +2069,8 @@
             "Status": "ENABLED"
           }
         }
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-codebuild-project.md"
     },
     {
       "logicalId": "BenchmarkStateMachine8C582B8A",
@@ -1979,7 +2082,8 @@
         "definitionSummary": [
           "BenchmarkStartCodeBuild"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-stepfunctions-statemachine.md"
     },
     {
       "logicalId": "ChatRunStateMachine52CAF7BA",
@@ -1992,7 +2096,8 @@
           "ChatRunWorkerTask",
           "ChatRunMarkFailedTask"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-stepfunctions-statemachine.md"
     },
     {
       "logicalId": "DocumentIngestRunStateMachine2FD7D3D3",
@@ -2005,7 +2110,8 @@
           "DocumentIngestRunWorkerTask",
           "DocumentIngestRunMarkFailedTask"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-stepfunctions-statemachine.md"
     },
     {
       "logicalId": "BenchmarkProjectKeyB840011B",
@@ -2014,7 +2120,8 @@
       "settings": {
         "enableKeyRotation": true,
         "keyPolicyStatementCount": 1
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-kms-key.md"
     },
     {
       "logicalId": "BenchmarkRunnerAuthSecret035EF8F2",
@@ -2025,7 +2132,8 @@
         "generateStringKey": "<masked>",
         "passwordLength": 32,
         "excludedCharactersConfigured": true
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-secretsmanager-secret.md"
     },
     {
       "logicalId": "ApiFunctionLogGroup00D1AC73",
@@ -2033,7 +2141,8 @@
       "purpose": "Api Function Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "BenchmarkProjectLogGroup395F719E",
@@ -2041,7 +2150,8 @@
       "purpose": "Benchmark Project Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "BenchmarkStateMachineLogGroup6D80BBB2",
@@ -2049,7 +2159,8 @@
       "purpose": "Benchmark State Machine Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "ChatRunEventsStreamLogGroupDB3F86F0",
@@ -2057,7 +2168,8 @@
       "purpose": "Chat Run Events Stream Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "ChatRunMarkFailedLogGroup7848AD59",
@@ -2065,7 +2177,8 @@
       "purpose": "Chat Run Mark Failed Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "ChatRunStateMachineLogGroup6AD4AA67",
@@ -2073,7 +2186,8 @@
       "purpose": "Chat Run State Machine Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "ChatRunWorkerLogGroup5ACB3363",
@@ -2081,7 +2195,8 @@
       "purpose": "Chat Run Worker Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "DocumentIngestRunMarkFailedLogGroupF2BA4346",
@@ -2089,7 +2204,8 @@
       "purpose": "Document Ingest Run Mark Failed Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "DocumentIngestRunStateMachineLogGroup94B2F1DE",
@@ -2097,7 +2213,8 @@
       "purpose": "Document Ingest Run State Machine Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "DocumentIngestRunWorkerLogGroup2B1C84D3",
@@ -2105,7 +2222,8 @@
       "purpose": "Document Ingest Run Worker Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "HeavyApiFunctionLogGroupF418C95A",
@@ -2113,7 +2231,8 @@
       "purpose": "Heavy Api Function Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "RestApiAccessLogGroup246D1CE0",
@@ -2121,7 +2240,8 @@
       "purpose": "Rest Api Access Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "S3VectorsProviderFrameworkLogGroupB49A141A",
@@ -2129,7 +2249,8 @@
       "purpose": "S3Vectors Provider Framework Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "S3VectorsProviderLogGroupE19D8C96",
@@ -2137,7 +2258,8 @@
       "purpose": "S3Vectors Provider Log Group (CloudWatch Logs log group)",
       "settings": {
         "retentionInDays": 7
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
     },
     {
       "logicalId": "ApiFunctionServiceRole52B9747B",
@@ -2151,7 +2273,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "BenchmarkProjectRole31C9ABBD",
@@ -2162,7 +2285,8 @@
           "Service:codebuild.amazonaws.com"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "BenchmarkStateMachineRole9EC7E298",
@@ -2173,7 +2297,8 @@
           "Service:states.amazonaws.com"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "ChatRunEventsStreamFunctionServiceRole41BBFB5A",
@@ -2187,7 +2312,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "ChatRunMarkFailedFunctionServiceRoleAAD50CA8",
@@ -2201,7 +2327,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "ChatRunStateMachineRoleE7E4F7A4",
@@ -2212,7 +2339,8 @@
           "Service:states.amazonaws.com"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "ChatRunWorkerFunctionServiceRoleBED42CDB",
@@ -2226,7 +2354,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
@@ -2240,7 +2369,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
@@ -2254,7 +2384,8 @@
           "Sub:arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D",
@@ -2268,7 +2399,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "DocumentIngestRunStateMachineRole10EA8277",
@@ -2279,7 +2411,8 @@
           "Service:states.amazonaws.com"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED",
@@ -2293,7 +2426,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "HeavyApiFunctionServiceRole25A7AE5E",
@@ -2307,7 +2441,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "RestApiCloudWatchRoleE3ED6605",
@@ -2321,7 +2456,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "S3VectorsProviderFnServiceRoleFEC97124",
@@ -2335,7 +2471,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "S3VectorsProviderframeworkonEventServiceRole5255E58B",
@@ -2349,7 +2486,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
         ],
         "inlinePolicyCount": 0
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
     },
     {
       "logicalId": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
@@ -2417,7 +2555,8 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "BenchmarkProjectRoleDefaultPolicyCFB0FA8E",
@@ -2474,7 +2613,8 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
           "Ref:BenchmarkRunnerAuthSecret035EF8F2"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "BenchmarkStateMachineRoleDefaultPolicyED2C1461",
@@ -2512,7 +2652,8 @@
           "GetAtt:BenchmarkProject1593465D.Arn",
           "GetAtt:BenchmarkRunsTableD0841636.Arn"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2",
@@ -2538,7 +2679,8 @@
           "GetAtt:ChatRunEventsTable7455A50E.Arn",
           "GetAtt:ChatRunsTable8446CD95.Arn"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617",
@@ -2568,7 +2710,8 @@
           "GetAtt:ChatRunEventsTable7455A50E.Arn",
           "GetAtt:ChatRunsTable8446CD95.Arn"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "ChatRunStateMachineRoleDefaultPolicyC3BFD137",
@@ -2598,7 +2741,8 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunMarkFailedFunction23223E28\",\"Arn\"]},\":*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunWorkerFunction3C85A553\",\"Arn\"]},\":*\"]]"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3",
@@ -2651,7 +2795,8 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
@@ -2681,7 +2826,8 @@
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":s3:::cdk-hnb659fds-assets-111111111111-ap-northeast-1/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B",
@@ -2711,7 +2857,8 @@
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F",
@@ -2741,7 +2888,8 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunMarkFailedFunction41F16DD3\",\"Arn\"]},\":*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunWorkerFunctionBBDBF694\",\"Arn\"]},\":*\"]]"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE",
@@ -2795,7 +2943,8 @@
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE",
@@ -2863,7 +3012,8 @@
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7",
@@ -2881,7 +3031,8 @@
         "resources": [
           "*"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756",
@@ -2901,7 +3052,8 @@
           "GetAtt:S3VectorsProviderFn215E3A4E.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"S3VectorsProviderFn215E3A4E\",\"Arn\"]},\":*\"]]"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
     },
     {
       "logicalId": "ApiFunctionServiceRoleOverflowPolicy15B8AE146",
@@ -2926,7 +3078,8 @@
           "Ref:ChatRunStateMachine52CAF7BA",
           "Ref:DocumentIngestRunStateMachine2FD7D3D3"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-managedpolicy.md"
     },
     {
       "logicalId": "HeavyApiFunctionServiceRoleOverflowPolicy13079BA64",
@@ -2951,7 +3104,8 @@
           "Ref:ChatRunStateMachine52CAF7BA",
           "Ref:DocumentIngestRunStateMachine2FD7D3D3"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-iam-managedpolicy.md"
     },
     {
       "logicalId": "S3VectorsResources",
@@ -2981,7 +3135,8 @@
         ],
         "dimension": 1024,
         "distanceMetric": "cosine"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-cloudformation-customresource.md"
     },
     {
       "logicalId": "DeployBenchmarkDatasetsCustomResource7C791D40",
@@ -2996,7 +3151,8 @@
           "<asset-hash>.zip"
         ],
         "prune": true
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-cdkbucketdeployment.md"
     },
     {
       "logicalId": "DeployConversationBenchmarkCorpusCustomResourceAC06DC7F",
@@ -3010,7 +3166,8 @@
           "<asset-hash>.zip"
         ],
         "prune": true
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-cdkbucketdeployment.md"
     },
     {
       "logicalId": "DeployConversationBenchmarkDatasetsCustomResource0681BCBB",
@@ -3024,7 +3181,8 @@
           "<asset-hash>.zip"
         ],
         "prune": true
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-cdkbucketdeployment.md"
     },
     {
       "logicalId": "DeploySearchBenchmarkDatasetsCustomResourceDFC997D1",
@@ -3038,7 +3196,8 @@
           "<asset-hash>.zip"
         ],
         "prune": true
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-cdkbucketdeployment.md"
     },
     {
       "logicalId": "AccessLogsBucketAutoDeleteObjectsCustomResource93F9213A",
@@ -3047,7 +3206,8 @@
       "settings": {
         "bucketName": "Ref:AccessLogsBucket83982689",
         "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
     },
     {
       "logicalId": "BenchmarkBucketAutoDeleteObjectsCustomResource7A0948DC",
@@ -3056,7 +3216,8 @@
       "settings": {
         "bucketName": "Ref:BenchmarkBucketDD7D1D2F",
         "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
     },
     {
       "logicalId": "DebugDownloadBucketAutoDeleteObjectsCustomResource4EAC1AC1",
@@ -3065,7 +3226,8 @@
       "settings": {
         "bucketName": "Ref:DebugDownloadBucketAB6A16BE",
         "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
     },
     {
       "logicalId": "DocumentsBucketAutoDeleteObjectsCustomResourceFE3123FC",
@@ -3074,7 +3236,8 @@
       "settings": {
         "bucketName": "Ref:DocumentsBucket9EC9DEB9",
         "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
     },
     {
       "logicalId": "FrontendBucketAutoDeleteObjectsCustomResourceDB860B32",
@@ -3083,7 +3246,8 @@
       "settings": {
         "bucketName": "Ref:FrontendBucketEFE2E19C",
         "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
     },
     {
       "logicalId": "AccessLogsBucketPolicy7F77476F",
@@ -3099,7 +3263,8 @@
           "s3:List*",
           "s3:PutBucketPolicy"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
     },
     {
       "logicalId": "BenchmarkBucketPolicyF16DB7DA",
@@ -3115,7 +3280,8 @@
           "s3:List*",
           "s3:PutBucketPolicy"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
     },
     {
       "logicalId": "DebugDownloadBucketPolicy961A4DDF",
@@ -3131,7 +3297,8 @@
           "s3:List*",
           "s3:PutBucketPolicy"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
     },
     {
       "logicalId": "DocumentsBucketPolicy1F991BD4",
@@ -3147,7 +3314,8 @@
           "s3:List*",
           "s3:PutBucketPolicy"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
     },
     {
       "logicalId": "FrontendBucketPolicy1DFF75D9",
@@ -3164,7 +3332,8 @@
           "s3:List*",
           "s3:PutBucketPolicy"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
     },
     {
       "logicalId": "DeployBenchmarkDatasetsAwsCliLayer634804B4",
@@ -3172,7 +3341,8 @@
       "purpose": "Deploy Benchmark Datasets Aws Cli Layer (Lambda layer)",
       "settings": {
         "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
     },
     {
       "logicalId": "DeployConversationBenchmarkCorpusAwsCliLayerCAE6DA8B",
@@ -3180,7 +3350,8 @@
       "purpose": "Deploy Conversation Benchmark Corpus Aws Cli Layer (Lambda layer)",
       "settings": {
         "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
     },
     {
       "logicalId": "DeployConversationBenchmarkDatasetsAwsCliLayer8941B84A",
@@ -3188,7 +3359,8 @@
       "purpose": "Deploy Conversation Benchmark Datasets Aws Cli Layer (Lambda layer)",
       "settings": {
         "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
     },
     {
       "logicalId": "DeploySearchBenchmarkDatasetsAwsCliLayer63B30B23",
@@ -3196,7 +3368,8 @@
       "purpose": "Deploy Search Benchmark Datasets Aws Cli Layer (Lambda layer)",
       "settings": {
         "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
     },
     {
       "logicalId": "RestApiANYApiPermissionMemoRagMvpStackTestRestApi748483EDANYD291338E",
@@ -3207,7 +3380,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApiANYApiPermissionTestMemoRagMvpStackTestRestApi748483EDANY129460B9",
@@ -3218,7 +3392,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/*/\"]]"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApibenchmarkqueryPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTbenchmarkquery38D9FB38",
@@ -3229,7 +3404,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApibenchmarkqueryPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTbenchmarkqueryF68D5828",
@@ -3240,7 +3416,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/benchma…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApibenchmarksearchPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTbenchmarksearch97DEE87C",
@@ -3251,7 +3428,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApibenchmarksearchPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTbenchmarksearch9873F838",
@@ -3262,7 +3440,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/benchma…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApichatPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTchat5ECCB162",
@@ -3273,7 +3452,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApichatPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTchat23C33014",
@@ -3284,7 +3464,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/chat\"]]"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApichatrunsPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTchatrunsECE2E619",
@@ -3295,7 +3476,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApichatrunsPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTchatruns735A9349",
@@ -3306,7 +3488,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/chat-ru…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApichatrunsrunIdeventsGETApiPermissionMemoRagMvpStackTestRestApi748483EDGETchatrunsrunIdevents894E577B",
@@ -3317,7 +3500,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ChatRunEventsStreamFunctionA12E11AC.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApichatrunsrunIdeventsGETApiPermissionTestMemoRagMvpStackTestRestApi748483EDGETchatrunsrunIdeventsE2525C91",
@@ -3328,7 +3512,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ChatRunEventsStreamFunctionA12E11AC.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/GET/chat-run…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdDELETEApiPermissionMemoRagMvpStackTestRestApi748483EDDELETEdocumentsdocumentId68A6118D",
@@ -3339,7 +3524,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdDELETEApiPermissionTestMemoRagMvpStackTestRestApi748483EDDELETEdocumentsdocumentId9BD5D8E0",
@@ -3350,7 +3536,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/DELETE/docum…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsdocumentIdreindex4E79CE0C",
@@ -3361,7 +3548,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsdocumentIdreindex936A89D6",
@@ -3372,7 +3560,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexstagePOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsdocumentIdreindexstage30D2932F",
@@ -3383,7 +3572,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsdocumentIdreindexstagePOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsdocumentIdreindexstageB1772148",
@@ -3394,7 +3584,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsGETApiPermissionMemoRagMvpStackTestRestApi748483EDGETdocuments7E306A58",
@@ -3405,7 +3596,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsGETApiPermissionTestMemoRagMvpStackTestRestApi748483EDGETdocumentsF109861A",
@@ -3416,7 +3608,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/GET/document…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocuments4B9A7517",
@@ -3427,7 +3620,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocuments65F9A870",
@@ -3438,7 +3632,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsGETApiPermissionMemoRagMvpStackTestRestApi748483EDGETdocumentsreindexmigrationsF8E12C9B",
@@ -3449,7 +3644,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsGETApiPermissionTestMemoRagMvpStackTestRestApi748483EDGETdocumentsreindexmigrations60AE7F67",
@@ -3460,7 +3656,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/GET/document…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsreindexmigrationsmigrationIdcutover24424ADB",
@@ -3471,7 +3668,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsreindexmigrationsmigrationIdcutoverF53E99FD",
@@ -3482,7 +3680,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsreindexmigrationsmigrationIdrollback4767AC9B",
@@ -3493,7 +3692,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsreindexmigrationsmigrationIdrollbackACE59FB5",
@@ -3504,7 +3704,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploads7F8FA5ED",
@@ -3515,7 +3716,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploads67526D6C",
@@ -3526,7 +3728,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdcontentPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploadsuploadIdcontent1D618CAB",
@@ -3537,7 +3740,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdcontentPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploadsuploadIdcontentBE73C768",
@@ -3548,7 +3752,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdingestPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploadsuploadIdingest1FDAC8E0",
@@ -3559,7 +3764,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApidocumentsuploadsuploadIdingestPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploadsuploadIdingestE429854E",
@@ -3570,7 +3776,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApiproxyANYApiPermissionMemoRagMvpStackTestRestApi748483EDANYproxyB80C7411",
@@ -3581,7 +3788,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApiproxyANYApiPermissionTestMemoRagMvpStackTestRestApi748483EDANYproxy5381E3FA",
@@ -3592,7 +3800,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/*/*\"]]"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApisearchPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTsearch4E7225EF",
@@ -3603,7 +3812,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApisearchPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTsearch6EE8A05D",
@@ -3614,7 +3824,8 @@
         "principal": "apigateway.amazonaws.com",
         "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
         "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/search\"…"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
     },
     {
       "logicalId": "RestApiAccount7C83CF5A",
@@ -3622,7 +3833,8 @@
       "purpose": "Rest Api Account (API Gateway account settings)",
       "settings": {
         "cloudWatchRoleArn": "GetAtt:RestApiCloudWatchRoleE3ED6605.Arn"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-account.md"
     },
     {
       "logicalId": "RestApiDeployment180EC5032ef45d9fea11e79ee1d6401947564acb",
@@ -3631,7 +3843,8 @@
       "settings": {
         "restApiId": "Ref:RestApi0C43BF4B",
         "description": "Automatically created by the RestApi construct"
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-deployment.md"
     },
     {
       "logicalId": "RestApiDefault4xxGatewayResponse52322928",
@@ -3644,7 +3857,8 @@
           "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
           "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
         }
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-gatewayresponse.md"
     },
     {
       "logicalId": "RestApiDefault5xxGatewayResponse8E1119C1",
@@ -3657,7 +3871,8 @@
           "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
           "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
         }
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-gatewayresponse.md"
     },
     {
       "logicalId": "RestApiRequestValidatorAAF760FF",
@@ -3667,7 +3882,8 @@
         "name": "basic-request-validator",
         "validateRequestBody": true,
         "validateRequestParameters": true
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-requestvalidator.md"
     },
     {
       "logicalId": "RestApiCognitoAuthorizerF1518B6A",
@@ -3679,7 +3895,8 @@
         "providerARNs": [
           "GetAtt:UserPool6BA7E5F2.Arn"
         ]
-      }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-authorizer.md"
     }
   ]
 }
