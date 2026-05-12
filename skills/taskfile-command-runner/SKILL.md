@@ -11,7 +11,7 @@ Use this skill whenever a task is executed through `task`, a repository Taskfile
 
 - Use `skills/implementation-test-selector/SKILL.md` or `skills/repository-test-runner/SKILL.md` when the command is a validation check.
 - Use `skills/worktree-task-pr-flow/SKILL.md` for repository work that will be committed or PR'd.
-- Use `.agents/skills/blocker-recovery/SKILL.md` when a command is blocked by missing services, dependencies, permissions, ports, or network access.
+- Use `skills/blocker-recovery/SKILL.md` when a command is blocked by missing services, dependencies, permissions, ports, or network access.
 
 ## Command Selection
 

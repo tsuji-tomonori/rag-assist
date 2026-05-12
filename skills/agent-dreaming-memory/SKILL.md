@@ -87,7 +87,7 @@ find .codex-memory -maxdepth 3 -type f 2>/dev/null
 Optional helper script:
 
 ```bash
-python .agents/skills/agent-dreaming-memory/scripts/consolidate_memory.py --root .
+python skills/agent-dreaming-memory/scripts/consolidate_memory.py --root .
 ```
 
 The script is a first-pass scanner. Treat its output as evidence candidates, not final truth.

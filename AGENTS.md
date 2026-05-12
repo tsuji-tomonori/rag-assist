@@ -16,11 +16,11 @@
 - ブロック時は「完了」ではなく「blocked / partially complete」として報告する。
 - 不可逆操作（送金、注文、予約確定、破壊的削除など）は最終実行前に確認を要求する。
 - 長時間・複雑タスクでは以下 skills の併用を推奨する。
-  - `.agents/skills/task-completion-guardian/SKILL.md`
-  - `.agents/skills/verification-repair-loop/SKILL.md`
-  - `.agents/skills/milestone-exec-runner/SKILL.md`
-  - `.agents/skills/blocker-recovery/SKILL.md`
-  - `.agents/skills/completion-status-reporter/SKILL.md`
+  - `skills/task-completion-guardian/SKILL.md`
+  - `skills/verification-repair-loop/SKILL.md`
+  - `skills/milestone-exec-runner/SKILL.md`
+  - `skills/blocker-recovery/SKILL.md`
+  - `skills/completion-status-reporter/SKILL.md`
 
 ## Worktree Task PR Flow
 - 常時適用: このリポジトリでファイル編集、コマンド実行、調査、検証、ドキュメント作成、commit、PR 作成などの実作業を伴う依頼は、ユーザーが明示しなくても `Worktree Task PR Flow` の対象として扱う。

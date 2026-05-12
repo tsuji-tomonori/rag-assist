@@ -11,8 +11,8 @@ Use this skill when validation must be executed or reported. It complements `ski
 
 - Always use `skills/implementation-test-selector/SKILL.md` before finishing implementation work.
 - Use `skills/taskfile-command-runner/SKILL.md` when a selected check is a Taskfile command.
-- Use `.agents/skills/verification-repair-loop/SKILL.md` when a check fails.
-- Use `.agents/skills/blocker-recovery/SKILL.md` when dependencies, services, permissions, or environment constraints block a check.
+- Use `skills/verification-repair-loop/SKILL.md` when a check fails.
+- Use `skills/blocker-recovery/SKILL.md` when dependencies, services, permissions, or environment constraints block a check.
 
 ## Execution Rules
 
