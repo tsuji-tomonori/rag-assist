@@ -56,7 +56,6 @@ test("fixed MemoRAG workflow answers from selected evidence and records fixed tr
       "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
-      "extract_policy_computations",
       "answerability_gate",
       "sufficient_context_gate",
       "generate_answer",
@@ -212,7 +211,6 @@ test("fixed workflow executes nodes in the declared order", async () => {
       "clarification_gate",
       "evaluate_search_progress",
       "rerank_chunks",
-      "extract_policy_computations",
       "answerability_gate",
       "sufficient_context_gate",
       "generate_answer",
@@ -974,10 +972,16 @@ test("fixed workflow answers English ChatRAG VPN follow-up without refusal conta
   assert.match(second.answer, /Contractors need both manager approval and a sponsor review/)
   assert.equal(second.retrieved.some((item) => item.fileName === "chatrag_sample_it.md"), true)
   assert.equal(second.debug?.steps.filter((step) => step.label === "execute_search_action").length, 1)
+  assert.equal(second.debug?.steps.some((step) => step.label === "extract_policy_computations"), false)
+  const clueStep = second.debug?.steps.find((step) => step.label === "generate_clues")
+  const clueOutput = clueStep?.output as { expandedQueries?: string[] } | undefined
+  assert.ok((clueOutput?.expandedQueries?.length ?? 99) <= 3)
+  const actionStep = second.debug?.steps.find((step) => step.label === "execute_search_action")
+  assert.match(actionStep?.detail ?? "", /queries=[123]\b/)
   const rewriteStep = second.debug?.steps.find((step) => step.label === "decontextualize_query")
   assert.match(rewriteStep?.detail ?? "", /contractors/i)
   assert.match(rewriteStep?.detail ?? "", /VPN access/i)
-  assert.doesNotMatch(rewriteStep?.detail ?? "", /資料からは回答できません|Who can/)
+  assert.doesNotMatch(rewriteStep?.detail ?? "", /資料|回答できません|Who can/)
 })
 
 async function createTestDeps(): Promise<Dependencies> {
