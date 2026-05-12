@@ -132,7 +132,7 @@ export function useChatSession({
   loading: boolean
   rememberMessages: (id: string, titleCandidate: string, messages: Message[]) => void
   createConversationId: () => string
-  ingestDocument: (file: File, options?: { purpose?: "document" | "chatAttachment"; groupId?: string; temporaryScopeId?: string }) => Promise<void>
+  ingestDocument: (file: File, options?: { purpose?: "document" | "chatAttachment"; groupId?: string; temporaryScopeId?: string }) => Promise<unknown>
   setDebugRuns: Dispatch<SetStateAction<DebugTrace[]>>
   setSelectedRunId: (runId: string) => void
   setExpandedStepId: (stepId: number | null) => void

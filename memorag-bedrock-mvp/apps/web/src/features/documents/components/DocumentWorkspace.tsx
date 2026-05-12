@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
-import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
+import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
 import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
@@ -74,7 +74,7 @@ export function DocumentWorkspace({
   uploadState?: DocumentUploadState
   migrations: ReindexMigration[]
   onUploadGroupChange: (groupId: string) => void
-  onUpload: (file: File) => Promise<DocumentOperationResult | void>
+  onUpload: (file: File) => Promise<DocumentUploadResult | DocumentOperationResult | void>
   onCreateGroup: (input: CreateDocumentGroupInput) => Promise<DocumentGroup | void>
   onShareGroup: (groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }) => Promise<DocumentOperationResult | void>
   onDelete: (documentId: string) => Promise<DocumentOperationResult | void>
@@ -111,6 +111,7 @@ export function DocumentWorkspace({
   const [selectedDocumentId, setSelectedDocumentId] = useState(urlState?.documentId ?? "")
   const [selectedMigrationId, setSelectedMigrationId] = useState(urlState?.migrationId ?? "")
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
+  const [lastUploadedDocument, setLastUploadedDocument] = useState<DocumentManifest | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
@@ -153,7 +154,9 @@ export function DocumentWorkspace({
       return true
     })
     .sort((left, right) => compareDocuments(left, right, documentSort))
-  const selectedDocument = selectedDocumentId ? documents.find((document) => document.documentId === selectedDocumentId) ?? null : null
+  const selectedDocument = selectedDocumentId
+    ? documents.find((document) => document.documentId === selectedDocumentId) ?? (lastUploadedDocument?.documentId === selectedDocumentId ? lastUploadedDocument : null)
+    : null
   const visibleChunkCount = visibleDocuments.reduce((sum, document) => sum + document.chunkCount, 0)
   const documentPageSizeOptions = [25, 50, 100]
   const documentPageCount = Math.max(1, Math.ceil(visibleDocuments.length / documentPageSize))
@@ -262,13 +265,32 @@ export function DocumentWorkspace({
     if (!uploadFile || !canUploadToDestination) return
     const fileName = uploadFile.name
     const destination = uploadDestinationLabel
-    const result = normalizeOperationResult(await onUpload(uploadFile))
+    const result = normalizeUploadResult(await onUpload(uploadFile))
     if (result.ok) {
+      setLastUploadedDocument(result.document ?? null)
       recordSessionOperation("アップロード", fileName, `保存先: ${destination}`, "反映済み")
       setUploadFile(null)
     } else {
+      setLastUploadedDocument(null)
       recordSessionOperation("アップロード", fileName, `保存先: ${destination} / error: ${result.error}`, "失敗")
     }
+  }
+
+  function onUploadFileChange(file: File | null) {
+    setUploadFile(file)
+    if (file) setLastUploadedDocument(null)
+  }
+
+  function openUploadedDocument(document: DocumentManifest) {
+    setSelectedDocumentId(document.documentId)
+    setSelectedMigrationId("")
+  }
+
+  function showUploadedFolder(groupId: string) {
+    setSelectedFolderId(groupId)
+    setDocumentGroupFilter("all")
+    setDocumentPage(1)
+    onUploadGroupChange(groupId)
   }
 
   async function onCreateGroupSubmit(event: FormEvent) {
@@ -490,6 +512,8 @@ export function DocumentWorkspace({
           uploadFile={uploadFile}
           uploadDestinationLabel={uploadDestinationLabel}
           uploadState={uploadState}
+          uploadedDocument={lastUploadedDocument}
+          uploadedDocumentGroupId={uploadedDocumentGroupId(lastUploadedDocument, uploadState?.groupId, uploadGroupId)}
           recentOperationEvents={recentOperationEvents}
           groupName={groupName}
           groupDescription={groupDescription}
@@ -512,7 +536,7 @@ export function DocumentWorkspace({
           operationState={operationState}
           uploadInputRef={uploadInputRef}
           shareSelectRef={shareSelectRef}
-          onUploadFileChange={setUploadFile}
+          onUploadFileChange={onUploadFileChange}
           onGroupNameChange={setGroupName}
           onGroupDescriptionChange={setGroupDescription}
           onGroupParentIdChange={setGroupParentId}
@@ -527,6 +551,9 @@ export function DocumentWorkspace({
           onCreateShareGroupOptionChange={toggleCreateShareGroupOption}
           onUploadGroupChange={onUploadGroupChange}
           onUploadSubmit={(event) => void onSubmit(event)}
+          onOpenUploadedDocument={openUploadedDocument}
+          onAskUploadedDocument={onAskDocument}
+          onShowUploadedFolder={showUploadedFolder}
           onCreateGroupSubmit={(event) => void onCreateGroupSubmit(event)}
           onShareSubmit={(event) => void onShareSubmit(event)}
         />
@@ -573,6 +600,14 @@ export function DocumentWorkspace({
 
 function normalizeOperationResult(result: DocumentOperationResult | void): DocumentOperationResult {
   return result ?? { ok: true }
+}
+
+function normalizeUploadResult(result: DocumentUploadResult | DocumentOperationResult | void): { ok: true; document?: DocumentManifest } | { ok: false; error: string } {
+  return result ?? { ok: true }
+}
+
+function uploadedDocumentGroupId(document: DocumentManifest | null, uploadStateGroupId: string | undefined, uploadGroupId: string): string {
+  return document ? documentGroupIds(document)[0] ?? uploadStateGroupId ?? uploadGroupId : ""
 }
 
 function isConfirmActionRunning(action: ConfirmAction | null, operationState: DocumentOperationState): boolean {
