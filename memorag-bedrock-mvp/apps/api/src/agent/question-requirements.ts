@@ -7,13 +7,7 @@ export type QuestionRequirement =
   | {
       type: "slot"
       slot:
-        | "amount"
         | "date"
-        | "count"
-        | "procedure"
-        | "person"
-        | "condition"
-        | "classification"
         | "place"
         | "organization"
         | "section"
@@ -43,28 +37,10 @@ export function detectQuestionRequirements(question: string): QuestionRequiremen
   if (listCount !== undefined) {
     requirements.push({ type: "list_count", count: listCount, label: `${listCount}項目` })
   }
-  if (asksForMoney(normalized) || hasComparableQuantitySignal(normalized)) {
-    requirements.push({ type: "slot", slot: "amount", label: "数量・金額" })
-  }
   if (/期限|期日|締切|締め切り|開始日|終了日|何営業日/u.test(normalized)) {
     requirements.push({ type: "slot", slot: "date", label: "期限" })
   } else if (/いつ|何年|何月|何日|時期|起点|開始|発足|設置/u.test(normalized)) {
     requirements.push({ type: "slot", slot: "date", label: "日付・時期" })
-  }
-  if (/頻度|何回|何度|ごと|毎月|毎年/u.test(normalized)) {
-    requirements.push({ type: "slot", slot: "count", label: "回数・頻度" })
-  }
-  if (/方法|手順|やり方|フロー|提出/u.test(normalized) || (/申請/u.test(normalized) && !/申請期限|申請期日|申請締切/u.test(normalized))) {
-    requirements.push({ type: "slot", slot: "procedure", label: "手順" })
-  }
-  if (/誰|担当|承認者|責任者|部署|報告先|依頼先/u.test(normalized)) {
-    requirements.push({ type: "slot", slot: "person", label: "担当者・組織" })
-  }
-  if (/条件|対象|例外|適用範囲/u.test(normalized)) {
-    requirements.push({ type: "slot", slot: "condition", label: "条件" })
-  }
-  if (/分類|種類|区分/u.test(normalized)) {
-    requirements.push({ type: "slot", slot: "classification", label: "分類" })
   }
   if (/どこ|場所|所在地|設置先|置かれた|どこに/u.test(normalized)) {
     requirements.push({ type: "slot", slot: "place", label: "場所" })
@@ -88,10 +64,6 @@ export function detectQuestionRequirements(question: string): QuestionRequiremen
     requirements.push({ type: "slot", slot: "yes_no", label: "可否" })
   }
   return dedupeRequirements(requirements).slice(0, 8)
-}
-
-function hasComparableQuantitySignal(question: string): boolean {
-  return /[¥$€£]\s*\p{Number}/u.test(question) || /\p{Number}\s*%/u.test(question)
 }
 
 export function formatQuestionRequirementsForPrompt(question: string): string {

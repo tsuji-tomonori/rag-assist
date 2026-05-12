@@ -29,7 +29,6 @@ import { createSearchEvidenceNode } from "./nodes/search-evidence.js"
 import { createSufficientContextGateNode } from "./nodes/sufficient-context-gate.js"
 import { validateCitations } from "./nodes/validate-citations.js"
 import { createVerifyAnswerSupportNode } from "./nodes/verify-answer-support.js"
-import { detectQuestionRequirements, type QuestionRequirement } from "./question-requirements.js"
 import { deriveMinEvidenceCount, expandedSearchTopK, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeTopK, ragRuntimePolicy } from "./runtime-policy.js"
 import { NO_ANSWER, isPrimaryRequiredFact, type Clarification, type QaAgentState, type QaAgentUpdate, type RequiredFact, type SearchAction } from "./state.js"
 import { buildSignalPhrase } from "./text-signals.js"
@@ -396,17 +395,9 @@ function shouldExtractPolicyComputations(state: QaAgentState): boolean {
 }
 
 function hasStructuredPolicyComputationSignal(state: QaAgentState): boolean {
-  if (!hasComputationOrientedRequirement(state.searchPlan.requiredFacts)) return false
   const questionValueKinds = extractComparableValueKinds(state.question)
   if (questionValueKinds.size === 0) return false
   return state.selectedChunks.some((chunk) => hasCompatibleValueKind(questionValueKinds, extractComparableValueKinds(chunk.metadata.text ?? "")))
-}
-
-function hasComputationOrientedRequirement(requiredFacts: RequiredFact[]): boolean {
-  return requiredFacts.some((fact) => {
-    if (fact.factType === "amount" || fact.factType === "condition") return true
-    return false
-  })
 }
 
 function extractComparableValueKinds(text: string): Set<string> {
@@ -524,9 +515,6 @@ function mergeRetrievedChunks(chunks: RetrievedVector[], additions: RetrievedVec
 }
 
 function extractRequiredFacts(question: string, clues: string[]): RequiredFact[] {
-  const planned = planStructuredFacts(question)
-  if (planned.length > 0) return planned
-
   const fallbackDescription = buildFallbackFactDescription(question, clues)
   return [
     {
@@ -542,48 +530,6 @@ function extractRequiredFacts(question: string, clues: string[]): RequiredFact[]
       supportingChunkKeys: []
     }
   ]
-}
-
-function planStructuredFacts(question: string): RequiredFact[] {
-  const subject = inferFactSubject(question)
-  const candidates: Array<Pick<RequiredFact, "factType" | "description" | "expectedValueType">> = []
-  for (const requirement of detectQuestionRequirements(question)) {
-    const candidate = factCandidateForRequirement(requirement, subject)
-    if (candidate) candidates.push(candidate)
-  }
-
-  return dedupeFactCandidates(candidates).slice(0, ragRuntimePolicy.limits.requiredFactLimit).map((candidate, index) => ({
-    id: `fact-${index + 1}`,
-    description: candidate.description,
-    factType: candidate.factType,
-    necessity: "primary",
-    subject,
-    scope: inferFactScope(question),
-    expectedValueType: candidate.expectedValueType,
-    confidence: 0.72,
-    plannerSource: "deterministic",
-    priority: index + 1,
-    status: "missing",
-    supportingChunkKeys: []
-  }))
-}
-
-function factCandidateForRequirement(requirement: QuestionRequirement, subject: string): Pick<RequiredFact, "factType" | "description" | "expectedValueType"> | undefined {
-  if (requirement.type === "list_count") return { factType: "classification", description: `${subject} ${requirement.count}項目`, expectedValueType: `list_count:${requirement.count}` }
-  if (requirement.slot === "amount") return { factType: "amount", description: `${subject} 数量・金額`, expectedValueType: "quantity_or_amount" }
-  if (requirement.slot === "date") return { factType: "date", description: `${subject} ${requirement.label}`, expectedValueType: "date_or_duration" }
-  if (requirement.slot === "count") return { factType: "count", description: `${subject} 回数・頻度`, expectedValueType: "count_or_frequency" }
-  if (requirement.slot === "procedure") return { factType: "procedure", description: `${subject} 手順`, expectedValueType: "procedure" }
-  if (requirement.slot === "person") return { factType: "person", description: `${subject} 担当者・組織`, expectedValueType: "person_or_org" }
-  if (requirement.slot === "condition") return { factType: "condition", description: `${subject} 条件`, expectedValueType: "condition" }
-  if (requirement.slot === "classification") return { factType: "classification", description: `${subject} 分類`, expectedValueType: "classification_items" }
-  if (requirement.slot === "place") return { factType: "scope", description: `${subject} 場所`, expectedValueType: "place" }
-  if (requirement.slot === "organization") return { factType: "person", description: `${subject} 組織名`, expectedValueType: "person_or_org" }
-  if (requirement.slot === "section") return { factType: "scope", description: `${subject} 節番号・節名`, expectedValueType: "section" }
-  if (requirement.slot === "item") return { factType: "classification", description: `${subject} 項目名`, expectedValueType: "list_items" }
-  if (requirement.slot === "reason") return { factType: "condition", description: `${subject} 理由・根拠`, expectedValueType: "reason" }
-  if (requirement.slot === "yes_no") return { factType: "condition", description: `${subject} 可否`, expectedValueType: "boolean" }
-  return undefined
 }
 
 function inferFactSubject(question: string): string {
@@ -614,26 +560,10 @@ function inferFallbackFactSubject(question: string, fallbackDescription: string)
 function cleanFactSubject(value: string): string {
   return value
     .normalize("NFKC")
-    .replace(/(金額|費用|料金|価格|単価|上限|下限|いくら|期限|期日|締切|締め切り|開始日|終了日|何日|何営業日|頻度|何回|何度|方法|手順|やり方|フロー|申請|提出|担当|承認者|責任者|部署|報告先|依頼先|条件|対象|例外|適用範囲|分類|種類|区分)/gu, "")
     .replace(/(と|および|及び|かつ|または|又は|、|,|\/)+/gu, " ")
     .replace(/の\s*$/u, "")
     .replace(/\s+/g, " ")
     .trim()
-}
-
-function dedupeFactCandidates<T extends Pick<RequiredFact, "factType" | "description" | "expectedValueType">>(candidates: T[]): T[] {
-  const seen = new Set<string>()
-  return candidates.filter((candidate) => {
-    const key = `${candidate.factType ?? ""}:${candidate.description}:${candidate.expectedValueType ?? ""}`
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
-}
-
-function inferFactScope(question: string): string | undefined {
-  const match = question.match(/(現行|旧制度|新制度|最新版|現在|過去|[0-9０-９]{4}年|[A-Za-z0-9_-]+部|[^\s、。?？]+部署)/u)
-  return match?.[0]
 }
 
 function isMissingObjectError(error: unknown): boolean {

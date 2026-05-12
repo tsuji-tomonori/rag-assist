@@ -110,8 +110,6 @@ test("question requirements cover money, section, term, reason, and validation b
   assert.equal(asksForMoney("円滑な入退院を実現する項目は？"), false)
   assert.equal(asksForMoney("費用はいくらですか？"), true)
   assert.equal(asksForMoney("上限は5,000円ですか？"), true)
-  assert.equal(detectQuestionRequirements("Does a $75 purchase need approval?").some((requirement) => requirement.type === "slot" && requirement.slot === "amount"), true)
-  assert.equal(detectQuestionRequirements("Is a 50% allocation covered?").some((requirement) => requirement.type === "slot" && requirement.slot === "amount"), true)
   assert.equal(formatQuestionRequirementsForPrompt("要点を説明してください。"), "")
   assert.match(formatQuestionRequirementsForPrompt("どの節に該当しますか？理由も答えてください。"), /節番号・節名/)
 
