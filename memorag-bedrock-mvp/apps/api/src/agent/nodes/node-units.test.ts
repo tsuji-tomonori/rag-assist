@@ -169,6 +169,35 @@ test("conversation query rewrite ignores refusal text and weak English function 
   assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("can"), false)
 })
 
+test("conversation query rewrite strips generic grounded answer preambles from follow-up search", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "What about contractors?",
+    conversation: {
+      conversationId: "conv-vpn",
+      turnId: "turn-2",
+      turnIndex: 2,
+      turns: [
+        { role: "user", text: "Who can request VPN access?" },
+        {
+          role: "assistant",
+          text: "資料では次のように記載されています。Employees with manager approval can request VPN access.",
+          citations: [{ documentId: "doc-vpn", fileName: "chatrag_sample_it.md", chunkId: "chunk-0000" }]
+        }
+      ]
+    }
+  }))
+
+  const queryUpdate = await decontextualizeQuery(state({
+    question: "What about contractors?",
+    conversationState: conversationUpdate.conversationState
+  }))
+
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /contractors/i)
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /VPN access/i)
+  assert.doesNotMatch(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /資料|記載されています|Who can/i)
+  assert.ok((queryUpdate.decontextualizedQuery?.retrievalQueries.length ?? 99) <= 3)
+})
+
 test("conversation rewrite carries domain signals without fixed benchmark vocabulary", async () => {
   const conversationUpdate = await buildConversationState(state({
     question: "And auditors?",
@@ -340,7 +369,7 @@ test("conversation state decontextualizes follow-up questions without using expe
   assert.equal(rewriteUpdate.decontextualizedQuery?.shouldUsePreviousCitations, true)
   assert.match(rewriteUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /経費精算/)
   assert.ok(rewriteUpdate.decontextualizedQuery?.retrievalQueries.some((query) => query.includes("handbook.md")))
-  assert.ok(rewriteUpdate.decontextualizedQuery?.retrievalQueries.some((query) => query.includes("chunk-1")))
+  assert.ok((rewriteUpdate.decontextualizedQuery?.retrievalQueries.length ?? 0) <= 3)
 })
 
 test("classification answers require actual requirements classification terms", async () => {

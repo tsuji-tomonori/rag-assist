@@ -346,6 +346,19 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
   }
 }
 
+function shouldExtractPolicyComputations(state: QaAgentState): boolean {
+  if (state.selectedChunks.length === 0) return false
+  if (state.toolIntent?.needsArithmeticCalculation || state.toolIntent?.needsTemporalCalculation || state.toolIntent?.needsAggregation || state.toolIntent?.needsTaskDeadlineIndex) return true
+  return hasPolicyComputationCue(state.question)
+}
+
+function hasPolicyComputationCue(question: string): boolean {
+  const normalized = question.normalize("NFKC")
+  const hasNumericThreshold = /[0-9][0-9,]*(?:\.\d+)?\s*(?:円|万円|千円|%|割|人|名|件|回|日|月|年)|以上|以下|未満|超|以内|以降|以前/u.test(normalized)
+  const asksDecision = /必要|不要|対象|対象外|該当|非該当|可|不可|いる|要る|できますか|できる|allowed|required|eligible|need/i.test(normalized)
+  return hasNumericThreshold && asksDecision
+}
+
 type QaAgentNode = (state: QaAgentState) => Promise<QaAgentUpdate>
 
 async function applyNode(state: QaAgentState, nodeName: string, node: QaAgentNode, progress?: ProgressSink): Promise<QaAgentState> {

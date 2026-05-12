@@ -9,7 +9,7 @@ export async function buildConversationState(state: QaAgentState): Promise<QaAge
   const previousUserTurns = turns.filter((turn) => turn.role === "user").map((turn) => turn.text.trim()).filter(Boolean)
   const informativeAssistantTurns = turns
     .filter((turn) => turn.role === "assistant")
-    .map((turn) => turn.text.trim())
+    .map((turn) => stripGenericAssistantPreamble(turn.text.trim()))
     .filter((text) => text && !isGenericAssistantText(text))
   const citations = turns.flatMap((turn) => "citations" in turn
     ? (turn.citations ?? []) as Array<{ documentId?: string; fileName?: string; chunkId?: string; pageStart?: number; pageEnd?: number }>
@@ -28,7 +28,7 @@ export async function buildConversationState(state: QaAgentState): Promise<QaAge
     ...(conversation?.state?.activeEntities ?? []),
     ...turns
       .filter((turn) => turn.role === "user" || !isGenericAssistantText(turn.text))
-      .flatMap((turn) => extractEntities(turn.text))
+      .flatMap((turn) => extractEntities(turn.role === "assistant" ? stripGenericAssistantPreamble(turn.text) : turn.text))
   ]).slice(0, 12)
   const turnDependency = inferTurnDependency(state.question, turns.length, conversation?.turnDependency)
 
@@ -57,16 +57,7 @@ export async function decontextualizeQuery(state: QaAgentState): Promise<QaAgent
   ].map((item) => item.trim()).filter(Boolean)).slice(0, 4).join(" ")
   const isDependent = conversationState?.turnDependency && conversationState.turnDependency !== "standalone"
   const standaloneQuestion = isDependent && topicPrefix ? buildStandaloneQuestion(question, topicPrefix) : question
-  const retrievalQueries = unique([
-    standaloneQuestion,
-    question,
-    ...(conversationState?.activeDocuments ?? []).slice(0, 3).map((document) => `${standaloneQuestion} ${document}`),
-    ...(conversationState?.activeEntities ?? []).slice(0, 4).map((entity) => `${standaloneQuestion} ${entity}`),
-    ...(conversationState?.previousCitations ?? []).slice(0, 3).flatMap((citation) => {
-      const anchors = [citation.fileName, citation.documentId, citation.chunkId].filter((value): value is string => Boolean(value))
-      return anchors.map((anchor) => `${standaloneQuestion} ${anchor}`)
-    })
-  ]).slice(0, 8)
+  const retrievalQueries = buildRetrievalQueries(question, standaloneQuestion, conversationState)
 
   return {
     decontextualizedQuery: {
@@ -78,6 +69,35 @@ export async function decontextualizeQuery(state: QaAgentState): Promise<QaAgent
       shouldUsePreviousCitations: (conversationState?.previousCitationCount ?? 0) > 0
     }
   }
+}
+
+function buildRetrievalQueries(
+  question: string,
+  standaloneQuestion: string,
+  conversationState: QaAgentState["conversationState"]
+): string[] {
+  if ((conversationState?.previousCitationCount ?? 0) > 0 && isCompactFollowUpQuestion(question)) {
+    const citationAnchor = conversationState?.previousCitations
+      ?.map((citation) => citation.fileName ?? citation.documentId ?? citation.chunkId)
+      .find((value): value is string => Boolean(value))
+    const documentAnchor = citationAnchor ?? conversationState?.activeDocuments?.[0]
+    return unique([
+      standaloneQuestion,
+      question,
+      ...(documentAnchor ? [`${standaloneQuestion} ${documentAnchor}`] : [])
+    ]).slice(0, 3)
+  }
+
+  return unique([
+    standaloneQuestion,
+    question,
+    ...(conversationState?.activeDocuments ?? []).slice(0, 3).map((document) => `${standaloneQuestion} ${document}`),
+    ...(conversationState?.activeEntities ?? []).slice(0, 4).map((entity) => `${standaloneQuestion} ${entity}`),
+    ...(conversationState?.previousCitations ?? []).slice(0, 3).flatMap((citation) => {
+      const anchors = [citation.fileName, citation.documentId, citation.chunkId].filter((value): value is string => Boolean(value))
+      return anchors.map((anchor) => `${standaloneQuestion} ${anchor}`)
+    })
+  ]).slice(0, 8)
 }
 
 function inferTurnDependency(question: string, historyCount: number, explicit?: string): string {
@@ -95,6 +115,11 @@ function isShortFollowUpQuestion(question: string): boolean {
   const tokens = question.normalize("NFKC").match(/[A-Za-z][A-Za-z0-9_-]*|[\p{Script=Han}\p{Script=Katakana}ー]{2,}|[\p{Script=Hiragana}]{3,}/gu) ?? []
   const signalCount = extractSignalTerms(question, 4).length
   return tokens.length > 0 && tokens.length <= 5 && signalCount > 0 && signalCount <= 2
+}
+
+function isCompactFollowUpQuestion(question: string): boolean {
+  const normalized = question.trim()
+  return isShortFollowUpQuestion(normalized) || FOLLOW_UP_CUE.test(normalized)
 }
 
 function extractTopic(text: string): string {
@@ -120,6 +145,15 @@ function isGenericAssistantText(text: string): boolean {
   if (!normalized) return true
   if (/資料からは?回答できません|回答できません|noanswer|cannot answer|can't answer/.test(normalized)) return true
   return false
+}
+
+function stripGenericAssistantPreamble(text: string): string {
+  return text
+    .normalize("NFKC")
+    .replace(/^資料では次のように記載されています[。:：]?\s*/u, "")
+    .replace(/^資料には次のように記載されています[。:：]?\s*/u, "")
+    .replace(/^the provided (?:material|document) states[:,]?\s*/iu, "")
+    .trim()
 }
 
 function unique<T>(items: T[]): T[] {
