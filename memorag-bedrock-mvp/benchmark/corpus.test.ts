@@ -476,9 +476,16 @@ test("seedBenchmarkCorpus compacts optional per-file metadata before upload", as
     fetchImpl
   })
 
-  const upload = requests.at(-1)?.body as { metadata?: { searchAliases?: Record<string, string[]>; benchmarkIngestSignature?: string; drawingSourceType?: string; drawingSheetMetadata?: unknown[]; drawingRegionIndex?: unknown[] } }
+  const upload = requests.at(-1)?.body as { metadata?: { searchAliases?: Record<string, string[]>; benchmarkIngestSignature?: string; drawingSourceType?: string; pageOrSheet?: string; drawingNo?: string; sheetTitle?: string; scale?: string; regionId?: string; regionType?: string; bbox?: unknown; drawingSheetMetadata?: unknown[]; drawingRegionIndex?: unknown[] } }
   assert.deepEqual(upload.metadata?.searchAliases, { "立替": ["経費精算"] })
   assert.equal(upload.metadata?.drawingSourceType, "project_drawing")
+  assert.equal(upload.metadata?.pageOrSheet, "P1")
+  assert.equal(upload.metadata?.drawingNo, "A-001")
+  assert.equal(upload.metadata?.sheetTitle, "配置図")
+  assert.equal(upload.metadata?.scale, "1/100")
+  assert.equal(upload.metadata?.regionId, "s01-titleblock-001")
+  assert.equal(upload.metadata?.regionType, "titleblock")
+  assert.deepEqual(upload.metadata?.bbox, { unit: "normalized_page", x: 0.55, y: 0.72, width: 0.45, height: 0.28 })
   assert.equal(upload.metadata?.drawingSheetMetadata, undefined)
   assert.equal(upload.metadata?.drawingRegionIndex, undefined)
   assert.equal(typeof upload.metadata?.benchmarkIngestSignature, "string")
@@ -496,11 +503,52 @@ test("compactBenchmarkCorpusMetadata drops rich drawing metadata and enforces pr
 
   assert.deepEqual(compact, {
     searchAliases: { "立替": ["経費精算"] },
-    drawingSourceType: "standard_detail"
+    drawingSourceType: "standard_detail",
+    pageOrSheet: "P1",
+    regionId: "r1"
   })
 
   assert.throws(
     () => compactBenchmarkCorpusMetadata({ searchAliases: { ["A".repeat(1600)]: ["経費精算"] } }),
     /Benchmark corpus metadata exceeds 1500 bytes/
+  )
+})
+
+test("compactBenchmarkCorpusMetadata keeps scalar page metadata only when the corpus has a single sheet", () => {
+  assert.deepEqual(
+    compactBenchmarkCorpusMetadata({
+      drawingSourceType: "standard_detail",
+      drawingSheetMetadata: [
+        { pageOrSheet: "P1 / sheet 1-01", drawingNo: "1-01", sheetTitle: "床: 仕上げ", scale: "1/5" },
+        { pageOrSheet: "P1 / sheet 1-01", drawingNo: "1-01", sheetTitle: "床: 仕上げ", scale: "1/5" }
+      ],
+      drawingRegionIndex: [
+        { regionId: "s02-titleblock-001", regionType: "titleblock", pageOrSheet: "P1 / sheet 1-01", bbox: { unit: "normalized_page", x: 0.55, y: 0.72, width: 0.45, height: 0.28 } },
+        { regionId: "s02-note-001", regionType: "note", pageOrSheet: "P1 / sheet 1-01" }
+      ]
+    }),
+    {
+      drawingSourceType: "standard_detail",
+      pageOrSheet: "P1 / sheet 1-01",
+      drawingNo: "1-01",
+      sheetTitle: "床: 仕上げ",
+      scale: "1/5"
+    }
+  )
+
+  assert.deepEqual(
+    compactBenchmarkCorpusMetadata({
+      drawingSourceType: "standard_detail",
+      drawingSheetMetadata: [
+        { pageOrSheet: "P1 / sheet 1-01", drawingNo: "1-01" },
+        { pageOrSheet: "P2 / sheet 1-02", drawingNo: "1-02" }
+      ],
+      drawingRegionIndex: [
+        { regionId: "s02-titleblock-001", regionType: "titleblock", pageOrSheet: "P1 / sheet 1-01" }
+      ]
+    }),
+    {
+      drawingSourceType: "standard_detail"
+    }
   )
 })
