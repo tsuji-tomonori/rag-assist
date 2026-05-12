@@ -384,6 +384,43 @@ test("rerank chunks uses page layout metadata and previous citation prior as sof
   assert.ok((reranked.selectedChunks?.[0]?.score ?? 0) > higherBaseOtherDoc.score)
 })
 
+test("rerank chunks excludes final answer context below minScore", async () => {
+  const lowScoreRelevant = {
+    ...chunk,
+    key: "doc-low-chunk-0001",
+    score: 0.1,
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-low",
+      fileName: "low.txt",
+      chunkId: "chunk-0001",
+      text: "VPN access Contractors sponsor review manager approval."
+    }
+  }
+  const highScoreCandidate = {
+    ...chunk,
+    key: "doc-high-chunk-0001",
+    score: 0.25,
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-high",
+      fileName: "high.txt",
+      chunkId: "chunk-0001",
+      text: "General IT access policy index."
+    }
+  }
+
+  const reranked = await rerankChunks(state({
+    question: "What about contractors?",
+    minScore: 0.2,
+    topK: 2,
+    retrievedChunks: [lowScoreRelevant, highScoreCandidate]
+  }))
+
+  assert.deepEqual(reranked.selectedChunks?.map((selected) => selected.key), ["doc-high-chunk-0001"])
+  assert.equal(reranked.selectedChunks?.some((selected) => selected.score < 0.2), false)
+})
+
 test("default policy keeps requirements classification special cases opt-in", async () => {
   const outlineChunk = {
     ...chunk,

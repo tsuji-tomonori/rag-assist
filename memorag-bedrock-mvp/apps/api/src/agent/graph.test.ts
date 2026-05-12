@@ -943,6 +943,7 @@ test("fixed workflow answers English ChatRAG VPN follow-up without refusal conta
   assert.equal(first.isAnswerable, true)
   assert.match(first.answer, /Employees with manager approval can request VPN access/)
   assert.equal(first.citations.some((item) => item.fileName === "chatrag_sample_it.md"), true)
+  assert.equal(first.debug?.steps.filter((step) => step.label === "execute_search_action").length, 1)
 
   const second = await service.chat(
     {
@@ -972,6 +973,7 @@ test("fixed workflow answers English ChatRAG VPN follow-up without refusal conta
   assert.equal(second.isAnswerable, true)
   assert.match(second.answer, /Contractors need both manager approval and a sponsor review/)
   assert.equal(second.retrieved.some((item) => item.fileName === "chatrag_sample_it.md"), true)
+  assert.equal(second.debug?.steps.filter((step) => step.label === "execute_search_action").length, 1)
   const rewriteStep = second.debug?.steps.find((step) => step.label === "decontextualize_query")
   assert.match(rewriteStep?.detail ?? "", /contractors/i)
   assert.match(rewriteStep?.detail ?? "", /VPN access/i)

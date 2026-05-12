@@ -5,7 +5,10 @@ import type { QaAgentState, QaAgentUpdate } from "../state.js"
 export async function rerankChunks(state: QaAgentState): Promise<QaAgentUpdate> {
   const reranked = rerankWithConversationAndLayout(state)
   return {
-    selectedChunks: selectFinalAnswerChunks(state.decontextualizedQuery?.standaloneQuestion ?? state.question, reranked).slice(0, state.topK)
+    selectedChunks: selectFinalAnswerChunks(
+      state.decontextualizedQuery?.standaloneQuestion ?? state.question,
+      reranked.filter((chunk) => chunk.score >= state.minScore)
+    ).slice(0, state.topK)
   }
 }
 
