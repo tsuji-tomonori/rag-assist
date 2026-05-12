@@ -87,6 +87,16 @@ const documentGroupProps = {
   onShareGroup: vi.fn()
 }
 
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((nextResolve, nextReject) => {
+    resolve = nextResolve
+    reject = nextReject
+  })
+  return { promise, resolve, reject }
+}
+
 describe("DocumentWorkspace", () => {
   it("登録文書を表示し、削除操作を通知する", async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
@@ -322,7 +332,125 @@ describe("DocumentWorkspace", () => {
 
     expect(onDelete).toHaveBeenCalledWith("doc-1")
     expect(within(recentOperations).getByText("文書削除")).toBeInTheDocument()
-    expect(within(recentOperations).getByText("要求済み")).toBeInTheDocument()
+    expect(within(recentOperations).getAllByText("反映済み").length).toBeGreaterThanOrEqual(1)
+  })
+
+  it("確認ダイアログは処理中の二重実行を防ぎ、成功後に閉じる", async () => {
+    const deferred = createDeferred<void>()
+    const onDelete = vi.fn().mockReturnValue(deferred.promise.then(() => ({ ok: true as const })))
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={onDelete}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    const dialog = screen.getByRole("dialog", { name: "文書を削除しますか" })
+    await userEvent.click(within(dialog).getByRole("button", { name: "削除" }))
+
+    expect(onDelete).toHaveBeenCalledTimes(1)
+    expect(within(dialog).getByRole("button", { name: "処理中" })).toBeDisabled()
+    expect(within(dialog).getByRole("button", { name: "キャンセル" })).toBeDisabled()
+    await userEvent.click(within(dialog).getByRole("button", { name: "処理中" }))
+    expect(onDelete).toHaveBeenCalledTimes(1)
+
+    deferred.resolve()
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "文書を削除しますか" })).not.toBeInTheDocument())
+  })
+
+  it("確認ダイアログは失敗時に閉じず、失敗ログを残す", async () => {
+    const onDelete = vi.fn().mockResolvedValue({ ok: false, error: "delete failed" })
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={onDelete}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await userEvent.click(screen.getByRole("button", { name: "削除" }))
+
+    expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toBeInTheDocument()
+    expect(screen.getByRole("alert")).toHaveTextContent("delete failed")
+    const recentOperations = screen.getByRole("list", { name: "最近の操作" })
+    expect(within(recentOperations).getByText("文書削除")).toBeInTheDocument()
+    expect(within(recentOperations).getByText("失敗")).toBeInTheDocument()
+    expect(within(recentOperations).getByText(/delete failed/)).toBeInTheDocument()
+  })
+
+  it("確認ダイアログはEscape、focus trap、return focusを扱う", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const deleteButton = screen.getByTitle("requirements.mdを削除")
+    await user.click(deleteButton)
+    const dialog = screen.getByRole("dialog", { name: "文書を削除しますか" })
+    const cancelButton = within(dialog).getByRole("button", { name: "キャンセル" })
+    const confirmButton = within(dialog).getByRole("button", { name: "削除" })
+
+    expect(cancelButton).toHaveFocus()
+    await user.tab({ shift: true })
+    expect(confirmButton).toHaveFocus()
+    await user.tab()
+    expect(cancelButton).toHaveFocus()
+
+    await user.keyboard("{Escape}")
+    expect(screen.queryByRole("dialog", { name: "文書を削除しますか" })).not.toBeInTheDocument()
+    expect(deleteButton).toHaveFocus()
   })
 
   it("操作データがない場合は最近の操作の空状態を表示する", () => {

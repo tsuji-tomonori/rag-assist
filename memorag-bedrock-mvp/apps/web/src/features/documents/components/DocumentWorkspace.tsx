@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
-import type { CreateDocumentGroupInput, DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
+import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
 import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
@@ -74,13 +74,13 @@ export function DocumentWorkspace({
   uploadState?: DocumentUploadState
   migrations: ReindexMigration[]
   onUploadGroupChange: (groupId: string) => void
-  onUpload: (file: File) => Promise<void>
+  onUpload: (file: File) => Promise<DocumentOperationResult | void>
   onCreateGroup: (input: CreateDocumentGroupInput) => Promise<DocumentGroup | void>
-  onShareGroup: (groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }) => Promise<void>
-  onDelete: (documentId: string) => Promise<void>
-  onStageReindex: (documentId: string) => Promise<void>
-  onCutoverReindex: (migrationId: string) => Promise<void>
-  onRollbackReindex: (migrationId: string) => Promise<void>
+  onShareGroup: (groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }) => Promise<DocumentOperationResult | void>
+  onDelete: (documentId: string) => Promise<DocumentOperationResult | void>
+  onStageReindex: (documentId: string) => Promise<DocumentOperationResult | void>
+  onCutoverReindex: (migrationId: string) => Promise<DocumentOperationResult | void>
+  onRollbackReindex: (migrationId: string) => Promise<DocumentOperationResult | void>
   onAskDocument?: (document: DocumentManifest) => void
   onBack: () => void
   urlState?: DocumentWorkspaceUrlState
@@ -100,6 +100,7 @@ export function DocumentWorkspace({
   const [selectedFolderId, setSelectedFolderId] = useState(urlState?.folderId ?? "all")
   const [folderSearch, setFolderSearch] = useState("")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
   const [documentQuery, setDocumentQuery] = useState(urlState?.query ?? "")
   const [documentTypeFilter, setDocumentTypeFilter] = useState(urlState?.type ?? "all")
   const [documentStatusFilter, setDocumentStatusFilter] = useState(urlState?.status ?? "all")
@@ -261,9 +262,13 @@ export function DocumentWorkspace({
     if (!uploadFile || !canUploadToDestination) return
     const fileName = uploadFile.name
     const destination = uploadDestinationLabel
-    await onUpload(uploadFile)
-    recordSessionOperation("アップロード", fileName, `保存先: ${destination}`)
-    setUploadFile(null)
+    const result = normalizeOperationResult(await onUpload(uploadFile))
+    if (result.ok) {
+      recordSessionOperation("アップロード", fileName, `保存先: ${destination}`, "反映済み")
+      setUploadFile(null)
+    } else {
+      recordSessionOperation("アップロード", fileName, `保存先: ${destination} / error: ${result.error}`, "失敗")
+    }
   }
 
   async function onCreateGroupSubmit(event: FormEvent) {
@@ -279,7 +284,7 @@ export function DocumentWorkspace({
       ...(createManagerDraft.groups.length > 0 ? { managerUserIds: createManagerDraft.groups } : {})
     }
     const createdGroup = await onCreateGroup(input)
-    recordSessionOperation("フォルダ作成", name, `公開範囲: ${createVisibilityLabel}`, createdGroup?.groupId ? "反映済み" : "要求済み")
+    recordSessionOperation("フォルダ作成", name, `公開範囲: ${createVisibilityLabel}`, createdGroup?.groupId ? "反映済み" : "失敗")
     if (createdGroup?.groupId && moveToCreatedGroup) {
       setSelectedFolderId(createdGroup.groupId)
       onUploadGroupChange(createdGroup.groupId)
@@ -295,9 +300,15 @@ export function DocumentWorkspace({
   async function onShareSubmit(event: FormEvent) {
     event.preventDefault()
     if (!canSubmitShare) return
-    await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups })
-    recordSessionOperation("共有更新", shareTargetGroup?.name ?? shareTargetGroupId, `shared groups: ${shareDraft.groups.join(", ") || "なし"}`)
-    setShareClearConfirmed(false)
+    const target = shareTargetGroup?.name ?? shareTargetGroupId
+    const detail = `shared groups: ${shareDraft.groups.join(", ") || "なし"}`
+    const result = normalizeOperationResult(await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups }))
+    if (result.ok) {
+      recordSessionOperation("共有更新", target, detail, "反映済み")
+      setShareClearConfirmed(false)
+    } else {
+      recordSessionOperation("共有更新", target, `${detail} / error: ${result.error}`, "失敗")
+    }
   }
 
   function toggleShareGroupOption(groupName: string, checked: boolean) {
@@ -332,23 +343,40 @@ export function DocumentWorkspace({
   async function runConfirmedAction() {
     if (!confirmAction) return
     const action = confirmAction
-    setConfirmAction(null)
+    setConfirmError(null)
+    let actionLabel: string
+    let target: string
+    let detail: string
+    let result: DocumentOperationResult
     if (action.kind === "delete") {
-      await onDelete(action.document.documentId)
-      recordSessionOperation("文書削除", action.document.fileName, `documentId: ${action.document.documentId}`)
+      actionLabel = "文書削除"
+      target = action.document.fileName
+      detail = `documentId: ${action.document.documentId}`
+      result = normalizeOperationResult(await onDelete(action.document.documentId))
+    } else if (action.kind === "stage") {
+      actionLabel = "reindex stage"
+      target = action.document.fileName
+      detail = `documentId: ${action.document.documentId}`
+      result = normalizeOperationResult(await onStageReindex(action.document.documentId))
+    } else if (action.kind === "cutover") {
+      actionLabel = "reindex cutover"
+      target = action.migration.migrationId
+      detail = `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`
+      result = normalizeOperationResult(await onCutoverReindex(action.migration.migrationId))
+    } else {
+      actionLabel = "reindex rollback"
+      target = action.migration.migrationId
+      detail = `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`
+      result = normalizeOperationResult(await onRollbackReindex(action.migration.migrationId))
     }
-    if (action.kind === "stage") {
-      await onStageReindex(action.document.documentId)
-      recordSessionOperation("reindex stage", action.document.fileName, `documentId: ${action.document.documentId}`)
+
+    if (result.ok) {
+      recordSessionOperation(actionLabel, target, detail, "反映済み")
+      setConfirmAction(null)
+      return
     }
-    if (action.kind === "cutover") {
-      await onCutoverReindex(action.migration.migrationId)
-      recordSessionOperation("reindex cutover", action.migration.migrationId, `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`)
-    }
-    if (action.kind === "rollback") {
-      await onRollbackReindex(action.migration.migrationId)
-      recordSessionOperation("reindex rollback", action.migration.migrationId, `${action.migration.sourceDocumentId} → ${action.migration.stagedDocumentId}`)
-    }
+    setConfirmError(result.error)
+    recordSessionOperation(actionLabel, target, `${detail} / error: ${result.error}`, "失敗")
   }
 
   function selectFolder(folderId: string, groupId: string) {
@@ -436,6 +464,7 @@ export function DocumentWorkspace({
           }}
           onConfirmAction={(action) => {
             if (action.kind === "cutover" || action.kind === "rollback") setSelectedMigrationId(action.migration.migrationId)
+            setConfirmError(null)
             setConfirmAction(action)
           }}
         />
@@ -507,8 +536,13 @@ export function DocumentWorkspace({
           action={confirmAction}
           documents={documents}
           documentGroups={documentGroups}
-          onCancel={() => setConfirmAction(null)}
-          onConfirm={() => void runConfirmedAction()}
+          loading={isConfirmActionRunning(confirmAction, operationState)}
+          errorMessage={confirmError}
+          onCancel={() => {
+            setConfirmError(null)
+            setConfirmAction(null)
+          }}
+          onConfirm={runConfirmedAction}
         />
       )}
       {selectedDocument && (
@@ -520,10 +554,12 @@ export function DocumentWorkspace({
           onAskDocument={() => onAskDocument?.(selectedDocument)}
           onClose={() => setSelectedDocumentId("")}
           onDelete={() => {
+            setConfirmError(null)
             setConfirmAction({ kind: "delete", document: selectedDocument })
             setSelectedDocumentId("")
           }}
           onStageReindex={() => {
+            setConfirmError(null)
             setConfirmAction({ kind: "stage", document: selectedDocument })
             setSelectedDocumentId("")
           }}
@@ -533,4 +569,16 @@ export function DocumentWorkspace({
       )}
     </section>
   )
+}
+
+function normalizeOperationResult(result: DocumentOperationResult | void): DocumentOperationResult {
+  return result ?? { ok: true }
+}
+
+function isConfirmActionRunning(action: ConfirmAction | null, operationState: DocumentOperationState): boolean {
+  if (!action) return false
+  if (action.kind === "delete") return operationState.deletingDocumentId === action.document.documentId
+  if (action.kind === "stage") return operationState.stagingReindexDocumentId === action.document.documentId
+  if (action.kind === "cutover") return operationState.cutoverMigrationId === action.migration.migrationId
+  return operationState.rollbackMigrationId === action.migration.migrationId
 }

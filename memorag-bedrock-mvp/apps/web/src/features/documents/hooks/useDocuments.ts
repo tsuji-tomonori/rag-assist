@@ -23,6 +23,10 @@ export type DocumentUploadState = {
   errorMessage?: string
 } | null
 
+export type DocumentOperationResult =
+  | { ok: true }
+  | { ok: false; error: string }
+
 export type CreateDocumentGroupInput = {
   name: string
   description?: string
@@ -115,8 +119,14 @@ export function useDocuments({
     setReindexMigrations(await listReindexMigrations())
   }
 
-  async function onDelete(documentId?: string) {
-    if (!documentId) return
+  function operationError(err: unknown): DocumentOperationResult {
+    const error = err instanceof Error ? err.message : String(err)
+    setError(error)
+    return { ok: false, error }
+  }
+
+  async function onDelete(documentId?: string): Promise<DocumentOperationResult> {
+    if (!documentId) return { ok: false, error: "削除対象の documentId が未指定です" }
 
     updateOperationState({ deletingDocumentId: documentId })
     setError(null)
@@ -124,25 +134,28 @@ export function useDocuments({
       await deleteDocument(documentId)
       setSelectedDocumentId("all")
       await refreshDocuments()
+      return { ok: true }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      return operationError(err)
     } finally {
       updateOperationState({ deletingDocumentId: null })
     }
   }
 
-  async function onUploadDocumentFile(uploadFile: File) {
-    if (!canWriteDocuments) return
+  async function onUploadDocumentFile(uploadFile: File): Promise<DocumentOperationResult> {
+    if (!canWriteDocuments) return { ok: false, error: "文書をアップロードする権限がありません" }
     updateOperationState({ isUploading: true })
     setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId || undefined, phase: "preparing", updatedAt: new Date().toISOString() })
     setError(null)
     try {
       await ingestDocument(uploadFile, { groupId: uploadGroupId || undefined })
       setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "complete", updatedAt: new Date().toISOString() } : current)
+      return { ok: true }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
       setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "failed", updatedAt: new Date().toISOString(), errorKind: classifyUploadError(message), errorMessage: message } : current)
+      return { ok: false, error: message }
     } finally {
       updateOperationState({ isUploading: false })
     }
@@ -164,57 +177,61 @@ export function useDocuments({
     }
   }
 
-  async function onShareDocumentGroup(groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }) {
-    if (!canWriteDocuments) return
+  async function onShareDocumentGroup(groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }): Promise<DocumentOperationResult> {
+    if (!canWriteDocuments) return { ok: false, error: "共有設定を更新する権限がありません" }
     updateOperationState({ sharingGroupId: groupId })
     setError(null)
     try {
       await shareDocumentGroup(groupId, input)
       await refreshDocumentGroups()
+      return { ok: true }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      return operationError(err)
     } finally {
       updateOperationState({ sharingGroupId: null })
     }
   }
 
-  async function onStageReindex(documentId: string) {
-    if (!canReindexDocuments) return
+  async function onStageReindex(documentId: string): Promise<DocumentOperationResult> {
+    if (!canReindexDocuments) return { ok: false, error: "再インデックスを実行する権限がありません" }
     updateOperationState({ stagingReindexDocumentId: documentId })
     setError(null)
     try {
       await stageReindexMigration(documentId)
       await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+      return { ok: true }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      return operationError(err)
     } finally {
       updateOperationState({ stagingReindexDocumentId: null })
     }
   }
 
-  async function onCutoverReindex(migrationId: string) {
-    if (!canReindexDocuments) return
+  async function onCutoverReindex(migrationId: string): Promise<DocumentOperationResult> {
+    if (!canReindexDocuments) return { ok: false, error: "再インデックスを実行する権限がありません" }
     updateOperationState({ cutoverMigrationId: migrationId })
     setError(null)
     try {
       await cutoverReindexMigration(migrationId)
       await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+      return { ok: true }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      return operationError(err)
     } finally {
       updateOperationState({ cutoverMigrationId: null })
     }
   }
 
-  async function onRollbackReindex(migrationId: string) {
-    if (!canReindexDocuments) return
+  async function onRollbackReindex(migrationId: string): Promise<DocumentOperationResult> {
+    if (!canReindexDocuments) return { ok: false, error: "再インデックスを実行する権限がありません" }
     updateOperationState({ rollbackMigrationId: migrationId })
     setError(null)
     try {
       await rollbackReindexMigration(migrationId)
       await Promise.all([refreshDocuments(), refreshReindexMigrations()])
+      return { ok: true }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      return operationError(err)
     } finally {
       updateOperationState({ rollbackMigrationId: null })
     }

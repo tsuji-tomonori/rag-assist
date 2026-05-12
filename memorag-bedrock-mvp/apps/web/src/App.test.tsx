@@ -554,7 +554,7 @@ describe("App document management", () => {
     await userEvent.click(screen.getByTitle("requirements.mdを削除"))
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
 
-    expect(await screen.findByText("delete failed")).toBeInTheDocument()
+    expect(await screen.findByRole("alert")).toHaveTextContent("delete failed")
   })
 
   it("uploads documents from the documents workspace", async () => {

@@ -6,14 +6,18 @@ export function DocumentConfirmDialog({
   action,
   documents,
   documentGroups,
+  loading = false,
+  errorMessage,
   onCancel,
   onConfirm
 }: {
   action: ConfirmAction
   documents: DocumentManifest[]
   documentGroups: DocumentGroup[]
+  loading?: boolean
+  errorMessage?: string | null
   onCancel: () => void
-  onConfirm: () => void
+  onConfirm: () => Promise<void> | void
 }) {
   const details = confirmDetails(action, documents, documentGroups)
   return (
@@ -22,6 +26,8 @@ export function DocumentConfirmDialog({
       message={details.message}
       rows={details.rows}
       confirmLabel={details.confirmLabel}
+      loading={loading}
+      errorMessage={errorMessage}
       danger={details.danger}
       onCancel={onCancel}
       onConfirm={onConfirm}
