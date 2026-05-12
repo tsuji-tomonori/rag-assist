@@ -40,6 +40,7 @@
 - confirm action は成功時のみ閉じ、失敗時は dialog 内にエラーを表示して失敗ログを残すようにした。
 - web inventory generated docs を更新した。
 - component/hook tests に busy、失敗、keyboard focus、結果返却の検証を追加した。
+- PR 作成後の CI で検出された web lint と既存 App test の期待値不整合を修正した。
 
 ## 成果物
 
@@ -59,6 +60,8 @@
 - `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web -- DocumentWorkspace useDocuments`: 初回 fail、テスト変数修正後 pass
 - `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`: pass
 - `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`: 初回 fail、inventory 再生成後 pass
+- `npm --prefix memorag-bedrock-mvp exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: CI fail 後の修正で pass
+- `npm --prefix memorag-bedrock-mvp exec -w @memorag-mvp/web -- vitest run --coverage`: CI fail 後の修正で pass
 - `git diff --check`: pass
 
 ## 指示への fit 評価

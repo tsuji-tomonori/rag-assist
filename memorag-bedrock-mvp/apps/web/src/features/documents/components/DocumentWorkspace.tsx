@@ -344,10 +344,10 @@ export function DocumentWorkspace({
     if (!confirmAction) return
     const action = confirmAction
     setConfirmError(null)
+    let actionLabel: string
+    let target: string
+    let detail: string
     let result: DocumentOperationResult
-    let actionLabel = ""
-    let target = ""
-    let detail = ""
     if (action.kind === "delete") {
       actionLabel = "文書削除"
       target = action.document.fileName

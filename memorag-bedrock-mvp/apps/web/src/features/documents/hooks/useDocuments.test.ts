@@ -224,7 +224,7 @@ describe("useDocuments", () => {
     expect(result.current.documentGroups).toHaveLength(1)
 
     act(() => result.current.setUploadGroupId("group-1"))
-    const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
+    await act(() => result.current.onUploadDocumentFile(file))
     expect(uploadDocumentFile).toHaveBeenCalledWith(expect.objectContaining({
       scope: { scopeType: "group", groupIds: ["group-1"] }
     }))
