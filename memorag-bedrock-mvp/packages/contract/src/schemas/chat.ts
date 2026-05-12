@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { JsonValueSchema } from "../json.js"
 import { RAG_CONTRACT_LIMITS } from "../limits.js"
 
 export const ConversationCitationSchema = z.object({
@@ -7,6 +8,14 @@ export const ConversationCitationSchema = z.object({
   chunkId: z.string().optional(),
   pageStart: z.number().int().positive().optional(),
   pageEnd: z.number().int().positive().optional(),
+  pageOrSheet: z.string().optional(),
+  drawingNo: z.string().optional(),
+  sheetTitle: z.string().optional(),
+  scale: z.string().optional(),
+  regionId: z.string().optional(),
+  regionType: z.string().optional(),
+  sourceType: z.string().optional(),
+  bbox: JsonValueSchema.optional(),
   score: z.number().optional(),
   text: z.string().optional()
 })
@@ -83,6 +92,14 @@ export const CitationSchema = z.object({
   chunkId: z.string().optional(),
   pageStart: z.number().int().positive().optional(),
   pageEnd: z.number().int().positive().optional(),
+  pageOrSheet: z.string().optional(),
+  drawingNo: z.string().optional(),
+  sheetTitle: z.string().optional(),
+  scale: z.string().optional(),
+  regionId: z.string().optional(),
+  regionType: z.string().optional(),
+  sourceType: z.string().optional(),
+  bbox: JsonValueSchema.optional(),
   score: z.number(),
   text: z.string()
 })

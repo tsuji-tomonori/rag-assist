@@ -181,6 +181,13 @@ test("service keeps rich drawing metadata out of vector filter metadata", async 
       ragPolicy: "drawing-qarag",
       answerPolicy: "grounded-only",
       drawingSourceType: "standard_detail",
+      pageOrSheet: "P1 / sheet 1-01",
+      drawingNo: "1-01",
+      sheetTitle: "床: 仕上げ",
+      scale: "1/5",
+      regionId: "s01-titleblock-001",
+      regionType: "titleblock",
+      sourceType: "pdf_text",
       drawingSheetMetadata: [{ pageOrSheet: "P1", sheetTitle: "表示記号及び略号", sourceQaIds: ["QA-001"] }],
       drawingRegionIndex: [{ regionId: "s01-titleblock-001", regionType: "titleblock", sourceQaIds: ["QA-001"] }],
       drawingReferenceGraph: { schemaVersion: 1, nodes: [{ nodeId: "n1" }], edges: [] },
@@ -196,6 +203,13 @@ test("service keeps rich drawing metadata out of vector filter metadata", async 
   assert.equal(vectorMetadata?.domainPolicy, "architecture-drawing")
   assert.equal(vectorMetadata?.ragPolicy, "drawing-qarag")
   assert.equal(vectorMetadata?.answerPolicy, "grounded-only")
+  assert.equal(vectorMetadata?.pageOrSheet, "P1 / sheet 1-01")
+  assert.equal(vectorMetadata?.drawingNo, "1-01")
+  assert.equal(vectorMetadata?.sheetTitle, "床: 仕上げ")
+  assert.equal(vectorMetadata?.scale, "1/5")
+  assert.equal(vectorMetadata?.regionId, "s01-titleblock-001")
+  assert.equal(vectorMetadata?.regionType, "titleblock")
+  assert.equal(vectorMetadata?.sourceType, "pdf_text")
   assert.equal(vectorMetadata?.drawingSheetMetadata, undefined)
   assert.equal(vectorMetadata?.drawingRegionIndex, undefined)
   assert.equal(vectorMetadata?.drawingReferenceGraph, undefined)

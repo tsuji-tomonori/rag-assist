@@ -120,6 +120,10 @@ type Citation = {
   bbox?: unknown
   pageStart?: number
   pageEnd?: number
+  pageOrSheet?: string
+  drawingNo?: string
+  sheetTitle?: string
+  scale?: string
   score?: number
   text?: string
   metadata?: Record<string, unknown>
@@ -2063,6 +2067,9 @@ function citationPageKeys(citation: Citation): string[] {
   return [
     citation.pageStart,
     citation.pageEnd,
+    citation.pageOrSheet,
+    citation.drawingNo,
+    citation.sheetTitle,
     stringMetadata(metadata.pageStart),
     stringMetadata(metadata.pageEnd),
     stringMetadata(metadata.pageNumber),

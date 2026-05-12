@@ -401,11 +401,33 @@ test("agent utility helpers normalize citations, clues, tokens, ranges, and trac
         documentId: "doc",
         fileName: "file.txt",
         memoryId: "memory-1",
+        pageOrSheet: "P1 / sheet 1-01",
+        drawingNo: "1-01",
+        sheetTitle: "床: 仕上げ",
+        scale: "1/5",
+        regionId: "s02-titleblock-001",
+        regionType: "titleblock",
+        sourceType: "titleblock_ocr",
+        bbox: { unit: "normalized_page", x: 0.55, y: 0.72, width: 0.45, height: 0.28 },
         text: "body",
         createdAt: "2026-04-30T00:00:00.000Z"
       }
     }),
-    { documentId: "doc", fileName: "file.txt", chunkId: "memory-1", score: 0.1235, text: "body" }
+    {
+      documentId: "doc",
+      fileName: "file.txt",
+      chunkId: "memory-1",
+      pageOrSheet: "P1 / sheet 1-01",
+      drawingNo: "1-01",
+      sheetTitle: "床: 仕上げ",
+      scale: "1/5",
+      regionId: "s02-titleblock-001",
+      regionType: "titleblock",
+      sourceType: "titleblock_ocr",
+      bbox: { unit: "normalized_page", x: 0.55, y: 0.72, width: 0.45, height: 0.28 },
+      score: 0.1235,
+      text: "body"
+    }
   )
   assert.equal(estimateTokenCount(""), 0)
   assert.equal(estimateTokenCount("abcd"), 1)

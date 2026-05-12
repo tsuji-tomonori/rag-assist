@@ -2096,6 +2096,13 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   const ragPolicy = stringValue(metadata.ragPolicy)
   const answerPolicy = stringValue(metadata.answerPolicy)
   const drawingSourceType = drawingSourceTypeValue(metadata.drawingSourceType)
+  const pageOrSheet = stringValue(metadata.pageOrSheet)
+  const drawingNo = stringValue(metadata.drawingNo)
+  const sheetTitle = stringValue(metadata.sheetTitle)
+  const scale = stringValue(metadata.scale)
+  const regionId = stringValue(metadata.regionId)
+  const regionType = stringValue(metadata.regionType)
+  const sourceType = stringValue(metadata.sourceType)
   const aclGroup = stringValue(metadata.aclGroup) ?? aclGroups[0]
   if (tenantId) filterable.tenantId = tenantId
   if (department) filterable.department = department
@@ -2112,6 +2119,13 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (ragPolicy) filterable.ragPolicy = ragPolicy
   if (answerPolicy) filterable.answerPolicy = answerPolicy
   if (drawingSourceType) filterable.drawingSourceType = drawingSourceType
+  if (pageOrSheet) filterable.pageOrSheet = pageOrSheet
+  if (drawingNo) filterable.drawingNo = drawingNo
+  if (sheetTitle) filterable.sheetTitle = sheetTitle
+  if (scale) filterable.scale = scale
+  if (regionId) filterable.regionId = regionId
+  if (regionType) filterable.regionType = regionType
+  if (sourceType) filterable.sourceType = sourceType
   if (aclGroup) filterable.aclGroup = aclGroup
   if (aclGroups.length > 0) filterable.aclGroups = aclGroups
   if (allowedUsers && allowedUsers.length > 0) filterable.allowedUsers = allowedUsers

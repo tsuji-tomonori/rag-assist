@@ -237,6 +237,15 @@ test("benchmark runner treats expected pages without page metadata as not applic
       expectedPages: ["1-01"]
     },
     {
+      id: "page-metadata-direct-hit",
+      question: "direct pageOrSheet があり期待 sheet に当たる",
+      answerable: true,
+      expectedResponseType: "answer",
+      expectedContains: ["正しい回答"],
+      expectedFiles: ["drawing.pdf"],
+      expectedPages: ["1-01"]
+    },
+    {
       id: "page-metadata-miss",
       question: "page metadata があり期待 sheet に当たらない",
       answerable: true,
@@ -265,12 +274,13 @@ test("benchmark runner treats expected pages without page metadata as not applic
     })
 
     assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
-    assert.equal(calls.length, 3)
+    assert.equal(calls.length, 4)
 
     const rows = readResultRows(paths.output)
     assert.equal(rows.find((row) => row.id === "page-metadata-absent")?.evaluation.expectedPageHit, null)
     assert.equal(rows.find((row) => row.id === "page-metadata-absent")?.evaluation.answerCorrect, true)
     assert.equal(rows.find((row) => row.id === "page-metadata-hit")?.evaluation.expectedPageHit, true)
+    assert.equal(rows.find((row) => row.id === "page-metadata-direct-hit")?.evaluation.expectedPageHit, true)
     assert.equal(rows.find((row) => row.id === "page-metadata-miss")?.evaluation.expectedPageHit, false)
     assert.deepEqual(rows.find((row) => row.id === "page-metadata-miss")?.evaluation.failureReasons, [
       "expected_page_not_hit",
@@ -278,11 +288,11 @@ test("benchmark runner treats expected pages without page metadata as not applic
     ])
 
     const summary = readSummary(paths.summary)
-    assert.equal(summary.metrics?.answerableAccuracy, 0.6667)
+    assert.equal(summary.metrics?.answerableAccuracy, 0.75)
     assert.equal(summary.metrics?.answerContentAccuracy, 1)
     assert.equal(summary.metrics?.groundedFileAccuracy, 1)
-    assert.equal(summary.metrics?.expectedPageHitRate, 0.5)
-    assert.equal(summary.metrics?.groundedPageAccuracy, 0.5)
+    assert.equal(summary.metrics?.expectedPageHitRate, 0.6667)
+    assert.equal(summary.metrics?.groundedPageAccuracy, 0.6667)
 
     const report = readFileSync(paths.report, "utf-8")
     assert.match(report, /answer_content_accuracy/)
@@ -290,7 +300,7 @@ test("benchmark runner treats expected pages without page metadata as not applic
     assert.match(report, /grounded_page_accuracy/)
     assert.match(report, /expected_page_hit_rate/)
     assert.match(report, /rows_with_expected_pages/)
-    assert.match(report, /1\/2/)
+    assert.match(report, /2\/3/)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
@@ -954,12 +964,14 @@ async function handlePageMetadataGateRunnerRequest(req: IncomingMessage, res: Se
       : id === "page-metadata-miss"
         ? { pageOrSheet: "2-01" }
         : undefined
+  const directPageMetadata = id === "page-metadata-direct-hit" ? { pageOrSheet: "1-01", drawingNo: "1-01" } : undefined
   const evidence = {
     documentId: "doc-drawing",
     fileName: "drawing.pdf",
     chunkId: `${id ?? "row"}-chunk`,
     score: 0.9,
     text: "正しい回答の根拠です。",
+    ...(directPageMetadata ?? {}),
     ...(pageMetadata ? { metadata: pageMetadata } : {})
   }
   res.end(JSON.stringify({ json: {

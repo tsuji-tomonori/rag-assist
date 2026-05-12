@@ -444,6 +444,14 @@ const ConversationCitationSchema = z.object({
   chunkId: z.string().optional(),
   pageStart: z.number().int().positive().optional(),
   pageEnd: z.number().int().positive().optional(),
+  pageOrSheet: z.string().optional(),
+  drawingNo: z.string().optional(),
+  sheetTitle: z.string().optional(),
+  scale: z.string().optional(),
+  regionId: z.string().optional(),
+  regionType: z.string().optional(),
+  sourceType: z.string().optional(),
+  bbox: MetadataValueSchema.optional(),
   score: z.number().optional(),
   text: z.string().optional()
 })
@@ -560,6 +568,14 @@ export const CitationSchema = z.object({
   chunkId: z.string().optional(),
   pageStart: z.number().int().positive().optional(),
   pageEnd: z.number().int().positive().optional(),
+  pageOrSheet: z.string().optional(),
+  drawingNo: z.string().optional(),
+  sheetTitle: z.string().optional(),
+  scale: z.string().optional(),
+  regionId: z.string().optional(),
+  regionType: z.string().optional(),
+  sourceType: z.string().optional(),
+  bbox: MetadataValueSchema.optional(),
   score: z.number(),
   text: z.string()
 })

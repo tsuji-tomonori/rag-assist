@@ -51,6 +51,14 @@ Media type: `application/json`
 | `conversation.turns[].citations[].chunkId` | `string` | no | `data.conversation.turns[].citations[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `conversation.turns[].citations[].pageStart` | `integer` | no | `data.conversation.turns[].citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
 | `conversation.turns[].citations[].pageEnd` | `integer` | no | `data.conversation.turns[].citations[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `conversation.turns[].citations[].pageOrSheet` | `string` | no | `data.conversation.turns[].citations[].pageOrSheet` の値。項目名は page or sheet を表します。 | - |
+| `conversation.turns[].citations[].drawingNo` | `string` | no | `data.conversation.turns[].citations[].drawingNo` の値。項目名は drawing no を表します。 | - |
+| `conversation.turns[].citations[].sheetTitle` | `string` | no | `data.conversation.turns[].citations[].sheetTitle` の値。項目名は sheet title を表します。 | - |
+| `conversation.turns[].citations[].scale` | `string` | no | `data.conversation.turns[].citations[].scale` の値。項目名は scale を表します。 | - |
+| `conversation.turns[].citations[].regionId` | `string` | no | `data.conversation.turns[].citations[].regionId` の値。項目名は region id を表します。 | - |
+| `conversation.turns[].citations[].regionType` | `string` | no | `data.conversation.turns[].citations[].regionType` の値。項目名は region type を表します。 | - |
+| `conversation.turns[].citations[].sourceType` | `string` | no | `data.conversation.turns[].citations[].sourceType` の値。項目名は source type を表します。 | - |
+| `conversation.turns[].citations[].bbox` | `object` | no | `data.conversation.turns[].citations[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `conversation.turns[].citations[].score` | `number` | no | 検索または評価で算出した関連度 score。 | - |
 | `conversation.turns[].citations[].text` | `string` | no | 文書本文またはチャンク本文。 | - |
 | `conversation.turns[].createdAt` | `string` | no | レコードを作成した日時。 | - |
