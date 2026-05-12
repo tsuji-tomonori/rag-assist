@@ -1,6 +1,6 @@
 # 図面 seed page metadata 付与
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 作業ブランチ: `codex/drawing-seed-page-metadata`
 - 作成日時: 2026-05-12 23:23 JST
