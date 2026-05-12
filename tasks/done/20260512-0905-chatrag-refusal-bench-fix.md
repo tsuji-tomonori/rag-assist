@@ -1,6 +1,6 @@
 # ChatRAG benchmark refusal 再発防止
 
-状態: in_progress
+状態: done
 
 ## 背景
 
@@ -52,7 +52,7 @@
 - [x] simple high-confidence retrieval で不要な追加検索を避ける。
 - [x] 選定した検証コマンドが pass する、または未実施理由を記録する。
 - [x] 作業レポートを `reports/working/` に保存する。
-- [ ] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
+- [x] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿する。
 
 ## 検証計画
 
@@ -79,6 +79,8 @@
 - simple high-confidence evidence の early stop を追加し、ChatRAG regression で `execute_search_action` が各 turn 1 回になることを確認した。
 - 詳細設計 `DES_DLD_001.md` を同期した。
 - 作業レポート: `reports/working/20260512-0911-chatrag-refusal-bench-fix.md`
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/269
+- PR コメント: 受け入れ条件確認コメントとセルフレビューコメントを投稿済み。
 
 ### 実行した検証
 
