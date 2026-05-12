@@ -2,7 +2,7 @@
 
 ## 状態
 
-in_progress
+done
 
 ## 背景
 
@@ -62,3 +62,9 @@ in_progress
 
 - upload API の戻り値 shape と hook の戻り値型がずれると、完了導線が表示できない。
 - 完了後 action state が古い document を指し続けないようにする必要がある。
+
+## 完了結果
+
+- PR: #283
+- 受け入れ条件: PR コメントで確認済み。
+- セルフレビュー: PR コメントで実施済み。
