@@ -18,7 +18,11 @@ export function DocumentDetailPanel({
   shareHasDuplicate,
   shareDuplicates,
   shareDiff,
+  shareDraftGroups,
   shareGroupOptions,
+  shareHasChanges,
+  shareRequiresClearConfirmation,
+  shareClearConfirmed,
   visibleDocuments,
   visibleChunkCount,
   uploadGroupId,
@@ -57,6 +61,7 @@ export function DocumentDetailPanel({
   onMoveToCreatedGroupChange,
   onShareGroupIdChange,
   onShareGroupsChange,
+  onShareClearConfirmedChange,
   onShareGroupOptionChange,
   onCreateShareGroupOptionChange,
   onUploadGroupChange,
@@ -74,7 +79,11 @@ export function DocumentDetailPanel({
   shareHasDuplicate: boolean
   shareDuplicates: string[]
   shareDiff: { added: string[]; removed: string[]; unchanged: string[] }
+  shareDraftGroups: string[]
   shareGroupOptions: string[]
+  shareHasChanges: boolean
+  shareRequiresClearConfirmation: boolean
+  shareClearConfirmed: boolean
   visibleDocuments: DocumentManifest[]
   visibleChunkCount: number
   uploadGroupId: string
@@ -113,6 +122,7 @@ export function DocumentDetailPanel({
   onMoveToCreatedGroupChange: (value: boolean) => void
   onShareGroupIdChange: (value: string) => void
   onShareGroupsChange: (value: string) => void
+  onShareClearConfirmedChange: (value: boolean) => void
   onShareGroupOptionChange: (groupName: string, checked: boolean) => void
   onCreateShareGroupOptionChange: (groupName: string, checked: boolean) => void
   onUploadGroupChange: (groupId: string) => void
@@ -171,6 +181,7 @@ export function DocumentDetailPanel({
           <div className="share-validation" id="share-groups-validation" aria-live="polite">
             {shareHasEmptyToken && <p className="error">空の group 指定があります。余分なカンマを削除してください。</p>}
             {shareHasDuplicate && <p className="error">重複している group: {shareDuplicates.join(", ")}</p>}
+            {!shareHasValidationError && !shareHasChanges && <p>既存の共有設定から変更はありません。</p>}
             {!shareHasValidationError && <p>入力された group 名だけを共有先として送信します。存在確認は API 更新時に行われます。</p>}
           </div>
           <fieldset className="share-group-selector" aria-label="共有 group 候補">
@@ -180,7 +191,7 @@ export function DocumentDetailPanel({
             ) : (
               <div className="share-group-options">
                 {shareGroupOptions.map((groupName) => {
-                  const checked = shareGroups.split(",").map((item) => item.trim()).includes(groupName)
+                  const checked = shareDraftGroups.includes(groupName)
                   return (
                     <label key={groupName}>
                       <input
@@ -201,7 +212,18 @@ export function DocumentDetailPanel({
             <span>削除: {shareDiff.removed.length > 0 ? shareDiff.removed.join(", ") : "なし"}</span>
             <span>変更なし: {shareDiff.unchanged.length > 0 ? shareDiff.unchanged.join(", ") : "なし"}</span>
           </div>
-          <button type="submit" disabled={!canWrite || !shareTargetGroupId || shareHasValidationError || operationState.sharingGroupId !== null}>
+          {shareRequiresClearConfirmation && (
+            <label className="share-clear-confirm">
+              <input
+                type="checkbox"
+                checked={shareClearConfirmed}
+                disabled={!canWrite || operationState.sharingGroupId !== null}
+                onChange={(event) => onShareClearConfirmedChange(event.target.checked)}
+              />
+              <span>既存共有をすべて削除することを確認しました</span>
+            </label>
+          )}
+          <button type="submit" disabled={!canWrite || !shareTargetGroupId || shareHasValidationError || !shareHasChanges || (shareRequiresClearConfirmation && !shareClearConfirmed) || operationState.sharingGroupId !== null}>
             {operationState.sharingGroupId !== null && <LoadingSpinner className="button-spinner" />}
             共有更新
           </button>

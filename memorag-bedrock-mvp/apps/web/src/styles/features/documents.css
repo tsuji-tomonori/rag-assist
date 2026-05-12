@@ -1055,6 +1055,23 @@
   font-weight: 850;
 }
 
+.share-clear-confirm {
+  border: 1px solid #e0aaaa;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px;
+  color: #8b1d1d;
+  background: #fff6f6;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.share-clear-confirm input {
+  margin: 2px 0 0;
+}
+
 .document-drawer-backdrop {
   position: fixed;
   inset: 0;

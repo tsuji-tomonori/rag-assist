@@ -615,6 +615,7 @@ describe("DocumentWorkspace", () => {
     )
 
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
+    await userEvent.clear(screen.getByLabelText("共有 Cognito group"))
     await userEvent.type(screen.getByLabelText("共有 Cognito group"), "HR,,HR")
 
     expect(screen.getByText("空の group 指定があります。余分なカンマを削除してください。")).toBeInTheDocument()
@@ -652,11 +653,10 @@ describe("DocumentWorkspace", () => {
 
     const selector = screen.getByRole("group", { name: "共有 group 候補" })
     const hrOption = within(selector).getByRole("checkbox", { name: "HR" })
-    expect(hrOption).not.toBeChecked()
-
-    await userEvent.click(hrOption)
     expect(screen.getByLabelText("共有 Cognito group")).toHaveValue("HR")
+    expect(hrOption).toBeChecked()
     expect(screen.getByText("変更なし: HR")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "共有更新" })).toBeDisabled()
 
     await userEvent.type(screen.getByLabelText("共有 Cognito group"), ", RAG_GROUP_MANAGER")
     const ragOption = within(selector).getByRole("checkbox", { name: "RAG_GROUP_MANAGER" })
@@ -671,6 +671,55 @@ describe("DocumentWorkspace", () => {
     expect(onShareGroup).toHaveBeenCalledWith("group-1", {
       visibility: "shared",
       sharedGroups: ["RAG_GROUP_MANAGER"]
+    })
+  })
+
+  it("未変更の共有更新を抑止し、全解除には専用確認を要求する", async () => {
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={onShareGroup}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
+
+    const shareInput = screen.getByLabelText("共有 Cognito group")
+    const submitButton = screen.getByRole("button", { name: "共有更新" })
+    expect(shareInput).toHaveValue("HR")
+    expect(submitButton).toBeDisabled()
+
+    await userEvent.clear(shareInput)
+    expect(screen.getByText("削除: HR")).toBeInTheDocument()
+    expect(screen.getByLabelText("既存共有をすべて削除することを確認しました")).not.toBeChecked()
+    expect(submitButton).toBeDisabled()
+
+    await userEvent.click(submitButton)
+    expect(onShareGroup).not.toHaveBeenCalled()
+
+    await userEvent.click(screen.getByLabelText("既存共有をすべて削除することを確認しました"))
+    await userEvent.click(submitButton)
+
+    expect(onShareGroup).toHaveBeenCalledWith("group-1", {
+      visibility: "private",
+      sharedGroups: []
     })
   })
 

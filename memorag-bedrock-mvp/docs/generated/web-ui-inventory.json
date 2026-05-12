@@ -142,7 +142,7 @@
         "documents"
       ],
       "componentCount": 6,
-      "interactionCount": 86
+      "interactionCount": 88
     },
     {
       "feature": "history",
@@ -6608,9 +6608,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:340:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:363:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 340,
+      "line": 363,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -6858,9 +6858,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:150:form",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:160:form",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 150,
+      "line": 160,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "form",
@@ -6890,9 +6890,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:151:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:161:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 151,
+      "line": 161,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -6912,9 +6912,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:153:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:163:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 153,
+      "line": 163,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "select",
@@ -6954,9 +6954,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:154:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:164:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 154,
+      "line": 164,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -6981,9 +6981,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:156:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:166:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 156,
+      "line": 166,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -7008,9 +7008,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:160:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:170:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 160,
+      "line": 170,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7030,9 +7030,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:162:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:172:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 162,
+      "line": 172,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "input",
@@ -7085,9 +7085,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:185:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:196:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 185,
+      "line": 196,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7107,9 +7107,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:186:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:197:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 186,
+      "line": 197,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "input",
@@ -7149,9 +7149,73 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:204:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:216:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 204,
+      "line": 216,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "label",
+      "isIntrinsic": true,
+      "label": "既存共有をすべて削除することを確認しました",
+      "a11y": {
+        "accessibleName": "既存共有をすべて削除することを確認しました",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [],
+      "attributes": [],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:217:input",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 217,
+      "feature": "documents",
+      "component": "DocumentDetailPanel",
+      "element": "input",
+      "isIntrinsic": true,
+      "label": "既存共有をすべて削除することを確認しました",
+      "a11y": {
+        "accessibleName": "既存共有をすべて削除することを確認しました",
+        "accessibleNameSource": "label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canWrite || operationState.sharingGroupId !== null"
+        ],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onChange",
+          "value": "(event) => onShareClearConfirmedChange(event.target.checked)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "checkbox"
+        },
+        {
+          "name": "disabled",
+          "value": "!canWrite || operationState.sharingGroupId !== null"
+        },
+        {
+          "name": "onChange",
+          "value": "(event) => onShareClearConfirmedChange(event.target.checked)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:226:button",
+      "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
+      "line": 226,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "button",
@@ -7163,7 +7227,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canWrite || !shareTargetGroupId || shareHasValidationError || operationState.sharingGrou…"
+          "disabled=!canWrite || !shareTargetGroupId || shareHasValidationError || !shareHasChanges || (share…"
         ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
@@ -7176,15 +7240,15 @@
         },
         {
           "name": "disabled",
-          "value": "!canWrite || !shareTargetGroupId || shareHasValidationError || operationState.sharingGrou…"
+          "value": "!canWrite || !shareTargetGroupId || shareHasValidationError || !shareHasChanges || (share…"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:230:form",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:252:form",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 230,
+      "line": 252,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "form",
@@ -7214,9 +7278,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:231:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:253:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 231,
+      "line": 253,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7236,9 +7300,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:233:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:255:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 233,
+      "line": 255,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "select",
@@ -7278,9 +7342,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:234:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:256:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 234,
+      "line": 256,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -7305,9 +7369,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:236:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:258:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 236,
+      "line": 258,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -7332,9 +7396,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:240:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:262:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 240,
+      "line": 262,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7359,9 +7423,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:243:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:265:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 243,
+      "line": 265,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "input",
@@ -7405,9 +7469,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:246:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:268:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 246,
+      "line": 268,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "button",
@@ -7438,9 +7502,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:254:form",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:276:form",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 254,
+      "line": 276,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "form",
@@ -7470,9 +7534,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:255:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:277:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 255,
+      "line": 277,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7492,9 +7556,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:257:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:279:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 257,
+      "line": 279,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "input",
@@ -7538,9 +7602,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:259:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:281:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 259,
+      "line": 281,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7560,9 +7624,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:261:textarea",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:283:textarea",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 261,
+      "line": 283,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "textarea",
@@ -7606,9 +7670,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:263:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:285:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 263,
+      "line": 285,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7628,9 +7692,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:265:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:287:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 265,
+      "line": 287,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "select",
@@ -7670,9 +7734,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:266:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:288:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 266,
+      "line": 288,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -7697,9 +7761,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:268:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:290:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 268,
+      "line": 290,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -7724,9 +7788,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:272:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:294:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 272,
+      "line": 294,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7746,9 +7810,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:274:select",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:296:select",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 274,
+      "line": 296,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "select",
@@ -7788,9 +7852,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:275:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:297:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 275,
+      "line": 297,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -7815,9 +7879,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:276:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:298:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 276,
+      "line": 298,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -7842,9 +7906,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:277:option",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:299:option",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 277,
+      "line": 299,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "option",
@@ -7869,9 +7933,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:280:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:302:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 280,
+      "line": 302,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7891,9 +7955,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:282:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:304:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 282,
+      "line": 304,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "input",
@@ -7946,9 +8010,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:300:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:322:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 300,
+      "line": 322,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -7968,9 +8032,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:301:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:323:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 301,
+      "line": 323,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "input",
@@ -8010,9 +8074,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:314:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:336:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 314,
+      "line": 336,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -8032,9 +8096,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:316:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:338:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 316,
+      "line": 338,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "input",
@@ -8087,9 +8151,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:325:label",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:347:label",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 325,
+      "line": 347,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "label",
@@ -8109,9 +8173,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:326:input",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:348:input",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 326,
+      "line": 348,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "input",
@@ -8151,9 +8215,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:343:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:365:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx",
-      "line": 343,
+      "line": 365,
       "feature": "documents",
       "component": "DocumentDetailPanel",
       "element": "button",

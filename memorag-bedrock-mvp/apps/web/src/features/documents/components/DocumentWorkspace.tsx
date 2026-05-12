@@ -96,6 +96,7 @@ export function DocumentWorkspace({
   const [moveToCreatedGroup, setMoveToCreatedGroup] = useState(true)
   const [shareGroupId, setShareGroupId] = useState("")
   const [shareGroups, setShareGroups] = useState("")
+  const [shareClearConfirmed, setShareClearConfirmed] = useState(false)
   const [selectedFolderId, setSelectedFolderId] = useState(urlState?.folderId ?? "all")
   const [folderSearch, setFolderSearch] = useState("")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
@@ -166,12 +167,23 @@ export function DocumentWorkspace({
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
   const shareTargetGroupId = shareGroupId || selectedGroupId
   const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
+  const currentShareGroups = shareTargetGroup?.sharedGroups ?? []
+  const currentShareGroupsValue = currentShareGroups.join(", ")
   const shareDraft = parseSharedGroups(shareGroups)
   const shareGroupOptions = uniqueSorted([...documentGroups.flatMap((group) => group.sharedGroups), ...shareDraft.groups])
-  const shareDiff = buildShareDiff(shareTargetGroup?.sharedGroups ?? [], shareDraft.groups)
+  const shareDiff = buildShareDiff(currentShareGroups, shareDraft.groups)
   const shareHasDuplicate = shareDraft.duplicates.length > 0
   const shareHasEmptyToken = shareDraft.hasEmptyToken
   const shareHasValidationError = shareHasDuplicate || shareHasEmptyToken
+  const shareHasChanges = shareDiff.added.length > 0 || shareDiff.removed.length > 0
+  const shareClearsAllExistingGroups = currentShareGroups.length > 0 && shareDraft.groups.length === 0
+  const shareRequiresClearConfirmation = shareClearsAllExistingGroups && shareHasChanges
+  const canSubmitShare = canWrite &&
+    Boolean(shareTargetGroupId) &&
+    !shareHasValidationError &&
+    shareHasChanges &&
+    operationState.sharingGroupId === null &&
+    (!shareRequiresClearConfirmation || shareClearConfirmed)
   const createSharedDraft = parseListInput(groupSharedGroups)
   const createShareGroupOptions = uniqueSorted([...documentGroups.flatMap((group) => group.sharedGroups), ...createSharedDraft.groups])
   const createManagerDraft = parseListInput(groupManagerUserIds)
@@ -226,6 +238,11 @@ export function DocumentWorkspace({
     if (documentPage > documentPageCount) setDocumentPage(documentPageCount)
   }, [documentPage, documentPageCount])
 
+  useEffect(() => {
+    setShareGroups(currentShareGroupsValue)
+    setShareClearConfirmed(false)
+  }, [currentShareGroupsValue, shareTargetGroupId])
+
   function recordSessionOperation(actionLabel: string, target: string, detail?: string, result: DocumentOperationEvent["result"] = "要求済み") {
     operationEventSeqRef.current += 1
     const event: DocumentOperationEvent = {
@@ -277,10 +294,10 @@ export function DocumentWorkspace({
 
   async function onShareSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!shareTargetGroupId || !canWrite || shareHasValidationError) return
+    if (!canSubmitShare) return
     await onShareGroup(shareTargetGroupId, { visibility: shareDraft.groups.length > 0 ? "shared" : "private", sharedGroups: shareDraft.groups })
     recordSessionOperation("共有更新", shareTargetGroup?.name ?? shareTargetGroupId, `shared groups: ${shareDraft.groups.join(", ") || "なし"}`)
-    setShareGroups("")
+    setShareClearConfirmed(false)
   }
 
   function toggleShareGroupOption(groupName: string, checked: boolean) {
@@ -288,6 +305,12 @@ export function DocumentWorkspace({
       ? uniqueSorted([...shareDraft.groups, groupName])
       : shareDraft.groups.filter((group) => group !== groupName)
     setShareGroups(nextGroups.join(", "))
+    setShareClearConfirmed(false)
+  }
+
+  function updateShareGroups(value: string) {
+    setShareGroups(value)
+    setShareClearConfirmed(false)
   }
 
   function toggleCreateShareGroupOption(groupName: string, checked: boolean) {
@@ -427,7 +450,11 @@ export function DocumentWorkspace({
           shareHasDuplicate={shareHasDuplicate}
           shareDuplicates={shareDraft.duplicates}
           shareDiff={shareDiff}
+          shareDraftGroups={shareDraft.groups}
           shareGroupOptions={shareGroupOptions}
+          shareHasChanges={shareHasChanges}
+          shareRequiresClearConfirmation={shareRequiresClearConfirmation}
+          shareClearConfirmed={shareClearConfirmed}
           visibleDocuments={visibleDocuments}
           visibleChunkCount={visibleChunkCount}
           uploadGroupId={uploadGroupId}
@@ -465,7 +492,8 @@ export function DocumentWorkspace({
           onGroupManagerUserIdsChange={setGroupManagerUserIds}
           onMoveToCreatedGroupChange={setMoveToCreatedGroup}
           onShareGroupIdChange={setShareGroupId}
-          onShareGroupsChange={setShareGroups}
+          onShareGroupsChange={updateShareGroups}
+          onShareClearConfirmedChange={setShareClearConfirmed}
           onShareGroupOptionChange={toggleShareGroupOption}
           onCreateShareGroupOptionChange={toggleCreateShareGroupOption}
           onUploadGroupChange={onUploadGroupChange}
