@@ -122,6 +122,7 @@ export const ragRuntimePolicy = {
     searchBudgetCalls: Math.max(0, config.ragSearchBudgetCalls),
     contextWindowDecay: clampNumber(config.ragContextWindowDecay, 0, 1),
     contextWindowMaxScore: clampNumber(config.ragContextWindowMaxScore, 0, 1),
+    highConfidenceTopScore: 0.9,
     combinedMaxScore: retrievalProfile.scoring.combinedMaxScore,
     lexicalBaseScore: retrievalProfile.scoring.lexicalBaseScore,
     lexicalLogDivisor: retrievalProfile.scoring.lexicalLogDivisor,

@@ -176,6 +176,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     const stopByExhaustedCandidates = exhaustedCandidateSet(state)
     const stopByRepeatedNoEvidence = repeatedNoNewEvidenceAction(state)
     const unresolvedPrimaryConflict = state.retrievalEvaluation.conflictingFactIds.some((factId) => isPrimaryRequiredFactId(state.searchPlan.requiredFacts, factId))
+    const stopBySimpleHighConfidence = hasSimpleHighConfidenceEvidence(state, unresolvedPrimaryConflict)
     const forcedRefusal =
       unresolvedPrimaryConflict &&
       state.retrievalEvaluation.nextAction.type !== "finalize_refusal" &&
@@ -184,7 +185,7 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
     return {
       iteration: nextIteration,
       noNewEvidenceStreak,
-      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence || stopByExhaustedCandidates || stopByRepeatedNoEvidence ? "done" : "continue_search",
+      searchDecision: evaluatorDone || stopByIteration || stopByNoEvidence || stopByExhaustedCandidates || stopByRepeatedNoEvidence || stopBySimpleHighConfidence ? "done" : "continue_search",
       retrievalEvaluation: forcedRefusal
         ? {
             ...state.retrievalEvaluation,
@@ -194,6 +195,15 @@ export function createQaAgentGraph(deps: Dependencies, user: AppUser = systemAdm
           }
         : state.retrievalEvaluation
     }
+  }
+
+  function hasSimpleHighConfidenceEvidence(state: QaAgentState, unresolvedPrimaryConflict: boolean): boolean {
+    if (state.searchPlan.complexity !== "simple") return false
+    if (unresolvedPrimaryConflict) return false
+    if (state.newEvidenceCount <= 0) return false
+    if (state.retrievalEvaluation.retrievalQuality === "irrelevant") return false
+    if (state.retrievalEvaluation.nextAction.type === "finalize_refusal") return false
+    return (state.retrievedChunks[0]?.score ?? 0) >= ragRuntimePolicy.retrieval.highConfidenceTopScore
   }
 
   function routeAfterSearchEvaluation(state: QaAgentState) {
