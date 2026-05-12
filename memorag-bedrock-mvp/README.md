@@ -117,8 +117,11 @@ task docs:openapi:check
 - [Local Verification](docs/LOCAL_VERIFICATION.md): ローカル検証手順と確認観点。
 - [GitHub Actions Deploy](docs/GITHUB_ACTIONS_DEPLOY.md): OIDCを使ったGitHub ActionsからのCDK deploy手順。
 - [Web UI Inventory](docs/generated/web-overview.md): Web UI の画面、機能、コンポーネント、主要操作要素の自動生成インベントリ。機能別詳細は `docs/generated/web-features/*.md` に分割しています。
+- [AWS Resource Inventory](docs/generated/infra-inventory.md): CDK snapshot から生成した AWS リソース数、logical id、主要設定値の自動生成インベントリ。
 
 Web UI インベントリは静的解析で生成します。更新は `npm run docs:web-inventory`、CI と同じ最新性確認は `npm run docs:web-inventory:check` を使います。初めて読む場合は `docs/generated/web-overview.md` から画面、機能、コンポーネントの順に辿ってください。条件付き表示、権限別表示、実行時データ依存の UI は生成物の `certainty` を確認してください。
+
+AWS リソースインベントリは CDK snapshot の CloudFormation template を静的解析して生成します。更新は `npm run docs:infra-inventory`、CI と同じ最新性確認は `npm run docs:infra-inventory:check` を使います。生成先は `docs/generated/infra-inventory.md` と、機械可読な `docs/generated/infra-resource-inventory.json` です。CDK 実装を変えた場合は infra test / snapshot 更新と合わせて再生成してください。
 
 ## ローカル起動
 

@@ -21,6 +21,8 @@
     "docs:openapi:check": "npm run docs:openapi:check -w @memorag-mvp/api",
     "docs:web-inventory": "node tools/web-inventory/generate-web-inventory.mjs",
     "docs:web-inventory:check": "node tools/web-inventory/generate-web-inventory.mjs --check",
+    "docs:infra-inventory": "node tools/infra-inventory/generate-infra-inventory.mjs",
+    "docs:infra-inventory:check": "node tools/infra-inventory/generate-infra-inventory.mjs --check",
     "dev:api": "npm run dev -w @memorag-mvp/api",
     "dev:web": "VITE_AUTH_MODE=local npm run dev -w @memorag-mvp/web",
     "benchmark": "npm run start -w @memorag-mvp/benchmark",
