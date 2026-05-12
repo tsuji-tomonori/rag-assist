@@ -2,6 +2,7 @@ import type { Citation, RetrievedVector } from "../types.js"
 import { ragRuntimePolicy } from "./runtime-policy.js"
 
 export function toCitation(hit: RetrievedVector): Citation {
+  const sourceType = hit.metadata.sourceType ?? hit.metadata.drawingSourceType
   const citation: Citation = {
     documentId: hit.metadata.documentId,
     fileName: hit.metadata.fileName,
@@ -11,6 +12,14 @@ export function toCitation(hit: RetrievedVector): Citation {
   }
   if (hit.metadata.pageStart) citation.pageStart = hit.metadata.pageStart
   if (hit.metadata.pageEnd) citation.pageEnd = hit.metadata.pageEnd
+  if (hit.metadata.pageOrSheet) citation.pageOrSheet = hit.metadata.pageOrSheet
+  if (hit.metadata.drawingNo) citation.drawingNo = hit.metadata.drawingNo
+  if (hit.metadata.sheetTitle) citation.sheetTitle = hit.metadata.sheetTitle
+  if (hit.metadata.scale) citation.scale = hit.metadata.scale
+  if (hit.metadata.regionId) citation.regionId = hit.metadata.regionId
+  if (hit.metadata.regionType) citation.regionType = hit.metadata.regionType
+  if (sourceType) citation.sourceType = sourceType
+  if (hit.metadata.bbox !== undefined) citation.bbox = hit.metadata.bbox
   return citation
 }
 

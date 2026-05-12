@@ -68,6 +68,14 @@ export type VectorMetadata = {
   chunkHash?: string
   pageStart?: number
   pageEnd?: number
+  pageOrSheet?: string
+  drawingNo?: string
+  sheetTitle?: string
+  scale?: string
+  regionId?: string
+  regionType?: string
+  sourceType?: string
+  bbox?: JsonValue
   chunkKind?: ChunkKind
   sourceBlockId?: string
   normalizedFrom?: string
@@ -238,6 +246,14 @@ export type Citation = {
   chunkId?: string
   pageStart?: number
   pageEnd?: number
+  pageOrSheet?: string
+  drawingNo?: string
+  sheetTitle?: string
+  scale?: string
+  regionId?: string
+  regionType?: string
+  sourceType?: string
+  bbox?: JsonValue
   score: number
   text: string
 }

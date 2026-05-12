@@ -50,7 +50,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 79 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 103 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -109,6 +109,14 @@ Media type: `application/json`
 | `citations[].chunkId` | `string` | no | `response.citations[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `citations[].pageStart` | `integer` | no | `response.citations[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
 | `citations[].pageEnd` | `integer` | no | `response.citations[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `citations[].pageOrSheet` | `string` | no | `response.citations[].pageOrSheet` の値。項目名は page or sheet を表します。 | - |
+| `citations[].drawingNo` | `string` | no | `response.citations[].drawingNo` の値。項目名は drawing no を表します。 | - |
+| `citations[].sheetTitle` | `string` | no | `response.citations[].sheetTitle` の値。項目名は sheet title を表します。 | - |
+| `citations[].scale` | `string` | no | `response.citations[].scale` の値。項目名は scale を表します。 | - |
+| `citations[].regionId` | `string` | no | `response.citations[].regionId` の値。項目名は region id を表します。 | - |
+| `citations[].regionType` | `string` | no | `response.citations[].regionType` の値。項目名は region type を表します。 | - |
+| `citations[].sourceType` | `string` | no | `response.citations[].sourceType` の値。項目名は source type を表します。 | - |
+| `citations[].bbox` | `object` | no | `response.citations[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `citations[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `citations[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `retrieved` | `array<object>` | yes | 検索直後の候補チャンク一覧。 | - |
@@ -117,6 +125,14 @@ Media type: `application/json`
 | `retrieved[].chunkId` | `string` | no | `response.retrieved[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `retrieved[].pageStart` | `integer` | no | `response.retrieved[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
 | `retrieved[].pageEnd` | `integer` | no | `response.retrieved[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `retrieved[].pageOrSheet` | `string` | no | `response.retrieved[].pageOrSheet` の値。項目名は page or sheet を表します。 | - |
+| `retrieved[].drawingNo` | `string` | no | `response.retrieved[].drawingNo` の値。項目名は drawing no を表します。 | - |
+| `retrieved[].sheetTitle` | `string` | no | `response.retrieved[].sheetTitle` の値。項目名は sheet title を表します。 | - |
+| `retrieved[].scale` | `string` | no | `response.retrieved[].scale` の値。項目名は scale を表します。 | - |
+| `retrieved[].regionId` | `string` | no | `response.retrieved[].regionId` の値。項目名は region id を表します。 | - |
+| `retrieved[].regionType` | `string` | no | `response.retrieved[].regionType` の値。項目名は region type を表します。 | - |
+| `retrieved[].sourceType` | `string` | no | `response.retrieved[].sourceType` の値。項目名は source type を表します。 | - |
+| `retrieved[].bbox` | `object` | no | `response.retrieved[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `retrieved[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `retrieved[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `finalEvidence` | `array<object>` | no | 回答生成へ渡した最終根拠候補。 | - |
@@ -125,6 +141,14 @@ Media type: `application/json`
 | `finalEvidence[].chunkId` | `string` | no | `response.finalEvidence[].chunkId` の値。項目名は chunk id を表します。 | - |
 | `finalEvidence[].pageStart` | `integer` | no | `response.finalEvidence[].pageStart` の値。項目名は page start を表します。 | minimum=0 |
 | `finalEvidence[].pageEnd` | `integer` | no | `response.finalEvidence[].pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `finalEvidence[].pageOrSheet` | `string` | no | `response.finalEvidence[].pageOrSheet` の値。項目名は page or sheet を表します。 | - |
+| `finalEvidence[].drawingNo` | `string` | no | `response.finalEvidence[].drawingNo` の値。項目名は drawing no を表します。 | - |
+| `finalEvidence[].sheetTitle` | `string` | no | `response.finalEvidence[].sheetTitle` の値。項目名は sheet title を表します。 | - |
+| `finalEvidence[].scale` | `string` | no | `response.finalEvidence[].scale` の値。項目名は scale を表します。 | - |
+| `finalEvidence[].regionId` | `string` | no | `response.finalEvidence[].regionId` の値。項目名は region id を表します。 | - |
+| `finalEvidence[].regionType` | `string` | no | `response.finalEvidence[].regionType` の値。項目名は region type を表します。 | - |
+| `finalEvidence[].sourceType` | `string` | no | `response.finalEvidence[].sourceType` の値。項目名は source type を表します。 | - |
+| `finalEvidence[].bbox` | `object` | no | `response.finalEvidence[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
 | `steps` | `array<object>` | yes | `response.steps` の値。項目名は steps を表します。 | - |
