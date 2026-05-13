@@ -1,6 +1,6 @@
 # infra inventory lambda env role links
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 作成日時: 2026-05-13 21:52 JST
 
@@ -14,9 +14,9 @@ Lambda 詳細の可読性を上げるため、environment variables を key/valu
 
 ## 受け入れ条件
 
-- [ ] Lambda 詳細ファイルで `environment` が key/value 表として別章表示される。
-- [ ] Lambda の `role` が IAM Role 詳細ファイルの該当論理IDへリンクする。
-- [ ] `npm run docs:infra-inventory:check` が pass する。
+- [x] Lambda 詳細ファイルで `environment` が key/value 表として別章表示される。
+- [x] Lambda の `role` が IAM Role 詳細ファイルの該当論理IDへリンクする。
+- [x] `npm run docs:infra-inventory:check` が pass する。
 
 ## 検証計画
 
