@@ -25,10 +25,7 @@
 - AC-FR042-004: 送信ショートカットの有効/無効状態は、画面上の送信操作と同じ validation に従うこと。
 
 ## 要件の源泉・背景
-
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-UI-001`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-UI-001`
-- 背景: 復元仕様では chat UI の主要操作として send shortcut が確認されている。
+- 背景: 既存要件整理では chat UI の主要操作として send shortcut が確認されている。
 
 ## 要件の目的・意図
 
@@ -43,7 +40,6 @@
 | 識別子 | `FR-042` |
 | 説明 | チャット画面のキーボード送信 |
 | 根拠 | chat UI の主要操作を keyboard/mouse で実行できる必要がある |
-| 源泉 | `REQ-UI-001`, `AC-UI-001`, `SPEC-UI-001` |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-003`, `FR-009` |
 | 衝突 | streaming 中の二重送信防止が必要 |

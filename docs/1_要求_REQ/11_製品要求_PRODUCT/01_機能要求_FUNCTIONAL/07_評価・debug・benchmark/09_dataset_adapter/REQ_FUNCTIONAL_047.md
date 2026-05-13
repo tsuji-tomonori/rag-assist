@@ -25,10 +25,6 @@
 - AC-FR047-004: adapter 出力から生成される metrics と report artifact は、dataset 間で比較可能な項目名を持つこと。
 
 ## 要件の源泉・背景
-
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-BENCH-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-BENCH-002`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-BENCH-002`
 - 背景: Allganize、MMRAG DocQA、NeoAI などの dataset を同じ benchmark runner で扱う必要がある。
 
 ## 要件の目的・意図
@@ -44,7 +40,6 @@
 | 識別子 | `FR-047` |
 | 説明 | benchmark dataset adapter の共通形式正規化 |
 | 根拠 | dataset ごとの構造差を product 実装へ持ち込むと評価が再現不能になる |
-| 源泉 | `REQ-BENCH-002`, `AC-BENCH-002`, `SPEC-BENCH-002` |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-012`, `FR-019`, `FR-039`, `FR-040`, `SQ-001` |
 | 衝突 | dataset 固有の評価情報は adapter 保守の対象になる |

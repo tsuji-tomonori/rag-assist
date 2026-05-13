@@ -17,11 +17,7 @@
 - AC-SQ003-004: 不十分または不支持の回答は、回答不能または確認質問へ流れること。
 
 ## 要件の源泉・背景
-
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-RAG-003`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-RAG-003`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-RAG-003`
-- 背景: 復元仕様では、回答可能性判定を dataset 固有 hardcode ではなく汎用 policy として扱うことが明記されている。
+- 背景: 既存要件整理では、回答可能性判定を dataset 固有 hardcode ではなく汎用 policy として扱うことが明記されている。
 
 ## 要件の目的・意図
 
@@ -36,7 +32,6 @@
 | 識別子 | `SQ-003` |
 | 説明 | dataset 固有 hardcode に依存しない回答可能性 policy |
 | 根拠 | 固有値分岐は benchmark スコアを上げても実運用品質を保証しない |
-| 源泉 | `REQ-RAG-003`, `AC-RAG-003`, `SPEC-RAG-003` |
 | 種類 | サービス品質制約 |
 | 依存関係 | `FR-014`, `FR-015`, `FR-044`, `SQ-001` |
 | 衝突 | 汎用判定は短期的な dataset 個別改善より設計・評価コストが高い |

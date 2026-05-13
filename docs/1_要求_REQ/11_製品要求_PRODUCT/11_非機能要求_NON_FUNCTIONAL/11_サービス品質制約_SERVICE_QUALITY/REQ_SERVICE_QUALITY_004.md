@@ -17,11 +17,7 @@
 - AC-SQ004-004: 画面幅が変わっても、主要操作の button text、icon、状態表示が親要素からはみ出さないこと。
 
 ## 要件の源泉・背景
-
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-UI-001`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-UI-001`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-UI-001`
-- 背景: 復元条件では、回答、引用、debug panel、loading 表示が互いに重ならないことが求められている。
+- 背景: 既存要件整理では、回答、引用、debug panel、loading 表示が互いに重ならないことが求められている。
 
 ## 要件の目的・意図
 
@@ -36,7 +32,6 @@
 | 識別子 | `SQ-004` |
 | 説明 | chat UI の表示要素非重なり |
 | 根拠 | RAG 回答、引用、debug 情報を同時に扱う画面では layout 破綻が検証性と利用性を下げる |
-| 源泉 | `REQ-UI-001`, `AC-UI-001`, `SPEC-UI-001` |
 | 種類 | サービス品質制約 |
 | 依存関係 | `FR-003`, `FR-004`, `FR-009`, `FR-041`, `FR-042` |
 | 衝突 | 情報量が多い debug 表示では画面密度との調整が必要 |

@@ -26,11 +26,7 @@
 - AC-FR046-004: 通常ユーザーは debug trace artifact を取得できないこと。
 
 ## 要件の源泉・背景
-
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-DBG-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-DBG-002`
-- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-DBG-002`
-- 背景: 復元仕様では、debug trace artifact が timeline、sentence assessments、finalEvidence、判定 step を再現できることが求められている。
+- 背景: 既存要件整理では、debug trace artifact が timeline、sentence assessments、finalEvidence、判定 step を再現できることが求められている。
 
 ## 要件の目的・意図
 
@@ -45,7 +41,6 @@
 | 識別子 | `FR-046` |
 | 説明 | debug trace timeline artifact の取得 |
 | 根拠 | RAG 品質調査では run 内の判定 step を時系列で再現する必要がある |
-| 源泉 | `REQ-DBG-002`, `AC-DBG-002`, `SPEC-DBG-002` |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-010`, `FR-011`, `NFR-010`, `NFR-011` |
 | 衝突 | artifact に機微情報が含まれるため redaction 要件と同時に満たす必要がある |

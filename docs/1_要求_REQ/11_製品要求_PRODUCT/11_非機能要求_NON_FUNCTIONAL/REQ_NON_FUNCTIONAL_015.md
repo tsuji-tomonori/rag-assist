@@ -18,10 +18,6 @@
 - AC-NFR015-005: redaction 対象が未確定の detail 生文字列は、未確定リスクとして追跡し、sanitize 済みとして扱わないこと。
 
 ## 要件の源泉・背景
-
-- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-DBG-002`
-- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-DBG-002`
-- 源泉: `docs/spec-recovery/09_gap_analysis.md` の `GAP-008`
 - 背景: debug trace は管理者限定でも機微情報を含み得るため、artifact 化時に不要な raw data を露出させない必要がある。
 
 ## 要件の目的・意図
@@ -37,7 +33,6 @@
 | 識別子 | `NFR-015` |
 | 説明 | debug trace artifact の redaction |
 | 根拠 | debug trace artifact は管理者限定でも raw chunk や内部情報を過剰に含めるべきではない |
-| 源泉 | `REQ-DBG-002`, `AC-DBG-002`, `GAP-008` |
 | 種類 | 非機能要求 |
 | 依存関係 | `FR-045`, `NFR-010`, `NFR-011` |
 | 衝突 | redaction を強めすぎると調査に必要な evidence が欠落する |

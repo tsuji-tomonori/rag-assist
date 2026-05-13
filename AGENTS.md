@@ -86,21 +86,6 @@
 - テスト fixture、Storybook、visual regression mock、ローカル開発 seed は、本番コンポーネントの fallback と分離されている場合のみ許容する。
 - API や実データが存在しない値は、架空値で埋めず「未設定」「利用不可」などの正直な状態にする。推定値を表示する場合は、推定であることと根拠を UI または PR 本文に明記する。
 
-## Specification Recovery Skills
-- 対象: 作業レポート、チケット、PR、既存テスト、既存仕様から、要件・仕様・受け入れ条件・E2Eシナリオ・トレーサビリティ・欠落分析を作成または更新する作業。
-- 必読: `skills/rag-assist-spec-completion-orchestrator/SKILL.md`
-- 必要に応じて以下も併用する。
-  - `skills/work-report-task-extractor-ja/SKILL.md`
-  - `skills/acceptance-criteria-writer-ja/SKILL.md`
-  - `skills/e2e-scenario-writer-ja/SKILL.md`
-  - `skills/operation-expectation-clusterer-ja/SKILL.md`
-  - `skills/requirement-spec-synthesizer-ja/SKILL.md`
-  - `skills/rag-quality-and-security-spec-ja/SKILL.md`
-  - `skills/traceability-gap-analysis-ja/SKILL.md`
-- 成果物は原則 `docs/spec-recovery/` に置き、確定事実と推定・矛盾・未確定点を `confirmed`、`inferred`、`conflict`、`open_question` で区別する。
-- 画面操作・期待値は要件そのものではなく、要件を検証可能にした具体例として扱う。
-- 完了前に `scripts/validate_spec_recovery.py` の適用可否を確認し、実施または未実施理由を記録する。
-
 ## Implementation Test Selection
 - 対象: 実装、修正、リファクタ、設定変更、ドキュメント変更の完了前。
 - 必読: `skills/implementation-test-selector/SKILL.md`
