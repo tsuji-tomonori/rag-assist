@@ -19,9 +19,6 @@ jobs:
     name: Lint, type-check, test, build, and synth
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: memorag-bedrock-mvp
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,7 +28,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: memorag-bedrock-mvp/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         id: install
@@ -135,8 +132,8 @@ jobs:
       - name: Synthesize CDK template with cdk-nag
         id: cdk_synth
         run: |
-          mkdir -p memorag-bedrock-mvp/infra/cdk.out
-          npm run cdk -w @memorag-mvp/infra -- synth > memorag-bedrock-mvp/infra/cdk.out/MemoRagMvpStack.template.yaml
+          mkdir -p infra/cdk.out
+          npm run cdk -w @memorag-mvp/infra -- synth > infra/cdk.out/MemoRagMvpStack.template.yaml
         continue-on-error: true
 
       - name: Upload CDK synth artifacts
@@ -146,8 +143,8 @@ jobs:
         with:
           name: memorag-ci-cdk-synth
           path: |
-            memorag-bedrock-mvp/infra/cdk.out/MemoRagMvpStack.template.yaml
-            memorag-bedrock-mvp/infra/cdk.out/AwsSolutions-*-NagReport.csv
+            infra/cdk.out/MemoRagMvpStack.template.yaml
+            infra/cdk.out/AwsSolutions-*-NagReport.csv
           if-no-files-found: warn
 
       - name: Comment CI result on PR

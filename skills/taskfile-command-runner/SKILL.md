@@ -18,8 +18,8 @@ Use this skill whenever a task is executed through `task`, a repository Taskfile
 1. Inspect the relevant `Taskfile.yaml` or `Taskfile.yml` before inventing commands.
 2. Prefer the narrowest task that validates or runs the affected area.
 3. Prefer repository-level aliases when they exist, such as:
-   - `task memorag:verify`
-   - `task memorag:smoke:api`
+   - `task verify`
+   - `task smoke:api`
    - `task docs:check`
    - `task benchmark:sample`
 4. Use package-manager commands directly only when no suitable Taskfile target exists or the Taskfile delegates to a missing target.

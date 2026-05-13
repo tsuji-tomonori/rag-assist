@@ -34,9 +34,9 @@ Public API から機微データの読み取り、改ざん、管理操作がで
 
 ## MemoRAG 固有の静的ガード
 
-- `memorag-bedrock-mvp/apps/api/src/app.ts` の保護対象 route を変更したら、`memorag-bedrock-mvp/apps/api/src/security/access-control-policy.test.ts` の route policy を同時に更新する。
+- `apps/api/src/app.ts` の保護対象 route を変更したら、`apps/api/src/security/access-control-policy.test.ts` の route policy を同時に更新する。
 - `/questions` 系 route は問い合わせ ticket の requester、source chat、answer、references、internal memo を扱うため、permission 変更や route 追加時に必ず明示レビューする。
-- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api` を実行し、静的 policy と runtime RBAC contract の両方を通す。
+- `npm run test -w @memorag-mvp/api` を実行し、静的 policy と runtime RBAC contract の両方を通す。
 
 ## 出力に含めること
 

@@ -8,7 +8,7 @@ description: AWS CDKスタックから、作成されるAWSリソース数・役
 ## 1. 対象と前提
 
 - 対象スタック: `MemoRagMvpStack`
-- 参照実装: `memorag-bedrock-mvp/infra/lib/memorag-mvp-stack.ts`
+- 参照実装: `infra/lib/memorag-mvp-stack.ts`
 - 実リソース数の根拠: `infra/test/__snapshots__/memorag-mvp-stack.snapshot.json`
 - デプロイ前提:
   - サーバレス構成（VPC / NAT / RDS / OpenSearch なし）
@@ -139,4 +139,3 @@ description: AWS CDKスタックから、作成されるAWSリソース数・役
 - `defaultModelId` / `embeddingModelId` 変更時は、対象リージョンでのBedrockモデル有効化を確認。
 - CORS緩和（`*`）を継続するか、公開範囲に応じて許可Originを絞るかを判断。
 - `RemovalPolicy.DESTROY` はMVP前提。本番では `RETAIN` 検討。
-

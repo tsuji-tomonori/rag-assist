@@ -94,7 +94,7 @@ The plan should cover the relevant subset below:
   - update RAG workflow, authorization, search, benchmark, debug trace, data structure, API, or deployment design docs when affected
   - preserve traceability to ASR / ADR / DES docs
 - User / developer docs:
-  - update root `README.md`, `memorag-bedrock-mvp/README.md`, `docs/API_EXAMPLES.md`, OpenAPI targets, `docs/LOCAL_VERIFICATION.md`, `docs/OPERATIONS.md`, and deploy docs when behavior, API, verification, environment variables, permissions, rollback, cost, or deployment changes
+  - update root `README.md`, `docs/API_EXAMPLES.md`, OpenAPI targets, `docs/LOCAL_VERIFICATION.md`, `docs/OPERATIONS.md`, and deploy docs when behavior, API, verification, environment variables, permissions, rollback, cost, or deployment changes
 - PR body:
   - if a doc is intentionally not updated, require the future PR body to explain why it is unaffected
   - list unrun checks and residual documentation risks

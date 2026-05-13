@@ -5,6 +5,8 @@ node_modules/
 dist/
 build/
 coverage/
+cdk.out/
+infra/lambda-dist/
 
 # TypeScript incremental build info
 *.tsbuildinfo
@@ -14,16 +16,18 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
 
 # Environment files
 .env
 .env.*
+.local-data/
+.eslintcache*
 
 # OS / editor
 .DS_Store
 .idea/
 .vscode/
-
 
 # workspace
 .workspace
@@ -32,4 +36,4 @@ pnpm-debug.log*
 .worktrees/
 
 # Generated OpenAPI JSON is served at runtime and is not committed.
-memorag-bedrock-mvp/docs/generated/openapi.json
+docs/generated/openapi.json

@@ -20,14 +20,14 @@ Use this skill before finishing implementation work, including documentation or 
 
 ## Command Selection
 
-For `memorag-bedrock-mvp` changes:
+For MemoRAG MVP changes:
 
-- API code or API tests: `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/api` and typecheck for the API workspace when relevant.
-- Web UI code: `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web` plus the web typecheck for TypeScript changes.
-- Infra or CDK code: `task memorag:cdk:test`.
-- Cross-workspace behavior, shared config, package, or build-affecting changes: `task memorag:verify`.
-- Running local API behavior: `task memorag:smoke:api` only when a compatible local API server is running.
-- Benchmark behavior: `task benchmark:sample` from `memorag-bedrock-mvp` when benchmark inputs or scoring logic change.
+- API code or API tests: `npm run test -w @memorag-mvp/api` and typecheck for the API workspace when relevant.
+- Web UI code: `npm run test -w @memorag-mvp/web` plus the web typecheck for TypeScript changes.
+- Infra or CDK code: `task cdk:test`.
+- Cross-workspace behavior, shared config, package, or build-affecting changes: `task verify`.
+- Running local API behavior: `task smoke:api` only when a compatible local API server is running.
+- Benchmark behavior: `task benchmark:sample` when benchmark inputs or scoring logic change.
 
 For repository-level Markdown, skills, and agent instructions:
 

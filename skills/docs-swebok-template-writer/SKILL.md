@@ -46,9 +46,9 @@ For product requirement subtypes, use the dedicated skills because their definit
 Keep shared filenames, directory mapping, and template assets here. Put document-type-specific writing guidance in the dedicated skill.
 
 
-## Project-specific routing (`memorag-bedrock-mvp`)
+## Project-specific routing
 
-When editing `memorag-bedrock-mvp/docs`, follow `memorag-bedrock-mvp/docs/DOCS_STRUCTURE.md` first.
+When editing `docs/`, follow `docs/DOCS_STRUCTURE.md` first.
 If legacy flat files (e.g. `REQUIREMENTS.md`, `ARCHITECTURE.md`) must be updated, keep them aligned with SWEBOK-lite metadata and atomic requirement style to ease incremental migration.
 
 ## Naming
@@ -100,4 +100,4 @@ The script copies the matching template from `assets/templates/` and writes it u
 
 - 要件ドキュメントは **1要件1ファイル** を必須とする。
 - 各要件ファイルには、その要件専用の **受け入れ条件** を同一ファイル内に必ず記載する。
-- `memorag-bedrock-mvp/docs/REQUIREMENTS.md` はインデックス用途とし、要求本文は分割ファイルを正とする。
+- `docs/REQUIREMENTS.md` はインデックス用途とし、要求本文は分割ファイルを正とする。

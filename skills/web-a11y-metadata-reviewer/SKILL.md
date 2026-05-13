@@ -75,11 +75,11 @@ Add or verify accessible metadata for:
 
 Run the smallest relevant checks:
 
-- `npm --prefix memorag-bedrock-mvp run docs:web-inventory`
-- `npm --prefix memorag-bedrock-mvp run docs:web-inventory:check`
-- `npm --prefix memorag-bedrock-mvp run typecheck -w @memorag-mvp/web`
-- `npm --prefix memorag-bedrock-mvp run test -w @memorag-mvp/web`
-- `npm --prefix memorag-bedrock-mvp run lint`
+- `npm run docs:web-inventory`
+- `npm run docs:web-inventory:check`
+- `npm run typecheck -w @memorag-mvp/web`
+- `npm run test -w @memorag-mvp/web`
+- `npm run lint`
 - `git diff --check`
 
 If Playwright or manual screen reader testing is not run, report it as a limitation.

@@ -104,7 +104,7 @@ Use checkboxes only for items actually satisfied. Use unchecked items for unreso
   - `ASR-RETRIEVAL-001`: lexical / semantic / RRF / evaluation remain sound.
   - `ASR-EVAL-001`: benchmark and trace can measure quality continuously.
   - `ASR-SEC-*`: debug, benchmark, alias, and ACL data are not exposed carelessly.
-- Root `README.md`, `memorag-bedrock-mvp/README.md`, API examples, OpenAPI targets, `LOCAL_VERIFICATION.md`, `OPERATIONS.md`, deploy docs, and GitHub Actions docs are updated or explicitly judged unaffected.
+- Root `README.md`, API examples, OpenAPI targets, `docs/LOCAL_VERIFICATION.md`, `docs/OPERATIONS.md`, deploy docs, and GitHub Actions docs are updated or explicitly judged unaffected.
 
 ### 2. API Changes
 
@@ -184,7 +184,6 @@ Use checkboxes only for items actually satisfied. Use unchecked items for unreso
 Choose the smallest sufficient subset:
 
 ```bash
-cd memorag-bedrock-mvp
 npm ci
 npm run lint
 npm run typecheck --workspaces --if-present
@@ -243,7 +242,7 @@ pre-commit run --files <changed-files>
 - Self sign-up does not grant elevated permissions.
 - Presigned/debug URLs have appropriate expiration.
 
-When `memorag-bedrock-mvp/apps/api/src/app.ts` protected routes change, also update `memorag-bedrock-mvp/apps/api/src/security/access-control-policy.test.ts` and run API tests.
+When `apps/api/src/app.ts` protected routes change, also update `apps/api/src/security/access-control-policy.test.ts` and run API tests.
 
 ## Data, Compatibility, and Migration
 
