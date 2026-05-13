@@ -1,8 +1,10 @@
 # MemoRAG MVP root 化
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 作成日時: 2026-05-13 22:28 JST
+- 完了日時: 2026-05-13 22:56 JST
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/284
 
 ## 背景
 
@@ -61,13 +63,13 @@
 
 ## 受け入れ条件
 
-- [ ] `apps/`, `packages/`, `infra/`, `benchmark/`, `docs/`, `tools/`, npm workspace 設定が repository root に配置されている。
-- [ ] GitHub Actions から `working-directory: memorag-bedrock-mvp` と root 化で壊れる artifact/cache/path 指定が除去または修正されている。
-- [ ] root Taskfile で主要な `verify`, `dev:api`, `dev:web`, `cdk:test`, `cdk:synth:yaml` と互換 `memorag:*` alias が利用できる。
-- [ ] CDK の CodeBuild buildspec が root 前提になり、関連 snapshot が更新されている。
-- [ ] README / deploy docs / E2E docs / `.gitignore` が root 化後の構成と矛盾しない。
-- [ ] 選定した検証を実行し、未実施がある場合は理由を記録している。
-- [ ] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿している。
+- [x] `apps/`, `packages/`, `infra/`, `benchmark/`, `docs/`, `tools/`, npm workspace 設定が repository root に配置されている。
+- [x] GitHub Actions から `working-directory: memorag-bedrock-mvp` と root 化で壊れる artifact/cache/path 指定が除去または修正されている。
+- [x] root Taskfile で主要な `verify`, `dev:api`, `dev:web`, `cdk:test`, `cdk:synth:yaml` と互換 `memorag:*` alias が利用できる。
+- [x] CDK の CodeBuild buildspec が root 前提になり、関連 snapshot が更新されている。
+- [x] README / deploy docs / E2E docs / `.gitignore` が root 化後の構成と矛盾しない。
+- [x] 選定した検証を実行し、未実施がある場合は理由を記録している。
+- [x] PR 作成後に受け入れ条件確認コメントとセルフレビューコメントを日本語で投稿している。
 
 ## 検証計画
 
@@ -78,6 +80,19 @@
 - `task cdk:test`
 - `task cdk:synth:yaml`
 - `docker compose config`
+
+## 検証結果
+
+- `npm ci`: 成功。3 件の vulnerability は今回の root 化とは別件として未修正。
+- `npm run ci`: 成功。初回は CDK snapshot mismatch で失敗し、snapshot 更新後に再実行して成功。
+- `UPDATE_SNAPSHOTS=1 npm test -w @memorag-mvp/infra`: 成功。
+- `task --list`: 成功。root タスクと互換 alias を確認。
+- `task verify`: 成功。
+- `task cdk:test`: 成功。
+- `task cdk:synth:yaml`: 成功。既存の CDK Nag / feature flag 警告のみ出力。
+- `docker compose config`: 成功。sandbox 制約のため権限確認後に実行。
+- `git diff --check`: 成功。
+- 旧 path 参照検索: 通常 workflows/docs/skills/code で root 化により壊れる旧 path が残っていないことを確認。`docs/spec-recovery/` は履歴証跡として除外。
 
 ## PR レビュー観点
 
