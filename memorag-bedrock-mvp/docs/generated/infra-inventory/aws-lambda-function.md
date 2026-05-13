@@ -43,8 +43,52 @@ Logical ID: `ApiFunctionCE271BD4`
 | `architectures` | [arm64] |
 | `memorySize` | 1024 |
 | `timeoutSeconds` | 60 |
-| `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","BENCHMARK_STATE_MACHINE_ARN":"Ref:BenchmarkStateMachine8C582B8A","BENCHMARK_TARGET_API_BASE_URL":"Join:[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"},\"/prod/\"]]","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUN_STATE_MACHINE_ARN":"Ref:ChatRunStateMachine52CAF7BA","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN":"Ref:DocumentIngestRunStateMachine2FD7D3D3","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","PDF_OCR_FALLBACK_ENABLED":"true","PDF_OCR_FALLBACK_TIMEOUT_MS":"45000","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
-| `role` | GetAtt:ApiFunctionServiceRole52B9747B.Arn |
+| `role` | [Api Function Service Role](aws-iam-role.md#api-function-service-role) (`ApiFunctionServiceRole52B9747B`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `AUTH_ENABLED` | true |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `BENCHMARK_STATE_MACHINE_ARN` | Ref:BenchmarkStateMachine8C582B8A |
+| `BENCHMARK_TARGET_API_BASE_URL` | Join:["",["https://",{"Ref":"RestApi0C43BF4B"},".execute-api.",{"Ref":"AWS::Region"},".",{"Ref":"AWS::URLSuffix"},"/prod/"]] |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUN_STATE_MACHINE_ARN` | Ref:ChatRunStateMachine52CAF7BA |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN` | Ref:DocumentIngestRunStateMachine2FD7D3D3 |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `PDF_OCR_FALLBACK_ENABLED` | true |
+| `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
+| `USE_LOCAL_QUESTION_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
 ### Chat Run Events Stream Function
 
@@ -59,8 +103,46 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `architectures` | [arm64] |
 | `memorySize` | 512 |
 | `timeoutSeconds` | 900 |
-| `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
-| `role` | GetAtt:ChatRunEventsStreamFunctionServiceRole41BBFB5A.Arn |
+| `role` | [Chat Run Events Stream Function Service Role](aws-iam-role.md#chat-run-events-stream-function-service-role) (`ChatRunEventsStreamFunctionServiceRole41BBFB5A`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `AUTH_ENABLED` | true |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
+| `USE_LOCAL_QUESTION_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
 ### Chat Run Mark Failed Function
 
@@ -75,8 +157,46 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `architectures` | [arm64] |
 | `memorySize` | 512 |
 | `timeoutSeconds` | 29 |
-| `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
-| `role` | GetAtt:ChatRunMarkFailedFunctionServiceRoleAAD50CA8.Arn |
+| `role` | [Chat Run Mark Failed Function Service Role](aws-iam-role.md#chat-run-mark-failed-function-service-role) (`ChatRunMarkFailedFunctionServiceRoleAAD50CA8`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `AUTH_ENABLED` | true |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
+| `USE_LOCAL_QUESTION_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
 ### Chat Run Worker Function
 
@@ -91,8 +211,46 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `architectures` | [arm64] |
 | `memorySize` | 1024 |
 | `timeoutSeconds` | 900 |
-| `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
-| `role` | GetAtt:ChatRunWorkerFunctionServiceRoleBED42CDB.Arn |
+| `role` | [Chat Run Worker Function Service Role](aws-iam-role.md#chat-run-worker-function-service-role) (`ChatRunWorkerFunctionServiceRoleBED42CDB`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `AUTH_ENABLED` | true |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
+| `USE_LOCAL_QUESTION_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
 ### Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536
 
@@ -105,9 +263,14 @@ Logical ID: `CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536`
 | `handler` | index.handler |
 | `runtime` | python3.13 |
 | `timeoutSeconds` | 900 |
-| `environment` | {"AWS_CA_BUNDLE":"/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"} |
 | `layers` | [Ref:DeployBenchmarkDatasetsAwsCliLayer634804B4] |
-| `role` | GetAtt:CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265.Arn |
+| `role` | [Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role](aws-iam-role.md#custom-cdk-bucket-deployment8693bb64968944b69aafb0cc9eb8756c-service-role) (`CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `AWS_CA_BUNDLE` | /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem |
 
 ### Custom S3Auto Delete Objects Custom Resource Provider Handler
 
@@ -121,7 +284,7 @@ Logical ID: `CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F`
 | `runtime` | nodejs22.x |
 | `memorySize` | 128 |
 | `timeoutSeconds` | 900 |
-| `role` | GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092.Arn |
+| `role` | [Custom S3Auto Delete Objects Custom Resource Provider Role](aws-iam-role.md#custom-s3auto-delete-objects-custom-resource-provider-role) (`CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092`) |
 
 ### Document Ingest Run Mark Failed Function
 
@@ -136,8 +299,46 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `architectures` | [arm64] |
 | `memorySize` | 512 |
 | `timeoutSeconds` | 29 |
-| `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
-| `role` | GetAtt:DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D.Arn |
+| `role` | [Document Ingest Run Mark Failed Function Service Role](aws-iam-role.md#document-ingest-run-mark-failed-function-service-role) (`DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `AUTH_ENABLED` | true |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
+| `USE_LOCAL_QUESTION_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
 ### Document Ingest Run Worker Function
 
@@ -153,8 +354,48 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `memorySize` | 3008 |
 | `timeoutSeconds` | 900 |
 | `ephemeralStorageMb` | 4096 |
-| `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","PDF_OCR_FALLBACK_ENABLED":"true","PDF_OCR_FALLBACK_TIMEOUT_MS":"45000","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
-| `role` | GetAtt:DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED.Arn |
+| `role` | [Document Ingest Run Worker Function Service Role](aws-iam-role.md#document-ingest-run-worker-function-service-role) (`DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `AUTH_ENABLED` | true |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `PDF_OCR_FALLBACK_ENABLED` | true |
+| `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
+| `USE_LOCAL_QUESTION_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
 ### Heavy Api Function
 
@@ -169,8 +410,52 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `architectures` | [arm64] |
 | `memorySize` | 3008 |
 | `timeoutSeconds` | 60 |
-| `environment` | {"AUTH_ENABLED":"true","BENCHMARK_BUCKET_NAME":"Ref:BenchmarkBucketDD7D1D2F","BENCHMARK_DEFAULT_DATASET_KEY":"datasets/agent/standard-v1.jsonl","BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS":"900","BENCHMARK_RUNS_TABLE_NAME":"Ref:BenchmarkRunsTableD0841636","BENCHMARK_STATE_MACHINE_ARN":"Ref:BenchmarkStateMachine8C582B8A","BENCHMARK_TARGET_API_BASE_URL":"Join:[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"},\"/prod/\"]]","CHAT_RUN_EVENTS_TABLE_NAME":"Ref:ChatRunEventsTable7455A50E","CHAT_RUN_STATE_MACHINE_ARN":"Ref:ChatRunStateMachine52CAF7BA","CHAT_RUNS_TABLE_NAME":"Ref:ChatRunsTable8446CD95","COGNITO_APP_CLIENT_ID":"Ref:UserPoolWebClient4C9370B0","COGNITO_REGION":"Ref:AWS::Region","COGNITO_USER_POOL_ID":"Ref:UserPool6BA7E5F2","CONVERSATION_HISTORY_TABLE_NAME":"Ref:ConversationHistoryTable59A3534C","CORS_ALLOWED_ORIGINS":"*","DEBUG_DOWNLOAD_BUCKET_NAME":"Ref:DebugDownloadBucketAB6A16BE","DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS":"900","DEFAULT_MEMORY_MODEL_ID":"amazon.nova-lite-v1:0","DEFAULT_MODEL_ID":"amazon.nova-lite-v1:0","DOCS_BUCKET_NAME":"Ref:DocumentsBucket9EC9DEB9","DOCUMENT_GROUPS_TABLE_NAME":"Ref:DocumentGroupsTableA5108040","DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME":"Ref:DocumentIngestRunEventsTableF4692EBE","DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN":"Ref:DocumentIngestRunStateMachine2FD7D3D3","DOCUMENT_INGEST_RUNS_TABLE_NAME":"Ref:DocumentIngestRunsTableEA8F8CCA","EMBEDDING_DIMENSIONS":"1024","EMBEDDING_MODEL_ID":"amazon.titan-embed-text-v2:0","EVIDENCE_VECTOR_INDEX_NAME":"evidence-index","MEMORY_VECTOR_INDEX_NAME":"memory-index","MIN_RETRIEVAL_SCORE":"0.20","MOCK_BEDROCK":"false","NODE_ENV":"production","PDF_OCR_FALLBACK_ENABLED":"true","PDF_OCR_FALLBACK_TIMEOUT_MS":"45000","QUESTION_TABLE_NAME":"Ref:HumanQuestionsTable5DA9688B","USE_LOCAL_BENCHMARK_RUN_STORE":"false","USE_LOCAL_CHAT_RUN_STORE":"false","USE_LOCAL_CONVERSATION_HISTORY_STORE":"false","USE_LOCAL_QUESTION_STORE":"false","USE_LOCAL_VECTOR_STORE":"false","VECTOR_BUCKET_NAME":"Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"} |
-| `role` | GetAtt:HeavyApiFunctionServiceRole25A7AE5E.Arn |
+| `role` | [Heavy Api Function Service Role](aws-iam-role.md#heavy-api-function-service-role) (`HeavyApiFunctionServiceRole25A7AE5E`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `AUTH_ENABLED` | true |
+| `BENCHMARK_BUCKET_NAME` | Ref:BenchmarkBucketDD7D1D2F |
+| `BENCHMARK_DEFAULT_DATASET_KEY` | datasets/agent/standard-v1.jsonl |
+| `BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `BENCHMARK_RUNS_TABLE_NAME` | Ref:BenchmarkRunsTableD0841636 |
+| `BENCHMARK_STATE_MACHINE_ARN` | Ref:BenchmarkStateMachine8C582B8A |
+| `BENCHMARK_TARGET_API_BASE_URL` | Join:["",["https://",{"Ref":"RestApi0C43BF4B"},".execute-api.",{"Ref":"AWS::Region"},".",{"Ref":"AWS::URLSuffix"},"/prod/"]] |
+| `CHAT_RUN_EVENTS_TABLE_NAME` | Ref:ChatRunEventsTable7455A50E |
+| `CHAT_RUN_STATE_MACHINE_ARN` | Ref:ChatRunStateMachine52CAF7BA |
+| `CHAT_RUNS_TABLE_NAME` | Ref:ChatRunsTable8446CD95 |
+| `COGNITO_APP_CLIENT_ID` | Ref:UserPoolWebClient4C9370B0 |
+| `COGNITO_REGION` | Ref:AWS::Region |
+| `COGNITO_USER_POOL_ID` | Ref:UserPool6BA7E5F2 |
+| `CONVERSATION_HISTORY_TABLE_NAME` | Ref:ConversationHistoryTable59A3534C |
+| `CORS_ALLOWED_ORIGINS` | * |
+| `DEBUG_DOWNLOAD_BUCKET_NAME` | Ref:DebugDownloadBucketAB6A16BE |
+| `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
+| `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
+| `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
+| `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
+| `DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN` | Ref:DocumentIngestRunStateMachine2FD7D3D3 |
+| `DOCUMENT_INGEST_RUNS_TABLE_NAME` | Ref:DocumentIngestRunsTableEA8F8CCA |
+| `EMBEDDING_DIMENSIONS` | 1024 |
+| `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
+| `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `MEMORY_VECTOR_INDEX_NAME` | memory-index |
+| `MIN_RETRIEVAL_SCORE` | 0.20 |
+| `MOCK_BEDROCK` | false |
+| `NODE_ENV` | production |
+| `PDF_OCR_FALLBACK_ENABLED` | true |
+| `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
+| `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
+| `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
+| `USE_LOCAL_QUESTION_STORE` | false |
+| `USE_LOCAL_VECTOR_STORE` | false |
+| `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
 ### S3Vectors Provider Fn
 
@@ -184,7 +469,7 @@ Logical ID: `S3VectorsProviderFn215E3A4E`
 | `runtime` | nodejs22.x |
 | `architectures` | [arm64] |
 | `timeoutSeconds` | 120 |
-| `role` | GetAtt:S3VectorsProviderFnServiceRoleFEC97124.Arn |
+| `role` | [S3Vectors Provider Fn Service Role](aws-iam-role.md#s3vectors-provider-fn-service-role) (`S3VectorsProviderFnServiceRoleFEC97124`) |
 
 ### S3Vectors Providerframeworkon Event
 
@@ -197,5 +482,10 @@ Logical ID: `S3VectorsProviderframeworkonEventEB240CE8`
 | `handler` | framework.onEvent |
 | `runtime` | nodejs22.x |
 | `timeoutSeconds` | 900 |
-| `environment` | {"USER_ON_EVENT_FUNCTION_ARN":"GetAtt:S3VectorsProviderFn215E3A4E.Arn"} |
-| `role` | GetAtt:S3VectorsProviderframeworkonEventServiceRole5255E58B.Arn |
+| `role` | [S3Vectors Providerframeworkon Event Service Role](aws-iam-role.md#s3vectors-providerframeworkon-event-service-role) (`S3VectorsProviderframeworkonEventServiceRole5255E58B`) |
+
+#### Environment variables
+
+| Key | Value |
+| --- | --- |
+| `USER_ON_EVENT_FUNCTION_ARN` | GetAtt:S3VectorsProviderFn215E3A4E.Arn |

@@ -616,6 +616,7 @@ function renderIndexMarkdown(inventory) {
 }
 
 function renderTypeDetailMarkdown(inventory, type, resources) {
+  const resourceByLogicalId = new Map(inventory.resources.map((resource) => [resource.logicalId, resource]))
   const lines = [
     `# ${type}`,
     "",
@@ -650,8 +651,18 @@ function renderTypeDetailMarkdown(inventory, type, resources) {
     lines.push("")
     lines.push("| 設定項目 | 値 |")
     lines.push("| --- | --- |")
-    for (const [key, value] of settingsEntries(resource.settings)) {
-      lines.push(`| \`${escapeMd(key)}\` | ${formatSettingValue(value)} |`)
+    for (const [key, value] of settingsEntries(resource.settings, { omitEnvironment: type === "AWS::Lambda::Function" })) {
+      lines.push(`| \`${escapeMd(key)}\` | ${formatSettingValue(key, value, resourceByLogicalId)} |`)
+    }
+    if (type === "AWS::Lambda::Function" && resource.settings.environment) {
+      lines.push("")
+      lines.push("#### Environment variables")
+      lines.push("")
+      lines.push("| Key | Value |")
+      lines.push("| --- | --- |")
+      for (const [key, value] of Object.entries(resource.settings.environment)) {
+        lines.push(`| \`${escapeMd(key)}\` | ${formatSettingValue(key, value, resourceByLogicalId)} |`)
+      }
     }
     if (resource !== resources.at(-1)) lines.push("")
   }
@@ -670,13 +681,32 @@ function formatValue(value) {
   return String(value)
 }
 
-function formatSettingValue(value) {
+function formatSettingValue(key, value, resourceByLogicalId) {
+  if (key === "role") {
+    const linkedRole = formatRoleLink(value, resourceByLogicalId)
+    if (linkedRole) return linkedRole
+  }
   return escapeMd(formatValue(value))
 }
 
-function settingsEntries(settings) {
+function settingsEntries(settings, options = {}) {
   const entries = Object.entries(settings ?? {})
+    .filter(([key]) => !(options.omitEnvironment && key === "environment"))
   return entries.length > 0 ? entries : [["-", "-"]]
+}
+
+function formatRoleLink(value, resourceByLogicalId) {
+  const roleLogicalId = parseGetAttLogicalId(value)
+  if (!roleLogicalId) return null
+  const roleResource = resourceByLogicalId.get(roleLogicalId)
+  if (!roleResource || roleResource.type !== "AWS::IAM::Role") return escapeMd(formatValue(value))
+  return `[${escapeMd(roleResource.logicalName)}](aws-iam-role.md#${anchorFor(roleResource.logicalName)}) (\`${roleResource.logicalId}\`)`
+}
+
+function parseGetAttLogicalId(value) {
+  if (typeof value !== "string") return null
+  const match = /^GetAtt:([^.]+)\.Arn$/.exec(value)
+  return match?.[1] ?? null
 }
 
 function compactObject(object) {
