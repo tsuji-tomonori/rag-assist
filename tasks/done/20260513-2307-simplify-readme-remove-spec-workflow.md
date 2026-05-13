@@ -1,6 +1,6 @@
 # README 簡潔化と仕様復元 workflow 削除
 
-- 状態: in_progress
+- 状態: done
 - ブランチ: `codex/simplify-readme-remove-spec-workflow`
 - タスク種別: ドキュメント更新
 
@@ -26,6 +26,12 @@
 3. 仕様復元 workflow の skill、`docs/spec-recovery/`、validator、AGENTS.md の該当 section を削除する。
 4. `rg` と `git diff --check` で残存参照・Markdown 差分を確認する。
 5. 作業レポート、commit、PR、受け入れ条件コメント、セルフレビューコメントまで進める。
+
+## 完了更新
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/285
+- 受け入れ条件コメント: GitHub Apps tool で投稿済み。
+- 状態更新: PR コメント投稿後に `done` へ更新し、`tasks/done/` へ移動。
 
 ## ドキュメント保守方針
 
