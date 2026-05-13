@@ -1,0 +1,326 @@
+version: '3'
+
+env:
+  API_PORT: '{{.API_PORT | default "8787"}}'
+  ZIP_OUT: '{{.ZIP_OUT | default "dist/memorag-bedrock-mvp.zip"}}'
+
+tasks:
+  precommit:
+    desc: Install pre-commit hook
+    cmds:
+      - pre-commit install
+
+  install:
+    desc: Install npm workspace dependencies
+    cmds:
+      - npm install
+
+  build:
+    desc: Build all workspaces
+    cmds:
+      - npm run build --workspaces --if-present
+
+  verify:
+    desc: Run local static verification for all workspaces
+    cmds:
+      - npm run lint
+      - npm run typecheck --workspaces --if-present
+      - npm run build --workspaces --if-present
+
+  typecheck:
+    desc: Type-check all TypeScript workspaces
+    cmds:
+      - npm run typecheck --workspaces --if-present
+
+  docs:openapi:
+    desc: Generate Markdown API reference from the Hono OpenAPI document
+    cmds:
+      - npm run docs:openapi
+
+  docs:openapi:check:
+    desc: Validate Japanese OpenAPI summaries, descriptions, and field descriptions
+    cmds:
+      - npm run docs:openapi:check
+
+  docs:infra-inventory:
+    desc: Generate Markdown and JSON AWS resource inventory from the CDK snapshot
+    cmds:
+      - npm run docs:infra-inventory
+
+  docs:infra-inventory:check:
+    desc: Check generated AWS resource inventory freshness
+    cmds:
+      - npm run docs:infra-inventory:check
+
+  dev:api:
+    desc: Run the Hono API locally with mock Bedrock and local vector store
+    env:
+      PORT: '{{.API_PORT}}'
+      MOCK_BEDROCK: 'true'
+      USE_LOCAL_VECTOR_STORE: 'true'
+      LOCAL_DATA_DIR: '.local-data'
+    cmds:
+      - npm run dev -w @memorag-mvp/api
+
+  dev:web:
+    desc: Run the React chat/upload UI locally
+    env:
+      VITE_API_BASE_URL: 'http://localhost:{{.API_PORT}}'
+      VITE_AUTH_MODE: 'local'
+    cmds:
+      - npm run dev -w @memorag-mvp/web
+
+  docker:up:
+    desc: Start local API and UI with Docker Compose
+    cmds:
+      - docker compose up --build
+
+  docker:down:
+    desc: Stop local Docker Compose stack
+    cmds:
+      - docker compose down
+
+  cdk:synth:
+    desc: Synthesize AWS CDK stack
+    cmds:
+      - npm run build -w @memorag-mvp/web
+      - npm run build -w @memorag-mvp/infra
+      - npm run cdk -w @memorag-mvp/infra -- synth
+
+  cdk:synth:yaml:
+    desc: Synthesize AWS CDK stack and write a YAML template to infra/cdk.out
+    cmds:
+      - npm run build -w @memorag-mvp/web
+      - npm run build -w @memorag-mvp/infra
+      - mkdir -p infra/cdk.out
+      - npm run cdk -w @memorag-mvp/infra -- synth {{.CDK_CONTEXT_ARGS}} > infra/cdk.out/MemoRagMvpStack.template.yaml
+
+  cdk:test:
+    desc: Run CDK assertion and snapshot tests
+    cmds:
+      - npm run build -w @memorag-mvp/infra
+      - npm run test -w @memorag-mvp/infra
+
+  cdk:deploy:
+    desc: Build frontend and deploy AWS CDK stack
+    cmds:
+      - npm run build -w @memorag-mvp/web
+      - npm run build -w @memorag-mvp/infra
+      - npm run cdk -w @memorag-mvp/infra -- deploy {{.CDK_CONTEXT_ARGS}}
+
+  cdk:bootstrap:
+    desc: Bootstrap the target AWS account and region for CDK deployments
+    cmds:
+      - npm run cdk -w @memorag-mvp/infra -- bootstrap {{.CDK_CONTEXT_ARGS}}
+
+  cdk:deploy:ci:
+    desc: Build and deploy the AWS CDK stack without approval prompts
+    cmds:
+      - npm run build -w @memorag-mvp/web
+      - npm run build -w @memorag-mvp/infra
+      - npm run test -w @memorag-mvp/infra
+      - npm run cdk -w @memorag-mvp/infra -- deploy --require-approval never {{.CDK_CONTEXT_ARGS}}
+
+  cdk:destroy:
+    desc: Destroy AWS CDK stack
+    cmds:
+      - npm run cdk -w @memorag-mvp/infra -- destroy
+
+  benchmark:sample:
+    desc: Run the sample benchmark and generate JSONL/JSON/Markdown reports
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: 'benchmark/dataset.sample.jsonl'
+      OUTPUT: '.local-data/benchmark-results.jsonl'
+      SUMMARY: '.local-data/benchmark-summary.json'
+      REPORT: '.local-data/benchmark-report.md'
+      BENCHMARK_SUITE_ID: 'standard-agent-v1'
+      BENCHMARK_CORPUS_DIR: 'benchmark/corpus/standard-agent-v1'
+    cmds:
+      - npm run start -w @memorag-mvp/benchmark
+
+  benchmark:rag-baseline:sample:
+    desc: Run the six-category RAG baseline benchmark and generate JSONL/JSON/Markdown reports
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: 'benchmark/dataset.rag-baseline.sample.jsonl'
+      OUTPUT: '.local-data/rag-baseline-results.jsonl'
+      SUMMARY: '.local-data/rag-baseline-summary.json'
+      REPORT: '.local-data/rag-baseline-report.md'
+      BENCHMARK_SUITE_ID: 'rag-baseline-v1'
+      BENCHMARK_CORPUS_DIR: 'benchmark/corpus/rag-baseline-v1'
+      BENCHMARK_CORPUS_SUITE_ID: 'rag-baseline-v1'
+    cmds:
+      - npm run start -w @memorag-mvp/benchmark
+
+  benchmark:allganize:prepare:
+    desc: Convert allganize/RAG-Evaluation-Dataset-JA CSV files and download the source PDF corpus
+    env:
+      ALLGANIZE_RAG_DATASET_OUTPUT: '{{.ALLGANIZE_RAG_DATASET_OUTPUT | default ".local-data/allganize-rag-evaluation-ja/dataset.jsonl"}}'
+      ALLGANIZE_RAG_CORPUS_DIR: '{{.ALLGANIZE_RAG_CORPUS_DIR | default ".local-data/allganize-rag-evaluation-ja/corpus"}}'
+      ALLGANIZE_RAG_LIMIT: '{{.ALLGANIZE_RAG_LIMIT | default ""}}'
+      ALLGANIZE_RAG_DOMAIN: '{{.ALLGANIZE_RAG_DOMAIN | default ""}}'
+    cmds:
+      - npm run prepare:allganize-ja -w @memorag-mvp/benchmark
+
+  benchmark:allganize:ja:
+    desc: Run allganize/RAG-Evaluation-Dataset-JA as an agent benchmark
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: '{{.ALLGANIZE_RAG_DATASET_OUTPUT | default ".local-data/allganize-rag-evaluation-ja/dataset.jsonl"}}'
+      OUTPUT: '{{.OUTPUT | default ".local-data/allganize-rag-evaluation-ja/results.jsonl"}}'
+      SUMMARY: '{{.SUMMARY | default ".local-data/allganize-rag-evaluation-ja/summary.json"}}'
+      REPORT: '{{.REPORT | default ".local-data/allganize-rag-evaluation-ja/report.md"}}'
+      BENCHMARK_SUITE_ID: 'allganize-rag-evaluation-ja-v1'
+      BENCHMARK_CORPUS_DIR: '{{.ALLGANIZE_RAG_CORPUS_DIR | default ".local-data/allganize-rag-evaluation-ja/corpus"}}'
+      ALLGANIZE_RAG_DATASET_OUTPUT: '{{.ALLGANIZE_RAG_DATASET_OUTPUT | default ".local-data/allganize-rag-evaluation-ja/dataset.jsonl"}}'
+      ALLGANIZE_RAG_CORPUS_DIR: '{{.ALLGANIZE_RAG_CORPUS_DIR | default ".local-data/allganize-rag-evaluation-ja/corpus"}}'
+      ALLGANIZE_RAG_LIMIT: '{{.ALLGANIZE_RAG_LIMIT | default ""}}'
+      ALLGANIZE_RAG_DOMAIN: '{{.ALLGANIZE_RAG_DOMAIN | default ""}}'
+    cmds:
+      - npm run prepare:allganize-ja -w @memorag-mvp/benchmark
+      - npm run start -w @memorag-mvp/benchmark
+
+  benchmark:mtrag:prepare:
+    desc: Convert MTRAG dataset to rag-assist conversation JSONL and corpus
+    env:
+      MTRAG_INPUT: '{{.MTRAG_INPUT}}'
+      MTRAG_DATASET_OUTPUT: '{{.MTRAG_DATASET_OUTPUT | default ".local-data/mtrag/dataset.jsonl"}}'
+      MTRAG_CORPUS_DIR: '{{.MTRAG_CORPUS_DIR | default ".local-data/mtrag/corpus"}}'
+    cmds:
+      - npm run prepare:mtrag -w @memorag-mvp/benchmark
+
+  benchmark:mtrag:
+    desc: Run MTRAG as a multi-turn RAG benchmark
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: '{{.MTRAG_DATASET_OUTPUT | default ".local-data/mtrag/dataset.jsonl"}}'
+      OUTPUT: '{{.OUTPUT | default ".local-data/mtrag/results.jsonl"}}'
+      SUMMARY: '{{.SUMMARY | default ".local-data/mtrag/summary.json"}}'
+      REPORT: '{{.REPORT | default ".local-data/mtrag/report.md"}}'
+      BENCHMARK_SUITE_ID: 'mtrag-v1'
+      BENCHMARK_CORPUS_DIR: '{{.MTRAG_CORPUS_DIR | default ".local-data/mtrag/corpus"}}'
+      BENCHMARK_CORPUS_SUITE_ID: 'mtrag-v1'
+      MTRAG_INPUT: '{{.MTRAG_INPUT}}'
+      MTRAG_DATASET_OUTPUT: '{{.MTRAG_DATASET_OUTPUT | default ".local-data/mtrag/dataset.jsonl"}}'
+      MTRAG_CORPUS_DIR: '{{.MTRAG_CORPUS_DIR | default ".local-data/mtrag/corpus"}}'
+    cmds:
+      - npm run prepare:mtrag -w @memorag-mvp/benchmark
+      - npm run start:conversation -w @memorag-mvp/benchmark
+
+  benchmark:chatrag-bench:prepare:
+    desc: Convert ChatRAG Bench datasets to rag-assist conversation JSONL and corpus
+    env:
+      CHATRAG_INPUT_DIR: '{{.CHATRAG_INPUT_DIR}}'
+      CHATRAG_DATASET_OUTPUT: '{{.CHATRAG_DATASET_OUTPUT | default ".local-data/chatrag-bench/dataset.jsonl"}}'
+      CHATRAG_CORPUS_DIR: '{{.CHATRAG_CORPUS_DIR | default ".local-data/chatrag-bench/corpus"}}'
+    cmds:
+      - npm run prepare:chatrag-bench -w @memorag-mvp/benchmark
+
+  benchmark:chatrag-bench:
+    desc: Run ChatRAG Bench as a multi-turn RAG benchmark
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: '{{.CHATRAG_DATASET_OUTPUT | default ".local-data/chatrag-bench/dataset.jsonl"}}'
+      OUTPUT: '{{.OUTPUT | default ".local-data/chatrag-bench/results.jsonl"}}'
+      SUMMARY: '{{.SUMMARY | default ".local-data/chatrag-bench/summary.json"}}'
+      REPORT: '{{.REPORT | default ".local-data/chatrag-bench/report.md"}}'
+      BENCHMARK_SUITE_ID: 'chatrag-bench-v1'
+      BENCHMARK_CORPUS_DIR: '{{.CHATRAG_CORPUS_DIR | default ".local-data/chatrag-bench/corpus"}}'
+      BENCHMARK_CORPUS_SUITE_ID: 'chatrag-bench-v1'
+      CHATRAG_INPUT_DIR: '{{.CHATRAG_INPUT_DIR}}'
+      CHATRAG_DATASET_OUTPUT: '{{.CHATRAG_DATASET_OUTPUT | default ".local-data/chatrag-bench/dataset.jsonl"}}'
+      CHATRAG_CORPUS_DIR: '{{.CHATRAG_CORPUS_DIR | default ".local-data/chatrag-bench/corpus"}}'
+    cmds:
+      - npm run prepare:chatrag-bench -w @memorag-mvp/benchmark
+      - npm run start:conversation -w @memorag-mvp/benchmark
+
+  benchmark:search:sample:
+    desc: Run the sample Search API qrels benchmark and generate JSONL/JSON/Markdown reports
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+      DATASET: 'benchmark/datasets/search.sample.jsonl'
+      OUTPUT: '.local-data/search-benchmark-results.jsonl'
+      SUMMARY: '.local-data/search-benchmark-summary.json'
+      REPORT: '.local-data/search-benchmark-report.md'
+      BENCHMARK_SUITE_ID: 'search-standard-v1'
+      BENCHMARK_CORPUS_DIR: 'benchmark/corpus/standard-agent-v1'
+      BENCHMARK_CORPUS_SUITE_ID: 'standard-agent-v1'
+    cmds:
+      - npm run start:search -w @memorag-mvp/benchmark
+
+  smoke:api:
+    desc: Smoke-test a running local API with health, ingest, chat, and OpenAPI requests
+    env:
+      API_BASE_URL: '{{.API_BASE_URL | default "http://localhost:8787"}}'
+    cmds:
+      - curl -fsS "$API_BASE_URL/health"
+      - |
+        curl -fsS "$API_BASE_URL/documents" \
+          -H 'Content-Type: application/json' \
+          -d '{"fileName":"handbook.md","text":"経費精算は申請から30日以内に行う必要があります。"}'
+      - |
+        curl -fsS "$API_BASE_URL/chat" \
+          -H 'Content-Type: application/json' \
+          -d '{"question":"経費精算の期限は？","modelId":"amazon.nova-lite-v1:0","includeDebug":true}'
+      - curl -fsS "$API_BASE_URL/openapi.json" >/dev/null
+
+  zip:
+    desc: Create a zip archive of this MVP repository
+    cmds:
+      - mkdir -p "$(dirname "$ZIP_OUT")"
+      - zip -r -FS "$ZIP_OUT" . -x "node_modules/*" "*/node_modules/*" "dist/*" "*/dist/*" "cdk.out/*" "infra/cdk.out/*" "infra/lambda-dist/*" ".local-data/*" "*/.local-data/*" "*.log"
+
+  memorag:install:
+    desc: Backward-compatible alias for install
+    cmds:
+      - task: install
+
+  memorag:verify:
+    desc: Backward-compatible alias for verify
+    cmds:
+      - task: verify
+
+  memorag:dev:api:
+    desc: Backward-compatible alias for dev:api
+    cmds:
+      - task: dev:api
+
+  memorag:dev:web:
+    desc: Backward-compatible alias for dev:web
+    cmds:
+      - task: dev:web
+
+  memorag:smoke:api:
+    desc: Backward-compatible alias for smoke:api
+    cmds:
+      - task: smoke:api
+
+  memorag:cdk:test:
+    desc: Backward-compatible alias for cdk:test
+    cmds:
+      - task: cdk:test
+
+  memorag:cdk:synth:yaml:
+    desc: Backward-compatible alias for cdk:synth:yaml
+    cmds:
+      - task: cdk:synth:yaml
+
+  memorag:cdk:bootstrap:
+    desc: Backward-compatible alias for cdk:bootstrap
+    cmds:
+      - task: cdk:bootstrap
+
+  memorag:cdk:deploy:ci:
+    desc: Backward-compatible alias for cdk:deploy:ci
+    cmds:
+      - task: cdk:deploy:ci
+
+  memorag:zip:
+    desc: Backward-compatible alias for zip archive creation
+    vars:
+      ZIP_OUT: '{{.ZIP_OUT | default ".workspace/memorag-bedrock-mvp.zip"}}'
+    cmds:
+      - task: zip
+        vars:
+          ZIP_OUT: '{{.ZIP_OUT}}'

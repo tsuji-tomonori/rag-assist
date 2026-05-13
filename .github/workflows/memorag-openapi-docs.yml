@@ -5,10 +5,11 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/memorag-openapi-docs.yml"
-      - "memorag-bedrock-mvp/apps/api/**"
-      - "memorag-bedrock-mvp/package.json"
-      - "memorag-bedrock-mvp/package-lock.json"
-      - "memorag-bedrock-mvp/Taskfile.yml"
+      - "apps/api/**"
+      - "packages/contract/**"
+      - "package.json"
+      - "package-lock.json"
+      - "Taskfile.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,9 +25,6 @@ jobs:
     name: Generate OpenAPI Markdown
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: memorag-bedrock-mvp
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,7 +34,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: memorag-bedrock-mvp/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -62,5 +60,5 @@ jobs:
 
             - `npm run docs:openapi`
           add-paths: |
-            memorag-bedrock-mvp/docs/generated/openapi.md
-            memorag-bedrock-mvp/docs/generated/openapi
+            docs/generated/openapi.md
+            docs/generated/openapi

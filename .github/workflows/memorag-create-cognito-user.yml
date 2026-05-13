@@ -60,9 +60,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'dev' }}
     timeout-minutes: 10
-    defaults:
-      run:
-        working-directory: memorag-bedrock-mvp
     env:
       AWS_REGION: ${{ inputs.aws-region || 'us-east-1' }}
       STACK_NAME: ${{ inputs.stack-name || 'MemoRagMvpStack' }}

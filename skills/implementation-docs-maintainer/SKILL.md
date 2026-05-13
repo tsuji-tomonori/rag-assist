@@ -13,7 +13,7 @@ Use this skill during implementation work when code, configuration, behavior, AP
 2. Search for related documentation with `rg` before assuming there is no document to update.
 3. Decide whether docs must be updated, explicitly noting the reason when no update is needed.
 4. Update the smallest durable document that will help future implementers, operators, reviewers, or users.
-5. When editing `memorag-bedrock-mvp/docs`, use `docs-swebok-template-writer` and the relevant requirement skills.
+5. When editing `docs/`, use `docs-swebok-template-writer` and the relevant requirement skills.
 6. After code and docs changes, run a repository-defined docs check when available, or at least inspect the diff for stale commands, paths, API names, and trailing whitespace.
 7. In the final response or work report, state which docs were updated, or why docs were intentionally unchanged.
 
@@ -30,9 +30,9 @@ Update docs when a change affects any of these:
 ## Preferred Targets
 
 - Repository-wide agent behavior: `AGENTS.md`.
-- MemoRAG product docs: `memorag-bedrock-mvp/docs/`.
-- High-level setup and usage: `README.md` or `memorag-bedrock-mvp/README.md`.
-- API examples: `memorag-bedrock-mvp/docs/API_EXAMPLES.md`.
+- MemoRAG product docs: `docs/`.
+- High-level setup and usage: `README.md`.
+- API examples: `docs/API_EXAMPLES.md`.
 - Transient completion records: `reports/working/`, not `docs/`.
 
 ## Avoid

@@ -50,9 +50,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment || 'dev' }}
     timeout-minutes: 45
-    defaults:
-      run:
-        working-directory: memorag-bedrock-mvp
     env:
       AWS_REGION: ${{ inputs.aws-region || 'us-east-1' }}
       CDK_DEFAULT_REGION: ${{ inputs.aws-region || 'us-east-1' }}
@@ -71,7 +68,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: memorag-bedrock-mvp/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -121,8 +118,8 @@ jobs:
         with:
           name: memorag-cdk-synth-${{ inputs.environment || 'dev' }}
           path: |
-            memorag-bedrock-mvp/infra/cdk.out/MemoRagMvpStack.template.yaml
-            memorag-bedrock-mvp/infra/cdk.out/AwsSolutions-*-NagReport.csv
+            infra/cdk.out/MemoRagMvpStack.template.yaml
+            infra/cdk.out/AwsSolutions-*-NagReport.csv
           if-no-files-found: warn
 
       - name: CDK deploy
@@ -140,5 +137,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: memorag-cdk-outputs-${{ inputs.environment || 'dev' }}
-          path: memorag-bedrock-mvp/infra/cdk-outputs.json
+          path: infra/cdk-outputs.json
           if-no-files-found: error

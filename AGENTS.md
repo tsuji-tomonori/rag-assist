@@ -74,9 +74,9 @@
 ## Implementation Docs Maintenance
 - 対象: 実装、修正、リファクタ、設定変更、API 変更、運用手順変更など、コードまたは挙動に影響する作業。
 - 必読（必要に応じて）: `skills/implementation-docs-maintainer/SKILL.md`
-- 作業前後に、README、`docs/`、`memorag-bedrock-mvp/docs/`、API 例、運用手順、`AGENTS.md` への影響を確認する。
+- 作業前後に、README、`docs/`、API 例、運用手順、`AGENTS.md` への影響を確認する。
 - ドキュメント更新が必要なら同じ作業範囲で更新する。不要なら最終回答または作業レポートで理由を簡潔に示す。
-- `memorag-bedrock-mvp/docs` を更新する場合は下記 Docs Update Policy を優先する。
+- `docs/` を更新する場合は下記 Docs Update Policy を優先する。
 
 ## No Mock Product UI
 - 対象: 本番 UI、API レスポンス整形、hooks、stores、ユーザー可視の画面・管理画面・操作部品の実装またはレビュー。
@@ -121,13 +121,13 @@
 - 対象: API route、middleware、認証・認可、RBAC、所有者境界、管理 API、外部公開設定、機微データを返す schema/store の追加・変更。
 - 必読: `skills/security-access-control-reviewer/SKILL.md`
 - 新規 route は、認証境界、route-level permission、所有者・担当者制約、返却 schema の機微フィールド、store の list/get/update/delete 範囲を確認する。
-- `memorag-bedrock-mvp/apps/api/src/app.ts` または `memorag-bedrock-mvp/apps/api/src/routes/` の保護対象 route を追加・変更する場合は、`memorag-bedrock-mvp/apps/api/src/security/access-control-policy.test.ts` の静的 policy も更新し、API test を実行する。
+- `apps/api/src/app.ts` または `apps/api/src/routes/` の保護対象 route を追加・変更する場合は、`apps/api/src/security/access-control-policy.test.ts` の静的 policy も更新し、API test を実行する。
 - 意図的な public endpoint は、理由、返却データが非機微である根拠、濫用対策を PR 本文または作業レポートに明記する。
 
-## Docs Update Policy for `memorag-bedrock-mvp/docs`
+## Docs Update Policy for `docs/`
 - 更新依頼では `skills/docs-swebok-template-writer/SKILL.md` を参照し、SWEBOK-lite の体裁に合わせる。
 - 要求は原子性（1 要件 = 1 検証可能条件）を保つ。
 - 要件ドキュメントは「1 要件 = 1 ファイル」とし、受け入れ条件を同一ファイル内に明記する。
-- 新規/大規模更新は `memorag-bedrock-mvp/docs/DOCS_STRUCTURE.md` の構成方針に合わせる。
+- 新規/大規模更新は `docs/DOCS_STRUCTURE.md` の構成方針に合わせる。
 - 既存単一ファイル（例: `REQUIREMENTS.md`, `ARCHITECTURE.md`）を更新する場合も、将来移行しやすいように種別メタ情報と要件IDを維持する。
 - 以降の docs 修正では、可能な限り REQ/ARC/DES/OPS のディレクトリに分割して追記・修正する。
