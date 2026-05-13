@@ -18,7 +18,11 @@
 - AC-NFR014-005: 対応 mime type、size、timeout の具体閾値が未確定の場合、未確定として文書化し、実施済みの値として扱わないこと。
 
 ## 要件の源泉・背景
-- 背景: 既存要件整理では PDF/OCR/大容量 ingest の境界値が重要とされているが、mime type、size、timeout の本番閾値は未確定である。
+
+- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-DOC-002`
+- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-DOC-003`
+- 源泉: `docs/spec-recovery/09_gap_analysis.md` の `GAP-003`
+- 背景: 復元結果では PDF/OCR/大容量 ingest の境界値が重要とされているが、mime type、size、timeout の本番閾値は未確定である。
 
 ## 要件の目的・意図
 
@@ -33,6 +37,7 @@
 | 識別子 | `NFR-014` |
 | 説明 | PDF/OCR/大容量/抽出不能文書の境界状態記録 |
 | 根拠 | 境界状態を記録しないと ingest failure と評価対象外を切り分けられない |
+| 源泉 | `REQ-DOC-002`, `AC-DOC-003`, `GAP-003` |
 | 種類 | 非機能要求 |
 | 依存関係 | `FR-001`, `FR-002`, `FR-038`, `FR-039` |
 | 衝突 | 境界分類の記録により run schema と運用手順が増える |

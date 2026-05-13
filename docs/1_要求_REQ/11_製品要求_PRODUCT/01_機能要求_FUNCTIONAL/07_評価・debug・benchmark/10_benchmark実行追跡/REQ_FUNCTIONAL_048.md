@@ -27,7 +27,11 @@
 - AC-FR048-005: CodeBuild log stream が記録された run では、管理画面からログ本文を `.txt` として download できること。
 
 ## 要件の源泉・背景
-- 背景: 既存要件整理では、長時間 benchmark run の timeout、progress、metrics、raw results download、artifact generation の追跡が求められている。
+
+- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-BENCH-003`
+- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-BENCH-003`
+- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-BENCH-003`
+- 背景: 復元仕様では、長時間 benchmark run の timeout、progress、metrics、raw results download、artifact generation の追跡が求められている。
 
 ## 要件の目的・意図
 
@@ -42,6 +46,7 @@
 | 識別子 | `FR-048` |
 | 説明 | benchmark run の進捗と artifact 生成状態の確認 |
 | 根拠 | 長時間 benchmark は途中状態と artifact 状態が見えないと成功/失敗を判断できない |
+| 源泉 | `REQ-BENCH-003`, `AC-BENCH-003`, `SPEC-BENCH-003` |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-010`, `FR-011`, `FR-012`, `SQ-002` |
 | 衝突 | 詳細な進捗記録により runner と artifact schema の保守負荷が増える |

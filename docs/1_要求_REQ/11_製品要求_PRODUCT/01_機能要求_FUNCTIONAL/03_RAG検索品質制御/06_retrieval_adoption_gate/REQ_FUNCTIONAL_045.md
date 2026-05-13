@@ -27,7 +27,11 @@
 - AC-FR045-004: 採用判断の trace は chunk、score、quality、nextAction を含み、dataset 固有の期待語句や QA sample 固有値を使わないこと。
 
 ## 要件の源泉・背景
-- 背景: 既存要件整理では semantic chunking、hybrid retrieval、retrieval evaluator の結果を採用 gate で選別することが求められている。
+
+- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-SRCH-002`
+- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-SRCH-002`
+- 源泉: `docs/spec-recovery/07_specifications.md` の `SPEC-SRCH-002`
+- 背景: 復元仕様では semantic chunking、hybrid retrieval、retrieval evaluator の結果を採用 gate で選別することが求められている。
 
 ## 要件の目的・意図
 
@@ -42,6 +46,7 @@
 | 識別子 | `FR-045` |
 | 説明 | retrieval adoption gate による回答根拠選別 |
 | 根拠 | 採用基準を満たさない検索候補を回答生成へ渡すと、unsupported answer のリスクが上がる |
+| 源泉 | `REQ-SRCH-002`, `AC-SRCH-002`, `SPEC-SRCH-002` |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-014`, `FR-016`, `FR-017`, `FR-018`, `FR-026`, `SQ-001` |
 | 衝突 | 再検索や context expansion により latency が増える |

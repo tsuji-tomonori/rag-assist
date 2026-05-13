@@ -25,7 +25,10 @@
 - AC-FR044-004: 安定順序のために debug trace、内部メモ、retrieved full text を sort key として使わないこと。
 
 ## 要件の源泉・背景
-- 背景: 既存要件整理では、同一時刻や短い substring でも履歴表示順が安定することが求められている。
+
+- 源泉: `docs/spec-recovery/06_requirements.md` の `REQ-HIST-002`
+- 源泉: `docs/spec-recovery/03_acceptance_criteria.md` の `AC-HIST-002`
+- 背景: 復元条件では、同一時刻や短い substring でも履歴表示順が安定することが求められている。
 
 ## 要件の目的・意図
 
@@ -40,6 +43,7 @@
 | 識別子 | `FR-044` |
 | 説明 | 会話履歴の安定表示順 |
 | 根拠 | 履歴検索・sort・favorite filter の結果が再描画で揺れると利用者が対象履歴を追いにくい |
+| 源泉 | `REQ-HIST-002`, `AC-HIST-002`, `SPEC-HIST-003` |
 | 種類 | 機能要求 |
 | 依存関係 | `FR-022`, `FR-028`, `FR-030` |
 | 衝突 | tie-break 用 key の選定が data schema に依存する |
