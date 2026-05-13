@@ -1,0 +1,4119 @@
+{
+  "generatedBy": "tools/infra-inventory/generate-infra-inventory.mjs",
+  "source": "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json",
+  "stackName": "MemoRagMvpStack",
+  "totalResources": 217,
+  "totalsByDomain": [
+    {
+      "domain": "Storage",
+      "count": 15
+    },
+    {
+      "domain": "Data",
+      "count": 8
+    },
+    {
+      "domain": "Compute",
+      "count": 15
+    },
+    {
+      "domain": "API",
+      "count": 70
+    },
+    {
+      "domain": "Identity",
+      "count": 12
+    },
+    {
+      "domain": "Delivery",
+      "count": 2
+    },
+    {
+      "domain": "Workflow",
+      "count": 4
+    },
+    {
+      "domain": "Security/IAM",
+      "count": 34
+    },
+    {
+      "domain": "Observability",
+      "count": 14
+    },
+    {
+      "domain": "Custom",
+      "count": 5
+    }
+  ],
+  "countsByType": [
+    {
+      "type": "AWS::S3::Bucket",
+      "count": 5,
+      "purpose": "S3 bucket"
+    },
+    {
+      "type": "AWS::DynamoDB::Table",
+      "count": 8,
+      "purpose": "DynamoDB table"
+    },
+    {
+      "type": "AWS::Lambda::Function",
+      "count": 11,
+      "purpose": "Lambda function"
+    },
+    {
+      "type": "AWS::ApiGateway::RestApi",
+      "count": 1,
+      "purpose": "API Gateway REST API"
+    },
+    {
+      "type": "AWS::ApiGateway::Stage",
+      "count": 1,
+      "purpose": "API Gateway stage"
+    },
+    {
+      "type": "AWS::ApiGateway::Resource",
+      "count": 21,
+      "purpose": "API Gateway resource path"
+    },
+    {
+      "type": "AWS::ApiGateway::Method",
+      "count": 41,
+      "purpose": "API Gateway method"
+    },
+    {
+      "type": "AWS::Cognito::UserPool",
+      "count": 1,
+      "purpose": "Cognito user pool"
+    },
+    {
+      "type": "AWS::Cognito::UserPoolClient",
+      "count": 1,
+      "purpose": "Cognito app client"
+    },
+    {
+      "type": "AWS::Cognito::UserPoolDomain",
+      "count": 1,
+      "purpose": "Cognito hosted domain"
+    },
+    {
+      "type": "AWS::Cognito::UserPoolGroup",
+      "count": 9,
+      "purpose": "Cognito role group"
+    },
+    {
+      "type": "AWS::CloudFront::Distribution",
+      "count": 1,
+      "purpose": "CloudFront distribution"
+    },
+    {
+      "type": "AWS::CloudFront::OriginAccessControl",
+      "count": 1,
+      "purpose": "CloudFront origin access control"
+    },
+    {
+      "type": "AWS::CodeBuild::Project",
+      "count": 1,
+      "purpose": "CodeBuild benchmark runner"
+    },
+    {
+      "type": "AWS::StepFunctions::StateMachine",
+      "count": 3,
+      "purpose": "Step Functions state machine"
+    },
+    {
+      "type": "AWS::KMS::Key",
+      "count": 1,
+      "purpose": "KMS key"
+    },
+    {
+      "type": "AWS::SecretsManager::Secret",
+      "count": 1,
+      "purpose": "Secrets Manager secret"
+    },
+    {
+      "type": "AWS::Logs::LogGroup",
+      "count": 14,
+      "purpose": "CloudWatch Logs log group"
+    },
+    {
+      "type": "AWS::IAM::Role",
+      "count": 16,
+      "purpose": "IAM role"
+    },
+    {
+      "type": "AWS::IAM::Policy",
+      "count": 14,
+      "purpose": "IAM inline policy"
+    },
+    {
+      "type": "AWS::IAM::ManagedPolicy",
+      "count": 2,
+      "purpose": "IAM managed policy"
+    },
+    {
+      "type": "AWS::CloudFormation::CustomResource",
+      "count": 1,
+      "purpose": "CloudFormation custom resource"
+    },
+    {
+      "type": "Custom::CDKBucketDeployment",
+      "count": 4,
+      "purpose": "CDK bucket deployment"
+    },
+    {
+      "type": "Custom::S3AutoDeleteObjects",
+      "count": 5,
+      "purpose": "S3 auto delete custom resource"
+    },
+    {
+      "type": "AWS::S3::BucketPolicy",
+      "count": 5,
+      "purpose": "S3 bucket policy"
+    },
+    {
+      "type": "AWS::Lambda::LayerVersion",
+      "count": 4,
+      "purpose": "Lambda layer"
+    },
+    {
+      "type": "AWS::Lambda::Permission",
+      "count": 38,
+      "purpose": "Lambda invoke permission"
+    },
+    {
+      "type": "AWS::ApiGateway::Account",
+      "count": 1,
+      "purpose": "API Gateway account settings"
+    },
+    {
+      "type": "AWS::ApiGateway::Deployment",
+      "count": 1,
+      "purpose": "API Gateway deployment"
+    },
+    {
+      "type": "AWS::ApiGateway::GatewayResponse",
+      "count": 2,
+      "purpose": "API Gateway error response"
+    },
+    {
+      "type": "AWS::ApiGateway::RequestValidator",
+      "count": 1,
+      "purpose": "API Gateway request validator"
+    },
+    {
+      "type": "AWS::ApiGateway::Authorizer",
+      "count": 1,
+      "purpose": "API Gateway Cognito authorizer"
+    }
+  ],
+  "resources": [
+    {
+      "logicalId": "AccessLogsBucket83982689",
+      "logicalName": "Access Logs Bucket",
+      "type": "AWS::S3::Bucket",
+      "purpose": "Access Logs Bucket (S3 bucket)",
+      "settings": {
+        "encryption": [
+          "AES256"
+        ],
+        "publicAccessBlock": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "enforceSSLPolicy": "BucketPolicy を参照",
+        "objectOwnership": [
+          "ObjectWriter"
+        ],
+        "lifecycleRules": [
+          {
+            "expirationInDays": 90,
+            "status": "Enabled"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
+    },
+    {
+      "logicalId": "BenchmarkBucketDD7D1D2F",
+      "logicalName": "Benchmark Bucket",
+      "type": "AWS::S3::Bucket",
+      "purpose": "Benchmark Bucket (S3 bucket)",
+      "settings": {
+        "encryption": [
+          "AES256"
+        ],
+        "publicAccessBlock": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "enforceSSLPolicy": "BucketPolicy を参照",
+        "loggingPrefix": "s3/benchmark/",
+        "lifecycleRules": [
+          {
+            "prefix": "runs/",
+            "expirationInDays": 30,
+            "status": "Enabled"
+          },
+          {
+            "prefix": "downloads/",
+            "expirationInDays": 7,
+            "status": "Enabled"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
+    },
+    {
+      "logicalId": "DebugDownloadBucketAB6A16BE",
+      "logicalName": "Debug Download Bucket",
+      "type": "AWS::S3::Bucket",
+      "purpose": "Debug Download Bucket (S3 bucket)",
+      "settings": {
+        "encryption": [
+          "AES256"
+        ],
+        "publicAccessBlock": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "enforceSSLPolicy": "BucketPolicy を参照",
+        "loggingPrefix": "s3/debug-downloads/",
+        "lifecycleRules": [
+          {
+            "expirationInDays": 7,
+            "status": "Enabled"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
+    },
+    {
+      "logicalId": "DocumentsBucket9EC9DEB9",
+      "logicalName": "Documents Bucket",
+      "type": "AWS::S3::Bucket",
+      "purpose": "Documents Bucket (S3 bucket)",
+      "settings": {
+        "encryption": [
+          "AES256"
+        ],
+        "publicAccessBlock": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "enforceSSLPolicy": "BucketPolicy を参照",
+        "loggingPrefix": "s3/documents/",
+        "lifecycleRules": [
+          {
+            "prefix": "uploads/",
+            "expirationInDays": 7,
+            "status": "Enabled"
+          }
+        ],
+        "corsRules": [
+          {
+            "allowedMethods": [
+              "PUT"
+            ],
+            "allowedOrigins": [
+              "*"
+            ],
+            "allowedHeaders": [
+              "content-type"
+            ],
+            "exposedHeaders": [
+              "ETag"
+            ],
+            "maxAge": 900
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
+    },
+    {
+      "logicalId": "FrontendBucketEFE2E19C",
+      "logicalName": "Frontend Bucket",
+      "type": "AWS::S3::Bucket",
+      "purpose": "Frontend Bucket (S3 bucket)",
+      "settings": {
+        "encryption": [
+          "AES256"
+        ],
+        "publicAccessBlock": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "enforceSSLPolicy": "BucketPolicy を参照",
+        "loggingPrefix": "s3/frontend/"
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucket.md"
+    },
+    {
+      "logicalId": "BenchmarkRunsTableD0841636",
+      "logicalName": "Benchmark Runs Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Benchmark Runs Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "runId",
+            "KeyType": "HASH"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "runId",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "ChatRunEventsTable7455A50E",
+      "logicalName": "Chat Run Events Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Chat Run Events Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "runId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "seq",
+            "KeyType": "RANGE"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "runId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "seq",
+            "AttributeType": "N"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true,
+        "timeToLive": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "ChatRunsTable8446CD95",
+      "logicalName": "Chat Runs Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Chat Runs Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "runId",
+            "KeyType": "HASH"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "runId",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true,
+        "timeToLive": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "ConversationHistoryTable59A3534C",
+      "logicalName": "Conversation History Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Conversation History Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "userId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "userId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "DocumentGroupsTableA5108040",
+      "logicalName": "Document Groups Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Document Groups Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "groupId",
+            "KeyType": "HASH"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "groupId",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunEventsTableF4692EBE",
+      "logicalName": "Document Ingest Run Events Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Document Ingest Run Events Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "runId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "seq",
+            "KeyType": "RANGE"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "runId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "seq",
+            "AttributeType": "N"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true,
+        "timeToLive": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunsTableEA8F8CCA",
+      "logicalName": "Document Ingest Runs Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Document Ingest Runs Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "runId",
+            "KeyType": "HASH"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "runId",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true,
+        "timeToLive": {
+          "AttributeName": "ttl",
+          "Enabled": true
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "HumanQuestionsTable5DA9688B",
+      "logicalName": "Human Questions Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Human Questions Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "questionId",
+            "KeyType": "HASH"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "questionId",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
+      "logicalId": "ApiFunctionCE271BD4",
+      "logicalName": "Api Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Api Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 1024,
+        "timeoutSeconds": 60,
+        "environment": {
+          "AUTH_ENABLED": "true",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "BENCHMARK_STATE_MACHINE_ARN": "Ref:BenchmarkStateMachine8C582B8A",
+          "BENCHMARK_TARGET_API_BASE_URL": "Join:[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"},\"/prod/\"]]",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUN_STATE_MACHINE_ARN": "Ref:ChatRunStateMachine52CAF7BA",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN": "Ref:DocumentIngestRunStateMachine2FD7D3D3",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "PDF_OCR_FALLBACK_ENABLED": "true",
+          "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+          "USE_LOCAL_QUESTION_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:ApiFunctionServiceRole52B9747B.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "ChatRunEventsStreamFunctionA12E11AC",
+      "logicalName": "Chat Run Events Stream Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Chat Run Events Stream Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 512,
+        "timeoutSeconds": 900,
+        "environment": {
+          "AUTH_ENABLED": "true",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+          "USE_LOCAL_QUESTION_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:ChatRunEventsStreamFunctionServiceRole41BBFB5A.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "ChatRunMarkFailedFunction23223E28",
+      "logicalName": "Chat Run Mark Failed Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Chat Run Mark Failed Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 512,
+        "timeoutSeconds": 29,
+        "environment": {
+          "AUTH_ENABLED": "true",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+          "USE_LOCAL_QUESTION_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:ChatRunMarkFailedFunctionServiceRoleAAD50CA8.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "ChatRunWorkerFunction3C85A553",
+      "logicalName": "Chat Run Worker Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Chat Run Worker Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 1024,
+        "timeoutSeconds": 900,
+        "environment": {
+          "AUTH_ENABLED": "true",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+          "USE_LOCAL_QUESTION_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:ChatRunWorkerFunctionServiceRoleBED42CDB.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+      "logicalName": "Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C81C01536 (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "python3.13",
+        "timeoutSeconds": 900,
+        "environment": {
+          "AWS_CA_BUNDLE": "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
+        },
+        "layers": [
+          "Ref:DeployBenchmarkDatasetsAwsCliLayer634804B4"
+        ],
+        "role": "GetAtt:CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "logicalName": "Custom S3Auto Delete Objects Custom Resource Provider Handler",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Custom S3Auto Delete Objects Custom Resource Provider Handler (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "memorySize": 128,
+        "timeoutSeconds": 900,
+        "role": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunMarkFailedFunction41F16DD3",
+      "logicalName": "Document Ingest Run Mark Failed Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Document Ingest Run Mark Failed Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 512,
+        "timeoutSeconds": 29,
+        "environment": {
+          "AUTH_ENABLED": "true",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+          "USE_LOCAL_QUESTION_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunWorkerFunctionBBDBF694",
+      "logicalName": "Document Ingest Run Worker Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Document Ingest Run Worker Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 3008,
+        "timeoutSeconds": 900,
+        "ephemeralStorageMb": 4096,
+        "environment": {
+          "AUTH_ENABLED": "true",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "PDF_OCR_FALLBACK_ENABLED": "true",
+          "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+          "USE_LOCAL_QUESTION_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "HeavyApiFunction4BC152A5",
+      "logicalName": "Heavy Api Function",
+      "type": "AWS::Lambda::Function",
+      "purpose": "Heavy Api Function (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "memorySize": 3008,
+        "timeoutSeconds": 60,
+        "environment": {
+          "AUTH_ENABLED": "true",
+          "BENCHMARK_BUCKET_NAME": "Ref:BenchmarkBucketDD7D1D2F",
+          "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
+          "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "BENCHMARK_RUNS_TABLE_NAME": "Ref:BenchmarkRunsTableD0841636",
+          "BENCHMARK_STATE_MACHINE_ARN": "Ref:BenchmarkStateMachine8C582B8A",
+          "BENCHMARK_TARGET_API_BASE_URL": "Join:[\"\",[\"https://\",{\"Ref\":\"RestApi0C43BF4B\"},\".execute-api.\",{\"Ref\":\"AWS::Region\"},\".\",{\"Ref\":\"AWS::URLSuffix\"},\"/prod/\"]]",
+          "CHAT_RUN_EVENTS_TABLE_NAME": "Ref:ChatRunEventsTable7455A50E",
+          "CHAT_RUN_STATE_MACHINE_ARN": "Ref:ChatRunStateMachine52CAF7BA",
+          "CHAT_RUNS_TABLE_NAME": "Ref:ChatRunsTable8446CD95",
+          "COGNITO_APP_CLIENT_ID": "Ref:UserPoolWebClient4C9370B0",
+          "COGNITO_REGION": "Ref:AWS::Region",
+          "COGNITO_USER_POOL_ID": "Ref:UserPool6BA7E5F2",
+          "CONVERSATION_HISTORY_TABLE_NAME": "Ref:ConversationHistoryTable59A3534C",
+          "CORS_ALLOWED_ORIGINS": "*",
+          "DEBUG_DOWNLOAD_BUCKET_NAME": "Ref:DebugDownloadBucketAB6A16BE",
+          "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
+          "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
+          "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
+          "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
+          "DOCUMENT_INGEST_RUN_STATE_MACHINE_ARN": "Ref:DocumentIngestRunStateMachine2FD7D3D3",
+          "DOCUMENT_INGEST_RUNS_TABLE_NAME": "Ref:DocumentIngestRunsTableEA8F8CCA",
+          "EMBEDDING_DIMENSIONS": "1024",
+          "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
+          "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "MEMORY_VECTOR_INDEX_NAME": "memory-index",
+          "MIN_RETRIEVAL_SCORE": "0.20",
+          "MOCK_BEDROCK": "false",
+          "NODE_ENV": "production",
+          "PDF_OCR_FALLBACK_ENABLED": "true",
+          "PDF_OCR_FALLBACK_TIMEOUT_MS": "45000",
+          "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
+          "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
+          "USE_LOCAL_CHAT_RUN_STORE": "false",
+          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
+          "USE_LOCAL_QUESTION_STORE": "false",
+          "USE_LOCAL_VECTOR_STORE": "false",
+          "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
+        },
+        "role": "GetAtt:HeavyApiFunctionServiceRole25A7AE5E.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "S3VectorsProviderFn215E3A4E",
+      "logicalName": "S3Vectors Provider Fn",
+      "type": "AWS::Lambda::Function",
+      "purpose": "S3Vectors Provider Fn (Lambda function)",
+      "settings": {
+        "handler": "index.handler",
+        "runtime": "nodejs22.x",
+        "architectures": [
+          "arm64"
+        ],
+        "timeoutSeconds": 120,
+        "role": "GetAtt:S3VectorsProviderFnServiceRoleFEC97124.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "S3VectorsProviderframeworkonEventEB240CE8",
+      "logicalName": "S3Vectors Providerframeworkon Event",
+      "type": "AWS::Lambda::Function",
+      "purpose": "S3Vectors Providerframeworkon Event (Lambda function)",
+      "settings": {
+        "handler": "framework.onEvent",
+        "runtime": "nodejs22.x",
+        "timeoutSeconds": 900,
+        "environment": {
+          "USER_ON_EVENT_FUNCTION_ARN": "GetAtt:S3VectorsProviderFn215E3A4E.Arn"
+        },
+        "role": "GetAtt:S3VectorsProviderframeworkonEventServiceRole5255E58B.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-function.md"
+    },
+    {
+      "logicalId": "RestApi0C43BF4B",
+      "logicalName": "Rest Api",
+      "type": "AWS::ApiGateway::RestApi",
+      "purpose": "Rest Api (API Gateway REST API)",
+      "settings": {
+        "name": "RestApi",
+        "endpointTypes": [
+          "REGIONAL"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-restapi.md"
+    },
+    {
+      "logicalId": "RestApiDeploymentStageprod3855DE66",
+      "logicalName": "Rest Api Deployment Stageprod",
+      "type": "AWS::ApiGateway::Stage",
+      "purpose": "Rest Api Deployment Stageprod (API Gateway stage)",
+      "settings": {
+        "stageName": "prod",
+        "loggingLevel": "INFO",
+        "metricsEnabled": true,
+        "dataTraceEnabled": false,
+        "accessLogDestination": "GetAtt:RestApiAccessLogGroup246D1CE0.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-stage.md"
+    },
+    {
+      "logicalId": "RestApibenchmark0687AE3D",
+      "logicalName": "Rest Apibenchmark",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apibenchmark (API Gateway resource path)",
+      "settings": {
+        "path": "/benchmark",
+        "pathPart": "benchmark"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApibenchmarkqueryABD4E6D7",
+      "logicalName": "Rest Apibenchmarkquery",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apibenchmarkquery (API Gateway resource path)",
+      "settings": {
+        "path": "/benchmark/query",
+        "pathPart": "query"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApibenchmarksearchEAD28036",
+      "logicalName": "Rest Apibenchmarksearch",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apibenchmarksearch (API Gateway resource path)",
+      "settings": {
+        "path": "/benchmark/search",
+        "pathPart": "search"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApichat40D4BF8B",
+      "logicalName": "Rest Apichat",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apichat (API Gateway resource path)",
+      "settings": {
+        "path": "/chat",
+        "pathPart": "chat"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApichatruns60F0DD77",
+      "logicalName": "Rest Apichatruns",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apichatruns (API Gateway resource path)",
+      "settings": {
+        "path": "/chat-runs",
+        "pathPart": "chat-runs"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApichatrunsrunId67B06C02",
+      "logicalName": "Rest Apichatrunsrun Id",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apichatrunsrun Id (API Gateway resource path)",
+      "settings": {
+        "path": "/chat-runs/{runId}",
+        "pathPart": "{runId}"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApichatrunsrunIdevents5BAC3B9E",
+      "logicalName": "Rest Apichatrunsrun Idevents",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apichatrunsrun Idevents (API Gateway resource path)",
+      "settings": {
+        "path": "/chat-runs/{runId}/events",
+        "pathPart": "events"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsA82097B4",
+      "logicalName": "Rest Apidocuments",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocuments (API Gateway resource path)",
+      "settings": {
+        "path": "/documents",
+        "pathPart": "documents"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentId13B24DA0",
+      "logicalName": "Rest Apidocumentsdocument Id",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsdocument Id (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/{documentId}",
+        "pathPart": "{documentId}"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexC5BDC2A8",
+      "logicalName": "Rest Apidocumentsdocument Idreindex",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsdocument Idreindex (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/{documentId}/reindex",
+        "pathPart": "reindex"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexstageA598443E",
+      "logicalName": "Rest Apidocumentsdocument Idreindexstage",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsdocument Idreindexstage (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/{documentId}/reindex/stage",
+        "pathPart": "stage"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsD613331E",
+      "logicalName": "Rest Apidocumentsreindexmigrations",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsreindexmigrations (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/reindex-migrations",
+        "pathPart": "reindex-migrations"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationId6339E170",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Id",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Id (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/reindex-migrations/{migrationId}",
+        "pathPart": "{migrationId}"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverA30516C7",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idcutover",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idcutover (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/reindex-migrations/{migrationId}/cutover",
+        "pathPart": "cutover"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackE6A0A906",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idrollback",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idrollback (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/reindex-migrations/{migrationId}/rollback",
+        "pathPart": "rollback"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsA497AFA8",
+      "logicalName": "Rest Apidocumentsuploads",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsuploads (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/uploads",
+        "pathPart": "uploads"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadId05DE8EA3",
+      "logicalName": "Rest Apidocumentsuploadsupload Id",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsuploadsupload Id (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/uploads/{uploadId}",
+        "pathPart": "{uploadId}"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdcontent9FB57E1D",
+      "logicalName": "Rest Apidocumentsuploadsupload Idcontent",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsuploadsupload Idcontent (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/uploads/{uploadId}/content",
+        "pathPart": "content"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdingestA823F650",
+      "logicalName": "Rest Apidocumentsuploadsupload Idingest",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apidocumentsuploadsupload Idingest (API Gateway resource path)",
+      "settings": {
+        "path": "/documents/uploads/{uploadId}/ingest",
+        "pathPart": "ingest"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApiproxyC95856DD",
+      "logicalName": "Rest Apiproxy",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apiproxy (API Gateway resource path)",
+      "settings": {
+        "path": "/{proxy+}",
+        "pathPart": "{proxy+}"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApisearchA0D22340",
+      "logicalName": "Rest Apisearch",
+      "type": "AWS::ApiGateway::Resource",
+      "purpose": "Rest Apisearch (API Gateway resource path)",
+      "settings": {
+        "path": "/search",
+        "pathPart": "search"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-resource.md"
+    },
+    {
+      "logicalId": "RestApiANYA7C1DC94",
+      "logicalName": "Rest Api ANY",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Api ANY (API Gateway method)",
+      "settings": {
+        "method": "ANY",
+        "path": "/",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApibenchmarkOPTIONS98E5C5B2",
+      "logicalName": "Rest Apibenchmark OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apibenchmark OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/benchmark",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApibenchmarkqueryOPTIONS35F1C45A",
+      "logicalName": "Rest Apibenchmarkquery OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apibenchmarkquery OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/benchmark/query",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApibenchmarkqueryPOSTDA41A31E",
+      "logicalName": "Rest Apibenchmarkquery POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apibenchmarkquery POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/benchmark/query",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApibenchmarksearchOPTIONS2B9A6F31",
+      "logicalName": "Rest Apibenchmarksearch OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apibenchmarksearch OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/benchmark/search",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApibenchmarksearchPOSTD62C84E5",
+      "logicalName": "Rest Apibenchmarksearch POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apibenchmarksearch POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/benchmark/search",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApichatOPTIONS0617E40B",
+      "logicalName": "Rest Apichat OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apichat OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/chat",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApichatPOST4DAC6FEC",
+      "logicalName": "Rest Apichat POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apichat POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/chat",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApichatrunsOPTIONS7EE1D56A",
+      "logicalName": "Rest Apichatruns OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apichatruns OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/chat-runs",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApichatrunsPOST78780797",
+      "logicalName": "Rest Apichatruns POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apichatruns POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/chat-runs",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApichatrunsrunIdeventsGETA659C870",
+      "logicalName": "Rest Apichatrunsrun Idevents GET",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apichatrunsrun Idevents GET (API Gateway method)",
+      "settings": {
+        "method": "GET",
+        "path": "/chat-runs/{runId}/events",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 900000,
+        "responseTransferMode": "STREAM"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApichatrunsrunIdeventsOPTIONSC49B5D8A",
+      "logicalName": "Rest Apichatrunsrun Idevents OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apichatrunsrun Idevents OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/chat-runs/{runId}/events",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApichatrunsrunIdOPTIONS3E839889",
+      "logicalName": "Rest Apichatrunsrun Id OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apichatrunsrun Id OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/chat-runs/{runId}",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdDELETEB97E741B",
+      "logicalName": "Rest Apidocumentsdocument Id DELETEB97E741B",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsdocument Id DELETEB97E741B (API Gateway method)",
+      "settings": {
+        "method": "DELETE",
+        "path": "/documents/{documentId}",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdOPTIONS430739B2",
+      "logicalName": "Rest Apidocumentsdocument Id OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsdocument Id OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/{documentId}",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexOPTIONSF984D30B",
+      "logicalName": "Rest Apidocumentsdocument Idreindex OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsdocument Idreindex OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/{documentId}/reindex",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexPOSTF324AB1F",
+      "logicalName": "Rest Apidocumentsdocument Idreindex POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsdocument Idreindex POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/documents/{documentId}/reindex",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexstageOPTIONS6A784B49",
+      "logicalName": "Rest Apidocumentsdocument Idreindexstage OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsdocument Idreindexstage OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/{documentId}/reindex/stage",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexstagePOST300E1BE4",
+      "logicalName": "Rest Apidocumentsdocument Idreindexstage POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsdocument Idreindexstage POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/documents/{documentId}/reindex/stage",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsGETAB791FA6",
+      "logicalName": "Rest Apidocuments GET",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocuments GET (API Gateway method)",
+      "settings": {
+        "method": "GET",
+        "path": "/documents",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsOPTIONSA31F374B",
+      "logicalName": "Rest Apidocuments OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocuments OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsPOST60E2D532",
+      "logicalName": "Rest Apidocuments POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocuments POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/documents",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsGET376D3592",
+      "logicalName": "Rest Apidocumentsreindexmigrations GET",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsreindexmigrations GET (API Gateway method)",
+      "settings": {
+        "method": "GET",
+        "path": "/documents/reindex-migrations",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverOPTIONS9DBE3D16",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idcutover OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idcutover OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/reindex-migrations/{migrationId}/cutover",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverPOST242FBD39",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idcutover POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idcutover POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/documents/reindex-migrations/{migrationId}/cutover",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdOPTIONS6554167F",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Id OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Id OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/reindex-migrations/{migrationId}",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackOPTIONSCCBBB98F",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idrollback OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idrollback OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/reindex-migrations/{migrationId}/rollback",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTA581B992",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idrollback POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idrollback POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/documents/reindex-migrations/{migrationId}/rollback",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsOPTIONS5E0EF276",
+      "logicalName": "Rest Apidocumentsreindexmigrations OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsreindexmigrations OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/reindex-migrations",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsOPTIONS4FAAFC51",
+      "logicalName": "Rest Apidocumentsuploads OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsuploads OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/uploads",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsPOSTB3672B01",
+      "logicalName": "Rest Apidocumentsuploads POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsuploads POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/documents/uploads",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdcontentOPTIONS46B7EF2B",
+      "logicalName": "Rest Apidocumentsuploadsupload Idcontent OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsuploadsupload Idcontent OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/uploads/{uploadId}/content",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdcontentPOST10F2C896",
+      "logicalName": "Rest Apidocumentsuploadsupload Idcontent POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsuploadsupload Idcontent POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/documents/uploads/{uploadId}/content",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdingestOPTIONS50AD773E",
+      "logicalName": "Rest Apidocumentsuploadsupload Idingest OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsuploadsupload Idingest OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/uploads/{uploadId}/ingest",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdingestPOSTC9699490",
+      "logicalName": "Rest Apidocumentsuploadsupload Idingest POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsuploadsupload Idingest POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/documents/uploads/{uploadId}/ingest",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdOPTIONSED0C4A5A",
+      "logicalName": "Rest Apidocumentsuploadsupload Id OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apidocumentsuploadsupload Id OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/documents/uploads/{uploadId}",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApiOPTIONS6AA64D2D",
+      "logicalName": "Rest Api OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Api OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApiproxyANY1786B242",
+      "logicalName": "Rest Apiproxy ANY",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apiproxy ANY (API Gateway method)",
+      "settings": {
+        "method": "ANY",
+        "path": "/{proxy+}",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApiproxyOPTIONS32C4B154",
+      "logicalName": "Rest Apiproxy OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apiproxy OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/{proxy+}",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApisearchOPTIONSDF398734",
+      "logicalName": "Rest Apisearch OPTIONS",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apisearch OPTIONS (API Gateway method)",
+      "settings": {
+        "method": "OPTIONS",
+        "path": "/search",
+        "authorizationType": "NONE",
+        "integrationType": "MOCK"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "RestApisearchPOST5D2A9A4A",
+      "logicalName": "Rest Apisearch POST",
+      "type": "AWS::ApiGateway::Method",
+      "purpose": "Rest Apisearch POST (API Gateway method)",
+      "settings": {
+        "method": "POST",
+        "path": "/search",
+        "authorizationType": "COGNITO_USER_POOLS",
+        "authorizerId": "Ref:RestApiCognitoAuthorizerF1518B6A",
+        "requestValidatorId": "Ref:RestApiRequestValidatorAAF760FF",
+        "integrationType": "AWS_PROXY",
+        "integrationHttpMethod": "POST",
+        "integrationTimeoutMs": 60000
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-method.md"
+    },
+    {
+      "logicalId": "UserPool6BA7E5F2",
+      "logicalName": "User Pool",
+      "type": "AWS::Cognito::UserPool",
+      "purpose": "User Pool (Cognito user pool)",
+      "settings": {
+        "adminCreateUserOnly": true,
+        "usernameAttributes": [
+          "email"
+        ],
+        "autoVerifiedAttributes": [
+          "email"
+        ],
+        "mfaConfiguration": "OPTIONAL",
+        "enabledMfas": [
+          "SOFTWARE_TOKEN_MFA"
+        ],
+        "accountRecoveryMechanisms": [
+          {
+            "Name": "verified_email",
+            "Priority": 1
+          }
+        ],
+        "passwordPolicy": {
+          "MinimumLength": 12,
+          "RequireLowercase": true,
+          "RequireNumbers": true,
+          "RequireSymbols": true,
+          "RequireUppercase": true
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpool.md"
+    },
+    {
+      "logicalId": "UserPoolWebClient4C9370B0",
+      "logicalName": "User Pool Web Client",
+      "type": "AWS::Cognito::UserPoolClient",
+      "purpose": "User Pool Web Client (Cognito app client)",
+      "settings": {
+        "generateSecret": false,
+        "explicitAuthFlows": [
+          "ALLOW_USER_PASSWORD_AUTH",
+          "ALLOW_USER_SRP_AUTH",
+          "ALLOW_REFRESH_TOKEN_AUTH"
+        ],
+        "preventUserExistenceErrors": "ENABLED",
+        "accessTokenValidity": 60,
+        "idTokenValidity": 60,
+        "refreshTokenValidity": 43200
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolclient.md"
+    },
+    {
+      "logicalId": "UserPoolUserPoolDomain9F01E991",
+      "logicalName": "User Pool User Pool Domain",
+      "type": "AWS::Cognito::UserPoolDomain",
+      "purpose": "User Pool User Pool Domain (Cognito hosted domain)",
+      "settings": {
+        "domain": "memorag-c85f22a0",
+        "userPoolId": "Ref:UserPool6BA7E5F2"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpooldomain.md"
+    },
+    {
+      "logicalId": "ACCESSADMINGroup",
+      "logicalName": "ACCESSADMIN Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "ACCESSADMIN Group (Cognito role group)",
+      "settings": {
+        "groupName": "ACCESS_ADMIN",
+        "description": "MemoRAG role: ACCESS_ADMIN"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "ANSWEREDITORGroup",
+      "logicalName": "ANSWEREDITOR Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "ANSWEREDITOR Group (Cognito role group)",
+      "settings": {
+        "groupName": "ANSWER_EDITOR",
+        "description": "MemoRAG role: ANSWER_EDITOR"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "BENCHMARKOPERATORGroup",
+      "logicalName": "BENCHMARKOPERATOR Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "BENCHMARKOPERATOR Group (Cognito role group)",
+      "settings": {
+        "groupName": "BENCHMARK_OPERATOR",
+        "description": "MemoRAG role: BENCHMARK_OPERATOR"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "BENCHMARKRUNNERGroup",
+      "logicalName": "BENCHMARKRUNNER Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "BENCHMARKRUNNER Group (Cognito role group)",
+      "settings": {
+        "groupName": "BENCHMARK_RUNNER",
+        "description": "MemoRAG role: BENCHMARK_RUNNER"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "CHATUSERGroup",
+      "logicalName": "CHATUSER Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "CHATUSER Group (Cognito role group)",
+      "settings": {
+        "groupName": "CHAT_USER",
+        "description": "MemoRAG role: CHAT_USER"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "COSTAUDITORGroup",
+      "logicalName": "COSTAUDITOR Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "COSTAUDITOR Group (Cognito role group)",
+      "settings": {
+        "groupName": "COST_AUDITOR",
+        "description": "MemoRAG role: COST_AUDITOR"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "RAGGROUPMANAGERGroup",
+      "logicalName": "RAGGROUPMANAGER Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "RAGGROUPMANAGER Group (Cognito role group)",
+      "settings": {
+        "groupName": "RAG_GROUP_MANAGER",
+        "description": "MemoRAG role: RAG_GROUP_MANAGER"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "SYSTEMADMINGroup",
+      "logicalName": "SYSTEMADMIN Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "SYSTEMADMIN Group (Cognito role group)",
+      "settings": {
+        "groupName": "SYSTEM_ADMIN",
+        "description": "MemoRAG role: SYSTEM_ADMIN"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "USERADMINGroup",
+      "logicalName": "USERADMIN Group",
+      "type": "AWS::Cognito::UserPoolGroup",
+      "purpose": "USERADMIN Group (Cognito role group)",
+      "settings": {
+        "groupName": "USER_ADMIN",
+        "description": "MemoRAG role: USER_ADMIN"
+      },
+      "detailFilePath": "infra-inventory/aws-cognito-userpoolgroup.md"
+    },
+    {
+      "logicalId": "FrontendDistributionE6EAF405",
+      "logicalName": "Frontend Distribution",
+      "type": "AWS::CloudFront::Distribution",
+      "purpose": "Frontend Distribution (CloudFront distribution)",
+      "settings": {
+        "enabled": true,
+        "defaultRootObject": "index.html",
+        "httpVersion": "http2",
+        "defaultViewerProtocolPolicy": "redirect-to-https",
+        "origins": [
+          {
+            "id": "MemoRagMvpStackTestFrontendDistributionOrigin143ACDEE5",
+            "domainName": "GetAtt:FrontendBucketEFE2E19C.RegionalDomainName",
+            "originAccessControlId": "GetAtt:FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6.Id"
+          }
+        ],
+        "logging": {
+          "Bucket": {
+            "Fn::GetAtt": [
+              "AccessLogsBucket83982689",
+              "RegionalDomainName"
+            ]
+          },
+          "Prefix": "cloudfront/frontend/"
+        },
+        "customErrorResponses": [
+          {
+            "ErrorCode": 403,
+            "ResponseCode": 200,
+            "ResponsePagePath": "/index.html"
+          },
+          {
+            "ErrorCode": 404,
+            "ResponseCode": 200,
+            "ResponsePagePath": "/index.html"
+          }
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-cloudfront-distribution.md"
+    },
+    {
+      "logicalId": "FrontendDistributionOrigin1S3OriginAccessControl51A3EFC6",
+      "logicalName": "Frontend Distribution Origin1S3Origin Access Control",
+      "type": "AWS::CloudFront::OriginAccessControl",
+      "purpose": "Frontend Distribution Origin1S3Origin Access Control (CloudFront origin access control)",
+      "settings": {
+        "name": "MemoRagMvpStackTestFrontendDOrigin1S3OriginAccessControl2ABD163A",
+        "originType": "s3",
+        "signingBehavior": "always",
+        "signingProtocol": "sigv4"
+      },
+      "detailFilePath": "infra-inventory/aws-cloudfront-originaccesscontrol.md"
+    },
+    {
+      "logicalId": "BenchmarkProject1593465D",
+      "logicalName": "Benchmark Project",
+      "type": "AWS::CodeBuild::Project",
+      "purpose": "Benchmark Project (CodeBuild benchmark runner)",
+      "settings": {
+        "serviceRole": "GetAtt:BenchmarkProjectRole31C9ABBD.Arn",
+        "encryptionKey": "GetAtt:BenchmarkProjectKeyB840011B.Arn",
+        "timeoutInMinutes": 180,
+        "computeType": "BUILD_GENERAL1_SMALL",
+        "image": "aws/codebuild/standard:7.0",
+        "privilegedMode": false,
+        "environmentVariables": [
+          {
+            "name": "COGNITO_USER_POOL_ID",
+            "value": "Ref:UserPool6BA7E5F2",
+            "type": "PLAINTEXT"
+          },
+          {
+            "name": "COGNITO_APP_CLIENT_ID",
+            "value": "Ref:UserPoolWebClient4C9370B0",
+            "type": "PLAINTEXT"
+          },
+          {
+            "name": "BENCHMARK_AUTH_SECRET_ID",
+            "value": "<masked-or-reference>",
+            "type": "PLAINTEXT"
+          },
+          {
+            "name": "BENCHMARK_RUNNER_GROUP",
+            "value": "BENCHMARK_RUNNER",
+            "type": "PLAINTEXT"
+          },
+          {
+            "name": "BENCHMARK_RUNS_TABLE_NAME",
+            "value": "Ref:BenchmarkRunsTableD0841636",
+            "type": "PLAINTEXT"
+          },
+          {
+            "name": "BENCHMARK_CODEBUILD_LOG_GROUP_NAME",
+            "value": "Ref:BenchmarkProjectLogGroup395F719E",
+            "type": "PLAINTEXT"
+          }
+        ],
+        "sourceType": "GITHUB",
+        "sourceLocation": "https://github.com/tsuji-tomonori/rag-assist.git",
+        "sourceVersion": "main",
+        "logsConfig": {
+          "CloudWatchLogs": {
+            "GroupName": {
+              "Ref": "BenchmarkProjectLogGroup395F719E"
+            },
+            "Status": "ENABLED"
+          }
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-codebuild-project.md"
+    },
+    {
+      "logicalId": "BenchmarkStateMachine8C582B8A",
+      "logicalName": "Benchmark State Machine",
+      "type": "AWS::StepFunctions::StateMachine",
+      "purpose": "Benchmark State Machine (Step Functions state machine)",
+      "settings": {
+        "stateMachineType": "STANDARD",
+        "loggingLevel": "ALL",
+        "definitionSummary": [
+          "BenchmarkStartCodeBuild"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-stepfunctions-statemachine.md"
+    },
+    {
+      "logicalId": "ChatRunStateMachine52CAF7BA",
+      "logicalName": "Chat Run State Machine",
+      "type": "AWS::StepFunctions::StateMachine",
+      "purpose": "Chat Run State Machine (Step Functions state machine)",
+      "settings": {
+        "stateMachineType": "STANDARD",
+        "loggingLevel": "ALL",
+        "definitionSummary": [
+          "ChatRunWorkerTask",
+          "ChatRunMarkFailedTask"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-stepfunctions-statemachine.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunStateMachine2FD7D3D3",
+      "logicalName": "Document Ingest Run State Machine",
+      "type": "AWS::StepFunctions::StateMachine",
+      "purpose": "Document Ingest Run State Machine (Step Functions state machine)",
+      "settings": {
+        "stateMachineType": "STANDARD",
+        "loggingLevel": "ALL",
+        "definitionSummary": [
+          "DocumentIngestRunWorkerTask",
+          "DocumentIngestRunMarkFailedTask"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-stepfunctions-statemachine.md"
+    },
+    {
+      "logicalId": "BenchmarkProjectKeyB840011B",
+      "logicalName": "Benchmark Project Key",
+      "type": "AWS::KMS::Key",
+      "purpose": "Benchmark Project Key (KMS key)",
+      "settings": {
+        "enableKeyRotation": true,
+        "keyPolicyStatementCount": 1
+      },
+      "detailFilePath": "infra-inventory/aws-kms-key.md"
+    },
+    {
+      "logicalId": "BenchmarkRunnerAuthSecret035EF8F2",
+      "logicalName": "Benchmark Runner Auth Secret",
+      "type": "AWS::SecretsManager::Secret",
+      "purpose": "Benchmark Runner Auth Secret (Secrets Manager secret)",
+      "settings": {
+        "description": "MemoRAG benchmark runner Cognito service user credentials",
+        "generateStringKey": "<masked>",
+        "passwordLength": 32,
+        "excludedCharactersConfigured": true
+      },
+      "detailFilePath": "infra-inventory/aws-secretsmanager-secret.md"
+    },
+    {
+      "logicalId": "ApiFunctionLogGroup00D1AC73",
+      "logicalName": "Api Function Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Api Function Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "BenchmarkProjectLogGroup395F719E",
+      "logicalName": "Benchmark Project Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Benchmark Project Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "BenchmarkStateMachineLogGroup6D80BBB2",
+      "logicalName": "Benchmark State Machine Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Benchmark State Machine Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "ChatRunEventsStreamLogGroupDB3F86F0",
+      "logicalName": "Chat Run Events Stream Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Chat Run Events Stream Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "ChatRunMarkFailedLogGroup7848AD59",
+      "logicalName": "Chat Run Mark Failed Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Chat Run Mark Failed Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "ChatRunStateMachineLogGroup6AD4AA67",
+      "logicalName": "Chat Run State Machine Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Chat Run State Machine Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "ChatRunWorkerLogGroup5ACB3363",
+      "logicalName": "Chat Run Worker Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Chat Run Worker Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunMarkFailedLogGroupF2BA4346",
+      "logicalName": "Document Ingest Run Mark Failed Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Document Ingest Run Mark Failed Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunStateMachineLogGroup94B2F1DE",
+      "logicalName": "Document Ingest Run State Machine Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Document Ingest Run State Machine Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunWorkerLogGroup2B1C84D3",
+      "logicalName": "Document Ingest Run Worker Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Document Ingest Run Worker Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "HeavyApiFunctionLogGroupF418C95A",
+      "logicalName": "Heavy Api Function Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Heavy Api Function Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "RestApiAccessLogGroup246D1CE0",
+      "logicalName": "Rest Api Access Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "Rest Api Access Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "S3VectorsProviderFrameworkLogGroupB49A141A",
+      "logicalName": "S3Vectors Provider Framework Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "S3Vectors Provider Framework Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "S3VectorsProviderLogGroupE19D8C96",
+      "logicalName": "S3Vectors Provider Log Group",
+      "type": "AWS::Logs::LogGroup",
+      "purpose": "S3Vectors Provider Log Group (CloudWatch Logs log group)",
+      "settings": {
+        "retentionInDays": 7
+      },
+      "detailFilePath": "infra-inventory/aws-logs-loggroup.md"
+    },
+    {
+      "logicalId": "ApiFunctionServiceRole52B9747B",
+      "logicalName": "Api Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Api Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "BenchmarkProjectRole31C9ABBD",
+      "logicalName": "Benchmark Project Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Benchmark Project Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:codebuild.amazonaws.com"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "BenchmarkStateMachineRole9EC7E298",
+      "logicalName": "Benchmark State Machine Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Benchmark State Machine Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:states.amazonaws.com"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "ChatRunEventsStreamFunctionServiceRole41BBFB5A",
+      "logicalName": "Chat Run Events Stream Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Chat Run Events Stream Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "ChatRunMarkFailedFunctionServiceRoleAAD50CA8",
+      "logicalName": "Chat Run Mark Failed Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Chat Run Mark Failed Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "ChatRunStateMachineRoleE7E4F7A4",
+      "logicalName": "Chat Run State Machine Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Chat Run State Machine Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:states.amazonaws.com"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "ChatRunWorkerFunctionServiceRoleBED42CDB",
+      "logicalName": "Chat Run Worker Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Chat Run Worker Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265",
+      "logicalName": "Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "logicalName": "Custom S3Auto Delete Objects Custom Resource Provider Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Custom S3Auto Delete Objects Custom Resource Provider Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Sub:arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D",
+      "logicalName": "Document Ingest Run Mark Failed Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Document Ingest Run Mark Failed Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunStateMachineRole10EA8277",
+      "logicalName": "Document Ingest Run State Machine Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Document Ingest Run State Machine Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:states.amazonaws.com"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED",
+      "logicalName": "Document Ingest Run Worker Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Document Ingest Run Worker Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "HeavyApiFunctionServiceRole25A7AE5E",
+      "logicalName": "Heavy Api Function Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Heavy Api Function Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "RestApiCloudWatchRoleE3ED6605",
+      "logicalName": "Rest Api Cloud Watch Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "Rest Api Cloud Watch Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:apigateway.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "S3VectorsProviderFnServiceRoleFEC97124",
+      "logicalName": "S3Vectors Provider Fn Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "S3Vectors Provider Fn Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "S3VectorsProviderframeworkonEventServiceRole5255E58B",
+      "logicalName": "S3Vectors Providerframeworkon Event Service Role",
+      "type": "AWS::IAM::Role",
+      "purpose": "S3Vectors Providerframeworkon Event Service Role (IAM role)",
+      "settings": {
+        "assumedBy": [
+          "Service:lambda.amazonaws.com"
+        ],
+        "managedPolicyArns": [
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole\"]]"
+        ],
+        "inlinePolicyCount": 0
+      },
+      "detailFilePath": "infra-inventory/aws-iam-role.md"
+    },
+    {
+      "logicalId": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
+      "logicalName": "Api Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Api Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
+        "roles": [
+          "Ref:ApiFunctionServiceRole52B9747B"
+        ],
+        "statementCount": 23,
+        "actions": [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:ListUsers",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "s3:Abort*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:List*",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging",
+          "s3vectors:DeleteVectors",
+          "s3vectors:GetVectors",
+          "s3vectors:ListVectors",
+          "s3vectors:PutVectors",
+          "s3vectors:QueryVectors",
+          "textract:DetectDocumentText",
+          "textract:GetDocumentTextDetection",
+          "textract:StartDocumentTextDetection"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:BenchmarkBucketDD7D1D2F.Arn",
+          "GetAtt:BenchmarkRunsTableD0841636.Arn",
+          "GetAtt:ChatRunEventsTable7455A50E.Arn",
+          "GetAtt:ChatRunsTable8446CD95.Arn",
+          "GetAtt:ConversationHistoryTable59A3534C.Arn",
+          "GetAtt:DebugDownloadBucketAB6A16BE.Arn",
+          "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
+          "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
+          "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:HumanQuestionsTable5DA9688B.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "BenchmarkProjectRoleDefaultPolicyCFB0FA8E",
+      "logicalName": "Benchmark Project Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Benchmark Project Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "BenchmarkProjectRoleDefaultPolicyCFB0FA8E",
+        "roles": [
+          "Ref:BenchmarkProjectRole31C9ABBD"
+        ],
+        "statementCount": 9,
+        "actions": [
+          "codebuild:BatchPutCodeCoverages",
+          "codebuild:BatchPutTestCases",
+          "codebuild:CreateReport",
+          "codebuild:CreateReportGroup",
+          "codebuild:UpdateReport",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminSetUserPassword",
+          "cognito-idp:InitiateAuth",
+          "dynamodb:UpdateItem",
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey*",
+          "kms:ReEncrypt*",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "s3:Abort*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:List*",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:GetSecretValue"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:BenchmarkBucketDD7D1D2F.Arn",
+          "GetAtt:BenchmarkProjectKeyB840011B.Arn",
+          "GetAtt:BenchmarkProjectLogGroup395F719E.Arn",
+          "GetAtt:BenchmarkRunsTableD0841636.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":codebuild:ap-northeast-1:111111111111:report-group/\",{\"Ref\":\"BenchmarkProject1593465D\"},\"-*\"]]",
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/\",{\"Ref\":\"BenchmarkProject1593465D\"},\":*\"]]",
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:/aws/codebuild/\",{\"Ref\":\"BenchmarkProject1593465D\"}]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
+          "Ref:BenchmarkRunnerAuthSecret035EF8F2"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "BenchmarkStateMachineRoleDefaultPolicyED2C1461",
+      "logicalName": "Benchmark State Machine Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Benchmark State Machine Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "BenchmarkStateMachineRoleDefaultPolicyED2C1461",
+        "roles": [
+          "Ref:BenchmarkStateMachineRole9EC7E298"
+        ],
+        "statementCount": 4,
+        "actions": [
+          "codebuild:BatchGetBuilds",
+          "codebuild:StartBuild",
+          "codebuild:StopBuild",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "events:DescribeRule",
+          "events:PutRule",
+          "events:PutTargets",
+          "logs:CreateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:DescribeLogGroups",
+          "logs:DescribeResourcePolicies",
+          "logs:GetLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutResourcePolicy",
+          "logs:UpdateLogDelivery"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:BenchmarkProject1593465D.Arn",
+          "GetAtt:BenchmarkRunsTableD0841636.Arn"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2",
+      "logicalName": "Chat Run Events Stream Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Chat Run Events Stream Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "ChatRunEventsStreamFunctionServiceRoleDefaultPolicyA6AD23F2",
+        "roles": [
+          "Ref:ChatRunEventsStreamFunctionServiceRole41BBFB5A"
+        ],
+        "statementCount": 4,
+        "actions": [
+          "dynamodb:BatchGetItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ],
+        "resources": [
+          "GetAtt:ChatRunEventsTable7455A50E.Arn",
+          "GetAtt:ChatRunsTable8446CD95.Arn"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617",
+      "logicalName": "Chat Run Mark Failed Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Chat Run Mark Failed Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "ChatRunMarkFailedFunctionServiceRoleDefaultPolicyDCCB4617",
+        "roles": [
+          "Ref:ChatRunMarkFailedFunctionServiceRoleAAD50CA8"
+        ],
+        "statementCount": 4,
+        "actions": [
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem"
+        ],
+        "resources": [
+          "GetAtt:ChatRunEventsTable7455A50E.Arn",
+          "GetAtt:ChatRunsTable8446CD95.Arn"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "ChatRunStateMachineRoleDefaultPolicyC3BFD137",
+      "logicalName": "Chat Run State Machine Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Chat Run State Machine Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "ChatRunStateMachineRoleDefaultPolicyC3BFD137",
+        "roles": [
+          "Ref:ChatRunStateMachineRoleE7E4F7A4"
+        ],
+        "statementCount": 3,
+        "actions": [
+          "lambda:InvokeFunction",
+          "logs:CreateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:DescribeLogGroups",
+          "logs:DescribeResourcePolicies",
+          "logs:GetLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutResourcePolicy",
+          "logs:UpdateLogDelivery"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:ChatRunMarkFailedFunction23223E28.Arn",
+          "GetAtt:ChatRunWorkerFunction3C85A553.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunMarkFailedFunction23223E28\",\"Arn\"]},\":*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"ChatRunWorkerFunction3C85A553\",\"Arn\"]},\":*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3",
+      "logicalName": "Chat Run Worker Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Chat Run Worker Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "ChatRunWorkerFunctionServiceRoleDefaultPolicy17EAA0D3",
+        "roles": [
+          "Ref:ChatRunWorkerFunctionServiceRoleBED42CDB"
+        ],
+        "statementCount": 10,
+        "actions": [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "s3:Abort*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:List*",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging",
+          "s3vectors:DeleteVectors",
+          "s3vectors:GetVectors",
+          "s3vectors:ListVectors",
+          "s3vectors:PutVectors",
+          "s3vectors:QueryVectors"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:ChatRunEventsTable7455A50E.Arn",
+          "GetAtt:ChatRunsTable8446CD95.Arn",
+          "GetAtt:DebugDownloadBucketAB6A16BE.Arn",
+          "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+      "logicalName": "Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Custom CDK Bucket Deployment8693BB64968944B69AAFB0CC9EB8756C Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRoleDefaultPolicy88902FDF",
+        "roles": [
+          "Ref:CustomCDKBucketDeployment8693BB64968944B69AAFB0CC9EB8756CServiceRole89A01265"
+        ],
+        "statementCount": 2,
+        "actions": [
+          "s3:Abort*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:List*",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging"
+        ],
+        "resources": [
+          "GetAtt:BenchmarkBucketDD7D1D2F.Arn",
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":s3:::cdk-hnb659fds-assets-111111111111-ap-northeast-1\"]]",
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":s3:::cdk-hnb659fds-assets-111111111111-ap-northeast-1/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B",
+      "logicalName": "Document Ingest Run Mark Failed Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Document Ingest Run Mark Failed Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "DocumentIngestRunMarkFailedFunctionServiceRoleDefaultPolicy6B2C079B",
+        "roles": [
+          "Ref:DocumentIngestRunMarkFailedFunctionServiceRole8A5F469D"
+        ],
+        "statementCount": 4,
+        "actions": [
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem"
+        ],
+        "resources": [
+          "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
+          "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F",
+      "logicalName": "Document Ingest Run State Machine Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Document Ingest Run State Machine Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "DocumentIngestRunStateMachineRoleDefaultPolicy40421B5F",
+        "roles": [
+          "Ref:DocumentIngestRunStateMachineRole10EA8277"
+        ],
+        "statementCount": 3,
+        "actions": [
+          "lambda:InvokeFunction",
+          "logs:CreateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:DescribeLogGroups",
+          "logs:DescribeResourcePolicies",
+          "logs:GetLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutResourcePolicy",
+          "logs:UpdateLogDelivery"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:DocumentIngestRunMarkFailedFunction41F16DD3.Arn",
+          "GetAtt:DocumentIngestRunWorkerFunctionBBDBF694.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunMarkFailedFunction41F16DD3\",\"Arn\"]},\":*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentIngestRunWorkerFunctionBBDBF694\",\"Arn\"]},\":*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE",
+      "logicalName": "Document Ingest Run Worker Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Document Ingest Run Worker Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "DocumentIngestRunWorkerFunctionServiceRoleDefaultPolicyE7C95FCE",
+        "roles": [
+          "Ref:DocumentIngestRunWorkerFunctionServiceRole7BEAC0ED"
+        ],
+        "statementCount": 10,
+        "actions": [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "s3:Abort*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:List*",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging",
+          "s3vectors:DeleteVectors",
+          "s3vectors:GetVectors",
+          "s3vectors:ListVectors",
+          "s3vectors:PutVectors",
+          "s3vectors:QueryVectors",
+          "textract:DetectDocumentText",
+          "textract:GetDocumentTextDetection",
+          "textract:StartDocumentTextDetection"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
+          "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
+          "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE",
+      "logicalName": "Heavy Api Function Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "Heavy Api Function Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE",
+        "roles": [
+          "Ref:HeavyApiFunctionServiceRole25A7AE5E"
+        ],
+        "statementCount": 23,
+        "actions": [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:ListUsers",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:ConditionCheckItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:GetItem",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
+          "dynamodb:PutItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:UpdateItem",
+          "s3:Abort*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject*",
+          "s3:List*",
+          "s3:PutObject",
+          "s3:PutObjectLegalHold",
+          "s3:PutObjectRetention",
+          "s3:PutObjectTagging",
+          "s3:PutObjectVersionTagging",
+          "s3vectors:DeleteVectors",
+          "s3vectors:GetVectors",
+          "s3vectors:ListVectors",
+          "s3vectors:PutVectors",
+          "s3vectors:QueryVectors",
+          "textract:DetectDocumentText",
+          "textract:GetDocumentTextDetection",
+          "textract:StartDocumentTextDetection"
+        ],
+        "resources": [
+          "*",
+          "GetAtt:BenchmarkBucketDD7D1D2F.Arn",
+          "GetAtt:BenchmarkRunsTableD0841636.Arn",
+          "GetAtt:ChatRunEventsTable7455A50E.Arn",
+          "GetAtt:ChatRunsTable8446CD95.Arn",
+          "GetAtt:ConversationHistoryTable59A3534C.Arn",
+          "GetAtt:DebugDownloadBucketAB6A16BE.Arn",
+          "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
+          "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
+          "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:HumanQuestionsTable5DA9688B.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7",
+      "logicalName": "S3Vectors Provider Fn Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "S3Vectors Provider Fn Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "S3VectorsProviderFnServiceRoleDefaultPolicy0DE2AFB7",
+        "roles": [
+          "Ref:S3VectorsProviderFnServiceRoleFEC97124"
+        ],
+        "statementCount": 1,
+        "actions": [
+          "s3vectors:*"
+        ],
+        "resources": [
+          "*"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756",
+      "logicalName": "S3Vectors Providerframeworkon Event Service Role Default Policy",
+      "type": "AWS::IAM::Policy",
+      "purpose": "S3Vectors Providerframeworkon Event Service Role Default Policy (IAM inline policy)",
+      "settings": {
+        "policyName": "S3VectorsProviderframeworkonEventServiceRoleDefaultPolicy486C3756",
+        "roles": [
+          "Ref:S3VectorsProviderframeworkonEventServiceRole5255E58B"
+        ],
+        "statementCount": 2,
+        "actions": [
+          "lambda:GetFunction",
+          "lambda:InvokeFunction"
+        ],
+        "resources": [
+          "GetAtt:S3VectorsProviderFn215E3A4E.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"S3VectorsProviderFn215E3A4E\",\"Arn\"]},\":*\"]]"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-policy.md"
+    },
+    {
+      "logicalId": "ApiFunctionServiceRoleOverflowPolicy15B8AE146",
+      "logicalName": "Api Function Service Role Overflow Policy15B8AE146",
+      "type": "AWS::IAM::ManagedPolicy",
+      "purpose": "Api Function Service Role Overflow Policy15B8AE146 (IAM managed policy)",
+      "settings": {
+        "roles": [
+          "Ref:ApiFunctionServiceRole52B9747B"
+        ],
+        "statementCount": 6,
+        "actions": [
+          "codebuild:BatchGetBuilds",
+          "logs:GetLogEvents",
+          "states:DescribeExecution",
+          "states:StartExecution",
+          "states:StopExecution"
+        ],
+        "resources": [
+          "GetAtt:BenchmarkProject1593465D.Arn",
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:\",{\"Ref\":\"BenchmarkProjectLogGroup395F719E\"},\":log-stream…",
+          "Ref:BenchmarkStateMachine8C582B8A",
+          "Ref:ChatRunStateMachine52CAF7BA",
+          "Ref:DocumentIngestRunStateMachine2FD7D3D3"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-managedpolicy.md"
+    },
+    {
+      "logicalId": "HeavyApiFunctionServiceRoleOverflowPolicy13079BA64",
+      "logicalName": "Heavy Api Function Service Role Overflow Policy13079BA64",
+      "type": "AWS::IAM::ManagedPolicy",
+      "purpose": "Heavy Api Function Service Role Overflow Policy13079BA64 (IAM managed policy)",
+      "settings": {
+        "roles": [
+          "Ref:HeavyApiFunctionServiceRole25A7AE5E"
+        ],
+        "statementCount": 6,
+        "actions": [
+          "codebuild:BatchGetBuilds",
+          "logs:GetLogEvents",
+          "states:DescribeExecution",
+          "states:StartExecution",
+          "states:StopExecution"
+        ],
+        "resources": [
+          "GetAtt:BenchmarkProject1593465D.Arn",
+          "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:\",{\"Ref\":\"BenchmarkProjectLogGroup395F719E\"},\":log-stream…",
+          "Ref:BenchmarkStateMachine8C582B8A",
+          "Ref:ChatRunStateMachine52CAF7BA",
+          "Ref:DocumentIngestRunStateMachine2FD7D3D3"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-iam-managedpolicy.md"
+    },
+    {
+      "logicalId": "S3VectorsResources",
+      "logicalName": "S3Vectors Resources",
+      "type": "AWS::CloudFormation::CustomResource",
+      "purpose": "S3Vectors Resources (CloudFormation custom resource)",
+      "settings": {
+        "serviceToken": "<masked-or-reference>",
+        "vectorBucketName": {
+          "Fn::Join": [
+            "",
+            [
+              "memorag-",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              "-",
+              {
+                "Ref": "AWS::Region"
+              },
+              "-c85f22a0"
+            ]
+          ]
+        },
+        "indexNames": [
+          "memory-index",
+          "evidence-index"
+        ],
+        "dimension": 1024,
+        "distanceMetric": "cosine"
+      },
+      "detailFilePath": "infra-inventory/aws-cloudformation-customresource.md"
+    },
+    {
+      "logicalId": "DeployBenchmarkDatasetsCustomResource7C791D40",
+      "logicalName": "Deploy Benchmark Datasets Custom Resource",
+      "type": "Custom::CDKBucketDeployment",
+      "purpose": "Deploy Benchmark Datasets Custom Resource (CDK bucket deployment)",
+      "settings": {
+        "destinationBucketName": "Ref:BenchmarkBucketDD7D1D2F",
+        "destinationBucketKeyPrefix": "datasets/agent",
+        "sourceObjectKeys": [
+          "<asset-hash>.zip",
+          "<asset-hash>.zip",
+          "<asset-hash>.zip"
+        ],
+        "prune": true
+      },
+      "detailFilePath": "infra-inventory/custom-cdkbucketdeployment.md"
+    },
+    {
+      "logicalId": "DeployConversationBenchmarkCorpusCustomResourceAC06DC7F",
+      "logicalName": "Deploy Conversation Benchmark Corpus Custom Resource",
+      "type": "Custom::CDKBucketDeployment",
+      "purpose": "Deploy Conversation Benchmark Corpus Custom Resource (CDK bucket deployment)",
+      "settings": {
+        "destinationBucketName": "Ref:BenchmarkBucketDD7D1D2F",
+        "destinationBucketKeyPrefix": "corpus/conversation",
+        "sourceObjectKeys": [
+          "<asset-hash>.zip",
+          "<asset-hash>.zip"
+        ],
+        "prune": true
+      },
+      "detailFilePath": "infra-inventory/custom-cdkbucketdeployment.md"
+    },
+    {
+      "logicalId": "DeployConversationBenchmarkDatasetsCustomResource0681BCBB",
+      "logicalName": "Deploy Conversation Benchmark Datasets Custom Resource",
+      "type": "Custom::CDKBucketDeployment",
+      "purpose": "Deploy Conversation Benchmark Datasets Custom Resource (CDK bucket deployment)",
+      "settings": {
+        "destinationBucketName": "Ref:BenchmarkBucketDD7D1D2F",
+        "destinationBucketKeyPrefix": "datasets/conversation",
+        "sourceObjectKeys": [
+          "<asset-hash>.zip",
+          "<asset-hash>.zip"
+        ],
+        "prune": true
+      },
+      "detailFilePath": "infra-inventory/custom-cdkbucketdeployment.md"
+    },
+    {
+      "logicalId": "DeploySearchBenchmarkDatasetsCustomResourceDFC997D1",
+      "logicalName": "Deploy Search Benchmark Datasets Custom Resource",
+      "type": "Custom::CDKBucketDeployment",
+      "purpose": "Deploy Search Benchmark Datasets Custom Resource (CDK bucket deployment)",
+      "settings": {
+        "destinationBucketName": "Ref:BenchmarkBucketDD7D1D2F",
+        "destinationBucketKeyPrefix": "datasets/search",
+        "sourceObjectKeys": [
+          "<asset-hash>.zip",
+          "<asset-hash>.zip"
+        ],
+        "prune": true
+      },
+      "detailFilePath": "infra-inventory/custom-cdkbucketdeployment.md"
+    },
+    {
+      "logicalId": "AccessLogsBucketAutoDeleteObjectsCustomResource93F9213A",
+      "logicalName": "Access Logs Bucket Auto Delete Objects Custom Resource",
+      "type": "Custom::S3AutoDeleteObjects",
+      "purpose": "Access Logs Bucket Auto Delete Objects Custom Resource (S3 auto delete custom resource)",
+      "settings": {
+        "bucketName": "Ref:AccessLogsBucket83982689",
+        "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
+    },
+    {
+      "logicalId": "BenchmarkBucketAutoDeleteObjectsCustomResource7A0948DC",
+      "logicalName": "Benchmark Bucket Auto Delete Objects Custom Resource",
+      "type": "Custom::S3AutoDeleteObjects",
+      "purpose": "Benchmark Bucket Auto Delete Objects Custom Resource (S3 auto delete custom resource)",
+      "settings": {
+        "bucketName": "Ref:BenchmarkBucketDD7D1D2F",
+        "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
+    },
+    {
+      "logicalId": "DebugDownloadBucketAutoDeleteObjectsCustomResource4EAC1AC1",
+      "logicalName": "Debug Download Bucket Auto Delete Objects Custom Resource",
+      "type": "Custom::S3AutoDeleteObjects",
+      "purpose": "Debug Download Bucket Auto Delete Objects Custom Resource (S3 auto delete custom resource)",
+      "settings": {
+        "bucketName": "Ref:DebugDownloadBucketAB6A16BE",
+        "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
+    },
+    {
+      "logicalId": "DocumentsBucketAutoDeleteObjectsCustomResourceFE3123FC",
+      "logicalName": "Documents Bucket Auto Delete Objects Custom Resource",
+      "type": "Custom::S3AutoDeleteObjects",
+      "purpose": "Documents Bucket Auto Delete Objects Custom Resource (S3 auto delete custom resource)",
+      "settings": {
+        "bucketName": "Ref:DocumentsBucket9EC9DEB9",
+        "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
+    },
+    {
+      "logicalId": "FrontendBucketAutoDeleteObjectsCustomResourceDB860B32",
+      "logicalName": "Frontend Bucket Auto Delete Objects Custom Resource",
+      "type": "Custom::S3AutoDeleteObjects",
+      "purpose": "Frontend Bucket Auto Delete Objects Custom Resource (S3 auto delete custom resource)",
+      "settings": {
+        "bucketName": "Ref:FrontendBucketEFE2E19C",
+        "serviceToken": "GetAtt:CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F.Arn"
+      },
+      "detailFilePath": "infra-inventory/custom-s3autodeleteobjects.md"
+    },
+    {
+      "logicalId": "AccessLogsBucketPolicy7F77476F",
+      "logicalName": "Access Logs Bucket Policy",
+      "type": "AWS::S3::BucketPolicy",
+      "purpose": "Access Logs Bucket Policy (S3 bucket policy)",
+      "settings": {
+        "bucket": "Ref:AccessLogsBucket83982689",
+        "statementCount": 2,
+        "actions": [
+          "s3:*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:List*",
+          "s3:PutBucketPolicy"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
+    },
+    {
+      "logicalId": "BenchmarkBucketPolicyF16DB7DA",
+      "logicalName": "Benchmark Bucket Policy",
+      "type": "AWS::S3::BucketPolicy",
+      "purpose": "Benchmark Bucket Policy (S3 bucket policy)",
+      "settings": {
+        "bucket": "Ref:BenchmarkBucketDD7D1D2F",
+        "statementCount": 2,
+        "actions": [
+          "s3:*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:List*",
+          "s3:PutBucketPolicy"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
+    },
+    {
+      "logicalId": "DebugDownloadBucketPolicy961A4DDF",
+      "logicalName": "Debug Download Bucket Policy",
+      "type": "AWS::S3::BucketPolicy",
+      "purpose": "Debug Download Bucket Policy (S3 bucket policy)",
+      "settings": {
+        "bucket": "Ref:DebugDownloadBucketAB6A16BE",
+        "statementCount": 2,
+        "actions": [
+          "s3:*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:List*",
+          "s3:PutBucketPolicy"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
+    },
+    {
+      "logicalId": "DocumentsBucketPolicy1F991BD4",
+      "logicalName": "Documents Bucket Policy",
+      "type": "AWS::S3::BucketPolicy",
+      "purpose": "Documents Bucket Policy (S3 bucket policy)",
+      "settings": {
+        "bucket": "Ref:DocumentsBucket9EC9DEB9",
+        "statementCount": 2,
+        "actions": [
+          "s3:*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:List*",
+          "s3:PutBucketPolicy"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
+    },
+    {
+      "logicalId": "FrontendBucketPolicy1DFF75D9",
+      "logicalName": "Frontend Bucket Policy",
+      "type": "AWS::S3::BucketPolicy",
+      "purpose": "Frontend Bucket Policy (S3 bucket policy)",
+      "settings": {
+        "bucket": "Ref:FrontendBucketEFE2E19C",
+        "statementCount": 3,
+        "actions": [
+          "s3:*",
+          "s3:DeleteObject*",
+          "s3:GetBucket*",
+          "s3:GetObject",
+          "s3:List*",
+          "s3:PutBucketPolicy"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-s3-bucketpolicy.md"
+    },
+    {
+      "logicalId": "DeployBenchmarkDatasetsAwsCliLayer634804B4",
+      "logicalName": "Deploy Benchmark Datasets Aws Cli Layer",
+      "type": "AWS::Lambda::LayerVersion",
+      "purpose": "Deploy Benchmark Datasets Aws Cli Layer (Lambda layer)",
+      "settings": {
+        "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
+    },
+    {
+      "logicalId": "DeployConversationBenchmarkCorpusAwsCliLayerCAE6DA8B",
+      "logicalName": "Deploy Conversation Benchmark Corpus Aws Cli Layer",
+      "type": "AWS::Lambda::LayerVersion",
+      "purpose": "Deploy Conversation Benchmark Corpus Aws Cli Layer (Lambda layer)",
+      "settings": {
+        "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
+    },
+    {
+      "logicalId": "DeployConversationBenchmarkDatasetsAwsCliLayer8941B84A",
+      "logicalName": "Deploy Conversation Benchmark Datasets Aws Cli Layer",
+      "type": "AWS::Lambda::LayerVersion",
+      "purpose": "Deploy Conversation Benchmark Datasets Aws Cli Layer (Lambda layer)",
+      "settings": {
+        "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
+    },
+    {
+      "logicalId": "DeploySearchBenchmarkDatasetsAwsCliLayer63B30B23",
+      "logicalName": "Deploy Search Benchmark Datasets Aws Cli Layer",
+      "type": "AWS::Lambda::LayerVersion",
+      "purpose": "Deploy Search Benchmark Datasets Aws Cli Layer (Lambda layer)",
+      "settings": {
+        "content": "{\"S3Bucket\":\"cdk-hnb659fds-assets-111111111111-ap-northeast-1\",\"S3Key\":\"<asset-hash>.zip\"}"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-layerversion.md"
+    },
+    {
+      "logicalId": "RestApiANYApiPermissionMemoRagMvpStackTestRestApi748483EDANYD291338E",
+      "logicalName": "Rest Api ANY Api Permission Memo Rag Mvp Stack Test Rest Api748483EDANY",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Api ANY Api Permission Memo Rag Mvp Stack Test Rest Api748483EDANY (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApiANYApiPermissionTestMemoRagMvpStackTestRestApi748483EDANY129460B9",
+      "logicalName": "Rest Api ANY Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDANY",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Api ANY Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDANY (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/*/\"]]"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApibenchmarkqueryPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTbenchmarkquery38D9FB38",
+      "logicalName": "Rest Apibenchmarkquery POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tbenchmarkquery",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apibenchmarkquery POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tbenchmarkquery (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApibenchmarkqueryPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTbenchmarkqueryF68D5828",
+      "logicalName": "Rest Apibenchmarkquery POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tbenchmarkquery",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apibenchmarkquery POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tbenchmarkquery (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/benchma…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApibenchmarksearchPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTbenchmarksearch97DEE87C",
+      "logicalName": "Rest Apibenchmarksearch POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tbenchmarksearch",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apibenchmarksearch POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tbenchmarksearch (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApibenchmarksearchPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTbenchmarksearch9873F838",
+      "logicalName": "Rest Apibenchmarksearch POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tbenchmarksearch",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apibenchmarksearch POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tbenchmarksearch (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/benchma…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApichatPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTchat5ECCB162",
+      "logicalName": "Rest Apichat POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tchat",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apichat POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tchat (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApichatPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTchat23C33014",
+      "logicalName": "Rest Apichat POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tchat",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apichat POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tchat (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/chat\"]]"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApichatrunsPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTchatrunsECE2E619",
+      "logicalName": "Rest Apichatruns POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tchatruns",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apichatruns POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tchatruns (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApichatrunsPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTchatruns735A9349",
+      "logicalName": "Rest Apichatruns POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tchatruns",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apichatruns POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tchatruns (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/chat-ru…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApichatrunsrunIdeventsGETApiPermissionMemoRagMvpStackTestRestApi748483EDGETchatrunsrunIdevents894E577B",
+      "logicalName": "Rest Apichatrunsrun Idevents GET Api Permission Memo Rag Mvp Stack Test Rest Api748483EDGE Tchatrunsrun Idevents",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apichatrunsrun Idevents GET Api Permission Memo Rag Mvp Stack Test Rest Api748483EDGE Tchatrunsrun Idevents (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ChatRunEventsStreamFunctionA12E11AC.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApichatrunsrunIdeventsGETApiPermissionTestMemoRagMvpStackTestRestApi748483EDGETchatrunsrunIdeventsE2525C91",
+      "logicalName": "Rest Apichatrunsrun Idevents GET Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDGE Tchatrunsrun Idevents",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apichatrunsrun Idevents GET Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDGE Tchatrunsrun Idevents (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ChatRunEventsStreamFunctionA12E11AC.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/GET/chat-run…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdDELETEApiPermissionMemoRagMvpStackTestRestApi748483EDDELETEdocumentsdocumentId68A6118D",
+      "logicalName": "Rest Apidocumentsdocument Id DELETE Api Permission Memo Rag Mvp Stack Test Rest Api748483EDDELET Edocumentsdocument Id",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsdocument Id DELETE Api Permission Memo Rag Mvp Stack Test Rest Api748483EDDELET Edocumentsdocument Id (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdDELETEApiPermissionTestMemoRagMvpStackTestRestApi748483EDDELETEdocumentsdocumentId9BD5D8E0",
+      "logicalName": "Rest Apidocumentsdocument Id DELETE Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDDELET Edocumentsdocument Id",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsdocument Id DELETE Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDDELET Edocumentsdocument Id (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/DELETE/docum…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsdocumentIdreindex4E79CE0C",
+      "logicalName": "Rest Apidocumentsdocument Idreindex POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsdocument Idreindex",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsdocument Idreindex POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsdocument Idreindex (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsdocumentIdreindex936A89D6",
+      "logicalName": "Rest Apidocumentsdocument Idreindex POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsdocument Idreindex",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsdocument Idreindex POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsdocument Idreindex (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexstagePOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsdocumentIdreindexstage30D2932F",
+      "logicalName": "Rest Apidocumentsdocument Idreindexstage POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsdocument Idreindexstage",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsdocument Idreindexstage POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsdocument Idreindexstage (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsdocumentIdreindexstagePOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsdocumentIdreindexstageB1772148",
+      "logicalName": "Rest Apidocumentsdocument Idreindexstage POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsdocument Idreindexstage",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsdocument Idreindexstage POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsdocument Idreindexstage (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsGETApiPermissionMemoRagMvpStackTestRestApi748483EDGETdocuments7E306A58",
+      "logicalName": "Rest Apidocuments GET Api Permission Memo Rag Mvp Stack Test Rest Api748483EDGE Tdocuments",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocuments GET Api Permission Memo Rag Mvp Stack Test Rest Api748483EDGE Tdocuments (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsGETApiPermissionTestMemoRagMvpStackTestRestApi748483EDGETdocumentsF109861A",
+      "logicalName": "Rest Apidocuments GET Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDGE Tdocuments",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocuments GET Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDGE Tdocuments (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/GET/document…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocuments4B9A7517",
+      "logicalName": "Rest Apidocuments POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocuments",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocuments POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocuments (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocuments65F9A870",
+      "logicalName": "Rest Apidocuments POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocuments",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocuments POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocuments (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsGETApiPermissionMemoRagMvpStackTestRestApi748483EDGETdocumentsreindexmigrationsF8E12C9B",
+      "logicalName": "Rest Apidocumentsreindexmigrations GET Api Permission Memo Rag Mvp Stack Test Rest Api748483EDGE Tdocumentsreindexmigrations",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsreindexmigrations GET Api Permission Memo Rag Mvp Stack Test Rest Api748483EDGE Tdocumentsreindexmigrations (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsGETApiPermissionTestMemoRagMvpStackTestRestApi748483EDGETdocumentsreindexmigrations60AE7F67",
+      "logicalName": "Rest Apidocumentsreindexmigrations GET Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDGE Tdocumentsreindexmigrations",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsreindexmigrations GET Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDGE Tdocumentsreindexmigrations (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/GET/document…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsreindexmigrationsmigrationIdcutover24424ADB",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idcutover POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsreindexmigrationsmigration Idcutover",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idcutover POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsreindexmigrationsmigration Idcutover (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdcutoverPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsreindexmigrationsmigrationIdcutoverF53E99FD",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idcutover POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsreindexmigrationsmigration Idcutover",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idcutover POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsreindexmigrationsmigration Idcutover (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsreindexmigrationsmigrationIdrollback4767AC9B",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idrollback POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsreindexmigrationsmigration Idrollback",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idrollback POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsreindexmigrationsmigration Idrollback (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsreindexmigrationsmigrationIdrollbackPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsreindexmigrationsmigrationIdrollbackACE59FB5",
+      "logicalName": "Rest Apidocumentsreindexmigrationsmigration Idrollback POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsreindexmigrationsmigration Idrollback",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsreindexmigrationsmigration Idrollback POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsreindexmigrationsmigration Idrollback (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploads7F8FA5ED",
+      "logicalName": "Rest Apidocumentsuploads POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploads",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsuploads POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploads (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploads67526D6C",
+      "logicalName": "Rest Apidocumentsuploads POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploads",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsuploads POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploads (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdcontentPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploadsuploadIdcontent1D618CAB",
+      "logicalName": "Rest Apidocumentsuploadsupload Idcontent POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploadsupload Idcontent",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsuploadsupload Idcontent POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploadsupload Idcontent (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdcontentPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploadsuploadIdcontentBE73C768",
+      "logicalName": "Rest Apidocumentsuploadsupload Idcontent POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploadsupload Idcontent",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsuploadsupload Idcontent POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploadsupload Idcontent (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdingestPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploadsuploadIdingest1FDAC8E0",
+      "logicalName": "Rest Apidocumentsuploadsupload Idingest POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploadsupload Idingest",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsuploadsupload Idingest POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploadsupload Idingest (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApidocumentsuploadsuploadIdingestPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTdocumentsuploadsuploadIdingestE429854E",
+      "logicalName": "Rest Apidocumentsuploadsupload Idingest POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploadsupload Idingest",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apidocumentsuploadsupload Idingest POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tdocumentsuploadsupload Idingest (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/documen…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApiproxyANYApiPermissionMemoRagMvpStackTestRestApi748483EDANYproxyB80C7411",
+      "logicalName": "Rest Apiproxy ANY Api Permission Memo Rag Mvp Stack Test Rest Api748483EDAN Yproxy",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apiproxy ANY Api Permission Memo Rag Mvp Stack Test Rest Api748483EDAN Yproxy (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApiproxyANYApiPermissionTestMemoRagMvpStackTestRestApi748483EDANYproxy5381E3FA",
+      "logicalName": "Rest Apiproxy ANY Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDAN Yproxy",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apiproxy ANY Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDAN Yproxy (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:ApiFunctionCE271BD4.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/*/*\"]]"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApisearchPOSTApiPermissionMemoRagMvpStackTestRestApi748483EDPOSTsearch4E7225EF",
+      "logicalName": "Rest Apisearch POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tsearch",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apisearch POST Api Permission Memo Rag Mvp Stack Test Rest Api748483EDPOS Tsearch (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/\",{\"Ref\":\"RestApiDeploymentSta…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApisearchPOSTApiPermissionTestMemoRagMvpStackTestRestApi748483EDPOSTsearch6EE8A05D",
+      "logicalName": "Rest Apisearch POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tsearch",
+      "type": "AWS::Lambda::Permission",
+      "purpose": "Rest Apisearch POST Api Permission Test Memo Rag Mvp Stack Test Rest Api748483EDPOS Tsearch (Lambda invoke permission)",
+      "settings": {
+        "action": "lambda:InvokeFunction",
+        "principal": "apigateway.amazonaws.com",
+        "functionName": "GetAtt:HeavyApiFunction4BC152A5.Arn",
+        "sourceArn": "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":execute-api:ap-northeast-1:111111111111:\",{\"Ref\":\"RestApi0C43BF4B\"},\"/test-invoke-stage/POST/search\"…"
+      },
+      "detailFilePath": "infra-inventory/aws-lambda-permission.md"
+    },
+    {
+      "logicalId": "RestApiAccount7C83CF5A",
+      "logicalName": "Rest Api Account",
+      "type": "AWS::ApiGateway::Account",
+      "purpose": "Rest Api Account (API Gateway account settings)",
+      "settings": {
+        "cloudWatchRoleArn": "GetAtt:RestApiCloudWatchRoleE3ED6605.Arn"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-account.md"
+    },
+    {
+      "logicalId": "RestApiDeployment180EC5032ef45d9fea11e79ee1d6401947564acb",
+      "logicalName": "Rest Api Deployment180EC5032ef45d9fea11e79ee1d6401947564acb",
+      "type": "AWS::ApiGateway::Deployment",
+      "purpose": "Rest Api Deployment180EC5032ef45d9fea11e79ee1d6401947564acb (API Gateway deployment)",
+      "settings": {
+        "restApiId": "Ref:RestApi0C43BF4B",
+        "description": "Automatically created by the RestApi construct"
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-deployment.md"
+    },
+    {
+      "logicalId": "RestApiDefault4xxGatewayResponse52322928",
+      "logicalName": "Rest Api Default4xx Gateway Response",
+      "type": "AWS::ApiGateway::GatewayResponse",
+      "purpose": "Rest Api Default4xx Gateway Response (API Gateway error response)",
+      "settings": {
+        "responseType": "DEFAULT_4XX",
+        "responseHeaders": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+          "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
+          "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-gatewayresponse.md"
+    },
+    {
+      "logicalId": "RestApiDefault5xxGatewayResponse8E1119C1",
+      "logicalName": "Rest Api Default5xx Gateway Response",
+      "type": "AWS::ApiGateway::GatewayResponse",
+      "purpose": "Rest Api Default5xx Gateway Response (API Gateway error response)",
+      "settings": {
+        "responseType": "DEFAULT_5XX",
+        "responseHeaders": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'",
+          "gatewayresponse.header.Access-Control-Allow-Headers": "'Content-Type, Authorization, Last-Event-ID'",
+          "gatewayresponse.header.Access-Control-Allow-Methods": "'GET, POST, DELETE, OPTIONS'"
+        }
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-gatewayresponse.md"
+    },
+    {
+      "logicalId": "RestApiRequestValidatorAAF760FF",
+      "logicalName": "Rest Api Request Validator",
+      "type": "AWS::ApiGateway::RequestValidator",
+      "purpose": "Rest Api Request Validator (API Gateway request validator)",
+      "settings": {
+        "name": "basic-request-validator",
+        "validateRequestBody": true,
+        "validateRequestParameters": true
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-requestvalidator.md"
+    },
+    {
+      "logicalId": "RestApiCognitoAuthorizerF1518B6A",
+      "logicalName": "Rest Api Cognito Authorizer",
+      "type": "AWS::ApiGateway::Authorizer",
+      "purpose": "Rest Api Cognito Authorizer (API Gateway Cognito authorizer)",
+      "settings": {
+        "name": "MemoRagMvpStackTestRestApiCognitoAuthorizer2CDE4DBB",
+        "type": "COGNITO_USER_POOLS",
+        "providerARNs": [
+          "GetAtt:UserPool6BA7E5F2.Arn"
+        ]
+      },
+      "detailFilePath": "infra-inventory/aws-apigateway-authorizer.md"
+    }
+  ]
+}

@@ -37,6 +37,16 @@ tasks:
     cmds:
       - npm run docs:openapi:check
 
+  docs:infra-inventory:
+    desc: Generate Markdown and JSON AWS resource inventory from the CDK snapshot
+    cmds:
+      - npm run docs:infra-inventory
+
+  docs:infra-inventory:check:
+    desc: Check generated AWS resource inventory freshness
+    cmds:
+      - npm run docs:infra-inventory:check
+
   dev:api:
     desc: Run the Hono API locally with mock Bedrock and local vector store
     env:
