@@ -23,11 +23,11 @@ Phase F では、上記に加えて仕様 4A/4B の `ChatToolDefinition` registr
 
 - [ ] 旧 `AgentRun` 相当の同期チャット処理が `ChatOrchestrationRun` として trace / store / contract 上で参照できる。
 - [ ] チャット内 tool 実行は実行ユーザーの feature permission と resource permission を超えない。
-- [ ] `ChatToolDefinition` は `toolId`、入出力 schema、必要 feature permission、必要 resource permission、承認要否、監査要否、有効状態を持つ。
-- [ ] `ChatToolInvocation` は実行者、toolId、入出力概要、状態、承認、時刻、結果を監査可能にする。
-- [ ] multi-turn 状態は raw messages だけに依存せず、文脈独立化クエリ、rolling summary、query-focused summary、citation memory、task state の保存方針を持つ。
+- [x] `ChatToolDefinition` は `toolId`、入出力 schema、必要 feature permission、必要 resource permission、承認要否、監査要否、有効状態を持つ。
+- [x] `ChatToolInvocation` は実行者、toolId、入出力概要、状態、承認、時刻、結果を監査可能にする。
+- [x] multi-turn 状態は raw messages だけに依存せず、文脈独立化クエリ、rolling summary、query-focused summary、citation memory、task state の保存方針を持つ。
 - [ ] 既存の grounded refusal、citation validation、answer support verification の挙動を維持する。
 
 ## 備考
 
-Phase D / F で詳細化する。
+Phase D / F で同期チャット処理の名称移行、tool registry、multi-turn optional state の基盤を追加した。後続 phase では disabled tool の本実装、承認 UI、専用 invocation store、resource permission 実行時 check を詳細化する。
