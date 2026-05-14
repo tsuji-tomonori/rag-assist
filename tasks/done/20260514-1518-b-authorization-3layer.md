@@ -1,5 +1,5 @@
 # B authorization 3-layer foundation
-状態: doing
+状態: done
 タスク種別: 機能追加
 発注元 wave: Wave 2
 依存タスク: `tasks/done/20260514-1506-b-pre-gap.md`
