@@ -46,10 +46,10 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 12 | ロール・権限管理 | `FR-027`, `FR-052`, `NFR-011` | `GAP-014`, `SPEC-SEC-001` | `apps/api/src/authorization.ts`, `apps/api/src/security/access-control-policy.test.ts` | divergent | B/J3 |
 | 13 | 利用状況・コスト | `FR-027`, `NFR-012` | `REQ-OPS-001` | `apps/api/src/routes/admin-routes.ts`, `apps/web/src/features/admin/` | partially covered | J3 |
 | 14 | 監査ログ | `FR-027`, `FR-052` | `REQ-SEC-001`, `SPEC-SEC-001` | `apps/api/src/routes/admin-routes.ts`, audit log surface | partially covered | J3 |
-| 14A | デバッグ・トレース・運用診断 | `FR-010`, `FR-011`, `FR-046` | `TASK-006`, `REQ-DBG-001`, `SPEC-DBG-001`, `GAP-008`, `GAP-016` | `apps/api/src/routes/debug-routes.ts`, `apps/web/src/features/debug/`, `apps/api/src/chat-orchestration/trace.ts` | partially covered | J2 |
+| 14A | デバッグ・トレース・運用診断 | `FR-010`, `FR-011`, `FR-046` | `TASK-006`, `REQ-DBG-001`, `SPEC-DBG-001`, `SPEC-DBG-002`, `GAP-008`, `GAP-016`, `docs/spec/gap-phase-j2.md` | `apps/api/src/routes/debug-routes.ts`, `apps/api/src/schemas.ts`, `apps/web/src/features/debug/`, `apps/web/src/features/chat/components/ChatView.tsx`, `apps/api/src/chat-orchestration/trace.ts` | partially covered | J2 |
 | 14B | API契約・OpenAPI / oRPC・開発品質ゲート | `FR-053` | `TASK-023`, `REQ-DOCS-001`, `REQ-API-001`, `SPEC-API-001` | `apps/api/src/app.ts`, `apps/api/src/generate-openapi-docs.ts`, `apps/api/src/validate-openapi-docs.ts`, `apps/api/src/orpc/router.ts`, `docs/generated/openapi.md`, `docs/spec/gap-phase-j1.md` | partially covered | J1 |
 | 14C | デプロイ・リリース・GitHub Actions 運用 | `FR-054`, `REQ_PROJECT_*` | `REQ-OPS-001` | `.github/workflows/`, `infra/`, `docs/GITHUB_ACTIONS_DEPLOY.md` | partially covered | J |
-| 14D | API共通 middleware・public endpoint・非同期 worker 実行契約 | `FR-055` | `GAP-014` | `apps/api/src/app.ts`, `apps/api/src/chat-run-worker.ts`, `apps/api/src/document-ingest-run-worker.ts` | partially covered | J2/G |
+| 14D | API共通 middleware・public endpoint・非同期 worker 実行契約 | `FR-055` | `GAP-014`, `REQ-API-001`, `SPEC-API-001`, `docs/spec/gap-phase-j2.md` | `apps/api/src/app.ts`, `apps/api/src/routes/chat-routes.ts`, `apps/api/src/routes/document-routes.ts`, `apps/api/src/chat-run-events-stream.ts`, `apps/api/src/chat-run-worker.ts`, `apps/api/src/document-ingest-run-worker.ts`, `apps/api/src/security/access-control-policy.test.ts` | partially covered | J2/G |
 | 15 | 再インデックス | `FR-002`, `FR-023`, `FR-038` | `GAP-010` | `apps/api/src/routes/document-routes.ts`, `apps/api/src/rag/memorag-service.ts` | partially covered | E/H |
 | 16 | 全体権限定義 | `FR-052`, `NFR-011` | `GAP-014` | `apps/api/src/authorization.ts` | divergent | B |
 | 17 | Resource-level permission | `FR-052`, `FR-041` | `GAP-014` | document group ACL / owner / manager logic | divergent | B |
@@ -84,6 +84,18 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 4B ChatToolDefinition | `ChatToolDefinition` schema / 型と `apps/api/src/chat-orchestration/tool-registry.ts` を追加済み。RAG 系は enabled、後続 phase 依存 tool は disabled metadata。 | 後続 task で disabled tool の本実装・承認 UI・resource permission 実行時チェックを追加する。 |
 | 4B ChatToolInvocation | `ChatToolInvocation` schema / 型を追加し、debug trace から `DebugTrace.toolInvocations` を生成する基盤を追加済み。 | 専用永続 store / 承認 workflow / debug tier 表示は後続 task。 |
 | 既存挙動の踏襲 | follow-up 軽量化、required fact planning 汎化、policy computation 汎化、answer support verify/repair、minScore filter、diversity、context budget は現行 runtime policy / nodes に存在する。 | registry 化で低 score chunk 復活、全履歴常時 LLM 投入、benchmark 固有分岐混入を避ける。 |
+
+## Phase J2-pre 補助表: 14A/14D debug / middleware / worker
+
+| 対象 | 現状 | 後続 task |
+|---|---|---|
+| 14A debug API | `/debug-runs` list/detail/download は `chat:admin:read_all` で保護され、RAG chat debug trace を返す。 | `J2-debug-4tier-and-middleware` で 4 tier visibility と `debug:*` permission の互換移行を定義する。 |
+| 14A debug panel | `debugMode && canReadDebugRuns` の場合だけ表示し、保存 JSON / 可視化 JSON / local JSON upload / 拡大表示 / step expand を提供する。 | 権限なしユーザーへの DOM 非表示、local JSON replay、拡大表示を維持したまま tier 表示を追加する。 |
+| 14A DebugTrace | 現行 schema は RAG chat trace の `steps`、conversation metadata、retrieved/citations/finalEvidence、toolInvocations に寄っている。 | `targetType`、`visibility`、sanitize policy version、export redaction metadata を既存互換で追加する。 |
+| 14D middleware | `/health` と `/openapi.json` だけを public allowlist とし、`OPTIONS` と public path 以外は `authMiddleware` を通す。CORS は `Last-Event-ID` header を許可する。 | public endpoint 追加時は非機微性と `access-control-policy.test.ts` 更新を必須化し、本番 CORS wildcard guard の扱いを決める。 |
+| 14D SSE | chat / document ingest stream は runId 単位、owned-run permission、`Last-Event-ID`、heartbeat、timeout を持つ。Lambda stream handler も同様の Last-Event-ID と permission check を持つ。 | event format と再接続挙動を regression test / docs に固定し、CORS wildcard 固定の扱いを整理する。 |
+| 14D worker runId | chat / document ingest worker は `{ runId }` を必須入力とし、欠落時に validation error として失敗する。 | `WorkerEvent` / `WorkerResult` 標準化は既存 Step Functions input `{ runId }` 互換を壊さず進める。benchmark / async agent worker は I/G に委譲する。 |
+| 既存挙動の踏襲 | debug route を public 化しない、`includeDebug` 時の `chat:admin:read_all` gate を弱めない、SSE `Last-Event-ID` を削らない、worker input `{ runId }` 互換を壊さない。 | J2 実装時の scope / scope-out として `docs/spec/gap-phase-j2.md` を参照する。 |
 
 ## 後続更新ルール
 
