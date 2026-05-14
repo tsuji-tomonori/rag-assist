@@ -5,9 +5,9 @@ import { SFNClient, StartExecutionCommand, StopExecutionCommand } from "@aws-sdk
 import { config } from "../config.js"
 import { rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
-import { runQaAgent } from "../agent/graph.js"
-import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
-import type { ChatInput, QaGraphResult } from "../agent/types.js"
+import { runChatOrchestration } from "../chat-orchestration/graph.js"
+import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
+import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
 import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
@@ -921,9 +921,9 @@ export class MemoRagService {
     return normalizeDebugTrace(JSON.parse(await this.deps.objectStore.getText(key)))
   }
 
-  async chat(input: ChatInput, user?: AppUser): Promise<QaGraphResult> {
+  async chat(input: ChatInput, user?: AppUser): Promise<ChatOrchestrationResult> {
     if (user) await this.assertSearchScopeReadable(user, input.searchScope)
-    return runQaAgent(this.deps, input, user)
+    return runChatOrchestration(this.deps, input, user)
   }
 
   async startChatRun(input: ChatInput, user: AppUser): Promise<{ runId: string; status: ChatRun["status"]; eventsPath: string }> {
@@ -997,7 +997,7 @@ export class MemoRagService {
     })
 
     try {
-      const result = await runQaAgent(
+      const result = await runChatOrchestration(
         this.deps,
         {
           question: run.question,

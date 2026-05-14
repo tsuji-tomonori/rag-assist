@@ -1,0 +1,2446 @@
+import assert from "node:assert/strict"
+import test from "node:test"
+import type { Dependencies } from "../../dependencies.js"
+import type { RetrievedVector } from "../../types.js"
+import { MockBedrockTextModel } from "../../adapters/mock-bedrock.js"
+import { analyzeInput } from "./analyze-input.js"
+import { answerabilityGate } from "./answerability-gate.js"
+import { buildConversationState, decontextualizeQuery } from "./build-conversation-state.js"
+import { clarificationGate } from "./clarification-gate.js"
+import { createEmbedQueriesNode } from "./embed-queries.js"
+import { executeComputationTools } from "./execute-computation-tools.js"
+import { finalizeResponse } from "./finalize-response.js"
+import { createGenerateCluesNode } from "./generate-clues.js"
+import { createRetrievalEvaluatorNode, retrievalEvaluator } from "./retrieval-evaluator.js"
+import { createRetrieveMemoryNode } from "./retrieve-memory.js"
+import { normalizeQuery } from "./normalize-query.js"
+import { rerankChunks } from "./rerank-chunks.js"
+import { createSearchEvidenceNode } from "./search-evidence.js"
+import { createSufficientContextGateNode } from "./sufficient-context-gate.js"
+import { validateCitations } from "./validate-citations.js"
+import { createVerifyAnswerSupportNode } from "./verify-answer-support.js"
+import { NO_ANSWER, type ChatOrchestrationState, type ChatOrchestrationUpdate } from "../state.js"
+import { buildSignalPhrase, extractSignalTerms } from "../text-signals.js"
+import { tracedNode } from "../trace.js"
+import { asksForMoney, detectQuestionRequirements, formatQuestionRequirementsForPrompt, validateAnswerRequirements } from "../question-requirements.js"
+import type { DebugStep } from "../../types.js"
+
+const chunk: RetrievedVector = {
+  key: "doc-1-chunk-0001",
+  score: 0.9,
+  metadata: {
+    kind: "chunk",
+    documentId: "doc-1",
+    fileName: "doc.txt",
+    chunkId: "chunk-0001",
+    text: "申請期限は翌月5営業日です。金額は5,000円です。申請システムから提出します。",
+    createdAt: "2026-04-30T00:00:00.000Z"
+  }
+}
+
+test("analyze input combines unresolved clarification context without duplicating selected values", async () => {
+  assert.deepEqual(await analyzeInput(state({ question: "  期限   は？  " })), {
+    question: "期限 は？",
+    normalizedQuery: "期限 は？",
+    clarificationContext: undefined
+  })
+
+  const unresolved = await analyzeInput(state({
+    question: "海外出張です",
+    clarificationContext: {
+      originalQuestion: "経費精算の期限は？",
+      options: [],
+      selectedValue: "旅費規程"
+    }
+  }))
+  assert.equal(unresolved.question, "経費精算の期限は？ 旅費規程 海外出張です")
+  assert.equal(unresolved.normalizedQuery, "経費精算の期限は？ 旅費規程 海外出張です")
+
+  const sameValue = await analyzeInput(state({
+    question: "旅費規程",
+    clarificationContext: {
+      originalQuestion: "経費精算の期限は？",
+      options: [],
+      selectedValue: "旅費規程"
+    }
+  }))
+  assert.equal(sameValue.question, "経費精算の期限は？ 旅費規程")
+
+  const resolved = await analyzeInput(state({
+    question: "海外出張です",
+    clarificationContext: {
+      originalQuestion: "経費精算の期限は？",
+      options: [],
+      selectedOptionId: "option-1",
+      selectedValue: "旅費規程"
+    }
+  }))
+  assert.equal(resolved.question, "海外出張です")
+})
+
+test("signal terms suppress low-information question tokens across domains", () => {
+  assert.deepEqual(extractSignalTerms("Who can request VPN access?"), ["request", "VPN", "access"])
+  assert.deepEqual(extractSignalTerms("Can vendors renew SOC2 access?"), ["vendors", "SOC2", "access"])
+  assert.equal(buildSignalPhrase(["What about auditors?", "Can vendors renew SOC2 access?"], "fallback"), "auditors vendors SOC2 access")
+})
+
+test("question requirements detect Japanese QA slots without benchmark expected text", () => {
+  const founding = detectQuestionRequirements("前身組織はいつ・どこに・何という組織として置かれましたか？")
+  assert.deepEqual(
+    founding.filter((requirement) => requirement.type === "slot").map((requirement) => requirement.type === "slot" ? requirement.slot : "").sort(),
+    ["date", "organization", "place"].sort()
+  )
+
+  const list = detectQuestionRequirements("円滑な入退院の実現に含まれる項目を4つ挙げてください。")
+  assert.equal(list.find((requirement) => requirement.type === "list_count")?.type, "list_count")
+  assert.equal(list.some((requirement) => requirement.type === "list_count" && requirement.count === 4), true)
+  assert.equal(list.some((requirement) => requirement.type === "slot" && requirement.slot === "item"), true)
+
+  assert.equal(validateAnswerRequirements("円滑な入退院の実現に含まれる項目を4つ挙げてください。", "① 入退院支援加算等の見直し、② 介護支援等連携指導料の見直し").length > 0, true)
+  assert.equal(
+    validateAnswerRequirements(
+      "円滑な入退院の実現に含まれる項目を4つ挙げてください。",
+      "① 入退院支援加算等の見直し、② 介護支援等連携指導料の見直し、③ 高次脳機能障害者への退院支援、④ 感染対策向上加算等における専従要件の見直し"
+    ).length,
+    0
+  )
+})
+
+test("question requirements cover money, section, term, reason, and validation branches", () => {
+  assert.equal(asksForMoney("円滑な入退院を実現する項目は？"), false)
+  assert.equal(asksForMoney("費用はいくらですか？"), true)
+  assert.equal(asksForMoney("上限は5,000円ですか？"), true)
+  assert.equal(formatQuestionRequirementsForPrompt("要点を説明してください。"), "")
+  assert.match(formatQuestionRequirementsForPrompt("どの節に該当しますか？理由も答えてください。"), /節番号・節名/)
+
+  const section = detectQuestionRequirements("DPC／PDPS はどの節・項目に該当しますか？理由は何ですか？")
+  assert.equal(section.some((requirement) => requirement.type === "slot" && requirement.slot === "section"), true)
+  assert.equal(section.some((requirement) => requirement.type === "slot" && requirement.slot === "term"), true)
+  assert.equal(section.some((requirement) => requirement.type === "slot" && requirement.slot === "reason"), true)
+  assert.equal(section.some((requirement) => requirement.type === "slot" && requirement.slot === "yes_no"), true)
+  assert.equal(detectQuestionRequirements("三つ挙げてください。").some((requirement) => requirement.type === "list_count" && requirement.count === 3), true)
+
+  assert.deepEqual(validateAnswerRequirements("要点を説明してください。", "短い回答です。"), [])
+
+  const missingFounding = validateAnswerRequirements("いつ・どこに・何という組織ですか？", "不明です。")
+  assert.equal(missingFounding.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "date"), true)
+  assert.equal(missingFounding.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "place"), true)
+  assert.equal(missingFounding.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "organization"), true)
+
+  const missingSection = validateAnswerRequirements("DPC/PDPS はどの節・項目に該当しますか？理由は？", "答えだけです。")
+  assert.equal(missingSection.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "section"), true)
+  assert.equal(missingSection.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "item"), true)
+  assert.equal(missingSection.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "term"), true)
+  assert.equal(missingSection.some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "reason"), true)
+  assert.equal(validateAnswerRequirements("申請できますか？", "未確認").some((issue) => issue.requirement.type === "slot" && issue.requirement.slot === "yes_no"), true)
+
+  const complete = validateAnswerRequirements(
+    "DPC/PDPS はどの節・項目に該当しますか？理由は？",
+    "はい、II-1-1 の項目です。DPC/PDPS の見直し、算定要件の整理に該当します。本文の趣旨に基づくためです。"
+  )
+  assert.deepEqual(complete, [])
+})
+
+test("conversation query rewrite ignores refusal text and weak English function words", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "What about contractors?",
+    conversation: {
+      conversationId: "conv-vpn",
+      turnId: "turn-2",
+      turnIndex: 2,
+      turns: [
+        { role: "user", text: "Who can request VPN access?" },
+        { role: "assistant", text: "資料からは回答できません。" }
+      ]
+    }
+  }))
+
+  const queryUpdate = await decontextualizeQuery(state({
+    question: "What about contractors?",
+    conversationState: conversationUpdate.conversationState
+  }))
+
+  assert.equal(queryUpdate.conversationState, undefined)
+  assert.equal(queryUpdate.decontextualizedQuery?.turnDependency, "coreference")
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /contractors/i)
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /VPN access/i)
+  assert.doesNotMatch(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /資料|回答できません|Who can/i)
+  assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("Who"), false)
+  assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("can"), false)
+})
+
+test("conversation query rewrite strips generic grounded answer preambles from follow-up search", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "What about contractors?",
+    conversation: {
+      conversationId: "conv-vpn",
+      turnId: "turn-2",
+      turnIndex: 2,
+      turns: [
+        { role: "user", text: "Who can request VPN access?" },
+        {
+          role: "assistant",
+          text: "資料では次のように記載されています。Employees with manager approval can request VPN access.",
+          citations: [{ documentId: "doc-vpn", fileName: "chatrag_sample_it.md", chunkId: "chunk-0000" }]
+        }
+      ]
+    }
+  }))
+
+  const queryUpdate = await decontextualizeQuery(state({
+    question: "What about contractors?",
+    conversationState: conversationUpdate.conversationState
+  }))
+
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /contractors/i)
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /VPN access/i)
+  assert.doesNotMatch(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /資料|記載されています|Who can/i)
+  assert.ok((queryUpdate.decontextualizedQuery?.retrievalQueries.length ?? 99) <= 3)
+})
+
+test("conversation rewrite carries domain signals without fixed benchmark vocabulary", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "And auditors?",
+    conversation: {
+      conversationId: "conv-soc2",
+      turnId: "turn-2",
+      turnIndex: 2,
+      turns: [
+        { role: "user", text: "Can vendors renew SOC2 access?" },
+        { role: "assistant", text: "I cannot answer from the provided material." }
+      ]
+    }
+  }))
+
+  const queryUpdate = await decontextualizeQuery(state({
+    question: "And auditors?",
+    conversationState: conversationUpdate.conversationState
+  }))
+
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /auditors/i)
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /vendors SOC2 access/i)
+  assert.doesNotMatch(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /cannot answer|Can vendors/i)
+  assert.deepEqual(queryUpdate.decontextualizedQuery?.carriedEntities.includes("Can"), false)
+})
+
+test("computation tools skip unavailable intents and derive relative policy deadline facts from evidence", async () => {
+  assert.deepEqual(await executeComputationTools(state({})), { computedFacts: [] })
+  assert.deepEqual(
+    await executeComputationTools(state({
+      temporalContext: { today: "2026-05-10", timezone: "Asia/Tokyo" },
+      toolIntent: {
+        needsArithmeticCalculation: false,
+        needsTemporalCalculation: false,
+        needsAggregation: false,
+        needsTaskDeadlineIndex: false,
+        temporalOperation: "none",
+        arithmeticOperation: "none",
+        confidence: 0.9,
+        reason: "document question"
+      }
+    })),
+    { computedFacts: [] }
+  )
+
+  const derived = await executeComputationTools(state({
+    question: "育休を7/1に開始する場合の申請期限は？",
+    temporalContext: { today: "2026-05-10", timezone: "Asia/Tokyo" },
+    toolIntent: {
+      needsArithmeticCalculation: false,
+      needsTemporalCalculation: true,
+      needsAggregation: false,
+      needsTaskDeadlineIndex: false,
+      temporalOperation: "relative_policy_deadline",
+      arithmeticOperation: "none",
+      confidence: 0.9,
+      reason: "relative deadline"
+    },
+    selectedChunks: [
+      {
+        ...chunk,
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "rule-1",
+          text: "申請期限は開始日の１か月前までに申請してください。"
+        }
+      }
+    ],
+    computedFacts: [
+      {
+        id: "today-001",
+        kind: "current_date",
+        inputFactIds: [],
+        today: "2026-05-10",
+        timezone: "Asia/Tokyo",
+        explanation: "基準日"
+      }
+    ]
+  }))
+
+  assert.equal(derived.computedFacts?.length, 2)
+  assert.equal(derived.computedFacts?.[1]?.kind, "relative_policy_deadline")
+  assert.equal(derived.computedFacts?.[1]?.sourceChunkId, "rule-1")
+  assert.equal(derived.computedFacts?.[1]?.baseDate, "2026-07-01")
+  assert.equal(derived.computedFacts?.[1]?.resultDate, "2026-06-01")
+
+  const invalidDate = await executeComputationTools(state({
+    question: "育休を13/40に開始する場合の申請期限は？",
+    temporalContext: { today: "2026-05-10", timezone: "Asia/Tokyo" },
+    toolIntent: {
+      needsArithmeticCalculation: false,
+      needsTemporalCalculation: true,
+      needsAggregation: false,
+      needsTaskDeadlineIndex: false,
+      temporalOperation: "relative_policy_deadline",
+      arithmeticOperation: "none",
+      confidence: 0.9,
+      reason: "relative deadline"
+    },
+    retrievedChunks: [chunk]
+  }))
+  assert.deepEqual(invalidDate.computedFacts, [])
+})
+
+test("normalize query rewrites context-dependent questions with conversation history", async () => {
+  const withoutHistory = await normalizeQuery(state({ question: "海外出張でも同じ？" }))
+  assert.equal(withoutHistory.normalizedQuery, "海外出張でも同じ")
+  assert.deepEqual(withoutHistory.expandedQueries, ["海外出張でも同じ"])
+
+  const withHistory = await normalizeQuery(state({
+    question: "海外出張でも同じ？",
+    conversationHistory: [
+      { role: "user", text: "経費精算の期限は？" },
+      { role: "assistant", text: "申請から30日以内です。" }
+    ]
+  }))
+  assert.equal(withHistory.normalizedQuery, "経費精算の期限について、海外出張でも同じ")
+  assert.deepEqual(withHistory.expandedQueries, ["経費精算の期限について、海外出張でも同じ", "海外出張でも同じ"])
+})
+
+test("answerability gate covers no hit, low score, missing fact, and sufficient evidence branches", async () => {
+  assert.equal((await answerabilityGate(state({ selectedChunks: [] }))).answerability?.reason, "no_relevant_chunks")
+
+  const lowScore = await answerabilityGate(state({ selectedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))
+  assert.equal(lowScore.answerability?.reason, "low_similarity_score")
+  assert.equal(lowScore.answerability?.sentenceAssessments?.[0]?.status, "ng")
+
+  const missingAmount = await answerabilityGate(state({ question: "金額はいくらですか？", selectedChunks: [{ ...chunk, metadata: { ...chunk.metadata, text: "期限は翌月です。" } }] }))
+  assert.equal(missingAmount.answerability?.reason, "missing_required_fact")
+  assert.equal(missingAmount.answerability?.sentenceAssessments?.[0]?.status, "ng")
+  assert.match(missingAmount.answerability?.sentenceAssessments?.[0]?.sentence ?? "", /期限/)
+
+  const sufficient = await answerabilityGate(state({ question: "申請方法と期限と金額は？", selectedChunks: [chunk] }))
+  assert.equal(sufficient.answerability?.reason, "sufficient_evidence")
+  assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("amount")))
+  assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("date")))
+  assert.ok(sufficient.answerability?.sentenceAssessments?.some((assessment) => assessment.status === "ok" && (assessment.checks ?? []).includes("procedure")))
+})
+
+test("conversation state decontextualizes follow-up questions without using expected answers", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "その例外は？",
+    conversation: {
+      conversationId: "conv-1",
+      turnId: "2",
+      turnIndex: 2,
+      turns: [
+        { role: "user", text: "経費精算の期限は？" },
+        {
+          role: "assistant",
+          text: "経費精算の期限は30日以内です。",
+          citations: [{ documentId: "doc-handbook", fileName: "handbook.md", chunkId: "chunk-1", pageStart: 12, pageEnd: 12, score: 0.9, text: "30日以内" }]
+        }
+      ]
+    }
+  }))
+  const rewriteUpdate = await decontextualizeQuery(state({
+    question: "その例外は？",
+    conversationState: conversationUpdate.conversationState
+  }))
+
+  assert.equal(conversationUpdate.conversationState?.turnDependency, "coreference")
+  assert.deepEqual(conversationUpdate.conversationState?.previousCitations, [{
+    documentId: "doc-handbook",
+    fileName: "handbook.md",
+    chunkId: "chunk-1",
+    pageStart: 12,
+    pageEnd: 12
+  }])
+  assert.equal(rewriteUpdate.decontextualizedQuery?.shouldUsePreviousCitations, true)
+  assert.match(rewriteUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /経費精算/)
+  assert.ok(rewriteUpdate.decontextualizedQuery?.retrievalQueries.some((query) => query.includes("handbook.md")))
+  assert.ok((rewriteUpdate.decontextualizedQuery?.retrievalQueries.length ?? 0) <= 3)
+})
+
+test("classification answers require actual requirements classification terms", async () => {
+  const outlineChunk = {
+    ...chunk,
+    metadata: {
+      ...chunk.metadata,
+      domainPolicy: "swebok-requirements",
+      text: "2 Requirements Elicitation\n4.3 ATDD\nBDD\n4.4 UMLSysML\n5 Requirements Validation\n6.1 Requirements Scrubbing\n7.2 Kano"
+    }
+  }
+  const classificationChunk = {
+    ...chunk,
+    key: "doc-1-chunk-0009",
+    score: 0.3,
+    metadata: {
+      ...chunk.metadata,
+      domainPolicy: "swebok-requirements",
+      chunkId: "chunk-0009",
+      text: "ソフトウェア要求の分類: ソフトウェア製品要求、ソフトウェアプロジェクト要求、機能要求、非機能要求、技術制約、サービス品質制約。"
+    }
+  }
+
+  assert.equal(
+    (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [outlineChunk] }))).answerability?.reason,
+    "missing_required_fact"
+  )
+
+  assert.equal(
+    (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [classificationChunk] }))).answerability?.reason,
+    "sufficient_evidence"
+  )
+
+  assert.deepEqual(
+    (await rerankChunks(state({ question: "ソフトウェア要求の分類を洗い出して", topK: 1, retrievedChunks: [outlineChunk, classificationChunk] }))).selectedChunks?.map(
+      (selected) => selected.key
+    ),
+    ["doc-1-chunk-0009"]
+  )
+})
+
+test("rerank chunks uses page layout metadata and previous citation prior as soft boosts", async () => {
+  const previousPageChunk = {
+    ...chunk,
+    key: "doc-policy-chunk-0012",
+    score: 0.42,
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-policy",
+      fileName: "policy.pdf",
+      chunkId: "chunk-0012",
+      pageStart: 12,
+      pageEnd: 12,
+      heading: "経費精算の例外条件",
+      sectionPath: ["経費精算", "例外"],
+      chunkKind: "table" as const,
+      text: "例外条件 | 上長承認 | システム障害"
+    }
+  }
+  const higherBaseOtherDoc = {
+    ...chunk,
+    key: "doc-other-chunk-0001",
+    score: 0.45,
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-other",
+      fileName: "other.pdf",
+      chunkId: "chunk-0001",
+      pageStart: 3,
+      pageEnd: 3,
+      text: "一般的な申請条件です。"
+    }
+  }
+
+  const reranked = await rerankChunks(state({
+    question: "その例外条件は？",
+    topK: 1,
+    decontextualizedQuery: {
+      standaloneQuestion: "経費精算の例外条件は？",
+      retrievalQueries: ["経費精算 例外 条件 表"],
+      carriedEntities: ["経費精算"],
+      carriedDocuments: ["policy.pdf"],
+      turnDependency: "coreference",
+      shouldUsePreviousCitations: true
+    },
+    conversationState: {
+      activeEntities: ["経費精算"],
+      activeDocuments: ["policy.pdf"],
+      activeTopics: ["経費精算"],
+      constraints: [],
+      previousCitationCount: 1,
+      previousCitations: [{ documentId: "doc-policy", fileName: "policy.pdf", chunkId: "chunk-0011", pageStart: 11, pageEnd: 11 }],
+      turnDependency: "coreference"
+    },
+    retrievedChunks: [higherBaseOtherDoc, previousPageChunk]
+  }))
+
+  assert.deepEqual(reranked.selectedChunks?.map((selected) => selected.key), ["doc-policy-chunk-0012"])
+  assert.ok((reranked.selectedChunks?.[0]?.score ?? 0) > higherBaseOtherDoc.score)
+})
+
+test("rerank chunks excludes final answer context below minScore", async () => {
+  const lowScoreRelevant = {
+    ...chunk,
+    key: "doc-low-chunk-0001",
+    score: 0.1,
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-low",
+      fileName: "low.txt",
+      chunkId: "chunk-0001",
+      text: "VPN access Contractors sponsor review manager approval."
+    }
+  }
+  const highScoreCandidate = {
+    ...chunk,
+    key: "doc-high-chunk-0001",
+    score: 0.25,
+    metadata: {
+      ...chunk.metadata,
+      documentId: "doc-high",
+      fileName: "high.txt",
+      chunkId: "chunk-0001",
+      text: "General IT access policy index."
+    }
+  }
+
+  const reranked = await rerankChunks(state({
+    question: "What about contractors?",
+    minScore: 0.2,
+    topK: 2,
+    retrievedChunks: [lowScoreRelevant, highScoreCandidate]
+  }))
+
+  assert.deepEqual(reranked.selectedChunks?.map((selected) => selected.key), ["doc-high-chunk-0001"])
+  assert.equal(reranked.selectedChunks?.some((selected) => selected.score < 0.2), false)
+})
+
+test("default policy keeps requirements classification special cases opt-in", async () => {
+  const outlineChunk = {
+    ...chunk,
+    metadata: {
+      ...chunk.metadata,
+      text: "2 Requirements Elicitation\n5 Requirements Validation\n7.2 Kano"
+    }
+  }
+
+  assert.equal(
+    (await answerabilityGate(state({ question: "ソフトウェア要求の分類を洗い出して", selectedChunks: [outlineChunk] }))).answerability?.reason,
+    "sufficient_evidence"
+  )
+})
+
+test("sufficient context gate accepts supported evidence and refuses partial evidence", async () => {
+  const answerableDeps = createDeps()
+  const answerable = await createSufficientContextGateNode(answerableDeps)(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.7 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [{ id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+
+  assert.equal(answerable.sufficientContext?.label, "ANSWERABLE")
+  assert.equal(answerable.answerability?.isAnswerable, true)
+  assert.equal(answerable.searchPlan?.requiredFacts?.[0]?.status, "supported")
+  assert.deepEqual(answerable.sufficientContext?.supportingChunkIds, ["doc-1-chunk-0001"])
+
+  const partialDeps = createDeps()
+  const baseModel = partialDeps.textModel
+  partialDeps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.62,
+          requiredFacts: ["申請期限", "例外承認者"],
+          supportedFacts: ["申請期限"],
+          missingFacts: ["例外承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "例外承認者の根拠がありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+  const partial = await createSufficientContextGateNode(partialDeps)(state({ answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.7 } }))
+
+  assert.equal(partial.sufficientContext?.label, "PARTIAL")
+  assert.equal(partial.answerability?.isAnswerable, false)
+  assert.equal(partial.answerability?.reason, "missing_required_fact")
+  assert.equal(partial.answer, NO_ANSWER)
+  assert.deepEqual(partial.sufficientContext?.supportingChunkIds, ["doc-1-chunk-0001"])
+})
+
+test("sufficient context gate does not override unanswerable judgement", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "UNANSWERABLE",
+          confidence: 0.74,
+          requiredFacts: ["社内カフェの新メニュー価格"],
+          supportedFacts: [],
+          missingFacts: ["社内カフェの新メニュー価格"],
+          conflictingFacts: [],
+          supportingChunkIds: [],
+          reason: "根拠チャンクは質問に答えていません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "社内カフェの新メニュー価格は？",
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      retrievalEvaluation: {
+        retrievalQuality: "sufficient",
+        missingFactIds: [],
+        conflictingFactIds: [],
+        supportedFactIds: ["fact-1"],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "heuristic supported"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "UNANSWERABLE")
+  assert.equal(result.answerability?.isAnswerable, false)
+  assert.equal(result.answer, NO_ANSWER)
+  assert.deepEqual(result.citations, [])
+})
+
+test("sufficient context gate proceeds on anchored unanswerable judgement with retrieved evidence", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "UNANSWERABLE",
+          confidence: 0.6,
+          requiredFacts: ["fact-1"],
+          supportedFacts: [],
+          missingFacts: ["追加の具体化"],
+          conflictingFacts: [],
+          supportingChunkIds: [],
+          reason: "一部情報が不足していると判断しました。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "円滑な入退院の実現に含まれる項目を4つ挙げてください。",
+      selectedChunks: [
+        {
+          ...chunk,
+          metadata: {
+            ...chunk.metadata,
+            heading: "II-2-2 円滑な入退院の実現",
+            text: "II-2-2 円滑な入退院の実現 ① 入退院支援加算等の見直し ② 介護支援等連携指導料の見直し ③ 回復期リハビリテーション病棟における高次脳機能障害者への退院支援 ④ 感染対策向上加算等における専従要件の見直し"
+          }
+        }
+      ],
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "円滑な入退院の実現",
+        requiredFacts: [
+          { id: "fact-1", description: "円滑な入退院の実現 項目名", factType: "classification", necessity: "primary", priority: 1, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      },
+      retrievalEvaluation: {
+        retrievalQuality: "partial",
+        missingFactIds: [],
+        conflictingFactIds: [],
+        supportedFactIds: [],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "heading anchored evidence"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "UNANSWERABLE")
+  assert.equal(result.answerability?.isAnswerable, true)
+  assert.equal(result.answer, undefined)
+})
+
+test("sufficient context gate keeps generic partial questions refused without a subject cue", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.69,
+          requiredFacts: ["いつ"],
+          supportedFacts: ["申請期限"],
+          missingFacts: [],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "日付らしき根拠はありますが、質問対象がありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "いつですか？",
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      retrievalEvaluation: {
+        retrievalQuality: "sufficient",
+        missingFactIds: [],
+        conflictingFactIds: [],
+        supportedFactIds: ["fact-1"],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "heuristic supported"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "PARTIAL")
+  assert.equal(result.answerability?.isAnswerable, false)
+  assert.equal(result.answer, NO_ANSWER)
+})
+
+test("sufficient context gate proceeds on partial evidence when only secondary facts are missing", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.7,
+          requiredFacts: ["申請期限", "例外承認者"],
+          supportedFacts: ["申請期限"],
+          missingFacts: ["例外承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "例外承認者の根拠がありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "申請期限と例外承認者は？",
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", factType: "date", necessity: "primary", priority: 1, status: "supported", supportingChunkKeys: ["doc-1-chunk-0001"] },
+          { id: "exception-approver", description: "例外承認者", factType: "person", necessity: "secondary", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      },
+      retrievalEvaluation: {
+        retrievalQuality: "partial",
+        missingFactIds: ["exception-approver"],
+        conflictingFactIds: [],
+        supportedFactIds: ["deadline"],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "partial evidence"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "PARTIAL")
+  assert.equal(result.answerability?.isAnswerable, true)
+  assert.equal(result.answerability?.reason, "sufficient_evidence")
+  assert.equal(result.answer, undefined)
+  assert.match(result.sufficientContext?.reason ?? "", /取得済み根拠で回答生成へ進みます/)
+})
+
+test("sufficient context gate proceeds when judge maps supported primary fact by id", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  let capturedPrompt = ""
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        capturedPrompt = prompt
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.85,
+          requiredFacts: ["fact-1"],
+          supportedFacts: ["fact-1"],
+          missingFacts: ["慶弔事由の具体的な事由"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "primary fact は根拠で支持されていますが、追加の具体例は資料にありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "特別休暇の対象となる慶弔事由は？",
+      selectedChunks: [
+        {
+          ...chunk,
+          metadata: {
+            ...chunk.metadata,
+            text: "特別休暇は慶弔など会社が認める事由を対象にします。"
+          }
+        }
+      ],
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "特別休暇の対象となる慶弔事由",
+        requiredFacts: [
+          { id: "fact-1", description: "特別休暇の対象となる慶弔事由", factType: "condition", necessity: "primary", priority: 1, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      },
+      retrievalEvaluation: {
+        retrievalQuality: "partial",
+        missingFactIds: ["fact-1"],
+        conflictingFactIds: [],
+        supportedFactIds: [],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "heuristic missing"
+      }
+    })
+  )
+
+  assert.match(capturedPrompt, /id=fact-1; necessity=primary; type=condition; description=特別休暇の対象となる慶弔事由/)
+  assert.match(capturedPrompt, /supportedFacts、missingFacts、conflictingFacts には、原則として該当する required fact の id/)
+  assert.equal(result.sufficientContext?.label, "PARTIAL")
+  assert.equal(result.answerability?.isAnswerable, true)
+  assert.equal(result.searchPlan?.requiredFacts[0]?.status, "supported")
+  assert.equal(result.answer, undefined)
+})
+
+test("sufficient context gate refuses partial evidence when primary facts are missing", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("SUFFICIENT_CONTEXT_JSON")) {
+        return JSON.stringify({
+          label: "PARTIAL",
+          confidence: 0.7,
+          requiredFacts: ["申請期限", "例外承認者"],
+          supportedFacts: ["申請期限"],
+          missingFacts: ["例外承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "例外承認者の根拠がありません。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const result = await createSufficientContextGateNode(deps)(
+    state({
+      question: "申請期限と例外承認者は？",
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.8 },
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限と例外承認者",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", factType: "date", necessity: "primary", priority: 1, status: "supported", supportingChunkKeys: ["doc-1-chunk-0001"] },
+          { id: "exception-approver", description: "例外承認者", factType: "person", necessity: "primary", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      },
+      retrievalEvaluation: {
+        retrievalQuality: "partial",
+        missingFactIds: ["exception-approver"],
+        conflictingFactIds: [],
+        supportedFactIds: ["deadline"],
+        claims: [],
+        conflictCandidates: [],
+        nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+        reason: "partial evidence"
+      }
+    })
+  )
+
+  assert.equal(result.sufficientContext?.label, "PARTIAL")
+  assert.equal(result.answerability?.isAnswerable, false)
+  assert.equal(result.answerability?.reason, "missing_required_fact")
+  assert.equal(result.answer, NO_ANSWER)
+})
+
+test("sufficient context gate normalizes judge output and guards partial evidence boundaries", async () => {
+  const requiredFact = { id: "deadline", description: "申請期限", priority: 1, necessity: "primary" as const, status: "missing" as const, supportingChunkKeys: [] }
+  const baseState = state({
+    answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.1 },
+    selectedChunks: [chunk],
+    retrievalEvaluation: {
+      retrievalQuality: "partial",
+      missingFactIds: [],
+      conflictingFactIds: [],
+      supportedFactIds: ["deadline"],
+      claims: [],
+      conflictCandidates: [],
+      nextAction: { type: "rerank", objective: "answer_with_supported_evidence" },
+      reason: ""
+    },
+    searchPlan: {
+      complexity: "simple",
+      intent: "申請期限",
+      requiredFacts: [requiredFact],
+      actions: [],
+      stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 1, maxNoNewEvidenceStreak: 1 }
+    }
+  })
+  const nodeFor = (payload: Record<string, unknown>) => createSufficientContextGateNode({
+    ...createDeps(),
+    textModel: {
+      embed: async () => [1, 0],
+      generate: async () => JSON.stringify(payload)
+    }
+  })
+
+  const answerable = await nodeFor({
+    label: "ANSWERABLE",
+    confidence: 2,
+    requiredFacts: ["申請期限", "", 42],
+    supportedFacts: ["申請期限"],
+    missingFacts: ["ignored"],
+    conflictingFacts: [],
+    supportingChunkIds: ["chunk-0001", "unknown", "chunk-0001"],
+    reason: ""
+  })(baseState)
+  assert.equal(answerable.answerability?.confidence, 1)
+  assert.deepEqual(answerable.sufficientContext?.missingFacts, [])
+  assert.deepEqual(answerable.sufficientContext?.supportingChunkIds, ["doc-1-chunk-0001"])
+
+  const partialPayload = {
+    label: "PARTIAL",
+    confidence: Number.NaN,
+    requiredFacts: ["申請期限"],
+    supportedFacts: ["申請期限"],
+    missingFacts: [],
+    conflictingFacts: [],
+    supportingChunkIds: ["chunk-0001"]
+  }
+  assert.equal((await nodeFor(partialPayload)(state({ ...baseState, selectedChunks: [] }))).answerability?.isAnswerable, false)
+  assert.equal((await nodeFor(partialPayload)(state({ ...baseState, answerability: { isAnswerable: false, reason: "no_relevant_chunks", confidence: 0 } }))).answerability?.isAnswerable, false)
+  assert.equal((await nodeFor({ ...partialPayload, supportedFacts: [], supportingChunkIds: [] })(baseState)).answerability?.isAnswerable, false)
+  assert.equal(
+    (await nodeFor(partialPayload)(state({
+      ...baseState,
+      retrievalEvaluation: { ...(baseState.retrievalEvaluation as ChatOrchestrationState["retrievalEvaluation"]), retrievalQuality: "irrelevant" }
+    }))).answerability?.isAnswerable,
+    false
+  )
+  assert.equal(
+    (await nodeFor({ ...partialPayload, conflictingFacts: ["deadline"] })(state({
+      ...baseState,
+      retrievalEvaluation: { ...(baseState.retrievalEvaluation as ChatOrchestrationState["retrievalEvaluation"]), retrievalQuality: "conflicting", conflictingFactIds: ["deadline"] }
+    }))).answerability?.reason,
+    "conflicting_evidence"
+  )
+  assert.equal((await nodeFor(partialPayload)(state({ ...baseState, selectedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))).answerability?.isAnswerable, false)
+
+  const invalid = await createSufficientContextGateNode({ ...createDeps(), textModel: new MockBedrockTextModel({ invalidJsonOnGenerate: true }) })(baseState)
+  assert.equal(invalid.sufficientContext?.label, "UNANSWERABLE")
+  assert.deepEqual(invalid.sufficientContext?.requiredFacts, ["申請期限"])
+})
+
+test("citation validation accepts used ids and rejects invalid or ungrounded answers", async () => {
+  const ok = await validateCitations(
+    state({
+      selectedChunks: [chunk],
+      rawAnswer: JSON.stringify({ isAnswerable: true, answer: "翌月5営業日です。", usedChunkIds: ["chunk-0001"] })
+    })
+  )
+  assert.equal(ok.answer, "翌月5営業日です。")
+  assert.equal(ok.citations?.length, 1)
+
+  assert.equal((await validateCitations(state({ rawAnswer: "not-json" }))).answer, NO_ANSWER)
+  assert.equal((await validateCitations(state({ rawAnswer: JSON.stringify({ isAnswerable: false }) }))).answer, NO_ANSWER)
+  assert.equal(
+    (await validateCitations(state({ selectedChunks: [chunk], rawAnswer: JSON.stringify({ isAnswerable: true, answer: "根拠なし", usedChunkIds: ["missing"] }) }))).answerability
+      ?.reason,
+    "citation_validation_failed"
+  )
+  assert.equal(
+    (
+      await validateCitations(
+        state({
+          question: "ソフトウェア要求の分類を洗い出して",
+          selectedChunks: [{ ...chunk, metadata: { ...chunk.metadata, domainPolicy: "swebok-requirements" } }],
+          rawAnswer: JSON.stringify({ isAnswerable: true, answer: "1. Requirements Elicitation\n2. BDD", usedChunkIds: ["chunk-0001"] })
+        })
+      )
+    ).answerability?.reason,
+    "citation_validation_failed"
+  )
+
+  assert.equal(
+    (
+      await validateCitations(
+        state({
+          selectedChunks: [],
+          computedFacts: [
+            {
+              id: "date-001",
+              kind: "current_date",
+              inputFactIds: [],
+              today: "2026-05-03",
+              timezone: "Asia/Tokyo",
+              explanation: "Asia/Tokyo の基準日は 2026-05-03 です。"
+            }
+          ],
+          rawAnswer: JSON.stringify({ isAnswerable: true, answer: "今日の日付は2026-05-03です。", usedChunkIds: [], usedComputedFactIds: ["missing"] })
+        })
+      )
+    ).answerability?.reason,
+    "citation_validation_failed"
+  )
+})
+
+test("answer support verifier accepts supported answers and rejects unsupported sentences", async () => {
+  const supported = await createVerifyAnswerSupportNode(createDeps())(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      answer: "申請期限は翌月5営業日です。",
+      citations: [
+        {
+          documentId: "doc-1",
+          fileName: "doc.txt",
+          chunkId: "chunk-0001",
+          score: 0.9,
+          text: chunk.metadata.text ?? ""
+        }
+      ]
+    })
+  )
+
+  assert.equal(supported.answerSupport?.supported, true)
+  assert.deepEqual(supported.answerSupport?.unsupportedSentences, [])
+  assert.deepEqual(supported.answerSupport?.supportingChunkIds, ["doc-1-chunk-0001"])
+
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("ANSWER_SUPPORT_JSON")) {
+        return JSON.stringify({
+          supported: false,
+          unsupportedSentences: [{ sentence: "例外時は部長承認が必要です。", reason: "根拠チャンクに例外承認者の記載がありません。" }],
+          supportingChunkIds: ["chunk-0001"],
+          contradictionChunkIds: [],
+          confidence: 0.77,
+          totalSentences: 2,
+          reason: "一部の回答文が根拠範囲を超えています。"
+        })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const unsupported = await createVerifyAnswerSupportNode(deps)(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      answer: "申請期限は翌月5営業日です。例外時は部長承認が必要です。",
+      citations: [
+        {
+          documentId: "doc-1",
+          fileName: "doc.txt",
+          chunkId: "chunk-0001",
+          score: 0.9,
+          text: chunk.metadata.text ?? ""
+        }
+      ]
+    })
+  )
+
+  assert.equal(unsupported.answerSupport?.supported, false)
+  assert.equal(unsupported.answerability?.reason, "unsupported_answer")
+  assert.equal(unsupported.answer, NO_ANSWER)
+  assert.deepEqual(unsupported.citations, [])
+  assert.deepEqual(unsupported.answerSupport?.supportingChunkIds, ["doc-1-chunk-0001"])
+})
+
+test("answer support verifier repairs unsupported answers once with supported-only facts", async () => {
+  const deps = createDeps()
+  const baseModel = deps.textModel
+  let supportCalls = 0
+  deps.textModel = {
+    embed: baseModel.embed.bind(baseModel),
+    generate: async (prompt, options) => {
+      if (prompt.includes("ANSWER_SUPPORT_JSON")) {
+        supportCalls += 1
+        if (supportCalls === 1) {
+          return JSON.stringify({
+            supported: false,
+            unsupportedSentences: [{ sentence: "例外時は部長承認が必要です。", reason: "根拠がありません。" }],
+            supportingChunkIds: ["chunk-0001"],
+            contradictionChunkIds: [],
+            confidence: 0.7,
+            totalSentences: 2,
+            reason: "一部 unsupported です。"
+          })
+        }
+        return JSON.stringify({
+          supported: true,
+          unsupportedSentences: [],
+          supportingChunkIds: ["chunk-0001"],
+          contradictionChunkIds: [],
+          confidence: 0.9,
+          totalSentences: 1,
+          reason: "修復後の回答は根拠で支持されています。"
+        })
+      }
+      if (prompt.includes("SUPPORTED_ONLY_ANSWER_JSON")) {
+        return JSON.stringify({ isAnswerable: true, answer: "申請期限は翌月5営業日です。", usedChunkIds: ["chunk-0001"] })
+      }
+      return baseModel.generate(prompt, options)
+    }
+  }
+
+  const repaired = await createVerifyAnswerSupportNode(deps)(
+    state({
+      answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 },
+      answer: "申請期限は翌月5営業日です。例外時は部長承認が必要です。",
+      selectedChunks: [chunk],
+      citations: [
+        {
+          documentId: "doc-1",
+          fileName: "doc.txt",
+          chunkId: "chunk-0001",
+          score: 0.9,
+          text: chunk.metadata.text ?? ""
+        }
+      ]
+    })
+  )
+
+  assert.equal(repaired.answer, "申請期限は翌月5営業日です。")
+  assert.equal(repaired.answerSupport?.supported, true)
+  assert.equal(repaired.citations?.length, 1)
+})
+
+test("finalize response preserves grounded answers and converts invalid final states to refusals", async () => {
+  assert.deepEqual(await finalizeResponse(state({ answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.9 }, answer: "  OK  " })), {
+    answer: "OK"
+  })
+  assert.equal(
+    (await finalizeResponse(state({ answerability: { isAnswerable: true, reason: "sufficient_evidence", confidence: 0.4 }, answer: NO_ANSWER }))).answerability?.reason,
+    "citation_validation_failed"
+  )
+  assert.equal(
+    (await finalizeResponse(state({ answerability: { isAnswerable: false, reason: "low_similarity_score", confidence: 0.1 } }))).answerability?.reason,
+    "low_similarity_score"
+  )
+})
+
+test("query nodes handle memory-disabled, fallback, generated clue, and search merge paths", async () => {
+  const deps = createDeps()
+  assert.deepEqual(await createRetrieveMemoryNode(deps, user())(state({ useMemory: false })), { memoryCards: [] })
+
+  const guardedDeps = createDeps()
+  const guardedObjectStore = guardedDeps.objectStore
+  guardedDeps.objectStore = {
+    ...guardedObjectStore,
+    getText: async (key: string) => {
+      if (key === "manifests/doc-quality-excluded.json") {
+        return JSON.stringify({
+          documentId: "doc-quality-excluded",
+          fileName: "excluded.txt",
+          sourceObjectKey: "documents/doc-quality-excluded/source.txt",
+          manifestObjectKey: "manifests/doc-quality-excluded.json",
+          vectorKeys: ["doc-quality-excluded-memory-1"],
+          lifecycleStatus: "active",
+          metadata: { aclGroup: "GROUP_A" },
+          qualityProfile: { ragEligibility: "excluded" },
+          chunkCount: 1,
+          memoryCardCount: 1,
+          createdAt: "2026-05-03T00:00:00.000Z"
+        })
+      }
+      return guardedObjectStore.getText(key)
+    }
+  }
+  guardedDeps.memoryVectorStore = {
+    put: async () => undefined,
+    query: async () => [
+      { ...chunk, key: "active-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-1", aclGroup: "GROUP_A" } },
+      { ...chunk, key: "quality-excluded-memory", metadata: { ...chunk.metadata, documentId: "doc-quality-excluded", kind: "memory", memoryId: "memory-q", aclGroup: "GROUP_A" } },
+      { ...chunk, key: "staging-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-2", lifecycleStatus: "staging", aclGroup: "GROUP_A" } },
+      { ...chunk, key: "forbidden-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-3", aclGroup: "GROUP_B" } }
+    ],
+    delete: async () => undefined
+  }
+  const guardedMemory = await createRetrieveMemoryNode(guardedDeps, { userId: "user-a", cognitoGroups: ["GROUP_A"] })(state({ memoryTopK: 3 }))
+  assert.deepEqual(guardedMemory.memoryCards?.map((hit) => hit.key), ["active-memory"])
+
+  const noMemoryClues = await createGenerateCluesNode(deps)(state({ memoryCards: [], expandedQueries: ["standalone question", "retrieval query"] }))
+  assert.deepEqual(noMemoryClues, { clues: [], expandedQueries: ["standalone question", "retrieval query", "question"] })
+
+  const generatedClues = await createGenerateCluesNode(deps)(state({ memoryCards: [{ ...chunk, metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-1" } }] }))
+  assert.ok((generatedClues.expandedQueries?.length ?? 0) > 1)
+
+  const fallbackEmbeddings = await createEmbedQueriesNode(deps)(state({ expandedQueries: [] }))
+  assert.equal(fallbackEmbeddings.queryEmbeddings?.length, 1)
+
+  const search = await createSearchEvidenceNode(deps, user())(state({ queryEmbeddings: [{ query: "q", vector: [1, 0] }] }))
+  assert.deepEqual(search.retrievedChunks?.map((hit) => hit.key), ["doc-1-chunk-0001"])
+  assert.equal(search.retrievalDiagnostics?.semanticCount, 2)
+
+  const multiQuerySearch = await createSearchEvidenceNode(deps, user())(
+    state({
+      queryEmbeddings: [
+        { query: "申請期限", vector: [1, 0] },
+        { query: "提出期限", vector: [0.9, 0.1] }
+      ]
+    })
+  )
+  assert.equal(multiQuerySearch.retrievalDiagnostics?.queryCount, 2)
+  assert.equal(multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRank, 1)
+  assert.ok((multiQuerySearch.retrievedChunks?.[0]?.metadata.crossQueryRrfScore ?? 0) > 0)
+
+  const filterDeps = createDeps()
+  let capturedVectorFilter: unknown
+  filterDeps.evidenceVectorStore = {
+    put: async () => undefined,
+    query: async (_vector, _topK, filter) => {
+      capturedVectorFilter = filter
+      return []
+    },
+    delete: async () => undefined
+  }
+  await createSearchEvidenceNode(filterDeps, user())(
+    state({
+      queryEmbeddings: [{ query: "申請期限", vector: [1, 0] }],
+      searchFilters: { source: "benchmark-runner", docType: "benchmark-corpus" }
+    })
+  )
+  assert.deepEqual(capturedVectorFilter, {
+    kind: "chunk",
+    documentId: undefined,
+    tenantId: undefined,
+    department: undefined,
+    source: "benchmark-runner",
+    docType: "benchmark-corpus",
+    benchmarkSuiteId: undefined
+  })
+
+  const memoryExpansionDeps = createDeps()
+  memoryExpansionDeps.evidenceVectorStore = {
+    put: async () => undefined,
+    query: async () => [],
+    delete: async () => undefined
+  }
+  const memoryExpanded = await createSearchEvidenceNode(memoryExpansionDeps, user())(
+    state({
+      normalizedQuery: "not-in-document",
+      queryEmbeddings: [{ query: "not-in-document", vector: [1, 0] }],
+      memoryCards: [{
+        ...chunk,
+        key: "doc-1-memory-section-0001",
+        score: 0.82,
+        metadata: {
+          ...chunk.metadata,
+          kind: "memory",
+          chunkId: undefined,
+          memoryId: "memory-section-0001",
+          sourceChunkIds: ["chunk-0000"],
+          pageStart: 3,
+          pageEnd: 3,
+          text: "Level: section\nSource chunks: chunk-0000"
+        }
+      }]
+    })
+  )
+  assert.deepEqual(memoryExpanded.retrievedChunks?.map((hit) => hit.metadata.kind), ["chunk"])
+  assert.equal(memoryExpanded.retrievedChunks?.[0]?.metadata.sources?.includes("memory"), true)
+  assert.equal(memoryExpanded.retrievedChunks?.[0]?.metadata.chunkId, "chunk-0000")
+  assert.equal(memoryExpanded.retrievalDiagnostics?.sourceCounts.memory, 1)
+
+  const excludedExpansionDeps = createDeps()
+  const excludedObjectStore = excludedExpansionDeps.objectStore
+  excludedExpansionDeps.objectStore = {
+    ...excludedObjectStore,
+    getText: async (key: string) => {
+      if (key === "manifests/doc-1.json") {
+        const manifest = JSON.parse(await excludedObjectStore.getText(key)) as Record<string, unknown>
+        return JSON.stringify({ ...manifest, qualityProfile: { ragEligibility: "excluded" } })
+      }
+      return excludedObjectStore.getText(key)
+    }
+  }
+  excludedExpansionDeps.evidenceVectorStore = {
+    put: async () => undefined,
+    query: async () => [],
+    delete: async () => undefined
+  }
+  const excludedMemoryExpanded = await createSearchEvidenceNode(excludedExpansionDeps, user())(
+    state({
+      normalizedQuery: "not-in-document",
+      queryEmbeddings: [{ query: "not-in-document", vector: [1, 0] }],
+      memoryCards: [{
+        ...chunk,
+        key: "doc-1-memory-section-0001",
+        score: 0.82,
+        metadata: {
+          ...chunk.metadata,
+          kind: "memory",
+          chunkId: undefined,
+          memoryId: "memory-section-0001",
+          sourceChunkIds: ["chunk-0000"],
+          text: "Level: section\nSource chunks: chunk-0000"
+        }
+      }]
+    })
+  )
+  assert.deepEqual(excludedMemoryExpanded.retrievedChunks, [])
+  assert.equal(excludedMemoryExpanded.retrievalDiagnostics?.sourceCounts.memory, 0)
+})
+
+test("retrieval evaluator routes fact coverage conservatively", async () => {
+  const sufficient = await retrievalEvaluator(
+    state({
+      question: "申請期限は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [{ id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(sufficient.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(sufficient.retrievalEvaluation?.supportedFactIds, ["deadline"])
+  assert.equal(sufficient.retrievalEvaluation?.nextAction.type, "rerank")
+  assert.equal(sufficient.searchPlan?.requiredFacts[0]?.status, "supported")
+
+  const partial = await retrievalEvaluator(
+    state({
+      question: "申請期限と例外承認者は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "申請期限と例外承認者",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] },
+          { id: "exception-approver", description: "例外承認者", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(partial.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(partial.retrievalEvaluation?.missingFactIds, ["exception-approver"])
+  assert.equal(partial.retrievalEvaluation?.nextAction.type, "evidence_search")
+  assert.match(partial.retrievalEvaluation?.nextAction.type === "evidence_search" ? partial.retrievalEvaluation.nextAction.query : "", /例外承認者/)
+
+  const irrelevant = await retrievalEvaluator(state({ retrievedChunks: [{ ...chunk, score: 0.1 }], minScore: 0.2 }))
+  assert.equal(irrelevant.retrievalEvaluation?.retrievalQuality, "irrelevant")
+  assert.equal(irrelevant.retrievalEvaluation?.nextAction.type, "query_rewrite")
+
+  const irrelevantAfterRewrite = await retrievalEvaluator(
+    state({
+      retrievedChunks: [{ ...chunk, score: 0.1 }],
+      minScore: 0.2,
+      actionHistory: [
+        {
+          action: { type: "query_rewrite", strategy: "keyword", input: "question" },
+          hitCount: 1,
+          newEvidenceCount: 0,
+          topScore: 0.1,
+          summary: "rewritten"
+        }
+      ]
+    })
+  )
+  assert.equal(irrelevantAfterRewrite.retrievalEvaluation?.retrievalQuality, "irrelevant")
+  assert.equal(irrelevantAfterRewrite.retrievalEvaluation?.nextAction.type, "evidence_search")
+
+  const partialWithKnownSupport = await retrievalEvaluator(
+    state({
+      question: "申請期限と例外承認者は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "申請期限と例外承認者",
+        requiredFacts: [
+          { id: "deadline", description: "申請期限", priority: 1, status: "supported", supportingChunkKeys: ["doc-1-chunk-0001"] },
+          { id: "exception-approver", description: "例外承認者", priority: 2, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(partialWithKnownSupport.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.equal(partialWithKnownSupport.retrievalEvaluation?.nextAction.type, "expand_context")
+  assert.equal(
+    partialWithKnownSupport.retrievalEvaluation?.nextAction.type === "expand_context"
+      ? partialWithKnownSupport.retrievalEvaluation.nextAction.chunkKey
+      : "",
+    "doc-1-chunk-0001"
+  )
+
+  const genericDeadline = await retrievalEvaluator(
+    state({
+      question: "期限は？",
+      retrievedChunks: [chunk],
+      searchPlan: {
+        complexity: "simple",
+        intent: "期限",
+        requiredFacts: [{ id: "deadline-generic", description: "期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(genericDeadline.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(genericDeadline.retrievalEvaluation?.supportedFactIds, [])
+  assert.deepEqual(genericDeadline.retrievalEvaluation?.missingFactIds, ["deadline-generic"])
+
+  const noValue = await retrievalEvaluator(
+    state({
+      question: "申請期限は？",
+      retrievedChunks: [{ ...chunk, metadata: { ...chunk.metadata, text: "申請期限については社内資料を確認してください。" } }],
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [{ id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(noValue.retrievalEvaluation?.retrievalQuality, "partial")
+  assert.deepEqual(noValue.retrievalEvaluation?.supportedFactIds, [])
+  assert.deepEqual(noValue.retrievalEvaluation?.missingFactIds, ["deadline"])
+
+  const multiFacetSeparateChunks = await retrievalEvaluator(
+    state({
+      question: "経費精算の申請方法と期限と金額は？",
+      retrievedChunks: [
+        { ...chunk, key: "expense-amount", metadata: { ...chunk.metadata, chunkId: "expense-amount", text: "経費精算の金額上限は5,000円です。" } },
+        { ...chunk, key: "expense-deadline", metadata: { ...chunk.metadata, chunkId: "expense-deadline", text: "経費精算の申請期限は翌月5営業日です。" } },
+        { ...chunk, key: "expense-procedure", metadata: { ...chunk.metadata, chunkId: "expense-procedure", text: "経費精算は申請システムから提出します。" } }
+      ],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "経費精算の申請方法と期限と金額",
+        requiredFacts: [
+          { id: "amount", description: "経費精算 金額", factType: "amount", subject: "経費精算", priority: 1, status: "missing", supportingChunkKeys: [] },
+          { id: "deadline", description: "経費精算 期限", factType: "date", subject: "経費精算", priority: 2, status: "missing", supportingChunkKeys: [] },
+          { id: "procedure", description: "経費精算 手順", factType: "procedure", subject: "経費精算", priority: 3, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(multiFacetSeparateChunks.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(multiFacetSeparateChunks.retrievalEvaluation?.missingFactIds, [])
+  assert.deepEqual(new Set(multiFacetSeparateChunks.retrievalEvaluation?.supportedFactIds), new Set(["amount", "deadline", "procedure"]))
+
+  const currentRuleWithStatusCue = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          metadata: {
+            ...chunk.metadata,
+            text: "旧制度は廃止され、現行制度では申請期限は翌月5営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(currentRuleWithStatusCue.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(currentRuleWithStatusCue.retrievalEvaluation?.conflictingFactIds, [])
+  assert.equal(currentRuleWithStatusCue.retrievalEvaluation?.nextAction.type, "rerank")
+
+  const valueMismatch = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0001",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0001",
+            text: "現行制度の申請期限は翌月5営業日です。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0002",
+          score: 0.88,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0002",
+            text: "現行制度の申請期限は翌月10営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(valueMismatch.retrievalEvaluation?.retrievalQuality, "conflicting")
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.supportedFactIds, [])
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
+  assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "typed_claim_conflict")
+  assert.deepEqual(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.values, ["翌月5営業日", "翌月10営業日"])
+  assert.equal(valueMismatch.retrievalEvaluation?.riskSignals?.[0]?.conflictCandidate?.scope, "現行")
+  assert.ok((valueMismatch.retrievalEvaluation?.claims.length ?? 0) >= 2)
+  assert.equal(valueMismatch.retrievalEvaluation?.nextAction.type, "evidence_search")
+  assert.match(valueMismatch.retrievalEvaluation?.nextAction.type === "evidence_search" ? valueMismatch.retrievalEvaluation.nextAction.query : "", /現行 最新/)
+
+  const scopedOldAndCurrent = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0003",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0003",
+            text: "旧制度の申請期限は翌月10日でした。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0004",
+          score: 0.91,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0004",
+            text: "現行制度の申請期限は翌月5営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(scopedOldAndCurrent.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.conflictingFactIds, [])
+  assert.deepEqual(scopedOldAndCurrent.retrievalEvaluation?.riskSignals, [])
+
+  const uncertainScopeMismatch = await retrievalEvaluator(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "doc-1-chunk-0005",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0005",
+            text: "申請期限は翌月5営業日です。"
+          }
+        },
+        {
+          ...chunk,
+          key: "doc-1-chunk-0006",
+          score: 0.89,
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "chunk-0006",
+            text: "現行の申請期限は翌月10営業日です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", factType: "date", subject: "制度", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.retrievalQuality, "conflicting")
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.riskSignals?.[0]?.type, "uncertain_scope_conflict")
+  assert.equal(uncertainScopeMismatch.retrievalEvaluation?.riskSignals?.[0]?.conflictCandidate?.scope, "uncertain")
+
+  const lowScoreTermMatch = await retrievalEvaluator(
+    state({
+      question: "申請期限は？",
+      retrievedChunks: [{ ...chunk, score: 0.41 }],
+      searchPlan: {
+        complexity: "simple",
+        intent: "申請期限",
+        requiredFacts: [{ id: "deadline", description: "申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.7, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.notEqual(lowScoreTermMatch.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(lowScoreTermMatch.retrievalEvaluation?.supportedFactIds, [])
+})
+
+test("retrieval evaluator supports non-date fact types and judge fallback paths", async () => {
+  const multiType = await retrievalEvaluator(
+    state({
+      question: "運用規程の頻度、状態、版、条件、担当、分類は？",
+      retrievedChunks: [
+        {
+          ...chunk,
+          key: "ops-all",
+          metadata: {
+            ...chunk.metadata,
+            chunkId: "ops-all",
+            text: "運用規程の点検頻度は毎月1回です。運用規程の状態は現行で有効です。運用規程の版はv2.3です。運用規程の適用範囲は正社員と契約社員です。運用規程の担当は人事部です。運用規程の分類は社内規程です。"
+          }
+        }
+      ],
+      searchPlan: {
+        complexity: "multi_hop",
+        intent: "運用規程",
+        requiredFacts: [
+          { id: "count", description: "運用規程 頻度", factType: "count", subject: "運用規程", priority: 1, status: "missing", supportingChunkKeys: [] },
+          { id: "status", description: "運用規程 状態", factType: "status", subject: "運用規程", priority: 2, status: "missing", supportingChunkKeys: [] },
+          { id: "version", description: "運用規程 版", factType: "version", subject: "運用規程", priority: 3, status: "missing", supportingChunkKeys: [] },
+          { id: "condition", description: "運用規程 条件", factType: "condition", subject: "運用規程", priority: 4, status: "missing", supportingChunkKeys: [] },
+          { id: "person", description: "運用規程 担当", factType: "person", subject: "運用規程", priority: 5, status: "missing", supportingChunkKeys: [] },
+          { id: "classification", description: "運用規程 分類", factType: "classification", subject: "運用規程", priority: 6, status: "missing", supportingChunkKeys: [] }
+        ],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(multiType.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(new Set(multiType.retrievalEvaluation?.supportedFactIds), new Set(["count", "status", "version", "condition", "person", "classification"]))
+
+  const invalidJudge = createRetrievalEvaluatorNode({
+    ...createDeps(),
+    textModel: new MockBedrockTextModel({ invalidJsonOnGenerate: true })
+  })
+  const judged = await invalidJudge(
+    state({
+      question: "現行制度の申請期限は？",
+      retrievedChunks: [
+        { ...chunk, key: "a", metadata: { ...chunk.metadata, chunkId: "a", text: "現行制度の申請期限は翌月5営業日です。" } },
+        { ...chunk, key: "b", metadata: { ...chunk.metadata, chunkId: "b", text: "現行制度の申請期限は翌月10営業日です。" } }
+      ],
+      searchPlan: {
+        complexity: "simple",
+        intent: "現行制度の申請期限",
+        requiredFacts: [{ id: "deadline", description: "現行制度 申請期限", factType: "date", subject: "制度", priority: 1, status: "missing", supportingChunkKeys: [] }],
+        actions: [],
+        stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+      }
+    })
+  )
+  assert.equal(judged.retrievalEvaluation?.llmJudge?.label, "UNCLEAR")
+  assert.deepEqual(judged.retrievalEvaluation?.llmJudge?.factIds, ["deadline"])
+})
+
+test("clarification gate asks only with grounded options and leaves clear queries alone", async () => {
+  const expense = {
+    ...chunk,
+    key: "expense-memory",
+    score: 0.91,
+    metadata: {
+      ...chunk.metadata,
+      kind: "memory" as const,
+      memoryId: "memory-expense",
+      text: "経費精算の申請期限は30日以内です。"
+    }
+  }
+  const vacation = {
+    ...chunk,
+    key: "vacation-memory",
+    score: 0.9,
+    metadata: {
+      ...chunk.metadata,
+      kind: "memory" as const,
+      memoryId: "memory-vacation",
+      text: "休暇申請の申請期限は前日までです。"
+    }
+  }
+  const privateLabel = {
+    ...chunk,
+    key: "private-memory",
+    score: 0.89,
+    metadata: {
+      ...chunk.metadata,
+      kind: "memory" as const,
+      memoryId: "memory-private",
+      text: "非公開の機密申請は内部aliasだけで管理します。"
+    }
+  }
+
+  const ambiguous = await clarificationGate(state({
+    question: "申請期限は？",
+    normalizedQuery: "申請期限",
+    memoryCards: [privateLabel, expense, vacation],
+    actionHistory: [{ action: { type: "evidence_search", query: "申請期限", topK: 3 }, hitCount: 2, newEvidenceCount: 2, summary: "searched" }]
+  }))
+
+  assert.equal(ambiguous.clarification?.needsClarification, true)
+  assert.equal(ambiguous.clarification?.reason, "multiple_candidate_intents")
+  assert.deepEqual(ambiguous.clarification?.missingSlots, ["申請種別"])
+  assert.deepEqual(ambiguous.clarification?.options.map((option) => option.label), ["経費精算", "休暇申請"])
+  assert.ok(ambiguous.clarification?.options.every((option) => option.grounding.length > 0))
+  assert.ok(ambiguous.clarification?.options.every((option) => !/(非公開|機密|内部alias)/.test(option.label)))
+
+  const clear = await clarificationGate(state({
+    question: "経費精算の申請期限は？",
+    normalizedQuery: "経費精算の申請期限",
+    memoryCards: [expense, vacation]
+  }))
+  assert.equal(clear.clarification?.needsClarification, false)
+
+  const noCandidate = await clarificationGate(state({
+    question: "社長の昨日の昼食は？",
+    normalizedQuery: "社長の昨日の昼食"
+  }))
+  assert.equal(noCandidate.clarification?.needsClarification, false)
+
+  const internalControl = await clarificationGate(state({
+    question: "申請期限は？",
+    normalizedQuery: "申請期限",
+    actionHistory: [{ action: { type: "evidence_search", query: "申請期限", topK: 3 }, hitCount: 2, newEvidenceCount: 2, summary: "searched" }],
+    memoryCards: [
+      {
+        ...chunk,
+        key: "internal-control-memory",
+        score: 0.92,
+        metadata: {
+          ...chunk.metadata,
+          kind: "memory" as const,
+          memoryId: "memory-internal-control",
+          text: "内部統制申請の期限は四半期末です。"
+        }
+      },
+      expense
+    ]
+  }))
+  assert.equal(internalControl.clarification?.needsClarification, true)
+  assert.ok(internalControl.clarification?.options.some((option) => option.label.includes("内部統制")))
+})
+
+test("retrieval evaluator LLM judge handles uncertain value mismatch cases", async () => {
+  const mismatchState = state({
+    question: "現行制度の申請期限は？",
+    retrievedChunks: [
+      {
+        ...chunk,
+        key: "doc-1-chunk-0001",
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "chunk-0001",
+          text: "現行制度の申請期限は翌月5営業日です。"
+        }
+      },
+      {
+        ...chunk,
+        key: "doc-1-chunk-0002",
+        score: 0.88,
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "chunk-0002",
+          text: "現行制度の申請期限は翌月10営業日です。"
+        }
+      }
+    ],
+    searchPlan: {
+      complexity: "simple",
+      intent: "現行制度の申請期限",
+      requiredFacts: [{ id: "current-deadline", description: "現行制度の申請期限", priority: 1, status: "missing", supportingChunkKeys: [] }],
+      actions: [],
+      stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+    }
+  })
+
+  const noConflict = createRetrievalEvaluatorNode({
+    ...createDeps(),
+    textModel: {
+      embed: async () => [1],
+      generate: async () =>
+        JSON.stringify({
+          label: "NO_CONFLICT",
+          confidence: 0.91,
+          factIds: ["current-deadline"],
+          supportingChunkIds: ["doc-1-chunk-0001"],
+          contradictionChunkIds: [],
+          reason: "片方は補足情報であり、回答根拠には翌月5営業日を使える。"
+        })
+    }
+  })
+  const resolved = await noConflict(mismatchState)
+  assert.equal(resolved.retrievalEvaluation?.llmJudge?.label, "NO_CONFLICT")
+  assert.equal(resolved.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(resolved.retrievalEvaluation?.conflictingFactIds, [])
+  assert.equal(resolved.retrievalEvaluation?.nextAction.type, "rerank")
+  assert.equal(resolved.searchPlan?.requiredFacts[0]?.status, "supported")
+
+  const conflict = createRetrievalEvaluatorNode({
+    ...createDeps(),
+    textModel: {
+      embed: async () => [1],
+      generate: async () =>
+        JSON.stringify({
+          label: "CONFLICT",
+          confidence: 0.88,
+          factIds: ["current-deadline"],
+          supportingChunkIds: [],
+          contradictionChunkIds: ["doc-1-chunk-0001", "doc-1-chunk-0002"],
+          reason: "同一 scope で申請期限の値が排他的です。"
+        })
+    }
+  })
+  const judgedConflict = await conflict(mismatchState)
+  assert.equal(judgedConflict.retrievalEvaluation?.llmJudge?.label, "CONFLICT")
+  assert.equal(judgedConflict.retrievalEvaluation?.retrievalQuality, "conflicting")
+  assert.deepEqual(judgedConflict.retrievalEvaluation?.conflictingFactIds, ["current-deadline"])
+  assert.equal(judgedConflict.retrievalEvaluation?.nextAction.type, "evidence_search")
+})
+
+test("retrieval evaluator LLM judge resolves high-confidence no-conflict without requiring scoped candidates", async () => {
+  const mismatchState = state({
+    question: "申請期限は？",
+    retrievedChunks: [
+      {
+        ...chunk,
+        key: "doc-1-chunk-0001",
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "chunk-0001",
+          text: "申請期限は翌月5営業日です。"
+        }
+      },
+      {
+        ...chunk,
+        key: "doc-1-chunk-0002",
+        score: 0.88,
+        metadata: {
+          ...chunk.metadata,
+          chunkId: "chunk-0002",
+          text: "申請期限は翌月10営業日です。"
+        }
+      }
+    ],
+    searchPlan: {
+      complexity: "simple",
+      intent: "申請期限",
+      requiredFacts: [{ id: "deadline", description: "申請期限", factType: "date", necessity: "primary", priority: 1, status: "missing", supportingChunkKeys: [] }],
+      actions: [],
+      stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+    }
+  })
+
+  const noConflict = createRetrievalEvaluatorNode({
+    ...createDeps(),
+    textModel: {
+      embed: async () => [1],
+      generate: async () =>
+        JSON.stringify({
+          label: "NO_CONFLICT",
+          confidence: 0.91,
+          factIds: ["deadline"],
+          supportingChunkIds: ["doc-1-chunk-0001"],
+          contradictionChunkIds: [],
+          reason: "回答に使う primary fact は翌月5営業日で支持され、他の値は競合として扱わない。"
+        })
+    }
+  })
+
+  const resolved = await noConflict(mismatchState)
+  assert.equal(resolved.retrievalEvaluation?.llmJudge?.label, "NO_CONFLICT")
+  assert.equal(resolved.retrievalEvaluation?.retrievalQuality, "sufficient")
+  assert.deepEqual(resolved.retrievalEvaluation?.conflictingFactIds, [])
+  assert.equal(resolved.retrievalEvaluation?.nextAction.type, "rerank")
+  assert.equal(resolved.searchPlan?.requiredFacts[0]?.status, "supported")
+})
+
+test("traced node records success, warning, model ids, details, and thrown errors", async () => {
+  const success = await tracedNode("search_evidence", async () => ({ retrievedChunks: [chunk] }))(state({ trace: [] }))
+  const successTrace = success.trace as unknown as DebugStep
+  assert.equal(successTrace.status, "success")
+  assert.equal(successTrace.modelId, "embed")
+  assert.equal(successTrace.hitCount, 1)
+  assert.match(successTrace.detail ?? "", /doc.txt/)
+  assert.equal(successTrace.output?.retrievedChunks, undefined)
+
+  const warning = await tracedNode("generate_answer", async () => ({ answer: NO_ANSWER }))(state({ trace: [] }))
+  const warningTrace = warning.trace as unknown as DebugStep
+  assert.equal(warningTrace.status, "warning")
+  assert.equal(warningTrace.tokenCount, 4)
+  assert.equal(warningTrace.output?.answer, NO_ANSWER)
+
+  const answerability = await tracedNode("answerability_gate", async () => answerabilityGate(state({ question: "金額はいくらですか？", selectedChunks: [chunk] })))(state({ trace: [] }))
+  const answerabilityTrace = answerability.trace as unknown as DebugStep
+  assert.match(answerabilityTrace.detail ?? "", /判定に使った文/)
+  assert.match(answerabilityTrace.detail ?? "", /\[OK\]/)
+
+  const error = await tracedNode("generate_clues", async () => {
+    throw new Error("boom")
+  })(state({ trace: [] }))
+  const errorTrace = error.trace as unknown as DebugStep
+  assert.equal(error.answer, NO_ANSWER)
+  assert.equal(errorTrace.status, "error")
+  assert.equal(errorTrace.modelId, undefined)
+  assert.equal(errorTrace.output?.answer, NO_ANSWER)
+})
+
+test("traced node formats debug trace details for major agent updates", async () => {
+  const updates = [
+    {
+      label: "clarification_gate",
+      update: {
+        clarification: {
+          needsClarification: true,
+          reason: "multiple_candidates",
+          question: "どの規程ですか？",
+          options: [{ id: "opt-1", label: "旅費規程", value: "travel", source: "retrieval", grounding: ["doc-1-chunk-0001"] }],
+          missingSlots: ["規程名"],
+          confidence: 0.72,
+          ambiguityScore: 0.81,
+          groundedOptionCount: 1,
+          rejectedOptions: ["候補外"]
+        }
+      },
+      expected: /clarification=true/
+    },
+    {
+      label: "sufficient_context_gate",
+      update: {
+        sufficientContext: {
+          label: "PARTIAL",
+          confidence: 0.66,
+          requiredFacts: ["期限", "承認者"],
+          supportedFacts: ["期限"],
+          missingFacts: ["承認者"],
+          conflictingFacts: [],
+          supportingChunkIds: ["chunk-0001"],
+          reason: "承認者が不足"
+        }
+      },
+      expected: /sufficient_context=PARTIAL/
+    },
+    {
+      label: "detect_tool_intent",
+      update: {
+        toolIntent: {
+          needsSearch: false,
+          needsTemporalCalculation: true,
+          needsArithmeticCalculation: false,
+          needsAggregation: false,
+          needsTaskDeadlineIndex: false,
+          temporalOperation: "current_date",
+          arithmeticOperation: "none",
+          confidence: 0.9,
+          reason: "current date"
+        }
+      },
+      expected: /tool_intent/
+    },
+    {
+      label: "build_temporal_context",
+      update: {
+        temporalContext: { today: "2026-05-10", timezone: "Asia/Tokyo", source: "injected" }
+      },
+      expected: /today=2026-05-10/
+    },
+    {
+      label: "build_conversation_state",
+      update: {
+        conversationState: {
+          conversationId: "conv-1",
+          turnIndex: 2,
+          turnDependency: "coreference",
+          previousCitationCount: 1,
+          contextText: "前回の文脈"
+        }
+      },
+      expected: /conversation=conv-1/
+    },
+    {
+      label: "normalize_query",
+      update: {
+        decontextualizedQuery: {
+          standaloneQuestion: "経費精算の期限は？",
+          retrievalQueries: ["経費精算の期限", "期限"],
+          shouldUsePreviousCitations: true,
+          reason: "前回文脈を参照"
+        }
+      },
+      expected: /standalone_query=経費精算/
+    },
+    {
+      label: "retrieval_evaluator",
+      update: {
+        retrievalEvaluation: {
+          retrievalQuality: "conflicting",
+          missingFactIds: [],
+          conflictingFactIds: ["deadline"],
+          supportedFactIds: [],
+          claims: [],
+          conflictCandidates: [],
+          riskSignals: [
+            {
+              type: "typed_claim_conflict",
+              factId: "deadline",
+              values: ["翌月5営業日", "翌月10営業日"],
+              chunkKeys: ["doc-1-chunk-0001", "doc-1-chunk-0002"],
+              reason: "期限値が競合",
+              conflictCandidate: {
+                subject: "現行制度",
+                predicate: "申請期限",
+                value: "翌月10営業日",
+                scope: "現行",
+                chunkKey: "doc-1-chunk-0002"
+              }
+            }
+          ],
+          llmJudge: {
+            label: "CONFLICT",
+            confidence: 0.8,
+            factIds: ["deadline"],
+            supportingChunkIds: ["doc-1-chunk-0001"],
+            contradictionChunkIds: ["doc-1-chunk-0002"],
+            reason: "LLM judge conflict"
+          },
+          nextAction: { type: "evidence_search", query: "現行 最新 期限", topK: 8 },
+          reason: "conflict"
+        }
+      },
+      expected: /retrieval=conflicting/
+    },
+    {
+      label: "extract_references",
+      update: {
+        searchPlan: {
+          complexity: "multi_hop",
+          intent: "現行制度の期限",
+          requiredFacts: [{ id: "deadline", description: "期限", priority: 1, necessity: "primary", status: "missing", supportingChunkKeys: [] }],
+          actions: [
+            { type: "query_rewrite", strategy: "keyword", input: "期限" },
+            { type: "expand_context", chunkKey: "doc-1-chunk-0001", window: 1 },
+            { type: "rerank", objective: "answer_with_supported_evidence" },
+            { type: "finalize_refusal", reason: "insufficient_evidence" }
+          ],
+          stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+        }
+      },
+      expected: /plan actions=4/
+    },
+    {
+      label: "evaluate_search_progress",
+      update: {
+        actionHistory: [
+          {
+            action: { type: "query_rewrite", strategy: "keyword", input: "期限" },
+            hitCount: 2,
+            newEvidenceCount: 1,
+            topScore: 0.91,
+            summary: "追加根拠を取得",
+            retrievalDiagnostics: {
+              queryCount: 2,
+              indexVersions: ["idx-1"],
+              aliasVersions: [],
+              lexicalCount: 1,
+              semanticCount: 1,
+              fusedCount: 2,
+              sourceCounts: { lexical: 1, semantic: 1, hybrid: 0 }
+            }
+          }
+        ]
+      },
+      expected: /action=query_rewrite/
+    },
+    {
+      label: "generate_clues",
+      update: { clues: ["期限"], expandedQueries: ["申請期限", "提出期限"] },
+      expected: /expanded queries=2/
+    },
+    {
+      label: "embed_queries",
+      update: { queryEmbeddings: [{ query: "申請期限", vector: [1, 0] }] },
+      expected: /embedded queries=1/
+    },
+    {
+      label: "rerank_chunks",
+      update: { selectedChunks: [chunk] },
+      expected: /selected=1/
+    },
+    {
+      label: "validate_citations",
+      update: { citations: [{ documentId: "doc-1", fileName: "doc.txt", chunkId: "chunk-0001", score: 0.9, text: "根拠" }] },
+      expected: /citations=1/
+    },
+    {
+      label: "validate_citations",
+      update: { rawAnswer: "{\"answer\":\"ok\"}" },
+      expected: /validate_citations completed/
+    }
+  ]
+
+  for (const item of updates) {
+    const result = await tracedNode(item.label, async () => item.update as unknown as ChatOrchestrationUpdate)(state({ trace: [] }))
+    const trace = result.trace as unknown as DebugStep
+    assert.match(trace.summary, item.expected)
+    assert.ok(trace.detail === undefined || trace.detail.length > 0)
+    assert.ok(trace.output === undefined || Object.keys(trace.output).length > 0)
+  }
+
+  const emptyActionHistory = await tracedNode("evaluate_search_progress", async () => ({ actionHistory: [] }))(state({ trace: [] }))
+  const emptyTrace = emptyActionHistory.trace as unknown as DebugStep
+  assert.equal(emptyTrace.detail, "なし")
+
+  const temporalError = await tracedNode("build_temporal_context", async () => {
+    throw "invalid date"
+  })(state({ trace: [] }))
+  assert.equal(temporalError.answerability?.reason, "invalid_temporal_context")
+  assert.match((temporalError.trace as unknown as DebugStep).detail ?? "", /invalid date/)
+})
+
+test("traced node covers fallback summaries and empty detail branches", async () => {
+  const cases = [
+    {
+      label: "noop",
+      update: {},
+      summary: /noop completed/,
+      detail: undefined
+    },
+    {
+      label: "answerability_gate",
+      update: { answerability: { isAnswerable: false, reason: "no_relevant_chunks", confidence: 0 } },
+      summary: /answerable=false/,
+      detail: /判定に使った文:\nなし/
+    },
+    {
+      label: "sufficient_context_gate",
+      update: { sufficientContext: { label: "SUFFICIENT", confidence: 1, reason: "ok" } },
+      summary: /missing=0/,
+      detail: /requiredFacts:\nなし/
+    },
+    {
+      label: "clarification_gate",
+      update: {
+        clarification: {
+          needsClarification: false,
+          reason: "not_needed",
+          question: "",
+          options: [],
+          missingSlots: [],
+          confidence: 1,
+          groundedOptionCount: 0,
+          rejectedOptions: []
+        }
+      },
+      summary: /clarification=false/,
+      detail: /question:\nなし/
+    },
+    {
+      label: "verify_answer_support",
+      update: {
+        answerSupport: {
+          supported: true,
+          unsupportedSentences: [],
+          supportingChunkIds: [],
+          supportingComputedFactIds: [],
+          contradictionChunkIds: [],
+          confidence: 0.9,
+          totalSentences: 1,
+          reason: "supported"
+        }
+      },
+      summary: /answer_support=supported/,
+      detail: /unsupportedSentences:\nなし/
+    },
+    {
+      label: "extract_references",
+      update: {
+        searchPlan: {
+          complexity: "simple",
+          intent: "empty",
+          requiredFacts: [],
+          actions: [],
+          stopCriteria: { maxIterations: 1, minTopScore: 0.2, minEvidenceCount: 1, maxNoNewEvidenceStreak: 1 }
+        }
+      },
+      summary: /plan actions=0/,
+      detail: /actions:\nなし/
+    },
+    {
+      label: "evaluate_search_progress",
+      update: {
+        actionHistory: [
+          {
+            action: { type: "finalize_refusal", reason: "insufficient_evidence" },
+            hitCount: 0,
+            newEvidenceCount: 0,
+            summary: "stop",
+            retrievalDiagnostics: {
+              queryCount: 0,
+              indexVersions: [],
+              aliasVersions: [],
+              lexicalCount: 0,
+              semanticCount: 0,
+              fusedCount: 0,
+              sourceCounts: { lexical: 0, semantic: 0, hybrid: 0 }
+            }
+          }
+        ]
+      },
+      summary: /action=finalize_refusal/,
+      detail: /indexVersions=none/
+    },
+    {
+      label: "retrieve_memory",
+      update: { memoryCards: [{ ...chunk, metadata: { ...chunk.metadata, kind: "memory" as const } }] },
+      summary: /memory hits=1/,
+      detail: /doc.txt/
+    },
+    {
+      label: "generate_answer",
+      update: { answer: "ok" },
+      summary: /finalized/,
+      detail: /ok/
+    }
+  ]
+
+  for (const item of cases) {
+    const result = await tracedNode(item.label, async () => item.update as unknown as ChatOrchestrationUpdate)(state({ trace: [] }))
+    const trace = result.trace as unknown as DebugStep
+    assert.match(trace.summary, item.summary)
+    if (item.detail === undefined) assert.equal(trace.detail, undefined)
+    else assert.match(trace.detail ?? "", item.detail)
+  }
+
+  const symbolError = await tracedNode("validate_citations", async () => {
+    throw Symbol("bad")
+  })(state({ trace: [] }))
+  assert.equal(symbolError.answerability?.reason, "citation_validation_failed")
+  assert.match((symbolError.trace as unknown as DebugStep).detail ?? "", /Symbol\(bad\)/)
+})
+
+function createDeps(): Dependencies {
+  return {
+    objectStore: {
+      putText: async () => undefined,
+      getText: async (key: string) => {
+        if (key === "manifests/doc-1.json") {
+          return JSON.stringify({
+            documentId: "doc-1",
+            fileName: "doc.txt",
+            sourceObjectKey: "documents/doc-1/source.txt",
+            manifestObjectKey: "manifests/doc-1.json",
+            vectorKeys: ["doc-1-chunk-0001", "doc-1-memory-1"],
+            lifecycleStatus: "active",
+            metadata: { aclGroup: "GROUP_A" },
+            chunkCount: 1,
+            memoryCardCount: 1,
+            createdAt: "2026-05-03T00:00:00.000Z"
+          })
+        }
+        if (key === "documents/doc-1/source.txt") return chunk.metadata.text ?? ""
+        return ""
+      },
+      deleteObject: async () => undefined,
+      listKeys: async (prefix: string) => prefix === "manifests/" ? ["manifests/doc-1.json"] : []
+    },
+    memoryVectorStore: {
+      put: async () => undefined,
+      query: async () => [{ ...chunk, metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-1" } }],
+      delete: async () => undefined
+    },
+    evidenceVectorStore: {
+      put: async () => undefined,
+      query: async () => [chunk, { ...chunk, key: "doc-1-chunk-0001", score: 0.8 }],
+      delete: async () => undefined
+    },
+    textModel: new MockBedrockTextModel(),
+    questionStore: {
+      create: async () => {
+        throw new Error("not used")
+      },
+      list: async () => [],
+      get: async () => undefined,
+      answer: async () => {
+        throw new Error("not used")
+      },
+      resolve: async () => {
+        throw new Error("not used")
+      }
+    },
+    conversationHistoryStore: {
+      save: async () => {
+        throw new Error("not used")
+      },
+      list: async () => [],
+      delete: async () => undefined
+    }
+  } as unknown as Dependencies
+}
+
+function user() {
+  return {
+    userId: "test-user",
+    email: "test-user@example.com",
+    cognitoGroups: ["SYSTEM_ADMIN"]
+  }
+}
+
+function state(overrides: Record<string, unknown> = {}): ChatOrchestrationState {
+  return {
+    runId: "run",
+    question: "question",
+    conversationHistory: [],
+    modelId: "model",
+    embeddingModelId: "embed",
+    clueModelId: "clue",
+    useMemory: true,
+    debug: false,
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.2,
+    strictGrounded: true,
+    searchFilters: undefined,
+    iteration: 0,
+    referenceQueue: [],
+    resolvedReferences: [],
+    unresolvedReferenceTargets: [],
+    visitedDocumentIds: [],
+    searchBudget: { maxReferenceDepth: 2, remainingCalls: 3 },
+    normalizedQuery: undefined,
+    memoryCards: [],
+    clues: [],
+    expandedQueries: [],
+    queryEmbeddings: [],
+    searchPlan: {
+      complexity: "simple",
+      intent: "question",
+      requiredFacts: [],
+      actions: [],
+      stopCriteria: { maxIterations: 3, minTopScore: 0.2, minEvidenceCount: 2, maxNoNewEvidenceStreak: 2 }
+    },
+    actionHistory: [],
+    retrievalEvaluation: {
+      retrievalQuality: "irrelevant",
+      missingFactIds: [],
+      conflictingFactIds: [],
+      supportedFactIds: [],
+      claims: [],
+      conflictCandidates: [],
+      nextAction: {
+        type: "evidence_search",
+        query: "",
+        topK: 6
+      },
+      reason: ""
+    },
+    temporalContext: undefined,
+    asOfDate: undefined,
+    asOfDateSource: undefined,
+    toolIntent: undefined,
+    computedFacts: [],
+    usedComputedFactIds: [],
+    maxIterations: 3,
+    newEvidenceCount: 0,
+    noNewEvidenceStreak: 0,
+    searchDecision: "continue_search",
+    retrievedChunks: [],
+    retrievalDiagnostics: undefined,
+    selectedChunks: [chunk],
+    answerability: { isAnswerable: false, reason: "not_checked", confidence: 0 },
+    sufficientContext: {
+      label: "UNANSWERABLE",
+      confidence: 0,
+      requiredFacts: [],
+      supportedFacts: [],
+      missingFacts: [],
+      conflictingFacts: [],
+      supportingChunkIds: [],
+      reason: ""
+    },
+    rawAnswer: undefined,
+    answer: undefined,
+    answerSupport: {
+      supported: false,
+      unsupportedSentences: [],
+      supportingChunkIds: [],
+      supportingComputedFactIds: [],
+      contradictionChunkIds: [],
+      confidence: 0,
+      totalSentences: 0,
+      reason: ""
+    },
+    clarification: {
+      needsClarification: false,
+      reason: "not_needed",
+      question: "",
+      options: [],
+      missingSlots: [],
+      confidence: 0,
+      groundedOptionCount: 0,
+      rejectedOptions: []
+    },
+    citations: [],
+    trace: [],
+    ...overrides
+  } as unknown as ChatOrchestrationState
+}

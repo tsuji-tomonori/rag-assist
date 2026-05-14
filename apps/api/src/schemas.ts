@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi"
-import { ragRuntimePolicy } from "./agent/runtime-policy.js"
+import { ragRuntimePolicy } from "./chat-orchestration/runtime-policy.js"
 import type { JsonValue } from "./types.js"
 
 const MetadataValueSchema = z.custom<JsonValue>(isJsonValue)
@@ -70,6 +70,7 @@ export const IngestUploadedDocumentRequestSchema = z.object({
 })
 
 export const PipelineVersionsSchema = z.object({
+  chatOrchestrationWorkflowVersion: z.string(),
   agentWorkflowVersion: z.string(),
   chunkerVersion: z.string(),
   sourceExtractorVersion: z.string(),

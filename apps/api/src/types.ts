@@ -55,6 +55,8 @@ export type DocumentGroup = {
 }
 
 export type PipelineVersions = {
+  chatOrchestrationWorkflowVersion: string
+  /** @deprecated Use chatOrchestrationWorkflowVersion. */
   agentWorkflowVersion: string
   chunkerVersion: string
   sourceExtractorVersion: string

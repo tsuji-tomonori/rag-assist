@@ -14,7 +14,7 @@ confirmed:
 - `rg -n "\\b[A-Za-z0-9_]*Agent[A-Za-z0-9_]*\\b" --glob '*.ts' --glob '*.tsx' --glob '*.mts' --glob '*.cts'`
 - `rg --no-filename -o "\\b[A-Za-z_$][A-Za-z0-9_$]*Agent[A-Za-z0-9_$]*\\b" --glob '*.ts' --glob '*.tsx' --glob '*.mts' --glob '*.cts' apps packages benchmark infra | sort | uniq -c`
 - `rg -n "4B|4C|ChatOrchestrationRun|AgentRun|ChatTool|tool invocation|チャット内オーケストレーション|非同期エージェント" docs/spec/2026-chapter-spec.md docs/spec/CHAPTER_TO_REQ_MAP.md docs/1_要求_REQ docs/3_設計_DES`
-- `rg -n "AgentStateSchema|QaAgent|runQaAgent|createQaAgentGraph|AGENT_WORKFLOW_VERSION|agentWorkflowVersion|BenchmarkModeSchema|standard-agent-v1|smoke-agent-v1|datasets/agent|mode.*agent|runner.*agent" apps packages benchmark infra docs/generated/openapi docs/generated/infra-inventory docs/LOCAL_VERIFICATION.md`
+- `rg -n "ChatOrchestrationStateSchema|QaAgent|runChatOrchestration|createChatOrchestrationGraph|AGENT_WORKFLOW_VERSION|agentWorkflowVersion|BenchmarkModeSchema|standard-agent-v1|smoke-agent-v1|datasets/agent|mode.*agent|runner.*agent" apps packages benchmark infra docs/generated/openapi docs/generated/infra-inventory docs/LOCAL_VERIFICATION.md`
 - `rg -n "agent" apps packages benchmark infra docs --glob '!node_modules' --glob '!dist'`
 
 open_question:
@@ -25,7 +25,7 @@ open_question:
 
 confirmed:
 
-- `docs/spec/CHAPTER_TO_REQ_MAP.md` は 4B を「チャット内オーケストレーション・ツール実行」、対応要件を `FR-049`、現行実装を `apps/api/src/agent/`、状態を `divergent` としている。
+- `docs/spec/CHAPTER_TO_REQ_MAP.md` は 4B を「チャット内オーケストレーション・ツール実行」、対応要件を `FR-049`、現行実装を `apps/api/src/chat-orchestration/`、状態を `divergent` としている。
 - 同 map は 4C を「非同期エージェント実行」、対応要件を `FR-050`、状態を `missing` としている。
 - `docs/spec/2026-chapter-spec.md` 4B.1 は、旧「エージェント機能 / AgentRun」を「チャット内オーケストレーション / ChatOrchestrationRun」と呼ぶ定義変更を明記している。
 - 4B は `ChatOrchestrationMode`、`ChatOrchestrationRun`、`ChatToolDefinition`、`ChatToolInvocation` を仕様名として持つ。
@@ -43,25 +43,25 @@ confirmed:
 
 | 識別子 | 件数 | 主な場所 | 後続 scope 判定 |
 | --- | ---: | --- | --- |
-| `QaAgentState` | 144 | `apps/api/src/agent/state.ts`, `apps/api/src/agent/graph.ts`, `apps/api/src/agent/nodes/*.ts`, tests | scope: 4B 同期チャット処理の state 型。`ChatOrchestrationState` などへ rename 候補。 |
-| `QaAgentUpdate` | 86 | `apps/api/src/agent/state.ts`, `apps/api/src/agent/trace.ts`, nodes, tests | scope: 4B node update 型。`ChatOrchestrationUpdate` などへ rename 候補。 |
-| `QaAgentNode` | 2 | `apps/api/src/agent/graph.ts` | scope: 4B internal node 型。 |
-| `AgentStateSchema` | 1 export + 参照 | `apps/api/src/agent/state.ts` | scope: 4B state schema。OpenAPI 表面ではなく内部 schema として rename 候補。 |
-| `createQaAgentGraph` | 2 | `apps/api/src/agent/graph.ts` | scope: 4B graph factory。 |
-| `runQaAgent` | 4 | `apps/api/src/agent/graph.ts`, `apps/api/src/rag/memorag-service.ts` | scope: `POST /chat`, async chat run, `/benchmark/query` が使う同期 chat orchestration 実行入口。 |
-| `applyQaAgentUpdate` | 5 | `apps/api/src/agent/graph.ts`, tests | scope: 4B state update helper。 |
+| `ChatOrchestrationState` | 144 | `apps/api/src/chat-orchestration/state.ts`, `apps/api/src/chat-orchestration/graph.ts`, `apps/api/src/chat-orchestration/nodes/*.ts`, tests | scope: 4B 同期チャット処理の state 型。`ChatOrchestrationState` などへ rename 候補。 |
+| `ChatOrchestrationUpdate` | 86 | `apps/api/src/chat-orchestration/state.ts`, `apps/api/src/chat-orchestration/trace.ts`, nodes, tests | scope: 4B node update 型。`ChatOrchestrationUpdate` などへ rename 候補。 |
+| `ChatOrchestrationNode` | 2 | `apps/api/src/chat-orchestration/graph.ts` | scope: 4B internal node 型。 |
+| `ChatOrchestrationStateSchema` | 1 export + 参照 | `apps/api/src/chat-orchestration/state.ts` | scope: 4B state schema。OpenAPI 表面ではなく内部 schema として rename 候補。 |
+| `createChatOrchestrationGraph` | 2 | `apps/api/src/chat-orchestration/graph.ts` | scope: 4B graph factory。 |
+| `runChatOrchestration` | 4 | `apps/api/src/chat-orchestration/graph.ts`, `apps/api/src/rag/memorag-service.ts` | scope: `POST /chat`, async chat run, `/benchmark/query` が使う同期 chat orchestration 実行入口。 |
+| `applyChatOrchestrationUpdate` | 5 | `apps/api/src/chat-orchestration/graph.ts`, tests | scope: 4B state update helper。 |
 | `AGENT_WORKFLOW_VERSION` | 1 export + build | `apps/api/src/rag/pipeline-versions.ts` | scope: version constant。値 `qa-agent-v2` と field `agentWorkflowVersion` は契約互換性に注意。 |
 | `agentWorkflowVersion` | API field | `apps/api/src/rag/pipeline-versions.ts`, `apps/api/src/schemas.ts`, `packages/contract/src/schemas/chat.ts`, `apps/api/src/types.ts` | scope: OpenAPI / contract 表面。rename は breaking change になり得る。 |
 
 confirmed:
 
-- `apps/api/src/agent/` 配下のファイルは全体として 4B 同期チャット処理の実装であり、`normalize-query`、`retrieve-memory`、`generate-clues`、`clarification-gate`、`plan_search`、`execute_search_action`、`retrieval_evaluator`、`sufficient_context_gate`、`generate_answer`、`verify_answer_support`、`finalize_response` などの node を持つ。
-- `MemoRagService.chat()` と `MemoRagService.executeChatRun()` は `runQaAgent()` を呼び、同期 `/chat` と非同期 `/chat-runs` の実行本体に使っている。
+- `apps/api/src/chat-orchestration/` 配下のファイルは全体として 4B 同期チャット処理の実装であり、`normalize-query`、`retrieve-memory`、`generate-clues`、`clarification-gate`、`plan_search`、`execute_search_action`、`retrieval_evaluator`、`sufficient_context_gate`、`generate_answer`、`verify_answer_support`、`finalize_response` などの node を持つ。
+- `MemoRagService.chat()` と `MemoRagService.executeChatRun()` は `runChatOrchestration()` を呼び、同期 `/chat` と非同期 `/chat-runs` の実行本体に使っている。
 - `/benchmark/query` は `service.chat()` に `benchmark-runner` / `benchmark-corpus` filter を渡すため、agent mode benchmark は同じ 4B 実行経路を評価している。
 
 inferred:
 
-- package directory `apps/api/src/agent/` は後続 rename の中心候補。ただし path rename は import パス、tests、docs、coverage、past reports まで波及するため、scope を限定して段階化する余地がある。
+- package directory `apps/api/src/chat-orchestration/` は後続 rename の中心候補。ただし path rename は import パス、tests、docs、coverage、past reports まで波及するため、scope を限定して段階化する余地がある。
 - API field `agentWorkflowVersion` は `pipelineVersions` の既存契約であり、名称変更する場合は `chatOrchestrationWorkflowVersion` の追加と旧 field の互換保持を検討する必要がある。
 
 ## OpenAPI schema / contract 表面
@@ -94,12 +94,12 @@ confirmed:
 
 | パス | 種別 | 後続 scope 判定 |
 | --- | --- | --- |
-| `apps/api/src/agent/` | 実装 directory | scope候補。4B 同期 chat orchestration 実装。 |
-| `apps/api/src/agent/graph.ts` | graph 実装 | scope候補。`createQaAgentGraph` / `runQaAgent` を含む。 |
-| `apps/api/src/agent/state.ts` | state schema | scope候補。`AgentStateSchema` / `QaAgentState` / `QaAgentUpdate` を含む。 |
-| `apps/api/src/agent/trace.ts` | debug trace formatter | scope候補。node trace と `QaAgentUpdate` を扱う。 |
-| `apps/api/src/agent/nodes/*.ts` | 4B node群 | scope候補。import path rename が大きい。 |
-| `apps/api/src/agent/*test.ts`, `apps/api/src/agent/nodes/*test.ts` | tests | scope候補。実装 rename と同時に更新。 |
+| `apps/api/src/chat-orchestration/` | 実装 directory | scope候補。4B 同期 chat orchestration 実装。 |
+| `apps/api/src/chat-orchestration/graph.ts` | graph 実装 | scope候補。`createChatOrchestrationGraph` / `runChatOrchestration` を含む。 |
+| `apps/api/src/chat-orchestration/state.ts` | state schema | scope候補。`ChatOrchestrationStateSchema` / `ChatOrchestrationState` / `ChatOrchestrationUpdate` を含む。 |
+| `apps/api/src/chat-orchestration/trace.ts` | debug trace formatter | scope候補。node trace と `ChatOrchestrationUpdate` を扱う。 |
+| `apps/api/src/chat-orchestration/nodes/*.ts` | 4B node群 | scope候補。import path rename が大きい。 |
+| `apps/api/src/chat-orchestration/*test.ts`, `apps/api/src/chat-orchestration/nodes/*test.ts` | tests | scope候補。実装 rename と同時に更新。 |
 | `benchmark/corpus/standard-agent-v1/` | benchmark corpus | scope-out / preserve 推奨。suite identity と seed hash に関係。 |
 | `benchmark/suites.codebuild.json` の `smoke-agent-v1`, `standard-agent-v1`, `mode: "agent"`, `runner: "agent"` | benchmark manifest | scope-out / preserve 推奨。性能・品質比較の継続性に関係。 |
 | `packages/contract/src/infra.ts`, `packages/contract/infra.d.ts` の `BenchmarkSuiteId` | infra contract | scope-out / preserve 推奨。deployed suite ID と workflow input 互換。 |
@@ -110,7 +110,7 @@ confirmed:
 confirmed:
 
 - root level の `AGENTS.md`、`skills/*agent*`、`reports/working/*agent*.md` は repository agent / Codex agent の文脈を多く含むため、4B rename とは別文脈。
-- file name として `Agent` を含む現行 product 実装ファイルはなく、主な実装 path は lowercase `apps/api/src/agent/`。
+- file name として `Agent` を含む現行 product 実装ファイルはなく、主な実装 path は lowercase `apps/api/src/chat-orchestration/`。
 
 ## docs 参照棚卸し
 
@@ -119,10 +119,10 @@ confirmed:
 | docs | 内容 | 後続 scope 判定 |
 | --- | --- | --- |
 | `docs/spec/2026-chapter-spec.md` 4B | 旧 AgentRun から ChatOrchestrationRun への名称変更済み仕様 | source of truth。scope確認対象。 |
-| `docs/spec/CHAPTER_TO_REQ_MAP.md` | 4B が `apps/api/src/agent/` と divergent であることを明記 | 原則編集不要。後続 rename 完了後に status 更新候補。 |
+| `docs/spec/CHAPTER_TO_REQ_MAP.md` | 4B が `apps/api/src/chat-orchestration/` と divergent であることを明記 | 原則編集不要。後続 rename 完了後に status 更新候補。 |
 | `docs/1_要求_REQ/.../REQ_FUNCTIONAL_049.md` | 4B requirement。旧 `AgentRun` 相当を `ChatOrchestrationRun` として扱う AC | source of truth。後続 rename の受け入れ条件。 |
 | `docs/1_要求_REQ/.../REQ_FUNCTIONAL_050.md` | 4C 非同期エージェント実行 | scope-out。`Agent` 名称を preserve。 |
-| `docs/3_設計_DES/41_API_API/DES_API_001.md` | `/chat-runs` が `runQaAgent()` へ渡す、benchmark run が agent mode で `/benchmark/query` を使う記述 | scope候補。ただし benchmark mode は preserve。 |
+| `docs/3_設計_DES/41_API_API/DES_API_001.md` | `/chat-runs` が `runChatOrchestration()` へ渡す、benchmark run が agent mode で `/benchmark/query` を使う記述 | scope候補。ただし benchmark mode は preserve。 |
 | `docs/3_設計_DES/31_データ_DATA/DES_DATA_001.md` | `PipelineVersions.agentWorkflowVersion` を chat RAG state machine version と説明 | scope候補。field 互換を検討。 |
 | `docs/OPERATIONS.md` | benchmark metrics、runner、agent mode、quality gate、latency/cost/ACL隔離を説明 | preserve 優先。性能・品質チューニングの主要根拠。 |
 | `docs/LOCAL_VERIFICATION.md` | `standard-agent-v1` / `smoke-agent-v1` / corpus seed / runner 動作を説明 | preserve 優先。ローカル検証手順の互換性。 |
@@ -162,9 +162,9 @@ preserve:
 
 confirmed:
 
-- `apps/api/src/agent/` 配下の 4B 同期 chat RAG 実装名。
-- `QaAgentState`、`QaAgentUpdate`、`QaAgentNode`、`AgentStateSchema`、`createQaAgentGraph`、`runQaAgent`、`applyQaAgentUpdate`。
-- `apps/api/src/rag/memorag-service.ts` の `runQaAgent` import / 呼び出し。
+- `apps/api/src/chat-orchestration/` 配下の 4B 同期 chat RAG 実装名。
+- `ChatOrchestrationState`、`ChatOrchestrationUpdate`、`ChatOrchestrationNode`、`ChatOrchestrationStateSchema`、`createChatOrchestrationGraph`、`runChatOrchestration`、`applyChatOrchestrationUpdate`。
+- `apps/api/src/rag/memorag-service.ts` の `runChatOrchestration` import / 呼び出し。
 - `apps/api/src/rag/pipeline-versions.ts` の `AGENT_WORKFLOW_VERSION` と値 `qa-agent-v2` の扱い。
 - `PipelineVersions.agentWorkflowVersion` と関連 schema / contract / generated OpenAPI docs の互換方針。
 - `docs/3_設計_DES/31_データ_DATA/DES_DATA_001.md` など、chat RAG state machine を `agentWorkflowVersion` と呼ぶ durable docs。
@@ -173,7 +173,7 @@ inferred:
 
 - 最初の rename PR では internal symbol/path rename と compatibility alias の追加を分けると安全。API response field rename まで含める場合は major/breaking 扱いに近い。
 - `agentWorkflowVersion` は、旧 field を残したまま新 field `chatOrchestrationWorkflowVersion` を追加し、docs で deprecation 期間を明記するほうが既存 debug/history/reindex response との互換性を保ちやすい。
-- `apps/api/src/agent/` directory rename は import churn が大きいため、後続 PR では tests と generated docs を含む広範囲検証が必要。
+- `apps/api/src/chat-orchestration/` directory rename は import churn が大きいため、後続 PR では tests と generated docs を含む広範囲検証が必要。
 
 ## 後続 scope-out
 
@@ -192,7 +192,7 @@ open_question:
 
 - OpenAPI component schema 名に `Agent` を含むものが runtime 生成されるか。dependency install 後に `/openapi.json` を生成して確認する。
 - `agentWorkflowVersion` を契約上 rename するか、互換 field として保持するか。
-- directory `apps/api/src/agent/` を rename する場合、同一 PR で generated OpenAPI docs と design docs まで更新するか、internal rename と contract rename を分割するか。
+- directory `apps/api/src/chat-orchestration/` を rename する場合、同一 PR で generated OpenAPI docs と design docs まで更新するか、internal rename と contract rename を分割するか。
 - benchmark UI の表示文言「エージェント」や label `Agent standard` を `チャット/RAG` 系へ変えるか。suite ID と mode は preserve 推奨だが、UI ラベルだけなら後方互換性への影響は小さい。
 - `qa-agent-v2` version string を `chat-orchestration-v*` へ変える場合、過去 debug trace / manifest / benchmark baseline との比較で version discontinuity をどう扱うか。
 
@@ -200,8 +200,34 @@ open_question:
 
 inferred:
 
-1. Internal rename: `QaAgent*` と `runQaAgent` などを `ChatOrchestration*` 系へ変更し、必要なら deprecated alias を短期維持する。
-2. Path rename: `apps/api/src/agent/` を `apps/api/src/chat-orchestration/` などへ移動し、import と tests を更新する。
+1. Internal rename: `QaAgent*` と `runChatOrchestration` などを `ChatOrchestration*` 系へ変更し、必要なら deprecated alias を短期維持する。
+2. Path rename: `apps/api/src/chat-orchestration/` を `apps/api/src/chat-orchestration/` などへ移動し、import と tests を更新する。
 3. Contract compatibility: `pipelineVersions.chatOrchestrationWorkflowVersion` を追加し、`agentWorkflowVersion` は互換 field として残すか deprecation 方針を docs 化する。
 4. Generated docs update: OpenAPI docs、API docs、data design docs を再生成・更新する。
 5. Benchmark label cleanup: suite ID / mode / dataset path は preserve し、表示ラベルのみ必要に応じて調整する。
+
+## D 実装結果
+
+confirmed:
+
+- 4B 同期 chat RAG 実装の directory を `apps/api/src/agent/` から `apps/api/src/chat-orchestration/` へ rename した。
+- 主要 internal symbols を `ChatOrchestrationState`、`ChatOrchestrationUpdate`、`ChatOrchestrationNode`、`ChatOrchestrationStateSchema`、`createChatOrchestrationGraph`、`runChatOrchestration`、`applyChatOrchestrationUpdate` へ rename した。
+- `MemoRagService.chat()` と async chat run execution は `runChatOrchestration()` を呼ぶ構造へ更新した。
+- `PipelineVersions.chatOrchestrationWorkflowVersion` を追加し、既存 `agentWorkflowVersion` は同じ値を返す互換 field として維持した。
+- `CHAT_ORCHESTRATION_WORKFLOW_VERSION` と互換 export `AGENT_WORKFLOW_VERSION` はどちらも `qa-agent-v2` を返す。過去 debug trace / benchmark baseline との比較継続を優先し、version string は変更しない。
+- `standard-agent-v1`、`smoke-agent-v1`、`mode: "agent"`、`runner: "agent"`、`datasets/agent/*` は benchmark identity として preserve した。
+- C / E merge 後の `DocumentQualityProfile` と parsed document metadata は renamed path に統合され、quality gate と parsing metadata の挙動は維持されている。
+
+confirmed validations:
+
+- `npm run typecheck -w @memorag-mvp/api`: pass。
+- `npm exec -w @memorag-mvp/api -- tsx --test src/chat-orchestration/graph.test.ts src/chat-orchestration/nodes/node-units.test.ts src/contract/api-contract.test.ts`: pass。
+- `npm run docs:openapi:check`: pass。
+- `npm run test -w @memorag-mvp/api`: pass。
+- `python3 scripts/validate_spec_recovery.py docs/spec-recovery`: pass。出力は `Validation completed. Review warnings before treating the spec recovery as complete.`。
+- `git diff --check`: pass。
+
+open_question:
+
+- `agentWorkflowVersion` の完全削除は breaking API change になるため、今回の scope では実施しない。削除する場合は major 変更、保存済み history/debug JSON、Web 型、OpenAPI examples の migration plan が必要。
+- benchmark UI の表示文言 `Agent standard` は suite identity の preserve を優先して変更しない。UI label だけの rename は別 task で検討できる。

@@ -1,6 +1,6 @@
 import type { RetrievedVector } from "../types.js"
-import { ragRuntimePolicy } from "../agent/runtime-policy.js"
-import { detectQuestionRequirements } from "../agent/question-requirements.js"
+import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
+import { detectQuestionRequirements } from "../chat-orchestration/question-requirements.js"
 
 export type ContextBlock = {
   id: string

@@ -105,6 +105,7 @@ export const CitationSchema = z.object({
 })
 
 export const PipelineVersionsSchema = z.object({
+  chatOrchestrationWorkflowVersion: z.string(),
   agentWorkflowVersion: z.string(),
   chunkerVersion: z.string(),
   sourceExtractorVersion: z.string(),
