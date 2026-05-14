@@ -1853,7 +1853,8 @@ export class MemoRagService {
 
   async listAsyncAgentArtifacts(user: AppUser, agentRunId: string): Promise<AsyncAgentRun["artifacts"] | undefined> {
     const run = await this.getAsyncAgentRun(user, agentRunId)
-    return run?.artifacts ?? []
+    if (!run) return undefined
+    return run.artifacts
   }
 
   async getAsyncAgentArtifact(user: AppUser, agentRunId: string, artifactId: string): Promise<AsyncAgentRun["artifacts"][number] | undefined> {

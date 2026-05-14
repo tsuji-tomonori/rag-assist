@@ -17,7 +17,7 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import type { BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
+import type { AgentRuntimeProvider, BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
 import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
@@ -721,6 +721,108 @@ test("service preserves asynchronous chat run options and can mark worker failur
   const errorEvents = await deps.chatRunEventStore.listAfter("run-worker-timeout", 0)
   assert.equal(errorEvents.at(-1)?.type, "error")
   assert.equal(errorEvents.at(-1)?.message, "States.Timeout: worker timed out")
+})
+
+test("service preserves async agent ownership, cancel, and artifact metadata boundaries", async () => {
+  const { service } = await createService()
+  const owner = { userId: "agent-owner", email: "owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const outsider = { userId: "agent-outsider", email: "outsider@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const admin = { userId: "agent-admin", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+
+  const run = await service.createAsyncAgentRun(owner, {
+    provider: "custom",
+    modelId: "custom-placeholder",
+    instruction: "状態だけ確認する"
+  })
+  assert.equal(run.status, "blocked")
+  assert.equal(run.providerAvailability, "disabled")
+  assert.equal(run.failureReasonCode, "not_configured")
+
+  assert.equal((await service.getAsyncAgentRun(owner, run.agentRunId))?.agentRunId, run.agentRunId)
+  await assert.rejects(() => service.getAsyncAgentRun(outsider, run.agentRunId), /Forbidden/)
+  await assert.rejects(() => service.cancelAsyncAgentRun(outsider, run.agentRunId), /Forbidden/)
+  assert.equal((await service.listAsyncAgentRuns(owner))[0]?.agentRunId, run.agentRunId)
+  assert.deepEqual(await service.listAsyncAgentRuns(outsider), [])
+  assert.equal((await service.listAsyncAgentRuns(admin))[0]?.agentRunId, run.agentRunId)
+  assert.deepEqual(await service.listAsyncAgentArtifacts(owner, run.agentRunId), [])
+  assert.equal(await service.listAsyncAgentArtifacts(owner, "missing-agent-run"), undefined)
+  assert.equal(await service.getAsyncAgentArtifact(owner, run.agentRunId, "missing-artifact"), undefined)
+
+  const cancelled = await service.cancelAsyncAgentRun(owner, run.agentRunId)
+  assert.equal(cancelled?.status, "cancelled")
+  assert.equal(cancelled?.failureReasonCode, "cancelled")
+  assert.equal((await service.cancelAsyncAgentRun(owner, run.agentRunId))?.status, "cancelled")
+  assert.equal(await service.cancelAsyncAgentRun(owner, "missing-agent-run"), undefined)
+  assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "cancelled")
+  await assert.rejects(() => service.executeAsyncAgentRun("missing-agent-run"), /Async agent run not found/)
+
+  const unavailable = await service.createAsyncAgentRun(owner, {
+    provider: "future_provider" as AgentRuntimeProvider,
+    modelId: "future-placeholder",
+    instruction: "未登録 provider は実行しない"
+  })
+  assert.equal(unavailable.providerAvailability, "provider_unavailable")
+  assert.equal(unavailable.failureReasonCode, "provider_unavailable")
+  assert.equal((await service.executeAsyncAgentRun(unavailable.agentRunId)).status, "blocked")
+})
+
+test("service rejects async agent selections that are not readable", async () => {
+  const { service } = await createService()
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["CHAT_USER"] }
+  const baseInput = {
+    provider: "claude_code" as const,
+    modelId: "claude-placeholder",
+    instruction: "選択境界を確認する"
+  }
+
+  await assert.rejects(() => service.createAsyncAgentRun(user, {
+    ...baseInput,
+    selectedDocumentIds: ["missing-document"]
+  }), /Forbidden/)
+  await assert.rejects(() => service.createAsyncAgentRun(user, {
+    ...baseInput,
+    selectedSkillIds: ["skill-1"]
+  }), /Forbidden/)
+  await assert.rejects(() => service.createAsyncAgentRun(user, {
+    ...baseInput,
+    selectedAgentProfileIds: ["profile-1"]
+  }), /Forbidden/)
+})
+
+test("service records async agent readable selections without expanding duplicates", async () => {
+  const { service } = await createService()
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const document = await service.ingest({
+    fileName: "agent-source.md",
+    text: "非同期エージェントが参照する読み取り可能な資料です。",
+    skipMemory: true,
+    metadata: { ownerUserId: user.userId }
+  })
+
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "codex",
+    modelId: "codex-placeholder",
+    instruction: "選択資料の mount 情報を確認する",
+    selectedDocumentIds: [document.documentId, document.documentId],
+    selectedSkillIds: ["skill-a", "skill-a"],
+    selectedAgentProfileIds: ["profile-a", "profile-a"],
+    budget: { maxDurationMinutes: 15 }
+  })
+
+  assert.deepEqual(run.selectedDocumentIds, [document.documentId])
+  assert.deepEqual(run.selectedSkillIds, ["skill-a"])
+  assert.deepEqual(run.selectedAgentProfileIds, ["profile-a"])
+  assert.deepEqual(run.budget, { maxDurationMinutes: 15 })
+  assert.equal(run.workspaceMounts.length, 1)
+  assert.deepEqual(run.workspaceMounts[0], {
+    mountId: run.workspaceMounts[0]?.mountId,
+    workspaceId: run.workspaceId,
+    sourceType: "document",
+    sourceId: document.documentId,
+    mountedPath: `/workspace/read-only/documents/${document.documentId}`,
+    accessMode: "readOnly",
+    permissionCheckedAt: run.createdAt
+  })
 })
 
 test("asynchronous chat run stores debug trace by reference", async () => {
