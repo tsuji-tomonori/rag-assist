@@ -1,6 +1,6 @@
 # C knowledge quality axes
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 機能追加
 - branch: `codex/phase-c-knowledge-quality-axes`
 - worktree: `.worktrees/phase-c-knowledge-quality-axes`
@@ -47,17 +47,17 @@ Wave 3 の `C-knowledge-quality-axes` として、仕様 3B / `docs/spec/gap-pha
 
 ## 受け入れ条件
 
-- [ ] `DocumentQualityProfile` と verification / freshness / supersession / extraction quality / rag eligibility の enum が型として追加され、`DocumentLifecycleStatus` と分離されている。
-- [ ] 既存文書互換として quality profile 未指定は通常 RAG で eligible 相当に扱われる。
-- [ ] 明示 `ragEligibility: excluded` など quality gate 不合格の文書は通常 RAG evidence から除外される。
-- [ ] lexical index、semantic vector hit 再確認、memory hit、memory source chunk expansion に同じ quality-approved 判定が通る。
-- [ ] ACL、search scope、active lifecycle、`minScore`、sufficient context、citation validation、answer support verification の既存挙動を弱めていない。
-- [ ] user-facing response に権限外文書や詳細な quality exclusion reason を漏らさず、diagnostics は安全な集計に限定されている。
-- [ ] S3 Vectors filterable metadata 2,048 bytes budget を守り、詳細 profile を vector metadata に丸ごと載せていない。
-- [ ] `docs/spec/gap-phase-c.md` に実装結果と残 open question が追記されている。
-- [ ] `reports/working/*c-knowledge-quality-axes*.md` に作業レポートが作成されている。
-- [ ] main 向け PR が作成され、日本語 PR 本文、受け入れ条件コメント、セルフレビューコメントが追加されている。
-- [ ] PR コメント後に task md が `tasks/done/` に移動され、状態 `done` に更新されている。
+- [x] `DocumentQualityProfile` と verification / freshness / supersession / extraction quality / rag eligibility の enum が型として追加され、`DocumentLifecycleStatus` と分離されている。
+- [x] 既存文書互換として quality profile 未指定は通常 RAG で eligible 相当に扱われる。
+- [x] 明示 `ragEligibility: excluded` など quality gate 不合格の文書は通常 RAG evidence から除外される。
+- [x] lexical index、semantic vector hit 再確認、memory hit、memory source chunk expansion に同じ quality-approved 判定が通る。
+- [x] ACL、search scope、active lifecycle、`minScore`、sufficient context、citation validation、answer support verification の既存挙動を弱めていない。
+- [x] user-facing response に権限外文書や詳細な quality exclusion reason を漏らさず、diagnostics は安全な集計に限定されている。
+- [x] S3 Vectors filterable metadata 2,048 bytes budget を守り、詳細 profile を vector metadata に丸ごと載せていない。
+- [x] `docs/spec/gap-phase-c.md` に実装結果と残 open question が追記されている。
+- [x] `reports/working/*c-knowledge-quality-axes*.md` に作業レポートが作成されている。
+- [x] main 向け PR が作成され、日本語 PR 本文、受け入れ条件コメント、セルフレビューコメントが追加されている。
+- [x] PR コメント後に task md が `tasks/done/` に移動され、状態 `done` に更新されている。
 
 ## 検証計画
 
