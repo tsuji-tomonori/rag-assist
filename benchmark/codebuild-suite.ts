@@ -2,6 +2,7 @@ import { copyFile, mkdir, readFile, rm } from "node:fs/promises"
 import { spawnSync } from "node:child_process"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import type { BenchmarkUseCase } from "@memorag-mvp/contract"
 
 type CodeBuildSuiteManifest = {
   version: 1
@@ -20,6 +21,13 @@ type CodeBuildSuite = {
   runner: "agent" | "search" | "conversation"
   dataset: { source: "codebuild-input" | "prepare" | "local"; path?: string }
   corpus?: { dir?: string; suiteId?: string; source?: "local" | "codebuild-bucket"; s3Prefix?: string }
+  metadata?: {
+    useCase: BenchmarkUseCase
+    datasetName?: string
+    datasetVersion?: string
+    conversionVersion?: string
+    evaluatorProfile?: string
+  }
   prepare?: {
     script: string
     env?: Record<string, string>
@@ -65,6 +73,12 @@ export function createRunnerEnv(manifest: CodeBuildSuiteManifest, suite: CodeBui
   }
   if (suite.corpus?.dir) runnerEnv.BENCHMARK_CORPUS_DIR = suite.corpus.dir
   if (suite.corpus?.suiteId) runnerEnv.BENCHMARK_CORPUS_SUITE_ID = suite.corpus.suiteId
+  if (suite.metadata?.useCase) runnerEnv.BENCHMARK_USE_CASE = suite.metadata.useCase
+  if (suite.metadata?.datasetName) runnerEnv.BENCHMARK_DATASET_NAME = suite.metadata.datasetName
+  if (suite.metadata?.datasetVersion) runnerEnv.BENCHMARK_DATASET_VERSION = suite.metadata.datasetVersion
+  if (suite.metadata?.conversionVersion) runnerEnv.BENCHMARK_DATASET_CONVERSION_VERSION = suite.metadata.conversionVersion
+  if (suite.metadata?.evaluatorProfile) runnerEnv.EVALUATOR_PROFILE = suite.metadata.evaluatorProfile
+  runnerEnv.BENCHMARK_DATASET_SOURCE_TYPE = suite.dataset.source
   return suite.prepare?.env ? withTemplateEnv(runnerEnv, suite.prepare.env) : runnerEnv
 }
 
@@ -185,6 +199,7 @@ function validateManifest(manifest: CodeBuildSuiteManifest): void {
     if (suite.corpus?.source && !["local", "codebuild-bucket"].includes(suite.corpus.source)) {
       throw new Error(`Suite ${suite.suiteId} has invalid corpus source`)
     }
+    if (!suite.metadata?.useCase) throw new Error(`Suite ${suite.suiteId} is missing metadata.useCase`)
   }
 }
 

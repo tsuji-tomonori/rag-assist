@@ -11,6 +11,7 @@
       "suiteId": "smoke-agent-v1",
       "mode": "agent",
       "runner": "agent",
+      "metadata": { "useCase": "internal_qa", "datasetName": "smoke-agent", "datasetVersion": "v1", "conversionVersion": "manifest-v1" },
       "dataset": { "source": "codebuild-input" },
       "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
     },
@@ -18,6 +19,7 @@
       "suiteId": "standard-agent-v1",
       "mode": "agent",
       "runner": "agent",
+      "metadata": { "useCase": "internal_qa", "datasetName": "standard-agent", "datasetVersion": "v1", "conversionVersion": "manifest-v1" },
       "dataset": { "source": "codebuild-input" },
       "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
     },
@@ -25,6 +27,7 @@
       "suiteId": "clarification-smoke-v1",
       "mode": "agent",
       "runner": "agent",
+      "metadata": { "useCase": "internal_qa", "datasetName": "clarification-smoke", "datasetVersion": "v1", "conversionVersion": "manifest-v1" },
       "dataset": { "source": "codebuild-input" },
       "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
     },
@@ -32,6 +35,7 @@
       "suiteId": "search-smoke-v1",
       "mode": "search",
       "runner": "search",
+      "metadata": { "useCase": "search_retrieval", "datasetName": "search-smoke", "datasetVersion": "v1", "conversionVersion": "manifest-v1" },
       "dataset": { "source": "codebuild-input" },
       "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
     },
@@ -39,6 +43,7 @@
       "suiteId": "search-standard-v1",
       "mode": "search",
       "runner": "search",
+      "metadata": { "useCase": "search_retrieval", "datasetName": "search-standard", "datasetVersion": "v1", "conversionVersion": "manifest-v1" },
       "dataset": { "source": "codebuild-input" },
       "corpus": { "dir": "benchmark/corpus/standard-agent-v1", "suiteId": "standard-agent-v1" }
     },
@@ -46,6 +51,7 @@
       "suiteId": "allganize-rag-evaluation-ja-v1",
       "mode": "agent",
       "runner": "agent",
+      "metadata": { "useCase": "internal_qa", "datasetName": "allganize-rag-evaluation-ja", "datasetVersion": "v1", "conversionVersion": "converter-v1" },
       "dataset": { "source": "prepare" },
       "prepare": {
         "script": "prepare:allganize-ja",
@@ -60,6 +66,7 @@
       "suiteId": "mmrag-docqa-v1",
       "mode": "agent",
       "runner": "agent",
+      "metadata": { "useCase": "long_pdf_qa", "datasetName": "mmlongbench-docqa", "datasetVersion": "v1", "conversionVersion": "converter-v1" },
       "dataset": { "source": "prepare" },
       "corpus": { "suiteId": "mmrag-docqa-v1" },
       "prepare": {
@@ -75,6 +82,7 @@
       "suiteId": "mtrag-v1",
       "mode": "agent",
       "runner": "conversation",
+      "metadata": { "useCase": "multi_turn_rag", "datasetName": "mtrag", "datasetVersion": "v1", "conversionVersion": "manifest-v1" },
       "dataset": { "source": "codebuild-input" },
       "corpus": {
         "source": "codebuild-bucket",
@@ -87,6 +95,7 @@
       "suiteId": "chatrag-bench-v1",
       "mode": "agent",
       "runner": "conversation",
+      "metadata": { "useCase": "chat_rag", "datasetName": "chatrag-bench", "datasetVersion": "v1", "conversionVersion": "manifest-v1" },
       "dataset": { "source": "codebuild-input" },
       "corpus": {
         "source": "codebuild-bucket",
@@ -99,6 +108,7 @@
       "suiteId": "jp-public-pdf-qa-v1",
       "mode": "agent",
       "runner": "agent",
+      "metadata": { "useCase": "public_pdf_qa", "datasetName": "jp-public-pdf-qa", "datasetVersion": "v1", "conversionVersion": "converter-v1" },
       "dataset": { "source": "prepare" },
       "corpus": { "suiteId": "jp-public-pdf-qa-v1" },
       "prepare": {
@@ -114,6 +124,7 @@
       "suiteId": "mlit-pdf-figure-table-rag-seed-v1",
       "mode": "agent",
       "runner": "agent",
+      "metadata": { "useCase": "knowledge_quality", "datasetName": "mlit-pdf-figure-table-rag", "datasetVersion": "v1", "conversionVersion": "converter-v1" },
       "dataset": { "source": "prepare" },
       "corpus": { "suiteId": "mlit-pdf-figure-table-rag-seed-v1" },
       "prepare": {
@@ -129,6 +140,7 @@
       "suiteId": "architecture-drawing-qarag-v0.1",
       "mode": "agent",
       "runner": "agent",
+      "metadata": { "useCase": "design_drawing_qa", "datasetName": "architecture-drawing-qarag", "datasetVersion": "v0.1", "conversionVersion": "converter-v1" },
       "dataset": { "source": "prepare" },
       "corpus": { "suiteId": "architecture-drawing-qarag-v0.1" },
       "prepare": {
