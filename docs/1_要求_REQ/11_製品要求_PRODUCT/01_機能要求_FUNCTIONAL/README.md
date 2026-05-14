@@ -86,6 +86,7 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 2.6 確認質問・曖昧性解消 | [`FR-029`](02_チャットQA・根拠提示・回答不能制御/06_確認質問・曖昧性解消/REQ_FUNCTIONAL_029.md) | 曖昧な質問に対し、grounded な候補がある場合だけ回答前に確認質問を返す。 |
 | 2.7 チャットUI操作性 | [`FR-042`](02_チャットQA・根拠提示・回答不能制御/07_チャットUI操作性/REQ_FUNCTIONAL_042.md) | キーボードから質問送信を実行する。 |
 | 2.7 チャットUI操作性 | [`FR-043`](02_チャットQA・根拠提示・回答不能制御/07_チャットUI操作性/REQ_FUNCTIONAL_043.md) | 回答本文を対象としてコピーする。 |
+| 2.8 チャット内オーケストレーション | [`FR-049`](02_チャットQA・根拠提示・回答不能制御/08_チャット内オーケストレーション/REQ_FUNCTIONAL_049.md) | 同期チャット内の RAG とツール実行を ChatOrchestrationRun として扱う。 |
 
 ### 3. RAG検索品質制御
 
@@ -141,6 +142,9 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 7.8 debug trace artifact | [`FR-046`](07_評価・debug・benchmark/08_debug_trace_artifact/REQ_FUNCTIONAL_046.md) | 管理者が debug trace を時系列 artifact として取得する。 |
 | 7.9 dataset adapter | [`FR-047`](07_評価・debug・benchmark/09_dataset_adapter/REQ_FUNCTIONAL_047.md) | dataset ごとの入力を共通評価形式へ正規化する。 |
 | 7.10 benchmark 実行追跡 | [`FR-048`](07_評価・debug・benchmark/10_benchmark実行追跡/REQ_FUNCTIONAL_048.md) | benchmark run の進捗と成果物生成状態を確認する。 |
+| 7.11 API契約・品質ゲート | [`FR-053`](07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_053.md) | OpenAPI を runtime source of truth として API drift と docs quality を検出する。 |
+| 7.11 API契約・品質ゲート | [`FR-054`](07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_054.md) | GitHub Actions、OIDC、CDK を使う deploy / release 運用を追跡する。 |
+| 7.11 API契約・品質ゲート | [`FR-055`](07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_055.md) | API 共通 middleware と非同期 worker の runId 契約を管理する。 |
 
 ### 8. 認証・認可・管理・監査
 
@@ -149,6 +153,9 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 8.1 通常利用者セルフサインアップ | [`FR-025`](08_認証・認可・管理・監査/01_通常利用者セルフサインアップ/REQ_FUNCTIONAL_025.md) | 未認証利用者が Cognito アカウントを作成し、CHAT_USER のみ付与される。 |
 | 8.2 Phase 1 RAG運用管理 | [`FR-024`](08_認証・認可・管理・監査/02_Phase_1_RAG運用管理/REQ_FUNCTIONAL_024.md) | 管理画面から文書管理、問い合わせ対応、debug/評価、性能テストへ遷移できる。 |
 | 8.3 Phase 2 管理・監査 | [`FR-027`](08_認証・認可・管理・監査/03_Phase_2_管理・監査/REQ_FUNCTIONAL_027.md) | ユーザー、ロール、管理操作履歴、利用状況、コスト監査を扱う。 |
+| 8.4 非同期エージェント実行 | [`FR-050`](08_認証・認可・管理・監査/04_非同期エージェント実行/REQ_FUNCTIONAL_050.md) | provider を選択して非同期エージェント実行と writeback 承認を管理する。 |
+| 8.5 個人設定 | [`FR-051`](08_認証・認可・管理・監査/05_個人設定/REQ_FUNCTIONAL_051.md) | 利用者本人の既定モデル、回答範囲、通知、表示設定を保存する。 |
+| 8.6 3層認可モデル | [`FR-052`](08_認証・認可・管理・監査/06_3層認可モデル/REQ_FUNCTIONAL_052.md) | Account status、Feature permission、Resource permission で操作可否を判定する。 |
 
 ## 関連カテゴリ
 
@@ -174,6 +181,13 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | [`FR-045`](03_RAG検索品質制御/06_retrieval_adoption_gate/REQ_FUNCTIONAL_045.md) | 3. RAG検索品質制御 | 4. 回答検証・ガードレール、7. 評価・debug・benchmark |
 | [`FR-046`](07_評価・debug・benchmark/08_debug_trace_artifact/REQ_FUNCTIONAL_046.md) | 7. 評価・debug・benchmark | 8. 認証・認可・管理・監査 |
 | [`FR-048`](07_評価・debug・benchmark/10_benchmark実行追跡/REQ_FUNCTIONAL_048.md) | 7. 評価・debug・benchmark | 運用 |
+| [`FR-049`](02_チャットQA・根拠提示・回答不能制御/08_チャット内オーケストレーション/REQ_FUNCTIONAL_049.md) | 2. チャットQA・根拠提示・回答不能制御 | 3. RAG検索品質制御、8. 認証・認可・管理・監査 |
+| [`FR-050`](08_認証・認可・管理・監査/04_非同期エージェント実行/REQ_FUNCTIONAL_050.md) | 8. 認証・認可・管理・監査 | 1. 文書・知識ベース管理、7. 評価・debug・benchmark |
+| [`FR-051`](08_認証・認可・管理・監査/05_個人設定/REQ_FUNCTIONAL_051.md) | 8. 認証・認可・管理・監査 | 2. チャットQA・根拠提示・回答不能制御 |
+| [`FR-052`](08_認証・認可・管理・監査/06_3層認可モデル/REQ_FUNCTIONAL_052.md) | 8. 認証・認可・管理・監査 | 1. 文書・知識ベース管理、3. RAG検索品質制御、7. 評価・debug・benchmark |
+| [`FR-053`](07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_053.md) | 7. 評価・debug・benchmark | API、運用 |
+| [`FR-054`](07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_054.md) | 7. 評価・debug・benchmark | 運用、インフラ |
+| [`FR-055`](07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_055.md) | 7. 評価・debug・benchmark | API、運用 |
 
 ## 網羅性チェック
 
