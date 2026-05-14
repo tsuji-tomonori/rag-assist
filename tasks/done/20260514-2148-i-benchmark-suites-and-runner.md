@@ -1,6 +1,6 @@
 # I-benchmark-suites-and-runner
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 作業ブランチ: `codex/phase-i-benchmark-suites-runner`
 - ベース: `origin/main`
@@ -36,15 +36,28 @@ Wave 5 実装として、`docs/spec/gap-phase-i.md` の後続 scope に基づき
 
 ## 受け入れ条件
 
-- [ ] 現行 JSONL / suite manifest の互換性を保ち、`BenchmarkSuite`, `BenchmarkCase`, `BenchmarkRun`, `BenchmarkTargetConfig`, `BenchmarkDatasetPrepareRun` に対応する contract / docs が存在する。
-- [ ] agent / search / conversation runner の suite metadata に `useCase`, `runner`, `corpus`, `datasetSource`, `evaluatorProfile` を明示できる。
-- [ ] `benchmark_grounded_short` は benchmark metadata / suite profile で切り替わり、通常回答 policy と分離され、RAG runtime に dataset 固有分岐を入れていない。
-- [ ] baseline / candidate config、case-level result、failure reason、retrieval / citation / latency / cost、seed manifest、skip manifest が artifact contract として整理され、可能な範囲で runner output に含まれる。
-- [ ] CodeBuild runner の auth fail-fast、token mask、suite input validation、timeout、artifact upload、metrics update を壊していない。
-- [ ] S3 Vectors metadata budget（2048 bytes / benchmark compact 1500 bytes）と Lambda quota / timeout（15分 / 3008MB）を docs/test か受け入れ条件に残す。
-- [ ] ChatRAG refusal benchmark の期待語句・拒否期待値、benchmark corpus isolation、BENCHMARK_RUNNER 最小権限境界、secret/signed URL/token 非露出の方針を弱めていない。
-- [ ] 選定した検証コマンドが pass し、未実施の検証があれば理由を記録する。
-- [ ] 作業レポート、commit/push、PR 作成、受け入れ条件確認 comment、セルフレビュー comment、task done 移動 commit/push が完了している。
+- [x] 現行 JSONL / suite manifest の互換性を保ち、`BenchmarkSuite`, `BenchmarkCase`, `BenchmarkRun`, `BenchmarkTargetConfig`, `BenchmarkDatasetPrepareRun` に対応する contract / docs が存在する。
+- [x] agent / search / conversation runner の suite metadata に `useCase`, `runner`, `corpus`, `datasetSource`, `evaluatorProfile` を明示できる。
+- [x] `benchmark_grounded_short` は benchmark metadata / suite profile で切り替わり、通常回答 policy と分離され、RAG runtime に dataset 固有分岐を入れていない。
+- [x] baseline / candidate config、case-level result、failure reason、retrieval / citation / latency / cost、seed manifest、skip manifest が artifact contract として整理され、可能な範囲で runner output に含まれる。
+- [x] CodeBuild runner の auth fail-fast、token mask、suite input validation、timeout、artifact upload、metrics update を壊していない。
+- [x] S3 Vectors metadata budget（2048 bytes / benchmark compact 1500 bytes）と Lambda quota / timeout（15分 / 3008MB）を docs/test か受け入れ条件に残す。
+- [x] ChatRAG refusal benchmark の期待語句・拒否期待値、benchmark corpus isolation、BENCHMARK_RUNNER 最小権限境界、secret/signed URL/token 非露出の方針を弱めていない。
+- [x] 選定した検証コマンドが pass し、未実施の検証があれば理由を記録する。
+- [x] 作業レポート、commit/push、PR 作成、受け入れ条件確認 comment、セルフレビュー comment、task done 移動 commit/push が完了している。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/307
+- 受け入れ条件確認 comment: posted
+- セルフレビュー comment: posted
+- 作業レポート: `reports/working/20260514-2210-i-benchmark-suites-runner.md`
+- 検証:
+  - `npm ci`: pass
+  - `npm run typecheck -w @memorag-mvp/benchmark`: pass
+  - `npm test -w @memorag-mvp/benchmark`: pass
+  - `npm run typecheck -w @memorag-mvp/contract`: pass
+  - `git diff --check`: pass
 
 ## 検証計画
 
