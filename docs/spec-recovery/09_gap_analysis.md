@@ -30,6 +30,16 @@
 - Impact: H 実装で既存 requester 境界や `internalMemo` 非公開を壊す、または AI 候補を human review なしに検索へ反映するリスクがある。sanitized diagnostics を設計しないまま担当者へ trace を出すと、権限外文書名・件数・ACL group・内部 policy の露出につながる。
 - Recommended action: `H-support-search-improvement` で既存 `/questions` 互換を維持した optional field 追加、`support_sanitized` allowlist、低評価 / answer_unavailable 起点の ticket create、AI suggest を draft / review 待ちに留める検索改善候補、publish 前 diff / reason / audit を実装する。API route 追加時は `access-control-policy.test.ts` と OpenAPI contract を同時更新する。
 
+## GAP-016: 4A/4B の toolId registry と multi-turn 永続構造が現行 chat-orchestration と未接続
+
+- Category: traceability_gap
+- Related: `docs/spec/gap-phase-f.md`, `docs/spec/2026-chapter-spec.md` 4A/4B, `apps/api/src/chat-orchestration/`
+- Severity: high
+- Confidence: confirmed
+- Evidence: Phase F-pre 調査で、現行 `apps/api/src/chat-orchestration/graph.ts` と `nodes/` には RAG pipeline の主要 step、`decontextualizedQuery`、previous citation anchoring、RequiredFact、answerability / sufficient context / citation / support verification が存在することを確認した。一方、`ChatToolDefinition` / `ChatToolInvocation` schema、4B.5 の toolId registry、toolId ごとの permission / approval / audit metadata、conversation history store の `rollingSummary` / `queryFocusedSummary` / `citationMemory` / `taskState` は未実装。
+- Impact: Phase F 実装で graph node、SearchAction、toolId の粒度を混同すると、trace / audit / permission が不明瞭になり、既存の ChatRAG follow-up 軽量化、required fact planning 汎化、policy computation 汎化、answer support verification、minScore filter、diversity、context budget が退化するリスクがある。
+- Recommended action: `F-chat-tool-registry-multiturn` で、RAG 系 toolId と現行 node の対応を明示し、`ChatToolDefinition` / `ChatToolInvocation` / multi-turn state schema を追加する。document / drawing / support / benchmark / debug / external / quality / parse tool の本実装は Phase C/E/H/I/J/G 依存として scope-out または disabled registry entry に分ける。
+
 ## GAP-001: 作業レポート本文精読は完了
 
 - Category: resolved_coverage_gap
