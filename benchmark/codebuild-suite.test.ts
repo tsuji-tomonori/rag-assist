@@ -13,9 +13,12 @@ test("loads CodeBuild suite manifest and resolves standard corpus without CDK co
   })
 
   assert.equal(suite.runner, "search")
+  assert.equal(suite.metadata?.useCase, "search_retrieval")
   assert.equal(env.BENCHMARK_SUITE_ID, "search-standard-v1")
   assert.equal(env.BENCHMARK_CORPUS_DIR, "benchmark/corpus/standard-agent-v1")
   assert.equal(env.BENCHMARK_CORPUS_SUITE_ID, "standard-agent-v1")
+  assert.equal(env.BENCHMARK_USE_CASE, "search_retrieval")
+  assert.equal(env.BENCHMARK_DATASET_SOURCE_TYPE, "codebuild-input")
 })
 
 test("resolves dynamic prepare suites from manifest", async () => {
@@ -24,6 +27,7 @@ test("resolves dynamic prepare suites from manifest", async () => {
   const env = createRunnerEnv(manifest, suite, {})
 
   assert.equal(suite.dataset.source, "prepare")
+  assert.equal(suite.metadata?.useCase, "long_pdf_qa")
   assert.equal(suite.prepare?.script, "prepare:mmrag-docqa")
   assert.equal(suite.runner, "agent")
   assert.equal(env.DATASET, "./benchmark/.runner-dataset.jsonl")
@@ -31,6 +35,9 @@ test("resolves dynamic prepare suites from manifest", async () => {
   assert.equal(env.MMRAG_DOCQA_DATASET_OUTPUT, "./benchmark/.runner-dataset.jsonl")
   assert.equal(env.BENCHMARK_CORPUS_DIR, "./benchmark/.runner-mmrag-docqa-corpus")
   assert.equal(env.BENCHMARK_CORPUS_SUITE_ID, "mmrag-docqa-v1")
+  assert.equal(env.BENCHMARK_USE_CASE, "long_pdf_qa")
+  assert.equal(env.BENCHMARK_DATASET_SOURCE_TYPE, "prepare")
+  assert.equal(env.BENCHMARK_DATASET_NAME, "mmlongbench-docqa")
 })
 
 test("resolves conversation corpus from the CodeBuild bucket", async () => {
@@ -53,6 +60,7 @@ test("resolves conversation corpus from the CodeBuild bucket", async () => {
     const env = createRunnerEnv(manifest, suite, {})
 
     assert.equal(suite.runner, "conversation")
+    assert.ok(suite.metadata?.useCase === "multi_turn_rag" || suite.metadata?.useCase === "chat_rag")
     assert.deepEqual(suite.corpus, {
       source: "codebuild-bucket",
       dir: expected.dir,

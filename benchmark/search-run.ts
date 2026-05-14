@@ -19,9 +19,19 @@ import {
   resolveEvaluatorProfile,
   type EvaluatorProfile
 } from "./evaluator-profile.js"
+import {
+  benchmarkArtifactContractVersion,
+  createBenchmarkCaseResult,
+  createBenchmarkDatasetPrepareRun,
+  createBenchmarkRunArtifact,
+  createBenchmarkSuiteMetadata,
+  datasetSourceFromEnv,
+  targetConfigFromEnv
+} from "./artifact-contract.js"
 import { benchmarkCorpusDirFromEnv, benchmarkCorpusSkipMemoryFromEnv, benchmarkIngestRunPollIntervalMsFromEnv, benchmarkIngestRunTimeoutMsFromEnv, seedBenchmarkCorpus, type SeededDocument } from "./corpus.js"
 import { createBenchmarkApiClient } from "./api-client.js"
 import type { BenchmarkSearchResponse, SearchResult } from "@memorag-mvp/contract"
+import type { BenchmarkRun, BenchmarkSuite, BenchmarkTargetConfig, BenchmarkUseCase } from "@memorag-mvp/contract"
 
 type SearchDatasetRow = {
   id: string
@@ -92,6 +102,14 @@ type SearchMetrics = {
 }
 
 type SearchSummary = {
+  artifactContractVersion: 1
+  suite: BenchmarkSuite
+  baselineConfig?: BenchmarkTargetConfig
+  candidateConfig: BenchmarkTargetConfig
+  caseResults: BenchmarkRun["caseResults"]
+  datasetPrepareRuns: BenchmarkRun["datasetPrepareRuns"]
+  seedManifest: BenchmarkRun["seedManifest"]
+  skipManifest: BenchmarkRun["skipManifest"]
   mode: "search"
   datasetPath: string
   outputPath: string
@@ -120,6 +138,7 @@ const apiAuthToken = process.env.API_AUTH_TOKEN
 const api = createBenchmarkApiClient({ apiBaseUrl, authToken: apiAuthToken })
 const defaultEmbeddingModelId = process.env.EMBEDDING_MODEL_ID?.trim() || undefined
 const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? "standard-agent-v1"
+const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? benchmarkCorpusSuiteId
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const datasetPath = resolveExistingPath(process.env.DATASET ?? "datasets/search.sample.jsonl", [process.cwd(), benchmarkDir, repoRoot])
@@ -140,15 +159,33 @@ let outputClosed = false
 let suiteEvaluatorProfile = resolveEvaluatorProfile()
 let baselineComparisonNote: string | undefined
 let corpusSeed: SeededDocument[] = []
+let suiteMetadata = createSearchSuiteMetadata(suiteEvaluatorProfile)
+let candidateConfig = targetConfigFromEnv({
+  suite: suiteMetadata,
+  env: process.env,
+  apiBaseUrl,
+  evaluatorProfile: profileKey(suiteEvaluatorProfile),
+  defaultEmbeddingModelId
+})
+let baselineConfig: BenchmarkTargetConfig | undefined
 
 try {
   suiteEvaluatorProfile = resolveEvaluatorProfile(process.env.EVALUATOR_PROFILE)
+  suiteMetadata = createSearchSuiteMetadata(suiteEvaluatorProfile)
+  candidateConfig = targetConfigFromEnv({
+    suite: suiteMetadata,
+    env: process.env,
+    apiBaseUrl,
+    evaluatorProfile: profileKey(suiteEvaluatorProfile),
+    defaultEmbeddingModelId
+  })
   const baselineSummary = baselineSummaryPath
     ? (JSON.parse(await readFile(baselineSummaryPath, "utf-8")) as { evaluatorProfile?: SearchSummary["evaluatorProfile"] })
     : undefined
   baselineComparisonNote = baselineSummary
     ? assertComparableProfiles(suiteEvaluatorProfile, baselineSummary, process.env.ALLOW_EVALUATOR_PROFILE_MISMATCH === "1")
     : undefined
+  baselineConfig = baselineSummaryPath ? { ...candidateConfig, targetName: "baseline" } : undefined
   const benchmarkCorpusDir = benchmarkCorpusDirFromEnv(process.env)
   const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
     ? resolveExistingPath(benchmarkCorpusDir, [process.cwd(), benchmarkDir, repoRoot])
@@ -254,6 +291,36 @@ function evaluateRow(row: SearchDatasetRow, status: number, latencyMs: number, b
 
 function summarize(rows: SearchResultRow[], runnerError?: string): SearchSummary {
   const latencies = rows.map((row) => row.latencyMs)
+  const seedManifest = corpusSeed.map((seed) => ({
+    fileName: seed.fileName,
+    status: seed.status,
+    chunkCount: seed.chunkCount,
+    sourceHash: seed.sourceHash,
+    ingestSignature: seed.ingestSignature,
+    skipReason: seed.skipReason
+  }))
+  const caseResults = rows.map((row) => createBenchmarkCaseResult({
+    caseId: row.id,
+    status: row.status,
+    failureReasons: row.failureReasons,
+    retrieval: {
+      retrievedCount: row.results.length,
+      recallAtK: row.metrics.recallAtK,
+      recallAt20: row.metrics.recallAt20,
+      mrrAtK: row.metrics.mrrAt10,
+      noAccessLeakCount: row.noAccessLeakCount
+    },
+    latency: {
+      latencyMs: row.latencyMs
+    }
+  }))
+  const datasetPrepareRuns = [
+    createBenchmarkDatasetPrepareRun({
+      suite: suiteMetadata,
+      datasetPath,
+      seedManifest
+    })
+  ]
   const metricAverages = {
     recallAtK: averageMetric(rows, "recallAtK"),
     recallAt1: averageMetric(rows, "recallAt1"),
@@ -286,6 +353,22 @@ function summarize(rows: SearchResultRow[], runnerError?: string): SearchSummary
   if (runnerError) failures.push({ id: "__runner__", query: "search benchmark runner", caseType: undefined, reasons: [runnerError] })
 
   return {
+    ...createBenchmarkRunArtifact({
+      suite: suiteMetadata,
+      baselineConfig,
+      candidateConfig,
+      caseResults,
+      datasetPrepareRuns,
+      seedManifest
+    }),
+    artifactContractVersion: benchmarkArtifactContractVersion,
+    suite: suiteMetadata,
+    baselineConfig,
+    candidateConfig,
+    caseResults,
+    datasetPrepareRuns,
+    seedManifest,
+    skipManifest: [],
     mode: "search",
     datasetPath,
     outputPath,
@@ -303,6 +386,25 @@ function summarize(rows: SearchResultRow[], runnerError?: string): SearchSummary
     metrics: metricAverages,
     failures
   }
+}
+
+function createSearchSuiteMetadata(evaluatorProfile: EvaluatorProfile): BenchmarkSuite {
+  return createBenchmarkSuiteMetadata({
+    suiteId: benchmarkSuiteId,
+    useCase: benchmarkUseCaseFromEnv() ?? "search_retrieval",
+    runner: "search",
+    corpus: {
+      suiteId: benchmarkCorpusSuiteId,
+      dir: process.env.BENCHMARK_CORPUS_DIR,
+      source: process.env.BENCHMARK_CORPUS_DIR ? "local" : "none"
+    },
+    datasetSource: datasetSourceFromEnv(process.env),
+    evaluatorProfile: profileKey(evaluatorProfile)
+  })
+}
+
+function benchmarkUseCaseFromEnv(): BenchmarkUseCase | undefined {
+  return process.env.BENCHMARK_USE_CASE === "search_retrieval" ? "search_retrieval" : undefined
 }
 
 function renderMarkdownReport(summary: SearchSummary, rows: SearchResultRow[]): string {

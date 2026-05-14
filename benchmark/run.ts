@@ -15,7 +15,17 @@ import {
   resolveEvaluatorProfile,
   type EvaluatorProfile
 } from "./evaluator-profile.js"
+import {
+  benchmarkArtifactContractVersion,
+  createBenchmarkCaseResult,
+  createBenchmarkDatasetPrepareRun,
+  createBenchmarkRunArtifact,
+  createBenchmarkSuiteMetadata,
+  datasetSourceFromEnv,
+  targetConfigFromEnv
+} from "./artifact-contract.js"
 import type { BenchmarkQueryResponse } from "@memorag-mvp/contract"
+import type { BenchmarkRun, BenchmarkSuite, BenchmarkTargetConfig, BenchmarkUseCase } from "@memorag-mvp/contract"
 
 type DatasetRow = {
   id?: string
@@ -287,6 +297,14 @@ type BenchmarkResultRow = {
 }
 
 type Summary = {
+  artifactContractVersion: 1
+  suite: BenchmarkSuite
+  baselineConfig?: BenchmarkTargetConfig
+  candidateConfig: BenchmarkTargetConfig
+  caseResults: BenchmarkRun["caseResults"]
+  datasetPrepareRuns: BenchmarkRun["datasetPrepareRuns"]
+  seedManifest: BenchmarkRun["seedManifest"]
+  skipManifest: BenchmarkRun["skipManifest"]
   datasetPath: string
   outputPath: string
   reportPath: string
@@ -435,6 +453,27 @@ const benchmarkCorpusDir = benchmarkCorpusDirFromEnv(process.env)
 const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
   ? resolveExistingPath(benchmarkCorpusDir, [process.cwd(), benchmarkDir, repoRoot])
   : undefined
+const suiteMetadata = createBenchmarkSuiteMetadata({
+  suiteId: benchmarkSuiteId,
+  useCase: benchmarkUseCaseFromEnv(),
+  runner: "agent",
+  corpus: {
+    suiteId: benchmarkCorpusSuiteId,
+    dir: process.env.BENCHMARK_CORPUS_DIR,
+    source: process.env.BENCHMARK_CORPUS_DIR ? "local" : "none"
+  },
+  datasetSource: datasetSourceFromEnv(process.env),
+  evaluatorProfile: profileKey(suiteEvaluatorProfile)
+})
+const candidateConfig = targetConfigFromEnv({
+  suite: suiteMetadata,
+  env: process.env,
+  apiBaseUrl,
+  evaluatorProfile: profileKey(suiteEvaluatorProfile),
+  defaultModelId,
+  defaultEmbeddingModelId
+})
+const baselineConfig = baselineSummaryPath ? { ...candidateConfig, targetName: "baseline" } : undefined
 
 const corpusSeed = await seedBenchmarkCorpus({
   apiBaseUrl,
@@ -1094,8 +1133,61 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
     .filter((value): value is number => value !== null)
   const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
   const llmJudgeCallCount = llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeCount ?? 0), 0)
+  const seedManifest = corpusSeed.map((seed) => ({
+    fileName: seed.fileName,
+    status: seed.status,
+    chunkCount: seed.chunkCount,
+    sourceHash: seed.sourceHash,
+    ingestSignature: seed.ingestSignature,
+    skipReason: seed.skipReason
+  }))
+  const skipManifest = skippedRows.map((row) => ({
+    id: row.id,
+    question: row.question,
+    fileNames: row.fileNames,
+    reason: row.reason
+  }))
+  const caseResults = results.map((row) => createBenchmarkCaseResult({
+    caseId: row.id,
+    status: row.status,
+    failureReasons: row.evaluation.failureReasons,
+    retrieval: {
+      retrievedCount: row.evaluation.retrievedCount,
+      recallAtK: row.evaluation.retrievalRecallAtK === null ? null : Number(row.evaluation.retrievalRecallAtK),
+      recallAt20: row.evaluation.retrievalRecallAt20 === null ? null : Number(row.evaluation.retrievalRecallAt20),
+      mrrAtK: row.evaluation.retrievalMrrAtK,
+      noAccessLeakCount: row.evaluation.noAccessLeakCount
+    },
+    citation: {
+      citationCount: row.evaluation.citationCount,
+      citationHit: row.evaluation.citationHit,
+      citationSupportPass: row.evaluation.citationSupportPass,
+      expectedFileHit: row.evaluation.expectedFileHit,
+      expectedPageHit: row.evaluation.expectedPageHit
+    },
+    latency: {
+      latencyMs: row.latencyMs,
+      taskLatencyMs: row.taskLatencyMs
+    }
+  }))
+  const datasetPrepareRuns = [
+    createBenchmarkDatasetPrepareRun({
+      suite: suiteMetadata,
+      datasetPath,
+      seedManifest,
+      skipManifest
+    })
+  ]
 
   const summary = {
+    artifactContractVersion: benchmarkArtifactContractVersion,
+    suite: suiteMetadata,
+    baselineConfig,
+    candidateConfig,
+    caseResults,
+    datasetPrepareRuns,
+    seedManifest,
+    skipManifest,
     datasetPath,
     outputPath,
     reportPath,
@@ -1327,6 +1419,16 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
     diagnosticFailureBreakdown: diagnosticFailureBreakdown(results)
   }
   return {
+    ...createBenchmarkRunArtifact({
+      suite: suiteMetadata,
+      baselineConfig,
+      candidateConfig,
+      caseResults,
+      datasetPrepareRuns,
+      seedManifest,
+      skipManifest,
+      generatedAt: summary.generatedAt
+    }),
     ...summary,
     qualityReview: createQualityReview({
       current: summary.metrics,
@@ -1335,6 +1437,24 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       failures: summary.failures
     })
   }
+}
+
+function benchmarkUseCaseFromEnv(): BenchmarkUseCase | undefined {
+  const value = process.env.BENCHMARK_USE_CASE
+  if (
+    value === "internal_qa" ||
+    value === "multi_turn_rag" ||
+    value === "chat_rag" ||
+    value === "search_retrieval" ||
+    value === "long_pdf_qa" ||
+    value === "design_drawing_qa" ||
+    value === "knowledge_quality" ||
+    value === "public_pdf_qa" ||
+    value === "async_agent_task"
+  ) {
+    return value
+  }
+  return undefined
 }
 
 function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary["turnDependencyMetrics"] {
