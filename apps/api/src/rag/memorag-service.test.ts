@@ -378,9 +378,9 @@ test("service stages and rolls back structured blue-green reindex migrations", a
   const { service, dataDir } = await createService()
   const textractJson = JSON.stringify({
     Blocks: [
-      { Id: "table-1", BlockType: "TABLE", Page: 1, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2"] }] },
-      { Id: "cell-1", BlockType: "CELL", RowIndex: 1, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-1"] }] },
-      { Id: "cell-2", BlockType: "CELL", RowIndex: 1, ColumnIndex: 2, Relationships: [{ Type: "CHILD", Ids: ["word-2"] }] },
+      { Id: "table-1", BlockType: "TABLE", Page: 1, Confidence: 92, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2"] }] },
+      { Id: "cell-1", BlockType: "CELL", RowIndex: 1, ColumnIndex: 1, Confidence: 90, Relationships: [{ Type: "CHILD", Ids: ["word-1"] }] },
+      { Id: "cell-2", BlockType: "CELL", RowIndex: 1, ColumnIndex: 2, Confidence: 88, Relationships: [{ Type: "CHILD", Ids: ["word-2"] }] },
       { Id: "word-1", BlockType: "WORD", Text: "項目" },
       { Id: "word-2", BlockType: "WORD", Text: "期限" }
     ]
@@ -388,7 +388,16 @@ test("service stages and rolls back structured blue-green reindex migrations", a
   const manifest = await service.ingest({ fileName: "policy.textract.json", textractJson, skipMemory: true })
 
   assert.equal(manifest.chunks?.[0]?.chunkKind, "table")
+  assert.equal(manifest.chunks?.[0]?.tableId, "table-1")
+  assert.equal(manifest.chunks?.[0]?.tableConfidence, 90)
+  assert.equal(manifest.parsedDocument?.tables?.[0]?.id, "table-1")
   assert.ok(manifest.structuredBlocksObjectKey)
+  const structuredBlocks = JSON.parse(await readFile(path.join(dataDir, `objects/${manifest.structuredBlocksObjectKey}`), "utf-8")) as {
+    schemaVersion?: number
+    parsedDocument?: { tables?: Array<{ id: string }> }
+  }
+  assert.equal(structuredBlocks.schemaVersion, 2)
+  assert.equal(structuredBlocks.parsedDocument?.tables?.[0]?.id, "table-1")
 
   const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const staged = await service.stageReindexMigration(actor, manifest.documentId)
@@ -657,7 +666,9 @@ test("service executes asynchronous document ingest runs from uploaded object", 
   assert.equal(completed.documentId, completed.manifest?.documentId)
 
   const events = await deps.documentIngestRunEventStore.listAfter(started.runId, 0)
-  assert.deepEqual(events.map((event) => event.type), ["status", "status", "final"])
+  assert.deepEqual(events.map((event) => event.type), ["status", "status", "status", "status", "final"])
+  assert.equal(completed.stage, "done")
+  assert.equal(completed.counters?.chunkCount, 1)
   assert.equal(events.at(-1)?.stage, "done")
 })
 

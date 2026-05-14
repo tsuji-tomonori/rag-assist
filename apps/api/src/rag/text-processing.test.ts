@@ -158,6 +158,31 @@ test("chunking normalizes table, list, code, and figure blocks", () => {
   assert.equal(chunks[3]?.figureCaption, "承認フロー")
 })
 
+test("structured chunking propagates parsed block metadata for quality gates", () => {
+  const chunks = chunkStructuredBlocks([
+    {
+      id: "table-1",
+      kind: "table",
+      text: "| 項目 | 期限 |\n| --- | --- |\n| 申請 | 翌月5営業日 |",
+      pageStart: 3,
+      tableId: "table-1",
+      tableColumnCount: 2,
+      tableRowCount: 2,
+      tableConfidence: 87,
+      confidence: 87,
+      readingOrder: 4,
+      bbox: { unit: "normalized_page", x: 0.1, y: 0.2, width: 0.3, height: 0.4 },
+      sourceLocation: { page: 3, bbox: { unit: "normalized_page", x: 0.1, y: 0.2, width: 0.3, height: 0.4 }, unit: "normalized_page", source: "textract" },
+      extractionMethod: "textract-json-v1"
+    }
+  ])
+
+  assert.equal(chunks[0]?.tableId, "table-1")
+  assert.equal(chunks[0]?.tableConfidence, 87)
+  assert.equal(chunks[0]?.readingOrder, 4)
+  assert.deepEqual(chunks[0]?.bbox, { unit: "normalized_page", x: 0.1, y: 0.2, width: 0.3, height: 0.4 })
+})
+
 test("chunking keeps atomic structured blocks unsplit", () => {
   const tableText = "| 項目 | 期限 |\n| --- | --- |\n| 申請 | 翌月5営業日 |\n| 承認 | 翌月7営業日 |"
   const codeText = "```\n" + "status = approved\n".repeat(8) + "```"
@@ -193,14 +218,28 @@ test("upload extraction parses Textract JSON tables and lines into structured bl
   const textractJson = JSON.stringify({
     Blocks: [
       { Id: "line-1", BlockType: "LINE", Text: "1. 申請手順", Page: 1 },
-      { Id: "line-2", BlockType: "LINE", Text: "Figure: 承認フロー", Page: 1 },
+      {
+        Id: "line-2",
+        BlockType: "LINE",
+        Text: "Figure: 承認フロー",
+        Page: 1,
+        Confidence: 65,
+        Geometry: { BoundingBox: { Left: 0.1, Top: 0.2, Width: 0.3, Height: 0.4 } }
+      },
       { Id: "line-3", BlockType: "LINE", Text: "# 見出し", Page: 1 },
-      { Id: "table-1", BlockType: "TABLE", Page: 1, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2", "cell-3", "cell-4"] }] },
+      {
+        Id: "table-1",
+        BlockType: "TABLE",
+        Page: 1,
+        Confidence: 92,
+        Geometry: { BoundingBox: { Left: 0.2, Top: 0.3, Width: 0.4, Height: 0.2 } },
+        Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2", "cell-3", "cell-4"] }]
+      },
       { Id: "table-empty", BlockType: "TABLE", Page: 1 },
-      { Id: "cell-1", BlockType: "CELL", RowIndex: 1, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-1"] }] },
-      { Id: "cell-2", BlockType: "CELL", RowIndex: 1, ColumnIndex: 2, Relationships: [{ Type: "CHILD", Ids: ["word-2"] }] },
-      { Id: "cell-3", BlockType: "CELL", RowIndex: 2, ColumnIndex: 1, Relationships: [{ Type: "CHILD", Ids: ["word-3"] }] },
-      { Id: "cell-4", BlockType: "CELL", RowIndex: 2, ColumnIndex: 2, Relationships: [{ Type: "CHILD", Ids: ["word-4"] }] },
+      { Id: "cell-1", BlockType: "CELL", RowIndex: 1, ColumnIndex: 1, Confidence: 90, Relationships: [{ Type: "CHILD", Ids: ["word-1"] }] },
+      { Id: "cell-2", BlockType: "CELL", RowIndex: 1, ColumnIndex: 2, Confidence: 88, Relationships: [{ Type: "CHILD", Ids: ["word-2"] }] },
+      { Id: "cell-3", BlockType: "CELL", RowIndex: 2, ColumnIndex: 1, Confidence: 86, Relationships: [{ Type: "CHILD", Ids: ["word-3"] }] },
+      { Id: "cell-4", BlockType: "CELL", RowIndex: 2, ColumnIndex: 2, Confidence: 84, Relationships: [{ Type: "CHILD", Ids: ["word-4"] }] },
       { Id: "word-1", BlockType: "WORD", Text: "項目" },
       { Id: "word-2", BlockType: "WORD", Text: "期限" },
       { Id: "word-3", BlockType: "WORD", Text: "申請" },
@@ -214,6 +253,14 @@ test("upload extraction parses Textract JSON tables and lines into structured bl
   assert.ok(extracted.blocks?.some((block) => block.kind === "list" && block.text.includes("- 申請手順")))
   assert.ok(extracted.blocks?.some((block) => block.kind === "figure" && block.text === "Figure: 承認フロー"))
   assert.ok(extracted.blocks?.some((block) => block.heading === "見出し"))
+  const table = extracted.parsedDocument?.tables?.find((candidate) => candidate.id === "table-1")
+  assert.equal(extracted.parsedDocument?.schemaVersion, 2)
+  assert.equal(table?.columnCount, 2)
+  assert.equal(table?.rowCount, 2)
+  assert.equal(table?.confidence, 88)
+  assert.equal(extracted.blocks?.find((block) => block.id === "table-1")?.tableId, "table-1")
+  assert.equal(extracted.blocks?.find((block) => block.id === "line-2")?.figureId, "line-2")
+  assert.deepEqual(extracted.blocks?.find((block) => block.id === "line-2")?.bbox, { unit: "normalized_page", x: 0.1, y: 0.2, width: 0.3, height: 0.4 })
 })
 
 test("upload extraction handles PDF embedded text and OCR fallback outcomes", async () => {

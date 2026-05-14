@@ -136,9 +136,17 @@ function appendSegmentChunks(input: {
         sourceBlockId: input.block?.sourceBlockId ?? input.block?.id,
         normalizedFrom: input.block?.normalizedFrom,
         tableColumnCount: input.block?.tableColumnCount,
+        tableId: input.block?.tableId,
+        tableRowCount: input.block?.tableRowCount,
+        tableConfidence: input.block?.tableConfidence,
         listDepth: input.block?.listDepth,
         codeLanguage: input.block?.codeLanguage,
         figureCaption: input.block?.figureCaption,
+        figureId: input.block?.figureId,
+        confidence: input.block?.confidence,
+        readingOrder: input.block?.readingOrder,
+        bbox: input.block?.bbox,
+        sourceLocation: input.block?.sourceLocation,
         extractionMethod: input.block?.extractionMethod
       })
       index += 1
