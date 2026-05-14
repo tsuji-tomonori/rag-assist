@@ -37,10 +37,10 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 7A | 回答不能・担当者対応の詳細 | `FR-005`, `FR-021`, `FR-031` | `AC-QA-001`, `AC-QA-003`, `E2E-QA-001`, `GAP-015` | `apps/api/src/routes/question-routes.ts`, `apps/api/src/chat-orchestration/nodes/finalize-refusal.ts` | partially covered | H |
 | 7B | 品質起因の担当者対応・改善ループ | `FR-037`, `FR-045` | `GAP-010`, `GAP-015` | 近接: `question-routes.ts`, Phase C quality gate, Phase E extraction warnings, alias management。品質起因 loop は未整備 | partially covered | H |
 | 8 | 検索改善 | `FR-023`, `FR-037` | `TASK-004`, `REQ-SRCH-001`, `SPEC-SRCH-001`, `SPEC-SRCH-003`, `AC-SRCH-003`, `GAP-007`, `GAP-010`, `GAP-015` | `apps/api/src/search/alias-artifacts.ts`, `apps/api/src/routes/admin-routes.ts`, `apps/api/src/rag/memorag-service.ts` alias lifecycle | partially covered | H |
-| 9 | 評価・ベンチマーク | `FR-010`, `FR-011`, `FR-012`, `FR-013`, `FR-019`, `FR-039`, `FR-040`, `FR-047`, `FR-048` | `TASK-007`, `SPEC-BENCH-001`, `GAP-011` | `apps/api/src/routes/benchmark-routes.ts`, `benchmark/`, `.github/workflows/memorag-benchmark-run.yml` | confirmed | I |
-| 9A | チャット・RAG・非同期エージェントのベンチマーク設計 | `FR-019`, `FR-047`, `FR-048`, `FR-050` | `SPEC-BENCH-002`, `SPEC-BENCH-003` | `benchmark/`, `apps/api/src/routes/benchmark-routes.ts` | partially covered | I/G |
-| 9B | ナレッジ品質・文書解析ベンチマーク | `FR-047`, `FR-048` | `GAP-003`, `GAP-011` | 近接: `benchmark/`, document ingest tests。品質 4 軸 benchmark は未整備 | missing | I |
-| 9C | ベンチマーク運用・外部データセット・runner 実行基盤 | `FR-039`, `FR-040`, `FR-048` | `AC-BENCH-001`, `AC-OPS-001` | `apps/api/src/adapters/benchmark-run-store.ts`, `infra/`, CodeBuild runner | partially covered | I |
+| 9 | 評価・ベンチマーク | `FR-010`, `FR-011`, `FR-012`, `FR-013`, `FR-019`, `FR-039`, `FR-040`, `FR-047`, `FR-048` | `TASK-007`, `SPEC-BENCH-001`, `GAP-011`, `docs/spec/gap-phase-i.md` | `apps/api/src/routes/benchmark-routes.ts`, `apps/api/src/authorization.ts`, `benchmark/`, `.github/workflows/memorag-benchmark-run.yml` | partially covered | I |
+| 9A | チャット・RAG・非同期エージェントのベンチマーク設計 | `FR-019`, `FR-047`, `FR-048`, `FR-050` | `SPEC-BENCH-002`, `SPEC-BENCH-003`, `docs/spec/gap-phase-i.md` | `benchmark/run.ts`, `benchmark/conversation-run.ts`, `benchmark/metrics/`, `apps/api/src/routes/benchmark-routes.ts` | partially covered | I/G |
+| 9B | ナレッジ品質・文書解析ベンチマーク | `FR-047`, `FR-048`, `FR-045` | `GAP-003`, `GAP-011`, `docs/spec/gap-phase-i.md` | 近接: `benchmark/metrics/quality.ts`, `benchmark/metrics/drawing-normalization.ts`, document ingest / extraction tests。品質 4 軸 benchmark は未整備 | missing | I |
+| 9C | ベンチマーク運用・外部データセット・runner 実行基盤 | `FR-039`, `FR-040`, `FR-048`, `REQ-OPS-001` | `AC-BENCH-001`, `AC-OPS-001`, `docs/spec/gap-phase-i.md` | `benchmark/codebuild-suite.ts`, `benchmark/corpus.ts`, `benchmark/suites.codebuild.json`, `apps/api/src/routes/benchmark-seed.ts`, `apps/api/src/adapters/benchmark-run-store.ts`, `infra/`, `.github/workflows/memorag-benchmark-run.yml` | partially covered | I |
 | 10 | 管理ダッシュボード | `FR-024`, `FR-027` | `TASK-008`, `REQ-ADM-001`, `SPEC-ADM-001` | `apps/web/src/features/admin/`, `apps/api/src/routes/admin-routes.ts` | partially covered | J3 |
 | 11 | ユーザー・グループ管理 | `FR-024`, `FR-027` | `FACT-007`, `FACT-008`, `REQ-ADM-001` | `apps/api/src/routes/admin-routes.ts`, `apps/api/src/adapters/user-directory.ts` | confirmed | J3 |
 | 12 | ロール・権限管理 | `FR-027`, `FR-052`, `NFR-011` | `GAP-014`, `SPEC-SEC-001` | `apps/api/src/authorization.ts`, `apps/api/src/security/access-control-policy.test.ts` | divergent | B/J3 |
@@ -84,6 +84,17 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 4B ChatToolDefinition | `ChatToolDefinition` schema / 型と `apps/api/src/chat-orchestration/tool-registry.ts` を追加済み。RAG 系は enabled、後続 phase 依存 tool は disabled metadata。 | 後続 task で disabled tool の本実装・承認 UI・resource permission 実行時チェックを追加する。 |
 | 4B ChatToolInvocation | `ChatToolInvocation` schema / 型を追加し、debug trace から `DebugTrace.toolInvocations` を生成する基盤を追加済み。 | 専用永続 store / 承認 workflow / debug tier 表示は後続 task。 |
 | 既存挙動の踏襲 | follow-up 軽量化、required fact planning 汎化、policy computation 汎化、answer support verify/repair、minScore filter、diversity、context budget は現行 runtime policy / nodes に存在する。 | registry 化で低 score chunk 復活、全履歴常時 LLM 投入、benchmark 固有分岐混入を避ける。 |
+
+## Phase I-pre 補助表: 9/9A/9B/9C benchmark suites / runner
+
+| 対象 | 現状 | 後続 task |
+|---|---|---|
+| 9 BenchmarkSuite / BenchmarkRun | `/benchmark-suites`、`/benchmark-runs`、DynamoDB run store、artifact download、cancel、CodeBuild metrics update はある。`BenchmarkCase` CRUD、promotion gate、本番反映 API は未実装。 | `I-benchmark-suites-and-runner` で既存 JSONL / suite manifest と canonical suite / case / run schema の mapping を定義し、promotion gate は read-only artifact から開始する。 |
+| 9A useCase / pipeline | agent / search / conversation runner、MTRAG / ChatRAG / MMRAG / public PDF / drawing 系 converter と metrics はある。baseline / candidate diff、unified pipeline stage、async agent benchmark は不足。 | runner 種別、useCase、evaluator profile、case-level result、seed / skip artifact を manifest 化し、async agent は Phase G 依存として scope-out する。 |
+| 9A benchmark answer policy | `benchmark_grounded_short` 方針と benchmark suite filter はある。dataset row id による本番ロジック分岐は禁止。 | answer policy は benchmark metadata / suite profile で切り替え、通常回答 policy と分離する。ChatRAG refusal expected values と expected phrases を regression として維持する。 |
+| 9B quality / parse benchmark | quality / drawing metrics の部品はあるが、verified / unverified / stale / expired / superseded、OCR / table / figure citation を横断する品質 4 軸 suite は未整備。 | Phase C/E metadata を使った最小 sample と artifact contract を作り、dataset 固有値を実装へ漏らさない。 |
+| 9C runner ops | CodeBuild runner、Secrets Manager auth、GitHub Actions manual start、suite manifest、corpus seed isolation、S3 artifact、metrics update はある。`BenchmarkDatasetPrepareRun` / skip manifest は未整備。 | auth fail-fast、token mask、BENCHMARK_RUNNER 最小権限、S3 Vectors metadata budget、Lambda 15 分 / 3008MB quota 方針を維持したまま不足 artifact を追加する。 |
+| 既存挙動の踏襲 | `source=benchmark-runner`、`docType=benchmark-corpus`、`benchmarkSuiteId`、`aclGroups=["BENCHMARK_RUNNER"]` による corpus isolation、`benchmark:query` / `benchmark:seed_corpus` の runner 境界、`benchmark:download` の現行互換がある。 | permission 名 `benchmark:artifact:download` への移行は Phase B 方針と合わせる。即時 rename ではなく alias / compatibility を検討する。 |
 
 ## Phase J2-pre 補助表: 14A/14D debug / middleware / worker
 
