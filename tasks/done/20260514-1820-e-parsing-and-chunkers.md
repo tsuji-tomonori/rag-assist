@@ -1,6 +1,6 @@
 # E-parsing-and-chunkers
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - branch: `codex/phase-e-parsing-and-chunkers`
 - worktree: `.worktrees/phase-e-parsing-and-chunkers`
@@ -62,8 +62,8 @@ Phase E の仕様 3A/3C と `docs/spec/gap-phase-e.md` に基づき、既存の 
 - [x] `docs/spec/gap-phase-e.md` に実装結果と残 scope-out / open question が追記されている。
 - [x] `reports/working/*e-parsing-and-chunkers*.md` に作業レポートが作成されている。
 - [x] 必須検証を実行し、結果と未実施理由を PR 本文・コメント・最終報告に記録している。
-- [ ] main 向け PR を作成し、日本語 PR 本文、受け入れ条件コメント、セルフレビューコメントを追加している。
-- [ ] PR 作成後に task md を `tasks/done/` へ移動し、状態 `done` に更新した追加 commit を同じ branch に push している。
+- [x] main 向け PR を作成し、日本語 PR 本文、受け入れ条件コメント、セルフレビューコメントを追加している。
+- [x] PR 作成後に task md を `tasks/done/` へ移動し、状態 `done` に更新した追加 commit を同じ branch に push している。
 
 ## 検証計画
 
