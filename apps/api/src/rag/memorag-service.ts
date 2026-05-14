@@ -100,6 +100,18 @@ type AliasInput = {
   }
 }
 
+type SearchImprovementCandidateInput = Pick<AliasInput, "scope"> & {
+  term: string
+  expansions: string[]
+  candidateSource?: "ai_suggested" | "support_ticket"
+  suggestionReason?: string
+  reviewReason?: string
+  impactSummary?: string
+  searchResultDiffSummary?: string
+  beforeResultIds?: string[]
+  afterResultIds?: string[]
+}
+
 type AliasReviewInput = {
   decision: "approve" | "reject"
   comment?: string
@@ -707,6 +719,40 @@ export class MemoRagService {
     return alias
   }
 
+  async createSearchImprovementCandidate(actor: AppUser, questionId: string, input: SearchImprovementCandidateInput): Promise<AliasDefinition | undefined> {
+    const question = await this.getQuestion(questionId)
+    if (!question) return undefined
+    const ledger = await this.loadAliasLedger()
+    const now = new Date().toISOString()
+    const alias: AliasDefinition = {
+      aliasId: `alias_${randomUUID().slice(0, 12)}`,
+      term: normalizeAliasTerm(input.term),
+      expansions: normalizeAliasExpansions(input.expansions),
+      scope: normalizeAliasScope(input.scope),
+      status: "draft",
+      searchImprovement: {
+        candidateSource: input.candidateSource ?? "support_ticket",
+        sourceQuestionId: question.questionId,
+        sourceMessageId: question.messageId,
+        sourceRagRunId: question.ragRunId ?? question.chatRunId,
+        suggestionReason: trimOptional(input.suggestionReason),
+        reviewState: "pending_review",
+        reviewReason: trimOptional(input.reviewReason),
+        impactSummary: trimOptional(input.impactSummary),
+        searchResultDiffSummary: trimOptional(input.searchResultDiffSummary),
+        beforeResultIds: normalizeStringList(input.beforeResultIds, 50),
+        afterResultIds: normalizeStringList(input.afterResultIds, 50)
+      },
+      createdBy: actor.userId,
+      createdAt: now,
+      updatedAt: now
+    }
+    ledger.aliases.push(alias)
+    appendAliasAudit(ledger, actor, "create", alias.aliasId, `created search improvement candidate ${alias.term} from ${question.questionId}`)
+    await this.saveAliasLedger(ledger)
+    return alias
+  }
+
   async updateAlias(actor: AppUser, aliasId: string, input: AliasInput): Promise<AliasDefinition | undefined> {
     const ledger = await this.loadAliasLedger()
     const alias = ledger.aliases.find((candidate) => candidate.aliasId === aliasId)
@@ -733,6 +779,7 @@ export class MemoRagService {
     alias.reviewedBy = actor.userId
     alias.reviewedAt = new Date().toISOString()
     alias.reviewComment = input.comment
+    if (alias.searchImprovement) alias.searchImprovement.reviewState = "reviewed"
     alias.updatedAt = alias.reviewedAt
     appendAliasAudit(ledger, actor, "review", alias.aliasId, `${input.decision} ${alias.term}`)
     await this.saveAliasLedger(ledger)
@@ -756,7 +803,10 @@ export class MemoRagService {
     const version = createAliasVersion(publishedAt)
     const aliases = ledger.aliases.filter((alias) => alias.status === "approved").map((alias) => ({ ...alias, publishedVersion: version }))
     for (const alias of ledger.aliases) {
-      if (alias.status === "approved") alias.publishedVersion = version
+      if (alias.status === "approved") {
+        alias.publishedVersion = version
+        if (alias.searchImprovement) alias.searchImprovement.reviewState = "published"
+      }
     }
     const objectKey = `aliases/${version}/aliases.json`
     const artifact: PublishedAliasArtifact = {
@@ -1294,7 +1344,8 @@ export class MemoRagService {
       ...input,
       requesterUserId: user?.userId,
       requesterName: input.requesterName?.trim() || userDisplayName(user),
-      requesterDepartment: input.requesterDepartment?.trim() || "未設定"
+      requesterDepartment: input.requesterDepartment?.trim() || "未設定",
+      sanitizedDiagnostics: sanitizeSupportDiagnostics(input.sanitizedDiagnostics, input.answerUnavailableReason)
     })
   }
 
@@ -2040,6 +2091,16 @@ function normalizeAliasExpansions(expansions: string[]): string[] {
   return [...new Set(expansions.map((value) => value.trim()).filter(Boolean))].slice(0, ragRuntimePolicy.limits.aliasExpansionLimit)
 }
 
+function normalizeStringList(values: string[] | undefined, maxItems: number): string[] | undefined {
+  const normalized = [...new Set((values ?? []).map((value) => value.trim()).filter(Boolean))].slice(0, maxItems)
+  return normalized.length > 0 ? normalized : undefined
+}
+
+function trimOptional(value: string | undefined): string | undefined {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : undefined
+}
+
 function normalizeAliasScope(scope: AliasInput["scope"]): AliasDefinition["scope"] | undefined {
   if (!scope) return undefined
   const normalized = Object.fromEntries(
@@ -2048,6 +2109,33 @@ function normalizeAliasScope(scope: AliasInput["scope"]): AliasDefinition["scope
       .filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0)
   ) as AliasDefinition["scope"]
   return normalized && Object.keys(normalized).length > 0 ? normalized : undefined
+}
+
+function sanitizeSupportDiagnostics(
+  diagnostics: HumanQuestion["sanitizedDiagnostics"] | undefined,
+  fallbackAnswerUnavailableReason?: string
+): HumanQuestion["sanitizedDiagnostics"] | undefined {
+  if (!diagnostics && !fallbackAnswerUnavailableReason) return undefined
+  const sanitized: NonNullable<HumanQuestion["sanitizedDiagnostics"]> = {
+    tier: "support_sanitized",
+    answerUnavailableReason: trimOptional(diagnostics?.answerUnavailableReason) ?? trimOptional(fallbackAnswerUnavailableReason),
+    retrievalQuality: diagnostics?.retrievalQuality,
+    qualityCauses: diagnostics?.qualityCauses?.filter(isSupportQualityCause),
+    visibleCitationIds: normalizeStringList(diagnostics?.visibleCitationIds, 20),
+    visibleDocumentIds: normalizeStringList(diagnostics?.visibleDocumentIds, 20),
+    visibleChunkIds: normalizeStringList(diagnostics?.visibleChunkIds, 50),
+    qualityWarnings: normalizeStringList(diagnostics?.qualityWarnings, 20),
+    suggestedNextActions: diagnostics?.suggestedNextActions?.filter(isSupportNextAction)
+  }
+  return Object.fromEntries(Object.entries(sanitized).filter(([, value]) => value !== undefined)) as HumanQuestion["sanitizedDiagnostics"]
+}
+
+function isSupportQualityCause(value: unknown): value is NonNullable<HumanQuestion["qualityCause"]> {
+  return ["retrieval_gap", "low_quality_evidence", "stale_document", "extraction_warning", "unsupported_answer", "other"].includes(String(value))
+}
+
+function isSupportNextAction(value: unknown): value is NonNullable<NonNullable<HumanQuestion["sanitizedDiagnostics"]>["suggestedNextActions"]>[number] {
+  return ["search_improvement_review", "document_owner_review", "document_reparse", "rag_exclusion_review", "benchmark_case_review"].includes(String(value))
 }
 
 function appendAliasAudit(

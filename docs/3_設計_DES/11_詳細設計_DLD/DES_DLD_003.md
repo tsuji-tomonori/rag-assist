@@ -141,6 +141,7 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 | `POST` | `/admin/aliases/{aliasId}/disable` | `rag:alias:disable:group` | active alias を無効化する |
 | `POST` | `/admin/aliases/publish` | `rag:alias:publish:group` | batch publish を要求する |
 | `GET` | `/admin/aliases/audit-log` | `rag:alias:read` | audit log を参照する |
+| `POST` | `/questions/{questionId}/search-improvement-candidates` | `rag:alias:write:group` | 問い合わせから draft / pending review の検索語対応づけ候補を作成する |
 
 管理 API は alias 定義と監査を管理する。検索 index の直接更新は batch の責務にする。
 
@@ -154,6 +155,8 @@ search runtime は alias artifact を request 中に更新しない。通常 res
 - `diagnostics.aliasVersion` は opaque hash または `none` にし、alias 本文を含めない。
 - alias expansion は visible manifest 由来 alias と publish 済み alias artifact を merge し、scope/filter 外 alias を使わない。
 - alias ledger は `admin/alias-ledger.json` に draft / approved / disabled と audit log を保持する。
+- 問い合わせ由来の検索改善候補は alias ledger の draft として保存し、`searchImprovement.reviewState=pending_review` を持つ。AI suggest であってもこの状態では publish 済み artifact に入らない。
+- 検索改善候補は review reason、impact summary、search result diff summary を保存できる。UI 文言では「検索改善」「検索語対応づけ」を使い、通常利用者向け画面に alias 語や alias 本文を露出しない。
 - publish は `aliases/<version>/aliases.json` と `aliases/latest.json` を保存し、search runtime は request 中に alias を変更しない。
 
 ## 評価指標

@@ -241,7 +241,26 @@ Media type: `application/json`
 | `messages[].questionTicket.assigneeDepartment` | `string` | yes | `data.messages[].questionTicket.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
 | `messages[].questionTicket.category` | `string` | yes | 問い合わせや文書の分類。 | - |
 | `messages[].questionTicket.priority` | `enum(normal \| high \| urgent)` | yes | `data.messages[].questionTicket.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
-| `messages[].questionTicket.status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `messages[].questionTicket.status` | `enum(open \| in_progress \| waiting_requester \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, in_progress, waiting_requester, answered, resolved |
+| `messages[].questionTicket.source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `data.messages[].questionTicket.source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
+| `messages[].questionTicket.messageId` | `string` | no | `data.messages[].questionTicket.messageId` の値。項目名は message id を表します。 | - |
+| `messages[].questionTicket.ragRunId` | `string` | no | `data.messages[].questionTicket.ragRunId` の値。項目名は rag run id を表します。 | - |
+| `messages[].questionTicket.answerUnavailableEventId` | `string` | no | `data.messages[].questionTicket.answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
+| `messages[].questionTicket.answerUnavailableReason` | `string` | no | `data.messages[].questionTicket.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics` | `object` | no | `data.messages[].questionTicket.sanitizedDiagnostics` の値。項目名は sanitized diagnostics を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.tier` | `enum(support_sanitized)` | yes | `data.messages[].questionTicket.sanitizedDiagnostics.tier` の値。項目名は tier を表します。 | enum=support_sanitized |
+| `messages[].questionTicket.sanitizedDiagnostics.answerUnavailableReason` | `string` | no | `data.messages[].questionTicket.sanitizedDiagnostics.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.retrievalQuality` | `enum(no_evidence \| insufficient_evidence \| conflicting_evidence \| low_quality_evidence \| unknown)` | no | `data.messages[].questionTicket.sanitizedDiagnostics.retrievalQuality` の値。項目名は retrieval quality を表します。 | enum=no_evidence, insufficient_evidence, conflicting_evidence, low_quality_evidence, unknown |
+| `messages[].questionTicket.sanitizedDiagnostics.qualityCauses` | `array<enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)>` | no | `data.messages[].questionTicket.sanitizedDiagnostics.qualityCauses` の値。項目名は quality causes を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.visibleCitationIds` | `array<string>` | no | `data.messages[].questionTicket.sanitizedDiagnostics.visibleCitationIds` の値。項目名は visible citation ids を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.visibleDocumentIds` | `array<string>` | no | `data.messages[].questionTicket.sanitizedDiagnostics.visibleDocumentIds` の値。項目名は visible document ids を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.visibleChunkIds` | `array<string>` | no | `data.messages[].questionTicket.sanitizedDiagnostics.visibleChunkIds` の値。項目名は visible chunk ids を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.qualityWarnings` | `array<string>` | no | `data.messages[].questionTicket.sanitizedDiagnostics.qualityWarnings` の値。項目名は quality warnings を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.suggestedNextActions` | `array<enum(search_improvement_review \| document_owner_review \| document_reparse \| rag_exclusion_review \| benchmark_case_review)>` | no | `data.messages[].questionTicket.sanitizedDiagnostics.suggestedNextActions` の値。項目名は suggested next actions を表します。 | - |
+| `messages[].questionTicket.assigneeUserId` | `string` | no | `data.messages[].questionTicket.assigneeUserId` の値。項目名は assignee user id を表します。 | - |
+| `messages[].questionTicket.assigneeGroupId` | `string` | no | `data.messages[].questionTicket.assigneeGroupId` の値。項目名は assignee group id を表します。 | - |
+| `messages[].questionTicket.slaDueAt` | `string` | no | `data.messages[].questionTicket.slaDueAt` の値。項目名は sla due at を表します。 | - |
+| `messages[].questionTicket.qualityCause` | `enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)` | no | `data.messages[].questionTicket.qualityCause` の値。項目名は quality cause を表します。 | enum=retrieval_gap, low_quality_evidence, stale_document, extraction_warning, unsupported_answer, other |
 | `messages[].questionTicket.sourceQuestion` | `string` | no | `data.messages[].questionTicket.sourceQuestion` の値。項目名は source question を表します。 | - |
 | `messages[].questionTicket.chatAnswer` | `string` | no | `data.messages[].questionTicket.chatAnswer` の値。項目名は chat answer を表します。 | - |
 | `messages[].questionTicket.chatRunId` | `string` | no | `data.messages[].questionTicket.chatRunId` の値。項目名は chat run id を表します。 | - |
@@ -335,7 +354,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 277 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 296 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -560,7 +579,26 @@ Media type: `application/json`
 | `messages[].questionTicket.assigneeDepartment` | `string` | yes | `response.messages[].questionTicket.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
 | `messages[].questionTicket.category` | `string` | yes | 問い合わせや文書の分類。 | - |
 | `messages[].questionTicket.priority` | `enum(normal \| high \| urgent)` | yes | `response.messages[].questionTicket.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
-| `messages[].questionTicket.status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `messages[].questionTicket.status` | `enum(open \| in_progress \| waiting_requester \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, in_progress, waiting_requester, answered, resolved |
+| `messages[].questionTicket.source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `response.messages[].questionTicket.source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
+| `messages[].questionTicket.messageId` | `string` | no | `response.messages[].questionTicket.messageId` の値。項目名は message id を表します。 | - |
+| `messages[].questionTicket.ragRunId` | `string` | no | `response.messages[].questionTicket.ragRunId` の値。項目名は rag run id を表します。 | - |
+| `messages[].questionTicket.answerUnavailableEventId` | `string` | no | `response.messages[].questionTicket.answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
+| `messages[].questionTicket.answerUnavailableReason` | `string` | no | `response.messages[].questionTicket.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics` | `object` | no | `response.messages[].questionTicket.sanitizedDiagnostics` の値。項目名は sanitized diagnostics を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.tier` | `enum(support_sanitized)` | yes | `response.messages[].questionTicket.sanitizedDiagnostics.tier` の値。項目名は tier を表します。 | enum=support_sanitized |
+| `messages[].questionTicket.sanitizedDiagnostics.answerUnavailableReason` | `string` | no | `response.messages[].questionTicket.sanitizedDiagnostics.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.retrievalQuality` | `enum(no_evidence \| insufficient_evidence \| conflicting_evidence \| low_quality_evidence \| unknown)` | no | `response.messages[].questionTicket.sanitizedDiagnostics.retrievalQuality` の値。項目名は retrieval quality を表します。 | enum=no_evidence, insufficient_evidence, conflicting_evidence, low_quality_evidence, unknown |
+| `messages[].questionTicket.sanitizedDiagnostics.qualityCauses` | `array<enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)>` | no | `response.messages[].questionTicket.sanitizedDiagnostics.qualityCauses` の値。項目名は quality causes を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.visibleCitationIds` | `array<string>` | no | `response.messages[].questionTicket.sanitizedDiagnostics.visibleCitationIds` の値。項目名は visible citation ids を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.visibleDocumentIds` | `array<string>` | no | `response.messages[].questionTicket.sanitizedDiagnostics.visibleDocumentIds` の値。項目名は visible document ids を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.visibleChunkIds` | `array<string>` | no | `response.messages[].questionTicket.sanitizedDiagnostics.visibleChunkIds` の値。項目名は visible chunk ids を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.qualityWarnings` | `array<string>` | no | `response.messages[].questionTicket.sanitizedDiagnostics.qualityWarnings` の値。項目名は quality warnings を表します。 | - |
+| `messages[].questionTicket.sanitizedDiagnostics.suggestedNextActions` | `array<enum(search_improvement_review \| document_owner_review \| document_reparse \| rag_exclusion_review \| benchmark_case_review)>` | no | `response.messages[].questionTicket.sanitizedDiagnostics.suggestedNextActions` の値。項目名は suggested next actions を表します。 | - |
+| `messages[].questionTicket.assigneeUserId` | `string` | no | `response.messages[].questionTicket.assigneeUserId` の値。項目名は assignee user id を表します。 | - |
+| `messages[].questionTicket.assigneeGroupId` | `string` | no | `response.messages[].questionTicket.assigneeGroupId` の値。項目名は assignee group id を表します。 | - |
+| `messages[].questionTicket.slaDueAt` | `string` | no | `response.messages[].questionTicket.slaDueAt` の値。項目名は sla due at を表します。 | - |
+| `messages[].questionTicket.qualityCause` | `enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)` | no | `response.messages[].questionTicket.qualityCause` の値。項目名は quality cause を表します。 | enum=retrieval_gap, low_quality_evidence, stale_document, extraction_warning, unsupported_answer, other |
 | `messages[].questionTicket.sourceQuestion` | `string` | no | `response.messages[].questionTicket.sourceQuestion` の値。項目名は source question を表します。 | - |
 | `messages[].questionTicket.chatAnswer` | `string` | no | `response.messages[].questionTicket.chatAnswer` の値。項目名は chat answer を表します。 | - |
 | `messages[].questionTicket.chatRunId` | `string` | no | `response.messages[].questionTicket.chatRunId` の値。項目名は chat run id を表します。 | - |

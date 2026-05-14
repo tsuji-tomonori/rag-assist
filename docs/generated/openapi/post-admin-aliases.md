@@ -63,7 +63,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 17 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 29 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -83,6 +83,18 @@ Media type: `application/json`
 | `scope.docType` | `string` | no | `response.scope.docType` の値。項目名は doc type を表します。 | - |
 | `scope.benchmarkSuiteId` | `string` | no | `response.scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 | `status` | `enum(draft \| approved \| disabled)` | yes | 現在の処理状態または管理状態。 | enum=draft, approved, disabled |
+| `searchImprovement` | `object` | no | `response.searchImprovement` の値。項目名は search improvement を表します。 | - |
+| `searchImprovement.candidateSource` | `enum(human_draft \| ai_suggested \| support_ticket)` | yes | `response.searchImprovement.candidateSource` の値。項目名は candidate source を表します。 | enum=human_draft, ai_suggested, support_ticket |
+| `searchImprovement.sourceQuestionId` | `string` | no | `response.searchImprovement.sourceQuestionId` の値。項目名は source question id を表します。 | - |
+| `searchImprovement.sourceMessageId` | `string` | no | `response.searchImprovement.sourceMessageId` の値。項目名は source message id を表します。 | - |
+| `searchImprovement.sourceRagRunId` | `string` | no | `response.searchImprovement.sourceRagRunId` の値。項目名は source rag run id を表します。 | - |
+| `searchImprovement.suggestionReason` | `string` | no | `response.searchImprovement.suggestionReason` の値。項目名は suggestion reason を表します。 | - |
+| `searchImprovement.reviewState` | `enum(pending_review \| reviewed \| published)` | yes | `response.searchImprovement.reviewState` の値。項目名は review state を表します。 | enum=pending_review, reviewed, published |
+| `searchImprovement.reviewReason` | `string` | no | `response.searchImprovement.reviewReason` の値。項目名は review reason を表します。 | - |
+| `searchImprovement.impactSummary` | `string` | no | `response.searchImprovement.impactSummary` の値。項目名は impact summary を表します。 | - |
+| `searchImprovement.searchResultDiffSummary` | `string` | no | `response.searchImprovement.searchResultDiffSummary` の値。項目名は search result diff summary を表します。 | - |
+| `searchImprovement.beforeResultIds` | `array<string>` | no | `response.searchImprovement.beforeResultIds` の値。項目名は before result ids を表します。 | - |
+| `searchImprovement.afterResultIds` | `array<string>` | no | `response.searchImprovement.afterResultIds` の値。項目名は after result ids を表します。 | - |
 | `createdBy` | `string` | yes | `response.createdBy` の値。項目名は created by を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |

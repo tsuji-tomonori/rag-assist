@@ -70,4 +70,5 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/questions/{questionId}` | 担当者問い合わせ詳細を取得する | [詳細](openapi/get-questions-questionid.md) |
 | `POST` | `/questions/{questionId}/answer` | 担当者回答を登録する | [詳細](openapi/post-questions-questionid-answer.md) |
 | `POST` | `/questions/{questionId}/resolve` | 問い合わせを解決済みにする | [詳細](openapi/post-questions-questionid-resolve.md) |
+| `POST` | `/questions/{questionId}/search-improvement-candidates` | 検索改善候補を作成する | [詳細](openapi/post-questions-questionid-search-improvement-candidates.md) |
 | `POST` | `/search` | ハイブリッド検索を実行する | [詳細](openapi/post-search.md) |

@@ -386,6 +386,19 @@ export const AliasDefinitionSchema = z.object({
   expansions: z.array(z.string()),
   scope: AliasScopeSchema.optional(),
   status: AliasStatusSchema,
+  searchImprovement: z.object({
+    candidateSource: z.enum(["human_draft", "ai_suggested", "support_ticket"]),
+    sourceQuestionId: z.string().optional(),
+    sourceMessageId: z.string().optional(),
+    sourceRagRunId: z.string().optional(),
+    suggestionReason: z.string().optional(),
+    reviewState: z.enum(["pending_review", "reviewed", "published"]),
+    reviewReason: z.string().optional(),
+    impactSummary: z.string().optional(),
+    searchResultDiffSummary: z.string().optional(),
+    beforeResultIds: z.array(z.string()).optional(),
+    afterResultIds: z.array(z.string()).optional()
+  }).optional(),
   createdBy: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -877,7 +890,20 @@ export const SearchResponseSchema = z.object({
 })
 
 export const QuestionPrioritySchema = z.enum(["normal", "high", "urgent"])
-export const QuestionStatusSchema = z.enum(["open", "answered", "resolved"])
+export const QuestionStatusSchema = z.enum(["open", "in_progress", "waiting_requester", "answered", "resolved"])
+export const SupportTicketSourceSchema = z.enum(["manual_escalation", "answer_unavailable", "negative_feedback", "quality_issue"])
+export const SupportTicketQualityCauseSchema = z.enum(["retrieval_gap", "low_quality_evidence", "stale_document", "extraction_warning", "unsupported_answer", "other"])
+export const SupportSanitizedDiagnosticsSchema = z.object({
+  tier: z.literal("support_sanitized"),
+  answerUnavailableReason: z.string().optional(),
+  retrievalQuality: z.enum(["no_evidence", "insufficient_evidence", "conflicting_evidence", "low_quality_evidence", "unknown"]).optional(),
+  qualityCauses: z.array(SupportTicketQualityCauseSchema).optional(),
+  visibleCitationIds: z.array(z.string()).optional(),
+  visibleDocumentIds: z.array(z.string()).optional(),
+  visibleChunkIds: z.array(z.string()).optional(),
+  qualityWarnings: z.array(z.string()).optional(),
+  suggestedNextActions: z.array(z.enum(["search_improvement_review", "document_owner_review", "document_reparse", "rag_exclusion_review", "benchmark_case_review"])).optional()
+})
 
 export const QuestionSchema = z.object({
   questionId: z.string(),
@@ -890,6 +916,16 @@ export const QuestionSchema = z.object({
   category: z.string(),
   priority: QuestionPrioritySchema,
   status: QuestionStatusSchema,
+  source: SupportTicketSourceSchema.optional(),
+  messageId: z.string().optional(),
+  ragRunId: z.string().optional(),
+  answerUnavailableEventId: z.string().optional(),
+  answerUnavailableReason: z.string().optional(),
+  sanitizedDiagnostics: SupportSanitizedDiagnosticsSchema.optional(),
+  assigneeUserId: z.string().optional(),
+  assigneeGroupId: z.string().optional(),
+  slaDueAt: z.string().optional(),
+  qualityCause: SupportTicketQualityCauseSchema.optional(),
   sourceQuestion: z.string().optional(),
   chatAnswer: z.string().optional(),
   chatRunId: z.string().optional(),
@@ -946,9 +982,36 @@ export const CreateQuestionRequestSchema = z.object({
   assigneeDepartment: z.string().optional().openapi({ example: "総務部" }),
   category: z.string().optional().openapi({ example: "その他の質問" }),
   priority: QuestionPrioritySchema.optional(),
+  source: SupportTicketSourceSchema.optional().default("manual_escalation"),
+  messageId: z.string().optional(),
+  ragRunId: z.string().optional(),
+  answerUnavailableEventId: z.string().optional(),
+  answerUnavailableReason: z.string().optional(),
+  sanitizedDiagnostics: SupportSanitizedDiagnosticsSchema.optional(),
+  assigneeUserId: z.string().optional(),
+  assigneeGroupId: z.string().optional(),
+  slaDueAt: z.string().optional(),
+  qualityCause: SupportTicketQualityCauseSchema.optional(),
   sourceQuestion: z.string().optional(),
   chatAnswer: z.string().optional(),
   chatRunId: z.string().optional()
+})
+
+export const CreateSearchImprovementCandidateRequestSchema = z.object({
+  term: z.string().min(1).max(120).openapi({ example: "休暇申請" }),
+  expansions: z.array(z.string().min(1).max(120)).min(1).max(20).openapi({ example: ["年次有給休暇", "有休申請"] }),
+  scope: AliasScopeSchema.optional(),
+  candidateSource: z.enum(["ai_suggested", "support_ticket"]).optional().default("support_ticket"),
+  suggestionReason: z.string().min(1).max(1000).optional(),
+  reviewReason: z.string().min(1).max(1000).optional(),
+  impactSummary: z.string().max(2000).optional(),
+  searchResultDiffSummary: z.string().max(2000).optional(),
+  beforeResultIds: z.array(z.string().min(1)).max(50).optional(),
+  afterResultIds: z.array(z.string().min(1)).max(50).optional()
+})
+
+export const SearchImprovementCandidateResponseSchema = z.object({
+  candidate: AliasDefinitionSchema
 })
 
 export const AnswerQuestionRequestSchema = z.object({
