@@ -9,7 +9,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     looseRoute({
       method: "get",
       path: "/conversation-history",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:read:own", notes: ["実行者自身の会話履歴だけ返します。"] }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:read:own", operationKey: "history.read.self", resourceCondition: "self", notes: ["実行者自身の会話履歴だけ返します。"] }),
       responses: {
         200: {
           description: "List persisted conversation history for the current user",
@@ -30,7 +30,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     looseRoute({
       method: "post",
       path: "/conversation-history",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:create", notes: ["実行者自身の会話履歴として保存します。"] }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:create", operationKey: "history.update.self", resourceCondition: "self", notes: ["実行者自身の会話履歴として保存します。"] }),
       request: {
         body: {
           required: true,
@@ -55,7 +55,7 @@ export function registerConversationHistoryRoutes({ app, service }: ApiRouteCont
     looseRoute({
       method: "delete",
       path: "/conversation-history/{id}",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:delete:own", notes: ["実行者自身の会話履歴だけ削除できます。"] }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:delete:own", operationKey: "history.delete.self", resourceCondition: "self", notes: ["実行者自身の会話履歴だけ削除できます。"] }),
       request: {
         params: z.object({ id: z.string().min(1) })
       },

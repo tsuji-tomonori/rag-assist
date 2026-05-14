@@ -15,7 +15,29 @@ type RoutePolicy = {
   path: string
   mode: RouteAuthorizationMode
   permission?: Permission
+  operationKey?: string
+  resourceCondition?: string
+  errorDisclosure?: string
 }
+
+const operationMatrixSubset = new Map<string, { operationKey: string; resourceCondition: string }>([
+  ["POST /chat", { operationKey: "chat.send", resourceCondition: "documentGroupRead" }],
+  ["POST /chat-runs", { operationKey: "chat.run.start", resourceCondition: "documentGroupRead" }],
+  ["GET /chat-runs/{runId}/events", { operationKey: "chat.run.events.read", resourceCondition: "ownedRun" }],
+  ["POST /search", { operationKey: "document.search", resourceCondition: "documentGroupRead" }],
+  ["GET /conversation-history", { operationKey: "history.read.self", resourceCondition: "self" }],
+  ["POST /questions", { operationKey: "support.ticket.create.self", resourceCondition: "self" }],
+  ["GET /questions/{questionId}", { operationKey: "support.ticket.read", resourceCondition: "requester" }],
+  ["POST /questions/{questionId}/resolve", { operationKey: "support.ticket.close", resourceCondition: "requester" }],
+  ["GET /document-groups", { operationKey: "folder.read", resourceCondition: "documentGroupRead" }],
+  ["POST /document-groups", { operationKey: "folder.create.group", resourceCondition: "documentGroupFull" }],
+  ["POST /document-groups/{groupId}/share", { operationKey: "folder.share", resourceCondition: "documentGroupFull" }],
+  ["GET /documents", { operationKey: "document.read", resourceCondition: "benchmarkSeedScope" }],
+  ["POST /documents", { operationKey: "document.upload", resourceCondition: "benchmarkSeedScope" }],
+  ["POST /documents/uploads", { operationKey: "document.upload_session.create", resourceCondition: "documentUploadSession" }],
+  ["POST /benchmark-runs", { operationKey: "benchmark.run", resourceCondition: "documentGroupRead" }],
+  ["POST /admin/users/{userId}/roles", { operationKey: "role.assign", resourceCondition: "roleAssignment" }]
+])
 
 test("auth middleware uses a public allowlist instead of protected path enumeration", async () => {
   const source = await readRouteSources()
@@ -185,12 +207,44 @@ test("protected API routes document authorization metadata and auth error respon
   }
 })
 
+test("protected API routes document three-layer authorization metadata", async () => {
+  const policies = await openApiRoutePolicies()
+
+  for (const policy of policies) {
+    const route = routeKey(policy)
+    const auth = policy.operation["x-memorag-authorization"]
+    if (policy.mode !== "public") {
+      assert.ok(auth?.resourceCondition, `${route} must document resourceCondition`)
+      assert.ok(auth?.errorDisclosure, `${route} must document errorDisclosure`)
+      if (policy.mode !== "authenticated") assert.equal(auth.errorDisclosure, "generic", `${route} must default to generic 403 disclosure`)
+    }
+
+    const expected = operationMatrixSubset.get(route)
+    if (!expected) continue
+    assert.equal(auth?.operationKey, expected.operationKey, `${route} must document operationKey`)
+    assert.equal(auth?.resourceCondition, expected.resourceCondition, `${route} must document resourceCondition from chapter 20 subset`)
+  }
+})
+
+test("authorization metadata uses generic forbidden error bodies by default", async () => {
+  const policies = await openApiRoutePolicies()
+
+  for (const policy of policies.filter((item) => item.mode !== "public" && item.mode !== "authenticated")) {
+    const forbidden = policy.operation["x-memorag-authorization"]?.errors?.find((error) => error.status === 403)
+    assert.equal(forbidden?.body?.error, "Forbidden", `${routeKey(policy)} must not expose internal permission names in default 403 metadata`)
+  }
+})
+
 async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {
   operation: {
     responses?: Record<string, unknown>
     "x-memorag-authorization"?: {
       mode?: RouteAuthorizationMode
       requiredPermissions?: Permission[]
+      operationKey?: string
+      resourceCondition?: string
+      errorDisclosure?: string
+      errors?: Array<{ status?: number; body?: { error?: string } }>
     }
   }
 }>> {
@@ -202,6 +256,10 @@ async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {
       "x-memorag-authorization"?: {
         mode?: RouteAuthorizationMode
         requiredPermissions?: Permission[]
+        operationKey?: string
+        resourceCondition?: string
+        errorDisclosure?: string
+        errors?: Array<{ status?: number; body?: { error?: string } }>
       }
     }>>
   }
@@ -215,6 +273,9 @@ async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {
         path,
         mode: auth.mode,
         permission: auth.requiredPermissions?.[0],
+        operationKey: auth.operationKey,
+        resourceCondition: auth.resourceCondition,
+        errorDisclosure: auth.errorDisclosure,
         operation
       })
     }

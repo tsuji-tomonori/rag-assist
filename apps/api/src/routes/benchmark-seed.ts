@@ -45,7 +45,7 @@ type UploadPurpose = "document" | "benchmarkSeed" | "chatAttachment"
 export function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof DocumentUploadRequestSchema>) {
   if (hasPermission(user, "rag:doc:write:group")) return
   if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUpload(body)) return
-  throw new HTTPException(403, { message: "Forbidden: benchmark seed upload requires isolated benchmark metadata" })
+  throw new HTTPException(403, { message: "Forbidden" })
 }
 
 export function isBenchmarkSeedUpload(body: z.infer<typeof DocumentUploadRequestSchema>): boolean {
@@ -362,23 +362,23 @@ function isValidBenchmarkSeedBase64(value: string): boolean {
 export function authorizeUploadedDocumentIngest(user: AppUser, purpose: UploadPurpose, body: z.infer<typeof IngestUploadedDocumentRequestSchema>) {
   if (purpose === "chatAttachment") {
     if (hasPermission(user, "chat:create")) return
-    throw new HTTPException(403, { message: "Forbidden: missing chat:create" })
+    throw new HTTPException(403, { message: "Forbidden" })
   }
   if (purpose === "benchmarkSeed") {
     if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUploadedObjectIngest(body)) return
-    throw new HTTPException(403, { message: "Forbidden: benchmark seed upload requires isolated benchmark metadata" })
+    throw new HTTPException(403, { message: "Forbidden" })
   }
   if (hasPermission(user, "rag:doc:write:group")) return
-  throw new HTTPException(403, { message: "Forbidden: missing rag:doc:write:group" })
+  throw new HTTPException(403, { message: "Forbidden" })
 }
 
 export async function authorizeDocumentDelete(service: MemoRagService, user: AppUser, documentId: string) {
   if (hasPermission(user, "rag:doc:delete:group")) return
   if (!hasPermission(user, "benchmark:seed_corpus")) {
-    throw new HTTPException(403, { message: "Forbidden: missing document delete permission" })
+    throw new HTTPException(403, { message: "Forbidden" })
   }
   const manifest = await service.getDocumentManifest(documentId)
   if (!isBenchmarkSeedDocumentManifest(manifest)) {
-    throw new HTTPException(403, { message: "Forbidden: benchmark seed delete requires isolated benchmark metadata" })
+    throw new HTTPException(403, { message: "Forbidden" })
   }
 }

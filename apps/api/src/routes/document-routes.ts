@@ -55,14 +55,14 @@ function canReadDocumentIngestRun(user: AppUser, run: DocumentIngestRun): boolea
 function authorizeDocumentUploadSession(user: AppUser, purpose: UploadPurpose) {
   if (purpose === "chatAttachment") {
     if (hasPermission(user, "chat:create")) return
-    throw new HTTPException(403, { message: "Forbidden: missing chat:create" })
+    throw new HTTPException(403, { message: "Forbidden" })
   }
   if (purpose === "benchmarkSeed") {
     if (hasPermission(user, "benchmark:seed_corpus")) return
-    throw new HTTPException(403, { message: "Forbidden: missing benchmark:seed_corpus" })
+    throw new HTTPException(403, { message: "Forbidden" })
   }
   if (hasPermission(user, "rag:doc:write:group")) return
-  throw new HTTPException(403, { message: "Forbidden: missing rag:doc:write:group" })
+  throw new HTTPException(403, { message: "Forbidden" })
 }
 
 function buildUploadObjectKey(user: AppUser, purpose: UploadPurpose, fileName: string): string {
@@ -81,7 +81,7 @@ function uploadPurposeForKey(user: AppUser, objectKey: string): UploadPurpose {
   if (objectKey.startsWith(documentPrefix)) return "document"
   if (objectKey.startsWith(benchmarkPrefix)) return "benchmarkSeed"
   if (objectKey.startsWith(chatAttachmentPrefix)) return "chatAttachment"
-  throw new HTTPException(403, { message: "Forbidden: upload object key is outside the caller scope" })
+  throw new HTTPException(403, { message: "Forbidden" })
 }
 
 function encodeUploadId(objectKey: string): string {
@@ -181,7 +181,7 @@ async function authorizeScopedIngest(
   body: z.infer<typeof IngestUploadedDocumentRequestSchema>
 ) {
   if (purpose === "chatAttachment") {
-    if (!hasPermission(user, "chat:create")) throw new HTTPException(403, { message: "Forbidden: missing chat:create" })
+    if (!hasPermission(user, "chat:create")) throw new HTTPException(403, { message: "Forbidden" })
     if (body.scope?.scopeType && body.scope.scopeType !== "chat") throw new HTTPException(400, { message: "chatAttachment scopeType must be chat" })
     if (!body.scope?.temporaryScopeId) throw new HTTPException(400, { message: "chatAttachment requires temporaryScopeId" })
     return
@@ -195,7 +195,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "get",
       path: "/document-groups",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:read", operationKey: "folder.read", resourceCondition: "documentGroupRead" }),
       responses: {
         200: { description: "List visible document groups", content: { "application/json": { schema: DocumentGroupListResponseSchema } } },
         500: { description: "Server error", content: { "application/json": { schema: ErrorResponseSchema } } }
@@ -212,7 +212,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/document-groups",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:group:create" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:group:create", operationKey: "folder.create.group", resourceCondition: "documentGroupFull" }),
       request: {
         body: {
           required: true,
@@ -236,7 +236,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/document-groups/{groupId}/share",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:group:assign_manager" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:group:assign_manager", operationKey: "folder.share", resourceCondition: "documentGroupFull" }),
       request: {
         params: z.object({ groupId: z.string().min(1) }),
         body: {
@@ -270,7 +270,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "get",
       path: "/documents",
-      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedListOrPermission", permission: "rag:doc:read", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 文書の一覧に限定して実行できます。"] }),
+      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedListOrPermission", permission: "rag:doc:read", conditionalPermissions: ["benchmark:seed_corpus"], operationKey: "document.read", resourceCondition: "benchmarkSeedScope", notes: ["BENCHMARK_RUNNER は benchmark seed 文書の一覧に限定して実行できます。"] }),
       responses: {
         200: {
           description: "List ingested document summaries without full chunk metadata or vector keys",
@@ -282,7 +282,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     async (c) => {
       const user = c.get("user")
       if (!hasPermission(user, "rag:doc:read") && !hasPermission(user, "benchmark:seed_corpus")) {
-        throw new HTTPException(403, { message: "Forbidden: missing document list permission" })
+        throw new HTTPException(403, { message: "Forbidden" })
       }
       const documents = (await service.listDocuments(user)).map(documentListItemSummary)
       return c.json({ documents }, 200)
@@ -293,7 +293,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents",
-      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedOrPermission", permission: "rag:doc:write:group", conditionalPermissions: ["benchmark:seed_corpus"], notes: ["BENCHMARK_RUNNER は benchmark seed 用 upload body の場合だけ実行できます。"] }),
+      "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedOrPermission", permission: "rag:doc:write:group", conditionalPermissions: ["benchmark:seed_corpus"], operationKey: "document.upload", resourceCondition: "benchmarkSeedScope", notes: ["BENCHMARK_RUNNER は benchmark seed 用 upload body の場合だけ実行できます。"] }),
       request: {
         body: {
           required: true,
@@ -310,7 +310,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const body = validJson<z.infer<typeof DocumentUploadRequestSchema>>(c)
       const user = c.get("user")
       if (!hasPermission(user, "rag:doc:write:group") && !hasPermission(user, "benchmark:seed_corpus")) {
-        throw new HTTPException(403, { message: "Forbidden: missing document upload permission" })
+        throw new HTTPException(403, { message: "Forbidden" })
       }
       authorizeDocumentUpload(user, body)
       if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
@@ -324,7 +324,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/uploads",
-      "x-memorag-authorization": routeAuthorization({ mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], notes: ["purpose=document は rag:doc:write:group、purpose=chatAttachment は chat:create、purpose=benchmarkSeed は benchmark:seed_corpus が必要です。"] }),
+      "x-memorag-authorization": routeAuthorization({ mode: "documentUploadSession", permission: "rag:doc:write:group", conditionalPermissions: ["chat:create", "benchmark:seed_corpus"], operationKey: "document.upload_session.create", resourceCondition: "documentUploadSession", notes: ["purpose=document は rag:doc:write:group、purpose=chatAttachment は chat:create、purpose=benchmarkSeed は benchmark:seed_corpus が必要です。"] }),
       request: {
         body: {
           required: true,

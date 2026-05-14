@@ -93,7 +93,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/benchmark-suites",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read", operationKey: "benchmark.suite.read", resourceCondition: "none" }),
       responses: {
         200: { description: "List benchmark suites available for asynchronous runs", content: { "application/json": { schema: BenchmarkSuiteListResponseSchema } } }
       }
@@ -108,7 +108,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/benchmark-runs",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:run" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:run", operationKey: "benchmark.run", resourceCondition: "documentGroupRead" }),
       request: {
         body: {
           required: true,
@@ -132,7 +132,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/benchmark-runs",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read", operationKey: "benchmark.run.read", resourceCondition: "none" }),
       responses: {
         200: { description: "List benchmark runs", content: { "application/json": { schema: BenchmarkRunListResponseSchema } } }
       }
@@ -147,7 +147,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/benchmark-runs/{runId}",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:read", operationKey: "benchmark.run.read", resourceCondition: "none" }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -169,7 +169,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/benchmark-runs/{runId}/cancel",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:cancel" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:cancel", operationKey: "benchmark.run.cancel", resourceCondition: "none" }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -191,7 +191,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/benchmark-runs/{runId}/download",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download", operationKey: "benchmark.artifact.download", resourceCondition: "none" }),
       request: {
         params: z.object({ runId: z.string().min(1) }),
         body: {
@@ -218,7 +218,7 @@ export function registerBenchmarkRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/benchmark-runs/{runId}/logs",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "benchmark:download", operationKey: "benchmark.artifact.download", resourceCondition: "none" }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },

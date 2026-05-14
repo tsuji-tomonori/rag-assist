@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { getPermissionsForGroups, requirePermission } from "./authorization.js"
+import { canManageFolder, canReadFolder, folderPermissionSatisfies, getPermissionsForGroups, hasPermission, requirePermission } from "./authorization.js"
 
 test("SYSTEM_ADMIN は任意の権限チェックを通過する", () => {
   const user = { userId: "u1", cognitoGroups: ["SYSTEM_ADMIN"] }
@@ -10,7 +10,26 @@ test("SYSTEM_ADMIN は任意の権限チェックを通過する", () => {
 
 test("CHAT_USER は許可外権限で403になる", () => {
   const user = { userId: "u2", cognitoGroups: ["CHAT_USER"] }
-  assert.throws(() => requirePermission(user, "access:role:assign"))
+  assert.throws(() => requirePermission(user, "access:role:assign"), /Forbidden/)
+})
+
+test("停止・削除アカウントは role があっても権限チェックを通過しない", () => {
+  const suspended = { userId: "u-suspended", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "suspended" as const }
+  const deleted = { userId: "u-deleted", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "deleted" as const }
+
+  assert.equal(hasPermission(suspended, "chat:create"), false)
+  assert.equal(hasPermission(deleted, "chat:create"), false)
+  assert.throws(() => requirePermission(suspended, "chat:create"), /Forbidden/)
+})
+
+test("フォルダ実効権限は none/readOnly/full の順序で評価される", () => {
+  assert.equal(canReadFolder("none"), false)
+  assert.equal(canReadFolder("readOnly"), true)
+  assert.equal(canReadFolder("full"), true)
+  assert.equal(canManageFolder("readOnly"), false)
+  assert.equal(canManageFolder("full"), true)
+  assert.equal(folderPermissionSatisfies("full", "readOnly"), true)
+  assert.equal(folderPermissionSatisfies("readOnly", "full"), false)
 })
 
 test("RAG_GROUP_MANAGER は文書一覧と文書更新権限を持つ", () => {
