@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
+import { fileURLToPath } from "node:url"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { mkdtemp } from "node:fs/promises"
@@ -21,6 +22,7 @@ import type { Dependencies } from "../dependencies.js"
 import type { AgentRuntimeProvider, AsyncAgentRun, BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
+import { CommandAsyncAgentProvider } from "../async-agent/command-provider.js"
 import { AsyncAgentProviderRegistry, type AsyncAgentProviderAdapter, type AsyncAgentProviderInput } from "../async-agent/provider.js"
 import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { authorizeDocumentDelete } from "../routes/benchmark-seed.js"
@@ -1077,6 +1079,126 @@ test("service keeps Claude Code provider not configured without mock artifacts",
   assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "blocked")
 })
 
+test("service executes configured Codex command provider with sanitized artifacts", async () => {
+  const command = `/bin/sh ${asyncAgentCommandFixturePath()} success`
+  const provider = new CommandAsyncAgentProvider({
+    provider: "codex",
+    displayName: "Codex",
+    commandEnvName: "CODEX_COMMAND",
+    command,
+    modelIds: ["codex-cli"],
+    timeoutMs: 1000,
+    outputFileName: "codex-output.md"
+  })
+  const { service, deps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const document = await service.ingest({
+    fileName: "codex-source.md",
+    text: "Codex provider に readOnly mount される資料です。",
+    skipMemory: true,
+    metadata: { ownerUserId: user.userId }
+  })
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "codex",
+    modelId: "codex-cli",
+    instruction: "資料を整理する",
+    selectedDocumentIds: [document.documentId],
+    budget: { maxDurationMinutes: 5, maxToolCalls: 4 }
+  })
+
+  assert.equal(run.status, "queued")
+  assert.equal(run.providerAvailability, "available")
+  const completed = await service.executeAsyncAgentRun(run.agentRunId)
+
+  assert.equal(completed.status, "completed")
+  assert.equal(completed.artifacts.length, 2)
+  assert.equal(completed.artifacts[0]?.fileName, "codex-output.md")
+  const artifactText = await deps.objectStore.getText(completed.artifacts[0]?.storageRef ?? "")
+  const request = JSON.parse(artifactText) as AsyncAgentProviderInput
+  assert.equal(request.provider, "codex")
+  assert.equal(request.modelId, "codex-cli")
+  assert.equal(request.instruction, "資料を整理する")
+  assert.equal(request.workspaceMounts[0]?.sourceId, document.documentId)
+  assert.deepEqual(request.budget, { maxDurationMinutes: 5, maxToolCalls: 4 })
+  const logText = await deps.objectStore.getText(completed.artifacts[1]?.storageRef ?? "")
+  assert.doesNotMatch(logText, /fixture-secret-token/)
+  assert.match(logText, /CODEX_TOKEN=\[REDACTED\]/)
+})
+
+test("service records Codex command provider failures and timeouts without leaking raw secrets", async () => {
+  const fixturePath = asyncAgentCommandFixturePath()
+  const failureProvider = new CommandAsyncAgentProvider({
+    provider: "codex",
+    displayName: "Codex",
+    commandEnvName: "CODEX_COMMAND",
+    command: `/bin/sh ${fixturePath} fail`,
+    modelIds: ["codex-cli"],
+    timeoutMs: 1000,
+    outputFileName: "codex-output.md"
+  })
+  const timeoutProvider = new CommandAsyncAgentProvider({
+    provider: "codex",
+    displayName: "Codex",
+    commandEnvName: "CODEX_COMMAND",
+    command: `/bin/sh ${fixturePath} timeout`,
+    modelIds: ["codex-cli"],
+    timeoutMs: 10,
+    outputFileName: "codex-output.md"
+  })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+
+  const { service: failureService, deps: failureDeps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([failureProvider]) })
+  const failedRun = await failureService.createAsyncAgentRun(user, {
+    provider: "codex",
+    modelId: "codex-cli",
+    instruction: "失敗時の sanitize を確認する"
+  })
+  const failed = await failureService.executeAsyncAgentRun(failedRun.agentRunId)
+
+  assert.equal(failed.status, "failed")
+  assert.equal(failed.failureReason, "Codex provider exited with code 7.")
+  const failureLog = await failureDeps.objectStore.getText(failed.artifacts[0]?.storageRef ?? "")
+  assert.doesNotMatch(failureLog, /fixture-secret-token/)
+  assert.match(failureLog, /Bearer \[REDACTED\]/)
+
+  const { service: timeoutService } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([timeoutProvider]) })
+  const timeoutRun = await timeoutService.createAsyncAgentRun(user, {
+    provider: "codex",
+    modelId: "codex-cli",
+    instruction: "timeout を確認する"
+  })
+  const expired = await timeoutService.executeAsyncAgentRun(timeoutRun.agentRunId)
+
+  assert.equal(expired.status, "expired")
+  assert.equal(expired.failureReason, "Codex provider execution timed out.")
+})
+
+test("service keeps Codex provider not configured without mock artifacts", async () => {
+  const provider = new CommandAsyncAgentProvider({
+    provider: "codex",
+    displayName: "Codex",
+    commandEnvName: "CODEX_COMMAND",
+    command: "",
+    modelIds: [],
+    timeoutMs: 1000,
+    outputFileName: "codex-output.md"
+  })
+  const { service } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "codex",
+    modelId: "codex-cli",
+    instruction: "未設定状態を確認する"
+  })
+
+  assert.equal(run.status, "blocked")
+  assert.equal(run.providerAvailability, "not_configured")
+  assert.deepEqual(run.artifacts, [])
+  assert.deepEqual(run.artifactIds, [])
+  assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "blocked")
+})
+
 test("asynchronous chat run stores debug trace by reference", async () => {
   const { service, deps } = await createService()
   await service.ingest({
@@ -1735,6 +1857,10 @@ function defaultTestAsyncAgentProviders(): AsyncAgentProviderRegistry {
       execute: async () => ({ status: "failed", failureReason: "custom disabled" })
     }
   ])
+}
+
+function asyncAgentCommandFixturePath(): string {
+  return fileURLToPath(new URL("../../test-fixtures/async-agent-command.sh", import.meta.url))
 }
 
 async function waitForDocumentIngestRun(deps: Dependencies, runId: string) {

@@ -71,7 +71,7 @@ export function sanitizeProviderText(text: string, additionalSecrets: readonly s
     sanitized = sanitized.split(secret).join("[REDACTED]")
   }
   return sanitized
-    .replace(/(AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|ANTHROPIC_API_KEY|CLAUDE_CODE_TOKEN|OPENAI_API_KEY|CODEX_API_KEY)=\S+/g, "$1=[REDACTED]")
+    .replace(/(AWS_SECRET_ACCESS_KEY|AWS_SESSION_TOKEN|ANTHROPIC_API_KEY|CLAUDE_CODE_TOKEN|CODEX_TOKEN|OPENAI_API_KEY|CODEX_API_KEY)=\S+/g, "$1=[REDACTED]")
     .replace(/(X-Amz-Signature|X-Amz-Credential|X-Amz-Security-Token)=([^&\s]+)/g, "$1=[REDACTED]")
     .replace(/(Bearer\s+)[A-Za-z0-9._~+/=-]{12,}/g, "$1[REDACTED]")
     .replace(/(secret|token|api[_-]?key)(['":=\s]+)[A-Za-z0-9._~+/=-]{8,}/gi, "$1$2[REDACTED]")
