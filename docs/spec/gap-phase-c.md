@@ -138,3 +138,40 @@ Phase C は、仕様 3B「ナレッジ品質・RAG利用可否」を対象にす
 | `task benchmark:sample` または targeted ChatRAG benchmark | quality gate 追加後の over-refusal / citation hit / unsupported rate 確認。 |
 | `git diff --check` | whitespace / conflict marker 確認。 |
 | `python3 scripts/validate_spec_recovery.py docs/spec-recovery` | spec-recovery 変更時の検証。C-pre では spec-recovery 未変更でも実行して記録する。 |
+
+## Phase C Knowledge Quality Axes Implementation Note
+
+- 追記日: 2026-05-14
+- 対象 task: `C-knowledge-quality-axes`
+- 状態: Implemented minimal gate
+
+### implemented
+
+| ID | 実装内容 | 根拠 |
+| --- | --- | --- |
+| C-IMPL-KQ-001 | `DocumentQualityProfile` と `KnowledgeQualityStatus`、`VerificationStatus`、`FreshnessStatus`、`SupersessionStatus`、`ExtractionQualityStatus`、`RagEligibilityStatus`、`QualityFlag` を `DocumentLifecycleStatus` から分離した型として追加した。 | `apps/api/src/types.ts`, `apps/api/src/rag/quality.ts` |
+| C-IMPL-KQ-002 | 既存文書互換のため、quality profile 未指定は通常 RAG で `eligible / verified / current / high` 相当に正規化する。 | `normalizeDocumentQualityProfile` |
+| C-IMPL-KQ-003 | 通常 RAG の quality gate は、`ragEligibility: excluded`、`eligible_with_warning`、`verificationStatus: rejected`、`freshnessStatus: expired`、`supersessionStatus: superseded`、`extractionQualityStatus: unusable`、`knowledgeQualityStatus: blocked` を evidence から除外する。 | `qualityGateForNormalRag` |
+| C-IMPL-KQ-004 | lexical index、semantic vector hit 再確認、memory hit、memory source chunk expansion は manifest lookup 後に同じ `isQualityApprovedForNormalRag` を通す。ACL、search scope、active lifecycle の判定は維持している。 | `hybrid-search.ts`, `retrieve-memory.ts`, `search-evidence.ts` |
+| C-IMPL-KQ-005 | vector metadata には詳細 profile を丸ごと載せず、filterable metadata は粗い `ragEligibility` のみに限定した。通常 RAG の source of truth は manifest 側の profile 再確認に置く。 | `memorag-service.ts`, `s3-vectors-store.test.ts` |
+| C-IMPL-KQ-006 | user-facing search result / chat evidence には quality exclusion reason を含めず、除外文書を候補から落とす。既存の `minScore`、sufficient context、citation validation、answer support verification は後段 gate として維持する。 | `hybrid-search.test.ts`, `node-units.test.ts`, `memorag-service.test.ts` |
+
+### validation
+
+| コマンド | 結果 | 備考 |
+| --- | --- | --- |
+| `npm ci` | pass | 専用 worktree に依存を導入。`npm audit` は 1 moderate / 3 high を通知したが、依存更新は本 task scope 外。 |
+| `npm exec -w @memorag-mvp/api -- tsx --test src/search/hybrid-search.test.ts src/agent/nodes/node-units.test.ts src/rag/memorag-service.test.ts src/adapters/s3-vectors-store.test.ts` | pass | lexical / semantic / memory / memory source / metadata budget の targeted regression。 |
+| `npm exec -w @memorag-mvp/api -- tsx --test src/agent/graph.test.ts src/agent/nodes/node-units.test.ts src/rag/memorag-service.test.ts src/adapters/s3-vectors-store.test.ts` | pass | ユーザー指定の targeted regression。 |
+| `npm run typecheck -w @memorag-mvp/api` | pass | API workspace typecheck。 |
+| `npm run test -w @memorag-mvp/api` | pass | API full test。 |
+| `git diff --check` | pass | whitespace / conflict marker 確認。 |
+| `python3 scripts/validate_spec_recovery.py docs/spec-recovery` | pass | spec-recovery は未変更だが指定に従い実行。 |
+
+### open_question
+
+| ID | 内容 | 次の判断 |
+| --- | --- | --- |
+| C-OQ-007 | `eligible_with_warning` は現時点では通常 RAG evidence から除外している。warning 付き回答 API / UI schema が整った後、警告付き許可へ切り替えるか判断する。 | F/J1/J2 と response schema / debug tier を調整する。 |
+| C-OQ-008 | quality profile の更新 API / 監査ログ / 管理 UI は未実装。今回の source of truth は manifest 側の profile だが、運用では別 store または audit ledger が必要になる可能性がある。 | J3/14 と品質変更監査の責務を分ける。 |
+| C-OQ-009 | diagnostics は既存の安全な件数・profile identifier に留め、quality exclusion count / reason は露出していない。operator 向け集計が必要な場合は sanitize tier を決める必要がある。 | J2 の debug 4 tier と整合する形で追加する。 |

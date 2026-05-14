@@ -3,6 +3,7 @@ import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { normalizeSearchTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
+import { isQualityApprovedForNormalRag, qualityProfileCacheKey } from "../rag/quality.js"
 import { loadPublishedAliasMap } from "./alias-artifacts.js"
 import type { DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../types.js"
 
@@ -265,12 +266,13 @@ export async function getLexicalIndex(
     .filter((manifest) => canAccessManifest(manifest, user, groups))
     .filter((manifest) => manifestMatchesFilters(manifest, filters))
     .filter((manifest) => manifestMatchesScope(manifest, scope))
+    .filter(isQualityApprovedForNormalRag)
   const publishedAliases = await loadPublishedAliasMap(deps, filters, visible.map((manifest) => manifest.metadata))
   const aliases = mergeAliases([publishedAliases.aliases, ...visible.map((manifest) => aliasMapFromMetadata(manifest.metadata))])
   const combinedAliasSignature = stableStringifyAliasMap(aliases)
   const aliasSignature = publishedAliases.version === "none" ? combinedAliasSignature : `${publishedAliases.version}:${combinedAliasSignature}`
   const signature = visible
-    .map((manifest) => `${manifest.documentId}:${manifest.chunkCount}:${manifest.createdAt}:${stableStringifyAliasMap(aliasMapFromMetadata(manifest.metadata))}`)
+    .map((manifest) => `${manifest.documentId}:${manifest.chunkCount}:${manifest.createdAt}:${qualityProfileCacheKey(manifest)}:${stableStringifyAliasMap(aliasMapFromMetadata(manifest.metadata))}`)
     .sort()
     .concat(`aliases:${publishedAliases.version}:${stableStringifyAliasMap(publishedAliases.aliases)}`)
     .join("|")
@@ -728,7 +730,7 @@ async function filterAccessibleVectorHits(
   for (const hit of hits) {
     if (!canAccessVectorMetadata(hit.metadata, user)) continue
     const manifest = await getCachedManifest(deps, manifestCache, hit.metadata.documentId)
-    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user, groups) || !manifestMatchesScope(manifest, scope)) continue
+    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user, groups) || !manifestMatchesScope(manifest, scope) || !isQualityApprovedForNormalRag(manifest)) continue
     result.push(hit)
   }
   return result

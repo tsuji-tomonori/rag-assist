@@ -109,6 +109,44 @@ test("service listDocuments filters manifests by ACL for callers", async () => {
   assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
 })
 
+test("service persists document quality profile and excludes ineligible documents from normal RAG search", async () => {
+  const { service, dataDir } = await createService()
+  const eligible = await service.ingest({
+    fileName: "eligible.md",
+    text: "通常 RAG で利用できる資料です。",
+    skipMemory: true
+  })
+  const excluded = await service.ingest({
+    fileName: "excluded.md",
+    text: "品質管理により通常 RAG から除外する資料です。",
+    skipMemory: true,
+    metadata: {
+      ragEligibility: "excluded",
+      verificationStatus: "rejected",
+      freshnessStatus: "expired",
+      supersessionStatus: "superseded",
+      extractionQualityStatus: "unusable",
+      qualityFlags: ["manual_rag_exclusion"]
+    }
+  })
+
+  assert.equal(eligible.qualityProfile, undefined)
+  assert.equal(excluded.qualityProfile?.ragEligibility, "excluded")
+  assert.equal(excluded.qualityProfile?.verificationStatus, "rejected")
+  assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId).sort(), [eligible.documentId, excluded.documentId].sort())
+  const search = await service.search(
+    { query: "品質管理", topK: 5, lexicalTopK: 5, semanticTopK: 0 },
+    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  )
+  assert.deepEqual(search.results, [])
+
+  const evidenceDb = JSON.parse(await readFile(path.join(dataDir, "evidence-vectors.json"), "utf-8")) as { records: Array<{ key: string; metadata: Record<string, unknown> }> }
+  const excludedVectorMetadata = evidenceDb.records.find((record) => record.key.startsWith(excluded.documentId))?.metadata
+  assert.equal(excludedVectorMetadata?.ragEligibility, "excluded")
+  assert.equal(excludedVectorMetadata?.verificationStatus, undefined)
+  assert.equal(excludedVectorMetadata?.qualityFlags, undefined)
+})
+
 test("service listDocuments skips a manifest that disappeared after listing", async () => {
   const { service } = await createService({ objectListExtraKeys: ["manifests/stale-missing.json"] })
   const manifest = await service.ingest({

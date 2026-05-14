@@ -9,6 +9,7 @@ export type VectorFilter = {
   docType?: string
   benchmarkSuiteId?: string
   lifecycleStatus?: "active" | "staging" | "superseded"
+  ragEligibility?: VectorRecord["metadata"]["ragEligibility"]
   allowedGroups?: string[]
 }
 

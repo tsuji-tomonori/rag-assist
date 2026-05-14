@@ -116,6 +116,7 @@ function toS3Filter(filter: VectorFilter): QueryVectorsCommandInput["filter"] {
   if (filter.docType) clauses.push({ docType: { $eq: filter.docType } } as NonNullable<QueryVectorsCommandInput["filter"]>)
   if (filter.benchmarkSuiteId) clauses.push({ benchmarkSuiteId: { $eq: filter.benchmarkSuiteId } } as NonNullable<QueryVectorsCommandInput["filter"]>)
   if (filter.lifecycleStatus) clauses.push({ lifecycleStatus: { $eq: filter.lifecycleStatus } } as NonNullable<QueryVectorsCommandInput["filter"]>)
+  if (filter.ragEligibility) clauses.push({ ragEligibility: { $eq: filter.ragEligibility } } as NonNullable<QueryVectorsCommandInput["filter"]>)
   if (filter.allowedGroups && filter.allowedGroups.length > 0) {
     clauses.push({ aclGroup: { $in: filter.allowedGroups } } as NonNullable<QueryVectorsCommandInput["filter"]>)
   }

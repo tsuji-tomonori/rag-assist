@@ -1,6 +1,7 @@
 import type { AppUser } from "../../auth.js"
 import { config } from "../../config.js"
 import type { Dependencies } from "../../dependencies.js"
+import { isQualityApprovedForNormalRag } from "../../rag/quality.js"
 import type { DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../../types.js"
 import { ragRuntimePolicy } from "../runtime-policy.js"
 import type { QaAgentState, QaAgentUpdate } from "../state.js"
@@ -33,7 +34,7 @@ async function filterAccessibleMemoryHits(deps: Dependencies, hits: RetrievedVec
   for (const hit of hits) {
     if (!canAccessMemoryVectorMetadata(hit.metadata, user)) continue
     const manifest = await getCachedManifest(deps, manifestCache, hit.metadata.documentId)
-    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user, groups) || !manifestMatchesScope(manifest, scope)) continue
+    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user, groups) || !manifestMatchesScope(manifest, scope) || !isQualityApprovedForNormalRag(manifest)) continue
     result.push(hit)
   }
   return result
