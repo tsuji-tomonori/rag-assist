@@ -29,7 +29,7 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 4 | チャット | `FR-003`, `FR-004`, `FR-005`, `FR-006`, `FR-009`, `FR-042`, `FR-043` | `TASK-002`, `REQ-CHAT-001`, `SPEC-CHAT-001` | `apps/api/src/routes/chat-routes.ts`, `apps/web/src/features/chat/`, `apps/api/src/chat-run-worker.ts` | confirmed | D/F |
 | 4A | チャット内RAG・回答生成 | `FR-003`, `FR-004`, `FR-005`, `FR-014`, `FR-015`, `FR-016`, `FR-045`, `FR-049` | `REQ-RAG-001`, `REQ-RAG-002`, `SPEC-RAG-001`, `SPEC-RAG-002`, `GAP-016` | `apps/api/src/chat-orchestration/graph.ts`, `apps/api/src/chat-orchestration/nodes/`, `apps/api/src/rag/context-assembler.ts`, `apps/api/src/chat-orchestration/runtime-policy.ts` | partially covered | F |
 | 4B | チャット内オーケストレーション・ツール実行 | `FR-049` | `GAP-016` | `apps/api/src/chat-orchestration/` は名称移行済み。`ChatToolDefinition` registry / `ChatToolInvocation` は未実装 | partially covered | F |
-| 4C | 非同期エージェント実行 | `FR-050` | `GAP-013` | 未実装。流用候補: `apps/api/src/chat-run-worker.ts`, `infra/`, CodeBuild runner | missing | G |
+| 4C | 非同期エージェント実行 | `FR-050` | `GAP-013`, `docs/spec/gap-phase-g.md` | 型予約: `WorkerTargetType=async_agent_run`, `DebugTraceTargetType=async_agent_run`, `BenchmarkUseCase=async_agent_task`。本体未実装。流用候補: `apps/api/src/chat-run-worker.ts`, `infra/`, CodeBuild runner | partially covered | G |
 | 5 | 履歴 | `FR-022`, `FR-030`, `FR-044` | `TASK-005`, `REQ-HIST-001`, `SPEC-HIST-001` | `apps/api/src/routes/conversation-history-routes.ts`, `apps/api/src/adapters/*conversation-history-store.ts`, `apps/web/src/features/history/` | confirmed | F |
 | 6 | お気に入り | `FR-028`, `FR-044` | `REQ-HIST-002`, `SPEC-HIST-003` | `apps/api/src/adapters/conversation-history-store.ts`, `apps/web/src/features/history/` | partially covered | F/J3 |
 | 6A | 個人設定 | `FR-051` | `GAP-013` | `apps/web/src/app/components/PersonalSettingsView.tsx`, chat UI state。永続 UserPreference API は未実装 | divergent | J/G |
@@ -127,6 +127,17 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 13 利用状況・コスト | `/admin/usage` は `usage:read:all_users`、`/admin/costs` は `cost:read:all`。cost は `confidence` を持つ推定値として返る。 | user-level usage/cost は権限内で read-only 表示し、推定値を実請求額として扱わない。export / 異常検知 / 実請求連携は後続。 |
 | 14 監査ログ | `/admin/audit-log` は user create / role assign / suspend / unsuspend / delete の managed user audit を返す。alias audit は別 surface。汎用 AuditLogEntry / reason / requestId / export は未実装。 | 現行 admin audit と alias audit を read-only に統合表示するかを判断し、横断 audit store と export は scope-out。 |
 | 既存挙動の踏襲 | admin route permission、`/me` effective permissions、Web panel/data loader gate、J2 public/debug/auth middleware 境界、I benchmark runner/artifact read-only 境界がある。 | dashboard 統合で permission を広げない。benchmark は artifact summary 参照に留め、debug route を public 化しない。 |
+
+## Phase G-pre 補助表: 4C async agent execution
+
+| 対象 | 現状 | 後続 task |
+|---|---|---|
+| 4C AsyncAgentRun | `WorkerTargetType` / `WorkerTargetTypeSchema` と `DebugTraceTargetType` に `async_agent_run` は予約済み。`AsyncAgentRun` store、route、event store、worker handler、SSE、cancel/retry は未実装。 | `G1-async-agent-foundation` で provider-neutral schema / store / route / worker contract を追加し、J2 の `{ runId }` 互換を維持する。 |
+| 4C provider / model | Claude Code / Codex / OpenCode / custom の provider registry、model selection、provider adapter、provider credentials / Secrets は未実装。benchmark CodeBuild runner の Secrets / IAM / artifact pattern は流用候補。 | G1 は adapter interface と disabled / not configured state まで。`G2-async-agent-claude-code`、`G3-async-agent-codex`、`G4-async-agent-opencode` に provider 実装を分割する。 |
+| 4C workspace mount / artifact / writeback | original file readOnly mount、writableCopy、writeback approval、AgentArtifact は未実装。 | mount 前に folder/document readOnly 以上、writeback は full + 明示承認を要求し、No Mock Product UI と Secrets redaction を維持する。 |
+| 4C skill / agent profile / preset | product `SkillDefinition`、`AgentProfileDefinition`、`AgentExecutionPreset` と Markdown 共有 UI/API は未実装。 | G1 で schema / snapshot / read route を定義し、実行時には選択分をフラット化する。AI 生成と prompt injection 検査本実装は後続。 |
+| 9A async agent benchmark | `BenchmarkUseCase=async_agent_task` と `BenchmarkRunner=async_agent` は contract に予約済み。`benchmark/codebuild-suite.ts` と manifest は agent/search/conversation まで。 | G 実装後に Phase I follow-up で async agent suite、成果物品質、writeback safety 指標を追加する。 |
+| 既存挙動の踏襲 | B の 3 層認可、C の quality-approved evidence、F の tool registry、I の benchmark corpus isolation、J2 の debug tier / worker runId、No Mock Product UI、Secrets 管理を弱めない。 | async agent の raw file mount / provider logs / artifacts でも権限外ファイル、品質不適格 evidence、secret、raw debug trace を混ぜない。 |
 
 ## 後続更新ルール
 
