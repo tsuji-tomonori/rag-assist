@@ -1,5 +1,5 @@
 # A1 docs spec canonical 化
-状態: do
+状態: done
 タスク種別: ドキュメント更新
 発注元 wave: Wave 1
 依存タスク: `tasks/done/20260514-1315-phase-a-pre-gap.md`
