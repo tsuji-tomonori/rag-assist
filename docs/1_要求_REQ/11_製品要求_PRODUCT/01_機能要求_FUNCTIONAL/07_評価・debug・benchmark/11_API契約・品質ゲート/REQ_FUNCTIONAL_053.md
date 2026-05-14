@@ -3,6 +3,7 @@
 - 種別: `REQ_FUNCTIONAL`
 - 状態: planning
 - 仕様参照: `docs/spec/2026-chapter-spec.md` 14B 章
+- FR-053: REST、oRPC、shared contract、OpenAPI、生成 Markdown docs の関係を管理し、`GET /openapi.json` を runtime source of truth として API drift と docs quality を検出できること。
 
 ## 要求
 

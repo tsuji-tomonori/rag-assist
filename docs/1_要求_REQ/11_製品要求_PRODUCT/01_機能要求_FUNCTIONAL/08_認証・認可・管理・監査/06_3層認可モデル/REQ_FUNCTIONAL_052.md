@@ -3,6 +3,7 @@
 - 種別: `REQ_FUNCTIONAL`
 - 状態: planning
 - 仕様参照: `docs/spec/2026-chapter-spec.md` 16-20 章
+- FR-052: 操作可否を Account status、Feature permission、Resource permission の 3 層で判定し、フォルダ・文書・RAG・benchmark・admin 操作に一貫して適用できること。
 
 ## 要求
 

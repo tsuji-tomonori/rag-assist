@@ -32,6 +32,7 @@
 - `docs/1_要求_REQ/.../README.md` と `docs/REQUIREMENTS.md` に planning REQ を登録した。
 - `docs/spec-recovery/08_traceability_matrix.md` に `TASK-A2-CHAPTER-REQ-MAP` 行を追加した。
 - 章網羅チェック、spec-recovery validator、`git diff --check` を実行した。
+- PR CI の `requirements-coverage.test.ts` 失敗を受け、planning REQ 本文に `FR-049` から `FR-055` の要求箇条書きを追加し、coverage 静的テストにも同 REQ の planning docs 対応を登録した。
 
 ## 5. 成果物
 
@@ -43,6 +44,7 @@
 | `docs/REQUIREMENTS.md` | Markdown | `FR-049` - `FR-055` の上位索引登録 | 要件索引更新 |
 | `docs/spec-recovery/08_traceability_matrix.md` | Markdown | Phase A2 traceability 行 | spec-recovery 連携 |
 | `tasks/do/20260514-1432-a2-chapter-to-req-map.md` | Markdown | A2 task md | Worktree Task PR Flow |
+| `apps/api/src/rag/requirements-coverage.test.ts` | TypeScript | `FR-049` - `FR-055` の planning docs coverage 登録 | CI 失敗修正 |
 
 ## 6. 指示への fit 評価
 
@@ -63,9 +65,12 @@
 - `for id in $(rg '^# ' docs/spec/2026-chapter-spec.md | sed -E 's/^# ([0-9]+[A-Z]?).*/\\1/'); do grep -Fq \"| $id |\" docs/spec/CHAPTER_TO_REQ_MAP.md || echo \"missing $id\"; done`: pass
 - `python3 scripts/validate_spec_recovery.py docs/spec-recovery`: pass
 - `git diff --check`: pass
+- `npm exec -w @memorag-mvp/api -- tsx --test src/rag/requirements-coverage.test.ts`: pass
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass
 
 ## 8. 未対応・制約・リスク
 
 - planning REQ の本文は詳細仕様ではなく、後続 Phase で詳細化する。
 - 章別仕様と現実装が `divergent` の箇所は、実装 task 着手前に各 Phase の `*-pre-gap` で追加調査が必要。
 - 初回 map は章単位であり、節単位の trace は後続更新対象。
+- 初回 PR CI では planning REQ に `FR-*` 箇条書きがなく `requirements-coverage.test.ts` が失敗した。修正後に対象テストと API coverage コマンドは pass 済み。
