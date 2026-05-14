@@ -47,7 +47,7 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 13 | 利用状況・コスト | `FR-027`, `NFR-012` | `REQ-OPS-001` | `apps/api/src/routes/admin-routes.ts`, `apps/web/src/features/admin/` | partially covered | J3 |
 | 14 | 監査ログ | `FR-027`, `FR-052` | `REQ-SEC-001`, `SPEC-SEC-001` | `apps/api/src/routes/admin-routes.ts`, audit log surface | partially covered | J3 |
 | 14A | デバッグ・トレース・運用診断 | `FR-010`, `FR-011`, `FR-046` | `TASK-006`, `REQ-DBG-001`, `SPEC-DBG-001`, `GAP-008` | `apps/api/src/routes/debug-routes.ts`, `apps/web/src/features/debug/`, `apps/api/src/agent/trace.ts` | partially covered | J2 |
-| 14B | API契約・OpenAPI / oRPC・開発品質ゲート | `FR-053` | `TASK-023`, `REQ-DOCS-001` | `apps/api/src/generate-openapi-docs.ts`, `apps/api/src/orpc/router.ts`, `docs/generated/openapi.md` | partially covered | J1 |
+| 14B | API契約・OpenAPI / oRPC・開発品質ゲート | `FR-053` | `TASK-023`, `REQ-DOCS-001`, `REQ-API-001`, `SPEC-API-001` | `apps/api/src/app.ts`, `apps/api/src/generate-openapi-docs.ts`, `apps/api/src/validate-openapi-docs.ts`, `apps/api/src/orpc/router.ts`, `docs/generated/openapi.md`, `docs/spec/gap-phase-j1.md` | partially covered | J1 |
 | 14C | デプロイ・リリース・GitHub Actions 運用 | `FR-054`, `REQ_PROJECT_*` | `REQ-OPS-001` | `.github/workflows/`, `infra/`, `docs/GITHUB_ACTIONS_DEPLOY.md` | partially covered | J |
 | 14D | API共通 middleware・public endpoint・非同期 worker 実行契約 | `FR-055` | `GAP-014` | `apps/api/src/app.ts`, `apps/api/src/chat-run-worker.ts`, `apps/api/src/document-ingest-run-worker.ts` | partially covered | J2/G |
 | 15 | 再インデックス | `FR-002`, `FR-023`, `FR-038` | `GAP-010` | `apps/api/src/routes/document-routes.ts`, `apps/api/src/rag/memorag-service.ts` | partially covered | E/H |
@@ -57,7 +57,7 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 19 | ロールプリセット | `FR-052`, `FR-027` | `GAP-014` | `apps/api/src/authorization.ts`, admin roles route | divergent | B/J3 |
 | 20 | 操作別の最終認可表 | `FR-052` | `GAP-014` | `apps/api/src/security/access-control-policy.test.ts` | missing | B |
 | 21 | RAG 認可の不変条件 | `FR-004`, `FR-014`, `FR-015`, `FR-045`, `FR-052` | `SPEC-SEC-001`, `SPEC-RAG-001`, `GAP-004` | `apps/api/src/search/hybrid-search.ts`, `apps/api/src/agent/nodes/search-evidence.ts` | partially covered | B/C/F |
-| 21A | API lifecycle と互換性の不変条件 | `FR-053`, `FR-055` | `REQ-API-001`, `SPEC-API-001` | `apps/api/src/app.ts`, `apps/api/src/schemas.ts`, `packages/contract/src/` | partially covered | J1/J2 |
+| 21A | API lifecycle と互換性の不変条件 | `FR-053`, `FR-055` | `REQ-API-001`, `SPEC-API-001` | `apps/api/src/app.ts`, `apps/api/src/schemas.ts`, `packages/contract/src/`, `docs/spec/gap-phase-j1.md` | partially covered | J1/J2 |
 | 22 | 危険操作の共通要件 | `FR-027`, `FR-052` | `REQ-SEC-001` | admin routes, document delete / reindex routes | partially covered | B/J3 |
 | 23 | 推奨 URL 構成 | `FR-024`, `FR-027`, `FR-053` | `REQ-DOCS-001` | `apps/web/src/app/AppRoutes.tsx`, API routes | inferred | J |
 | 23A | 簡易処理フロー | `REQ-DOCS-001`, related FRs | `docs/spec-recovery/04_e2e_scenarios.md` | cross-cutting flow docs / worker routes | inferred | all |

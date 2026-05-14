@@ -251,6 +251,8 @@ login、初回パスワード変更、自己登録、password guidance は Cogni
 
 ### Description
 API route、OpenAPI、examples、request validation、access-control policy は同じ契約を表し、保護 route の認証・認可境界を維持する。
+`GET /openapi.json` は runtime API contract の source of truth として扱い、生成 Markdown は派生成果物として扱う。
+REST / oRPC / shared contract / OpenAPI の drift 検出範囲、docs quality gate、deprecated / compatibility endpoint の lifecycle 表現は、API 変更時に明示する。
 
 ### Acceptance criteria
 - AC-API-001

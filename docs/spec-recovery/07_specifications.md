@@ -250,6 +250,8 @@ Benchmark operator は suite を選択して run を起動できる。runner は
 
 ### Specification
 API route の分割や OpenAPI 更新時は、request/response schema、examples、docs check、access-control policy を同期する。保護 route には route-level permission と所有者境界を明示する。
+OpenAPI JSON は runtime `GET /openapi.json` を source of truth とし、生成 Markdown は `npm run docs:openapi` による派生成果物として扱う。
+docs quality gate は operation summary / description、field description、authorization metadata を検査する。REST / oRPC / shared contract の schema drift、generated Markdown stale、deprecated / compatibility lifecycle metadata は `docs/spec/gap-phase-j1.md` の gap として管理し、後続実装で検出範囲を追加する。
 
 ### Verification
 - AC-API-001
