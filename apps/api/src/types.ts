@@ -448,6 +448,17 @@ export type ConversationHistoryTurn = {
 }
 
 export type DebugStepStatus = "success" | "warning" | "error"
+export type DebugTraceTargetType = "rag_run" | "ingest_run" | "chat_orchestration_run" | "async_agent_run" | "tool_invocation"
+export type DebugTraceVisibility = "user_safe" | "support_sanitized" | "operator_sanitized" | "internal_restricted"
+
+export const DEBUG_TRACE_SANITIZE_POLICY_VERSION = "debug-trace-sanitize-v1"
+
+export type DebugTraceExportRedaction = {
+  policyVersion: typeof DEBUG_TRACE_SANITIZE_POLICY_VERSION
+  visibility: DebugTraceVisibility
+  redactedFields: string[]
+  notes?: string[]
+}
 
 export type DebugStep = {
   id: number
@@ -469,6 +480,10 @@ export const DEBUG_TRACE_SCHEMA_VERSION = 1
 export type DebugTrace = {
   schemaVersion: typeof DEBUG_TRACE_SCHEMA_VERSION
   runId: string
+  targetType?: DebugTraceTargetType
+  visibility?: DebugTraceVisibility
+  sanitizePolicyVersion?: typeof DEBUG_TRACE_SANITIZE_POLICY_VERSION
+  exportRedaction?: DebugTraceExportRedaction
   question: string
   modelId: string
   embeddingModelId: string
@@ -501,6 +516,26 @@ export type DebugTrace = {
   finalEvidence?: Citation[]
   toolInvocations?: ChatToolInvocation[]
   steps: DebugStep[]
+}
+
+export type WorkerTargetType = "chat_run" | "document_ingest_run" | "benchmark_run" | "async_agent_run"
+export type WorkerErrorCode = "validation_error" | "not_found" | "permission_revoked" | "execution_error"
+
+export type WorkerEvent = {
+  runId: string
+  targetType?: WorkerTargetType
+}
+
+export type WorkerResult = {
+  runId: string
+  targetType?: WorkerTargetType
+  status: string
+  resultType: "succeeded" | "failed"
+  error?: {
+    code: WorkerErrorCode
+    message: string
+    retryable: boolean
+  }
 }
 
 export type ChatResponsePayload = {

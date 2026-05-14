@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { ChatResponseSchema, ConversationHistoryItemSchema, DocumentUploadRequestSchema, SearchResponseSchema } from "../schemas.js"
+import { ChatResponseSchema, ConversationHistoryItemSchema, DebugTraceSchema, DocumentUploadRequestSchema, SearchResponseSchema, WorkerEventSchema, WorkerResultSchema } from "../schemas.js"
 
 test("document metadata schema accepts recursive JSON alias metadata", () => {
   const result = DocumentUploadRequestSchema.safeParse({
@@ -110,6 +110,54 @@ test("chat debug trace schema exposes only profile identifiers", () => {
     answerPolicyId: "default-answer-policy",
     answerPolicyVersion: "1"
   })
+})
+
+test("debug trace schema accepts legacy RAG traces and adds J2 visibility defaults", () => {
+  const result = DebugTraceSchema.safeParse({
+    schemaVersion: 1,
+    runId: "run_20260514_000000Z_abcdef12",
+    question: "質問",
+    modelId: "amazon.nova-lite-v1:0",
+    embeddingModelId: "amazon.titan-embed-text-v2:0",
+    clueModelId: "amazon.nova-lite-v1:0",
+    topK: 6,
+    memoryTopK: 4,
+    minScore: 0.2,
+    startedAt: "2026-05-14T00:00:00.000Z",
+    completedAt: "2026-05-14T00:00:01.000Z",
+    totalLatencyMs: 1000,
+    status: "success",
+    answerPreview: "回答です。",
+    isAnswerable: true,
+    citations: [],
+    retrieved: [],
+    steps: []
+  })
+
+  assert.equal(result.success, true)
+  if (!result.success) return
+  assert.equal(result.data.targetType, "rag_run")
+  assert.equal(result.data.visibility, "operator_sanitized")
+  assert.equal(result.data.sanitizePolicyVersion, "debug-trace-sanitize-v1")
+})
+
+test("worker contract keeps runId required while allowing target-specific metadata", () => {
+  const event = WorkerEventSchema.safeParse({ runId: "run-1", targetType: "chat_run", stepFunctionsRetry: 1 })
+  assert.equal(event.success, true)
+  if (!event.success) return
+  assert.equal(event.data.runId, "run-1")
+  assert.equal(event.data.targetType, "chat_run")
+
+  assert.equal(WorkerEventSchema.safeParse({ targetType: "chat_run" }).success, false)
+  assert.equal(WorkerEventSchema.safeParse({ runId: "" }).success, false)
+
+  const result = WorkerResultSchema.safeParse({
+    runId: "run-1",
+    targetType: "document_ingest_run",
+    status: "succeeded",
+    resultType: "succeeded"
+  })
+  assert.equal(result.success, true)
 })
 
 test("conversation history schema accepts optional multi-turn state fields", () => {

@@ -98,8 +98,24 @@ function DebugRunSummaryView({ envelope }: { envelope: DebugReplayEnvelope }) {
           <dd>{String(versions.modelId ?? "-")}</dd>
         </div>
         <div>
+          <dt>target</dt>
+          <dd>{summary.targetType ?? "未設定"}</dd>
+        </div>
+        <div>
+          <dt>visibility</dt>
+          <dd>{summary.visibility ?? "未設定"}</dd>
+        </div>
+        <div>
+          <dt>sanitize</dt>
+          <dd>{summary.sanitizePolicyVersion ?? "未設定"}</dd>
+        </div>
+        <div>
           <dt>embedding</dt>
           <dd>{String(versions.embeddingModelId ?? "-")}</dd>
+        </div>
+        <div>
+          <dt>redaction</dt>
+          <dd>{summary.exportRedaction ? `${summary.exportRedaction.redactedFields.length} fields` : "未設定"}</dd>
         </div>
         <div>
           <dt>failure</dt>

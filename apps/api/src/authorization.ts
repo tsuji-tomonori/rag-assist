@@ -47,6 +47,16 @@ export type Permission =
   | "benchmark:seed_corpus"
   | "benchmark:cancel"
   | "benchmark:download"
+  | "debug:trace:read:self"
+  | "debug:trace:read:sanitized"
+  | "debug:trace:read:internal"
+  | "debug:trace:export"
+  | "debug:ingest:read"
+  | "debug:chunk:read"
+  | "debug:replay"
+  | "debug:settings:update"
+  | "debug:answer_generation:read"
+  | "debug:answer_generation:export"
   | "usage:read:own"
   | "usage:read:all_users"
   | "cost:read:own"
@@ -131,6 +141,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "answer:edit","answer:publish","rag:group:create","rag:group:assign_manager","rag:doc:read","rag:doc:write:group","rag:doc:delete:group","rag:index:rebuild:group",
     "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
     "benchmark:read","benchmark:query","benchmark:run","benchmark:seed_corpus","benchmark:cancel","benchmark:download",
+    "debug:trace:read:self","debug:trace:read:sanitized","debug:trace:read:internal","debug:trace:export","debug:ingest:read","debug:chunk:read","debug:replay","debug:settings:update","debug:answer_generation:read","debug:answer_generation:export",
     "usage:read:own","usage:read:all_users","cost:read:own","cost:read:all","user:create","user:read","user:suspend","user:unsuspend","user:delete",
     "access:role:create","access:role:update","access:role:assign","access:policy:read"
   ]

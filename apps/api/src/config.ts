@@ -37,12 +37,17 @@ function csvEnv(name: string, defaultValue: readonly string[] = []): readonly st
   return raw.split(",").map((value) => value.trim()).filter(Boolean)
 }
 
+function validateCorsAllowedOrigins(origins: readonly string[]): readonly string[] {
+  if (isProduction && origins.includes("*")) throw new Error("CORS_ALLOWED_ORIGINS must not include * in production")
+  return origins
+}
+
 function requireProductionValue(name: string, value: string): void {
   if (isProduction && value.trim().length === 0) throw new Error(`${name} is required in production`)
 }
 
 const authEnabled = boolEnv("AUTH_ENABLED", isProduction)
-const corsAllowedOrigins = csvEnv("CORS_ALLOWED_ORIGINS", isProduction ? [] : ["*"])
+const corsAllowedOrigins = validateCorsAllowedOrigins(csvEnv("CORS_ALLOWED_ORIGINS", isProduction ? [] : ["*"]))
 const docsBucketName = process.env.DOCS_BUCKET_NAME ?? ""
 const cognitoRegion = process.env.COGNITO_REGION ?? region
 const cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID ?? ""

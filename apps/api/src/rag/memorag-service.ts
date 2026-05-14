@@ -8,7 +8,7 @@ import type { Dependencies } from "../dependencies.js"
 import { runChatOrchestration } from "../chat-orchestration/graph.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -2213,21 +2213,42 @@ export function createDebugTraceDownloadMetadata(runId: string): {
 }
 
 export function formatDebugTraceJson(trace: DebugTrace): string {
-  return JSON.stringify(trace, null, 2)
+  return JSON.stringify(withDebugTraceContractMetadata(trace), null, 2)
 }
 
 function normalizeDebugTrace(value: unknown): DebugTrace {
   const trace = value as DebugTrace & { schemaVersion?: number }
   const { schemaVersion: _schemaVersion, ...rest } = trace
   return {
-    schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
-    ...rest,
+    ...withDebugTraceContractMetadata({
+      schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
+      ...rest
+    } as DebugTrace),
     pipelineVersions:
       trace.pipelineVersions ??
       buildPipelineVersions({
         embeddingModelId: trace.embeddingModelId ?? config.embeddingModelId,
         embeddingDimensions: config.embeddingDimensions
       })
+  }
+}
+
+function withDebugTraceContractMetadata(trace: DebugTrace): DebugTrace {
+  return {
+    ...trace,
+    schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
+    targetType: trace.targetType ?? "rag_run",
+    visibility: trace.visibility ?? "operator_sanitized",
+    sanitizePolicyVersion: trace.sanitizePolicyVersion ?? DEBUG_TRACE_SANITIZE_POLICY_VERSION,
+    exportRedaction: trace.exportRedaction ?? {
+      policyVersion: DEBUG_TRACE_SANITIZE_POLICY_VERSION,
+      visibility: trace.visibility ?? "operator_sanitized",
+      redactedFields: ["rawPrompt", "credentials", "internalReasoning", "unauthorizedDocuments", "internalPolicyDetails"],
+      notes: [
+        "legacy trace normalized with J2 debug redaction metadata",
+        "debug API remains protected by chat:admin:read_all until debug:* migration is completed"
+      ]
+    }
   }
 }
 

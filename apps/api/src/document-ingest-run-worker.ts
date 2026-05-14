@@ -1,15 +1,16 @@
 import { createDependencies } from "./dependencies.js"
 import { MemoRagService } from "./rag/memorag-service.js"
+import { WorkerEventSchema, WorkerResultSchema } from "./schemas.js"
+import type { WorkerEvent, WorkerResult } from "./types.js"
 
-type DocumentIngestRunWorkerEvent = {
-  runId?: string
-}
+type DocumentIngestRunWorkerEvent = Partial<WorkerEvent>
 
 const service = new MemoRagService(createDependencies())
 
-export async function handler(event: DocumentIngestRunWorkerEvent): Promise<{ runId: string; status: string }> {
-  const runId = event.runId
-  if (!runId) throw new Error("runId is required")
+export async function handler(event: DocumentIngestRunWorkerEvent): Promise<WorkerResult> {
+  const parsed = WorkerEventSchema.safeParse({ ...event, targetType: event.targetType ?? "document_ingest_run" })
+  if (!parsed.success) throw new Error("runId is required")
+  const runId = parsed.data.runId
   const run = await service.executeDocumentIngestRun(runId)
-  return { runId: run.runId, status: run.status }
+  return WorkerResultSchema.parse({ runId: run.runId, targetType: "document_ingest_run", status: run.status, resultType: run.status === "failed" ? "failed" : "succeeded" })
 }

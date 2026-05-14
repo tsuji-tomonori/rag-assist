@@ -40,6 +40,12 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /admin/users/{userId}/roles", { operationKey: "role.assign", resourceCondition: "roleAssignment" }]
 ])
 
+const debugRoutePermissions = new Map<string, { permission: Permission; conditional?: Permission; operationKey: string }>([
+  ["GET /debug-runs", { permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized" }],
+  ["GET /debug-runs/{runId}", { permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized" }],
+  ["POST /debug-runs/{runId}/download", { permission: "chat:admin:read_all", conditional: "debug:trace:export", operationKey: "debug.trace.export" }]
+])
+
 test("auth middleware uses a public allowlist instead of protected path enumeration", async () => {
   const source = await readRouteSources()
   const middlewareBlock = findAuthMiddlewareBlock(source)
@@ -54,6 +60,20 @@ test("auth middleware uses a public allowlist instead of protected path enumerat
   assert.doesNotMatch(middlewareBlock, /protectedApiPaths/, "protected path enumeration must not return")
   assert.match(middlewareBlock, /publicApiPaths\.has\(c\.req\.path\)/, "auth middleware must bypass only publicApiPaths")
   assert.match(middlewareBlock, /return authMiddleware\(c, next\)/, "non-public paths must reach authMiddleware")
+})
+
+test("public allowlist, CORS, and preflight preserve the 14D middleware boundary", async () => {
+  const source = await readRouteSources()
+  const middlewareBlock = findAuthMiddlewareBlock(source)
+
+  assert.deepEqual(publicMiddlewarePaths, ["/health", "/openapi.json"])
+  assert.match(middlewareBlock, /c\.req\.method === ["']OPTIONS["']/, "OPTIONS preflight must bypass auth before protected route handling")
+  assert.match(middlewareBlock, /allowHeaders:\s*\[[^\]]*["']Last-Event-ID["'][^\]]*\]/, "CORS must continue to allow Last-Event-ID for SSE reconnect")
+  assert.doesNotMatch(middlewareBlock, /["']\/debug-runs["']/, "debug routes must not be added to the public allowlist")
+
+  const configSource = await readFile(path.resolve(process.cwd(), "src/config.ts"), "utf8")
+  assert.match(configSource, /CORS_ALLOWED_ORIGINS must not include \* in production/, "production config must reject wildcard CORS origins")
+  assert.match(configSource, /validateCorsAllowedOrigins\(csvEnv\("CORS_ALLOWED_ORIGINS"/, "CORS origins must pass through the production wildcard guard")
 })
 
 test("protected API routes keep route-level permission checks", async () => {
@@ -227,6 +247,57 @@ test("protected API routes document three-layer authorization metadata", async (
   }
 })
 
+test("debug routes remain protected and document the debug permission migration contract", async () => {
+  const policies = await openApiRoutePolicies()
+
+  for (const [route, expected] of debugRoutePermissions) {
+    const policy = policies.find((item) => routeKey(item) === route)
+    assert.ok(policy, `${route} must be present in OpenAPI policies`)
+    assert.notEqual(policy.mode, "public", `${route} must not become public`)
+    assert.equal(policy.permission, expected.permission, `${route} must keep the chat:admin:read_all alias gate`)
+    assert.equal(policy.operationKey, expected.operationKey, `${route} must document the debug operation key`)
+    assert.equal(policy.resourceCondition, "ownedRun", `${route} must stay scoped to ownedRun metadata`)
+    assert.match(
+      (policy.operation["x-memorag-authorization"]?.notes ?? []).join("\n"),
+      /debug:trace:(read:sanitized|export)/,
+      `${route} must document debug:* migration or alias notes`
+    )
+    if (expected.conditional) {
+      assert.ok(
+        policy.operation["x-memorag-authorization"]?.conditionalPermissions?.includes(expected.conditional),
+        `${route} must document ${expected.conditional} as the target debug permission`
+      )
+    }
+  }
+})
+
+test("debug permissions are defined without removing the existing admin debug gate", async () => {
+  const authorizationSource = await readFile(path.resolve(process.cwd(), "src/authorization.ts"), "utf8")
+  for (const permission of ["debug:trace:read:sanitized", "debug:trace:export", "debug:ingest:read", "debug:chunk:read", "debug:replay"]) {
+    assert.match(authorizationSource, new RegExp(`["']${escapeRegex(permission)}["']`), `${permission} must be part of the permission contract`)
+  }
+  assert.match(authorizationSource, /SYSTEM_ADMIN:[\s\S]*chat:admin:read_all[\s\S]*debug:trace:read:sanitized/, "SYSTEM_ADMIN must keep chat admin debug visibility while gaining debug:* permissions")
+})
+
+test("chat and document ingest SSE routes keep Last-Event-ID reconnect and event format", async () => {
+  const source = await readRouteSources()
+
+  for (const route of [
+    { method: "get", path: "/chat-runs/{runId}/events" },
+    { method: "get", path: "/document-ingest-runs/{runId}/events" }
+  ]) {
+    const block = findRouteBlock(source, { ...route, mode: "ownedRun" })
+    assert.match(block, /header\(["']Last-Event-ID["']\)/, `${route.path} must read Last-Event-ID`)
+    assert.match(block, /listAfter\(runId, afterSeq\)/, `${route.path} must resume by listAfter(runId, afterSeq)`)
+    assert.match(block, /id:\s*String\(item\.seq\)/, `${route.path} must emit SSE id from event seq`)
+    assert.match(block, /event:\s*item\.type/, `${route.path} must emit the stored event type`)
+    assert.match(block, /event:\s*["']heartbeat["']/, `${route.path} must keep heartbeat events`)
+    assert.match(block, /nextSeq:\s*afterSeq \+ 1/, `${route.path} must include nextSeq in heartbeat or timeout data`)
+    assert.match(block, /event:\s*["']timeout["']/, `${route.path} must keep timeout events`)
+    assert.match(block, /reconnect with Last-Event-ID/, `${route.path} timeout must tell clients to reconnect with Last-Event-ID`)
+  }
+})
+
 test("authorization metadata uses generic forbidden error bodies by default", async () => {
   const policies = await openApiRoutePolicies()
 
@@ -242,9 +313,11 @@ async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {
     "x-memorag-authorization"?: {
       mode?: RouteAuthorizationMode
       requiredPermissions?: Permission[]
+      conditionalPermissions?: Permission[]
       operationKey?: string
       resourceCondition?: string
       errorDisclosure?: string
+      notes?: string[]
       errors?: Array<{ status?: number; body?: { error?: string } }>
     }
   }
@@ -257,9 +330,11 @@ async function openApiRoutePolicies(): Promise<Array<RoutePolicy & {
       "x-memorag-authorization"?: {
         mode?: RouteAuthorizationMode
         requiredPermissions?: Permission[]
+        conditionalPermissions?: Permission[]
         operationKey?: string
         resourceCondition?: string
         errorDisclosure?: string
+        notes?: string[]
         errors?: Array<{ status?: number; body?: { error?: string } }>
       }
     }>>

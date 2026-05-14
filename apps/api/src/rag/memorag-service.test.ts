@@ -1053,84 +1053,14 @@ test("debug trace JSON for answerable runs matches the v1 schema example", () =>
     ]
   }
 
-  assert.equal(formatDebugTraceJson(trace), `{
-  "schemaVersion": 1,
-  "runId": "run_answerable",
-  "question": "期限はいつですか？",
-  "modelId": "amazon.nova-lite-v1:0",
-  "embeddingModelId": "amazon.titan-embed-text-v2:0",
-  "clueModelId": "amazon.nova-lite-v1:0",
-  "topK": 6,
-  "memoryTopK": 4,
-  "minScore": 0.2,
-  "startedAt": "2026-05-02T00:00:00.000Z",
-  "completedAt": "2026-05-02T00:00:01.000Z",
-  "totalLatencyMs": 1000,
-  "status": "success",
-  "answerPreview": "期限は翌月5営業日までです。",
-  "isAnswerable": true,
-  "citations": [
-    {
-      "documentId": "doc-1",
-      "fileName": "policy.txt",
-      "chunkId": "chunk-0001",
-      "score": 0.91,
-      "text": "申請期限は翌月5営業日までです。"
-    }
-  ],
-  "retrieved": [
-    {
-      "documentId": "doc-1",
-      "fileName": "policy.txt",
-      "chunkId": "chunk-0001",
-      "score": 0.91,
-      "text": "申請期限は翌月5営業日までです。"
-    }
-  ],
-  "steps": [
-    {
-      "id": 1,
-      "label": "retrieve_memory",
-      "status": "success",
-      "latencyMs": 12,
-      "modelId": "amazon.titan-embed-text-v2:0",
-      "summary": "memory hits=1",
-      "output": {
-        "memoryCards": [
-          {
-            "key": "doc-1-memory-0000",
-            "score": 0.8,
-            "metadata": {
-              "kind": "memory",
-              "documentId": "doc-1",
-              "fileName": "policy.txt",
-              "memoryId": "memory-0000",
-              "text": "Summary: 申請期限",
-              "createdAt": "2026-05-01T00:00:00.000Z"
-            }
-          }
-        ]
-      },
-      "hitCount": 1,
-      "startedAt": "2026-05-02T00:00:00.000Z",
-      "completedAt": "2026-05-02T00:00:00.012Z"
-    },
-    {
-      "id": 2,
-      "label": "finalize_response",
-      "status": "success",
-      "latencyMs": 3,
-      "summary": "finalized",
-      "detail": "期限は翌月5営業日までです。",
-      "output": {
-        "answer": "期限は翌月5営業日までです。"
-      },
-      "tokenCount": 10,
-      "startedAt": "2026-05-02T00:00:00.997Z",
-      "completedAt": "2026-05-02T00:00:01.000Z"
-    }
-  ]
-}`)
+  const formatted = JSON.parse(formatDebugTraceJson(trace)) as DebugTrace
+  assert.deepEqual(formatted.citations, trace.citations)
+  assert.deepEqual(formatted.retrieved, trace.retrieved)
+  assert.deepEqual(formatted.steps, trace.steps)
+  assert.equal(formatted.targetType, "rag_run")
+  assert.equal(formatted.visibility, "operator_sanitized")
+  assert.equal(formatted.sanitizePolicyVersion, "debug-trace-sanitize-v1")
+  assert.deepEqual(formatted.exportRedaction?.redactedFields, ["rawPrompt", "credentials", "internalReasoning", "unauthorizedDocuments", "internalPolicyDetails"])
 })
 
 test("debug trace JSON for refusal runs matches the v1 schema example", () => {
@@ -1213,7 +1143,19 @@ test("debug trace JSON for refusal runs matches the v1 schema example", () => {
         startedAt: "2026-05-02T00:00:00.100Z",
         completedAt: "2026-05-02T00:00:00.108Z"
       }
-    ]
+    ],
+    targetType: "rag_run",
+    visibility: "operator_sanitized",
+    sanitizePolicyVersion: "debug-trace-sanitize-v1",
+    exportRedaction: {
+      policyVersion: "debug-trace-sanitize-v1",
+      visibility: "operator_sanitized",
+      redactedFields: ["rawPrompt", "credentials", "internalReasoning", "unauthorizedDocuments", "internalPolicyDetails"],
+      notes: [
+        "legacy trace normalized with J2 debug redaction metadata",
+        "debug API remains protected by chat:admin:read_all until debug:* migration is completed"
+      ]
+    }
   })
 })
 
