@@ -15,6 +15,7 @@
 | SRC-022 | FACT-014 | TASK-010 | GAP-009 | - | - | REQ-SEC-001 | SPEC-SEC-001 | inferred | UI permission gate はコード推定。 |
 | SRC-024 | FACT-017 | TASK-011 | AC-AUTH-001 | E2E-AUTH-001 | OP-040, EXP-040 | REQ-AUTH-001 | SPEC-AUTH-001 | confirmed | login/new password/self signup/password guidance。 |
 | SRC-031 | FACT-024 | TASK-012, TASK-022 | AC-API-001 | - | - | REQ-API-001, REQ-SEC-001 | SPEC-API-001, SPEC-SEC-001 | confirmed | API route split は非 UI docs/test 検証。 |
+| docs/spec/2026-chapter-spec.md, docs/spec/gap-phase-j1.md | J1-CONF-001..J1-CONF-012, J1-GAP-001..J1-GAP-006 | TASK-012, TASK-022, TASK-A2-CHAPTER-REQ-MAP | AC-API-001, AC-DOCS-001 | - | - | REQ-API-001, FR-053, FR-055 | SPEC-API-001, docs/spec/CHAPTER_TO_REQ_MAP.md | confirmed/partially covered | 14B / 21A の runtime `/openapi.json`、生成 Markdown、docs quality gate、API lifecycle gap を J1 pre-gap として整理。 |
 | SRC-028 | FACT-021 | TASK-013 | AC-UI-001 | E2E-UI-001 | OP-041, EXP-041 | REQ-UI-001 | SPEC-UI-001 | confirmed | copy/send/loading/scroll。 |
 | SRC-028, SRC-012, SRC-013 | FACT-010, FACT-021 | TASK-014 | AC-HIST-002 | E2E-HIST-002 | OP-042, EXP-042 | REQ-HIST-002 | SPEC-HIST-003 | confirmed | 履歴検索、sort、回答通知。 |
 | SRC-029, SRC-020 | FACT-015, FACT-022 | TASK-015 | AC-DOC-003 | E2E-DOC-002 | OP-043, EXP-043 | REQ-DOC-002, REQ-OPS-001 | SPEC-DOC-003 | confirmed | PDF/OCR/upload size/S3/async ingest。 |
