@@ -172,3 +172,35 @@ Phase E は、仕様 3A「取り込み・抽出・チャンク化」と 3C「高
 | E-OQ-008 | open_question | `ParsedDocument` を API でどこまで返すか。 | manifest summary の非公開方針を維持し、管理者向け read API は J/C と調整する。 |
 | E-OQ-009 | open_question | 表・図・OCR confidence の閾値は固定値か folder policy 由来か。 | C の quality policy と接続し、E では保存と warning までに留める案を推奨。 |
 | E-OQ-010 | open_question | PDF page bbox の座標系を `normalized_page` へ変換するタイミング。 | benchmark gate と citation viewer の両方を満たす SourceLocation 仕様が必要。 |
+
+## E-parsing-and-chunkers Implementation Result
+
+### confirmed
+
+| ID | 実装結果 | 根拠 |
+| --- | --- | --- |
+| E-IMPL-001 | `ParsedDocument` / `ParsedPage` / `ParsedBlock` / `ExtractedTable` / `ExtractedFigure` 相当の最小型を追加した。既存 `StructuredBlock` は optional field 追加のみで互換維持した。 | `apps/api/src/types.ts` |
+| E-IMPL-002 | `structuredBlocksObjectKey` の保存 payload を `schemaVersion: 2` にし、既存 `blocks` と `parsedDocument` を同居させた。`loadStructuredBlocksForManifest` は従来どおり `blocks` を読むため reindex 互換を維持する。 | `apps/api/src/rag/memorag-service.ts`, `apps/api/src/rag/manifest-chunks.ts` |
+| E-IMPL-003 | `StructuredBlock` / `Chunk` / `VectorMetadata` / manifest chunk metadata に `bbox`、`confidence`、`readingOrder`、`sourceLocation`、`tableId`、`figureId`、table confidence / row count を optional field として追加した。 | `apps/api/src/types.ts`, `apps/api/src/rag/chunk.ts`, `apps/api/src/rag/memorag-service.ts` |
+| E-IMPL-004 | PDF native text は `digital_text` / `mixed` / `image_only` を記録でき、OCR fallback 成功時は `scanned_image` として記録する foundation を追加した。 | `apps/api/src/rag/text-extract.ts` |
+| E-IMPL-005 | Textract `TABLE` / `CELL` から markdown table block と `ExtractedTable` model を生成し、table chunk に page / table id / confidence / row count / column count を伝播する。 | `apps/api/src/rag/text-extract.ts`, `apps/api/src/rag/chunk.ts` |
+| E-IMPL-006 | Textract OCR fallback は block confidence を保存し、confidence 70 未満の OCR block を `ocr_low_confidence_block` warning として manifest / ingest run に伝播できる。 | `apps/api/src/rag/text-extract.ts`, `apps/api/src/rag/memorag-service.ts` |
+| E-IMPL-007 | `DocumentIngestRun.status` enum は維持し、`stage` / `counters` / `warnings` と SSE event の `preprocessing` / `extracting` / `done` data を拡張した。 | `apps/api/src/types.ts`, `apps/api/src/schemas.ts`, `apps/api/src/rag/memorag-service.ts` |
+| E-IMPL-008 | `bbox` は既存 citation / benchmark field 名を preserve し、通常 ingest では Textract Geometry または入力 metadata に存在する値だけを伝播する。架空の drawing number / scale / region は生成しない。 | `apps/api/src/rag/text-extract.ts`, `apps/api/src/rag/memorag-service.ts` |
+
+### scope_out
+
+| ID | 残 scope-out | 理由 / 後続 |
+| --- | --- | --- |
+| E-LEFT-001 | CAD/BIM native parser、本番 VLM-OCR、画像説明生成、UI preview は未実装。 | 初回 E scope-out のため。保存 schema は後続 parser の受け皿に留めた。 |
+| E-LEFT-002 | OCR / table / figure confidence による RAG eligibility enforcement は未実装。 | Phase C の quality policy と接続するため、本 task は warnings/counters 保存まで。 |
+| E-LEFT-003 | PDF mixed 文書のページ単位 OCR 切替は未実装。 | 現行 PDF native extraction 互換を優先し、document/page profile 記録 foundation に留めた。 |
+| E-LEFT-004 | benchmark 指標の大幅追加は未実装。 | E は既存 page / region / evidence sufficiency gate を壊さない範囲に限定した。 |
+
+### open_question
+
+| ID | 種別 | 内容 | 次の判断 |
+| --- | --- | --- | --- |
+| E-OQ-011 | open_question | `ParsedDocument` を full manifest に入れたが、管理 UI/API でどこまで公開するかは未確定。 | J/C の document preview / quality review API で返却粒度と認可境界を決める。 |
+| E-OQ-012 | open_question | confidence threshold は暫定 warning 生成の 70 未満のみ。 | Phase C の `KnowledgeQuality` / folder policy と接続して閾値を外部設定化する。 |
+| E-OQ-013 | open_question | `sourceLocation.unit` は Textract 由来 `normalized_page` を保存するが、PDF point / pixel / drawing_unit の正規化タイミングは未確定。 | citation viewer / drawing parser task で座標系変換方針を決める。 |

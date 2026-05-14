@@ -12,7 +12,7 @@ import {
   type GetDocumentTextDetectionCommandOutput
 } from "@aws-sdk/client-textract"
 import { config } from "../config.js"
-import type { StructuredBlock } from "../types.js"
+import type { ExtractedFigure, ExtractedTable, ExtractionWarning, JsonValue, ParsedDocument, PdfFileProfile, StructuredBlock } from "../types.js"
 
 const execFileAsync = promisify(execFile)
 
@@ -32,6 +32,10 @@ export type ExtractedDocument = {
   text: string
   blocks?: StructuredBlock[]
   sourceExtractorVersion: string
+  parsedDocument?: ParsedDocument
+  warnings?: ExtractionWarning[]
+  counters?: Record<string, number>
+  fileProfile?: PdfFileProfile
 }
 
 type SourceS3Object = {
@@ -115,7 +119,13 @@ async function extractPdfDocument(input: UploadLike, buffer: Buffer): Promise<Ex
   logPdfExtractStage({ stage: "pdf-extract", phase: "start", fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: buffer.length })
   const extractedText = await (input.pdfTextExtractor ?? extractPdfText)(buffer)
   logPdfExtractStage({ stage: "pdf-extract", phase: "end", fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: buffer.length, textLength: extractedText.length })
-  if (pdfTextQualityScore(extractedText) > 0) return textDocument(extractedText, "pdf-layout-v2")
+  if (pdfTextQualityScore(extractedText) > 0) {
+    return textDocument(extractedText, "pdf-layout-v2", {
+      fileProfile: profilePdfText(extractedText),
+      warnings: [],
+      counters: { pdfNativeTextChars: extractedText.length, ocrFallbackUsed: 0 }
+    })
+  }
 
   const ocrDetector = input.ocrDetector ?? detectTextWithTextract
   logPdfExtractStage({ stage: "textract", phase: "start", fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: buffer.length })
@@ -134,7 +144,27 @@ async function extractPdfDocument(input: UploadLike, buffer: Buffer): Promise<Ex
     textLength: ocrDocument?.text.length ?? 0,
     sourceExtractorVersion: ocrDocument?.sourceExtractorVersion
   })
-  return ocrDocument ?? textDocument(extractedText, "pdf-layout-v2")
+  if (ocrDocument) {
+    const warnings = [
+      ...(ocrDocument.warnings ?? []),
+      ...lowConfidenceWarnings(ocrDocument)
+    ]
+    return withParsedDocument({
+      ...ocrDocument,
+      warnings,
+      fileProfile: ocrDocument.fileProfile ?? "scanned_image",
+      counters: { ...(ocrDocument.counters ?? {}), pdfNativeTextChars: extractedText.length, ocrFallbackUsed: 1 }
+    })
+  }
+  return textDocument(extractedText, "pdf-layout-v2", {
+    fileProfile: "image_only",
+    warnings: [{
+      code: "pdf_ocr_unavailable",
+      message: "PDF native text was empty and OCR fallback did not return text.",
+      severity: "warning"
+    }],
+    counters: { pdfNativeTextChars: extractedText.length, ocrFallbackUsed: 0 }
+  })
 }
 
 async function detectTextWithTextract(input: {
@@ -228,46 +258,102 @@ function parseTextractBlocks(blocks: TextractBlock[], sourceExtractorVersion: st
   const byId = new Map(blocks.map((block) => [block.Id ?? "", block]))
 
   const structured: StructuredBlock[] = []
+  const tables: ExtractedTable[] = []
+  const figures: ExtractedFigure[] = []
+  const warnings: ExtractionWarning[] = []
+  let readingOrder = 0
   for (const block of blocks) {
     if (block.BlockType === "TABLE") {
       const cells = childIds(block).map((id) => byId.get(id)).filter((candidate): candidate is TextractBlock => candidate?.BlockType === "CELL")
-      structured.push(textractTableBlock(block, cells, byId, sourceExtractorVersion))
+      const { structuredBlock, table } = textractTableBlock(block, cells, byId, sourceExtractorVersion)
+      structured.push({ ...structuredBlock, readingOrder: readingOrder++ })
+      tables.push(table)
       continue
     }
     if (block.BlockType === "LINE" && block.Text) {
+      const kind = guessLineKind(block.Text)
+      const figureId = kind === "figure" ? block.Id ?? `figure-${figures.length}` : undefined
+      if (figureId) {
+        figures.push({
+          id: figureId,
+          pageStart: block.Page,
+          pageEnd: block.Page,
+          sourceBlockId: block.Id,
+          caption: normalizeLineText(block.Text).replace(/^Figure:\s*/i, ""),
+          confidence: block.Confidence,
+          bbox: bboxFromTextract(block)
+        })
+      }
       structured.push({
         id: block.Id ?? `line-${structured.length}`,
-        kind: guessLineKind(block.Text),
+        kind,
         text: normalizeLineText(block.Text),
         pageStart: block.Page,
         pageEnd: block.Page,
         heading: headingFromLine(block.Text),
         sourceBlockId: block.Id,
         normalizedFrom: "textract-line",
+        confidence: block.Confidence,
+        readingOrder: readingOrder++,
+        bbox: bboxFromTextract(block),
+        sourceLocation: sourceLocationFromTextract(block),
+        figureId,
         extractionMethod: sourceExtractorVersion
       })
     }
   }
 
-  return { text: structured.map((block) => block.text).join("\n\n"), blocks: structured, sourceExtractorVersion }
+  const counters = {
+    blockCount: blocks.length,
+    structuredBlockCount: structured.length,
+    tableCount: tables.length,
+    figureCount: figures.length,
+    lowConfidenceBlockCount: structured.filter((block) => isLowConfidence(block.confidence)).length
+  }
+  const document = {
+    text: structured.map((block) => block.text).join("\n\n"),
+    blocks: structured,
+    sourceExtractorVersion,
+    warnings,
+    counters,
+    fileProfile: sourceExtractorVersion.startsWith("textract-detect") ? "scanned_image" as const : undefined
+  }
+  return withParsedDocument(document, { tables, figures })
 }
 
-function textractTableBlock(block: TextractBlock, cells: TextractBlock[], byId: Map<string, TextractBlock>, extractionMethod: string): StructuredBlock {
+function textractTableBlock(
+  block: TextractBlock,
+  cells: TextractBlock[],
+  byId: Map<string, TextractBlock>,
+  extractionMethod: string
+): { structuredBlock: StructuredBlock; table: ExtractedTable } {
   const rows = new Map<number, Map<number, string>>()
+  const tableCells: ExtractedTable["cells"] = []
   let maxColumn = 0
   for (const cell of cells) {
     const rowIndex = cell.RowIndex ?? 1
     const columnIndex = cell.ColumnIndex ?? 1
     maxColumn = Math.max(maxColumn, columnIndex)
     const row = rows.get(rowIndex) ?? new Map<number, string>()
-    row.set(columnIndex, childText(cell, byId))
+    const text = childText(cell, byId)
+    row.set(columnIndex, text)
     rows.set(rowIndex, row)
+    tableCells.push({
+      rowIndex,
+      columnIndex,
+      text,
+      confidence: cell.Confidence,
+      bbox: bboxFromTextract(cell),
+      sourceBlockId: cell.Id
+    })
   }
   const ordered = [...rows.entries()].sort(([a], [b]) => a - b).map(([, row]) => {
     return Array.from({ length: maxColumn }, (_, index) => row.get(index + 1) ?? "")
   })
   const text = toMarkdownTable(ordered)
-  return {
+  const tableId = block.Id ?? "table"
+  const confidence = averageConfidence([block.Confidence, ...cells.map((cell) => cell.Confidence)])
+  const structuredBlock: StructuredBlock = {
     id: block.Id ?? "table",
     kind: "table",
     text,
@@ -276,7 +362,28 @@ function textractTableBlock(block: TextractBlock, cells: TextractBlock[], byId: 
     sourceBlockId: block.Id,
     normalizedFrom: "textract-table",
     tableColumnCount: maxColumn || undefined,
+    tableRowCount: ordered.length || undefined,
+    tableId,
+    tableConfidence: confidence,
+    confidence,
+    bbox: bboxFromTextract(block),
+    sourceLocation: sourceLocationFromTextract(block),
     extractionMethod
+  }
+  return {
+    structuredBlock,
+    table: {
+      id: tableId,
+      pageStart: block.Page,
+      pageEnd: block.Page,
+      sourceBlockId: block.Id,
+      markdown: text,
+      rowCount: ordered.length,
+      columnCount: maxColumn,
+      confidence,
+      bbox: bboxFromTextract(block),
+      cells: tableCells
+    }
   }
 }
 
@@ -340,13 +447,17 @@ function mergeAdjacentLists(blocks: StructuredBlock[]): StructuredBlock[] {
   return merged
 }
 
-function textDocument(text: string, sourceExtractorVersion: string): ExtractedDocument {
-  return { text, sourceExtractorVersion }
+function textDocument(
+  text: string,
+  sourceExtractorVersion: string,
+  options: Pick<ExtractedDocument, "warnings" | "counters" | "fileProfile"> = {}
+): ExtractedDocument {
+  return withParsedDocument({ text, sourceExtractorVersion, ...options })
 }
 
 function limitDocument(document: ExtractedDocument): ExtractedDocument {
   const normalized = limit(document.text)
-  if (!document.blocks) return { ...document, text: normalized }
+  if (!document.blocks) return withParsedDocument({ ...document, text: normalized })
   let total = 0
   const blocks: StructuredBlock[] = []
   for (const block of document.blocks) {
@@ -357,7 +468,7 @@ function limitDocument(document: ExtractedDocument): ExtractedDocument {
     blocks.push({ ...block, text })
     total += text.length + 2
   }
-  return { ...document, text: normalized, blocks }
+  return withParsedDocument({ ...document, text: normalized, blocks })
 }
 
 function limit(text: string): string {
@@ -383,6 +494,15 @@ type TextractBlock = {
   Page?: number
   RowIndex?: number
   ColumnIndex?: number
+  Confidence?: number
+  Geometry?: {
+    BoundingBox?: {
+      Left?: number
+      Top?: number
+      Width?: number
+      Height?: number
+    }
+  }
   Relationships?: Array<{ Type?: string; Ids?: string[] }>
 }
 
@@ -394,11 +514,126 @@ function normalizeTextractBlocks(blocks: AwsTextractBlock[]): TextractBlock[] {
     Page: block.Page,
     RowIndex: block.RowIndex,
     ColumnIndex: block.ColumnIndex,
+    Confidence: block.Confidence,
+    Geometry: block.Geometry,
     Relationships: block.Relationships?.map((relationship) => ({
       Type: relationship.Type,
       Ids: relationship.Ids
     }))
   }))
+}
+
+function withParsedDocument(
+  document: ExtractedDocument,
+  extras: { tables?: ExtractedTable[]; figures?: ExtractedFigure[] } = {}
+): ExtractedDocument {
+  const blocks = document.blocks ?? []
+  const parsedDocument: ParsedDocument = {
+    schemaVersion: 2,
+    text: document.text,
+    sourceExtractorVersion: document.sourceExtractorVersion,
+    fileProfile: document.fileProfile,
+    pages: pagesFromBlocks(document.text, blocks, document.fileProfile),
+    blocks: blocks.map((block) => ({
+      id: block.id,
+      kind: block.kind,
+      text: block.text,
+      pageStart: block.pageStart,
+      pageEnd: block.pageEnd,
+      sourceBlockId: block.sourceBlockId,
+      normalizedFrom: block.normalizedFrom,
+      extractionMethod: block.extractionMethod,
+      bbox: block.bbox,
+      confidence: block.confidence,
+      readingOrder: block.readingOrder,
+      sourceLocation: block.sourceLocation,
+      tableId: block.tableId,
+      figureId: block.figureId
+    })),
+    tables: extras.tables ?? document.parsedDocument?.tables,
+    figures: extras.figures ?? document.parsedDocument?.figures,
+    warnings: document.warnings,
+    counters: document.counters
+  }
+  return { ...document, parsedDocument }
+}
+
+function pagesFromBlocks(text: string, blocks: StructuredBlock[], fileProfile?: PdfFileProfile) {
+  if (blocks.length === 0) {
+    const pages = text.split(/\f+/)
+    return pages.map((pageText, index) => ({
+      pageNumber: index + 1,
+      text: pageText.trim(),
+      fileProfile,
+      confidence: undefined
+    }))
+  }
+  const pages = new Map<number, StructuredBlock[]>()
+  for (const block of blocks) {
+    const page = block.pageStart ?? 1
+    pages.set(page, [...(pages.get(page) ?? []), block])
+  }
+  return [...pages.entries()].sort(([a], [b]) => a - b).map(([pageNumber, pageBlocks]) => ({
+    pageNumber,
+    text: pageBlocks.map((block) => block.text).join("\n\n"),
+    fileProfile,
+    confidence: averageConfidence(pageBlocks.map((block) => block.confidence))
+  }))
+}
+
+function bboxFromTextract(block: TextractBlock): JsonValue | undefined {
+  const box = block.Geometry?.BoundingBox
+  if (!box) return undefined
+  return {
+    unit: "normalized_page",
+    x: box.Left ?? 0,
+    y: box.Top ?? 0,
+    width: box.Width ?? 0,
+    height: box.Height ?? 0
+  }
+}
+
+function sourceLocationFromTextract(block: TextractBlock) {
+  const bbox = bboxFromTextract(block)
+  if (!bbox && !block.Page) return undefined
+  return {
+    page: block.Page,
+    pageStart: block.Page,
+    pageEnd: block.Page,
+    bbox,
+    unit: bbox ? "normalized_page" as const : undefined,
+    source: "textract"
+  }
+}
+
+function averageConfidence(values: Array<number | undefined>): number | undefined {
+  const present = values.filter((value): value is number => typeof value === "number")
+  if (present.length === 0) return undefined
+  return Number((present.reduce((sum, value) => sum + value, 0) / present.length).toFixed(2))
+}
+
+function isLowConfidence(confidence: number | undefined): boolean {
+  return typeof confidence === "number" && confidence < 70
+}
+
+function lowConfidenceWarnings(document: ExtractedDocument): ExtractionWarning[] {
+  return (document.blocks ?? []).filter((block) => isLowConfidence(block.confidence)).map((block) => ({
+    code: "ocr_low_confidence_block",
+    message: "OCR fallback returned a low-confidence block.",
+    severity: "warning",
+    page: block.pageStart,
+    sourceBlockId: block.sourceBlockId ?? block.id,
+    confidence: block.confidence
+  }))
+}
+
+function profilePdfText(text: string): PdfFileProfile {
+  const pages = text.split(/\f+/).map((page) => pdfTextQualityScore(page))
+  if (pages.length <= 1) return "digital_text"
+  const textPages = pages.filter((score) => score > 0).length
+  if (textPages === pages.length) return "digital_text"
+  if (textPages === 0) return "image_only"
+  return "mixed"
 }
 
 function childIds(block: TextractBlock): string[] {

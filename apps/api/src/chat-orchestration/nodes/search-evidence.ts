@@ -1,6 +1,7 @@
 import type { AppUser } from "../../auth.js"
 import type { Dependencies } from "../../dependencies.js"
 import { loadChunksForManifest } from "../../rag/manifest-chunks.js"
+import { isQualityApprovedForNormalRag } from "../../rag/quality.js"
 import { rrfFuse, searchRag, type SearchResult, type SearchResponse } from "../../search/hybrid-search.js"
 import type { Chunk, DocumentManifest, RetrievedVector, VectorMetadata } from "../../types.js"
 import { expandedSearchTopK, ragRuntimePolicy } from "../runtime-policy.js"
@@ -160,7 +161,7 @@ async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestra
     const documentId = memoryHit.metadata.documentId
     if (!documentId) continue
     const manifest = await loadManifest(deps, manifestCache, documentId)
-    if (!manifest) continue
+    if (!manifest || !isQualityApprovedForNormalRag(manifest)) continue
     const chunks = await loadManifestChunks(deps, chunkCache, manifest)
     const candidates = candidateChunksForMemory(memoryHit, chunks)
     const selected = rankMemorySourceChunks(candidates, memoryHit, queryTokens).slice(0, Math.max(1, Math.min(limit, state.topK)))

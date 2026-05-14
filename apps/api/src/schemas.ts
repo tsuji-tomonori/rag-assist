@@ -106,10 +106,47 @@ const ChunkMetadataSchema = z.object({
   sourceBlockId: z.string().optional(),
   normalizedFrom: z.string().optional(),
   tableColumnCount: z.number().int().positive().optional(),
+  tableId: z.string().optional(),
+  tableRowCount: z.number().int().positive().optional(),
+  tableConfidence: z.number().optional(),
   listDepth: z.number().int().positive().optional(),
   codeLanguage: z.string().optional(),
   figureCaption: z.string().optional(),
+  figureId: z.string().optional(),
+  confidence: z.number().optional(),
+  readingOrder: z.number().int().nonnegative().optional(),
+  bbox: MetadataValueSchema.optional(),
+  sourceLocation: z.object({
+    page: z.number().int().positive().optional(),
+    pageStart: z.number().int().positive().optional(),
+    pageEnd: z.number().int().positive().optional(),
+    bbox: MetadataValueSchema.optional(),
+    unit: z.enum(["normalized_page", "pdf_point", "pixel", "unknown"]).optional(),
+    source: z.string().optional()
+  }).optional(),
   extractionMethod: z.string().optional()
+})
+
+const ExtractionWarningSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  severity: z.enum(["info", "warning", "error"]),
+  page: z.number().int().positive().optional(),
+  sourceBlockId: z.string().optional(),
+  confidence: z.number().optional()
+})
+
+const ParsedDocumentSchema = z.object({
+  schemaVersion: z.literal(2),
+  text: z.string(),
+  sourceExtractorVersion: z.string(),
+  fileProfile: z.enum(["digital_text", "scanned_image", "mixed", "image_only", "unknown"]).optional(),
+  pages: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
+  blocks: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
+  tables: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
+  figures: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
+  warnings: z.array(ExtractionWarningSchema).optional(),
+  counters: z.record(z.string(), z.number()).optional()
 })
 
 export const DocumentManifestSchema = z.object({
@@ -132,6 +169,10 @@ export const DocumentManifestSchema = z.object({
   indexVersion: z.string().optional(),
   pipelineVersions: PipelineVersionsSchema.optional(),
   chunks: z.array(ChunkMetadataSchema).optional(),
+  parsedDocument: ParsedDocumentSchema.optional(),
+  extractionWarnings: z.array(ExtractionWarningSchema).optional(),
+  extractionCounters: z.record(z.string(), z.number()).optional(),
+  fileProfile: z.enum(["digital_text", "scanned_image", "mixed", "image_only", "unknown"]).optional(),
   lifecycleStatus: z.enum(["active", "staging", "superseded"]).optional(),
   activeDocumentId: z.string().optional(),
   stagedFromDocumentId: z.string().optional(),
@@ -225,6 +266,9 @@ export const DocumentIngestRunSchema = z.object({
   manifest: DocumentManifestSummarySchema.optional(),
   documentId: z.string().optional(),
   error: z.string().optional(),
+  stage: z.string().optional(),
+  counters: z.record(z.string(), z.number()).optional(),
+  warnings: z.array(ExtractionWarningSchema).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   startedAt: z.string().optional(),

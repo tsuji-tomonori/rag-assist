@@ -6,6 +6,7 @@ test("assertFilterableMetadataBudget ignores non-filterable text", () => {
   assert.doesNotThrow(() => assertFilterableMetadataBudget("doc-chunk-0000", {
     kind: "chunk",
     documentId: "doc",
+    ragEligibility: "excluded",
     text: "本文".repeat(5000),
     createdAt: "2026-05-11T00:00:00.000Z"
   }))

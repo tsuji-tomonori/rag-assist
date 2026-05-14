@@ -5,6 +5,31 @@ export type VectorKind = "chunk" | "memory"
 export type ChunkKind = "text" | "table" | "list" | "code" | "figure"
 export type DocumentLifecycleStatus = "active" | "staging" | "superseded"
 export type DocumentScopeType = "personal" | "group" | "chat" | "benchmark"
+export type KnowledgeQualityStatus = "approved" | "warning" | "blocked"
+export type VerificationStatus = "verified" | "unverified" | "rejected"
+export type FreshnessStatus = "current" | "stale" | "expired"
+export type SupersessionStatus = "current" | "superseded"
+export type ExtractionQualityStatus = "high" | "medium" | "low" | "unusable"
+export type RagEligibilityStatus = "eligible" | "eligible_with_warning" | "excluded"
+export type QualityFlag =
+  | "verification_required"
+  | "freshness_review_required"
+  | "superseded_by_newer_document"
+  | "low_extraction_confidence"
+  | "manual_rag_exclusion"
+
+export type DocumentQualityProfile = {
+  knowledgeQualityStatus?: KnowledgeQualityStatus
+  verificationStatus?: VerificationStatus
+  freshnessStatus?: FreshnessStatus
+  supersessionStatus?: SupersessionStatus
+  extractionQualityStatus?: ExtractionQualityStatus
+  ragEligibility?: RagEligibilityStatus
+  confidence?: number
+  flags?: QualityFlag[]
+  updatedAt?: string
+  updatedBy?: string
+}
 
 export type SearchScope = {
   mode?: "all" | "groups" | "documents" | "temporary"
@@ -40,6 +65,96 @@ export type PipelineVersions = {
   indexVersion: string
   embeddingModelId: string
   embeddingDimensions: number
+}
+
+export type SourceLocation = {
+  page?: number
+  pageStart?: number
+  pageEnd?: number
+  bbox?: JsonValue
+  unit?: "normalized_page" | "pdf_point" | "pixel" | "unknown"
+  source?: string
+}
+
+export type ExtractionWarning = {
+  code: string
+  message: string
+  severity: "info" | "warning" | "error"
+  page?: number
+  sourceBlockId?: string
+  confidence?: number
+}
+
+export type PdfFileProfile = "digital_text" | "scanned_image" | "mixed" | "image_only" | "unknown"
+
+export type ParsedPage = {
+  pageNumber: number
+  text?: string
+  fileProfile?: PdfFileProfile
+  confidence?: number
+  warnings?: ExtractionWarning[]
+}
+
+export type ParsedBlock = {
+  id: string
+  kind: ChunkKind
+  text: string
+  pageStart?: number
+  pageEnd?: number
+  sourceBlockId?: string
+  normalizedFrom?: string
+  extractionMethod?: string
+  bbox?: JsonValue
+  confidence?: number
+  readingOrder?: number
+  sourceLocation?: SourceLocation
+  tableId?: string
+  figureId?: string
+}
+
+export type ExtractedTableCell = {
+  rowIndex: number
+  columnIndex: number
+  text: string
+  confidence?: number
+  bbox?: JsonValue
+  sourceBlockId?: string
+}
+
+export type ExtractedTable = {
+  id: string
+  pageStart?: number
+  pageEnd?: number
+  sourceBlockId?: string
+  markdown: string
+  rowCount: number
+  columnCount: number
+  confidence?: number
+  bbox?: JsonValue
+  cells: ExtractedTableCell[]
+}
+
+export type ExtractedFigure = {
+  id: string
+  pageStart?: number
+  pageEnd?: number
+  sourceBlockId?: string
+  caption?: string
+  confidence?: number
+  bbox?: JsonValue
+}
+
+export type ParsedDocument = {
+  schemaVersion: 2
+  text: string
+  sourceExtractorVersion: string
+  fileProfile?: PdfFileProfile
+  pages?: ParsedPage[]
+  blocks?: ParsedBlock[]
+  tables?: ExtractedTable[]
+  figures?: ExtractedFigure[]
+  warnings?: ExtractionWarning[]
+  counters?: Record<string, number>
 }
 
 export type DocumentStatistics = {
@@ -82,9 +197,16 @@ export type VectorMetadata = {
   sourceBlockId?: string
   normalizedFrom?: string
   tableColumnCount?: number
+  tableId?: string
+  tableRowCount?: number
+  tableConfidence?: number
   listDepth?: number
   codeLanguage?: string
   figureCaption?: string
+  figureId?: string
+  confidence?: number
+  readingOrder?: number
+  sourceLocation?: SourceLocation
   extractionMethod?: string
   lifecycleStatus?: DocumentLifecycleStatus
   tenantId?: string
@@ -101,6 +223,7 @@ export type VectorMetadata = {
   domainPolicy?: string
   ragPolicy?: string
   answerPolicy?: string
+  ragEligibility?: RagEligibilityStatus
   drawingSourceType?: "project_drawing" | "standard_detail" | "equipment_standard" | "benchmark_reference" | "external"
   drawingSheetMetadata?: JsonValue[]
   drawingRegionIndex?: JsonValue[]
@@ -138,6 +261,7 @@ export type DocumentManifest = {
   fileName: string
   mimeType?: string
   metadata?: Record<string, JsonValue>
+  qualityProfile?: DocumentQualityProfile
   sourceObjectKey: string
   structuredBlocksObjectKey?: string
   memoryCardsObjectKey?: string
@@ -160,6 +284,10 @@ export type DocumentManifest = {
   reindexMigrationId?: string
   chunkCount: number
   memoryCardCount: number
+  parsedDocument?: ParsedDocument
+  extractionWarnings?: ExtractionWarning[]
+  extractionCounters?: Record<string, number>
+  fileProfile?: PdfFileProfile
   createdAt: string
 }
 
@@ -217,9 +345,17 @@ export type Chunk = {
   sourceBlockId?: string
   normalizedFrom?: string
   tableColumnCount?: number
+  tableId?: string
+  tableRowCount?: number
+  tableConfidence?: number
   listDepth?: number
   codeLanguage?: string
   figureCaption?: string
+  figureId?: string
+  confidence?: number
+  readingOrder?: number
+  bbox?: JsonValue
+  sourceLocation?: SourceLocation
   extractionMethod?: string
 }
 
@@ -236,9 +372,17 @@ export type StructuredBlock = {
   sourceBlockId?: string
   normalizedFrom?: string
   tableColumnCount?: number
+  tableId?: string
+  tableRowCount?: number
+  tableConfidence?: number
   listDepth?: number
   codeLanguage?: string
   figureCaption?: string
+  figureId?: string
+  confidence?: number
+  readingOrder?: number
+  bbox?: JsonValue
+  sourceLocation?: SourceLocation
   extractionMethod?: string
 }
 
@@ -441,6 +585,9 @@ export type DocumentIngestRun = {
   manifest?: DocumentManifestSummary
   documentId?: string
   error?: string
+  stage?: string
+  counters?: Record<string, number>
+  warnings?: ExtractionWarning[]
   createdAt: string
   updatedAt: string
   startedAt?: string
