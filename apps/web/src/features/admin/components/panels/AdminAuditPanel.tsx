@@ -9,6 +9,7 @@ export function AdminAuditPanel({ adminAuditLog }: { adminAuditLog: ManagedUserA
         <h3>管理操作履歴</h3>
         <span>{adminAuditLog.length} 件</span>
       </div>
+      <p className="admin-panel-note">現行 API の managed user / role assign 監査ログです。横断 audit、reason、export は未提供です。</p>
       <div className="admin-audit-list">
         {adminAuditLog.length === 0 ? (
           <EmptyState title="管理操作履歴はありません。" />

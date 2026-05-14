@@ -92,7 +92,7 @@
         "admin"
       ],
       "componentCount": 8,
-      "interactionCount": 35
+      "interactionCount": 33
     },
     {
       "feature": "app",
@@ -295,6 +295,7 @@
         "div",
         "h2",
         "header",
+        "nav",
         "section",
         "span"
       ],
@@ -311,6 +312,7 @@
         "article",
         "div",
         "h3",
+        "p",
         "section",
         "small",
         "span",
@@ -326,10 +328,12 @@
         "AdminCostPanel"
       ],
       "jsxUsages": [
+        "EmptyState",
         "article",
         "div",
         "h3",
         "i",
+        "p",
         "section",
         "span",
         "strong"
@@ -344,8 +348,10 @@
       ],
       "jsxUsages": [
         "Icon",
+        "article",
         "button",
         "div",
+        "small",
         "span",
         "strong"
       ],
@@ -375,8 +381,10 @@
         "AdminUsagePanel"
       ],
       "jsxUsages": [
+        "EmptyState",
         "div",
         "h3",
+        "p",
         "section",
         "span"
       ],
@@ -1902,9 +1910,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:113:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:128:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 113,
+      "line": 128,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -1946,27 +1954,29 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:55:button",
-      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
-      "line": 55,
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:140:button",
+      "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
+      "line": 140,
       "feature": "admin",
-      "component": "AdminOverviewGrid",
+      "component": "AdminWorkspace",
       "element": "button",
       "isIntrinsic": true,
-      "label": "ドキュメント管理 / 件",
+      "label": "未推定",
       "a11y": {
-        "accessibleName": "ドキュメント管理 / 件",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "未推定",
+        "accessibleNameSource": "missing",
         "descriptionRefs": "-",
         "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+        "state": [
+          "aria-current=resolvedActiveSection === section.id ? \"page\" : undefined"
+        ],
+        "status": "missing",
+        "reason": "アクセシブル名が静的解析で確認できません。"
       },
       "handlers": [
         {
           "name": "onClick",
-          "value": "onOpenDocuments"
+          "value": "() => setActiveSection(section.id)"
         }
       ],
       "attributes": [
@@ -1975,24 +1985,28 @@
           "value": "button"
         },
         {
+          "name": "aria-current",
+          "value": "resolvedActiveSection === section.id ? \"page\" : undefined"
+        },
+        {
           "name": "onClick",
-          "value": "onOpenDocuments"
+          "value": "() => setActiveSection(section.id)"
         }
       ],
-      "certainty": "confirmed"
+      "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:62:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:186:button",
       "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
-      "line": 62,
+      "line": 186,
       "feature": "admin",
       "component": "AdminOverviewGrid",
       "element": "button",
       "isIntrinsic": true,
-      "label": "担当者対応 / 件が対応待ち",
+      "label": "`${card.label}を開く`",
       "a11y": {
-        "accessibleName": "担当者対応 / 件が対応待ち",
-        "accessibleNameSource": "visible-text",
+        "accessibleName": "`${card.label}を開く`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [],
@@ -2002,7 +2016,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "onOpenAssignee"
+          "value": "card.onSelect"
         }
       ],
       "attributes": [
@@ -2011,80 +2025,12 @@
           "value": "button"
         },
         {
-          "name": "onClick",
-          "value": "onOpenAssignee"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:69:button",
-      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
-      "line": 69,
-      "feature": "admin",
-      "component": "AdminOverviewGrid",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "デバッグ / 評価 / 件の実行履歴",
-      "a11y": {
-        "accessibleName": "デバッグ / 評価 / 件の実行履歴",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "onOpenDebug"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
+          "name": "aria-label",
+          "value": "`${card.label}を開く`"
         },
         {
           "name": "onClick",
-          "value": "onOpenDebug"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:76:button",
-      "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
-      "line": 76,
-      "feature": "admin",
-      "component": "AdminOverviewGrid",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "性能テスト / 件の実行履歴",
-      "a11y": {
-        "accessibleName": "性能テスト / 件の実行履歴",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "onOpenBenchmark"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "onClick",
-          "value": "onOpenBenchmark"
+          "value": "card.onSelect"
         }
       ],
       "certainty": "confirmed"
@@ -2446,9 +2392,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:174:select",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:177:select",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 174,
+      "line": 177,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "select",
@@ -2492,9 +2438,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:176:option",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:179:option",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 176,
+      "line": 179,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "option",
@@ -2519,9 +2465,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:179:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:182:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 179,
+      "line": 182,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2533,7 +2479,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canAssignRoles || loading || user.groups.includes(selectedRole)"
+          "disabled=!canAssignRoles || loading || !roleChanged"
         ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
@@ -2541,7 +2487,7 @@
       "handlers": [
         {
           "name": "onClick",
-          "value": "() => void onAssignRoles(user.userId, [selectedRole])"
+          "value": "() => setRoleAssignOpen(true)"
         }
       ],
       "attributes": [
@@ -2551,19 +2497,19 @@
         },
         {
           "name": "disabled",
-          "value": "!canAssignRoles || loading || user.groups.includes(selectedRole)"
+          "value": "!canAssignRoles || loading || !roleChanged"
         },
         {
           "name": "onClick",
-          "value": "() => void onAssignRoles(user.userId, [selectedRole])"
+          "value": "() => setRoleAssignOpen(true)"
         }
       ],
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:189:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:195:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 189,
+      "line": 195,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2603,9 +2549,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:194:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:200:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 194,
+      "line": 200,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2645,9 +2591,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:199:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:205:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 199,
+      "line": 205,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",

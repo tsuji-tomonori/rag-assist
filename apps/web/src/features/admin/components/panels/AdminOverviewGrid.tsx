@@ -1,6 +1,25 @@
 import { Icon } from "../../../../shared/components/Icon.js"
+import type { IconName } from "../../../../shared/components/Icon.js"
 import { formatCurrency } from "../../../../shared/utils/format.js"
 import type { AccessRoleDefinition, AliasDefinition, CostAuditSummary, ManagedUser, UserUsageSummary } from "../../types.js"
+
+type DashboardCard =
+  | {
+      kind: "action"
+      id: string
+      label: string
+      value: string
+      icon: IconName
+      onSelect: () => void
+    }
+  | {
+      kind: "kpi"
+      id: string
+      label: string
+      value: string
+      note: string
+      icon: IconName
+    }
 
 export function AdminOverviewGrid({
   documentsCount,
@@ -49,70 +68,135 @@ export function AdminOverviewGrid({
   onOpenDebug: () => void
   onOpenBenchmark: () => void
 }) {
+  const cards: DashboardCard[] = [
+    ...(canManageDocuments
+      ? [
+          {
+            kind: "action" as const,
+            id: "documents",
+            label: "ドキュメント管理",
+            value: `${documentsCount} 件`,
+            icon: "document" as const,
+            onSelect: onOpenDocuments
+          }
+        ]
+      : []),
+    ...(canAnswerQuestions
+      ? [
+          {
+            kind: "action" as const,
+            id: "assignee",
+            label: "担当者対応",
+            value: `${openQuestionsCount} 件が対応待ち`,
+            icon: "inbox" as const,
+            onSelect: onOpenAssignee
+          }
+        ]
+      : []),
+    ...(canReadDebugRuns
+      ? [
+          {
+            kind: "action" as const,
+            id: "debug",
+            label: "デバッグ / 評価",
+            value: `${debugRunsCount} 件の実行履歴`,
+            icon: "warning" as const,
+            onSelect: onOpenDebug
+          }
+        ]
+      : []),
+    ...(canReadBenchmarkRuns
+      ? [
+          {
+            kind: "action" as const,
+            id: "benchmark",
+            label: "性能テスト",
+            value: `${benchmarkRunsCount} 件の実行履歴`,
+            icon: "gauge" as const,
+            onSelect: onOpenBenchmark
+          }
+        ]
+      : []),
+    ...(canOpenAdminSettings
+      ? [
+          {
+            kind: "kpi" as const,
+            id: "access",
+            label: "アクセス管理",
+            value: `${accessRoles.length} role`,
+            note: "ロール定義は読み取り専用",
+            icon: "settings" as const
+          }
+        ]
+      : []),
+    ...(canReadUsers
+      ? [
+          {
+            kind: "kpi" as const,
+            id: "users",
+            label: "ユーザー管理",
+            value: `${managedUsers.length} users`,
+            note: "現行 API の管理対象ユーザー",
+            icon: "settings" as const
+          }
+        ]
+      : []),
+    ...(canReadUsage
+      ? [
+          {
+            kind: "kpi" as const,
+            id: "usage",
+            label: "利用状況",
+            value: `${usageSummaries.length} users`,
+            note: "ユーザー別 summary のみ",
+            icon: "gauge" as const
+          }
+        ]
+      : []),
+    ...(canReadCosts
+      ? [
+          {
+            kind: "kpi" as const,
+            id: "cost",
+            label: "コスト監査",
+            value: costAudit ? formatCurrency(costAudit.totalEstimatedUsd) : "未提供",
+            note: costAudit ? "推定値を含む" : "コスト summary は未提供",
+            icon: "warning" as const
+          }
+        ]
+      : []),
+    ...(canManageAliases
+      ? [
+          {
+            kind: "kpi" as const,
+            id: "alias",
+            label: "Alias管理",
+            value: `${aliases.length} aliases`,
+            note: "review / publish は別 section",
+            icon: "settings" as const
+          }
+        ]
+      : [])
+  ]
+
   return (
     <div className="admin-overview-grid">
-      {canManageDocuments && (
-        <button type="button" className="admin-overview-tile" onClick={onOpenDocuments}>
-          <Icon name="document" />
-          <strong>ドキュメント管理</strong>
-          <span>{documentsCount} 件</span>
-        </button>
-      )}
-      {canAnswerQuestions && (
-        <button type="button" className="admin-overview-tile" onClick={onOpenAssignee}>
-          <Icon name="inbox" />
-          <strong>担当者対応</strong>
-          <span>{openQuestionsCount} 件が対応待ち</span>
-        </button>
-      )}
-      {canReadDebugRuns && (
-        <button type="button" className="admin-overview-tile" onClick={onOpenDebug}>
-          <Icon name="warning" />
-          <strong>デバッグ / 評価</strong>
-          <span>{debugRunsCount} 件の実行履歴</span>
-        </button>
-      )}
-      {canReadBenchmarkRuns && (
-        <button type="button" className="admin-overview-tile" onClick={onOpenBenchmark}>
-          <Icon name="gauge" />
-          <strong>性能テスト</strong>
-          <span>{benchmarkRunsCount} 件の実行履歴</span>
-        </button>
-      )}
-      {canOpenAdminSettings && (
-        <div className="admin-overview-tile" aria-label="アクセス管理">
-          <Icon name="settings" />
-          <strong>アクセス管理</strong>
-          <span>{accessRoles.length} role</span>
-        </div>
-      )}
-      {canReadUsers && (
-        <div className="admin-overview-tile" aria-label="ユーザー管理">
-          <Icon name="settings" />
-          <strong>ユーザー管理</strong>
-          <span>{managedUsers.length} users</span>
-        </div>
-      )}
-      {canReadUsage && (
-        <div className="admin-overview-tile" aria-label="利用状況">
-          <Icon name="gauge" />
-          <strong>利用状況</strong>
-          <span>{usageSummaries.length} users</span>
-        </div>
-      )}
-      {canReadCosts && (
-        <div className="admin-overview-tile" aria-label="コスト監査">
-          <Icon name="warning" />
-          <strong>コスト監査</strong>
-          <span>{formatCurrency(costAudit?.totalEstimatedUsd ?? 0)}</span>
-        </div>
-      )}
-      {canManageAliases && (
-        <div className="admin-overview-tile" aria-label="Alias管理">
-          <Icon name="settings" />
-          <strong>Alias管理</strong>
-          <span>{aliases.length} aliases</span>
-        </div>
+      {cards.map((card) =>
+        card.kind === "action" ? (
+          <button type="button" className="admin-overview-tile action-card" aria-label={`${card.label}を開く`} onClick={card.onSelect} key={card.id}>
+            <Icon name={card.icon} />
+            <strong>{card.label}</strong>
+            <span>{card.value}</span>
+            <small>開く</small>
+          </button>
+        ) : (
+          <article className="admin-overview-tile kpi-card" aria-label={card.label} key={card.id}>
+            <Icon name={card.icon} />
+            <strong>{card.label}</strong>
+            <span>{card.value}</span>
+            <small>{card.note}</small>
+          </article>
+        )
       )}
     </div>
   )

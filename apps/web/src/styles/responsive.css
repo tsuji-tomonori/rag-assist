@@ -147,7 +147,8 @@
     overflow: visible;
   }
 
-  .phase2-admin-grid {
+  .phase2-admin-grid,
+  .admin-combined-section {
     grid-template-columns: 1fr;
   }
 

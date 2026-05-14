@@ -1,3 +1,4 @@
+import { useState } from "react"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
@@ -9,6 +10,8 @@ import { AdminRolePanel } from "./panels/AdminRolePanel.js"
 import { AdminUsagePanel } from "./panels/AdminUsagePanel.js"
 import { AdminUserPanel } from "./panels/AdminUserPanel.js"
 import { AliasAdminPanel } from "./panels/AliasAdminPanel.js"
+
+type AdminSectionId = "overview" | "users" | "roles" | "usage-cost" | "audit" | "alias"
 
 export function AdminWorkspace({
   user,
@@ -107,6 +110,18 @@ export function AdminWorkspace({
   onPublishAliases: () => Promise<void>
   onBack: () => void
 }) {
+  const [activeSection, setActiveSection] = useState<AdminSectionId>("overview")
+  const sections: Array<{ id: AdminSectionId; label: string; available: boolean }> = [
+    { id: "overview", label: "Overview", available: true },
+    { id: "users", label: "Users", available: canReadUsers },
+    { id: "roles", label: "Roles", available: canOpenAdminSettings },
+    { id: "usage-cost", label: "Usage / Cost", available: canReadUsage || canReadCosts },
+    { id: "audit", label: "Audit", available: canReadAdminAuditLog },
+    { id: "alias", label: "Alias", available: canReadAliases }
+  ]
+  const availableSections = sections.filter((section) => section.available)
+  const resolvedActiveSection = availableSections.some((section) => section.id === activeSection) ? activeSection : "overview"
+
   return (
     <section className="admin-workspace" aria-label="管理者設定">
       <header className="assignee-header">
@@ -120,70 +135,103 @@ export function AdminWorkspace({
       </header>
       {loading && <LoadingStatus label="管理APIを処理中" />}
 
-      <AdminOverviewGrid
-        documentsCount={documentsCount}
-        openQuestionsCount={openQuestionsCount}
-        debugRunsCount={debugRunsCount}
-        benchmarkRunsCount={benchmarkRunsCount}
-        managedUsers={managedUsers}
-        accessRoles={accessRoles}
-        usageSummaries={usageSummaries}
-        costAudit={costAudit}
-        aliases={aliases}
-        canManageDocuments={canManageDocuments}
-        canAnswerQuestions={canAnswerQuestions}
-        canReadDebugRuns={canReadDebugRuns}
-        canReadBenchmarkRuns={canReadBenchmarkRuns}
-        canOpenAdminSettings={canOpenAdminSettings}
-        canReadUsers={canReadUsers}
-        canReadUsage={canReadUsage}
-        canReadCosts={canReadCosts}
-        canManageAliases={canManageAliases}
-        onOpenDocuments={onOpenDocuments}
-        onOpenAssignee={onOpenAssignee}
-        onOpenDebug={onOpenDebug}
-        onOpenBenchmark={onOpenBenchmark}
-      />
+      <nav className="admin-section-tabs" aria-label="管理セクション">
+        {availableSections.map((section) => (
+          <button
+            type="button"
+            aria-current={resolvedActiveSection === section.id ? "page" : undefined}
+            onClick={() => setActiveSection(section.id)}
+            key={section.id}
+          >
+            {section.label}
+          </button>
+        ))}
+      </nav>
 
-      <div className="phase2-admin-grid">
-        {canReadAliases && (
-          <AliasAdminPanel
-            aliases={aliases}
-            auditLog={aliasAuditLog}
-            loading={loading}
-            canWrite={canWriteAliases}
-            canReview={canReviewAliases}
-            canDisable={canDisableAliases}
-            canPublish={canPublishAliases}
-            onCreate={onCreateAlias}
-            onUpdate={onUpdateAlias}
-            onReview={onReviewAlias}
-            onDisable={onDisableAlias}
-            onPublish={onPublishAliases}
-          />
-        )}
+      {resolvedActiveSection === "overview" && (
+        <AdminOverviewGrid
+          documentsCount={documentsCount}
+          openQuestionsCount={openQuestionsCount}
+          debugRunsCount={debugRunsCount}
+          benchmarkRunsCount={benchmarkRunsCount}
+          managedUsers={managedUsers}
+          accessRoles={accessRoles}
+          usageSummaries={usageSummaries}
+          costAudit={costAudit}
+          aliases={aliases}
+          canManageDocuments={canManageDocuments}
+          canAnswerQuestions={canAnswerQuestions}
+          canReadDebugRuns={canReadDebugRuns}
+          canReadBenchmarkRuns={canReadBenchmarkRuns}
+          canOpenAdminSettings={canOpenAdminSettings}
+          canReadUsers={canReadUsers}
+          canReadUsage={canReadUsage}
+          canReadCosts={canReadCosts}
+          canManageAliases={canManageAliases}
+          onOpenDocuments={onOpenDocuments}
+          onOpenAssignee={onOpenAssignee}
+          onOpenDebug={onOpenDebug}
+          onOpenBenchmark={onOpenBenchmark}
+        />
+      )}
 
+      <div className="phase2-admin-grid" hidden={resolvedActiveSection === "overview"}>
         {canReadUsers && (
-          <AdminUserPanel
-            managedUsers={managedUsers}
-            accessRoles={accessRoles}
-            loading={loading}
-            canCreateUsers={canCreateUsers}
-            canAssignRoles={canAssignRoles}
-            canSuspendUsers={canSuspendUsers}
-            canUnsuspendUsers={canUnsuspendUsers}
-            canDeleteUsers={canDeleteUsers}
-            onCreateUser={onCreateUser}
-            onAssignRoles={onAssignRoles}
-            onSetUserStatus={onSetUserStatus}
-            onRefreshAdminData={onRefreshAdminData}
-          />
+          <div hidden={resolvedActiveSection !== "users"}>
+            <AdminUserPanel
+              managedUsers={managedUsers}
+              accessRoles={accessRoles}
+              loading={loading}
+              canCreateUsers={canCreateUsers}
+              canAssignRoles={canAssignRoles}
+              canSuspendUsers={canSuspendUsers}
+              canUnsuspendUsers={canUnsuspendUsers}
+              canDeleteUsers={canDeleteUsers}
+              onCreateUser={onCreateUser}
+              onAssignRoles={onAssignRoles}
+              onSetUserStatus={onSetUserStatus}
+              onRefreshAdminData={onRefreshAdminData}
+            />
+          </div>
         )}
 
-        {canOpenAdminSettings && <AdminRolePanel accessRoles={accessRoles} />}
-        {canReadUsage && <AdminUsagePanel usageSummaries={usageSummaries} />}
-        {canReadCosts && costAudit && <AdminCostPanel costAudit={costAudit} />}
-        {canReadAdminAuditLog && <AdminAuditPanel adminAuditLog={adminAuditLog} />}
+        {canOpenAdminSettings && (
+          <div hidden={resolvedActiveSection !== "roles"}>
+            <AdminRolePanel accessRoles={accessRoles} />
+          </div>
+        )}
+
+        {(canReadUsage || canReadCosts) && (
+          <div className="admin-combined-section" hidden={resolvedActiveSection !== "usage-cost"}>
+            {canReadUsage && <AdminUsagePanel usageSummaries={usageSummaries} />}
+            {canReadCosts && <AdminCostPanel costAudit={costAudit} />}
+          </div>
+        )}
+
+        {canReadAdminAuditLog && (
+          <div hidden={resolvedActiveSection !== "audit"}>
+            <AdminAuditPanel adminAuditLog={adminAuditLog} />
+          </div>
+        )}
+
+        {canReadAliases && (
+          <div hidden={resolvedActiveSection !== "alias"}>
+            <AliasAdminPanel
+              aliases={aliases}
+              auditLog={aliasAuditLog}
+              loading={loading}
+              canWrite={canWriteAliases}
+              canReview={canReviewAliases}
+              canDisable={canDisableAliases}
+              canPublish={canPublishAliases}
+              onCreate={onCreateAlias}
+              onUpdate={onUpdateAlias}
+              onReview={onReviewAlias}
+              onDisable={onDisableAlias}
+              onPublish={onPublishAliases}
+            />
+          </div>
+        )}
       </div>
     </section>
   )

@@ -1451,18 +1451,26 @@ describe("App chat and upload flow", () => {
     await userEvent.click(await screen.findByTitle("管理者設定"))
     const adminWorkspace = await screen.findByLabelText("管理者設定")
     expect(within(adminWorkspace).getByLabelText("ユーザー管理")).toBeInTheDocument()
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Users" }))
     expect(await screen.findByLabelText("ユーザー管理一覧")).toBeInTheDocument()
     expect(screen.getByLabelText("管理対象ユーザー作成")).toBeInTheDocument()
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Roles" }))
     expect(screen.getByLabelText("ロール定義")).toBeInTheDocument()
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Usage / Cost" }))
     expect(screen.getByLabelText("利用状況一覧")).toBeInTheDocument()
     expect(screen.getByLabelText("コスト監査一覧")).toBeInTheDocument()
-    expect(screen.getByLabelText("Alias管理一覧")).toBeInTheDocument()
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Audit" }))
     expect(screen.getByLabelText("管理操作履歴")).toBeInTheDocument()
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Alias" }))
+    expect(screen.getByLabelText("Alias管理一覧")).toBeInTheDocument()
 
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Users" }))
     await userEvent.selectOptions(screen.getByDisplayValue("SYSTEM_ADMIN"), "COST_AUDITOR")
     const assignButton = screen.getAllByRole("button", { name: "付与" }).find((button) => !button.hasAttribute("disabled"))
     expect(assignButton).toBeDefined()
     await userEvent.click(assignButton!)
+    const roleAssignDialog = await screen.findByRole("dialog", { name: "ロールを付与しますか？" })
+    await userEvent.click(within(roleAssignDialog).getByRole("button", { name: "付与" }))
     await waitFor(() =>
       expect(
         fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/users/local-dev/roles") && (init as RequestInit | undefined)?.method === "POST")
@@ -1476,6 +1484,7 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "再開" }))
     expect(await screen.findByText("有効")).toBeInTheDocument()
 
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Alias" }))
     await userEvent.type(within(screen.getByLabelText("Alias管理一覧")).getByPlaceholderText("pto"), "sl")
     await userEvent.type(screen.getByPlaceholderText("有給休暇, 休暇申請"), "病気休暇, sick leave")
     await userEvent.click(screen.getByRole("button", { name: "追加" }))
@@ -1490,6 +1499,7 @@ describe("App chat and upload flow", () => {
       expect(fetchMock.mock.calls.some(([url, init]) => String(url).endsWith("/admin/aliases/publish") && (init as RequestInit | undefined)?.method === "POST")).toBe(true)
     )
 
+    await userEvent.click(within(adminWorkspace).getByRole("button", { name: "Users" }))
     await userEvent.click(screen.getByRole("button", { name: "削除" }))
     const userDeleteDialog = await screen.findByRole("dialog", { name: "このユーザーを削除状態にしますか？" })
     await userEvent.click(within(userDeleteDialog).getByRole("button", { name: "削除" }))

@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { CurrentUser } from "../../../shared/types/common.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, ManagedUser } from "../types.js"
+import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, UserUsageSummary } from "../types.js"
 import { AdminWorkspace } from "./AdminWorkspace.js"
 
 const user: CurrentUser = {
@@ -16,6 +16,10 @@ const roles: AccessRoleDefinition[] = [
   {
     role: "CHAT_USER",
     permissions: ["chat:create"]
+  },
+  {
+    role: "SYSTEM_ADMIN",
+    permissions: ["user:read", "access:role:assign"]
   }
 ]
 
@@ -61,6 +65,38 @@ const managedUser: ManagedUser = {
   groups: ["CHAT_USER"],
   createdAt: "2026-05-01T00:00:00.000Z",
   updatedAt: "2026-05-02T00:00:00.000Z"
+}
+
+const usageSummary: UserUsageSummary = {
+  userId: "managed-1",
+  email: "managed@example.com",
+  displayName: "管理対象ユーザー",
+  chatMessages: 3,
+  conversationCount: 2,
+  questionCount: 1,
+  documentCount: 4,
+  benchmarkRunCount: 0,
+  debugRunCount: 1
+}
+
+const costAudit: CostAuditSummary = {
+  periodStart: "2026-05-01T00:00:00.000Z",
+  periodEnd: "2026-05-31T00:00:00.000Z",
+  currency: "USD",
+  totalEstimatedUsd: 12.34,
+  items: [
+    {
+      service: "bedrock",
+      category: "chat",
+      usage: 1200,
+      unit: "tokens",
+      unitCostUsd: 0.001,
+      estimatedCostUsd: 1.2,
+      confidence: "estimated_usage"
+    }
+  ],
+  users: [{ userId: "managed-1", email: "managed@example.com", estimatedCostUsd: 1.2 }],
+  pricingCatalogUpdatedAt: "2026-05-01T00:00:00.000Z"
 }
 
 function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspace>[0]> = {}) {
@@ -120,14 +156,31 @@ function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspac
 }
 
 describe("AdminWorkspace", () => {
+  it("overview で action card と read-only KPI を分けて表示する", () => {
+    renderAdminWorkspace({
+      managedUsers: [managedUser],
+      canReadUsers: true,
+      canReadUsage: true,
+      canReadCosts: true,
+      usageSummaries: [usageSummary],
+      costAudit
+    })
+
+    expect(screen.getByRole("button", { name: /ドキュメント管理/ })).toBeInTheDocument()
+    expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("1 users")
+    expect(screen.getByLabelText("コスト監査")).toHaveTextContent("$12.3400")
+    expect(screen.queryByRole("button", { name: /ユーザー管理/ })).not.toBeInTheDocument()
+  })
+
   it("Alias 管理を表示し、作成と公開操作を通知する", async () => {
     const onCreateAlias = vi.fn().mockResolvedValue(undefined)
     const onPublishAliases = vi.fn().mockResolvedValue(undefined)
 
     renderAdminWorkspace({ onCreateAlias, onPublishAliases })
+    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
 
-    expect(screen.getByLabelText("Alias管理")).toHaveTextContent("2 aliases")
     const panel = screen.getByLabelText("Alias管理一覧")
+    expect(panel).toHaveTextContent("2 件")
     expect(within(panel).getByText("pto")).toBeInTheDocument()
     expect(within(panel).getByText("create")).toBeInTheDocument()
 
@@ -155,6 +208,7 @@ describe("AdminWorkspace", () => {
     const onDisableAlias = vi.fn().mockResolvedValue(undefined)
 
     renderAdminWorkspace({ onUpdateAlias, onReviewAlias, onDisableAlias })
+    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
 
     const panel = screen.getByLabelText("Alias管理一覧")
 
@@ -183,6 +237,7 @@ describe("AdminWorkspace", () => {
       canDeleteUsers: true,
       onSetUserStatus
     })
+    await userEvent.click(screen.getByRole("button", { name: "Users" }))
 
     await userEvent.click(screen.getByRole("button", { name: "停止" }))
     const suspendDialog = screen.getByRole("dialog", { name: "このユーザーを停止しますか？" })
@@ -196,5 +251,47 @@ describe("AdminWorkspace", () => {
     expect(deleteDialog).toHaveTextContent("管理対象ユーザー")
     await userEvent.click(within(deleteDialog).getByRole("button", { name: "削除" }))
     expect(onSetUserStatus).toHaveBeenCalledWith("managed-1", "delete")
+  })
+
+  it("ロール付与前に変更前後の差分を表示する", async () => {
+    const onAssignRoles = vi.fn().mockResolvedValue(undefined)
+
+    renderAdminWorkspace({
+      managedUsers: [managedUser],
+      canReadUsers: true,
+      canAssignRoles: true,
+      onAssignRoles
+    })
+    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+
+    await userEvent.selectOptions(screen.getByLabelText("managed@example.comに付与するロール"), "SYSTEM_ADMIN")
+    expect(screen.getByText("変更前: CHAT_USER / 変更後: SYSTEM_ADMIN")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "付与" }))
+    const dialog = screen.getByRole("dialog", { name: "ロールを付与しますか？" })
+    expect(dialog).toHaveTextContent("変更前")
+    expect(dialog).toHaveTextContent("SYSTEM_ADMIN")
+    expect(dialog).toHaveTextContent("理由入力と保存は API 未対応")
+    expect(onAssignRoles).not.toHaveBeenCalled()
+    await userEvent.click(within(dialog).getByRole("button", { name: "付与" }))
+
+    expect(onAssignRoles).toHaveBeenCalledWith("managed-1", ["SYSTEM_ADMIN"])
+  })
+
+  it("usage/cost/audit の未提供と空状態を正直に表示する", async () => {
+    renderAdminWorkspace({
+      canReadUsage: true,
+      canReadCosts: true,
+      canReadAdminAuditLog: true,
+      usageSummaries: [],
+      costAudit: null,
+      adminAuditLog: []
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "Usage / Cost" }))
+    expect(screen.getByText("利用状況はありません。")).toBeInTheDocument()
+    expect(screen.getByText("コスト summary は未提供です。")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Audit" }))
+    expect(screen.getByText(/横断 audit、reason、export は未提供です。/)).toBeInTheDocument()
+    expect(screen.getByText("管理操作履歴はありません。")).toBeInTheDocument()
   })
 })

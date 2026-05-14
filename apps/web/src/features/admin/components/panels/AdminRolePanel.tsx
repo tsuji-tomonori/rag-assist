@@ -7,6 +7,7 @@ export function AdminRolePanel({ accessRoles }: { accessRoles: AccessRoleDefinit
         <h3>ロール定義</h3>
         <span>{accessRoles.length} 件</span>
       </div>
+      <p className="admin-panel-note">ロール定義は現行 API の read-only preset です。custom role editor と resource-level folder permission は未提供です。</p>
       <div className="role-definition-list">
         {accessRoles.map((role) => (
           <article className="role-definition-card" key={role.role}>
