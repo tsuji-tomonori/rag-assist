@@ -41,11 +41,11 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 9A | チャット・RAG・非同期エージェントのベンチマーク設計 | `FR-019`, `FR-047`, `FR-048`, `FR-050` | `SPEC-BENCH-002`, `SPEC-BENCH-003`, `docs/spec/gap-phase-i.md` | `benchmark/run.ts`, `benchmark/conversation-run.ts`, `benchmark/metrics/`, `apps/api/src/routes/benchmark-routes.ts` | partially covered | I/G |
 | 9B | ナレッジ品質・文書解析ベンチマーク | `FR-047`, `FR-048`, `FR-045` | `GAP-003`, `GAP-011`, `docs/spec/gap-phase-i.md` | 近接: `benchmark/metrics/quality.ts`, `benchmark/metrics/drawing-normalization.ts`, document ingest / extraction tests。品質 4 軸 benchmark は未整備 | missing | I |
 | 9C | ベンチマーク運用・外部データセット・runner 実行基盤 | `FR-039`, `FR-040`, `FR-048`, `REQ-OPS-001` | `AC-BENCH-001`, `AC-OPS-001`, `docs/spec/gap-phase-i.md` | `benchmark/codebuild-suite.ts`, `benchmark/corpus.ts`, `benchmark/suites.codebuild.json`, `apps/api/src/routes/benchmark-seed.ts`, `apps/api/src/adapters/benchmark-run-store.ts`, `infra/`, `.github/workflows/memorag-benchmark-run.yml` | partially covered | I |
-| 10 | 管理ダッシュボード | `FR-024`, `FR-027` | `TASK-008`, `REQ-ADM-001`, `SPEC-ADM-001` | `apps/web/src/features/admin/`, `apps/api/src/routes/admin-routes.ts` | partially covered | J3 |
-| 11 | ユーザー・グループ管理 | `FR-024`, `FR-027` | `FACT-007`, `FACT-008`, `REQ-ADM-001` | `apps/api/src/routes/admin-routes.ts`, `apps/api/src/adapters/user-directory.ts` | confirmed | J3 |
-| 12 | ロール・権限管理 | `FR-027`, `FR-052`, `NFR-011` | `GAP-014`, `SPEC-SEC-001` | `apps/api/src/authorization.ts`, `apps/api/src/security/access-control-policy.test.ts` | divergent | B/J3 |
-| 13 | 利用状況・コスト | `FR-027`, `NFR-012` | `REQ-OPS-001` | `apps/api/src/routes/admin-routes.ts`, `apps/web/src/features/admin/` | partially covered | J3 |
-| 14 | 監査ログ | `FR-027`, `FR-052` | `REQ-SEC-001`, `SPEC-SEC-001` | `apps/api/src/routes/admin-routes.ts`, audit log surface | partially covered | J3 |
+| 10 | 管理ダッシュボード | `FR-024`, `FR-027` | `TASK-008`, `REQ-ADM-001`, `SPEC-ADM-001`, `docs/spec/gap-phase-j3.md` | `apps/web/src/features/admin/`, `apps/web/src/app/hooks/usePermissions.ts`, `apps/api/src/routes/admin-routes.ts`, `docs/generated/web-features/admin.md` | partially covered | J3 |
+| 11 | ユーザー・グループ管理 | `FR-024`, `FR-027`, `FR-052` | `FACT-007`, `FACT-008`, `REQ-ADM-001`, `docs/spec/gap-phase-j3.md` | `apps/web/src/features/admin/components/panels/AdminUserPanel.tsx`, `apps/api/src/routes/admin-routes.ts`, `apps/api/src/rag/memorag-service.ts`, `apps/api/src/adapters/user-directory.ts` | partially covered | J3/B |
+| 12 | ロール・権限管理 | `FR-027`, `FR-052`, `NFR-011` | `GAP-014`, `SPEC-SEC-001`, `docs/spec/gap-phase-j3.md` | `apps/web/src/features/admin/components/panels/AdminRolePanel.tsx`, `apps/api/src/authorization.ts`, `apps/api/src/routes/admin-routes.ts`, `apps/api/src/security/access-control-policy.test.ts` | divergent | B/J3 |
+| 13 | 利用状況・コスト | `FR-027`, `NFR-012` | `REQ-OPS-001`, `docs/spec/gap-phase-j3.md` | `apps/web/src/features/admin/components/panels/AdminUsagePanel.tsx`, `apps/web/src/features/admin/components/panels/AdminCostPanel.tsx`, `apps/api/src/routes/admin-routes.ts`, `apps/api/src/rag/memorag-service.ts` | partially covered | J3 |
+| 14 | 監査ログ | `FR-027`, `FR-052` | `REQ-SEC-001`, `SPEC-SEC-001`, `docs/spec/gap-phase-j3.md` | `apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx`, `apps/api/src/routes/admin-routes.ts`, `apps/api/src/rag/memorag-service.ts`, alias audit surface | partially covered | J3 |
 | 14A | デバッグ・トレース・運用診断 | `FR-010`, `FR-011`, `FR-046` | `TASK-006`, `REQ-DBG-001`, `SPEC-DBG-001`, `SPEC-DBG-002`, `GAP-008`, `GAP-016`, `docs/spec/gap-phase-j2.md` | `apps/api/src/routes/debug-routes.ts`, `apps/api/src/schemas.ts`, `apps/web/src/features/debug/`, `apps/web/src/features/chat/components/ChatView.tsx`, `apps/api/src/chat-orchestration/trace.ts` | partially covered | J2 |
 | 14B | API契約・OpenAPI / oRPC・開発品質ゲート | `FR-053` | `TASK-023`, `REQ-DOCS-001`, `REQ-API-001`, `SPEC-API-001` | `apps/api/src/app.ts`, `apps/api/src/generate-openapi-docs.ts`, `apps/api/src/validate-openapi-docs.ts`, `apps/api/src/orpc/router.ts`, `docs/generated/openapi.md`, `docs/spec/gap-phase-j1.md` | partially covered | J1 |
 | 14C | デプロイ・リリース・GitHub Actions 運用 | `FR-054`, `REQ_PROJECT_*` | `REQ-OPS-001` | `.github/workflows/`, `infra/`, `docs/GITHUB_ACTIONS_DEPLOY.md` | partially covered | J |
@@ -116,6 +116,17 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 14A debug permission | `debug:*` permission contract と `SYSTEM_ADMIN` role mapping を追加した。`/debug-runs` 系 route は既存管理者可視性を壊さないため `chat:admin:read_all` を alias gate として維持し、OpenAPI route metadata notes に移行方針を記録した。 | `debug:*` 単独 gate への完全移行は role migration と監査ログ整備後。 |
 | 14D middleware / SSE | `/health` と `/openapi.json` のみ public、`OPTIONS` bypass、`Last-Event-ID` allowed header、production wildcard CORS guard、chat/document ingest SSE event format を test で固定した。 | edge / WAF / CDN rate limit は infra/ops task。 |
 | 14D worker | chat / document ingest worker は `{ runId }` input を維持し、`WorkerEventSchema` / `WorkerResultSchema` を追加した。 | benchmark worker は Phase I、async agent worker は Phase G に委譲。 |
+
+## Phase J3-pre 補助表: 10/11/12/13/14 admin workspace
+
+| 対象 | 現状 | 後続 task |
+|---|---|---|
+| 10 管理ダッシュボード | `AdminWorkspace` と `AdminOverviewGrid` は権限別 tile と user / role / usage / cost / audit / alias panel を持つ。仕様の失敗取り込み、品質、最新 benchmark 結果、コスト異常、高リスク権限変更を集約する dashboard API / view model は未整備。 | `J3-admin-dashboard-unified` で clickable Action card と read-only KPI を分け、権限外 card や未実装 metric を fake 値で埋めない。 |
+| 11 ユーザー・グループ | `/admin/users` と `AdminUserPanel` は user create/list/status/role assign を持つ。グループ CRUD、full/readOnly membership、階層、folderPolicy 非表示、影響 folder/document 数は未実装。 | 初回 J3 は user 管理の統合表示と role assign 差分を最小 slice とし、group 管理は B / resource permission 設計と同期する。 |
+| 12 ロール・権限 | `/admin/roles` は static `rolePermissions` の read-only 表示。`POST /admin/users/{userId}/roles` は `access:role:assign`、self update 禁止、SYSTEM_ADMIN 付与 guard を持つ。 | 既存 guard を弱めず、role assign の差分表示から始める。理由入力 / role create/update は API/audit schema 追加が必要なため scope-out 候補。 |
+| 13 利用状況・コスト | `/admin/usage` は `usage:read:all_users`、`/admin/costs` は `cost:read:all`。cost は `confidence` を持つ推定値として返る。 | user-level usage/cost は権限内で read-only 表示し、推定値を実請求額として扱わない。export / 異常検知 / 実請求連携は後続。 |
+| 14 監査ログ | `/admin/audit-log` は user create / role assign / suspend / unsuspend / delete の managed user audit を返す。alias audit は別 surface。汎用 AuditLogEntry / reason / requestId / export は未実装。 | 現行 admin audit と alias audit を read-only に統合表示するかを判断し、横断 audit store と export は scope-out。 |
+| 既存挙動の踏襲 | admin route permission、`/me` effective permissions、Web panel/data loader gate、J2 public/debug/auth middleware 境界、I benchmark runner/artifact read-only 境界がある。 | dashboard 統合で permission を広げない。benchmark は artifact summary 参照に留め、debug route を public 化しない。 |
 
 ## 後続更新ルール
 
