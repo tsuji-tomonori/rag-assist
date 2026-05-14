@@ -122,6 +122,21 @@ test("service manages async agent run metadata without provider execution or moc
   assert.deepEqual(await service.listAsyncAgentRuns(other), [])
   assert.equal((await service.listAsyncAgentRuns(admin))[0]?.agentRunId, run.agentRunId)
 
+  const unavailable = await service.createAsyncAgentRun(owner, {
+    provider: "unknown_provider" as never,
+    modelId: "unknown-model",
+    instruction: "未設定 provider は実行しない",
+    selectedDocumentIds: [],
+    selectedFolderIds: [],
+    selectedSkillIds: [],
+    selectedAgentProfileIds: []
+  })
+  assert.equal(unavailable.status, "blocked")
+  assert.equal(unavailable.providerAvailability, "provider_unavailable")
+  assert.equal(unavailable.failureReasonCode, "provider_unavailable")
+  assert.deepEqual(unavailable.workspaceMounts, [])
+  assert.deepEqual(unavailable.artifacts, [])
+
   const cancelled = await service.cancelAsyncAgentRun(owner, run.agentRunId)
   assert.equal(cancelled?.status, "cancelled")
   assert.equal(cancelled?.failureReasonCode, "cancelled")

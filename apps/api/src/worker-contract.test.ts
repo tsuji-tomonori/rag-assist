@@ -75,9 +75,21 @@ test("async agent worker returns blocked and completed run results without provi
     workspaceId: "workspace_agent_worker_cancelled_fixture",
     completedAt: now
   }
+  const failedRun: AsyncAgentRun = {
+    ...queuedRun,
+    agentRunId: "agent_worker_failed_fixture",
+    runId: "agent_worker_failed_fixture",
+    status: "failed",
+    providerAvailability: "provider_unavailable",
+    failureReasonCode: "execution_error",
+    failureReason: "provider crashed",
+    workspaceId: "workspace_agent_worker_failed_fixture",
+    completedAt: now
+  }
   await deps.objectStore.putText("agent-runs/agent_worker_queued_fixture.json", JSON.stringify(queuedRun), "application/json; charset=utf-8")
   await deps.objectStore.putText("agent-runs/agent_worker_completed_fixture.json", JSON.stringify(completedRun), "application/json; charset=utf-8")
   await deps.objectStore.putText("agent-runs/agent_worker_cancelled_fixture.json", JSON.stringify(cancelledRun), "application/json; charset=utf-8")
+  await deps.objectStore.putText("agent-runs/agent_worker_failed_fixture.json", JSON.stringify(failedRun), "application/json; charset=utf-8")
 
   const blocked = await asyncAgentRunWorkerHandler({ agentRunId: queuedRun.agentRunId })
   assert.equal(blocked.runId, queuedRun.runId)
@@ -96,4 +108,9 @@ test("async agent worker returns blocked and completed run results without provi
   assert.equal(cancelled.status, "cancelled")
   assert.equal(cancelled.resultType, "failed")
   assert.equal(cancelled.error?.message, "cancelled")
+
+  const failed = await asyncAgentRunWorkerHandler({ runId: failedRun.runId })
+  assert.equal(failed.status, "failed")
+  assert.equal(failed.resultType, "failed")
+  assert.equal(failed.error?.message, "provider crashed")
 })
