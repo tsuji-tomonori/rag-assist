@@ -20,6 +20,16 @@
 - Impact: Phase B の認可基盤変更で既存 route permission、benchmark seed isolation、debug trace 権限境界を崩すリスクがある。
 - Recommended action: Phase B-pre で現行 role mapping、route metadata、document group / benchmark seed 例外を棚卸しし、3 層モデルへの移行時に踏襲すべき既存挙動を task md の scope-out とリスクへ明記する。
 
+## GAP-015: SupportTicket / 検索改善 loop が既存 HumanQuestion / alias API と部分的にしか接続していない
+
+- Category: implementation_gap
+- Related: `docs/spec/gap-phase-h.md`, `docs/spec/2026-chapter-spec.md` 7/7A/7B/8, `apps/api/src/routes/question-routes.ts`, `apps/api/src/routes/admin-routes.ts`
+- Severity: high
+- Confidence: confirmed
+- Evidence: 現実装は `/questions` と `HumanQuestion` により requesterUserId、chatRunId、担当者回答、internalMemo 非公開を扱える。一方、章別仕様の `SupportTicket.source`、`messageId`、`ragRunId`、`answerUnavailableEventId`、`sanitizedDiagnostics`、assignee user/group、SLA、品質起因分類、低評価起点、検索改善 AI suggest は未整備。alias API は draft / review / publish / audit を持つが、検索 0 件・低評価・問い合わせ・回答不能からの候補生成、検索結果差分、UI 上 alias 非露出の検証は未接続。
+- Impact: H 実装で既存 requester 境界や `internalMemo` 非公開を壊す、または AI 候補を human review なしに検索へ反映するリスクがある。sanitized diagnostics を設計しないまま担当者へ trace を出すと、権限外文書名・件数・ACL group・内部 policy の露出につながる。
+- Recommended action: `H-support-search-improvement` で既存 `/questions` 互換を維持した optional field 追加、`support_sanitized` allowlist、低評価 / answer_unavailable 起点の ticket create、AI suggest を draft / review 待ちに留める検索改善候補、publish 前 diff / reason / audit を実装する。API route 追加時は `access-control-policy.test.ts` と OpenAPI contract を同時更新する。
+
 ## GAP-001: 作業レポート本文精読は完了
 
 - Category: resolved_coverage_gap

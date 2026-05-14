@@ -113,6 +113,20 @@ SSE stream は event id を返し、クライアントは `Last-Event-ID` で再
 - AC-QA-001
 - AC-QA-002
 
+## SPEC-QA-002: 回答不能・低評価問い合わせの sanitized diagnostics
+
+- Requirement: REQ-QA-001, REQ-RAG-002, REQ-SEC-001
+- Type: API/security/RAG quality
+- Target: `/questions`, chat answer unavailable flow
+- Confidence: inferred
+- Source: AC-QA-003, docs/spec/2026-chapter-spec.md 7A/7B, docs/spec/gap-phase-h.md
+
+### Specification
+回答不能、低評価、手動エスカレーションから作成される問い合わせは、元質問、AI回答または回答不能メッセージ、利用者コメント、権限内 citation、`chatRunId` / `messageId` / `ragRunId` または trace reference を保持できる。担当者へ渡す診断情報は `support_sanitized` 相当の allowlist とし、権限外文書名、権限外件数、ACL group、内部 policy、raw prompt、LLM の内部推論を含めない。
+
+### Verification
+- AC-QA-003
+
 ## SPEC-HIST-001: 会話履歴 store の userId boundary
 
 - Requirement: REQ-HIST-001, REQ-SEC-001
@@ -225,6 +239,20 @@ Benchmark operator は suite を選択して run を起動できる。runner は
 
 ### Verification
 - AC-SRCH-001
+
+## SPEC-SRCH-003: 検索改善候補の human review / publish
+
+- Requirement: REQ-SRCH-001, REQ-SEC-001
+- Type: search/admin/security
+- Target: search improvement / alias lifecycle
+- Confidence: inferred
+- Source: AC-SRCH-003, docs/spec/2026-chapter-spec.md 8, docs/spec/gap-phase-h.md
+
+### Specification
+検索 0 件、低評価、問い合わせ、回答不能から検索改善候補を作成できる。AI が候補を作る場合も draft / review 待ちに留め、自動公開しない。公開には人間の review / publish 権限、検索結果差分確認、影響範囲確認、理由入力、監査ログ記録が必要である。UI では `alias` ではなく「検索改善」または「検索語対応づけ」と表示し、検索改善ルールは ACL、resource permission、quality gate、search scope を拡張しない。
+
+### Verification
+- AC-SRCH-003
 
 ## SPEC-AUTH-001: Cognito 認証 flow と初回パスワード
 

@@ -124,6 +124,25 @@
 - 本人でも `ANSWER_EDITOR` でもないため拒否される
 - `internalMemo` は通常ユーザー本人向け response に含まれない
 
+## AC-QA-003: 回答不能・低評価からの問い合わせ診断は無害化される
+
+- Task: TASK-003, TASK-H-SUPPORT-SEARCH-IMPROVEMENT
+- Type: security_boundary
+- Confidence: inferred
+- Source: docs/spec/2026-chapter-spec.md 7A/7B, docs/spec/gap-phase-h.md
+
+### Given
+- `CHAT_USER` が回答不能または低評価から問い合わせを作成する
+- 問い合わせには `chatRunId`、`messageId`、`ragRunId` または debug trace reference が関連付く
+
+### When
+- 問い合わせ担当者が ticket 詳細または診断情報を確認する
+
+### Then
+- 診断情報は `support_sanitized` 相当の allowlist に限定される
+- 権限外文書名、権限外件数、ACL group、内部 policy、raw prompt、LLM の内部推論は含まれない
+- 担当者が関連文書へ遷移する場合も担当者自身の resource permission が確認される
+
 ## AC-SRCH-001: 検索結果は権限と metadata で絞り込まれる
 
 - Task: TASK-004
@@ -140,6 +159,25 @@
 ### Then
 - ユーザーがアクセスできない文書 chunk は結果に含まれない
 - response metadata は allowlist 済みで、ACL group や内部 alias 定義を露出しない
+
+## AC-SRCH-003: 検索改善候補は人間 review 後にのみ公開される
+
+- Task: TASK-004, TASK-H-SUPPORT-SEARCH-IMPROVEMENT
+- Type: security_boundary
+- Confidence: inferred
+- Source: docs/spec/2026-chapter-spec.md 8, docs/spec/gap-phase-h.md
+
+### Given
+- 検索 0 件、低評価、問い合わせ、回答不能から検索改善候補が作成されている
+
+### When
+- AI または担当者が候補を作成し、検索に反映しようとする
+
+### Then
+- AI は候補を draft / review 待ちに置くだけで、自動公開しない
+- 公開には review / publish 権限、検索結果差分確認、理由入力が必要である
+- UI 文言では `alias` ではなく「検索改善」または「検索語対応づけ」を使う
+- 検索改善ルールは ACL、resource permission、quality gate、search scope を拡張しない
 
 ## AC-HIST-001: 会話履歴は userId ごとに保存・削除される
 

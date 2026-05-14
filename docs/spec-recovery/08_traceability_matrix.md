@@ -11,6 +11,7 @@
 | SRC-017, SRC-020, SRC-021 | FACT-012, FACT-015 | TASK-007 | AC-BENCH-001, AC-OPS-001 | E2E-BENCH-001 | OP-032, EXP-033 | REQ-BENCH-001, REQ-OPS-001 | SPEC-BENCH-001 | confirmed | AWS rerun は Q-006。 |
 | SRC-005, SRC-006, SRC-007, SRC-019 | FACT-007, FACT-008 | TASK-008 | AC-ADM-001 | E2E-ADM-001 | OP-033, EXP-034 | REQ-ADM-001, REQ-SEC-001 | SPEC-ADM-001, SPEC-SEC-001 | confirmed | 既存ユーザー移行は Q-007。 |
 | SRC-003, SRC-008 | FACT-006 | TASK-009 | GAP-007 | - | - | REQ-SRCH-001 | SPEC-SRCH-001 | inferred | alias/reindex 操作は API から復元、E2E 未作成。 |
+| docs/spec/2026-chapter-spec.md 7/7A/7B/8, docs/spec/gap-phase-h.md | FACT-H-001 | TASK-H-SUPPORT-SEARCH-IMPROVEMENT | AC-QA-003, AC-SRCH-003 | - | - | REQ-QA-001, REQ-RAG-002, REQ-SRCH-001, REQ-SEC-001 | SPEC-QA-002, SPEC-SRCH-003 | inferred | SupportTicket 拡張、sanitized diagnostics、検索改善 AI suggest + human review、UI 上 alias 非露出。 |
 | SRC-022 | FACT-014 | TASK-010 | GAP-009 | - | - | REQ-SEC-001 | SPEC-SEC-001 | inferred | UI permission gate はコード推定。 |
 | SRC-024 | FACT-017 | TASK-011 | AC-AUTH-001 | E2E-AUTH-001 | OP-040, EXP-040 | REQ-AUTH-001 | SPEC-AUTH-001 | confirmed | login/new password/self signup/password guidance。 |
 | SRC-031 | FACT-024 | TASK-012, TASK-022 | AC-API-001 | - | - | REQ-API-001, REQ-SEC-001 | SPEC-API-001, SPEC-SEC-001 | confirmed | API route split は非 UI docs/test 検証。 |
