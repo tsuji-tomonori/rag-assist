@@ -278,6 +278,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "担当者回答を登録する",
     description: "指定した問い合わせに担当者回答を登録します。"
   },
+  "POST /questions/{questionId}/search-improvement-candidates": {
+    summary: "検索改善候補を作成する",
+    description: "回答不能や低評価の問い合わせから、担当者レビュー待ちの検索語対応づけ候補を作成します。"
+  },
   "POST /questions/{questionId}/resolve": {
     summary: "問い合わせを解決済みにする",
     description: "回答済み問い合わせを解決済み状態へ更新します。"
@@ -415,6 +419,7 @@ const fieldDescriptions: Record<string, string> = {
   items: "一覧レスポンスに含まれる item 配列。",
   documents: "文書一覧。",
   questions: "問い合わせ一覧。",
+  candidate: "検索改善の候補。",
   runs: "run 一覧。",
   suites: "benchmark suite 一覧。",
   aliases: "検索 alias 一覧。",

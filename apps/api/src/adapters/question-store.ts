@@ -9,6 +9,16 @@ export type CreateQuestionInput = {
   assigneeDepartment?: string
   category?: string
   priority?: HumanQuestion["priority"]
+  source?: HumanQuestion["source"]
+  messageId?: string
+  ragRunId?: string
+  answerUnavailableEventId?: string
+  answerUnavailableReason?: string
+  sanitizedDiagnostics?: HumanQuestion["sanitizedDiagnostics"]
+  assigneeUserId?: string
+  assigneeGroupId?: string
+  slaDueAt?: string
+  qualityCause?: HumanQuestion["qualityCause"]
   sourceQuestion?: string
   chatAnswer?: string
   chatRunId?: string

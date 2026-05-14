@@ -28,6 +28,7 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["GET /conversation-history", { operationKey: "history.read.self", resourceCondition: "self" }],
   ["POST /questions", { operationKey: "support.ticket.create.self", resourceCondition: "self" }],
   ["GET /questions/{questionId}", { operationKey: "support.ticket.read", resourceCondition: "requester" }],
+  ["POST /questions/{questionId}/search-improvement-candidates", { operationKey: "search_improvement.candidate.create", resourceCondition: "none" }],
   ["POST /questions/{questionId}/resolve", { operationKey: "support.ticket.close", resourceCondition: "requester" }],
   ["GET /document-groups", { operationKey: "folder.read", resourceCondition: "documentGroupRead" }],
   ["POST /document-groups", { operationKey: "folder.create.group", resourceCondition: "documentGroupFull" }],

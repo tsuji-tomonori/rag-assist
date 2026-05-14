@@ -738,6 +738,7 @@ export type AliasDefinition = {
   expansions: string[]
   scope?: AliasScope
   status: AliasStatus
+  searchImprovement?: SearchImprovementMetadata
   createdBy: string
   createdAt: string
   updatedAt: string
@@ -745,6 +746,20 @@ export type AliasDefinition = {
   reviewedAt?: string
   reviewComment?: string
   publishedVersion?: string
+}
+
+export type SearchImprovementMetadata = {
+  candidateSource: "human_draft" | "ai_suggested" | "support_ticket"
+  sourceQuestionId?: string
+  sourceMessageId?: string
+  sourceRagRunId?: string
+  suggestionReason?: string
+  reviewState: "pending_review" | "reviewed" | "published"
+  reviewReason?: string
+  impactSummary?: string
+  searchResultDiffSummary?: string
+  beforeResultIds?: string[]
+  afterResultIds?: string[]
 }
 
 export type AliasAuditLogItem = {
@@ -820,8 +835,28 @@ export type CostAuditSummary = {
   pricingCatalogUpdatedAt: string
 }
 
-export type QuestionStatus = "open" | "answered" | "resolved"
+export type QuestionStatus = "open" | "in_progress" | "waiting_requester" | "answered" | "resolved"
 export type QuestionPriority = "normal" | "high" | "urgent"
+export type SupportTicketSource = "manual_escalation" | "answer_unavailable" | "negative_feedback" | "quality_issue"
+export type SupportTicketQualityCause =
+  | "retrieval_gap"
+  | "low_quality_evidence"
+  | "stale_document"
+  | "extraction_warning"
+  | "unsupported_answer"
+  | "other"
+
+export type SupportSanitizedDiagnostic = {
+  tier: "support_sanitized"
+  answerUnavailableReason?: string
+  retrievalQuality?: "no_evidence" | "insufficient_evidence" | "conflicting_evidence" | "low_quality_evidence" | "unknown"
+  qualityCauses?: SupportTicketQualityCause[]
+  visibleCitationIds?: string[]
+  visibleDocumentIds?: string[]
+  visibleChunkIds?: string[]
+  qualityWarnings?: string[]
+  suggestedNextActions?: Array<"search_improvement_review" | "document_owner_review" | "document_reparse" | "rag_exclusion_review" | "benchmark_case_review">
+}
 
 export type HumanQuestion = {
   questionId: string
@@ -834,6 +869,16 @@ export type HumanQuestion = {
   category: string
   priority: QuestionPriority
   status: QuestionStatus
+  source?: SupportTicketSource
+  messageId?: string
+  ragRunId?: string
+  answerUnavailableEventId?: string
+  answerUnavailableReason?: string
+  sanitizedDiagnostics?: SupportSanitizedDiagnostic
+  assigneeUserId?: string
+  assigneeGroupId?: string
+  slaDueAt?: string
+  qualityCause?: SupportTicketQualityCause
   sourceQuestion?: string
   chatAnswer?: string
   chatRunId?: string

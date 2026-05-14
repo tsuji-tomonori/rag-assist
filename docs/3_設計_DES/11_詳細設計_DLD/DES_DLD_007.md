@@ -75,11 +75,13 @@
 ### 人手問い合わせ
 
 1. 回答不能または利用者が追加確認を求める場面で、Web UI は問い合わせ作成 API を呼ぶ。
-2. Human Question Store は original question、conversation reference、refusal reason、status を保存する。
+2. Human Question Store は original question、conversation reference、refusal reason、status に加え、SupportTicket 互換の `source`、`messageId`、`ragRunId`、`answerUnavailableEventId`、担当者割当、SLA、品質起因分類を optional field として保存する。
 3. 担当者または管理者は permission に応じて ticket list を取得する。
 4. Answer Draft Manager は draft answer、internal note、公開状態、解決状態を更新する。
 5. 公開済み回答は対象利用者の conversation に紐づけて表示できる。
-6. 状態変更は audit event として保存する。
+6. 担当者向け診断情報は `support_sanitized` allowlist に限定し、権限外文書名、権限外件数、ACL group、内部 policy、raw prompt、LLM 内部推論を ticket response に含めない。
+7. 低評価または回答不能由来の検索改善候補は review 待ちの検索語対応づけ候補として作成し、human review / publish なしに runtime 検索挙動へ反映しない。
+8. 状態変更は audit event として保存する。
 
 ## 権限境界
 
@@ -110,3 +112,5 @@
 | 問い合わせ作成 | refusal metadata と conversation reference が ticket に紐づく。 |
 | 担当者更新 | permission なしで draft answer を更新できない。 |
 | debug 非漏えい | 履歴や問い合わせ通常 response に raw prompt や内部 ACL metadata が出ない。 |
+| support_sanitized | 担当者向け ticket に allowlist 外の文書名、ACL group、内部 policy が含まれない。 |
+| 検索改善候補 | 問い合わせ由来の候補は draft / pending review に留まり、自動 publish されない。 |

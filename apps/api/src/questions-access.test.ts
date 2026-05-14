@@ -16,6 +16,7 @@ test("question requester can read answers and resolve only their own ticket", as
   const requester = await startLocalServer(dataDir, "CHAT_USER", "requester-1", basePort)
   const otherRequester = await startLocalServer(dataDir, "CHAT_USER", "requester-2", basePort + 1)
   const admin = await startLocalServer(dataDir, "SYSTEM_ADMIN", "admin-1", basePort + 2)
+  const searchManager = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "manager-1", basePort + 3)
 
   try {
     const created = await postJson<{ questionId: string; requesterUserId?: string }>(requester, "/questions", {
@@ -23,7 +24,23 @@ test("question requester can read answers and resolve only their own ticket", as
       question: "担当者へ確認してください。",
       requesterName: "利用者",
       requesterDepartment: "利用部門",
-      assigneeDepartment: "総務部"
+      assigneeDepartment: "総務部",
+      source: "answer_unavailable",
+      messageId: "msg-1",
+      ragRunId: "run-1",
+      answerUnavailableEventId: "event-1",
+      answerUnavailableReason: "根拠が不足しています。",
+      sanitizedDiagnostics: {
+        tier: "support_sanitized",
+        answerUnavailableReason: "根拠が不足しています。",
+        retrievalQuality: "insufficient_evidence",
+        qualityCauses: ["retrieval_gap"],
+        visibleCitationIds: ["cite-1"],
+        visibleDocumentIds: ["doc-1"],
+        visibleChunkIds: ["chunk-1"],
+        qualityWarnings: ["検索語対応づけの確認が必要"],
+        suggestedNextActions: ["search_improvement_review"]
+      }
     })
     assert.equal(created.requesterUserId, "requester-1")
 
@@ -44,6 +61,56 @@ test("question requester can read answers and resolve only their own ticket", as
     assert.equal(visibleToRequester.status, "answered")
     assert.equal(visibleToRequester.answerBody, "担当者の確認結果です。")
     assert.equal(Object.hasOwn(visibleToRequester, "internalMemo"), false)
+    assert.equal(Object.hasOwn(visibleToRequester, "sanitizedDiagnostics"), false)
+
+    const visibleToSupport = await getJson<Record<string, unknown>>(admin, `/questions/${created.questionId}`)
+    assert.deepEqual(visibleToSupport.sanitizedDiagnostics, {
+      tier: "support_sanitized",
+      answerUnavailableReason: "根拠が不足しています。",
+      retrievalQuality: "insufficient_evidence",
+      qualityCauses: ["retrieval_gap"],
+      visibleCitationIds: ["cite-1"],
+      visibleDocumentIds: ["doc-1"],
+      visibleChunkIds: ["chunk-1"],
+      qualityWarnings: ["検索語対応づけの確認が必要"],
+      suggestedNextActions: ["search_improvement_review"]
+    })
+    assert.equal(JSON.stringify(visibleToSupport).includes("allowedUsers"), false)
+    assert.equal(JSON.stringify(visibleToSupport).includes("internal policy"), false)
+
+    const requesterCandidate = await fetch(url(requester, `/questions/${created.questionId}/search-improvement-candidates`), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ term: "休暇申請", expansions: ["年次有給休暇"] })
+    })
+    assert.equal(requesterCandidate.status, 403)
+
+    const candidateResponse = await postJson<Record<string, unknown>>(searchManager, `/questions/${created.questionId}/search-improvement-candidates`, {
+      term: "休暇申請",
+      expansions: ["年次有給休暇"],
+      candidateSource: "ai_suggested",
+      suggestionReason: "回答不能 ticket から検索語対応づけの候補を作成",
+      reviewReason: "担当者レビュー待ち",
+      impactSummary: "休暇関連の検索だけに影響",
+      searchResultDiffSummary: "公開前レビューで検索結果差分を確認予定",
+      beforeResultIds: ["before-1"],
+      afterResultIds: ["after-1"]
+    })
+    const candidate = candidateResponse.candidate as Record<string, unknown>
+    assert.equal(candidate.status, "draft")
+    assert.deepEqual(candidate.searchImprovement, {
+      candidateSource: "ai_suggested",
+      sourceQuestionId: created.questionId,
+      sourceMessageId: "msg-1",
+      sourceRagRunId: "run-1",
+      suggestionReason: "回答不能 ticket から検索語対応づけの候補を作成",
+      reviewState: "pending_review",
+      reviewReason: "担当者レビュー待ち",
+      impactSummary: "休暇関連の検索だけに影響",
+      searchResultDiffSummary: "公開前レビューで検索結果差分を確認予定",
+      beforeResultIds: ["before-1"],
+      afterResultIds: ["after-1"]
+    })
 
     const forbiddenToOther = await fetch(url(otherRequester, `/questions/${created.questionId}`))
     assert.equal(forbiddenToOther.status, 404)
@@ -58,6 +125,7 @@ test("question requester can read answers and resolve only their own ticket", as
     requester.process.kill("SIGTERM")
     otherRequester.process.kill("SIGTERM")
     admin.process.kill("SIGTERM")
+    searchManager.process.kill("SIGTERM")
   }
 })
 

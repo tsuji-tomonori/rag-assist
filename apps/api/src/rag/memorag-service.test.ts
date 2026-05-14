@@ -522,6 +522,54 @@ test("service manages reviewed alias artifacts and audit log", async () => {
   assert.match(latest.objectKey, /^aliases\/alias_/)
 })
 
+test("service creates search improvement candidates as draft review items", async () => {
+  const { service } = await createService()
+  const requester = { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] }
+  const manager = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const question = await service.createQuestion({
+    title: "回答不能",
+    question: "担当者へ確認してください。",
+    source: "answer_unavailable",
+    messageId: "msg-1",
+    ragRunId: "run-1",
+    answerUnavailableReason: "根拠が不足しています。"
+  }, requester)
+
+  const missing = await service.createSearchImprovementCandidate(manager, "missing-question", { term: "pto", expansions: ["有給休暇"] })
+  assert.equal(missing, undefined)
+
+  const candidate = await service.createSearchImprovementCandidate(manager, question.questionId, {
+    term: "PTO",
+    expansions: ["有給休暇"],
+    candidateSource: "ai_suggested",
+    suggestionReason: "回答不能 ticket から検索語対応づけ候補を作成",
+    reviewReason: "担当者レビュー待ち",
+    impactSummary: "休暇関連の検索だけに影響",
+    searchResultDiffSummary: "公開前レビューで確認する",
+    beforeResultIds: ["before-1"],
+    afterResultIds: ["after-1"]
+  })
+  assert.equal(candidate?.status, "draft")
+  assert.deepEqual(candidate?.searchImprovement, {
+    candidateSource: "ai_suggested",
+    sourceQuestionId: question.questionId,
+    sourceMessageId: "msg-1",
+    sourceRagRunId: "run-1",
+    suggestionReason: "回答不能 ticket から検索語対応づけ候補を作成",
+    reviewState: "pending_review",
+    reviewReason: "担当者レビュー待ち",
+    impactSummary: "休暇関連の検索だけに影響",
+    searchResultDiffSummary: "公開前レビューで確認する",
+    beforeResultIds: ["before-1"],
+    afterResultIds: ["after-1"]
+  })
+
+  const reviewed = await service.reviewAlias(manager, candidate?.aliasId ?? "", { decision: "approve", comment: "レビュー済み" })
+  assert.equal(reviewed?.searchImprovement?.reviewState, "reviewed")
+  await service.publishAliases(manager)
+  assert.equal((await service.listAliases()).find((item) => item.aliasId === candidate?.aliasId)?.searchImprovement?.reviewState, "published")
+})
+
 test("service delegates human question lifecycle to the question store", async () => {
   const { service } = await createService()
   const user = { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] }
@@ -529,6 +577,22 @@ test("service delegates human question lifecycle to the question store", async (
   const question = await service.createQuestion({
     title: "資料外の質問",
     question: "担当者へ確認してください。",
+    source: "answer_unavailable",
+    messageId: "msg-1",
+    ragRunId: "run-1",
+    answerUnavailableEventId: "event-1",
+    answerUnavailableReason: "根拠が不足しています。",
+    sanitizedDiagnostics: {
+      tier: "support_sanitized",
+      answerUnavailableReason: "根拠が不足しています。",
+      retrievalQuality: "insufficient_evidence",
+      qualityCauses: ["retrieval_gap"],
+      visibleCitationIds: ["cite-1"],
+      visibleDocumentIds: ["doc-1"],
+      visibleChunkIds: ["chunk-1"],
+      qualityWarnings: ["検索語対応づけの確認が必要"],
+      suggestedNextActions: ["search_improvement_review"]
+    },
     sourceQuestion: "資料外の質問は？",
     chatAnswer: "資料からは回答できません。"
   }, user)
@@ -536,6 +600,18 @@ test("service delegates human question lifecycle to the question store", async (
   assert.equal(question.requesterName, "requester@example.com")
   assert.equal(question.requesterDepartment, "未設定")
   assert.equal(question.requesterUserId, "user-1")
+  assert.equal(question.source, "answer_unavailable")
+  assert.deepEqual(question.sanitizedDiagnostics, {
+    tier: "support_sanitized",
+    answerUnavailableReason: "根拠が不足しています。",
+    retrievalQuality: "insufficient_evidence",
+    qualityCauses: ["retrieval_gap"],
+    visibleCitationIds: ["cite-1"],
+    visibleDocumentIds: ["doc-1"],
+    visibleChunkIds: ["chunk-1"],
+    qualityWarnings: ["検索語対応づけの確認が必要"],
+    suggestedNextActions: ["search_improvement_review"]
+  })
   assert.equal((await service.listQuestions())[0]?.questionId, question.questionId)
   assert.equal((await service.getQuestion(question.questionId))?.questionId, question.questionId)
 

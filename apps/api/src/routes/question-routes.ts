@@ -2,10 +2,12 @@ import { z } from "@hono/zod-openapi"
 import { hasPermission, requirePermission } from "../authorization.js"
 import {
   AnswerQuestionRequestSchema,
+  CreateSearchImprovementCandidateRequestSchema,
   CreateQuestionRequestSchema,
   ErrorResponseSchema,
   QuestionListResponseSchema,
-  QuestionSchema
+  QuestionSchema,
+  SearchImprovementCandidateResponseSchema
 } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, routeAuthorization, validJson, validParam } from "./route-utils.js"
@@ -13,6 +15,7 @@ import { looseRoute, routeAuthorization, validJson, validParam } from "./route-u
 function requesterVisibleQuestion(question: z.infer<typeof QuestionSchema>): z.infer<typeof QuestionSchema> {
   const visibleQuestion = { ...question }
   delete visibleQuestion.internalMemo
+  delete visibleQuestion.sanitizedDiagnostics
   return visibleQuestion
 }
 
@@ -111,6 +114,35 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
         if (err instanceof Error && err.message.includes("Question not found")) return c.json({ error: "Question not found" }, 404)
         throw err
       }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/questions/{questionId}/search-improvement-candidates",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:alias:write:group", operationKey: "search_improvement.candidate.create", resourceCondition: "none", notes: ["候補は draft / pending_review のみ作成し、この route では検索挙動へ publish しません。"] }),
+      request: {
+        params: z.object({ questionId: z.string().min(1) }),
+        body: {
+          required: true,
+          content: { "application/json": { schema: CreateSearchImprovementCandidateRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Created search improvement candidate awaiting human review", content: { "application/json": { schema: SearchImprovementCandidateResponseSchema } } },
+        400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Question not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:alias:write:group")
+      const { questionId } = validParam<{ questionId: string }>(c)
+      const body = validJson<z.infer<typeof CreateSearchImprovementCandidateRequestSchema>>(c)
+      const candidate = await service.createSearchImprovementCandidate(user, questionId, body)
+      if (!candidate) return c.json({ error: "Question not found" }, 404)
+      return c.json({ candidate }, 200)
     }
   )
 
