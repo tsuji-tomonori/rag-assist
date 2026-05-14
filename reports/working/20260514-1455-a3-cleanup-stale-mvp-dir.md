@@ -38,7 +38,7 @@
 |---|---|---|---|
 | `.gitignore` | ignore 設定 | `memorag-bedrock-mvp/` を stale root path として ignore | 旧 directory 再出現防止 |
 | `docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_003.md` | Markdown | root 化後の旧 MVP directory 取扱い decision | decision 付き実施 |
-| `tasks/do/20260514-1455-a3-cleanup-stale-mvp-dir.md` | Markdown | A3 task md / なぜなぜ分析 / 受け入れ条件 | Worktree Task PR Flow |
+| `tasks/done/20260514-1455-a3-cleanup-stale-mvp-dir.md` | Markdown | A3 task md / なぜなぜ分析 / 受け入れ条件 | Worktree Task PR Flow |
 
 ## 6. 指示への fit 評価
 

@@ -1,5 +1,5 @@
 # A3 stale MVP directory cleanup decision
-状態: doing
+状態: done
 タスク種別: 修正
 発注元 wave: Wave 1
 依存タスク: `tasks/done/20260514-1432-a2-chapter-to-req-map.md`
@@ -71,11 +71,16 @@ PR #284 で MemoRAG MVP は repository root へ移動済みであり、旧 `memo
 
 ## 受け入れ条件
 
-- [ ] `git ls-files memorag-bedrock-mvp` が空で、旧 path が tracked source ではないことを確認している。
-- [ ] `.gitignore` に root 化前の `memorag-bedrock-mvp/` を ignore する規則が追加されている。
-- [ ] ADR で `削除` ではなく `.gitignore` を選んだ decision と理由が記録されている。
-- [ ] 元 worktree の untracked 実体を勝手に削除していない。
-- [ ] `git diff --check` が pass している。
+- [x] `git ls-files memorag-bedrock-mvp` が空で、旧 path が tracked source ではないことを確認している。
+  - 根拠: コマンド出力なし。
+- [x] `.gitignore` に root 化前の `memorag-bedrock-mvp/` を ignore する規則が追加されている。
+  - 根拠: `.gitignore` の `memorag-bedrock-mvp/`。
+- [x] ADR で `削除` ではなく `.gitignore` を選んだ decision と理由が記録されている。
+  - 根拠: `docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_003.md`。
+- [x] 元 worktree の untracked 実体を勝手に削除していない。
+  - 根拠: PR 差分は `.gitignore`、ADR、task/report のみ。
+- [x] `git diff --check` が pass している。
+  - 根拠: `git diff --check` pass。
 
 ## 検証計画
 
