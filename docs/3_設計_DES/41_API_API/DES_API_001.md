@@ -163,7 +163,7 @@ npm run docs:openapi:check
 
 ### Request
 
-`POST /chat` と同じ request body を受け付ける。`strictGrounded`、`useMemory`、`maxIterations` も同期 API と同じ意味で保存し、worker 実行時に `runQaAgent()` へ渡す。`includeDebug=true` の場合は `chat:admin:read_all` も必要。
+`POST /chat` と同じ request body を受け付ける。`strictGrounded`、`useMemory`、`maxIterations` も同期 API と同じ意味で保存し、worker 実行時に `runChatOrchestration()` へ渡す。`includeDebug=true` の場合は `chat:admin:read_all` も必要。
 `searchScope` は run record に保存し、非同期 worker が lexical retrieval、semantic retrieval、memory retrieval の各段で同じ境界を使う。
 
 ### Response

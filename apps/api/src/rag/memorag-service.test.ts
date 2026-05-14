@@ -20,7 +20,7 @@ import type { Dependencies } from "../dependencies.js"
 import type { BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
-import { ragRuntimePolicy } from "../agent/runtime-policy.js"
+import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { authorizeDocumentDelete } from "../routes/benchmark-seed.js"
 import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 

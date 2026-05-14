@@ -1,7 +1,7 @@
 import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
-import { normalizeSearchTopK, ragRuntimePolicy } from "../agent/runtime-policy.js"
+import { normalizeSearchTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { loadPublishedAliasMap } from "./alias-artifacts.js"
 import type { DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../types.js"

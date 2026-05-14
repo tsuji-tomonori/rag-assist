@@ -1,9 +1,9 @@
 import type { RetrievedVector } from "../types.js"
-import type { ComputedFact, RetrievalRiskSignal, TemporalContext } from "../agent/state.js"
+import type { ComputedFact, RetrievalRiskSignal, TemporalContext } from "../chat-orchestration/state.js"
 import { assembleContext, formatContextXml, textAnswerRelevanceScore } from "./context-assembler.js"
-import { ragRuntimePolicy } from "../agent/runtime-policy.js"
+import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { selectAnswerPolicyForMetadata, type AnswerPolicy } from "./profiles.js"
-import { formatQuestionRequirementsForPrompt } from "../agent/question-requirements.js"
+import { formatQuestionRequirementsForPrompt } from "../chat-orchestration/question-requirements.js"
 
 type FinalAnswerPromptOptions = {
   style?: "benchmark_grounded_short"

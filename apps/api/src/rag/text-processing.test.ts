@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
-import { buildSearchClues, clamp, compactDetail, estimateTokenCount, toCitation, unique } from "../agent/utils.js"
+import { buildSearchClues, clamp, compactDetail, estimateTokenCount, toCitation, unique } from "../chat-orchestration/utils.js"
 import { chunkStructuredBlocks, chunkText, summarizeDocumentStatistics } from "./chunk.js"
 import { parseJsonObject } from "./json.js"
 import { extractDocumentFromUpload, extractTextFromUpload } from "./text-extract.js"
