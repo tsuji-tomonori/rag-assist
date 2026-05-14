@@ -37,7 +37,14 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /documents", { operationKey: "document.upload", resourceCondition: "benchmarkSeedScope" }],
   ["POST /documents/uploads", { operationKey: "document.upload_session.create", resourceCondition: "documentUploadSession" }],
   ["POST /benchmark-runs", { operationKey: "benchmark.run", resourceCondition: "documentGroupRead" }],
-  ["POST /admin/users/{userId}/roles", { operationKey: "role.assign", resourceCondition: "roleAssignment" }]
+  ["POST /admin/users/{userId}/roles", { operationKey: "role.assign", resourceCondition: "roleAssignment" }],
+  ["GET /agents/providers", { operationKey: "agent.provider.read", resourceCondition: "none" }],
+  ["POST /agents/runs", { operationKey: "agent.run.create", resourceCondition: "agentWorkspaceReadOnly" }],
+  ["GET /agents/runs", { operationKey: "agent.run.read", resourceCondition: "agentRunSelfOrManaged" }],
+  ["GET /agents/runs/{agentRunId}", { operationKey: "agent.run.read", resourceCondition: "agentRunSelfOrManaged" }],
+  ["POST /agents/runs/{agentRunId}/cancel", { operationKey: "agent.run.cancel", resourceCondition: "agentRunSelfOrManaged" }],
+  ["GET /agents/runs/{agentRunId}/artifacts", { operationKey: "agent.artifact.read", resourceCondition: "agentRunSelfOrManaged" }],
+  ["GET /agents/runs/{agentRunId}/artifacts/{artifactId}", { operationKey: "agent.artifact.read", resourceCondition: "agentRunSelfOrManaged" }]
 ])
 
 const debugRoutePermissions = new Map<string, { permission: Permission; conditional?: Permission; operationKey: string }>([
@@ -277,6 +284,46 @@ test("debug permissions are defined without removing the existing admin debug ga
     assert.match(authorizationSource, new RegExp(`["']${escapeRegex(permission)}["']`), `${permission} must be part of the permission contract`)
   }
   assert.match(authorizationSource, /SYSTEM_ADMIN:[\s\S]*chat:admin:read_all[\s\S]*debug:trace:read:sanitized/, "SYSTEM_ADMIN must keep chat admin debug visibility while gaining debug:* permissions")
+})
+
+test("async agent permissions and route metadata preserve G1 execution boundaries", async () => {
+  const authorizationSource = await readFile(path.resolve(process.cwd(), "src/authorization.ts"), "utf8")
+  for (const permission of [
+    "agent:run",
+    "agent:cancel",
+    "agent:read:self",
+    "agent:read:managed",
+    "agent:artifact:download",
+    "agent:artifact:writeback",
+    "agent:provider:manage",
+    "skill:read",
+    "skill:create",
+    "agent_profile:read",
+    "agent_preset:create:self"
+  ]) {
+    assert.match(authorizationSource, new RegExp(`["']${escapeRegex(permission)}["']`), `${permission} must be part of the permission contract`)
+  }
+  assert.match(authorizationSource, /ASYNC_AGENT_USER:[\s\S]*agent:run[\s\S]*agent:read:self[\s\S]*agent_preset:create:self/, "ASYNC_AGENT_USER role preset must include self-run and preset permissions")
+  assert.match(authorizationSource, /ASYNC_AGENT_ADMIN:[\s\S]*agent:read:managed[\s\S]*agent:provider:manage/, "ASYNC_AGENT_ADMIN role preset must include managed-read and provider-management permissions")
+
+  const policies = await openApiRoutePolicies()
+  for (const route of [
+    "POST /agents/runs",
+    "GET /agents/runs",
+    "GET /agents/runs/{agentRunId}",
+    "POST /agents/runs/{agentRunId}/cancel",
+    "GET /agents/runs/{agentRunId}/artifacts",
+    "GET /agents/runs/{agentRunId}/artifacts/{artifactId}"
+  ]) {
+    const policy = policies.find((item) => routeKey(item) === route)
+    assert.ok(policy, `${route} must be present in OpenAPI policies`)
+    assert.notEqual(policy.mode, "public", `${route} must not become public`)
+    assert.match(
+      (policy.operation["x-memorag-authorization"]?.notes ?? []).join("\n"),
+      /mock|readOnly|managed|provider|artifact|workspace|writeback/i,
+      `${route} must document async agent provider/resource boundary notes`
+    )
+  }
 })
 
 test("chat and document ingest SSE routes keep Last-Event-ID reconnect and event format", async () => {

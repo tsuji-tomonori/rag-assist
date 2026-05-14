@@ -40,7 +40,7 @@ Media type: `application/json`
 | 必須 permission | `access:role:assign` |
 | 条件付き permission | - |
 | 実行可能 role | `ACCESS_ADMIN`, `SYSTEM_ADMIN` |
-| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `COST_AUDITOR` |
+| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `COST_AUDITOR` |
 | 条件付きでエラーになる role | なし |
 
 補足:

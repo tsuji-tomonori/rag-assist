@@ -31,7 +31,7 @@ _なし_
 | 認可モード | `public` |
 | 必須 permission | - |
 | 条件付き permission | - |
-| 実行可能 role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR`, `SYSTEM_ADMIN` |
+| 実行可能 role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR`, `SYSTEM_ADMIN` |
 | エラーになる role | なし |
 | 条件付きでエラーになる role | なし |
 

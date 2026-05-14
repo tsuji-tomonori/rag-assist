@@ -538,6 +538,132 @@ export type WorkerResult = {
   }
 }
 
+export type AgentRuntimeProvider = "claude_code" | "codex" | "opencode" | "custom"
+export type AgentProviderAvailability = "disabled" | "not_configured" | "provider_unavailable" | "available"
+
+export type AgentModelSelection = {
+  provider: AgentRuntimeProvider
+  modelId: string
+  modelDisplayName?: string
+  maxTokens?: number
+  temperature?: number
+}
+
+export type AsyncAgentRunStatus =
+  | "queued"
+  | "preparing_workspace"
+  | "running"
+  | "waiting_for_approval"
+  | "completed"
+  | "failed"
+  | "blocked"
+  | "cancelled"
+  | "expired"
+
+export type AgentWorkspaceMount = {
+  mountId: string
+  workspaceId: string
+  sourceType: "folder" | "document" | "temporaryUpload" | "artifact"
+  sourceId: string
+  originalFileName?: string
+  mountedPath: string
+  accessMode: "readOnly" | "writableCopy"
+  permissionCheckedAt: string
+}
+
+export type AgentArtifact = {
+  artifactId: string
+  agentRunId: string
+  artifactType: "file" | "patch" | "report" | "markdown" | "json" | "log"
+  fileName: string
+  mimeType: string
+  size: number
+  storageRef: string
+  createdAt: string
+  writebackStatus?: "not_requested" | "pending_approval" | "approved" | "rejected" | "applied"
+}
+
+export type SkillDefinition = {
+  skillId: string
+  tenantId: string
+  name: string
+  description?: string
+  folderId: string
+  markdownDocumentId: string
+  version: string
+  status: "draft" | "active" | "archived"
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type AgentProfileDefinition = {
+  agentProfileId: string
+  tenantId: string
+  name: string
+  description?: string
+  folderId: string
+  markdownDocumentId: string
+  defaultSkillIds: string[]
+  recommendedProvider?: AgentRuntimeProvider
+  recommendedModelId?: string
+  version: string
+  status: "draft" | "active" | "archived"
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type AgentExecutionPreset = {
+  presetId: string
+  ownerUserId: string
+  name: string
+  description?: string
+  provider: AgentRuntimeProvider
+  modelId: string
+  defaultFolderIds: string[]
+  defaultSkillIds: string[]
+  defaultAgentProfileIds: string[]
+  defaultBudget?: AgentRunBudget
+  createdAt: string
+  updatedAt: string
+}
+
+export type AgentRunBudget = {
+  maxCost?: number
+  maxDurationMinutes?: number
+  maxToolCalls?: number
+}
+
+export type AsyncAgentRun = {
+  agentRunId: string
+  /** Worker contract alias. G1 keeps agentRunId and runId identical. */
+  runId: string
+  tenantId: string
+  requesterUserId: string
+  provider: AgentRuntimeProvider
+  modelId: string
+  status: AsyncAgentRunStatus
+  providerAvailability: AgentProviderAvailability
+  failureReasonCode?: "not_configured" | "provider_unavailable" | "cancelled" | "execution_error"
+  failureReason?: string
+  instruction: string
+  selectedFolderIds: string[]
+  selectedDocumentIds: string[]
+  selectedSkillIds: string[]
+  selectedAgentProfileIds: string[]
+  workspaceId: string
+  workspaceMounts: AgentWorkspaceMount[]
+  artifactIds: string[]
+  artifacts: AgentArtifact[]
+  budget?: AgentRunBudget
+  createdBy: string
+  createdAt: string
+  startedAt?: string
+  completedAt?: string
+  updatedAt: string
+}
+
 export type ChatResponsePayload = {
   responseType?: "answer" | "refusal" | "clarification"
   answer: string

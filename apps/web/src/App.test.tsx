@@ -168,6 +168,9 @@ const rolePermissions: Record<string, Permission[]> = {
   ],
   BENCHMARK_OPERATOR: ["benchmark:read", "benchmark:run"],
   BENCHMARK_RUNNER: ["benchmark:query", "benchmark:seed_corpus"],
+  ASYNC_AGENT_USER: ["agent:run", "agent:cancel", "agent:read:self", "agent:artifact:download", "skill:read", "agent_profile:read", "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self"],
+  SKILL_PROFILE_ADMIN: ["skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai", "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai"],
+  ASYNC_AGENT_ADMIN: ["agent:run", "agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:artifact:writeback", "agent:settings:manage", "agent:provider:manage", "skill:read", "agent_profile:read", "agent_preset:read:self"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   COST_AUDITOR: ["cost:read:all"],
@@ -176,6 +179,10 @@ const rolePermissions: Record<string, Permission[]> = {
     "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
     "rag:alias:read", "rag:alias:write:group", "rag:alias:review:group", "rag:alias:disable:group", "rag:alias:publish:group",
     "benchmark:read", "benchmark:query", "benchmark:run", "benchmark:cancel", "benchmark:download",
+    "agent:run", "agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:artifact:writeback", "agent:settings:manage", "agent:provider:manage",
+    "skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai",
+    "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai",
+    "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self",
     "usage:read:own", "usage:read:all_users", "cost:read:own", "cost:read:all", "user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete",
     "access:role:create", "access:role:update", "access:role:assign", "access:policy:read"
   ]
@@ -344,6 +351,10 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       { suiteId: "mlit-pdf-figure-table-rag-seed-v1", label: "MLIT PDF figure/table RAG seed", mode: "agent", datasetS3Key: "datasets/agent/mlit-pdf-figure-table-rag-seed-v1.jsonl", preset: "standard", defaultConcurrency: 1 }
     ] }))
     if (requestUrl.endsWith("/benchmark-runs") && isGet(init)) return Promise.resolve(response({ benchmarkRuns }))
+    if (requestUrl.endsWith("/agents/providers") && isGet(init)) return Promise.resolve(response({ providers: [
+      { provider: "codex", displayName: "Codex", availability: "not_configured", configuredModelIds: [] }
+    ] }))
+    if (requestUrl.endsWith("/agents/runs") && isGet(init)) return Promise.resolve(response({ agentRuns: [] }))
     if (requestUrl.endsWith("/benchmark-runs") && init?.method === "POST") {
       const body = parseRequestJson(init) as { suiteId?: string; mode?: BenchmarkRun["mode"]; runner?: BenchmarkRun["runner"] }
       const suiteId = body.suiteId ?? "standard-agent-v1"
@@ -1338,51 +1349,58 @@ describe("App chat and upload flow", () => {
     {
       groups: ["CHAT_USER"],
       visible: ["チャット", "履歴", "お気に入り"],
-      hidden: ["担当者対応", "性能テスト", "ドキュメント", "管理者設定"],
+      hidden: ["担当者対応", "性能テスト", "非同期エージェント", "ドキュメント", "管理者設定"],
       expectedGetSuffixes: ["/me", "/documents", "/conversation-history"],
-      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/agents/runs", "/agents/providers", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
     },
     {
       groups: ["ANSWER_EDITOR"],
       visible: ["チャット", "担当者対応", "履歴", "お気に入り", "管理者設定"],
-      hidden: ["性能テスト", "ドキュメント"],
+      hidden: ["性能テスト", "非同期エージェント", "ドキュメント"],
       expectedGetSuffixes: ["/me", "/questions"],
-      forbiddenGetSuffixes: ["/documents", "/debug-runs", "/benchmark-runs", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+      forbiddenGetSuffixes: ["/documents", "/debug-runs", "/benchmark-runs", "/agents/runs", "/agents/providers", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
     },
     {
       groups: ["RAG_GROUP_MANAGER"],
       visible: ["チャット", "履歴", "性能テスト", "お気に入り", "ドキュメント", "管理者設定"],
-      hidden: ["担当者対応"],
+      hidden: ["担当者対応", "非同期エージェント"],
       expectedGetSuffixes: ["/me", "/documents", "/benchmark-runs", "/benchmark-suites"],
-      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/agents/runs", "/agents/providers", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
     },
     {
       groups: ["BENCHMARK_OPERATOR"],
       visible: ["チャット", "履歴", "性能テスト", "お気に入り", "管理者設定"],
-      hidden: ["担当者対応", "ドキュメント"],
+      hidden: ["担当者対応", "非同期エージェント", "ドキュメント"],
       expectedGetSuffixes: ["/me", "/benchmark-runs", "/benchmark-suites"],
-      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/documents", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/agents/runs", "/agents/providers", "/documents", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+    },
+    {
+      groups: ["ASYNC_AGENT_USER"],
+      visible: ["チャット", "履歴", "お気に入り", "非同期エージェント"],
+      hidden: ["担当者対応", "性能テスト", "ドキュメント", "管理者設定"],
+      expectedGetSuffixes: ["/me", "/agents/runs", "/agents/providers"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
     },
     {
       groups: ["USER_ADMIN"],
       visible: ["チャット", "履歴", "お気に入り", "管理者設定"],
-      hidden: ["担当者対応", "性能テスト", "ドキュメント"],
+      hidden: ["担当者対応", "性能テスト", "非同期エージェント", "ドキュメント"],
       expectedGetSuffixes: ["/me", "/admin/users", "/admin/usage"],
-      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/roles", "/admin/costs"]
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/agents/runs", "/agents/providers", "/documents", "/admin/roles", "/admin/costs"]
     },
     {
       groups: ["ACCESS_ADMIN"],
       visible: ["チャット", "履歴", "お気に入り", "管理者設定"],
-      hidden: ["担当者対応", "性能テスト", "ドキュメント"],
+      hidden: ["担当者対応", "性能テスト", "非同期エージェント", "ドキュメント"],
       expectedGetSuffixes: ["/me", "/admin/roles", "/admin/audit-log"],
-      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/users", "/admin/usage", "/admin/costs"]
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/agents/runs", "/agents/providers", "/documents", "/admin/users", "/admin/usage", "/admin/costs"]
     },
     {
       groups: ["COST_AUDITOR"],
       visible: ["チャット", "履歴", "お気に入り", "管理者設定"],
-      hidden: ["担当者対応", "性能テスト", "ドキュメント"],
+      hidden: ["担当者対応", "性能テスト", "非同期エージェント", "ドキュメント"],
       expectedGetSuffixes: ["/me", "/admin/costs"],
-      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/users", "/admin/roles", "/admin/usage"]
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/agents/runs", "/agents/providers", "/documents", "/admin/users", "/admin/roles", "/admin/usage"]
     }
   ])("keeps role based navigation and initial API loading unchanged for $groups", async ({ groups, visible, hidden, expectedGetSuffixes, forbiddenGetSuffixes }) => {
     window.sessionStorage.setItem(

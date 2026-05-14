@@ -22,6 +22,9 @@ export function usePermissions(currentUser: CurrentUser | null) {
     const canRunBenchmark = hasPermission("benchmark:run")
     const canCancelBenchmark = hasPermission("benchmark:cancel")
     const canDownloadBenchmark = hasPermission("benchmark:download")
+    const canReadAgentRuns = hasPermission("agent:read:self") || hasPermission("agent:read:managed")
+    const canRunAgent = hasPermission("agent:run")
+    const canCancelAgent = hasPermission("agent:cancel")
     const canReadUsers = hasPermission("user:read")
     const canCreateUsers = hasPermission("user:create")
     const canSuspendUsers = hasPermission("user:suspend")
@@ -57,6 +60,9 @@ export function usePermissions(currentUser: CurrentUser | null) {
       canRunBenchmark,
       canCancelBenchmark,
       canDownloadBenchmark,
+      canReadAgentRuns,
+      canRunAgent,
+      canCancelAgent,
       canReadUsers,
       canCreateUsers,
       canSuspendUsers,

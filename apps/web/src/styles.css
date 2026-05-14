@@ -7,6 +7,7 @@
 @import "./styles/features/history.css";
 @import "./styles/features/documents.css";
 @import "./styles/features/admin.css";
+@import "./styles/features/agents.css";
 @import "./styles/responsive.css";
 @import "./styles/features/benchmark.css";
 @import "./styles/features/auth.css";

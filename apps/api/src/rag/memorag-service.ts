@@ -3,12 +3,12 @@ import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { SFNClient, StartExecutionCommand, StopExecutionCommand } from "@aws-sdk/client-sfn"
 import { config } from "../config.js"
-import { rolePermissions, type Role } from "../authorization.js"
+import { hasPermission, rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { runChatOrchestration } from "../chat-orchestration/graph.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AgentProviderAvailability, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -72,6 +72,17 @@ type CreateBenchmarkRunInput = {
   minScore?: number
   concurrency?: number
   thresholds?: BenchmarkRunThresholds
+}
+
+type CreateAsyncAgentRunInput = {
+  provider: AgentRuntimeProvider
+  modelId: string
+  instruction: string
+  selectedFolderIds?: string[]
+  selectedDocumentIds?: string[]
+  selectedSkillIds?: string[]
+  selectedAgentProfileIds?: string[]
+  budget?: AsyncAgentRun["budget"]
 }
 
 type BenchmarkDownloadArtifact = "report" | "summary" | "results" | "logs"
@@ -1702,6 +1713,172 @@ export class MemoRagService {
     return benchmarkSuites
   }
 
+  listAgentRuntimeProviders(): Array<{
+    provider: AgentRuntimeProvider
+    displayName: string
+    availability: AgentProviderAvailability
+    reason?: string
+    configuredModelIds: string[]
+  }> {
+    return [
+      {
+        provider: "claude_code",
+        displayName: "Claude Code",
+        availability: "not_configured",
+        reason: "Claude Code provider credentials and workspace execution are not configured in G1.",
+        configuredModelIds: []
+      },
+      {
+        provider: "codex",
+        displayName: "Codex",
+        availability: "not_configured",
+        reason: "Codex provider credentials and workspace execution are not configured in G1.",
+        configuredModelIds: []
+      },
+      {
+        provider: "opencode",
+        displayName: "OpenCode",
+        availability: "not_configured",
+        reason: "OpenCode provider credentials and workspace execution are not configured in G1.",
+        configuredModelIds: []
+      },
+      {
+        provider: "custom",
+        displayName: "Custom",
+        availability: "disabled",
+        reason: "Custom provider execution is disabled until a tenant provider adapter is configured.",
+        configuredModelIds: []
+      }
+    ]
+  }
+
+  async createAsyncAgentRun(user: AppUser, input: CreateAsyncAgentRunInput): Promise<AsyncAgentRun> {
+    await this.assertAsyncAgentSelectionsReadable(user, input)
+
+    const now = new Date().toISOString()
+    const agentRunId = createAsyncAgentRunId(now)
+    const provider = this.listAgentRuntimeProviders().find((candidate) => candidate.provider === input.provider)
+    const availability = provider?.availability ?? "provider_unavailable"
+    const blocked = availability !== "available"
+    const selectedFolderIds = uniqueStrings(input.selectedFolderIds ?? [])
+    const selectedDocumentIds = uniqueStrings(input.selectedDocumentIds ?? [])
+    const workspaceId = `workspace_${agentRunId}`
+    const run: AsyncAgentRun = {
+      agentRunId,
+      runId: agentRunId,
+      tenantId: "default",
+      requesterUserId: user.userId,
+      provider: input.provider,
+      modelId: input.modelId,
+      status: blocked ? "blocked" : "queued",
+      providerAvailability: availability,
+      failureReasonCode: blocked ? availability === "not_configured" || availability === "disabled" ? "not_configured" : "provider_unavailable" : undefined,
+      failureReason: blocked
+        ? availability === "not_configured" || availability === "disabled"
+          ? "Provider execution is not configured. G1 records the run contract without starting a provider."
+          : "Provider is unavailable. G1 does not create mock provider executions."
+        : undefined,
+      instruction: input.instruction,
+      selectedFolderIds,
+      selectedDocumentIds,
+      selectedSkillIds: uniqueStrings(input.selectedSkillIds ?? []),
+      selectedAgentProfileIds: uniqueStrings(input.selectedAgentProfileIds ?? []),
+      workspaceId,
+      workspaceMounts: [
+        ...selectedFolderIds.map((folderId) => ({
+          mountId: `mount_${randomUUID().slice(0, 12)}`,
+          workspaceId,
+          sourceType: "folder" as const,
+          sourceId: folderId,
+          mountedPath: `/workspace/read-only/folders/${folderId}`,
+          accessMode: "readOnly" as const,
+          permissionCheckedAt: now
+        })),
+        ...selectedDocumentIds.map((documentId) => ({
+          mountId: `mount_${randomUUID().slice(0, 12)}`,
+          workspaceId,
+          sourceType: "document" as const,
+          sourceId: documentId,
+          mountedPath: `/workspace/read-only/documents/${documentId}`,
+          accessMode: "readOnly" as const,
+          permissionCheckedAt: now
+        }))
+      ],
+      artifactIds: [],
+      artifacts: [],
+      budget: input.budget,
+      createdBy: user.userId,
+      createdAt: now,
+      completedAt: blocked ? now : undefined,
+      updatedAt: now
+    }
+
+    await this.saveAsyncAgentRun(run)
+    return run
+  }
+
+  async listAsyncAgentRuns(user: AppUser): Promise<AsyncAgentRun[]> {
+    const runs = await this.loadAsyncAgentRuns()
+    const canReadManaged = hasPermission(user, "agent:read:managed")
+    return runs
+      .filter((run) => canReadManaged || run.requesterUserId === user.userId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .slice(0, 100)
+  }
+
+  async getAsyncAgentRun(user: AppUser, agentRunId: string): Promise<AsyncAgentRun | undefined> {
+    const run = await this.loadAsyncAgentRun(agentRunId)
+    if (!run) return undefined
+    if (!this.canReadAsyncAgentRun(user, run)) throw forbiddenError("Forbidden")
+    return run
+  }
+
+  async cancelAsyncAgentRun(user: AppUser, agentRunId: string): Promise<AsyncAgentRun | undefined> {
+    const run = await this.loadAsyncAgentRun(agentRunId)
+    if (!run) return undefined
+    if (!this.canReadAsyncAgentRun(user, run)) throw forbiddenError("Forbidden")
+    if (run.status === "completed" || run.status === "failed" || run.status === "cancelled" || run.status === "expired") return run
+    const now = new Date().toISOString()
+    const updated: AsyncAgentRun = {
+      ...run,
+      status: "cancelled",
+      failureReasonCode: "cancelled",
+      failureReason: "Cancelled before provider execution.",
+      completedAt: now,
+      updatedAt: now
+    }
+    await this.saveAsyncAgentRun(updated)
+    return updated
+  }
+
+  async listAsyncAgentArtifacts(user: AppUser, agentRunId: string): Promise<AsyncAgentRun["artifacts"] | undefined> {
+    const run = await this.getAsyncAgentRun(user, agentRunId)
+    return run?.artifacts ?? []
+  }
+
+  async getAsyncAgentArtifact(user: AppUser, agentRunId: string, artifactId: string): Promise<AsyncAgentRun["artifacts"][number] | undefined> {
+    const artifacts = await this.listAsyncAgentArtifacts(user, agentRunId)
+    return artifacts?.find((artifact) => artifact.artifactId === artifactId)
+  }
+
+  async executeAsyncAgentRun(runId: string): Promise<AsyncAgentRun> {
+    const run = await this.loadAsyncAgentRun(runId)
+    if (!run) throw new Error(`Async agent run not found: ${runId}`)
+    if (run.status === "blocked" || run.status === "failed" || run.status === "cancelled" || run.status === "completed") return run
+    const now = new Date().toISOString()
+    const updated: AsyncAgentRun = {
+      ...run,
+      status: "blocked",
+      providerAvailability: "provider_unavailable",
+      failureReasonCode: "provider_unavailable",
+      failureReason: "Provider execution is not implemented in G1.",
+      completedAt: now,
+      updatedAt: now
+    }
+    await this.saveAsyncAgentRun(updated)
+    return updated
+  }
+
   async createBenchmarkRun(user: AppUser, input: CreateBenchmarkRunInput): Promise<BenchmarkRun> {
     const suite = benchmarkSuites.find((candidate) => candidate.suiteId === (input.suiteId ?? "standard-agent-v1"))
     if (!suite) throw new Error(`Unknown benchmark suite: ${input.suiteId}`)
@@ -1822,6 +1999,50 @@ export class MemoRagService {
       fileName,
       contentDisposition: `attachment; filename="${fileName}"`
     }
+  }
+
+  private async assertAsyncAgentSelectionsReadable(user: AppUser, input: CreateAsyncAgentRunInput): Promise<void> {
+    const selectedFolderIds = uniqueStrings(input.selectedFolderIds ?? [])
+    const selectedDocumentIds = uniqueStrings(input.selectedDocumentIds ?? [])
+    await this.assertSearchScopeReadable(user, { groupIds: selectedFolderIds })
+
+    if (selectedDocumentIds.length > 0) {
+      const readableDocuments = new Set((await this.listDocuments(user)).map((document) => document.documentId))
+      for (const documentId of selectedDocumentIds) {
+        if (!readableDocuments.has(documentId)) throw forbiddenError("Forbidden")
+      }
+    }
+
+    if ((input.selectedSkillIds?.length ?? 0) > 0 && !hasPermission(user, "skill:read")) throw forbiddenError("Forbidden")
+    if ((input.selectedAgentProfileIds?.length ?? 0) > 0 && !hasPermission(user, "agent_profile:read")) throw forbiddenError("Forbidden")
+  }
+
+  private canReadAsyncAgentRun(user: AppUser, run: AsyncAgentRun): boolean {
+    if (run.requesterUserId === user.userId && hasPermission(user, "agent:read:self")) return true
+    return hasPermission(user, "agent:read:managed")
+  }
+
+  private async loadAsyncAgentRuns(): Promise<AsyncAgentRun[]> {
+    const keys = await this.deps.objectStore.listKeys("agent-runs/")
+    const runs = await Promise.all(
+      keys
+        .filter((key) => key.endsWith(".json"))
+        .map(async (key) => JSON.parse(await this.deps.objectStore.getText(key)) as AsyncAgentRun)
+    )
+    return runs.map(normalizeAsyncAgentRun)
+  }
+
+  private async loadAsyncAgentRun(agentRunId: string): Promise<AsyncAgentRun | undefined> {
+    try {
+      return normalizeAsyncAgentRun(JSON.parse(await this.deps.objectStore.getText(asyncAgentRunObjectKey(agentRunId))) as AsyncAgentRun)
+    } catch (error: unknown) {
+      if (isMissingObjectError(error)) return undefined
+      throw error
+    }
+  }
+
+  private async saveAsyncAgentRun(run: AsyncAgentRun): Promise<void> {
+    await this.deps.objectStore.putText(asyncAgentRunObjectKey(run.agentRunId), JSON.stringify(run, null, 2), "application/json; charset=utf-8")
   }
 
   private async startBenchmarkExecution(run: BenchmarkRun, outputPrefix: string): Promise<string> {
@@ -2023,6 +2244,11 @@ function createBenchmarkRunId(now: string): string {
   return `bench_${compact}_${randomUUID().slice(0, 8)}`
 }
 
+function createAsyncAgentRunId(now: string): string {
+  const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
+  return `agent_${compact}_${randomUUID().slice(0, 8)}`
+}
+
 function createChatRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `chat_${compact}_${randomUUID().slice(0, 8)}`
@@ -2031,6 +2257,20 @@ function createChatRunId(now: string): string {
 function createDocumentIngestRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `ingest_${compact}_${randomUUID().slice(0, 8)}`
+}
+
+function asyncAgentRunObjectKey(agentRunId: string): string {
+  return `agent-runs/${agentRunId}.json`
+}
+
+function normalizeAsyncAgentRun(run: AsyncAgentRun): AsyncAgentRun {
+  return {
+    ...run,
+    runId: run.runId ?? run.agentRunId,
+    workspaceMounts: run.workspaceMounts ?? [],
+    artifactIds: run.artifactIds ?? [],
+    artifacts: run.artifacts ?? []
+  }
 }
 
 function toDocumentManifestSummary(manifest: DocumentManifest): DocumentManifestSummary {

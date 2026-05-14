@@ -2,6 +2,7 @@ import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { AppEnv } from "../app-env.js"
 import type { Dependencies } from "../dependencies.js"
 import type { MemoRagService } from "../rag/memorag-service.js"
+import { registerAgentRoutes } from "./agent-routes.js"
 import { registerAdminRoutes } from "./admin-routes.js"
 import { registerBenchmarkRoutes } from "./benchmark-routes.js"
 import { registerChatRoutes } from "./chat-routes.js"
@@ -23,4 +24,5 @@ export function registerApiRoutes(app: OpenAPIHono<AppEnv>, deps: Dependencies, 
   registerConversationHistoryRoutes(context)
   registerDebugRoutes(context)
   registerBenchmarkRoutes(context)
+  registerAgentRoutes(context)
 }

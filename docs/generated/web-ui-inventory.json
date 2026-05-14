@@ -53,6 +53,17 @@
       "certainty": "confirmed"
     },
     {
+      "view": "agents",
+      "label": "非同期エージェント",
+      "routePath": "/",
+      "routeKind": "client-state",
+      "screenComponent": "AsyncAgentWorkspace",
+      "permissions": [
+        "canReadAgentRuns"
+      ],
+      "certainty": "confirmed"
+    },
+    {
       "view": "admin",
       "label": "管理者設定",
       "routePath": "/",
@@ -95,13 +106,20 @@
       "interactionCount": 33
     },
     {
+      "feature": "agents",
+      "label": "agents",
+      "screens": [],
+      "componentCount": 1,
+      "interactionCount": 4
+    },
+    {
       "feature": "app",
       "label": "アプリケーション枠",
       "screens": [
         "profile"
       ],
       "componentCount": 7,
-      "interactionCount": 18
+      "interactionCount": 19
     },
     {
       "feature": "auth",
@@ -193,6 +211,7 @@
       "jsxUsages": [
         "AdminWorkspace",
         "AssigneeWorkspace",
+        "AsyncAgentWorkspace",
         "BenchmarkWorkspace",
         "ChatView",
         "DocumentWorkspace",
@@ -435,6 +454,30 @@
         "h3",
         "input",
         "label",
+        "section",
+        "small",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx",
+      "feature": "agents",
+      "exports": [
+        "AsyncAgentWorkspace"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "LoadingStatus",
+        "article",
+        "button",
+        "code",
+        "div",
+        "h2",
+        "h3",
+        "header",
+        "p",
         "section",
         "small",
         "span",
@@ -1417,9 +1460,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:24:a",
+      "id": "apps/web/src/app/components/RailNav.tsx:26:a",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 24,
+      "line": 26,
       "feature": "app",
       "component": "RailNav",
       "element": "a",
@@ -1444,9 +1487,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:28:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:30:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 28,
+      "line": 30,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1490,9 +1533,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:33:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:35:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 33,
+      "line": 35,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1536,9 +1579,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:38:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:40:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 38,
+      "line": 40,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1582,9 +1625,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:43:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:45:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 43,
+      "line": 45,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1628,9 +1671,55 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:48:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:51:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 48,
+      "line": 51,
+      "feature": "app",
+      "component": "RailNav",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "非同期エージェント",
+      "a11y": {
+        "accessibleName": "エージェント",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "aria-current=activeView === \"agents\" ? \"page\" : undefined"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"agents\")"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "title",
+          "value": "非同期エージェント"
+        },
+        {
+          "name": "aria-current",
+          "value": "activeView === \"agents\" ? \"page\" : undefined"
+        },
+        {
+          "name": "onClick",
+          "value": "() => onChangeView(\"agents\")"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/app/components/RailNav.tsx:56:button",
+      "file": "apps/web/src/app/components/RailNav.tsx",
+      "line": 56,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1674,9 +1763,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:53:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:61:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 53,
+      "line": 61,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1720,9 +1809,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:59:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:67:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 59,
+      "line": 67,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1766,9 +1855,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:65:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:73:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 65,
+      "line": 73,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -3107,6 +3196,188 @@
         {
           "name": "onClick",
           "value": "() => setDisableCandidate(alias)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:33:button",
+      "file": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx",
+      "line": 33,
+      "feature": "agents",
+      "component": "AsyncAgentWorkspace",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "チャットへ戻る",
+      "a11y": {
+        "accessibleName": "チャットへ戻る",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onBack"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onBack"
+        },
+        {
+          "name": "title",
+          "value": "チャットへ戻る"
+        },
+        {
+          "name": "aria-label",
+          "value": "チャットへ戻る"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:47:button",
+      "file": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx",
+      "line": 47,
+      "feature": "agents",
+      "component": "AsyncAgentWorkspace",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "非同期エージェント情報を更新",
+      "a11y": {
+        "accessibleName": "非同期エージェント情報を更新",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onRefresh"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onRefresh"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "title",
+          "value": "更新"
+        },
+        {
+          "name": "aria-label",
+          "value": "非同期エージェント情報を更新"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:84:button",
+      "file": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx",
+      "line": 84,
+      "feature": "agents",
+      "component": "AsyncAgentWorkspace",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "`${run.agentRunId}の詳細`",
+      "a11y": {
+        "accessibleName": "`${run.agentRunId}の詳細`",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "aria-current=selectedRun?.agentRunId === run.agentRunId ? \"true\" : undefined"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => setSelectedRunId(run.agentRunId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${run.agentRunId}の詳細`"
+        },
+        {
+          "name": "aria-current",
+          "value": "selectedRun?.agentRunId === run.agentRunId ? \"true\" : undefined"
+        },
+        {
+          "name": "onClick",
+          "value": "() => setSelectedRunId(run.agentRunId)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx:116:button",
+      "file": "apps/web/src/features/agents/components/AsyncAgentWorkspace.tsx",
+      "line": 116,
+      "feature": "agents",
+      "component": "AsyncAgentWorkspace",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "キャンセル",
+      "a11y": {
+        "accessibleName": "キャンセル",
+        "accessibleNameSource": "visible-text",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=!canCancel || ![\"queued\", \"preparing_workspace\", \"running\", \"waiting_for_approval\"].inclu…"
+        ],
+        "status": "warning",
+        "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onCancel(selectedRun.agentRunId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "disabled",
+          "value": "!canCancel || ![\"queued\", \"preparing_workspace\", \"running\", \"waiting_for_approval\"].inclu…"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onCancel(selectedRun.agentRunId)"
         }
       ],
       "certainty": "confirmed"
