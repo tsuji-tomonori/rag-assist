@@ -1,6 +1,6 @@
 # G2 async agent Claude Code provider
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 発注元 wave: Wave 7
 - 依存タスク: `tasks/done/20260514-2325-g1-async-agent-foundation.md`
@@ -53,14 +53,14 @@ Claude Code provider の実行契約を API/service/worker に実装し、後続
 
 ## 受け入れ条件
 
-- [ ] `claude_code` provider の availability が設定有無に基づき `available` または `not_configured` を返し、未設定時に mock run/artifact を作らない。
-- [ ] AsyncAgentRun worker が `claude_code` adapter を呼び、成功・失敗・timeout/cancel の run status と sanitized failure/log を保存できる。
-- [ ] provider adapter input に selected mount / instruction / model / budget が渡り、権限外・品質不適格な mount を追加しない。
-- [ ] artifact metadata は実行結果に由来し、固定 artifact / demo fallback / 架空 cost を本番経路に混入しない。
-- [ ] secret / token / signed URL が run failure、artifact metadata、log、debug へ露出しないことをテストで確認している。
-- [ ] G3/G4 が再利用できる provider adapter interface が追加され、Codex/OpenCode は未設定状態を維持している。
-- [ ] 関連 API / worker / service tests、typecheck、lint、`git diff --check` が pass している。
-- [ ] 作業レポートを `reports/working/` に追加し、PR コメント後に task を `tasks/done/` へ移動している。
+- [x] `claude_code` provider の availability が設定有無に基づき `available` または `not_configured` を返し、未設定時に mock run/artifact を作らない。
+- [x] AsyncAgentRun worker が `claude_code` adapter を呼び、成功・失敗・timeout/cancel の run status と sanitized failure/log を保存できる。
+- [x] provider adapter input に selected mount / instruction / model / budget が渡り、権限外・品質不適格な mount を追加しない。
+- [x] artifact metadata は実行結果に由来し、固定 artifact / demo fallback / 架空 cost を本番経路に混入しない。
+- [x] secret / token / signed URL が run failure、artifact metadata、log、debug へ露出しないことをテストで確認している。
+- [x] G3/G4 が再利用できる provider adapter interface が追加され、Codex/OpenCode は未設定状態を維持している。
+- [x] 関連 API / worker / service tests、typecheck、lint、`git diff --check` が pass している。
+- [x] 作業レポートを `reports/working/` に追加し、PR コメント後に task を `tasks/done/` へ移動している。
 
 ## 検証計画
 
