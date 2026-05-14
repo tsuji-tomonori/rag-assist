@@ -35,6 +35,7 @@
 - alias ledger に `searchImprovement` metadata を追加し、review / publish 時に state を進めるようにした。
 - `apps/api/src/security/access-control-policy.test.ts`、API docs、詳細設計 docs、contract schema、API/Web 型を更新した。
 - question access test と service unit test に support/search improvement の回帰確認を追加した。
+- Wave 4 の F/J1 PR merge 後に `origin/main` を取り込み、OpenAPI 生成物を再生成して runtime source gate と整合させた。
 
 ## 5. 成果物
 
@@ -46,6 +47,7 @@
 | `packages/contract/src/schemas/support.ts` | TypeScript | 共有 support/search improvement schema | R1, R5 |
 | `apps/api/src/questions-access.test.ts`, `apps/api/src/rag/memorag-service.test.ts` | Test | 権限境界、allowlist、draft candidate の検証 | R2, R3, R4 |
 | `docs/3_設計_DES/...` | Markdown | API / 検索改善 / 問い合わせ設計の追記 | R5 |
+| `docs/generated/openapi.md`, `docs/generated/openapi/` | Markdown | H/F/J1 統合後の runtime OpenAPI 生成物 | R5 |
 
 ## 6. 指示への fit 評価
 
@@ -70,6 +72,15 @@
 - `npm run test -w @memorag-mvp/api`: pass
 - `npm run docs:openapi:check`: pass
 - `git diff --check`: pass
+- main 取り込み後の追加検証:
+  - `npm exec -w @memorag-mvp/api -- tsx --test src/questions-access.test.ts src/security/access-control-policy.test.ts src/contract/api-contract.test.ts src/rag/memorag-service.test.ts`: pass（53 tests）
+  - `npm run typecheck -w @memorag-mvp/api`: pass
+  - `npm run typecheck -w @memorag-mvp/contract`: pass
+  - `npm run typecheck -w @memorag-mvp/web`: pass
+  - `npm run docs:openapi`: pass
+  - `npm run docs:openapi:check`: pass
+  - `git diff --check`: pass
+  - `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: coverage summary は閾値到達（Statements 93.86%, Branches 85.02%, Functions 93.93%, Lines 93.86%）。summary 出力後に終了処理が戻らず、該当 test process を TERM したため exit code は pass として扱わない。
 
 ## 8. 未対応・制約・リスク
 

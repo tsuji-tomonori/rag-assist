@@ -35,6 +35,25 @@ Media type: `application/json`
 | `assigneeDepartment` | `string` | no | `data.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
 | `category` | `string` | no | 問い合わせや文書の分類。 | - |
 | `priority` | `enum(normal \| high \| urgent)` | no | `data.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
+| `source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `data.source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
+| `messageId` | `string` | no | `data.messageId` の値。項目名は message id を表します。 | - |
+| `ragRunId` | `string` | no | `data.ragRunId` の値。項目名は rag run id を表します。 | - |
+| `answerUnavailableEventId` | `string` | no | `data.answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
+| `answerUnavailableReason` | `string` | no | `data.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `sanitizedDiagnostics` | `object` | no | `data.sanitizedDiagnostics` の値。項目名は sanitized diagnostics を表します。 | - |
+| `sanitizedDiagnostics.tier` | `enum(support_sanitized)` | yes | `data.sanitizedDiagnostics.tier` の値。項目名は tier を表します。 | enum=support_sanitized |
+| `sanitizedDiagnostics.answerUnavailableReason` | `string` | no | `data.sanitizedDiagnostics.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `sanitizedDiagnostics.retrievalQuality` | `enum(no_evidence \| insufficient_evidence \| conflicting_evidence \| low_quality_evidence \| unknown)` | no | `data.sanitizedDiagnostics.retrievalQuality` の値。項目名は retrieval quality を表します。 | enum=no_evidence, insufficient_evidence, conflicting_evidence, low_quality_evidence, unknown |
+| `sanitizedDiagnostics.qualityCauses` | `array<enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)>` | no | `data.sanitizedDiagnostics.qualityCauses` の値。項目名は quality causes を表します。 | - |
+| `sanitizedDiagnostics.visibleCitationIds` | `array<string>` | no | `data.sanitizedDiagnostics.visibleCitationIds` の値。項目名は visible citation ids を表します。 | - |
+| `sanitizedDiagnostics.visibleDocumentIds` | `array<string>` | no | `data.sanitizedDiagnostics.visibleDocumentIds` の値。項目名は visible document ids を表します。 | - |
+| `sanitizedDiagnostics.visibleChunkIds` | `array<string>` | no | `data.sanitizedDiagnostics.visibleChunkIds` の値。項目名は visible chunk ids を表します。 | - |
+| `sanitizedDiagnostics.qualityWarnings` | `array<string>` | no | `data.sanitizedDiagnostics.qualityWarnings` の値。項目名は quality warnings を表します。 | - |
+| `sanitizedDiagnostics.suggestedNextActions` | `array<enum(search_improvement_review \| document_owner_review \| document_reparse \| rag_exclusion_review \| benchmark_case_review)>` | no | `data.sanitizedDiagnostics.suggestedNextActions` の値。項目名は suggested next actions を表します。 | - |
+| `assigneeUserId` | `string` | no | `data.assigneeUserId` の値。項目名は assignee user id を表します。 | - |
+| `assigneeGroupId` | `string` | no | `data.assigneeGroupId` の値。項目名は assignee group id を表します。 | - |
+| `slaDueAt` | `string` | no | `data.slaDueAt` の値。項目名は sla due at を表します。 | - |
+| `qualityCause` | `enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)` | no | `data.qualityCause` の値。項目名は quality cause を表します。 | enum=retrieval_gap, low_quality_evidence, stale_document, extraction_warning, unsupported_answer, other |
 | `sourceQuestion` | `string` | no | `data.sourceQuestion` の値。項目名は source question を表します。 | - |
 | `chatAnswer` | `string` | no | `data.chatAnswer` の値。項目名は chat answer を表します。 | - |
 | `chatRunId` | `string` | no | `data.chatRunId` の値。項目名は chat run id を表します。 | - |
@@ -65,7 +84,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 24 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 43 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -86,7 +105,26 @@ Media type: `application/json`
 | `assigneeDepartment` | `string` | yes | `response.assigneeDepartment` の値。項目名は assignee department を表します。 | - |
 | `category` | `string` | yes | 問い合わせや文書の分類。 | - |
 | `priority` | `enum(normal \| high \| urgent)` | yes | `response.priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
-| `status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `status` | `enum(open \| in_progress \| waiting_requester \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, in_progress, waiting_requester, answered, resolved |
+| `source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `response.source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
+| `messageId` | `string` | no | `response.messageId` の値。項目名は message id を表します。 | - |
+| `ragRunId` | `string` | no | `response.ragRunId` の値。項目名は rag run id を表します。 | - |
+| `answerUnavailableEventId` | `string` | no | `response.answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
+| `answerUnavailableReason` | `string` | no | `response.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `sanitizedDiagnostics` | `object` | no | `response.sanitizedDiagnostics` の値。項目名は sanitized diagnostics を表します。 | - |
+| `sanitizedDiagnostics.tier` | `enum(support_sanitized)` | yes | `response.sanitizedDiagnostics.tier` の値。項目名は tier を表します。 | enum=support_sanitized |
+| `sanitizedDiagnostics.answerUnavailableReason` | `string` | no | `response.sanitizedDiagnostics.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `sanitizedDiagnostics.retrievalQuality` | `enum(no_evidence \| insufficient_evidence \| conflicting_evidence \| low_quality_evidence \| unknown)` | no | `response.sanitizedDiagnostics.retrievalQuality` の値。項目名は retrieval quality を表します。 | enum=no_evidence, insufficient_evidence, conflicting_evidence, low_quality_evidence, unknown |
+| `sanitizedDiagnostics.qualityCauses` | `array<enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)>` | no | `response.sanitizedDiagnostics.qualityCauses` の値。項目名は quality causes を表します。 | - |
+| `sanitizedDiagnostics.visibleCitationIds` | `array<string>` | no | `response.sanitizedDiagnostics.visibleCitationIds` の値。項目名は visible citation ids を表します。 | - |
+| `sanitizedDiagnostics.visibleDocumentIds` | `array<string>` | no | `response.sanitizedDiagnostics.visibleDocumentIds` の値。項目名は visible document ids を表します。 | - |
+| `sanitizedDiagnostics.visibleChunkIds` | `array<string>` | no | `response.sanitizedDiagnostics.visibleChunkIds` の値。項目名は visible chunk ids を表します。 | - |
+| `sanitizedDiagnostics.qualityWarnings` | `array<string>` | no | `response.sanitizedDiagnostics.qualityWarnings` の値。項目名は quality warnings を表します。 | - |
+| `sanitizedDiagnostics.suggestedNextActions` | `array<enum(search_improvement_review \| document_owner_review \| document_reparse \| rag_exclusion_review \| benchmark_case_review)>` | no | `response.sanitizedDiagnostics.suggestedNextActions` の値。項目名は suggested next actions を表します。 | - |
+| `assigneeUserId` | `string` | no | `response.assigneeUserId` の値。項目名は assignee user id を表します。 | - |
+| `assigneeGroupId` | `string` | no | `response.assigneeGroupId` の値。項目名は assignee group id を表します。 | - |
+| `slaDueAt` | `string` | no | `response.slaDueAt` の値。項目名は sla due at を表します。 | - |
+| `qualityCause` | `enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)` | no | `response.qualityCause` の値。項目名は quality cause を表します。 | enum=retrieval_gap, low_quality_evidence, stale_document, extraction_warning, unsupported_answer, other |
 | `sourceQuestion` | `string` | no | `response.sourceQuestion` の値。項目名は source question を表します。 | - |
 | `chatAnswer` | `string` | no | `response.chatAnswer` の値。項目名は chat answer を表します。 | - |
 | `chatRunId` | `string` | no | `response.chatRunId` の値。項目名は chat run id を表します。 | - |

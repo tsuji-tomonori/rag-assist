@@ -52,7 +52,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 18 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 30 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -73,6 +73,18 @@ Media type: `application/json`
 | `aliases[].scope.docType` | `string` | no | `response.aliases[].scope.docType` の値。項目名は doc type を表します。 | - |
 | `aliases[].scope.benchmarkSuiteId` | `string` | no | `response.aliases[].scope.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 | `aliases[].status` | `enum(draft \| approved \| disabled)` | yes | 現在の処理状態または管理状態。 | enum=draft, approved, disabled |
+| `aliases[].searchImprovement` | `object` | no | `response.aliases[].searchImprovement` の値。項目名は search improvement を表します。 | - |
+| `aliases[].searchImprovement.candidateSource` | `enum(human_draft \| ai_suggested \| support_ticket)` | yes | `response.aliases[].searchImprovement.candidateSource` の値。項目名は candidate source を表します。 | enum=human_draft, ai_suggested, support_ticket |
+| `aliases[].searchImprovement.sourceQuestionId` | `string` | no | `response.aliases[].searchImprovement.sourceQuestionId` の値。項目名は source question id を表します。 | - |
+| `aliases[].searchImprovement.sourceMessageId` | `string` | no | `response.aliases[].searchImprovement.sourceMessageId` の値。項目名は source message id を表します。 | - |
+| `aliases[].searchImprovement.sourceRagRunId` | `string` | no | `response.aliases[].searchImprovement.sourceRagRunId` の値。項目名は source rag run id を表します。 | - |
+| `aliases[].searchImprovement.suggestionReason` | `string` | no | `response.aliases[].searchImprovement.suggestionReason` の値。項目名は suggestion reason を表します。 | - |
+| `aliases[].searchImprovement.reviewState` | `enum(pending_review \| reviewed \| published)` | yes | `response.aliases[].searchImprovement.reviewState` の値。項目名は review state を表します。 | enum=pending_review, reviewed, published |
+| `aliases[].searchImprovement.reviewReason` | `string` | no | `response.aliases[].searchImprovement.reviewReason` の値。項目名は review reason を表します。 | - |
+| `aliases[].searchImprovement.impactSummary` | `string` | no | `response.aliases[].searchImprovement.impactSummary` の値。項目名は impact summary を表します。 | - |
+| `aliases[].searchImprovement.searchResultDiffSummary` | `string` | no | `response.aliases[].searchImprovement.searchResultDiffSummary` の値。項目名は search result diff summary を表します。 | - |
+| `aliases[].searchImprovement.beforeResultIds` | `array<string>` | no | `response.aliases[].searchImprovement.beforeResultIds` の値。項目名は before result ids を表します。 | - |
+| `aliases[].searchImprovement.afterResultIds` | `array<string>` | no | `response.aliases[].searchImprovement.afterResultIds` の値。項目名は after result ids を表します。 | - |
 | `aliases[].createdBy` | `string` | yes | `response.aliases[].createdBy` の値。項目名は created by を表します。 | - |
 | `aliases[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `aliases[].updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |

@@ -52,7 +52,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 25 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 44 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
@@ -73,7 +73,26 @@ Media type: `application/json`
 | `questions[].assigneeDepartment` | `string` | yes | `response.questions[].assigneeDepartment` の値。項目名は assignee department を表します。 | - |
 | `questions[].category` | `string` | yes | 問い合わせや文書の分類。 | - |
 | `questions[].priority` | `enum(normal \| high \| urgent)` | yes | `response.questions[].priority` の値。項目名は priority を表します。 | enum=normal, high, urgent |
-| `questions[].status` | `enum(open \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, answered, resolved |
+| `questions[].status` | `enum(open \| in_progress \| waiting_requester \| answered \| resolved)` | yes | 現在の処理状態または管理状態。 | enum=open, in_progress, waiting_requester, answered, resolved |
+| `questions[].source` | `enum(manual_escalation \| answer_unavailable \| negative_feedback \| quality_issue)` | no | `response.questions[].source` の値。項目名は source を表します。 | enum=manual_escalation, answer_unavailable, negative_feedback, quality_issue |
+| `questions[].messageId` | `string` | no | `response.questions[].messageId` の値。項目名は message id を表します。 | - |
+| `questions[].ragRunId` | `string` | no | `response.questions[].ragRunId` の値。項目名は rag run id を表します。 | - |
+| `questions[].answerUnavailableEventId` | `string` | no | `response.questions[].answerUnavailableEventId` の値。項目名は answer unavailable event id を表します。 | - |
+| `questions[].answerUnavailableReason` | `string` | no | `response.questions[].answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `questions[].sanitizedDiagnostics` | `object` | no | `response.questions[].sanitizedDiagnostics` の値。項目名は sanitized diagnostics を表します。 | - |
+| `questions[].sanitizedDiagnostics.tier` | `enum(support_sanitized)` | yes | `response.questions[].sanitizedDiagnostics.tier` の値。項目名は tier を表します。 | enum=support_sanitized |
+| `questions[].sanitizedDiagnostics.answerUnavailableReason` | `string` | no | `response.questions[].sanitizedDiagnostics.answerUnavailableReason` の値。項目名は answer unavailable reason を表します。 | - |
+| `questions[].sanitizedDiagnostics.retrievalQuality` | `enum(no_evidence \| insufficient_evidence \| conflicting_evidence \| low_quality_evidence \| unknown)` | no | `response.questions[].sanitizedDiagnostics.retrievalQuality` の値。項目名は retrieval quality を表します。 | enum=no_evidence, insufficient_evidence, conflicting_evidence, low_quality_evidence, unknown |
+| `questions[].sanitizedDiagnostics.qualityCauses` | `array<enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)>` | no | `response.questions[].sanitizedDiagnostics.qualityCauses` の値。項目名は quality causes を表します。 | - |
+| `questions[].sanitizedDiagnostics.visibleCitationIds` | `array<string>` | no | `response.questions[].sanitizedDiagnostics.visibleCitationIds` の値。項目名は visible citation ids を表します。 | - |
+| `questions[].sanitizedDiagnostics.visibleDocumentIds` | `array<string>` | no | `response.questions[].sanitizedDiagnostics.visibleDocumentIds` の値。項目名は visible document ids を表します。 | - |
+| `questions[].sanitizedDiagnostics.visibleChunkIds` | `array<string>` | no | `response.questions[].sanitizedDiagnostics.visibleChunkIds` の値。項目名は visible chunk ids を表します。 | - |
+| `questions[].sanitizedDiagnostics.qualityWarnings` | `array<string>` | no | `response.questions[].sanitizedDiagnostics.qualityWarnings` の値。項目名は quality warnings を表します。 | - |
+| `questions[].sanitizedDiagnostics.suggestedNextActions` | `array<enum(search_improvement_review \| document_owner_review \| document_reparse \| rag_exclusion_review \| benchmark_case_review)>` | no | `response.questions[].sanitizedDiagnostics.suggestedNextActions` の値。項目名は suggested next actions を表します。 | - |
+| `questions[].assigneeUserId` | `string` | no | `response.questions[].assigneeUserId` の値。項目名は assignee user id を表します。 | - |
+| `questions[].assigneeGroupId` | `string` | no | `response.questions[].assigneeGroupId` の値。項目名は assignee group id を表します。 | - |
+| `questions[].slaDueAt` | `string` | no | `response.questions[].slaDueAt` の値。項目名は sla due at を表します。 | - |
+| `questions[].qualityCause` | `enum(retrieval_gap \| low_quality_evidence \| stale_document \| extraction_warning \| unsupported_answer \| other)` | no | `response.questions[].qualityCause` の値。項目名は quality cause を表します。 | enum=retrieval_gap, low_quality_evidence, stale_document, extraction_warning, unsupported_answer, other |
 | `questions[].sourceQuestion` | `string` | no | `response.questions[].sourceQuestion` の値。項目名は source question を表します。 | - |
 | `questions[].chatAnswer` | `string` | no | `response.questions[].chatAnswer` の値。項目名は chat answer を表します。 | - |
 | `questions[].chatRunId` | `string` | no | `response.questions[].chatRunId` の値。項目名は chat run id を表します。 | - |
