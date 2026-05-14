@@ -18,12 +18,22 @@ export type OperationObject = {
   summary?: string
   description?: string
   operationId?: string
+  deprecated?: boolean
   tags?: string[]
   security?: Array<Record<string, string[]>>
   parameters?: ParameterObject[]
   requestBody?: RequestBodyObject
   responses?: Record<string, ResponseObject>
   "x-memorag-authorization"?: RouteAuthorizationMetadataObject
+  "x-memorag-lifecycle"?: ApiLifecycleMetadataObject
+}
+
+export type ApiLifecycleMetadataObject = {
+  stage?: "current" | "compatibility" | "deprecated"
+  replacement?: string
+  migrationNote?: string
+  removalPolicy?: string
+  notes?: string[]
 }
 
 export type RouteAuthorizationMetadataObject = {
@@ -348,6 +358,30 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   }
 }
 
+const lifecycleDocs: Record<string, ApiLifecycleMetadataObject> = {
+  "POST /chat": {
+    stage: "compatibility",
+    replacement: "POST /chat-runs + GET /chat-runs/{runId}/events",
+    migrationNote: "長時間 RAG 処理や進捗表示が必要な client は非同期 chat run API へ移行します。",
+    removalPolicy: "既存 client 互換のため削除予定日は未設定です。",
+    notes: ["同期 JSON API として維持しますが、新規 UI は非同期 API を優先します。"]
+  },
+  "POST /documents": {
+    stage: "compatibility",
+    replacement: "POST /documents/uploads + POST /document-ingest-runs",
+    migrationNote: "大容量ファイル、base64 upload、OCR fallback、embedding を伴う通常運用は upload session と非同期取り込みを使います。",
+    removalPolicy: "小さなテキスト互換用途を維持するため削除予定日は未設定です。",
+    notes: ["レスポンスは document summary のみ返し、manifest、chunk metadata、vector key は返しません。"]
+  },
+  "POST /documents/uploads/{uploadId}/ingest": {
+    stage: "compatibility",
+    replacement: "POST /document-ingest-runs",
+    migrationNote: "アップロード済み文書の通常取り込みは非同期 document ingest run を使います。",
+    removalPolicy: "既存 client 互換のため削除予定日は未設定です。",
+    notes: ["同期取り込みが timeout しうる用途では非同期 API へ誘導します。"]
+  }
+}
+
 const fieldDescriptions: Record<string, string> = {
   id: "リソースを一意に識別する ID。",
   userId: "対象ユーザーを一意に識別する ID。",
@@ -468,6 +502,8 @@ export function enrichOpenApiDocument(input: OpenApiDocument): OpenApiDocument {
         operation.summary = docs.summary
         operation.description = docs.description
       }
+      const lifecycle = lifecycleDocs[operationKey(method, path)]
+      if (lifecycle) operation["x-memorag-lifecycle"] = { ...lifecycle, ...(operation["x-memorag-lifecycle"] ?? {}) }
       if (requiresAuthorization(path)) {
         operation.parameters = [
           authorizationHeaderParameter(),
@@ -508,6 +544,7 @@ export function validateOpenApiDocument(api: OpenApiDocument): string[] {
       if (!hasJapanese(operation.summary)) errors.push(`${key}: summary に日本語説明がありません`)
       if (!hasJapanese(operation.description)) errors.push(`${key}: description に日本語説明がありません`)
       if (requiresAuthorization(path)) validateAuthorizationMetadata(errors, key, operation)
+      validateLifecycleMetadata(errors, key, operation)
       for (const parameter of operation.parameters ?? []) {
         if (!hasJapanese(parameter.description)) errors.push(`${key}: ${parameter.in ?? "parameter"} parameter ${parameter.name ?? "(unknown)"} に日本語 description がありません`)
       }
@@ -524,6 +561,24 @@ export function validateOpenApiDocument(api: OpenApiDocument): string[] {
   }
 
   return errors
+}
+
+function validateLifecycleMetadata(errors: string[], key: string, operation: OperationObject): void {
+  const expected = lifecycleDocs[key]
+  const lifecycle = operation["x-memorag-lifecycle"]
+  if (!expected) {
+    if (operation.deprecated && !lifecycle) errors.push(`${key}: deprecated operation に x-memorag-lifecycle がありません`)
+    return
+  }
+  if (!lifecycle) {
+    errors.push(`${key}: compatibility API に x-memorag-lifecycle がありません`)
+    return
+  }
+  if (!lifecycle.stage) errors.push(`${key}: x-memorag-lifecycle.stage がありません`)
+  if (!["current", "compatibility", "deprecated"].includes(String(lifecycle.stage))) errors.push(`${key}: x-memorag-lifecycle.stage が不正です`)
+  if (lifecycle.stage !== "current" && !lifecycle.replacement) errors.push(`${key}: compatibility/deprecated API に replacement がありません`)
+  if (lifecycle.stage !== "current" && !lifecycle.migrationNote) errors.push(`${key}: compatibility/deprecated API に migrationNote がありません`)
+  if (lifecycle.stage !== "current" && !lifecycle.removalPolicy) errors.push(`${key}: compatibility/deprecated API に removalPolicy がありません`)
 }
 
 function validateAuthorizationMetadata(errors: string[], key: string, operation: OperationObject): void {

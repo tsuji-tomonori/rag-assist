@@ -1,6 +1,6 @@
-import { mkdir, rm, writeFile } from "node:fs/promises"
+import { access, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
 import {
   contentRows,
   enrichOpenApiDocument,
@@ -25,10 +25,15 @@ process.env.USE_LOCAL_CHAT_RUN_STORE ??= "true"
 process.env.USE_LOCAL_DOCUMENT_INGEST_RUN_STORE ??= "true"
 process.env.LOCAL_DATA_DIR ??= ".local-data"
 
-const outputDir = fileURLToPath(new URL("../../../docs/generated/", import.meta.url))
+export const outputDir = fileURLToPath(new URL("../../../docs/generated/", import.meta.url))
 const openApiOutputPath = join(outputDir, "openapi.json")
 const markdownOutputPath = join(outputDir, "openapi.md")
 const operationOutputDir = join(outputDir, "openapi")
+
+export type OpenApiMarkdownArtifact = {
+  relativePath: string
+  content: string
+}
 
 function escapeMarkdown(value: string): string {
   return value.replaceAll("|", "\\|").replaceAll("\n", " ").trim()
@@ -129,6 +134,25 @@ function renderAuthorization(operation: OperationObject): string[] {
   return lines
 }
 
+function renderLifecycle(operation: OperationObject): string[] {
+  const lifecycle = operation["x-memorag-lifecycle"]
+  if (!lifecycle) return ["_なし_"]
+  const lines = [
+    "| 項目 | 内容 |",
+    "| --- | --- |",
+    `| stage | \`${escapeMarkdown(lifecycle.stage ?? "-")}\` |`,
+    `| replacement | ${lifecycle.replacement ? `\`${escapeMarkdown(lifecycle.replacement)}\`` : "-"} |`,
+    `| migrationNote | ${escapeMarkdown(lifecycle.migrationNote ?? "-")} |`,
+    `| removalPolicy | ${escapeMarkdown(lifecycle.removalPolicy ?? "-")} |`
+  ]
+  if (lifecycle.notes && lifecycle.notes.length > 0) {
+    lines.push("")
+    lines.push("補足:")
+    for (const note of lifecycle.notes) lines.push(`- ${escapeMarkdown(note)}`)
+  }
+  return lines
+}
+
 function renderRequestData(api: OpenApiDocument, operation: OperationObject): string[] {
   const body = operation.requestBody
   if (!body || typeof body !== "object" || !("content" in body)) return ["_なし_"]
@@ -198,13 +222,17 @@ function renderOperationDetail(api: OpenApiDocument, method: string, path: strin
   lines.push("")
   lines.push(...renderAuthorization(operation))
   lines.push("")
+  lines.push("## Lifecycle")
+  lines.push("")
+  lines.push(...renderLifecycle(operation))
+  lines.push("")
   lines.push("## Responses")
   lines.push("")
   lines.push(...renderResponses(api, operation))
   return `${lines.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`
 }
 
-function renderMarkdown(api: OpenApiDocument): string {
+export function renderMarkdown(api: OpenApiDocument): string {
   const title = api.info?.title ?? "OpenAPI Reference"
   const version = api.info?.version ?? "-"
   const description = api.info?.description ?? ""
@@ -225,30 +253,93 @@ function renderMarkdown(api: OpenApiDocument): string {
   return `${lines.join("\n").replace(/\n{3,}/g, "\n\n").trim()}\n`
 }
 
-async function main(): Promise<void> {
+export async function loadRuntimeOpenApiDocument(): Promise<OpenApiDocument> {
   const { default: app } = await import("./app.js")
   const response = await app.request("/openapi.json")
   if (!response.ok) {
-    throw new Error(`Failed to generate OpenAPI document: ${response.status}`)
+    throw new Error(`Failed to load OpenAPI document from runtime route: ${response.status}`)
   }
 
   const api = enrichOpenApiDocument((await response.json()) as OpenApiDocument)
+  return api
+}
+
+export function renderMarkdownArtifacts(api: OpenApiDocument): OpenApiMarkdownArtifact[] {
+  return [
+    { relativePath: "openapi.md", content: renderMarkdown(api) },
+    ...operationEntries(api).map((entry) => ({
+      relativePath: `openapi/${entry.fileName}`,
+      content: renderOperationDetail(api, entry.method, entry.path, entry.operation)
+    }))
+  ]
+}
+
+export async function validateGeneratedMarkdownFreshness(api: OpenApiDocument): Promise<string[]> {
+  const errors: string[] = []
+  const artifacts = renderMarkdownArtifacts(api)
+  const expectedPaths = new Set(artifacts.map((artifact) => artifact.relativePath))
+
+  try {
+    await access(openApiOutputPath)
+    errors.push("docs/generated/openapi.json は commit しません。runtime の GET /openapi.json を source of truth にしてください")
+  } catch {
+    // Expected: JSON contract is served by the runtime route, not checked in as a generated artifact.
+  }
+
+  for (const artifact of artifacts) {
+    const filePath = join(outputDir, artifact.relativePath)
+    let current: string
+    try {
+      current = await readFile(filePath, "utf8")
+    } catch {
+      errors.push(`${artifact.relativePath}: generated Markdown が存在しません。npm run docs:openapi を実行してください`)
+      continue
+    }
+    if (current !== artifact.content) {
+      errors.push(`${artifact.relativePath}: runtime OpenAPI から生成した Markdown と差分があります。npm run docs:openapi を実行してください`)
+    }
+  }
+
+  let generatedOperationFiles: string[] = []
+  try {
+    generatedOperationFiles = (await readdir(operationOutputDir))
+      .filter((fileName) => fileName.endsWith(".md"))
+      .map((fileName) => `openapi/${fileName}`)
+  } catch {
+    errors.push("openapi/: generated operation Markdown directory が存在しません。npm run docs:openapi を実行してください")
+  }
+  for (const relativePath of generatedOperationFiles) {
+    if (!expectedPaths.has(relativePath)) {
+      errors.push(`${relativePath}: runtime OpenAPI に存在しない stale generated Markdown です。npm run docs:openapi を実行してください`)
+    }
+  }
+
+  return errors
+}
+
+export async function writeOpenApiMarkdownArtifacts(api: OpenApiDocument): Promise<void> {
+  await mkdir(outputDir, { recursive: true })
+  await rm(openApiOutputPath, { force: true })
+  await rm(operationOutputDir, { force: true, recursive: true })
+  await mkdir(operationOutputDir, { recursive: true })
+  for (const artifact of renderMarkdownArtifacts(api)) {
+    await writeFile(join(outputDir, artifact.relativePath), artifact.content)
+  }
+}
+
+async function main(): Promise<void> {
+  const api = await loadRuntimeOpenApiDocument()
   const errors = validateOpenApiDocument(api)
   if (errors.length > 0) {
     throw new Error(`OpenAPI document quality check failed:\n${errors.map((error) => `- ${error}`).join("\n")}`)
   }
 
-  await mkdir(outputDir, { recursive: true })
-  await rm(openApiOutputPath, { force: true })
-  await rm(operationOutputDir, { force: true, recursive: true })
-  await mkdir(operationOutputDir, { recursive: true })
-  await writeFile(markdownOutputPath, renderMarkdown(api))
-  for (const entry of operationEntries(api)) {
-    await writeFile(join(operationOutputDir, entry.fileName), renderOperationDetail(api, entry.method, entry.path, entry.operation))
-  }
+  await writeOpenApiMarkdownArtifacts(api)
 
   console.log(`Generated ${markdownOutputPath}`)
   console.log(`Generated ${operationOutputDir}`)
 }
 
-await main()
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main()
+}

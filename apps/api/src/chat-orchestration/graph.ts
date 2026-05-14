@@ -34,6 +34,7 @@ import { NO_ANSWER, isPrimaryRequiredFact, type Clarification, type ChatOrchestr
 import { buildSignalPhrase } from "./text-signals.js"
 import { tracedNode } from "./trace.js"
 import type { ChatInput, ChatOrchestrationResult } from "./types.js"
+import { buildChatToolInvocationsFromTrace } from "./tool-registry.js"
 import { toCitation } from "./utils.js"
 
 const systemAdminUser: AppUser = {
@@ -727,6 +728,7 @@ export async function runChatOrchestration(deps: Dependencies, input: ChatInput,
         citations,
         retrieved,
         finalEvidence,
+        requesterUserId: user.userId,
         state
       })
     : undefined
@@ -767,6 +769,7 @@ async function persistDebugTrace(
     citations: DebugTrace["citations"]
     retrieved: DebugTrace["retrieved"]
     finalEvidence: NonNullable<DebugTrace["finalEvidence"]>
+    requesterUserId: string
     state: ChatOrchestrationState
   }
 ): Promise<DebugTrace> {
@@ -807,6 +810,11 @@ async function persistDebugTrace(
     citations: input.citations,
     retrieved: input.retrieved,
     finalEvidence: input.finalEvidence,
+    toolInvocations: buildChatToolInvocationsFromTrace({
+      orchestrationRunId: input.runId,
+      requesterUserId: input.requesterUserId,
+      steps: input.state.trace
+    }),
     steps: input.state.trace
   }
 

@@ -499,6 +499,7 @@ export type DebugTrace = {
   citations: Citation[]
   retrieved: Citation[]
   finalEvidence?: Citation[]
+  toolInvocations?: ChatToolInvocation[]
   steps: DebugStep[]
 }
 
@@ -858,6 +859,69 @@ export type SupportSanitizedDiagnostic = {
   suggestedNextActions?: Array<"search_improvement_review" | "document_owner_review" | "document_reparse" | "rag_exclusion_review" | "benchmark_case_review">
 }
 
+export type ChatOrchestrationMode =
+  | "rag_answer"
+  | "support_triage"
+  | "knowledge_admin_assist"
+  | "search_improvement_assist"
+  | "benchmark_assist"
+  | "debug_assist"
+
+export type ChatToolCategory =
+  | "rag"
+  | "ingest"
+  | "document"
+  | "drawing"
+  | "support"
+  | "search_improvement"
+  | "benchmark"
+  | "debug"
+  | "admin"
+  | "external"
+  | "quality"
+  | "parse"
+
+export type ChatToolDefinition = {
+  toolId: string
+  name: string
+  displayName: string
+  description: string
+  category: ChatToolCategory
+  inputSchema: JsonValue
+  outputSchema: JsonValue
+  requiredFeaturePermission: string
+  requiredResourcePermission?: "readOnly" | "full"
+  approvalRequired: boolean
+  auditRequired: boolean
+  enabled: boolean
+  disabledReason?: string
+  implementationStatus: "implemented" | "delegated" | "placeholder"
+  orchestrationModes: ChatOrchestrationMode[]
+  graphNodeLabels: string[]
+  traceLabels: string[]
+  maxToolCalls?: number
+}
+
+export type ChatToolInvocationStatus = "queued" | "waiting_for_approval" | "running" | "succeeded" | "failed" | "cancelled"
+
+export type ChatToolInvocation = {
+  invocationId: string
+  orchestrationRunId: string
+  toolId: string
+  requesterUserId: string
+  status: ChatToolInvocationStatus
+  input: JsonValue
+  inputSummary?: JsonValue
+  output?: JsonValue
+  outputSummary?: JsonValue
+  errorCode?: string
+  errorMessage?: string
+  approvedBy?: string
+  approvedAt?: string
+  startedAt?: string
+  completedAt?: string
+}
+
 export type HumanQuestion = {
   questionId: string
   title: string
@@ -904,13 +968,43 @@ export type ConversationMessage = {
   questionTicket?: HumanQuestion
 }
 
-export const CONVERSATION_HISTORY_SCHEMA_VERSION = 1
+export const CONVERSATION_HISTORY_SCHEMA_VERSION = 2
+
+export type ConversationHistorySchemaVersion = 1 | typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+
+export type ConversationDecontextualizedQuery = {
+  originalQuestion: string
+  standaloneQuestion: string
+  retrievalQueries: string[]
+  turnDependency?: string
+  previousCitationCount?: number
+}
+
+export type ConversationCitationMemoryItem = {
+  citation: Partial<Citation>
+  turnId?: string
+  answerExcerpt?: string
+  rememberedAt?: string
+}
+
+export type ConversationTaskState = {
+  status: "none" | "in_progress" | "waiting_for_user" | "completed" | "blocked"
+  goal?: string
+  pendingActions: string[]
+  metadata?: JsonValue
+}
 
 export type ConversationHistoryItem = {
-  schemaVersion: typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+  schemaVersion: ConversationHistorySchemaVersion
   id: string
   title: string
   updatedAt: string
   isFavorite?: boolean
   messages: ConversationMessage[]
+  decontextualizedQuery?: ConversationDecontextualizedQuery
+  rollingSummary?: string
+  queryFocusedSummary?: string
+  citationMemory?: ConversationCitationMemoryItem[]
+  taskState?: ConversationTaskState
+  toolInvocations?: ChatToolInvocation[]
 }

@@ -60,7 +60,7 @@ jobs:
         run: npm run typecheck -w @memorag-mvp/api
         continue-on-error: true
 
-      - name: Check OpenAPI docs
+      - name: Check OpenAPI contract docs
         id: openapi_docs
         run: npm run docs:openapi:check
         continue-on-error: true
@@ -196,7 +196,7 @@ jobs:
               ['infra', 'Lint', '${{ steps.infra_lint.outcome }}', '-', '`npm exec -- eslint infra --cache --cache-location .eslintcache-infra --max-warnings=0`'],
               ['infra', 'Type-check', '${{ steps.infra_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/infra`'],
               ['api', 'Type-check', '${{ steps.api_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/api`'],
-              ['api', 'OpenAPI docs', '${{ steps.openapi_docs.outcome }}', '日本語 summary / description gate', '`npm run docs:openapi:check`'],
+              ['api', 'OpenAPI contract docs', '${{ steps.openapi_docs.outcome }}', 'runtime source / docs freshness / lifecycle gate', '`npm run docs:openapi:check`'],
               ['web', 'Type-check', '${{ steps.web_typecheck.outcome }}', '-', '`npm run typecheck -w @memorag-mvp/web`'],
               ['web', 'Generated inventory check', '${{ steps.web_inventory.outcome }}', '-', '`npm run docs:web-inventory:check`'],
               ['infra', 'Generated inventory check', '${{ steps.infra_inventory.outcome }}', '-', '`npm run docs:infra-inventory:check`'],

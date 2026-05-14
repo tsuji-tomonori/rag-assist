@@ -53,7 +53,11 @@ Media type: `application/json`
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (rag:alias:write:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing rag:alias:write:group"}` |
+| `403` | 必要 permission (rag:alias:write:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+
+## Lifecycle
+
+_なし_
 
 ## Responses
 
