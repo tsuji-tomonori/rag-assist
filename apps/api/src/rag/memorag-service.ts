@@ -19,6 +19,7 @@ import { parseJsonObject } from "./json.js"
 import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./manifest-chunks.js"
 import { buildPipelineVersions } from "./pipeline-versions.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
+import { documentQualityProfileFromMetadata } from "./quality.js"
 import { extractDocumentFromUpload } from "./text-extract.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
 
@@ -283,6 +284,7 @@ export class MemoRagService {
     const evidenceRecords: VectorRecord[] = []
     const memoryRecords: VectorRecord[] = []
     const filterableMetadata = toFilterableVectorMetadata(input.metadata)
+    const qualityProfile = documentQualityProfileFromMetadata(input.metadata)
 
     logIngestStage({ stage: "embedding", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length })
     const evidenceRows = await mapWithConcurrency(chunks, config.embeddingConcurrency, async (chunk) => {
@@ -368,6 +370,7 @@ export class MemoRagService {
       fileName: input.fileName,
       mimeType: input.mimeType,
       metadata: input.metadata,
+      qualityProfile,
       sourceObjectKey,
       structuredBlocksObjectKey,
       memoryCardsObjectKey,
@@ -2095,6 +2098,7 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   const domainPolicy = stringValue(metadata.domainPolicy)
   const ragPolicy = stringValue(metadata.ragPolicy)
   const answerPolicy = stringValue(metadata.answerPolicy)
+  const ragEligibility = ragEligibilityValue(metadata.ragEligibility ?? objectValue(metadata.qualityProfile)?.ragEligibility)
   const drawingSourceType = drawingSourceTypeValue(metadata.drawingSourceType)
   const pageOrSheet = stringValue(metadata.pageOrSheet)
   const drawingNo = stringValue(metadata.drawingNo)
@@ -2118,6 +2122,7 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (domainPolicy) filterable.domainPolicy = domainPolicy
   if (ragPolicy) filterable.ragPolicy = ragPolicy
   if (answerPolicy) filterable.answerPolicy = answerPolicy
+  if (ragEligibility) filterable.ragEligibility = ragEligibility
   if (drawingSourceType) filterable.drawingSourceType = drawingSourceType
   if (pageOrSheet) filterable.pageOrSheet = pageOrSheet
   if (drawingNo) filterable.drawingNo = drawingNo
@@ -2137,6 +2142,14 @@ function drawingSourceTypeValue(value: JsonValue | undefined): VectorRecord["met
   return undefined
 }
 
+function ragEligibilityValue(value: JsonValue | undefined): VectorRecord["metadata"]["ragEligibility"] | undefined {
+  if (value === "eligible" || value === "eligible_with_warning" || value === "excluded") return value
+  return undefined
+}
+
+function objectValue(value: JsonValue | undefined): Record<string, JsonValue> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : undefined
+}
 
 function lifecycleStatus(metadata: Record<string, JsonValue> | undefined): VectorRecord["metadata"]["lifecycleStatus"] {
   const value = stringValue(metadata?.lifecycleStatus)

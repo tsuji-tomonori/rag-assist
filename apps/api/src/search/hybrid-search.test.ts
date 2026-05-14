@@ -105,6 +105,7 @@ test("lexical index and search handle empty inputs, scoped manifests, artifact m
   await objectStore.putText("lexical-index/latest.json", JSON.stringify({ signature: "stale", objectKey: "lexical-index/stale.json" }))
   await objectStore.putText("documents/active/source.txt", "休暇申請は3日前までです。")
   await objectStore.putText("documents/expired/source.txt", "期限切れ資料です。")
+  await objectStore.putText("documents/excluded/source.txt", "品質除外資料です。")
   await objectStore.putText("manifests/active.json", JSON.stringify({
     documentId: "active",
     fileName: "active.md",
@@ -140,6 +141,25 @@ test("lexical index and search handle empty inputs, scoped manifests, artifact m
     metadata: { expiresAt: "2000-01-01T00:00:00.000Z" },
     chunks: [{ id: "chunk-0000", text: "期限切れ資料です。" }]
   }))
+  await objectStore.putText("manifests/excluded.json", JSON.stringify({
+    documentId: "excluded",
+    fileName: "excluded.md",
+    sourceObjectKey: "documents/excluded/source.txt",
+    manifestObjectKey: "manifests/excluded.json",
+    vectorKeys: ["excluded-chunk-0000"],
+    chunkCount: 1,
+    memoryCardCount: 0,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    lifecycleStatus: "active",
+    metadata: {
+      tenantId: "tenant-a",
+      scopeType: "chat",
+      temporaryScopeId: "tmp-1",
+      allowedUsers: ["user@example.com"]
+    },
+    qualityProfile: { ragEligibility: "excluded", verificationStatus: "verified" },
+    chunks: [{ id: "chunk-0000", text: "品質除外資料です。" }]
+  }))
 
   const index = await getLexicalIndex(
     deps,
@@ -166,6 +186,23 @@ test("lexical index and search handle empty inputs, scoped manifests, artifact m
       put: async () => undefined,
       delete: async () => undefined,
       query: async () => [
+        {
+          key: "excluded-semantic",
+          score: 0.95,
+          metadata: {
+            kind: "chunk",
+            documentId: "excluded",
+            fileName: "excluded.md",
+            chunkId: "chunk-0000",
+            text: "quality excluded should be hidden",
+            createdAt: "2026-05-01T00:00:00.000Z",
+            lifecycleStatus: "active",
+            ragEligibility: "excluded",
+            scopeType: "chat",
+            allowedUsers: ["user@example.com"],
+            tenantId: "tenant-a"
+          }
+        },
         {
           key: "semantic-only",
           score: 0.8,

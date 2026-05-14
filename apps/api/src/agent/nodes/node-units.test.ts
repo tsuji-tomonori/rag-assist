@@ -1175,10 +1175,33 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   assert.deepEqual(await createRetrieveMemoryNode(deps, user())(state({ useMemory: false })), { memoryCards: [] })
 
   const guardedDeps = createDeps()
+  const guardedObjectStore = guardedDeps.objectStore
+  guardedDeps.objectStore = {
+    ...guardedObjectStore,
+    getText: async (key: string) => {
+      if (key === "manifests/doc-quality-excluded.json") {
+        return JSON.stringify({
+          documentId: "doc-quality-excluded",
+          fileName: "excluded.txt",
+          sourceObjectKey: "documents/doc-quality-excluded/source.txt",
+          manifestObjectKey: "manifests/doc-quality-excluded.json",
+          vectorKeys: ["doc-quality-excluded-memory-1"],
+          lifecycleStatus: "active",
+          metadata: { aclGroup: "GROUP_A" },
+          qualityProfile: { ragEligibility: "excluded" },
+          chunkCount: 1,
+          memoryCardCount: 1,
+          createdAt: "2026-05-03T00:00:00.000Z"
+        })
+      }
+      return guardedObjectStore.getText(key)
+    }
+  }
   guardedDeps.memoryVectorStore = {
     put: async () => undefined,
     query: async () => [
       { ...chunk, key: "active-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-1", aclGroup: "GROUP_A" } },
+      { ...chunk, key: "quality-excluded-memory", metadata: { ...chunk.metadata, documentId: "doc-quality-excluded", kind: "memory", memoryId: "memory-q", aclGroup: "GROUP_A" } },
       { ...chunk, key: "staging-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-2", lifecycleStatus: "staging", aclGroup: "GROUP_A" } },
       { ...chunk, key: "forbidden-memory", metadata: { ...chunk.metadata, kind: "memory", memoryId: "memory-3", aclGroup: "GROUP_B" } }
     ],
@@ -1269,6 +1292,45 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   assert.equal(memoryExpanded.retrievedChunks?.[0]?.metadata.sources?.includes("memory"), true)
   assert.equal(memoryExpanded.retrievedChunks?.[0]?.metadata.chunkId, "chunk-0000")
   assert.equal(memoryExpanded.retrievalDiagnostics?.sourceCounts.memory, 1)
+
+  const excludedExpansionDeps = createDeps()
+  const excludedObjectStore = excludedExpansionDeps.objectStore
+  excludedExpansionDeps.objectStore = {
+    ...excludedObjectStore,
+    getText: async (key: string) => {
+      if (key === "manifests/doc-1.json") {
+        const manifest = JSON.parse(await excludedObjectStore.getText(key)) as Record<string, unknown>
+        return JSON.stringify({ ...manifest, qualityProfile: { ragEligibility: "excluded" } })
+      }
+      return excludedObjectStore.getText(key)
+    }
+  }
+  excludedExpansionDeps.evidenceVectorStore = {
+    put: async () => undefined,
+    query: async () => [],
+    delete: async () => undefined
+  }
+  const excludedMemoryExpanded = await createSearchEvidenceNode(excludedExpansionDeps, user())(
+    state({
+      normalizedQuery: "not-in-document",
+      queryEmbeddings: [{ query: "not-in-document", vector: [1, 0] }],
+      memoryCards: [{
+        ...chunk,
+        key: "doc-1-memory-section-0001",
+        score: 0.82,
+        metadata: {
+          ...chunk.metadata,
+          kind: "memory",
+          chunkId: undefined,
+          memoryId: "memory-section-0001",
+          sourceChunkIds: ["chunk-0000"],
+          text: "Level: section\nSource chunks: chunk-0000"
+        }
+      }]
+    })
+  )
+  assert.deepEqual(excludedMemoryExpanded.retrievedChunks, [])
+  assert.equal(excludedMemoryExpanded.retrievalDiagnostics?.sourceCounts.memory, 0)
 })
 
 test("retrieval evaluator routes fact coverage conservatively", async () => {

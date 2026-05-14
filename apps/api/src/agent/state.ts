@@ -33,6 +33,7 @@ export const RetrievedChunkSchema = z.object({
     figureCaption: z.string().optional(),
     extractionMethod: z.string().optional(),
     lifecycleStatus: z.enum(["active", "staging", "superseded"]).optional(),
+    ragEligibility: z.enum(["eligible", "eligible_with_warning", "excluded"]).optional(),
     sources: z.array(z.string()).optional(),
     sourceChunkIds: z.array(z.string()).optional(),
     rrfScore: z.number().optional(),
