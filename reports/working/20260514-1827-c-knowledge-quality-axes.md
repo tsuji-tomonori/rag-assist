@@ -48,6 +48,7 @@
 | `apps/api/src/search/hybrid-search.ts` | TypeScript | lexical / semantic quality gate | R3-R5 |
 | `apps/api/src/agent/nodes/retrieve-memory.ts` | TypeScript | memory hit quality gate | R4-R5 |
 | `apps/api/src/agent/nodes/search-evidence.ts` | TypeScript | memory source chunk expansion quality gate | R4-R5 |
+| `apps/api/src/rag/quality.test.ts` | TypeScript | quality profile 正規化と gate 分岐の coverage 補強 | R1-R4 |
 | `apps/api/src/rag/memorag-service.ts` | TypeScript | ingest profile 保存と vector metadata 制限 | R2-R3/R6 |
 | `docs/spec/gap-phase-c.md` | Markdown | 実装結果と open question | R7 |
 | `tasks/do/20260514-1820-c-knowledge-quality-axes.md` | Markdown | task / 受け入れ条件 | R7 |
@@ -58,6 +59,7 @@
 - `npm exec -w @memorag-mvp/api -- tsx --test src/search/hybrid-search.test.ts src/agent/nodes/node-units.test.ts src/rag/memorag-service.test.ts src/adapters/s3-vectors-store.test.ts`: pass。
 - `npm run typecheck -w @memorag-mvp/api`: pass。
 - `npm run test -w @memorag-mvp/api`: pass。
+- `timeout 180 npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass。branch coverage は 85.29%。
 - `git diff --check`: pass。
 - `python3 scripts/validate_spec_recovery.py docs/spec-recovery`: pass。出力は `Validation completed. Review warnings before treating the spec recovery as complete.`。
 - `npm exec -w @memorag-mvp/api -- tsx --test src/agent/graph.test.ts src/agent/nodes/node-units.test.ts src/rag/memorag-service.test.ts src/adapters/s3-vectors-store.test.ts`: pass。
