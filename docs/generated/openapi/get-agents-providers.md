@@ -6,7 +6,7 @@
 
 Summary: 非同期エージェント provider 状態を取得する
 
-G1 では provider の設定状態だけを返し、credential、secret、実行可能な mock provider は返しません。
+provider の設定状態だけを返し、credential、secret、実行可能な mock provider は返しません。
 
 ## Headers
 

@@ -52,7 +52,7 @@ Media type: `application/json`
 | 条件付きでエラーになる role | なし |
 
 補足:
-- 選択 folder/document は readOnly 以上を service 層で確認します。writableCopy と writeback は G1 scope-out です。
+- 選択 folder/document は readOnly 以上を service 層で確認します。writableCopy と writeback は scope-out です。
 - provider が disabled / not configured / unavailable の場合、mock execution は作らず blocked run として返します。
 
 認証・認可エラー:

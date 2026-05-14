@@ -6,7 +6,7 @@
 
 Summary: 非同期エージェント run をキャンセルする
 
-自分の run または管理対象として参照できる run を cancel 状態へ更新します。provider 実行停止は G1 では行いません。
+自分の run または管理対象として参照できる run を cancel 状態へ更新します。provider 実行停止は adapter ごとの安全な停止境界に限定します。
 
 ## Headers
 

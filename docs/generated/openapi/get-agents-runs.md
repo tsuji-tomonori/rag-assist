@@ -39,7 +39,7 @@ _なし_
 
 補足:
 - 自分の AsyncAgentRun は agent:read:self で参照できます。管理対象 run の横断参照には agent:read:managed が必要です。
-- G1 では run metadata と read-only artifact metadata のみ返し、provider log / raw workspace / credential は返しません。
+- run metadata と read-only artifact metadata のみ返し、provider raw workspace / credential は返しません。provider log は sanitized artifact metadata としてのみ扱います。
 
 認証・認可エラー:
 

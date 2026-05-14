@@ -193,3 +193,26 @@ Phase G は、仕様 4C「非同期エージェント実行」を対象にする
 - provider credentials、workspace execution、実ファイル mount、writableCopy、writeback 適用。
 - skill / agent profile / preset の CRUD UI と prompt injection 検査。
 - async agent benchmark runner と debug trace producer。
+
+## G2-async-agent-claude-code 実装メモ
+
+- 追記日: 2026-05-15
+- 対象 task: `G2-async-agent-claude-code`
+- 状態: implemented provider adapter foundation
+
+### implemented
+
+| ID | 実装内容 | 根拠 |
+|---|---|---|
+| G2-IMPL-001 | `AsyncAgentProviderAdapter` / `AsyncAgentProviderRegistry` を追加し、G3/G4 が同じ interface を再利用できるようにした。 | `apps/api/src/async-agent/provider.ts` |
+| G2-IMPL-002 | `claude_code` provider は `CLAUDE_CODE_COMMAND` が設定された場合のみ `available` とし、未設定時は `not_configured` を返して mock execution / mock artifact を作らない。 | `apps/api/src/async-agent/claude-code-provider.ts`, `MemoRagService.listAgentRuntimeProviders` |
+| G2-IMPL-003 | AsyncAgentRun worker の service 実行経路で provider adapter を呼び、`running` → `completed` / `failed` / `expired` の状態遷移、artifact metadata 保存、sanitized log artifact 保存を行う。 | `MemoRagService.executeAsyncAgentRun`, `memorag-service.test.ts` |
+| G2-IMPL-004 | provider input には run ID、requester、model、instruction、workspace mounts、skill/profile selections、budget を渡す。selected mount の read boundary は G1 service check を継続する。 | `AsyncAgentProviderInput`, `memorag-service.test.ts` |
+| G2-IMPL-005 | provider stdout/stderr/failure text から API key、Bearer token、S3 signed URL credential/signature を redaction してから run failure / artifact storage に残す。 | `sanitizeProviderText`, `memorag-service.test.ts` |
+
+### scope-out
+
+- Codex / OpenCode provider の本実行。
+- provider credential の UI 管理、Secrets rotation、tenant/user-level provider settings。
+- writeback の自動適用、writableCopy の実ファイル同期、provider 外部 network policy の細粒度 enforcement。
+- async agent benchmark runner の本実装。

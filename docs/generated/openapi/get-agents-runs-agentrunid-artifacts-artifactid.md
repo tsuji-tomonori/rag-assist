@@ -41,7 +41,7 @@ _なし_
 | 条件付きでエラーになる role | `ASYNC_AGENT_USER` |
 
 補足:
-- artifact API は G1 では read-only metadata だけを返します。download URL、writeback 適用、架空 artifact fallback は実装しません。
+- artifact API は read-only metadata だけを返します。download URL、writeback 適用、架空 artifact fallback は実装しません。
 - 対象 run は自分の run または agent:read:managed で管理対象として読める run に限定します。
 
 認証・認可エラー:

@@ -34,6 +34,8 @@ import { LocalDocumentGroupStore } from "./adapters/local-document-group-store.j
 import type { DocumentGroupStore } from "./adapters/document-group-store.js"
 import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
 import { AwsCodeBuildLogReader, type CodeBuildLogReader } from "./adapters/codebuild-log-reader.js"
+import { createDefaultAsyncAgentProviderRegistry } from "./async-agent/claude-code-provider.js"
+import type { AsyncAgentProviderRegistry } from "./async-agent/provider.js"
 
 export type Dependencies = {
   objectStore: ObjectStore
@@ -49,6 +51,7 @@ export type Dependencies = {
   documentIngestRunEventStore: DocumentIngestRunEventStore
   documentGroupStore: DocumentGroupStore
   codeBuildLogReader?: CodeBuildLogReader
+  asyncAgentProviders?: AsyncAgentProviderRegistry
   userDirectory?: UserDirectory
 }
 
@@ -95,8 +98,9 @@ export function createDependencies(): Dependencies {
     ? new LocalDocumentGroupStore(config.localDataDir)
     : new DynamoDbDocumentGroupStore(config.documentGroupsTableName)
   const codeBuildLogReader = new AwsCodeBuildLogReader()
+  const asyncAgentProviders = createDefaultAsyncAgentProviderRegistry()
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, codeBuildLogReader, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
   return cached
 }
