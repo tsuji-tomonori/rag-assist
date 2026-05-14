@@ -9,6 +9,7 @@ import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
 import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
+import type { AppUser } from "../auth.js"
 import { LocalDocumentIngestRunEventStore } from "../adapters/local-document-ingest-run-event-store.js"
 import { LocalDocumentIngestRunStore } from "../adapters/local-document-ingest-run-store.js"
 import { LocalDocumentGroupStore } from "../adapters/local-document-group-store.js"
@@ -17,7 +18,7 @@ import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
-import type { AgentRuntimeProvider, BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
+import type { AgentRuntimeProvider, AsyncAgentRun, BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
 import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
@@ -80,6 +81,132 @@ test("service rejects empty uploads and missing documents", async () => {
   await assert.rejects(() => service.ingest({ fileName: "empty.txt", text: "   " }), /extractable text|No chunks/)
   await assert.rejects(() => service.deleteDocument("missing-document-id"))
   assert.equal(await service.getDebugRun("missing-run"), undefined)
+})
+
+test("service manages async agent run metadata without provider execution or mock artifacts", async () => {
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const other: AppUser = { userId: "other-user", email: "other@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const admin: AppUser = { userId: "agent-admin", email: "agent-admin@example.com", cognitoGroups: ["ASYNC_AGENT_ADMIN"] }
+  const manifest = await service.ingest({ fileName: "agent-source.md", text: "非同期エージェントの対象資料です。", skipMemory: true })
+  const group = await service.createDocumentGroup(owner, { name: "Agent source group" })
+
+  const run = await service.createAsyncAgentRun(owner, {
+    provider: "custom",
+    modelId: "custom-model",
+    instruction: "対象資料を確認する",
+    selectedDocumentIds: [manifest.documentId, manifest.documentId],
+    selectedFolderIds: [group.groupId, group.groupId],
+    selectedSkillIds: ["skill-a", "skill-a"],
+    selectedAgentProfileIds: ["profile-a", "profile-a"],
+    budget: { maxToolCalls: 10 }
+  })
+
+  assert.equal(run.agentRunId, run.runId)
+  assert.equal(run.status, "blocked")
+  assert.equal(run.providerAvailability, "disabled")
+  assert.equal(run.failureReasonCode, "not_configured")
+  assert.deepEqual(run.selectedDocumentIds, [manifest.documentId])
+  assert.deepEqual(run.selectedFolderIds, [group.groupId])
+  assert.deepEqual(run.selectedSkillIds, ["skill-a"])
+  assert.deepEqual(run.selectedAgentProfileIds, ["profile-a"])
+  assert.equal(run.workspaceMounts.length, 2)
+  assert.ok(run.workspaceMounts.every((mount) => mount.accessMode === "readOnly"))
+  assert.deepEqual(run.artifactIds, [])
+  assert.deepEqual(run.artifacts, [])
+
+  assert.equal((await service.getAsyncAgentRun(owner, run.agentRunId))?.agentRunId, run.agentRunId)
+  assert.equal((await service.getAsyncAgentRun(admin, run.agentRunId))?.agentRunId, run.agentRunId)
+  await assert.rejects(() => service.getAsyncAgentRun(other, run.agentRunId), /Forbidden/)
+  assert.deepEqual(await service.listAsyncAgentRuns(owner), [run])
+  assert.deepEqual(await service.listAsyncAgentRuns(other), [])
+  assert.equal((await service.listAsyncAgentRuns(admin))[0]?.agentRunId, run.agentRunId)
+
+  const unavailable = await service.createAsyncAgentRun(owner, {
+    provider: "unknown_provider" as never,
+    modelId: "unknown-model",
+    instruction: "未設定 provider は実行しない",
+    selectedDocumentIds: [],
+    selectedFolderIds: [],
+    selectedSkillIds: [],
+    selectedAgentProfileIds: []
+  })
+  assert.equal(unavailable.status, "blocked")
+  assert.equal(unavailable.providerAvailability, "provider_unavailable")
+  assert.equal(unavailable.failureReasonCode, "provider_unavailable")
+  assert.deepEqual(unavailable.workspaceMounts, [])
+  assert.deepEqual(unavailable.artifacts, [])
+
+  const cancelled = await service.cancelAsyncAgentRun(owner, run.agentRunId)
+  assert.equal(cancelled?.status, "cancelled")
+  assert.equal(cancelled?.failureReasonCode, "cancelled")
+  assert.equal((await service.cancelAsyncAgentRun(owner, run.agentRunId))?.updatedAt, cancelled?.updatedAt)
+  assert.deepEqual(await service.listAsyncAgentArtifacts(owner, run.agentRunId), [])
+  assert.equal(await service.getAsyncAgentArtifact(owner, run.agentRunId, "missing-artifact"), undefined)
+  assert.equal(await service.getAsyncAgentRun(owner, "missing-run"), undefined)
+  assert.equal(await service.cancelAsyncAgentRun(owner, "missing-run"), undefined)
+  assert.equal(await service.listAsyncAgentArtifacts(owner, "missing-run"), undefined)
+  await assert.rejects(() => service.executeAsyncAgentRun("missing-run"), /Async agent run not found/)
+
+  const queuedRun: AsyncAgentRun = {
+    ...run,
+    agentRunId: "agent_queued_fixture",
+    runId: "agent_queued_fixture",
+    status: "queued",
+    provider: "codex",
+    providerAvailability: "not_configured",
+    failureReasonCode: undefined,
+    failureReason: undefined,
+    artifactIds: ["artifact_report_fixture"],
+    artifacts: [{
+      artifactId: "artifact_report_fixture",
+      agentRunId: "agent_queued_fixture",
+      artifactType: "report",
+      fileName: "report.md",
+      mimeType: "text/markdown",
+      size: 12,
+      storageRef: "agent-artifacts/agent_queued_fixture/report.md",
+      createdAt: run.createdAt,
+      writebackStatus: "not_requested"
+    }],
+    completedAt: undefined
+  }
+  await deps.objectStore.putText("agent-runs/agent_queued_fixture.json", JSON.stringify(queuedRun), "application/json; charset=utf-8")
+
+  const blockedByWorkerContract = await service.executeAsyncAgentRun("agent_queued_fixture")
+  assert.equal(blockedByWorkerContract.status, "blocked")
+  assert.equal(blockedByWorkerContract.failureReasonCode, "provider_unavailable")
+  assert.equal((await service.getAsyncAgentArtifact(owner, "agent_queued_fixture", "artifact_report_fixture"))?.fileName, "report.md")
+  assert.equal((await service.listAsyncAgentArtifacts(owner, "agent_queued_fixture"))?.length, 1)
+})
+
+test("service treats object-store missing variants as absent async agent runs", async () => {
+  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const missingVariants = [
+    Object.assign(new Error("object missing"), { Code: "NoSuchKey" }),
+    Object.assign(new Error("object missing"), { name: "NoSuchKey" }),
+    Object.assign(new Error("object missing"), { name: "NotFound" }),
+    Object.assign(new Error("object missing"), { $metadata: { httpStatusCode: 404 } }),
+    new Error("NoSuchKey: object missing"),
+    new Error("ENOENT: object missing")
+  ]
+
+  for (const [index, objectGetError] of missingVariants.entries()) {
+    const { service } = await createService({
+      objectGetErrorPrefix: `agent-runs/missing-${index}`,
+      objectGetError
+    })
+    assert.equal(await service.getAsyncAgentRun(owner, `missing-${index}`), undefined)
+  }
+})
+
+test("service surfaces non-missing async agent run load errors", async () => {
+  const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const { service } = await createService({
+    objectGetErrorPrefix: "agent-runs/broken",
+    objectGetError: new Error("object store unavailable")
+  })
+  await assert.rejects(() => service.getAsyncAgentRun(owner, "broken"), /object store unavailable/)
 })
 
 test("service listDocuments filters manifests by ACL for callers", async () => {

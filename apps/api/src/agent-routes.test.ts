@@ -1,6 +1,8 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import app from "./app.js"
+import { createDependencies } from "./dependencies.js"
+import type { AsyncAgentRun } from "./types.js"
 
 test("async agent providers report honest not configured state", async () => {
   const response = await app.request("/agents/providers")
@@ -53,6 +55,82 @@ test("creating async agent run returns blocked metadata without mock artifacts",
   const artifactResponse = await app.request(`/agents/runs/${encodeURIComponent(run.agentRunId)}/artifacts`)
   assert.equal(artifactResponse.status, 200)
   assert.deepEqual(await artifactResponse.json(), { artifacts: [] })
+
+  const detailResponse = await app.request(`/agents/runs/${encodeURIComponent(run.agentRunId)}`)
+  assert.equal(detailResponse.status, 200)
+  const detail = await detailResponse.json() as { agentRunId: string; runId: string; status: string }
+  assert.equal(detail.agentRunId, run.agentRunId)
+  assert.equal(detail.runId, run.runId)
+  assert.equal(detail.status, "blocked")
+
+  const cancelResponse = await app.request(`/agents/runs/${encodeURIComponent(run.agentRunId)}/cancel`, { method: "POST" })
+  assert.equal(cancelResponse.status, 200)
+  const cancelled = await cancelResponse.json() as { agentRunId: string; status: string; failureReasonCode?: string }
+  assert.equal(cancelled.agentRunId, run.agentRunId)
+  assert.equal(cancelled.status, "cancelled")
+  assert.equal(cancelled.failureReasonCode, "cancelled")
+})
+
+test("async agent run routes report missing runs and artifacts honestly", async () => {
+  const missingRunResponse = await app.request("/agents/runs/missing-agent-run")
+  assert.equal(missingRunResponse.status, 404)
+  assert.deepEqual(await missingRunResponse.json(), { error: "Async agent run not found" })
+
+  const missingCancelResponse = await app.request("/agents/runs/missing-agent-run/cancel", { method: "POST" })
+  assert.equal(missingCancelResponse.status, 404)
+  assert.deepEqual(await missingCancelResponse.json(), { error: "Async agent run not found" })
+
+  const missingArtifactsResponse = await app.request("/agents/runs/missing-agent-run/artifacts")
+  assert.equal(missingArtifactsResponse.status, 404)
+  assert.deepEqual(await missingArtifactsResponse.json(), { error: "Async agent run not found" })
+
+  const missingArtifactResponse = await app.request("/agents/runs/missing-agent-run/artifacts/missing-artifact")
+  assert.equal(missingArtifactResponse.status, 404)
+  assert.deepEqual(await missingArtifactResponse.json(), { error: "Async agent artifact not found" })
+})
+
+test("async agent artifact route returns only persisted metadata", async () => {
+  const deps = createDependencies()
+  const now = "2026-05-14T00:00:00.000Z"
+  const run: AsyncAgentRun = {
+    agentRunId: "agent_route_artifact_fixture",
+    runId: "agent_route_artifact_fixture",
+    tenantId: "default",
+    requesterUserId: "local-user",
+    provider: "codex",
+    modelId: "codex-placeholder",
+    status: "blocked",
+    providerAvailability: "not_configured",
+    failureReasonCode: "not_configured",
+    instruction: "artifact route fixture",
+    selectedFolderIds: [],
+    selectedDocumentIds: [],
+    selectedSkillIds: [],
+    selectedAgentProfileIds: [],
+    workspaceId: "workspace_agent_route_artifact_fixture",
+    workspaceMounts: [],
+    artifactIds: ["artifact_route_report"],
+    artifacts: [{
+      artifactId: "artifact_route_report",
+      agentRunId: "agent_route_artifact_fixture",
+      artifactType: "report",
+      fileName: "report.md",
+      mimeType: "text/markdown",
+      size: 32,
+      storageRef: "agent-artifacts/agent_route_artifact_fixture/report.md",
+      createdAt: now,
+      writebackStatus: "not_requested"
+    }],
+    createdBy: "local-user",
+    createdAt: now,
+    completedAt: now,
+    updatedAt: now
+  }
+  await deps.objectStore.putText("agent-runs/agent_route_artifact_fixture.json", JSON.stringify(run), "application/json; charset=utf-8")
+
+  const response = await app.request("/agents/runs/agent_route_artifact_fixture/artifacts/artifact_route_report")
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), run.artifacts[0])
 })
 
 test("async agent run read, cancel, and artifact detail endpoints keep metadata read-only", async () => {
