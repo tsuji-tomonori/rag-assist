@@ -21,6 +21,7 @@ import type { Dependencies } from "../dependencies.js"
 import type { AgentRuntimeProvider, AsyncAgentRun, BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
 import type { CodeBuildLogReader } from "../adapters/codebuild-log-reader.js"
+import { AsyncAgentProviderRegistry, type AsyncAgentProviderAdapter, type AsyncAgentProviderInput } from "../async-agent/provider.js"
 import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { authorizeDocumentDelete } from "../routes/benchmark-seed.js"
 import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
@@ -952,6 +953,130 @@ test("service records async agent readable selections without expanding duplicat
   })
 })
 
+test("service executes configured Claude Code provider with sanitized artifacts", async () => {
+  const calls: AsyncAgentProviderInput[] = []
+  const provider = fakeAsyncAgentProvider({
+    availability: "available",
+    execute: async (input) => {
+      calls.push(input)
+      return {
+        status: "completed",
+        artifacts: [{
+          artifactType: "markdown",
+          fileName: "report.md",
+          mimeType: "text/markdown",
+          text: "result with ANTHROPIC_API_KEY=should-not-leak and X-Amz-Signature=abc123",
+          writebackStatus: "not_requested"
+        }],
+        logText: "Bearer secret-token-value"
+      }
+    }
+  })
+  const { service, deps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const document = await service.ingest({
+    fileName: "agent-source.md",
+    text: "Claude Code provider に readOnly mount される資料です。",
+    skipMemory: true,
+    metadata: { ownerUserId: user.userId }
+  })
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "claude_code",
+    modelId: "claude-code-default",
+    instruction: "資料を要約する",
+    selectedDocumentIds: [document.documentId],
+    budget: { maxDurationMinutes: 5, maxToolCalls: 3 }
+  })
+  assert.equal(run.status, "queued")
+  assert.equal(run.providerAvailability, "available")
+
+  const completed = await service.executeAsyncAgentRun(run.agentRunId)
+
+  assert.equal(completed.status, "completed")
+  assert.equal(completed.failureReason, undefined)
+  assert.equal(completed.artifacts.length, 2)
+  assert.equal(completed.artifacts[0]?.fileName, "report.md")
+  assert.equal(completed.artifacts[0]?.writebackStatus, "not_requested")
+  assert.equal(calls[0]?.instruction, "資料を要約する")
+  assert.equal(calls[0]?.workspaceMounts[0]?.sourceId, document.documentId)
+  assert.deepEqual(calls[0]?.budget, { maxDurationMinutes: 5, maxToolCalls: 3 })
+  const reportText = await deps.objectStore.getText(completed.artifacts[0]?.storageRef ?? "")
+  const logText = await deps.objectStore.getText(completed.artifacts[1]?.storageRef ?? "")
+  assert.doesNotMatch(reportText, /should-not-leak|abc123/)
+  assert.doesNotMatch(logText, /secret-token-value/)
+  assert.match(reportText, /ANTHROPIC_API_KEY=\[REDACTED\]/)
+  assert.match(logText, /Bearer \[REDACTED\]/)
+})
+
+test("service records Claude Code provider failures without leaking raw secrets", async () => {
+  const provider = fakeAsyncAgentProvider({
+    availability: "available",
+    execute: async () => ({
+      status: "expired",
+      failureReason: "timeout with token: abcdefghijklmnop",
+      logText: "signed url X-Amz-Credential=credential-value"
+    })
+  })
+  const { service, deps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "claude_code",
+    modelId: "claude-code-default",
+    instruction: "timeout を確認する"
+  })
+
+  const expired = await service.executeAsyncAgentRun(run.agentRunId)
+
+  assert.equal(expired.status, "expired")
+  assert.equal(expired.failureReasonCode, "execution_error")
+  assert.doesNotMatch(expired.failureReason ?? "", /abcdefghijklmnop/)
+  assert.equal(expired.artifacts[0]?.artifactType, "log")
+  const logText = await deps.objectStore.getText(expired.artifacts[0]?.storageRef ?? "")
+  assert.doesNotMatch(logText, /credential-value/)
+  assert.match(logText, /X-Amz-Credential=\[REDACTED\]/)
+})
+
+test("service converts Claude Code provider exceptions to sanitized failed runs", async () => {
+  const provider = fakeAsyncAgentProvider({
+    availability: "available",
+    execute: async () => {
+      throw new Error("provider crashed with ANTHROPIC_API_KEY=raw-secret")
+    }
+  })
+  const { service } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "claude_code",
+    modelId: "claude-code-default",
+    instruction: "例外を確認する"
+  })
+
+  const failed = await service.executeAsyncAgentRun(run.agentRunId)
+
+  assert.equal(failed.status, "failed")
+  assert.equal(failed.failureReasonCode, "execution_error")
+  assert.doesNotMatch(failed.failureReason ?? "", /raw-secret/)
+  assert.match(failed.failureReason ?? "", /ANTHROPIC_API_KEY=\[REDACTED\]/)
+})
+
+test("service keeps Claude Code provider not configured without mock artifacts", async () => {
+  const provider = fakeAsyncAgentProvider({ availability: "not_configured" })
+  const { service } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "claude_code",
+    modelId: "claude-code-default",
+    instruction: "未設定状態を確認する"
+  })
+
+  assert.equal(run.status, "blocked")
+  assert.equal(run.providerAvailability, "not_configured")
+  assert.deepEqual(run.artifacts, [])
+  assert.deepEqual(run.artifactIds, [])
+  assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "blocked")
+})
+
 test("asynchronous chat run stores debug trace by reference", async () => {
   const { service, deps } = await createService()
   await service.ingest({
@@ -1526,6 +1651,7 @@ async function createService(options: {
   objectListExtraKeys?: string[]
   userDirectory?: UserDirectory
   codeBuildLogReader?: CodeBuildLogReader
+  asyncAgentProviders?: AsyncAgentProviderRegistry
 } = {}): Promise<{ service: MemoRagService; dataDir: string; deps: Dependencies }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-service-test-"))
   const baseObjectStore = new LocalObjectStore(dataDir)
@@ -1569,9 +1695,46 @@ async function createService(options: {
     documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
     documentGroupStore: new LocalDocumentGroupStore(dataDir),
     codeBuildLogReader: options.codeBuildLogReader ?? { getText: async () => undefined },
+    asyncAgentProviders: options.asyncAgentProviders ?? defaultTestAsyncAgentProviders(),
     userDirectory: options.userDirectory
   } as unknown as Dependencies
   return { service: new MemoRagService(deps), dataDir, deps }
+}
+
+function fakeAsyncAgentProvider(options: {
+  provider?: AgentRuntimeProvider
+  displayName?: string
+  availability: "available" | "not_configured"
+  execute?: AsyncAgentProviderAdapter["execute"]
+}): AsyncAgentProviderAdapter {
+  return {
+    definition: () => ({
+      provider: options.provider ?? "claude_code",
+      displayName: options.displayName ?? "Claude Code",
+      availability: options.availability,
+      reason: options.availability === "available" ? undefined : "CLAUDE_CODE_COMMAND is not configured.",
+      configuredModelIds: options.availability === "available" ? ["claude-code-default"] : []
+    }),
+    execute: options.execute ?? (async () => ({ status: "failed", failureReason: "not configured" }))
+  }
+}
+
+function defaultTestAsyncAgentProviders(): AsyncAgentProviderRegistry {
+  return new AsyncAgentProviderRegistry([
+    fakeAsyncAgentProvider({ provider: "claude_code", displayName: "Claude Code", availability: "not_configured" }),
+    fakeAsyncAgentProvider({ provider: "codex", displayName: "Codex", availability: "not_configured" }),
+    fakeAsyncAgentProvider({ provider: "opencode", displayName: "OpenCode", availability: "not_configured" }),
+    {
+      definition: () => ({
+        provider: "custom",
+        displayName: "Custom",
+        availability: "disabled",
+        reason: "Custom provider execution is disabled until a tenant provider adapter is configured.",
+        configuredModelIds: []
+      }),
+      execute: async () => ({ status: "failed", failureReason: "custom disabled" })
+    }
+  ])
 }
 
 async function waitForDocumentIngestRun(deps: Dependencies, runId: string) {

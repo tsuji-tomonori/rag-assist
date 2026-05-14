@@ -20,7 +20,7 @@ const agentReadAuthorization = routeAuthorization({
   resourceCondition: "agentRunSelfOrManaged",
   notes: [
     "自分の AsyncAgentRun は agent:read:self で参照できます。管理対象 run の横断参照には agent:read:managed が必要です。",
-    "G1 では run metadata と read-only artifact metadata のみ返し、provider log / raw workspace / credential は返しません。"
+    "run metadata と read-only artifact metadata のみ返し、provider raw workspace / credential は返しません。provider log は sanitized artifact metadata としてのみ扱います。"
   ]
 })
 
@@ -31,7 +31,7 @@ const agentArtifactReadAuthorization = routeAuthorization({
   operationKey: "agent.artifact.read",
   resourceCondition: "agentRunSelfOrManaged",
   notes: [
-    "artifact API は G1 では read-only metadata だけを返します。download URL、writeback 適用、架空 artifact fallback は実装しません。",
+    "artifact API は read-only metadata だけを返します。download URL、writeback 適用、架空 artifact fallback は実装しません。",
     "対象 run は自分の run または agent:read:managed で管理対象として読める run に限定します。"
   ]
 })
@@ -69,7 +69,7 @@ export function registerAgentRoutes({ app, service }: ApiRouteContext) {
         operationKey: "agent.run.create",
         resourceCondition: "agentWorkspaceReadOnly",
         notes: [
-          "選択 folder/document は readOnly 以上を service 層で確認します。writableCopy と writeback は G1 scope-out です。",
+          "選択 folder/document は readOnly 以上を service 層で確認します。writableCopy と writeback は scope-out です。",
           "provider が disabled / not configured / unavailable の場合、mock execution は作らず blocked run として返します。"
         ]
       }),

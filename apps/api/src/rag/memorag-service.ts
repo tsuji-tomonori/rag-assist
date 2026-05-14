@@ -5,6 +5,7 @@ import { SFNClient, StartExecutionCommand, StopExecutionCommand } from "@aws-sdk
 import { config } from "../config.js"
 import { hasPermission, rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
+import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
 import { runChatOrchestration } from "../chat-orchestration/graph.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
@@ -1720,36 +1721,7 @@ export class MemoRagService {
     reason?: string
     configuredModelIds: string[]
   }> {
-    return [
-      {
-        provider: "claude_code",
-        displayName: "Claude Code",
-        availability: "not_configured",
-        reason: "Claude Code provider credentials and workspace execution are not configured in G1.",
-        configuredModelIds: []
-      },
-      {
-        provider: "codex",
-        displayName: "Codex",
-        availability: "not_configured",
-        reason: "Codex provider credentials and workspace execution are not configured in G1.",
-        configuredModelIds: []
-      },
-      {
-        provider: "opencode",
-        displayName: "OpenCode",
-        availability: "not_configured",
-        reason: "OpenCode provider credentials and workspace execution are not configured in G1.",
-        configuredModelIds: []
-      },
-      {
-        provider: "custom",
-        displayName: "Custom",
-        availability: "disabled",
-        reason: "Custom provider execution is disabled until a tenant provider adapter is configured.",
-        configuredModelIds: []
-      }
-    ]
+    return this.deps.asyncAgentProviders?.list() ?? []
   }
 
   async createAsyncAgentRun(user: AppUser, input: CreateAsyncAgentRunInput): Promise<AsyncAgentRun> {
@@ -1866,17 +1838,109 @@ export class MemoRagService {
     if (!run) throw new Error(`Async agent run not found: ${runId}`)
     if (run.status === "blocked" || run.status === "failed" || run.status === "cancelled" || run.status === "completed") return run
     const now = new Date().toISOString()
-    const updated: AsyncAgentRun = {
+    const provider = this.deps.asyncAgentProviders?.get(run.provider)
+    const providerDefinition = provider?.definition()
+    if (!provider || providerDefinition?.availability !== "available") {
+      const updated: AsyncAgentRun = {
+        ...run,
+        status: "blocked",
+        providerAvailability: providerDefinition?.availability ?? "provider_unavailable",
+        failureReasonCode: providerDefinition?.availability === "not_configured" || providerDefinition?.availability === "disabled" ? "not_configured" : "provider_unavailable",
+        failureReason: providerDefinition?.reason ?? "Provider execution is not configured.",
+        completedAt: now,
+        updatedAt: now
+      }
+      await this.saveAsyncAgentRun(updated)
+      return updated
+    }
+
+    const running: AsyncAgentRun = {
       ...run,
-      status: "blocked",
-      providerAvailability: "provider_unavailable",
-      failureReasonCode: "provider_unavailable",
-      failureReason: "Provider execution is not implemented in G1.",
-      completedAt: now,
+      status: "running",
+      providerAvailability: "available",
+      startedAt: run.startedAt ?? now,
       updatedAt: now
+    }
+    await this.saveAsyncAgentRun(running)
+
+    const input: AsyncAgentProviderInput = {
+      agentRunId: running.agentRunId,
+      requesterUserId: running.requesterUserId,
+      provider: running.provider,
+      modelId: running.modelId,
+      instruction: running.instruction,
+      workspaceId: running.workspaceId,
+      workspaceMounts: running.workspaceMounts,
+      selectedSkillIds: running.selectedSkillIds,
+      selectedAgentProfileIds: running.selectedAgentProfileIds,
+      budget: running.budget
+    }
+    const result: AsyncAgentProviderResult = await provider.execute(input).catch((error: unknown) => ({
+      status: "failed" as const,
+      failureReason: error instanceof Error ? error.message : "Provider execution failed."
+    }))
+    const completedAt = new Date().toISOString()
+    const artifacts = result.status === "completed"
+      ? await this.persistAsyncAgentArtifacts(running.agentRunId, result.artifacts, completedAt, result.logText)
+      : result.logText
+        ? await this.persistAsyncAgentArtifacts(running.agentRunId, [{
+            artifactType: "log",
+            fileName: "provider-log.txt",
+            mimeType: "text/plain",
+            text: result.logText,
+            writebackStatus: "not_requested"
+          }], completedAt)
+        : []
+    const updated: AsyncAgentRun = {
+      ...running,
+      status: result.status,
+      failureReasonCode: result.status === "completed" ? undefined : "execution_error",
+      failureReason: result.status === "completed" ? undefined : sanitizeProviderText(result.failureReason),
+      completedAt,
+      updatedAt: completedAt,
+      artifacts,
+      artifactIds: artifacts.map((artifact) => artifact.artifactId)
     }
     await this.saveAsyncAgentRun(updated)
     return updated
+  }
+
+  private async persistAsyncAgentArtifacts(
+    agentRunId: string,
+    artifacts: AsyncAgentProviderArtifact[],
+    createdAt: string,
+    logText?: string
+  ): Promise<AsyncAgentRun["artifacts"]> {
+    const normalizedArtifacts = [...artifacts]
+    if (logText?.trim()) {
+      normalizedArtifacts.push({
+        artifactType: "log",
+        fileName: "provider-log.txt",
+        mimeType: "text/plain",
+        text: logText,
+        writebackStatus: "not_requested"
+      })
+    }
+
+    const persisted = await Promise.all(normalizedArtifacts.map(async (artifact) => {
+      const artifactId = `artifact_${randomUUID().slice(0, 12)}`
+      const fileName = sanitizeArtifactFileName(artifact.fileName)
+      const storageRef = `agent-runs/${agentRunId}/artifacts/${artifactId}/${fileName}`
+      const text = sanitizeProviderText(artifact.text)
+      await this.deps.objectStore.putText(storageRef, text)
+      return {
+        artifactId,
+        agentRunId,
+        artifactType: artifact.artifactType,
+        fileName,
+        mimeType: artifact.mimeType,
+        size: Buffer.byteLength(text, "utf-8"),
+        storageRef,
+        createdAt,
+        writebackStatus: artifact.writebackStatus ?? "not_requested"
+      }
+    }))
+    return persisted
   }
 
   async createBenchmarkRun(user: AppUser, input: CreateBenchmarkRunInput): Promise<BenchmarkRun> {
@@ -2247,6 +2311,11 @@ function createBenchmarkRunId(now: string): string {
 function createAsyncAgentRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `agent_${compact}_${randomUUID().slice(0, 8)}`
+}
+
+function sanitizeArtifactFileName(fileName: string): string {
+  const sanitized = fileName.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/^_+/, "")
+  return sanitized || "artifact.txt"
 }
 
 function createChatRunId(now: string): string {
