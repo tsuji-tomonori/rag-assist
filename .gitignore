@@ -35,5 +35,8 @@ pnpm-debug.log*
 .codex.bak-*
 .worktrees/
 
+# Stale root path from before the repository root lift. Current source lives at repository root.
+memorag-bedrock-mvp/
+
 # Generated OpenAPI JSON is served at runtime and is not committed.
 docs/generated/openapi.json
