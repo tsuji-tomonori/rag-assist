@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { ChatResponseSchema, DocumentUploadRequestSchema, SearchResponseSchema } from "../schemas.js"
+import { ChatResponseSchema, ConversationHistoryItemSchema, DocumentUploadRequestSchema, SearchResponseSchema } from "../schemas.js"
 
 test("document metadata schema accepts recursive JSON alias metadata", () => {
   const result = DocumentUploadRequestSchema.safeParse({
@@ -110,4 +110,45 @@ test("chat debug trace schema exposes only profile identifiers", () => {
     answerPolicyId: "default-answer-policy",
     answerPolicyVersion: "1"
   })
+})
+
+test("conversation history schema accepts optional multi-turn state fields", () => {
+  const result = ConversationHistoryItemSchema.safeParse({
+    id: "conversation-1",
+    title: "経費精算の会話",
+    updatedAt: "2026-05-14T00:00:00.000Z",
+    messages: [{ role: "user", text: "前回の続きは？", createdAt: "2026-05-14T00:00:00.000Z" }],
+    decontextualizedQuery: {
+      originalQuestion: "前回の続きは？",
+      standaloneQuestion: "経費精算期限の前回引用箇所について教えて",
+      retrievalQueries: ["経費精算期限 前回引用"],
+      turnDependency: "follow_up",
+      previousCitationCount: 1
+    },
+    rollingSummary: "経費精算期限について会話している。",
+    queryFocusedSummary: "前回引用した経費精算期限の根拠を確認している。",
+    citationMemory: [
+      {
+        citation: {
+          documentId: "doc-1",
+          fileName: "policy.md",
+          chunkId: "chunk-1",
+          pageStart: 1
+        },
+        turnId: "turn-1",
+        answerExcerpt: "申請から30日以内です。",
+        rememberedAt: "2026-05-14T00:00:00.000Z"
+      }
+    ],
+    taskState: {
+      status: "in_progress",
+      goal: "経費精算期限を確認する",
+      pendingActions: ["前回 citation を再確認"]
+    }
+  })
+
+  assert.equal(result.success, true)
+  if (!result.success) return
+  assert.equal(result.data.schemaVersion, 2)
+  assert.equal(result.data.decontextualizedQuery?.turnDependency, "follow_up")
 })

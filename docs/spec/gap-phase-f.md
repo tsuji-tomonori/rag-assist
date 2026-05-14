@@ -105,3 +105,58 @@ Phase D 後の main では、旧 `agent` 実装は `apps/api/src/chat-orchestrat
 | F-Q-002 | `turnDependency` は仕様 enum へ正規化するか、現行 `coreference` / `ellipsis` を保持するか。 | 既存 benchmark / debug trace の互換性と、仕様読みやすさの trade-off。 |
 | F-Q-003 | conversation history の state 永続化を API request/response contract に出すか、server-side debug/history artifact に閉じるか。 | UI 表示、履歴検索、item size、権限境界に影響する。 |
 | F-Q-004 | disabled tool を registry に含める場合、クライアントへ表示するか operator/debug のみにするか。 | No Mock Product UI と未実装操作を実データのように見せないルールに関係する。 |
+
+## F-chat-tool-registry-multiturn 実装結果
+
+状態: implemented basis
+実装タスク: `tasks/do/20260514-1958-f-chat-tool-registry-multiturn.md`
+
+### 追加した基盤
+
+| 対象 | 実装 | 備考 |
+|---|---|---|
+| `ChatToolDefinition` schema / 型 | `packages/contract/src/schemas/chat.ts`, `apps/api/src/schemas.ts`, `apps/api/src/types.ts` に追加。 | `toolId`, schema 参照, feature/resource permission, approval/audit, enabled, implementation status, mode, trace label を持つ。 |
+| RAG tool registry | `apps/api/src/chat-orchestration/tool-registry.ts` を追加。 | 既存 RAG path に接続済みの toolId だけ `enabled: true`。 |
+| graph node / trace label 対応 | `RAG_CHAT_TOOL_NODE_MAPPINGS` と `tool-registry.test.ts` で固定。 | node 名、trace label、toolId を同一概念として扱わず、対応表として管理する。 |
+| `ChatToolInvocation` schema / 型 | contract / API schema / types に追加し、debug trace から audit-oriented metadata を作成。 | `DebugTrace.toolInvocations` は optional。既存 response 互換を維持する。 |
+| multi-turn history state | `ConversationHistoryItem` に `decontextualizedQuery`, `rollingSummary`, `queryFocusedSummary`, `citationMemory`, `taskState`, `toolInvocations` を optional 追加。 | schemaVersion は新規保存で `2`。既存 `1` も parse できる。 |
+| conversation history store | local / DynamoDB store で optional state を保存・取得。 | messages 100 件、citation memory 50 件、tool invocation 100 件、summary 4000 文字に制限する。 |
+
+### enabled RAG toolId
+
+| toolId | 対応 trace label | preserve 条件 |
+|---|---|---|
+| `rag.decontextualize_query` | `build_conversation_state`, `decontextualize_query` | follow-up 軽量化と previous citation anchor を維持する。 |
+| `rag.plan_required_facts` | `plan_search` | RequiredFact 汎化を維持し、dataset 固有語句を入れない。 |
+| `rag.search` | `normalize_query`, `retrieve_memory`, `generate_clues`, `execute_search_action`, `retrieval_evaluator` | 権限・品質 filter と search budget を変更しない。 |
+| `rag.rerank` | `rerank_chunks` | minScore filter, layout/page continuity/previous citation boost を維持する。 |
+| `rag.select_final_context` | `rerank_chunks` | final context selection の diversity / budget を維持する。 |
+| `rag.compute_policy_facts` | `detect_tool_intent`, `extract_policy_computations`, `execute_computation_tools` | quote 実在確認、金額表記、confidence threshold を緩めない。 |
+| `rag.evaluate_answerability` | `answerability_gate`, `sufficient_context_gate` | primary fact missing / conflict の拒否条件を維持する。 |
+| `rag.answer` | `generate_answer` | `benchmark_grounded_short` policy と通常 policy を混ぜない。 |
+| `rag.validate_citations` | `validate_citations` | citation と requirement slot 検証を維持する。 |
+| `rag.verify_answer_support` | `verify_answer_support` | unsupported sentence limit と fallback confidence を維持する。 |
+| `rag.repair_supported_only` | `verify_answer_support` | repair 後の再 verify を維持する。 |
+| `rag.explain_unavailable` | `finalize_refusal` | 権限外文書の存在を示唆しない。 |
+
+### disabled metadata と scope-out
+
+document / ingest / drawing / support / search improvement / benchmark / debug / external / quality / parse 系 toolId は registry に metadata として登録したが、`enabled: false` と `implementationStatus: placeholder` のままにした。後続 phase 依存の本実装、承認 UI、外部送信 sanitize、debug tier 設計が未完のため、本番 UI/API から実行可能な fallback として扱わない。
+
+### 実行済み検証
+
+| コマンド | 結果 |
+|---|---|
+| `npm ci` | pass。audit advisory 1 moderate / 3 high は本 task scope 外。 |
+| `npm run typecheck -w @memorag-mvp/api` | pass |
+| `npm run typecheck -w @memorag-mvp/contract` | pass |
+| `npm exec -w @memorag-mvp/api -- tsx --test src/chat-orchestration/tool-registry.test.ts src/adapters/local-stores.test.ts src/contract/schemas.test.ts` | pass |
+
+### 残る未確定点
+
+| ID | 状態 |
+|---|---|
+| F-Q-001 | `DebugTrace.toolInvocations` に trace step 由来の audit-oriented metadata を保存する基盤を入れた。全 RAG internal step を独立永続 store に保存するかは後続判断。 |
+| F-Q-002 | `turnDependency` は互換のため string のまま保持し、history state 側も optional string とした。enum 正規化は後続判断。 |
+| F-Q-003 | multi-turn state は conversation history item の optional field として保存可能にした。UI 表示は本 PR では追加しない。 |
+| F-Q-004 | disabled tool は registry metadata には含めるが、実行可能にも利用者向け機能にも見せない方針を採用した。 |

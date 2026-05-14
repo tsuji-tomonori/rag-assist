@@ -1,10 +1,10 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { CONVERSATION_HISTORY_SCHEMA_VERSION, type ConversationHistoryItem } from "../types.js"
-import type { ConversationHistoryStore, SaveConversationHistoryInput } from "./conversation-history-store.js"
+import { CONVERSATION_HISTORY_SCHEMA_VERSION, type ConversationHistoryItem, type ConversationHistorySchemaVersion } from "../types.js"
+import { normalizeConversationHistoryInput, type ConversationHistoryStore, type SaveConversationHistoryInput } from "./conversation-history-store.js"
 
 type StoredConversationHistoryItem = Omit<ConversationHistoryItem, "schemaVersion"> & {
-  schemaVersion?: typeof CONVERSATION_HISTORY_SCHEMA_VERSION
+  schemaVersion?: ConversationHistorySchemaVersion
   userId: string
 }
 
@@ -21,12 +21,8 @@ export class LocalConversationHistoryStore implements ConversationHistoryStore {
 
   async save(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
     const item: StoredConversationHistoryItem = {
-      ...input,
-      schemaVersion: input.schemaVersion ?? CONVERSATION_HISTORY_SCHEMA_VERSION,
-      userId,
-      updatedAt: input.updatedAt || new Date().toISOString(),
-      isFavorite: input.isFavorite ?? false,
-      messages: input.messages.slice(0, 100)
+      ...normalizeConversationHistoryInput(input),
+      userId
     }
     const db = await this.load()
     const otherUsers = db.conversations.filter((conversation) => conversation.userId !== userId)
