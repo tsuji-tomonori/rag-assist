@@ -62,7 +62,19 @@ Media type: `application/json`
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (rag:doc:write:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing rag:doc:write:group"}` |
+| `403` | 必要 permission (rag:doc:write:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+
+## Lifecycle
+
+| 項目 | 内容 |
+| --- | --- |
+| stage | `compatibility` |
+| replacement | `POST /documents/uploads + POST /document-ingest-runs` |
+| migrationNote | 大容量ファイル、base64 upload、OCR fallback、embedding を伴う通常運用は upload session と非同期取り込みを使います。 |
+| removalPolicy | 小さなテキスト互換用途を維持するため削除予定日は未設定です。 |
+
+補足:
+- レスポンスは document summary のみ返し、manifest、chunk metadata、vector key は返しません。
 
 ## Responses
 

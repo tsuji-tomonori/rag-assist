@@ -46,6 +46,10 @@ _なし_
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
 
+## Lifecycle
+
+_なし_
+
 ## Responses
 
 | Status | 説明 | Media type | Body |

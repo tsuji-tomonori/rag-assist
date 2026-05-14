@@ -61,7 +61,19 @@ Media type: `application/json`
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (rag:doc:write:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing rag:doc:write:group"}` |
+| `403` | 必要 permission (rag:doc:write:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+
+## Lifecycle
+
+| 項目 | 内容 |
+| --- | --- |
+| stage | `compatibility` |
+| replacement | `POST /document-ingest-runs` |
+| migrationNote | アップロード済み文書の通常取り込みは非同期 document ingest run を使います。 |
+| removalPolicy | 既存 client 互換のため削除予定日は未設定です。 |
+
+補足:
+- 同期取り込みが timeout しうる用途では非同期 API へ誘導します。
 
 ## Responses
 

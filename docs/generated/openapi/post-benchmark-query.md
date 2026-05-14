@@ -104,13 +104,17 @@ Media type: `application/json`
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (benchmark:query) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing benchmark:query"}` |
+| `403` | 必要 permission (benchmark:query) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+
+## Lifecycle
+
+_なし_
 
 ## Responses
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 176 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 193 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -210,6 +214,7 @@ Media type: `application/json`
 | `debug.conversationState` | `object` | no | `response.debug.conversationState` の値。項目名は conversation state を表します。 | nullable |
 | `debug.decontextualizedQuery` | `object` | no | `response.debug.decontextualizedQuery` の値。項目名は decontextualized query を表します。 | nullable |
 | `debug.pipelineVersions` | `object` | no | `response.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `debug.pipelineVersions.chatOrchestrationWorkflowVersion` | `string` | yes | `response.debug.pipelineVersions.chatOrchestrationWorkflowVersion` の値。項目名は chat orchestration workflow version を表します。 | - |
 | `debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
 | `debug.pipelineVersions.chunkerVersion` | `string` | yes | `response.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
 | `debug.pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.debug.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
@@ -282,6 +287,22 @@ Media type: `application/json`
 | `debug.finalEvidence[].bbox` | `object` | no | `response.debug.finalEvidence[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debug.toolInvocations` | `array<object>` | no | `response.debug.toolInvocations` の値。項目名は tool invocations を表します。 | - |
+| `debug.toolInvocations[].invocationId` | `string` | yes | `response.debug.toolInvocations[].invocationId` の値。項目名は invocation id を表します。 | minLength=1 |
+| `debug.toolInvocations[].orchestrationRunId` | `string` | yes | `response.debug.toolInvocations[].orchestrationRunId` の値。項目名は orchestration run id を表します。 | minLength=1 |
+| `debug.toolInvocations[].toolId` | `string` | yes | `response.debug.toolInvocations[].toolId` の値。項目名は tool id を表します。 | minLength=1 |
+| `debug.toolInvocations[].requesterUserId` | `string` | yes | `response.debug.toolInvocations[].requesterUserId` の値。項目名は requester user id を表します。 | minLength=1 |
+| `debug.toolInvocations[].status` | `enum(queued \| waiting_for_approval \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, waiting_for_approval, running, succeeded, failed, cancelled |
+| `debug.toolInvocations[].input` | `object` | yes | `response.debug.toolInvocations[].input` の値。項目名は input を表します。 | nullable |
+| `debug.toolInvocations[].inputSummary` | `object` | no | `response.debug.toolInvocations[].inputSummary` の値。項目名は input summary を表します。 | nullable |
+| `debug.toolInvocations[].output` | `object` | no | `response.debug.toolInvocations[].output` の値。項目名は output を表します。 | nullable |
+| `debug.toolInvocations[].outputSummary` | `object` | no | `response.debug.toolInvocations[].outputSummary` の値。項目名は output summary を表します。 | nullable |
+| `debug.toolInvocations[].errorCode` | `string` | no | `response.debug.toolInvocations[].errorCode` の値。項目名は error code を表します。 | - |
+| `debug.toolInvocations[].errorMessage` | `string` | no | `response.debug.toolInvocations[].errorMessage` の値。項目名は error message を表します。 | - |
+| `debug.toolInvocations[].approvedBy` | `string` | no | `response.debug.toolInvocations[].approvedBy` の値。項目名は approved by を表します。 | - |
+| `debug.toolInvocations[].approvedAt` | `string` | no | `response.debug.toolInvocations[].approvedAt` の値。項目名は approved at を表します。 | - |
+| `debug.toolInvocations[].startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `debug.toolInvocations[].completedAt` | `string` | no | 処理が完了した日時。 | - |
 | `debug.steps` | `array<object>` | yes | `response.debug.steps` の値。項目名は steps を表します。 | - |
 | `debug.steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
 | `debug.steps[].label` | `string` | yes | `response.debug.steps[].label` の値。項目名は label を表します。 | - |

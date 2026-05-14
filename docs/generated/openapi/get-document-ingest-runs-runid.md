@@ -47,13 +47,17 @@ _なし_
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (chat:read:own) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing chat:read:own"}` |
+| `403` | 必要 permission (chat:read:own) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+
+## Lifecycle
+
+_なし_
 
 ## Responses
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 33 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 42 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -93,6 +97,15 @@ Media type: `application/json`
 | `manifest.sourceExtractorVersion` | `string` | no | `response.manifest.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
 | `documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
 | `error` | `string` | no | エラー内容を表すメッセージ。 | - |
+| `stage` | `string` | no | `response.stage` の値。項目名は stage を表します。 | - |
+| `counters` | `object` | no | `response.counters` の値。項目名は counters を表します。 | - |
+| `warnings` | `array<object>` | no | `response.warnings` の値。項目名は warnings を表します。 | - |
+| `warnings[].code` | `string` | yes | `response.warnings[].code` の値。項目名は code を表します。 | - |
+| `warnings[].message` | `string` | yes | ユーザーまたは API 向けのメッセージ。 | - |
+| `warnings[].severity` | `enum(info \| warning \| error)` | yes | `response.warnings[].severity` の値。項目名は severity を表します。 | enum=info, warning, error |
+| `warnings[].page` | `integer` | no | `response.warnings[].page` の値。項目名は page を表します。 | minimum=0 |
+| `warnings[].sourceBlockId` | `string` | no | `response.warnings[].sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `warnings[].confidence` | `number` | no | `response.warnings[].confidence` の値。項目名は confidence を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `startedAt` | `string` | no | 処理を開始した日時。 | - |

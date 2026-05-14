@@ -49,13 +49,17 @@ Media type: `application/json`
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (rag:index:rebuild:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing rag:index:rebuild:group"}` |
+| `403` | 必要 permission (rag:index:rebuild:group) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+
+## Lifecycle
+
+_なし_
 
 ## Responses
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 53 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 94 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -84,6 +88,7 @@ Media type: `application/json`
 | `memoryPromptVersion` | `string` | no | `response.memoryPromptVersion` の値。項目名は memory prompt version を表します。 | - |
 | `indexVersion` | `string` | no | `response.indexVersion` の値。項目名は index version を表します。 | - |
 | `pipelineVersions` | `object` | no | `response.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `pipelineVersions.chatOrchestrationWorkflowVersion` | `string` | yes | `response.pipelineVersions.chatOrchestrationWorkflowVersion` の値。項目名は chat orchestration workflow version を表します。 | - |
 | `pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
 | `pipelineVersions.chunkerVersion` | `string` | yes | `response.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
 | `pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
@@ -108,10 +113,50 @@ Media type: `application/json`
 | `chunks[].sourceBlockId` | `string` | no | `response.chunks[].sourceBlockId` の値。項目名は source block id を表します。 | - |
 | `chunks[].normalizedFrom` | `string` | no | `response.chunks[].normalizedFrom` の値。項目名は normalized from を表します。 | - |
 | `chunks[].tableColumnCount` | `integer` | no | `response.chunks[].tableColumnCount` の値。項目名は table column count を表します。 | minimum=0 |
+| `chunks[].tableId` | `string` | no | `response.chunks[].tableId` の値。項目名は table id を表します。 | - |
+| `chunks[].tableRowCount` | `integer` | no | `response.chunks[].tableRowCount` の値。項目名は table row count を表します。 | minimum=0 |
+| `chunks[].tableConfidence` | `number` | no | `response.chunks[].tableConfidence` の値。項目名は table confidence を表します。 | - |
 | `chunks[].listDepth` | `integer` | no | `response.chunks[].listDepth` の値。項目名は list depth を表します。 | minimum=0 |
 | `chunks[].codeLanguage` | `string` | no | `response.chunks[].codeLanguage` の値。項目名は code language を表します。 | - |
 | `chunks[].figureCaption` | `string` | no | `response.chunks[].figureCaption` の値。項目名は figure caption を表します。 | - |
+| `chunks[].figureId` | `string` | no | `response.chunks[].figureId` の値。項目名は figure id を表します。 | - |
+| `chunks[].confidence` | `number` | no | `response.chunks[].confidence` の値。項目名は confidence を表します。 | - |
+| `chunks[].readingOrder` | `integer` | no | `response.chunks[].readingOrder` の値。項目名は reading order を表します。 | minimum=0 |
+| `chunks[].bbox` | `object` | no | `response.chunks[].bbox` の値。項目名は bbox を表します。 | nullable |
+| `chunks[].sourceLocation` | `object` | no | `response.chunks[].sourceLocation` の値。項目名は source location を表します。 | - |
+| `chunks[].sourceLocation.page` | `integer` | no | `response.chunks[].sourceLocation.page` の値。項目名は page を表します。 | minimum=0 |
+| `chunks[].sourceLocation.pageStart` | `integer` | no | `response.chunks[].sourceLocation.pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `chunks[].sourceLocation.pageEnd` | `integer` | no | `response.chunks[].sourceLocation.pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `chunks[].sourceLocation.bbox` | `object` | no | `response.chunks[].sourceLocation.bbox` の値。項目名は bbox を表します。 | nullable |
+| `chunks[].sourceLocation.unit` | `enum(normalized_page \| pdf_point \| pixel \| unknown)` | no | `response.chunks[].sourceLocation.unit` の値。項目名は unit を表します。 | enum=normalized_page, pdf_point, pixel, unknown |
+| `chunks[].sourceLocation.source` | `string` | no | `response.chunks[].sourceLocation.source` の値。項目名は source を表します。 | - |
 | `chunks[].extractionMethod` | `string` | no | `response.chunks[].extractionMethod` の値。項目名は extraction method を表します。 | - |
+| `parsedDocument` | `object` | no | `response.parsedDocument` の値。項目名は parsed document を表します。 | - |
+| `parsedDocument.schemaVersion` | `enum(2)` | yes | `response.parsedDocument.schemaVersion` の値。項目名は schema version を表します。 | enum=2 |
+| `parsedDocument.text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `parsedDocument.sourceExtractorVersion` | `string` | yes | `response.parsedDocument.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
+| `parsedDocument.fileProfile` | `enum(digital_text \| scanned_image \| mixed \| image_only \| unknown)` | no | `response.parsedDocument.fileProfile` の値。項目名は file profile を表します。 | enum=digital_text, scanned_image, mixed, image_only, unknown |
+| `parsedDocument.pages` | `array<object>` | no | `response.parsedDocument.pages` の値。項目名は pages を表します。 | - |
+| `parsedDocument.blocks` | `array<object>` | no | `response.parsedDocument.blocks` の値。項目名は blocks を表します。 | - |
+| `parsedDocument.tables` | `array<object>` | no | `response.parsedDocument.tables` の値。項目名は tables を表します。 | - |
+| `parsedDocument.figures` | `array<object>` | no | `response.parsedDocument.figures` の値。項目名は figures を表します。 | - |
+| `parsedDocument.warnings` | `array<object>` | no | `response.parsedDocument.warnings` の値。項目名は warnings を表します。 | - |
+| `parsedDocument.warnings[].code` | `string` | yes | `response.parsedDocument.warnings[].code` の値。項目名は code を表します。 | - |
+| `parsedDocument.warnings[].message` | `string` | yes | ユーザーまたは API 向けのメッセージ。 | - |
+| `parsedDocument.warnings[].severity` | `enum(info \| warning \| error)` | yes | `response.parsedDocument.warnings[].severity` の値。項目名は severity を表します。 | enum=info, warning, error |
+| `parsedDocument.warnings[].page` | `integer` | no | `response.parsedDocument.warnings[].page` の値。項目名は page を表します。 | minimum=0 |
+| `parsedDocument.warnings[].sourceBlockId` | `string` | no | `response.parsedDocument.warnings[].sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `parsedDocument.warnings[].confidence` | `number` | no | `response.parsedDocument.warnings[].confidence` の値。項目名は confidence を表します。 | - |
+| `parsedDocument.counters` | `object` | no | `response.parsedDocument.counters` の値。項目名は counters を表します。 | - |
+| `extractionWarnings` | `array<object>` | no | `response.extractionWarnings` の値。項目名は extraction warnings を表します。 | - |
+| `extractionWarnings[].code` | `string` | yes | `response.extractionWarnings[].code` の値。項目名は code を表します。 | - |
+| `extractionWarnings[].message` | `string` | yes | ユーザーまたは API 向けのメッセージ。 | - |
+| `extractionWarnings[].severity` | `enum(info \| warning \| error)` | yes | `response.extractionWarnings[].severity` の値。項目名は severity を表します。 | enum=info, warning, error |
+| `extractionWarnings[].page` | `integer` | no | `response.extractionWarnings[].page` の値。項目名は page を表します。 | minimum=0 |
+| `extractionWarnings[].sourceBlockId` | `string` | no | `response.extractionWarnings[].sourceBlockId` の値。項目名は source block id を表します。 | - |
+| `extractionWarnings[].confidence` | `number` | no | `response.extractionWarnings[].confidence` の値。項目名は confidence を表します。 | - |
+| `extractionCounters` | `object` | no | `response.extractionCounters` の値。項目名は extraction counters を表します。 | - |
+| `fileProfile` | `enum(digital_text \| scanned_image \| mixed \| image_only \| unknown)` | no | `response.fileProfile` の値。項目名は file profile を表します。 | enum=digital_text, scanned_image, mixed, image_only, unknown |
 | `lifecycleStatus` | `enum(active \| staging \| superseded)` | no | `response.lifecycleStatus` の値。項目名は lifecycle status を表します。 | enum=active, staging, superseded |
 | `activeDocumentId` | `string` | no | `response.activeDocumentId` の値。項目名は active document id を表します。 | - |
 | `stagedFromDocumentId` | `string` | no | `response.stagedFromDocumentId` の値。項目名は staged from document id を表します。 | - |

@@ -78,11 +78,11 @@ API contract の source of truth は Hono + `@hono/zod-openapi` の route 定義
 npm run docs:openapi
 ```
 
-生成物は上位 index の `docs/generated/openapi.md` と、API ごとの詳細ファイルを置く `docs/generated/openapi/` に出力する。生成済み `openapi.json` は commit せず、JSON 仕様は runtime の `GET /openapi.json` を source of truth とする。GitHub Actions では `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で同じコマンドを実行し、Markdown 差分がある場合に更新 PR を作成する。
+生成物は上位 index の `docs/generated/openapi.md` と、API ごとの詳細ファイルを置く `docs/generated/openapi/` に出力する。生成済み `openapi.json` は commit せず、JSON 仕様は runtime の `GET /openapi.json` を source of truth とする。`npm run docs:openapi:check` は runtime OpenAPI から Markdown を再レンダリングし、checked-in の `docs/generated/openapi.md` と `docs/generated/openapi/` が stale でないことも検査する。GitHub Actions では `.github/workflows/memorag-openapi-docs.yml` が main push または手動実行で同じコマンドを実行し、Markdown 差分がある場合に更新 PR を作成する。
 
-`packages/contract` は oRPC と共有型の source of truth として併設する。REST API と oRPC が同じ API 概念を扱う移行期間は、REST route schema と oRPC contract の両方を確認し、drift を許容しない。変更時は API contract test、OpenAPI docs check、PR self-review で REST / oRPC の更新要否を明記する。
+`packages/contract` は oRPC と共有型の source of truth として併設する。REST API と oRPC が同じ API 概念を扱う移行期間は、REST route schema と oRPC contract の両方を確認し、drift を許容しない。J1 時点の自動検査は `packages/contract` に定義された代表 oRPC route が runtime OpenAPI に存在し、input/output を持つ procedure が requestBody / 200 response を持つことまでを対象にする。全 endpoint の schema equivalence と breaking change 判定は後続 task の対象とする。変更時は API contract test、OpenAPI docs check、PR self-review で REST / oRPC の更新要否を明記する。
 
-`docs/generated/openapi.md` は API 一覧と詳細ファイルへのリンクを持つ上位ドキュメントとする。各 API 詳細 Markdown は schema を JSON block としてそのまま記載しない。各 operation の `headers`、`path parameters`、`query parameters`、`data`、`authorization`、`responses` を表形式で出力し、各項目に型、必須、説明、制約を記載する。`authorization` は route 定義時に OpenAPI extension `x-memorag-authorization` として付与する。Markdown 生成スクリプトは role / permission を推測せず、OpenAPI 上の extension を整形して、実行可能 role、エラーになる role、条件付きでエラーになる role、401 / 403 の発生条件と body を出力する。`responses` は先に status / 説明 / media type / body の一覧を出し、その後に各 response body の詳細を出力する。operation の `summary` / `description` と parameter / request body / response body の field description は日本語であることを必須とする。
+`docs/generated/openapi.md` は API 一覧と詳細ファイルへのリンクを持つ上位ドキュメントとする。各 API 詳細 Markdown は schema を JSON block としてそのまま記載しない。各 operation の `headers`、`path parameters`、`query parameters`、`data`、`authorization`、`lifecycle`、`responses` を表形式で出力し、各項目に型、必須、説明、制約を記載する。`authorization` は route 定義時に OpenAPI extension `x-memorag-authorization` として付与する。Markdown 生成スクリプトは role / permission を推測せず、OpenAPI 上の extension を整形して、実行可能 role、エラーになる role、条件付きでエラーになる role、401 / 403 の発生条件と body を出力する。互換同期 API は OpenAPI extension `x-memorag-lifecycle` に `stage`、`replacement`、`migrationNote`、`removalPolicy` を持ち、生成 Markdown の `Lifecycle` セクションへ出力する。`responses` は先に status / 説明 / media type / body の一覧を出し、その後に各 response body の詳細を出力する。operation の `summary` / `description` と parameter / request body / response body の field description は日本語であることを必須とする。
 
 OpenAPI 説明品質は次のコマンドで検証する。
 
@@ -90,7 +90,9 @@ OpenAPI 説明品質は次のコマンドで検証する。
 npm run docs:openapi:check
 ```
 
-`.github/workflows/memorag-ci.yml` と `.github/workflows/memorag-openapi-docs.yml` はこの検証を実行し、summary / description / field description の不足がある場合は CI を失敗させる。
+`.github/workflows/memorag-ci.yml` と `.github/workflows/memorag-openapi-docs.yml` はこの検証を実行し、summary / description / field description、authorization metadata、互換 API lifecycle metadata、generated Markdown freshness、代表 REST/oRPC mapping に不足がある場合は CI を失敗させる。
+
+`GET /openapi.json` は `/health` と同じ public allowlist に置く。返却内容は OpenAPI contract metadata、route 一覧、schema、公開用 description、authorization / lifecycle extension であり、問い合わせ本文、回答、参照 chunk、内部 memo、debug trace、署名付き URL、個人別データを返さないため、認証なしで公開できる。濫用対策は現行 J1 ではアプリ内 rate limit を追加せず、API Gateway / WAF / CDN policy など edge 側で扱う後続運用 task とする。
 
 ## `POST /chat`
 
