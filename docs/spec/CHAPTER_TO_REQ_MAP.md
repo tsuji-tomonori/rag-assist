@@ -81,8 +81,8 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 |---|---|---|
 | 4A RAG pipeline | `apps/api/src/chat-orchestration/graph.ts` と nodes に主要処理は存在するが、toolId registry には未接続。 | `F-chat-tool-registry-multiturn` で RAG 系 toolId と現行 node の対応を固定する。 |
 | 4A multi-turn | `conversation`, `conversationState`, `decontextualizedQuery`, `previousCitations` は request/debug trace にある。`rollingSummary`, `queryFocusedSummary`, `citationMemory`, `taskState` は永続 store にない。 | conversation history schema version up と互換 migration 方針を定義する。 |
-| 4B ChatToolDefinition | 未実装。4B.5 の toolId、permission、approval、audit metadata は registry として存在しない。 | contract/API schema と registry metadata を追加する。 |
-| 4B ChatToolInvocation | debug step はあるが、tool invocation record と approval/audit fields はない。 | invocation schema / audit / trace 連携を追加する。 |
+| 4B ChatToolDefinition | `ChatToolDefinition` schema / 型と `apps/api/src/chat-orchestration/tool-registry.ts` を追加済み。RAG 系は enabled、後続 phase 依存 tool は disabled metadata。 | 後続 task で disabled tool の本実装・承認 UI・resource permission 実行時チェックを追加する。 |
+| 4B ChatToolInvocation | `ChatToolInvocation` schema / 型を追加し、debug trace から `DebugTrace.toolInvocations` を生成する基盤を追加済み。 | 専用永続 store / 承認 workflow / debug tier 表示は後続 task。 |
 | 既存挙動の踏襲 | follow-up 軽量化、required fact planning 汎化、policy computation 汎化、answer support verify/repair、minScore filter、diversity、context budget は現行 runtime policy / nodes に存在する。 | registry 化で低 score chunk 復活、全履歴常時 LLM 投入、benchmark 固有分岐混入を避ける。 |
 
 ## 後続更新ルール

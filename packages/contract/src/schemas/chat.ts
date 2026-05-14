@@ -34,6 +34,103 @@ export const ConversationHistoryTurnSchema = ConversationTurnSchema.pick({
   turnId: true
 })
 
+export const ChatOrchestrationModeSchema = z.enum([
+  "rag_answer",
+  "support_triage",
+  "knowledge_admin_assist",
+  "search_improvement_assist",
+  "benchmark_assist",
+  "debug_assist"
+])
+
+export const ChatToolCategorySchema = z.enum([
+  "rag",
+  "ingest",
+  "document",
+  "drawing",
+  "support",
+  "search_improvement",
+  "benchmark",
+  "debug",
+  "admin",
+  "external",
+  "quality",
+  "parse"
+])
+
+export const ChatToolResourcePermissionSchema = z.enum(["readOnly", "full"])
+export const ChatToolImplementationStatusSchema = z.enum(["implemented", "delegated", "placeholder"])
+
+export const ChatToolDefinitionSchema = z.object({
+  toolId: z.string().min(1),
+  name: z.string().min(1),
+  displayName: z.string().min(1),
+  description: z.string().min(1),
+  category: ChatToolCategorySchema,
+  inputSchema: JsonValueSchema,
+  outputSchema: JsonValueSchema,
+  requiredFeaturePermission: z.string().min(1),
+  requiredResourcePermission: ChatToolResourcePermissionSchema.optional(),
+  approvalRequired: z.boolean(),
+  auditRequired: z.boolean(),
+  enabled: z.boolean(),
+  disabledReason: z.string().optional(),
+  implementationStatus: ChatToolImplementationStatusSchema,
+  orchestrationModes: z.array(ChatOrchestrationModeSchema).default(() => []),
+  graphNodeLabels: z.array(z.string()).default(() => []),
+  traceLabels: z.array(z.string()).default(() => []),
+  maxToolCalls: z.number().int().positive().optional()
+})
+
+export const ChatToolInvocationStatusSchema = z.enum([
+  "queued",
+  "waiting_for_approval",
+  "running",
+  "succeeded",
+  "failed",
+  "cancelled"
+])
+
+export const ChatToolInvocationSchema = z.object({
+  invocationId: z.string().min(1),
+  orchestrationRunId: z.string().min(1),
+  toolId: z.string().min(1),
+  requesterUserId: z.string().min(1),
+  status: ChatToolInvocationStatusSchema,
+  input: JsonValueSchema,
+  inputSummary: JsonValueSchema.optional(),
+  output: JsonValueSchema.optional(),
+  outputSummary: JsonValueSchema.optional(),
+  errorCode: z.string().optional(),
+  errorMessage: z.string().optional(),
+  approvedBy: z.string().optional(),
+  approvedAt: z.string().optional(),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional()
+})
+
+export const ConversationDecontextualizedQuerySchema = z.object({
+  originalQuestion: z.string(),
+  standaloneQuestion: z.string(),
+  retrievalQueries: z.array(z.string()).default(() => []),
+  turnDependency: z.string().optional(),
+  previousCitationCount: z.number().int().nonnegative().optional()
+})
+
+export const ConversationCitationMemoryItemSchema = z.object({
+  citation: ConversationCitationSchema,
+  turnId: z.string().optional(),
+  answerExcerpt: z.string().optional(),
+  rememberedAt: z.string().optional()
+})
+
+export const ConversationTaskStateSchema = z.object({
+  status: z.enum(["none", "in_progress", "waiting_for_user", "completed", "blocked"]).default("none"),
+  goal: z.string().optional(),
+  pendingActions: z.array(z.string()).default(() => []),
+  metadata: JsonValueSchema.optional()
+})
+
 export const ConversationInputSchema = z.object({
   conversationId: z.string(),
   turnId: z.string().optional(),
@@ -197,6 +294,7 @@ export const DebugTraceSchema = z.object({
   citations: z.array(CitationSchema),
   retrieved: z.array(CitationSchema),
   finalEvidence: z.array(CitationSchema).optional(),
+  toolInvocations: z.array(ChatToolInvocationSchema).optional(),
   steps: z.array(DebugStepSchema)
 })
 
@@ -218,9 +316,38 @@ export const ChatRunStartResponseSchema = z.object({
   eventsPath: z.string()
 })
 
+export const ConversationMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  text: z.string(),
+  createdAt: z.string(),
+  sourceQuestion: z.string().optional(),
+  result: ChatResponseSchema.optional()
+})
+
+export const ConversationHistoryItemSchema = z.object({
+  schemaVersion: z.union([z.literal(1), z.literal(2)]).default(2),
+  id: z.string().min(1),
+  title: z.string().min(1).max(120),
+  updatedAt: z.string(),
+  isFavorite: z.boolean().default(false),
+  messages: z.array(ConversationMessageSchema).max(100),
+  decontextualizedQuery: ConversationDecontextualizedQuerySchema.optional(),
+  rollingSummary: z.string().max(4000).optional(),
+  queryFocusedSummary: z.string().max(4000).optional(),
+  citationMemory: z.array(ConversationCitationMemoryItemSchema).max(50).optional(),
+  taskState: ConversationTaskStateSchema.optional(),
+  toolInvocations: z.array(ChatToolInvocationSchema).max(100).optional()
+})
+
 export type ConversationHistoryTurn = z.output<typeof ConversationHistoryTurnSchema>
 export type ConversationTurn = z.output<typeof ConversationTurnSchema>
 export type ConversationInput = z.input<typeof ConversationInputSchema>
+export type ChatOrchestrationMode = z.output<typeof ChatOrchestrationModeSchema>
+export type ChatToolDefinition = z.output<typeof ChatToolDefinitionSchema>
+export type ChatToolInvocation = z.output<typeof ChatToolInvocationSchema>
+export type ConversationDecontextualizedQuery = z.output<typeof ConversationDecontextualizedQuerySchema>
+export type ConversationCitationMemoryItem = z.output<typeof ConversationCitationMemoryItemSchema>
+export type ConversationTaskState = z.output<typeof ConversationTaskStateSchema>
 export type ClarificationContext = z.output<typeof ClarificationContextSchema>
 export type SearchScope = z.output<typeof SearchScopeSchema>
 export type ChatRequest = z.input<typeof ChatRequestSchema>
@@ -230,3 +357,5 @@ export type Clarification = z.output<typeof ClarificationSchema>
 export type DebugTrace = z.output<typeof DebugTraceSchema>
 export type ChatResponse = z.output<typeof ChatResponseSchema>
 export type ChatRunStartResponse = z.output<typeof ChatRunStartResponseSchema>
+export type ConversationMessage = z.output<typeof ConversationMessageSchema>
+export type ConversationHistoryItem = z.output<typeof ConversationHistoryItemSchema>
