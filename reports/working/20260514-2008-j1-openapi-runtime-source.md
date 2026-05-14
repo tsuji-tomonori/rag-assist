@@ -55,6 +55,8 @@
 - `npm run docs:openapi:check`: pass
 - `npm exec -w @memorag-mvp/api -- tsx --test src/openapi-runtime-source.test.ts src/security/access-control-policy.test.ts src/contract/api-contract.test.ts`: pass, 25 tests
 - `npm exec -w @memorag-mvp/api -- tsx --test src/openapi-runtime-source.test.ts`: pass, 3 tests
+- `npm exec -w @memorag-mvp/api -- tsx --test src/openapi-doc-quality.test.ts src/openapi-runtime-source.test.ts`: pass, 6 tests
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass (C0 93.79% / C1 85.04%)
 - `git diff --check`: pass
 
 ## 7. 指示へのfit評価
