@@ -15,3 +15,17 @@ test("document ingest run worker keeps missing runId as a validation error", asy
 test("async agent worker keeps missing runId as a validation error", async () => {
   await assert.rejects(() => asyncAgentRunWorkerHandler({}), /runId is required/)
 })
+
+test("async agent worker accepts agentRunId as the runId alias before execution lookup", async () => {
+  await assert.rejects(
+    () => asyncAgentRunWorkerHandler({ agentRunId: "agent_run_missing" }),
+    /Async agent run not found: agent_run_missing/
+  )
+})
+
+test("async agent worker preserves explicit async target type before execution lookup", async () => {
+  await assert.rejects(
+    () => asyncAgentRunWorkerHandler({ runId: "agent_run_missing_explicit", targetType: "async_agent_run" }),
+    /Async agent run not found: agent_run_missing_explicit/
+  )
+})
