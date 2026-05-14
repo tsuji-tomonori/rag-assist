@@ -1,5 +1,25 @@
 # Gap Analysis
 
+## GAP-013: 章別 canonical 仕様と既存 REQ の対応表が未整備
+
+- Category: traceability_gap
+- Related: `docs/spec/gap-phase-a.md`, `.workspace/rag-assist_仕様追加_章別定義_管理者向け構成版 (1).md`
+- Severity: high
+- Confidence: confirmed
+- Evidence: Phase A-pre 調査で `docs/spec/` と `docs/spec/CHAPTER_TO_REQ_MAP.md` が存在しないことを確認した。現行 `docs/REQUIREMENTS.md` と `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/README.md` は FR-001..FR-048 の L0-L3 分類を持つが、章別仕様の 0..24 章 ID から既存 REQ / spec-recovery / 実装ファイルへの対応はまだ追跡できない。
+- Impact: Phase B 以降の task md が章 ID を安定参照できず、3 層認可、ナレッジ品質、チャット内オーケストレーション、非同期エージェントなどの新規・拡張範囲を既存要件と重複または欠落させるリスクがある。
+- Recommended action: Phase A1 で章別仕様書を `docs/spec/2026-chapter-spec.md` として canonical 化し、Phase A2 で `docs/spec/CHAPTER_TO_REQ_MAP.md` を作成する。既存 FR 番号は renumber せず、新規不足分は `status: planning` の REQ 雛形として追加する。
+
+## GAP-014: 章別仕様の folder / 3層認可 / 品質ゲートが現実装の role permission モデルと乖離
+
+- Category: divergent_model
+- Related: `docs/spec/gap-phase-a.md`, `apps/api/src/authorization.ts`, `apps/api/src/security/access-control-policy.test.ts`
+- Severity: high
+- Confidence: confirmed
+- Evidence: 現実装は `Role` / `Permission` / `rolePermissions` と route-level permission metadata を中心に認可している。一方、章別仕様は Account status、Feature permission、Resource permission の 3 層と `EffectiveFolderPermission` を前提にする。仕様 2 章の folder 階層継承も、現行 document group / upload scope と完全一致しない。
+- Impact: Phase B の認可基盤変更で既存 route permission、benchmark seed isolation、debug trace 権限境界を崩すリスクがある。
+- Recommended action: Phase B-pre で現行 role mapping、route metadata、document group / benchmark seed 例外を棚卸しし、3 層モデルへの移行時に踏襲すべき既存挙動を task md の scope-out とリスクへ明記する。
+
 ## GAP-001: 作業レポート本文精読は完了
 
 - Category: resolved_coverage_gap
