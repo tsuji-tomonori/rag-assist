@@ -1,6 +1,6 @@
 # H-support-search-improvement
 
-状態: do
+状態: done
 タスク種別: 機能追加
 発注元 wave: Wave 4
 branch: `codex/phase-h-support-search-improvement`
@@ -43,8 +43,8 @@ base: `origin/main`
 - [x] 検索改善候補は draft / pending review のみに保存し、自動 publish しない。
 - [x] route 追加・変更に応じて access-control policy test を更新する。
 - [x] 最小十分な test / docs check / diff check を実行する。
-- [ ] PR 作成後に受け入れ条件コメントとセルフレビューコメントを投稿する。
-- [ ] PR コメント後に task md を `tasks/done/` に移動し、状態 `done` として同 branch に commit / push する。
+- [x] PR 作成後に受け入れ条件コメントとセルフレビューコメントを投稿する。
+- [x] PR コメント後に task md を `tasks/done/` に移動し、状態 `done` として同 branch に commit / push する。
 
 ## 受け入れ条件
 
