@@ -1,6 +1,6 @@
 # J2 debug 4 tier and middleware
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 機能追加
 - branch: `codex/phase-j2-debug-4tier-middleware`
 - worktree: `.worktrees/phase-j2-debug-4tier-middleware`
@@ -52,7 +52,7 @@
 - [x] 最小実装と必要 docs/test を追加する。
 - [x] 変更範囲に応じた検証を実行する。
 - [x] 作業レポートを作成する。
-- [ ] commit / push / PR / PR コメント / task done 移動まで完了する。
+- [x] commit / push / PR / PR コメント / task done 移動まで完了する。
 
 ## Done 条件
 
