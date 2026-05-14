@@ -66,6 +66,8 @@
 
 - `npm ci`: pass。初回検証で `vitest` / `tsc` が未導入だったため lockfile に沿って依存関係を復元。
 - `npm run test -w @memorag-mvp/web -- AdminWorkspace useAdminData`: 初回は旧 assertion で fail、修正後 pass。
+- `npm run test -w @memorag-mvp/web -- App AdminWorkspace useAdminData`: CI failure の再現後、section tab 前提に `App.test.tsx` を修正して pass。
+- `npm run test:coverage -w @memorag-mvp/web`: pass。31 files / 229 tests、C0 91.68% / C1 86.72%。
 - `npm run typecheck -w @memorag-mvp/web`: pass。
 - `npm run docs:web-inventory`: pass。
 - `npm run docs:web-inventory:check`: pass。
