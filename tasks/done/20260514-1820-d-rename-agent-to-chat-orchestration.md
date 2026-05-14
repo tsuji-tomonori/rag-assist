@@ -1,6 +1,6 @@
 # D-rename-agent-to-chat-orchestration
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -57,8 +57,8 @@ Wave 3 Phase D の仕様 4B は、同期チャット内 RAG 処理を旧 `Agent`
 - [x] `docs/spec/gap-phase-d.md` と関連 design docs に実装結果と残リスクが追記されている。
 - [x] 作業レポートが `reports/working/*d-rename-agent-to-chat-orchestration*.md` に作成されている。
 - [x] 必須検証が実行され、未実施がある場合は理由が PR 本文 / コメント / report に明記されている。
-- [ ] main 向け PR が作成され、日本語 PR 本文、受け入れ条件コメント、セルフレビューコメントが追加されている。
-- [ ] PR コメント後に task md が `tasks/done/` へ移動され、状態が `done` になり、同じ branch に commit / push されている。
+- [x] main 向け PR が作成され、日本語 PR 本文、受け入れ条件コメント、セルフレビューコメントが追加されている。
+- [x] PR コメント後に task md が `tasks/done/` へ移動され、状態が `done` になり、同じ branch に commit / push されている。
 
 ## 検証計画
 
