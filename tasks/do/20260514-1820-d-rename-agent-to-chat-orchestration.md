@@ -17,7 +17,7 @@ Wave 3 Phase D の仕様 4B は、同期チャット内 RAG 処理を旧 `Agent`
 ## Scope
 
 - `ChatOrchestrationState`, `ChatOrchestrationUpdate`, `ChatOrchestrationNode`, `ChatOrchestrationStateSchema`, `createChatOrchestrationGraph`, `runChatOrchestration`, `applyChatOrchestrationUpdate` を `ChatOrchestration` 系へ rename する。
-- 可能なら `apps/api/src/chat-orchestration/` を `apps/api/src/chat-orchestration/` へ rename する。
+- 可能なら `apps/api/src/agent/` を `apps/api/src/chat-orchestration/` へ rename する。
 - `PipelineVersions` に `chatOrchestrationWorkflowVersion` を追加し、既存 `agentWorkflowVersion` を互換 field として維持する。
 - `AGENT_WORKFLOW_VERSION` / `qa-agent-v2` の互換方針を docs に明記する。
 - `docs/spec/gap-phase-d.md` と関連 design docs に実装結果と残した open question を追記する。
@@ -49,14 +49,14 @@ Wave 3 Phase D の仕様 4B は、同期チャット内 RAG 処理を旧 `Agent`
 
 ## 受け入れ条件
 
-- [ ] 4B 同期 chat RAG 実装の主要 internal symbols が `ChatOrchestration` 系の名称へ rename されている。
-- [ ] `apps/api/src/chat-orchestration/` directory rename を実施するか、実施しない場合は conflict / scope-out 理由を docs / report に明記している。
-- [ ] `PipelineVersions.chatOrchestrationWorkflowVersion` が追加され、`agentWorkflowVersion` は互換 field として残っている。
-- [ ] `AGENT_WORKFLOW_VERSION` / `qa-agent-v2` の互換方針が docs / report に明記され、benchmark baseline を壊す値変更をしていない。
-- [ ] `standard-agent-v1`, `smoke-agent-v1`, `mode: agent`, `datasets/agent` など benchmark identity は preserve されている。
-- [ ] `docs/spec/gap-phase-d.md` と関連 design docs に実装結果と残リスクが追記されている。
-- [ ] 作業レポートが `reports/working/*d-rename-agent-to-chat-orchestration*.md` に作成されている。
-- [ ] 必須検証が実行され、未実施がある場合は理由が PR 本文 / コメント / report に明記されている。
+- [x] 4B 同期 chat RAG 実装の主要 internal symbols が `ChatOrchestration` 系の名称へ rename されている。
+- [x] `apps/api/src/agent/` から `apps/api/src/chat-orchestration/` への directory rename が実施されている。
+- [x] `PipelineVersions.chatOrchestrationWorkflowVersion` が追加され、`agentWorkflowVersion` は互換 field として残っている。
+- [x] `AGENT_WORKFLOW_VERSION` / `qa-agent-v2` の互換方針が docs / report に明記され、benchmark baseline を壊す値変更をしていない。
+- [x] `standard-agent-v1`, `smoke-agent-v1`, `mode: agent`, `datasets/agent` など benchmark identity は preserve されている。
+- [x] `docs/spec/gap-phase-d.md` と関連 design docs に実装結果と残リスクが追記されている。
+- [x] 作業レポートが `reports/working/*d-rename-agent-to-chat-orchestration*.md` に作成されている。
+- [x] 必須検証が実行され、未実施がある場合は理由が PR 本文 / コメント / report に明記されている。
 - [ ] main 向け PR が作成され、日本語 PR 本文、受け入れ条件コメント、セルフレビューコメントが追加されている。
 - [ ] PR コメント後に task md が `tasks/done/` へ移動され、状態が `done` になり、同じ branch に commit / push されている。
 

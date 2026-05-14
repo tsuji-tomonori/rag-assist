@@ -205,3 +205,29 @@ inferred:
 3. Contract compatibility: `pipelineVersions.chatOrchestrationWorkflowVersion` を追加し、`agentWorkflowVersion` は互換 field として残すか deprecation 方針を docs 化する。
 4. Generated docs update: OpenAPI docs、API docs、data design docs を再生成・更新する。
 5. Benchmark label cleanup: suite ID / mode / dataset path は preserve し、表示ラベルのみ必要に応じて調整する。
+
+## D 実装結果
+
+confirmed:
+
+- 4B 同期 chat RAG 実装の directory を `apps/api/src/agent/` から `apps/api/src/chat-orchestration/` へ rename した。
+- 主要 internal symbols を `ChatOrchestrationState`、`ChatOrchestrationUpdate`、`ChatOrchestrationNode`、`ChatOrchestrationStateSchema`、`createChatOrchestrationGraph`、`runChatOrchestration`、`applyChatOrchestrationUpdate` へ rename した。
+- `MemoRagService.chat()` と async chat run execution は `runChatOrchestration()` を呼ぶ構造へ更新した。
+- `PipelineVersions.chatOrchestrationWorkflowVersion` を追加し、既存 `agentWorkflowVersion` は同じ値を返す互換 field として維持した。
+- `CHAT_ORCHESTRATION_WORKFLOW_VERSION` と互換 export `AGENT_WORKFLOW_VERSION` はどちらも `qa-agent-v2` を返す。過去 debug trace / benchmark baseline との比較継続を優先し、version string は変更しない。
+- `standard-agent-v1`、`smoke-agent-v1`、`mode: "agent"`、`runner: "agent"`、`datasets/agent/*` は benchmark identity として preserve した。
+- C / E merge 後の `DocumentQualityProfile` と parsed document metadata は renamed path に統合され、quality gate と parsing metadata の挙動は維持されている。
+
+confirmed validations:
+
+- `npm run typecheck -w @memorag-mvp/api`: pass。
+- `npm exec -w @memorag-mvp/api -- tsx --test src/chat-orchestration/graph.test.ts src/chat-orchestration/nodes/node-units.test.ts src/contract/api-contract.test.ts`: pass。
+- `npm run docs:openapi:check`: pass。
+- `npm run test -w @memorag-mvp/api`: pass。
+- `python3 scripts/validate_spec_recovery.py docs/spec-recovery`: pass。出力は `Validation completed. Review warnings before treating the spec recovery as complete.`。
+- `git diff --check`: pass。
+
+open_question:
+
+- `agentWorkflowVersion` の完全削除は breaking API change になるため、今回の scope では実施しない。削除する場合は major 変更、保存済み history/debug JSON、Web 型、OpenAPI examples の migration plan が必要。
+- benchmark UI の表示文言 `Agent standard` は suite identity の preserve を優先して変更しない。UI label だけの rename は別 task で検討できる。
