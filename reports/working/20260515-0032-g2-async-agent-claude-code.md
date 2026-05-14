@@ -23,6 +23,7 @@
 - 未設定時は `not_configured` のまま blocked run とし、架空 artifact や固定 cost を生成しない方針を維持した。
 - 成功経路のテストは provider adapter を dependency injection で差し替え、実行結果由来の artifact と sanitized log 保存を検証した。
 - CodeBuild / Secrets の本格 IAM 追加は G2 では過剰なため、G3/G4 と共有できる adapter interface と config 境界に留めた。
+- G1 coverage 補強後の `origin/main` へ rebase した際、既存 coverage test の旧 `provider_unavailable` 期待を G2 の正しい `not_configured` 期待へ更新した。
 
 ## 実施作業
 
@@ -47,12 +48,12 @@
 
 ## 検証
 
-- `./node_modules/.bin/tsx --test apps/api/src/rag/memorag-service.test.ts apps/api/src/agent-routes.test.ts apps/api/src/worker-contract.test.ts` passed
+- `./node_modules/.bin/tsx --test apps/api/src/rag/memorag-service.test.ts apps/api/src/agent-routes.test.ts apps/api/src/worker-contract.test.ts` passed (51 tests)
 - `npm run typecheck -w @memorag-mvp/api` passed
 - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0` passed
 - `npm run docs:openapi` passed
 - `npm run docs:openapi:check` passed
-- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts` passed (Statements 93.72%, Branches 85.16%, Functions 93.9%, Lines 93.72%)
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts` passed (274 tests; Statements 93.88%, Branches 85.27%, Functions 93.9%, Lines 93.88%)
 - `git diff --check` passed
 
 ## Fit 評価

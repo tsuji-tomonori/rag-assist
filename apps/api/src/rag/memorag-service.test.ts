@@ -176,7 +176,7 @@ test("service manages async agent run metadata without provider execution or moc
 
   const blockedByWorkerContract = await service.executeAsyncAgentRun("agent_queued_fixture")
   assert.equal(blockedByWorkerContract.status, "blocked")
-  assert.equal(blockedByWorkerContract.failureReasonCode, "provider_unavailable")
+  assert.equal(blockedByWorkerContract.failureReasonCode, "not_configured")
   assert.equal((await service.getAsyncAgentArtifact(owner, "agent_queued_fixture", "artifact_report_fixture"))?.fileName, "report.md")
   assert.equal((await service.listAsyncAgentArtifacts(owner, "agent_queued_fixture"))?.length, 1)
 })
