@@ -262,7 +262,11 @@ export class MemoRagService {
     const manifestObjectKey = `manifests/${documentId}.json`
     await this.deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")
     if (structuredBlocksObjectKey && extracted.blocks) {
-      await this.deps.objectStore.putText(structuredBlocksObjectKey, JSON.stringify({ schemaVersion: 1, blocks: extracted.blocks }, null, 2), "application/json")
+      await this.deps.objectStore.putText(
+        structuredBlocksObjectKey,
+        JSON.stringify({ schemaVersion: 2, blocks: extracted.blocks, parsedDocument: extracted.parsedDocument }, null, 2),
+        "application/json"
+      )
     }
 
     const documentStatistics = summarizeDocumentStatistics(chunks)
@@ -317,9 +321,17 @@ export class MemoRagService {
           sourceBlockId: chunk.sourceBlockId,
           normalizedFrom: chunk.normalizedFrom,
           tableColumnCount: chunk.tableColumnCount,
+          tableId: chunk.tableId,
+          tableRowCount: chunk.tableRowCount,
+          tableConfidence: chunk.tableConfidence,
           listDepth: chunk.listDepth,
           codeLanguage: chunk.codeLanguage,
           figureCaption: chunk.figureCaption,
+          figureId: chunk.figureId,
+          confidence: chunk.confidence,
+          readingOrder: chunk.readingOrder,
+          bbox: chunk.bbox,
+          sourceLocation: chunk.sourceLocation,
           extractionMethod: chunk.extractionMethod,
           lifecycleStatus: lifecycleStatus(input.metadata),
           ...filterableMetadata,
@@ -393,6 +405,10 @@ export class MemoRagService {
       reindexMigrationId: stringValue(input.metadata?.reindexMigrationId),
       chunkCount: chunks.length,
       memoryCardCount: memoryCards.length,
+      parsedDocument: extracted.parsedDocument,
+      extractionWarnings: extracted.warnings,
+      extractionCounters: extracted.counters,
+      fileProfile: extracted.fileProfile,
       createdAt
     }
 
@@ -1106,6 +1122,9 @@ export class MemoRagService {
       embeddingModelId: input.embeddingModelId,
       memoryModelId: input.memoryModelId,
       skipMemory: input.skipMemory,
+      stage: "queued",
+      counters: {},
+      warnings: [],
       createdAt: now,
       updatedAt: now,
       ttl
@@ -1141,7 +1160,7 @@ export class MemoRagService {
     if (!run) throw new Error(`Document ingest run not found: ${runId}`)
     const ttl = run.ttl
     const startedAt = new Date().toISOString()
-    await this.deps.documentIngestRunStore.update(runId, { status: "running", startedAt, updatedAt: startedAt })
+    await this.deps.documentIngestRunStore.update(runId, { status: "running", stage: "running", startedAt, updatedAt: startedAt })
     await this.deps.documentIngestRunEventStore.append({
       runId,
       type: "status",
@@ -1153,12 +1172,33 @@ export class MemoRagService {
 
     try {
       logIngestStage({ stage: "s3_read", phase: "start", runId, fileName: run.fileName, mimeType: run.mimeType })
+      await this.deps.documentIngestRunEventStore.append({
+        runId,
+        type: "status",
+        stage: "preprocessing",
+        message: "アップロード済みオブジェクトを読み込んでいます",
+        data: { status: "running", stage: "preprocessing" },
+        ttl
+      })
       const contentBytes = await this.deps.objectStore.getBytes(run.objectKey)
       if (contentBytes.length === 0) throw new Error("Uploaded object is empty")
       logIngestStage({ stage: "s3_read", phase: "end", runId, fileName: run.fileName, mimeType: run.mimeType, fileSizeBytes: contentBytes.length })
       const sourceS3Object = config.docsBucketName
         ? { bucketName: config.docsBucketName, key: run.objectKey }
         : undefined
+      await this.deps.documentIngestRunStore.update(runId, {
+        stage: "extracting",
+        counters: { fileSizeBytes: contentBytes.length },
+        updatedAt: new Date().toISOString()
+      })
+      await this.deps.documentIngestRunEventStore.append({
+        runId,
+        type: "status",
+        stage: "extracting",
+        message: "文書を解析し、チャンク化とインデックス登録を実行しています",
+        data: { status: "running", stage: "extracting", counters: { fileSizeBytes: contentBytes.length } },
+        ttl
+      })
       const manifest = await this.ingest({
         fileName: run.fileName,
         mimeType: run.mimeType,
@@ -1172,18 +1212,31 @@ export class MemoRagService {
       await this.deps.objectStore.deleteObject(run.objectKey)
       const manifestSummary = toDocumentManifestSummary(manifest)
       const completedAt = new Date().toISOString()
+      const counters = {
+        ...(manifest.extractionCounters ?? {}),
+        chunkCount: manifest.chunkCount,
+        memoryCardCount: manifest.memoryCardCount
+      }
       await this.deps.documentIngestRunEventStore.append({
         runId,
         type: "final",
         stage: "done",
         message: "文書取り込みが完了しました",
-        data: { documentId: manifest.documentId, manifest: manifestSummary as unknown as JsonValue },
+        data: {
+          documentId: manifest.documentId,
+          manifest: manifestSummary as unknown as JsonValue,
+          counters,
+          warnings: (manifest.extractionWarnings ?? []) as unknown as JsonValue
+        },
         ttl
       })
       return this.deps.documentIngestRunStore.update(runId, {
         status: "succeeded",
+        stage: "done",
         manifest: manifestSummary,
         documentId: manifest.documentId,
+        counters,
+        warnings: manifest.extractionWarnings,
         completedAt,
         updatedAt: completedAt
       })
@@ -1200,6 +1253,7 @@ export class MemoRagService {
       })
       return this.deps.documentIngestRunStore.update(runId, {
         status: "failed",
+        stage: "failed",
         error: message,
         completedAt,
         updatedAt: completedAt
@@ -1223,6 +1277,7 @@ export class MemoRagService {
     })
     return this.deps.documentIngestRunStore.update(runId, {
       status: "failed",
+      stage: "failed",
       error: reason,
       completedAt,
       updatedAt: completedAt
@@ -1465,9 +1520,17 @@ export class MemoRagService {
         sourceBlockId: chunk.sourceBlockId,
         normalizedFrom: chunk.normalizedFrom,
         tableColumnCount: chunk.tableColumnCount,
+        tableId: chunk.tableId,
+        tableRowCount: chunk.tableRowCount,
+        tableConfidence: chunk.tableConfidence,
         listDepth: chunk.listDepth,
         codeLanguage: chunk.codeLanguage,
         figureCaption: chunk.figureCaption,
+        figureId: chunk.figureId,
+        confidence: chunk.confidence,
+        readingOrder: chunk.readingOrder,
+        bbox: chunk.bbox,
+        sourceLocation: chunk.sourceLocation,
         extractionMethod: chunk.extractionMethod,
         lifecycleStatus: status,
         ...filterableMetadata,
@@ -2107,6 +2170,7 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   const regionId = stringValue(metadata.regionId)
   const regionType = stringValue(metadata.regionType)
   const sourceType = stringValue(metadata.sourceType)
+  const bbox = metadata.bbox
   const aclGroup = stringValue(metadata.aclGroup) ?? aclGroups[0]
   if (tenantId) filterable.tenantId = tenantId
   if (department) filterable.department = department
@@ -2131,6 +2195,7 @@ function toFilterableVectorMetadata(metadata: Record<string, JsonValue> | undefi
   if (regionId) filterable.regionId = regionId
   if (regionType) filterable.regionType = regionType
   if (sourceType) filterable.sourceType = sourceType
+  if (bbox !== undefined) filterable.bbox = bbox
   if (aclGroup) filterable.aclGroup = aclGroup
   if (aclGroups.length > 0) filterable.aclGroups = aclGroups
   if (allowedUsers && allowedUsers.length > 0) filterable.allowedUsers = allowedUsers
