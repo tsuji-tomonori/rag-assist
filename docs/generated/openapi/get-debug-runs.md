@@ -52,7 +52,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 105 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 121 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -154,6 +154,22 @@ Media type: `application/json`
 | `debugRuns[].finalEvidence[].bbox` | `object` | no | `response.debugRuns[].finalEvidence[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `debugRuns[].finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `debugRuns[].finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `debugRuns[].toolInvocations` | `array<object>` | no | `response.debugRuns[].toolInvocations` の値。項目名は tool invocations を表します。 | - |
+| `debugRuns[].toolInvocations[].invocationId` | `string` | yes | `response.debugRuns[].toolInvocations[].invocationId` の値。項目名は invocation id を表します。 | minLength=1 |
+| `debugRuns[].toolInvocations[].orchestrationRunId` | `string` | yes | `response.debugRuns[].toolInvocations[].orchestrationRunId` の値。項目名は orchestration run id を表します。 | minLength=1 |
+| `debugRuns[].toolInvocations[].toolId` | `string` | yes | `response.debugRuns[].toolInvocations[].toolId` の値。項目名は tool id を表します。 | minLength=1 |
+| `debugRuns[].toolInvocations[].requesterUserId` | `string` | yes | `response.debugRuns[].toolInvocations[].requesterUserId` の値。項目名は requester user id を表します。 | minLength=1 |
+| `debugRuns[].toolInvocations[].status` | `enum(queued \| waiting_for_approval \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, waiting_for_approval, running, succeeded, failed, cancelled |
+| `debugRuns[].toolInvocations[].input` | `object` | yes | `response.debugRuns[].toolInvocations[].input` の値。項目名は input を表します。 | nullable |
+| `debugRuns[].toolInvocations[].inputSummary` | `object` | no | `response.debugRuns[].toolInvocations[].inputSummary` の値。項目名は input summary を表します。 | nullable |
+| `debugRuns[].toolInvocations[].output` | `object` | no | `response.debugRuns[].toolInvocations[].output` の値。項目名は output を表します。 | nullable |
+| `debugRuns[].toolInvocations[].outputSummary` | `object` | no | `response.debugRuns[].toolInvocations[].outputSummary` の値。項目名は output summary を表します。 | nullable |
+| `debugRuns[].toolInvocations[].errorCode` | `string` | no | `response.debugRuns[].toolInvocations[].errorCode` の値。項目名は error code を表します。 | - |
+| `debugRuns[].toolInvocations[].errorMessage` | `string` | no | `response.debugRuns[].toolInvocations[].errorMessage` の値。項目名は error message を表します。 | - |
+| `debugRuns[].toolInvocations[].approvedBy` | `string` | no | `response.debugRuns[].toolInvocations[].approvedBy` の値。項目名は approved by を表します。 | - |
+| `debugRuns[].toolInvocations[].approvedAt` | `string` | no | `response.debugRuns[].toolInvocations[].approvedAt` の値。項目名は approved at を表します。 | - |
+| `debugRuns[].toolInvocations[].startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `debugRuns[].toolInvocations[].completedAt` | `string` | no | 処理が完了した日時。 | - |
 | `debugRuns[].steps` | `array<object>` | yes | `response.debugRuns[].steps` の値。項目名は steps を表します。 | - |
 | `debugRuns[].steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
 | `debugRuns[].steps[].label` | `string` | yes | `response.debugRuns[].steps[].label` の値。項目名は label を表します。 | - |

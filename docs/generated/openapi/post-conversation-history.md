@@ -28,7 +28,7 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `schemaVersion` | `enum(1)` | no | `data.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `schemaVersion` | `anyOf` | no | `data.schemaVersion` の値。項目名は schema version を表します。 | - |
 | `id` | `string` | yes | リソースを一意に識別する ID。 | minLength=1 |
 | `title` | `string` | yes | 表示や一覧で利用するタイトル。 | minLength=1<br>maxLength=120 |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
@@ -202,6 +202,22 @@ Media type: `application/json`
 | `messages[].result.debug.finalEvidence[].bbox` | `object` | no | `data.messages[].result.debug.finalEvidence[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `messages[].result.debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug.toolInvocations` | `array<object>` | no | `data.messages[].result.debug.toolInvocations` の値。項目名は tool invocations を表します。 | - |
+| `messages[].result.debug.toolInvocations[].invocationId` | `string` | yes | `data.messages[].result.debug.toolInvocations[].invocationId` の値。項目名は invocation id を表します。 | minLength=1 |
+| `messages[].result.debug.toolInvocations[].orchestrationRunId` | `string` | yes | `data.messages[].result.debug.toolInvocations[].orchestrationRunId` の値。項目名は orchestration run id を表します。 | minLength=1 |
+| `messages[].result.debug.toolInvocations[].toolId` | `string` | yes | `data.messages[].result.debug.toolInvocations[].toolId` の値。項目名は tool id を表します。 | minLength=1 |
+| `messages[].result.debug.toolInvocations[].requesterUserId` | `string` | yes | `data.messages[].result.debug.toolInvocations[].requesterUserId` の値。項目名は requester user id を表します。 | minLength=1 |
+| `messages[].result.debug.toolInvocations[].status` | `enum(queued \| waiting_for_approval \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, waiting_for_approval, running, succeeded, failed, cancelled |
+| `messages[].result.debug.toolInvocations[].input` | `object` | yes | `data.messages[].result.debug.toolInvocations[].input` の値。項目名は input を表します。 | nullable |
+| `messages[].result.debug.toolInvocations[].inputSummary` | `object` | no | `data.messages[].result.debug.toolInvocations[].inputSummary` の値。項目名は input summary を表します。 | nullable |
+| `messages[].result.debug.toolInvocations[].output` | `object` | no | `data.messages[].result.debug.toolInvocations[].output` の値。項目名は output を表します。 | nullable |
+| `messages[].result.debug.toolInvocations[].outputSummary` | `object` | no | `data.messages[].result.debug.toolInvocations[].outputSummary` の値。項目名は output summary を表します。 | nullable |
+| `messages[].result.debug.toolInvocations[].errorCode` | `string` | no | `data.messages[].result.debug.toolInvocations[].errorCode` の値。項目名は error code を表します。 | - |
+| `messages[].result.debug.toolInvocations[].errorMessage` | `string` | no | `data.messages[].result.debug.toolInvocations[].errorMessage` の値。項目名は error message を表します。 | - |
+| `messages[].result.debug.toolInvocations[].approvedBy` | `string` | no | `data.messages[].result.debug.toolInvocations[].approvedBy` の値。項目名は approved by を表します。 | - |
+| `messages[].result.debug.toolInvocations[].approvedAt` | `string` | no | `data.messages[].result.debug.toolInvocations[].approvedAt` の値。項目名は approved at を表します。 | - |
+| `messages[].result.debug.toolInvocations[].startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `messages[].result.debug.toolInvocations[].completedAt` | `string` | no | 処理が完了した日時。 | - |
 | `messages[].result.debug.steps` | `array<object>` | yes | `data.messages[].result.debug.steps` の値。項目名は steps を表します。 | - |
 | `messages[].result.debug.steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
 | `messages[].result.debug.steps[].label` | `string` | yes | `data.messages[].result.debug.steps[].label` の値。項目名は label を表します。 | - |
@@ -240,6 +256,55 @@ Media type: `application/json`
 | `messages[].questionTicket.updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `messages[].questionTicket.answeredAt` | `string` | no | `data.messages[].questionTicket.answeredAt` の値。項目名は answered at を表します。 | - |
 | `messages[].questionTicket.resolvedAt` | `string` | no | `data.messages[].questionTicket.resolvedAt` の値。項目名は resolved at を表します。 | - |
+| `decontextualizedQuery` | `object` | no | `data.decontextualizedQuery` の値。項目名は decontextualized query を表します。 | - |
+| `decontextualizedQuery.originalQuestion` | `string` | yes | `data.decontextualizedQuery.originalQuestion` の値。項目名は original question を表します。 | - |
+| `decontextualizedQuery.standaloneQuestion` | `string` | yes | `data.decontextualizedQuery.standaloneQuestion` の値。項目名は standalone question を表します。 | - |
+| `decontextualizedQuery.retrievalQueries` | `array<string>` | no | `data.decontextualizedQuery.retrievalQueries` の値。項目名は retrieval queries を表します。 | - |
+| `decontextualizedQuery.turnDependency` | `string` | no | `data.decontextualizedQuery.turnDependency` の値。項目名は turn dependency を表します。 | - |
+| `decontextualizedQuery.previousCitationCount` | `integer` | no | `data.decontextualizedQuery.previousCitationCount` の値。項目名は previous citation count を表します。 | minimum=0 |
+| `rollingSummary` | `string` | no | `data.rollingSummary` の値。項目名は rolling summary を表します。 | maxLength=4000 |
+| `queryFocusedSummary` | `string` | no | `data.queryFocusedSummary` の値。項目名は query focused summary を表します。 | maxLength=4000 |
+| `citationMemory` | `array<object>` | no | `data.citationMemory` の値。項目名は citation memory を表します。 | maxItems=50 |
+| `citationMemory[].citation` | `object` | yes | `data.citationMemory[].citation` の値。項目名は citation を表します。 | - |
+| `citationMemory[].citation.documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `citationMemory[].citation.fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `citationMemory[].citation.chunkId` | `string` | no | `data.citationMemory[].citation.chunkId` の値。項目名は chunk id を表します。 | - |
+| `citationMemory[].citation.pageStart` | `integer` | no | `data.citationMemory[].citation.pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `citationMemory[].citation.pageEnd` | `integer` | no | `data.citationMemory[].citation.pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `citationMemory[].citation.pageOrSheet` | `string` | no | `data.citationMemory[].citation.pageOrSheet` の値。項目名は page or sheet を表します。 | - |
+| `citationMemory[].citation.drawingNo` | `string` | no | `data.citationMemory[].citation.drawingNo` の値。項目名は drawing no を表します。 | - |
+| `citationMemory[].citation.sheetTitle` | `string` | no | `data.citationMemory[].citation.sheetTitle` の値。項目名は sheet title を表します。 | - |
+| `citationMemory[].citation.scale` | `string` | no | `data.citationMemory[].citation.scale` の値。項目名は scale を表します。 | - |
+| `citationMemory[].citation.regionId` | `string` | no | `data.citationMemory[].citation.regionId` の値。項目名は region id を表します。 | - |
+| `citationMemory[].citation.regionType` | `string` | no | `data.citationMemory[].citation.regionType` の値。項目名は region type を表します。 | - |
+| `citationMemory[].citation.sourceType` | `string` | no | `data.citationMemory[].citation.sourceType` の値。項目名は source type を表します。 | - |
+| `citationMemory[].citation.bbox` | `object` | no | `data.citationMemory[].citation.bbox` の値。項目名は bbox を表します。 | nullable |
+| `citationMemory[].citation.score` | `number` | no | 検索または評価で算出した関連度 score。 | - |
+| `citationMemory[].citation.text` | `string` | no | 文書本文またはチャンク本文。 | - |
+| `citationMemory[].turnId` | `string` | no | `data.citationMemory[].turnId` の値。項目名は turn id を表します。 | - |
+| `citationMemory[].answerExcerpt` | `string` | no | `data.citationMemory[].answerExcerpt` の値。項目名は answer excerpt を表します。 | - |
+| `citationMemory[].rememberedAt` | `string` | no | `data.citationMemory[].rememberedAt` の値。項目名は remembered at を表します。 | - |
+| `taskState` | `object` | no | `data.taskState` の値。項目名は task state を表します。 | - |
+| `taskState.status` | `enum(none \| in_progress \| waiting_for_user \| completed \| blocked)` | no | 現在の処理状態または管理状態。 | enum=none, in_progress, waiting_for_user, completed, blocked |
+| `taskState.goal` | `string` | no | `data.taskState.goal` の値。項目名は goal を表します。 | - |
+| `taskState.pendingActions` | `array<string>` | no | `data.taskState.pendingActions` の値。項目名は pending actions を表します。 | - |
+| `taskState.metadata` | `object` | no | `data.taskState.metadata` の値。項目名は metadata を表します。 | nullable |
+| `toolInvocations` | `array<object>` | no | `data.toolInvocations` の値。項目名は tool invocations を表します。 | maxItems=100 |
+| `toolInvocations[].invocationId` | `string` | yes | `data.toolInvocations[].invocationId` の値。項目名は invocation id を表します。 | minLength=1 |
+| `toolInvocations[].orchestrationRunId` | `string` | yes | `data.toolInvocations[].orchestrationRunId` の値。項目名は orchestration run id を表します。 | minLength=1 |
+| `toolInvocations[].toolId` | `string` | yes | `data.toolInvocations[].toolId` の値。項目名は tool id を表します。 | minLength=1 |
+| `toolInvocations[].requesterUserId` | `string` | yes | `data.toolInvocations[].requesterUserId` の値。項目名は requester user id を表します。 | minLength=1 |
+| `toolInvocations[].status` | `enum(queued \| waiting_for_approval \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, waiting_for_approval, running, succeeded, failed, cancelled |
+| `toolInvocations[].input` | `object` | yes | `data.toolInvocations[].input` の値。項目名は input を表します。 | nullable |
+| `toolInvocations[].inputSummary` | `object` | no | `data.toolInvocations[].inputSummary` の値。項目名は input summary を表します。 | nullable |
+| `toolInvocations[].output` | `object` | no | `data.toolInvocations[].output` の値。項目名は output を表します。 | nullable |
+| `toolInvocations[].outputSummary` | `object` | no | `data.toolInvocations[].outputSummary` の値。項目名は output summary を表します。 | nullable |
+| `toolInvocations[].errorCode` | `string` | no | `data.toolInvocations[].errorCode` の値。項目名は error code を表します。 | - |
+| `toolInvocations[].errorMessage` | `string` | no | `data.toolInvocations[].errorMessage` の値。項目名は error message を表します。 | - |
+| `toolInvocations[].approvedBy` | `string` | no | `data.toolInvocations[].approvedBy` の値。項目名は approved by を表します。 | - |
+| `toolInvocations[].approvedAt` | `string` | no | `data.toolInvocations[].approvedAt` の値。項目名は approved at を表します。 | - |
+| `toolInvocations[].startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `toolInvocations[].completedAt` | `string` | no | 処理が完了した日時。 | - |
 
 ## Authorization
 
@@ -270,7 +335,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 212 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 277 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -282,7 +347,7 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `schemaVersion` | `enum(1)` | no | `response.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
+| `schemaVersion` | `anyOf` | no | `response.schemaVersion` の値。項目名は schema version を表します。 | - |
 | `id` | `string` | yes | リソースを一意に識別する ID。 | minLength=1 |
 | `title` | `string` | yes | 表示や一覧で利用するタイトル。 | minLength=1<br>maxLength=120 |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
@@ -456,6 +521,22 @@ Media type: `application/json`
 | `messages[].result.debug.finalEvidence[].bbox` | `object` | no | `response.messages[].result.debug.finalEvidence[].bbox` の値。項目名は bbox を表します。 | nullable |
 | `messages[].result.debug.finalEvidence[].score` | `number` | yes | 検索または評価で算出した関連度 score。 | - |
 | `messages[].result.debug.finalEvidence[].text` | `string` | yes | 文書本文またはチャンク本文。 | - |
+| `messages[].result.debug.toolInvocations` | `array<object>` | no | `response.messages[].result.debug.toolInvocations` の値。項目名は tool invocations を表します。 | - |
+| `messages[].result.debug.toolInvocations[].invocationId` | `string` | yes | `response.messages[].result.debug.toolInvocations[].invocationId` の値。項目名は invocation id を表します。 | minLength=1 |
+| `messages[].result.debug.toolInvocations[].orchestrationRunId` | `string` | yes | `response.messages[].result.debug.toolInvocations[].orchestrationRunId` の値。項目名は orchestration run id を表します。 | minLength=1 |
+| `messages[].result.debug.toolInvocations[].toolId` | `string` | yes | `response.messages[].result.debug.toolInvocations[].toolId` の値。項目名は tool id を表します。 | minLength=1 |
+| `messages[].result.debug.toolInvocations[].requesterUserId` | `string` | yes | `response.messages[].result.debug.toolInvocations[].requesterUserId` の値。項目名は requester user id を表します。 | minLength=1 |
+| `messages[].result.debug.toolInvocations[].status` | `enum(queued \| waiting_for_approval \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, waiting_for_approval, running, succeeded, failed, cancelled |
+| `messages[].result.debug.toolInvocations[].input` | `object` | yes | `response.messages[].result.debug.toolInvocations[].input` の値。項目名は input を表します。 | nullable |
+| `messages[].result.debug.toolInvocations[].inputSummary` | `object` | no | `response.messages[].result.debug.toolInvocations[].inputSummary` の値。項目名は input summary を表します。 | nullable |
+| `messages[].result.debug.toolInvocations[].output` | `object` | no | `response.messages[].result.debug.toolInvocations[].output` の値。項目名は output を表します。 | nullable |
+| `messages[].result.debug.toolInvocations[].outputSummary` | `object` | no | `response.messages[].result.debug.toolInvocations[].outputSummary` の値。項目名は output summary を表します。 | nullable |
+| `messages[].result.debug.toolInvocations[].errorCode` | `string` | no | `response.messages[].result.debug.toolInvocations[].errorCode` の値。項目名は error code を表します。 | - |
+| `messages[].result.debug.toolInvocations[].errorMessage` | `string` | no | `response.messages[].result.debug.toolInvocations[].errorMessage` の値。項目名は error message を表します。 | - |
+| `messages[].result.debug.toolInvocations[].approvedBy` | `string` | no | `response.messages[].result.debug.toolInvocations[].approvedBy` の値。項目名は approved by を表します。 | - |
+| `messages[].result.debug.toolInvocations[].approvedAt` | `string` | no | `response.messages[].result.debug.toolInvocations[].approvedAt` の値。項目名は approved at を表します。 | - |
+| `messages[].result.debug.toolInvocations[].startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `messages[].result.debug.toolInvocations[].completedAt` | `string` | no | 処理が完了した日時。 | - |
 | `messages[].result.debug.steps` | `array<object>` | yes | `response.messages[].result.debug.steps` の値。項目名は steps を表します。 | - |
 | `messages[].result.debug.steps[].id` | `number` | yes | リソースを一意に識別する ID。 | - |
 | `messages[].result.debug.steps[].label` | `string` | yes | `response.messages[].result.debug.steps[].label` の値。項目名は label を表します。 | - |
@@ -494,6 +575,55 @@ Media type: `application/json`
 | `messages[].questionTicket.updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 | `messages[].questionTicket.answeredAt` | `string` | no | `response.messages[].questionTicket.answeredAt` の値。項目名は answered at を表します。 | - |
 | `messages[].questionTicket.resolvedAt` | `string` | no | `response.messages[].questionTicket.resolvedAt` の値。項目名は resolved at を表します。 | - |
+| `decontextualizedQuery` | `object` | no | `response.decontextualizedQuery` の値。項目名は decontextualized query を表します。 | - |
+| `decontextualizedQuery.originalQuestion` | `string` | yes | `response.decontextualizedQuery.originalQuestion` の値。項目名は original question を表します。 | - |
+| `decontextualizedQuery.standaloneQuestion` | `string` | yes | `response.decontextualizedQuery.standaloneQuestion` の値。項目名は standalone question を表します。 | - |
+| `decontextualizedQuery.retrievalQueries` | `array<string>` | no | `response.decontextualizedQuery.retrievalQueries` の値。項目名は retrieval queries を表します。 | - |
+| `decontextualizedQuery.turnDependency` | `string` | no | `response.decontextualizedQuery.turnDependency` の値。項目名は turn dependency を表します。 | - |
+| `decontextualizedQuery.previousCitationCount` | `integer` | no | `response.decontextualizedQuery.previousCitationCount` の値。項目名は previous citation count を表します。 | minimum=0 |
+| `rollingSummary` | `string` | no | `response.rollingSummary` の値。項目名は rolling summary を表します。 | maxLength=4000 |
+| `queryFocusedSummary` | `string` | no | `response.queryFocusedSummary` の値。項目名は query focused summary を表します。 | maxLength=4000 |
+| `citationMemory` | `array<object>` | no | `response.citationMemory` の値。項目名は citation memory を表します。 | maxItems=50 |
+| `citationMemory[].citation` | `object` | yes | `response.citationMemory[].citation` の値。項目名は citation を表します。 | - |
+| `citationMemory[].citation.documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `citationMemory[].citation.fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `citationMemory[].citation.chunkId` | `string` | no | `response.citationMemory[].citation.chunkId` の値。項目名は chunk id を表します。 | - |
+| `citationMemory[].citation.pageStart` | `integer` | no | `response.citationMemory[].citation.pageStart` の値。項目名は page start を表します。 | minimum=0 |
+| `citationMemory[].citation.pageEnd` | `integer` | no | `response.citationMemory[].citation.pageEnd` の値。項目名は page end を表します。 | minimum=0 |
+| `citationMemory[].citation.pageOrSheet` | `string` | no | `response.citationMemory[].citation.pageOrSheet` の値。項目名は page or sheet を表します。 | - |
+| `citationMemory[].citation.drawingNo` | `string` | no | `response.citationMemory[].citation.drawingNo` の値。項目名は drawing no を表します。 | - |
+| `citationMemory[].citation.sheetTitle` | `string` | no | `response.citationMemory[].citation.sheetTitle` の値。項目名は sheet title を表します。 | - |
+| `citationMemory[].citation.scale` | `string` | no | `response.citationMemory[].citation.scale` の値。項目名は scale を表します。 | - |
+| `citationMemory[].citation.regionId` | `string` | no | `response.citationMemory[].citation.regionId` の値。項目名は region id を表します。 | - |
+| `citationMemory[].citation.regionType` | `string` | no | `response.citationMemory[].citation.regionType` の値。項目名は region type を表します。 | - |
+| `citationMemory[].citation.sourceType` | `string` | no | `response.citationMemory[].citation.sourceType` の値。項目名は source type を表します。 | - |
+| `citationMemory[].citation.bbox` | `object` | no | `response.citationMemory[].citation.bbox` の値。項目名は bbox を表します。 | nullable |
+| `citationMemory[].citation.score` | `number` | no | 検索または評価で算出した関連度 score。 | - |
+| `citationMemory[].citation.text` | `string` | no | 文書本文またはチャンク本文。 | - |
+| `citationMemory[].turnId` | `string` | no | `response.citationMemory[].turnId` の値。項目名は turn id を表します。 | - |
+| `citationMemory[].answerExcerpt` | `string` | no | `response.citationMemory[].answerExcerpt` の値。項目名は answer excerpt を表します。 | - |
+| `citationMemory[].rememberedAt` | `string` | no | `response.citationMemory[].rememberedAt` の値。項目名は remembered at を表します。 | - |
+| `taskState` | `object` | no | `response.taskState` の値。項目名は task state を表します。 | - |
+| `taskState.status` | `enum(none \| in_progress \| waiting_for_user \| completed \| blocked)` | no | 現在の処理状態または管理状態。 | enum=none, in_progress, waiting_for_user, completed, blocked |
+| `taskState.goal` | `string` | no | `response.taskState.goal` の値。項目名は goal を表します。 | - |
+| `taskState.pendingActions` | `array<string>` | no | `response.taskState.pendingActions` の値。項目名は pending actions を表します。 | - |
+| `taskState.metadata` | `object` | no | `response.taskState.metadata` の値。項目名は metadata を表します。 | nullable |
+| `toolInvocations` | `array<object>` | no | `response.toolInvocations` の値。項目名は tool invocations を表します。 | maxItems=100 |
+| `toolInvocations[].invocationId` | `string` | yes | `response.toolInvocations[].invocationId` の値。項目名は invocation id を表します。 | minLength=1 |
+| `toolInvocations[].orchestrationRunId` | `string` | yes | `response.toolInvocations[].orchestrationRunId` の値。項目名は orchestration run id を表します。 | minLength=1 |
+| `toolInvocations[].toolId` | `string` | yes | `response.toolInvocations[].toolId` の値。項目名は tool id を表します。 | minLength=1 |
+| `toolInvocations[].requesterUserId` | `string` | yes | `response.toolInvocations[].requesterUserId` の値。項目名は requester user id を表します。 | minLength=1 |
+| `toolInvocations[].status` | `enum(queued \| waiting_for_approval \| running \| succeeded \| failed \| cancelled)` | yes | 現在の処理状態または管理状態。 | enum=queued, waiting_for_approval, running, succeeded, failed, cancelled |
+| `toolInvocations[].input` | `object` | yes | `response.toolInvocations[].input` の値。項目名は input を表します。 | nullable |
+| `toolInvocations[].inputSummary` | `object` | no | `response.toolInvocations[].inputSummary` の値。項目名は input summary を表します。 | nullable |
+| `toolInvocations[].output` | `object` | no | `response.toolInvocations[].output` の値。項目名は output を表します。 | nullable |
+| `toolInvocations[].outputSummary` | `object` | no | `response.toolInvocations[].outputSummary` の値。項目名は output summary を表します。 | nullable |
+| `toolInvocations[].errorCode` | `string` | no | `response.toolInvocations[].errorCode` の値。項目名は error code を表します。 | - |
+| `toolInvocations[].errorMessage` | `string` | no | `response.toolInvocations[].errorMessage` の値。項目名は error message を表します。 | - |
+| `toolInvocations[].approvedBy` | `string` | no | `response.toolInvocations[].approvedBy` の値。項目名は approved by を表します。 | - |
+| `toolInvocations[].approvedAt` | `string` | no | `response.toolInvocations[].approvedAt` の値。項目名は approved at を表します。 | - |
+| `toolInvocations[].startedAt` | `string` | no | 処理を開始した日時。 | - |
+| `toolInvocations[].completedAt` | `string` | no | 処理が完了した日時。 | - |
 
 ##### `400` リクエスト形式または入力値が不正です。
 
