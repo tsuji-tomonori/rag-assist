@@ -12,6 +12,29 @@
   gap: 16px;
 }
 
+.admin-section-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-section-tabs button {
+  min-height: 36px;
+  border: 1px solid #cbd9f0;
+  border-radius: var(--radius-xs);
+  padding: 0 14px;
+  color: #2f4f7f;
+  background: var(--color-surface);
+  font-weight: 900;
+}
+
+.admin-section-tabs button[aria-current="page"] {
+  border-color: var(--color-primary);
+  color: var(--color-surface);
+  background: var(--color-primary);
+}
+
 .admin-overview-tile {
   min-height: 148px;
   border: 1px solid var(--color-border);
@@ -25,6 +48,20 @@
   background: var(--color-surface);
   text-align: left;
   box-shadow: var(--shadow-card);
+}
+
+.admin-overview-tile small {
+  color: #66758d;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.admin-overview-tile.kpi-card {
+  box-shadow: none;
+}
+
+.admin-overview-tile.action-card {
+  cursor: pointer;
 }
 
 .admin-overview-tile .icon {
@@ -64,7 +101,17 @@
   display: grid;
   grid-template-columns: minmax(560px, 1.2fr) minmax(360px, 0.8fr);
   gap: 16px;
-  margin-top: 16px;
+}
+
+.phase2-admin-grid[hidden],
+.phase2-admin-grid [hidden] {
+  display: none;
+}
+
+.admin-combined-section {
+  display: grid;
+  grid-template-columns: minmax(520px, 1fr) minmax(360px, 0.75fr);
+  gap: 16px;
 }
 
 .admin-section-panel {
@@ -80,6 +127,14 @@
   margin: 0;
   color: #13223d;
   letter-spacing: 0;
+}
+
+.admin-panel-note {
+  margin: 8px 0 14px;
+  color: #52627c;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.6;
 }
 
 .document-list-head button {
@@ -322,6 +377,10 @@
   display: grid;
   grid-template-columns: minmax(180px, 1fr) 58px;
   gap: 8px;
+}
+
+.role-diff-preview {
+  color: #52627c;
 }
 
 .role-assignment select {

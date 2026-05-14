@@ -155,6 +155,9 @@ function ManagedUserRow({
 }) {
   const [selectedRole, setSelectedRole] = useState(user.groups[0] ?? "CHAT_USER")
   const [statusCandidate, setStatusCandidate] = useState<"suspend" | "delete" | null>(null)
+  const [roleAssignOpen, setRoleAssignOpen] = useState(false)
+  const nextGroups = [selectedRole]
+  const roleChanged = !user.groups.includes(selectedRole) || user.groups.length !== nextGroups.length
 
   useEffect(() => {
     setSelectedRole(user.groups[0] ?? "CHAT_USER")
@@ -176,12 +179,15 @@ function ManagedUserRow({
               <option value={role.role} key={role.role}>{role.role}</option>
             ))}
           </select>
-          <button type="button" disabled={!canAssignRoles || loading || user.groups.includes(selectedRole)} onClick={() => void onAssignRoles(user.userId, [selectedRole])}>
+          <button type="button" disabled={!canAssignRoles || loading || !roleChanged} onClick={() => setRoleAssignOpen(true)}>
             {loading && <LoadingSpinner className="button-spinner" />}
             <span>付与</span>
           </button>
         </div>
-        <small>{user.groups.join(" / ")}</small>
+        {roleChanged && (
+          <small className="role-diff-preview">変更前: {formatGroupList(user.groups)} / 変更後: {formatGroupList(nextGroups)}</small>
+        )}
+        <small>{formatGroupList(user.groups)}</small>
       </span>
       <span role="cell">
         <div className="user-row-actions">
@@ -217,6 +223,30 @@ function ManagedUserRow({
           }}
         />
       )}
+      {roleAssignOpen && (
+        <ConfirmDialog
+          title="ロールを付与しますか？"
+          description="変更前後の差分を確認してから付与します。理由入力と保存は API 未対応のため、この画面では保存しません。"
+          details={[
+            `ユーザー: ${user.displayName || user.email}`,
+            `メール: ${user.email}`,
+            `変更前: ${formatGroupList(user.groups)}`,
+            `変更後: ${formatGroupList(nextGroups)}`
+          ]}
+          confirmLabel="付与"
+          tone="warning"
+          loading={loading}
+          onCancel={() => setRoleAssignOpen(false)}
+          onConfirm={async () => {
+            await onAssignRoles(user.userId, nextGroups)
+            setRoleAssignOpen(false)
+          }}
+        />
+      )}
     </div>
   )
+}
+
+function formatGroupList(groups: string[]) {
+  return groups.length > 0 ? groups.join(" / ") : "未設定"
 }

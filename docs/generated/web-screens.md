@@ -16,7 +16,7 @@
 | 履歴 | history | / (client-state) | [履歴](web-features/history.md) | HistoryWorkspace | - | チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages ほか 2 件 | inferred |
 | お気に入り | favorites | / (client-state) | [履歴](web-features/history.md) | HistoryWorkspace | - | チャットへ戻る、履歴を検索、履歴の並び順、newest、oldest、messages ほか 2 件 | inferred |
 | 性能テスト | benchmark | / (client-state) | [性能テスト](web-features/benchmark.md) | BenchmarkWorkspace | canReadBenchmarkRuns | チャットへ戻る、テスト種別、benchmark suite を取得できません、データセット、モデル / Nova Lite v1 / Claude 3.5 Sonnet / Claude 3 Haiku、modelId ほか 4 件 | confirmed |
-| 管理者設定 | admin | / (client-state) | [管理](web-features/admin.md) | AdminWorkspace | canSeeAdminSettings | チャットへ戻る、ドキュメント管理 / 件、担当者対応 / 件が対応待ち、デバッグ / 評価 / 件の実行履歴、性能テスト / 件の実行履歴、更新 ほか 23 件 | confirmed |
+| 管理者設定 | admin | / (client-state) | [管理](web-features/admin.md) | AdminWorkspace | canSeeAdminSettings | チャットへ戻る、更新、管理対象ユーザー作成、メール、表示名、任意 ほか 19 件 | confirmed |
 | ドキュメント | documents | / (client-state) | [ドキュメント](web-features/documents.md) | DocumentWorkspace | canManageDocuments | 管理者設定へ戻る、文書詳細を閉じる、この資料に質問する、再インデックス、削除、共有フォルダ / 選択してください / 共有 Cognito group / 既存 shared group 候補 / 追加: / 削除: / 変更なし: /… ほか 63 件 | confirmed |
 | 個人設定 | profile | / (client-state) | [アプリケーション枠](web-features/app.md) | PersonalSettingsView | - | チャットへ戻る、送信キー / Enterで送信 / Ctrl+Enterで送信、submitShortcut、enter、ctrlEnter、サインアウト ほか 11 件 | confirmed |
 
@@ -80,7 +80,7 @@
 - route: `/` (client-state)
 - 権限条件: `canSeeAdminSettings`
 - 画面の意味: 管理者設定。文書管理、担当者対応、debug / benchmark、ユーザー管理、alias 管理などの入口になります。
-- 主要操作: チャットへ戻る、ドキュメント管理 / 件、担当者対応 / 件が対応待ち、デバッグ / 評価 / 件の実行履歴、性能テスト / 件の実行履歴、更新、管理対象ユーザー作成、メール、表示名、任意 ほか 19 件
+- 主要操作: チャットへ戻る、更新、管理対象ユーザー作成、メール、表示名、任意、初期ロール、role、作成、付与 ほか 15 件
 
 ### ドキュメント
 
