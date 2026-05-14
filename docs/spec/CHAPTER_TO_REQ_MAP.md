@@ -24,17 +24,17 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 2 | フォルダ管理 | `FR-041`, `FR-024`, `FR-052` | `REQ-DOC-001`, `SPEC-SEC-001`, `GAP-014` | `apps/api/src/routes/document-routes.ts`, `apps/api/src/rag/memorag-service.ts`, `apps/api/src/adapters/document-group-store.ts` | divergent | B |
 | 3 | 文書管理 | `FR-001`, `FR-002`, `FR-007`, `FR-008`, `FR-038`, `FR-041` | `TASK-001`, `TASK-015`, `REQ-DOC-001`, `REQ-DOC-002` | `apps/api/src/routes/document-routes.ts`, `apps/api/src/rag/memorag-service.ts`, `apps/web/src/features/documents/` | confirmed | C/E |
 | 3A | 取り込み・抽出・チャンク化 | `FR-002`, `FR-038`, `TC-001`, `SQ-001` | `SPEC-DOC-001`, `SPEC-DOC-002`, `GAP-003` | `apps/api/src/rag/chunk.ts`, `apps/api/src/rag/text-extract.ts`, `apps/api/src/document-ingest-run-worker.ts` | partially covered | E |
-| 3B | ナレッジ品質・RAG利用可否 | `FR-002`, `FR-045` | `GAP-013`, `GAP-014` | 未実装。近接: `apps/api/src/rag/memorag-service.ts`, `apps/api/src/agent/nodes/search-evidence.ts` | missing | C |
+| 3B | ナレッジ品質・RAG利用可否 | `FR-002`, `FR-045` | `GAP-013`, `GAP-014` | 近接: `apps/api/src/rag/memorag-service.ts`, `apps/api/src/chat-orchestration/nodes/search-evidence.ts`。4軸 model は Phase C で反映済み | partially covered | C |
 | 3C | 高度文書解析・構造化抽出 | `FR-002`, `FR-047` | `GAP-003` | 未実装。近接: `apps/api/src/rag/text-extract.ts`, `apps/api/src/rag/chunk.ts` | missing | E |
 | 4 | チャット | `FR-003`, `FR-004`, `FR-005`, `FR-006`, `FR-009`, `FR-042`, `FR-043` | `TASK-002`, `REQ-CHAT-001`, `SPEC-CHAT-001` | `apps/api/src/routes/chat-routes.ts`, `apps/web/src/features/chat/`, `apps/api/src/chat-run-worker.ts` | confirmed | D/F |
-| 4A | チャット内RAG・回答生成 | `FR-003`, `FR-004`, `FR-005`, `FR-014`, `FR-015`, `FR-016`, `FR-045` | `REQ-RAG-001`, `REQ-RAG-002`, `SPEC-RAG-001`, `SPEC-RAG-002` | `apps/api/src/agent/graph.ts`, `apps/api/src/agent/nodes/`, `apps/api/src/rag/context-assembler.ts` | confirmed | F |
-| 4B | チャット内オーケストレーション・ツール実行 | `FR-049` | `GAP-013` | 現行は `apps/api/src/agent/`。`ChatOrchestrationRun` / tool registry は未実装 | divergent | D/F |
+| 4A | チャット内RAG・回答生成 | `FR-003`, `FR-004`, `FR-005`, `FR-014`, `FR-015`, `FR-016`, `FR-045`, `FR-049` | `REQ-RAG-001`, `REQ-RAG-002`, `SPEC-RAG-001`, `SPEC-RAG-002`, `GAP-015` | `apps/api/src/chat-orchestration/graph.ts`, `apps/api/src/chat-orchestration/nodes/`, `apps/api/src/rag/context-assembler.ts`, `apps/api/src/chat-orchestration/runtime-policy.ts` | partially covered | F |
+| 4B | チャット内オーケストレーション・ツール実行 | `FR-049` | `GAP-015` | `apps/api/src/chat-orchestration/` は名称移行済み。`ChatToolDefinition` registry / `ChatToolInvocation` は未実装 | partially covered | F |
 | 4C | 非同期エージェント実行 | `FR-050` | `GAP-013` | 未実装。流用候補: `apps/api/src/chat-run-worker.ts`, `infra/`, CodeBuild runner | missing | G |
 | 5 | 履歴 | `FR-022`, `FR-030`, `FR-044` | `TASK-005`, `REQ-HIST-001`, `SPEC-HIST-001` | `apps/api/src/routes/conversation-history-routes.ts`, `apps/api/src/adapters/*conversation-history-store.ts`, `apps/web/src/features/history/` | confirmed | F |
 | 6 | お気に入り | `FR-028`, `FR-044` | `REQ-HIST-002`, `SPEC-HIST-003` | `apps/api/src/adapters/conversation-history-store.ts`, `apps/web/src/features/history/` | partially covered | F/J3 |
 | 6A | 個人設定 | `FR-051` | `GAP-013` | `apps/web/src/app/components/PersonalSettingsView.tsx`, chat UI state。永続 UserPreference API は未実装 | divergent | J/G |
 | 7 | 問い合わせ対応 | `FR-021`, `FR-031`, `FR-032`, `FR-033`, `FR-034`, `FR-035`, `FR-036`, `FR-037` | `TASK-003`, `REQ-QA-001`, `SPEC-QA-001` | `apps/api/src/routes/question-routes.ts`, `apps/api/src/adapters/question-store.ts`, `apps/web/src/features/questions/` | confirmed | H |
-| 7A | 回答不能・担当者対応の詳細 | `FR-005`, `FR-021`, `FR-031` | `AC-QA-001`, `E2E-QA-001` | `apps/api/src/routes/question-routes.ts`, `apps/api/src/agent/nodes/finalize-refusal.ts` | partially covered | H |
+| 7A | 回答不能・担当者対応の詳細 | `FR-005`, `FR-021`, `FR-031` | `AC-QA-001`, `E2E-QA-001` | `apps/api/src/routes/question-routes.ts`, `apps/api/src/chat-orchestration/nodes/finalize-refusal.ts` | partially covered | H |
 | 7B | 品質起因の担当者対応・改善ループ | `FR-037`, `FR-045` | `GAP-010` | 近接: question routes / alias management。品質起因 loop は未整備 | partially covered | H |
 | 8 | 検索改善 | `FR-023`, `FR-037` | `TASK-004`, `REQ-SRCH-001`, `SPEC-SRCH-001`, `GAP-007`, `GAP-010` | `apps/api/src/search/alias-artifacts.ts`, `apps/api/src/routes/admin-routes.ts` | partially covered | H |
 | 9 | 評価・ベンチマーク | `FR-010`, `FR-011`, `FR-012`, `FR-013`, `FR-019`, `FR-039`, `FR-040`, `FR-047`, `FR-048` | `TASK-007`, `SPEC-BENCH-001`, `GAP-011` | `apps/api/src/routes/benchmark-routes.ts`, `benchmark/`, `.github/workflows/memorag-benchmark-run.yml` | confirmed | I |
@@ -46,7 +46,7 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 12 | ロール・権限管理 | `FR-027`, `FR-052`, `NFR-011` | `GAP-014`, `SPEC-SEC-001` | `apps/api/src/authorization.ts`, `apps/api/src/security/access-control-policy.test.ts` | divergent | B/J3 |
 | 13 | 利用状況・コスト | `FR-027`, `NFR-012` | `REQ-OPS-001` | `apps/api/src/routes/admin-routes.ts`, `apps/web/src/features/admin/` | partially covered | J3 |
 | 14 | 監査ログ | `FR-027`, `FR-052` | `REQ-SEC-001`, `SPEC-SEC-001` | `apps/api/src/routes/admin-routes.ts`, audit log surface | partially covered | J3 |
-| 14A | デバッグ・トレース・運用診断 | `FR-010`, `FR-011`, `FR-046` | `TASK-006`, `REQ-DBG-001`, `SPEC-DBG-001`, `GAP-008` | `apps/api/src/routes/debug-routes.ts`, `apps/web/src/features/debug/`, `apps/api/src/agent/trace.ts` | partially covered | J2 |
+| 14A | デバッグ・トレース・運用診断 | `FR-010`, `FR-011`, `FR-046` | `TASK-006`, `REQ-DBG-001`, `SPEC-DBG-001`, `GAP-008`, `GAP-015` | `apps/api/src/routes/debug-routes.ts`, `apps/web/src/features/debug/`, `apps/api/src/chat-orchestration/trace.ts` | partially covered | J2 |
 | 14B | API契約・OpenAPI / oRPC・開発品質ゲート | `FR-053` | `TASK-023`, `REQ-DOCS-001` | `apps/api/src/generate-openapi-docs.ts`, `apps/api/src/orpc/router.ts`, `docs/generated/openapi.md` | partially covered | J1 |
 | 14C | デプロイ・リリース・GitHub Actions 運用 | `FR-054`, `REQ_PROJECT_*` | `REQ-OPS-001` | `.github/workflows/`, `infra/`, `docs/GITHUB_ACTIONS_DEPLOY.md` | partially covered | J |
 | 14D | API共通 middleware・public endpoint・非同期 worker 実行契約 | `FR-055` | `GAP-014` | `apps/api/src/app.ts`, `apps/api/src/chat-run-worker.ts`, `apps/api/src/document-ingest-run-worker.ts` | partially covered | J2/G |
@@ -56,7 +56,7 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 18 | Feature-level permission | `FR-052`, `FR-027` | `GAP-014` | `apps/api/src/authorization.ts`, route metadata | partially covered | B |
 | 19 | ロールプリセット | `FR-052`, `FR-027` | `GAP-014` | `apps/api/src/authorization.ts`, admin roles route | divergent | B/J3 |
 | 20 | 操作別の最終認可表 | `FR-052` | `GAP-014` | `apps/api/src/security/access-control-policy.test.ts` | missing | B |
-| 21 | RAG 認可の不変条件 | `FR-004`, `FR-014`, `FR-015`, `FR-045`, `FR-052` | `SPEC-SEC-001`, `SPEC-RAG-001`, `GAP-004` | `apps/api/src/search/hybrid-search.ts`, `apps/api/src/agent/nodes/search-evidence.ts` | partially covered | B/C/F |
+| 21 | RAG 認可の不変条件 | `FR-004`, `FR-014`, `FR-015`, `FR-045`, `FR-052` | `SPEC-SEC-001`, `SPEC-RAG-001`, `GAP-004` | `apps/api/src/search/hybrid-search.ts`, `apps/api/src/chat-orchestration/nodes/search-evidence.ts` | partially covered | B/C/F |
 | 21A | API lifecycle と互換性の不変条件 | `FR-053`, `FR-055` | `REQ-API-001`, `SPEC-API-001` | `apps/api/src/app.ts`, `apps/api/src/schemas.ts`, `packages/contract/src/` | partially covered | J1/J2 |
 | 22 | 危険操作の共通要件 | `FR-027`, `FR-052` | `REQ-SEC-001` | admin routes, document delete / reindex routes | partially covered | B/J3 |
 | 23 | 推奨 URL 構成 | `FR-024`, `FR-027`, `FR-053` | `REQ-DOCS-001` | `apps/web/src/app/AppRoutes.tsx`, API routes | inferred | J |
@@ -74,6 +74,16 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | `FR-053` | 14B | `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_053.md` |
 | `FR-054` | 14C | `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_054.md` |
 | `FR-055` | 14D | `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要求_FUNCTIONAL/07_評価・debug・benchmark/11_API契約・品質ゲート/REQ_FUNCTIONAL_055.md` |
+
+## Phase F-pre 補助表: 4A/4B tool registry / multi-turn
+
+| 対象 | 現状 | 後続 task |
+|---|---|---|
+| 4A RAG pipeline | `apps/api/src/chat-orchestration/graph.ts` と nodes に主要処理は存在するが、toolId registry には未接続。 | `F-chat-tool-registry-multiturn` で RAG 系 toolId と現行 node の対応を固定する。 |
+| 4A multi-turn | `conversation`, `conversationState`, `decontextualizedQuery`, `previousCitations` は request/debug trace にある。`rollingSummary`, `queryFocusedSummary`, `citationMemory`, `taskState` は永続 store にない。 | conversation history schema version up と互換 migration 方針を定義する。 |
+| 4B ChatToolDefinition | 未実装。4B.5 の toolId、permission、approval、audit metadata は registry として存在しない。 | contract/API schema と registry metadata を追加する。 |
+| 4B ChatToolInvocation | debug step はあるが、tool invocation record と approval/audit fields はない。 | invocation schema / audit / trace 連携を追加する。 |
+| 既存挙動の踏襲 | follow-up 軽量化、required fact planning 汎化、policy computation 汎化、answer support verify/repair、minScore filter、diversity、context budget は現行 runtime policy / nodes に存在する。 | registry 化で低 score chunk 復活、全履歴常時 LLM 投入、benchmark 固有分岐混入を避ける。 |
 
 ## 後続更新ルール
 
