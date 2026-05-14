@@ -30,6 +30,9 @@ export type RouteAuthorizationMetadataObject = {
   mode?: string
   requiredPermissions?: string[]
   conditionalPermissions?: string[]
+  operationKey?: string
+  resourceCondition?: string
+  errorDisclosure?: string
   allowedRoles?: string[]
   deniedRoles?: string[]
   conditionalDeniedRoles?: string[]

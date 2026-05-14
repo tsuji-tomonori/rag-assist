@@ -26,7 +26,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/users",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:create" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:create", operationKey: "user.create", resourceCondition: "adminManagedUser" }),
       request: {
         body: {
           required: true,
@@ -57,7 +57,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/users",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:read", operationKey: "user.read", resourceCondition: "adminManagedUser" }),
       responses: {
         200: { description: "List managed users", content: { "application/json": { schema: ManagedUserListResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
@@ -74,7 +74,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/audit-log",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:policy:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:policy:read", operationKey: "audit.read", resourceCondition: "none" }),
       responses: {
         200: { description: "List recent admin audit log entries", content: { "application/json": { schema: AdminAuditLogResponseSchema } } }
       }
@@ -90,7 +90,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/users/{userId}/roles",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:role:assign", notes: ["自分自身の role 更新は 403 を返します。", "SYSTEM_ADMIN を付与する場合、実行者も SYSTEM_ADMIN role である必要があります。"] }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:role:assign", operationKey: "role.assign", resourceCondition: "roleAssignment", notes: ["自分自身の role 更新は 403 を返します。", "SYSTEM_ADMIN を付与する場合、実行者も SYSTEM_ADMIN role である必要があります。"] }),
       request: {
         params: z.object({ userId: z.string().min(1) }),
         body: {
@@ -123,7 +123,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/users/{userId}/suspend",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:suspend" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:suspend", operationKey: "user.suspend", resourceCondition: "adminManagedUser" }),
       request: { params: z.object({ userId: z.string().min(1) }) },
       responses: {
         200: { description: "Suspended user", content: { "application/json": { schema: ManagedUserSchema } } },
@@ -144,7 +144,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/admin/users/{userId}/unsuspend",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:unsuspend" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:unsuspend", operationKey: "user.restore", resourceCondition: "adminManagedUser" }),
       request: { params: z.object({ userId: z.string().min(1) }) },
       responses: {
         200: { description: "Unsuspended user", content: { "application/json": { schema: ManagedUserSchema } } },
@@ -165,7 +165,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "delete",
       path: "/admin/users/{userId}",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:delete" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "user:delete", operationKey: "user.delete", resourceCondition: "adminManagedUser" }),
       request: { params: z.object({ userId: z.string().min(1) }) },
       responses: {
         200: { description: "Deleted user from management ledger", content: { "application/json": { schema: ManagedUserSchema } } },
@@ -186,7 +186,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/roles",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:policy:read" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:policy:read", operationKey: "role.read", resourceCondition: "none" }),
       responses: {
         200: { description: "List access roles and permissions", content: { "application/json": { schema: AccessRoleListResponseSchema } } }
       }
@@ -347,7 +347,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/usage",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "usage:read:all_users" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "usage:read:all_users", operationKey: "usage.read.aggregate", resourceCondition: "none" }),
       responses: {
         200: { description: "List all-user usage summaries", content: { "application/json": { schema: UsageSummaryListResponseSchema } } }
       }
@@ -363,7 +363,7 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/admin/costs",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "cost:read:all" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "cost:read:all", operationKey: "cost.read.aggregate", resourceCondition: "none" }),
       responses: {
         200: { description: "Get estimated cost audit summary", content: { "application/json": { schema: CostAuditSummarySchema } } }
       }

@@ -1,6 +1,26 @@
 import { HTTPException } from "hono/http-exception"
 import type { AppUser } from "./auth.js"
 
+export type AccountStatus = "active" | "suspended" | "deleted"
+
+export type EffectiveFolderPermission = "none" | "readOnly" | "full"
+
+export type AuthorizationResourceCondition =
+  | "none"
+  | "self"
+  | "requester"
+  | "ownedRun"
+  | "documentGroupRead"
+  | "documentGroupFull"
+  | "documentUploadSession"
+  | "benchmarkSeedScope"
+  | "documentIngestRun"
+  | "adminManagedUser"
+  | "roleAssignment"
+  | "publicNonSensitive"
+
+export type AuthorizationErrorDisclosure = "generic" | "resource-hidden" | "permission-detail"
+
 export type Permission =
   | "chat:create"
   | "chat:read:own"
@@ -69,6 +89,9 @@ export type RouteAuthorizationPolicy = {
   permission?: Permission
   permissions?: Permission[]
   conditionalPermissions?: Permission[]
+  operationKey?: string
+  resourceCondition?: AuthorizationResourceCondition
+  errorDisclosure?: AuthorizationErrorDisclosure
   notes?: string[]
 }
 
@@ -76,6 +99,9 @@ export type RouteAuthorizationMetadata = {
   mode: RouteAuthorizationMode
   requiredPermissions: Permission[]
   conditionalPermissions: Permission[]
+  operationKey?: string
+  resourceCondition: AuthorizationResourceCondition
+  errorDisclosure: AuthorizationErrorDisclosure
   allowedRoles: Role[]
   deniedRoles: Role[]
   conditionalDeniedRoles: Role[]
@@ -111,6 +137,12 @@ export const rolePermissions: Record<Role, Permission[]> = {
 }
 
 export const applicationRoles = Object.keys(rolePermissions) as Role[]
+
+const folderPermissionRank: Record<EffectiveFolderPermission, number> = {
+  none: 0,
+  readOnly: 1,
+  full: 2
+}
 
 export function getPermissionsForGroups(groups: string[]): Permission[] {
   const permissions = new Set<Permission>()
@@ -148,13 +180,16 @@ export function routeAuthorization(policy: RouteAuthorizationPolicy): RouteAutho
       when: requiredPermissions.length > 0
         ? `必要 permission (${requiredPermissions.join(", ")}) または条件付き permission を満たさない場合。`
         : "認可条件を満たさない場合。",
-      body: { error: requiredPermissions[0] ? `Forbidden: missing ${requiredPermissions[0]}` : "Forbidden" }
+      body: { error: policy.errorDisclosure === "permission-detail" && requiredPermissions[0] ? `Forbidden: missing ${requiredPermissions[0]}` : "Forbidden" }
     })
   }
   return {
     mode: policy.mode,
     requiredPermissions,
     conditionalPermissions,
+    operationKey: policy.operationKey,
+    resourceCondition: policy.resourceCondition ?? defaultResourceCondition(policy.mode),
+    errorDisclosure: policy.errorDisclosure ?? "generic",
     allowedRoles,
     deniedRoles,
     conditionalDeniedRoles,
@@ -164,9 +199,39 @@ export function routeAuthorization(policy: RouteAuthorizationPolicy): RouteAutho
 }
 
 export function requirePermission(user: AppUser, permission: Permission) {
-  if (!hasPermission(user, permission)) throw new HTTPException(403, { message: `Forbidden: missing ${permission}` })
+  if (!hasPermission(user, permission)) throw new HTTPException(403, { message: "Forbidden" })
 }
 
 export function hasPermission(user: AppUser, permission: Permission) {
-  return getPermissionsForGroups(user.cognitoGroups).includes(permission)
+  return isActiveAccount(user) && getPermissionsForGroups(user.cognitoGroups).includes(permission)
+}
+
+export function isActiveAccount(user: Pick<AppUser, "accountStatus">): boolean {
+  return (user.accountStatus ?? "active") === "active"
+}
+
+export function requireActiveAccount(user: Pick<AppUser, "accountStatus">) {
+  if (!isActiveAccount(user)) throw new HTTPException(403, { message: "Forbidden" })
+}
+
+export function folderPermissionSatisfies(actual: EffectiveFolderPermission, required: EffectiveFolderPermission): boolean {
+  return folderPermissionRank[actual] >= folderPermissionRank[required]
+}
+
+export function canReadFolder(permission: EffectiveFolderPermission): boolean {
+  return folderPermissionSatisfies(permission, "readOnly")
+}
+
+export function canManageFolder(permission: EffectiveFolderPermission): boolean {
+  return folderPermissionSatisfies(permission, "full")
+}
+
+function defaultResourceCondition(mode: RouteAuthorizationMode): AuthorizationResourceCondition {
+  if (mode === "public" || mode === "authenticated" || mode === "required") return "none"
+  if (mode === "requesterOrPermission") return "requester"
+  if (mode === "ownedRun") return "ownedRun"
+  if (mode === "benchmarkSeedRunOrOwnedRun") return "documentIngestRun"
+  if (mode === "benchmarkSeedOrPermission" || mode === "benchmarkSeedListOrPermission" || mode === "benchmarkSeedDeleteOrPermission") return "benchmarkSeedScope"
+  if (mode === "documentUploadSession") return "documentUploadSession"
+  return "none"
 }

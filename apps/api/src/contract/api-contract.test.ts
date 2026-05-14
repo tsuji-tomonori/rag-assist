@@ -1124,10 +1124,10 @@ test("benchmark seed authorization rejects non-isolated document operations", as
 
   assert.doesNotThrow(() => authorizeDocumentUpload(runner, seedBody))
   assert.doesNotThrow(() => authorizeDocumentUpload(manager, { fileName: "general.txt", text: "general" }))
-  assert.throws(() => authorizeDocumentUpload(runner, { fileName: "general.txt", text: "general" }), /benchmark seed upload/)
+  assert.throws(() => authorizeDocumentUpload(runner, { fileName: "general.txt", text: "general" }), { message: /^Forbidden$/ })
   assert.doesNotThrow(() => authorizeUploadedDocumentIngest(chatUser, "chatAttachment", { fileName: "note.txt", mimeType: "text/plain" }))
-  assert.throws(() => authorizeUploadedDocumentIngest(runner, "document", { fileName: "note.txt", mimeType: "text/plain" }), /missing rag:doc:write:group/)
-  assert.throws(() => authorizeUploadedDocumentIngest(runner, "benchmarkSeed", { fileName: "source.txt", mimeType: "text/plain", metadata: { ...seedBody.metadata, docType: "general" } }), /benchmark seed upload/)
+  assert.throws(() => authorizeUploadedDocumentIngest(runner, "document", { fileName: "note.txt", mimeType: "text/plain" }), { message: /^Forbidden$/ })
+  assert.throws(() => authorizeUploadedDocumentIngest(runner, "benchmarkSeed", { fileName: "source.txt", mimeType: "text/plain", metadata: { ...seedBody.metadata, docType: "general" } }), { message: /^Forbidden$/ })
 
   const documentManifests = {
     "seed-1": {
@@ -1153,8 +1153,8 @@ test("benchmark seed authorization rejects non-isolated document operations", as
     getDocumentManifest: async (documentId: string) => documentManifests[documentId as keyof typeof documentManifests]
   } as any
   await assert.doesNotReject(() => authorizeDocumentDelete(service, runner, "seed-1"))
-  await assert.rejects(() => authorizeDocumentDelete(service, runner, "general-1"), /benchmark seed delete/)
-  await assert.rejects(() => authorizeDocumentDelete(service, chatUser, "seed-1"), /missing document delete permission/)
+  await assert.rejects(() => authorizeDocumentDelete(service, runner, "general-1"), { message: /^Forbidden$/ })
+  await assert.rejects(() => authorizeDocumentDelete(service, chatUser, "seed-1"), { message: /^Forbidden$/ })
 })
 
 test("question and debug management endpoints enforce Phase 1 role boundaries", async () => {

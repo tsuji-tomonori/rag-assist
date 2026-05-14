@@ -9,7 +9,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/debug-runs",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized", resourceCondition: "ownedRun" }),
       responses: {
         200: {
           description: "List persisted chat debug traces",
@@ -27,7 +27,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/debug-runs/{runId}",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized", resourceCondition: "ownedRun" }),
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -50,7 +50,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/debug-runs/{runId}/download",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all", operationKey: "debug.trace.export", resourceCondition: "ownedRun" }),
       request: { params: z.object({ runId: z.string().min(1) }) },
       responses: {
         200: { description: "Create signed download URL for debug JSON", content: { "application/json": { schema: DebugDownloadResponseSchema } } },

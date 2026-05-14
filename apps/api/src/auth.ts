@@ -8,6 +8,7 @@ export type AppUser = {
   userId: string
   email?: string
   cognitoGroups: string[]
+  accountStatus?: "active" | "suspended" | "deleted"
 }
 
 const cognitoRegion = config.cognitoRegion
@@ -25,7 +26,8 @@ export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
     c.set("user", {
       userId: process.env.LOCAL_AUTH_USER_ID ?? "local-dev",
       email: process.env.LOCAL_AUTH_EMAIL ?? "local-dev@example.com",
-      cognitoGroups: localAuthGroups && localAuthGroups.length > 0 ? localAuthGroups : ["SYSTEM_ADMIN"]
+      cognitoGroups: localAuthGroups && localAuthGroups.length > 0 ? localAuthGroups : ["SYSTEM_ADMIN"],
+      accountStatus: "active"
     } as AppUser)
     return next()
   }
@@ -49,10 +51,16 @@ export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
   c.set("user", {
     userId: String(payload.sub),
     email: payload.email ? String(payload.email) : undefined,
-    cognitoGroups: Array.isArray(payload["cognito:groups"]) ? payload["cognito:groups"].map(String) : []
+    cognitoGroups: Array.isArray(payload["cognito:groups"]) ? payload["cognito:groups"].map(String) : [],
+    accountStatus: parseAccountStatus(payload["custom:account_status"])
   } as AppUser)
 
   await next()
+}
+
+function parseAccountStatus(value: unknown): AppUser["accountStatus"] {
+  if (value === "suspended" || value === "deleted") return value
+  return "active"
 }
 
 declare module "hono" {
