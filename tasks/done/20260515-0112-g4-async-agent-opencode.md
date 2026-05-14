@@ -1,6 +1,6 @@
 # G4 async agent OpenCode provider
 
-- 状態: do
+- 状態: done
 - タスク種別: 機能追加
 - 発注元 wave: Wave 7
 - 依存タスク:
@@ -46,14 +46,14 @@ OpenCode provider の設定解決、availability、command 実行、artifact/log
 
 ## 受け入れ条件
 
-- [ ] `opencode` provider の availability が `OPENCODE_COMMAND` の設定有無に基づき `available` または `not_configured` を返し、未設定時に mock run/artifact を作らない。
-- [ ] AsyncAgentRun worker/service が OpenCode adapter を呼び、成功・失敗・timeout の run status と sanitized failure/log を保存できる。
-- [ ] OpenCode provider input に selected mount / instruction / model / budget が渡り、権限外・品質不適格な mount を追加しない。
-- [ ] artifact metadata は実行結果に由来し、固定 artifact / demo fallback / 架空 cost を本番経路に混入しない。
-- [ ] secret / token / signed URL が run failure、artifact metadata、log、debug へ露出しないことをテストで確認している。
-- [ ] Claude Code / Codex provider の既存挙動を壊さず、custom は disabled を維持している。
-- [ ] 関連 API / worker / service tests、typecheck、lint、OpenAPI docs check、`git diff --check` が pass している。
-- [ ] 作業レポートを `reports/working/` に追加し、PR コメント後に task を `tasks/done/` へ移動している。
+- [x] `opencode` provider の availability が `OPENCODE_COMMAND` の設定有無に基づき `available` または `not_configured` を返し、未設定時に mock run/artifact を作らない。
+- [x] AsyncAgentRun worker/service が OpenCode adapter を呼び、成功・失敗・timeout の run status と sanitized failure/log を保存できる。
+- [x] OpenCode provider input に selected mount / instruction / model / budget が渡り、権限外・品質不適格な mount を追加しない。
+- [x] artifact metadata は実行結果に由来し、固定 artifact / demo fallback / 架空 cost を本番経路に混入しない。
+- [x] secret / token / signed URL が run failure、artifact metadata、log、debug へ露出しないことをテストで確認している。
+- [x] Claude Code / Codex provider の既存挙動を壊さず、custom は disabled を維持している。
+- [x] 関連 API / worker / service tests、typecheck、lint、OpenAPI docs check、`git diff --check` が pass している。
+- [x] 作業レポートを `reports/working/` に追加し、PR コメント後に task を `tasks/done/` へ移動している。
 
 ## 検証計画
 
