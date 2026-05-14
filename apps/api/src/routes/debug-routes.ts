@@ -4,12 +4,35 @@ import { DebugDownloadResponseSchema, DebugTraceListResponseSchema, DebugTraceSc
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, routeAuthorization, validParam } from "./route-utils.js"
 
+const debugReadAuthorization = routeAuthorization({
+  mode: "required",
+  permission: "chat:admin:read_all",
+  operationKey: "debug.trace.read.sanitized",
+  resourceCondition: "ownedRun",
+  notes: [
+    "現行 gate は chat:admin:read_all です。debug:trace:read:sanitized は 14A の移行先 permission として role mapping に追加済みですが、既存管理者可視性を壊さないためこの route では chat:admin:read_all を alias gate として維持します。",
+    "返却 trace は operator_sanitized 以下の sanitize 済み DebugTrace contract です。debug 権限は文書閲覧権限を拡張しません。"
+  ]
+})
+
+const debugExportAuthorization = routeAuthorization({
+  mode: "required",
+  permission: "chat:admin:read_all",
+  conditionalPermissions: ["debug:trace:export"],
+  operationKey: "debug.trace.export",
+  resourceCondition: "ownedRun",
+  notes: [
+    "現行 gate は chat:admin:read_all です。debug:trace:export は 14A の移行先 permission として metadata に明記し、既存管理者の export 可視性を維持します。",
+    "download artifact は DebugTrace.exportRedaction の policy version と redaction metadata を含む sanitize 済み JSON に限定します。"
+  ]
+})
+
 export function registerDebugRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
     looseRoute({
       method: "get",
       path: "/debug-runs",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized", resourceCondition: "ownedRun" }),
+      "x-memorag-authorization": debugReadAuthorization,
       responses: {
         200: {
           description: "List persisted chat debug traces",
@@ -27,7 +50,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "get",
       path: "/debug-runs/{runId}",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized", resourceCondition: "ownedRun" }),
+      "x-memorag-authorization": debugReadAuthorization,
       request: {
         params: z.object({ runId: z.string().min(1) })
       },
@@ -50,7 +73,7 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     looseRoute({
       method: "post",
       path: "/debug-runs/{runId}/download",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:admin:read_all", operationKey: "debug.trace.export", resourceCondition: "ownedRun" }),
+      "x-memorag-authorization": debugExportAuthorization,
       request: { params: z.object({ runId: z.string().min(1) }) },
       responses: {
         200: { description: "Create signed download URL for debug JSON", content: { "application/json": { schema: DebugDownloadResponseSchema } } },

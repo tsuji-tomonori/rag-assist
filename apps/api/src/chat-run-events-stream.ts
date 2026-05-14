@@ -1,6 +1,7 @@
 import type { APIGatewayProxyEvent } from "aws-lambda"
 import { createDependencies } from "./dependencies.js"
 import { getPermissionsForGroups } from "./authorization.js"
+import { config } from "./config.js"
 import type { ChatRunEvent, JsonValue } from "./types.js"
 
 declare const awslambda: {
@@ -16,7 +17,7 @@ declare const awslambda: {
 const deps = createDependencies()
 
 export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": config.corsAllowedOrigins.includes("*") ? "*" : config.corsAllowedOrigins[0] ?? "",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, Last-Event-ID",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS"
 }

@@ -39,6 +39,10 @@ _なし_
 | エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
 | 条件付きでエラーになる role | なし |
 
+補足:
+- 現行 gate は chat:admin:read_all です。debug:trace:read:sanitized は 14A の移行先 permission として role mapping に追加済みですが、既存管理者可視性を壊さないためこの route では chat:admin:read_all を alias gate として維持します。
+- 返却 trace は operator_sanitized 以下の sanitize 済み DebugTrace contract です。debug 権限は文書閲覧権限を拡張しません。
+
 認証・認可エラー:
 
 | Status | 発生条件 | Body |
@@ -54,7 +58,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 120 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 128 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -67,6 +71,14 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `schemaVersion` | `enum(1)` | no | `response.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
 | `runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `targetType` | `enum(rag_run \| ingest_run \| chat_orchestration_run \| async_agent_run \| tool_invocation)` | no | `response.targetType` の値。項目名は target type を表します。 | enum=rag_run, ingest_run, chat_orchestration_run, async_agent_run, tool_invocation |
+| `visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | no | `response.visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
+| `sanitizePolicyVersion` | `enum(debug-trace-sanitize-v1)` | no | `response.sanitizePolicyVersion` の値。項目名は sanitize policy version を表します。 | enum=debug-trace-sanitize-v1 |
+| `exportRedaction` | `object` | no | `response.exportRedaction` の値。項目名は export redaction を表します。 | - |
+| `exportRedaction.policyVersion` | `enum(debug-trace-sanitize-v1)` | yes | `response.exportRedaction.policyVersion` の値。項目名は policy version を表します。 | enum=debug-trace-sanitize-v1 |
+| `exportRedaction.visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | yes | `response.exportRedaction.visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
+| `exportRedaction.redactedFields` | `array<string>` | yes | `response.exportRedaction.redactedFields` の値。項目名は redacted fields を表します。 | - |
+| `exportRedaction.notes` | `array<string>` | no | `response.exportRedaction.notes` の値。項目名は notes を表します。 | - |
 | `question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
 | `modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |

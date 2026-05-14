@@ -1,15 +1,16 @@
 import { createDependencies } from "./dependencies.js"
 import { MemoRagService } from "./rag/memorag-service.js"
+import { WorkerEventSchema, WorkerResultSchema } from "./schemas.js"
+import type { WorkerEvent, WorkerResult } from "./types.js"
 
-type ChatRunWorkerEvent = {
-  runId?: string
-}
+type ChatRunWorkerEvent = Partial<WorkerEvent>
 
 const service = new MemoRagService(createDependencies())
 
-export async function handler(event: ChatRunWorkerEvent): Promise<{ runId: string; status: string }> {
-  const runId = event.runId
-  if (!runId) throw new Error("runId is required")
+export async function handler(event: ChatRunWorkerEvent): Promise<WorkerResult> {
+  const parsed = WorkerEventSchema.safeParse({ ...event, targetType: event.targetType ?? "chat_run" })
+  if (!parsed.success) throw new Error("runId is required")
+  const runId = parsed.data.runId
   const run = await service.executeChatRun(runId)
-  return { runId: run.runId, status: run.status }
+  return WorkerResultSchema.parse({ runId: run.runId, targetType: "chat_run", status: run.status, resultType: run.status === "failed" ? "failed" : "succeeded" })
 }

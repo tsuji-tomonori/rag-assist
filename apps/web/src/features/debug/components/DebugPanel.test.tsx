@@ -14,6 +14,14 @@ const citation = {
 const trace: DebugTrace = {
   schemaVersion: 1,
   runId: "run-1",
+  targetType: "rag_run",
+  visibility: "operator_sanitized",
+  sanitizePolicyVersion: "debug-trace-sanitize-v1",
+  exportRedaction: {
+    policyVersion: "debug-trace-sanitize-v1",
+    visibility: "operator_sanitized",
+    redactedFields: ["rawPrompt", "credentials"]
+  },
   question: "要求分類を教えて",
   modelId: "model",
   embeddingModelId: "embedding",
@@ -104,6 +112,9 @@ describe("DebugPanel", () => {
     renderDebugPanel()
 
     expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("run-1")
+    expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("operator_sanitized")
+    expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("debug-trace-sanitize-v1")
+    expect(screen.getByRole("region", { name: "実行サマリ" })).toHaveTextContent("2 fields")
     expect(screen.getByRole("button", { name: /retrieval_evaluator/ })).toHaveAttribute("aria-pressed", "false")
     expect(screen.getByRole("region", { name: "Fact coverage" })).toHaveTextContent("fact-missing")
     expect(screen.getByRole("region", { name: "Evidence viewer" })).toHaveTextContent("retrieved 2 / cited 1")

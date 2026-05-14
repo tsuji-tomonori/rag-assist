@@ -108,6 +108,15 @@ canonical 仕様: `docs/spec/2026-chapter-spec.md`
 | 14D worker runId | chat / document ingest worker は `{ runId }` を必須入力とし、欠落時に validation error として失敗する。 | `WorkerEvent` / `WorkerResult` 標準化は既存 Step Functions input `{ runId }` 互換を壊さず進める。benchmark / async agent worker は I/G に委譲する。 |
 | 既存挙動の踏襲 | debug route を public 化しない、`includeDebug` 時の `chat:admin:read_all` gate を弱めない、SSE `Last-Event-ID` を削らない、worker input `{ runId }` 互換を壊さない。 | J2 実装時の scope / scope-out として `docs/spec/gap-phase-j2.md` を参照する。 |
 
+### Phase J2-debug-4tier-and-middleware 補足
+
+| 対象 | 実装結果 | 残作業 |
+|---|---|---|
+| 14A DebugTrace 4 tier | 既存 `schemaVersion: 1` RAG trace 互換のまま `targetType`、`visibility`、`sanitizePolicyVersion`、`exportRedaction` metadata を追加した。legacy trace は normalize 時に `rag_run` / `operator_sanitized` / `debug-trace-sanitize-v1` を補う。 | replay 実行 API、監査ログ、raw file 再処理は後続。 |
+| 14A debug permission | `debug:*` permission contract と `SYSTEM_ADMIN` role mapping を追加した。`/debug-runs` 系 route は既存管理者可視性を壊さないため `chat:admin:read_all` を alias gate として維持し、OpenAPI route metadata notes に移行方針を記録した。 | `debug:*` 単独 gate への完全移行は role migration と監査ログ整備後。 |
+| 14D middleware / SSE | `/health` と `/openapi.json` のみ public、`OPTIONS` bypass、`Last-Event-ID` allowed header、production wildcard CORS guard、chat/document ingest SSE event format を test で固定した。 | edge / WAF / CDN rate limit は infra/ops task。 |
+| 14D worker | chat / document ingest worker は `{ runId }` input を維持し、`WorkerEventSchema` / `WorkerResultSchema` を追加した。 | benchmark worker は Phase I、async agent worker は Phase G に委譲。 |
+
 ## 後続更新ルール
 
 - Phase B 以降の `*-pre-gap` では、この map の対象章行を更新し、必要に応じて節単位の補助表を追加する。

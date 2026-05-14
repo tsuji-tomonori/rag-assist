@@ -113,6 +113,14 @@ Media type: `application/json`
 | `messages[].result.debug` | `object` | no | 調査用の内部処理情報。 | - |
 | `messages[].result.debug.schemaVersion` | `enum(1)` | no | `data.messages[].result.debug.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
 | `messages[].result.debug.runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `messages[].result.debug.targetType` | `enum(rag_run \| ingest_run \| chat_orchestration_run \| async_agent_run \| tool_invocation)` | no | `data.messages[].result.debug.targetType` の値。項目名は target type を表します。 | enum=rag_run, ingest_run, chat_orchestration_run, async_agent_run, tool_invocation |
+| `messages[].result.debug.visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | no | `data.messages[].result.debug.visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
+| `messages[].result.debug.sanitizePolicyVersion` | `enum(debug-trace-sanitize-v1)` | no | `data.messages[].result.debug.sanitizePolicyVersion` の値。項目名は sanitize policy version を表します。 | enum=debug-trace-sanitize-v1 |
+| `messages[].result.debug.exportRedaction` | `object` | no | `data.messages[].result.debug.exportRedaction` の値。項目名は export redaction を表します。 | - |
+| `messages[].result.debug.exportRedaction.policyVersion` | `enum(debug-trace-sanitize-v1)` | yes | `data.messages[].result.debug.exportRedaction.policyVersion` の値。項目名は policy version を表します。 | enum=debug-trace-sanitize-v1 |
+| `messages[].result.debug.exportRedaction.visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | yes | `data.messages[].result.debug.exportRedaction.visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
+| `messages[].result.debug.exportRedaction.redactedFields` | `array<string>` | yes | `data.messages[].result.debug.exportRedaction.redactedFields` の値。項目名は redacted fields を表します。 | - |
+| `messages[].result.debug.exportRedaction.notes` | `array<string>` | no | `data.messages[].result.debug.exportRedaction.notes` の値。項目名は notes を表します。 | - |
 | `messages[].result.debug.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
 | `messages[].result.debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `messages[].result.debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |
@@ -354,7 +362,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 296 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 304 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -451,6 +459,14 @@ Media type: `application/json`
 | `messages[].result.debug` | `object` | no | 調査用の内部処理情報。 | - |
 | `messages[].result.debug.schemaVersion` | `enum(1)` | no | `response.messages[].result.debug.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
 | `messages[].result.debug.runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `messages[].result.debug.targetType` | `enum(rag_run \| ingest_run \| chat_orchestration_run \| async_agent_run \| tool_invocation)` | no | `response.messages[].result.debug.targetType` の値。項目名は target type を表します。 | enum=rag_run, ingest_run, chat_orchestration_run, async_agent_run, tool_invocation |
+| `messages[].result.debug.visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | no | `response.messages[].result.debug.visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
+| `messages[].result.debug.sanitizePolicyVersion` | `enum(debug-trace-sanitize-v1)` | no | `response.messages[].result.debug.sanitizePolicyVersion` の値。項目名は sanitize policy version を表します。 | enum=debug-trace-sanitize-v1 |
+| `messages[].result.debug.exportRedaction` | `object` | no | `response.messages[].result.debug.exportRedaction` の値。項目名は export redaction を表します。 | - |
+| `messages[].result.debug.exportRedaction.policyVersion` | `enum(debug-trace-sanitize-v1)` | yes | `response.messages[].result.debug.exportRedaction.policyVersion` の値。項目名は policy version を表します。 | enum=debug-trace-sanitize-v1 |
+| `messages[].result.debug.exportRedaction.visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | yes | `response.messages[].result.debug.exportRedaction.visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
+| `messages[].result.debug.exportRedaction.redactedFields` | `array<string>` | yes | `response.messages[].result.debug.exportRedaction.redactedFields` の値。項目名は redacted fields を表します。 | - |
+| `messages[].result.debug.exportRedaction.notes` | `array<string>` | no | `response.messages[].result.debug.exportRedaction.notes` の値。項目名は notes を表します。 | - |
 | `messages[].result.debug.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
 | `messages[].result.debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `messages[].result.debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |

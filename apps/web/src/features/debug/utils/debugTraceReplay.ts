@@ -29,6 +29,10 @@ export type DebugGraphEdge = {
 
 export type DebugRunSummary = {
   runId: string
+  targetType?: DebugTrace["targetType"]
+  visibility?: DebugTrace["visibility"]
+  sanitizePolicyVersion?: DebugTrace["sanitizePolicyVersion"]
+  exportRedaction?: DebugTrace["exportRedaction"]
   question: string
   status: "answered" | "refused" | "error" | "warning"
   isAnswerable: boolean
@@ -177,6 +181,10 @@ function buildRunSummary(trace: DebugTrace): DebugRunSummary {
   const mainFailureStage = inferFailureStage(errorStep ?? lastWarning)
   return {
     runId: trace.runId,
+    targetType: trace.targetType,
+    visibility: trace.visibility,
+    sanitizePolicyVersion: trace.sanitizePolicyVersion,
+    exportRedaction: trace.exportRedaction,
     question: trace.question,
     status: trace.status === "error" ? "error" : trace.isAnswerable ? "answered" : trace.status === "warning" ? "warning" : "refused",
     isAnswerable: trace.isAnswerable,

@@ -5,7 +5,7 @@ import type { Dependencies } from "../dependencies.js"
 import { hasUsableComputedFact } from "./computation.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { buildPipelineVersions } from "../rag/pipeline-versions.js"
-import { DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type DebugTrace } from "../types.js"
 import type { DocumentManifest, RetrievedVector } from "../types.js"
 import { analyzeInput } from "./nodes/analyze-input.js"
 import { answerabilityGate } from "./nodes/answerability-gate.js"
@@ -777,6 +777,18 @@ async function persistDebugTrace(
   const trace: DebugTrace = {
     schemaVersion: DEBUG_TRACE_SCHEMA_VERSION,
     runId: input.runId,
+    targetType: "rag_run",
+    visibility: "operator_sanitized",
+    sanitizePolicyVersion: DEBUG_TRACE_SANITIZE_POLICY_VERSION,
+    exportRedaction: {
+      policyVersion: DEBUG_TRACE_SANITIZE_POLICY_VERSION,
+      visibility: "operator_sanitized",
+      redactedFields: ["rawPrompt", "credentials", "internalReasoning", "unauthorizedDocuments", "internalPolicyDetails"],
+      notes: [
+        "通常利用者向けには権限外文書、内部 policy、raw prompt、credential、LLM 内部推論を含めない。",
+        "現行 debug API は chat:admin:read_all gate の operator_sanitized trace として返す。"
+      ]
+    },
     question: input.question,
     modelId: input.modelId,
     embeddingModelId: input.embeddingModelId,

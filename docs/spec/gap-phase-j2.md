@@ -153,3 +153,20 @@ Phase J2 は、仕様 14A「デバッグ・トレース・運用診断」と 14D
 | `git diff --check` | Markdown whitespace / conflict marker 確認。 |
 | `npm run test -w @memorag-mvp/api -- access-control-policy.test.ts` | 後続で route / middleware を変更した場合の静的 policy guard。今回の pre-gap docs 変更では未実施。 |
 | `npm run test -w @memorag-mvp/web -- DebugPanel` | 後続で debug panel 表示を変更した場合の UI regression。今回の pre-gap docs 変更では未実施。 |
+
+## J2-debug-4tier-and-middleware 実装メモ
+
+| 項目 | 実装判断 |
+|---|---|
+| DebugTrace 4 tier | 既存 RAG trace の `schemaVersion: 1` と `steps[]` を維持し、`targetType`、`visibility`、`sanitizePolicyVersion`、`exportRedaction` を optional/default metadata として追加する。legacy trace は読み込み時に `targetType=rag_run`、`visibility=operator_sanitized`、`sanitizePolicyVersion=debug-trace-sanitize-v1` へ normalize する。 |
+| `debug:*` permission | `debug:trace:read:*`、`debug:trace:export`、`debug:ingest:read`、`debug:chunk:read`、`debug:replay` などを permission contract と `SYSTEM_ADMIN` role mapping に追加する。ただし `/debug-runs` 系 route の実行 gate は既存管理者可視性を壊さないため `chat:admin:read_all` を alias gate として維持し、route metadata notes に移行方針を明記する。 |
+| Debug export | download JSON は `formatDebugTraceJson()` で legacy trace にも redaction metadata を付与する。export 内容は sanitize 済み metadata を含む DebugTrace に限定し、raw prompt、credential、LLM 内部推論、権限外文書、内部 policy 詳細は通常利用者向けに含めない方針を metadata に残す。 |
+| Public allowlist / CORS | `/health` と `/openapi.json` だけを public allowlist とし、`/debug-runs` は public 化しない。`OPTIONS` bypass と `Last-Event-ID` allowed header を static test で固定する。本番 `CORS_ALLOWED_ORIGINS=*` は config guard で起動失敗にする。Lambda streaming header も同じ config を参照し、production wildcard guard の対象にする。 |
+| SSE | chat / document ingest SSE は `Last-Event-ID`、`listAfter(runId, afterSeq)`、stored event `id` / `event` / JSON `data`、heartbeat、timeout format を static regression test で固定する。owned run permission と benchmark seed run の scoped read は既存 route policy を維持する。 |
+| Worker contract | chat / document ingest worker は既存 Step Functions input `{ runId }` を維持し、`WorkerEventSchema` / `WorkerResultSchema` を追加する。handler の返却は既存 `runId` / `status` に `targetType` / `resultType` を加える後方互換拡張とし、runId 欠落時は引き続き `runId is required` として失敗する。 |
+
+### 残 scope-out
+
+- benchmark run worker / SSE / retry / cancel は Phase I worker に委譲する。
+- async agent worker と provider workspace 実行は Phase G に委譲する。
+- debug replay 実行 API、監査ログ記録、resource permission revoked 中断、edge / WAF / CDN rate limit は後続 task とする。

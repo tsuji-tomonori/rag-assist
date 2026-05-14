@@ -114,7 +114,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 193 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 201 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -198,6 +198,14 @@ Media type: `application/json`
 | `debug` | `object` | no | 調査用の内部処理情報。 | - |
 | `debug.schemaVersion` | `enum(1)` | no | `response.debug.schemaVersion` の値。項目名は schema version を表します。 | enum=1 |
 | `debug.runId` | `string` | yes | 非同期 run または debug trace を識別する ID。 | - |
+| `debug.targetType` | `enum(rag_run \| ingest_run \| chat_orchestration_run \| async_agent_run \| tool_invocation)` | no | `response.debug.targetType` の値。項目名は target type を表します。 | enum=rag_run, ingest_run, chat_orchestration_run, async_agent_run, tool_invocation |
+| `debug.visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | no | `response.debug.visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
+| `debug.sanitizePolicyVersion` | `enum(debug-trace-sanitize-v1)` | no | `response.debug.sanitizePolicyVersion` の値。項目名は sanitize policy version を表します。 | enum=debug-trace-sanitize-v1 |
+| `debug.exportRedaction` | `object` | no | `response.debug.exportRedaction` の値。項目名は export redaction を表します。 | - |
+| `debug.exportRedaction.policyVersion` | `enum(debug-trace-sanitize-v1)` | yes | `response.debug.exportRedaction.policyVersion` の値。項目名は policy version を表します。 | enum=debug-trace-sanitize-v1 |
+| `debug.exportRedaction.visibility` | `enum(user_safe \| support_sanitized \| operator_sanitized \| internal_restricted)` | yes | `response.debug.exportRedaction.visibility` の値。項目名は visibility を表します。 | enum=user_safe, support_sanitized, operator_sanitized, internal_restricted |
+| `debug.exportRedaction.redactedFields` | `array<string>` | yes | `response.debug.exportRedaction.redactedFields` の値。項目名は redacted fields を表します。 | - |
+| `debug.exportRedaction.notes` | `array<string>` | no | `response.debug.exportRedaction.notes` の値。項目名は notes を表します。 | - |
 | `debug.question` | `string` | yes | ユーザーまたは benchmark dataset から渡される質問文。 | - |
 | `debug.modelId` | `string` | yes | 回答生成に利用する Bedrock model ID。 | - |
 | `debug.embeddingModelId` | `string` | yes | embedding 生成に利用する model ID。 | - |

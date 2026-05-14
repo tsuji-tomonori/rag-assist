@@ -18,6 +18,15 @@ export type DebugStep = {
 export type DebugTrace = {
   schemaVersion: 1
   runId: string
+  targetType?: "rag_run" | "ingest_run" | "chat_orchestration_run" | "async_agent_run" | "tool_invocation"
+  visibility?: "user_safe" | "support_sanitized" | "operator_sanitized" | "internal_restricted"
+  sanitizePolicyVersion?: "debug-trace-sanitize-v1"
+  exportRedaction?: {
+    policyVersion: "debug-trace-sanitize-v1"
+    visibility: "user_safe" | "support_sanitized" | "operator_sanitized" | "internal_restricted"
+    redactedFields: string[]
+    notes?: string[]
+  }
   question: string
   modelId: string
   embeddingModelId: string

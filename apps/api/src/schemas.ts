@@ -4,6 +4,9 @@ import type { JsonValue } from "./types.js"
 
 const MetadataValueSchema = z.custom<JsonValue>(isJsonValue)
 const DebugStepOutputSchema = z.record(z.string(), MetadataValueSchema)
+export const DebugTraceTargetTypeSchema = z.enum(["rag_run", "ingest_run", "chat_orchestration_run", "async_agent_run", "tool_invocation"])
+export const DebugTraceVisibilitySchema = z.enum(["user_safe", "support_sanitized", "operator_sanitized", "internal_restricted"])
+export const DebugTraceSanitizePolicyVersionSchema = z.literal("debug-trace-sanitize-v1")
 
 function isJsonValue(value: unknown): value is JsonValue {
   if (value === null) return true
@@ -773,6 +776,15 @@ export const DebugStepSchema = z.object({
 export const DebugTraceSchema = z.object({
   schemaVersion: z.literal(1).default(1),
   runId: z.string(),
+  targetType: DebugTraceTargetTypeSchema.optional().default("rag_run"),
+  visibility: DebugTraceVisibilitySchema.optional().default("operator_sanitized"),
+  sanitizePolicyVersion: DebugTraceSanitizePolicyVersionSchema.optional().default("debug-trace-sanitize-v1"),
+  exportRedaction: z.object({
+    policyVersion: DebugTraceSanitizePolicyVersionSchema,
+    visibility: DebugTraceVisibilitySchema,
+    redactedFields: z.array(z.string()),
+    notes: z.array(z.string()).optional()
+  }).optional(),
   question: z.string(),
   modelId: z.string(),
   embeddingModelId: z.string(),
@@ -1154,4 +1166,22 @@ export const DebugDownloadResponseSchema = z.object({
   url: z.string().url(),
   expiresInSeconds: z.number().int().positive(),
   objectKey: z.string()
+})
+
+export const WorkerTargetTypeSchema = z.enum(["chat_run", "document_ingest_run", "benchmark_run", "async_agent_run"])
+export const WorkerEventSchema = z.object({
+  runId: z.string().min(1),
+  targetType: WorkerTargetTypeSchema.optional()
+}).passthrough()
+
+export const WorkerResultSchema = z.object({
+  runId: z.string().min(1),
+  targetType: WorkerTargetTypeSchema.optional(),
+  status: z.string().min(1),
+  resultType: z.enum(["succeeded", "failed"]),
+  error: z.object({
+    code: z.enum(["validation_error", "not_found", "permission_revoked", "execution_error"]),
+    message: z.string(),
+    retryable: z.boolean()
+  }).optional()
 })

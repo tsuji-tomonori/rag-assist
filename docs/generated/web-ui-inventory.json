@@ -6243,9 +6243,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:127:button",
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:143:button",
       "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
-      "line": 127,
+      "line": 143,
       "feature": "debug",
       "component": "DebugFlowNodeButton",
       "element": "button",
@@ -6285,9 +6285,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:200:button",
+      "id": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx:216:button",
       "file": "apps/web/src/features/debug/components/panel/DebugPanelBody.tsx",
-      "line": 200,
+      "line": 216,
       "feature": "debug",
       "component": "DebugStepList",
       "element": "button",

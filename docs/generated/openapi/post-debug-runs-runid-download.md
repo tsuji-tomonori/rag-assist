@@ -34,10 +34,14 @@ _なし_
 | --- | --- |
 | 認可モード | `required` |
 | 必須 permission | `chat:admin:read_all` |
-| 条件付き permission | - |
+| 条件付き permission | `debug:trace:export` |
 | 実行可能 role | `SYSTEM_ADMIN` |
 | エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
 | 条件付きでエラーになる role | なし |
+
+補足:
+- 現行 gate は chat:admin:read_all です。debug:trace:export は 14A の移行先 permission として metadata に明記し、既存管理者の export 可視性を維持します。
+- download artifact は DebugTrace.exportRedaction の policy version と redaction metadata を含む sanitize 済み JSON に限定します。
 
 認証・認可エラー:
 
