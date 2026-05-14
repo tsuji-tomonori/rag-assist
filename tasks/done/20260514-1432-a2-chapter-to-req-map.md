@@ -1,5 +1,5 @@
 # A2 章から REQ への対応表作成
-状態: do
+状態: done
 タスク種別: ドキュメント更新
 発注元 wave: Wave 1
 依存タスク: `tasks/done/20260514-1421-a1-docs-spec-canonical.md`
