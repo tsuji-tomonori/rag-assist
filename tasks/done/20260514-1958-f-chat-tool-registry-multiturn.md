@@ -1,6 +1,6 @@
 # F-chat-tool-registry-multiturn
 
-状態: do
+状態: done
 タスク種別: 機能追加
 作成日: 2026-05-14
 branch: `codex/phase-f-chat-tool-registry-multiturn`
@@ -44,14 +44,14 @@ worktree: `.worktrees/phase-f-chat-tool-registry-multiturn`
 
 ## 受け入れ条件
 
-- [ ] `ChatToolDefinition` は `toolId`、入出力 schema 参照、必要 feature permission、必要 resource permission、承認要否、監査要否、有効状態を schema / 型で表現できる。
-- [ ] `ChatToolInvocation` は `invocationId`、`toolId`、実行者、入出力概要、状態、承認、時刻、結果を監査可能な optional schema / 型として表現できる。
-- [ ] RAG 系 toolId は既存 `chat-orchestration` graph node / trace label との対応が registry と tests で固定され、既存 RAG 挙動・閾値・budget を変更しない。
-- [ ] 後続 phase 依存 tool は disabled metadata として区別され、実行可能な本番 UI/API fallback として扱われない。
-- [ ] conversation history store は既存 `messages` 互換を保ったまま、`decontextualizedQuery`, `rollingSummary`, `queryFocusedSummary`, `citationMemory`, `taskState` などの multi-turn optional state を保存・取得できる。
-- [ ] H/J1 所有領域の主実装ファイルを不要に変更していない。
-- [ ] 変更範囲に見合う検証が実行され、未実施検証がある場合は理由を PR 本文・コメント・レポートに明記する。
-- [ ] PR 作成後に日本語の受け入れ条件コメントとセルフレビューコメントを投稿し、その後 task md を `tasks/done/` に移動して状態 `done` の commit/push を行う。
+- [x] `ChatToolDefinition` は `toolId`、入出力 schema 参照、必要 feature permission、必要 resource permission、承認要否、監査要否、有効状態を schema / 型で表現できる。
+- [x] `ChatToolInvocation` は `invocationId`、`toolId`、実行者、入出力概要、状態、承認、時刻、結果を監査可能な optional schema / 型として表現できる。
+- [x] RAG 系 toolId は既存 `chat-orchestration` graph node / trace label との対応が registry と tests で固定され、既存 RAG 挙動・閾値・budget を変更しない。
+- [x] 後続 phase 依存 tool は disabled metadata として区別され、実行可能な本番 UI/API fallback として扱われない。
+- [x] conversation history store は既存 `messages` 互換を保ったまま、`decontextualizedQuery`, `rollingSummary`, `queryFocusedSummary`, `citationMemory`, `taskState` などの multi-turn optional state を保存・取得できる。
+- [x] H/J1 所有領域の主実装ファイルを不要に変更していない。
+- [x] 変更範囲に見合う検証が実行され、未実施検証がある場合は理由を PR 本文・コメント・レポートに明記する。
+- [x] PR 作成後に日本語の受け入れ条件コメントとセルフレビューコメントを投稿し、その後 task md を `tasks/done/` に移動して状態 `done` の commit/push を行う。
 
 ## 検証計画
 
