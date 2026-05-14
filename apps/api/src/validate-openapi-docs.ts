@@ -1,4 +1,6 @@
 import { enrichOpenApiDocument, validateOpenApiDocument, type OpenApiDocument } from "./openapi-doc-quality.js"
+import { validateRestOrpcContractDrift } from "./openapi-contract-drift.js"
+import { validateGeneratedMarkdownFreshness } from "./generate-openapi-docs.js"
 
 process.env.MOCK_BEDROCK ??= "true"
 process.env.USE_LOCAL_VECTOR_STORE ??= "true"
@@ -17,7 +19,11 @@ async function main(): Promise<void> {
   }
 
   const api = enrichOpenApiDocument((await response.json()) as OpenApiDocument)
-  const errors = validateOpenApiDocument(api)
+  const errors = [
+    ...validateOpenApiDocument(api),
+    ...validateRestOrpcContractDrift(api),
+    ...await validateGeneratedMarkdownFreshness(api)
+  ]
   if (errors.length > 0) {
     console.error("OpenAPI document quality check failed:")
     for (const error of errors) console.error(`- ${error}`)

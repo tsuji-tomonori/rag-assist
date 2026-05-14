@@ -26,6 +26,7 @@ const app = new OpenAPIHono<AppEnv>({
   }
 })
 
+// Public routes return only service health or API contract metadata; all business data routes stay behind auth.
 const publicApiPaths = new Set(["/health", "/openapi.json"])
 
 app.use(
@@ -60,7 +61,7 @@ app.all("/rpc/*", async (c) => {
   return c.json({ error: "oRPC procedure not found" }, 404)
 })
 
-const openApiConfig = {
+export const openApiConfig = {
   openapi: "3.0.0",
   info: {
     version: "0.1.0",

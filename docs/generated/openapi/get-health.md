@@ -38,6 +38,10 @@ _なし_
 補足:
 - 認証なしで実行できます。
 
+## Lifecycle
+
+_なし_
+
 ## Responses
 
 | Status | 説明 | Media type | Body |

@@ -42,7 +42,7 @@ jobs:
       - name: Generate OpenAPI docs
         run: npm run docs:openapi
 
-      - name: Check OpenAPI doc quality
+      - name: Check OpenAPI contract docs
         run: npm run docs:openapi:check
 
       - name: Create pull request

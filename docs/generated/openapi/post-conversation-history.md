@@ -129,6 +129,7 @@ Media type: `application/json`
 | `messages[].result.debug.conversationState` | `object` | no | `data.messages[].result.debug.conversationState` の値。項目名は conversation state を表します。 | nullable |
 | `messages[].result.debug.decontextualizedQuery` | `object` | no | `data.messages[].result.debug.decontextualizedQuery` の値。項目名は decontextualized query を表します。 | nullable |
 | `messages[].result.debug.pipelineVersions` | `object` | no | `data.messages[].result.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `messages[].result.debug.pipelineVersions.chatOrchestrationWorkflowVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.chatOrchestrationWorkflowVersion` の値。項目名は chat orchestration workflow version を表します。 | - |
 | `messages[].result.debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
 | `messages[].result.debug.pipelineVersions.chunkerVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
 | `messages[].result.debug.pipelineVersions.sourceExtractorVersion` | `string` | yes | `data.messages[].result.debug.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
@@ -259,13 +260,17 @@ Media type: `application/json`
 | Status | 発生条件 | Body |
 | --- | --- | --- |
 | `401` | Authorization header がない、または Bearer token を検証できない場合。 | `{"error":"Unauthorized"}` |
-| `403` | 必要 permission (chat:create) または条件付き permission を満たさない場合。 | `{"error":"Forbidden: missing chat:create"}` |
+| `403` | 必要 permission (chat:create) または条件付き permission を満たさない場合。 | `{"error":"Forbidden"}` |
+
+## Lifecycle
+
+_なし_
 
 ## Responses
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 211 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 212 field(s) |
 | `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
@@ -378,6 +383,7 @@ Media type: `application/json`
 | `messages[].result.debug.conversationState` | `object` | no | `response.messages[].result.debug.conversationState` の値。項目名は conversation state を表します。 | nullable |
 | `messages[].result.debug.decontextualizedQuery` | `object` | no | `response.messages[].result.debug.decontextualizedQuery` の値。項目名は decontextualized query を表します。 | nullable |
 | `messages[].result.debug.pipelineVersions` | `object` | no | `response.messages[].result.debug.pipelineVersions` の値。項目名は pipeline versions を表します。 | - |
+| `messages[].result.debug.pipelineVersions.chatOrchestrationWorkflowVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.chatOrchestrationWorkflowVersion` の値。項目名は chat orchestration workflow version を表します。 | - |
 | `messages[].result.debug.pipelineVersions.agentWorkflowVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.agentWorkflowVersion` の値。項目名は agent workflow version を表します。 | - |
 | `messages[].result.debug.pipelineVersions.chunkerVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.chunkerVersion` の値。項目名は chunker version を表します。 | - |
 | `messages[].result.debug.pipelineVersions.sourceExtractorVersion` | `string` | yes | `response.messages[].result.debug.pipelineVersions.sourceExtractorVersion` の値。項目名は source extractor version を表します。 | - |
