@@ -168,3 +168,28 @@ Phase G は、仕様 4C「非同期エージェント実行」を対象にする
 | `npm run test -w @memorag-mvp/benchmark` | async agent benchmark artifact 追加時の contract / runner regression。 |
 | `git diff --check` | whitespace / conflict marker 確認。 |
 | `python3 scripts/validate_spec_recovery.py docs/spec-recovery` | spec-recovery 更新の構造確認。 |
+
+## G1-async-agent-foundation 実装メモ
+
+- 追記日: 2026-05-14
+- 対象 task: `G1-async-agent-foundation`
+- 状態: implemented foundation
+
+### implemented
+
+| ID | 実装内容 | 根拠 |
+|---|---|---|
+| G1-IMPL-001 | provider-neutral な `AgentRuntimeProvider`、`AgentModelSelection`、`AsyncAgentRun`、`AgentWorkspaceMount`、`AgentArtifact`、`SkillDefinition`、`AgentProfileDefinition`、`AgentExecutionPreset` schema / type を API と contract package に追加した。 | `apps/api/src/schemas.ts`, `apps/api/src/types.ts`, `packages/contract/src/schemas/agents.ts` |
+| G1-IMPL-002 | `agent:*`、`skill:*`、`agent_profile:*`、`agent_preset:*` permission と `ASYNC_AGENT_USER`、`SKILL_PROFILE_ADMIN`、`ASYNC_AGENT_ADMIN` role preset を追加した。 | `apps/api/src/authorization.ts`, `apps/api/src/authorization.test.ts` |
+| G1-IMPL-003 | `/agents/providers`、`/agents/runs` create/list/get/cancel、`/agents/runs/{agentRunId}/artifacts` read-only metadata API を追加した。 | `apps/api/src/routes/agent-routes.ts` |
+| G1-IMPL-004 | provider は G1 では実行せず、未設定/無効/利用不可を `blocked` run と `not_configured` / `provider_unavailable` で返す。架空 provider execution、架空 artifact、固定 cost は作らない。 | `MemoRagService.createAsyncAgentRun`, `agent-routes.test.ts` |
+| G1-IMPL-005 | selected folder/document は readOnly mount metadata として扱い、service 層で read access を確認する。writeback は `agent:artifact:writeback` と `agentWritebackFull` boundary だけ定義し、本実行は scope-out とした。 | `MemoRagService.assertAsyncAgentSelectionsReadable`, `access-control-policy.test.ts` |
+| G1-IMPL-006 | worker contract は J2 の `{ runId }` 互換を維持し、`agentRunId` と `runId` を同一値として保存する。`agentRunId` input は worker alias として受ける。 | `apps/api/src/async-agent-run-worker.ts`, `worker-contract.test.ts` |
+| G1-IMPL-007 | Web は provider 未設定、empty、permission denied、read-only run detail の最小表示に限定した。 | `apps/web/src/features/agents/` |
+
+### scope-out
+
+- Claude Code / Codex / OpenCode / custom provider の本実行。
+- provider credentials、workspace execution、実ファイル mount、writableCopy、writeback 適用。
+- skill / agent profile / preset の CRUD UI と prompt injection 検査。
+- async agent benchmark runner と debug trace producer。

@@ -19,6 +19,7 @@ describe("RailNav", () => {
         authSession={authSession}
         canAnswerQuestions={true}
         canReadBenchmarkRuns={true}
+        canReadAgentRuns={true}
         canManageDocuments={true}
         canSeeAdminSettings={true}
         onChangeView={onChangeView}
@@ -27,6 +28,7 @@ describe("RailNav", () => {
 
     expect(screen.getByTitle("担当者対応")).toBeInTheDocument()
     expect(screen.getByTitle("性能テスト")).toBeInTheDocument()
+    expect(screen.getByTitle("非同期エージェント")).toBeInTheDocument()
     expect(screen.getByTitle("ドキュメント")).toBeInTheDocument()
     expect(screen.getByTitle("管理者設定")).toBeInTheDocument()
 
@@ -42,6 +44,7 @@ describe("RailNav", () => {
         authSession={authSession}
         canAnswerQuestions={false}
         canReadBenchmarkRuns={false}
+        canReadAgentRuns={false}
         canManageDocuments={false}
         canSeeAdminSettings={false}
         onChangeView={vi.fn()}
@@ -50,6 +53,7 @@ describe("RailNav", () => {
 
     expect(screen.queryByTitle("担当者対応")).not.toBeInTheDocument()
     expect(screen.queryByTitle("性能テスト")).not.toBeInTheDocument()
+    expect(screen.queryByTitle("非同期エージェント")).not.toBeInTheDocument()
     expect(screen.queryByTitle("ドキュメント")).not.toBeInTheDocument()
     expect(screen.queryByTitle("管理者設定")).not.toBeInTheDocument()
   })
@@ -63,6 +67,7 @@ describe("RailNav", () => {
         authSession={{ ...authSession, email: "very-long-account-name-for-layout-check@example.internal" }}
         canAnswerQuestions={false}
         canReadBenchmarkRuns={false}
+        canReadAgentRuns={false}
         canManageDocuments={false}
         canSeeAdminSettings={false}
         onChangeView={onChangeView}

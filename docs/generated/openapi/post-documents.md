@@ -51,7 +51,7 @@ Media type: `application/json`
 | 必須 permission | `rag:doc:write:group` |
 | 条件付き permission | `benchmark:seed_corpus` |
 | 実行可能 role | `RAG_GROUP_MANAGER`, `BENCHMARK_RUNNER`, `SYSTEM_ADMIN` |
-| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `BENCHMARK_OPERATOR`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `BENCHMARK_OPERATOR`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
 | 条件付きでエラーになる role | `RAG_GROUP_MANAGER` |
 
 補足:

@@ -36,7 +36,7 @@ _なし_
 | 必須 permission | `chat:read:own` |
 | 条件付き permission | `benchmark:seed_corpus` |
 | 実行可能 role | `CHAT_USER`, `BENCHMARK_RUNNER`, `SYSTEM_ADMIN` |
-| エラーになる role | `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| エラーになる role | `ANSWER_EDITOR`, `RAG_GROUP_MANAGER`, `BENCHMARK_OPERATOR`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
 | 条件付きでエラーになる role | `CHAT_USER` |
 
 補足:

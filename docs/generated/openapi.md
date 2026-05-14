@@ -28,6 +28,13 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/admin/users/{userId}/roles` | ユーザーのロールを更新する | [詳細](openapi/post-admin-users-userid-roles.md) |
 | `POST` | `/admin/users/{userId}/suspend` | ユーザーを停止する | [詳細](openapi/post-admin-users-userid-suspend.md) |
 | `POST` | `/admin/users/{userId}/unsuspend` | ユーザー停止を解除する | [詳細](openapi/post-admin-users-userid-unsuspend.md) |
+| `GET` | `/agents/providers` | 非同期エージェント provider 状態を取得する | [詳細](openapi/get-agents-providers.md) |
+| `POST` | `/agents/runs` | 非同期エージェント run を作成する | [詳細](openapi/post-agents-runs.md) |
+| `GET` | `/agents/runs` | 非同期エージェント run 一覧を取得する | [詳細](openapi/get-agents-runs.md) |
+| `GET` | `/agents/runs/{agentRunId}` | 非同期エージェント run 詳細を取得する | [詳細](openapi/get-agents-runs-agentrunid.md) |
+| `GET` | `/agents/runs/{agentRunId}/artifacts` | 非同期エージェント artifact metadata 一覧を取得する | [詳細](openapi/get-agents-runs-agentrunid-artifacts.md) |
+| `GET` | `/agents/runs/{agentRunId}/artifacts/{artifactId}` | 非同期エージェント artifact metadata を取得する | [詳細](openapi/get-agents-runs-agentrunid-artifacts-artifactid.md) |
+| `POST` | `/agents/runs/{agentRunId}/cancel` | 非同期エージェント run をキャンセルする | [詳細](openapi/post-agents-runs-agentrunid-cancel.md) |
 | `POST` | `/benchmark-runs` | 非同期 benchmark run を開始する | [詳細](openapi/post-benchmark-runs.md) |
 | `GET` | `/benchmark-runs` | benchmark run 一覧を取得する | [詳細](openapi/get-benchmark-runs.md) |
 | `GET` | `/benchmark-runs/{runId}` | benchmark run 詳細を取得する | [詳細](openapi/get-benchmark-runs-runid.md) |

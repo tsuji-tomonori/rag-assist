@@ -120,6 +120,41 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "ログインユーザー情報を取得する",
     description: "認証済みユーザーの ID、ロール、有効 permission を返します。"
   },
+  "GET /agents/providers": {
+    summary: "非同期エージェント provider 状態を取得する",
+    description:
+      "G1 では provider の設定状態だけを返し、credential、secret、実行可能な mock provider は返しません。"
+  },
+  "POST /agents/runs": {
+    summary: "非同期エージェント run を作成する",
+    description:
+      "選択 folder/document の readOnly 条件を確認し、provider が未設定または利用不可の場合は正直な blocked run metadata を作成します。"
+  },
+  "GET /agents/runs": {
+    summary: "非同期エージェント run 一覧を取得する",
+    description:
+      "呼び出しユーザーが参照できる run metadata を返し、provider 実行ログや workspace 実体は返しません。"
+  },
+  "GET /agents/runs/{agentRunId}": {
+    summary: "非同期エージェント run 詳細を取得する",
+    description:
+      "自分の run または管理対象として参照できる run の read-only metadata を取得します。"
+  },
+  "POST /agents/runs/{agentRunId}/cancel": {
+    summary: "非同期エージェント run をキャンセルする",
+    description:
+      "自分の run または管理対象として参照できる run を cancel 状態へ更新します。provider 実行停止は G1 では行いません。"
+  },
+  "GET /agents/runs/{agentRunId}/artifacts": {
+    summary: "非同期エージェント artifact metadata 一覧を取得する",
+    description:
+      "対象 run の read-only artifact metadata だけを返します。G1 では架空 artifact、download URL、writeback 適用は返しません。"
+  },
+  "GET /agents/runs/{agentRunId}/artifacts/{artifactId}": {
+    summary: "非同期エージェント artifact metadata を取得する",
+    description:
+      "対象 run の指定 artifact metadata だけを返します。credential、workspace 実体、writeback 対象の内容は返しません。"
+  },
   "POST /admin/users": {
     summary: "管理対象ユーザーを作成する",
     description: "管理者が Cognito と管理台帳に新しいユーザーを作成します。"

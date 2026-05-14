@@ -36,7 +36,7 @@ _なし_
 | 必須 permission | `rag:alias:disable:group` |
 | 条件付き permission | - |
 | 実行可能 role | `RAG_GROUP_MANAGER`, `SYSTEM_ADMIN` |
-| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
+| エラーになる role | `CHAT_USER`, `ANSWER_EDITOR`, `BENCHMARK_OPERATOR`, `BENCHMARK_RUNNER`, `ASYNC_AGENT_USER`, `SKILL_PROFILE_ADMIN`, `ASYNC_AGENT_ADMIN`, `USER_ADMIN`, `ACCESS_ADMIN`, `COST_AUDITOR` |
 | 条件付きでエラーになる role | なし |
 
 認証・認可エラー:
