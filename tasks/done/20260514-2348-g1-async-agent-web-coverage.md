@@ -1,6 +1,6 @@
 # G1 async agent web coverage fix
 
-- 状態: do
+- 状態: done
 - タスク種別: CI 修正
 - ブランチ: `codex/phase-g1-async-agent-coverage`
 - worktree: `.worktrees/phase-g1-async-agent-coverage`
@@ -21,11 +21,11 @@ G1 で追加した非同期エージェント Web UI/API hook の実挙動をテ
 
 ## 受け入れ条件
 
-- [ ] Web coverage が CI 閾値 C0 90%、C1 85% を満たす。
-- [ ] 追加テストが non-mock product UI 方針に反しない。
-- [ ] `npm test -w @memorag-mvp/web -- --coverage` または同等の coverage 検証が通る。
-- [ ] `git diff --check` が通る。
-- [ ] 作業レポートを `reports/working/` に追加し、PR コメント後に task を `tasks/done/` へ移動する。
+- [x] Web coverage が CI 閾値 C0 90%、C1 85% を満たす。
+- [x] 追加テストが non-mock product UI 方針に反しない。
+- [x] `npm test -w @memorag-mvp/web -- --coverage` または同等の coverage 検証が通る。
+- [x] `git diff --check` が通る。
+- [x] 作業レポートを `reports/working/` に追加し、PR コメント後に task を `tasks/done/` へ移動する。
 
 ## 検証計画
 
