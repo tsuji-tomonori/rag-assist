@@ -5,6 +5,7 @@ import { AsyncAgentProviderRegistry, type AsyncAgentProviderAdapter } from "./pr
 
 const claudeCodeProvider: AgentRuntimeProvider = "claude_code"
 const codexProvider: AgentRuntimeProvider = "codex"
+const openCodeProvider: AgentRuntimeProvider = "opencode"
 
 export function createDefaultAsyncAgentProviderRegistry(): AsyncAgentProviderRegistry {
   return new AsyncAgentProviderRegistry([
@@ -26,7 +27,15 @@ export function createDefaultAsyncAgentProviderRegistry(): AsyncAgentProviderReg
       timeoutMs: config.codexTimeoutMs,
       outputFileName: "codex-output.md"
     }),
-    staticUnavailableProvider("opencode", "OpenCode", "OpenCode provider credentials and workspace execution are not configured in G3."),
+    new CommandAsyncAgentProvider({
+      provider: openCodeProvider,
+      displayName: "OpenCode",
+      commandEnvName: "OPENCODE_COMMAND",
+      command: config.openCodeCommand,
+      modelIds: config.openCodeModelIds,
+      timeoutMs: config.openCodeTimeoutMs,
+      outputFileName: "opencode-output.md"
+    }),
     staticUnavailableProvider("custom", "Custom", "Custom provider execution is disabled until a tenant provider adapter is configured.", "disabled")
   ])
 }

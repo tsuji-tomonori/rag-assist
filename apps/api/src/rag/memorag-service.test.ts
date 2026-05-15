@@ -1199,6 +1199,126 @@ test("service keeps Codex provider not configured without mock artifacts", async
   assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "blocked")
 })
 
+test("service executes configured OpenCode command provider with sanitized artifacts", async () => {
+  const command = `/bin/sh ${asyncAgentCommandFixturePath()} success-opencode`
+  const provider = new CommandAsyncAgentProvider({
+    provider: "opencode",
+    displayName: "OpenCode",
+    commandEnvName: "OPENCODE_COMMAND",
+    command,
+    modelIds: ["opencode-cli"],
+    timeoutMs: 1000,
+    outputFileName: "opencode-output.md"
+  })
+  const { service, deps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+  const document = await service.ingest({
+    fileName: "opencode-source.md",
+    text: "OpenCode provider に readOnly mount される資料です。",
+    skipMemory: true,
+    metadata: { ownerUserId: user.userId }
+  })
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "opencode",
+    modelId: "opencode-cli",
+    instruction: "資料を確認する",
+    selectedDocumentIds: [document.documentId],
+    budget: { maxDurationMinutes: 4, maxToolCalls: 2 }
+  })
+
+  assert.equal(run.status, "queued")
+  assert.equal(run.providerAvailability, "available")
+  const completed = await service.executeAsyncAgentRun(run.agentRunId)
+
+  assert.equal(completed.status, "completed")
+  assert.equal(completed.artifacts.length, 2)
+  assert.equal(completed.artifacts[0]?.fileName, "opencode-output.md")
+  const artifactText = await deps.objectStore.getText(completed.artifacts[0]?.storageRef ?? "")
+  const request = JSON.parse(artifactText) as AsyncAgentProviderInput
+  assert.equal(request.provider, "opencode")
+  assert.equal(request.modelId, "opencode-cli")
+  assert.equal(request.instruction, "資料を確認する")
+  assert.equal(request.workspaceMounts[0]?.sourceId, document.documentId)
+  assert.deepEqual(request.budget, { maxDurationMinutes: 4, maxToolCalls: 2 })
+  const logText = await deps.objectStore.getText(completed.artifacts[1]?.storageRef ?? "")
+  assert.doesNotMatch(logText, /fixture-secret-token/)
+  assert.match(logText, /OPENCODE_TOKEN=\[REDACTED\]/)
+})
+
+test("service records OpenCode command provider failures and timeouts without leaking raw secrets", async () => {
+  const fixturePath = asyncAgentCommandFixturePath()
+  const failureProvider = new CommandAsyncAgentProvider({
+    provider: "opencode",
+    displayName: "OpenCode",
+    commandEnvName: "OPENCODE_COMMAND",
+    command: `/bin/sh ${fixturePath} fail-opencode`,
+    modelIds: ["opencode-cli"],
+    timeoutMs: 1000,
+    outputFileName: "opencode-output.md"
+  })
+  const timeoutProvider = new CommandAsyncAgentProvider({
+    provider: "opencode",
+    displayName: "OpenCode",
+    commandEnvName: "OPENCODE_COMMAND",
+    command: `/bin/sh ${fixturePath} timeout`,
+    modelIds: ["opencode-cli"],
+    timeoutMs: 10,
+    outputFileName: "opencode-output.md"
+  })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+
+  const { service: failureService, deps: failureDeps } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([failureProvider]) })
+  const failedRun = await failureService.createAsyncAgentRun(user, {
+    provider: "opencode",
+    modelId: "opencode-cli",
+    instruction: "失敗時の sanitize を確認する"
+  })
+  const failed = await failureService.executeAsyncAgentRun(failedRun.agentRunId)
+
+  assert.equal(failed.status, "failed")
+  assert.equal(failed.failureReason, "OpenCode provider exited with code 7.")
+  const failureLog = await failureDeps.objectStore.getText(failed.artifacts[0]?.storageRef ?? "")
+  assert.doesNotMatch(failureLog, /fixture-secret-token/)
+  assert.match(failureLog, /OPENCODE_API_KEY=\[REDACTED\]/)
+
+  const { service: timeoutService } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([timeoutProvider]) })
+  const timeoutRun = await timeoutService.createAsyncAgentRun(user, {
+    provider: "opencode",
+    modelId: "opencode-cli",
+    instruction: "timeout を確認する"
+  })
+  const expired = await timeoutService.executeAsyncAgentRun(timeoutRun.agentRunId)
+
+  assert.equal(expired.status, "expired")
+  assert.equal(expired.failureReason, "OpenCode provider execution timed out.")
+})
+
+test("service keeps OpenCode provider not configured without mock artifacts", async () => {
+  const provider = new CommandAsyncAgentProvider({
+    provider: "opencode",
+    displayName: "OpenCode",
+    commandEnvName: "OPENCODE_COMMAND",
+    command: "",
+    modelIds: [],
+    timeoutMs: 1000,
+    outputFileName: "opencode-output.md"
+  })
+  const { service } = await createService({ asyncAgentProviders: new AsyncAgentProviderRegistry([provider]) })
+  const user = { userId: "agent-user", email: "agent@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
+
+  const run = await service.createAsyncAgentRun(user, {
+    provider: "opencode",
+    modelId: "opencode-cli",
+    instruction: "未設定状態を確認する"
+  })
+
+  assert.equal(run.status, "blocked")
+  assert.equal(run.providerAvailability, "not_configured")
+  assert.deepEqual(run.artifacts, [])
+  assert.deepEqual(run.artifactIds, [])
+  assert.equal((await service.executeAsyncAgentRun(run.agentRunId)).status, "blocked")
+})
+
 test("asynchronous chat run stores debug trace by reference", async () => {
   const { service, deps } = await createService()
   await service.ingest({

@@ -239,3 +239,25 @@ Phase G は、仕様 4C「非同期エージェント実行」を対象にする
 - Codex credential の UI 管理、Secrets rotation、tenant/user-level provider settings。
 - writeback の自動適用、writableCopy の実ファイル同期、provider 外部 network policy の細粒度 enforcement。
 - async agent benchmark runner の本実装。
+
+## G4-async-agent-opencode 実装メモ
+
+- 追記日: 2026-05-15
+- 対象 task: `G4-async-agent-opencode`
+- 状態: implemented OpenCode command provider
+
+### implemented
+
+| ID | 実装内容 | 根拠 |
+|---|---|---|
+| G4-IMPL-001 | `opencode` provider を G3 の `CommandAsyncAgentProvider` に接続し、Claude Code / Codex / OpenCode が同じ stdin JSON、stdout artifact、stderr log、timeout 境界を使うようにした。 | `apps/api/src/async-agent/claude-code-provider.ts`, `apps/api/src/async-agent/command-provider.ts` |
+| G4-IMPL-002 | `opencode` provider は `OPENCODE_COMMAND` が設定された場合のみ `available` とし、未設定時は `not_configured` を返して mock execution / mock artifact を作らない。 | `apps/api/src/config.ts`, `memorag-service.test.ts` |
+| G4-IMPL-003 | OpenCode command provider は stdout を `opencode-output.md` artifact として保存し、stderr は sanitized log artifact として保存する。stdout が空の場合は固定 artifact を作らない。 | `CommandAsyncAgentProvider`, `memorag-service.test.ts` |
+| G4-IMPL-004 | OpenCode failure / timeout は `failed` / `expired` run として保存し、`OPENCODE_TOKEN`、`OPENCODE_API_KEY`、Bearer token、signed URL を redaction する。 | `sanitizeProviderText`, `memorag-service.test.ts` |
+| G4-IMPL-005 | provider input には run ID、requester、model、instruction、workspace mounts、skill/profile selections、budget を渡す。selected mount の read boundary は G1/G2/G3 service check を継続する。 | `CommandAsyncAgentProvider`, `MemoRagService.executeAsyncAgentRun`, `memorag-service.test.ts` |
+
+### scope-out
+
+- provider credential の UI 管理、Secrets rotation、tenant/user-level provider settings。
+- writeback の自動適用、writableCopy の実ファイル同期、provider 外部 network policy の細粒度 enforcement。
+- async agent benchmark runner の本実装。
