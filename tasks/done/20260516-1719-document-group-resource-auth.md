@@ -1,6 +1,6 @@
 # 文書グループの resource-level 認可と階層表示を補強する
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -63,12 +63,12 @@
 
 ## 受け入れ条件
 
-- [ ] group scoped 文書の delete は、対象 group の manager / owner / SYSTEM_ADMIN のみ許可される。
-- [ ] group scoped 文書の reindex / stage は、対象 group の full 権限を持つ caller のみ許可される。
-- [ ] cutover / rollback は migration の元文書または対象文書に対する full 権限を再確認する。
-- [ ] group に紐づかない legacy 文書の既存操作互換性を不必要に壊さない。
-- [ ] Web フォルダツリーが parent/child 階層を表示し、階層深度が操作可能性や件数表示を壊さない。
-- [ ] 関連 API / Web テストが通る。
+- [x] group scoped 文書の delete は、対象 group の manager / owner / SYSTEM_ADMIN のみ許可される。
+- [x] group scoped 文書の reindex / stage は、対象 group の full 権限を持つ caller のみ許可される。
+- [x] cutover / rollback は migration の元文書または対象文書に対する full 権限を再確認する。
+- [x] group に紐づかない legacy 文書の既存操作互換性を不必要に壊さない。
+- [x] Web フォルダツリーが parent/child 階層を表示し、階層深度が操作可能性や件数表示を壊さない。
+- [x] 関連 API / Web テストが通る。
 
 ## 検証計画
 
