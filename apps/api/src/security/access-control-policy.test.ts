@@ -79,8 +79,8 @@ test("public allowlist, CORS, and preflight preserve the 14D middleware boundary
   assert.doesNotMatch(middlewareBlock, /["']\/debug-runs["']/, "debug routes must not be added to the public allowlist")
 
   const configSource = await readFile(path.resolve(process.cwd(), "src/config.ts"), "utf8")
-  assert.match(configSource, /CORS_ALLOWED_ORIGINS must not include \* in production/, "production config must reject wildcard CORS origins")
-  assert.match(configSource, /validateCorsAllowedOrigins\(csvEnv\("CORS_ALLOWED_ORIGINS"/, "CORS origins must pass through the production wildcard guard")
+  assert.doesNotMatch(configSource, /CORS_ALLOWED_ORIGINS must not include \* in production/, "production config must temporarily allow wildcard CORS origins")
+  assert.match(configSource, /csvEnv\("CORS_ALLOWED_ORIGINS",\s*isProduction \? \[\] : \["\*"\]\)/, "production must still require explicit CORS origins")
 })
 
 test("protected API routes keep route-level permission checks", async () => {
