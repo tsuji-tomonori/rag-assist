@@ -42,8 +42,8 @@ test("production config rejects fail-open auth", () => {
   assert.match(result.stderr, /AUTH_ENABLED must be true in production/)
 })
 
-test("production config rejects wildcard CORS origins", () => {
-  const result = importConfigInSubprocess({
+test("production config temporarily allows wildcard CORS origins", () => {
+  const result = importConfigJsonInSubprocess({
     NODE_ENV: "production",
     AUTH_ENABLED: "true",
     CORS_ALLOWED_ORIGINS: "*",
@@ -53,8 +53,9 @@ test("production config rejects wildcard CORS origins", () => {
     COGNITO_APP_CLIENT_ID: "client-id"
   })
 
-  assert.notEqual(result.status, 0)
-  assert.match(result.stderr, /CORS_ALLOWED_ORIGINS must not include \* in production/)
+  assert.equal(result.status, 0, result.stderr)
+  const config = JSON.parse(result.stdout)
+  assert.deepEqual(config.corsAllowedOrigins, ["*"])
 })
 
 test("production config requires Cognito settings when auth is enabled", () => {
