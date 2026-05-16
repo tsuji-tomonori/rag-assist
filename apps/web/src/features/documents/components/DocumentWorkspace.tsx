@@ -11,8 +11,8 @@ import { DocumentFolderTree } from "./workspace/DocumentFolderTree.js"
 import {
   buildShareDiff,
   buildOperationEvents,
+  buildWorkspaceFolders,
   compareDocuments,
-  countDocumentsForGroup,
   type DocumentOperationEvent,
   documentGroupIds,
   documentStatusLabel,
@@ -118,16 +118,10 @@ export function DocumentWorkspace({
   const operationEventSeqRef = useRef(0)
 
   const folders = useMemo<WorkspaceFolder[]>(() => {
-    return documentGroups.map((group) => ({
-      id: group.groupId,
-      name: group.name,
-      path: `/ ドキュメントグループ / ${group.name}`,
-      count: countDocumentsForGroup(documents, group.groupId),
-      group
-    }))
+    return buildWorkspaceFolders(documentGroups, documents)
   }, [documentGroups, documents])
 
-  const allDocumentsFolder: WorkspaceFolder = { id: "all", name: "すべてのドキュメント", path: "/ すべてのドキュメント", count: documents.length }
+  const allDocumentsFolder: WorkspaceFolder = { id: "all", name: "すべてのドキュメント", path: "/ すべてのドキュメント", count: documents.length, depth: 0 }
   const normalizedFolderSearch = folderSearch.trim().toLowerCase()
   const filteredFolders = normalizedFolderSearch
     ? folders.filter((folder) => `${folder.name} ${folder.path}`.toLowerCase().includes(normalizedFolderSearch))

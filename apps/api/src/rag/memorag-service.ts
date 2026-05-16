@@ -442,13 +442,14 @@ export class MemoRagService {
 
   async reindexDocument(actor: AppUser, documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<DocumentManifest> {
     const migration = await this.stageReindexMigration(actor, documentId, input)
-    await this.cutoverReindexMigration(migration.migrationId)
+    await this.cutoverReindexMigration(actor, migration.migrationId)
     return this.getManifest(migration.stagedDocumentId)
   }
 
   async stageReindexMigration(actor: AppUser, documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<ReindexMigration> {
     const manifestKey = `manifests/${documentId}.json`
     const manifest = JSON.parse(await this.deps.objectStore.getText(manifestKey)) as DocumentManifest
+    await this.assertDocumentManifestWritable(actor, manifest)
     if ((manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") !== "active") {
       throw new Error("Only active documents can be staged for reindex")
     }
@@ -489,13 +490,14 @@ export class MemoRagService {
     return migration
   }
 
-  async cutoverReindexMigration(migrationId: string): Promise<ReindexMigration> {
+  async cutoverReindexMigration(actor: AppUser, migrationId: string): Promise<ReindexMigration> {
     const ledger = await this.loadReindexMigrationLedger()
     const migration = ledger.find((candidate) => candidate.migrationId === migrationId)
     if (!migration) throw new Error("Reindex migration not found")
     if (migration.status !== "staged") throw new Error(`Reindex migration is ${migration.status}`)
     const source = await this.getManifest(migration.sourceDocumentId)
     const staged = await this.getManifest(migration.stagedDocumentId)
+    await this.assertDocumentManifestWritable(actor, source)
     try {
       await this.reputDocumentVectorsWithLifecycle(staged, "active")
       await this.markManifestLifecycle(staged, "active", { activeDocumentId: staged.documentId })
@@ -514,13 +516,14 @@ export class MemoRagService {
     return migration
   }
 
-  async rollbackReindexMigration(migrationId: string): Promise<ReindexMigration> {
+  async rollbackReindexMigration(actor: AppUser, migrationId: string): Promise<ReindexMigration> {
     const ledger = await this.loadReindexMigrationLedger()
     const migration = ledger.find((candidate) => candidate.migrationId === migrationId)
     if (!migration) throw new Error("Reindex migration not found")
     if (migration.status !== "cutover") throw new Error(`Reindex migration is ${migration.status}`)
     const staged = await this.getManifest(migration.stagedDocumentId)
     const previous = JSON.parse(await this.deps.objectStore.getText(migration.previousManifestObjectKey)) as DocumentManifest
+    await this.assertDocumentManifestWritable(actor, previous)
     const text = await this.deps.objectStore.getText(previous.sourceObjectKey)
     const structuredBlocks = await this.loadStructuredBlocks(previous)
     await this.deps.evidenceVectorStore.delete(staged.evidenceVectorKeys ?? staged.vectorKeys)
@@ -577,6 +580,12 @@ export class MemoRagService {
 
   async getDocumentManifest(documentId: string): Promise<DocumentManifest> {
     return this.getManifest(documentId)
+  }
+
+  async assertDocumentWritable(actor: AppUser, documentId: string): Promise<DocumentManifest> {
+    const manifest = await this.getManifest(documentId)
+    await this.assertDocumentManifestWritable(actor, manifest)
+    return manifest
   }
 
   async getParsedDocumentPreview(user: AppUser, documentId: string): Promise<ParsedDocumentPreview | undefined> {
@@ -664,6 +673,13 @@ export class MemoRagService {
     for (const groupId of groupIds) {
       const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
       if (!group || !canManageDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot write document group ${groupId}`)
+    }
+  }
+
+  private async assertDocumentManifestWritable(actor: AppUser, manifest: DocumentManifest): Promise<void> {
+    const documentGroups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    if (!canManageManifest(manifest, actor, documentGroups)) {
+      throw forbiddenError(`Forbidden: cannot manage document ${manifest.documentId}`)
     }
   }
 
@@ -2944,6 +2960,18 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGr
   return true
 }
 
+function canManageManifest(manifest: DocumentManifest, user: AppUser, documentGroups: DocumentGroup[] = []): boolean {
+  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
+  const metadata = manifest.metadata ?? {}
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
+  const groupIds = stringArray(metadata.groupIds ?? metadata.groupId) ?? []
+  if (groupIds.length > 0) {
+    return groupIds.every((groupId) => canManageDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user))
+  }
+  if (stringValue(metadata.scopeType) === "group") return false
+  return true
+}
+
 function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
   if (!group) return false
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
@@ -2953,7 +2981,8 @@ function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser)
   return group.sharedGroups.some((sharedGroup) => user.cognitoGroups.includes(sharedGroup))
 }
 
-function canManageDocumentGroup(group: DocumentGroup, user: AppUser): boolean {
+function canManageDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
+  if (!group) return false
   return user.cognitoGroups.includes("SYSTEM_ADMIN") || group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId)
 }
 

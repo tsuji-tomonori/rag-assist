@@ -32,7 +32,7 @@
 
 | コンポーネント | 要素 | ラベル | 操作説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/documents/components/DocumentWorkspace.tsx:413 | confirmed |
+| DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/documents/components/DocumentWorkspace.tsx:407 | confirmed |
 | DocumentDetailDrawer | button | 文書詳細を閉じる | 「文書詳細を閉じる」を実行するボタン。 | - | onClick=onClose | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:61 | confirmed |
 | DocumentDetailDrawer | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | 状態: disabled=!onAskDocument | onClick=() => onAskDocument?.() | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:88 | confirmed |
 | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | onClick=onCopyDocumentId | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:92 | unknown |
@@ -55,7 +55,7 @@
 | ReindexMigrationStrip | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=operationState.rollbackMigrationId === migration.migrationId \|\| migration.status !== "cut… | onClick=() => onConfirmAction({ kind: "rollback", migration }) | apps/web/src/features/documents/components/workspace/DocumentFilePanel.tsx:339 | unknown |
 | DocumentFolderTree | button | フォルダ検索をクリア | 「フォルダ検索をクリア」を実行するボタン。 | 状態: disabled=!folderSearch | onClick=() => onFolderSearchChange("") | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:36 | confirmed |
 | DocumentFolderTree | button | すべてのドキュメント | 「すべてのドキュメント」を実行するボタン。 | 状態: aria-current=selectedFolderId === "all" ? "true" : undefined | onClick=() => onSelectFolder("all", "") | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:41 | confirmed |
-| DocumentFolderTree | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=selectedFolder.id === folder.id ? "true" : undefined | onClick=() => onSelectFolder(folder.id, folder.group?.groupId ?? "") | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:58 | unknown |
+| DocumentFolderTree | button | `${folder.path} ${folder.count}件` | 「`${folder.path} ${folder.count}件`」を実行するボタン。 | 状態: aria-current=selectedFolder.id === folder.id ? "true" : undefined | onClick=() => onSelectFolder(folder.id, folder.group?.groupId ?? "") | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:58 | confirmed |
 
 ## フォーム
 
@@ -95,7 +95,7 @@
 
 | コンポーネント | 要素 | ラベル | UI 説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/documents/components/DocumentWorkspace.tsx:413 | confirmed |
+| DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/documents/components/DocumentWorkspace.tsx:407 | confirmed |
 | DocumentDetailDrawer | button | 文書詳細を閉じる | 「文書詳細を閉じる」を実行するボタン。 | - | onClick=onClose | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:61 | confirmed |
 | DocumentDetailDrawer | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | 状態: disabled=!onAskDocument | onClick=() => onAskDocument?.() | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:88 | confirmed |
 | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | onClick=onCopyDocumentId | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:92 | unknown |
@@ -185,4 +185,4 @@
 | DocumentFolderTree | input | フォルダを検索 | 「フォルダを検索」を入力または選択する項目。 | - | onChange=(event) => onFolderSearchChange(event.target.value) | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:28 | confirmed |
 | DocumentFolderTree | button | フォルダ検索をクリア | 「フォルダ検索をクリア」を実行するボタン。 | 状態: disabled=!folderSearch | onClick=() => onFolderSearchChange("") | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:36 | confirmed |
 | DocumentFolderTree | button | すべてのドキュメント | 「すべてのドキュメント」を実行するボタン。 | 状態: aria-current=selectedFolderId === "all" ? "true" : undefined | onClick=() => onSelectFolder("all", "") | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:41 | confirmed |
-| DocumentFolderTree | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=selectedFolder.id === folder.id ? "true" : undefined | onClick=() => onSelectFolder(folder.id, folder.group?.groupId ?? "") | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:58 | unknown |
+| DocumentFolderTree | button | `${folder.path} ${folder.count}件` | 「`${folder.path} ${folder.count}件`」を実行するボタン。 | 状態: aria-current=selectedFolder.id === folder.id ? "true" : undefined | onClick=() => onSelectFolder(folder.id, folder.group?.groupId ?? "") | apps/web/src/features/documents/components/workspace/DocumentFolderTree.tsx:58 | confirmed |
