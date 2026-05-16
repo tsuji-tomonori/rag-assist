@@ -105,4 +105,4 @@ runtime config の production validation が、現在の deployment environment 
 
 ## 状態
 
-in_progress
+done
