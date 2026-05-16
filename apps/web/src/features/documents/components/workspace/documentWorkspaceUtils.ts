@@ -6,6 +6,7 @@ export type WorkspaceFolder = {
   name: string
   path: string
   count: number
+  depth: number
   group?: DocumentGroup
 }
 
@@ -70,6 +71,42 @@ export function countDocumentsForGroup(documents: DocumentManifest[], groupId: s
   return documents.filter((document) => documentGroupIds(document).includes(groupId)).length
 }
 
+export function buildWorkspaceFolders(documentGroups: DocumentGroup[], documents: DocumentManifest[]): WorkspaceFolder[] {
+  const groupsById = new Map(documentGroups.map((group) => [group.groupId, group]))
+  const childrenByParentId = new Map<string, DocumentGroup[]>()
+  const roots: DocumentGroup[] = []
+  for (const group of documentGroups) {
+    if (group.parentGroupId && groupsById.has(group.parentGroupId)) {
+      childrenByParentId.set(group.parentGroupId, [...(childrenByParentId.get(group.parentGroupId) ?? []), group])
+    } else {
+      roots.push(group)
+    }
+  }
+
+  const folders: WorkspaceFolder[] = []
+  const visited = new Set<string>()
+  const appendGroup = (group: DocumentGroup, depth: number, ancestorNames: string[]) => {
+    if (visited.has(group.groupId)) return
+    visited.add(group.groupId)
+    const pathNames = [...ancestorNames, group.name]
+    folders.push({
+      id: group.groupId,
+      name: group.name,
+      path: `/ ドキュメントグループ / ${pathNames.join(" / ")}`,
+      count: countDocumentsForGroup(documents, group.groupId),
+      depth,
+      group
+    })
+    for (const child of sortedGroups(childrenByParentId.get(group.groupId) ?? [])) {
+      appendGroup(child, depth + 1, pathNames)
+    }
+  }
+
+  for (const root of sortedGroups(roots)) appendGroup(root, 0, [])
+  for (const group of sortedGroups(documentGroups)) appendGroup(group, 0, [])
+  return folders
+}
+
 export function documentGroupIds(document: DocumentManifest): string[] {
   const raw = document.metadata?.groupIds ?? document.metadata?.groupId
   return typeof raw === "string" ? [raw] : Array.isArray(raw) ? raw.filter((item): item is string => typeof item === "string") : []
@@ -106,6 +143,10 @@ export function uploadErrorLabel(errorKind: NonNullable<DocumentUploadState>["er
 
 export function uniqueSorted(values: string[]): string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right, "ja"))
+}
+
+function sortedGroups(groups: DocumentGroup[]): DocumentGroup[] {
+  return [...groups].sort((left, right) => left.name.localeCompare(right.name, "ja") || left.groupId.localeCompare(right.groupId, "ja"))
 }
 
 export function documentStatusLabel(document: DocumentManifest): string {

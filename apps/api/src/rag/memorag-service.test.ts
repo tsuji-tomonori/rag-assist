@@ -520,6 +520,40 @@ test("service enforces document group management and search scope boundaries", a
   await service.assertSearchScopeReadable(manager, { groupIds: [parent.groupId] })
 })
 
+test("service enforces full document group permission for delete and reindex operations", async () => {
+  const { service } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const sharedReader = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(owner, {
+    name: "Restricted group",
+    sharedUserIds: [sharedReader.userId]
+  })
+  const manifest = await service.ingest({
+    fileName: "restricted.md",
+    text: "restricted content",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  await assert.rejects(() => authorizeDocumentDelete(service, sharedReader, manifest.documentId), /Forbidden/)
+  await assert.rejects(() => authorizeDocumentDelete(service, outsider, manifest.documentId), /Forbidden/)
+  await authorizeDocumentDelete(service, owner, manifest.documentId)
+
+  await assert.rejects(() => service.stageReindexMigration(sharedReader, manifest.documentId), /cannot manage document/)
+  await assert.rejects(() => service.stageReindexMigration(outsider, manifest.documentId), /cannot manage document/)
+  const staged = await service.stageReindexMigration(owner, manifest.documentId)
+
+  await assert.rejects(() => service.cutoverReindexMigration(sharedReader, staged.migrationId), /cannot manage document/)
+  await service.cutoverReindexMigration(owner, staged.migrationId)
+  await assert.rejects(() => service.rollbackReindexMigration(sharedReader, staged.migrationId), /cannot manage document/)
+  await service.rollbackReindexMigration(owner, staged.migrationId)
+})
+
 test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
   const { service } = await createService()
   const manifest = await service.ingest({
@@ -572,7 +606,7 @@ test("service stages and rolls back structured blue-green reindex migrations", a
   assert.equal(staged.status, "staged")
   assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
 
-  const cutover = await service.cutoverReindexMigration(staged.migrationId)
+  const cutover = await service.cutoverReindexMigration(actor, staged.migrationId)
   assert.equal(cutover.status, "cutover")
   const activeAfterCutover = await service.listDocuments()
   assert.deepEqual(activeAfterCutover.map((doc) => doc.documentId), [staged.stagedDocumentId])
@@ -585,7 +619,7 @@ test("service stages and rolls back structured blue-green reindex migrations", a
     "active"
   )
 
-  const rolledBack = await service.rollbackReindexMigration(staged.migrationId)
+  const rolledBack = await service.rollbackReindexMigration(actor, staged.migrationId)
   assert.equal(rolledBack.status, "rolled_back")
   const activeAfterRollback = await service.listDocuments()
   assert.equal(activeAfterRollback.length, 1)
@@ -609,7 +643,7 @@ test("service restores staging state when cutover vector activation fails after 
   stagedDocumentId = staged.stagedDocumentId
 
   failActivePut = true
-  await assert.rejects(() => service.cutoverReindexMigration(staged.migrationId), /simulated partial active put failure/)
+  await assert.rejects(() => service.cutoverReindexMigration(actor, staged.migrationId), /simulated partial active put failure/)
 
   assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
   const stagedManifest = JSON.parse(await readFile(path.join(dataDir, `objects/manifests/${staged.stagedDocumentId}.json`), "utf-8")) as { lifecycleStatus?: string }
@@ -1819,8 +1853,8 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   assert.equal((await service.publishAliases(admin)).aliasCount, 0)
   assert.equal((await service.listAliases())[0]?.status, "disabled")
 
-  await assert.rejects(() => service.cutoverReindexMigration("missing-migration"), /not found/)
-  await assert.rejects(() => service.rollbackReindexMigration("missing-migration"), /not found/)
+  await assert.rejects(() => service.cutoverReindexMigration(admin, "missing-migration"), /not found/)
+  await assert.rejects(() => service.rollbackReindexMigration(admin, "missing-migration"), /not found/)
 
   await assert.rejects(() => service.executeChatRun("missing-run"), /Chat run not found/)
   await assert.rejects(() => service.markChatRunFailed("missing-run", "timeout"), /Chat run not found/)

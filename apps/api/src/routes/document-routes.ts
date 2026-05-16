@@ -141,6 +141,10 @@ function documentListItemSummary(manifest: DocumentManifest): DocumentListItemSu
   }
 }
 
+function isForbiddenError(err: unknown): boolean {
+  return err instanceof Error && err.message.startsWith("Forbidden")
+}
+
 async function scopedMetadata(
   service: ApiRouteContext["service"],
   user: AppUser,
@@ -553,7 +557,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/{documentId}/reindex",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group", operationKey: "document.reindex", resourceCondition: "documentGroupFull" }),
       request: {
         params: z.object({ documentId: z.string().min(1) }),
         body: {
@@ -574,6 +578,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       try {
         return c.json(await service.reindexDocument(user, documentId, body), 200)
       } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
         throw err
       }
@@ -599,7 +604,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/{documentId}/reindex/stage",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group", operationKey: "document.reindex.stage", resourceCondition: "documentGroupFull" }),
       request: {
         params: z.object({ documentId: z.string().min(1) }),
         body: {
@@ -620,6 +625,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       try {
         return c.json(await service.stageReindexMigration(user, documentId, body), 200)
       } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
         throw err
       }
@@ -630,7 +636,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/reindex-migrations/{migrationId}/cutover",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group", operationKey: "document.reindex.cutover", resourceCondition: "documentGroupFull" }),
       request: { params: z.object({ migrationId: z.string().min(1) }) },
       responses: {
         200: { description: "Cut over staged reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
@@ -638,11 +644,13 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "rag:index:rebuild:group")
+      const user = c.get("user")
+      requirePermission(user, "rag:index:rebuild:group")
       const { migrationId } = validParam<{ migrationId: string }>(c)
       try {
-        return c.json(await service.cutoverReindexMigration(migrationId), 200)
+        return c.json(await service.cutoverReindexMigration(user, migrationId), 200)
       } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
         throw err
       }
@@ -653,7 +661,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/reindex-migrations/{migrationId}/rollback",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group", operationKey: "document.reindex.rollback", resourceCondition: "documentGroupFull" }),
       request: { params: z.object({ migrationId: z.string().min(1) }) },
       responses: {
         200: { description: "Rolled back reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
@@ -661,11 +669,13 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "rag:index:rebuild:group")
+      const user = c.get("user")
+      requirePermission(user, "rag:index:rebuild:group")
       const { migrationId } = validParam<{ migrationId: string }>(c)
       try {
-        return c.json(await service.rollbackReindexMigration(migrationId), 200)
+        return c.json(await service.rollbackReindexMigration(user, migrationId), 200)
       } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
         throw err
       }

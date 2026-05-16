@@ -373,7 +373,17 @@ export function authorizeUploadedDocumentIngest(user: AppUser, purpose: UploadPu
 }
 
 export async function authorizeDocumentDelete(service: MemoRagService, user: AppUser, documentId: string) {
-  if (hasPermission(user, "rag:doc:delete:group")) return
+  if (hasPermission(user, "rag:doc:delete:group")) {
+    try {
+      await service.assertDocumentWritable(user, documentId)
+      return
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith("Forbidden")) {
+        throw new HTTPException(403, { message: "Forbidden" })
+      }
+      throw err
+    }
+  }
   if (!hasPermission(user, "benchmark:seed_corpus")) {
     throw new HTTPException(403, { message: "Forbidden" })
   }

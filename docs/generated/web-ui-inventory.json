@@ -6833,9 +6833,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:413:button",
+      "id": "apps/web/src/features/documents/components/DocumentWorkspace.tsx:407:button",
       "file": "apps/web/src/features/documents/components/DocumentWorkspace.tsx",
-      "line": 413,
+      "line": 407,
       "feature": "documents",
       "component": "DocumentWorkspace",
       "element": "button",
@@ -9888,17 +9888,17 @@
       "component": "DocumentFolderTree",
       "element": "button",
       "isIntrinsic": true,
-      "label": "未推定",
+      "label": "`${folder.path} ${folder.count}件`",
       "a11y": {
-        "accessibleName": "未推定",
-        "accessibleNameSource": "missing",
+        "accessibleName": "`${folder.path} ${folder.count}件`",
+        "accessibleNameSource": "aria-label",
         "descriptionRefs": "-",
         "role": "-",
         "state": [
           "aria-current=selectedFolder.id === folder.id ? \"true\" : undefined"
         ],
-        "status": "missing",
-        "reason": "アクセシブル名が静的解析で確認できません。 アイコン中心の操作は aria-label または aria-labelledby で用途を明示してください。"
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
       },
       "handlers": [
         {
@@ -9916,11 +9916,19 @@
           "value": "selectedFolder.id === folder.id ? \"true\" : undefined"
         },
         {
+          "name": "aria-label",
+          "value": "`${folder.path} ${folder.count}件`"
+        },
+        {
+          "name": "title",
+          "value": "folder.path"
+        },
+        {
           "name": "onClick",
           "value": "() => onSelectFolder(folder.id, folder.group?.groupId ?? \"\")"
         }
       ],
-      "certainty": "unknown"
+      "certainty": "confirmed"
     },
     {
       "id": "apps/web/src/features/history/components/HistoryWorkspace.tsx:53:button",

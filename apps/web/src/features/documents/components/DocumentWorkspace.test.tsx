@@ -673,6 +673,50 @@ describe("DocumentWorkspace", () => {
     })
   })
 
+  it("親子フォルダを階層順に表示し、パスを操作名に含める", () => {
+    const childGroup: DocumentGroup = {
+      groupId: "group-child",
+      name: "人事",
+      parentGroupId: "group-1",
+      ancestorGroupIds: ["group-1"],
+      visibility: "private",
+      ownerUserId: "user-1",
+      sharedUserIds: [],
+      sharedGroups: [],
+      managerUserIds: ["user-1"],
+      createdAt: "2026-05-02T00:00:00.000Z",
+      updatedAt: "2026-05-02T00:00:00.000Z"
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: ["group-child"] } }]}
+        documentGroups={[...documentGroups, childGroup]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const parent = screen.getByRole("button", { name: /ドキュメントグループ \/ 社内規定 0件/ })
+    const child = screen.getByRole("button", { name: /ドキュメントグループ \/ 社内規定 \/ 人事 1件/ })
+    expect(parent.compareDocumentPosition(child) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(child).toHaveAttribute("title", "/ ドキュメントグループ / 社内規定 / 人事")
+    expect(child).toHaveStyle({ paddingLeft: "52px" })
+  })
+
   it("設定込みでフォルダを作成し、作成後に保存先へ移動する", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue({
       groupId: "group-new",
