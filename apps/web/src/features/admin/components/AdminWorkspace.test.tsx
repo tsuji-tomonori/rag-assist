@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { CurrentUser } from "../../../shared/types/common.js"
@@ -172,6 +172,31 @@ describe("AdminWorkspace", () => {
     expect(screen.queryByRole("button", { name: /ユーザー管理/ })).not.toBeInTheDocument()
   })
 
+  it("overview は API field が未提供の action card と count を表示しない", () => {
+    renderAdminWorkspace({
+      documentsCount: null,
+      openQuestionsCount: null,
+      debugRunsCount: null,
+      benchmarkRunsCount: null,
+      managedUsers: null,
+      accessRoles: null,
+      usageSummaries: null,
+      aliases: null,
+      canReadUsers: true,
+      canReadUsage: true
+    })
+
+    expect(screen.queryByRole("button", { name: /ドキュメント管理/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /担当者対応/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /デバッグ/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /性能テスト/ })).not.toBeInTheDocument()
+    expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("未提供")
+    expect(screen.getByLabelText("アクセス管理")).toHaveTextContent("ロール定義 API field は未提供")
+    expect(screen.getByLabelText("Alias管理")).toHaveTextContent("Alias API field は未提供")
+    expect(screen.queryByText("0 users")).not.toBeInTheDocument()
+    expect(screen.queryByText("0 aliases")).not.toBeInTheDocument()
+  })
+
   it("Alias 管理を表示し、作成と公開操作を通知する", async () => {
     const onCreateAlias = vi.fn().mockResolvedValue(undefined)
     const onPublishAliases = vi.fn().mockResolvedValue(undefined)
@@ -200,6 +225,20 @@ describe("AdminWorkspace", () => {
       scope: { department: "SRE" }
     })
     expect(onPublishAliases).toHaveBeenCalledTimes(1)
+  })
+
+  it("Alias API field 未提供または公開対象なしでは公開 control を表示しない", async () => {
+    renderAdminWorkspace({ aliases: null, aliasAuditLog: null })
+    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
+
+    expect(screen.getByText("Alias API field は未提供です。")).toBeInTheDocument()
+    expect(screen.getByText("Alias監査ログ API field は未提供です。")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "公開" })).not.toBeInTheDocument()
+
+    cleanup()
+    renderAdminWorkspace({ aliases: aliases.filter((alias) => alias.status !== "approved"), aliasAuditLog: [] })
+    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
+    expect(screen.queryByRole("button", { name: "公開" })).not.toBeInTheDocument()
   })
 
   it("Alias の下書き化、承認、差戻、無効化操作を通知する", async () => {
@@ -277,6 +316,37 @@ describe("AdminWorkspace", () => {
     expect(onAssignRoles).toHaveBeenCalledWith("managed-1", ["SYSTEM_ADMIN"])
   })
 
+  it("ロール API field が未提供のとき fake group を作成・付与しない", async () => {
+    const onCreateUser = vi.fn().mockResolvedValue(undefined)
+    const onAssignRoles = vi.fn().mockResolvedValue(undefined)
+
+    renderAdminWorkspace({
+      managedUsers: [{ ...managedUser, groups: [] }],
+      accessRoles: null,
+      canReadUsers: true,
+      canCreateUsers: true,
+      canAssignRoles: true,
+      onCreateUser,
+      onAssignRoles
+    })
+    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+
+    expect(screen.getAllByText("未提供").length).toBeGreaterThan(0)
+    expect(screen.getByText("ロール定義は未提供")).toBeInTheDocument()
+    expect(screen.queryByLabelText("managed@example.comに付与するロール")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "付与" })).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("メール"), "new@example.com")
+    await userEvent.click(screen.getByRole("button", { name: "作成" }))
+
+    expect(onCreateUser).toHaveBeenCalledWith({
+      email: "new@example.com",
+      displayName: undefined,
+      groups: undefined
+    })
+    expect(onAssignRoles).not.toHaveBeenCalled()
+  })
+
   it("usage/cost/audit の未提供と空状態を正直に表示する", async () => {
     renderAdminWorkspace({
       canReadUsage: true,
@@ -293,5 +363,21 @@ describe("AdminWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: "Audit" }))
     expect(screen.getByText(/横断 audit、reason、export は未提供です。/)).toBeInTheDocument()
     expect(screen.getByText("管理操作履歴はありません。")).toBeInTheDocument()
+  })
+
+  it("usage/audit API field 未提供を空件数に変換しない", async () => {
+    renderAdminWorkspace({
+      canReadUsage: true,
+      canReadAdminAuditLog: true,
+      usageSummaries: null,
+      adminAuditLog: null
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "Usage / Cost" }))
+    expect(screen.getByText("利用状況 API field は未提供です。")).toBeInTheDocument()
+    expect(screen.queryByText("0 users")).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Audit" }))
+    expect(screen.getByText("管理操作履歴 API field は未提供です。")).toBeInTheDocument()
+    expect(screen.queryByText("0 件")).not.toBeInTheDocument()
   })
 })

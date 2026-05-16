@@ -72,6 +72,30 @@ test("resolves conversation corpus from the CodeBuild bucket", async () => {
   }
 })
 
+test("sets async agent runner env for CodeBuild suites without requiring a package script", () => {
+  const manifest = {
+    version: 1,
+    defaults: {
+      dataset: "./benchmark/.runner-dataset.jsonl",
+      output: "./benchmark/.runner-results.jsonl",
+      summary: "./benchmark/.runner-summary.json",
+      report: "./benchmark/.runner-report.md"
+    },
+    suites: []
+  } as Parameters<typeof createRunnerEnv>[0]
+  const env = createRunnerEnv(manifest, {
+    suiteId: "async-agent-task-v1",
+    mode: "async_agent",
+    runner: "async_agent",
+    dataset: { source: "local", path: "benchmark/dataset.sample.jsonl" },
+    metadata: { useCase: "async_agent_task" }
+  }, {})
+
+  assert.equal(env.BENCHMARK_RUNNER, "async_agent")
+  assert.equal(env.BENCHMARK_USE_CASE, "async_agent_task")
+  assert.equal(env.BENCHMARK_SUITE_ID, "async-agent-task-v1")
+})
+
 test("fails unknown CodeBuild benchmark suites before running shell commands", async () => {
   const manifest = await loadCodeBuildSuiteManifest()
 

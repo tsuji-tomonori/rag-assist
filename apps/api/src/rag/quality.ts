@@ -1,6 +1,7 @@
 import type {
   DocumentManifest,
   DocumentQualityProfile,
+  ExtractionWarning,
   ExtractionQualityStatus,
   FreshnessStatus,
   JsonValue,
@@ -28,6 +29,7 @@ const qualityFlags = new Set<QualityFlag>([
 export type QualityGateDecision = {
   approved: boolean
   profile: DocumentQualityProfile
+  reasons: string[]
 }
 
 export function documentQualityProfileFromMetadata(metadata: Record<string, JsonValue> | undefined): DocumentQualityProfile | undefined {
@@ -70,25 +72,29 @@ export function resolveDocumentQualityProfile(manifest: Pick<DocumentManifest, "
   })
 }
 
-export function isQualityApprovedForNormalRag(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile">): boolean {
+export function isQualityApprovedForNormalRag(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile" | "extractionWarnings" | "chunks" | "parsedDocument">): boolean {
   return qualityGateForNormalRag(manifest).approved
 }
 
-export function qualityGateForNormalRag(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile">): QualityGateDecision {
+export function qualityGateForNormalRag(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile" | "extractionWarnings" | "chunks" | "parsedDocument">): QualityGateDecision {
   const profile = resolveDocumentQualityProfile(manifest)
+  const reasons = [
+    ...(profile.knowledgeQualityStatus === "blocked" ? ["knowledge_quality_blocked"] : []),
+    ...(profile.ragEligibility !== "eligible" ? ["rag_not_eligible"] : []),
+    ...(profile.verificationStatus === "rejected" ? ["verification_rejected"] : []),
+    ...(profile.freshnessStatus === "expired" ? ["freshness_expired"] : []),
+    ...(profile.supersessionStatus === "superseded" ? ["superseded_by_newer_document"] : []),
+    ...(profile.extractionQualityStatus === "unusable" ? ["unusable_extraction"] : []),
+    ...extractionConfidenceRestrictionReasons(manifest)
+  ]
   return {
     profile,
-    approved:
-      profile.knowledgeQualityStatus !== "blocked" &&
-      profile.ragEligibility === "eligible" &&
-      profile.verificationStatus !== "rejected" &&
-      profile.freshnessStatus !== "expired" &&
-      profile.supersessionStatus !== "superseded" &&
-      profile.extractionQualityStatus !== "unusable"
+    reasons,
+    approved: reasons.length === 0
   }
 }
 
-export function qualityProfileCacheKey(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile">): string {
+export function qualityProfileCacheKey(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile" | "extractionWarnings" | "chunks" | "parsedDocument">): string {
   const profile = resolveDocumentQualityProfile(manifest)
   return JSON.stringify({
     knowledgeQualityStatus: profile.knowledgeQualityStatus,
@@ -98,8 +104,27 @@ export function qualityProfileCacheKey(manifest: Pick<DocumentManifest, "metadat
     extractionQualityStatus: profile.extractionQualityStatus,
     ragEligibility: profile.ragEligibility,
     confidence: profile.confidence,
-    flags: profile.flags
+    flags: profile.flags,
+    extractionRestrictions: extractionConfidenceRestrictionReasons(manifest)
   })
+}
+
+function extractionConfidenceRestrictionReasons(
+  manifest: Pick<DocumentManifest, "extractionWarnings" | "chunks" | "parsedDocument">
+): string[] {
+  const reasons = new Set<string>()
+  for (const warning of [...(manifest.extractionWarnings ?? []), ...(manifest.parsedDocument?.warnings ?? [])]) {
+    if (isLowConfidenceWarning(warning)) reasons.add("low_confidence_extraction_warning")
+  }
+  if ((manifest.chunks ?? []).some((chunk) => typeof chunk.confidence === "number" && chunk.confidence < 70)) reasons.add("low_confidence_chunk")
+  if ((manifest.parsedDocument?.pages ?? []).some((page) => typeof page.confidence === "number" && page.confidence < 70)) reasons.add("low_confidence_page")
+  if ((manifest.parsedDocument?.tables ?? []).some((table) => typeof table.confidence === "number" && table.confidence < 70)) reasons.add("low_confidence_table")
+  if ((manifest.parsedDocument?.figures ?? []).some((figure) => typeof figure.confidence === "number" && figure.confidence < 70)) reasons.add("low_confidence_figure")
+  return [...reasons].sort()
+}
+
+function isLowConfidenceWarning(warning: ExtractionWarning): boolean {
+  return warning.severity === "error" || (typeof warning.confidence === "number" && warning.confidence < 70)
 }
 
 function objectValue(value: JsonValue | undefined): Record<string, JsonValue> | undefined {

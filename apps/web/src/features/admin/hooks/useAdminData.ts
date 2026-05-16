@@ -34,13 +34,13 @@ export function useAdminData({
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
 }) {
-  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([])
-  const [adminAuditLog, setAdminAuditLog] = useState<ManagedUserAuditLogEntry[]>([])
-  const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[]>([])
-  const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[]>([])
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[] | null>(null)
+  const [adminAuditLog, setAdminAuditLog] = useState<ManagedUserAuditLogEntry[] | null>(null)
+  const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[] | null>(null)
+  const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[] | null>(null)
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
-  const [aliases, setAliases] = useState<AliasDefinition[]>([])
-  const [aliasAuditLog, setAliasAuditLog] = useState<AliasAuditLogItem[]>([])
+  const [aliases, setAliases] = useState<AliasDefinition[] | null>(null)
+  const [aliasAuditLog, setAliasAuditLog] = useState<AliasAuditLogItem[] | null>(null)
 
   async function refreshManagedUsers() {
     setManagedUsers(await listManagedUsers())
@@ -93,7 +93,7 @@ export function useAdminData({
     setError(null)
     try {
       const updated = await assignUserRoles(userId, groups)
-      setManagedUsers((prev) => [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
+      setManagedUsers((prev) => [updated, ...(prev ?? []).filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
       await refreshAdminSideEffects()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -107,7 +107,7 @@ export function useAdminData({
     setError(null)
     try {
       const created = await createManagedUser(input)
-      setManagedUsers((prev) => [created, ...prev.filter((user) => user.userId !== created.userId)].sort((a, b) => a.email.localeCompare(b.email)))
+      setManagedUsers((prev) => [created, ...(prev ?? []).filter((user) => user.userId !== created.userId)].sort((a, b) => a.email.localeCompare(b.email)))
       await refreshAdminSideEffects()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -123,8 +123,9 @@ export function useAdminData({
       const updated =
         action === "suspend" ? await suspendManagedUser(userId) : action === "unsuspend" ? await unsuspendManagedUser(userId) : await deleteManagedUser(userId)
       setManagedUsers((prev) => {
-        if (updated.status === "deleted") return prev.filter((user) => user.userId !== userId)
-        return [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
+        const current = prev ?? []
+        if (updated.status === "deleted") return current.filter((user) => user.userId !== userId)
+        return [updated, ...current.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
       })
       await refreshAdminSideEffects()
     } catch (err) {
@@ -167,8 +168,19 @@ export function useAdminData({
     setLoading(true)
     setError(null)
     try {
-      await reviewAlias(aliasId, decision, comment)
-      await refreshAliases()
+      const reviewed = await reviewAlias(aliasId, decision, comment)
+      const [nextAliases, nextAuditLog] = await Promise.all([listAliases(), listAliasAuditLog()])
+      setAliases(nextAliases === null ? null : nextAliases.map((alias) => {
+        if (alias.aliasId !== aliasId) return alias
+        return reviewed.aliasId === aliasId
+          ? reviewed
+          : {
+              ...alias,
+              status: decision === "approve" ? "approved" : "draft",
+              updatedAt: new Date().toISOString()
+            }
+      }))
+      setAliasAuditLog(nextAuditLog)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {

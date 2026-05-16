@@ -9,7 +9,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { runChatOrchestration } from "../chat-orchestration/graph.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AgentProviderAvailability, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -20,7 +20,7 @@ import { parseJsonObject } from "./json.js"
 import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./manifest-chunks.js"
 import { buildPipelineVersions } from "./pipeline-versions.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
-import { documentQualityProfileFromMetadata } from "./quality.js"
+import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./quality.js"
 import { extractDocumentFromUpload } from "./text-extract.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
 
@@ -579,6 +579,17 @@ export class MemoRagService {
     return this.getManifest(documentId)
   }
 
+  async getParsedDocumentPreview(user: AppUser, documentId: string): Promise<ParsedDocumentPreview | undefined> {
+    const manifest = await this.getManifest(documentId).catch((error: unknown) => {
+      if (isMissingObjectError(error)) return undefined
+      throw error
+    })
+    if (!manifest) return undefined
+    const documentGroups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    if (!canAccessManifest(manifest, user, documentGroups)) throw forbiddenError("Forbidden")
+    return buildParsedDocumentPreview(manifest)
+  }
+
   async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
     const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
     return groups
@@ -966,6 +977,61 @@ export class MemoRagService {
     }
   }
 
+  async listQualityActionCards(actor: AppUser): Promise<QualityActionCard[]> {
+    const documents = await this.listDocuments(actor)
+    return documents
+      .flatMap((manifest) => qualityActionCardsForManifest(manifest))
+      .sort((a, b) => {
+        const severityRank = { blocked: 0, warning: 1, info: 2 } satisfies Record<QualityActionCard["severity"], number>
+        return severityRank[a.severity] - severityRank[b.severity] || b.createdAt.localeCompare(a.createdAt)
+      })
+      .slice(0, 200)
+  }
+
+  async createAdminExportDownloadUrl(actor: AppUser, exportType: AdminExportArtifact["exportType"]): Promise<AdminExportArtifact> {
+    if (!config.debugDownloadBucketName) throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
+    const generatedAt = new Date().toISOString()
+    const redaction = {
+      policyVersion: "admin-export-redaction-v1",
+      redactedFields: ["credentials", "secrets", "rawPrompt", "internalReasoning"],
+      notes: ["管理 export は署名付き URL と sanitize 済み集計・監査メタデータだけを返します。"]
+    }
+    const body = exportType === "audit_log"
+      ? {
+          exportType,
+          generatedAt,
+          redaction,
+          auditLog: await this.listAdminAuditLog(actor)
+        }
+      : {
+          exportType,
+          generatedAt,
+          redaction,
+          costSummary: await this.getCostAuditSummary(actor)
+        }
+    const safeType = exportType.replace(/[^a-z0-9_-]/g, "_")
+    const objectKey = `downloads/admin-${safeType}-${generatedAt.replace(/[-:.]/g, "")}.json`
+    const fileName = objectKey.split("/").at(-1) ?? "admin-export.json"
+    const contentDisposition = `attachment; filename="${fileName}"`
+    const s3 = new S3Client({ region: config.region })
+    await s3.send(new PutObjectCommand({
+      Bucket: config.debugDownloadBucketName,
+      Key: objectKey,
+      Body: JSON.stringify(body, null, 2),
+      ContentType: "application/json; charset=utf-8",
+      ContentDisposition: contentDisposition
+    }))
+
+    const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
+    const url = await getSignedUrl(s3, new GetObjectCommand({
+      Bucket: config.debugDownloadBucketName,
+      Key: objectKey,
+      ResponseContentType: "application/json; charset=utf-8",
+      ResponseContentDisposition: contentDisposition
+    }), { expiresIn: expiresInSeconds })
+    return { exportType, url, expiresInSeconds, objectKey, generatedAt, redaction }
+  }
+
   async listDebugRuns(): Promise<DebugTrace[]> {
     const keys = await this.deps.objectStore.listKeys("debug-runs/")
     const traces = await Promise.all(
@@ -981,6 +1047,43 @@ export class MemoRagService {
     const key = keys.find((candidate) => candidate.endsWith(`/${runId}.json`))
     if (!key) return undefined
     return normalizeDebugTrace(JSON.parse(await this.deps.objectStore.getText(key)))
+  }
+
+  async listChatToolInvocations(): Promise<ChatToolInvocation[]> {
+    const debugRuns = await this.listDebugRuns()
+    return debugRuns
+      .flatMap((trace) => trace.toolInvocations ?? [])
+      .sort((a, b) => (b.startedAt ?? b.completedAt ?? "").localeCompare(a.startedAt ?? a.completedAt ?? ""))
+      .slice(0, 200)
+  }
+
+  async createDebugReplayPlan(runId: string): Promise<DebugReplayPlan | undefined> {
+    const trace = await this.getDebugRun(runId)
+    if (!trace) return undefined
+    const redaction = trace.exportRedaction ?? {
+      policyVersion: DEBUG_TRACE_SANITIZE_POLICY_VERSION,
+      visibility: trace.visibility ?? "operator_sanitized",
+      redactedFields: ["rawPrompt", "credentials", "internalReasoning", "unauthorizedDocuments", "internalPolicyDetails"],
+      notes: ["replay plan is metadata-only and does not execute model/tool calls"]
+    }
+    return {
+      runId: trace.runId,
+      targetType: trace.targetType ?? "rag_run",
+      sourceTraceVisibility: trace.visibility ?? "operator_sanitized",
+      createdAt: new Date().toISOString(),
+      replayable: false,
+      blockedReason: "Replay execution is disabled until operator approval and current permission checks are completed.",
+      inputSummary: {
+        question: trace.question,
+        modelId: trace.modelId,
+        embeddingModelId: trace.embeddingModelId,
+        topK: trace.topK,
+        memoryTopK: trace.memoryTopK,
+        minScore: trace.minScore,
+        citationCount: trace.citations.length
+      },
+      redaction
+    }
   }
 
   async chat(input: ChatInput, user?: AppUser): Promise<ChatOrchestrationResult> {
@@ -1724,6 +1827,21 @@ export class MemoRagService {
     return this.deps.asyncAgentProviders?.list() ?? []
   }
 
+  listAgentProviderSettings(): AgentProviderSetting[] {
+    return this.listAgentRuntimeProviders().map((provider) => ({
+      provider: provider.provider,
+      displayName: provider.displayName,
+      availability: provider.availability,
+      credentialMode: provider.availability === "disabled"
+        ? "disabled"
+        : provider.availability === "not_configured"
+          ? "not_configured"
+          : "environment",
+      configuredModelIds: provider.configuredModelIds,
+      reason: provider.reason
+    }))
+  }
+
   async createAsyncAgentRun(user: AppUser, input: CreateAsyncAgentRunInput): Promise<AsyncAgentRun> {
     await this.assertAsyncAgentSelectionsReadable(user, input)
 
@@ -1831,6 +1949,64 @@ export class MemoRagService {
   async getAsyncAgentArtifact(user: AppUser, agentRunId: string, artifactId: string): Promise<AsyncAgentRun["artifacts"][number] | undefined> {
     const artifacts = await this.listAsyncAgentArtifacts(user, agentRunId)
     return artifacts?.find((artifact) => artifact.artifactId === artifactId)
+  }
+
+  async updateAsyncAgentArtifactWriteback(
+    user: AppUser,
+    agentRunId: string,
+    artifactId: string,
+    input: {
+      action: "request" | "approve" | "reject" | "apply"
+      target?: NonNullable<AsyncAgentRun["artifacts"][number]["writebackTarget"]>
+      reason?: string
+    }
+  ): Promise<AsyncAgentRun["artifacts"][number] | undefined> {
+    const run = await this.getAsyncAgentRun(user, agentRunId)
+    if (!run) return undefined
+    const artifact = run.artifacts.find((candidate) => candidate.artifactId === artifactId)
+    if (!artifact) return undefined
+    const now = new Date().toISOString()
+    const target = input.target ?? artifact.writebackTarget
+    if ((input.action === "request" || input.action === "approve" || input.action === "apply") && !target) {
+      throw new Error("Writeback target is required")
+    }
+    if (target) await this.assertAsyncAgentWritebackTargetFull(user, target)
+
+    const nextArtifact = { ...artifact }
+    if (input.action === "request") {
+      nextArtifact.writebackStatus = "pending_approval"
+      nextArtifact.writebackTarget = target
+      nextArtifact.writebackRequestedBy = user.userId
+      nextArtifact.writebackRequestedAt = now
+      nextArtifact.writebackDecisionReason = trimOptional(input.reason)
+    } else if (input.action === "approve") {
+      if (artifact.writebackStatus !== "pending_approval") throw new Error("Only pending writeback can be approved")
+      nextArtifact.writebackStatus = "approved"
+      nextArtifact.writebackReviewedBy = user.userId
+      nextArtifact.writebackReviewedAt = now
+      nextArtifact.writebackDecisionReason = trimOptional(input.reason)
+    } else if (input.action === "reject") {
+      if (artifact.writebackStatus !== "pending_approval") throw new Error("Only pending writeback can be rejected")
+      nextArtifact.writebackStatus = "rejected"
+      nextArtifact.writebackReviewedBy = user.userId
+      nextArtifact.writebackReviewedAt = now
+      nextArtifact.writebackDecisionReason = trimOptional(input.reason)
+    } else {
+      if (artifact.writebackStatus !== "approved") throw new Error("Only approved writeback can be applied")
+      nextArtifact.writebackStatus = "applied"
+      nextArtifact.writebackAppliedBy = user.userId
+      nextArtifact.writebackAppliedAt = now
+      nextArtifact.writebackDecisionReason = trimOptional(input.reason)
+    }
+
+    const updatedRun: AsyncAgentRun = {
+      ...run,
+      status: input.action === "request" ? "waiting_for_approval" : run.status,
+      updatedAt: now,
+      artifacts: run.artifacts.map((candidate) => candidate.artifactId === artifactId ? nextArtifact : candidate)
+    }
+    await this.saveAsyncAgentRun(updatedRun)
+    return nextArtifact
   }
 
   async executeAsyncAgentRun(runId: string): Promise<AsyncAgentRun> {
@@ -2079,6 +2255,26 @@ export class MemoRagService {
 
     if ((input.selectedSkillIds?.length ?? 0) > 0 && !hasPermission(user, "skill:read")) throw forbiddenError("Forbidden")
     if ((input.selectedAgentProfileIds?.length ?? 0) > 0 && !hasPermission(user, "agent_profile:read")) throw forbiddenError("Forbidden")
+  }
+
+  private async assertAsyncAgentWritebackTargetFull(
+    user: AppUser,
+    target: NonNullable<AsyncAgentRun["artifacts"][number]["writebackTarget"]>
+  ): Promise<void> {
+    if (target.sourceType === "folder") {
+      await this.assertDocumentGroupsWritable(user, [target.sourceId])
+      return
+    }
+
+    const manifest = await this.getManifest(target.sourceId)
+    const groupIds = stringArray(manifest.metadata?.groupIds ?? manifest.metadata?.groupId) ?? []
+    if (groupIds.length > 0) {
+      await this.assertDocumentGroupsWritable(user, groupIds)
+      return
+    }
+    if (stringValue(manifest.metadata?.ownerUserId) === user.userId && hasPermission(user, "rag:doc:write:group")) return
+    if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return
+    throw forbiddenError("Forbidden")
   }
 
   private canReadAsyncAgentRun(user: AppUser, run: AsyncAgentRun): boolean {
@@ -2340,6 +2536,100 @@ function normalizeAsyncAgentRun(run: AsyncAgentRun): AsyncAgentRun {
     artifactIds: run.artifactIds ?? [],
     artifacts: run.artifacts ?? []
   }
+}
+
+function buildParsedDocumentPreview(manifest: DocumentManifest): ParsedDocumentPreview {
+  const parsed = manifest.parsedDocument
+  const warnings = [
+    ...(manifest.extractionWarnings ?? []),
+    ...(parsed?.warnings ?? [])
+  ].slice(0, 50)
+  if (!parsed) {
+    return {
+      documentId: manifest.documentId,
+      fileName: manifest.fileName,
+      sourceExtractorVersion: manifest.sourceExtractorVersion,
+      fileProfile: manifest.fileProfile,
+      pageCount: 0,
+      blockCount: manifest.chunks?.length ?? 0,
+      tableCount: 0,
+      figureCount: 0,
+      warnings,
+      counters: manifest.extractionCounters,
+      qualityProfile: manifest.qualityProfile ?? documentQualityProfileFromMetadata(manifest.metadata),
+      available: false,
+      unavailableReason: "parsed document preview is not available for this manifest"
+    }
+  }
+
+  return {
+    documentId: manifest.documentId,
+    fileName: manifest.fileName,
+    sourceExtractorVersion: parsed.sourceExtractorVersion ?? manifest.sourceExtractorVersion,
+    fileProfile: parsed.fileProfile ?? manifest.fileProfile,
+    textPreview: parsed.text.replace(/\s+/g, " ").trim().slice(0, 4000) || undefined,
+    pageCount: parsed.pages?.length ?? 0,
+    blockCount: parsed.blocks?.length ?? 0,
+    tableCount: parsed.tables?.length ?? 0,
+    figureCount: parsed.figures?.length ?? 0,
+    warnings,
+    counters: parsed.counters ?? manifest.extractionCounters,
+    pages: parsed.pages?.slice(0, 10),
+    blocks: parsed.blocks?.slice(0, 50),
+    tables: parsed.tables?.slice(0, 20),
+    figures: parsed.figures?.slice(0, 20),
+    qualityProfile: manifest.qualityProfile ?? documentQualityProfileFromMetadata(manifest.metadata),
+    available: true
+  }
+}
+
+function qualityActionCardsForManifest(manifest: DocumentManifest): QualityActionCard[] {
+  const profile = manifest.qualityProfile ?? documentQualityProfileFromMetadata(manifest.metadata)
+  const gate = qualityGateForNormalRag(manifest)
+  const reasons = [
+    ...(profile?.knowledgeQualityStatus === "blocked" ? ["knowledge_quality_blocked"] : []),
+    ...(profile?.ragEligibility === "excluded" ? ["rag_excluded"] : []),
+    ...(profile?.verificationStatus === "unverified" ? ["verification_required"] : []),
+    ...(profile?.verificationStatus === "rejected" ? ["verification_rejected"] : []),
+    ...(profile?.freshnessStatus === "stale" ? ["freshness_review_required"] : []),
+    ...(profile?.freshnessStatus === "expired" ? ["freshness_expired"] : []),
+    ...(profile?.supersessionStatus === "superseded" ? ["superseded_by_newer_document"] : []),
+    ...(profile?.extractionQualityStatus === "low" || profile?.extractionQualityStatus === "unusable" ? ["low_extraction_confidence"] : []),
+    ...(profile?.flags ?? []),
+    ...lowConfidenceWarningCodes(manifest.extractionWarnings ?? manifest.parsedDocument?.warnings ?? [])
+  ]
+  const uniqueReasons = uniqueStrings(reasons)
+  if (uniqueReasons.length === 0 && gate.approved) return []
+
+  const severity: QualityActionCard["severity"] = !gate.approved
+    ? "blocked"
+    : uniqueReasons.some((reason) => reason.includes("low") || reason.includes("required") || reason.includes("stale"))
+      ? "warning"
+      : "info"
+  const suggestedAction: QualityActionCard["suggestedAction"] = uniqueReasons.some((reason) => reason.includes("extraction") || reason.includes("confidence"))
+    ? "review_extraction"
+    : uniqueReasons.some((reason) => reason.includes("freshness"))
+      ? "update_freshness"
+      : uniqueReasons.some((reason) => reason.includes("excluded"))
+        ? "rag_exclusion_review"
+        : "verify_document"
+  return [{
+    actionId: `quality_${manifest.documentId}`,
+    documentId: manifest.documentId,
+    fileName: manifest.fileName,
+    severity,
+    reasonCodes: uniqueReasons,
+    suggestedAction,
+    title: severity === "blocked" ? "通常 RAG から除外中の文書" : "文書品質の確認が必要",
+    description: uniqueReasons.join(", "),
+    createdAt: profile?.updatedAt ?? manifest.createdAt
+  }]
+}
+
+function lowConfidenceWarningCodes(warnings: ExtractionWarning[]): string[] {
+  return warnings
+    .filter((warning) => warning.severity === "error" || (warning.confidence !== undefined && warning.confidence < 70))
+    .map((warning) => warning.code || "low_confidence_extraction_warning")
 }
 
 function toDocumentManifestSummary(manifest: DocumentManifest): DocumentManifestSummary {
