@@ -1,5 +1,6 @@
 import { Icon } from "../../../../shared/components/Icon.js"
 import type { IconName } from "../../../../shared/components/Icon.js"
+import { EmptyState } from "../../../../shared/ui/index.js"
 import { formatCurrency } from "../../../../shared/utils/format.js"
 import type { AccessRoleDefinition, AliasDefinition, CostAuditSummary, ManagedUser, UserUsageSummary } from "../../types.js"
 
@@ -45,15 +46,15 @@ export function AdminOverviewGrid({
   onOpenDebug,
   onOpenBenchmark
 }: {
-  documentsCount: number
-  openQuestionsCount: number
-  debugRunsCount: number
-  benchmarkRunsCount: number
-  managedUsers: ManagedUser[]
-  accessRoles: AccessRoleDefinition[]
-  usageSummaries: UserUsageSummary[]
+  documentsCount: number | null
+  openQuestionsCount: number | null
+  debugRunsCount: number | null
+  benchmarkRunsCount: number | null
+  managedUsers: ManagedUser[] | null
+  accessRoles: AccessRoleDefinition[] | null
+  usageSummaries: UserUsageSummary[] | null
   costAudit: CostAuditSummary | null
-  aliases: AliasDefinition[]
+  aliases: AliasDefinition[] | null
   canManageDocuments: boolean
   canAnswerQuestions: boolean
   canReadDebugRuns: boolean
@@ -69,7 +70,7 @@ export function AdminOverviewGrid({
   onOpenBenchmark: () => void
 }) {
   const cards: DashboardCard[] = [
-    ...(canManageDocuments
+    ...(canManageDocuments && documentsCount !== null
       ? [
           {
             kind: "action" as const,
@@ -81,7 +82,7 @@ export function AdminOverviewGrid({
           }
         ]
       : []),
-    ...(canAnswerQuestions
+    ...(canAnswerQuestions && openQuestionsCount !== null
       ? [
           {
             kind: "action" as const,
@@ -93,7 +94,7 @@ export function AdminOverviewGrid({
           }
         ]
       : []),
-    ...(canReadDebugRuns
+    ...(canReadDebugRuns && debugRunsCount !== null
       ? [
           {
             kind: "action" as const,
@@ -105,7 +106,7 @@ export function AdminOverviewGrid({
           }
         ]
       : []),
-    ...(canReadBenchmarkRuns
+    ...(canReadBenchmarkRuns && benchmarkRunsCount !== null
       ? [
           {
             kind: "action" as const,
@@ -123,8 +124,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "access",
             label: "アクセス管理",
-            value: `${accessRoles.length} role`,
-            note: "ロール定義は読み取り専用",
+            value: accessRoles ? `${accessRoles.length} role` : "未提供",
+            note: accessRoles ? "ロール定義は読み取り専用" : "ロール定義 API field は未提供",
             icon: "settings" as const
           }
         ]
@@ -135,8 +136,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "users",
             label: "ユーザー管理",
-            value: `${managedUsers.length} users`,
-            note: "現行 API の管理対象ユーザー",
+            value: managedUsers ? `${managedUsers.length} users` : "未提供",
+            note: managedUsers ? "現行 API の管理対象ユーザー" : "管理対象ユーザー API field は未提供",
             icon: "settings" as const
           }
         ]
@@ -147,8 +148,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "usage",
             label: "利用状況",
-            value: `${usageSummaries.length} users`,
-            note: "ユーザー別 summary のみ",
+            value: usageSummaries ? `${usageSummaries.length} users` : "未提供",
+            note: usageSummaries ? "ユーザー別 summary のみ" : "利用状況 API field は未提供",
             icon: "gauge" as const
           }
         ]
@@ -171,8 +172,8 @@ export function AdminOverviewGrid({
             kind: "kpi" as const,
             id: "alias",
             label: "Alias管理",
-            value: `${aliases.length} aliases`,
-            note: "review / publish は別 section",
+            value: aliases ? `${aliases.length} aliases` : "未提供",
+            note: aliases ? "review / publish は別 section" : "Alias API field は未提供",
             icon: "settings" as const
           }
         ]
@@ -181,7 +182,9 @@ export function AdminOverviewGrid({
 
   return (
     <div className="admin-overview-grid">
-      {cards.map((card) =>
+      {cards.length === 0 ? (
+        <EmptyState title="表示できる管理 summary はありません。" description="権限内の API から overview に表示できる field が返されていません。" />
+      ) : cards.map((card) =>
         card.kind === "action" ? (
           <button type="button" className="admin-overview-tile action-card" aria-label={`${card.label}を開く`} onClick={card.onSelect} key={card.id}>
             <Icon name={card.icon} />

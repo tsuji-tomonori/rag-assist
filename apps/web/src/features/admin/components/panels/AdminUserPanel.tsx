@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react"
+import { type FormEvent, useEffect, useMemo, useState } from "react"
 import { ConfirmDialog } from "../../../../shared/components/ConfirmDialog.js"
 import { EmptyState } from "../../../../shared/ui/index.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
@@ -19,8 +19,8 @@ export function AdminUserPanel({
   onSetUserStatus,
   onRefreshAdminData
 }: {
-  managedUsers: ManagedUser[]
-  accessRoles: AccessRoleDefinition[]
+  managedUsers: ManagedUser[] | null
+  accessRoles: AccessRoleDefinition[] | null
   loading: boolean
   canCreateUsers: boolean
   canAssignRoles: boolean
@@ -51,7 +51,9 @@ export function AdminUserPanel({
           <span role="columnheader">ロール</span>
           <span role="columnheader">操作</span>
         </div>
-        {managedUsers.length === 0 ? (
+        {managedUsers === null ? (
+          <EmptyState title="管理対象ユーザー API field は未提供です。" description="権限内の API response に users field がありません。" />
+        ) : managedUsers.length === 0 ? (
           <EmptyState title="管理対象ユーザーはありません。" />
         ) : (
           managedUsers.map((managedUser) => (
@@ -79,17 +81,21 @@ function AdminCreateUserForm({
   loading,
   onCreateUser
 }: {
-  roles: AccessRoleDefinition[]
+  roles: AccessRoleDefinition[] | null
   loading: boolean
   onCreateUser: (input: { email: string; displayName?: string; groups?: string[] }) => Promise<void>
 }) {
   const [email, setEmail] = useState("")
   const [displayName, setDisplayName] = useState("")
-  const [role, setRole] = useState("CHAT_USER")
+  const [role, setRole] = useState("")
 
   useEffect(() => {
+    if (!roles) {
+      setRole("")
+      return
+    }
     if (roles.some((candidate) => candidate.role === role)) return
-    setRole(roles[0]?.role ?? "CHAT_USER")
+    setRole(roles[0]?.role ?? "")
   }, [role, roles])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -99,11 +105,11 @@ function AdminCreateUserForm({
     await onCreateUser({
       email: normalizedEmail,
       displayName: displayName.trim() || undefined,
-      groups: [role]
+      groups: role ? [role] : undefined
     })
     setEmail("")
     setDisplayName("")
-    setRole("CHAT_USER")
+    setRole(roles?.[0]?.role ?? "")
   }
 
   return (
@@ -118,11 +124,17 @@ function AdminCreateUserForm({
       </label>
       <label>
         <span>初期ロール</span>
-        <select value={role} onChange={(event) => setRole(event.target.value)}>
-          {roles.map((roleDefinition) => (
-            <option value={roleDefinition.role} key={roleDefinition.role}>{roleDefinition.role}</option>
-          ))}
-        </select>
+        {roles === null ? (
+          <span className="admin-field-unavailable">未提供</span>
+        ) : roles.length === 0 ? (
+          <span className="admin-field-unavailable">選択可能なロールはありません</span>
+        ) : (
+          <select value={role} onChange={(event) => setRole(event.target.value)}>
+            {roles.map((roleDefinition) => (
+              <option value={roleDefinition.role} key={roleDefinition.role}>{roleDefinition.role}</option>
+            ))}
+          </select>
+        )}
       </label>
       <button type="submit" disabled={loading || email.trim().length === 0}>
         {loading && <LoadingSpinner className="button-spinner" />}
@@ -144,7 +156,7 @@ function ManagedUserRow({
   onSetStatus
 }: {
   user: ManagedUser
-  roles: AccessRoleDefinition[]
+  roles: AccessRoleDefinition[] | null
   loading: boolean
   canAssignRoles: boolean
   canSuspend: boolean
@@ -153,15 +165,24 @@ function ManagedUserRow({
   onAssignRoles: (userId: string, groups: string[]) => Promise<void>
   onSetStatus: (userId: string, action: "suspend" | "unsuspend" | "delete") => Promise<void>
 }) {
-  const [selectedRole, setSelectedRole] = useState(user.groups[0] ?? "CHAT_USER")
+  const availableRoles = useMemo(() => roles ?? [], [roles])
+  const [selectedRole, setSelectedRole] = useState(user.groups[0] ?? availableRoles[0]?.role ?? "")
   const [statusCandidate, setStatusCandidate] = useState<"suspend" | "delete" | null>(null)
   const [roleAssignOpen, setRoleAssignOpen] = useState(false)
-  const nextGroups = [selectedRole]
-  const roleChanged = !user.groups.includes(selectedRole) || user.groups.length !== nextGroups.length
+  const canShowRoleAssignment = canAssignRoles && availableRoles.length > 0
+  const nextGroups = selectedRole ? [selectedRole] : []
+  const roleChanged = canShowRoleAssignment && selectedRole !== "" && (!user.groups.includes(selectedRole) || user.groups.length !== nextGroups.length)
+  const canShowSuspendAction = user.status === "suspended" ? canUnsuspend : canSuspend
+  const canShowDeleteAction = canDelete
 
   useEffect(() => {
-    setSelectedRole(user.groups[0] ?? "CHAT_USER")
-  }, [user.groups])
+    const currentRole = user.groups[0]
+    if (currentRole && availableRoles.some((role) => role.role === currentRole)) {
+      setSelectedRole(currentRole)
+      return
+    }
+    setSelectedRole(availableRoles[0]?.role ?? "")
+  }, [availableRoles, user.groups])
 
   return (
     <div className="admin-user-row" role="row">
@@ -173,17 +194,20 @@ function ManagedUserRow({
         <i className={`user-status ${user.status}`}>{managedUserStatusLabel(user.status)}</i>
       </span>
       <span role="cell">
-        <div className="role-assignment">
-          <select value={selectedRole} disabled={!canAssignRoles || loading} aria-label={`${user.email}に付与するロール`} onChange={(event) => setSelectedRole(event.target.value)}>
-            {roles.map((role) => (
-              <option value={role.role} key={role.role}>{role.role}</option>
-            ))}
-          </select>
-          <button type="button" disabled={!canAssignRoles || loading || !roleChanged} onClick={() => setRoleAssignOpen(true)}>
-            {loading && <LoadingSpinner className="button-spinner" />}
-            <span>付与</span>
-          </button>
-        </div>
+        {canShowRoleAssignment && (
+          <div className="role-assignment">
+            <select value={selectedRole} disabled={loading} aria-label={`${user.email}に付与するロール`} onChange={(event) => setSelectedRole(event.target.value)}>
+              {availableRoles.map((role) => (
+                <option value={role.role} key={role.role}>{role.role}</option>
+              ))}
+            </select>
+            <button type="button" disabled={loading || !roleChanged} onClick={() => setRoleAssignOpen(true)}>
+              {loading && <LoadingSpinner className="button-spinner" />}
+              <span>付与</span>
+            </button>
+          </div>
+        )}
+        {roles === null && <small>ロール定義は未提供</small>}
         {roleChanged && (
           <small className="role-diff-preview">変更前: {formatGroupList(user.groups)} / 変更後: {formatGroupList(nextGroups)}</small>
         )}
@@ -191,21 +215,22 @@ function ManagedUserRow({
       </span>
       <span role="cell">
         <div className="user-row-actions">
-          {user.status === "suspended" ? (
-            <button type="button" disabled={!canUnsuspend || loading} onClick={() => void onSetStatus(user.userId, "unsuspend")}>
+          {canShowSuspendAction && (user.status === "suspended" ? (
+            <button type="button" disabled={loading} onClick={() => void onSetStatus(user.userId, "unsuspend")}>
               {loading && <LoadingSpinner className="button-spinner" />}
               <span>再開</span>
             </button>
           ) : (
-            <button type="button" disabled={!canSuspend || loading} onClick={() => setStatusCandidate("suspend")}>
+            <button type="button" disabled={loading} onClick={() => setStatusCandidate("suspend")}>
               {loading && <LoadingSpinner className="button-spinner" />}
               <span>停止</span>
             </button>
-          )}
-          <button type="button" disabled={!canDelete || loading} onClick={() => setStatusCandidate("delete")}>
+          ))}
+          {canShowDeleteAction && <button type="button" disabled={loading} onClick={() => setStatusCandidate("delete")}>
             {loading && <LoadingSpinner className="button-spinner" />}
             <span>削除</span>
-          </button>
+          </button>}
+          {!canShowSuspendAction && !canShowDeleteAction && <span className="admin-field-unavailable">利用可能な操作はありません</span>}
         </div>
       </span>
       {statusCandidate && (

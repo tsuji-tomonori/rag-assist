@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi"
 import { requirePermission } from "../authorization.js"
-import { DebugDownloadResponseSchema, DebugTraceListResponseSchema, DebugTraceSchema, ErrorResponseSchema } from "../schemas.js"
+import { DebugDownloadResponseSchema, DebugReplayPlanSchema, DebugTraceListResponseSchema, DebugTraceSchema, ErrorResponseSchema } from "../schemas.js"
 import type { ApiRouteContext } from "./route-context.js"
 import { looseRoute, routeAuthorization, validParam } from "./route-utils.js"
 
@@ -68,6 +68,37 @@ export function registerDebugRoutes({ app, service }: ApiRouteContext) {
     }
   )
 
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/debug-runs/{runId}/replay-plan",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "chat:admin:read_all",
+        conditionalPermissions: ["debug:replay"],
+        operationKey: "debug.trace.replay_plan",
+        resourceCondition: "ownedRun",
+        notes: [
+          "現行 gate は chat:admin:read_all です。debug:replay は移行先 permission として metadata に明記します。",
+          "replay-plan は sanitize 済み入力概要のみを返し、モデル/tool 再実行は行いません。"
+        ]
+      }),
+      request: { params: z.object({ runId: z.string().min(1) }) },
+      responses: {
+        200: { description: "Create sanitized debug replay plan metadata without execution", content: { "application/json": { schema: DebugReplayPlanSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Debug run not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      requirePermission(c.get("user"), "chat:admin:read_all")
+      const { runId } = validParam<{ runId: string }>(c)
+      const plan = await service.createDebugReplayPlan(runId)
+      if (!plan) return c.json({ error: "Debug run not found" }, 404)
+      return c.json(plan, 200)
+    }
+  )
 
   app.openapi(
     looseRoute({

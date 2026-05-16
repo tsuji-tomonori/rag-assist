@@ -24,6 +24,8 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /chat", { operationKey: "chat.send", resourceCondition: "documentGroupRead" }],
   ["POST /chat-runs", { operationKey: "chat.run.start", resourceCondition: "documentGroupRead" }],
   ["GET /chat-runs/{runId}/events", { operationKey: "chat.run.events.read", resourceCondition: "ownedRun" }],
+  ["GET /chat-tools", { operationKey: "chat_tool.registry.read", resourceCondition: "none" }],
+  ["GET /chat-tool-invocations", { operationKey: "chat_tool.invocation.read", resourceCondition: "ownedRun" }],
   ["POST /search", { operationKey: "document.search", resourceCondition: "documentGroupRead" }],
   ["GET /conversation-history", { operationKey: "history.read.self", resourceCondition: "self" }],
   ["POST /questions", { operationKey: "support.ticket.create.self", resourceCondition: "self" }],
@@ -34,22 +36,29 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /document-groups", { operationKey: "folder.create.group", resourceCondition: "documentGroupFull" }],
   ["POST /document-groups/{groupId}/share", { operationKey: "folder.share", resourceCondition: "documentGroupFull" }],
   ["GET /documents", { operationKey: "document.read", resourceCondition: "benchmarkSeedScope" }],
+  ["GET /documents/{documentId}/parsed-preview", { operationKey: "document.parsed_preview.read", resourceCondition: "documentGroupRead" }],
   ["POST /documents", { operationKey: "document.upload", resourceCondition: "benchmarkSeedScope" }],
+  ["POST /admin/audit-log/export", { operationKey: "audit.export", resourceCondition: "none" }],
+  ["GET /admin/quality-actions", { operationKey: "quality.action.read", resourceCondition: "documentGroupRead" }],
+  ["POST /admin/costs/export", { operationKey: "cost.export", resourceCondition: "none" }],
   ["POST /documents/uploads", { operationKey: "document.upload_session.create", resourceCondition: "documentUploadSession" }],
   ["POST /benchmark-runs", { operationKey: "benchmark.run", resourceCondition: "documentGroupRead" }],
   ["POST /admin/users/{userId}/roles", { operationKey: "role.assign", resourceCondition: "roleAssignment" }],
   ["GET /agents/providers", { operationKey: "agent.provider.read", resourceCondition: "none" }],
+  ["GET /agents/provider-settings", { operationKey: "agent.provider_settings.read", resourceCondition: "none" }],
   ["POST /agents/runs", { operationKey: "agent.run.create", resourceCondition: "agentWorkspaceReadOnly" }],
   ["GET /agents/runs", { operationKey: "agent.run.read", resourceCondition: "agentRunSelfOrManaged" }],
   ["GET /agents/runs/{agentRunId}", { operationKey: "agent.run.read", resourceCondition: "agentRunSelfOrManaged" }],
   ["POST /agents/runs/{agentRunId}/cancel", { operationKey: "agent.run.cancel", resourceCondition: "agentRunSelfOrManaged" }],
   ["GET /agents/runs/{agentRunId}/artifacts", { operationKey: "agent.artifact.read", resourceCondition: "agentRunSelfOrManaged" }],
+  ["POST /agents/runs/{agentRunId}/artifacts/{artifactId}/writeback", { operationKey: "agent.artifact.writeback", resourceCondition: "agentWritebackFull" }],
   ["GET /agents/runs/{agentRunId}/artifacts/{artifactId}", { operationKey: "agent.artifact.read", resourceCondition: "agentRunSelfOrManaged" }]
 ])
 
 const debugRoutePermissions = new Map<string, { permission: Permission; conditional?: Permission; operationKey: string }>([
   ["GET /debug-runs", { permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized" }],
   ["GET /debug-runs/{runId}", { permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized" }],
+  ["POST /debug-runs/{runId}/replay-plan", { permission: "chat:admin:read_all", conditional: "debug:replay", operationKey: "debug.trace.replay_plan" }],
   ["POST /debug-runs/{runId}/download", { permission: "chat:admin:read_all", conditional: "debug:trace:export", operationKey: "debug.trace.export" }]
 ])
 
@@ -266,7 +275,7 @@ test("debug routes remain protected and document the debug permission migration 
     assert.equal(policy.resourceCondition, "ownedRun", `${route} must stay scoped to ownedRun metadata`)
     assert.match(
       (policy.operation["x-memorag-authorization"]?.notes ?? []).join("\n"),
-      /debug:trace:(read:sanitized|export)/,
+      /debug:(trace:(read:sanitized|export)|replay)/,
       `${route} must document debug:* migration or alias notes`
     )
     if (expected.conditional) {
@@ -309,10 +318,12 @@ test("async agent permissions and route metadata preserve G1 execution boundarie
   const policies = await openApiRoutePolicies()
   for (const route of [
     "POST /agents/runs",
+    "GET /agents/provider-settings",
     "GET /agents/runs",
     "GET /agents/runs/{agentRunId}",
     "POST /agents/runs/{agentRunId}/cancel",
     "GET /agents/runs/{agentRunId}/artifacts",
+    "POST /agents/runs/{agentRunId}/artifacts/{artifactId}/writeback",
     "GET /agents/runs/{agentRunId}/artifacts/{artifactId}"
   ]) {
     const policy = policies.find((item) => routeKey(item) === route)

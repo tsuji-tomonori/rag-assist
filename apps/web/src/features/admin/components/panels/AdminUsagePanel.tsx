@@ -2,12 +2,12 @@ import { EmptyState } from "../../../../shared/ui/index.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import type { UserUsageSummary } from "../../types.js"
 
-export function AdminUsagePanel({ usageSummaries }: { usageSummaries: UserUsageSummary[] }) {
+export function AdminUsagePanel({ usageSummaries }: { usageSummaries: UserUsageSummary[] | null }) {
   return (
     <section className="admin-section-panel" aria-label="利用状況一覧">
       <div className="document-list-head">
         <h3>利用状況</h3>
-        <span>{usageSummaries.length} users</span>
+        <span>{usageSummaries ? `${usageSummaries.length} users` : "未提供"}</span>
       </div>
       <p className="admin-panel-note">現行 API が返すユーザー別 summary の read-only 表示です。グループ別、モデル別、export は未提供です。</p>
       <div className="usage-table" role="table" aria-label="利用状況">
@@ -20,7 +20,9 @@ export function AdminUsagePanel({ usageSummaries }: { usageSummaries: UserUsageS
           <span role="columnheader">debug</span>
           <span role="columnheader">最終利用</span>
         </div>
-        {usageSummaries.length === 0 ? (
+        {usageSummaries === null ? (
+          <EmptyState title="利用状況 API field は未提供です。" description="権限内の API response に users field がありません。" />
+        ) : usageSummaries.length === 0 ? (
           <EmptyState title="利用状況はありません。" description="権限内の API から返された user-level usage summary は空です。" />
         ) : (
           usageSummaries.map((item) => (

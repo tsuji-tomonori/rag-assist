@@ -21,6 +21,7 @@ import {
   DocumentUploadRequestSchema,
   ErrorResponseSchema,
   IngestUploadedDocumentRequestSchema,
+  ParsedDocumentPreviewSchema,
   ReindexMigrationListResponseSchema,
   ReindexMigrationSchema,
   ShareDocumentGroupRequestSchema,
@@ -666,6 +667,41 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         return c.json(await service.rollbackReindexMigration(migrationId), 200)
       } catch (err) {
         if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
+        throw err
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "get",
+      path: "/documents/{documentId}/parsed-preview",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "rag:doc:read",
+        operationKey: "document.parsed_preview.read",
+        resourceCondition: "documentGroupRead",
+        notes: ["ParsedDocument preview は caller が読める文書に限定し、全文・vector key・raw object key は返しません。"]
+      }),
+      request: {
+        params: z.object({ documentId: z.string().min(1) })
+      },
+      responses: {
+        200: { description: "Get parsed document preview metadata", content: { "application/json": { schema: ParsedDocumentPreviewSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:read")
+      const { documentId } = validParam<{ documentId: string }>(c)
+      try {
+        const preview = await service.getParsedDocumentPreview(user, documentId)
+        if (!preview) return c.json({ error: "Document not found" }, 404)
+        return c.json(preview, 200)
+      } catch (err) {
+        if (err instanceof Error && err.message.startsWith("Forbidden")) throw new HTTPException(403, { message: "Forbidden" })
         throw err
       }
     }

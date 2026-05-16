@@ -59,7 +59,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 94 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 105 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -74,6 +74,17 @@ Media type: `application/json`
 | `fileName` | `string` | yes | 登録またはアップロードするファイル名。 | - |
 | `mimeType` | `string` | no | `response.mimeType` の値。項目名は mime type を表します。 | - |
 | `metadata` | `object` | no | `response.metadata` の値。項目名は metadata を表します。 | - |
+| `qualityProfile` | `object` | no | `response.qualityProfile` の値。項目名は quality profile を表します。 | - |
+| `qualityProfile.knowledgeQualityStatus` | `enum(approved \| warning \| blocked)` | no | `response.qualityProfile.knowledgeQualityStatus` の値。項目名は knowledge quality status を表します。 | enum=approved, warning, blocked |
+| `qualityProfile.verificationStatus` | `enum(verified \| unverified \| rejected)` | no | `response.qualityProfile.verificationStatus` の値。項目名は verification status を表します。 | enum=verified, unverified, rejected |
+| `qualityProfile.freshnessStatus` | `enum(current \| stale \| expired)` | no | `response.qualityProfile.freshnessStatus` の値。項目名は freshness status を表します。 | enum=current, stale, expired |
+| `qualityProfile.supersessionStatus` | `enum(current \| superseded)` | no | `response.qualityProfile.supersessionStatus` の値。項目名は supersession status を表します。 | enum=current, superseded |
+| `qualityProfile.extractionQualityStatus` | `enum(high \| medium \| low \| unusable)` | no | `response.qualityProfile.extractionQualityStatus` の値。項目名は extraction quality status を表します。 | enum=high, medium, low, unusable |
+| `qualityProfile.ragEligibility` | `enum(eligible \| eligible_with_warning \| excluded)` | no | `response.qualityProfile.ragEligibility` の値。項目名は rag eligibility を表します。 | enum=eligible, eligible_with_warning, excluded |
+| `qualityProfile.confidence` | `number` | no | `response.qualityProfile.confidence` の値。項目名は confidence を表します。 | - |
+| `qualityProfile.flags` | `array<enum(verification_required \| freshness_review_required \| superseded_by_newer_document \| low_extraction_confidence \| manual_rag_exclusion)>` | no | `response.qualityProfile.flags` の値。項目名は flags を表します。 | - |
+| `qualityProfile.updatedAt` | `string` | no | レコードを最後に更新した日時。 | - |
+| `qualityProfile.updatedBy` | `string` | no | `response.qualityProfile.updatedBy` の値。項目名は updated by を表します。 | - |
 | `sourceObjectKey` | `string` | yes | `response.sourceObjectKey` の値。項目名は source object key を表します。 | - |
 | `structuredBlocksObjectKey` | `string` | no | `response.structuredBlocksObjectKey` の値。項目名は structured blocks object key を表します。 | - |
 | `memoryCardsObjectKey` | `string` | no | `response.memoryCardsObjectKey` の値。項目名は memory cards object key を表します。 | - |

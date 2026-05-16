@@ -125,6 +125,34 @@ describe("useAdminData", () => {
     expect(result.current.costAudit?.totalEstimatedUsd).toBe(1)
   })
 
+  it("API field が未提供の場合は空配列に変換せず null のまま保持する", async () => {
+    vi.mocked(listManagedUsers).mockResolvedValueOnce(null)
+    vi.mocked(listAdminAuditLog).mockResolvedValueOnce(null)
+    vi.mocked(listAccessRoles).mockResolvedValueOnce(null)
+    vi.mocked(listUsageSummaries).mockResolvedValueOnce(null)
+    vi.mocked(getCostAuditSummary).mockResolvedValueOnce(null)
+    vi.mocked(listAliases).mockResolvedValueOnce(null)
+    vi.mocked(listAliasAuditLog).mockResolvedValueOnce(null)
+    const { result } = renderHook(() => useAdminData(createProps({
+      canReadUsers: true,
+      canReadAdminAuditLog: true,
+      canOpenAdminSettings: true,
+      canReadUsage: true,
+      canReadCosts: true,
+      canReadAliases: true
+    })))
+
+    await act(() => result.current.refreshAdminData())
+
+    expect(result.current.managedUsers).toBeNull()
+    expect(result.current.adminAuditLog).toBeNull()
+    expect(result.current.accessRoles).toBeNull()
+    expect(result.current.usageSummaries).toBeNull()
+    expect(result.current.costAudit).toBeNull()
+    expect(result.current.aliases).toBeNull()
+    expect(result.current.aliasAuditLog).toBeNull()
+  })
+
   it("読み取り権限がない admin データは再取得しない", async () => {
     const { result } = renderHook(() => useAdminData(createProps({ canReadAliases: false })))
 
@@ -154,7 +182,7 @@ describe("useAdminData", () => {
     expect(suspendManagedUser).toHaveBeenCalledWith("user-1")
     expect(unsuspendManagedUser).toHaveBeenCalledWith("user-1")
     expect(deleteManagedUser).toHaveBeenCalledTimes(1)
-    expect(result.current.managedUsers.some((user) => user.userId === "user-1")).toBe(false)
+    expect(result.current.managedUsers?.some((user) => user.userId === "user-1")).toBe(false)
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
   })
 

@@ -125,6 +125,11 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     description:
       "provider の設定状態だけを返し、credential、secret、実行可能な mock provider は返しません。"
   },
+  "GET /agents/provider-settings": {
+    summary: "非同期エージェント provider 設定状態を取得する",
+    description:
+      "管理者向けに provider の credential 設定有無と利用可能 model ID を返します。secret 値や環境変数の内容は返しません。"
+  },
   "POST /agents/runs": {
     summary: "非同期エージェント run を作成する",
     description:
@@ -150,6 +155,11 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     description:
       "対象 run の read-only artifact metadata だけを返します。架空 artifact、download URL、writeback 適用は返しません。"
   },
+  "POST /agents/runs/{agentRunId}/artifacts/{artifactId}/writeback": {
+    summary: "非同期エージェント artifact writeback 状態を更新する",
+    description:
+      "artifact の writeback 要求、承認、却下、適用済み metadata を更新します。対象 folder/document の full 権限を再確認し、provider workspace や credential は返しません。"
+  },
   "GET /agents/runs/{agentRunId}/artifacts/{artifactId}": {
     summary: "非同期エージェント artifact metadata を取得する",
     description:
@@ -166,6 +176,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   "GET /admin/audit-log": {
     summary: "管理操作履歴を取得する",
     description: "ユーザー管理や権限管理に関する監査ログを取得します。"
+  },
+  "POST /admin/audit-log/export": {
+    summary: "管理操作履歴 export URL を作成する",
+    description: "監査ログを sanitize 済み JSON として保存し、短期限の署名付き URL を返します。"
   },
   "POST /admin/users/{userId}/roles": {
     summary: "ユーザーのロールを更新する",
@@ -219,13 +233,25 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "利用状況を取得する",
     description: "全ユーザーまたは指定条件に一致する利用状況の集計を返します。"
   },
+  "GET /admin/quality-actions": {
+    summary: "文書品質 action card 一覧を取得する",
+    description: "参照可能な文書の品質 profile と抽出警告から、管理者が対応すべき action card を返します。"
+  },
   "GET /admin/costs": {
     summary: "概算コストを取得する",
     description: "モデル利用や処理量に基づく概算コストの監査向け summary を返します。"
   },
+  "POST /admin/costs/export": {
+    summary: "概算コスト export URL を作成する",
+    description: "概算コスト summary を sanitize 済み JSON として保存し、短期限の署名付き URL を返します。"
+  },
   "GET /documents": {
     summary: "登録文書一覧を取得する",
     description: "ログインユーザーが参照できる登録済み文書の summary 一覧を返します。full manifest、chunk metadata、vector key は返しません。"
+  },
+  "GET /documents/{documentId}/parsed-preview": {
+    summary: "ParsedDocument preview を取得する",
+    description: "参照権限のある文書について、抽出結果の preview、警告、件数、品質 profile を返します。raw object key や vector key は返しません。"
   },
   "POST /documents": {
     summary: "文書を同期登録する（非推奨）",
@@ -303,6 +329,14 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "チャット run イベントを購読する",
     description: "指定したチャット run の進捗と最終回答を Server-Sent Events で返します。"
   },
+  "GET /chat-tools": {
+    summary: "チャット tool registry を取得する",
+    description: "RAG orchestration で利用可能または将来予定の tool 定義 metadata を返します。実行 credential や tool 出力は返しません。"
+  },
+  "GET /chat-tool-invocations": {
+    summary: "チャット tool invocation 監査一覧を取得する",
+    description: "sanitize 済み debug trace から、tool invocation の状態、概要、エラー metadata を管理者向けに返します。"
+  },
   "POST /search": {
     summary: "ハイブリッド検索を実行する",
     description: "lexical / vector / RRF を組み合わせた検索結果と診断情報を返します。"
@@ -350,6 +384,10 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   "GET /debug-runs/{runId}": {
     summary: "debug trace 詳細を取得する",
     description: "指定した RAG debug trace の詳細ステップと判断情報を返します。"
+  },
+  "POST /debug-runs/{runId}/replay-plan": {
+    summary: "debug replay plan を作成する",
+    description: "sanitize 済み trace から replay 可能性と入力概要を返します。モデルや tool の再実行は行いません。"
   },
   "POST /debug-runs/{runId}/download": {
     summary: "debug trace ダウンロード URL を作成する",

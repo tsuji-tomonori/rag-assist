@@ -139,6 +139,25 @@ const ExtractionWarningSchema = z.object({
   confidence: z.number().optional()
 })
 
+const DocumentQualityProfileSchema = z.object({
+  knowledgeQualityStatus: z.enum(["approved", "warning", "blocked"]).optional(),
+  verificationStatus: z.enum(["verified", "unverified", "rejected"]).optional(),
+  freshnessStatus: z.enum(["current", "stale", "expired"]).optional(),
+  supersessionStatus: z.enum(["current", "superseded"]).optional(),
+  extractionQualityStatus: z.enum(["high", "medium", "low", "unusable"]).optional(),
+  ragEligibility: z.enum(["eligible", "eligible_with_warning", "excluded"]).optional(),
+  confidence: z.number().optional(),
+  flags: z.array(z.enum([
+    "verification_required",
+    "freshness_review_required",
+    "superseded_by_newer_document",
+    "low_extraction_confidence",
+    "manual_rag_exclusion"
+  ])).optional(),
+  updatedAt: z.string().optional(),
+  updatedBy: z.string().optional()
+})
+
 const ParsedDocumentSchema = z.object({
   schemaVersion: z.literal(2),
   text: z.string(),
@@ -157,6 +176,7 @@ export const DocumentManifestSchema = z.object({
   fileName: z.string(),
   mimeType: z.string().optional(),
   metadata: z.record(MetadataValueSchema).optional(),
+  qualityProfile: DocumentQualityProfileSchema.optional(),
   sourceObjectKey: z.string(),
   structuredBlocksObjectKey: z.string().optional(),
   memoryCardsObjectKey: z.string().optional(),
@@ -245,6 +265,27 @@ export const DocumentListItemSummarySchema = DocumentManifestSummarySchema.exten
 
 export const DocumentListResponseSchema = z.object({
   documents: z.array(DocumentListItemSummarySchema)
+})
+
+export const ParsedDocumentPreviewSchema = z.object({
+  documentId: z.string(),
+  fileName: z.string(),
+  sourceExtractorVersion: z.string().optional(),
+  fileProfile: z.enum(["digital_text", "scanned_image", "mixed", "image_only", "unknown"]).optional(),
+  textPreview: z.string().optional(),
+  pageCount: z.number().int().nonnegative(),
+  blockCount: z.number().int().nonnegative(),
+  tableCount: z.number().int().nonnegative(),
+  figureCount: z.number().int().nonnegative(),
+  warnings: z.array(ExtractionWarningSchema),
+  counters: z.record(z.string(), z.number()).optional(),
+  pages: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
+  blocks: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
+  tables: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
+  figures: z.array(z.record(z.string(), MetadataValueSchema)).optional(),
+  qualityProfile: DocumentQualityProfileSchema.optional(),
+  available: z.boolean(),
+  unavailableReason: z.string().optional()
 })
 
 export const StartDocumentIngestRunRequestSchema = IngestUploadedDocumentRequestSchema.extend({
@@ -1203,7 +1244,38 @@ export const AgentArtifactSchema = z.object({
   size: z.number().int().nonnegative(),
   storageRef: z.string(),
   createdAt: z.string(),
-  writebackStatus: z.enum(["not_requested", "pending_approval", "approved", "rejected", "applied"]).optional()
+  writebackStatus: z.enum(["not_requested", "pending_approval", "approved", "rejected", "applied"]).optional(),
+  writebackTarget: z.object({
+    sourceType: z.enum(["folder", "document"]),
+    sourceId: z.string(),
+    targetPath: z.string().optional()
+  }).optional(),
+  writebackRequestedBy: z.string().optional(),
+  writebackRequestedAt: z.string().optional(),
+  writebackReviewedBy: z.string().optional(),
+  writebackReviewedAt: z.string().optional(),
+  writebackAppliedBy: z.string().optional(),
+  writebackAppliedAt: z.string().optional(),
+  writebackDecisionReason: z.string().optional()
+})
+
+export const AgentArtifactWritebackRequestSchema = z.object({
+  action: z.enum(["request", "approve", "reject", "apply"]),
+  target: z.object({
+    sourceType: z.enum(["folder", "document"]),
+    sourceId: z.string().min(1),
+    targetPath: z.string().min(1).max(500).optional()
+  }).optional(),
+  reason: z.string().max(1000).optional()
+})
+
+export const AgentProviderSettingSchema = z.object({
+  provider: AgentRuntimeProviderSchema,
+  displayName: z.string(),
+  availability: AgentProviderAvailabilitySchema,
+  credentialMode: z.enum(["environment", "not_configured", "disabled"]),
+  configuredModelIds: z.array(z.string()),
+  reason: z.string().optional()
 })
 
 export const SkillDefinitionSchema = z.object({
@@ -1303,6 +1375,48 @@ export const AgentProviderListResponseSchema = z.object({
   providers: z.array(AgentRuntimeProviderDefinitionSchema)
 })
 
+export const AgentProviderSettingsResponseSchema = z.object({
+  providers: z.array(AgentProviderSettingSchema)
+})
+
+export const ChatToolDefinitionListResponseSchema = z.object({
+  registryVersion: z.string(),
+  tools: z.array(ChatToolDefinitionSchema)
+})
+
+export const ChatToolInvocationListResponseSchema = z.object({
+  invocations: z.array(ChatToolInvocationSchema)
+})
+
+export const QualityActionCardSchema = z.object({
+  actionId: z.string(),
+  documentId: z.string(),
+  fileName: z.string(),
+  severity: z.enum(["info", "warning", "blocked"]),
+  reasonCodes: z.array(z.string()),
+  suggestedAction: z.enum(["review_extraction", "reparse_document", "verify_document", "update_freshness", "rag_exclusion_review"]),
+  title: z.string(),
+  description: z.string(),
+  createdAt: z.string()
+})
+
+export const QualityActionCardListResponseSchema = z.object({
+  actions: z.array(QualityActionCardSchema)
+})
+
+export const AdminExportResponseSchema = z.object({
+  exportType: z.enum(["audit_log", "cost_summary"]),
+  url: z.string().url(),
+  expiresInSeconds: z.number().int().positive(),
+  objectKey: z.string(),
+  generatedAt: z.string(),
+  redaction: z.object({
+    policyVersion: z.string(),
+    redactedFields: z.array(z.string()),
+    notes: z.array(z.string())
+  })
+})
+
 export const ErrorResponseSchema = z.object({
   error: z.string(),
   details: z.record(z.array(z.string())).optional()
@@ -1313,6 +1427,30 @@ export const DebugDownloadResponseSchema = z.object({
   url: z.string().url(),
   expiresInSeconds: z.number().int().positive(),
   objectKey: z.string()
+})
+
+export const DebugReplayPlanSchema = z.object({
+  runId: z.string(),
+  targetType: DebugTraceTargetTypeSchema,
+  sourceTraceVisibility: DebugTraceVisibilitySchema,
+  createdAt: z.string(),
+  replayable: z.boolean(),
+  blockedReason: z.string().optional(),
+  inputSummary: z.object({
+    question: z.string(),
+    modelId: z.string(),
+    embeddingModelId: z.string(),
+    topK: z.number().int(),
+    memoryTopK: z.number().int(),
+    minScore: z.number(),
+    citationCount: z.number().int().nonnegative()
+  }),
+  redaction: z.object({
+    policyVersion: DebugTraceSanitizePolicyVersionSchema,
+    visibility: DebugTraceVisibilitySchema,
+    redactedFields: z.array(z.string()),
+    notes: z.array(z.string()).optional()
+  })
 })
 
 export const WorkerTargetTypeSchema = z.enum(["chat_run", "document_ingest_run", "benchmark_run", "async_agent_run"])

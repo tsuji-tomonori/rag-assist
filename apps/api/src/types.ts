@@ -314,6 +314,27 @@ export type DocumentListItemSummary = DocumentManifestSummary & Pick<
   | "embeddingDimensions"
 >
 
+export type ParsedDocumentPreview = {
+  documentId: string
+  fileName: string
+  sourceExtractorVersion?: string
+  fileProfile?: PdfFileProfile
+  textPreview?: string
+  pageCount: number
+  blockCount: number
+  tableCount: number
+  figureCount: number
+  warnings: ExtractionWarning[]
+  counters?: Record<string, number>
+  pages?: ParsedPage[]
+  blocks?: ParsedBlock[]
+  tables?: ExtractedTable[]
+  figures?: ExtractedFigure[]
+  qualityProfile?: DocumentQualityProfile
+  available: boolean
+  unavailableReason?: string
+}
+
 export type MemoryCard = {
   id: string
   level?: "document" | "section" | "concept"
@@ -581,6 +602,27 @@ export type AgentArtifact = {
   storageRef: string
   createdAt: string
   writebackStatus?: "not_requested" | "pending_approval" | "approved" | "rejected" | "applied"
+  writebackTarget?: {
+    sourceType: "folder" | "document"
+    sourceId: string
+    targetPath?: string
+  }
+  writebackRequestedBy?: string
+  writebackRequestedAt?: string
+  writebackReviewedBy?: string
+  writebackReviewedAt?: string
+  writebackAppliedBy?: string
+  writebackAppliedAt?: string
+  writebackDecisionReason?: string
+}
+
+export type AgentProviderSetting = {
+  provider: AgentRuntimeProvider
+  displayName: string
+  availability: AgentProviderAvailability
+  credentialMode: "environment" | "not_configured" | "disabled"
+  configuredModelIds: string[]
+  reason?: string
 }
 
 export type SkillDefinition = {
@@ -662,6 +704,50 @@ export type AsyncAgentRun = {
   startedAt?: string
   completedAt?: string
   updatedAt: string
+}
+
+export type QualityActionCard = {
+  actionId: string
+  documentId: string
+  fileName: string
+  severity: "info" | "warning" | "blocked"
+  reasonCodes: string[]
+  suggestedAction: "review_extraction" | "reparse_document" | "verify_document" | "update_freshness" | "rag_exclusion_review"
+  title: string
+  description: string
+  createdAt: string
+}
+
+export type AdminExportArtifact = {
+  exportType: "audit_log" | "cost_summary"
+  url: string
+  expiresInSeconds: number
+  objectKey: string
+  generatedAt: string
+  redaction: {
+    policyVersion: string
+    redactedFields: string[]
+    notes: string[]
+  }
+}
+
+export type DebugReplayPlan = {
+  runId: string
+  targetType: DebugTraceTargetType
+  sourceTraceVisibility: DebugTraceVisibility
+  createdAt: string
+  replayable: boolean
+  blockedReason?: string
+  inputSummary: {
+    question: string
+    modelId: string
+    embeddingModelId: string
+    topK: number
+    memoryTopK: number
+    minScore: number
+    citationCount: number
+  }
+  redaction: DebugTraceExportRedaction
 }
 
 export type ChatResponsePayload = {

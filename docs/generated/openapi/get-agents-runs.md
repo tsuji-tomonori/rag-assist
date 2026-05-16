@@ -56,7 +56,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 46 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 57 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -103,6 +103,17 @@ Media type: `application/json`
 | `agentRuns[].artifacts[].storageRef` | `string` | yes | `response.agentRuns[].artifacts[].storageRef` の値。項目名は storage ref を表します。 | - |
 | `agentRuns[].artifacts[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `agentRuns[].artifacts[].writebackStatus` | `enum(not_requested \| pending_approval \| approved \| rejected \| applied)` | no | `response.agentRuns[].artifacts[].writebackStatus` の値。項目名は writeback status を表します。 | enum=not_requested, pending_approval, approved, rejected, applied |
+| `agentRuns[].artifacts[].writebackTarget` | `object` | no | `response.agentRuns[].artifacts[].writebackTarget` の値。項目名は writeback target を表します。 | - |
+| `agentRuns[].artifacts[].writebackTarget.sourceType` | `enum(folder \| document)` | yes | `response.agentRuns[].artifacts[].writebackTarget.sourceType` の値。項目名は source type を表します。 | enum=folder, document |
+| `agentRuns[].artifacts[].writebackTarget.sourceId` | `string` | yes | `response.agentRuns[].artifacts[].writebackTarget.sourceId` の値。項目名は source id を表します。 | - |
+| `agentRuns[].artifacts[].writebackTarget.targetPath` | `string` | no | `response.agentRuns[].artifacts[].writebackTarget.targetPath` の値。項目名は target path を表します。 | - |
+| `agentRuns[].artifacts[].writebackRequestedBy` | `string` | no | `response.agentRuns[].artifacts[].writebackRequestedBy` の値。項目名は writeback requested by を表します。 | - |
+| `agentRuns[].artifacts[].writebackRequestedAt` | `string` | no | `response.agentRuns[].artifacts[].writebackRequestedAt` の値。項目名は writeback requested at を表します。 | - |
+| `agentRuns[].artifacts[].writebackReviewedBy` | `string` | no | `response.agentRuns[].artifacts[].writebackReviewedBy` の値。項目名は writeback reviewed by を表します。 | - |
+| `agentRuns[].artifacts[].writebackReviewedAt` | `string` | no | `response.agentRuns[].artifacts[].writebackReviewedAt` の値。項目名は writeback reviewed at を表します。 | - |
+| `agentRuns[].artifacts[].writebackAppliedBy` | `string` | no | `response.agentRuns[].artifacts[].writebackAppliedBy` の値。項目名は writeback applied by を表します。 | - |
+| `agentRuns[].artifacts[].writebackAppliedAt` | `string` | no | `response.agentRuns[].artifacts[].writebackAppliedAt` の値。項目名は writeback applied at を表します。 | - |
+| `agentRuns[].artifacts[].writebackDecisionReason` | `string` | no | `response.agentRuns[].artifacts[].writebackDecisionReason` の値。項目名は writeback decision reason を表します。 | - |
 | `agentRuns[].budget` | `object` | no | `response.agentRuns[].budget` の値。項目名は budget を表します。 | - |
 | `agentRuns[].budget.maxCost` | `number` | no | `response.agentRuns[].budget.maxCost` の値。項目名は max cost を表します。 | minimum=0 |
 | `agentRuns[].budget.maxDurationMinutes` | `integer` | no | `response.agentRuns[].budget.maxDurationMinutes` の値。項目名は max duration minutes を表します。 | minimum=0 |

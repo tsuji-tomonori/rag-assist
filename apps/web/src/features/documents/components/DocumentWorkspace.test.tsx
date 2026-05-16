@@ -161,6 +161,99 @@ describe("DocumentWorkspace", () => {
     expect(container.querySelector('[data-label="操作"] .document-action-buttons')).not.toBeNull()
   })
 
+  it("API 由来の ParsedDocument preview と抽出品質を詳細に表示する", async () => {
+    const parsedDocument: DocumentManifest = {
+      documentId: "doc-preview",
+      fileName: "preview.pdf",
+      mimeType: "application/pdf",
+      chunkCount: 4,
+      memoryCardCount: 1,
+      createdAt: "2026-05-07T00:00:00.000Z",
+      fileProfile: "mixed",
+      parsedDocument: {
+        schemaVersion: 2,
+        text: "第1章 本文の抽出結果です。表と注記を含みます。",
+        sourceExtractorVersion: "textract-v2",
+        pages: [{ pageNumber: 1 }],
+        blocks: [{ id: "block-1", kind: "text" }],
+        tables: [{ id: "table-1" }],
+        figures: []
+      },
+      extractionWarnings: [
+        { code: "low_confidence", message: "2ページ目のOCR信頼度が低いです", severity: "warning", page: 2, confidence: 0.61 }
+      ],
+      extractionCounters: { pageCount: 2, tableCount: 1 },
+      qualityProfile: {
+        extractionQualityStatus: "low",
+        ragEligibility: "eligible_with_warning",
+        confidence: 0.78,
+        flags: ["low_extraction_confidence"]
+      }
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={[parsedDocument]}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("row", { name: "preview.pdfの詳細を表示" }))
+
+    const drawer = screen.getByRole("dialog", { name: "preview.pdf" })
+    expect(within(drawer).getByText("抽出品質")).toBeInTheDocument()
+    expect(within(drawer).getByText(/extraction: low/)).toBeInTheDocument()
+    expect(within(drawer).getByText(/RAG: eligible_with_warning/)).toBeInTheDocument()
+    expect(within(drawer).getByText(/flags: low_extraction_confidence/)).toBeInTheDocument()
+    expect(within(drawer).getByText(/warning: low_confidence - 2ページ目のOCR信頼度が低いです/)).toBeInTheDocument()
+    expect(within(drawer).getByText(/pageCount: 2/)).toBeInTheDocument()
+    expect(within(drawer).getByText(/tableCount: 1/)).toBeInTheDocument()
+    expect(within(drawer).getByText(/schemaVersion: 2 \/ extractor: textract-v2 \/ fileProfile: mixed/)).toBeInTheDocument()
+    expect(within(drawer).getByText(/pages: 1 \/ blocks: 1 \/ tables: 1 \/ figures: 0/)).toBeInTheDocument()
+    expect(within(drawer).getByText("第1章 本文の抽出結果です。表と注記を含みます。")).toBeInTheDocument()
+  })
+
+  it("preview API フィールドがない文書では架空の抽出内容を表示しない", async () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("row", { name: "requirements.mdの詳細を表示" }))
+
+    const drawer = screen.getByRole("dialog", { name: "requirements.md" })
+    expect(within(drawer).getByText("ParsedDocument summary")).toBeInTheDocument()
+    expect(within(drawer).getAllByText("利用不可").length).toBeGreaterThanOrEqual(4)
+    expect(within(drawer).queryByText(/pageCount:/)).not.toBeInTheDocument()
+    expect(within(drawer).queryByText(/tableCount:/)).not.toBeInTheDocument()
+    expect(within(drawer).queryByText(/schemaVersion:/)).not.toBeInTheDocument()
+    expect(within(drawer).queryByText(/low_extraction_confidence/)).not.toBeInTheDocument()
+  })
+
   it("文書一覧をページ分割し、表示件数とページ移動を操作できる", async () => {
     render(
       <DocumentWorkspace

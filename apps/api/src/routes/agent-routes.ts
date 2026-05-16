@@ -3,7 +3,9 @@ import { hasPermission, requirePermission } from "../authorization.js"
 import {
   AgentArtifactListResponseSchema,
   AgentArtifactSchema,
+  AgentArtifactWritebackRequestSchema,
   AgentProviderListResponseSchema,
+  AgentProviderSettingsResponseSchema,
   AsyncAgentRunListResponseSchema,
   AsyncAgentRunSchema,
   CreateAsyncAgentRunRequestSchema,
@@ -61,6 +63,28 @@ export function registerAgentRoutes({ app, service }: ApiRouteContext) {
 
   app.openapi(
     looseRoute({
+      method: "get",
+      path: "/agents/provider-settings",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "agent:provider:manage",
+        operationKey: "agent.provider_settings.read",
+        resourceCondition: "none",
+        notes: ["provider settings は credential 値を返さず、設定状態と利用可能 model ID だけを返します。"]
+      }),
+      responses: {
+        200: { description: "List async agent provider setting states without secrets", content: { "application/json": { schema: AgentProviderSettingsResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    (c) => {
+      requirePermission(c.get("user"), "agent:provider:manage")
+      return c.json({ providers: service.listAgentProviderSettings() }, 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
       method: "post",
       path: "/agents/runs",
       "x-memorag-authorization": routeAuthorization({
@@ -69,7 +93,7 @@ export function registerAgentRoutes({ app, service }: ApiRouteContext) {
         operationKey: "agent.run.create",
         resourceCondition: "agentWorkspaceReadOnly",
         notes: [
-          "選択 folder/document は readOnly 以上を service 層で確認します。writableCopy と writeback は scope-out です。",
+          "選択 folder/document は readOnly 以上を service 層で確認します。writeback は artifact approval API で full 権限を再確認します。",
           "provider が disabled / not configured / unavailable の場合、mock execution は作らず blocked run として返します。"
         ]
       }),
@@ -174,6 +198,52 @@ export function registerAgentRoutes({ app, service }: ApiRouteContext) {
       const artifacts = await service.listAsyncAgentArtifacts(c.get("user"), agentRunId)
       if (!artifacts) return c.json({ error: "Async agent run not found" }, 404)
       return c.json({ artifacts }, 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/agents/runs/{agentRunId}/artifacts/{artifactId}/writeback",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "agent:artifact:writeback",
+        conditionalPermissions: ["agent:read:managed"],
+        operationKey: "agent.artifact.writeback",
+        resourceCondition: "agentWritebackFull",
+        notes: [
+          "artifact writeback は target folder/document の full 権限を service 層で再確認します。",
+          "apply は承認済み metadata 状態を記録するだけで、provider raw workspace や credential は返しません。"
+        ]
+      }),
+      request: {
+        params: z.object({ agentRunId: z.string().min(1), artifactId: z.string().min(1) }),
+        body: {
+          required: true,
+          content: { "application/json": { schema: AgentArtifactWritebackRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Updated async agent artifact writeback state", content: { "application/json": { schema: AgentArtifactSchema } } },
+        400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Async agent artifact not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "agent:artifact:writeback")
+      const { agentRunId, artifactId } = validParam<{ agentRunId: string; artifactId: string }>(c)
+      const body = validJson<z.infer<typeof AgentArtifactWritebackRequestSchema>>(c)
+      try {
+        const artifact = await service.updateAsyncAgentArtifactWriteback(user, agentRunId, artifactId, body)
+        if (!artifact) return c.json({ error: "Async agent artifact not found" }, 404)
+        return c.json(artifact, 200)
+      } catch (err) {
+        if (err instanceof Error && err.message.startsWith("Forbidden")) return c.json({ error: "Forbidden" }, 403)
+        if (err instanceof Error) return c.json({ error: err.message }, 400)
+        throw err
+      }
     }
   )
 

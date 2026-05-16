@@ -2,6 +2,7 @@ import { z } from "@hono/zod-openapi"
 import { requirePermission } from "../authorization.js"
 import {
   AccessRoleListResponseSchema,
+  AdminExportResponseSchema,
   AdminAuditLogResponseSchema,
   AliasAuditLogResponseSchema,
   AliasDefinitionSchema,
@@ -14,6 +15,7 @@ import {
   ManagedUserListResponseSchema,
   ManagedUserSchema,
   PublishAliasesResponseSchema,
+  QualityActionCardListResponseSchema,
   ReviewAliasRequestSchema,
   UpdateAliasRequestSchema,
   UsageSummaryListResponseSchema
@@ -83,6 +85,35 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       const user = c.get("user")
       requirePermission(user, "access:policy:read")
       return c.json({ auditLog: await service.listAdminAuditLog(user) }, 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/admin/audit-log/export",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "access:policy:read",
+        operationKey: "audit.export",
+        resourceCondition: "none",
+        notes: ["audit export は sanitize 済み JSON を署名付き URL として返し、credential や raw prompt は含めません。"]
+      }),
+      responses: {
+        200: { description: "Create signed admin audit export URL", content: { "application/json": { schema: AdminExportResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "export 保存先が設定されていません", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "access:policy:read")
+      try {
+        return c.json(await service.createAdminExportDownloadUrl(user, "audit_log"), 200)
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("DEBUG_DOWNLOAD_BUCKET_NAME")) return c.json({ error: "Export storage is not configured" }, 503)
+        throw err
+      }
     }
   )
 
@@ -346,6 +377,29 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
   app.openapi(
     looseRoute({
       method: "get",
+      path: "/admin/quality-actions",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "rag:doc:read",
+        operationKey: "quality.action.read",
+        resourceCondition: "documentGroupRead",
+        notes: ["品質 action card は caller が読める文書から算出し、架空件数や固定 fallback は返しません。"]
+      }),
+      responses: {
+        200: { description: "List document quality action cards", content: { "application/json": { schema: QualityActionCardListResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:read")
+      return c.json({ actions: await service.listQualityActionCards(user) }, 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "get",
       path: "/admin/usage",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "usage:read:all_users", operationKey: "usage.read.aggregate", resourceCondition: "none" }),
       responses: {
@@ -372,6 +426,35 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       const user = c.get("user")
       requirePermission(user, "cost:read:all")
       return c.json(await service.getCostAuditSummary(user), 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/admin/costs/export",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "cost:read:all",
+        operationKey: "cost.export",
+        resourceCondition: "none",
+        notes: ["cost export は集計値と redaction metadata のみを含む sanitize 済み JSON として返します。"]
+      }),
+      responses: {
+        200: { description: "Create signed admin cost export URL", content: { "application/json": { schema: AdminExportResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        503: { description: "export 保存先が設定されていません", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "cost:read:all")
+      try {
+        return c.json(await service.createAdminExportDownloadUrl(user, "cost_summary"), 200)
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("DEBUG_DOWNLOAD_BUCKET_NAME")) return c.json({ error: "Export storage is not configured" }, 503)
+        throw err
+      }
     }
   )
 }
