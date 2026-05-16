@@ -366,6 +366,7 @@
         "AdminOverviewGrid"
       ],
       "jsxUsages": [
+        "EmptyState",
         "Icon",
         "article",
         "button",
@@ -383,6 +384,7 @@
         "AdminRolePanel"
       ],
       "jsxUsages": [
+        "EmptyState",
         "article",
         "div",
         "h3",
@@ -979,8 +981,12 @@
         "DocumentDetailDrawer"
       ],
       "jsxUsages": [
+        "CounterList",
         "DetailRow",
         "Icon",
+        "InlineList",
+        "ParsedDocumentSummary",
+        "WarningList",
         "aside",
         "button",
         "dd",
@@ -989,7 +995,9 @@
         "dt",
         "h3",
         "header",
-        "span"
+        "li",
+        "span",
+        "ul"
       ],
       "certainty": "confirmed"
     },
@@ -2085,9 +2093,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:186:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:189:button",
       "file": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx",
-      "line": 186,
+      "line": 189,
       "feature": "admin",
       "component": "AdminOverviewGrid",
       "element": "button",
@@ -2199,9 +2207,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:110:form",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:116:form",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 110,
+      "line": 116,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "form",
@@ -2235,9 +2243,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:111:label",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:117:label",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 111,
+      "line": 117,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2257,9 +2265,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:113:input",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:119:input",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 113,
+      "line": 119,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "input",
@@ -2301,9 +2309,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:115:label",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:121:label",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 115,
+      "line": 121,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2323,9 +2331,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:117:input",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:123:input",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 117,
+      "line": 123,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "input",
@@ -2363,9 +2371,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:119:label",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:125:label",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 119,
+      "line": 125,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "label",
@@ -2385,9 +2393,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:121:select",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:132:select",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 121,
+      "line": 132,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "select",
@@ -2421,9 +2429,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:123:option",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:134:option",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 123,
+      "line": 134,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "option",
@@ -2448,9 +2456,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:127:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:139:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 127,
+      "line": 139,
       "feature": "admin",
       "component": "AdminCreateUserForm",
       "element": "button",
@@ -2481,9 +2489,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:177:select",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:199:select",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 177,
+      "line": 199,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "select",
@@ -2495,7 +2503,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canAssignRoles || loading"
+          "disabled=loading"
         ],
         "status": "ok",
         "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
@@ -2513,7 +2521,7 @@
         },
         {
           "name": "disabled",
-          "value": "!canAssignRoles || loading"
+          "value": "loading"
         },
         {
           "name": "aria-label",
@@ -2527,9 +2535,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:179:option",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:201:option",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 179,
+      "line": 201,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "option",
@@ -2554,9 +2562,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:182:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:204:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 182,
+      "line": 204,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2568,7 +2576,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canAssignRoles || loading || !roleChanged"
+          "disabled=loading || !roleChanged"
         ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
@@ -2586,7 +2594,7 @@
         },
         {
           "name": "disabled",
-          "value": "!canAssignRoles || loading || !roleChanged"
+          "value": "loading || !roleChanged"
         },
         {
           "name": "onClick",
@@ -2596,9 +2604,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:195:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:219:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 195,
+      "line": 219,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2610,7 +2618,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canUnsuspend || loading"
+          "disabled=loading"
         ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
@@ -2628,7 +2636,7 @@
         },
         {
           "name": "disabled",
-          "value": "!canUnsuspend || loading"
+          "value": "loading"
         },
         {
           "name": "onClick",
@@ -2638,9 +2646,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:200:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:224:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 200,
+      "line": 224,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2652,7 +2660,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canSuspend || loading"
+          "disabled=loading"
         ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
@@ -2670,7 +2678,7 @@
         },
         {
           "name": "disabled",
-          "value": "!canSuspend || loading"
+          "value": "loading"
         },
         {
           "name": "onClick",
@@ -2680,9 +2688,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:205:button",
+      "id": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:229:button",
       "file": "apps/web/src/features/admin/components/panels/AdminUserPanel.tsx",
-      "line": 205,
+      "line": 229,
       "feature": "admin",
       "component": "ManagedUserRow",
       "element": "button",
@@ -2694,7 +2702,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canDelete || loading"
+          "disabled=loading"
         ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
@@ -2712,7 +2720,7 @@
         },
         {
           "name": "disabled",
-          "value": "!canDelete || loading"
+          "value": "loading"
         },
         {
           "name": "onClick",
@@ -2722,9 +2730,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:63:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:66:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 63,
+      "line": 66,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -2736,7 +2744,7 @@
         "descriptionRefs": "-",
         "role": "-",
         "state": [
-          "disabled=!canPublish || loading"
+          "disabled=loading"
         ],
         "status": "warning",
         "reason": "削除、停止、公開、切替などの影響が大きい操作は対象や影響が分かる日本語メタデータを推奨します。"
@@ -2754,7 +2762,7 @@
         },
         {
           "name": "disabled",
-          "value": "!canPublish || loading"
+          "value": "loading"
         },
         {
           "name": "onClick",
@@ -2764,9 +2772,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:71:form",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:75:form",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 71,
+      "line": 75,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "form",
@@ -2796,9 +2804,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:72:label",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:76:label",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 72,
+      "line": 76,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
@@ -2818,9 +2826,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:74:input",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:78:input",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 74,
+      "line": 78,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "input",
@@ -2864,9 +2872,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:76:label",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:80:label",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 76,
+      "line": 80,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
@@ -2886,9 +2894,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:78:input",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:82:input",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 78,
+      "line": 82,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "input",
@@ -2932,9 +2940,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:80:label",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:84:label",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 80,
+      "line": 84,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "label",
@@ -2954,9 +2962,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:82:input",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:86:input",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 82,
+      "line": 86,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "input",
@@ -3000,9 +3008,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:84:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:88:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 84,
+      "line": 88,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -3033,9 +3041,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:103:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:109:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 103,
+      "line": 109,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -3075,9 +3083,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:107:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:113:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 107,
+      "line": 113,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -3117,9 +3125,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:111:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:117:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 111,
+      "line": 117,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -3159,9 +3167,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:115:button",
+      "id": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx:121:button",
       "file": "apps/web/src/features/admin/components/panels/AliasAdminPanel.tsx",
-      "line": 115,
+      "line": 121,
       "feature": "admin",
       "component": "AliasAdminPanel",
       "element": "button",
@@ -6869,9 +6877,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:55:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:61:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 55,
+      "line": 61,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -6913,9 +6921,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:80:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:88:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 80,
+      "line": 88,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -6955,9 +6963,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:84:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:92:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 84,
+      "line": 92,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -6991,9 +6999,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:88:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:96:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 88,
+      "line": 96,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
@@ -7033,9 +7041,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:92:button",
+      "id": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:100:button",
       "file": "apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx",
-      "line": 92,
+      "line": 100,
       "feature": "documents",
       "component": "DocumentDetailDrawer",
       "element": "button",
