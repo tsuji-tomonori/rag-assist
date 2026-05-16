@@ -1,6 +1,6 @@
 # 章別仕様 gap 全量実装
 
-- 状態: do
+- 状態: done
 - 種別: 機能追加 / 仕様差分解消
 - 作成日: 2026-05-16
 - 対象仕様: `docs/spec/2026-chapter-spec.md` および `.workspace/rag-assist_仕様追加_章別定義_管理者向け構成版 (1).md`
@@ -30,3 +30,9 @@
 - Benchmark runner が async-agent unavailable/provider metadata と artifact redaction を評価できる。
 - 新規 route は access-control policy test と OpenAPI docs に登録されている。
 - `npm run lint`、`npm run typecheck`、`npm test --workspaces --if-present`、`npm run build`、`npm run docs:openapi:check`、`git diff --check` が成功する。
+
+## 完了確認
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/319
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み

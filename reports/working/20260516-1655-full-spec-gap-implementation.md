@@ -2,7 +2,7 @@
 
 - 作業日時: 2026-05-16 16:55 JST
 - ブランチ: `codex/full-spec-gap-implementation`
-- task: `tasks/do/20260516-1625-full-spec-gap-implementation.md`
+- task: `tasks/done/20260516-1625-full-spec-gap-implementation.md`
 
 ## 指示
 
