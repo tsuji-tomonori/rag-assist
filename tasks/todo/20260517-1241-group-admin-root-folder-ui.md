@@ -24,6 +24,33 @@ Web UI から group 管理者 namespace の root folder を作成できるよう
 - Cognito group 管理 UI 全体。
 - group membership 管理。
 
+## 昇華メタ情報
+
+- 優先度: P2。API は対応済みだが、UI には group 候補 source の前提が必要。
+- 依存関係: group / role directory API、admin principal validation、folder create UI。
+- 推奨 PR 分割:
+  - PR 1: Web hook / API client 型同期。
+  - PR 2: group 候補取得 source の実装または既存 API 接続。
+  - PR 3: create folder UI の admin principal selector。
+- 成功指標: 権限のある user が実在 group namespace に root folder を作成できる。
+
+## 実装設計メモ
+
+- group 候補 API がない場合、先に候補取得 task を切る。架空候補は作らない。
+- child folder は parent の admin principal を継承し、UI で変更させない。
+- user namespace と group namespace は同一 canonical path でも別 namespace として表示する。
+- permission error は group membership 不足か system admin 不足かを安全な範囲で表示する。
+
+## 追加確認観点
+
+- `adminPrincipalId` を client 入力だけで信用しない。
+- group root 作成後の folder tree search / upload destination が namespace を混同しない。
+- local auth / test fixture で group namespace を再現できる。
+
+## 未確定点
+
+- group 候補を Cognito group API、admin users API、または別 directory から取るか。
+
 ## 実行計画
 
 1. API client と Web hook の create group input 差分を確認する。

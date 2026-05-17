@@ -26,6 +26,33 @@ DynamoDB に `ParentFolderIndex` を追加し、指定 parent 配下の direct c
 - `AdminCanonicalPathIndex` の置き換え。
 - folder search 全体の全文検索化。
 
+## 昇華メタ情報
+
+- 優先度: P2。大規模 folder tree の UX / query scale task。
+- 依存関係: `parentPathPk` backfill、folder tree lazy loading 方針、GSI deploy plan。
+- 推奨 PR 分割:
+  - PR 1: CDK GSI と store query。
+  - PR 2: API pagination / child listing endpoint。
+  - PR 3: Web lazy loading / search state。
+- 成功指標: direct children を parent key で query し、全 group load を避けられる。
+
+## 実装設計メモ
+
+- GSI key は root parent 表現を `ROOT` に統一し、PR #321 の `parentPathPk` と合わせる。
+- sort key は `normalizedName#groupId` にして同名衝突と安定 order を両立する。
+- UI lazy loading では selected folder path の ancestors を展開できる必要がある。
+- folder search が全 tree を必要とする場合、search API との役割分担を決める。
+
+## 追加確認観点
+
+- move / rename 後に ParentFolderIndex key が stale にならない。
+- root children と nested children の query が同じ response shape を返す。
+- GSI backfill 中の rollout 手順が PR に明記される。
+
+## 未確定点
+
+- API を existing list endpoint に pagination 追加するか、children endpoint を新設するか。
+
 ## 実行計画
 
 1. `parentPathPk = tenantId#adminPrincipalType#adminPrincipalId#parentGroupId` の key 設計を再確認する。

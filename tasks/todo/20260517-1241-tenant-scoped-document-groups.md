@@ -25,6 +25,33 @@ DocumentGroup の tenantId を実 tenant context に接続し、folder create / 
 - billing tenant 管理。
 - tenant 作成 / invite UI 全体。
 
+## 昇華メタ情報
+
+- 優先度: P2。ただし multi-tenant production を始める前には P0。
+- 依存関係: auth claims / tenant model、DocumentGroup canonical fields、document / RAG scope filters。
+- 推奨 PR 分割:
+  - PR 1: tenant context source と local test fixture。
+  - PR 2: DocumentGroup service の default tenant 排除。
+  - PR 3: document / RAG / upload scope の tenant strict 化。
+- 成功指標: client body ではなく actor context 由来 tenant で folder namespace が分離される。
+
+## 実装設計メモ
+
+- production path では `defaultTenantId` fallback を使わず、tenant missing は fail closed にする。
+- local mode だけ明示 fallback を許可する場合は config / report に残す。
+- tenantId は path lock key、GSI partition key、document manifest、search filter で同じ source を使う。
+- tenant strict 化前に existing data の tenant backfill 方針を確認する。
+
+## 追加確認観点
+
+- user が request body の tenantId を変えても cross-tenant folder を作れない。
+- RAG retrieval / document list / upload destination が同じ tenant boundary を使う。
+- system admin の cross-tenant 操作が必要なら明示 route / permission に分ける。
+
+## 未確定点
+
+- tenant claim 名、local auth の tenant fixture、既存 data migration 方針。
+
 ## 実行計画
 
 1. current user / auth context に tenant 情報が存在するか確認する。

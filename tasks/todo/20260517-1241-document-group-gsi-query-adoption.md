@@ -24,6 +24,33 @@ DocumentGroup の canonical path lookup、admin namespace listing、duplicate pr
 - ParentFolderIndex の追加。これは `20260517-1241-parent-folder-index.md` で扱う。
 - path lock transaction の削除。
 
+## 昇華メタ情報
+
+- 優先度: P1.5。正しさではなく scale / latency 改善。backfill apply の見通し後に着手する。
+- 依存関係: `AdminCanonicalPathIndex` deploy、canonical fields backfill、legacy fallback 方針。
+- 推奨 PR 分割:
+  - PR 1: duplicate precheck の `findByCanonicalPath` 化。
+  - PR 2: admin namespace listing の `listByAdminPath` 化。
+  - PR 3: pagination / sorting / metrics。
+- 成功指標: hot path が全件 list に依存せず、lock transaction は維持される。
+
+## 実装設計メモ
+
+- GSI query は precheck / list の高速化であり、唯一性の最終保証には使わない。
+- backfill 未完了環境では legacy fallback をどうするか明示する。
+- `listDocumentGroups` の API response order が変わる場合は Web test と docs に影響する。
+- query latency / item count の trace または debug log を検討する。
+
+## 追加確認観点
+
+- GSI query adoption 後も legacy normalized group が見える。
+- tenant / admin principal partition key が request actor の namespace と一致する。
+- path conflict race は transaction lock で防げる。
+
+## 未確定点
+
+- folder listing に pagination を入れるか、まず内部 query 置換だけに留めるか。
+
 ## 実行計画
 
 1. service 層で全件 list を使っている document group 処理を棚卸しする。

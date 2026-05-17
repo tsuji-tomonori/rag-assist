@@ -25,6 +25,34 @@
 - cross-tenant sharing。
 - 外部 IdP group の実在検証。
 
+## 昇華メタ情報
+
+- 優先度: P1.5。認可境界に直結するため、delete / audit 以降に慎重に入れる。
+- 依存関係: folder tree canonical path、現行 ACL、RAG retrieval scope、document list ACL。
+- 推奨 PR 分割:
+  - PR 1: inheritance model の型 / schema / legacy compatibility。
+  - PR 2: effective ACL 計算と API tests。
+  - PR 3: Web 表示と sharing UI。
+- 成功指標: stored ACL と effective ACL が区別され、RAG scope が effective ACL を使う。
+
+## 実装設計メモ
+
+- legacy group は現行挙動を維持する default にする。
+- `inherit` / `override` / `private override` など、状態を明示する field を検討する。
+- effective ACL は parent chain を辿るため cycle guard と depth guard を持つ。
+- UI では inherited value と explicit value をラベルで区別する。
+
+## 追加確認観点
+
+- 親共有を追加したときに子 document の検索可否が期待通り変わる。
+- 子で private override した場合、親共有が漏れない。
+- manager 権限の継承有無がテストで固定されている。
+
+## 未確定点
+
+- manager 権限も継承するか、read sharing だけ継承するか。
+- legacy group の default を inherit にするか explicit にするか。
+
 ## 実行計画
 
 1. 仕様上の共有継承要件を確認する。
