@@ -13,6 +13,9 @@ import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.j
 import { LocalDocumentIngestRunStore } from "../adapters/local-document-ingest-run-store.js"
 import { LocalDocumentIngestRunEventStore } from "../adapters/local-document-ingest-run-event-store.js"
 import { LocalDocumentGroupStore } from "../adapters/local-document-group-store.js"
+import { LocalFolderPolicyStore } from "../adapters/local-folder-policy-store.js"
+import { LocalUserGroupStore } from "../adapters/local-user-group-store.js"
+import { LocalGroupMembershipStore } from "../adapters/local-group-membership-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
@@ -502,7 +505,10 @@ function createLocalDeps(dataDir: string): Dependencies {
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
     documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
-    documentGroupStore: new LocalDocumentGroupStore(dataDir)
+    documentGroupStore: new LocalDocumentGroupStore(dataDir),
+    folderPolicyStore: new LocalFolderPolicyStore(dataDir),
+    userGroupStore: new LocalUserGroupStore(dataDir),
+    groupMembershipStore: new LocalGroupMembershipStore(dataDir)
   }
 }
 

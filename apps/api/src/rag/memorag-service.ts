@@ -656,6 +656,9 @@ export class MemoRagService {
       sharedUserIds: uniqueStrings(input.sharedUserIds ?? []),
       sharedGroups: uniqueStrings(input.sharedGroups ?? []),
       managerUserIds: uniqueStrings([actor.userId, ...(input.managerUserIds ?? [])]),
+      hasExplicitPolicy: false,
+      status: "active",
+      createdBy: actor.userId,
       createdAt: now,
       updatedAt: now
     }
@@ -3031,6 +3034,7 @@ function canManageManifest(manifest: DocumentManifest, user: AppUser, documentGr
 
 function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
   if (!group) return false
+  if ((group.status ?? "active") !== "active") return false
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   if (group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId) || group.sharedUserIds.includes(user.userId)) return true
   if (user.email && group.sharedUserIds.includes(user.email)) return true
@@ -3040,6 +3044,7 @@ function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser)
 
 function canManageDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
   if (!group) return false
+  if ((group.status ?? "active") !== "active") return false
   return user.cognitoGroups.includes("SYSTEM_ADMIN") || group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId)
 }
 
@@ -3215,7 +3220,10 @@ function normalizeDocumentGroup(group: DocumentGroup, parent?: DocumentGroup): D
     visibility: group.visibility ?? "private",
     sharedUserIds: uniqueStrings(group.sharedUserIds ?? []),
     sharedGroups: uniqueStrings(group.sharedGroups ?? []),
-    managerUserIds: uniqueStrings([group.ownerUserId, ...(group.managerUserIds ?? [])])
+    managerUserIds: uniqueStrings([group.ownerUserId, ...(group.managerUserIds ?? [])]),
+    hasExplicitPolicy: group.hasExplicitPolicy ?? Boolean(group.policyId),
+    status: group.status ?? "active",
+    createdBy: group.createdBy ?? group.ownerUserId
   }
 }
 
