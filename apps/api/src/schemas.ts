@@ -207,7 +207,17 @@ export const DocumentManifestSchema = z.object({
 
 export const DocumentGroupSchema = z.object({
   groupId: z.string(),
+  schemaVersion: z.number().int().positive().optional(),
+  itemType: z.literal("documentGroup").optional(),
+  tenantId: z.string().optional(),
+  adminPrincipalType: z.enum(["user", "group"]),
+  adminPrincipalId: z.string(),
   name: z.string(),
+  normalizedName: z.string(),
+  canonicalPath: z.string(),
+  normalizedCanonicalPath: z.string(),
+  adminPathPk: z.string(),
+  parentPathPk: z.string(),
   description: z.string().optional(),
   parentGroupId: z.string().optional(),
   ancestorGroupIds: z.array(z.string()).optional(),
@@ -227,6 +237,8 @@ export const DocumentGroupListResponseSchema = z.object({
 export const CreateDocumentGroupRequestSchema = z.object({
   name: z.string().min(1).max(120).openapi({ example: "社内規定" }),
   description: z.string().max(1000).optional(),
+  adminPrincipalType: z.enum(["user", "group"]).optional(),
+  adminPrincipalId: z.string().min(1).max(200).optional(),
   parentGroupId: z.string().min(1).optional(),
   visibility: z.enum(["private", "shared", "org"]).optional().default("private"),
   sharedUserIds: z.array(z.string().min(1)).max(50).optional(),
@@ -235,6 +247,8 @@ export const CreateDocumentGroupRequestSchema = z.object({
 })
 
 export const ShareDocumentGroupRequestSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
+  description: z.string().max(1000).optional(),
   visibility: z.enum(["private", "shared", "org"]).optional(),
   parentGroupId: z.string().min(1).optional(),
   sharedUserIds: z.array(z.string().min(1)).max(50).optional(),

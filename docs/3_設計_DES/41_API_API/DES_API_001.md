@@ -284,7 +284,15 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
   "groups": [
     {
       "groupId": "docgrp_company_policy",
+      "tenantId": "default",
+      "adminPrincipalType": "user",
+      "adminPrincipalId": "user-001",
       "name": "社内規定",
+      "normalizedName": "社内規定",
+      "canonicalPath": "/社内規定",
+      "normalizedCanonicalPath": "/社内規定",
+      "adminPathPk": "default#user#user-001",
+      "parentPathPk": "default#user#user-001#ROOT",
       "visibility": "private",
       "ownerUserId": "user-001",
       "sharedUserIds": ["user-002"],
@@ -303,6 +311,8 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 {
   "name": "社内規定",
   "description": "就業規則と人事関連規定",
+  "adminPrincipalType": "user",
+  "adminPrincipalId": "user-001",
   "visibility": "private",
   "sharedGroups": ["HR"],
   "managerUserIds": ["user-001"]
@@ -313,6 +323,7 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 
 ```json
 {
+  "name": "人事規定",
   "visibility": "org",
   "sharedUserIds": ["user-002@example.com"],
   "sharedGroups": ["HR"],
@@ -320,7 +331,7 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 }
 ```
 
-資料グループの作成は `rag:group:create`、共有設定更新は `rag:group:assign_manager` を要求する。グループへ文書を保存する `POST /documents`、`POST /documents/uploads/{uploadId}/ingest`、`POST /document-ingest-runs` は既存の文書書き込み権限に加え、対象グループの manager 権限を確認する。`POST /documents` は小さなテキスト互換用であり、大容量ファイルは upload session と非同期 ingest run を使う。外部返却は summary に限定し、full manifest、chunk metadata、vector key、ファイル本体は返さない。一時添付は `purpose=chatAttachment` と `scope.scopeType=chat` を使い、`chat:create` を持つ利用者が同一チャット内だけで参照できる。
+資料グループの作成は `rag:group:create`、共有設定更新は `rag:group:assign_manager` を要求する。`POST /document-groups/{groupId}/share` は共有設定に加えて `name` と `description` の更新も受け付け、rename / move 時は `tenantId + adminPrincipalType + adminPrincipalId + normalizedCanonicalPath` の重複を拒否する。DynamoDB 環境では `AdminCanonicalPathIndex` で path lookup を行い、一意性は transaction lock item で保証する。グループへ文書を保存する `POST /documents`、`POST /documents/uploads/{uploadId}/ingest`、`POST /document-ingest-runs` は既存の文書書き込み権限に加え、対象グループの manager 権限を確認する。`POST /documents` は小さなテキスト互換用であり、大容量ファイルは upload session と非同期 ingest run を使う。外部返却は summary に限定し、full manifest、chunk metadata、vector key、ファイル本体は返さない。一時添付は `purpose=chatAttachment` と `scope.scopeType=chat` を使い、`chat:create` を持つ利用者が同一チャット内だけで参照できる。
 
 ## `POST /conversation-history`
 

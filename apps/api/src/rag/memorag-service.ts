@@ -13,6 +13,7 @@ import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type A
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
+import type { DocumentGroupPathUpdate } from "../adapters/document-group-store.js"
 import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
 import { chunkStructuredBlocks, chunkText, summarizeDocumentStatistics } from "./chunk.js"
 import { embedWithCache, mapWithConcurrency } from "./embedding-cache.js"
@@ -111,6 +112,10 @@ type AliasInput = {
     benchmarkSuiteId?: string
   }
 }
+
+const defaultTenantId = "default"
+const rootParentPathSegment = "ROOT"
+const maxDocumentGroupPathTransactionItems = 8
 
 type SearchImprovementCandidateInput = Pick<AliasInput, "scope"> & {
   term: string
@@ -569,7 +574,7 @@ export class MemoRagService {
           throw error
         }))
     )
-    const documentGroups = user ? (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup) : []
+    const documentGroups = user ? normalizeDocumentGroups(await this.deps.documentGroupStore.list()) : []
     return manifests
       .filter((manifest): manifest is DocumentManifest => manifest !== undefined)
       .filter((manifest) => (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active")
@@ -594,21 +599,23 @@ export class MemoRagService {
       throw error
     })
     if (!manifest) return undefined
-    const documentGroups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    const documentGroups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     if (!canAccessManifest(manifest, user, documentGroups)) throw forbiddenError("Forbidden")
     return buildParsedDocumentPreview(manifest)
   }
 
   async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
-    const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     return groups
       .filter((group) => canAccessDocumentGroup(group, user))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => (a.normalizedCanonicalPath ?? a.name).localeCompare(b.normalizedCanonicalPath ?? b.name))
   }
 
   async createDocumentGroup(actor: AppUser, input: {
     name: string
     description?: string
+    adminPrincipalType?: DocumentGroup["adminPrincipalType"]
+    adminPrincipalId?: string
     parentGroupId?: string
     visibility?: DocumentGroup["visibility"]
     sharedUserIds?: string[]
@@ -616,12 +623,31 @@ export class MemoRagService {
     managerUserIds?: string[]
   }): Promise<DocumentGroup> {
     const now = new Date().toISOString()
-    const parent = input.parentGroupId ? normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(input.parentGroupId)) : undefined
+    const name = validateDocumentGroupName(input.name)
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
+    const parent = input.parentGroupId ? groups.find((group) => group.groupId === input.parentGroupId) : undefined
     if (input.parentGroupId && !parent) throw new Error("Parent document group not found")
     if (parent && !canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot create a child group under this parent")
+    const principal = resolveDocumentGroupAdminPrincipal(actor, input, parent)
+    const pathFields = documentGroupPathFields({
+      tenantId: principal.tenantId,
+      adminPrincipalType: principal.adminPrincipalType,
+      adminPrincipalId: principal.adminPrincipalId,
+      parent,
+      name
+    })
+    if (groups.some((group) => group.adminPathPk === pathFields.adminPathPk && group.normalizedCanonicalPath === pathFields.normalizedCanonicalPath)) {
+      throw new Error("Document group canonical path already exists")
+    }
     const group: DocumentGroup = {
       groupId: `docgrp_${randomUUID().slice(0, 12)}`,
-      name: input.name.trim(),
+      schemaVersion: 2,
+      itemType: "documentGroup",
+      tenantId: principal.tenantId,
+      adminPrincipalType: principal.adminPrincipalType,
+      adminPrincipalId: principal.adminPrincipalId,
+      name,
+      ...pathFields,
       description: input.description?.trim() || undefined,
       parentGroupId: parent?.groupId,
       ancestorGroupIds: parent ? [...(parent.ancestorGroupIds ?? []), parent.groupId] : [],
@@ -633,39 +659,64 @@ export class MemoRagService {
       createdAt: now,
       updatedAt: now
     }
-    return this.deps.documentGroupStore.create(group)
+    return this.deps.documentGroupStore.createWithPathLock(group)
   }
 
   async updateDocumentGroupSharing(actor: AppUser, groupId: string, input: {
+    name?: string
+    description?: string
     visibility?: DocumentGroup["visibility"]
     parentGroupId?: string
     sharedUserIds?: string[]
     sharedGroups?: string[]
     managerUserIds?: string[]
   }): Promise<DocumentGroup | undefined> {
-    const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
+    const group = groups.find((item) => item.groupId === groupId)
     if (!group) return undefined
     if (!canManageDocumentGroup(group, actor)) throw forbiddenError("Forbidden: only group managers can update sharing")
     const update: Partial<DocumentGroup> = {}
+    let targetName = group.name
+    if (input.name !== undefined) {
+      targetName = validateDocumentGroupName(input.name)
+      update.name = targetName
+      update.normalizedName = normalizeDocumentGroupName(targetName)
+    }
+    if (input.description !== undefined) update.description = input.description.trim() || undefined
     if (input.visibility !== undefined) update.visibility = input.visibility
     if (input.sharedUserIds !== undefined) update.sharedUserIds = uniqueStrings(input.sharedUserIds)
     if (input.sharedGroups !== undefined) update.sharedGroups = uniqueStrings(input.sharedGroups)
     if (input.managerUserIds !== undefined) update.managerUserIds = uniqueStrings([group.ownerUserId, ...input.managerUserIds])
     let parentChanged = false
+    let parent = group.parentGroupId ? groups.find((item) => item.groupId === group.parentGroupId) : undefined
     if (input.parentGroupId !== undefined) {
       parentChanged = true
       const parentGroupId = input.parentGroupId
       if (parentGroupId === group.groupId) throw new Error("Document group cannot be its own parent")
-      const parent = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(parentGroupId))
+      parent = groups.find((item) => item.groupId === parentGroupId)
       if (!parent) throw new Error("Parent document group not found")
       if ((parent.ancestorGroupIds ?? []).includes(group.groupId)) throw new Error("Document group cannot move under its descendant")
       if (!canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot move group under this parent")
       update.parentGroupId = parent.groupId
       update.ancestorGroupIds = [...(parent.ancestorGroupIds ?? []), parent.groupId]
     }
-    const updated = await this.deps.documentGroupStore.update(groupId, { ...update, updatedAt: new Date().toISOString() })
-    if (parentChanged) await this.refreshDescendantDocumentGroupAncestors(updated)
-    return updated
+    const now = new Date().toISOString()
+    if (parentChanged || input.name !== undefined) {
+      const pathUpdates = buildDocumentGroupPathUpdates(groups, group, { ...update, name: targetName, updatedAt: now }, parent)
+      if (pathUpdates.length > maxDocumentGroupPathTransactionItems) throw new Error("Document group subtree is too large for synchronous path update")
+      for (const next of pathUpdates.map((updateItem) => updateItem.next)) {
+        const conflict = groups.find((candidate) => (
+          candidate.groupId !== next.groupId &&
+          !pathUpdates.some((updateItem) => updateItem.current.groupId === candidate.groupId) &&
+          candidate.adminPathPk === next.adminPathPk &&
+          candidate.normalizedCanonicalPath === next.normalizedCanonicalPath
+        ))
+        if (conflict) throw new Error("Document group canonical path already exists")
+      }
+      const updated = await this.deps.documentGroupStore.updateWithPathLocks(pathUpdates)
+      return updated.find((item) => item.groupId === groupId)
+    }
+    return this.deps.documentGroupStore.update(groupId, { ...update, updatedAt: now })
   }
 
   async assertDocumentGroupsWritable(actor: AppUser, groupIds: string[]): Promise<void> {
@@ -677,7 +728,7 @@ export class MemoRagService {
   }
 
   private async assertDocumentManifestWritable(actor: AppUser, manifest: DocumentManifest): Promise<void> {
-    const documentGroups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    const documentGroups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     if (!canManageManifest(manifest, actor, documentGroups)) {
       throw forbiddenError(`Forbidden: cannot manage document ${manifest.documentId}`)
     }
@@ -692,7 +743,7 @@ export class MemoRagService {
   }
 
   private async refreshDescendantDocumentGroupAncestors(root: DocumentGroup): Promise<void> {
-    const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     const byParent = new Map<string, DocumentGroup[]>()
     for (const group of groups) {
       if (!group.parentGroupId) continue
@@ -2986,10 +3037,175 @@ function canManageDocumentGroup(group: DocumentGroup | undefined, user: AppUser)
   return user.cognitoGroups.includes("SYSTEM_ADMIN") || group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId)
 }
 
-function normalizeDocumentGroup(group: DocumentGroup): DocumentGroup {
+function validateDocumentGroupName(name: string): string {
+  const trimmed = name.trim()
+  if (!trimmed) throw new Error("Document group name is required")
+  if (trimmed.includes("/") || containsControlCharacter(trimmed)) throw new Error("Document group name contains unsupported characters")
+  return trimmed
+}
+
+function containsControlCharacter(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) return true
+  }
+  return false
+}
+
+function normalizeDocumentGroupName(name: string): string {
+  return name.trim().normalize("NFKC").toLocaleLowerCase("ja-JP")
+}
+
+function resolveDocumentGroupAdminPrincipal(
+  actor: AppUser,
+  input: { adminPrincipalType?: DocumentGroup["adminPrincipalType"]; adminPrincipalId?: string },
+  parent?: DocumentGroup
+): { tenantId: string; adminPrincipalType: "user" | "group"; adminPrincipalId: string } {
+  if (parent?.adminPrincipalType && parent.adminPrincipalId) {
+    return {
+      tenantId: parent.tenantId ?? defaultTenantId,
+      adminPrincipalType: parent.adminPrincipalType,
+      adminPrincipalId: parent.adminPrincipalId
+    }
+  }
+  const adminPrincipalType = input.adminPrincipalType ?? "user"
+  const adminPrincipalId = (input.adminPrincipalId ?? (adminPrincipalType === "user" ? actor.userId : "")).trim()
+  if (!adminPrincipalId) throw new Error("adminPrincipalId is required")
+  if (adminPrincipalType === "user" && adminPrincipalId !== actor.userId && !actor.cognitoGroups.includes("SYSTEM_ADMIN")) {
+    throw forbiddenError("Forbidden: cannot create a user-managed group for another user")
+  }
+  if (adminPrincipalType === "group" && !actor.cognitoGroups.includes(adminPrincipalId) && !actor.cognitoGroups.includes("SYSTEM_ADMIN")) {
+    throw forbiddenError("Forbidden: cannot create a group-managed folder without group membership")
+  }
+  return { tenantId: defaultTenantId, adminPrincipalType, adminPrincipalId }
+}
+
+function documentGroupPathFields(input: {
+  tenantId: string
+  adminPrincipalType: "user" | "group"
+  adminPrincipalId: string
+  parent?: DocumentGroup
+  name: string
+}): Pick<DocumentGroup, "normalizedName" | "canonicalPath" | "normalizedCanonicalPath" | "adminPathPk" | "parentPathPk"> {
+  const normalizedName = normalizeDocumentGroupName(input.name)
+  const adminPathPk = documentGroupAdminPathPk(input.tenantId, input.adminPrincipalType, input.adminPrincipalId)
+  const parentCanonicalPath = input.parent?.canonicalPath
+  const parentNormalizedCanonicalPath = input.parent?.normalizedCanonicalPath
+  return {
+    normalizedName,
+    canonicalPath: parentCanonicalPath ? `${parentCanonicalPath}/${input.name}` : `/${input.name}`,
+    normalizedCanonicalPath: parentNormalizedCanonicalPath ? `${parentNormalizedCanonicalPath}/${normalizedName}` : `/${normalizedName}`,
+    adminPathPk,
+    parentPathPk: documentGroupParentPathPk(adminPathPk, input.parent?.groupId)
+  }
+}
+
+function documentGroupAdminPathPk(tenantId: string, adminPrincipalType: "user" | "group", adminPrincipalId: string): string {
+  return `${tenantId}#${adminPrincipalType}#${adminPrincipalId}`
+}
+
+function documentGroupParentPathPk(adminPathPk: string, parentGroupId?: string): string {
+  return `${adminPathPk}#${parentGroupId ?? rootParentPathSegment}`
+}
+
+function buildDocumentGroupPathUpdates(
+  groups: DocumentGroup[],
+  root: DocumentGroup,
+  rootUpdate: Partial<DocumentGroup>,
+  parent?: DocumentGroup
+): DocumentGroupPathUpdate[] {
+  const childrenByParentId = new Map<string, DocumentGroup[]>()
+  for (const group of groups) {
+    if (!group.parentGroupId) continue
+    childrenByParentId.set(group.parentGroupId, [...(childrenByParentId.get(group.parentGroupId) ?? []), group])
+  }
+
+  const updates: DocumentGroupPathUpdate[] = []
+  const queue: Array<{ current: DocumentGroup; patch: Partial<DocumentGroup>; parent?: DocumentGroup }> = [{ current: root, patch: rootUpdate, parent }]
+  while (queue.length > 0) {
+    const item = queue.shift()
+    if (!item) continue
+    const currentParent = item.parent
+    const nextName = item.patch.name ?? item.current.name
+    const tenantId = currentParent?.tenantId ?? item.current.tenantId ?? defaultTenantId
+    const adminPrincipalType = currentParent?.adminPrincipalType ?? item.current.adminPrincipalType ?? "user"
+    const adminPrincipalId = currentParent?.adminPrincipalId ?? item.current.adminPrincipalId ?? item.current.ownerUserId
+    const pathFields = documentGroupPathFields({
+      tenantId,
+      adminPrincipalType,
+      adminPrincipalId,
+      parent: currentParent,
+      name: nextName
+    })
+    const next: DocumentGroup = {
+      ...item.current,
+      ...item.patch,
+      schemaVersion: 2,
+      itemType: "documentGroup",
+      tenantId,
+      adminPrincipalType,
+      adminPrincipalId,
+      name: nextName,
+      ...pathFields
+    }
+    updates.push({ current: item.current, next })
+    for (const child of childrenByParentId.get(item.current.groupId) ?? []) {
+      queue.push({
+        current: child,
+        parent: next,
+        patch: {
+          ancestorGroupIds: [...(next.ancestorGroupIds ?? []), next.groupId],
+          updatedAt: next.updatedAt
+        }
+      })
+    }
+  }
+  return updates
+}
+
+function normalizeDocumentGroups(groups: DocumentGroup[]): DocumentGroup[] {
+  const byId = new Map(groups.map((group) => [group.groupId, group]))
+  const normalized = new Map<string, DocumentGroup>()
+  const visiting = new Set<string>()
+  const visit = (group: DocumentGroup): DocumentGroup => {
+    const cached = normalized.get(group.groupId)
+    if (cached) return cached
+    if (visiting.has(group.groupId)) return normalizeDocumentGroup(group)
+    visiting.add(group.groupId)
+    const parent = group.parentGroupId ? byId.get(group.parentGroupId) : undefined
+    const normalizedParent = parent ? visit(parent) : undefined
+    const result = normalizeDocumentGroup(group, normalizedParent)
+    visiting.delete(group.groupId)
+    normalized.set(group.groupId, result)
+    return result
+  }
+  return groups.map(visit)
+}
+
+function normalizeDocumentGroup(group: DocumentGroup, parent?: DocumentGroup): DocumentGroup {
+  const name = group.name.trim() || group.groupId
+  const tenantId = group.tenantId ?? parent?.tenantId ?? defaultTenantId
+  const adminPrincipalType = group.adminPrincipalType ?? parent?.adminPrincipalType ?? "user"
+  const adminPrincipalId = group.adminPrincipalId ?? parent?.adminPrincipalId ?? group.ownerUserId
+  const pathFields = group.canonicalPath && group.normalizedCanonicalPath && group.adminPathPk && group.parentPathPk
+    ? {
+        normalizedName: group.normalizedName ?? normalizeDocumentGroupName(name),
+        canonicalPath: group.canonicalPath,
+        normalizedCanonicalPath: group.normalizedCanonicalPath,
+        adminPathPk: group.adminPathPk,
+        parentPathPk: group.parentPathPk
+      }
+    : documentGroupPathFields({ tenantId, adminPrincipalType, adminPrincipalId, parent, name })
   return {
     ...group,
-    ancestorGroupIds: uniqueStrings(group.ancestorGroupIds ?? []),
+    schemaVersion: group.schemaVersion ?? 1,
+    itemType: "documentGroup",
+    tenantId,
+    adminPrincipalType,
+    adminPrincipalId,
+    name,
+    ...pathFields,
+    ancestorGroupIds: parent ? [...(parent.ancestorGroupIds ?? []), parent.groupId] : uniqueStrings(group.ancestorGroupIds ?? []),
     visibility: group.visibility ?? "private",
     sharedUserIds: uniqueStrings(group.sharedUserIds ?? []),
     sharedGroups: uniqueStrings(group.sharedGroups ?? []),

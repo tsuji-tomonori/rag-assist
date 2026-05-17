@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, shareDocumentGroup, stageReindexMigration, uploadDocumentFile } from "../api/documentsApi.js"
+import type { DocumentGroup } from "../types.js"
 import { useDocuments } from "./useDocuments.js"
 
 vi.mock("../api/documentsApi.js", () => ({
@@ -28,45 +29,55 @@ function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}
   }
 }
 
+function documentGroupFixture(overrides: Partial<DocumentGroup> = {}): DocumentGroup {
+  const name = overrides.name ?? "社内規定"
+  const ownerUserId = overrides.ownerUserId ?? "user-1"
+  const canonicalPath = overrides.canonicalPath ?? `/${name}`
+  const normalizedName = overrides.normalizedName ?? name.normalize("NFKC").toLocaleLowerCase("ja-JP")
+  const normalizedCanonicalPath = overrides.normalizedCanonicalPath ?? canonicalPath.normalize("NFKC").toLocaleLowerCase("ja-JP")
+  const adminPathPk = overrides.adminPathPk ?? `default#user#${ownerUserId}`
+  return {
+    groupId: "group-1",
+    schemaVersion: 2,
+    itemType: "documentGroup",
+    tenantId: "default",
+    adminPrincipalType: "user",
+    adminPrincipalId: ownerUserId,
+    name,
+    normalizedName,
+    canonicalPath,
+    normalizedCanonicalPath,
+    adminPathPk,
+    parentPathPk: `${adminPathPk}#ROOT`,
+    visibility: "private",
+    ownerUserId,
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [ownerUserId],
+    createdAt: "now",
+    updatedAt: "now",
+    ...overrides
+  }
+}
+
 describe("useDocuments", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(listDocumentGroups).mockResolvedValue([{
-      groupId: "group-1",
-      name: "社内規定",
-      visibility: "private",
-      ownerUserId: "user-1",
-      sharedUserIds: [],
-      sharedGroups: [],
-      managerUserIds: ["user-1"],
-      createdAt: "now",
-      updatedAt: "now"
-    }])
+    vi.mocked(listDocumentGroups).mockResolvedValue([documentGroupFixture()])
     vi.mocked(listDocuments).mockResolvedValue([{ documentId: "doc-1", fileName: "a.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }])
     vi.mocked(listReindexMigrations).mockResolvedValue([])
     vi.mocked(uploadDocumentFile).mockResolvedValue({ documentId: "doc-2", fileName: "b.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
-    vi.mocked(createDocumentGroup).mockResolvedValue({
+    vi.mocked(createDocumentGroup).mockResolvedValue(documentGroupFixture({
       groupId: "group-2",
       name: "個人メモ",
-      visibility: "private",
-      ownerUserId: "user-1",
-      sharedUserIds: [],
-      sharedGroups: [],
-      managerUserIds: ["user-1"],
-      createdAt: "now",
-      updatedAt: "now"
-    })
-    vi.mocked(shareDocumentGroup).mockResolvedValue({
-      groupId: "group-1",
-      name: "社内規定",
+      canonicalPath: "/個人メモ",
+      normalizedCanonicalPath: "/個人メモ",
+      normalizedName: "個人メモ"
+    }))
+    vi.mocked(shareDocumentGroup).mockResolvedValue(documentGroupFixture({
       visibility: "shared",
-      ownerUserId: "user-1",
-      sharedUserIds: [],
-      sharedGroups: ["HR"],
-      managerUserIds: ["user-1"],
-      createdAt: "now",
-      updatedAt: "now"
-    })
+      sharedGroups: ["HR"]
+    }))
     vi.mocked(deleteDocument).mockResolvedValue(undefined)
     vi.mocked(stageReindexMigration).mockResolvedValue({
       migrationId: "migration-1",
@@ -159,17 +170,15 @@ describe("useDocuments", () => {
   })
 
   it("資料グループ一覧更新時に消えた選択と保存先を初期値へ戻す", async () => {
-    vi.mocked(listDocumentGroups).mockResolvedValueOnce([{
+    vi.mocked(listDocumentGroups).mockResolvedValueOnce([documentGroupFixture({
       groupId: "group-2",
       name: "公開資料",
+      canonicalPath: "/公開資料",
+      normalizedCanonicalPath: "/公開資料",
+      normalizedName: "公開資料",
       visibility: "shared",
-      ownerUserId: "user-1",
-      sharedUserIds: [],
-      sharedGroups: ["HR"],
-      managerUserIds: ["user-1"],
-      createdAt: "now",
-      updatedAt: "now"
-    }])
+      sharedGroups: ["HR"]
+    })])
     const { result } = renderHook(() => useDocuments(createProps()))
 
     act(() => {

@@ -233,7 +233,13 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const user = c.get("user")
       requirePermission(user, "rag:group:create")
       const body = validJson<z.infer<typeof CreateDocumentGroupRequestSchema>>(c)
-      return c.json(await service.createDocumentGroup(user, body), 200)
+      try {
+        return c.json(await service.createDocumentGroup(user, body), 200)
+      } catch (err) {
+        if (isDocumentGroupInputError(err)) return c.json({ error: (err as Error).message }, 400)
+        if (err instanceof Error && err.message.startsWith("Forbidden:")) throw new HTTPException(403, { message: "Forbidden" })
+        throw err
+      }
     }
   )
 
@@ -265,6 +271,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         if (!group) return c.json({ error: "Document group not found" }, 404)
         return c.json(group, 200)
       } catch (err) {
+        if (isDocumentGroupInputError(err)) return c.json({ error: (err as Error).message }, 400)
         if (err instanceof Error && err.message.startsWith("Forbidden:")) throw new HTTPException(403, { message: "Forbidden" })
         throw err
       }
@@ -748,4 +755,14 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
     }
   )
+}
+
+function isDocumentGroupInputError(err: unknown): boolean {
+  return err instanceof Error && [
+    "Document group canonical path already exists",
+    "Document group name is required",
+    "Document group name contains unsupported characters",
+    "adminPrincipalId is required",
+    "Document group subtree is too large for synchronous path update"
+  ].includes(err.message)
 }

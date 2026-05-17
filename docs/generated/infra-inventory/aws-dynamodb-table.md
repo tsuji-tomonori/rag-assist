@@ -90,7 +90,7 @@ Logical ID: `DocumentGroupsTableA5108040`
 | 設定項目 | 値 |
 | --- | --- |
 | `keySchema` | [{"AttributeName":"groupId","KeyType":"HASH"}] |
-| `attributeDefinitions` | [{"AttributeName":"groupId","AttributeType":"S"}] |
+| `attributeDefinitions` | [{"AttributeName":"groupId","AttributeType":"S"},{"AttributeName":"adminPathPk","AttributeType":"S"},{"AttributeName":"normalizedCanonicalPath","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 

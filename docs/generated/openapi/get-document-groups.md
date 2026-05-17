@@ -52,7 +52,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 13 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 23 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
@@ -65,7 +65,17 @@ Media type: `application/json`
 | --- | --- | --- | --- | --- |
 | `groups` | `array<object>` | yes | ユーザーが所属する Cognito group または検証用 group。 | - |
 | `groups[].groupId` | `string` | yes | `response.groups[].groupId` の値。項目名は group id を表します。 | - |
+| `groups[].schemaVersion` | `integer` | no | `response.groups[].schemaVersion` の値。項目名は schema version を表します。 | minimum=0 |
+| `groups[].itemType` | `enum(documentGroup)` | no | `response.groups[].itemType` の値。項目名は item type を表します。 | enum=documentGroup |
+| `groups[].tenantId` | `string` | no | `response.groups[].tenantId` の値。項目名は tenant id を表します。 | - |
+| `groups[].adminPrincipalType` | `enum(user \| group)` | yes | `response.groups[].adminPrincipalType` の値。項目名は admin principal type を表します。 | enum=user, group |
+| `groups[].adminPrincipalId` | `string` | yes | `response.groups[].adminPrincipalId` の値。項目名は admin principal id を表します。 | - |
 | `groups[].name` | `string` | yes | 表示名または項目名。 | - |
+| `groups[].normalizedName` | `string` | yes | `response.groups[].normalizedName` の値。項目名は normalized name を表します。 | - |
+| `groups[].canonicalPath` | `string` | yes | `response.groups[].canonicalPath` の値。項目名は canonical path を表します。 | - |
+| `groups[].normalizedCanonicalPath` | `string` | yes | `response.groups[].normalizedCanonicalPath` の値。項目名は normalized canonical path を表します。 | - |
+| `groups[].adminPathPk` | `string` | yes | `response.groups[].adminPathPk` の値。項目名は admin path pk を表します。 | - |
+| `groups[].parentPathPk` | `string` | yes | `response.groups[].parentPathPk` の値。項目名は parent path pk を表します。 | - |
 | `groups[].description` | `string` | no | `response.groups[].description` の値。項目名は description を表します。 | - |
 | `groups[].parentGroupId` | `string` | no | `response.groups[].parentGroupId` の値。項目名は parent group id を表します。 | - |
 | `groups[].ancestorGroupIds` | `array<string>` | no | `response.groups[].ancestorGroupIds` の値。項目名は ancestor group ids を表します。 | - |

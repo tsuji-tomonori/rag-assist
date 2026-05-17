@@ -216,6 +216,16 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::DynamoDB::Table", {
     KeySchema: [{ AttributeName: "groupId", KeyType: "HASH" }],
     BillingMode: "PAY_PER_REQUEST",
+    GlobalSecondaryIndexes: Match.arrayWith([
+      Match.objectLike({
+        IndexName: "AdminCanonicalPathIndex",
+        KeySchema: [
+          { AttributeName: "adminPathPk", KeyType: "HASH" },
+          { AttributeName: "normalizedCanonicalPath", KeyType: "RANGE" }
+        ],
+        Projection: { ProjectionType: "ALL" }
+      })
+    ]),
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
   for (const groupName of [

@@ -57,7 +57,17 @@ export type DocumentManifest = {
 
 export type DocumentGroup = {
   groupId: string
+  schemaVersion?: number
+  itemType?: "documentGroup"
+  tenantId?: string
+  adminPrincipalType: "user" | "group"
+  adminPrincipalId: string
   name: string
+  normalizedName: string
+  canonicalPath: string
+  normalizedCanonicalPath: string
+  adminPathPk: string
+  parentPathPk: string
   description?: string
   parentGroupId?: string
   ancestorGroupIds?: string[]
