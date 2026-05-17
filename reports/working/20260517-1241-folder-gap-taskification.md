@@ -29,6 +29,7 @@
 - フォルダ周辺の残課題 12 件を `tasks/todo/` に追加した。
 - 今回の task 化作業自体を `tasks/do/` に記録した。
 - Markdown 差分に対して `git diff --check` を実行した。
+- PR #322 を作成し、受け入れ条件確認コメントとセルフレビューコメントを追加した。
 
 ## 5. 成果物
 
@@ -64,3 +65,4 @@
 - 今回は task 化のみで、各課題の実装は行っていない。
 - `git diff --check` 以外の API / Web tests は、Markdown task 追加のみのため実行対象外とした。
 - 後続実装時には、各 task の対象コードを再確認して受け入れ条件を必要に応じて更新する。
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/322
