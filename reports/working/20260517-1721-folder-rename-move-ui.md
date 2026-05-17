@@ -48,8 +48,11 @@
 | `apps/web/src/features/documents/` | フォルダ更新 UI、hook、API client、テスト |
 | `docs/generated/openapi*` | OpenAPI 生成物更新 |
 | `docs/generated/web-*` | Web inventory 更新 |
-| `tasks/do/20260517-1241-folder-rename-move-ui.md` | task 着手状態へ移動 |
-| `tasks/do/20260517-1241-folder-move-to-root.md` | task 着手状態へ移動 |
+| `tasks/done/20260517-1241-folder-rename-move-ui.md` | task 完了状態へ移動 |
+| `tasks/done/20260517-1241-folder-move-to-root.md` | task 完了状態へ移動 |
+| PR #324 | `https://github.com/tsuji-tomonori/rag-assist/pull/324` |
+| PR 受け入れ条件コメント | issue comment `4469900326` |
+| PR セルフレビューコメント | issue comment `4469902495` |
 
 ## 6. 実行した検証
 
@@ -73,6 +76,6 @@
 
 ## 8. 未対応・制約・リスク
 
-- PR 作成前時点では GitHub CI は未確認。PR 作成後に確認する。
+- PR 作成直後時点では GitHub CI は未完了。最終報告前に最新状態を確認する。
 - `/document-groups/{groupId}/share` は共有以外の rename / move も扱う。Web client 名は `updateDocumentGroup` に寄せたが、route 名の整理は別 task が適切。
 - `npm ci` の audit 警告は今回変更で発生したものではないため、依存更新は未対応。
