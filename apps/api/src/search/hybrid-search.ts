@@ -1,11 +1,13 @@
 import type { AppUser } from "../auth.js"
+import { folderPermissionSatisfies } from "../authorization.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { normalizeSearchTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
+import { FolderPermissionService } from "../folders/folder-permission-service.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { isQualityApprovedForNormalRag, qualityProfileCacheKey } from "../rag/quality.js"
 import { loadPublishedAliasMap } from "./alias-artifacts.js"
-import type { DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../types.js"
+import type { DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../types.js"
 
 export type SearchInput = {
   query: string
@@ -150,6 +152,10 @@ type CachedIndex = {
 
 type AliasMap = Record<string, string[]>
 
+type SearchAuthorizationDeps = Pick<Dependencies, "documentGroupStore" | "folderPolicyStore" | "userGroupStore" | "groupMembershipStore">
+
+type SearchObjectDeps = SearchAuthorizationDeps & Pick<Dependencies, "objectStore">
+
 let cachedIndex: CachedIndex | undefined
 
 export async function searchRag(deps: Dependencies, input: SearchInput, user: AppUser): Promise<SearchResponse> {
@@ -252,7 +258,7 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
 }
 
 export async function getLexicalIndex(
-  deps: Pick<Dependencies, "objectStore" | "documentGroupStore">,
+  deps: SearchObjectDeps,
   user: AppUser,
   filters?: SearchInput["filters"],
   scope?: SearchScope
@@ -260,10 +266,11 @@ export async function getLexicalIndex(
   const started = Date.now()
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
-  const groups = await loadDocumentGroups(deps)
-  const visible = manifests
+  const access = new FolderPermissionService(deps)
+  const visible = (await Promise.all(manifests
     .filter(isActiveManifest)
-    .filter((manifest) => canAccessManifest(manifest, user, groups))
+    .map(async (manifest) => await canAccessManifest(manifest, user, access) ? manifest : undefined)))
+    .filter((manifest): manifest is DocumentManifest => manifest !== undefined)
     .filter((manifest) => manifestMatchesFilters(manifest, filters))
     .filter((manifest) => manifestMatchesScope(manifest, scope))
     .filter(isQualityApprovedForNormalRag)
@@ -702,12 +709,15 @@ function normalize(text: string): string {
   return text.normalize("NFKC").toLowerCase().trim()
 }
 
-function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: DocumentGroup[] = []): boolean {
+async function canAccessManifest(manifest: DocumentManifest, user: AppUser, access: FolderPermissionService): Promise<boolean> {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
   if (stringValue(metadata.ownerUserId) === user.userId) return true
   const manifestGroupIds = stringValues(metadata.groupIds ?? metadata.groupId)
-  if (manifestGroupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user))) return true
+  if (manifestGroupIds.length > 0) {
+    const permissions = await access.resolveEffectiveFolderPermissions(user, manifestGroupIds)
+    if (manifestGroupIds.some((groupId) => folderPermissionSatisfies(permissions[groupId] ?? "none", "readOnly"))) return true
+  }
   if (stringValue(metadata.scopeType) === "group") return false
   return canAccessMetadata(metadata, user)
 }
@@ -719,18 +729,18 @@ function isActiveManifest(manifest: DocumentManifest): boolean {
 }
 
 async function filterAccessibleVectorHits(
-  deps: Pick<Dependencies, "objectStore" | "documentGroupStore">,
+  deps: SearchObjectDeps,
   hits: RetrievedVector[],
   user: AppUser,
   scope?: SearchScope
 ): Promise<RetrievedVector[]> {
   const manifestCache = new Map<string, DocumentManifest | undefined>()
-  const groups = await loadDocumentGroups(deps)
+  const access = new FolderPermissionService(deps)
   const result: RetrievedVector[] = []
   for (const hit of hits) {
     if (!canAccessVectorMetadata(hit.metadata, user)) continue
     const manifest = await getCachedManifest(deps, manifestCache, hit.metadata.documentId)
-    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user, groups) || !manifestMatchesScope(manifest, scope) || !isQualityApprovedForNormalRag(manifest)) continue
+    if (!manifest || !isActiveManifest(manifest) || !(await canAccessManifest(manifest, user, access)) || !manifestMatchesScope(manifest, scope) || !isQualityApprovedForNormalRag(manifest)) continue
     result.push(hit)
   }
   return result
@@ -803,22 +813,6 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
     return Boolean(scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId)
   }
   return true
-}
-
-async function loadDocumentGroups(deps: Pick<Dependencies, "documentGroupStore">): Promise<DocumentGroup[]> {
-  try {
-    return await deps.documentGroupStore.list()
-  } catch {
-    return []
-  }
-}
-
-function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
-  if (!group) return false
-  if (group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId) || group.sharedUserIds.includes(user.userId)) return true
-  if (user.email && group.sharedUserIds.includes(user.email)) return true
-  if (group.visibility === "org") return true
-  return group.sharedGroups.some((sharedGroup) => user.cognitoGroups.includes(sharedGroup))
 }
 
 function stringValues(value: JsonValue | undefined): string[] {
