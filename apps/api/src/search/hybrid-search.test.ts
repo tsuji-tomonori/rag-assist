@@ -393,7 +393,7 @@ test("search removes folder policy documents immediately after group membership 
     lifecycleStatus: "active",
     metadata: {
       scopeType: "group",
-      ownerUserId: "owner-1",
+      ownerUserId: member.userId,
       groupIds: ["folder-secret"],
       tenantId: "tenant-a"
     }
@@ -406,6 +406,41 @@ test("search removes folder policy documents immediately after group membership 
   const revoked = await searchRag(deps, { query: "kiwifruit launch", topK: 10, lexicalTopK: 10, semanticTopK: 0 }, member)
   assert.equal(revoked.results.some((result) => result.fileName === "folder-policy-secret.md"), false)
   assert.equal(revoked.diagnostics.index?.visibleManifestCount, 0)
+
+  const semanticDeps = {
+    ...deps,
+    evidenceVectorStore: {
+      ...deps.evidenceVectorStore,
+      query: async () => [
+        {
+          key: "folder-policy-secret-chunk-0000",
+          score: 0.99,
+          metadata: {
+            kind: "chunk",
+            documentId: "folder-policy-secret",
+            fileName: "folder-policy-secret.md",
+            chunkId: "chunk-0000",
+            text: "kiwifruit launch approval requires folder policy access.",
+            createdAt: "2026-05-17T00:00:00.000Z",
+            lifecycleStatus: "active",
+            scopeType: "group",
+            groupIds: ["folder-secret"],
+            ownerUserId: member.userId,
+            tenantId: "tenant-a"
+          }
+        }
+      ]
+    }
+  } as unknown as Dependencies
+  const semanticRevoked = await searchRag(semanticDeps, {
+    query: "kiwifruit launch",
+    topK: 10,
+    lexicalTopK: 0,
+    semanticTopK: 5,
+    semanticVector: [1, 0]
+  }, member)
+  assert.equal(semanticRevoked.results.some((result) => result.fileName === "folder-policy-secret.md"), false)
+  assert.equal(semanticRevoked.diagnostics.semanticCount, 0)
 })
 
 test("service search publishes and reuses immutable lexical index artifacts", async () => {

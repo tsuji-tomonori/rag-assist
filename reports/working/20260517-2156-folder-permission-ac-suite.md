@@ -68,3 +68,18 @@
 - API route、UI、migration/backfill、監査ログ API は今回 PR では未実装。
 - `MemoRagService` の文書一覧・preview・scope assert には legacy helper が残る。今回の変更は `searchRag` の lexical / vector 検索経路が対象。
 - `npm audit` の既存依存脆弱性は今回の範囲外で未対応。
+
+## 9. PR レビュー指摘への追加対応
+
+PR 作成後、folder-scoped manifest の `ownerUserId` bypass が AC-FOLDER-010 を破る可能性があるという指摘を受けた。追加で以下を実施した。
+
+- `groupIds/groupId/folderIds/folderId` を持つ manifest では、`ownerUserId` より先に folder permission を唯一の判定源にするよう `canAccessManifest` を修正した。
+- `scopeType=group` または `scopeType=folder` で folder id がない manifest は、owner fallback せず検索不可にした。
+- AC-FOLDER-010 テストを、検索 user 自身が `ownerUserId` の folder-scoped 文書で membership を失うケースに変更した。
+- membership 削除後の semantic-only vector hit が manifest 再確認で除外され、`semanticCount=0` になることを同じテストで確認した。
+
+追加検証:
+
+- `npm run test -w @memorag-mvp/api -- --test-name-pattern "folder policy documents|service search denies group-scoped|folder|document group|search"`: pass。277 tests。
+- `npm run typecheck -w @memorag-mvp/api`: pass。
+- `git diff --check`: pass。

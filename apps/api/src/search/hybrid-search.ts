@@ -712,13 +712,14 @@ function normalize(text: string): string {
 async function canAccessManifest(manifest: DocumentManifest, user: AppUser, access: FolderPermissionService): Promise<boolean> {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
-  if (stringValue(metadata.ownerUserId) === user.userId) return true
-  const manifestGroupIds = stringValues(metadata.groupIds ?? metadata.groupId)
-  if (manifestGroupIds.length > 0) {
-    const permissions = await access.resolveEffectiveFolderPermissions(user, manifestGroupIds)
-    if (manifestGroupIds.some((groupId) => folderPermissionSatisfies(permissions[groupId] ?? "none", "readOnly"))) return true
+  const folderIds = stringValues(metadata.folderIds ?? metadata.folderId ?? metadata.groupIds ?? metadata.groupId)
+  const scopeType = stringValue(metadata.scopeType)
+  if (folderIds.length > 0) {
+    const permissions = await access.resolveEffectiveFolderPermissions(user, folderIds)
+    return folderIds.some((folderId) => folderPermissionSatisfies(permissions[folderId] ?? "none", "readOnly"))
   }
-  if (stringValue(metadata.scopeType) === "group") return false
+  if (scopeType === "group" || scopeType === "folder") return false
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
   return canAccessMetadata(metadata, user)
 }
 

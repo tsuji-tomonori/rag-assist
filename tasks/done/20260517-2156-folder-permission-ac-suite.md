@@ -56,6 +56,7 @@
 - `apps/api/src/search/hybrid-search.test.ts` に、group membership 削除後に再インデックスなしで検索対象から外れる AC-FOLDER-010 回帰テストを追加した。
 - `apps/api/src/adapters/local-document-group-store.test.ts` に、同一管理者の重複拒否、同一管理者の異なる full path 許可、異なる管理者の同一 path 許可を明示する test expectation を追加した。
 - PR #327 を作成し、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
+- PR レビュー指摘を受け、folder-scoped manifest の `ownerUserId` bypass を禁止し、owner 権限喪失と semantic-only hit 除外の回帰テストを追加した。
 
 ## 検証結果
 
@@ -63,6 +64,9 @@
 - `npm run test -w @memorag-mvp/api -- --test-name-pattern "folder|document group|search"`: pass。277 tests。
 - `npm run typecheck -w @memorag-mvp/api`: pass。
 - `git diff --check`: pass。
+- 追加対応後 `npm run test -w @memorag-mvp/api -- --test-name-pattern "folder policy documents|service search denies group-scoped|folder|document group|search"`: pass。277 tests。
+- 追加対応後 `npm run typecheck -w @memorag-mvp/api`: pass。
+- 追加対応後 `git diff --check`: pass。
 
 ## 検証計画
 
