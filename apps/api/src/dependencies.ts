@@ -32,6 +32,15 @@ import type { DocumentIngestRunEventStore } from "./adapters/document-ingest-run
 import { DynamoDbDocumentGroupStore } from "./adapters/dynamodb-document-group-store.js"
 import { LocalDocumentGroupStore } from "./adapters/local-document-group-store.js"
 import type { DocumentGroupStore } from "./adapters/document-group-store.js"
+import { DynamoDbFolderPolicyStore } from "./adapters/dynamodb-folder-policy-store.js"
+import { LocalFolderPolicyStore } from "./adapters/local-folder-policy-store.js"
+import type { FolderPolicyStore } from "./adapters/folder-policy-store.js"
+import { DynamoDbUserGroupStore } from "./adapters/dynamodb-user-group-store.js"
+import { LocalUserGroupStore } from "./adapters/local-user-group-store.js"
+import type { UserGroupStore } from "./adapters/user-group-store.js"
+import { DynamoDbGroupMembershipStore } from "./adapters/dynamodb-group-membership-store.js"
+import { LocalGroupMembershipStore } from "./adapters/local-group-membership-store.js"
+import type { GroupMembershipStore } from "./adapters/group-membership-store.js"
 import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
 import { AwsCodeBuildLogReader, type CodeBuildLogReader } from "./adapters/codebuild-log-reader.js"
 import { createDefaultAsyncAgentProviderRegistry } from "./async-agent/claude-code-provider.js"
@@ -50,6 +59,9 @@ export type Dependencies = {
   documentIngestRunStore: DocumentIngestRunStore
   documentIngestRunEventStore: DocumentIngestRunEventStore
   documentGroupStore: DocumentGroupStore
+  folderPolicyStore: FolderPolicyStore
+  userGroupStore: UserGroupStore
+  groupMembershipStore: GroupMembershipStore
   codeBuildLogReader?: CodeBuildLogReader
   asyncAgentProviders?: AsyncAgentProviderRegistry
   userDirectory?: UserDirectory
@@ -97,10 +109,19 @@ export function createDependencies(): Dependencies {
   const documentGroupStore = config.useLocalDocumentGroupStore
     ? new LocalDocumentGroupStore(config.localDataDir)
     : new DynamoDbDocumentGroupStore(config.documentGroupsTableName)
+  const folderPolicyStore = config.useLocalDocumentGroupStore
+    ? new LocalFolderPolicyStore(config.localDataDir)
+    : new DynamoDbFolderPolicyStore(config.documentGroupsTableName)
+  const userGroupStore = config.useLocalDocumentGroupStore
+    ? new LocalUserGroupStore(config.localDataDir)
+    : new DynamoDbUserGroupStore(config.documentGroupsTableName)
+  const groupMembershipStore = config.useLocalDocumentGroupStore
+    ? new LocalGroupMembershipStore(config.localDataDir)
+    : new DynamoDbGroupMembershipStore(config.documentGroupsTableName)
   const codeBuildLogReader = new AwsCodeBuildLogReader()
   const asyncAgentProviders = createDefaultAsyncAgentProviderRegistry()
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
   return cached
 }

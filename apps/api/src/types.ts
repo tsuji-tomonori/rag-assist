@@ -18,6 +18,56 @@ export type QualityFlag =
   | "low_extraction_confidence"
   | "manual_rag_exclusion"
 
+export type FolderStatus = "active" | "archived"
+export type FolderPolicySource = "explicit" | "inherited" | "ownerDefault" | "none"
+export type FolderPrincipalType = "user" | "group"
+export type FolderPolicyPermissionLevel = "readOnly" | "full"
+export type FolderPolicyEntry = {
+  principalType: FolderPrincipalType
+  principalId: string
+  permissionLevel: FolderPolicyPermissionLevel
+}
+
+export type FolderPolicy = {
+  policyId: string
+  itemType?: "folderPolicy"
+  tenantId: string
+  folderId: string
+  entries: FolderPolicyEntry[]
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type UserGroupType = "department" | "project" | "team" | "admin" | "folderPolicy" | "system" | "custom"
+export type UserGroup = {
+  groupId: string
+  itemType?: "userGroup"
+  tenantId?: string
+  name: string
+  type: UserGroupType
+  parentGroupId?: string
+  ancestorGroupIds: string[]
+  status: FolderStatus
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type GroupMembershipSource = "manual" | "external" | "system"
+export type GroupMembership = {
+  membershipId?: string
+  itemType?: "groupMembership"
+  tenantId?: string
+  groupId: string
+  memberType: FolderPrincipalType
+  memberId: string
+  permissionLevel: FolderPolicyPermissionLevel
+  source: GroupMembershipSource
+  createdAt: string
+  updatedAt: string
+}
+
 export type DocumentQualityProfile = {
   knowledgeQualityStatus?: KnowledgeQualityStatus
   verificationStatus?: VerificationStatus
@@ -60,6 +110,13 @@ export type DocumentGroup = {
   sharedUserIds: string[]
   sharedGroups: string[]
   managerUserIds: string[]
+  hasExplicitPolicy?: boolean
+  policyId?: string
+  status?: FolderStatus
+  createdBy?: string
+  effectivePermission?: "none" | "readOnly" | "full"
+  policySource?: FolderPolicySource
+  inheritedFromFolderId?: string
   createdAt: string
   updatedAt: string
 }

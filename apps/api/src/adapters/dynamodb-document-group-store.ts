@@ -20,7 +20,7 @@ export class DynamoDbDocumentGroupStore implements DocumentGroupStore {
       const result = await this.client.send(new ScanCommand({ TableName: this.tableName, ExclusiveStartKey }))
       groups.push(...(result.Items ?? [])
         .map((item) => unmarshall(item) as DocumentGroup | DocumentGroupPathLock)
-        .filter((item): item is DocumentGroup => item.itemType !== "documentGroupPathLock"))
+        .filter(isDocumentGroupItem))
       ExclusiveStartKey = result.LastEvaluatedKey
     } while (ExclusiveStartKey)
     return groups
@@ -34,7 +34,7 @@ export class DynamoDbDocumentGroupStore implements DocumentGroupStore {
       })
     )
     const item = result.Item ? (unmarshall(result.Item) as DocumentGroup | DocumentGroupPathLock) : undefined
-    return item && item.itemType !== "documentGroupPathLock" ? item : undefined
+    return item && isDocumentGroupItem(item) ? item : undefined
   }
 
   async create(input: CreateDocumentGroupInput): Promise<DocumentGroup> {
@@ -152,7 +152,7 @@ export class DynamoDbDocumentGroupStore implements DocumentGroupStore {
       })
     )
     const items = (result.Items ?? []).map((item) => unmarshall(item) as DocumentGroup | DocumentGroupPathLock)
-    return items.find((item): item is DocumentGroup => item.itemType !== "documentGroupPathLock")
+    return items.find(isDocumentGroupItem)
   }
 
   async listByAdminPath(adminPathPk: string): Promise<DocumentGroup[]> {
@@ -170,11 +170,15 @@ export class DynamoDbDocumentGroupStore implements DocumentGroupStore {
       )
       groups.push(...(result.Items ?? [])
         .map((item) => unmarshall(item) as DocumentGroup | DocumentGroupPathLock)
-        .filter((item): item is DocumentGroup => item.itemType !== "documentGroupPathLock"))
+        .filter(isDocumentGroupItem))
       ExclusiveStartKey = result.LastEvaluatedKey
     } while (ExclusiveStartKey)
     return groups
   }
+}
+
+function isDocumentGroupItem(item: DocumentGroup | DocumentGroupPathLock | { itemType?: string }): item is DocumentGroup {
+  return item.itemType === undefined || item.itemType === "documentGroup"
 }
 
 function pathLockForGroup(group: DocumentGroup): DocumentGroupPathLock {

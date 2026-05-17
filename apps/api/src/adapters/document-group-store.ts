@@ -21,6 +21,13 @@ export type UpdateDocumentGroupInput = Partial<Pick<
   | "sharedUserIds"
   | "sharedGroups"
   | "managerUserIds"
+  | "hasExplicitPolicy"
+  | "policyId"
+  | "status"
+  | "createdBy"
+  | "effectivePermission"
+  | "policySource"
+  | "inheritedFromFolderId"
   | "updatedAt"
 >>
 
