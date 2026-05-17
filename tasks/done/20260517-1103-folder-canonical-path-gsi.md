@@ -1,6 +1,6 @@
 # folder canonical path / GSI 一意性
 
-状態: in_progress
+状態: done
 タスク種別: 機能追加
 
 ## 背景
@@ -49,19 +49,19 @@
 
 ## 受け入れ条件
 
-- [ ] `DocumentGroup` に `adminPrincipalType`, `adminPrincipalId`, `canonicalPath`, `normalizedCanonicalPath`, `normalizedName` が追加される。
-- [ ] `DocumentGroup` に `tenantId`, `adminPathPk`, `parentPathPk`, `schemaVersion` が追加される。
-- [ ] 既存データは読み込み時に後方互換で補完される。
-- [ ] 新規作成、移動、名前変更相当の更新で、同一 `tenantId + adminPrincipalType + adminPrincipalId + normalizedCanonicalPath` の重複を拒否する。
-- [ ] DynamoDB table に path lookup 用 `AdminCanonicalPathIndex` が追加される。
-- [ ] DynamoDB store では transaction lock item により重複が拒否される。
-- [ ] Local store でも同じ制約を再現する。
-- [ ] 既存データ向け backfill / duplicate detection 方針と dry-run コマンドが用意される。
-- [ ] 子孫の `ancestorGroupIds` と canonical path が移動時に再計算される。
-- [ ] 子孫 move 時に canonical path と lock item が整合する。
-- [ ] API schema / Web type / OpenAPI docs / infra snapshot / docs が同期する。
-- [ ] 既存の document group ACL、RAG 検索範囲、文書 upload scope が退行しない。
-- [ ] API test、Web test、typecheck、OpenAPI check、CDK test、`git diff --check` が通る。
+- [x] `DocumentGroup` に `adminPrincipalType`, `adminPrincipalId`, `canonicalPath`, `normalizedCanonicalPath`, `normalizedName` が追加される。
+- [x] `DocumentGroup` に `tenantId`, `adminPathPk`, `parentPathPk`, `schemaVersion` が追加される。
+- [x] 既存データは読み込み時に後方互換で補完される。
+- [x] 新規作成、移動、名前変更相当の更新で、同一 `tenantId + adminPrincipalType + adminPrincipalId + normalizedCanonicalPath` の重複を拒否する。
+- [x] DynamoDB table に path lookup 用 `AdminCanonicalPathIndex` が追加される。
+- [x] DynamoDB store では transaction lock item により重複が拒否される。
+- [x] Local store でも同じ制約を再現する。
+- [x] 既存データ向け backfill / duplicate detection 方針と dry-run コマンドが用意される。
+- [x] 子孫の `ancestorGroupIds` と canonical path が移動時に再計算される。
+- [x] 子孫 move 時に canonical path と lock item が整合する。
+- [x] API schema / Web type / OpenAPI docs / infra snapshot / docs が同期する。
+- [x] 既存の document group ACL、RAG 検索範囲、文書 upload scope が退行しない。
+- [x] API test、Web test、typecheck、OpenAPI check、CDK test、`git diff --check` が通る。
 
 ## 検証計画
 
