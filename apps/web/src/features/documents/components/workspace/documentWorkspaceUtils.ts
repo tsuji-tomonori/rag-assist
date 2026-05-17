@@ -28,6 +28,8 @@ export type DocumentOperationEvent = {
   detail?: string
 }
 
+export const rootFolderParentValue = "__root__"
+
 export const emptyOperationState: DocumentOperationState = {
   isUploading: false,
   creatingGroup: false,
@@ -85,11 +87,10 @@ export function buildWorkspaceFolders(documentGroups: DocumentGroup[], documents
 
   const folders: WorkspaceFolder[] = []
   const visited = new Set<string>()
-  const appendGroup = (group: DocumentGroup, depth: number, ancestorNames: string[]) => {
+  const appendGroup = (group: DocumentGroup, depth: number) => {
     if (visited.has(group.groupId)) return
     visited.add(group.groupId)
-    const pathNames = [...ancestorNames, group.name]
-    const canonicalPath = group.canonicalPath || `/${pathNames.join("/")}`
+    const canonicalPath = group.canonicalPath
     folders.push({
       id: group.groupId,
       name: group.name,
@@ -99,12 +100,12 @@ export function buildWorkspaceFolders(documentGroups: DocumentGroup[], documents
       group
     })
     for (const child of sortedGroups(childrenByParentId.get(group.groupId) ?? [])) {
-      appendGroup(child, depth + 1, pathNames)
+      appendGroup(child, depth + 1)
     }
   }
 
-  for (const root of sortedGroups(roots)) appendGroup(root, 0, [])
-  for (const group of sortedGroups(documentGroups)) appendGroup(group, 0, [])
+  for (const root of sortedGroups(roots)) appendGroup(root, 0)
+  for (const group of sortedGroups(documentGroups)) appendGroup(group, 0)
   return folders
 }
 

@@ -4,9 +4,9 @@
 
 [API 一覧へ戻る](../openapi.md)
 
-Summary: 文書グループ共有設定を更新する
+Summary: 文書グループ設定を更新する
 
-指定した文書グループの共有先や権限範囲を更新します。
+指定した文書グループの名前、説明、親フォルダ、共有先、権限範囲を更新します。
 
 ## Headers
 
@@ -33,7 +33,7 @@ Media type: `application/json`
 | `name` | `string` | no | 表示名または項目名。 | minLength=1<br>maxLength=120 |
 | `description` | `string` | no | `data.description` の値。項目名は description を表します。 | maxLength=1000 |
 | `visibility` | `enum(private \| shared \| org)` | no | `data.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
-| `parentGroupId` | `string` | no | `data.parentGroupId` の値。項目名は parent group id を表します。 | minLength=1 |
+| `parentGroupId` | `string` | no | `data.parentGroupId` の値。項目名は parent group id を表します。 | nullable<br>minLength=1 |
 | `sharedUserIds` | `array<string>` | no | `data.sharedUserIds` の値。項目名は shared user ids を表します。 | maxItems=50 |
 | `sharedGroups` | `array<string>` | no | `data.sharedGroups` の値。項目名は shared groups を表します。 | maxItems=50 |
 | `managerUserIds` | `array<string>` | no | `data.managerUserIds` の値。項目名は manager user ids を表します。 | maxItems=50 |
@@ -65,6 +65,7 @@ _なし_
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
 | `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 22 field(s) |
+| `400` | リクエスト形式または入力値が不正です。 | `application/json` | 2 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -97,6 +98,15 @@ Media type: `application/json`
 | `managerUserIds` | `array<string>` | yes | `response.managerUserIds` の値。項目名は manager user ids を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
+
+##### `400` リクエスト形式または入力値が不正です。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `401` 認証が必要です。
 

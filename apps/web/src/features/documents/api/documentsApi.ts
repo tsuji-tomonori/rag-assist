@@ -1,6 +1,16 @@
 import { createHeaders, del, get, post } from "../../../shared/api/http.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 
+export type UpdateDocumentGroupInput = {
+  name?: string
+  description?: string
+  visibility?: "private" | "shared" | "org"
+  parentGroupId?: string | null
+  sharedUserIds?: string[]
+  sharedGroups?: string[]
+  managerUserIds?: string[]
+}
+
 export async function uploadDocument(input: {
   fileName: string
   text?: string
@@ -175,16 +185,12 @@ export async function createDocumentGroup(input: {
   return post<DocumentGroup>("/document-groups", input)
 }
 
-export async function shareDocumentGroup(groupId: string, input: {
-  name?: string
-  description?: string
-  visibility?: "private" | "shared" | "org"
-  parentGroupId?: string
-  sharedUserIds?: string[]
-  sharedGroups?: string[]
-  managerUserIds?: string[]
-}): Promise<DocumentGroup> {
+export async function updateDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentGroup> {
   return post<DocumentGroup>(`/document-groups/${encodeURIComponent(groupId)}/share`, input)
+}
+
+export async function shareDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentGroup> {
+  return updateDocumentGroup(groupId, input)
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {

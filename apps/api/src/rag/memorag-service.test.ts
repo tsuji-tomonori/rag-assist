@@ -514,6 +514,36 @@ test("service recalculates descendant canonical paths and local lock items on mo
   assert.equal(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/source/child"), false)
 })
 
+test("service moves a document group subtree back to root with path locks", async () => {
+  const { service, dataDir } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const root = await service.createDocumentGroup(owner, { name: "Root" })
+  const child = await service.createDocumentGroup(owner, { name: "Child", parentGroupId: root.groupId })
+  const grandchild = await service.createDocumentGroup(owner, { name: "Grandchild", parentGroupId: child.groupId })
+
+  const moved = await service.updateDocumentGroupSharing(owner, child.groupId, { parentGroupId: null })
+
+  assert.equal(moved?.parentGroupId, undefined)
+  assert.deepEqual(moved?.ancestorGroupIds, [])
+  assert.equal(moved?.canonicalPath, "/Child")
+  assert.equal(moved?.normalizedCanonicalPath, "/child")
+
+  const groups = await service.listDocumentGroups(owner)
+  const movedGrandchild = groups.find((group) => group.groupId === grandchild.groupId)
+  assert.equal(movedGrandchild?.canonicalPath, "/Child/Grandchild")
+  assert.deepEqual(movedGrandchild?.ancestorGroupIds, [child.groupId])
+
+  const db = JSON.parse(await readFile(path.join(dataDir, "document-groups.json"), "utf-8")) as { pathLocks?: Array<{ lockedGroupId: string; normalizedCanonicalPath: string }> }
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/child"))
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === grandchild.groupId && lock.normalizedCanonicalPath === "/child/grandchild"))
+  assert.equal(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/root/child"), false)
+
+  await assert.rejects(
+    () => service.updateDocumentGroupSharing(owner, child.groupId, { name: "Root", parentGroupId: null }),
+    /canonical path already exists/
+  )
+})
+
 test("service normalizes legacy document groups on read", async () => {
   const { service, deps } = await createService()
   const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }

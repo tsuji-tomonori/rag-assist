@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, shareDocumentGroup, stageReindexMigration, uploadDocumentFile } from "../api/documentsApi.js"
+import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, updateDocumentGroup, uploadDocumentFile } from "../api/documentsApi.js"
 import type { DocumentGroup } from "../types.js"
 import { useDocuments } from "./useDocuments.js"
 
@@ -12,8 +12,8 @@ vi.mock("../api/documentsApi.js", () => ({
   listDocuments: vi.fn(),
   listReindexMigrations: vi.fn(),
   rollbackReindexMigration: vi.fn(),
-  shareDocumentGroup: vi.fn(),
   stageReindexMigration: vi.fn(),
+  updateDocumentGroup: vi.fn(),
   uploadDocumentFile: vi.fn()
 }))
 
@@ -74,7 +74,7 @@ describe("useDocuments", () => {
       normalizedCanonicalPath: "/個人メモ",
       normalizedName: "個人メモ"
     }))
-    vi.mocked(shareDocumentGroup).mockResolvedValue(documentGroupFixture({
+    vi.mocked(updateDocumentGroup).mockResolvedValue(documentGroupFixture({
       visibility: "shared",
       sharedGroups: ["HR"]
     }))
@@ -209,9 +209,9 @@ describe("useDocuments", () => {
     const readonlyShareResult = await act(() => readonly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
     expect(uploadDocumentFile).toHaveBeenCalledTimes(1)
     expect(createDocumentGroup).not.toHaveBeenCalled()
-    expect(shareDocumentGroup).not.toHaveBeenCalled()
+    expect(updateDocumentGroup).not.toHaveBeenCalled()
     expect(readonlyUploadResult).toEqual({ ok: false, error: "文書をアップロードする権限がありません" })
-    expect(readonlyShareResult).toEqual({ ok: false, error: "共有設定を更新する権限がありません" })
+    expect(readonlyShareResult).toEqual({ ok: false, error: "フォルダ設定を更新する権限がありません" })
 
     const missingTargetResult = await act(() => result.current.onDelete(undefined))
     const deleteResult = await act(() => result.current.onDelete("doc-1"))
@@ -248,10 +248,12 @@ describe("useDocuments", () => {
 
     await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
     await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared", sharedGroups: ["HR"] }))
+    await act(() => result.current.onUpdateDocumentGroup("group-1", { name: "社内規定改定", description: "", parentGroupId: null }))
 
     expect(createDocumentGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
-    expect(shareDocumentGroup).toHaveBeenCalledWith("group-1", { visibility: "shared", sharedGroups: ["HR"] })
-    expect(listDocumentGroups).toHaveBeenCalledTimes(3)
+    expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { visibility: "shared", sharedGroups: ["HR"] })
+    expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { name: "社内規定改定", description: "", parentGroupId: null })
+    expect(listDocumentGroups).toHaveBeenCalledTimes(4)
   })
 
   it("アップロード進捗と失敗原因を操作単位の状態に反映する", async () => {
@@ -298,7 +300,7 @@ describe("useDocuments", () => {
     vi.mocked(deleteDocument).mockRejectedValueOnce("delete failed")
     vi.mocked(uploadDocumentFile).mockRejectedValueOnce("upload failed")
     vi.mocked(createDocumentGroup).mockRejectedValueOnce("create group failed")
-    vi.mocked(shareDocumentGroup).mockRejectedValueOnce("share group failed")
+    vi.mocked(updateDocumentGroup).mockRejectedValueOnce("share group failed")
     vi.mocked(stageReindexMigration).mockRejectedValueOnce("stage failed")
     vi.mocked(cutoverReindexMigration).mockRejectedValueOnce("cutover failed")
     vi.mocked(rollbackReindexMigration).mockRejectedValueOnce("rollback failed")
@@ -332,7 +334,7 @@ describe("useDocuments", () => {
     const props = createProps()
     vi.mocked(uploadDocumentFile).mockRejectedValueOnce(new Error("upload failed"))
     vi.mocked(createDocumentGroup).mockRejectedValueOnce(new Error("create group failed"))
-    vi.mocked(shareDocumentGroup).mockRejectedValueOnce(new Error("share group failed"))
+    vi.mocked(updateDocumentGroup).mockRejectedValueOnce(new Error("share group failed"))
     vi.mocked(cutoverReindexMigration).mockRejectedValueOnce(new Error("cutover failed"))
     vi.mocked(rollbackReindexMigration).mockRejectedValueOnce(new Error("rollback failed"))
     const { result } = renderHook(() => useDocuments(props))

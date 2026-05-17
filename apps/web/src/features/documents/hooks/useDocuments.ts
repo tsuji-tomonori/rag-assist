@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, shareDocumentGroup, stageReindexMigration, uploadDocumentFile } from "../api/documentsApi.js"
-import type { DocumentUploadProgress } from "../api/documentsApi.js"
+import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, updateDocumentGroup, uploadDocumentFile } from "../api/documentsApi.js"
+import type { DocumentUploadProgress, UpdateDocumentGroupInput } from "../api/documentsApi.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 
 export type DocumentOperationState = {
@@ -182,12 +182,12 @@ export function useDocuments({
     }
   }
 
-  async function onShareDocumentGroup(groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }): Promise<DocumentOperationResult> {
-    if (!canWriteDocuments) return { ok: false, error: "共有設定を更新する権限がありません" }
+  async function onUpdateDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentOperationResult> {
+    if (!canWriteDocuments) return { ok: false, error: "フォルダ設定を更新する権限がありません" }
     updateOperationState({ sharingGroupId: groupId })
     setError(null)
     try {
-      await shareDocumentGroup(groupId, input)
+      await updateDocumentGroup(groupId, input)
       await refreshDocumentGroups()
       return { ok: true }
     } catch (err) {
@@ -195,6 +195,10 @@ export function useDocuments({
     } finally {
       updateOperationState({ sharingGroupId: null })
     }
+  }
+
+  async function onShareDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentOperationResult> {
+    return onUpdateDocumentGroup(groupId, input)
   }
 
   async function onStageReindex(documentId: string): Promise<DocumentOperationResult> {
@@ -266,7 +270,8 @@ export function useDocuments({
     onCutoverReindex,
     onRollbackReindex,
     onCreateDocumentGroup,
-    onShareDocumentGroup
+    onShareDocumentGroup,
+    onUpdateDocumentGroup
   }
 }
 

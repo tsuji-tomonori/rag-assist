@@ -743,6 +743,80 @@ describe("DocumentWorkspace", () => {
     expect(child).toHaveStyle({ paddingLeft: "52px" })
   })
 
+  it("選択フォルダの名前、説明、移動先を更新し、root移動をnullで送信する", async () => {
+    const childGroup: DocumentGroup = {
+      groupId: "group-child",
+      name: "人事",
+      description: "旧説明",
+      ...canonicalGroupFields("人事", { parentCanonicalPath: "/社内規定", parentGroupId: "group-1" }),
+      parentGroupId: "group-1",
+      ancestorGroupIds: ["group-1"],
+      visibility: "private",
+      ownerUserId: "user-1",
+      sharedUserIds: [],
+      sharedGroups: [],
+      managerUserIds: ["user-1"],
+      createdAt: "2026-05-02T00:00:00.000Z",
+      updatedAt: "2026-05-02T00:00:00.000Z"
+    }
+    const grandchildGroup: DocumentGroup = {
+      groupId: "group-grandchild",
+      name: "採用",
+      ...canonicalGroupFields("採用", { parentCanonicalPath: "/社内規定/人事", parentGroupId: "group-child" }),
+      parentGroupId: "group-child",
+      ancestorGroupIds: ["group-1", "group-child"],
+      visibility: "private",
+      ownerUserId: "user-1",
+      sharedUserIds: [],
+      sharedGroups: [],
+      managerUserIds: ["user-1"],
+      createdAt: "2026-05-03T00:00:00.000Z",
+      updatedAt: "2026-05-03T00:00:00.000Z"
+    }
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[...documentGroups, childGroup, grandchildGroup]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={onShareGroup}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "/ ドキュメントグループ/社内規定/人事 0件" }))
+    await userEvent.clear(screen.getByLabelText("編集後フォルダ名"))
+    await userEvent.type(screen.getByLabelText("編集後フォルダ名"), "人事改定")
+    await userEvent.clear(screen.getByLabelText("編集後説明"))
+    await userEvent.type(screen.getByLabelText("編集後説明"), "新しい説明")
+    await userEvent.selectOptions(screen.getByLabelText("移動先フォルダ"), "__root__")
+
+    const moveSelector = screen.getByLabelText("移動先フォルダ")
+    expect(within(moveSelector).queryByRole("option", { name: "/社内規定/人事/採用" })).not.toBeInTheDocument()
+    expect(screen.getByText("移動先: ルート")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ更新" }))
+
+    expect(onShareGroup).toHaveBeenCalledWith("group-child", {
+      name: "人事改定",
+      description: "新しい説明",
+      parentGroupId: null
+    })
+  })
+
   it("設定込みでフォルダを作成し、作成後に保存先へ移動する", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue({
       groupId: "group-new",

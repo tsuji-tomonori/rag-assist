@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
+import type { UpdateDocumentGroupInput } from "../api/documentsApi.js"
 import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
@@ -20,6 +21,7 @@ import {
   fileTypeLabel,
   parseListInput,
   parseSharedGroups,
+  rootFolderParentValue,
   sharedEntries,
   uniqueSorted,
   visibilityLabelValue,
@@ -76,7 +78,7 @@ export function DocumentWorkspace({
   onUploadGroupChange: (groupId: string) => void
   onUpload: (file: File) => Promise<DocumentUploadResult | DocumentOperationResult | void>
   onCreateGroup: (input: CreateDocumentGroupInput) => Promise<DocumentGroup | void>
-  onShareGroup: (groupId: string, input: { visibility?: "private" | "shared" | "org"; sharedGroups?: string[]; sharedUserIds?: string[] }) => Promise<DocumentOperationResult | void>
+  onShareGroup: (groupId: string, input: UpdateDocumentGroupInput) => Promise<DocumentOperationResult | void>
   onDelete: (documentId: string) => Promise<DocumentOperationResult | void>
   onStageReindex: (documentId: string) => Promise<DocumentOperationResult | void>
   onCutoverReindex: (migrationId: string) => Promise<DocumentOperationResult | void>
@@ -97,6 +99,9 @@ export function DocumentWorkspace({
   const [shareGroupId, setShareGroupId] = useState("")
   const [shareGroups, setShareGroups] = useState("")
   const [shareClearConfirmed, setShareClearConfirmed] = useState(false)
+  const [editGroupName, setEditGroupName] = useState("")
+  const [editGroupDescription, setEditGroupDescription] = useState("")
+  const [editGroupParentId, setEditGroupParentId] = useState(rootFolderParentValue)
   const [selectedFolderId, setSelectedFolderId] = useState(urlState?.folderId ?? "all")
   const [folderSearch, setFolderSearch] = useState("")
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null)
@@ -192,6 +197,30 @@ export function DocumentWorkspace({
     createManagerDraft.duplicates.length > 0
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
   const createVisibilityLabel = visibilityLabelValue(groupVisibility)
+  const editTargetGroup = selectedFolder.group
+  const editDescendantGroupIds = useMemo(() => descendantGroupIds(documentGroups, selectedGroupId), [documentGroups, selectedGroupId])
+  const editMoveTargetGroups = documentGroups.filter((group) => group.groupId !== selectedGroupId && !editDescendantGroupIds.has(group.groupId))
+  const editParentGroup = editGroupParentId === rootFolderParentValue ? undefined : documentGroups.find((group) => group.groupId === editGroupParentId)
+  const editParentInvalid = Boolean(
+    editTargetGroup &&
+    editGroupParentId !== rootFolderParentValue &&
+    (!editParentGroup || editGroupParentId === editTargetGroup.groupId || editDescendantGroupIds.has(editGroupParentId))
+  )
+  const editName = editGroupName.trim()
+  const editDescription = editGroupDescription.trim()
+  const editCurrentParentId = editTargetGroup?.parentGroupId ?? rootFolderParentValue
+  const editHasChanges = Boolean(editTargetGroup) && (
+    editName !== editTargetGroup?.name ||
+    (editDescription || undefined) !== editTargetGroup?.description ||
+    editGroupParentId !== editCurrentParentId
+  )
+  const editCanSubmit = canWrite &&
+    Boolean(editTargetGroup) &&
+    Boolean(editName) &&
+    editHasChanges &&
+    !editParentInvalid &&
+    operationState.sharingGroupId === null
+  const editDestinationLabel = editGroupParentId === rootFolderParentValue ? "ルート" : editParentGroup?.canonicalPath ?? "選択不可"
 
   useEffect(() => {
     if (!urlState) return
@@ -240,6 +269,18 @@ export function DocumentWorkspace({
     setShareGroups(currentShareGroupsValue)
     setShareClearConfirmed(false)
   }, [currentShareGroupsValue, shareTargetGroupId])
+
+  useEffect(() => {
+    if (!editTargetGroup) {
+      setEditGroupName("")
+      setEditGroupDescription("")
+      setEditGroupParentId(rootFolderParentValue)
+      return
+    }
+    setEditGroupName(editTargetGroup.name)
+    setEditGroupDescription(editTargetGroup.description ?? "")
+    setEditGroupParentId(editTargetGroup.parentGroupId ?? rootFolderParentValue)
+  }, [editTargetGroup, editTargetGroup?.description, editTargetGroup?.groupId, editTargetGroup?.name, editTargetGroup?.parentGroupId])
 
   function recordSessionOperation(actionLabel: string, target: string, detail?: string, result: DocumentOperationEvent["result"] = "要求済み") {
     operationEventSeqRef.current += 1
@@ -324,6 +365,26 @@ export function DocumentWorkspace({
       setShareClearConfirmed(false)
     } else {
       recordSessionOperation("共有更新", target, `${detail} / error: ${result.error}`, "失敗")
+    }
+  }
+
+  async function onEditGroupSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!editTargetGroup || !editCanSubmit) return
+    const input: UpdateDocumentGroupInput = {}
+    if (editName !== editTargetGroup.name) input.name = editName
+    if ((editDescription || undefined) !== editTargetGroup.description) input.description = editDescription
+    if (editGroupParentId !== editCurrentParentId) input.parentGroupId = editGroupParentId === rootFolderParentValue ? null : editGroupParentId
+    const detail = [
+      input.name !== undefined ? `名前: ${input.name}` : undefined,
+      input.description !== undefined ? `説明: ${input.description || "未設定"}` : undefined,
+      input.parentGroupId !== undefined ? `移動先: ${editDestinationLabel}` : undefined
+    ].filter(Boolean).join(" / ")
+    const result = normalizeOperationResult(await onShareGroup(editTargetGroup.groupId, input))
+    if (result.ok) {
+      recordSessionOperation("フォルダ更新", editTargetGroup.name, detail || "設定変更", "反映済み")
+    } else {
+      recordSessionOperation("フォルダ更新", editTargetGroup.name, `${detail || "設定変更"} / error: ${result.error}`, "失敗")
     }
   }
 
@@ -525,6 +586,15 @@ export function DocumentWorkspace({
           createVisibilityLabel={createVisibilityLabel}
           shareGroupId={shareGroupId}
           shareGroups={shareGroups}
+          editTargetGroup={editTargetGroup}
+          editGroupName={editGroupName}
+          editGroupDescription={editGroupDescription}
+          editGroupParentId={editGroupParentId}
+          editMoveTargetGroups={editMoveTargetGroups}
+          editParentInvalid={editParentInvalid}
+          editHasChanges={editHasChanges}
+          editCanSubmit={editCanSubmit}
+          editDestinationLabel={editDestinationLabel}
           canWrite={canWrite}
           canUploadToDestination={canUploadToDestination}
           operationState={operationState}
@@ -543,6 +613,9 @@ export function DocumentWorkspace({
           onShareClearConfirmedChange={setShareClearConfirmed}
           onShareGroupOptionChange={toggleShareGroupOption}
           onCreateShareGroupOptionChange={toggleCreateShareGroupOption}
+          onEditGroupNameChange={setEditGroupName}
+          onEditGroupDescriptionChange={setEditGroupDescription}
+          onEditGroupParentIdChange={setEditGroupParentId}
           onUploadGroupChange={onUploadGroupChange}
           onUploadSubmit={(event) => void onSubmit(event)}
           onOpenUploadedDocument={openUploadedDocument}
@@ -550,6 +623,7 @@ export function DocumentWorkspace({
           onShowUploadedFolder={showUploadedFolder}
           onCreateGroupSubmit={(event) => void onCreateGroupSubmit(event)}
           onShareSubmit={(event) => void onShareSubmit(event)}
+          onEditGroupSubmit={(event) => void onEditGroupSubmit(event)}
         />
       </div>
       {confirmAction && (
@@ -610,4 +684,22 @@ function isConfirmActionRunning(action: ConfirmAction | null, operationState: Do
   if (action.kind === "stage") return operationState.stagingReindexDocumentId === action.document.documentId
   if (action.kind === "cutover") return operationState.cutoverMigrationId === action.migration.migrationId
   return operationState.rollbackMigrationId === action.migration.migrationId
+}
+
+function descendantGroupIds(groups: DocumentGroup[], rootGroupId: string): Set<string> {
+  const result = new Set<string>()
+  if (!rootGroupId) return result
+  const childrenByParentId = new Map<string, DocumentGroup[]>()
+  for (const group of groups) {
+    if (!group.parentGroupId) continue
+    childrenByParentId.set(group.parentGroupId, [...(childrenByParentId.get(group.parentGroupId) ?? []), group])
+  }
+  const queue = [...(childrenByParentId.get(rootGroupId) ?? [])]
+  while (queue.length > 0) {
+    const group = queue.shift()
+    if (!group || result.has(group.groupId)) continue
+    result.add(group.groupId)
+    queue.push(...(childrenByParentId.get(group.groupId) ?? []))
+  }
+  return result
 }
