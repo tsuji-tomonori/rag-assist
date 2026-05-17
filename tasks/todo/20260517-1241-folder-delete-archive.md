@@ -25,6 +25,34 @@
 - 文書そのものの削除再実装。
 - 大規模 subtree 削除の非同期 job。必要なら後続 task に分離する。
 
+## 昇華メタ情報
+
+- 優先度: P1。rename / move UI の次に必要だが、危険操作なので audit と並行検討する。
+- 依存関係: path lock item、folder tree state、document list / group assignment 確認。
+- 推奨 PR 分割:
+  - PR 1: empty-only delete または archive の仕様決定と API schema。
+  - PR 2: Local / DynamoDB store と service mutation。
+  - PR 3: Web confirmation UI と operation state。
+- 成功指標: stale folder と stale path lock を残さず、誤削除を UI / API で防げる。
+
+## 実装設計メモ
+
+- 初回は empty-only delete か archive を推奨する。recursive delete は別 task に分離する。
+- delete 前に direct child、descendant、document assignment の有無を確認する。
+- DynamoDB では group item と path lock cleanup を transaction で扱う。
+- UI confirmation には folder name、canonical path、配下 folder / document の有無、不可逆性を表示する。
+
+## 追加確認観点
+
+- 削除対象が selected folder / upload destination の場合、安全な fallback state へ戻る。
+- 権限不足、not found、not empty、conflict を API / UI が区別する。
+- RAG retrieval が削除済み folder scope を使わない。
+
+## 未確定点
+
+- 初回仕様を empty-only delete、archive、recursive delete のどれにするか。
+- archive の場合、canonical path lock を保持するか解放するか。
+
 ## 実行計画
 
 1. 削除方式を「空フォルダのみ delete」「archive」「recursive delete」のどれにするか決める。

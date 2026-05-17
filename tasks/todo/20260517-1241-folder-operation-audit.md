@@ -24,6 +24,34 @@
 - 全システム操作の audit 統合。
 - 外部 SIEM 連携。
 
+## 昇華メタ情報
+
+- 優先度: P1。delete / move / sharing などの危険操作に先行または同時実装したい。
+- 依存関係: actor / tenant context、folder mutation service、audit storage 方針。
+- 推奨 PR 分割:
+  - PR 1: audit event schema と store。
+  - PR 2: folder mutation への audit emit。
+  - PR 3: admin / operation UI または API read model。
+- 成功指標: folder mutation の before / after summary を権限内で追跡できる。
+
+## 実装設計メモ
+
+- audit event には actor、tenantId、operation、target groupId、canonical path before / after、result を入れる。
+- raw request、credentials、内部 reasoning、unauthorized document data は保存しない。
+- audit write failure の扱いは operation ごとに fail closed / fail open を決める。
+- delete / move は denied / failed event も記録対象にする。
+
+## 追加確認観点
+
+- audit log read API は system admin または適切な audit permission に限定される。
+- audit event が cross-tenant に見えない。
+- operation success と audit write の整合性がテストされている。
+
+## 未確定点
+
+- audit store を既存 store に統合するか、専用 table / object にするか。
+- 保持期間と redaction policy。
+
 ## 実行計画
 
 1. 既存の recent operations / audit 風実装を確認する。

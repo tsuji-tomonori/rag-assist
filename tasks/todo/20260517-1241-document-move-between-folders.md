@@ -26,6 +26,34 @@
 - フォルダ自体の移動。
 - 文書 content 再 ingest。必要な場合のみ metadata update / reindex を設計する。
 
+## 昇華メタ情報
+
+- 優先度: P1。フォルダ運用で upload 後の分類変更を可能にする中核 task。
+- 依存関係: folder selector UI、destination folder ACL、manifest / vector metadata の group scope 方針。
+- 推奨 PR 分割:
+  - PR 1: document move API と権限仕様。
+  - PR 2: manifest / index / vector metadata 更新実装。
+  - PR 3: Web document action と確認 dialog。
+- 成功指標: 移動後の list / search / upload scope / RAG retrieval が新 folder の ACL に従う。
+
+## 実装設計メモ
+
+- 権限は source read だけでなく destination manage または upload 権限を要求する。
+- vector metadata に group scope が含まれる場合は metadata update または reindex が必要。
+- document move は document updatedAt、operation log、debug trace への影響を確認する。
+- UI は複数選択 move を初回に含めるか、single document move から始めるかを決める。
+
+## 追加確認観点
+
+- 旧 folder の権限しかない user が移動後 document を検索できない。
+- 移動先 folder の権限がない user は move できない。
+- 移動後に document detail / list / chat scope の表示が矛盾しない。
+
+## 未確定点
+
+- move を metadata-only にできるか、vector metadata 再生成が必要か。
+- bulk move を初回 scope に含めるか。
+
 ## 実行計画
 
 1. Document が持つ `groupId` / scope / manifest / vector metadata を棚卸しする。
