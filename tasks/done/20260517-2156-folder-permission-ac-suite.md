@@ -1,6 +1,6 @@
 # フォルダ権限 AC 受け入れテスト補強
 
-状態: implementation_validated
+状態: done
 タスク種別: 機能追加
 
 ## 背景
@@ -55,6 +55,7 @@
 - `apps/api/src/search/hybrid-search.ts` の lexical / vector manifest 再確認で `FolderPermissionService` を使用するように変更した。
 - `apps/api/src/search/hybrid-search.test.ts` に、group membership 削除後に再インデックスなしで検索対象から外れる AC-FOLDER-010 回帰テストを追加した。
 - `apps/api/src/adapters/local-document-group-store.test.ts` に、同一管理者の重複拒否、同一管理者の異なる full path 許可、異なる管理者の同一 path 許可を明示する test expectation を追加した。
+- PR #327 を作成し、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
 
 ## 検証結果
 
