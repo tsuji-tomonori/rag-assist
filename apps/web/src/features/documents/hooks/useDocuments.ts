@@ -44,12 +44,16 @@ export function useDocuments({
   modelId,
   embeddingModelId,
   canWriteDocuments,
+  canCreateDocumentGroups,
+  canShareDocumentGroups,
   canReindexDocuments,
   setError
 }: {
   modelId: string
   embeddingModelId: string
   canWriteDocuments: boolean
+  canCreateDocumentGroups: boolean
+  canShareDocumentGroups: boolean
   canReindexDocuments: boolean
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -167,7 +171,7 @@ export function useDocuments({
   }
 
   async function onCreateDocumentGroup(input: CreateDocumentGroupInput): Promise<DocumentGroup | undefined> {
-    if (!canWriteDocuments) return undefined
+    if (!canCreateDocumentGroups) return undefined
     updateOperationState({ creatingGroup: true })
     setError(null)
     try {
@@ -183,7 +187,7 @@ export function useDocuments({
   }
 
   async function onUpdateDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentOperationResult> {
-    if (!canWriteDocuments) return { ok: false, error: "フォルダ設定を更新する権限がありません" }
+    if (!canShareDocumentGroups) return { ok: false, error: "フォルダ設定を更新する権限がありません" }
     updateOperationState({ sharingGroupId: groupId })
     setError(null)
     try {

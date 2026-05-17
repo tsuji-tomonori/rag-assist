@@ -22,6 +22,8 @@ function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}
     modelId: "model",
     embeddingModelId: "embedding",
     canWriteDocuments: true,
+    canCreateDocumentGroups: true,
+    canShareDocumentGroups: true,
     canReindexDocuments: true,
     setLoading: vi.fn(),
     setError: vi.fn(),
@@ -191,7 +193,7 @@ describe("useDocuments", () => {
     expect(result.current.uploadGroupId).toBe("")
   })
 
-  it("アップロード権限と削除操作に応じて API 呼び出しを分岐する", async () => {
+  it("アップロード権限、フォルダ権限、削除操作に応じて API 呼び出しを分岐する", async () => {
     const props = createProps()
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "b.txt", { type: "" })
@@ -203,10 +205,12 @@ describe("useDocuments", () => {
       embeddingModelId: "embedding"
     }))
 
-    const readonly = renderHook(() => useDocuments(createProps({ canWriteDocuments: false })))
-    const readonlyUploadResult = await act(() => readonly.result.current.onUploadDocumentFile(file))
-    await act(() => readonly.result.current.onCreateDocumentGroup({ name: "readonly", visibility: "private" }))
-    const readonlyShareResult = await act(() => readonly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    const readonlyUpload = renderHook(() => useDocuments(createProps({ canWriteDocuments: false })))
+    const readonlyUploadResult = await act(() => readonlyUpload.result.current.onUploadDocumentFile(file))
+    const readonlyCreate = renderHook(() => useDocuments(createProps({ canCreateDocumentGroups: false })))
+    await act(() => readonlyCreate.result.current.onCreateDocumentGroup({ name: "readonly", visibility: "private" }))
+    const readonlyShare = renderHook(() => useDocuments(createProps({ canShareDocumentGroups: false })))
+    const readonlyShareResult = await act(() => readonlyShare.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
     expect(uploadDocumentFile).toHaveBeenCalledTimes(1)
     expect(createDocumentGroup).not.toHaveBeenCalled()
     expect(updateDocumentGroup).not.toHaveBeenCalled()

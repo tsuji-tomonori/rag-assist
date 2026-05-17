@@ -47,6 +47,8 @@ export function DocumentWorkspace({
   loading,
   canWrite,
   canDelete,
+  canCreateGroups,
+  canShareGroups,
   canReindex,
   uploadGroupId = "",
   operationState = emptyOperationState,
@@ -70,6 +72,8 @@ export function DocumentWorkspace({
   loading: boolean
   canWrite: boolean
   canDelete: boolean
+  canCreateGroups: boolean
+  canShareGroups: boolean
   canReindex: boolean
   uploadGroupId?: string
   operationState?: DocumentOperationState
@@ -101,6 +105,7 @@ export function DocumentWorkspace({
   const [shareClearConfirmed, setShareClearConfirmed] = useState(false)
   const [editGroupName, setEditGroupName] = useState("")
   const [editGroupDescription, setEditGroupDescription] = useState("")
+  const [folderSettingsOpen, setFolderSettingsOpen] = useState(false)
   const [editGroupParentId, setEditGroupParentId] = useState(rootFolderParentValue)
   const [selectedFolderId, setSelectedFolderId] = useState(urlState?.folderId ?? "all")
   const [folderSearch, setFolderSearch] = useState("")
@@ -181,7 +186,7 @@ export function DocumentWorkspace({
   const shareHasChanges = shareDiff.added.length > 0 || shareDiff.removed.length > 0
   const shareClearsAllExistingGroups = currentShareGroups.length > 0 && shareDraft.groups.length === 0
   const shareRequiresClearConfirmation = shareClearsAllExistingGroups && shareHasChanges
-  const canSubmitShare = canWrite &&
+  const canSubmitShare = canShareGroups &&
     Boolean(shareTargetGroupId) &&
     !shareHasValidationError &&
     shareHasChanges &&
@@ -214,7 +219,7 @@ export function DocumentWorkspace({
     (editDescription || undefined) !== editTargetGroup?.description ||
     editGroupParentId !== editCurrentParentId
   )
-  const editCanSubmit = canWrite &&
+  const editCanSubmit = canShareGroups &&
     Boolean(editTargetGroup) &&
     Boolean(editName) &&
     editHasChanges &&
@@ -331,7 +336,7 @@ export function DocumentWorkspace({
   async function onCreateGroupSubmit(event: FormEvent) {
     event.preventDefault()
     const name = groupName.trim()
-    if (!name || !canWrite || createHasValidationError) return
+    if (!name || !canCreateGroups || createHasValidationError) return
     const input: CreateDocumentGroupInput = {
       name,
       visibility: groupVisibility,
@@ -346,6 +351,7 @@ export function DocumentWorkspace({
       setSelectedFolderId(createdGroup.groupId)
       onUploadGroupChange(createdGroup.groupId)
     }
+    if (createdGroup?.groupId) setFolderSettingsOpen(false)
     setGroupName("")
     setGroupDescription("")
     setGroupParentId("")
@@ -363,6 +369,7 @@ export function DocumentWorkspace({
     if (result.ok) {
       recordSessionOperation("共有更新", target, detail, "反映済み")
       setShareClearConfirmed(false)
+      setFolderSettingsOpen(false)
     } else {
       recordSessionOperation("共有更新", target, `${detail} / error: ${result.error}`, "失敗")
     }
@@ -383,6 +390,7 @@ export function DocumentWorkspace({
     const result = normalizeOperationResult(await onShareGroup(editTargetGroup.groupId, input))
     if (result.ok) {
       recordSessionOperation("フォルダ更新", editTargetGroup.name, detail || "設定変更", "反映済み")
+      setFolderSettingsOpen(false)
     } else {
       recordSessionOperation("フォルダ更新", editTargetGroup.name, `${detail || "設定変更"} / error: ${result.error}`, "失敗")
     }
@@ -461,6 +469,19 @@ export function DocumentWorkspace({
     onUploadGroupChange(groupId)
   }
 
+  function openCreateFolderModal() {
+    setGroupParentId(selectedGroupId)
+    setFolderSettingsOpen(true)
+  }
+
+  function openFolderSettingsModal() {
+    setFolderSettingsOpen(true)
+  }
+
+  function openUploadPicker() {
+    setFolderSettingsOpen(true)
+  }
+
   return (
     <section className="document-workspace" aria-label="ドキュメント管理">
       <header className="document-page-header">
@@ -519,12 +540,12 @@ export function DocumentWorkspace({
           operationState={operationState}
           canWrite={canWrite}
           canDelete={canDelete}
+          canCreateGroups={canCreateGroups}
+          canShareGroups={canShareGroups}
           canReindex={canReindex}
           canUploadToDestination={canUploadToDestination}
           migrations={migrations}
           selectedMigrationId={selectedMigrationId}
-          uploadInputRef={uploadInputRef}
-          shareSelectRef={shareSelectRef}
           onDocumentQueryChange={setDocumentQuery}
           onDocumentTypeFilterChange={setDocumentTypeFilter}
           onDocumentStatusFilterChange={setDocumentStatusFilter}
@@ -544,88 +565,115 @@ export function DocumentWorkspace({
             setConfirmError(null)
             setConfirmAction(action)
           }}
-        />
-        <DocumentDetailPanel
-          documentGroups={documentGroups}
-          selectedFolder={selectedFolder}
-          selectedGroupId={selectedGroupId}
-          selectedSharedEntries={selectedSharedEntries}
-          shareTargetGroupId={shareTargetGroupId}
-          shareHasValidationError={shareHasValidationError}
-          shareHasEmptyToken={shareHasEmptyToken}
-          shareHasDuplicate={shareHasDuplicate}
-          shareDuplicates={shareDraft.duplicates}
-          shareDiff={shareDiff}
-          shareDraftGroups={shareDraft.groups}
-          shareGroupOptions={shareGroupOptions}
-          shareHasChanges={shareHasChanges}
-          shareRequiresClearConfirmation={shareRequiresClearConfirmation}
-          shareClearConfirmed={shareClearConfirmed}
-          visibleDocuments={visibleDocuments}
-          visibleChunkCount={visibleChunkCount}
-          uploadGroupId={uploadGroupId}
-          uploadFile={uploadFile}
-          uploadDestinationLabel={uploadDestinationLabel}
-          uploadState={uploadState}
-          uploadedDocument={lastUploadedDocument}
-          uploadedDocumentGroupId={uploadedDocumentGroupId(lastUploadedDocument, uploadState?.groupId, uploadGroupId)}
-          recentOperationEvents={recentOperationEvents}
-          groupName={groupName}
-          groupDescription={groupDescription}
-          groupParentId={groupParentId}
-          groupVisibility={groupVisibility}
-          groupSharedGroups={groupSharedGroups}
-          groupManagerUserIds={groupManagerUserIds}
-          moveToCreatedGroup={moveToCreatedGroup}
-          createSharedDraft={createSharedDraft}
-          createShareGroupOptions={createShareGroupOptions}
-          createManagerDraft={createManagerDraft}
-          validatesCreateSharedGroups={validatesCreateSharedGroups}
-          createHasValidationError={createHasValidationError}
-          createParentGroup={createParentGroup}
-          createVisibilityLabel={createVisibilityLabel}
-          shareGroupId={shareGroupId}
-          shareGroups={shareGroups}
-          editTargetGroup={editTargetGroup}
-          editGroupName={editGroupName}
-          editGroupDescription={editGroupDescription}
-          editGroupParentId={editGroupParentId}
-          editMoveTargetGroups={editMoveTargetGroups}
-          editParentInvalid={editParentInvalid}
-          editHasChanges={editHasChanges}
-          editCanSubmit={editCanSubmit}
-          editDestinationLabel={editDestinationLabel}
-          canWrite={canWrite}
-          canUploadToDestination={canUploadToDestination}
-          operationState={operationState}
-          uploadInputRef={uploadInputRef}
-          shareSelectRef={shareSelectRef}
-          onUploadFileChange={onUploadFileChange}
-          onGroupNameChange={setGroupName}
-          onGroupDescriptionChange={setGroupDescription}
-          onGroupParentIdChange={setGroupParentId}
-          onGroupVisibilityChange={setGroupVisibility}
-          onGroupSharedGroupsChange={setGroupSharedGroups}
-          onGroupManagerUserIdsChange={setGroupManagerUserIds}
-          onMoveToCreatedGroupChange={setMoveToCreatedGroup}
-          onShareGroupIdChange={setShareGroupId}
-          onShareGroupsChange={updateShareGroups}
-          onShareClearConfirmedChange={setShareClearConfirmed}
-          onShareGroupOptionChange={toggleShareGroupOption}
-          onCreateShareGroupOptionChange={toggleCreateShareGroupOption}
-          onEditGroupNameChange={setEditGroupName}
-          onEditGroupDescriptionChange={setEditGroupDescription}
-          onEditGroupParentIdChange={setEditGroupParentId}
-          onUploadGroupChange={onUploadGroupChange}
-          onUploadSubmit={(event) => void onSubmit(event)}
-          onOpenUploadedDocument={openUploadedDocument}
-          onAskUploadedDocument={onAskDocument}
-          onShowUploadedFolder={showUploadedFolder}
-          onCreateGroupSubmit={(event) => void onCreateGroupSubmit(event)}
-          onShareSubmit={(event) => void onShareSubmit(event)}
-          onEditGroupSubmit={(event) => void onEditGroupSubmit(event)}
+          onOpenCreateFolder={openCreateFolderModal}
+          onOpenFolderSettings={openFolderSettingsModal}
+          onOpenUploadPicker={openUploadPicker}
         />
       </div>
+
+      {folderSettingsOpen && (
+        <div
+          className="document-settings-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setFolderSettingsOpen(false)
+          }}
+        >
+          <section className="document-settings-modal" role="dialog" aria-modal="true" aria-labelledby="document-settings-title">
+            <header className="document-settings-modal-head">
+              <div>
+                <h3 id="document-settings-title">フォルダ設定</h3>
+                <span>{selectedFolder.path}</span>
+              </div>
+              <button type="button" aria-label="フォルダ設定を閉じる" onClick={() => setFolderSettingsOpen(false)}>
+                <Icon name="close" />
+              </button>
+            </header>
+            <DocumentDetailPanel
+              documentGroups={documentGroups}
+              selectedFolder={selectedFolder}
+              selectedGroupId={selectedGroupId}
+              selectedSharedEntries={selectedSharedEntries}
+              shareTargetGroupId={shareTargetGroupId}
+              shareHasValidationError={shareHasValidationError}
+              shareHasEmptyToken={shareHasEmptyToken}
+              shareHasDuplicate={shareHasDuplicate}
+              shareDuplicates={shareDraft.duplicates}
+              shareDiff={shareDiff}
+              shareDraftGroups={shareDraft.groups}
+              shareGroupOptions={shareGroupOptions}
+              shareHasChanges={shareHasChanges}
+              shareRequiresClearConfirmation={shareRequiresClearConfirmation}
+              shareClearConfirmed={shareClearConfirmed}
+              visibleDocuments={visibleDocuments}
+              visibleChunkCount={visibleChunkCount}
+              uploadGroupId={uploadGroupId}
+              uploadFile={uploadFile}
+              uploadDestinationLabel={uploadDestinationLabel}
+              uploadState={uploadState}
+              uploadedDocument={lastUploadedDocument}
+              uploadedDocumentGroupId={uploadedDocumentGroupId(lastUploadedDocument, uploadState?.groupId, uploadGroupId)}
+              recentOperationEvents={recentOperationEvents}
+              groupName={groupName}
+              groupDescription={groupDescription}
+              groupParentId={groupParentId}
+              groupVisibility={groupVisibility}
+              groupSharedGroups={groupSharedGroups}
+              groupManagerUserIds={groupManagerUserIds}
+              moveToCreatedGroup={moveToCreatedGroup}
+              createSharedDraft={createSharedDraft}
+              createShareGroupOptions={createShareGroupOptions}
+              createManagerDraft={createManagerDraft}
+              validatesCreateSharedGroups={validatesCreateSharedGroups}
+              createHasValidationError={createHasValidationError}
+              createParentGroup={createParentGroup}
+              createVisibilityLabel={createVisibilityLabel}
+              shareGroupId={shareGroupId}
+              shareGroups={shareGroups}
+              editTargetGroup={editTargetGroup}
+              editGroupName={editGroupName}
+              editGroupDescription={editGroupDescription}
+              editGroupParentId={editGroupParentId}
+              editMoveTargetGroups={editMoveTargetGroups}
+              editParentInvalid={editParentInvalid}
+              editHasChanges={editHasChanges}
+              editCanSubmit={editCanSubmit}
+              editDestinationLabel={editDestinationLabel}
+              canWrite={canWrite}
+              canCreateGroups={canCreateGroups}
+              canShareGroups={canShareGroups}
+              canUploadToDestination={canUploadToDestination}
+              operationState={operationState}
+              uploadInputRef={uploadInputRef}
+              shareSelectRef={shareSelectRef}
+              onUploadFileChange={onUploadFileChange}
+              onGroupNameChange={setGroupName}
+              onGroupDescriptionChange={setGroupDescription}
+              onGroupParentIdChange={setGroupParentId}
+              onGroupVisibilityChange={setGroupVisibility}
+              onGroupSharedGroupsChange={setGroupSharedGroups}
+              onGroupManagerUserIdsChange={setGroupManagerUserIds}
+              onMoveToCreatedGroupChange={setMoveToCreatedGroup}
+              onShareGroupIdChange={setShareGroupId}
+              onShareGroupsChange={updateShareGroups}
+              onShareClearConfirmedChange={setShareClearConfirmed}
+              onShareGroupOptionChange={toggleShareGroupOption}
+              onCreateShareGroupOptionChange={toggleCreateShareGroupOption}
+              onEditGroupNameChange={setEditGroupName}
+              onEditGroupDescriptionChange={setEditGroupDescription}
+              onEditGroupParentIdChange={setEditGroupParentId}
+              onUploadGroupChange={onUploadGroupChange}
+              onUploadSubmit={(event) => void onSubmit(event)}
+              onOpenUploadedDocument={openUploadedDocument}
+              onAskUploadedDocument={onAskDocument}
+              onShowUploadedFolder={showUploadedFolder}
+              onCreateGroupSubmit={(event) => void onCreateGroupSubmit(event)}
+              onShareSubmit={(event) => void onShareSubmit(event)}
+              onEditGroupSubmit={(event) => void onEditGroupSubmit(event)}
+            />
+          </section>
+        </div>
+      )}
       {confirmAction && (
         <DocumentConfirmDialog
           action={confirmAction}

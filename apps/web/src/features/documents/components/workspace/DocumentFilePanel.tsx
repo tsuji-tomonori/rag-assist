@@ -1,4 +1,3 @@
-import type { RefObject } from "react"
 import { EmptyState } from "../../../../shared/ui/index.js"
 import { Icon } from "../../../../shared/components/Icon.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
@@ -42,12 +41,12 @@ export function DocumentFilePanel({
   operationState,
   canWrite,
   canDelete,
+  canCreateGroups,
+  canShareGroups,
   canReindex,
   canUploadToDestination,
   migrations,
   selectedMigrationId,
-  uploadInputRef,
-  shareSelectRef,
   onDocumentQueryChange,
   onDocumentTypeFilterChange,
   onDocumentStatusFilterChange,
@@ -56,7 +55,10 @@ export function DocumentFilePanel({
   onDocumentPageChange,
   onDocumentPageSizeChange,
   onSelectDocument,
-  onConfirmAction
+  onConfirmAction,
+  onOpenCreateFolder,
+  onOpenFolderSettings,
+  onOpenUploadPicker
 }: {
   documents: DocumentManifest[]
   documentGroups: DocumentGroup[]
@@ -83,12 +85,12 @@ export function DocumentFilePanel({
   operationState: DocumentOperationState
   canWrite: boolean
   canDelete: boolean
+  canCreateGroups: boolean
+  canShareGroups: boolean
   canReindex: boolean
   canUploadToDestination: boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
-  uploadInputRef: RefObject<HTMLInputElement | null>
-  shareSelectRef: RefObject<HTMLSelectElement | null>
   onDocumentQueryChange: (value: string) => void
   onDocumentTypeFilterChange: (value: string) => void
   onDocumentStatusFilterChange: (value: string) => void
@@ -98,6 +100,9 @@ export function DocumentFilePanel({
   onDocumentPageSizeChange: (pageSize: number) => void
   onSelectDocument: (document: DocumentManifest) => void
   onConfirmAction: (action: ConfirmAction) => void
+  onOpenCreateFolder: () => void
+  onOpenFolderSettings: () => void
+  onOpenUploadPicker: () => void
 }) {
   return (
     <section className="document-file-panel" aria-label="登録文書一覧">
@@ -110,19 +115,28 @@ export function DocumentFilePanel({
         <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
           <button
             type="button"
-            title={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
-            aria-label={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
-            disabled={!canUploadToDestination || operationState.isUploading}
-            onClick={() => uploadInputRef.current?.click()}
+            title={selectedFolder.group ? "このフォルダに子フォルダを作成" : "新規フォルダを作成"}
+            aria-label={selectedFolder.group ? "このフォルダに子フォルダを作成" : "新規フォルダを作成"}
+            disabled={!canCreateGroups || operationState.creatingGroup}
+            onClick={onOpenCreateFolder}
           >
             <Icon name="plus" />
           </button>
           <button
             type="button"
-            title="共有設定を編集"
-            aria-label="共有設定を編集"
-            disabled={!canWrite || operationState.sharingGroupId !== null}
-            onClick={() => shareSelectRef.current?.focus()}
+            title={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
+            aria-label={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
+            disabled={!canUploadToDestination || operationState.isUploading}
+            onClick={onOpenUploadPicker}
+          >
+            <Icon name="download" />
+          </button>
+          <button
+            type="button"
+            title="フォルダ設定を開く"
+            aria-label="フォルダ設定を開く"
+            disabled={(!canShareGroups && !canCreateGroups && !canWrite) || operationState.sharingGroupId !== null}
+            onClick={onOpenFolderSettings}
           >
             <Icon name="share" />
           </button>
@@ -188,7 +202,7 @@ export function DocumentFilePanel({
           <EmptyState
             title="登録済みドキュメントはありません。"
             description={documentGroups.length === 0 ? "まずフォルダを作成し、保存先を選択してからファイルをアップロードしてください。" : "保存先フォルダを選択してファイルをアップロードしてください。"}
-            action={<button type="button" disabled={!canWrite || !uploadGroupId} onClick={() => uploadInputRef.current?.click()}>ファイルをアップロード</button>}
+            action={<button type="button" disabled={!canWrite || !uploadGroupId} onClick={onOpenUploadPicker}>ファイルをアップロード</button>}
           />
         ) : filteredDocumentsCount === 0 ? (
           <EmptyState
