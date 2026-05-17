@@ -136,6 +136,64 @@ test("group membership nesting is resolved with cycle guard", async () => {
   assert.equal(await service.resolveEffectiveFolderPermission(user("user-1"), "folder-1"), "readOnly")
 })
 
+test("inactive users and archived groups do not receive folder grants", async () => {
+  const { documentGroupStore, folderPolicyStore, groupMembershipStore, userGroupStore, service } = await fixture()
+  await userGroupStore.save(userGroup("archived-team", { status: "archived" }))
+  await groupMembershipStore.save(membership("archived-team", "user", "user-1", "full"))
+  await documentGroupStore.create(group({ groupId: "folder-1", ownerUserId: "owner-1", hasExplicitPolicy: true, policyId: "policy-1" }))
+  await folderPolicyStore.save(policy("policy-1", "folder-1", [
+    { principalType: "group", principalId: "archived-team", permissionLevel: "full" },
+    { principalType: "user", principalId: "owner-1", permissionLevel: "full" }
+  ]))
+
+  assert.equal(await service.resolveEffectiveFolderPermission(user("owner-1", [], "suspended"), "folder-1"), "none")
+  assert.equal(await service.resolveEffectiveFolderPermission(user("user-1"), "folder-1"), "none")
+})
+
+test("legacy compatibility grants manager shared user shared group and org visibility permissions", async () => {
+  const { documentGroupStore, groupMembershipStore, userGroupStore, service } = await fixture()
+  await userGroupStore.save(userGroup("team-a"))
+  await groupMembershipStore.save(membership("team-a", "user", "group-user", "full"))
+  await documentGroupStore.create(group({
+    groupId: "folder-1",
+    ownerUserId: "owner-1",
+    managerUserIds: ["owner-1", "manager-1"],
+    sharedUserIds: ["reader-1"],
+    sharedGroups: ["team-a"],
+    visibility: "org"
+  }))
+
+  assert.equal(await service.resolveEffectiveFolderPermission(user("manager-1"), "folder-1"), "full")
+  assert.equal(await service.resolveEffectiveFolderPermission(user("reader-1"), "folder-1"), "readOnly")
+  assert.equal(await service.resolveEffectiveFolderPermission(user("group-user"), "folder-1"), "readOnly")
+  assert.equal(await service.resolveEffectiveFolderPermission(user("org-user"), "folder-1"), "readOnly")
+})
+
+test("cognito group membership can manage group-admin folders", async () => {
+  const { documentGroupStore, userGroupStore, service } = await fixture()
+  await userGroupStore.save(userGroup("admin-team"))
+  await documentGroupStore.create(group({ groupId: "folder-1", ownerUserId: "creator-1", adminPrincipalType: "group", adminPrincipalId: "admin-team" }))
+
+  assert.equal(await service.resolveEffectiveFolderPermission(user("member-1", ["admin-team"]), "folder-1"), "full")
+})
+
+test("folder permission helpers expose bulk resolution and enforce required access", async () => {
+  const { documentGroupStore, service } = await fixture()
+  await documentGroupStore.create(group({ groupId: "full-folder", ownerUserId: "owner-1" }))
+  await documentGroupStore.create(group({ groupId: "read-folder", ownerUserId: "owner-2", sharedUserIds: ["owner-1"] }))
+  await documentGroupStore.create(group({ groupId: "hidden-folder", ownerUserId: "owner-3" }))
+
+  assert.deepEqual(await service.resolveEffectiveFolderPermissions(user("owner-1"), ["full-folder", "read-folder", "hidden-folder"]), {
+    "full-folder": "full",
+    "read-folder": "readOnly",
+    "hidden-folder": "none"
+  })
+  assert.deepEqual((await service.listReadableFolderIds(user("owner-1"))).sort(), ["full-folder", "read-folder"])
+  assert.deepEqual(await service.listManageableFolderIds(user("owner-1")), ["full-folder"])
+  await assert.doesNotReject(() => service.assertFolderPermission(user("owner-1"), "read-folder", "readOnly"))
+  await assert.rejects(() => service.assertFolderPermission(user("owner-1"), "read-folder", "full"), /Forbidden/)
+})
+
 async function fixture() {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-permission-test-"))
   const documentGroupStore = new LocalDocumentGroupStore(dataDir)
@@ -146,8 +204,8 @@ async function fixture() {
   return { documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, service }
 }
 
-function user(userId: string, cognitoGroups: string[] = []): AppUser {
-  return { userId, email: `${userId}@example.com`, cognitoGroups, accountStatus: "active" }
+function user(userId: string, cognitoGroups: string[] = [], accountStatus: AppUser["accountStatus"] = "active"): AppUser {
+  return { userId, email: `${userId}@example.com`, cognitoGroups, accountStatus }
 }
 
 function group(input: Partial<DocumentGroup> & Pick<DocumentGroup, "groupId" | "ownerUserId">): DocumentGroup {
@@ -196,7 +254,7 @@ function policy(policyId: string, folderId: string, entries: FolderPolicy["entri
   }
 }
 
-function userGroup(groupId: string): UserGroup {
+function userGroup(groupId: string, input: Partial<UserGroup> = {}): UserGroup {
   return {
     groupId,
     itemType: "userGroup",
@@ -204,7 +262,7 @@ function userGroup(groupId: string): UserGroup {
     name: groupId,
     type: "team",
     ancestorGroupIds: [],
-    status: "active",
+    status: input.status ?? "active",
     createdBy: "owner-1",
     createdAt: "2026-05-17T00:00:00.000Z",
     updatedAt: "2026-05-17T00:00:00.000Z"
