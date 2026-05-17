@@ -30,6 +30,7 @@
 - `apps/api/src/adapters/local-document-group-store.test.ts` を追加した。
 - legacy read、basic create/update error、path lock duplicate、optimistic update conflict、lock conflict、canonical path lookup をテストした。
 - API coverage command を再実行し、branch coverage を `85.2%` まで回復させた。
+- PR #322 に CI failure 対応コメントとセルフレビューコメントを追加した。
 
 ## 5. 成果物
 
@@ -67,3 +68,4 @@
 
 - CI rerun の完了確認は push 後に別途必要。
 - API branch coverage は改善したが、今後も閾値に近い状態にならないよう、API 実装追加時は関連 branch test を同時に追加する必要がある。
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/322
