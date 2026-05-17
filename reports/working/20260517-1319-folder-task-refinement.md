@@ -31,6 +31,7 @@
 - `tasks/todo/20260517-1319-folder-implementation-roadmap.md` を追加し、全体の推奨フェーズと横断設計原則を整理した。
 - `tasks/do/20260517-1319-folder-task-refinement.md` を追加し、今回作業の受け入れ条件を管理した。
 - `git diff --check` を実行した。
+- PR #323 を作成し、受け入れ条件確認コメントとセルフレビューコメントを追加した。
 
 ## 5. 成果物
 
@@ -64,3 +65,4 @@
 - API / Web / infra tests は runtime 変更がないため未実施。
 - `scripts/validate_spec_recovery.py` は `docs/spec-recovery/` 更新を行っていないため未実施。
 - 後続実装時には、対象 code inspection により task の未確定点を再確認する必要がある。
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/323
