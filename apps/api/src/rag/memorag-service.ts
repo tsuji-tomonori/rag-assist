@@ -3040,8 +3040,16 @@ function canManageDocumentGroup(group: DocumentGroup | undefined, user: AppUser)
 function validateDocumentGroupName(name: string): string {
   const trimmed = name.trim()
   if (!trimmed) throw new Error("Document group name is required")
-  if (trimmed.includes("/") || /[\u0000-\u001f\u007f]/.test(trimmed)) throw new Error("Document group name contains unsupported characters")
+  if (trimmed.includes("/") || containsControlCharacter(trimmed)) throw new Error("Document group name contains unsupported characters")
   return trimmed
+}
+
+function containsControlCharacter(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) return true
+  }
+  return false
 }
 
 function normalizeDocumentGroupName(name: string): string {

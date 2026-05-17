@@ -479,6 +479,13 @@ test("service assigns canonical document group paths and rejects duplicate paths
 
   await assert.rejects(() => service.createDocumentGroup(owner, { name: "team" }), /canonical path already exists/)
   await assert.rejects(() => service.createDocumentGroup(owner, { name: "Forbidden/Name" }), /unsupported characters/)
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "Forbidden\u0001Name" }), /unsupported characters/)
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "   " }), /name is required/)
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "Group missing id", adminPrincipalType: "group" }), /adminPrincipalId is required/)
+  await assert.rejects(
+    () => service.createDocumentGroup(owner, { name: "Forbidden group", adminPrincipalType: "group", adminPrincipalId: "TEAM_B" }),
+    /cannot create a group-managed folder/
+  )
 })
 
 test("service recalculates descendant canonical paths and local lock items on move and rename", async () => {
