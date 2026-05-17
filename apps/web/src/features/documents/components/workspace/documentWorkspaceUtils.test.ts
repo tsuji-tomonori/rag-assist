@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import type { DocumentManifest } from "../../types.js"
-import { buildOperationEvents, compareDocuments, documentUpdatedAt } from "./documentWorkspaceUtils.js"
+import type { DocumentGroup, DocumentManifest } from "../../types.js"
+import { buildOperationEvents, buildWorkspaceFolders, compareDocuments, documentUpdatedAt } from "./documentWorkspaceUtils.js"
 
 function document(overrides: Partial<DocumentManifest>): DocumentManifest {
   return {
@@ -14,6 +14,17 @@ function document(overrides: Partial<DocumentManifest>): DocumentManifest {
 }
 
 describe("documentWorkspaceUtils", () => {
+  it("canonicalPathをフォルダパスとして使う", () => {
+    const folders = buildWorkspaceFolders([group({
+      groupId: "group-1",
+      name: "同名",
+      canonicalPath: "/親/同名"
+    })], [])
+
+    expect(folders[0]?.path).toBe("/ ドキュメントグループ/親/同名")
+    expect(folders[0]?.group?.canonicalPath).toBe("/親/同名")
+  })
+
   it("文書更新日時はmetadata.updatedAt、top-level updatedAt、createdAtの順に使う", () => {
     expect(documentUpdatedAt(document({
       createdAt: "2026-05-01T00:00:00.000Z",
@@ -74,3 +85,28 @@ describe("documentWorkspaceUtils", () => {
     ])
   })
 })
+
+function group(overrides: Partial<DocumentGroup>): DocumentGroup {
+  return {
+    groupId: "group",
+    schemaVersion: 2,
+    itemType: "documentGroup",
+    tenantId: "default",
+    adminPrincipalType: "user",
+    adminPrincipalId: "user-1",
+    name: "グループ",
+    normalizedName: "グループ",
+    canonicalPath: "/グループ",
+    normalizedCanonicalPath: "/グループ",
+    adminPathPk: "default#user#user-1",
+    parentPathPk: "default#user#user-1#ROOT",
+    visibility: "private",
+    ownerUserId: "user-1",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: ["user-1"],
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z",
+    ...overrides
+  }
+}

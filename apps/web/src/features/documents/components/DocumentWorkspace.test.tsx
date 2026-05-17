@@ -28,10 +28,34 @@ const paginatedDocuments = Array.from({ length: 30 }, (_, index) => {
   }
 })
 
+function canonicalGroupFields(
+  name: string,
+  options: { ownerUserId?: string; parentCanonicalPath?: string; parentGroupId?: string } = {}
+): Pick<DocumentGroup, "schemaVersion" | "itemType" | "tenantId" | "adminPrincipalType" | "adminPrincipalId" | "normalizedName" | "canonicalPath" | "normalizedCanonicalPath" | "adminPathPk" | "parentPathPk"> {
+  const ownerUserId = options.ownerUserId ?? "user-1"
+  const normalizedName = name.normalize("NFKC").toLocaleLowerCase("ja-JP")
+  const canonicalPath = options.parentCanonicalPath ? `${options.parentCanonicalPath}/${name}` : `/${name}`
+  const normalizedCanonicalPath = options.parentCanonicalPath ? `${options.parentCanonicalPath.normalize("NFKC").toLocaleLowerCase("ja-JP")}/${normalizedName}` : `/${normalizedName}`
+  const adminPathPk = `default#user#${ownerUserId}`
+  return {
+    schemaVersion: 2,
+    itemType: "documentGroup",
+    tenantId: "default",
+    adminPrincipalType: "user",
+    adminPrincipalId: ownerUserId,
+    normalizedName,
+    canonicalPath,
+    normalizedCanonicalPath,
+    adminPathPk,
+    parentPathPk: `${adminPathPk}#${options.parentGroupId ?? "ROOT"}`
+  }
+}
+
 const documentGroups: DocumentGroup[] = [
   {
     groupId: "group-1",
     name: "社内規定",
+    ...canonicalGroupFields("社内規定"),
     visibility: "private",
     ownerUserId: "user-1",
     sharedUserIds: [],
@@ -45,6 +69,7 @@ const documentGroups: DocumentGroup[] = [
 const organizationGroup: DocumentGroup = {
   groupId: "group-org",
   name: "全社公開",
+  ...canonicalGroupFields("全社公開"),
   visibility: "org",
   ownerUserId: "user-1",
   sharedUserIds: ["user-2"],
@@ -677,6 +702,7 @@ describe("DocumentWorkspace", () => {
     const childGroup: DocumentGroup = {
       groupId: "group-child",
       name: "人事",
+      ...canonicalGroupFields("人事", { parentCanonicalPath: "/社内規定", parentGroupId: "group-1" }),
       parentGroupId: "group-1",
       ancestorGroupIds: ["group-1"],
       visibility: "private",
@@ -710,10 +736,10 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    const parent = screen.getByRole("button", { name: /ドキュメントグループ \/ 社内規定 0件/ })
-    const child = screen.getByRole("button", { name: /ドキュメントグループ \/ 社内規定 \/ 人事 1件/ })
+    const parent = screen.getByRole("button", { name: /ドキュメントグループ\/社内規定 0件/ })
+    const child = screen.getByRole("button", { name: /ドキュメントグループ\/社内規定\/人事 1件/ })
     expect(parent.compareDocumentPosition(child) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(child).toHaveAttribute("title", "/ ドキュメントグループ / 社内規定 / 人事")
+    expect(child).toHaveAttribute("title", "/ ドキュメントグループ/社内規定/人事")
     expect(child).toHaveStyle({ paddingLeft: "52px" })
   })
 
@@ -721,6 +747,7 @@ describe("DocumentWorkspace", () => {
     const onCreateGroup = vi.fn().mockResolvedValue({
       groupId: "group-new",
       name: "人事規程",
+      ...canonicalGroupFields("人事規程"),
       visibility: "shared",
       ownerUserId: "user-1",
       sharedUserIds: [],

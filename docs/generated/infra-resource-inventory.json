@@ -490,6 +490,14 @@
           {
             "AttributeName": "groupId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "adminPathPk",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "normalizedCanonicalPath",
+            "AttributeType": "S"
           }
         ],
         "billingMode": "PAY_PER_REQUEST",
@@ -2692,6 +2700,7 @@
           "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
       },
@@ -2938,6 +2947,7 @@
           "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
       },
@@ -3090,6 +3100,7 @@
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
       },
@@ -3160,6 +3171,7 @@
           "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
       },

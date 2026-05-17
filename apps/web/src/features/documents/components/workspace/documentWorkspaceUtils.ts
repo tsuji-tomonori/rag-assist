@@ -89,10 +89,11 @@ export function buildWorkspaceFolders(documentGroups: DocumentGroup[], documents
     if (visited.has(group.groupId)) return
     visited.add(group.groupId)
     const pathNames = [...ancestorNames, group.name]
+    const canonicalPath = group.canonicalPath || `/${pathNames.join("/")}`
     folders.push({
       id: group.groupId,
       name: group.name,
-      path: `/ ドキュメントグループ / ${pathNames.join(" / ")}`,
+      path: `/ ドキュメントグループ${canonicalPath}`,
       count: countDocumentsForGroup(documents, group.groupId),
       depth,
       group

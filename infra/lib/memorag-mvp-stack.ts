@@ -204,6 +204,12 @@ export class MemoRagMvpStack extends Stack {
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.DESTROY
     })
+    documentGroupsTable.addGlobalSecondaryIndex({
+      indexName: "AdminCanonicalPathIndex",
+      partitionKey: { name: "adminPathPk", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "normalizedCanonicalPath", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL
+    })
 
     new s3deploy.BucketDeployment(this, "DeployBenchmarkDatasets", {
       sources: [

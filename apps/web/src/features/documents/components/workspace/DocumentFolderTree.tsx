@@ -66,7 +66,10 @@ export function DocumentFolderTree({
               onClick={() => onSelectFolder(folder.id, folder.group?.groupId ?? "")}
             >
               <Icon name="folder" />
-              <span>{folder.name}</span>
+              <span>
+                {folder.name}
+                <small>{folder.group?.canonicalPath ?? folder.path}</small>
+              </span>
               <strong>{folder.count}</strong>
             </button>
           ))}

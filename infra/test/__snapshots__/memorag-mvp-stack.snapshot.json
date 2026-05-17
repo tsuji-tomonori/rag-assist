@@ -1381,9 +1381,35 @@
           {
             "AttributeName": "groupId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "adminPathPk",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "normalizedCanonicalPath",
+            "AttributeType": "S"
           }
         ],
         "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "AdminCanonicalPathIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "adminPathPk",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "normalizedCanonicalPath",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
         "KeySchema": [
           {
             "AttributeName": "groupId",
@@ -2945,6 +2971,20 @@
                     "DocumentGroupsTableA5108040",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -2959,6 +2999,20 @@
                   "Fn::GetAtt": [
                     "DocumentGroupsTableA5108040",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -3751,6 +3805,20 @@
                     "DocumentGroupsTableA5108040",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3765,6 +3833,20 @@
                   "Fn::GetAtt": [
                     "DocumentGroupsTableA5108040",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -4333,6 +4415,20 @@
                     "DocumentGroupsTableA5108040",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -4347,6 +4443,20 @@
                   "Fn::GetAtt": [
                     "DocumentGroupsTableA5108040",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -5378,6 +5488,20 @@
                     "DocumentGroupsTableA5108040",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -5392,6 +5516,20 @@
                   "Fn::GetAtt": [
                     "DocumentGroupsTableA5108040",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]

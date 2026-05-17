@@ -30,6 +30,8 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
+| `name` | `string` | no | 表示名または項目名。 | minLength=1<br>maxLength=120 |
+| `description` | `string` | no | `data.description` の値。項目名は description を表します。 | maxLength=1000 |
 | `visibility` | `enum(private \| shared \| org)` | no | `data.visibility` の値。項目名は visibility を表します。 | enum=private, shared, org |
 | `parentGroupId` | `string` | no | `data.parentGroupId` の値。項目名は parent group id を表します。 | minLength=1 |
 | `sharedUserIds` | `array<string>` | no | `data.sharedUserIds` の値。項目名は shared user ids を表します。 | maxItems=50 |
@@ -62,7 +64,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 12 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 22 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -74,7 +76,17 @@ Media type: `application/json`
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
 | `groupId` | `string` | yes | `response.groupId` の値。項目名は group id を表します。 | - |
+| `schemaVersion` | `integer` | no | `response.schemaVersion` の値。項目名は schema version を表します。 | minimum=0 |
+| `itemType` | `enum(documentGroup)` | no | `response.itemType` の値。項目名は item type を表します。 | enum=documentGroup |
+| `tenantId` | `string` | no | `response.tenantId` の値。項目名は tenant id を表します。 | - |
+| `adminPrincipalType` | `enum(user \| group)` | yes | `response.adminPrincipalType` の値。項目名は admin principal type を表します。 | enum=user, group |
+| `adminPrincipalId` | `string` | yes | `response.adminPrincipalId` の値。項目名は admin principal id を表します。 | - |
 | `name` | `string` | yes | 表示名または項目名。 | - |
+| `normalizedName` | `string` | yes | `response.normalizedName` の値。項目名は normalized name を表します。 | - |
+| `canonicalPath` | `string` | yes | `response.canonicalPath` の値。項目名は canonical path を表します。 | - |
+| `normalizedCanonicalPath` | `string` | yes | `response.normalizedCanonicalPath` の値。項目名は normalized canonical path を表します。 | - |
+| `adminPathPk` | `string` | yes | `response.adminPathPk` の値。項目名は admin path pk を表します。 | - |
+| `parentPathPk` | `string` | yes | `response.parentPathPk` の値。項目名は parent path pk を表します。 | - |
 | `description` | `string` | no | `response.description` の値。項目名は description を表します。 | - |
 | `parentGroupId` | `string` | no | `response.parentGroupId` の値。項目名は parent group id を表します。 | - |
 | `ancestorGroupIds` | `array<string>` | no | `response.ancestorGroupIds` の値。項目名は ancestor group ids を表します。 | - |

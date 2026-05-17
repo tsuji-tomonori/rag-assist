@@ -453,6 +453,93 @@ test("service stores document group hierarchy outside S3 object keys", async () 
   assert.deepEqual((await deps.documentGroupStore.get(grandchild.groupId))?.ancestorGroupIds, [anotherParent.groupId, child.groupId])
 })
 
+test("service assigns canonical document group paths and rejects duplicate paths per admin principal", async () => {
+  const { service } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "TEAM_A"] }
+  const otherOwner = { userId: "owner-2", email: "owner2@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  const root = await service.createDocumentGroup(owner, { name: "Team" })
+  const child = await service.createDocumentGroup(owner, { name: "Spec", parentGroupId: root.groupId })
+  const rootSibling = await service.createDocumentGroup(owner, { name: "Spec" })
+  const otherOwnerRoot = await service.createDocumentGroup(otherOwner, { name: "Team" })
+  const groupManagedRoot = await service.createDocumentGroup(owner, {
+    name: "Team",
+    adminPrincipalType: "group",
+    adminPrincipalId: "TEAM_A"
+  })
+
+  assert.equal(root.canonicalPath, "/Team")
+  assert.equal(root.normalizedCanonicalPath, "/team")
+  assert.equal(root.adminPathPk, "default#user#owner-1")
+  assert.equal(child.canonicalPath, "/Team/Spec")
+  assert.equal(child.normalizedCanonicalPath, "/team/spec")
+  assert.equal(rootSibling.canonicalPath, "/Spec")
+  assert.equal(otherOwnerRoot.adminPathPk, "default#user#owner-2")
+  assert.equal(groupManagedRoot.adminPathPk, "default#group#TEAM_A")
+
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "team" }), /canonical path already exists/)
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "Forbidden/Name" }), /unsupported characters/)
+})
+
+test("service recalculates descendant canonical paths and local lock items on move and rename", async () => {
+  const { service, dataDir } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const source = await service.createDocumentGroup(owner, { name: "Source" })
+  const target = await service.createDocumentGroup(owner, { name: "Target" })
+  const child = await service.createDocumentGroup(owner, { name: "Child", parentGroupId: source.groupId })
+  const grandchild = await service.createDocumentGroup(owner, { name: "Grandchild", parentGroupId: child.groupId })
+
+  const moved = await service.updateDocumentGroupSharing(owner, child.groupId, {
+    name: "Renamed",
+    parentGroupId: target.groupId
+  })
+  assert.equal(moved?.canonicalPath, "/Target/Renamed")
+  assert.deepEqual(moved?.ancestorGroupIds, [target.groupId])
+
+  const groups = await service.listDocumentGroups(owner)
+  const movedGrandchild = groups.find((group) => group.groupId === grandchild.groupId)
+  assert.equal(movedGrandchild?.canonicalPath, "/Target/Renamed/Grandchild")
+  assert.deepEqual(movedGrandchild?.ancestorGroupIds, [target.groupId, child.groupId])
+
+  const db = JSON.parse(await readFile(path.join(dataDir, "document-groups.json"), "utf-8")) as { pathLocks?: Array<{ lockedGroupId: string; normalizedCanonicalPath: string }> }
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/target/renamed"))
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === grandchild.groupId && lock.normalizedCanonicalPath === "/target/renamed/grandchild"))
+  assert.equal(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/source/child"), false)
+})
+
+test("service normalizes legacy document groups on read", async () => {
+  const { service, deps } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  await deps.documentGroupStore.create({
+    groupId: "legacy-parent",
+    name: "Legacy",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await deps.documentGroupStore.create({
+    groupId: "legacy-child",
+    name: "Child",
+    parentGroupId: "legacy-parent",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+
+  const groups = await service.listDocumentGroups(owner)
+  assert.equal(groups.find((group) => group.groupId === "legacy-parent")?.canonicalPath, "/Legacy")
+  assert.equal(groups.find((group) => group.groupId === "legacy-child")?.canonicalPath, "/Legacy/Child")
+  assert.equal(groups.find((group) => group.groupId === "legacy-child")?.adminPathPk, "default#user#owner-1")
+})
+
 test("service enforces document group management and search scope boundaries", async () => {
   const { service } = await createService()
   const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
