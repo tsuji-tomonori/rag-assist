@@ -1,6 +1,6 @@
 # フォルダ権限基盤の仕様化と実効権限 service 実装
 
-状態: do
+状態: done
 タスク種別: 機能追加
 
 ## 背景
@@ -51,20 +51,27 @@
 
 ## 受け入れ条件
 
-- [ ] 最新 `origin/main` から専用 worktree で作業している。
-- [ ] Folder 権限 ADR が追加され、legacy 互換、継承、explicit policy、group membership、SYSTEM_ADMIN の扱いが明記されている。
-- [ ] `DocumentGroup` に policy / status / effective permission 系 field が追加され、API schema / Web type と同期している。
-- [ ] `FolderPolicy`、`FolderPolicyEntry`、`UserGroup`、`GroupMembership` の型と schema が追加されている。
-- [ ] `FolderPolicyStore`、`UserGroupStore`、`GroupMembershipStore` の interface と Local / DynamoDB 実装が追加されている。
-- [ ] `FolderPermissionService` が `resolveEffectiveFolderPermission`、`resolveEffectiveFolderPermissions`、`assertFolderPermission`、`listReadableFolderIds`、`listManageableFolderIds` を提供する。
-- [ ] 個人管理フォルダの管理者本人は常に `full` になる。
-- [ ] グループ管理フォルダは `GroupMembership.permissionLevel` と folder policy permission の min で `full / readOnly` が決まる。
-- [ ] 子フォルダに個別 policy がなければ、直近親方向の explicit policy を継承する。
-- [ ] 子フォルダに個別 policy があれば、その階層以降では子 policy が完全設定として優先される。
-- [ ] `full` 権限者が 0 人になる policy 保存は validation で拒否できる。
-- [ ] 既存 canonical path / path lock の API test が退行していない。
-- [ ] API test、API typecheck、API lint、OpenAPI docs check、`git diff --check` が通る。
-- [ ] 未実装の後続範囲は PR 本文と作業レポートで明示されている。
+- [x] 最新 `origin/main` から専用 worktree で作業している。
+- [x] Folder 権限 ADR が追加され、legacy 互換、継承、explicit policy、group membership、SYSTEM_ADMIN の扱いが明記されている。
+- [x] `DocumentGroup` に policy / status / effective permission 系 field が追加され、API schema / Web type と同期している。
+- [x] `FolderPolicy`、`FolderPolicyEntry`、`UserGroup`、`GroupMembership` の型と schema が追加されている。
+- [x] `FolderPolicyStore`、`UserGroupStore`、`GroupMembershipStore` の interface と Local / DynamoDB 実装が追加されている。
+- [x] `FolderPermissionService` が `resolveEffectiveFolderPermission`、`resolveEffectiveFolderPermissions`、`assertFolderPermission`、`listReadableFolderIds`、`listManageableFolderIds` を提供する。
+- [x] 個人管理フォルダの管理者本人は常に `full` になる。
+- [x] グループ管理フォルダは `GroupMembership.permissionLevel` と folder policy permission の min で `full / readOnly` が決まる。
+- [x] 子フォルダに個別 policy がなければ、直近親方向の explicit policy を継承する。
+- [x] 子フォルダに個別 policy があれば、その階層以降では子 policy が完全設定として優先される。
+- [x] `full` 権限者が 0 人になる policy 保存は validation で拒否できる。
+- [x] 既存 canonical path / path lock の API test が退行していない。
+- [x] API test、API typecheck、API lint、OpenAPI docs check、`git diff --check` が通る。
+- [x] 未実装の後続範囲は PR 本文と作業レポートで明示されている。
+
+## 完了メモ
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/325
+- 受け入れ条件コメント: PR #325 に投稿済み。
+- セルフレビューコメント: PR #325 に投稿済み。
+- 作業レポート: `reports/working/20260517-1936-folder-permission-foundation.md`
 
 ## 検証計画
 
