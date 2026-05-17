@@ -666,7 +666,7 @@ export class MemoRagService {
     name?: string
     description?: string
     visibility?: DocumentGroup["visibility"]
-    parentGroupId?: string
+    parentGroupId?: string | null
     sharedUserIds?: string[]
     sharedGroups?: string[]
     managerUserIds?: string[]
@@ -692,13 +692,19 @@ export class MemoRagService {
     if (input.parentGroupId !== undefined) {
       parentChanged = true
       const parentGroupId = input.parentGroupId
-      if (parentGroupId === group.groupId) throw new Error("Document group cannot be its own parent")
-      parent = groups.find((item) => item.groupId === parentGroupId)
-      if (!parent) throw new Error("Parent document group not found")
-      if ((parent.ancestorGroupIds ?? []).includes(group.groupId)) throw new Error("Document group cannot move under its descendant")
-      if (!canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot move group under this parent")
-      update.parentGroupId = parent.groupId
-      update.ancestorGroupIds = [...(parent.ancestorGroupIds ?? []), parent.groupId]
+      if (parentGroupId === null) {
+        parent = undefined
+        update.parentGroupId = undefined
+        update.ancestorGroupIds = []
+      } else {
+        if (parentGroupId === group.groupId) throw new Error("Document group cannot be its own parent")
+        parent = groups.find((item) => item.groupId === parentGroupId)
+        if (!parent) throw new Error("Parent document group not found")
+        if ((parent.ancestorGroupIds ?? []).includes(group.groupId)) throw new Error("Document group cannot move under its descendant")
+        if (!canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot move group under this parent")
+        update.parentGroupId = parent.groupId
+        update.ancestorGroupIds = [...(parent.ancestorGroupIds ?? []), parent.groupId]
+      }
     }
     const now = new Date().toISOString()
     if (parentChanged || input.name !== undefined) {

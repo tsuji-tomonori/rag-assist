@@ -314,8 +314,8 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     description: "文書をスコープごとに整理するための文書グループを作成します。"
   },
   "POST /document-groups/{groupId}/share": {
-    summary: "文書グループ共有設定を更新する",
-    description: "指定した文書グループの共有先や権限範囲を更新します。"
+    summary: "文書グループ設定を更新する",
+    description: "指定した文書グループの名前、説明、親フォルダ、共有先、権限範囲を更新します。"
   },
   "POST /chat": {
     summary: "同期チャット回答を生成する",

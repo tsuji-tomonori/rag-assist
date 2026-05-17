@@ -1,6 +1,6 @@
 # フォルダ rename / move UI
 
-状態: todo
+状態: do
 タスク種別: 機能追加
 
 ## 背景

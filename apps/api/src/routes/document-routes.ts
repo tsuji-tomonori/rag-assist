@@ -256,7 +256,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         }
       },
       responses: {
-        200: { description: "Updated document group sharing", content: { "application/json": { schema: DocumentGroupSchema } } },
+        200: { description: "Updated document group settings", content: { "application/json": { schema: DocumentGroupSchema } } },
+        400: { description: "Invalid document group update", content: { "application/json": { schema: ErrorResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
         404: { description: "Not found", content: { "application/json": { schema: ErrorResponseSchema } } }
       }

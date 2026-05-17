@@ -4,7 +4,7 @@ import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"
 import type { DocumentOperationState, DocumentUploadState } from "../../hooks/useDocuments.js"
-import { operationResultClassName, uploadErrorLabel, uploadStepClassName, type DocumentOperationEvent, type WorkspaceFolder } from "./documentWorkspaceUtils.js"
+import { operationResultClassName, rootFolderParentValue, uploadErrorLabel, uploadStepClassName, type DocumentOperationEvent, type WorkspaceFolder } from "./documentWorkspaceUtils.js"
 import type { sharedEntries } from "./documentWorkspaceUtils.js"
 
 export function DocumentDetailPanel({
@@ -48,6 +48,15 @@ export function DocumentDetailPanel({
   createVisibilityLabel,
   shareGroupId,
   shareGroups,
+  editTargetGroup,
+  editGroupName,
+  editGroupDescription,
+  editGroupParentId,
+  editMoveTargetGroups,
+  editParentInvalid,
+  editHasChanges,
+  editCanSubmit,
+  editDestinationLabel,
   canWrite,
   canUploadToDestination,
   operationState,
@@ -66,13 +75,17 @@ export function DocumentDetailPanel({
   onShareClearConfirmedChange,
   onShareGroupOptionChange,
   onCreateShareGroupOptionChange,
+  onEditGroupNameChange,
+  onEditGroupDescriptionChange,
+  onEditGroupParentIdChange,
   onUploadGroupChange,
   onUploadSubmit,
   onOpenUploadedDocument,
   onAskUploadedDocument,
   onShowUploadedFolder,
   onCreateGroupSubmit,
-  onShareSubmit
+  onShareSubmit,
+  onEditGroupSubmit
 }: {
   documentGroups: DocumentGroup[]
   selectedFolder: WorkspaceFolder
@@ -114,6 +127,15 @@ export function DocumentDetailPanel({
   createVisibilityLabel: string
   shareGroupId: string
   shareGroups: string
+  editTargetGroup?: DocumentGroup
+  editGroupName: string
+  editGroupDescription: string
+  editGroupParentId: string
+  editMoveTargetGroups: DocumentGroup[]
+  editParentInvalid: boolean
+  editHasChanges: boolean
+  editCanSubmit: boolean
+  editDestinationLabel: string
   canWrite: boolean
   canUploadToDestination: boolean
   operationState: DocumentOperationState
@@ -132,6 +154,9 @@ export function DocumentDetailPanel({
   onShareClearConfirmedChange: (value: boolean) => void
   onShareGroupOptionChange: (groupName: string, checked: boolean) => void
   onCreateShareGroupOptionChange: (groupName: string, checked: boolean) => void
+  onEditGroupNameChange: (value: string) => void
+  onEditGroupDescriptionChange: (value: string) => void
+  onEditGroupParentIdChange: (value: string) => void
   onUploadGroupChange: (groupId: string) => void
   onUploadSubmit: (event: FormEvent) => void
   onOpenUploadedDocument: (document: DocumentManifest) => void
@@ -139,6 +164,7 @@ export function DocumentDetailPanel({
   onShowUploadedFolder: (groupId: string) => void
   onCreateGroupSubmit: (event: FormEvent) => void
   onShareSubmit: (event: FormEvent) => void
+  onEditGroupSubmit: (event: FormEvent) => void
 }) {
   return (
     <aside className="document-detail-panel" aria-label="フォルダ情報と共有設定">
@@ -255,6 +281,65 @@ export function DocumentDetailPanel({
             <li>グループを選択すると共有先を確認できます。</li>
           )}
         </ul>
+      </section>
+
+      <section className="sharing-card">
+        <div className="card-title-row">
+          <h3>選択フォルダ更新</h3>
+        </div>
+        <form className="compact-form" onSubmit={onEditGroupSubmit}>
+          <label>
+            <span>編集後フォルダ名</span>
+            <input
+              value={editGroupName}
+              disabled={!canWrite || !editTargetGroup || operationState.sharingGroupId !== null}
+              onChange={(event) => onEditGroupNameChange(event.target.value)}
+              placeholder="フォルダ名"
+              aria-invalid={(Boolean(editTargetGroup) && !editGroupName.trim()) || undefined}
+              aria-describedby="edit-folder-validation edit-folder-preview"
+            />
+          </label>
+          <label>
+            <span>編集後説明</span>
+            <textarea
+              value={editGroupDescription}
+              disabled={!canWrite || !editTargetGroup || operationState.sharingGroupId !== null}
+              onChange={(event) => onEditGroupDescriptionChange(event.target.value)}
+              placeholder="フォルダの用途や対象資料"
+              aria-describedby="edit-folder-preview"
+            />
+          </label>
+          <label>
+            <span>移動先フォルダ</span>
+            <select
+              value={editGroupParentId}
+              disabled={!canWrite || !editTargetGroup || operationState.sharingGroupId !== null}
+              onChange={(event) => onEditGroupParentIdChange(event.target.value)}
+              aria-invalid={editParentInvalid || undefined}
+              aria-describedby="edit-folder-validation edit-folder-preview"
+            >
+              <option value={rootFolderParentValue}>ルート</option>
+              {editMoveTargetGroups.map((group) => (
+                <option value={group.groupId} key={group.groupId}>{group.canonicalPath}</option>
+              ))}
+            </select>
+          </label>
+          <div className="share-validation" id="edit-folder-validation" aria-live="polite">
+            {!editTargetGroup && <p>フォルダを選択すると名前、説明、移動先を更新できます。</p>}
+            {editTargetGroup && !editGroupName.trim() && <p className="error">フォルダ名を入力してください。</p>}
+            {editParentInvalid && <p className="error">自分自身または子孫フォルダ配下へは移動できません。</p>}
+            {editTargetGroup && !editParentInvalid && !editHasChanges && <p>選択フォルダの設定から変更はありません。</p>}
+          </div>
+          <div className="share-diff-preview" id="edit-folder-preview" aria-label="フォルダ更新プレビュー">
+            <span>現在 path: {editTargetGroup?.canonicalPath ?? "未選択"}</span>
+            <span>移動先: {editDestinationLabel}</span>
+            <span>子孫: {editTargetGroup ? "path は API 更新後に再計算" : "未選択"}</span>
+          </div>
+          <button type="submit" disabled={!editCanSubmit}>
+            {operationState.sharingGroupId !== null && <LoadingSpinner className="button-spinner" />}
+            フォルダ更新
+          </button>
+        </form>
       </section>
 
       <section className="folder-operation-card">

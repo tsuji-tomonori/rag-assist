@@ -250,7 +250,7 @@ export const ShareDocumentGroupRequestSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   description: z.string().max(1000).optional(),
   visibility: z.enum(["private", "shared", "org"]).optional(),
-  parentGroupId: z.string().min(1).optional(),
+  parentGroupId: z.string().min(1).nullable().optional(),
   sharedUserIds: z.array(z.string().min(1)).max(50).optional(),
   sharedGroups: z.array(z.string().min(1)).max(50).optional(),
   managerUserIds: z.array(z.string().min(1)).max(50).optional()

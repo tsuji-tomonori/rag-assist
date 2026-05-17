@@ -63,7 +63,7 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/debug-runs/{runId}/replay-plan` | debug replay plan を作成する | [詳細](openapi/post-debug-runs-runid-replay-plan.md) |
 | `GET` | `/document-groups` | 文書グループ一覧を取得する | [詳細](openapi/get-document-groups.md) |
 | `POST` | `/document-groups` | 文書グループを作成する | [詳細](openapi/post-document-groups.md) |
-| `POST` | `/document-groups/{groupId}/share` | 文書グループ共有設定を更新する | [詳細](openapi/post-document-groups-groupid-share.md) |
+| `POST` | `/document-groups/{groupId}/share` | 文書グループ設定を更新する | [詳細](openapi/post-document-groups-groupid-share.md) |
 | `POST` | `/document-ingest-runs` | 非同期文書取り込みを開始する | [詳細](openapi/post-document-ingest-runs.md) |
 | `GET` | `/document-ingest-runs/{runId}` | 文書取り込み run を取得する | [詳細](openapi/get-document-ingest-runs-runid.md) |
 | `GET` | `/document-ingest-runs/{runId}/events` | 文書取り込みイベントを購読する | [詳細](openapi/get-document-ingest-runs-runid-events.md) |
