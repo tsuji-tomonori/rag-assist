@@ -2,6 +2,7 @@ import type { AppUser } from "../auth.js"
 import { config } from "../config.js"
 import type { Dependencies } from "../dependencies.js"
 import { normalizeSearchTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
+import { canAccessDocumentGroup } from "../folders/document-group-permissions.js"
 import { loadChunksForManifest } from "../rag/manifest-chunks.js"
 import { isQualityApprovedForNormalRag, qualityProfileCacheKey } from "../rag/quality.js"
 import { loadPublishedAliasMap } from "./alias-artifacts.js"
@@ -707,7 +708,7 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: Do
   const metadata = manifest.metadata ?? {}
   if (stringValue(metadata.ownerUserId) === user.userId) return true
   const manifestGroupIds = stringValues(metadata.groupIds ?? metadata.groupId)
-  if (manifestGroupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user))) return true
+  if (manifestGroupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))) return true
   if (stringValue(metadata.scopeType) === "group") return false
   return canAccessMetadata(metadata, user)
 }
@@ -811,14 +812,6 @@ async function loadDocumentGroups(deps: Pick<Dependencies, "documentGroupStore">
   } catch {
     return []
   }
-}
-
-function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
-  if (!group) return false
-  if (group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId) || group.sharedUserIds.includes(user.userId)) return true
-  if (user.email && group.sharedUserIds.includes(user.email)) return true
-  if (group.visibility === "org") return true
-  return group.sharedGroups.some((sharedGroup) => user.cognitoGroups.includes(sharedGroup))
 }
 
 function stringValues(value: JsonValue | undefined): string[] {

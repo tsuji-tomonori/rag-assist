@@ -644,6 +644,78 @@ test("service enforces document group management and search scope boundaries", a
   await service.assertSearchScopeReadable(manager, { groupIds: [parent.groupId] })
 })
 
+test("service inherits parent document group sharing unless child has explicit policy", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
+  const outsider: AppUser = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
+  const suspendedReader: AppUser = { ...reader, accountStatus: "suspended" }
+
+  const parent = await service.createDocumentGroup(owner, {
+    name: "Parent policy",
+    sharedUserIds: [reader.userId]
+  })
+  const inheritedChild = await service.createDocumentGroup(owner, {
+    name: "Inherited child",
+    parentGroupId: parent.groupId
+  })
+  const restrictedChild = await service.createDocumentGroup(owner, {
+    name: "Restricted child",
+    parentGroupId: parent.groupId,
+    visibility: "private"
+  })
+  await service.ingest({
+    fileName: "inherited-child.md",
+    text: "inherited pear policy is readable through the parent folder sharing.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [inheritedChild.groupId]
+    }
+  })
+  await service.ingest({
+    fileName: "restricted-child.md",
+    text: "restricted mango policy must not leak to the parent shared reader.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [restrictedChild.groupId]
+    }
+  })
+
+  assert.equal(inheritedChild.hasExplicitPolicy, false)
+  assert.equal(restrictedChild.hasExplicitPolicy, true)
+  assert.deepEqual((await service.listDocumentGroups(reader)).map((group) => group.groupId).sort(), [inheritedChild.groupId, parent.groupId].sort())
+  assert.equal((await service.listDocumentGroups(reader)).some((group) => group.groupId === restrictedChild.groupId), false)
+  assert.deepEqual(await service.listDocumentGroups(suspendedReader), [])
+  assert.deepEqual((await service.listDocuments(reader)).map((document) => document.fileName), ["inherited-child.md"])
+  await service.assertSearchScopeReadable(reader, { groupIds: [inheritedChild.groupId] })
+  await assert.rejects(() => service.assertDocumentGroupsWritable(reader, [inheritedChild.groupId]), /cannot write document group/)
+  await assert.rejects(() => service.assertSearchScopeReadable(reader, { groupIds: [restrictedChild.groupId] }), /cannot read document group/)
+  await assert.rejects(() => service.assertSearchScopeReadable(outsider, { groupIds: [inheritedChild.groupId] }), /cannot read document group/)
+
+  const inheritedSearch = await service.search({
+    query: "inherited pear",
+    topK: 10,
+    lexicalTopK: 20,
+    semanticTopK: 0,
+    scope: { mode: "groups", groupIds: [inheritedChild.groupId] }
+  }, reader)
+  assert.deepEqual(inheritedSearch.results.map((result) => result.fileName), ["inherited-child.md"])
+  assert.equal(JSON.stringify(inheritedSearch).includes("restricted-child"), false)
+
+  await assert.rejects(
+    () => service.search({ query: "restricted mango", topK: 10, scope: { mode: "groups", groupIds: [restrictedChild.groupId] } }, reader),
+    /cannot read document group/
+  )
+  await assert.rejects(
+    () => service.chat({ question: "restricted mango", searchScope: { mode: "groups", groupIds: [restrictedChild.groupId] } }, reader),
+    /cannot read document group/
+  )
+})
+
 test("service enforces full document group permission for delete and reindex operations", async () => {
   const { service } = await createService()
   const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }

@@ -1657,6 +1657,42 @@ describe("DocumentWorkspace", () => {
     expect(onShareGroup).not.toHaveBeenCalled()
   })
 
+  it("削除と再インデックス権限がない場合は操作handlerを呼ばない", async () => {
+    const onDelete = vi.fn()
+    const onStageReindex = vi.fn()
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        {...documentGroupProps}
+        loading={false}
+        canWrite={true}
+        canDelete={false}
+        canReindex={false}
+        migrations={[]}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={onDelete}
+        onStageReindex={onStageReindex}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const deleteButton = screen.getByTitle("requirements.mdを削除")
+    const reindexButton = screen.getByTitle("requirements.mdの再インデックスをステージング")
+    expect(deleteButton).toBeDisabled()
+    expect(reindexButton).toBeDisabled()
+
+    await userEvent.click(deleteButton)
+    await userEvent.click(reindexButton)
+
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(onStageReindex).not.toHaveBeenCalled()
+  })
+
   it("ファイルアップロードとmimeType由来の種別表示を処理する", async () => {
     const onUpload = vi.fn().mockResolvedValue(undefined)
     const file = new File(["hello"], "memo.txt", { type: "text/plain" })

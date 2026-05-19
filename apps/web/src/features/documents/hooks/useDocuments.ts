@@ -44,12 +44,14 @@ export function useDocuments({
   modelId,
   embeddingModelId,
   canWriteDocuments,
+  canDeleteDocuments,
   canReindexDocuments,
   setError
 }: {
   modelId: string
   embeddingModelId: string
   canWriteDocuments: boolean
+  canDeleteDocuments: boolean
   canReindexDocuments: boolean
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -132,6 +134,7 @@ export function useDocuments({
 
   async function onDelete(documentId?: string): Promise<DocumentOperationResult> {
     if (!documentId) return { ok: false, error: "削除対象の documentId が未指定です" }
+    if (!canDeleteDocuments) return { ok: false, error: "文書を削除する権限がありません" }
 
     updateOperationState({ deletingDocumentId: documentId })
     setError(null)

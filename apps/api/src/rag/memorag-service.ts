@@ -24,6 +24,7 @@ import { buildMemoryCardPrompt } from "./prompts.js"
 import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./quality.js"
 import { extractDocumentFromUpload } from "./text-extract.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
+import { canAccessDocumentGroup, canManageDocumentGroup, documentGroupHasLegacyExplicitPolicy } from "../folders/document-group-permissions.js"
 
 type IngestInput = {
   fileName: string
@@ -607,7 +608,7 @@ export class MemoRagService {
   async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
     const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     return groups
-      .filter((group) => canAccessDocumentGroup(group, user))
+      .filter((group) => canAccessDocumentGroup(group, user, groups))
       .sort((a, b) => (a.normalizedCanonicalPath ?? a.name).localeCompare(b.normalizedCanonicalPath ?? b.name))
   }
 
@@ -627,7 +628,7 @@ export class MemoRagService {
     const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     const parent = input.parentGroupId ? groups.find((group) => group.groupId === input.parentGroupId) : undefined
     if (input.parentGroupId && !parent) throw new Error("Parent document group not found")
-    if (parent && !canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot create a child group under this parent")
+    if (parent && !canManageDocumentGroup(parent, actor, groups)) throw forbiddenError("Forbidden: cannot create a child group under this parent")
     const principal = resolveDocumentGroupAdminPrincipal(actor, input, parent)
     const pathFields = documentGroupPathFields({
       tenantId: principal.tenantId,
@@ -656,7 +657,7 @@ export class MemoRagService {
       sharedUserIds: uniqueStrings(input.sharedUserIds ?? []),
       sharedGroups: uniqueStrings(input.sharedGroups ?? []),
       managerUserIds: uniqueStrings([actor.userId, ...(input.managerUserIds ?? [])]),
-      hasExplicitPolicy: false,
+      hasExplicitPolicy: documentGroupHasLegacyExplicitPolicy(input),
       status: "active",
       createdBy: actor.userId,
       createdAt: now,
@@ -677,7 +678,7 @@ export class MemoRagService {
     const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     const group = groups.find((item) => item.groupId === groupId)
     if (!group) return undefined
-    if (!canManageDocumentGroup(group, actor)) throw forbiddenError("Forbidden: only group managers can update sharing")
+    if (!canManageDocumentGroup(group, actor, groups)) throw forbiddenError("Forbidden: only group managers can update sharing")
     const update: Partial<DocumentGroup> = {}
     let targetName = group.name
     if (input.name !== undefined) {
@@ -690,6 +691,7 @@ export class MemoRagService {
     if (input.sharedUserIds !== undefined) update.sharedUserIds = uniqueStrings(input.sharedUserIds)
     if (input.sharedGroups !== undefined) update.sharedGroups = uniqueStrings(input.sharedGroups)
     if (input.managerUserIds !== undefined) update.managerUserIds = uniqueStrings([group.ownerUserId, ...input.managerUserIds])
+    if (documentGroupHasLegacyExplicitPolicy(input)) update.hasExplicitPolicy = true
     let parentChanged = false
     let parent = group.parentGroupId ? groups.find((item) => item.groupId === group.parentGroupId) : undefined
     if (input.parentGroupId !== undefined) {
@@ -704,7 +706,7 @@ export class MemoRagService {
         parent = groups.find((item) => item.groupId === parentGroupId)
         if (!parent) throw new Error("Parent document group not found")
         if ((parent.ancestorGroupIds ?? []).includes(group.groupId)) throw new Error("Document group cannot move under its descendant")
-        if (!canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot move group under this parent")
+        if (!canManageDocumentGroup(parent, actor, groups)) throw forbiddenError("Forbidden: cannot move group under this parent")
         update.parentGroupId = parent.groupId
         update.ancestorGroupIds = [...(parent.ancestorGroupIds ?? []), parent.groupId]
       }
@@ -730,9 +732,10 @@ export class MemoRagService {
 
   async assertDocumentGroupsWritable(actor: AppUser, groupIds: string[]): Promise<void> {
     if (groupIds.length === 0) return
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     for (const groupId of groupIds) {
-      const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
-      if (!group || !canManageDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot write document group ${groupId}`)
+      const group = groups.find((item) => item.groupId === groupId)
+      if (!group || !canManageDocumentGroup(group, actor, groups)) throw forbiddenError(`Forbidden: cannot write document group ${groupId}`)
     }
   }
 
@@ -745,9 +748,10 @@ export class MemoRagService {
 
   async assertSearchScopeReadable(actor: AppUser, scope: ChatInput["searchScope"]): Promise<void> {
     if (!scope?.groupIds?.length) return
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     for (const groupId of scope.groupIds) {
-      const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
-      if (!group || !canAccessDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot read document group ${groupId}`)
+      const group = groups.find((item) => item.groupId === groupId)
+      if (!group || !canAccessDocumentGroup(group, actor, groups)) throw forbiddenError(`Forbidden: cannot read document group ${groupId}`)
     }
   }
 
@@ -3010,7 +3014,7 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGr
   const metadata = manifest.metadata ?? {}
   if (stringValue(metadata.ownerUserId) === user.userId) return true
   const groupIds = stringArray(metadata.groupIds ?? metadata.groupId) ?? []
-  if (groupIds.some((groupId) => canAccessDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user))) return true
+  if (groupIds.some((groupId) => canAccessDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user, documentGroups))) return true
   if (stringValue(metadata.scopeType) === "group") return false
   const groups = new Set(user.cognitoGroups)
   const aclGroups = stringArray(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group) ?? []
@@ -3026,26 +3030,10 @@ function canManageManifest(manifest: DocumentManifest, user: AppUser, documentGr
   if (stringValue(metadata.ownerUserId) === user.userId) return true
   const groupIds = stringArray(metadata.groupIds ?? metadata.groupId) ?? []
   if (groupIds.length > 0) {
-    return groupIds.every((groupId) => canManageDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user))
+    return groupIds.every((groupId) => canManageDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user, documentGroups))
   }
   if (stringValue(metadata.scopeType) === "group") return false
   return true
-}
-
-function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
-  if (!group) return false
-  if ((group.status ?? "active") !== "active") return false
-  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
-  if (group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId) || group.sharedUserIds.includes(user.userId)) return true
-  if (user.email && group.sharedUserIds.includes(user.email)) return true
-  if (group.visibility === "org") return true
-  return group.sharedGroups.some((sharedGroup) => user.cognitoGroups.includes(sharedGroup))
-}
-
-function canManageDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
-  if (!group) return false
-  if ((group.status ?? "active") !== "active") return false
-  return user.cognitoGroups.includes("SYSTEM_ADMIN") || group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId)
 }
 
 function validateDocumentGroupName(name: string): string {
@@ -3227,9 +3215,6 @@ function normalizeDocumentGroup(group: DocumentGroup, parent?: DocumentGroup): D
   }
 }
 
-function normalizeOptionalDocumentGroup(group: DocumentGroup | undefined): DocumentGroup | undefined {
-  return group ? normalizeDocumentGroup(group) : undefined
-}
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort()
