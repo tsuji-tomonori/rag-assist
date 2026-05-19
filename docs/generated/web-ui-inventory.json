@@ -182,6 +182,13 @@
       "interactionCount": 21
     },
     {
+      "feature": "rag",
+      "label": "RAG",
+      "screens": [],
+      "componentCount": 5,
+      "interactionCount": 0
+    },
+    {
       "feature": "shared",
       "label": "共通",
       "screens": [],
@@ -1143,6 +1150,51 @@
         "textarea",
         "time"
       ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/rag/components/AnswerUnavailablePanel.tsx",
+      "feature": "rag",
+      "exports": [
+        "AnswerUnavailablePanel"
+      ],
+      "jsxUsages": [],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/rag/components/CitationList.tsx",
+      "feature": "rag",
+      "exports": [
+        "CitationList"
+      ],
+      "jsxUsages": [],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/rag/components/EvidenceDebugPanel.tsx",
+      "feature": "rag",
+      "exports": [
+        "EvidenceDebugPanel"
+      ],
+      "jsxUsages": [],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/rag/pages/RagTracePage.tsx",
+      "feature": "rag",
+      "exports": [
+        "RagTracePage"
+      ],
+      "jsxUsages": [],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/rag/pages/SearchTestPage.tsx",
+      "feature": "rag",
+      "exports": [
+        "SearchTestPage"
+      ],
+      "jsxUsages": [],
       "certainty": "confirmed"
     },
     {

@@ -40,6 +40,7 @@ const featureLabels = {
   documents: "ドキュメント",
   history: "履歴",
   questions: "担当者対応",
+  rag: "RAG",
   shared: "共通"
 }
 
@@ -53,6 +54,7 @@ const featureDescriptions = {
   documents: "ドキュメント upload、document group、共有、blue-green reindex 操作を扱う領域です。",
   history: "会話履歴、検索、並び替え、お気に入り、履歴削除を扱う領域です。",
   questions: "担当者が問い合わせを確認し、回答作成、下書き保存、回答送信を行う領域です。",
+  rag: "RAG の引用、根拠 debug、回答不可状態、検索テスト、trace 表示を扱う領域です。",
   shared: "複数領域で再利用される表示部品です。単独の画面ではなく、他の画面から使われます。"
 }
 
