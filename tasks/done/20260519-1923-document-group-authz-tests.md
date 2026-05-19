@@ -1,6 +1,6 @@
 # document-groups 権限テストと実装修正
 
-状態: in_progress
+状態: done
 タスク種別: 修正
 
 ## 背景
@@ -72,3 +72,24 @@
 
 - P0 全ケースを一度に完全網羅すると変更が過大になるため、既存構造に合わせた代表ケース中心になる可能性がある。
 - Playwright E2E はローカルサーバーや fixture 準備が重い場合、Vitest/API targeted を優先し未実施理由を記録する可能性がある。
+
+## 完了結果
+
+- PR: https://github.com/tsuji-tomonori/rag-assist/pull/328
+- 作業レポート: `reports/working/20260519-1934-document-group-authz-tests.md`
+- 受け入れ条件確認コメント: 投稿済み。
+- セルフレビューコメント: 投稿済み。
+
+## 実行した検証
+
+- `npm ci`: pass。
+- `npm run test -w @memorag-mvp/api -- --test-name-pattern "document group"`: pass。
+- `npm run test -w @memorag-mvp/web -- DocumentWorkspace useDocuments`: pass。
+- `npm run typecheck -w @memorag-mvp/api`: pass。
+- `npm run typecheck -w @memorag-mvp/web`: pass。
+- `./node_modules/.bin/tsx --test apps/api/src/rag/memorag-service.test.ts apps/api/src/search/hybrid-search.test.ts`: pass。
+- `git diff --check`: pass。
+
+## 未実施
+
+- Playwright E2E: 今回は service / hook / component の targeted regression を優先し、複数ユーザー fixture を使った通し検証は未実施。
