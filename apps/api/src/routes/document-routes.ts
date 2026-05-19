@@ -764,6 +764,9 @@ function isDocumentGroupInputError(err: unknown): boolean {
     "Document group name is required",
     "Document group name contains unsupported characters",
     "adminPrincipalId is required",
+    "Parent document group not found",
+    "Document group cannot be its own parent",
+    "Document group cannot move under its descendant",
     "Document group subtree is too large for synchronous path update"
   ].includes(err.message)
 }

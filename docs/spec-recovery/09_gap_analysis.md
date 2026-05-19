@@ -16,7 +16,7 @@
 - Related: `docs/spec/gap-phase-a.md`, `apps/api/src/authorization.ts`, `apps/api/src/security/access-control-policy.test.ts`
 - Severity: high
 - Confidence: confirmed
-- Evidence: 現実装は `Role` / `Permission` / `rolePermissions` と route-level permission metadata を中心に認可している。一方、章別仕様は Account status、Feature permission、Resource permission の 3 層と `EffectiveFolderPermission` を前提にする。仕様 2 章の folder 階層継承も、現行 document group / upload scope と完全一致しない。
+- Evidence: 現実装は `Role` / `Permission` / `rolePermissions` と route-level permission metadata を中心に認可している。一方、章別仕様は Account status、Feature permission、Resource permission の 3 層と `EffectiveFolderPermission` を前提にする。2026-05-19 の document group 権限修正で、親 sharing 継承と子の個別ポリシー優先は `document-groups` / documents / search / chat の主要実行経路に反映済み。ただし、章別仕様全体の 3 層認可モデルと品質ゲートの全 route への適用は継続課題である。
 - Impact: Phase B の認可基盤変更で既存 route permission、benchmark seed isolation、debug trace 権限境界を崩すリスクがある。
 - Recommended action: Phase B-pre で現行 role mapping、route metadata、document group / benchmark seed 例外を棚卸しし、3 層モデルへの移行時に踏襲すべき既存挙動を task md の scope-out とリスクへ明記する。
 
