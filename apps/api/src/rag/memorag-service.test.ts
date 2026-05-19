@@ -685,7 +685,7 @@ test("service inherits parent document group sharing unless child has explicit p
     }
   })
 
-  assert.equal(inheritedChild.hasExplicitPolicy, false)
+  assert.equal(inheritedChild.hasExplicitPolicy, undefined)
   assert.equal(restrictedChild.hasExplicitPolicy, true)
   assert.deepEqual((await service.listDocumentGroups(reader)).map((group) => group.groupId).sort(), [inheritedChild.groupId, parent.groupId].sort())
   assert.equal((await service.listDocumentGroups(reader)).some((group) => group.groupId === restrictedChild.groupId), false)
@@ -714,6 +714,128 @@ test("service inherits parent document group sharing unless child has explicit p
     () => service.chat({ question: "restricted mango", searchScope: { mode: "groups", groupIds: [restrictedChild.groupId] } }, reader),
     /cannot read document group/
   )
+})
+
+test("service preserves legacy explicit shared child policy when hasExplicitPolicy is false", async () => {
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create({
+    groupId: "legacy-private-parent",
+    name: "Legacy private parent",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await deps.documentGroupStore.create({
+    groupId: "legacy-shared-child",
+    name: "Legacy shared child",
+    parentGroupId: "legacy-private-parent",
+    ownerUserId: owner.userId,
+    visibility: "shared",
+    sharedUserIds: [reader.userId],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await service.ingest({
+    fileName: "legacy-shared-child.md",
+    text: "legacy child policy should remain visible to the explicitly shared reader.",
+    skipMemory: true,
+    metadata: { scopeType: "group", ownerUserId: owner.userId, groupIds: ["legacy-shared-child"] }
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-private-parent"), false)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-shared-child"), true)
+  await service.assertSearchScopeReadable(reader, { groupIds: ["legacy-shared-child"] })
+  assert.deepEqual((await service.listDocuments(reader)).map((document) => document.fileName), ["legacy-shared-child.md"])
+})
+
+test("service preserves legacy explicit private child policy and does not leak parent sharing", async () => {
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create({
+    groupId: "legacy-shared-parent",
+    name: "Legacy shared parent",
+    ownerUserId: owner.userId,
+    visibility: "shared",
+    sharedUserIds: [reader.userId],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await deps.documentGroupStore.create({
+    groupId: "legacy-private-child",
+    name: "Legacy private child",
+    parentGroupId: "legacy-shared-parent",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await service.ingest({
+    fileName: "legacy-private-child.md",
+    text: "legacy private child must not become visible through parent sharing.",
+    skipMemory: true,
+    metadata: { scopeType: "group", ownerUserId: owner.userId, groupIds: ["legacy-private-child"] }
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-shared-parent"), true)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-private-child"), false)
+  await assert.rejects(
+    () => service.assertSearchScopeReadable(reader, { groupIds: ["legacy-private-child"] }),
+    /cannot read document group/
+  )
+  assert.deepEqual(await service.listDocuments(reader), [])
+})
+
+test("service annotates visible document groups with effective permission and inheritance source", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  const parent = await service.createDocumentGroup(owner, {
+    name: "Shared parent for annotation",
+    sharedUserIds: [reader.userId]
+  })
+  const inheritedChild = await service.createDocumentGroup(owner, {
+    name: "Inherited child for annotation",
+    parentGroupId: parent.groupId
+  })
+  const explicitPrivateChild = await service.createDocumentGroup(owner, {
+    name: "Explicit private child for annotation",
+    parentGroupId: parent.groupId,
+    visibility: "private"
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  const visibleParent = visibleGroups.find((group) => group.groupId === parent.groupId)
+  const visibleInheritedChild = visibleGroups.find((group) => group.groupId === inheritedChild.groupId)
+
+  assert.equal(visibleParent?.effectivePermission, "readOnly")
+  assert.equal(visibleParent?.policySource, "explicit")
+  assert.equal(visibleInheritedChild?.effectivePermission, "readOnly")
+  assert.equal(visibleInheritedChild?.policySource, "inherited")
+  assert.equal(visibleInheritedChild?.inheritedFromFolderId, parent.groupId)
+  assert.equal(visibleGroups.some((group) => group.groupId === explicitPrivateChild.groupId), false)
 })
 
 test("service enforces full document group permission for delete and reindex operations", async () => {

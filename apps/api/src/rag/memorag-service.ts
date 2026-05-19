@@ -24,7 +24,7 @@ import { buildMemoryCardPrompt } from "./prompts.js"
 import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./quality.js"
 import { extractDocumentFromUpload } from "./text-extract.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
-import { canAccessDocumentGroup, canManageDocumentGroup, documentGroupHasLegacyExplicitPolicy } from "../folders/document-group-permissions.js"
+import { canAccessDocumentGroup, canManageDocumentGroup, documentGroupHasLegacyExplicitPolicy, resolveDocumentGroupPermissionDetail } from "../folders/document-group-permissions.js"
 
 type IngestInput = {
   fileName: string
@@ -608,7 +608,16 @@ export class MemoRagService {
   async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
     const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     return groups
-      .filter((group) => canAccessDocumentGroup(group, user, groups))
+      .map((group) => {
+        const detail = resolveDocumentGroupPermissionDetail(group, user, groups)
+        return {
+          ...group,
+          effectivePermission: detail.permission,
+          policySource: detail.policySource,
+          inheritedFromFolderId: detail.inheritedFromFolderId
+        }
+      })
+      .filter((group) => group.effectivePermission !== "none")
       .sort((a, b) => (a.normalizedCanonicalPath ?? a.name).localeCompare(b.normalizedCanonicalPath ?? b.name))
   }
 
@@ -640,6 +649,7 @@ export class MemoRagService {
     if (groups.some((group) => group.adminPathPk === pathFields.adminPathPk && group.normalizedCanonicalPath === pathFields.normalizedCanonicalPath)) {
       throw new Error("Document group canonical path already exists")
     }
+    const hasExplicitPolicy = documentGroupHasLegacyExplicitPolicy(input)
     const group: DocumentGroup = {
       groupId: `docgrp_${randomUUID().slice(0, 12)}`,
       schemaVersion: 2,
@@ -657,7 +667,7 @@ export class MemoRagService {
       sharedUserIds: uniqueStrings(input.sharedUserIds ?? []),
       sharedGroups: uniqueStrings(input.sharedGroups ?? []),
       managerUserIds: uniqueStrings([actor.userId, ...(input.managerUserIds ?? [])]),
-      hasExplicitPolicy: documentGroupHasLegacyExplicitPolicy(input),
+      ...(hasExplicitPolicy ? { hasExplicitPolicy: true } : {}),
       status: "active",
       createdBy: actor.userId,
       createdAt: now,
@@ -3209,7 +3219,7 @@ function normalizeDocumentGroup(group: DocumentGroup, parent?: DocumentGroup): D
     sharedUserIds: uniqueStrings(group.sharedUserIds ?? []),
     sharedGroups: uniqueStrings(group.sharedGroups ?? []),
     managerUserIds: uniqueStrings([group.ownerUserId, ...(group.managerUserIds ?? [])]),
-    hasExplicitPolicy: group.hasExplicitPolicy ?? Boolean(group.policyId),
+    ...(group.hasExplicitPolicy !== undefined || group.policyId ? { hasExplicitPolicy: group.hasExplicitPolicy ?? true } : {}),
     status: group.status ?? "active",
     createdBy: group.createdBy ?? group.ownerUserId
   }

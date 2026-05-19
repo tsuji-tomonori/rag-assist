@@ -35,7 +35,7 @@ export type CreateDocumentGroupInput = {
   name: string
   description?: string
   parentGroupId?: string
-  visibility: "private" | "shared" | "org"
+  visibility?: "private" | "shared" | "org"
   sharedGroups?: string[]
   managerUserIds?: string[]
 }

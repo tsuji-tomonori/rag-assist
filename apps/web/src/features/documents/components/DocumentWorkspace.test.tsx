@@ -1693,6 +1693,92 @@ describe("DocumentWorkspace", () => {
     expect(onStageReindex).not.toHaveBeenCalled()
   })
 
+  it("親フォルダから継承する新規フォルダでは explicit policy 項目を送らない", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "継承フォルダ")
+    await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), "group-1")
+    await userEvent.selectOptions(screen.getByLabelText("公開範囲"), "inherit")
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+
+    expect(onCreateGroup).toHaveBeenCalledWith({
+      name: "継承フォルダ",
+      parentGroupId: "group-1"
+    })
+  })
+
+  it("選択フォルダが readOnly の場合は global write 権限があっても書き込み操作を無効化する", async () => {
+    const onDelete = vi.fn()
+    const onStageReindex = vi.fn()
+    const readOnlyGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-readonly",
+      name: "閲覧のみフォルダ",
+      ...canonicalGroupFields("閲覧のみフォルダ"),
+      sharedGroups: [],
+      managerUserIds: ["owner-1"],
+      effectivePermission: "readOnly",
+      policySource: "inherited",
+      inheritedFromFolderId: "group-parent"
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: [readOnlyGroup.groupId] } }]}
+        documentGroups={[readOnlyGroup]}
+        uploadGroupId={readOnlyGroup.groupId}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={onDelete}
+        onStageReindex={onStageReindex}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /閲覧のみフォルダ/ }))
+
+    expect(screen.getByTitle("このフォルダにアップロード")).toBeDisabled()
+    expect(screen.getByTitle("共有設定を編集")).toBeDisabled()
+    expect(screen.getByTitle("requirements.mdを削除")).toBeDisabled()
+    expect(screen.getByTitle("requirements.mdの再インデックスをステージング")).toBeDisabled()
+
+    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(onStageReindex).not.toHaveBeenCalled()
+  })
+
   it("ファイルアップロードとmimeType由来の種別表示を処理する", async () => {
     const onUpload = vi.fn().mockResolvedValue(undefined)
     const file = new File(["hello"], "memo.txt", { type: "text/plain" })
