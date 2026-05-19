@@ -1,15 +1,39 @@
-export type RagComponentDescriptor = {
-  id: string
-  runtime: "offline" | "online" | "shared"
-  stage: string
-  area: string
-  status: "planned"
+import type { Dependencies } from "../../../../dependencies.js"
+import { buildFinalAnswerPrompt, formatConversationHistory } from "../../../prompts.js"
+import type { VectorMetadata } from "../../../../types.js"
+import { llmOptions } from "../../../../chat-orchestration/runtime-policy.js"
+import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../../../../chat-orchestration/state.js"
+
+export function createGenerateAnswerNode(deps: Dependencies) {
+  return async function generateAnswer(state: ChatOrchestrationState): Promise<ChatOrchestrationUpdate> {
+    const rawAnswer = await deps.textModel.generate(
+      buildFinalAnswerPrompt(
+        state.question,
+        state.selectedChunks,
+        state.computedFacts,
+        state.temporalContext,
+        formatConversationHistory(state.conversationHistory),
+        { style: benchmarkAnswerStyle(state) }
+      ),
+      llmOptions("finalAnswer", state.modelId)
+    )
+
+    return { rawAnswer }
+  }
 }
 
-export const ragComponentDescriptor = {
-  id: "online/generation/answer/answer-generator",
-  runtime: "online",
-  stage: "generation",
-  area: "answer",
-  status: "planned"
-} satisfies RagComponentDescriptor
+function benchmarkAnswerStyle(state: ChatOrchestrationState): "benchmark_grounded_short" | undefined {
+  const filters = state.searchFilters
+  if (filters?.source === "benchmark-runner" || filters?.docType === "benchmark-corpus" || filters?.benchmarkSuiteId) {
+    return "benchmark_grounded_short"
+  }
+  if (
+    state.selectedChunks.some((chunk) => {
+      const metadata = chunk.metadata as VectorMetadata
+      return metadata.source === "benchmark-runner" || metadata.docType === "benchmark-corpus" || Boolean(metadata.benchmarkSuiteId)
+    })
+  ) {
+    return "benchmark_grounded_short"
+  }
+  return undefined
+}
