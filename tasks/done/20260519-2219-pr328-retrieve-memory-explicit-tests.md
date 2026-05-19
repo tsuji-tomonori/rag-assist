@@ -1,6 +1,6 @@
 # PR #328 retrieve-memory explicit regression tests
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: テスト追加
 - 対象 PR: #328
 - 現行 head: `e563e1962d93665e0e5e650bd03c57b0f430381a`
