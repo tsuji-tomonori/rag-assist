@@ -29,6 +29,7 @@ Web は feature permission を残しつつ、row document / share target group /
 - `DocumentWorkspace` / `DocumentFilePanel` / `DocumentDetailPanel` を resource permission 単位の guard に修正。
 - `npm run docs:web-inventory` で generated Web inventory docs を更新。
 - CI の Web lint failure を確認し、`canSubmitShare` へ集約後に残っていた未使用 prop `shareTargetGroupId` を削除。
+- 未使用 prop 削除後に Web inventory が再度 stale になったため、generated docs を再更新。
 
 ## 成果物
 
@@ -47,6 +48,7 @@ Web は feature permission を残しつつ、row document / share target group /
 - pass: `npm run typecheck -w @memorag-mvp/api`
 - pass: `npm run typecheck -w @memorag-mvp/web`
 - pass: `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`
+- pass: `npm run docs:web-inventory:check`（lint fix 後に再実行）
 - pass: `npm run test -w @memorag-mvp/api`
 - pass: `npm run docs:openapi:check -w @memorag-mvp/api`
 - pass: `git diff --check`
