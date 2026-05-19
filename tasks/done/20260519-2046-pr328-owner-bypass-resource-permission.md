@@ -1,6 +1,6 @@
 # PR #328 owner bypass / resource permission 追修正
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - 対象 PR: #328
 - 現行 head: `66704eaca87977940d51f795a1a2af7368bed8f9`
