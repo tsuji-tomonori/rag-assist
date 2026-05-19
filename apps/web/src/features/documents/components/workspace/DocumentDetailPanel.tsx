@@ -43,6 +43,7 @@ export function DocumentDetailPanel({
   createShareGroupOptions,
   createManagerDraft,
   validatesCreateSharedGroups,
+  validatesCreateManagers,
   createHasValidationError,
   createParentGroup,
   createVisibilityLabel,
@@ -58,6 +59,7 @@ export function DocumentDetailPanel({
   editCanSubmit,
   editDestinationLabel,
   canWrite,
+  canSubmitShare,
   canUploadToDestination,
   operationState,
   uploadInputRef,
@@ -122,6 +124,7 @@ export function DocumentDetailPanel({
   createShareGroupOptions: string[]
   createManagerDraft: { groups: string[]; duplicates: string[]; hasEmptyToken: boolean }
   validatesCreateSharedGroups: boolean
+  validatesCreateManagers: boolean
   createHasValidationError: boolean
   createParentGroup?: DocumentGroup
   createVisibilityLabel: string
@@ -137,6 +140,7 @@ export function DocumentDetailPanel({
   editCanSubmit: boolean
   editDestinationLabel: string
   canWrite: boolean
+  canSubmitShare: boolean
   canUploadToDestination: boolean
   operationState: DocumentOperationState
   uploadInputRef: RefObject<HTMLInputElement | null>
@@ -259,7 +263,7 @@ export function DocumentDetailPanel({
               <span>既存共有をすべて削除することを確認しました</span>
             </label>
           )}
-          <button type="submit" disabled={!canWrite || !shareTargetGroupId || shareHasValidationError || !shareHasChanges || (shareRequiresClearConfirmation && !shareClearConfirmed) || operationState.sharingGroupId !== null}>
+          <button type="submit" disabled={!canSubmitShare}>
             {operationState.sharingGroupId !== null && <LoadingSpinner className="button-spinner" />}
             共有更新
           </button>
@@ -441,7 +445,7 @@ export function DocumentDetailPanel({
             <span>管理者 user IDs</span>
             <input
               value={groupManagerUserIds}
-              disabled={!canWrite || operationState.creatingGroup}
+              disabled={!canWrite || operationState.creatingGroup || groupVisibility === "inherit"}
               onChange={(event) => onGroupManagerUserIdsChange(event.target.value)}
               placeholder="User ID をカンマ区切りで入力"
               aria-invalid={(createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0) || undefined}
@@ -455,15 +459,15 @@ export function DocumentDetailPanel({
           <div className="share-validation" id="create-group-validation" aria-live="polite">
             {validatesCreateSharedGroups && createSharedDraft.hasEmptyToken && <p className="error">shared groups に空の指定があります。余分なカンマを削除してください。</p>}
             {validatesCreateSharedGroups && createSharedDraft.duplicates.length > 0 && <p className="error">重複している shared group: {createSharedDraft.duplicates.join(", ")}</p>}
-            {createManagerDraft.hasEmptyToken && <p className="error">管理者 user IDs に空の指定があります。余分なカンマを削除してください。</p>}
-            {createManagerDraft.duplicates.length > 0 && <p className="error">重複している管理者 user ID: {createManagerDraft.duplicates.join(", ")}</p>}
+            {validatesCreateManagers && createManagerDraft.hasEmptyToken && <p className="error">管理者 user IDs に空の指定があります。余分なカンマを削除してください。</p>}
+            {validatesCreateManagers && createManagerDraft.duplicates.length > 0 && <p className="error">重複している管理者 user ID: {createManagerDraft.duplicates.join(", ")}</p>}
             {!createHasValidationError && <p>入力値だけを作成 payload に含めます。group / user の存在確認は API 作成時に行われます。</p>}
           </div>
           <div className="share-diff-preview" id="create-group-preview" aria-label="新規フォルダ作成プレビュー">
             <span>公開範囲: {createVisibilityLabel}</span>
             <span>親フォルダ: {createParentGroup?.name ?? "なし"}</span>
             <span>共有先: {groupVisibility === "inherit" ? "親フォルダから継承" : groupVisibility === "shared" && createSharedDraft.groups.length > 0 ? createSharedDraft.groups.join(", ") : "なし"}</span>
-            <span>管理者: {createManagerDraft.groups.length > 0 ? createManagerDraft.groups.join(", ") : "未指定"}</span>
+            <span>管理者: {groupVisibility === "inherit" ? "親フォルダから継承" : createManagerDraft.groups.length > 0 ? createManagerDraft.groups.join(", ") : "未指定"}</span>
             <span>作成後移動: {moveToCreatedGroup ? "する" : "しない"}</span>
           </div>
           <button type="submit" disabled={!canWrite || !groupName.trim() || createHasValidationError || operationState.creatingGroup}>

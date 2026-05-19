@@ -1779,6 +1779,153 @@ describe("DocumentWorkspace", () => {
     expect(onStageReindex).not.toHaveBeenCalled()
   })
 
+  it("すべてのドキュメントでは文書ごとの所属フォルダ権限で削除と再インデックスを無効化する", async () => {
+    const onDelete = vi.fn()
+    const onStageReindex = vi.fn()
+    const fullGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-full",
+      name: "full folder",
+      ...canonicalGroupFields("full folder"),
+      effectivePermission: "full"
+    }
+    const readOnlyGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-readonly",
+      name: "readonly folder",
+      ...canonicalGroupFields("readonly folder"),
+      effectivePermission: "readOnly",
+      policySource: "inherited",
+      inheritedFromFolderId: "group-parent"
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={[
+          { documentId: "doc-full", fileName: "full.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-01T00:00:00.000Z", metadata: { groupIds: [fullGroup.groupId] } },
+          { documentId: "doc-readonly", fileName: "readonly.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-02T00:00:00.000Z", metadata: { groupIds: [readOnlyGroup.groupId] } }
+        ]}
+        documentGroups={[fullGroup, readOnlyGroup]}
+        uploadGroupId={fullGroup.groupId}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={onDelete}
+        onStageReindex={onStageReindex}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByTitle("full.mdを削除")).toBeEnabled()
+    expect(screen.getByTitle("full.mdの再インデックスをステージング")).toBeEnabled()
+    expect(screen.getByTitle("readonly.mdを削除")).toBeDisabled()
+    expect(screen.getByTitle("readonly.mdの再インデックスをステージング")).toBeDisabled()
+
+    await userEvent.click(screen.getByTitle("readonly.mdを削除"))
+    await userEvent.click(screen.getByTitle("readonly.mdの再インデックスをステージング"))
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(onStageReindex).not.toHaveBeenCalled()
+  })
+
+  it("共有更新は選択中フォルダではなく共有対象フォルダの full 権限を要求する", async () => {
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+    const fullGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-full",
+      name: "full folder",
+      ...canonicalGroupFields("full folder"),
+      effectivePermission: "full"
+    }
+    const readOnlyGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-readonly",
+      name: "readonly folder",
+      ...canonicalGroupFields("readonly folder"),
+      sharedGroups: [],
+      effectivePermission: "readOnly",
+      policySource: "inherited",
+      inheritedFromFolderId: fullGroup.groupId
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[fullGroup, readOnlyGroup]}
+        uploadGroupId={fullGroup.groupId}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={onShareGroup}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /full folder/ }))
+    await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), readOnlyGroup.groupId)
+    await userEvent.clear(screen.getByLabelText("共有 Cognito group"))
+    await userEvent.type(screen.getByLabelText("共有 Cognito group"), "RAG_READERS")
+
+    expect(screen.getByRole("button", { name: "共有更新" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "共有更新" }))
+    expect(onShareGroup).not.toHaveBeenCalled()
+  })
+
+  it("親フォルダから継承する新規フォルダでは managerUserIds も送らない", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "継承フォルダ")
+    await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), "group-1")
+    await userEvent.type(screen.getByLabelText("管理者 user IDs"), "user-extra")
+    await userEvent.selectOptions(screen.getByLabelText("公開範囲"), "inherit")
+
+    expect(screen.getByLabelText("管理者 user IDs")).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+
+    expect(onCreateGroup).toHaveBeenCalledWith({
+      name: "継承フォルダ",
+      parentGroupId: "group-1"
+    })
+  })
+
   it("ファイルアップロードとmimeType由来の種別表示を処理する", async () => {
     const onUpload = vi.fn().mockResolvedValue(undefined)
     const file = new File(["hello"], "memo.txt", { type: "text/plain" })

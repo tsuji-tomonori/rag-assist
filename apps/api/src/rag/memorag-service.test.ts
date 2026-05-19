@@ -838,6 +838,91 @@ test("service annotates visible document groups with effective permission and in
   assert.equal(visibleGroups.some((group) => group.groupId === explicitPrivateChild.groupId), false)
 })
 
+test("service does not expose group scoped documents to ownerUserId without folder read permission", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass read group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-read.md",
+    text: "owner bypass read content must stay hidden without folder read permission.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  assert.equal((await service.listDocumentGroups(uploader)).some((candidate) => candidate.groupId === group.groupId), false)
+  assert.deepEqual((await service.listDocuments(uploader)).map((document) => document.documentId), [])
+  await assert.rejects(() => service.getParsedDocumentPreview(uploader, manifest.documentId), /Forbidden/)
+})
+
+test("service does not allow group scoped document owner to delete or reindex without folder full permission", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass manage group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-manage.md",
+    text: "owner bypass manage content must not be deleted or reindexed without folder full permission.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  await assert.rejects(
+    () => authorizeDocumentDelete(service, uploader, manifest.documentId),
+    /Forbidden|cannot manage document/
+  )
+  await assert.rejects(
+    () => service.stageReindexMigration(uploader, manifest.documentId),
+    /Forbidden|cannot manage document/
+  )
+  assert.deepEqual(await service.listReindexMigrations(), [])
+})
+
+test("search excludes owner-owned group scoped documents when folder permission is none", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass search group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-search.md",
+    text: "revoked owner secret pear must not appear in all mode search.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  const result = await service.search({
+    query: "owner secret pear",
+    topK: 10,
+    lexicalTopK: 20,
+    semanticTopK: 0
+  }, uploader)
+
+  assert.deepEqual(result.results, [])
+  assert.equal(JSON.stringify(result).includes("revoked owner secret pear"), false)
+  assert.equal(JSON.stringify(result).includes(manifest.documentId), false)
+})
+
 test("service enforces full document group permission for delete and reindex operations", async () => {
   const { service } = await createService()
   const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }

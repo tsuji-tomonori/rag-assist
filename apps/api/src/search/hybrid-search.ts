@@ -706,10 +706,12 @@ function normalize(text: string): string {
 function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: DocumentGroup[] = []): boolean {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
-  if (stringValue(metadata.ownerUserId) === user.userId) return true
   const manifestGroupIds = stringValues(metadata.groupIds ?? metadata.groupId)
-  if (manifestGroupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))) return true
-  if (stringValue(metadata.scopeType) === "group") return false
+  const scopeType = stringValue(metadata.scopeType)
+  if (manifestGroupIds.length > 0 || scopeType === "group") {
+    return manifestGroupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))
+  }
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
   return canAccessMetadata(metadata, user)
 }
 
