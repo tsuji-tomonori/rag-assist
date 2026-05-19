@@ -1,6 +1,6 @@
 # PR #328 memory retrieval / parent permission 追修正
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - 対象 PR: #328
 - 現行 head: `16fa045b49e6917d5c2cad796acc72fe3be36e1d`
