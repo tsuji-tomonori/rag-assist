@@ -28,6 +28,7 @@ Web は feature permission を残しつつ、row document / share target group /
 - `apps/web/src/features/documents/components/DocumentWorkspace.test.tsx` に all view row permission、share target permission、inherit manager 制御のテストを追加。
 - `DocumentWorkspace` / `DocumentFilePanel` / `DocumentDetailPanel` を resource permission 単位の guard に修正。
 - `npm run docs:web-inventory` で generated Web inventory docs を更新。
+- CI の Web lint failure を確認し、`canSubmitShare` へ集約後に残っていた未使用 prop `shareTargetGroupId` を削除。
 
 ## 成果物
 
@@ -45,6 +46,7 @@ Web は feature permission を残しつつ、row document / share target group /
 - pass: `npm run docs:web-inventory:check`
 - pass: `npm run typecheck -w @memorag-mvp/api`
 - pass: `npm run typecheck -w @memorag-mvp/web`
+- pass: `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`
 - pass: `npm run test -w @memorag-mvp/api`
 - pass: `npm run docs:openapi:check -w @memorag-mvp/api`
 - pass: `git diff --check`
@@ -56,4 +58,4 @@ Web は feature permission を残しつつ、row document / share target group /
 ## 未対応・制約・リスク
 
 - Playwright E2E は未実施。今回の Web regression は Vitest の component test で固定した。
-- GitHub Actions の最終結果は push 後に確認する必要がある。
+- GitHub Actions の最終結果は lint fix push 後に再確認する必要がある。

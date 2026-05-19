@@ -39,6 +39,7 @@ CI では最新 head `66704eac` の MemoRAG CI が `npm run docs:web-inventory:c
 - `DocumentWorkspace.test.tsx` に all view row permission、share target permission、inherit manager 制御のテストを追加する。
 - `DocumentWorkspace` / `DocumentFilePanel` / `DocumentDetailPanel` の props と handler guard を row/target/resource 単位に修正する。
 - `docs:web-inventory:check` の failure を再現し、必要な生成 inventory 更新または実装調整を行う。
+- CI の Web lint failure を再現し、未使用 prop を削除する。
 
 ## 検証計画
 
@@ -78,6 +79,7 @@ API/Web の認可境界修正であり、OpenAPI schema 追加は予定しない
 - pass: `npm run docs:web-inventory:check`
 - pass: `npm run typecheck -w @memorag-mvp/api`
 - pass: `npm run typecheck -w @memorag-mvp/web`
+- pass: `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`
 - pass: `npm run test -w @memorag-mvp/api`
 - pass: `npm run docs:openapi:check -w @memorag-mvp/api`
 - pass: `git diff --check`

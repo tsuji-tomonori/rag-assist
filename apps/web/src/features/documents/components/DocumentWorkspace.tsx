@@ -563,7 +563,6 @@ export function DocumentWorkspace({
           selectedFolder={selectedFolder}
           selectedGroupId={selectedGroupId}
           selectedSharedEntries={selectedSharedEntries}
-          shareTargetGroupId={shareTargetGroupId}
           shareHasValidationError={shareHasValidationError}
           shareHasEmptyToken={shareHasEmptyToken}
           shareHasDuplicate={shareHasDuplicate}

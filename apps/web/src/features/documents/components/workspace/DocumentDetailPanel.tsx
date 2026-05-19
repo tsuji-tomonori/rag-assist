@@ -12,7 +12,6 @@ export function DocumentDetailPanel({
   selectedFolder,
   selectedGroupId,
   selectedSharedEntries,
-  shareTargetGroupId,
   shareHasValidationError,
   shareHasEmptyToken,
   shareHasDuplicate,
@@ -93,7 +92,6 @@ export function DocumentDetailPanel({
   selectedFolder: WorkspaceFolder
   selectedGroupId: string
   selectedSharedEntries: ReturnType<typeof sharedEntries>
-  shareTargetGroupId: string
   shareHasValidationError: boolean
   shareHasEmptyToken: boolean
   shareHasDuplicate: boolean
