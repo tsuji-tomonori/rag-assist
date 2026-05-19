@@ -73,10 +73,12 @@ function isActiveManifest(manifest: DocumentManifest): boolean {
 function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: DocumentGroup[] = []): boolean {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
-  if (stringValue(metadata.ownerUserId) === user.userId) return true
   const groupIds = stringValues(metadata.groupIds ?? metadata.groupId)
-  if (groupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))) return true
-  if (stringValue(metadata.scopeType) === "group") return false
+  const scopeType = stringValue(metadata.scopeType)
+  if (groupIds.length > 0 || scopeType === "group") {
+    return groupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))
+  }
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
   return canAccessMetadata(metadata, user)
 }
 

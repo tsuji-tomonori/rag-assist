@@ -202,11 +202,18 @@ export function DocumentWorkspace({
     (validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) ||
     (validatesCreateManagers && (createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0))
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
+  const createParentCanManage = groupParentId ? Boolean(createParentGroup && canManageDocumentGroup(createParentGroup)) : true
+  const canCreateGroup = canWrite &&
+    createParentCanManage &&
+    Boolean(groupName.trim()) &&
+    !createHasValidationError &&
+    !operationState.creatingGroup
   const createVisibilityLabel = groupVisibility === "inherit" ? "親フォルダから継承" : visibilityLabelValue(groupVisibility)
   const editTargetGroup = selectedFolder.group
   const editDescendantGroupIds = useMemo(() => descendantGroupIds(documentGroups, selectedGroupId), [documentGroups, selectedGroupId])
   const editMoveTargetGroups = documentGroups.filter((group) => group.groupId !== selectedGroupId && !editDescendantGroupIds.has(group.groupId))
   const editParentGroup = editGroupParentId === rootFolderParentValue ? undefined : documentGroups.find((group) => group.groupId === editGroupParentId)
+  const editParentCanManage = editGroupParentId === rootFolderParentValue || Boolean(editParentGroup && canManageDocumentGroup(editParentGroup))
   const editParentInvalid = Boolean(
     editTargetGroup &&
     editGroupParentId !== rootFolderParentValue &&
@@ -225,6 +232,7 @@ export function DocumentWorkspace({
     Boolean(editName) &&
     editHasChanges &&
     !editParentInvalid &&
+    editParentCanManage &&
     operationState.sharingGroupId === null
   const editDestinationLabel = editGroupParentId === rootFolderParentValue ? "ルート" : editParentGroup?.canonicalPath ?? "選択不可"
 
@@ -337,7 +345,7 @@ export function DocumentWorkspace({
   async function onCreateGroupSubmit(event: FormEvent) {
     event.preventDefault()
     const name = groupName.trim()
-    if (!name || !canWriteSelectedFolder || createHasValidationError) return
+    if (!canCreateGroup) return
     const input: CreateDocumentGroupInput = {
       name,
       ...(groupDescription.trim() ? { description: groupDescription.trim() } : {}),
@@ -596,6 +604,7 @@ export function DocumentWorkspace({
           validatesCreateManagers={validatesCreateManagers}
           createHasValidationError={createHasValidationError}
           createParentGroup={createParentGroup}
+          canCreateGroup={canCreateGroup}
           createVisibilityLabel={createVisibilityLabel}
           shareGroupId={shareGroupId}
           shareGroups={shareGroups}
@@ -608,7 +617,7 @@ export function DocumentWorkspace({
           editHasChanges={editHasChanges}
           editCanSubmit={editCanSubmit}
           editDestinationLabel={editDestinationLabel}
-          canWrite={canWriteSelectedFolder}
+          canWrite={canWrite}
           canSubmitShare={canSubmitShare}
           canUploadToDestination={canUploadToDestination}
           operationState={operationState}

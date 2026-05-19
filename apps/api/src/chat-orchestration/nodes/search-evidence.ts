@@ -1,9 +1,10 @@
 import type { AppUser } from "../../auth.js"
 import type { Dependencies } from "../../dependencies.js"
+import { canAccessDocumentGroup } from "../../folders/document-group-permissions.js"
 import { loadChunksForManifest } from "../../rag/manifest-chunks.js"
 import { isQualityApprovedForNormalRag } from "../../rag/quality.js"
 import { rrfFuse, searchRag, type SearchResult, type SearchResponse } from "../../search/hybrid-search.js"
-import type { Chunk, DocumentManifest, RetrievedVector, VectorMetadata } from "../../types.js"
+import type { Chunk, DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, VectorMetadata } from "../../types.js"
 import { expandedSearchTopK, ragRuntimePolicy } from "../runtime-policy.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../state.js"
 
@@ -55,7 +56,7 @@ export function createSearchEvidenceNode(deps: Dependencies, user: AppUser) {
       })
       .filter((hit): hit is RetrievedVector => hit !== undefined)
       .slice(0, expandedSearchTopK(state.topK))
-    const memorySourceChunks = await expandMemorySourceChunks(deps, state, expandedSearchTopK(state.topK))
+    const memorySourceChunks = await expandMemorySourceChunks(deps, state, user, expandedSearchTopK(state.topK))
     const retrievedChunks = mergeRetrievedChunks([...hybridChunks, ...memorySourceChunks], expandedSearchTopK(state.topK))
     return { retrievedChunks, retrievalDiagnostics: summarizeDiagnostics(diagnostics, retrievedChunks) }
   }
@@ -145,7 +146,7 @@ function sourceList(chunk: RetrievedVector): string[] {
   return Array.isArray(raw) ? raw.filter((item): item is string => typeof item === "string") : []
 }
 
-async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestrationState, limit: number): Promise<RetrievedVector[]> {
+async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestrationState, user: AppUser, limit: number): Promise<RetrievedVector[]> {
   if (!state.useMemory || state.memoryCards.length === 0) return []
   const queryTokens = tokenizeQueries([
     state.normalizedQuery,
@@ -155,13 +156,14 @@ async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestra
   ])
   const manifestCache = new Map<string, DocumentManifest | undefined>()
   const chunkCache = new Map<string, Chunk[]>()
+  const groups = await loadDocumentGroups(deps)
   const expanded: RetrievedVector[] = []
   for (const memoryHit of state.memoryCards) {
     const memoryMetadata = memoryHit.metadata as VectorMetadata
     const documentId = memoryHit.metadata.documentId
     if (!documentId) continue
     const manifest = await loadManifest(deps, manifestCache, documentId)
-    if (!manifest || !isQualityApprovedForNormalRag(manifest)) continue
+    if (!manifest || !canAccessManifest(manifest, user, groups) || !isQualityApprovedForNormalRag(manifest)) continue
     const chunks = await loadManifestChunks(deps, chunkCache, manifest)
     const candidates = candidateChunksForMemory(memoryHit, chunks)
     const selected = rankMemorySourceChunks(candidates, memoryHit, queryTokens).slice(0, Math.max(1, Math.min(limit, state.topK)))
@@ -219,6 +221,45 @@ async function expandMemorySourceChunks(deps: Dependencies, state: ChatOrchestra
     }
   }
   return expanded
+}
+
+async function loadDocumentGroups(deps: Pick<Dependencies, "documentGroupStore">): Promise<DocumentGroup[]> {
+  try {
+    return await deps.documentGroupStore.list()
+  } catch {
+    return []
+  }
+}
+
+function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: DocumentGroup[] = []): boolean {
+  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
+  const metadata = manifest.metadata ?? {}
+  const groupIds = stringValues(metadata.groupIds ?? metadata.groupId)
+  const scopeType = stringValue(metadata.scopeType)
+  if (groupIds.length > 0 || scopeType === "group") {
+    return groupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))
+  }
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
+  return canAccessMetadata(metadata, user)
+}
+
+function canAccessMetadata(metadata: Record<string, JsonValue>, user: AppUser): boolean {
+  const groups = new Set(user.cognitoGroups)
+  const aclGroups = stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group)
+  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
+  const allowedUsers = stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId)
+  if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
+  return true
+}
+
+function stringValues(value: JsonValue | undefined): string[] {
+  if (typeof value === "string") return [value]
+  if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string")
+  return []
+}
+
+function stringValue(value: JsonValue | undefined): string | undefined {
+  return typeof value === "string" ? value : undefined
 }
 
 async function loadManifest(

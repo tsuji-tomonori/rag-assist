@@ -1926,6 +1926,139 @@ describe("DocumentWorkspace", () => {
     })
   })
 
+  it("readOnly parent を選んだ新規フォルダ作成は disabled で onCreateGroup を呼ばない", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+    const readOnlyParent: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-readonly-parent",
+      name: "閲覧のみ親",
+      ...canonicalGroupFields("閲覧のみ親"),
+      effectivePermission: "readOnly",
+      policySource: "inherited",
+      inheritedFromFolderId: "group-root"
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[readOnlyParent]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "作成不可")
+    await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), readOnlyParent.groupId)
+
+    expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+    expect(onCreateGroup).not.toHaveBeenCalled()
+  })
+
+  it("selected folder が readOnly でも parent 未指定の root 作成は feature permission があれば可能", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+    const readOnlyGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-readonly",
+      name: "閲覧のみフォルダ",
+      ...canonicalGroupFields("閲覧のみフォルダ"),
+      effectivePermission: "readOnly",
+      policySource: "inherited",
+      inheritedFromFolderId: "group-parent"
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[readOnlyGroup]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /閲覧のみフォルダ/ }))
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "ルート作成")
+
+    expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeEnabled()
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+    expect(onCreateGroup).toHaveBeenCalledWith({ name: "ルート作成", visibility: "private" })
+  })
+
+  it("full source folder を readOnly parent 配下へ移動する更新は disabled", async () => {
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+    const fullGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-full",
+      name: "full folder",
+      ...canonicalGroupFields("full folder"),
+      effectivePermission: "full"
+    }
+    const readOnlyParent: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-readonly-parent",
+      name: "readonly parent",
+      ...canonicalGroupFields("readonly parent"),
+      effectivePermission: "readOnly",
+      policySource: "inherited",
+      inheritedFromFolderId: "group-root"
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[fullGroup, readOnlyParent]}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={onShareGroup}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /full folder/ }))
+    await userEvent.selectOptions(screen.getByLabelText("移動先フォルダ"), readOnlyParent.groupId)
+
+    expect(screen.getByRole("button", { name: "フォルダ更新" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ更新" }))
+    expect(onShareGroup).not.toHaveBeenCalled()
+  })
+
   it("ファイルアップロードとmimeType由来の種別表示を処理する", async () => {
     const onUpload = vi.fn().mockResolvedValue(undefined)
     const file = new File(["hello"], "memo.txt", { type: "text/plain" })

@@ -45,6 +45,7 @@ export function DocumentDetailPanel({
   validatesCreateManagers,
   createHasValidationError,
   createParentGroup,
+  canCreateGroup,
   createVisibilityLabel,
   shareGroupId,
   shareGroups,
@@ -125,6 +126,7 @@ export function DocumentDetailPanel({
   validatesCreateManagers: boolean
   createHasValidationError: boolean
   createParentGroup?: DocumentGroup
+  canCreateGroup: boolean
   createVisibilityLabel: string
   shareGroupId: string
   shareGroups: string
@@ -468,7 +470,7 @@ export function DocumentDetailPanel({
             <span>管理者: {groupVisibility === "inherit" ? "親フォルダから継承" : createManagerDraft.groups.length > 0 ? createManagerDraft.groups.join(", ") : "未指定"}</span>
             <span>作成後移動: {moveToCreatedGroup ? "する" : "しない"}</span>
           </div>
-          <button type="submit" disabled={!canWrite || !groupName.trim() || createHasValidationError || operationState.creatingGroup}>
+          <button type="submit" disabled={!canCreateGroup}>
             {operationState.creatingGroup && <LoadingSpinner className="button-spinner" />}
             新規フォルダ
           </button>
