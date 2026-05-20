@@ -1,6 +1,6 @@
 # folderId metadata の scoped search 整合修正
 
-状態: do
+状態: done
 
 ## 背景
 
