@@ -129,6 +129,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canWriteDocuments,
     canCreateDocumentGroups,
     canShareDocumentGroups,
+    canDeleteDocuments,
     canReindexDocuments,
     setLoading,
     setError

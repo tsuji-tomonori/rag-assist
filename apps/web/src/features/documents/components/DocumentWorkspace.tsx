@@ -96,7 +96,7 @@ export function DocumentWorkspace({
   const [groupName, setGroupName] = useState("")
   const [groupDescription, setGroupDescription] = useState("")
   const [groupParentId, setGroupParentId] = useState("")
-  const [groupVisibility, setGroupVisibility] = useState<"private" | "shared" | "org">("private")
+  const [groupVisibility, setGroupVisibility] = useState<"inherit" | "private" | "shared" | "org">("private")
   const [groupSharedGroups, setGroupSharedGroups] = useState("")
   const [groupManagerUserIds, setGroupManagerUserIds] = useState("")
   const [moveToCreatedGroup, setMoveToCreatedGroup] = useState(true)
@@ -140,7 +140,11 @@ export function DocumentWorkspace({
   const selectedGroupId = selectedFolder.group?.groupId ?? ""
   const uploadDestination = uploadGroupId ? documentGroups.find((group) => group.groupId === uploadGroupId) : undefined
   const uploadDestinationLabel = uploadDestination?.name ?? "未選択"
-  const canUploadToDestination = canWrite && Boolean(uploadGroupId)
+  const selectedFolderCanManage = !selectedFolder.group || canManageDocumentGroup(selectedFolder.group)
+  const canWriteSelectedFolder = canWrite && selectedFolderCanManage
+  const canDeleteSelectedFolder = canDelete && selectedFolderCanManage
+  const canReindexSelectedFolder = canReindex && selectedFolderCanManage
+  const canUploadToDestination = canWrite && Boolean(uploadGroupId) && Boolean(uploadDestination && canManageDocumentGroup(uploadDestination))
   const folderDocuments = selectedGroupId ? documents.filter((document) => documentGroupIds(document).includes(selectedGroupId)) : documents
   const documentTypeOptions = uniqueSorted(folderDocuments.map(fileTypeLabel))
   const documentStatusOptions = uniqueSorted(folderDocuments.map(documentStatusLabel))
@@ -175,6 +179,7 @@ export function DocumentWorkspace({
   const selectedSharedEntries = selectedFolder.group ? sharedEntries(selectedFolder.group) : []
   const shareTargetGroupId = shareGroupId || selectedGroupId
   const shareTargetGroup = documentGroups.find((group) => group.groupId === shareTargetGroupId)
+  const shareTargetCanManage = Boolean(shareTargetGroup && canManageDocumentGroup(shareTargetGroup))
   const currentShareGroups = shareTargetGroup?.sharedGroups ?? []
   const currentShareGroupsValue = currentShareGroups.join(", ")
   const shareDraft = parseSharedGroups(shareGroups)
@@ -187,25 +192,34 @@ export function DocumentWorkspace({
   const shareClearsAllExistingGroups = currentShareGroups.length > 0 && shareDraft.groups.length === 0
   const shareRequiresClearConfirmation = shareClearsAllExistingGroups && shareHasChanges
   const canSubmitShare = canShareGroups &&
+    shareTargetCanManage &&
     Boolean(shareTargetGroupId) &&
     !shareHasValidationError &&
     shareHasChanges &&
     operationState.sharingGroupId === null &&
     (!shareRequiresClearConfirmation || shareClearConfirmed)
+  const canSetCreateSharing = canCreateGroups && canShareGroups
   const createSharedDraft = parseListInput(groupSharedGroups)
   const createShareGroupOptions = uniqueSorted([...documentGroups.flatMap((group) => group.sharedGroups), ...createSharedDraft.groups])
   const createManagerDraft = parseListInput(groupManagerUserIds)
-  const validatesCreateSharedGroups = groupVisibility === "shared"
+  const validatesCreateSharedGroups = canSetCreateSharing && groupVisibility === "shared"
+  const validatesCreateManagers = canSetCreateSharing && groupVisibility !== "inherit"
   const createHasValidationError =
     (validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) ||
-    createManagerDraft.hasEmptyToken ||
-    createManagerDraft.duplicates.length > 0
+    (validatesCreateManagers && (createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0))
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
-  const createVisibilityLabel = visibilityLabelValue(groupVisibility)
+  const createParentCanManage = groupParentId ? Boolean(createParentGroup && canManageDocumentGroup(createParentGroup)) : true
+  const canCreateGroup = canCreateGroups &&
+    createParentCanManage &&
+    Boolean(groupName.trim()) &&
+    !createHasValidationError &&
+    !operationState.creatingGroup
+  const createVisibilityLabel = groupVisibility === "inherit" ? "親フォルダから継承" : visibilityLabelValue(groupVisibility)
   const editTargetGroup = selectedFolder.group
   const editDescendantGroupIds = useMemo(() => descendantGroupIds(documentGroups, selectedGroupId), [documentGroups, selectedGroupId])
   const editMoveTargetGroups = documentGroups.filter((group) => group.groupId !== selectedGroupId && !editDescendantGroupIds.has(group.groupId))
   const editParentGroup = editGroupParentId === rootFolderParentValue ? undefined : documentGroups.find((group) => group.groupId === editGroupParentId)
+  const editParentCanManage = editGroupParentId === rootFolderParentValue || Boolean(editParentGroup && canManageDocumentGroup(editParentGroup))
   const editParentInvalid = Boolean(
     editTargetGroup &&
     editGroupParentId !== rootFolderParentValue &&
@@ -221,9 +235,11 @@ export function DocumentWorkspace({
   )
   const editCanSubmit = canShareGroups &&
     Boolean(editTargetGroup) &&
+    Boolean(editTargetGroup && canManageDocumentGroup(editTargetGroup)) &&
     Boolean(editName) &&
     editHasChanges &&
     !editParentInvalid &&
+    editParentCanManage &&
     operationState.sharingGroupId === null
   const editDestinationLabel = editGroupParentId === rootFolderParentValue ? "ルート" : editParentGroup?.canonicalPath ?? "選択不可"
 
@@ -336,14 +352,14 @@ export function DocumentWorkspace({
   async function onCreateGroupSubmit(event: FormEvent) {
     event.preventDefault()
     const name = groupName.trim()
-    if (!name || !canCreateGroups || createHasValidationError) return
+    if (!canCreateGroup) return
     const input: CreateDocumentGroupInput = {
       name,
-      visibility: groupVisibility,
       ...(groupDescription.trim() ? { description: groupDescription.trim() } : {}),
       ...(groupParentId ? { parentGroupId: groupParentId } : {}),
-      ...(groupVisibility === "shared" && createSharedDraft.groups.length > 0 ? { sharedGroups: createSharedDraft.groups } : {}),
-      ...(createManagerDraft.groups.length > 0 ? { managerUserIds: createManagerDraft.groups } : {})
+      ...(canSetCreateSharing && groupVisibility !== "inherit" ? { visibility: groupVisibility } : {}),
+      ...(canSetCreateSharing && groupVisibility === "shared" && createSharedDraft.groups.length > 0 ? { sharedGroups: createSharedDraft.groups } : {}),
+      ...(canSetCreateSharing && groupVisibility !== "inherit" && createManagerDraft.groups.length > 0 ? { managerUserIds: createManagerDraft.groups } : {})
     }
     const createdGroup = await onCreateGroup(input)
     recordSessionOperation("フォルダ作成", name, `公開範囲: ${createVisibilityLabel}`, createdGroup?.groupId ? "反映済み" : "失敗")
@@ -373,6 +389,13 @@ export function DocumentWorkspace({
     } else {
       recordSessionOperation("共有更新", target, `${detail} / error: ${result.error}`, "失敗")
     }
+  }
+
+  function onDocumentConfirmAction(action: ConfirmAction) {
+    if ((action.kind === "delete" || action.kind === "stage") && !canManageDocument(action.document, documentGroups)) return
+    if (action.kind === "cutover" || action.kind === "rollback") setSelectedMigrationId(action.migration.migrationId)
+    setConfirmError(null)
+    setConfirmAction(action)
   }
 
   async function onEditGroupSubmit(event: FormEvent) {
@@ -482,6 +505,8 @@ export function DocumentWorkspace({
     setFolderSettingsOpen(true)
   }
 
+  const selectedDocumentCanManage = selectedDocument ? canManageDocument(selectedDocument, documentGroups) : selectedFolderCanManage
+
   return (
     <section className="document-workspace" aria-label="ドキュメント管理">
       <header className="document-page-header">
@@ -538,11 +563,13 @@ export function DocumentWorkspace({
           documentStatusOptions={documentStatusOptions}
           selectedDocument={selectedDocument}
           operationState={operationState}
-          canWrite={canWrite}
-          canDelete={canDelete}
+          canWrite={canWriteSelectedFolder}
+          canDelete={canDeleteSelectedFolder}
           canCreateGroups={canCreateGroups}
           canShareGroups={canShareGroups}
-          canReindex={canReindex}
+          canReindex={canReindexSelectedFolder}
+          canDeleteDocument={(document) => canDelete && canManageDocument(document, documentGroups)}
+          canReindexDocument={(document) => canReindex && canManageDocument(document, documentGroups)}
           canUploadToDestination={canUploadToDestination}
           migrations={migrations}
           selectedMigrationId={selectedMigrationId}
@@ -560,11 +587,7 @@ export function DocumentWorkspace({
             setSelectedDocumentId(document.documentId)
             setSelectedMigrationId("")
           }}
-          onConfirmAction={(action) => {
-            if (action.kind === "cutover" || action.kind === "rollback") setSelectedMigrationId(action.migration.migrationId)
-            setConfirmError(null)
-            setConfirmAction(action)
-          }}
+          onConfirmAction={onDocumentConfirmAction}
           onOpenCreateFolder={openCreateFolderModal}
           onOpenFolderSettings={openFolderSettingsModal}
           onOpenUploadPicker={openUploadPicker}
@@ -594,7 +617,6 @@ export function DocumentWorkspace({
               selectedFolder={selectedFolder}
               selectedGroupId={selectedGroupId}
               selectedSharedEntries={selectedSharedEntries}
-              shareTargetGroupId={shareTargetGroupId}
               shareHasValidationError={shareHasValidationError}
               shareHasEmptyToken={shareHasEmptyToken}
               shareHasDuplicate={shareHasDuplicate}
@@ -625,8 +647,10 @@ export function DocumentWorkspace({
               createShareGroupOptions={createShareGroupOptions}
               createManagerDraft={createManagerDraft}
               validatesCreateSharedGroups={validatesCreateSharedGroups}
+              validatesCreateManagers={validatesCreateManagers}
               createHasValidationError={createHasValidationError}
               createParentGroup={createParentGroup}
+              canCreateGroup={canCreateGroup}
               createVisibilityLabel={createVisibilityLabel}
               shareGroupId={shareGroupId}
               shareGroups={shareGroups}
@@ -642,6 +666,7 @@ export function DocumentWorkspace({
               canWrite={canWrite}
               canCreateGroups={canCreateGroups}
               canShareGroups={canShareGroups}
+              canSubmitShare={canSubmitShare}
               canUploadToDestination={canUploadToDestination}
               operationState={operationState}
               uploadInputRef={uploadInputRef}
@@ -698,16 +723,16 @@ export function DocumentWorkspace({
           onClose={() => setSelectedDocumentId("")}
           onDelete={() => {
             setConfirmError(null)
-            setConfirmAction({ kind: "delete", document: selectedDocument })
+            if (selectedDocumentCanManage) setConfirmAction({ kind: "delete", document: selectedDocument })
             setSelectedDocumentId("")
           }}
           onStageReindex={() => {
             setConfirmError(null)
-            setConfirmAction({ kind: "stage", document: selectedDocument })
+            if (selectedDocumentCanManage) setConfirmAction({ kind: "stage", document: selectedDocument })
             setSelectedDocumentId("")
           }}
-          canDelete={canDelete}
-          canReindex={canReindex}
+          canDelete={canDelete && selectedDocumentCanManage}
+          canReindex={canReindex && selectedDocumentCanManage}
         />
       )}
     </section>
@@ -750,4 +775,17 @@ function descendantGroupIds(groups: DocumentGroup[], rootGroupId: string): Set<s
     queue.push(...(childrenByParentId.get(group.groupId) ?? []))
   }
   return result
+}
+
+function canManageDocumentGroup(group: DocumentGroup): boolean {
+  return group.effectivePermission === undefined || group.effectivePermission === "full"
+}
+
+function canManageDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  const groupIds = documentGroupIds(document)
+  if (groupIds.length === 0) return true
+  return groupIds.every((groupId) => {
+    const group = groups.find((candidate) => candidate.groupId === groupId)
+    return Boolean(group && canManageDocumentGroup(group))
+  })
 }

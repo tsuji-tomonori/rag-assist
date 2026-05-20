@@ -24,6 +24,7 @@ function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}
     canWriteDocuments: true,
     canCreateDocumentGroups: true,
     canShareDocumentGroups: true,
+    canDeleteDocuments: true,
     canReindexDocuments: true,
     setLoading: vi.fn(),
     setError: vi.fn(),
@@ -148,6 +149,15 @@ describe("useDocuments", () => {
     expect(stageResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
     expect(cutoverResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
     expect(rollbackResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
+  })
+
+  it("削除権限がない場合は削除 API を呼ばない", async () => {
+    const { result } = renderHook(() => useDocuments(createProps({ canDeleteDocuments: false })))
+
+    const deleteResult = await act(() => result.current.onDelete("doc-1"))
+
+    expect(deleteDocument).not.toHaveBeenCalled()
+    expect(deleteResult).toEqual({ ok: false, error: "文書を削除する権限がありません" })
   })
 
   it("再インデックス失敗時はエラーを設定する", async () => {
@@ -355,5 +365,26 @@ describe("useDocuments", () => {
     expect(props.setError).toHaveBeenCalledWith("share group failed")
     expect(props.setError).toHaveBeenCalledWith("cutover failed")
     expect(props.setError).toHaveBeenCalledWith("rollback failed")
+  })
+
+  it("共有権限がない新規フォルダ作成では共有・管理者 payload を除外する", async () => {
+    const props = createProps({ canCreateDocumentGroups: true, canShareDocumentGroups: false })
+    vi.mocked(createDocumentGroup).mockResolvedValueOnce(documentGroupFixture({ groupId: "group-created" }))
+    const { result } = renderHook(() => useDocuments(props))
+
+    await act(() => result.current.onCreateDocumentGroup({
+      name: "作成のみ",
+      description: "説明",
+      parentGroupId: "parent-1",
+      visibility: "shared",
+      sharedGroups: ["HR"],
+      managerUserIds: ["manager-1"]
+    }))
+
+    expect(createDocumentGroup).toHaveBeenCalledWith({
+      name: "作成のみ",
+      description: "説明",
+      parentGroupId: "parent-1"
+    })
   })
 })

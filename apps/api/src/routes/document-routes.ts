@@ -36,6 +36,7 @@ import {
   authorizeUploadedDocumentIngest,
   isBenchmarkSeedUploadedObjectIngest
 } from "./benchmark-seed.js"
+import { documentGroupHasLegacyExplicitPolicy } from "../folders/document-group-permissions.js"
 
 const uploadObjectKeyPrefix = "uploads"
 
@@ -233,6 +234,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const user = c.get("user")
       requirePermission(user, "rag:group:create")
       const body = validJson<z.infer<typeof CreateDocumentGroupRequestSchema>>(c)
+      if (documentGroupHasLegacyExplicitPolicy(body)) requirePermission(user, "rag:group:assign_manager")
       try {
         return c.json(await service.createDocumentGroup(user, body), 200)
       } catch (err) {
@@ -764,6 +766,9 @@ function isDocumentGroupInputError(err: unknown): boolean {
     "Document group name is required",
     "Document group name contains unsupported characters",
     "adminPrincipalId is required",
+    "Parent document group not found",
+    "Document group cannot be its own parent",
+    "Document group cannot move under its descendant",
     "Document group subtree is too large for synchronous path update"
   ].includes(err.message)
 }

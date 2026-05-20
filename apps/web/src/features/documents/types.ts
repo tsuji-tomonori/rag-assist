@@ -76,6 +76,13 @@ export type DocumentGroup = {
   sharedUserIds: string[]
   sharedGroups: string[]
   managerUserIds: string[]
+  hasExplicitPolicy?: boolean
+  policyId?: string
+  status?: "active" | "archived"
+  createdBy?: string
+  effectivePermission?: "none" | "readOnly" | "full"
+  policySource?: "explicit" | "inherited" | "ownerDefault" | "none"
+  inheritedFromFolderId?: string
   createdAt: string
   updatedAt: string
 }

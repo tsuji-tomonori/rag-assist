@@ -64,7 +64,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 22 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 29 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -94,6 +94,13 @@ Media type: `application/json`
 | `sharedUserIds` | `array<string>` | yes | `response.sharedUserIds` の値。項目名は shared user ids を表します。 | - |
 | `sharedGroups` | `array<string>` | yes | `response.sharedGroups` の値。項目名は shared groups を表します。 | - |
 | `managerUserIds` | `array<string>` | yes | `response.managerUserIds` の値。項目名は manager user ids を表します。 | - |
+| `hasExplicitPolicy` | `boolean` | no | `response.hasExplicitPolicy` の値。項目名は has explicit policy を表します。 | - |
+| `policyId` | `string` | no | `response.policyId` の値。項目名は policy id を表します。 | - |
+| `status` | `enum(active \| archived)` | no | 現在の処理状態または管理状態。 | enum=active, archived |
+| `createdBy` | `string` | no | `response.createdBy` の値。項目名は created by を表します。 | - |
+| `effectivePermission` | `enum(none \| readOnly \| full)` | no | `response.effectivePermission` の値。項目名は effective permission を表します。 | enum=none, readOnly, full |
+| `policySource` | `enum(explicit \| inherited \| ownerDefault \| none)` | no | `response.policySource` の値。項目名は policy source を表します。 | enum=explicit, inherited, ownerDefault, none |
+| `inheritedFromFolderId` | `string` | no | `response.inheritedFromFolderId` の値。項目名は inherited from folder id を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `updatedAt` | `string` | yes | レコードを最後に更新した日時。 | - |
 

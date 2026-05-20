@@ -35,7 +35,7 @@ export type CreateDocumentGroupInput = {
   name: string
   description?: string
   parentGroupId?: string
-  visibility: "private" | "shared" | "org"
+  visibility?: "private" | "shared" | "org"
   sharedGroups?: string[]
   managerUserIds?: string[]
 }
@@ -46,6 +46,7 @@ export function useDocuments({
   canWriteDocuments,
   canCreateDocumentGroups,
   canShareDocumentGroups,
+  canDeleteDocuments,
   canReindexDocuments,
   setError
 }: {
@@ -54,6 +55,7 @@ export function useDocuments({
   canWriteDocuments: boolean
   canCreateDocumentGroups: boolean
   canShareDocumentGroups: boolean
+  canDeleteDocuments: boolean
   canReindexDocuments: boolean
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
@@ -136,6 +138,7 @@ export function useDocuments({
 
   async function onDelete(documentId?: string): Promise<DocumentOperationResult> {
     if (!documentId) return { ok: false, error: "削除対象の documentId が未指定です" }
+    if (!canDeleteDocuments) return { ok: false, error: "文書を削除する権限がありません" }
 
     updateOperationState({ deletingDocumentId: documentId })
     setError(null)
@@ -172,10 +175,17 @@ export function useDocuments({
 
   async function onCreateDocumentGroup(input: CreateDocumentGroupInput): Promise<DocumentGroup | undefined> {
     if (!canCreateDocumentGroups) return undefined
+    const safeInput: CreateDocumentGroupInput = canShareDocumentGroups
+      ? input
+      : {
+          name: input.name,
+          ...(input.description !== undefined ? { description: input.description } : {}),
+          ...(input.parentGroupId !== undefined ? { parentGroupId: input.parentGroupId } : {})
+        }
     updateOperationState({ creatingGroup: true })
     setError(null)
     try {
-      const group = await createDocumentGroup(input)
+      const group = await createDocumentGroup(safeInput)
       await refreshDocumentGroups()
       return group
     } catch (err) {

@@ -226,6 +226,57 @@ export const DocumentGroupSchema = z.object({
   sharedUserIds: z.array(z.string()),
   sharedGroups: z.array(z.string()),
   managerUserIds: z.array(z.string()),
+  hasExplicitPolicy: z.boolean().optional(),
+  policyId: z.string().optional(),
+  status: z.enum(["active", "archived"]).optional(),
+  createdBy: z.string().optional(),
+  effectivePermission: z.enum(["none", "readOnly", "full"]).optional(),
+  policySource: z.enum(["explicit", "inherited", "ownerDefault", "none"]).optional(),
+  inheritedFromFolderId: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const FolderPolicyEntrySchema = z.object({
+  principalType: z.enum(["user", "group"]),
+  principalId: z.string(),
+  permissionLevel: z.enum(["readOnly", "full"])
+})
+
+export const FolderPolicySchema = z.object({
+  policyId: z.string(),
+  itemType: z.literal("folderPolicy").optional(),
+  tenantId: z.string(),
+  folderId: z.string(),
+  entries: z.array(FolderPolicyEntrySchema),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const UserGroupSchema = z.object({
+  groupId: z.string(),
+  itemType: z.literal("userGroup").optional(),
+  tenantId: z.string().optional(),
+  name: z.string(),
+  type: z.enum(["department", "project", "team", "admin", "folderPolicy", "system", "custom"]),
+  parentGroupId: z.string().optional(),
+  ancestorGroupIds: z.array(z.string()),
+  status: z.enum(["active", "archived"]),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const GroupMembershipSchema = z.object({
+  membershipId: z.string().optional(),
+  itemType: z.literal("groupMembership").optional(),
+  tenantId: z.string().optional(),
+  groupId: z.string(),
+  memberType: z.enum(["user", "group"]),
+  memberId: z.string(),
+  permissionLevel: z.enum(["readOnly", "full"]),
+  source: z.enum(["manual", "external", "system"]),
   createdAt: z.string(),
   updatedAt: z.string()
 })
@@ -240,7 +291,7 @@ export const CreateDocumentGroupRequestSchema = z.object({
   adminPrincipalType: z.enum(["user", "group"]).optional(),
   adminPrincipalId: z.string().min(1).max(200).optional(),
   parentGroupId: z.string().min(1).optional(),
-  visibility: z.enum(["private", "shared", "org"]).optional().default("private"),
+  visibility: z.enum(["private", "shared", "org"]).optional(),
   sharedUserIds: z.array(z.string().min(1)).max(50).optional(),
   sharedGroups: z.array(z.string().min(1)).max(50).optional(),
   managerUserIds: z.array(z.string().min(1)).max(50).optional()

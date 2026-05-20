@@ -203,6 +203,22 @@ test("protected API routes keep route-level permission checks", async () => {
   }
 })
 
+test("document group create requires assign_manager for initial sharing payloads", async () => {
+  const source = await readRouteSources()
+  const block = findRouteBlock(source, {
+    method: "post",
+    path: "/document-groups",
+    mode: "required",
+    permission: "rag:group:create"
+  })
+
+  assert.match(
+    block,
+    /documentGroupHasLegacyExplicitPolicy\(body\)[\s\S]*?requirePermission\([^\)]*["']rag:group:assign_manager["']\)/,
+    "POST /document-groups must require rag:group:assign_manager when the create body includes visibility/shared/manager fields"
+  )
+})
+
 test("protected API routes must be explicitly reviewed before they change", async () => {
   const source = await readRouteSources()
   const documentedProtectedRoutes = (await openApiRoutePolicies())
