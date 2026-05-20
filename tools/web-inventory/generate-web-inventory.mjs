@@ -985,13 +985,30 @@ function renderOutputs(inventory) {
   ]))
 }
 
+function findOrphanFeatureDetailFiles(outputs) {
+  if (!fs.existsSync(featureOutputDir)) return []
+
+  const expectedFeatureFiles = new Set(
+    Object.keys(outputs)
+      .filter((filePath) => path.dirname(filePath) === featureOutputDir)
+      .map((filePath) => path.basename(filePath))
+  )
+
+  return fs.readdirSync(featureOutputDir)
+    .filter((fileName) => fileName.endsWith(".md"))
+    .filter((fileName) => !expectedFeatureFiles.has(fileName))
+    .map((fileName) => path.join(featureOutputDir, fileName))
+}
+
 function main() {
   const outputs = renderOutputs(buildInventory())
+  const orphanFeatureDetailFiles = findOrphanFeatureDetailFiles(outputs)
   if (checkOnly) {
     const staleFiles = []
     for (const [filePath, content] of Object.entries(outputs)) {
       if (!fs.existsSync(filePath) || fs.readFileSync(filePath, "utf8") !== content) staleFiles.push(path.relative(repoRoot, filePath))
     }
+    staleFiles.push(...orphanFeatureDetailFiles.map((filePath) => path.relative(repoRoot, filePath)))
     if (staleFiles.length > 0) {
       console.error(`Web UI インベントリが最新ではありません: ${staleFiles.join(", ")}`)
       console.error("更新するには `npm run docs:web-inventory` を実行してください。")
@@ -1004,6 +1021,10 @@ function main() {
 
   fs.mkdirSync(outputDir, { recursive: true })
   fs.mkdirSync(featureOutputDir, { recursive: true })
+  for (const filePath of orphanFeatureDetailFiles) {
+    fs.unlinkSync(filePath)
+    console.log(`removed ${path.relative(repoRoot, filePath)}`)
+  }
   for (const [filePath, content] of Object.entries(outputs)) {
     fs.writeFileSync(filePath, content)
     console.log(`generated ${path.relative(repoRoot, filePath)}`)
