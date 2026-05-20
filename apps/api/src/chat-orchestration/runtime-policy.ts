@@ -1,6 +1,6 @@
 import { config } from "../config.js"
 import type { GenerateOptions } from "../adapters/text-model.js"
-import { answerPolicyById, resolveRetrievalProfileId, type RAGProfile, type RetrievalProfile } from "../rag/profiles.js"
+import { answerPolicyById, resolveRetrievalProfileId, type RAGProfile, type RetrievalProfile } from "../rag/_shared/policies/answer-policy.js"
 
 type LlmTask =
   | "clue"

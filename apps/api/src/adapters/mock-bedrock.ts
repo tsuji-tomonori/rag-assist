@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto"
 import { config } from "../config.js"
-import { neutralAnswerPolicy } from "../rag/profiles.js"
-import { textAnswerRelevanceScore } from "../rag/context-assembler.js"
+import { neutralAnswerPolicy } from "../rag/_shared/policies/answer-policy.js"
+import { textAnswerRelevanceScore } from "../rag/online/post-retrieval/context-packing/context-packer.js"
 import type { EmbedOptions, GenerateOptions, TextModel } from "./text-model.js"
 
 function normalize(vector: number[]): number[] {
