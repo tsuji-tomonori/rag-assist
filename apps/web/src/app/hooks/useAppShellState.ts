@@ -125,6 +125,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     modelId,
     embeddingModelId,
     canWriteDocuments,
+    canDeleteDocuments,
     canReindexDocuments,
     setLoading,
     setError

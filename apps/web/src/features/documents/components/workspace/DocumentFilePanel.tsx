@@ -43,6 +43,8 @@ export function DocumentFilePanel({
   canWrite,
   canDelete,
   canReindex,
+  canDeleteDocument,
+  canReindexDocument,
   canUploadToDestination,
   migrations,
   selectedMigrationId,
@@ -84,6 +86,8 @@ export function DocumentFilePanel({
   canWrite: boolean
   canDelete: boolean
   canReindex: boolean
+  canDeleteDocument: (document: DocumentManifest) => boolean
+  canReindexDocument: (document: DocumentManifest) => boolean
   canUploadToDestination: boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
@@ -198,6 +202,8 @@ export function DocumentFilePanel({
         ) : (
           pagedDocuments.map((document) => {
             const groupLabel = documentGroupNames(document, documentGroups).join(", ") || "未設定"
+            const canDeleteRow = canDelete && canDeleteDocument(document)
+            const canReindexRow = canReindex && canReindexDocument(document)
             return (
               <div
                 className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
@@ -228,9 +234,10 @@ export function DocumentFilePanel({
                       type="button"
                       title={`${document.fileName}の再インデックスをステージング`}
                       aria-label={`${document.fileName}の再インデックスをステージング`}
-                      disabled={!canReindex || operationState.stagingReindexDocumentId === document.documentId}
+                      disabled={!canReindexRow || operationState.stagingReindexDocumentId === document.documentId}
                       onClick={(event) => {
                         event.stopPropagation()
+                        if (!canReindexRow) return
                         onConfirmAction({ kind: "stage", document })
                       }}
                     >
@@ -241,9 +248,10 @@ export function DocumentFilePanel({
                       className="delete-document-button"
                       title={`${document.fileName}を削除`}
                       aria-label={`${document.fileName}を削除`}
-                      disabled={!canDelete || operationState.deletingDocumentId === document.documentId}
+                      disabled={!canDeleteRow || operationState.deletingDocumentId === document.documentId}
                       onClick={(event) => {
                         event.stopPropagation()
+                        if (!canDeleteRow) return
                         onConfirmAction({ kind: "delete", document })
                       }}
                     >

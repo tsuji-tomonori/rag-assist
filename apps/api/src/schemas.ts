@@ -291,7 +291,7 @@ export const CreateDocumentGroupRequestSchema = z.object({
   adminPrincipalType: z.enum(["user", "group"]).optional(),
   adminPrincipalId: z.string().min(1).max(200).optional(),
   parentGroupId: z.string().min(1).optional(),
-  visibility: z.enum(["private", "shared", "org"]).optional().default("private"),
+  visibility: z.enum(["private", "shared", "org"]).optional(),
   sharedUserIds: z.array(z.string().min(1)).max(50).optional(),
   sharedGroups: z.array(z.string().min(1)).max(50).optional(),
   managerUserIds: z.array(z.string().min(1)).max(50).optional()

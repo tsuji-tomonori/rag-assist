@@ -22,6 +22,7 @@ function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}
     modelId: "model",
     embeddingModelId: "embedding",
     canWriteDocuments: true,
+    canDeleteDocuments: true,
     canReindexDocuments: true,
     setLoading: vi.fn(),
     setError: vi.fn(),
@@ -146,6 +147,15 @@ describe("useDocuments", () => {
     expect(stageResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
     expect(cutoverResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
     expect(rollbackResult).toEqual({ ok: false, error: "再インデックスを実行する権限がありません" })
+  })
+
+  it("削除権限がない場合は削除 API を呼ばない", async () => {
+    const { result } = renderHook(() => useDocuments(createProps({ canDeleteDocuments: false })))
+
+    const deleteResult = await act(() => result.current.onDelete("doc-1"))
+
+    expect(deleteDocument).not.toHaveBeenCalled()
+    expect(deleteResult).toEqual({ ok: false, error: "文書を削除する権限がありません" })
   })
 
   it("再インデックス失敗時はエラーを設定する", async () => {

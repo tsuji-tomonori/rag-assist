@@ -644,6 +644,285 @@ test("service enforces document group management and search scope boundaries", a
   await service.assertSearchScopeReadable(manager, { groupIds: [parent.groupId] })
 })
 
+test("service inherits parent document group sharing unless child has explicit policy", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
+  const outsider: AppUser = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
+  const suspendedReader: AppUser = { ...reader, accountStatus: "suspended" }
+
+  const parent = await service.createDocumentGroup(owner, {
+    name: "Parent policy",
+    sharedUserIds: [reader.userId]
+  })
+  const inheritedChild = await service.createDocumentGroup(owner, {
+    name: "Inherited child",
+    parentGroupId: parent.groupId
+  })
+  const restrictedChild = await service.createDocumentGroup(owner, {
+    name: "Restricted child",
+    parentGroupId: parent.groupId,
+    visibility: "private"
+  })
+  await service.ingest({
+    fileName: "inherited-child.md",
+    text: "inherited pear policy is readable through the parent folder sharing.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [inheritedChild.groupId]
+    }
+  })
+  await service.ingest({
+    fileName: "restricted-child.md",
+    text: "restricted mango policy must not leak to the parent shared reader.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [restrictedChild.groupId]
+    }
+  })
+
+  assert.equal(inheritedChild.hasExplicitPolicy, undefined)
+  assert.equal(restrictedChild.hasExplicitPolicy, true)
+  assert.deepEqual((await service.listDocumentGroups(reader)).map((group) => group.groupId).sort(), [inheritedChild.groupId, parent.groupId].sort())
+  assert.equal((await service.listDocumentGroups(reader)).some((group) => group.groupId === restrictedChild.groupId), false)
+  assert.deepEqual(await service.listDocumentGroups(suspendedReader), [])
+  assert.deepEqual((await service.listDocuments(reader)).map((document) => document.fileName), ["inherited-child.md"])
+  await service.assertSearchScopeReadable(reader, { groupIds: [inheritedChild.groupId] })
+  await assert.rejects(() => service.assertDocumentGroupsWritable(reader, [inheritedChild.groupId]), /cannot write document group/)
+  await assert.rejects(() => service.assertSearchScopeReadable(reader, { groupIds: [restrictedChild.groupId] }), /cannot read document group/)
+  await assert.rejects(() => service.assertSearchScopeReadable(outsider, { groupIds: [inheritedChild.groupId] }), /cannot read document group/)
+
+  const inheritedSearch = await service.search({
+    query: "inherited pear",
+    topK: 10,
+    lexicalTopK: 20,
+    semanticTopK: 0,
+    scope: { mode: "groups", groupIds: [inheritedChild.groupId] }
+  }, reader)
+  assert.deepEqual(inheritedSearch.results.map((result) => result.fileName), ["inherited-child.md"])
+  assert.equal(JSON.stringify(inheritedSearch).includes("restricted-child"), false)
+
+  await assert.rejects(
+    () => service.search({ query: "restricted mango", topK: 10, scope: { mode: "groups", groupIds: [restrictedChild.groupId] } }, reader),
+    /cannot read document group/
+  )
+  await assert.rejects(
+    () => service.chat({ question: "restricted mango", searchScope: { mode: "groups", groupIds: [restrictedChild.groupId] } }, reader),
+    /cannot read document group/
+  )
+})
+
+test("service preserves legacy explicit shared child policy when hasExplicitPolicy is false", async () => {
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create({
+    groupId: "legacy-private-parent",
+    name: "Legacy private parent",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await deps.documentGroupStore.create({
+    groupId: "legacy-shared-child",
+    name: "Legacy shared child",
+    parentGroupId: "legacy-private-parent",
+    ownerUserId: owner.userId,
+    visibility: "shared",
+    sharedUserIds: [reader.userId],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await service.ingest({
+    fileName: "legacy-shared-child.md",
+    text: "legacy child policy should remain visible to the explicitly shared reader.",
+    skipMemory: true,
+    metadata: { scopeType: "group", ownerUserId: owner.userId, groupIds: ["legacy-shared-child"] }
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-private-parent"), false)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-shared-child"), true)
+  await service.assertSearchScopeReadable(reader, { groupIds: ["legacy-shared-child"] })
+  assert.deepEqual((await service.listDocuments(reader)).map((document) => document.fileName), ["legacy-shared-child.md"])
+})
+
+test("service preserves legacy explicit private child policy and does not leak parent sharing", async () => {
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create({
+    groupId: "legacy-shared-parent",
+    name: "Legacy shared parent",
+    ownerUserId: owner.userId,
+    visibility: "shared",
+    sharedUserIds: [reader.userId],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await deps.documentGroupStore.create({
+    groupId: "legacy-private-child",
+    name: "Legacy private child",
+    parentGroupId: "legacy-shared-parent",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await service.ingest({
+    fileName: "legacy-private-child.md",
+    text: "legacy private child must not become visible through parent sharing.",
+    skipMemory: true,
+    metadata: { scopeType: "group", ownerUserId: owner.userId, groupIds: ["legacy-private-child"] }
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-shared-parent"), true)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-private-child"), false)
+  await assert.rejects(
+    () => service.assertSearchScopeReadable(reader, { groupIds: ["legacy-private-child"] }),
+    /cannot read document group/
+  )
+  assert.deepEqual(await service.listDocuments(reader), [])
+})
+
+test("service annotates visible document groups with effective permission and inheritance source", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  const parent = await service.createDocumentGroup(owner, {
+    name: "Shared parent for annotation",
+    sharedUserIds: [reader.userId]
+  })
+  const inheritedChild = await service.createDocumentGroup(owner, {
+    name: "Inherited child for annotation",
+    parentGroupId: parent.groupId
+  })
+  const explicitPrivateChild = await service.createDocumentGroup(owner, {
+    name: "Explicit private child for annotation",
+    parentGroupId: parent.groupId,
+    visibility: "private"
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  const visibleParent = visibleGroups.find((group) => group.groupId === parent.groupId)
+  const visibleInheritedChild = visibleGroups.find((group) => group.groupId === inheritedChild.groupId)
+
+  assert.equal(visibleParent?.effectivePermission, "readOnly")
+  assert.equal(visibleParent?.policySource, "explicit")
+  assert.equal(visibleInheritedChild?.effectivePermission, "readOnly")
+  assert.equal(visibleInheritedChild?.policySource, "inherited")
+  assert.equal(visibleInheritedChild?.inheritedFromFolderId, parent.groupId)
+  assert.equal(visibleGroups.some((group) => group.groupId === explicitPrivateChild.groupId), false)
+})
+
+test("service does not expose group scoped documents to ownerUserId without folder read permission", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass read group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-read.md",
+    text: "owner bypass read content must stay hidden without folder read permission.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  assert.equal((await service.listDocumentGroups(uploader)).some((candidate) => candidate.groupId === group.groupId), false)
+  assert.deepEqual((await service.listDocuments(uploader)).map((document) => document.documentId), [])
+  await assert.rejects(() => service.getParsedDocumentPreview(uploader, manifest.documentId), /Forbidden/)
+})
+
+test("service does not allow group scoped document owner to delete or reindex without folder full permission", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass manage group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-manage.md",
+    text: "owner bypass manage content must not be deleted or reindexed without folder full permission.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  await assert.rejects(
+    () => authorizeDocumentDelete(service, uploader, manifest.documentId),
+    /Forbidden|cannot manage document/
+  )
+  await assert.rejects(
+    () => service.stageReindexMigration(uploader, manifest.documentId),
+    /Forbidden|cannot manage document/
+  )
+  assert.deepEqual(await service.listReindexMigrations(), [])
+})
+
+test("search excludes owner-owned group scoped documents when folder permission is none", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass search group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-search.md",
+    text: "revoked owner secret pear must not appear in all mode search.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  const result = await service.search({
+    query: "owner secret pear",
+    topK: 10,
+    lexicalTopK: 20,
+    semanticTopK: 0
+  }, uploader)
+
+  assert.deepEqual(result.results, [])
+  assert.equal(JSON.stringify(result).includes("revoked owner secret pear"), false)
+  assert.equal(JSON.stringify(result).includes(manifest.documentId), false)
+})
+
 test("service enforces full document group permission for delete and reindex operations", async () => {
   const { service } = await createService()
   const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }

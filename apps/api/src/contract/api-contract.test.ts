@@ -75,6 +75,31 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     })
     assert.equal(createGroup.status, 200)
     const group = (await createGroup.json()) as { groupId: string }
+    const createMissingParentGroup = await fetch(`http://127.0.0.1:${port}/document-groups`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "存在しない親配下", parentGroupId: "missing-parent" })
+    })
+    assert.equal(createMissingParentGroup.status, 400)
+    const createChildGroup = await fetch(`http://127.0.0.1:${port}/document-groups`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "子フォルダ", parentGroupId: group.groupId })
+    })
+    assert.equal(createChildGroup.status, 200)
+    const childGroup = (await createChildGroup.json()) as { groupId: string }
+    const moveGroupUnderItself = await fetch(`http://127.0.0.1:${port}/document-groups/${encodeURIComponent(group.groupId)}/share`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ parentGroupId: group.groupId })
+    })
+    assert.equal(moveGroupUnderItself.status, 400)
+    const moveGroupUnderDescendant = await fetch(`http://127.0.0.1:${port}/document-groups/${encodeURIComponent(group.groupId)}/share`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ parentGroupId: childGroup.groupId })
+    })
+    assert.equal(moveGroupUnderDescendant.status, 400)
     const shareMissingGroup = await fetch(`http://127.0.0.1:${port}/document-groups/missing/share`, {
       method: "POST",
       headers: { "content-type": "application/json" },
