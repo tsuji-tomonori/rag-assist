@@ -1,8 +1,8 @@
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../../../../chat-orchestration/state.js"
 import { NO_ANSWER } from "../../../../chat-orchestration/state.js"
 import { hasUnavailableComputedFact, hasUsableComputedFact } from "../../../../chat-orchestration/computation.js"
-import { hasUsableRequirementsClassificationEvidence, isRequirementsClassificationQuestion } from "../../../prompts.js"
-import { selectAnswerPolicyForMetadata } from "../../../profiles.js"
+import { selectAnswerPolicyForMetadata } from "../../../_shared/policies/answer-policy.js"
+import { hasUsableRequirementsClassificationEvidence, isRequirementsClassificationQuestion } from "../../generation/prompt/grounded-prompt-builder.js"
 import { ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
 import { asksForMoney } from "../../../../chat-orchestration/question-requirements.js"
 

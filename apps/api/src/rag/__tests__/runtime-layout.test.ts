@@ -91,6 +91,10 @@ test("old RAG flat paths are compatibility re-export shims", () => {
     "rag/quality.ts",
     "rag/manifest-chunks.ts",
     "rag/pipeline-versions.ts",
+    "rag/prompts.ts",
+    "rag/context-assembler.ts",
+    "rag/profiles.ts",
+    "rag/json.ts",
     "search/hybrid-search.ts",
     "chat-orchestration/graph.ts"
   ]
@@ -98,6 +102,75 @@ test("old RAG flat paths are compatibility re-export shims", () => {
   for (const file of oldFiles) {
     const source = readFileSync(path.join(apiSrcDir, file), "utf8")
     assert.match(source, /^export \* from ["'][.][/\w.-]+["']\s*$/u, `${file} should re-export from the new layout`)
+  }
+})
+
+test("production code does not import old RAG compatibility shims", () => {
+  const forbiddenSpecifiers = [
+    "../search/hybrid-search.js",
+    "../chat-orchestration/graph.js",
+    "./chunk.js",
+    "./text-extract.js",
+    "./embedding-cache.js",
+    "./manifest-chunks.js",
+    "./pipeline-versions.js",
+    "./quality.js",
+    "./prompts.js",
+    "./context-assembler.js",
+    "./profiles.js",
+    "./json.js"
+  ]
+
+  const files = walkTsFiles(apiSrcDir)
+    .filter((file) => !file.includes("/__tests__/"))
+    .filter((file) => !file.endsWith(".test.ts"))
+    .filter((file) => !file.endsWith("/search/hybrid-search.ts"))
+    .filter((file) => !file.endsWith("/chat-orchestration/graph.ts"))
+    .filter((file) => !file.match(/\/rag\/(chunk|text-extract|embedding-cache|manifest-chunks|pipeline-versions|quality|prompts|context-assembler|profiles|json)\.ts$/))
+
+  for (const file of files) {
+    const source = readFileSync(file, "utf8")
+    for (const specifier of forbiddenSpecifiers) {
+      assert.doesNotMatch(source, new RegExp(`from ["']${escapeRegExp(specifier)}["']`), file)
+    }
+  }
+})
+
+test("old flat RAG root files are shims or removed", () => {
+  const files = readdirSync(path.join(apiSrcDir, "rag"))
+    .filter((name) => name.endsWith(".ts"))
+    .filter((name) => !name.endsWith(".test.ts"))
+
+  for (const file of files) {
+    if (file === "memorag-service.ts") continue
+
+    const source = readFileSync(path.join(apiSrcDir, "rag", file), "utf8")
+    assert.match(
+      source,
+      /^export \* from ["'][^"']+["']\s*$/u,
+      `${file} must be a compatibility shim or moved into the runtime layout`
+    )
+  }
+})
+
+test("MemoRagService delegates ingest pipeline to offline ingest service", () => {
+  const source = readFileSync(path.join(apiSrcDir, "rag/memorag-service.ts"), "utf8")
+
+  assert.doesNotMatch(source, /evidenceVectorStore\.put/)
+  assert.doesNotMatch(source, /memoryVectorStore\.put/)
+  assert.doesNotMatch(source, /chunkStructuredBlocks|chunkText/)
+  assert.match(source, /offline\/pre-retrieval\/ingestion/)
+})
+
+test("RAG production modules are not empty placeholders", () => {
+  const files = walkTsFiles(path.join(apiSrcDir, "rag"))
+    .filter((file) => !file.endsWith(".test.ts"))
+
+  for (const file of files) {
+    const source = readFileSync(file, "utf8").trim()
+
+    assert.notEqual(source, "export {}", `${file} is an empty placeholder module`)
+    assert.notEqual(source, "export {};", `${file} is an empty placeholder module`)
   }
 })
 
@@ -110,4 +183,8 @@ function walkTsFiles(root: string): string[] {
     if (stat.isFile() && fullPath.endsWith(".ts") && !fullPath.endsWith(".test.ts")) files.push(fullPath)
   }
   return files
+}
+
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }

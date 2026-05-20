@@ -1,5 +1,5 @@
 import type { Dependencies } from "../../../../dependencies.js"
-import { buildFinalAnswerPrompt, formatConversationHistory } from "../../../prompts.js"
+import { buildFinalAnswerPrompt, formatConversationHistory } from "../prompt/grounded-prompt-builder.js"
 import type { VectorMetadata } from "../../../../types.js"
 import { llmOptions } from "../../../../chat-orchestration/runtime-policy.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../../../../chat-orchestration/state.js"

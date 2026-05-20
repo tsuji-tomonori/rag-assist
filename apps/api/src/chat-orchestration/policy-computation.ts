@@ -1,7 +1,7 @@
 import { z } from "zod"
 import type { RetrievedVector } from "../types.js"
 import type { ComputedFact } from "./state.js"
-import { policyComparatorOperators, policyEffectValues, type PolicyComputationPolicy, type PolicyTextMapping } from "../rag/profiles.js"
+import { policyComparatorOperators, policyEffectValues, type PolicyComputationPolicy, type PolicyTextMapping } from "../rag/_shared/policies/answer-policy.js"
 import { ragRuntimePolicy } from "./runtime-policy.js"
 
 const ComparatorSchema = z.enum(policyComparatorOperators)

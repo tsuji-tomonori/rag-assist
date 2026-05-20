@@ -1,6 +1,6 @@
 import type { Dependencies } from "../../../../dependencies.js"
-import { parseJsonObject } from "../../../json.js"
-import { buildAnswerSupportPrompt, buildSupportedAnswerRepairPrompt } from "../../../prompts.js"
+import { parseJsonObject } from "../../../_shared/json.js"
+import { buildAnswerSupportPrompt, buildSupportedAnswerRepairPrompt } from "../prompt/grounded-prompt-builder.js"
 import { llmOptions, ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
 import { NO_ANSWER, type AnswerSupportJudgement, type ChatOrchestrationState, type ChatOrchestrationUpdate } from "../../../../chat-orchestration/state.js"
 import { toCitation } from "../../../../chat-orchestration/utils.js"

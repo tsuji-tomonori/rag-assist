@@ -1,6 +1,6 @@
 import type { Dependencies } from "../../../../dependencies.js"
-import { parseJsonObject } from "../../../json.js"
-import { buildSufficientContextPrompt } from "../../../prompts.js"
+import { parseJsonObject } from "../../../_shared/json.js"
+import { buildSufficientContextPrompt } from "../../generation/prompt/grounded-prompt-builder.js"
 import { llmOptions, ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
 import { NO_ANSWER, isPrimaryRequiredFact, requiredFactNecessity, type ChatOrchestrationState, type ChatOrchestrationUpdate, type RequiredFact, type SufficientContextJudgement } from "../../../../chat-orchestration/state.js"
 

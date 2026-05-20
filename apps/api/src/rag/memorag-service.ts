@@ -6,7 +6,7 @@ import { config } from "../config.js"
 import { hasPermission, rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
-import { runChatOrchestration } from "../chat-orchestration/graph.js"
+import { runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
 import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
@@ -14,36 +14,16 @@ import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
 import type { DocumentGroupPathUpdate } from "../adapters/document-group-store.js"
-import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
-import { chunkStructuredBlocks, chunkText, summarizeDocumentStatistics } from "./chunk.js"
-import { embedWithCache, mapWithConcurrency } from "./embedding-cache.js"
-import { parseJsonObject } from "./json.js"
-import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./manifest-chunks.js"
-import { buildPipelineVersions } from "./pipeline-versions.js"
-import { buildMemoryCardPrompt } from "./prompts.js"
-import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./quality.js"
-import { extractDocumentFromUpload } from "./text-extract.js"
+import { searchRag, type SearchInput, type SearchResponse } from "./online/retrieval/hybrid/hybrid-retriever.js"
+import { parseJsonObject } from "./_shared/json.js"
+import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./_shared/storage/manifest-chunks.js"
+import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./_shared/policies/quality-policy.js"
+import { buildMemoryCardPrompt } from "./offline/generation/prompt-assets/memory-card-prompt.js"
+import { putDocumentVectorRecords, runIngestPipeline, type IngestInput } from "./offline/pre-retrieval/ingestion/ingest-run.service.js"
+import { embedWithCache, mapWithConcurrency } from "./offline/pre-retrieval/embedding/embedding-cache.js"
+import { buildPipelineVersions } from "./offline/pre-retrieval/indexing/index-version-store.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
 import { canAccessDocumentGroup, canManageDocumentGroup, documentGroupHasLegacyExplicitPolicy, resolveDocumentGroupPermissionDetail } from "../folders/document-group-permissions.js"
-
-type IngestInput = {
-  fileName: string
-  text?: string
-  contentBase64?: string
-  contentBytes?: Buffer
-  textractJson?: string
-  mimeType?: string
-  sourceS3Object?: {
-    bucketName: string
-    key: string
-  }
-  metadata?: Record<string, JsonValue>
-  embeddingModelId?: string
-  memoryModelId?: string
-  skipMemory?: boolean
-  structuredBlocks?: StructuredBlock[]
-  sourceExtractorVersion?: string
-}
 
 type StartDocumentIngestRunInput = {
   uploadId: string
@@ -249,201 +229,7 @@ export class MemoRagService {
   constructor(private readonly deps: Dependencies) {}
 
   async ingest(input: IngestInput): Promise<DocumentManifest> {
-    const documentId = randomUUID()
-    const createdAt = new Date().toISOString()
-    const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
-    logIngestStage({ stage: "extract", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length })
-    const extracted = input.structuredBlocks?.length
-      ? {
-          text: input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n"),
-          blocks: input.structuredBlocks,
-          sourceExtractorVersion: input.sourceExtractorVersion ?? "structured-blocks-ledger-v1"
-        }
-      : await extractDocumentFromUpload(input)
-    logIngestStage({
-      stage: "extract",
-      phase: "end",
-      documentId,
-      fileName: input.fileName,
-      mimeType: input.mimeType,
-      fileSizeBytes: input.contentBytes?.length,
-      textLength: extracted.text.length,
-      blockCount: extracted.blocks?.length,
-      sourceExtractorVersion: extracted.sourceExtractorVersion
-    })
-    const pipelineVersions = buildPipelineVersions({
-      embeddingModelId,
-      embeddingDimensions: config.embeddingDimensions,
-      sourceExtractorVersion: extracted.sourceExtractorVersion
-    })
-    const text = extracted.text
-    if (!text) throw new Error("Uploaded document did not contain extractable text")
-
-    logIngestStage({ stage: "chunk", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, textLength: text.length })
-    const chunks = extracted.blocks?.length
-      ? chunkStructuredBlocks(extracted.blocks, config.chunkSizeChars, config.chunkOverlapChars)
-      : chunkText(text, config.chunkSizeChars, config.chunkOverlapChars)
-    if (chunks.length === 0) throw new Error("No chunks were produced from the uploaded document")
-    logIngestStage({ stage: "chunk", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, textLength: text.length, chunkCount: chunks.length })
-
-    const sourceObjectKey = `documents/${documentId}/source.txt`
-    const structuredBlocksObjectKey = extracted.blocks?.length ? `documents/${documentId}/structured-blocks.json` : undefined
-    const memoryCardsObjectKey = input.skipMemory ? undefined : `documents/${documentId}/memory-cards.json`
-    const manifestObjectKey = `manifests/${documentId}.json`
-    await this.deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")
-    if (structuredBlocksObjectKey && extracted.blocks) {
-      await this.deps.objectStore.putText(
-        structuredBlocksObjectKey,
-        JSON.stringify({ schemaVersion: 2, blocks: extracted.blocks, parsedDocument: extracted.parsedDocument }, null, 2),
-        "application/json"
-      )
-    }
-
-    const documentStatistics = summarizeDocumentStatistics(chunks)
-    const memoryCards = input.skipMemory
-      ? []
-      : await this.createMemoryCards({
-          fileName: input.fileName,
-          text,
-          chunks,
-          documentStatistics,
-          modelId: input.memoryModelId
-        })
-    if (memoryCardsObjectKey) {
-      await this.deps.objectStore.putText(memoryCardsObjectKey, JSON.stringify({ schemaVersion: 1, memoryCards }, null, 2), "application/json")
-    }
-
-    const evidenceVectorKeys: string[] = []
-    const memoryVectorKeys: string[] = []
-    const evidenceRecords: VectorRecord[] = []
-    const memoryRecords: VectorRecord[] = []
-    const filterableMetadata = toFilterableVectorMetadata(input.metadata)
-    const qualityProfile = documentQualityProfileFromMetadata(input.metadata)
-
-    logIngestStage({ stage: "embedding", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length })
-    const evidenceRows = await mapWithConcurrency(chunks, config.embeddingConcurrency, async (chunk) => {
-      const vector = await embedWithCache(this.deps, {
-        text: chunk.text,
-        modelId: embeddingModelId,
-        dimensions: config.embeddingDimensions
-      })
-      const key = `${documentId}-${chunk.id}`
-      evidenceVectorKeys.push(key)
-      return {
-        key,
-        vector,
-        metadata: {
-          kind: "chunk",
-          documentId,
-          fileName: input.fileName,
-          chunkId: chunk.id,
-          objectKey: sourceObjectKey,
-          text: chunk.text,
-          sectionPath: chunk.sectionPath,
-          heading: chunk.heading,
-          parentSectionId: chunk.parentSectionId,
-          previousChunkId: chunk.previousChunkId,
-          nextChunkId: chunk.nextChunkId,
-          chunkHash: chunk.chunkHash,
-          pageStart: chunk.pageStart,
-          pageEnd: chunk.pageEnd,
-          chunkKind: chunk.chunkKind,
-          sourceBlockId: chunk.sourceBlockId,
-          normalizedFrom: chunk.normalizedFrom,
-          tableColumnCount: chunk.tableColumnCount,
-          tableId: chunk.tableId,
-          tableRowCount: chunk.tableRowCount,
-          tableConfidence: chunk.tableConfidence,
-          listDepth: chunk.listDepth,
-          codeLanguage: chunk.codeLanguage,
-          figureCaption: chunk.figureCaption,
-          figureId: chunk.figureId,
-          confidence: chunk.confidence,
-          readingOrder: chunk.readingOrder,
-          bbox: chunk.bbox,
-          sourceLocation: chunk.sourceLocation,
-          extractionMethod: chunk.extractionMethod,
-          lifecycleStatus: lifecycleStatus(input.metadata),
-          ...filterableMetadata,
-          createdAt
-        }
-      } satisfies VectorRecord
-    })
-    evidenceRecords.push(...evidenceRows)
-
-    const memoryRows = await mapWithConcurrency(memoryCards, config.embeddingConcurrency, async (card) => {
-      const vector = await embedWithCache(this.deps, {
-        text: card.text,
-        modelId: embeddingModelId,
-        dimensions: config.embeddingDimensions
-      })
-      const key = `${documentId}-${card.id}`
-      memoryVectorKeys.push(key)
-      return {
-        key,
-        vector,
-        metadata: {
-          kind: "memory",
-          documentId,
-          fileName: input.fileName,
-          memoryId: card.id,
-          objectKey: sourceObjectKey,
-          text: card.text,
-          sectionPath: card.sectionPath,
-          pageStart: card.pageStart,
-          pageEnd: card.pageEnd,
-          sourceChunkIds: card.sourceChunkIds,
-          lifecycleStatus: lifecycleStatus(input.metadata),
-          ...filterableMetadata,
-          createdAt
-        }
-      } satisfies VectorRecord
-    })
-    memoryRecords.push(...memoryRows)
-    logIngestStage({ stage: "embedding", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length, memoryCardCount: memoryCards.length })
-
-    logIngestStage({ stage: "vector_put", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: evidenceRecords.length, memoryCardCount: memoryRecords.length })
-    await this.deps.evidenceVectorStore.put(evidenceRecords)
-    await this.deps.memoryVectorStore.put(memoryRecords)
-    logIngestStage({ stage: "vector_put", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: evidenceRecords.length, memoryCardCount: memoryRecords.length })
-
-    const manifest: DocumentManifest = {
-      documentId,
-      fileName: input.fileName,
-      mimeType: input.mimeType,
-      metadata: input.metadata,
-      qualityProfile,
-      sourceObjectKey,
-      structuredBlocksObjectKey,
-      memoryCardsObjectKey,
-      manifestObjectKey,
-      vectorKeys: [...evidenceVectorKeys, ...memoryVectorKeys],
-      memoryVectorKeys,
-      evidenceVectorKeys,
-      embeddingModelId,
-      embeddingDimensions: config.embeddingDimensions,
-      chunkerVersion: pipelineVersions.chunkerVersion,
-      sourceExtractorVersion: pipelineVersions.sourceExtractorVersion,
-      memoryPromptVersion: pipelineVersions.memoryPromptVersion,
-      indexVersion: pipelineVersions.indexVersion,
-      pipelineVersions,
-      documentStatistics,
-      chunks: chunks.map(toChunkMetadata),
-      lifecycleStatus: lifecycleStatus(input.metadata),
-      activeDocumentId: stringValue(input.metadata?.activeDocumentId),
-      stagedFromDocumentId: stringValue(input.metadata?.stagedFromDocumentId),
-      reindexMigrationId: stringValue(input.metadata?.reindexMigrationId),
-      chunkCount: chunks.length,
-      memoryCardCount: memoryCards.length,
-      parsedDocument: extracted.parsedDocument,
-      extractionWarnings: extracted.warnings,
-      extractionCounters: extracted.counters,
-      fileProfile: extracted.fileProfile,
-      createdAt
-    }
-
-    await this.deps.objectStore.putText(manifestObjectKey, JSON.stringify(manifest, null, 2), "application/json")
-    return manifest
+    return runIngestPipeline(this.deps, input, (memoryInput) => this.createMemoryCards(memoryInput))
   }
 
   async reindexDocument(actor: AppUser, documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<DocumentManifest> {
@@ -1818,8 +1604,7 @@ export class MemoRagService {
       }
     }))
 
-    await this.deps.evidenceVectorStore.put(evidenceRecords)
-    await this.deps.memoryVectorStore.put(memoryRecords)
+    await putDocumentVectorRecords(this.deps, { evidenceRecords, memoryRecords })
   }
 
   private async restoreFailedCutoverState(source: DocumentManifest, staged: DocumentManifest): Promise<void> {

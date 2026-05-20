@@ -1,4 +1,4 @@
-import { selectFinalAnswerChunks } from "../../../prompts.js"
+import { selectFinalAnswerChunks } from "../../generation/prompt/grounded-prompt-builder.js"
 import type { RetrievedVector, VectorMetadata } from "../../../../types.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../../../../chat-orchestration/state.js"
 
