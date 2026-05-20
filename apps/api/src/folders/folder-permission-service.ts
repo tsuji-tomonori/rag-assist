@@ -123,7 +123,8 @@ export class FolderPermissionService {
     while (current) {
       if (visited.has(current.groupId)) return { source: "none" }
       visited.add(current.groupId)
-      if (current.hasExplicitPolicy && current.policyId) {
+      if (current.hasExplicitPolicy !== undefined || current.policyId) {
+        if (!current.policyId) return { source: inherited ? "inherited" : "explicit" }
         const policy = await this.deps.folderPolicyStore.get(current.policyId)
         if (!policy) return { source: "none" }
         return {

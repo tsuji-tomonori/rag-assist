@@ -593,6 +593,47 @@ test("semantic-only search includes folderId metadata when requested folder scop
   assert.equal(result.results[0]?.fileName, "folder-policy-secret.md")
 })
 
+test("search does not expose child legacy explicit private folder under parent FolderPolicy", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-legacy-explicit-child-search-"))
+  const deps = createLocalDeps(dataDir)
+  const objectStore = deps.objectStore as LocalObjectStore
+  const reader: AppUser = { userId: "reader-1", email: "reader-1@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create(folder("parent", "/parent", { hasExplicitPolicy: true, policyId: "policy-parent" }))
+  await deps.folderPolicyStore.save(policy("policy-parent", "parent", [
+    { principalType: "user", principalId: "owner-1", permissionLevel: "full" },
+    { principalType: "user", principalId: "reader-1", permissionLevel: "readOnly" }
+  ]))
+  await deps.documentGroupStore.create(folder("child-private", "/parent/child-private", {
+    parentGroupId: "parent",
+    hasExplicitPolicy: false,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: ["owner-1"]
+  }))
+  await putFolderPolicySearchManifest(objectStore, {
+    documentId: "child-private-doc",
+    fileName: "child-private.md",
+    text: "papaya private child policy must not inherit parent folder policy.",
+    metadata: {
+      scopeType: "folder",
+      folderId: "child-private",
+      tenantId: "tenant-a"
+    }
+  })
+
+  const result = await searchRag(deps, {
+    query: "papaya private child",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0
+  }, reader)
+
+  assert.equal(result.results.some((searchResult) => searchResult.fileName === "child-private.md"), false)
+  assert.equal(result.diagnostics.index?.visibleManifestCount, 0)
+})
+
 test("service search publishes and reuses immutable lexical index artifacts", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-lexical-artifact-"))
   const objectStore = new LocalObjectStore(dataDir)
@@ -800,6 +841,7 @@ async function putFolderPolicySearchManifest(
   objectStore: LocalObjectStore,
   input: {
     documentId: string
+    fileName?: string
     text: string
     metadata: Record<string, JsonValue>
   }
@@ -807,7 +849,7 @@ async function putFolderPolicySearchManifest(
   await objectStore.putText(`documents/${input.documentId}/source.txt`, input.text)
   await objectStore.putText(`manifests/${input.documentId}.json`, JSON.stringify({
     documentId: input.documentId,
-    fileName: "folder-policy-secret.md",
+    fileName: input.fileName ?? "folder-policy-secret.md",
     sourceObjectKey: `documents/${input.documentId}/source.txt`,
     manifestObjectKey: `manifests/${input.documentId}.json`,
     vectorKeys: [`${input.documentId}-chunk-0000`],
