@@ -1,6 +1,6 @@
 # PR326 upload session benchmark seed 境界修正
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - 対象 PR: https://github.com/tsuji-tomonori/rag-assist/pull/326
 
@@ -64,3 +64,14 @@
 ## リスク
 
 - 既存の通常文書が偶然 benchmark seed 予約 key を使っていた場合は 403 になる。ただし予約 metadata は benchmark seed 隔離用であり、document purpose での利用は境界違反として扱う。
+
+## 完了記録
+
+- 実装 commit: `23632ada108ab72d7c33a0c65955743b65725702`
+- PR body 更新: GitHub Apps 経由で実施
+- 受け入れ条件確認コメント: https://github.com/tsuji-tomonori/rag-assist/pull/326#issuecomment-4503589096
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/326#issuecomment-4503590174
+- 検証:
+  - `../../node_modules/.bin/tsx --test src/contract/api-contract.test.ts`: pass
+  - `npm run typecheck -w @memorag-mvp/api`: pass
+  - `git diff --check`: pass
