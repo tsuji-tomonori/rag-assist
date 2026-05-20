@@ -570,7 +570,6 @@ export function DocumentWorkspace({
           canReindex={canReindexSelectedFolder}
           canDeleteDocument={(document) => canDelete && canManageDocument(document, documentGroups)}
           canReindexDocument={(document) => canReindex && canManageDocument(document, documentGroups)}
-          canUploadToDestination={canUploadToDestination}
           migrations={migrations}
           selectedMigrationId={selectedMigrationId}
           onDocumentQueryChange={setDocumentQuery}
@@ -778,7 +777,7 @@ function descendantGroupIds(groups: DocumentGroup[], rootGroupId: string): Set<s
 }
 
 function canManageDocumentGroup(group: DocumentGroup): boolean {
-  return group.effectivePermission === undefined || group.effectivePermission === "full"
+  return group.effectivePermission === "full"
 }
 
 function canManageDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {

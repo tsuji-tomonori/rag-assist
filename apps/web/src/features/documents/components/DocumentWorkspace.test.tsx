@@ -61,6 +61,7 @@ const documentGroups: DocumentGroup[] = [
     sharedUserIds: [],
     sharedGroups: ["HR"],
     managerUserIds: ["user-1"],
+    effectivePermission: "full",
     createdAt: "2026-05-01T00:00:00.000Z",
     updatedAt: "2026-05-01T00:00:00.000Z"
   }
@@ -75,6 +76,7 @@ const organizationGroup: DocumentGroup = {
   sharedUserIds: ["user-2"],
   sharedGroups: [],
   managerUserIds: ["user-1"],
+  effectivePermission: "full",
   createdAt: "2026-05-01T00:00:00.000Z",
   updatedAt: "2026-05-01T00:00:00.000Z"
 }
@@ -758,6 +760,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-02T00:00:00.000Z",
       updatedAt: "2026-05-02T00:00:00.000Z"
     }
@@ -806,6 +809,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-02T00:00:00.000Z",
       updatedAt: "2026-05-02T00:00:00.000Z"
     }
@@ -820,6 +824,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-03T00:00:00.000Z",
       updatedAt: "2026-05-03T00:00:00.000Z"
     }
@@ -1927,6 +1932,76 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
     expect(onDelete).not.toHaveBeenCalled()
     expect(onStageReindex).not.toHaveBeenCalled()
+  })
+
+  it("effectivePermission が欠落したフォルダは full とみなさない", async () => {
+    const onUpload = vi.fn().mockResolvedValue(undefined)
+    const onDelete = vi.fn()
+    const onStageReindex = vi.fn()
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+    const fullGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-full-missing-check",
+      name: "full folder",
+      ...canonicalGroupFields("full folder"),
+      effectivePermission: "full"
+    }
+    const missingPermissionGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-missing-permission",
+      name: "権限未設定フォルダ",
+      ...canonicalGroupFields("権限未設定フォルダ"),
+      effectivePermission: undefined
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: [missingPermissionGroup.groupId] } }]}
+        documentGroups={[missingPermissionGroup, fullGroup]}
+        uploadGroupId={missingPermissionGroup.groupId}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={onUpload}
+        onCreateGroup={vi.fn()}
+        onShareGroup={onShareGroup}
+        onDelete={onDelete}
+        onStageReindex={onStageReindex}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByTitle("保存先を選択してアップロード"))
+    const uploadDestination = screen.getByLabelText("保存先フォルダ")
+    expect(within(uploadDestination).queryByRole("option", { name: "権限未設定フォルダ" })).not.toBeInTheDocument()
+    expect(within(uploadDestination).getByRole("option", { name: "full folder" })).toBeInTheDocument()
+    expect(screen.getByLabelText("アップロードする文書を選択")).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+    expect(onUpload).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
+
+    await userEvent.click(screen.getByRole("button", { name: /権限未設定フォルダ/ }))
+    expect(screen.getByTitle("requirements.mdを削除")).toBeDisabled()
+    expect(screen.getByTitle("requirements.mdの再インデックスをステージング")).toBeDisabled()
+    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(onStageReindex).not.toHaveBeenCalled()
+
+    await openFolderSettings()
+    await userEvent.clear(screen.getByLabelText("共有 Cognito group"))
+    await userEvent.type(screen.getByLabelText("共有 Cognito group"), "RAG_READERS")
+
+    expect(screen.getByRole("button", { name: "共有更新" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "共有更新" }))
+    expect(onShareGroup).not.toHaveBeenCalled()
   })
 
   it("すべてのドキュメントでは文書ごとの所属フォルダ権限で削除と再インデックスを無効化する", async () => {

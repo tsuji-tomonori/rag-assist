@@ -18,6 +18,7 @@ const documentGroups = [
     sharedUserIds: [],
     sharedGroups: [],
     managerUserIds: ["local-dev"],
+    effectivePermission: "full",
     createdAt: "2026-04-30T00:00:00.000Z",
     updatedAt: "2026-04-30T00:00:00.000Z"
   }

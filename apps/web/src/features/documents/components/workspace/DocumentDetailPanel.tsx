@@ -586,5 +586,5 @@ function UploadProgressPanel({
 }
 
 function canUploadToGroup(group: DocumentGroup): boolean {
-  return group.effectivePermission === undefined || group.effectivePermission === "full"
+  return group.effectivePermission === "full"
 }

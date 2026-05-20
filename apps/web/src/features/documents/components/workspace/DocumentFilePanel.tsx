@@ -91,7 +91,6 @@ export function DocumentFilePanel({
   canReindex: boolean
   canDeleteDocument: (document: DocumentManifest) => boolean
   canReindexDocument: (document: DocumentManifest) => boolean
-  canUploadToDestination: boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
   onDocumentQueryChange: (value: string) => void
