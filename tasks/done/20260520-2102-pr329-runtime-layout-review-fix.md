@@ -78,6 +78,7 @@ PR #329 の再レビューで、既存 RAG 実装の runtime layout 移設が進
 - `packages/contract/src/index.ts` から RAG placeholder contract の root export を削除した。
 - `apps/web/src/features/rag/**` と `benchmark/src/rag/**` の placeholder を scope 外として削除した。
 - PR #329 に受け入れ条件確認コメントとセルフレビューコメントを投稿した。
+- CI の API coverage step が branch coverage `84.99%` で閾値 `85%` を下回ったため、移設先 shared policy / context packing の回帰テストを追加した。
 
 ## 実行した検証
 
@@ -93,3 +94,8 @@ PR #329 の再レビューで、既存 RAG 実装の runtime layout 移設が進
 - `git diff --check`: pass
 - `gh run watch 26167206188 --exit-status --interval 10`: fail。理由: API lint で `MemoRagService` の未使用 helper 2 件を検出。
 - `npm run lint`: fail 後修正して pass。補足: API workspace 単体には `lint` script がないため root lint で確認。
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: fail。理由: tests は pass したが branch coverage が `84.99%` で閾値 `85%` 未満。
+- `./node_modules/.bin/tsx --test apps/api/src/rag/__tests__/runtime-layout.test.ts`: shared policy / context packing test 追加後 pass
+- `npm run typecheck -w @memorag-mvp/api`: shared policy / context packing test 追加後 pass
+- `npm run lint`: shared policy / context packing test 追加後 pass
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass。結果: statements `92.73%`, branches `85.04%`, functions `92.37%`, lines `92.73%`。

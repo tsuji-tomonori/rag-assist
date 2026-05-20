@@ -6,6 +6,16 @@ import test from "node:test"
 import { chunkStructuredBlocks, chunkText } from "../offline/pre-retrieval/chunking/chunker.service.js"
 import { extractDocumentFromUpload } from "../offline/pre-retrieval/extraction/text-extractor.js"
 import { createChatOrchestrationGraph } from "../orchestration/chat-rag-orchestrator.js"
+import {
+  answerPolicyById,
+  resolveRetrievalProfileId,
+  selectAnswerPolicyForMetadata
+} from "../_shared/policies/answer-policy.js"
+import {
+  assembleContext,
+  buildRelevantSnippet,
+  textAnswerRelevanceScore
+} from "../online/post-retrieval/context-packing/context-packer.js"
 import { bm25Search, buildLexicalIndex, rrfFuse } from "../online/retrieval/hybrid/hybrid-retriever.js"
 
 const apiSrcDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..")
@@ -81,6 +91,60 @@ test("online hybrid retriever keeps BM25 and RRF behavior from the new layout", 
 
 test("chat RAG orchestrator is exported from the new rag/orchestration path", () => {
   assert.equal(typeof createChatOrchestrationGraph, "function")
+})
+
+test("RAG runtime policies are resolved from the new shared policy layout", () => {
+  assert.equal(resolveRetrievalProfileId(undefined), "default")
+  assert.equal(resolveRetrievalProfileId("default", true), "adaptive-retrieval")
+  assert.equal(resolveRetrievalProfileId("adaptive-retrieval"), "adaptive-retrieval")
+  assert.throws(() => resolveRetrievalProfileId("unknown-profile"), /Unknown RAG_PROFILE_ID/)
+
+  const neutral = answerPolicyById(undefined)
+  assert.equal(neutral.id, "default-answer-policy")
+  assert.equal(answerPolicyById("swebok").id, "swebok-requirements-policy")
+  assert.equal(selectAnswerPolicyForMetadata([{ domainPolicy: "software-requirements" }], neutral).id, "swebok-requirements-policy")
+  assert.equal(selectAnswerPolicyForMetadata([{ domainPolicy: "general" }], neutral).id, "default-answer-policy")
+})
+
+test("RAG context packing keeps focused snippets and drop accounting in the new layout", () => {
+  const assembly = assembleContext({
+    question: "休暇申請の承認者と期限は？",
+    requiredFacts: ["休暇申請 承認者", "休暇申請 期限"],
+    tokenBudget: 800,
+    chunks: [
+      {
+        key: "empty",
+        score: 0.1,
+        metadata: {
+          kind: "chunk",
+          documentId: "doc-1",
+          fileName: "handbook.md",
+          text: "",
+          createdAt: "2026-05-20T00:00:00.000Z"
+        }
+      },
+      {
+        key: "policy",
+        score: 0.9,
+        metadata: {
+          kind: "chunk",
+          documentId: "doc-1",
+          fileName: "handbook.md",
+          chunkId: "chunk-1",
+          text: "# 休暇申請\n休暇申請の承認者は直属上長です。\n期限は開始日の3日前です。",
+          heading: "休暇申請",
+          sectionPath: ["人事", "休暇"],
+          createdAt: "2026-05-20T00:00:00.000Z"
+        }
+      }
+    ]
+  })
+
+  assert.deepEqual(assembly.includedChunkIds, ["policy"])
+  assert.deepEqual(assembly.droppedChunkIds, ["empty"])
+  assert.match(assembly.contextBlocks[0]?.reason ?? "", /^covers:/)
+  assert.ok(buildRelevantSnippet("要求分類を列挙して", "分類A\n分類B", 20).includes("分類A"))
+  assert.ok(textAnswerRelevanceScore("承認者は？", "承認者は直属上長です。") > 0)
 })
 
 test("old RAG flat paths are compatibility re-export shims", () => {

@@ -37,6 +37,7 @@
 - `buildMemoryCardPrompt` を `offline/generation/prompt-assets/memory-card-prompt.ts` へ分離。
 - `apps/api/src/rag/**` の `export {}` だけの空 module を削除。
 - `runtime-layout.test.ts` に旧 shim import 禁止、root shim、ingest delegation、empty placeholder 禁止のテストを追加。
+- CI の API coverage step が branch coverage `84.99%` で閾値 `85%` を下回ったため、移設先の shared policy / context packing の回帰テストを追加。
 - `packages/contract/src/index.ts` から RAG contract root export を削除し、contract package に test script と公開抑止テストを追加。
 - `apps/web/src/features/rag/**` と `benchmark/src/rag/**` の placeholder を削除し、web inventory を再生成。
 - `apps/api/src/rag/README.md` を、実装が残る実在 module に合わせて更新。
@@ -81,6 +82,11 @@
 - `git diff --check`: pass
 - `gh run watch 26167206188 --exit-status --interval 10`: fail。理由: API lint で `MemoRagService` の未使用 helper 2 件を検出。
 - `npm run lint`: fail 後修正して pass。補足: API workspace 単体には `lint` script がないため root lint で確認。
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: fail。理由: tests は pass したが branch coverage が `84.99%` で閾値 `85%` 未満。
+- `./node_modules/.bin/tsx --test apps/api/src/rag/__tests__/runtime-layout.test.ts`: shared policy / context packing test 追加後 pass
+- `npm run typecheck -w @memorag-mvp/api`: shared policy / context packing test 追加後 pass
+- `npm run lint`: shared policy / context packing test 追加後 pass
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: pass。結果: statements `92.73%`, branches `85.04%`, functions `92.37%`, lines `92.73%`。
 
 ## 8. 未対応・制約・リスク
 
