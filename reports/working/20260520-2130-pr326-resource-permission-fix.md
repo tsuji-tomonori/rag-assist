@@ -38,6 +38,7 @@
 - API route の create 時 permission guard と access-control static test を追加。
 - Web inventory / OpenAPI docs check、Web/API test、typecheck、build、coverage を実行。
 - push 後の GitHub Actions で web/api lint が fail 判定になったため、CI と同じ lint をローカルで再現し、React Compiler の memo 指摘、未使用 prop、不要 regex escape を修正。
+- 追加 lint fix 後の GitHub Actions で Web UI inventory check が fail 判定になったため、`npm run docs:web-inventory` で generated docs を再生成。
 
 ## 5. 成果物
 
@@ -51,6 +52,7 @@
 | `apps/api/src/security/access-control-policy.test.ts` | TS test | API create route の追加 permission guard を静的確認 | R3/R6 |
 | `docs/generated/*` | generated docs | Web inventory を再生成 | docs 同期 |
 | GitHub Actions lint follow-up | CI 修正 | web/api lint failure をローカル再現し、差分側の lint error を修正 | R7 |
+| `docs/generated/web-*` | generated docs | lint fix 後の Web inventory 差分を再生成 | R7/docs 同期 |
 
 ## 6. 指示へのfit評価
 
@@ -77,7 +79,7 @@
 - `npm run typecheck -w @memorag-mvp/api`: pass
 - `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: fail -> 修正後 pass
 - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: fail -> 修正後 pass
-- `npm run docs:web-inventory:check`: pass
+- `npm run docs:web-inventory:check`: pass、追加 lint fix 後に fail -> `npm run docs:web-inventory` 後 pass
 - `npm run docs:openapi:check`: pass
 - `git diff --cached --check`: pass
 - `rg -n "^(<<<<<<<|=======|>>>>>>>)" apps docs tasks --glob '!reports/**'`: pass

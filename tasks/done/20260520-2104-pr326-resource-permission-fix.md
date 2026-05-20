@@ -65,7 +65,7 @@ API response と UI 権限制御の挙動が変わるため、既存 docs/genera
 - `npm run typecheck -w @memorag-mvp/api`: pass
 - `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: fail -> 修正後 pass
 - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: fail -> 修正後 pass
-- `npm run docs:web-inventory:check`: pass
+- `npm run docs:web-inventory:check`: pass、追加 lint fix 後に fail -> `npm run docs:web-inventory` 後 pass
 - `npm run docs:openapi:check`: pass
 - `git diff --cached --check`: pass
 - `rg -n "^(<<<<<<<|=======|>>>>>>>)" apps docs tasks --glob '!reports/**'`: pass
