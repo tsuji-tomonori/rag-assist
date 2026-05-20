@@ -31,6 +31,7 @@
 - `hasExplicitPolicy: true` / `policyId` なし child が parent `FolderPolicy` を継承しない単体テストを追加した。
 - `hasExplicitPolicy: false` / `policyId` なし child も legacy explicit boundary として扱う単体テストを追加した。
 - `searchRag` で legacy explicit private child の文書が parent policy reader に返らない回帰テストを追加した。
+- 最新 `origin/main` 取り込みで `apps/api/src/search/hybrid-search.ts` が再エクスポートへ変わったため、検索認可修正を実体の `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts` へ移植して競合を解消した。
 - 対象 API test、API typecheck、`git diff --check` を実行した。
 
 ## 5. 成果物
@@ -39,6 +40,7 @@
 |---|---|---|---|
 | `apps/api/src/folders/folder-permission-service.ts` | TypeScript | explicit boundary 判定修正 | R1-R2 |
 | `apps/api/src/folders/folder-permission-service.test.ts` | TypeScript test | `hasExplicitPolicy: true/false` の parent policy 継承遮断テスト | R1-R2 |
+| `apps/api/src/rag/online/retrieval/hybrid/hybrid-retriever.ts` | TypeScript | 移動後の hybrid search 実装で `FolderPermissionService` と `folderScopeIds` を使う検索認可へ更新 | R3-R4 |
 | `apps/api/src/search/hybrid-search.test.ts` | TypeScript test | 検索経路の legacy explicit private child 漏洩防止テスト | R3-R4 |
 | `tasks/do/20260521-0123-legacy-explicit-child-boundary.md` | Markdown | task と受け入れ条件 | workflow 要件 |
 | `reports/working/20260521-0125-legacy-explicit-child-boundary.md` | Markdown | 本作業レポート | report 要件 |
@@ -57,8 +59,8 @@
 
 ## 7. 実行した検証
 
-- `npm run test -w @memorag-mvp/api -- --test-name-pattern "legacy explicit|child without explicit policy inherits nearest parent explicit policy|service inherits parent document group sharing"`: pass。294 tests。
-- `npm run test -w @memorag-mvp/api -- --test-name-pattern "folder-scoped search|semantic-only search includes folderId|folder policy documents|document group|search"`: pass。294 tests。
+- `npm run test -w @memorag-mvp/api -- --test-name-pattern "legacy explicit|child without explicit policy inherits nearest parent explicit policy|service inherits parent document group sharing"`: pass。最新 `origin/main` 取り込み後に再実行し、307 tests。
+- `npm run test -w @memorag-mvp/api -- --test-name-pattern "folder-scoped search|semantic-only search includes folderId|folder policy documents|document group|search"`: pass。最新 `origin/main` 取り込み後に再実行し、307 tests。
 - `npm run typecheck -w @memorag-mvp/api`: pass。
 - `git diff --check`: pass。
 
@@ -66,4 +68,4 @@
 
 - 未対応事項: なし。
 - 制約: 長い `--test-name-pattern` を 1 コマンドにまとめた初回実行は Node test runner が `ENAMETOOLONG` で失敗したため、検証対象を 2 コマンドに分割して再実行した。
-- リスク: CI の最新結果は push 後に別途確認が必要。
+- リスク: 最新 push 後の CI 結果は別途確認が必要。

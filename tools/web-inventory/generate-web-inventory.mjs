@@ -40,6 +40,7 @@ const featureLabels = {
   documents: "ドキュメント",
   history: "履歴",
   questions: "担当者対応",
+  rag: "RAG",
   shared: "共通"
 }
 
@@ -53,6 +54,7 @@ const featureDescriptions = {
   documents: "ドキュメント upload、document group、共有、blue-green reindex 操作を扱う領域です。",
   history: "会話履歴、検索、並び替え、お気に入り、履歴削除を扱う領域です。",
   questions: "担当者が問い合わせを確認し、回答作成、下書き保存、回答送信を行う領域です。",
+  rag: "RAG の引用、根拠 debug、回答不可状態、検索テスト、trace 表示を扱う領域です。",
   shared: "複数領域で再利用される表示部品です。単独の画面ではなく、他の画面から使われます。"
 }
 
@@ -983,13 +985,30 @@ function renderOutputs(inventory) {
   ]))
 }
 
+function findOrphanFeatureDetailFiles(outputs) {
+  if (!fs.existsSync(featureOutputDir)) return []
+
+  const expectedFeatureFiles = new Set(
+    Object.keys(outputs)
+      .filter((filePath) => path.dirname(filePath) === featureOutputDir)
+      .map((filePath) => path.basename(filePath))
+  )
+
+  return fs.readdirSync(featureOutputDir)
+    .filter((fileName) => fileName.endsWith(".md"))
+    .filter((fileName) => !expectedFeatureFiles.has(fileName))
+    .map((fileName) => path.join(featureOutputDir, fileName))
+}
+
 function main() {
   const outputs = renderOutputs(buildInventory())
+  const orphanFeatureDetailFiles = findOrphanFeatureDetailFiles(outputs)
   if (checkOnly) {
     const staleFiles = []
     for (const [filePath, content] of Object.entries(outputs)) {
       if (!fs.existsSync(filePath) || fs.readFileSync(filePath, "utf8") !== content) staleFiles.push(path.relative(repoRoot, filePath))
     }
+    staleFiles.push(...orphanFeatureDetailFiles.map((filePath) => path.relative(repoRoot, filePath)))
     if (staleFiles.length > 0) {
       console.error(`Web UI インベントリが最新ではありません: ${staleFiles.join(", ")}`)
       console.error("更新するには `npm run docs:web-inventory` を実行してください。")
@@ -1002,6 +1021,10 @@ function main() {
 
   fs.mkdirSync(outputDir, { recursive: true })
   fs.mkdirSync(featureOutputDir, { recursive: true })
+  for (const filePath of orphanFeatureDetailFiles) {
+    fs.unlinkSync(filePath)
+    console.log(`removed ${path.relative(repoRoot, filePath)}`)
+  }
   for (const [filePath, content] of Object.entries(outputs)) {
     fs.writeFileSync(filePath, content)
     console.log(`generated ${path.relative(repoRoot, filePath)}`)

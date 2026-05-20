@@ -1,7 +1,7 @@
 import type { Dependencies } from "../dependencies.js"
 import type { Citation, DebugTrace, SearchScope } from "../types.js"
 import type { Clarification } from "./state.js"
-import type { SearchInput } from "../search/hybrid-search.js"
+import type { SearchInput } from "../rag/online/retrieval/hybrid/hybrid-retriever.js"
 
 export type PublicClarification = Omit<Clarification, "rejectedOptions">
 

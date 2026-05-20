@@ -1,7 +1,7 @@
 import type { RetrievedVector } from "../../types.js"
 import type { Dependencies } from "../../dependencies.js"
-import { parseJsonObject } from "../../rag/json.js"
-import { buildRetrievalJudgePrompt } from "../../rag/prompts.js"
+import { parseJsonObject } from "../../rag/_shared/json.js"
+import { buildRetrievalJudgePrompt } from "../../rag/online/generation/prompt/grounded-prompt-builder.js"
 import { llmOptions, ragRuntimePolicy } from "../runtime-policy.js"
 import { isPrimaryRequiredFact, type Claim, type ConflictCandidate, type ChatOrchestrationState, type ChatOrchestrationUpdate, type RequiredFact, type RetrievalEvaluation, type RetrievalLlmJudge, type RetrievalRiskSignal } from "../state.js"
 
