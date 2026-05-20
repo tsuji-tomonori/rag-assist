@@ -1,6 +1,6 @@
 # PR326 resource permission fix
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象 PR: https://github.com/tsuji-tomonori/rag-assist/pull/326
 
@@ -36,15 +36,15 @@ API response と UI 権限制御の挙動が変わるため、既存 docs/genera
 
 ## 受け入れ条件
 
-- [ ] PR branch が `origin/main` と競合しない。
-- [ ] `canCreateDocumentGroups=true` かつ `canShareDocumentGroups=false` では、新規グループ作成時に管理者・共有先・共有 visibility を指定できず、submit payload に含まれない。
-- [ ] `canCreateDocumentGroups=true` かつ `canShareDocumentGroups=true` では、新規グループ作成時に `managerUserIds` / `sharedGroupIds` を payload に含められる。
-- [ ] API 側で、作成 payload に管理者・共有先・共有系 visibility が含まれる場合は `rag:group:assign_manager` 相当の権限が必要。
-- [ ] upload dialog では `effectivePermission === "full"` のグループだけが選択可能または submit 可能。
-- [ ] `canUploadDocuments=false` または `canWriteDocuments=false` では、`effectivePermission === "full"` のグループがあってもアップロードできない。
-- [ ] 共有/編集操作は `canShareDocumentGroups && group.effectivePermission === "full"` の場合だけ実行できる。
-- [ ] 関連する Web/API 単体テストと型チェックが pass する。
-- [ ] PR に受け入れ条件確認コメントとセルフレビューコメントを日本語で追加する。
+- [x] PR branch が `origin/main` と競合しない。
+- [x] `canCreateDocumentGroups=true` かつ `canShareDocumentGroups=false` では、新規グループ作成時に管理者・共有先・共有 visibility を指定できず、submit payload に含まれない。
+- [x] `canCreateDocumentGroups=true` かつ `canShareDocumentGroups=true` では、新規グループ作成時に `managerUserIds` / `sharedGroupIds` を payload に含められる。
+- [x] API 側で、作成 payload に管理者・共有先・共有系 visibility が含まれる場合は `rag:group:assign_manager` 相当の権限が必要。
+- [x] upload dialog では `effectivePermission === "full"` のグループだけが選択可能または submit 可能。
+- [x] `canUploadDocuments=false` または `canWriteDocuments=false` では、`effectivePermission === "full"` のグループがあってもアップロードできない。
+- [x] 共有/編集操作は `canShareDocumentGroups && group.effectivePermission === "full"` の場合だけ実行できる。
+- [x] 関連する Web/API 単体テストと型チェックが pass する。
+- [x] PR に受け入れ条件確認コメントとセルフレビューコメントを日本語で追加する。
 
 ## 検証計画
 
@@ -74,7 +74,7 @@ API response と UI 権限制御の挙動が変わるため、既存 docs/genera
 - 新規グループ作成は `canShareGroups=false` 時に共有/管理者/visibility を UI で disabled にし、component/hook 双方で payload から除外する。
 - API route は create payload に legacy sharing fields が含まれる場合、`rag:group:assign_manager` を追加要求する。
 - upload / share / edit は `effectivePermission === "full"` を submit 条件または候補条件に含める。
-- PR コメントは push 後に実施するため、現時点では task は `do` のまま維持する。
+- PR に受け入れ条件確認コメントとセルフレビューコメントを投稿済み。
 
 ## PR レビュー観点
 
