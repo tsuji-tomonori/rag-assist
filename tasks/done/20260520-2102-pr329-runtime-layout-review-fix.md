@@ -1,6 +1,6 @@
 # PR329 runtime layout review 指摘対応
 
-状態: doing
+状態: done
 
 タスク種別: 修正
 
@@ -69,3 +69,25 @@ PR #329 の再レビューで、既存 RAG 実装の runtime layout 移設が進
 
 - 空 module 削除により typecheck 対象の import が壊れる可能性がある。
 - `MemoRagService` から ingestion を分離する際、private helper の移設漏れで manifest/vector metadata の互換性が崩れる可能性がある。
+
+## 完了結果
+
+- `MemoRagService.ingest()` を `offline/pre-retrieval/ingestion/ingest-run.service.ts` へ委譲した。
+- root `rag/*.ts` の残実装を新 layout へ移し、旧 root は shim 化した。
+- `apps/api/src/rag/**` の `export {}` だけの空 module を削除した。
+- `packages/contract/src/index.ts` から RAG placeholder contract の root export を削除した。
+- `apps/web/src/features/rag/**` と `benchmark/src/rag/**` の placeholder を scope 外として削除した。
+- PR #329 に受け入れ条件確認コメントとセルフレビューコメントを投稿した。
+
+## 実行した検証
+
+- `./node_modules/.bin/tsx --test apps/api/src/rag/__tests__/runtime-layout.test.ts`: fail -> root shim regex 修正後 pass
+- `npm test -w @memorag-mvp/api`: fail -> runtime-layout test 修正後 pass
+- `npm run typecheck -w @memorag-mvp/api`: pass
+- `npm test -w @memorag-mvp/contract`: pass
+- `npm run typecheck -w @memorag-mvp/contract`: pass
+- `npm run docs:web-inventory:check`: fail -> `npm run docs:web-inventory` で更新後 pass
+- `npm test -w @memorag-mvp/benchmark`: pass
+- `npm run typecheck -w @memorag-mvp/benchmark`: pass
+- `npm run typecheck -w @memorag-mvp/web`: pass
+- `git diff --check`: pass
