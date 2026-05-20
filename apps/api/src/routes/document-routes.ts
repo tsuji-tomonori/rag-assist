@@ -34,6 +34,7 @@ import {
   authorizeDocumentDelete,
   authorizeDocumentUpload,
   authorizeUploadedDocumentIngest,
+  isBenchmarkSeedUpload,
   isBenchmarkSeedUploadedObjectIngest
 } from "./benchmark-seed.js"
 import { documentGroupHasLegacyExplicitPolicy } from "../folders/document-group-permissions.js"
@@ -165,6 +166,14 @@ async function scopedMetadata(
       temporaryScopeId,
       expiresAt: scope?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     }
+  }
+
+  if (purpose === "document") {
+    if (!scope || scope.scopeType !== "group" || !scope.groupIds?.length) {
+      throw new HTTPException(400, { message: "document upload requires group scope" })
+    }
+    await service.assertDocumentGroupsWritable(user, scope.groupIds)
+    return { ...base, scopeType: "group", ownerUserId: user.userId, groupIds: scope.groupIds }
   }
 
   if (!scope) return metadata
@@ -329,7 +338,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
       authorizeDocumentUpload(user, body)
       if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
-      const metadata = await scopedMetadata(service, user, body.metadata, body.scope)
+      const purpose: UploadPurpose = isBenchmarkSeedUpload(body) ? "benchmarkSeed" : "document"
+      const metadata = await scopedMetadata(service, user, body.metadata, body.scope, purpose)
       const manifest = await service.ingest({ ...body, metadata })
       return c.json(documentManifestSummary(manifest), 200)
     }

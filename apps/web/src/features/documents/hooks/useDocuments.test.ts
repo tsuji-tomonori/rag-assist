@@ -208,6 +208,7 @@ describe("useDocuments", () => {
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "b.txt", { type: "" })
 
+    act(() => result.current.setUploadGroupId("group-1"))
     await act(() => result.current.onUploadDocumentFile(file))
     expect(uploadDocumentFile).toHaveBeenCalledWith(expect.objectContaining({
       file,
@@ -236,6 +237,17 @@ describe("useDocuments", () => {
     expect(deleteResult).toEqual({ ok: true })
     expect(result.current.selectedDocumentId).toBe("all")
     expect(result.current.operationState.deletingDocumentId).toBeNull()
+  })
+
+  it("uploadGroupId が空の場合は通常文書アップロード API を呼ばない", async () => {
+    const { result } = renderHook(() => useDocuments(createProps({ canWriteDocuments: true })))
+    const file = new File(["body"], "missing-folder.txt", { type: "text/plain" })
+
+    const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
+
+    expect(uploadResult).toEqual({ ok: false, error: "アップロード先フォルダが未指定です" })
+    expect(uploadDocumentFile).not.toHaveBeenCalled()
+    expect(result.current.operationState.isUploading).toBe(false)
   })
 
   it("資料グループの取得、保存先指定、一時添付、共有更新を扱う", async () => {
@@ -321,6 +333,7 @@ describe("useDocuments", () => {
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "error.txt", { type: "text/plain" })
 
+    act(() => result.current.setUploadGroupId("group-1"))
     const deleteResult = await act(() => result.current.onDelete("doc-1"))
     const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
     await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
@@ -354,6 +367,7 @@ describe("useDocuments", () => {
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "error.txt", { type: "text/plain" })
 
+    act(() => result.current.setUploadGroupId("group-1"))
     await act(() => result.current.onUploadDocumentFile(file))
     await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
     await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))

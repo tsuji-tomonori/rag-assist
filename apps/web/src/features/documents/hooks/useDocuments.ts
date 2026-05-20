@@ -156,11 +156,12 @@ export function useDocuments({
 
   async function onUploadDocumentFile(uploadFile: File): Promise<DocumentUploadResult> {
     if (!canWriteDocuments) return { ok: false, error: "文書をアップロードする権限がありません" }
+    if (!uploadGroupId) return { ok: false, error: "アップロード先フォルダが未指定です" }
     updateOperationState({ isUploading: true })
-    setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId || undefined, phase: "preparing", updatedAt: new Date().toISOString() })
+    setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId, phase: "preparing", updatedAt: new Date().toISOString() })
     setError(null)
     try {
-      const document = await ingestDocument(uploadFile, { groupId: uploadGroupId || undefined })
+      const document = await ingestDocument(uploadFile, { groupId: uploadGroupId })
       setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "complete", updatedAt: new Date().toISOString() } : current)
       return { ok: true, document }
     } catch (err) {

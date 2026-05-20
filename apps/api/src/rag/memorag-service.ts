@@ -3030,8 +3030,9 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGr
   if (stringValue(metadata.ownerUserId) === user.userId) return true
   const groups = new Set(user.cognitoGroups)
   const aclGroups = stringArray(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group) ?? []
-  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   const allowedUsers = stringArray(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId) ?? []
+  if (aclGroups.length === 0 && allowedUsers.length === 0) return false
+  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
   return true
 }
@@ -3046,7 +3047,7 @@ function canManageManifest(manifest: DocumentManifest, user: AppUser, documentGr
     return groupIds.every((groupId) => canManageDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user, documentGroups))
   }
   if (stringValue(metadata.ownerUserId) === user.userId) return true
-  return true
+  return false
 }
 
 function validateDocumentGroupName(name: string): string {

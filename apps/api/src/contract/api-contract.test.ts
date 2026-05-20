@@ -131,6 +131,13 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     })
     assert.equal(invalidGroupScopeDocument.status, 400)
 
+    const missingGroupScopeDocument = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "no-scope.txt", text: "document upload without scope" })
+    })
+    assert.equal(missingGroupScopeDocument.status, 400)
+
     const personalDocument = await fetch(`http://127.0.0.1:${port}/documents`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -140,12 +147,12 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
         scope: { scopeType: "personal" }
       })
     })
-    assert.equal(personalDocument.status, 200)
+    assert.equal(personalDocument.status, 400)
 
     const postDocument = await fetch(`http://127.0.0.1:${port}/documents`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(fixtures.requests.postDocuments)
+      body: JSON.stringify({ ...fixtures.requests.postDocuments, scope: { scopeType: "group", groupIds: [group.groupId] } })
     })
     assert.equal(postDocument.status, 200)
     const created = (await postDocument.json()) as Record<string, unknown>
@@ -171,10 +178,28 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     })
     assert.equal(putUpload.status, 204)
 
-    const ingestUploaded = await fetch(`http://127.0.0.1:${port}/documents/uploads/${encodeURIComponent(uploadSession.uploadId)}/ingest`, {
+    const missingScopeUploadedIngest = await fetch(`http://127.0.0.1:${port}/documents/uploads/${encodeURIComponent(uploadSession.uploadId)}/ingest`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain" })
+    })
+    assert.equal(missingScopeUploadedIngest.status, 400)
+    const emptyGroupScopeUploadedIngest = await fetch(`http://127.0.0.1:${port}/documents/uploads/${encodeURIComponent(uploadSession.uploadId)}/ingest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain", scope: { scopeType: "group", groupIds: [] } })
+    })
+    assert.equal(emptyGroupScopeUploadedIngest.status, 400)
+    const missingUploadedGroupIngest = await fetch(`http://127.0.0.1:${port}/documents/uploads/${encodeURIComponent(uploadSession.uploadId)}/ingest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain", scope: { scopeType: "group", groupIds: ["missing-group"] } })
+    })
+    assert.equal(missingUploadedGroupIngest.status, 403)
+    const ingestUploaded = await fetch(`http://127.0.0.1:${port}/documents/uploads/${encodeURIComponent(uploadSession.uploadId)}/ingest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain", scope: { scopeType: "group", groupIds: [group.groupId] } })
     })
     assert.equal(ingestUploaded.status, 200)
     const ingested = (await ingestUploaded.json()) as Record<string, unknown>
@@ -186,9 +211,47 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     const invalidUploadIdIngest = await fetch(`http://127.0.0.1:${port}/documents/uploads/not-a-valid-upload-id/ingest`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain" })
+      body: JSON.stringify({ fileName: "handoff.txt", mimeType: "text/plain", scope: { scopeType: "group", groupIds: [group.groupId] } })
     })
     assert.equal(invalidUploadIdIngest.status, 400)
+
+    const asyncDocumentSessionRes = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "async-document.txt", mimeType: "text/plain" })
+    })
+    assert.equal(asyncDocumentSessionRes.status, 200)
+    const asyncDocumentSession = (await asyncDocumentSessionRes.json()) as { uploadId: string; uploadUrl: string; method: "POST"; headers: Record<string, string> }
+    const putAsyncDocument = await fetch(asyncDocumentSession.uploadUrl, {
+      method: asyncDocumentSession.method,
+      headers: asyncDocumentSession.headers,
+      body: "Async document upload text."
+    })
+    assert.equal(putAsyncDocument.status, 204)
+    const missingScopeDocumentRun = await fetch(`http://127.0.0.1:${port}/document-ingest-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ uploadId: asyncDocumentSession.uploadId, fileName: "async-document.txt", mimeType: "text/plain" })
+    })
+    assert.equal(missingScopeDocumentRun.status, 400)
+    const emptyGroupScopeDocumentRun = await fetch(`http://127.0.0.1:${port}/document-ingest-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ uploadId: asyncDocumentSession.uploadId, fileName: "async-document.txt", mimeType: "text/plain", scope: { scopeType: "group", groupIds: [] } })
+    })
+    assert.equal(emptyGroupScopeDocumentRun.status, 400)
+    const missingGroupDocumentRun = await fetch(`http://127.0.0.1:${port}/document-ingest-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ uploadId: asyncDocumentSession.uploadId, fileName: "async-document.txt", mimeType: "text/plain", scope: { scopeType: "group", groupIds: ["missing-group"] } })
+    })
+    assert.equal(missingGroupDocumentRun.status, 403)
+    const asyncDocumentRunStart = await fetch(`http://127.0.0.1:${port}/document-ingest-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ uploadId: asyncDocumentSession.uploadId, fileName: "async-document.txt", mimeType: "text/plain", scope: { scopeType: "group", groupIds: [group.groupId] } })
+    })
+    assert.equal(asyncDocumentRunStart.status, 200)
 
     const chatAttachmentSessionRes = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
       method: "POST",
@@ -665,6 +728,13 @@ test("benchmark search does not allow dataset user overrides", async () => {
 
   try {
     await waitUntilReady(setupServer, setupPort)
+    const createSetupGroup = await fetch(`http://127.0.0.1:${setupPort}/document-groups`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Group A setup", sharedGroups: ["GROUP_A"] })
+    })
+    assert.equal(createSetupGroup.status, 200)
+    const setupGroup = (await createSetupGroup.json()) as { groupId: string }
     const upload = await fetch(`http://127.0.0.1:${setupPort}/documents`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -672,7 +742,8 @@ test("benchmark search does not allow dataset user overrides", async () => {
         fileName: "group-a-secret.md",
         text: "Alpha launch approval policy is visible only to group A.",
         skipMemory: true,
-        metadata: { tenantId: "tenant-a", aclGroups: ["GROUP_A"] }
+        metadata: { tenantId: "tenant-a", aclGroups: ["GROUP_A"] },
+        scope: { scopeType: "group", groupIds: [setupGroup.groupId] }
       })
     })
     assert.equal(upload.status, 200)
