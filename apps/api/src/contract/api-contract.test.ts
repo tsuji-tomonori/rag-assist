@@ -1070,6 +1070,76 @@ test("benchmark runner can list and upload only isolated benchmark seed document
   }
 })
 
+test("document writer cannot bypass group scope with benchmark seed metadata", async () => {
+  const port = 28200 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-seed-boundary-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "RAG_GROUP_MANAGER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+  const seedBody = {
+    fileName: "seed.md",
+    text: "benchmark seed shaped content",
+    mimeType: "text/markdown",
+    skipMemory: true,
+    metadata: {
+      benchmarkSeed: true,
+      benchmarkSuiteId: "standard-agent-v1",
+      benchmarkSourceHash: "hash",
+      benchmarkIngestSignature: "signature",
+      benchmarkCorpusSkipMemory: true,
+      benchmarkEmbeddingModelId: "api-default",
+      aclGroups: ["BENCHMARK_RUNNER"],
+      docType: "benchmark-corpus",
+      lifecycleStatus: "active",
+      source: "benchmark-runner"
+    }
+  }
+
+  try {
+    await waitUntilReady(server, port)
+
+    const noScopeSeedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(seedBody)
+    })
+    assert.equal(noScopeSeedUpload.status, 403)
+
+    const createGroup = await fetch(`http://127.0.0.1:${port}/document-groups`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "通常文書保存先" })
+    })
+    assert.equal(createGroup.status, 200)
+    const group = (await createGroup.json()) as { groupId: string }
+    const scopedSeedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...seedBody, scope: { scopeType: "group", groupIds: [group.groupId] } })
+    })
+    assert.equal(scopedSeedUpload.status, 403)
+
+    const documents = await fetch(`http://127.0.0.1:${port}/documents`)
+    assert.equal(documents.status, 200)
+    const list = (await documents.json()) as { documents?: unknown[] }
+    assert.deepEqual(list.documents, [])
+  } finally {
+    await stopServer(server)
+  }
+})
+
 test("benchmark seed upload whitelist accepts isolated PDF corpus payloads only", () => {
   const metadata = {
     benchmarkSeed: true,
@@ -1220,6 +1290,8 @@ test("benchmark seed authorization rejects non-isolated document operations", as
 
   assert.doesNotThrow(() => authorizeDocumentUpload(runner, seedBody))
   assert.doesNotThrow(() => authorizeDocumentUpload(manager, { fileName: "general.txt", text: "general" }))
+  assert.throws(() => authorizeDocumentUpload(manager, seedBody), { message: /^Forbidden$/ })
+  assert.throws(() => authorizeDocumentUpload(manager, { ...seedBody, scope: { scopeType: "group", groupIds: ["group-1"] } }), { message: /^Forbidden$/ })
   assert.throws(() => authorizeDocumentUpload(runner, { fileName: "general.txt", text: "general" }), { message: /^Forbidden$/ })
   assert.doesNotThrow(() => authorizeUploadedDocumentIngest(chatUser, "chatAttachment", { fileName: "note.txt", mimeType: "text/plain" }))
   assert.throws(() => authorizeUploadedDocumentIngest(runner, "document", { fileName: "note.txt", mimeType: "text/plain" }), { message: /^Forbidden$/ })

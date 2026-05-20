@@ -43,8 +43,11 @@ const benchmarkSeedMetadataKeys = new Set([
 type UploadPurpose = "document" | "benchmarkSeed" | "chatAttachment"
 
 export function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof DocumentUploadRequestSchema>) {
+  if (isBenchmarkSeedUpload(body)) {
+    if (hasPermission(user, "benchmark:seed_corpus")) return
+    throw new HTTPException(403, { message: "Forbidden" })
+  }
   if (hasPermission(user, "rag:doc:write:group")) return
-  if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUpload(body)) return
   throw new HTTPException(403, { message: "Forbidden" })
 }
 
