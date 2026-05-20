@@ -39,6 +39,14 @@ const benchmarkSeedMetadataKeys = new Set([
   "drawingReferenceGraph",
   "drawingExtractionArtifacts"
 ])
+const benchmarkSeedReservedDocumentMetadataKeys = new Set([
+  "benchmarkSeed",
+  "benchmarkSuiteId",
+  "benchmarkSourceHash",
+  "benchmarkIngestSignature",
+  "benchmarkCorpusSkipMemory",
+  "benchmarkEmbeddingModelId"
+])
 
 type UploadPurpose = "document" | "benchmarkSeed" | "chatAttachment"
 
@@ -77,6 +85,12 @@ export function isBenchmarkSeedUploadedObjectIngest(body: z.infer<typeof IngestU
   if (body.mimeType === "application/pdf") return /\.pdf$/i.test(body.fileName)
   if (!body.mimeType || body.mimeType === "text/markdown" || body.mimeType === "text/plain") return /\.(md|txt)$/i.test(body.fileName)
   return false
+}
+
+function hasBenchmarkSeedReservedDocumentMetadata(body: z.infer<typeof IngestUploadedDocumentRequestSchema>): boolean {
+  const metadata = body.metadata
+  if (!metadata) return false
+  return Object.keys(metadata).some((key) => benchmarkSeedReservedDocumentMetadataKeys.has(key))
 }
 
 function isBenchmarkSeedUploadMetadata(body: {
@@ -371,6 +385,7 @@ export function authorizeUploadedDocumentIngest(user: AppUser, purpose: UploadPu
     if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUploadedObjectIngest(body)) return
     throw new HTTPException(403, { message: "Forbidden" })
   }
+  if (hasBenchmarkSeedReservedDocumentMetadata(body)) throw new HTTPException(403, { message: "Forbidden" })
   if (hasPermission(user, "rag:doc:write:group")) return
   throw new HTTPException(403, { message: "Forbidden" })
 }

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { mkdtemp, readFile } from "node:fs/promises"
+import { mkdtemp, readdir, readFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { spawn } from "node:child_process"
@@ -1131,6 +1131,60 @@ test("document writer cannot bypass group scope with benchmark seed metadata", a
     })
     assert.equal(scopedSeedUpload.status, 403)
 
+    const documentUploadSession = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "seed.md", mimeType: "text/markdown", purpose: "document" })
+    })
+    assert.equal(documentUploadSession.status, 200)
+    const session = (await documentUploadSession.json()) as { uploadId: string; uploadUrl: string; method: "POST"; headers: Record<string, string> }
+    const transfer = await fetch(session.uploadUrl, {
+      method: session.method,
+      headers: session.headers,
+      body: "benchmark seed shaped content from document upload session"
+    })
+    assert.equal(transfer.status, 204)
+    const uploadedSeedIngest = await fetch(`http://127.0.0.1:${port}/documents/uploads/${encodeURIComponent(session.uploadId)}/ingest`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "seed.md",
+        mimeType: "text/markdown",
+        skipMemory: true,
+        metadata: seedBody.metadata,
+        scope: { scopeType: "group", groupIds: [group.groupId] }
+      })
+    })
+    assert.equal(uploadedSeedIngest.status, 403)
+
+    const asyncDocumentUploadSession = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ fileName: "async-seed.md", mimeType: "text/markdown", purpose: "document" })
+    })
+    assert.equal(asyncDocumentUploadSession.status, 200)
+    const asyncSession = (await asyncDocumentUploadSession.json()) as { uploadId: string; uploadUrl: string; method: "POST"; headers: Record<string, string> }
+    const asyncTransfer = await fetch(asyncSession.uploadUrl, {
+      method: asyncSession.method,
+      headers: asyncSession.headers,
+      body: "async benchmark seed shaped content from document upload session"
+    })
+    assert.equal(asyncTransfer.status, 204)
+    const asyncSeedRunStart = await fetch(`http://127.0.0.1:${port}/document-ingest-runs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        uploadId: asyncSession.uploadId,
+        fileName: "async-seed.md",
+        mimeType: "text/markdown",
+        skipMemory: true,
+        metadata: seedBody.metadata,
+        scope: { scopeType: "group", groupIds: [group.groupId] }
+      })
+    })
+    assert.equal(asyncSeedRunStart.status, 403)
+    assert.deepEqual(await listDocumentIngestRunFiles(dataDir), [])
+
     const documents = await fetch(`http://127.0.0.1:${port}/documents`)
     assert.equal(documents.status, 200)
     const list = (await documents.json()) as { documents?: unknown[] }
@@ -1294,7 +1348,10 @@ test("benchmark seed authorization rejects non-isolated document operations", as
   assert.throws(() => authorizeDocumentUpload(manager, { ...seedBody, scope: { scopeType: "group", groupIds: ["group-1"] } }), { message: /^Forbidden$/ })
   assert.throws(() => authorizeDocumentUpload(runner, { fileName: "general.txt", text: "general" }), { message: /^Forbidden$/ })
   assert.doesNotThrow(() => authorizeUploadedDocumentIngest(chatUser, "chatAttachment", { fileName: "note.txt", mimeType: "text/plain" }))
+  assert.doesNotThrow(() => authorizeUploadedDocumentIngest(runner, "benchmarkSeed", { fileName: "source.txt", mimeType: "text/plain", metadata: seedBody.metadata }))
   assert.throws(() => authorizeUploadedDocumentIngest(runner, "document", { fileName: "note.txt", mimeType: "text/plain" }), { message: /^Forbidden$/ })
+  assert.throws(() => authorizeUploadedDocumentIngest(manager, "document", { fileName: "source.txt", mimeType: "text/plain", metadata: seedBody.metadata }), { message: /^Forbidden$/ })
+  assert.throws(() => authorizeUploadedDocumentIngest(manager, "document", { fileName: "source.txt", mimeType: "text/plain", metadata: { benchmarkSuiteId: "standard-agent-v1" } }), { message: /^Forbidden$/ })
   assert.throws(() => authorizeUploadedDocumentIngest(runner, "benchmarkSeed", { fileName: "source.txt", mimeType: "text/plain", metadata: { ...seedBody.metadata, docType: "general" } }), { message: /^Forbidden$/ })
 
   const documentManifests = {
@@ -1642,6 +1699,15 @@ async function stopServer(server: ReturnType<typeof spawn>): Promise<void> {
   const closed = new Promise<void>((resolve) => server.once("close", () => resolve()))
   server.kill("SIGTERM")
   await Promise.race([closed, new Promise((resolve) => setTimeout(resolve, 1000))])
+}
+
+async function listDocumentIngestRunFiles(dataDir: string): Promise<string[]> {
+  try {
+    return await readdir(path.join(dataDir, "document-ingest-runs"))
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return []
+    throw err
+  }
 }
 
 async function getJson(url: string): Promise<{ ok: boolean; status: number; body: any }> {
