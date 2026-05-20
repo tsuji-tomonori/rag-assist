@@ -2529,11 +2529,6 @@ function toJsonValue(value: unknown): JsonValue | undefined {
   return JSON.parse(JSON.stringify(value)) as JsonValue
 }
 
-function toChunkMetadata(chunk: Chunk): NonNullable<DocumentManifest["chunks"]>[number] {
-  const { text: _text, ...metadata } = chunk
-  return metadata
-}
-
 function artifactExtension(artifact: BenchmarkDownloadArtifact): string {
   if (artifact === "report") return ".md"
   if (artifact === "summary") return ".json"
@@ -2797,11 +2792,6 @@ function ragEligibilityValue(value: JsonValue | undefined): VectorRecord["metada
 
 function objectValue(value: JsonValue | undefined): Record<string, JsonValue> | undefined {
   return value && typeof value === "object" && !Array.isArray(value) ? value : undefined
-}
-
-function lifecycleStatus(metadata: Record<string, JsonValue> | undefined): VectorRecord["metadata"]["lifecycleStatus"] {
-  const value = stringValue(metadata?.lifecycleStatus)
-  return value === "staging" || value === "superseded" ? value : "active"
 }
 
 function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGroups: DocumentGroup[] = []): boolean {

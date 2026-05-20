@@ -79,6 +79,8 @@
 - `npm run typecheck -w @memorag-mvp/benchmark`: pass
 - `npm run typecheck -w @memorag-mvp/web`: pass
 - `git diff --check`: pass
+- `gh run watch 26167206188 --exit-status --interval 10`: fail。理由: API lint で `MemoRagService` の未使用 helper 2 件を検出。
+- `npm run lint`: fail 後修正して pass。補足: API workspace 単体には `lint` script がないため root lint で確認。
 
 ## 8. 未対応・制約・リスク
 
