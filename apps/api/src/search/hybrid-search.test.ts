@@ -21,7 +21,7 @@ import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
 import { MemoRagService } from "../rag/memorag-service.js"
 import { adaptiveEffectiveMinScore, bm25Score, bm25Search, buildLexicalIndex, getLexicalIndex, rrfFuse, searchRag, tokenizeQuery } from "./hybrid-search.js"
-import type { DocumentGroup, FolderPolicy, GroupMembership, UserGroup } from "../types.js"
+import type { DocumentGroup, FolderPolicy, GroupMembership, JsonValue, UserGroup } from "../types.js"
 
 test("tokenizeQuery normalizes Japanese and ASCII terms with n-grams", () => {
   const tokens = tokenizeQuery("  申請承認 Workflow  ")
@@ -443,6 +443,156 @@ test("search removes folder policy documents immediately after group membership 
   assert.equal(semanticRevoked.diagnostics.semanticCount, 0)
 })
 
+test("folder-scoped search includes manifests that use folderId metadata", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-id-scope-include-"))
+  const deps = createLocalDeps(dataDir)
+  const objectStore = deps.objectStore as LocalObjectStore
+  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create(folder("folder-secret", "/secret", { hasExplicitPolicy: true, policyId: "policy-secret" }))
+  await deps.folderPolicyStore.save(policy("policy-secret", "folder-secret", [
+    { principalType: "user", principalId: member.userId, permissionLevel: "readOnly" }
+  ]))
+  await putFolderPolicySearchManifest(objectStore, {
+    documentId: "folder-policy-secret-folder-id",
+    text: "kiwifruit launch approval requires folder policy access.",
+    metadata: {
+      scopeType: "folder",
+      folderId: "folder-secret",
+      tenantId: "tenant-a"
+    }
+  })
+
+  const result = await searchRag(deps, {
+    query: "kiwifruit launch",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0,
+    scope: { mode: "groups", groupIds: ["folder-secret"] }
+  }, member)
+
+  assert.equal(result.results[0]?.fileName, "folder-policy-secret.md")
+})
+
+test("folder-scoped search includes manifests that use folderIds metadata", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-ids-scope-include-"))
+  const deps = createLocalDeps(dataDir)
+  const objectStore = deps.objectStore as LocalObjectStore
+  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create(folder("folder-secret", "/secret", { hasExplicitPolicy: true, policyId: "policy-secret" }))
+  await deps.folderPolicyStore.save(policy("policy-secret", "folder-secret", [
+    { principalType: "user", principalId: member.userId, permissionLevel: "full" }
+  ]))
+  await putFolderPolicySearchManifest(objectStore, {
+    documentId: "folder-policy-secret-folder-ids",
+    text: "kiwifruit launch approval requires folder policy access.",
+    metadata: {
+      scopeType: "folder",
+      folderIds: ["folder-secret"],
+      tenantId: "tenant-a"
+    }
+  })
+
+  const result = await searchRag(deps, {
+    query: "kiwifruit launch",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0,
+    scope: { mode: "groups", groupIds: ["folder-secret"] }
+  }, member)
+
+  assert.equal(result.results[0]?.fileName, "folder-policy-secret.md")
+})
+
+test("folder-scoped search excludes folderId manifests outside requested scope", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-id-scope-exclude-"))
+  const deps = createLocalDeps(dataDir)
+  const objectStore = deps.objectStore as LocalObjectStore
+  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create(folder("folder-secret", "/secret", { hasExplicitPolicy: true, policyId: "policy-secret" }))
+  await deps.folderPolicyStore.save(policy("policy-secret", "folder-secret", [
+    { principalType: "user", principalId: member.userId, permissionLevel: "readOnly" }
+  ]))
+  await putFolderPolicySearchManifest(objectStore, {
+    documentId: "folder-policy-secret-folder-id-outside",
+    text: "kiwifruit launch approval requires folder policy access.",
+    metadata: {
+      scopeType: "folder",
+      folderId: "folder-secret",
+      tenantId: "tenant-a"
+    }
+  })
+
+  const result = await searchRag(deps, {
+    query: "kiwifruit launch",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0,
+    scope: { mode: "groups", groupIds: ["other-folder"] }
+  }, member)
+
+  assert.equal(result.results.some((searchResult) => searchResult.fileName === "folder-policy-secret.md"), false)
+  assert.equal(result.diagnostics.index?.visibleManifestCount, 0)
+})
+
+test("semantic-only search includes folderId metadata when requested folder scope matches", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-folder-id-semantic-scope-"))
+  const deps = createLocalDeps(dataDir)
+  const objectStore = deps.objectStore as LocalObjectStore
+  const member: AppUser = { userId: "member-1", email: "member@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create(folder("folder-secret", "/secret", { hasExplicitPolicy: true, policyId: "policy-secret" }))
+  await deps.folderPolicyStore.save(policy("policy-secret", "folder-secret", [
+    { principalType: "user", principalId: member.userId, permissionLevel: "readOnly" }
+  ]))
+  await putFolderPolicySearchManifest(objectStore, {
+    documentId: "folder-policy-secret-folder-id-semantic",
+    text: "kiwifruit launch approval requires folder policy access.",
+    metadata: {
+      scopeType: "folder",
+      folderId: "folder-secret",
+      tenantId: "tenant-a"
+    }
+  })
+
+  const semanticDeps = {
+    ...deps,
+    evidenceVectorStore: {
+      ...deps.evidenceVectorStore,
+      query: async () => [
+        {
+          key: "folder-policy-secret-folder-id-semantic-chunk-0000",
+          score: 0.99,
+          metadata: {
+            kind: "chunk",
+            documentId: "folder-policy-secret-folder-id-semantic",
+            fileName: "folder-policy-secret.md",
+            chunkId: "chunk-0000",
+            text: "kiwifruit launch approval requires folder policy access.",
+            createdAt: "2026-05-20T00:00:00.000Z",
+            lifecycleStatus: "active",
+            tenantId: "tenant-a"
+          }
+        }
+      ]
+    }
+  } as unknown as Dependencies
+
+  const result = await searchRag(semanticDeps, {
+    query: "kiwifruit launch",
+    topK: 10,
+    lexicalTopK: 0,
+    semanticTopK: 5,
+    semanticVector: [1, 0],
+    scope: { mode: "groups", groupIds: ["folder-secret"] }
+  }, member)
+
+  assert.ok(result.diagnostics.semanticCount > 0)
+  assert.equal(result.results[0]?.fileName, "folder-policy-secret.md")
+})
+
 test("service search publishes and reuses immutable lexical index artifacts", async () => {
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-lexical-artifact-"))
   const objectStore = new LocalObjectStore(dataDir)
@@ -644,6 +794,31 @@ function policy(policyId: string, folderId: string, entries: FolderPolicy["entri
     createdAt: "2026-05-17T00:00:00.000Z",
     updatedAt: "2026-05-17T00:00:00.000Z"
   }
+}
+
+async function putFolderPolicySearchManifest(
+  objectStore: LocalObjectStore,
+  input: {
+    documentId: string
+    text: string
+    metadata: Record<string, JsonValue>
+  }
+): Promise<void> {
+  await objectStore.putText(`documents/${input.documentId}/source.txt`, input.text)
+  await objectStore.putText(`manifests/${input.documentId}.json`, JSON.stringify({
+    documentId: input.documentId,
+    fileName: "folder-policy-secret.md",
+    sourceObjectKey: `documents/${input.documentId}/source.txt`,
+    manifestObjectKey: `manifests/${input.documentId}.json`,
+    vectorKeys: [`${input.documentId}-chunk-0000`],
+    evidenceVectorKeys: [`${input.documentId}-chunk-0000`],
+    memoryVectorKeys: [],
+    chunkCount: 1,
+    memoryCardCount: 0,
+    createdAt: "2026-05-20T00:00:00.000Z",
+    lifecycleStatus: "active",
+    metadata: input.metadata
+  }))
 }
 
 function userGroup(groupId: string): UserGroup {

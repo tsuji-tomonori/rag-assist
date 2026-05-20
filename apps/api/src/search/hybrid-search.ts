@@ -712,7 +712,7 @@ function normalize(text: string): string {
 async function canAccessManifest(manifest: DocumentManifest, user: AppUser, access: FolderPermissionService): Promise<boolean> {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
-  const folderIds = stringValues(metadata.folderIds ?? metadata.folderId ?? metadata.groupIds ?? metadata.groupId)
+  const folderIds = folderScopeIds(metadata)
   const scopeType = stringValue(metadata.scopeType)
   if (folderIds.length > 0) {
     const permissions = await access.resolveEffectiveFolderPermissions(user, folderIds)
@@ -801,10 +801,9 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
     if (scopeType !== "chat") return true
     return temporaryMatch
   }
-  const groupIds = stringValues(metadata.groupIds ?? metadata.groupId)
   if (scope.mode === "groups") {
     const requested = new Set(scope.groupIds ?? [])
-    return temporaryMatch || groupIds.some((groupId) => requested.has(groupId))
+    return temporaryMatch || folderScopeIds(metadata).some((folderId) => requested.has(folderId))
   }
   if (scope.mode === "documents") {
     const requested = new Set(scope.documentIds ?? [])
@@ -814,6 +813,10 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
     return Boolean(scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId)
   }
   return true
+}
+
+function folderScopeIds(metadata: Record<string, JsonValue> | undefined): string[] {
+  return stringValues(metadata?.folderIds ?? metadata?.folderId ?? metadata?.groupIds ?? metadata?.groupId)
 }
 
 function stringValues(value: JsonValue | undefined): string[] {
