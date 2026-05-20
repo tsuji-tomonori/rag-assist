@@ -1,6 +1,6 @@
 # PR326 effectivePermission fail-closed fix
 
-- 状態: do
+- 状態: done
 - タスク種別: 修正
 - 対象 PR: https://github.com/tsuji-tomonori/rag-assist/pull/326
 
@@ -36,13 +36,13 @@ Web UI のフォルダ管理判定を `effectivePermission === "full"` のみに
 
 ## 受け入れ条件
 
-- [ ] `canManageDocumentGroup` は `effectivePermission === "full"` のみ true を返す。
-- [ ] `canUploadToGroup` は `effectivePermission === "full"` のみ true を返す。
-- [ ] `effectivePermission` 欠落フォルダは upload 候補に出ない。
-- [ ] `effectivePermission` 欠落フォルダでは削除・再インデックス・共有更新操作が disabled になり、対象 handler が呼ばれない。
-- [ ] 既存の許可系 fixture は必要に応じて `effectivePermission: "full"` を明示する。
-- [ ] 関連 Web 単体テスト、typecheck、lint、docs check が pass する。
-- [ ] PR に受け入れ条件確認コメントとセルフレビューコメントを日本語で追加する。
+- [x] `canManageDocumentGroup` は `effectivePermission === "full"` のみ true を返す。
+- [x] `canUploadToGroup` は `effectivePermission === "full"` のみ true を返す。
+- [x] `effectivePermission` 欠落フォルダは upload 候補に出ない。
+- [x] `effectivePermission` 欠落フォルダでは削除・再インデックス・共有更新操作が disabled になり、対象 handler が呼ばれない。
+- [x] 既存の許可系 fixture は必要に応じて `effectivePermission: "full"` を明示する。
+- [x] 関連 Web 単体テスト、typecheck、lint、docs check が pass する。
+- [x] PR に受け入れ条件確認コメントとセルフレビューコメントを日本語で追加する。
 
 ## 検証計画
 
@@ -68,7 +68,7 @@ Web UI のフォルダ管理判定を `effectivePermission === "full"` のみに
 - `effectivePermission` 欠落 fixture は upload 候補に出ず、upload input/submit は disabled のまま。
 - `effectivePermission` 欠落フォルダの文書削除・再インデックス・共有更新は disabled で handler が呼ばれない。
 - 許可系 fixture は `effectivePermission: "full"` を明示した。
-- PR コメントは push 後に実施するため、現時点では task は `do` のまま維持する。
+- PR に受け入れ条件確認コメントとセルフレビューコメントを投稿済み。
 
 ## PR レビュー観点
 
