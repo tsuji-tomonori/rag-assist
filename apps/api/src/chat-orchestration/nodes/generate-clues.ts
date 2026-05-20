@@ -1,6 +1,6 @@
 import type { Dependencies } from "../../dependencies.js"
-import { parseJsonObject } from "../../rag/json.js"
-import { buildCluePrompt, formatConversationHistory } from "../../rag/prompts.js"
+import { parseJsonObject } from "../../rag/_shared/json.js"
+import { buildCluePrompt, formatConversationHistory } from "../../rag/online/generation/prompt/grounded-prompt-builder.js"
 import { llmOptions } from "../runtime-policy.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../state.js"
 import type { ClueJson } from "../types.js"
