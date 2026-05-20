@@ -46,7 +46,6 @@ export function DocumentFilePanel({
   canReindex,
   canDeleteDocument,
   canReindexDocument,
-  canUploadToDestination,
   migrations,
   selectedMigrationId,
   onDocumentQueryChange,

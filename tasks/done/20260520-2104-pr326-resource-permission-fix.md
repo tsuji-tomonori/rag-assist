@@ -63,6 +63,8 @@ API response と UI 権限制御の挙動が変わるため、既存 docs/genera
 - `npm run build -w @memorag-mvp/web`: pass
 - `npm run test -w @memorag-mvp/api -- access-control-policy`: pass（API workspace の node:test 全体が実行され 287 件 pass）
 - `npm run typecheck -w @memorag-mvp/api`: pass
+- `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: fail -> 修正後 pass
+- `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: fail -> 修正後 pass
 - `npm run docs:web-inventory:check`: pass
 - `npm run docs:openapi:check`: pass
 - `git diff --cached --check`: pass

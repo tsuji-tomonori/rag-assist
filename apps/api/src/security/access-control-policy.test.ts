@@ -214,7 +214,7 @@ test("document group create requires assign_manager for initial sharing payloads
 
   assert.match(
     block,
-    /documentGroupHasLegacyExplicitPolicy\(body\)[\s\S]*?requirePermission\([^\)]*["']rag:group:assign_manager["']\)/,
+    /documentGroupHasLegacyExplicitPolicy\(body\)[\s\S]*?requirePermission\([^)]*["']rag:group:assign_manager["']\)/,
     "POST /document-groups must require rag:group:assign_manager when the create body includes visibility/shared/manager fields"
   )
 })
