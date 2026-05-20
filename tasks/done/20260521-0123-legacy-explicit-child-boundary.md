@@ -1,6 +1,6 @@
 # legacy explicit child boundary の検索認可修正
 
-状態: do
+状態: done
 
 ## 背景
 
