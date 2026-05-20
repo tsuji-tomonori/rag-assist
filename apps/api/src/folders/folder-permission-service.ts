@@ -47,6 +47,17 @@ export class FolderPermissionService {
     const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     const folder = groups.find((group) => group.groupId === folderId)
     if (!folder || folder.status === "archived") return noneDetail(folderId)
+    const parent = folder.parentGroupId ? groups.find((group) => group.groupId === folder.parentGroupId) : undefined
+    if (parent && folder.hasExplicitPolicy === undefined && !folder.policyId) {
+      const parentDetail = await this.resolveEffectiveFolderPermissionDetail(user, parent.groupId)
+      return {
+        folderId,
+        permission: parentDetail.permission,
+        policySource: parentDetail.permission === "none" ? parentDetail.policySource : "inherited",
+        policyId: parentDetail.policyId,
+        inheritedFromFolderId: parentDetail.permission === "none" ? parentDetail.inheritedFromFolderId : parentDetail.inheritedFromFolderId ?? parent.groupId
+      }
+    }
 
     const policyContext = await this.resolvePolicyContext(folder, groups)
     const grants: EffectiveFolderPermission[] = [await this.resolveAdminPrincipalGrant(user, folder)]
@@ -112,7 +123,8 @@ export class FolderPermissionService {
     while (current) {
       if (visited.has(current.groupId)) return { source: "none" }
       visited.add(current.groupId)
-      if (current.hasExplicitPolicy && current.policyId) {
+      if (current.hasExplicitPolicy !== undefined || current.policyId) {
+        if (!current.policyId) return { source: inherited ? "inherited" : "explicit" }
         const policy = await this.deps.folderPolicyStore.get(current.policyId)
         if (!policy) return { source: "none" }
         return {
@@ -217,7 +229,7 @@ function normalizeDocumentGroup(group: DocumentGroup, parent?: DocumentGroup): D
     sharedUserIds: uniqueStrings(group.sharedUserIds ?? []),
     sharedGroups: uniqueStrings(group.sharedGroups ?? []),
     managerUserIds: uniqueStrings([group.ownerUserId, ...(group.managerUserIds ?? [])]),
-    hasExplicitPolicy: group.hasExplicitPolicy ?? Boolean(group.policyId),
+    hasExplicitPolicy: group.hasExplicitPolicy ?? (group.policyId ? true : undefined),
     status: group.status ?? "active",
     createdBy: group.createdBy ?? group.ownerUserId
   }

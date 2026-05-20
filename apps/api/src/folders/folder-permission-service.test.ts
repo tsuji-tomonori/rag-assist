@@ -95,6 +95,64 @@ test("child explicit policy fully overrides inherited parent policy", async () =
   assert.equal(await service.resolveEffectiveFolderPermission(user("reader-1"), "grandchild"), "none")
 })
 
+test("folder permission service does not inherit parent FolderPolicy when child has legacy explicit private policy", async () => {
+  const { documentGroupStore, folderPolicyStore, service } = await fixture()
+  const reader = user("reader-1")
+
+  await documentGroupStore.create(group({
+    groupId: "parent",
+    ownerUserId: "owner-1",
+    hasExplicitPolicy: true,
+    policyId: "policy-parent"
+  }))
+  await folderPolicyStore.save(policy("policy-parent", "parent", [
+    { principalType: "user", principalId: "owner-1", permissionLevel: "full" },
+    { principalType: "user", principalId: "reader-1", permissionLevel: "readOnly" }
+  ]))
+  await documentGroupStore.create(group({
+    groupId: "child-private",
+    parentGroupId: "parent",
+    ownerUserId: "owner-1",
+    hasExplicitPolicy: true,
+    policyId: undefined,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: ["owner-1"]
+  }))
+
+  assert.equal(await service.resolveEffectiveFolderPermission(reader, "child-private"), "none")
+})
+
+test("folder permission service treats hasExplicitPolicy false as legacy explicit child boundary", async () => {
+  const { documentGroupStore, folderPolicyStore, service } = await fixture()
+  const reader = user("reader-1")
+
+  await documentGroupStore.create(group({
+    groupId: "parent",
+    ownerUserId: "owner-1",
+    hasExplicitPolicy: true,
+    policyId: "policy-parent"
+  }))
+  await folderPolicyStore.save(policy("policy-parent", "parent", [
+    { principalType: "user", principalId: "owner-1", permissionLevel: "full" },
+    { principalType: "user", principalId: "reader-1", permissionLevel: "readOnly" }
+  ]))
+  await documentGroupStore.create(group({
+    groupId: "child-private",
+    parentGroupId: "parent",
+    ownerUserId: "owner-1",
+    hasExplicitPolicy: false,
+    policyId: undefined,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: ["owner-1"]
+  }))
+
+  assert.equal(await service.resolveEffectiveFolderPermission(reader, "child-private"), "none")
+})
+
 test("policy save rejects zero full principals and accepts active full group", async () => {
   const { service, userGroupStore, folderPolicyStore } = await fixture()
 

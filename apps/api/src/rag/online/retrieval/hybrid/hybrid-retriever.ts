@@ -1,12 +1,13 @@
 import type { AppUser } from "../../../../auth.js"
 import { config } from "../../../../config.js"
 import type { Dependencies } from "../../../../dependencies.js"
+import { folderPermissionSatisfies } from "../../../../authorization.js"
 import { normalizeSearchTopK, ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
-import { canAccessDocumentGroup } from "../../../../folders/document-group-permissions.js"
+import { FolderPermissionService } from "../../../../folders/folder-permission-service.js"
 import { loadChunksForManifest } from "../../../_shared/storage/manifest-chunks.js"
 import { isQualityApprovedForNormalRag, qualityProfileCacheKey } from "../../../_shared/policies/quality-policy.js"
 import { loadPublishedAliasMap } from "../../../../search/alias-artifacts.js"
-import type { DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../../../../types.js"
+import type { DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../../../../types.js"
 
 export type SearchInput = {
   query: string
@@ -151,6 +152,9 @@ type CachedIndex = {
 
 type AliasMap = Record<string, string[]>
 
+type SearchAuthorizationDeps = Pick<Dependencies, "documentGroupStore" | "folderPolicyStore" | "userGroupStore" | "groupMembershipStore">
+type SearchObjectDeps = SearchAuthorizationDeps & Pick<Dependencies, "objectStore">
+
 let cachedIndex: CachedIndex | undefined
 
 export async function searchRag(deps: Dependencies, input: SearchInput, user: AppUser): Promise<SearchResponse> {
@@ -253,7 +257,7 @@ export async function searchRag(deps: Dependencies, input: SearchInput, user: Ap
 }
 
 export async function getLexicalIndex(
-  deps: Pick<Dependencies, "objectStore" | "documentGroupStore">,
+  deps: SearchObjectDeps,
   user: AppUser,
   filters?: SearchInput["filters"],
   scope?: SearchScope
@@ -261,10 +265,12 @@ export async function getLexicalIndex(
   const started = Date.now()
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
-  const groups = await loadDocumentGroups(deps)
-  const visible = manifests
-    .filter(isActiveManifest)
-    .filter((manifest) => canAccessManifest(manifest, user, groups))
+  const access = new FolderPermissionService(deps)
+  const activeManifests = manifests.filter(isActiveManifest)
+  const accessible = await Promise.all(activeManifests.map(async (manifest) => [manifest, await canAccessManifest(manifest, user, access)] as const))
+  const visible = accessible
+    .filter(([, allowed]) => allowed)
+    .map(([manifest]) => manifest)
     .filter((manifest) => manifestMatchesFilters(manifest, filters))
     .filter((manifest) => manifestMatchesScope(manifest, scope))
     .filter(isQualityApprovedForNormalRag)
@@ -703,14 +709,16 @@ function normalize(text: string): string {
   return text.normalize("NFKC").toLowerCase().trim()
 }
 
-function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: DocumentGroup[] = []): boolean {
+async function canAccessManifest(manifest: DocumentManifest, user: AppUser, access: FolderPermissionService): Promise<boolean> {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
-  const manifestGroupIds = stringValues(metadata.groupIds ?? metadata.groupId)
+  const folderIds = folderScopeIds(metadata)
   const scopeType = stringValue(metadata.scopeType)
-  if (manifestGroupIds.length > 0 || scopeType === "group") {
-    return manifestGroupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))
+  if (folderIds.length > 0) {
+    const permissions = await access.resolveEffectiveFolderPermissions(user, folderIds)
+    return folderIds.some((folderId) => folderPermissionSatisfies(permissions[folderId] ?? "none", "readOnly"))
   }
+  if (scopeType === "group" || scopeType === "folder") return false
   if (stringValue(metadata.ownerUserId) === user.userId) return true
   return canAccessMetadata(metadata, user)
 }
@@ -722,18 +730,26 @@ function isActiveManifest(manifest: DocumentManifest): boolean {
 }
 
 async function filterAccessibleVectorHits(
-  deps: Pick<Dependencies, "objectStore" | "documentGroupStore">,
+  deps: SearchObjectDeps,
   hits: RetrievedVector[],
   user: AppUser,
   scope?: SearchScope
 ): Promise<RetrievedVector[]> {
   const manifestCache = new Map<string, DocumentManifest | undefined>()
-  const groups = await loadDocumentGroups(deps)
+  const access = new FolderPermissionService(deps)
   const result: RetrievedVector[] = []
   for (const hit of hits) {
     if (!canAccessVectorMetadata(hit.metadata, user)) continue
     const manifest = await getCachedManifest(deps, manifestCache, hit.metadata.documentId)
-    if (!manifest || !isActiveManifest(manifest) || !canAccessManifest(manifest, user, groups) || !manifestMatchesScope(manifest, scope) || !isQualityApprovedForNormalRag(manifest)) continue
+    if (
+      !manifest ||
+      !isActiveManifest(manifest) ||
+      !(await canAccessManifest(manifest, user, access)) ||
+      !manifestMatchesScope(manifest, scope) ||
+      !isQualityApprovedForNormalRag(manifest)
+    ) {
+      continue
+    }
     result.push(hit)
   }
   return result
@@ -793,7 +809,7 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
     if (scopeType !== "chat") return true
     return temporaryMatch
   }
-  const groupIds = stringValues(metadata.groupIds ?? metadata.groupId)
+  const groupIds = folderScopeIds(metadata)
   if (scope.mode === "groups") {
     const requested = new Set(scope.groupIds ?? [])
     return temporaryMatch || groupIds.some((groupId) => requested.has(groupId))
@@ -808,18 +824,14 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
   return true
 }
 
-async function loadDocumentGroups(deps: Pick<Dependencies, "documentGroupStore">): Promise<DocumentGroup[]> {
-  try {
-    return await deps.documentGroupStore.list()
-  } catch {
-    return []
-  }
-}
-
 function stringValues(value: JsonValue | undefined): string[] {
   if (typeof value === "string") return [value]
   if (Array.isArray(value)) return value.filter((item): item is string => typeof item === "string")
   return []
+}
+
+function folderScopeIds(metadata: Record<string, JsonValue> | undefined): string[] {
+  return stringValues(metadata?.folderIds ?? metadata?.folderId ?? metadata?.groupIds ?? metadata?.groupId)
 }
 
 function stringValue(value: JsonValue | undefined): string | undefined {

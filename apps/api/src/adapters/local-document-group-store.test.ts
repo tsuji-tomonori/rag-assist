@@ -39,6 +39,12 @@ test("local document group store enforces canonical path locks for create and mo
   await assert.rejects(() => store.createWithPathLock(group("docgrp_1", "/team-copy")), /Document group already exists/)
 
   const sibling = await store.createWithPathLock(group("docgrp_2", "/sibling"))
+  const nestedSameName = await store.createWithPathLock(group("docgrp_3", "/archive/team"))
+  const otherOwnerSamePath = await store.createWithPathLock(group("docgrp_4", "/team", { adminPrincipalId: "owner-2", ownerUserId: "owner-2" }))
+  const otherAdminGroupSamePath = await store.createWithPathLock(group("docgrp_5", "/team", { adminPrincipalType: "group", adminPrincipalId: "team-admin", ownerUserId: "owner-3" }))
+  assert.equal(nestedSameName.normalizedCanonicalPath, "/archive/team")
+  assert.equal(otherOwnerSamePath.adminPathPk, "default#user#owner-2")
+  assert.equal(otherAdminGroupSamePath.adminPathPk, "default#group#team-admin")
   await assert.rejects(() => store.updateWithPathLocks([{
     current: { ...source, updatedAt: "2026-04-30T00:00:00.000Z" },
     next: group("docgrp_1", "/renamed")
@@ -51,8 +57,8 @@ test("local document group store enforces canonical path locks for create and mo
   const moved = { ...group("docgrp_1", "/renamed"), updatedAt: "2026-05-03T00:00:00.000Z" }
   assert.deepEqual(await store.updateWithPathLocks([{ current: source, next: moved }]), [moved])
   assert.equal((await store.findByCanonicalPath("default#user#owner-1", "/renamed"))?.groupId, "docgrp_1")
-  assert.deepEqual((await store.listByAdminPath("default#user#owner-1")).map((item) => item.groupId).sort(), [moved.groupId, sibling.groupId].sort())
-  await assert.rejects(() => store.createWithPathLock(group("docgrp_3", "/renamed")), /canonical path already exists/)
+  assert.deepEqual((await store.listByAdminPath("default#user#owner-1")).map((item) => item.groupId).sort(), [moved.groupId, sibling.groupId, nestedSameName.groupId].sort())
+  await assert.rejects(() => store.createWithPathLock(group("docgrp_6", "/renamed")), /canonical path already exists/)
 })
 
 test("local document group store detects lock conflicts during path updates", async () => {
@@ -68,26 +74,29 @@ test("local document group store detects lock conflicts during path updates", as
   }]), /canonical path already exists/)
 })
 
-function group(groupId: string, normalizedCanonicalPath: string): DocumentGroup {
+function group(groupId: string, normalizedCanonicalPath: string, input: Partial<DocumentGroup> = {}): DocumentGroup {
   const name = normalizedCanonicalPath.split("/").filter(Boolean).at(-1) ?? "team"
+  const adminPrincipalType = input.adminPrincipalType ?? "user"
+  const adminPrincipalId = input.adminPrincipalId ?? "owner-1"
+  const ownerUserId = input.ownerUserId ?? adminPrincipalId
   return {
     groupId,
     schemaVersion: 2,
     itemType: "documentGroup",
     tenantId: "default",
-    adminPrincipalType: "user",
-    adminPrincipalId: "owner-1",
+    adminPrincipalType,
+    adminPrincipalId,
     name,
     normalizedName: name,
     canonicalPath: normalizedCanonicalPath,
     normalizedCanonicalPath,
-    adminPathPk: "default#user#owner-1",
-    parentPathPk: "default#user#owner-1#ROOT",
-    ownerUserId: "owner-1",
+    adminPathPk: `default#${adminPrincipalType}#${adminPrincipalId}`,
+    parentPathPk: `default#${adminPrincipalType}#${adminPrincipalId}#ROOT`,
+    ownerUserId,
     visibility: "private",
     sharedUserIds: [],
     sharedGroups: [],
-    managerUserIds: ["owner-1"],
+    managerUserIds: [ownerUserId],
     createdAt: "2026-05-01T00:00:00.000Z",
     updatedAt: "2026-05-01T00:00:00.000Z"
   }
