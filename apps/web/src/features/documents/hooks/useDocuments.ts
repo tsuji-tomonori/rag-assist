@@ -43,18 +43,18 @@ export type CreateDocumentGroupInput = {
 export function useDocuments({
   modelId,
   embeddingModelId,
+  canWriteDocuments,
   canCreateDocumentGroups,
   canShareDocumentGroups,
-  canWriteDocuments,
   canDeleteDocuments,
   canReindexDocuments,
   setError
 }: {
   modelId: string
   embeddingModelId: string
+  canWriteDocuments: boolean
   canCreateDocumentGroups: boolean
   canShareDocumentGroups: boolean
-  canWriteDocuments: boolean
   canDeleteDocuments: boolean
   canReindexDocuments: boolean
   setLoading: (loading: boolean) => void
@@ -156,11 +156,12 @@ export function useDocuments({
 
   async function onUploadDocumentFile(uploadFile: File): Promise<DocumentUploadResult> {
     if (!canWriteDocuments) return { ok: false, error: "文書をアップロードする権限がありません" }
+    if (!uploadGroupId) return { ok: false, error: "アップロード先フォルダが未指定です" }
     updateOperationState({ isUploading: true })
-    setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId || undefined, phase: "preparing", updatedAt: new Date().toISOString() })
+    setUploadState({ fileName: uploadFile.name, groupId: uploadGroupId, phase: "preparing", updatedAt: new Date().toISOString() })
     setError(null)
     try {
-      const document = await ingestDocument(uploadFile, { groupId: uploadGroupId || undefined })
+      const document = await ingestDocument(uploadFile, { groupId: uploadGroupId })
       setUploadState((current) => current && current.fileName === uploadFile.name ? { ...current, phase: "complete", updatedAt: new Date().toISOString() } : current)
       return { ok: true, document }
     } catch (err) {
@@ -175,14 +176,21 @@ export function useDocuments({
 
   async function onCreateDocumentGroup(input: CreateDocumentGroupInput): Promise<DocumentGroup | undefined> {
     if (!canCreateDocumentGroups) return undefined
+    const safeInput: CreateDocumentGroupInput = canShareDocumentGroups
+      ? input
+      : {
+          name: input.name,
+          ...(input.description !== undefined ? { description: input.description } : {}),
+          ...(input.parentGroupId !== undefined ? { parentGroupId: input.parentGroupId } : {})
+        }
     updateOperationState({ creatingGroup: true })
     setError(null)
     try {
-      const group = await createDocumentGroup(input)
+      const group = await createDocumentGroup(safeInput)
       try {
         await refreshDocumentGroups()
-      } catch (refreshErr) {
-        setError(refreshErr instanceof Error ? refreshErr.message : String(refreshErr))
+      } catch (refreshError) {
+        setError(refreshError instanceof Error ? refreshError.message : String(refreshError))
       }
       return group
     } catch (err) {

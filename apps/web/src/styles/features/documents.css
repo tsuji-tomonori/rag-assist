@@ -91,7 +91,7 @@
   min-width: 0;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(260px, 290px) minmax(620px, 1fr) minmax(300px, 380px);
+  grid-template-columns: minmax(260px, 300px) minmax(620px, 1fr);
   gap: 14px;
 }
 
@@ -300,6 +300,86 @@
 
 .document-folder-actions {
   flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+}
+
+.document-settings-modal-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 52%);
+}
+
+.document-settings-modal {
+  width: min(1040px, 100%);
+  max-height: min(86vh, 940px);
+  min-height: 0;
+  border: 1px solid #d5dfed;
+  border-radius: var(--radius-sm);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: 0 24px 70px rgb(15 23 42 / 24%);
+}
+
+.document-settings-modal-head {
+  min-width: 0;
+  border-bottom: 1px solid #e3e9f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #fbfcfe;
+}
+
+.document-settings-modal-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.document-settings-modal-head h3 {
+  margin: 0;
+  color: #13223d;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.document-settings-modal-head span {
+  min-width: 0;
+  overflow: hidden;
+  color: #60708a;
+  font-size: 12px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-settings-modal-head button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d4deeb;
+  border-radius: var(--radius-xs);
+  display: grid;
+  place-items: center;
+  color: #314769;
+  background: var(--color-surface);
+}
+
+.document-settings-modal-head button .icon {
+  width: 17px;
+  height: 17px;
+}
+
+.document-settings-modal .document-detail-panel {
+  padding: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .document-filter-bar {

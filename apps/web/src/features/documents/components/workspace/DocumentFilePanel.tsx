@@ -1,4 +1,3 @@
-import type { RefObject } from "react"
 import { EmptyState } from "../../../../shared/ui/index.js"
 import { Icon } from "../../../../shared/components/Icon.js"
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner.js"
@@ -40,19 +39,18 @@ export function DocumentFilePanel({
   documentStatusOptions,
   selectedDocument,
   operationState,
-  canShare,
+  canWrite,
   canDelete,
+  canCreateGroups,
+  canShareGroups,
   canReindex,
-  canDeleteDocument,
-  canReindexDocument,
   canUploadToDestination,
   uploadDisabledReason,
   canOpenCreateFolderForm,
+  canDeleteDocument,
+  canReindexDocument,
   migrations,
   selectedMigrationId,
-  uploadInputRef,
-  shareSelectRef,
-  createGroupNameRef,
   onDocumentQueryChange,
   onDocumentTypeFilterChange,
   onDocumentStatusFilterChange,
@@ -61,7 +59,10 @@ export function DocumentFilePanel({
   onDocumentPageChange,
   onDocumentPageSizeChange,
   onSelectDocument,
-  onConfirmAction
+  onConfirmAction,
+  onOpenCreateFolder,
+  onOpenFolderSettings,
+  onOpenUploadPicker
 }: {
   documents: DocumentManifest[]
   documentGroups: DocumentGroup[]
@@ -86,19 +87,18 @@ export function DocumentFilePanel({
   documentStatusOptions: string[]
   selectedDocument: DocumentManifest | null
   operationState: DocumentOperationState
-  canShare: boolean
+  canWrite: boolean
   canDelete: boolean
+  canCreateGroups: boolean
+  canShareGroups: boolean
   canReindex: boolean
-  canDeleteDocument: (document: DocumentManifest) => boolean
-  canReindexDocument: (document: DocumentManifest) => boolean
   canUploadToDestination: boolean
   uploadDisabledReason: string | null
   canOpenCreateFolderForm: boolean
+  canDeleteDocument: (document: DocumentManifest) => boolean
+  canReindexDocument: (document: DocumentManifest) => boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
-  uploadInputRef: RefObject<HTMLInputElement | null>
-  shareSelectRef: RefObject<HTMLSelectElement | null>
-  createGroupNameRef: RefObject<HTMLInputElement | null>
   onDocumentQueryChange: (value: string) => void
   onDocumentTypeFilterChange: (value: string) => void
   onDocumentStatusFilterChange: (value: string) => void
@@ -108,6 +108,9 @@ export function DocumentFilePanel({
   onDocumentPageSizeChange: (pageSize: number) => void
   onSelectDocument: (document: DocumentManifest) => void
   onConfirmAction: (action: ConfirmAction) => void
+  onOpenCreateFolder: () => void
+  onOpenFolderSettings: () => void
+  onOpenUploadPicker: () => void
 }) {
   return (
     <section className="document-file-panel" aria-label="登録文書一覧">
@@ -122,33 +125,33 @@ export function DocumentFilePanel({
             type="button"
             title={uploadDisabledReason ?? `ファイルをアップロード: ${uploadDestinationLabel}`}
             aria-label="ファイルをアップロード"
-            aria-describedby={uploadDisabledReason ? "document-upload-shortcut-reason" : undefined}
+            aria-describedby={uploadDisabledReason ? "upload-shortcut-disabled-reason" : undefined}
             disabled={!canUploadToDestination || operationState.isUploading}
-            onClick={() => uploadInputRef.current?.click()}
+            onClick={onOpenUploadPicker}
           >
             <Icon name="download" />
           </button>
-          {uploadDisabledReason && <span id="document-upload-shortcut-reason" className="sr-only">{uploadDisabledReason}</span>}
           <button
             type="button"
-            title="フォルダを作成"
+            title={operationState.creatingGroup ? "フォルダを作成中です。" : "フォルダを作成"}
             aria-label="フォルダを作成"
             disabled={!canOpenCreateFolderForm}
-            onClick={() => createGroupNameRef.current?.focus()}
+            onClick={onOpenCreateFolder}
           >
             <Icon name="plus" />
           </button>
           <button
             type="button"
-            title="共有設定を編集"
-            aria-label="共有設定を編集"
-            disabled={!canShare || operationState.sharingGroupId !== null}
-            onClick={() => shareSelectRef.current?.focus()}
+            title="フォルダ設定を開く"
+            aria-label="フォルダ設定を開く"
+            disabled={(!canShareGroups && !canCreateGroups && !canWrite) || operationState.sharingGroupId !== null}
+            onClick={onOpenFolderSettings}
           >
             <Icon name="share" />
           </button>
         </div>
       </div>
+      {uploadDisabledReason && <p className="field-hint" id="upload-shortcut-disabled-reason">{uploadDisabledReason}</p>}
 
       <div className="document-filter-bar" aria-label="文書検索と絞り込み">
         <label>
@@ -209,7 +212,7 @@ export function DocumentFilePanel({
           <EmptyState
             title="登録済みドキュメントはありません。"
             description={documentGroups.length === 0 ? "まずフォルダを作成し、保存先を選択してからファイルをアップロードしてください。" : "保存先フォルダを選択してファイルをアップロードしてください。"}
-            action={<button type="button" disabled={!canUploadToDestination} onClick={() => uploadInputRef.current?.click()}>ファイルをアップロード</button>}
+            action={<button type="button" disabled={!canUploadToDestination} onClick={onOpenUploadPicker}>ファイルをアップロード</button>}
           />
         ) : filteredDocumentsCount === 0 ? (
           <EmptyState

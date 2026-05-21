@@ -79,7 +79,13 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: Do
     return groupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))
   }
   if (stringValue(metadata.ownerUserId) === user.userId) return true
+  if (!hasExplicitMetadataAcl(metadata)) return false
   return canAccessMetadata(metadata, user)
+}
+
+function hasExplicitMetadataAcl(metadata: Record<string, JsonValue>): boolean {
+  return stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group).length > 0
+    || stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId).length > 0
 }
 
 function canAccessMetadata(metadata: Record<string, JsonValue>, user: AppUser): boolean {

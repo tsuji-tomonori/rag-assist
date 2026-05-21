@@ -21,9 +21,9 @@ function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}
   return {
     modelId: "model",
     embeddingModelId: "embedding",
+    canWriteDocuments: true,
     canCreateDocumentGroups: true,
     canShareDocumentGroups: true,
-    canWriteDocuments: true,
     canDeleteDocuments: true,
     canReindexDocuments: true,
     setLoading: vi.fn(),
@@ -203,11 +203,12 @@ describe("useDocuments", () => {
     expect(result.current.uploadGroupId).toBe("")
   })
 
-  it("アップロード権限と削除操作に応じて API 呼び出しを分岐する", async () => {
+  it("アップロード権限、フォルダ権限、削除操作に応じて API 呼び出しを分岐する", async () => {
     const props = createProps()
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "b.txt", { type: "" })
 
+    act(() => result.current.setUploadGroupId("group-1"))
     await act(() => result.current.onUploadDocumentFile(file))
     expect(uploadDocumentFile).toHaveBeenCalledWith(expect.objectContaining({
       file,
@@ -215,14 +216,12 @@ describe("useDocuments", () => {
       embeddingModelId: "embedding"
     }))
 
-    const readonly = renderHook(() => useDocuments(createProps({
-      canCreateDocumentGroups: false,
-      canShareDocumentGroups: false,
-      canWriteDocuments: false
-    })))
-    const readonlyUploadResult = await act(() => readonly.result.current.onUploadDocumentFile(file))
-    await act(() => readonly.result.current.onCreateDocumentGroup({ name: "readonly", visibility: "private" }))
-    const readonlyShareResult = await act(() => readonly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    const readonlyUpload = renderHook(() => useDocuments(createProps({ canWriteDocuments: false })))
+    const readonlyUploadResult = await act(() => readonlyUpload.result.current.onUploadDocumentFile(file))
+    const readonlyCreate = renderHook(() => useDocuments(createProps({ canCreateDocumentGroups: false })))
+    await act(() => readonlyCreate.result.current.onCreateDocumentGroup({ name: "readonly", visibility: "private" }))
+    const readonlyShare = renderHook(() => useDocuments(createProps({ canShareDocumentGroups: false })))
+    const readonlyShareResult = await act(() => readonlyShare.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
     expect(uploadDocumentFile).toHaveBeenCalledTimes(1)
     expect(createDocumentGroup).not.toHaveBeenCalled()
     expect(updateDocumentGroup).not.toHaveBeenCalled()
@@ -240,69 +239,15 @@ describe("useDocuments", () => {
     expect(result.current.operationState.deletingDocumentId).toBeNull()
   })
 
-  it("フォルダ作成と共有更新の権限を文書アップロード権限から分離する", async () => {
-    const createOnly = renderHook(() => useDocuments(createProps({
-      canCreateDocumentGroups: true,
-      canShareDocumentGroups: false,
-      canWriteDocuments: false
-    })))
+  it("uploadGroupId が空の場合は通常文書アップロード API を呼ばない", async () => {
+    const { result } = renderHook(() => useDocuments(createProps({ canWriteDocuments: true })))
+    const file = new File(["body"], "missing-folder.txt", { type: "text/plain" })
 
-    await act(() => createOnly.result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
-    const createOnlyUploadResult = await act(() => createOnly.result.current.onUploadDocumentFile(new File(["body"], "memo.txt")))
-    const createOnlyShareResult = await act(() => createOnly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
 
-    expect(createDocumentGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
+    expect(uploadResult).toEqual({ ok: false, error: "アップロード先フォルダが未指定です" })
     expect(uploadDocumentFile).not.toHaveBeenCalled()
-    expect(updateDocumentGroup).not.toHaveBeenCalled()
-    expect(createOnlyUploadResult).toEqual({ ok: false, error: "文書をアップロードする権限がありません" })
-    expect(createOnlyShareResult).toEqual({ ok: false, error: "フォルダ設定を更新する権限がありません" })
-
-    vi.clearAllMocks()
-    vi.mocked(listDocumentGroups).mockResolvedValue([documentGroupFixture()])
-    vi.mocked(listDocuments).mockResolvedValue([{ documentId: "doc-1", fileName: "a.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }])
-    vi.mocked(createDocumentGroup).mockResolvedValue(documentGroupFixture())
-    vi.mocked(updateDocumentGroup).mockResolvedValue(documentGroupFixture())
-    vi.mocked(uploadDocumentFile).mockResolvedValue({ documentId: "doc-2", fileName: "b.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
-
-    const uploadOnly = renderHook(() => useDocuments(createProps({
-      canCreateDocumentGroups: false,
-      canShareDocumentGroups: true,
-      canWriteDocuments: true
-    })))
-    const uploadOnlyCreateResult = await act(() => uploadOnly.result.current.onCreateDocumentGroup({ name: "作れない", visibility: "private" }))
-    await act(() => uploadOnly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
-    await act(() => uploadOnly.result.current.onUploadDocumentFile(new File(["body"], "upload.txt")))
-
-    expect(uploadOnlyCreateResult).toBeUndefined()
-    expect(createDocumentGroup).not.toHaveBeenCalled()
-    expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { visibility: "shared" })
-    expect(uploadDocumentFile).toHaveBeenCalled()
-  })
-
-  it("create-onlyユーザーでは作成成功後の一覧refresh 403を作成失敗扱いにしない", async () => {
-    const setError = vi.fn()
-    const createdGroup = documentGroupFixture({
-      groupId: "group-created",
-      name: "新規資料",
-      canonicalPath: "/新規資料",
-      normalizedCanonicalPath: "/新規資料",
-      normalizedName: "新規資料"
-    })
-    vi.mocked(createDocumentGroup).mockResolvedValueOnce(createdGroup)
-    vi.mocked(listDocumentGroups).mockRejectedValueOnce(new Error("403 Forbidden"))
-
-    const { result } = renderHook(() => useDocuments(createProps({
-      canCreateDocumentGroups: true,
-      canShareDocumentGroups: false,
-      canWriteDocuments: false,
-      setError
-    })))
-
-    const createResult = await act(() => result.current.onCreateDocumentGroup({ name: "新規資料", visibility: "private" }))
-
-    expect(createResult).toEqual(createdGroup)
-    expect(result.current.operationState.creatingGroup).toBe(false)
-    expect(setError).toHaveBeenCalledWith("403 Forbidden")
+    expect(result.current.operationState.isUploading).toBe(false)
   })
 
   it("資料グループの取得、保存先指定、一時添付、共有更新を扱う", async () => {
@@ -388,6 +333,7 @@ describe("useDocuments", () => {
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "error.txt", { type: "text/plain" })
 
+    act(() => result.current.setUploadGroupId("group-1"))
     const deleteResult = await act(() => result.current.onDelete("doc-1"))
     const uploadResult = await act(() => result.current.onUploadDocumentFile(file))
     await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
@@ -421,6 +367,7 @@ describe("useDocuments", () => {
     const { result } = renderHook(() => useDocuments(props))
     const file = new File(["body"], "error.txt", { type: "text/plain" })
 
+    act(() => result.current.setUploadGroupId("group-1"))
     await act(() => result.current.onUploadDocumentFile(file))
     await act(() => result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
     await act(() => result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
@@ -432,5 +379,26 @@ describe("useDocuments", () => {
     expect(props.setError).toHaveBeenCalledWith("share group failed")
     expect(props.setError).toHaveBeenCalledWith("cutover failed")
     expect(props.setError).toHaveBeenCalledWith("rollback failed")
+  })
+
+  it("共有権限がない新規フォルダ作成では共有・管理者 payload を除外する", async () => {
+    const props = createProps({ canCreateDocumentGroups: true, canShareDocumentGroups: false })
+    vi.mocked(createDocumentGroup).mockResolvedValueOnce(documentGroupFixture({ groupId: "group-created" }))
+    const { result } = renderHook(() => useDocuments(props))
+
+    await act(() => result.current.onCreateDocumentGroup({
+      name: "作成のみ",
+      description: "説明",
+      parentGroupId: "parent-1",
+      visibility: "shared",
+      sharedGroups: ["HR"],
+      managerUserIds: ["manager-1"]
+    }))
+
+    expect(createDocumentGroup).toHaveBeenCalledWith({
+      name: "作成のみ",
+      description: "説明",
+      parentGroupId: "parent-1"
+    })
   })
 })

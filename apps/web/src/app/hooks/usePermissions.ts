@@ -6,10 +6,10 @@ export function usePermissions(currentUser: CurrentUser | null) {
     const hasPermission = (permission: Permission) => currentUser?.permissions.includes(permission) ?? false
     const canCreateChat = hasPermission("chat:create")
     const canReadDocuments = hasPermission("rag:doc:read")
-    const canCreateDocumentGroups = hasPermission("rag:group:create")
-    const canShareDocumentGroups = hasPermission("rag:group:assign_manager")
     const canWriteDocuments = hasPermission("rag:doc:write:group")
     const canDeleteDocuments = hasPermission("rag:doc:delete:group")
+    const canCreateDocumentGroups = hasPermission("rag:group:create")
+    const canShareDocumentGroups = hasPermission("rag:group:assign_manager")
     const canReindexDocuments = hasPermission("rag:index:rebuild:group")
     const canReadAliases = hasPermission("rag:alias:read")
     const canWriteAliases = hasPermission("rag:alias:write:group")
@@ -36,7 +36,12 @@ export function usePermissions(currentUser: CurrentUser | null) {
     const canReadUsage = hasPermission("usage:read:all_users")
     const canReadCosts = hasPermission("cost:read:all")
     const canReadAdminAuditLog = canOpenAdminSettings
-    const canManageDocuments = canCreateDocumentGroups || canShareDocumentGroups || canWriteDocuments || canDeleteDocuments || canReindexDocuments
+    const canManageDocuments =
+      canWriteDocuments ||
+      canDeleteDocuments ||
+      canCreateDocumentGroups ||
+      canShareDocumentGroups ||
+      canReindexDocuments
     const canManageAliases = canReadAliases || canWriteAliases || canReviewAliases || canDisableAliases || canPublishAliases
     const canManageUsers = canReadUsers || canCreateUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
     const canAuditOperations = canReadUsage || canReadCosts
@@ -46,10 +51,10 @@ export function usePermissions(currentUser: CurrentUser | null) {
     return {
       canCreateChat,
       canReadDocuments,
-      canCreateDocumentGroups,
-      canShareDocumentGroups,
       canWriteDocuments,
       canDeleteDocuments,
+      canCreateDocumentGroups,
+      canShareDocumentGroups,
       canReindexDocuments,
       canReadAliases,
       canWriteAliases,
