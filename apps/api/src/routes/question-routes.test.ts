@@ -77,6 +77,73 @@ test("questionRoute_listAnswerEditorSeesDefaultSupportQueue", async () => {
   }
 })
 
+test("questionRoute_answerRejectsUnassignedAnswerEditor", async () => {
+  const app = createQuestionRouteApp({ userId: "answerer-1", cognitoGroups: ["ANSWER_EDITOR"], accountStatus: "active" }, {
+    getQuestion: async () => question({ assigneeUserId: "other-answerer", assigneeGroupId: "SUPPORT_OTHER" }),
+    answerQuestion: async () => {
+      throw new Error("answerQuestion must not be called")
+    }
+  })
+
+  const response = await app.request("/questions/ticket-1/answer", answerRequest())
+  const body = await response.json() as {
+    error?: string
+    title?: string
+    question?: string
+    internalMemo?: string
+    sanitizedDiagnostics?: unknown
+  }
+
+  assert.equal(response.status, 404)
+  assert.equal(body.error, "Question not found")
+  assert.equal(body.title, undefined)
+  assert.equal(body.question, undefined)
+  assert.equal(body.internalMemo, undefined)
+  assert.equal(body.sanitizedDiagnostics, undefined)
+})
+
+test("questionRoute_answerAllowsAssignedUser", async () => {
+  const app = createQuestionRouteApp({ userId: "answerer-1", cognitoGroups: ["ANSWER_EDITOR"], accountStatus: "active" }, {
+    getQuestion: async () => question({ assigneeUserId: "answerer-1", assigneeGroupId: "SUPPORT_OTHER" }),
+    answerQuestion: async () => question({ status: "answered", answerBody: "回答本文", assigneeUserId: "answerer-1" })
+  })
+
+  const response = await app.request("/questions/ticket-1/answer", answerRequest())
+  const body = await response.json() as { status?: string; answerBody?: string }
+
+  assert.equal(response.status, 200)
+  assert.equal(body.status, "answered")
+  assert.equal(body.answerBody, "回答本文")
+})
+
+test("questionRoute_answerAllowsAssignedGroupMember", async () => {
+  const app = createQuestionRouteApp({ userId: "answerer-1", cognitoGroups: ["ANSWER_EDITOR", "SUPPORT_DEFAULT"], accountStatus: "active" }, {
+    getQuestion: async () => question({ assigneeGroupId: "SUPPORT_DEFAULT" }),
+    answerQuestion: async () => question({ status: "answered", answerBody: "回答本文", assigneeGroupId: "SUPPORT_DEFAULT" })
+  })
+
+  const response = await app.request("/questions/ticket-1/answer", answerRequest())
+  const body = await response.json() as { status?: string; assigneeGroupId?: string }
+
+  assert.equal(response.status, 200)
+  assert.equal(body.status, "answered")
+  assert.equal(body.assigneeGroupId, "SUPPORT_DEFAULT")
+})
+
+test("questionRoute_answerAllowsReadAllAdmin", async () => {
+  const app = createQuestionRouteApp({ userId: "admin-1", cognitoGroups: ["SYSTEM_ADMIN"], accountStatus: "active" }, {
+    getQuestion: async () => question({ assigneeUserId: "other-answerer", assigneeGroupId: "SUPPORT_OTHER" }),
+    answerQuestion: async () => question({ status: "answered", answerBody: "管理者回答" })
+  })
+
+  const response = await app.request("/questions/ticket-1/answer", answerRequest())
+  const body = await response.json() as { status?: string; answerBody?: string }
+
+  assert.equal(response.status, 200)
+  assert.equal(body.status, "answered")
+  assert.equal(body.answerBody, "管理者回答")
+})
+
 function createQuestionRouteApp(user: AppUser, service: Record<string, unknown>) {
   const app = new OpenAPIHono<AppEnv>()
   app.use("*", async (c, next) => {
@@ -85,6 +152,17 @@ function createQuestionRouteApp(user: AppUser, service: Record<string, unknown>)
   })
   registerQuestionRoutes({ app, deps: {} as never, service: service as never })
   return app
+}
+
+function answerRequest(): RequestInit {
+  return {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      answerTitle: "回答タイトル",
+      answerBody: "回答本文"
+    })
+  }
 }
 
 function question(overrides: Partial<HumanQuestion> = {}): HumanQuestion {

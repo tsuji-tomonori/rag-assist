@@ -115,7 +115,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
         const { questionId } = validParam<{ questionId: string }>(c)
         const question = await service.getQuestion(questionId)
         if (!question) return c.json({ error: "Question not found" }, 404)
-        if (!hasPermission(user, "answer:publish") && !canAccessAssignedTicket(user, question)) {
+        if (!canReadAllTickets(user) && !canAccessAssignedTicket(user, question)) {
           return c.json({ error: "Question not found" }, 404)
         }
         const body = validJson<z.infer<typeof AnswerQuestionRequestSchema>>(c)
