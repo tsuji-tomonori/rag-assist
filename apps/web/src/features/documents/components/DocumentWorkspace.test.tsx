@@ -2,7 +2,8 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
-import { DocumentWorkspace, getCreateFolderDisabledReason } from "./DocumentWorkspace.js"
+import { DocumentWorkspace } from "./DocumentWorkspace.js"
+import { getCreateFolderDisabledReason } from "./workspace/documentWorkspaceUtils.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-05-01T00:00:00.000Z" }

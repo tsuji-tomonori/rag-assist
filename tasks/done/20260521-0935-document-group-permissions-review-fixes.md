@@ -32,3 +32,8 @@ PR #330 の再レビューで、フォルダ作成ショートカットの disab
 - `npm run test -w @memorag-mvp/web -- --coverage`: 初回 1 件失敗、App test fixture を API 返却相当に修正後 pass
 - `npm run test -w @memorag-mvp/api -- --coverage`: pass
 - `git diff --check`: pass
+- `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: pass
+- `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
+- `npm run docs:web-inventory:check`: pass
+- `npm run test -w @memorag-mvp/web -- DocumentWorkspace.test.tsx useDocuments.test.ts App.test.tsx`: pass
+- `npm run test -w @memorag-mvp/api -- api-contract.test.ts`: pass

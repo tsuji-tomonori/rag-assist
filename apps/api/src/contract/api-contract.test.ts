@@ -490,7 +490,7 @@ test("document group create route rejects inaccessible parent and duplicate cano
     stdio: ["ignore", "pipe", "pipe"]
   })
 
-  let parentGroupId = ""
+  let parentGroupId: string | undefined
   try {
     await waitUntilReady(ownerServer, port)
     const createParent = await fetch(`http://127.0.0.1:${port}/document-groups`, {
@@ -513,6 +513,7 @@ test("document group create route rejects inaccessible parent and duplicate cano
   } finally {
     await stopServer(ownerServer)
   }
+  assert.ok(parentGroupId)
 
   const outsiderServer = spawn(tsxBin, ["src/local.ts"], {
     cwd: process.cwd(),
@@ -565,7 +566,7 @@ test("document group create route rejects read-only parent folders", async () =>
     stdio: ["ignore", "pipe", "pipe"]
   })
 
-  let parentGroupId = ""
+  let parentGroupId: string | undefined
   try {
     await waitUntilReady(ownerServer, port)
     const createParent = await fetch(`http://127.0.0.1:${port}/document-groups`, {
@@ -579,6 +580,7 @@ test("document group create route rejects read-only parent folders", async () =>
   } finally {
     await stopServer(ownerServer)
   }
+  assert.ok(parentGroupId)
 
   const readOnlyServer = spawn(tsxBin, ["src/local.ts"], {
     cwd: process.cwd(),
