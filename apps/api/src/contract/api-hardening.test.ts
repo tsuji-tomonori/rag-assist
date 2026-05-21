@@ -35,7 +35,8 @@ test("production config rejects fail-open auth", () => {
     NODE_ENV: "production",
     AUTH_ENABLED: "false",
     CORS_ALLOWED_ORIGINS: "https://app.example.com",
-    DOCS_BUCKET_NAME: "docs-bucket"
+    DOCS_BUCKET_NAME: "docs-bucket",
+    FAVORITES_TABLE_NAME: "favorites-table"
   })
 
   assert.notEqual(result.status, 0)
@@ -48,6 +49,7 @@ test("production config temporarily allows wildcard CORS origins", () => {
     AUTH_ENABLED: "true",
     CORS_ALLOWED_ORIGINS: "*",
     DOCS_BUCKET_NAME: "docs-bucket",
+    FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_REGION: "ap-northeast-1",
     COGNITO_USER_POOL_ID: "ap-northeast-1_example",
     COGNITO_APP_CLIENT_ID: "client-id"
@@ -64,6 +66,7 @@ test("production config requires Cognito settings when auth is enabled", () => {
     AUTH_ENABLED: "true",
     CORS_ALLOWED_ORIGINS: "https://app.example.com",
     DOCS_BUCKET_NAME: "docs-bucket",
+    FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_REGION: "ap-northeast-1",
     COGNITO_USER_POOL_ID: "",
     COGNITO_APP_CLIENT_ID: ""
@@ -80,6 +83,7 @@ test("production config parses explicit runtime environment values", () => {
     AUTH_ENABLED: "true",
     CORS_ALLOWED_ORIGINS: "https://app.example.com, https://admin.example.com",
     DOCS_BUCKET_NAME: "docs-bucket",
+    FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_USER_POOL_ID: "us-west-2_example",
     COGNITO_APP_CLIENT_ID: "client-id",
     PORT: "9000.5",
@@ -126,6 +130,7 @@ test("production config rejects missing docs bucket and invalid scalar values", 
     AUTH_ENABLED: "true",
     CORS_ALLOWED_ORIGINS: "https://app.example.com",
     DOCS_BUCKET_NAME: "docs-bucket",
+    FAVORITES_TABLE_NAME: "favorites-table",
     COGNITO_REGION: "ap-northeast-1",
     COGNITO_USER_POOL_ID: "ap-northeast-1_example",
     COGNITO_APP_CLIENT_ID: "client-id"
@@ -146,6 +151,10 @@ test("production config rejects missing docs bucket and invalid scalar values", 
     ...requiredProductionEnv,
     COGNITO_APP_CLIENT_ID: ""
   })
+  const missingFavoritesTable = importConfigInSubprocess({
+    ...requiredProductionEnv,
+    FAVORITES_TABLE_NAME: ""
+  })
 
   assert.notEqual(missingDocsBucket.status, 0)
   assert.match(missingDocsBucket.stderr, /DOCS_BUCKET_NAME is required in production/)
@@ -155,6 +164,8 @@ test("production config rejects missing docs bucket and invalid scalar values", 
   assert.match(invalidNumber.stderr, /PORT must be a finite number in production/)
   assert.notEqual(missingAppClient.status, 0)
   assert.match(missingAppClient.stderr, /COGNITO_APP_CLIENT_ID is required in production/)
+  assert.notEqual(missingFavoritesTable.status, 0)
+  assert.match(missingFavoritesTable.stderr, /FAVORITES_TABLE_NAME is required in production/)
 })
 
 test("development config falls back for invalid scalar values", () => {

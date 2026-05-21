@@ -1092,6 +1092,45 @@ export const ConversationHistoryListResponseSchema = z.object({
   history: z.array(ConversationHistoryItemSchema)
 })
 
+export const FavoriteTargetTypeSchema = z.enum([
+  "chatSession",
+  "chatMessage",
+  "folder",
+  "document",
+  "agentExecutionPreset",
+  "skill",
+  "agentProfile",
+  "benchmarkRun"
+])
+
+export const CreateFavoriteTargetTypeSchema = z.enum([
+  "chatSession",
+  "folder",
+  "document"
+])
+
+export const FavoriteSchema = z.object({
+  favoriteId: z.string(),
+  targetType: FavoriteTargetTypeSchema,
+  targetId: z.string(),
+  label: z.string().optional(),
+  note: z.string().optional(),
+  accessible: z.boolean().default(true),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional()
+})
+
+export const FavoriteListResponseSchema = z.object({
+  favorites: z.array(FavoriteSchema)
+})
+
+export const CreateFavoriteRequestSchema = z.object({
+  targetType: CreateFavoriteTargetTypeSchema,
+  targetId: z.string().min(1),
+  label: z.string().max(200).optional(),
+  note: z.string().max(1000).optional()
+})
+
 export const CreateQuestionRequestSchema = z.object({
   title: z.string().min(1).max(120).openapi({ example: "山田さんの昼食について確認したい" }),
   question: z.string().min(1).max(2000).openapi({ example: "今日山田さんは何を食べたか、担当者に確認してください。" }),

@@ -8,6 +8,7 @@ import {
   buildAssigneeRouteProps,
   buildBenchmarkRouteProps,
   buildDocumentRouteProps,
+  buildFavoritesRouteProps,
   buildHistoryRouteProps,
   buildProfileRouteProps
 } from "../routeProps/featureRouteProps.js"
@@ -22,6 +23,7 @@ import { useChatSession } from "../../features/chat/hooks/useChatSession.js"
 import { useDebugRuns, useDebugSelection } from "../../features/debug/hooks/useDebugRuns.js"
 import type { DocumentWorkspaceUrlState } from "../../features/documents/components/DocumentWorkspace.js"
 import { useDocuments } from "../../features/documents/hooks/useDocuments.js"
+import { useFavorites } from "../../features/favorites/hooks/useFavorites.js"
 import { useConversationHistory } from "../../features/history/hooks/useConversationHistory.js"
 import { useQuestions } from "../../features/questions/hooks/useQuestions.js"
 
@@ -177,6 +179,13 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     updateHistoryQuestionTickets,
     createConversationId
   } = useConversationHistory({ setError })
+
+  const {
+    favorites,
+    refreshFavorites,
+    addFavorite,
+    removeFavorite
+  } = useFavorites({ setError })
 
   const {
     debugRuns,
@@ -339,7 +348,10 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     if (canReadCosts) loaders.push(refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err)))
     if (canReadAliases) loaders.push(refreshAliases().catch((err) => console.warn("Failed to load aliases", err)))
     if (canAnswerQuestions) loaders.push(refreshQuestions().catch((err) => console.warn("Failed to load questions", err)))
-    if (canReadHistory) loaders.push(refreshHistory().catch((err) => console.warn("Failed to load conversation history", err)))
+    if (canReadHistory) {
+      loaders.push(refreshHistory().catch((err) => console.warn("Failed to load conversation history", err)))
+      loaders.push(refreshFavorites().catch((err) => console.warn("Failed to load favorites", err)))
+    }
     if (loaders.length === 0) return
     setLoading(true)
     void Promise.all(loaders).finally(() => setLoading(false))
@@ -639,7 +651,13 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
         setPendingDebugQuestion(null)
       },
       onDelete: deleteHistoryItem,
-      onToggleFavorite: toggleFavorite,
+      onToggleFavorite: (item) => {
+        void toggleFavorite(item, { addFavorite, removeFavorite })
+      },
+      onBack: () => setActiveView("chat")
+    }),
+    favoritesProps: buildFavoritesRouteProps({
+      favorites,
       onBack: () => setActiveView("chat")
     }),
     profileProps: buildProfileRouteProps({

@@ -78,6 +78,7 @@ export class MemoRagMvpStack extends Stack {
     const evidenceVectorIndexName = "evidence-index"
     const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
     const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
+    const defaultSupportAssigneeGroupId = String(this.node.tryGetContext("defaultSupportAssigneeGroupId") ?? "ANSWER_EDITOR")
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -148,10 +149,31 @@ export class MemoRagMvpStack extends Stack {
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.DESTROY
     })
+    for (const [indexName, partitionKey] of [
+      ["RequesterUpdatedAtIndex", "requesterUserId"],
+      ["AssigneeUserUpdatedAtIndex", "assigneeUserId"],
+      ["AssigneeGroupUpdatedAtIndex", "assigneeGroupId"],
+      ["StatusUpdatedAtIndex", "status"]
+    ] as const) {
+      questionsTable.addGlobalSecondaryIndex({
+        indexName,
+        partitionKey: { name: partitionKey, type: dynamodb.AttributeType.STRING },
+        sortKey: { name: "updatedAt", type: dynamodb.AttributeType.STRING },
+        projectionType: dynamodb.ProjectionType.ALL
+      })
+    }
 
     const conversationHistoryTable = new dynamodb.Table(this, "ConversationHistoryTable", {
       partitionKey: { name: "userId", type: dynamodb.AttributeType.STRING },
       sortKey: { name: "id", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
+    const favoritesTable = new dynamodb.Table(this, "FavoritesTable", {
+      partitionKey: { name: "ownerUserId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "targetKey", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
       removalPolicy: RemovalPolicy.DESTROY
@@ -355,7 +377,9 @@ export class MemoRagMvpStack extends Stack {
       MOCK_BEDROCK: "false",
       DOCS_BUCKET_NAME: docsBucket.bucketName,
       QUESTION_TABLE_NAME: questionsTable.tableName,
+      DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID: defaultSupportAssigneeGroupId,
       CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
+      FAVORITES_TABLE_NAME: favoritesTable.tableName,
       BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
       CHAT_RUNS_TABLE_NAME: chatRunsTable.tableName,
       CHAT_RUN_EVENTS_TABLE_NAME: chatRunEventsTable.tableName,
@@ -365,8 +389,6 @@ export class MemoRagMvpStack extends Stack {
       BENCHMARK_BUCKET_NAME: benchmarkBucket.bucketName,
       BENCHMARK_DEFAULT_DATASET_KEY: "datasets/agent/standard-v1.jsonl",
       BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS: "900",
-      USE_LOCAL_QUESTION_STORE: "false",
-      USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
       USE_LOCAL_BENCHMARK_RUN_STORE: "false",
       USE_LOCAL_CHAT_RUN_STORE: "false",
       VECTOR_BUCKET_NAME: vectorBucketName,
@@ -499,6 +521,7 @@ export class MemoRagMvpStack extends Stack {
       benchmarkBucket.grantRead(fn)
       questionsTable.grantReadWriteData(fn)
       conversationHistoryTable.grantReadWriteData(fn)
+      favoritesTable.grantReadWriteData(fn)
       benchmarkRunsTable.grantReadWriteData(fn)
       chatRunsTable.grantReadWriteData(fn)
       chatRunEventsTable.grantReadWriteData(fn)

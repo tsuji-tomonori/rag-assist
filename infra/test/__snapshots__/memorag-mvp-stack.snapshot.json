@@ -998,9 +998,95 @@
           {
             "AttributeName": "questionId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "requesterUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "updatedAt",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "assigneeUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "assigneeGroupId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "status",
+            "AttributeType": "S"
           }
         ],
         "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "RequesterUpdatedAtIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "requesterUserId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          },
+          {
+            "IndexName": "AssigneeUserUpdatedAtIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "assigneeUserId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          },
+          {
+            "IndexName": "AssigneeGroupUpdatedAtIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "assigneeGroupId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          },
+          {
+            "IndexName": "StatusUpdatedAtIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "status",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
         "KeySchema": [
           {
             "AttributeName": "questionId",
@@ -1061,6 +1147,63 @@
           },
           {
             "AttributeName": "id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "FavoritesTable4DA8A306": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "ownerUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "targetKey",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "ownerUserId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "targetKey",
             "KeyType": "RANGE"
           }
         ],
@@ -2705,6 +2848,20 @@
                     "HumanQuestionsTable5DA9688B",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "HumanQuestionsTable5DA9688B",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -2720,257 +2877,6 @@
                     "HumanQuestionsTable5DA9688B",
                     "Arn"
                   ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ConversationHistoryTable59A3534C",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ConversationHistoryTable59A3534C",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "BenchmarkRunsTableD0841636",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "BenchmarkRunsTableD0841636",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ChatRunsTable8446CD95",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ChatRunsTable8446CD95",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ChatRunEventsTable7455A50E",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ChatRunEventsTable7455A50E",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunsTableEA8F8CCA",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunsTableEA8F8CCA",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunEventsTableF4692EBE",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunEventsTableF4692EBE",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentGroupsTableA5108040",
-                    "Arn"
-                  ]
                 },
                 {
                   "Fn::Join": [
@@ -2978,7 +2884,7 @@
                     [
                       {
                         "Fn::GetAtt": [
-                          "DocumentGroupsTableA5108040",
+                          "HumanQuestionsTable5DA9688B",
                           "Arn"
                         ]
                       },
@@ -2990,8 +2896,282 @@
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConversationHistoryTable59A3534C",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
                 "dynamodb:GetRecords",
                 "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConversationHistoryTable59A3534C",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FavoritesTable4DA8A306",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FavoritesTable4DA8A306",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunsTableD0841636",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunsTableD0841636",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunsTableEA8F8CCA",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunsTableEA8F8CCA",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunEventsTableF4692EBE",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunEventsTableF4692EBE",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
               ],
               "Effect": "Allow",
               "Resource": [
@@ -3024,6 +3204,53 @@
               ],
               "Effect": "Allow",
               "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
+        "Roles": [
+          {
+            "Ref": "ApiFunctionServiceRole52B9747B"
+          }
+        ]
+      }
+    },
+    "ApiFunctionServiceRoleOverflowPolicy15B8AE146": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "Description": "Part of the policies for MemoRagMvpStackTest/ApiFunction/ServiceRole",
+        "Path": "/",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
             },
             {
               "Action": [
@@ -3059,25 +3286,7 @@
               ],
               "Effect": "Allow",
               "Resource": "*"
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "PolicyName": "ApiFunctionServiceRoleDefaultPolicy20A32B8D",
-        "Roles": [
-          {
-            "Ref": "ApiFunctionServiceRole52B9747B"
-          }
-        ]
-      }
-    },
-    "ApiFunctionServiceRoleOverflowPolicy15B8AE146": {
-      "Type": "AWS::IAM::ManagedPolicy",
-      "Properties": {
-        "Description": "Part of the policies for MemoRagMvpStackTest/ApiFunction/ServiceRole",
-        "Path": "/",
-        "PolicyDocument": {
-          "Statement": [
+            },
             {
               "Action": "states:StartExecution",
               "Effect": "Allow",
@@ -3170,8 +3379,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -3196,8 +3409,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "VECTOR_BUCKET_NAME": {
@@ -3539,6 +3750,20 @@
                     "HumanQuestionsTable5DA9688B",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "HumanQuestionsTable5DA9688B",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3554,257 +3779,6 @@
                     "HumanQuestionsTable5DA9688B",
                     "Arn"
                   ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ConversationHistoryTable59A3534C",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ConversationHistoryTable59A3534C",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "BenchmarkRunsTableD0841636",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "BenchmarkRunsTableD0841636",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ChatRunsTable8446CD95",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ChatRunsTable8446CD95",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ChatRunEventsTable7455A50E",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "ChatRunEventsTable7455A50E",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunsTableEA8F8CCA",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunsTableEA8F8CCA",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunEventsTableF4692EBE",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunEventsTableF4692EBE",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentGroupsTableA5108040",
-                    "Arn"
-                  ]
                 },
                 {
                   "Fn::Join": [
@@ -3812,7 +3786,7 @@
                     [
                       {
                         "Fn::GetAtt": [
-                          "DocumentGroupsTableA5108040",
+                          "HumanQuestionsTable5DA9688B",
                           "Arn"
                         ]
                       },
@@ -3824,8 +3798,282 @@
             },
             {
               "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConversationHistoryTable59A3534C",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
                 "dynamodb:GetRecords",
                 "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ConversationHistoryTable59A3534C",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FavoritesTable4DA8A306",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FavoritesTable4DA8A306",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunsTableD0841636",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "BenchmarkRunsTableD0841636",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunsTable8446CD95",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "ChatRunEventsTable7455A50E",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunsTableEA8F8CCA",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunsTableEA8F8CCA",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunEventsTableF4692EBE",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentIngestRunEventsTableF4692EBE",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
               ],
               "Effect": "Allow",
               "Resource": [
@@ -3858,6 +4106,53 @@
               ],
               "Effect": "Allow",
               "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE",
+        "Roles": [
+          {
+            "Ref": "HeavyApiFunctionServiceRole25A7AE5E"
+          }
+        ]
+      }
+    },
+    "HeavyApiFunctionServiceRoleOverflowPolicy13079BA64": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "Description": "Part of the policies for MemoRagMvpStackTest/HeavyApiFunction/ServiceRole",
+        "Path": "/",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
             },
             {
               "Action": [
@@ -3893,25 +4188,7 @@
               ],
               "Effect": "Allow",
               "Resource": "*"
-            }
-          ],
-          "Version": "2012-10-17"
-        },
-        "PolicyName": "HeavyApiFunctionServiceRoleDefaultPolicyC207D4DE",
-        "Roles": [
-          {
-            "Ref": "HeavyApiFunctionServiceRole25A7AE5E"
-          }
-        ]
-      }
-    },
-    "HeavyApiFunctionServiceRoleOverflowPolicy13079BA64": {
-      "Type": "AWS::IAM::ManagedPolicy",
-      "Properties": {
-        "Description": "Part of the policies for MemoRagMvpStackTest/HeavyApiFunction/ServiceRole",
-        "Path": "/",
-        "PolicyDocument": {
-          "Statement": [
+            },
             {
               "Action": "states:StartExecution",
               "Effect": "Allow",
@@ -4004,8 +4281,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -4030,8 +4311,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "VECTOR_BUCKET_NAME": {
@@ -4512,8 +4791,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -4538,8 +4821,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "VECTOR_BUCKET_NAME": {
@@ -4833,8 +5114,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -4859,8 +5144,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "VECTOR_BUCKET_NAME": {
@@ -5146,8 +5429,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -5172,8 +5459,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "VECTOR_BUCKET_NAME": {
@@ -5594,8 +5879,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -5620,8 +5909,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "VECTOR_BUCKET_NAME": {
@@ -5920,8 +6207,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -5946,8 +6237,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "VECTOR_BUCKET_NAME": {

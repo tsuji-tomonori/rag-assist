@@ -1273,6 +1273,32 @@ export type HumanQuestion = {
   resolvedAt?: string
 }
 
+export type FavoriteTargetType =
+  | "chatSession"
+  | "chatMessage"
+  | "folder"
+  | "document"
+  | "agentExecutionPreset"
+  | "skill"
+  | "agentProfile"
+  | "benchmarkRun"
+
+export type FavoriteItem = {
+  favoriteId: string
+  ownerUserId: string
+  targetKey: string
+  targetType: FavoriteTargetType
+  targetId: string
+  label?: string
+  note?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type FavoriteListItem = Omit<FavoriteItem, "ownerUserId" | "targetKey"> & {
+  accessible: boolean
+}
+
 export type ConversationMessage = {
   role: "user" | "assistant"
   text: string

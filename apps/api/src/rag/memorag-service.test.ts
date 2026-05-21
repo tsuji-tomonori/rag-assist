@@ -8,6 +8,7 @@ import { setTimeout as delay } from "node:timers/promises"
 import test from "node:test"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
+import { LocalFavoriteStore } from "../adapters/local-favorite-store.js"
 import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
 import type { AppUser } from "../auth.js"
@@ -26,6 +27,7 @@ import { CommandAsyncAgentProvider } from "../async-agent/command-provider.js"
 import { AsyncAgentProviderRegistry, type AsyncAgentProviderAdapter, type AsyncAgentProviderInput } from "../async-agent/provider.js"
 import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { authorizeDocumentDelete } from "../routes/benchmark-seed.js"
+import { config } from "../config.js"
 import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
@@ -1201,7 +1203,7 @@ test("service delegates human question lifecycle to the question store", async (
     qualityWarnings: ["検索語対応づけの確認が必要"],
     suggestedNextActions: ["search_improvement_review"]
   })
-  assert.equal((await service.listQuestions())[0]?.questionId, question.questionId)
+  assert.equal((await service.listAllQuestionsForAdmin())[0]?.questionId, question.questionId)
   assert.equal((await service.getQuestion(question.questionId))?.questionId, question.questionId)
 
   const answered = await service.answerQuestion(question.questionId, {
@@ -1215,6 +1217,81 @@ test("service delegates human question lifecycle to the question store", async (
 
   const resolved = await service.resolveQuestion(question.questionId)
   assert.equal(resolved.status, "resolved")
+})
+
+test("questionCreate_setsDefaultAssigneeGroupWhenMissing", async () => {
+  const mutableConfig = config as { defaultSupportAssigneeGroupId: string }
+  const previous = mutableConfig.defaultSupportAssigneeGroupId
+  mutableConfig.defaultSupportAssigneeGroupId = "support-default"
+  try {
+    const { service } = await createService()
+    const question = await service.createQuestion({
+      title: "資料外の質問",
+      question: "担当者へ確認してください。"
+    }, { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] })
+
+    assert.equal(question.assigneeGroupId, "support-default")
+  } finally {
+    mutableConfig.defaultSupportAssigneeGroupId = previous
+  }
+})
+
+test("conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites", async () => {
+  const { service, deps } = await createService()
+  const userId = "user-1"
+  for (let index = 1; index <= 21; index += 1) {
+    await service.saveConversationHistory(userId, {
+      id: `conv-${index}`,
+      title: `会話 ${index}`,
+      messages: [],
+      updatedAt: `2026-05-${String(index).padStart(2, "0")}T00:00:00.000Z`
+    })
+  }
+  await deps.favoriteStore.save(userId, { targetType: "chatSession", targetId: "conv-1", label: "古いお気に入り" })
+
+  const history = await service.listConversationHistory(userId)
+
+  assert.equal(history.length, 20)
+  assert.equal(history[0]?.id, "conv-1")
+  assert.equal(history[0]?.isFavorite, true)
+  assert.equal(history.some((item) => item.id === "conv-2"), false)
+})
+
+test("favoriteList_marksUnsupportedTargetTypeInaccessible", async () => {
+  const { service, deps } = await createService()
+  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  await deps.favoriteStore.save(user.userId, { targetType: "skill", targetId: "skill-1", label: "Skill 1" })
+
+  const favorites = await service.listFavorites(user)
+
+  assert.equal(favorites[0]?.targetType, "skill")
+  assert.equal(favorites[0]?.accessible, false)
+  assert.equal(favorites[0]?.label, "この項目には現在アクセスできません")
+})
+
+test("favoriteCreateDoesNotReturnAccessibleTrueWithoutResolver", async () => {
+  const { service } = await createService()
+  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await assert.rejects(() => service.saveFavorite(user, { targetType: "skill", targetId: "skill-1" }), /Unsupported favorite target type/)
+})
+
+test("favoriteCreateRechecksChatSessionOwner", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const other: AppUser = { userId: "other-1", email: "other@example.com", cognitoGroups: ["CHAT_USER"] }
+  await service.saveConversationHistory(owner.userId, {
+    id: "conv-1",
+    title: "会話",
+    messages: [],
+    updatedAt: "2026-05-21T00:00:00.000Z"
+  })
+
+  const ownerFavorite = await service.saveFavorite(owner, { targetType: "chatSession", targetId: "conv-1", label: "会話" })
+  const otherFavorite = await service.saveFavorite(other, { targetType: "chatSession", targetId: "conv-1", label: "会話" })
+
+  assert.equal(ownerFavorite.accessible, true)
+  assert.equal(otherFavorite.accessible, false)
 })
 
 test("service preserves asynchronous chat run options and can mark worker failures", async () => {
@@ -2389,6 +2466,7 @@ async function createService(options: {
     textModel: options.textModel ?? new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    favoriteStore: new LocalFavoriteStore(dataDir),
     benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),

@@ -2430,7 +2430,9 @@ function createDeps(): Dependencies {
       create: async () => {
         throw new Error("not used")
       },
-      list: async () => [],
+      listAssignedToUser: async () => [],
+      listRequestedByUser: async () => [],
+      listAllForAdmin: async () => [],
       get: async () => undefined,
       answer: async () => {
         throw new Error("not used")
@@ -2444,6 +2446,14 @@ function createDeps(): Dependencies {
         throw new Error("not used")
       },
       list: async () => [],
+      delete: async () => undefined
+    },
+    favoriteStore: {
+      save: async () => {
+        throw new Error("not used")
+      },
+      list: async () => [],
+      get: async () => undefined,
       delete: async () => undefined
     }
   } as unknown as Dependencies

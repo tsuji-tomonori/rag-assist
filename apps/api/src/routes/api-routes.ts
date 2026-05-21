@@ -9,6 +9,7 @@ import { registerChatRoutes } from "./chat-routes.js"
 import { registerConversationHistoryRoutes } from "./conversation-history-routes.js"
 import { registerDebugRoutes } from "./debug-routes.js"
 import { registerDocumentRoutes } from "./document-routes.js"
+import { registerFavoriteRoutes } from "./favorite-routes.js"
 import { registerQuestionRoutes } from "./question-routes.js"
 import { registerSystemRoutes } from "./system-routes.js"
 
@@ -22,6 +23,7 @@ export function registerApiRoutes(app: OpenAPIHono<AppEnv>, deps: Dependencies, 
   registerChatRoutes(context)
   registerQuestionRoutes(context)
   registerConversationHistoryRoutes(context)
+  registerFavoriteRoutes(context)
   registerDebugRoutes(context)
   registerBenchmarkRoutes(context)
   registerAgentRoutes(context)

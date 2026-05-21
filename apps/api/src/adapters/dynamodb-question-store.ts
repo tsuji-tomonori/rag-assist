@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto"
-import { DynamoDBClient, GetItemCommand, PutItemCommand, ScanCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb"
+import { GetItemCommand, PutItemCommand, QueryCommand, UpdateItemCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
-import { config } from "../config.js"
 import type { HumanQuestion } from "../types.js"
 import type { AnswerQuestionInput, CreateQuestionInput, QuestionStore } from "./question-store.js"
+import { createDynamoDbClient } from "./dynamodb-client.js"
 
 export class DynamoDbQuestionStore implements QuestionStore {
   private readonly client: DynamoDBClient
 
-  constructor(private readonly tableName: string, client = new DynamoDBClient({ region: config.region })) {
+  constructor(private readonly tableName: string, client = createDynamoDbClient()) {
     this.client = client
   }
 
@@ -51,11 +51,22 @@ export class DynamoDbQuestionStore implements QuestionStore {
     return question
   }
 
-  async list(): Promise<HumanQuestion[]> {
-    const result = await this.client.send(new ScanCommand({ TableName: this.tableName }))
-    return (result.Items ?? [])
-      .map((item) => unmarshall(item) as HumanQuestion)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  async listAssignedToUser(userId: string, groupIds: string[]): Promise<HumanQuestion[]> {
+    const [userItems, ...groupItems] = await Promise.all([
+      this.queryByIndex("AssigneeUserUpdatedAtIndex", "assigneeUserId", userId),
+      ...groupIds.map((groupId) => this.queryByIndex("AssigneeGroupUpdatedAtIndex", "assigneeGroupId", groupId))
+    ])
+    return sortAndDedupeQuestions([...userItems, ...groupItems.flat()])
+  }
+
+  async listRequestedByUser(userId: string): Promise<HumanQuestion[]> {
+    return this.queryByIndex("RequesterUpdatedAtIndex", "requesterUserId", userId)
+  }
+
+  async listAllForAdmin(): Promise<HumanQuestion[]> {
+    const statuses: HumanQuestion["status"][] = ["open", "in_progress", "waiting_requester", "answered", "resolved"]
+    const results = await Promise.all(statuses.map((status) => this.queryByIndex("StatusUpdatedAtIndex", "status", status)))
+    return sortAndDedupeQuestions(results.flat())
   }
 
   async get(questionId: string): Promise<HumanQuestion | undefined> {
@@ -123,4 +134,29 @@ export class DynamoDbQuestionStore implements QuestionStore {
     if (!result.Attributes) throw new Error("Question not found")
     return unmarshall(result.Attributes) as HumanQuestion
   }
+
+  private async queryByIndex(indexName: string, keyName: string, keyValue: string): Promise<HumanQuestion[]> {
+    if (!keyValue) return []
+    const items: HumanQuestion[] = []
+    let ExclusiveStartKey: Record<string, unknown> | undefined
+    do {
+      const result = await this.client.send(new QueryCommand({
+        TableName: this.tableName,
+        IndexName: indexName,
+        KeyConditionExpression: "#pk = :pk",
+        ExpressionAttributeNames: { "#pk": keyName },
+        ExpressionAttributeValues: marshall({ ":pk": keyValue }),
+        ExclusiveStartKey: ExclusiveStartKey as never
+      }))
+      items.push(...(result.Items ?? []).map((item) => unmarshall(item) as HumanQuestion))
+      ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined
+    } while (ExclusiveStartKey)
+    return items
+  }
+}
+
+function sortAndDedupeQuestions(questions: HumanQuestion[]): HumanQuestion[] {
+  const byId = new Map<string, HumanQuestion>()
+  for (const question of questions) byId.set(question.questionId, question)
+  return [...byId.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 }
