@@ -1,6 +1,6 @@
 # DynamoDB-backed store PR レビュー指摘対応
 
-状態: do
+状態: done
 タスク種別: 修正
 
 ## 背景
@@ -19,11 +19,17 @@ PR #332 のレビューで、runtime LocalStore fallback、suspended SYSTEM_ADMI
 
 ## 検証計画
 
-- `npm run typecheck -w @memorag-mvp/api`
-- `npm test -w @memorag-mvp/api`
-- `npm run docs:openapi:check -w @memorag-mvp/api`
-- `git diff --check`
+- `npm run typecheck --workspace apps/api`: pass
+- `./node_modules/.bin/tsx --test apps/api/src/dependencies.test.ts apps/api/src/adapters/dynamodb-question-store.test.ts apps/api/src/adapters/dynamodb-favorite-store.test.ts apps/api/src/adapters/dynamodb-conversation-history-store.test.ts apps/api/src/migrations/backfill-favorites.test.ts apps/api/src/routes/question-routes.test.ts apps/api/src/questions-access.test.ts apps/api/src/rag/memorag-service.test.ts`: pass, 83 tests
+- `npm run docs:openapi`: pass
+- `npm run docs:openapi:check`: pass
+- `git diff --check`: pass
 
 ## 完了条件
 
 実装、テスト、検証、作業レポート、commit/push、PR コメント、セルフレビューコメントまで完了したら `tasks/done/` へ移動する。
+
+## PR コメント
+
+- レビュー指摘対応コメント: https://github.com/tsuji-tomonori/rag-assist/pull/332#issuecomment-4504375425
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/332#issuecomment-4504376362
