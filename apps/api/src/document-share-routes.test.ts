@@ -48,6 +48,18 @@ test("document direct share routes do not leak share metadata to direct readOnly
     assert.deepEqual(ownerShareInfo.directDocumentGrants.map((grant) => [grant.principalId, grant.permissionLevel, grant.tenantId]), [["user-b", "readOnly", "default"]])
 
     await putJson(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`, {
+      grants: [
+        { principalType: "user", principalId: "user-b", permissionLevel: "readOnly" },
+        { principalType: "user", principalId: "user-b", permissionLevel: "full" }
+      ],
+      reason: "duplicate principal check"
+    }, { expectedStatus: 400 })
+    await putJson(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`, {
+      grants: [{ principalType: "user", principalId: "   ", permissionLevel: "readOnly" }],
+      reason: "blank principal check"
+    }, { expectedStatus: 400 })
+
+    await putJson(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`, {
       grants: [{ principalType: "user", principalId: "user-b", permissionLevel: "full" }],
       reason: "delegate document administration"
     })
@@ -152,12 +164,13 @@ async function postJson<T>(server: LocalServer, route: string, body: unknown, op
   return response.json() as Promise<T>
 }
 
-async function putJson<T>(server: LocalServer, route: string, body: unknown): Promise<T> {
+async function putJson<T>(server: LocalServer, route: string, body: unknown, options: { expectedStatus?: number } = {}): Promise<T> {
   const response = await fetch(url(server, route), {
     method: "PUT",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body)
   })
-  assert.equal(response.status, 200)
+  assert.equal(response.status, options.expectedStatus ?? 200)
+  if (options.expectedStatus && options.expectedStatus !== 200) return undefined as T
   return response.json() as Promise<T>
 }

@@ -274,30 +274,31 @@ export async function getLexicalIndex(
     .filter(([, allowed]) => allowed)
     .map(([manifest]) => manifest)
     .filter((manifest) => manifestMatchesFilters(manifest, filters))
-    .filter((manifest) => manifestMatchesScope(manifest, scope))
+  const scoped = await filterManifestsByScope(visible, scope, user, access)
+  const approved = scoped
     .filter(isQualityApprovedForNormalRag)
-  const publishedAliases = await loadPublishedAliasMap(deps, filters, visible.map((manifest) => manifest.metadata))
-  const aliases = mergeAliases([publishedAliases.aliases, ...visible.map((manifest) => aliasMapFromMetadata(manifest.metadata))])
+  const publishedAliases = await loadPublishedAliasMap(deps, filters, approved.map((manifest) => manifest.metadata))
+  const aliases = mergeAliases([publishedAliases.aliases, ...approved.map((manifest) => aliasMapFromMetadata(manifest.metadata))])
   const combinedAliasSignature = stableStringifyAliasMap(aliases)
   const aliasSignature = publishedAliases.version === "none" ? combinedAliasSignature : `${publishedAliases.version}:${combinedAliasSignature}`
-  const signature = visible
+  const signature = approved
     .map((manifest) => `${manifest.documentId}:${manifest.chunkCount}:${manifest.createdAt}:${qualityProfileCacheKey(manifest)}:${stableStringifyAliasMap(aliasMapFromMetadata(manifest.metadata))}`)
     .sort()
     .concat(`aliases:${publishedAliases.version}:${stableStringifyAliasMap(publishedAliases.aliases)}`)
     .join("|")
   if (cachedIndex && cachedIndex.signature === signature) {
-    cachedIndex.index.diagnostics = indexDiagnostics(visible.length, cachedIndex.index.nDocs, "memory", started)
+    cachedIndex.index.diagnostics = indexDiagnostics(approved.length, cachedIndex.index.nDocs, "memory", started)
     return cachedIndex.index
   }
   const artifact = await loadLexicalIndexArtifact(deps, signature)
   if (artifact) {
-    artifact.diagnostics = indexDiagnostics(visible.length, artifact.nDocs, "artifact", started)
+    artifact.diagnostics = indexDiagnostics(approved.length, artifact.nDocs, "artifact", started)
     cachedIndex = { signature, index: artifact }
     return artifact
   }
 
   const docs: LexicalDocument[] = []
-  for (const manifest of visible) {
+  for (const manifest of approved) {
     const chunks = await loadChunksForManifest(deps, manifest)
     for (const chunk of chunks) {
       docs.push({
@@ -314,7 +315,7 @@ export async function getLexicalIndex(
   }
 
   const index = buildLexicalIndex(docs, versionLabel("lexical", signature || "empty"), aliases, aliasVersionLabel(aliasSignature))
-  index.diagnostics = indexDiagnostics(visible.length, index.nDocs, "built", started)
+  index.diagnostics = indexDiagnostics(approved.length, index.nDocs, "built", started)
   if (config.publishLexicalIndexOnSearch) await publishLexicalIndexArtifact(deps, signature, index)
   cachedIndex = { signature, index }
   return index
@@ -750,7 +751,7 @@ async function filterAccessibleVectorHits(
       !manifest ||
       !isActiveManifest(manifest) ||
       !(await canAccessManifest(manifest, user, access, documentAccess)) ||
-      !manifestMatchesScope(manifest, scope) ||
+      !(await manifestMatchesScopeForUser(manifest, scope, user, access)) ||
       !isQualityApprovedForNormalRag(manifest)
     ) {
       continue
@@ -827,6 +828,36 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
     return Boolean(scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId)
   }
   return true
+}
+
+async function filterManifestsByScope(
+  manifests: DocumentManifest[],
+  scope: SearchScope | undefined,
+  user: AppUser,
+  access: FolderPermissionService
+): Promise<DocumentManifest[]> {
+  const scoped = await Promise.all(manifests.map(async (manifest) => [manifest, await manifestMatchesScopeForUser(manifest, scope, user, access)] as const))
+  return scoped.filter(([, allowed]) => allowed).map(([manifest]) => manifest)
+}
+
+async function manifestMatchesScopeForUser(
+  manifest: DocumentManifest,
+  scope: SearchScope | undefined,
+  user: AppUser,
+  access: FolderPermissionService
+): Promise<boolean> {
+  if (!scope || scope.mode !== "groups") return manifestMatchesScope(manifest, scope)
+  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return manifestMatchesScope(manifest, scope)
+  const metadata = manifest.metadata ?? {}
+  const temporaryMatch = Boolean(
+    scope.includeTemporary && scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId
+  )
+  if (temporaryMatch) return true
+  const requested = new Set(scope.groupIds ?? [])
+  const matchingFolderIds = folderScopeIds(metadata).filter((folderId) => requested.has(folderId))
+  if (matchingFolderIds.length === 0) return false
+  const permissions = await access.resolveEffectiveFolderPermissions(user, matchingFolderIds)
+  return matchingFolderIds.some((folderId) => folderPermissionSatisfies(permissions[folderId] ?? "none", "readOnly"))
 }
 
 function stringValues(value: JsonValue | undefined): string[] {

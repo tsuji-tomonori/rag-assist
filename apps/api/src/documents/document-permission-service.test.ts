@@ -14,6 +14,8 @@ import {
   calculateEffectiveDocumentPermission,
   canMoveDocument,
   canShareDocument,
+  DocumentShareConflictError,
+  DocumentShareValidationError,
   DocumentPermissionService,
   validateDocumentMoveRequest,
   validateDocumentShareRequest
@@ -41,14 +43,21 @@ test("document share and move guards require full document permission and operat
 })
 
 test("document share and move request validators require reason and destination", () => {
-  assert.throws(() => validateDocumentShareRequest([], ""), /reason/)
+  assert.throws(() => validateDocumentShareRequest([], ""), DocumentShareValidationError)
+  assert.throws(() => validateDocumentShareRequest([
+    { principalType: "user", principalId: "user-b", permissionLevel: "readOnly" },
+    { principalType: "user", principalId: "user-b", permissionLevel: "full" }
+  ], "重複確認"), DocumentShareValidationError)
+  assert.throws(() => validateDocumentShareRequest([
+    { principalType: "user", principalId: "   ", permissionLevel: "readOnly" }
+  ], "空白確認"), DocumentShareValidationError)
   assert.doesNotThrow(() => validateDocumentShareRequest([{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }], "確認依頼"))
   assert.throws(() => validateDocumentMoveRequest({ reason: "整理" }), /destinationFolderId/)
   assert.throws(() => validateDocumentMoveRequest({ destinationFolderId: "folder-1" }), /reason/)
 })
 
 test("direct document grants are isolated by tenant", async () => {
-  const service = await createDocumentPermissionService()
+  const { service } = await createDocumentPermissionFixture()
   const actor = manager
   const reader: AppUser = { userId: "user-b", email: "b@example.com", cognitoGroups: ["CHAT_USER"] }
   const tenantA = manifest("doc-1", "tenant-a")
@@ -64,15 +73,68 @@ test("direct document grants are isolated by tenant", async () => {
   assert.deepEqual(tenantAShare.directDocumentGrants.map((grant) => grant.principalId), ["user-b"])
 })
 
-async function createDocumentPermissionService(): Promise<DocumentPermissionService> {
+test("document share ledgers are saved per document without cross-document lost updates", async () => {
+  const { service } = await createDocumentPermissionFixture()
+  const docA = manifest("doc-a", "tenant-a")
+  const docB = manifest("doc-b", "tenant-a")
+
+  await Promise.all([
+    service.replaceDocumentShareGrants(manager, docA, [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }], "doc A share"),
+    service.replaceDocumentShareGrants(manager, docB, [{ principalType: "user", principalId: "user-c", permissionLevel: "full" }], "doc B share")
+  ])
+
+  const docAShare = await service.getShareInfo(manager, docA)
+  const docBShare = await service.getShareInfo(manager, docB)
+  assert.deepEqual(docAShare.directDocumentGrants.map((grant) => [grant.documentId, grant.principalId, grant.permissionLevel]), [["doc-a", "user-b", "readOnly"]])
+  assert.deepEqual(docBShare.directDocumentGrants.map((grant) => [grant.documentId, grant.principalId, grant.permissionLevel]), [["doc-b", "user-c", "full"]])
+})
+
+test("concurrent replacements for the same document fail with conflict instead of dropping grants silently", async () => {
+  const { service } = await createDocumentPermissionFixture()
+  const doc = manifest("doc-1", "tenant-a")
+
+  const results = await Promise.allSettled([
+    service.replaceDocumentShareGrants(manager, doc, [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }], "first share"),
+    service.replaceDocumentShareGrants(manager, doc, [{ principalType: "user", principalId: "user-c", permissionLevel: "readOnly" }], "second share")
+  ])
+
+  assert.equal(results.filter((result) => result.status === "fulfilled").length, 1)
+  const rejected = results.find((result) => result.status === "rejected")
+  assert.ok(rejected)
+  assert.ok((rejected as PromiseRejectedResult).reason instanceof DocumentShareConflictError)
+  const grants = (await service.getShareInfo(manager, doc)).directDocumentGrants
+  assert.equal(grants.length, 1)
+})
+
+test("share grant updates and move audit entries use separate per-document ledgers", async () => {
+  const { service } = await createDocumentPermissionFixture()
+  const doc = manifest("doc-1", "tenant-a")
+
+  await Promise.all([
+    service.replaceDocumentShareGrants(manager, doc, [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }], "share for review"),
+    service.appendDocumentAudit(manager, "document:move", "tenant-a", "doc-1", { folderIds: ["old"] }, { folderIds: ["new"] }, "整理")
+  ])
+
+  const shareInfo = await service.getShareInfo(manager, doc)
+  const auditLog = await service.listAuditLog()
+  assert.deepEqual(shareInfo.directDocumentGrants.map((grant) => grant.principalId), ["user-b"])
+  assert.ok(auditLog.some((entry) => entry.documentId === "doc-1" && entry.action === "document:move"))
+  assert.ok(auditLog.some((entry) => entry.documentId === "doc-1" && entry.action === "document:share"))
+})
+
+async function createDocumentPermissionFixture(): Promise<{ service: DocumentPermissionService; objectStore: LocalObjectStore }> {
   const dataDir = await mkdtemp(path.join(tmpdir(), "doc-permission-service-test-"))
-  return new DocumentPermissionService({
-    objectStore: new LocalObjectStore(dataDir),
-    documentGroupStore: new LocalDocumentGroupStore(dataDir),
-    folderPolicyStore: new LocalFolderPolicyStore(dataDir),
-    userGroupStore: new LocalUserGroupStore(dataDir),
-    groupMembershipStore: new LocalGroupMembershipStore(dataDir)
-  })
+  const objectStore = new LocalObjectStore(dataDir)
+  return {
+    objectStore,
+    service: new DocumentPermissionService({
+      objectStore,
+      documentGroupStore: new LocalDocumentGroupStore(dataDir),
+      folderPolicyStore: new LocalFolderPolicyStore(dataDir),
+      userGroupStore: new LocalUserGroupStore(dataDir),
+      groupMembershipStore: new LocalGroupMembershipStore(dataDir)
+    })
+  }
 }
 
 function manifest(documentId: string, tenantId: string): DocumentManifest {

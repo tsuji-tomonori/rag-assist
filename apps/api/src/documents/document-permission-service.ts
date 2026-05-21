@@ -45,7 +45,11 @@ function tenantIdForManifest(manifest: DocumentManifest): string {
   return typeof manifest.metadata?.tenantId === "string" ? manifest.metadata.tenantId : "default"
 }
 
-const documentShareLedgerKey = "documents/share-grants.json"
+const documentShareLegacyLedgerKey = "documents/share-grants.json"
+const documentShareGrantPrefix = "documents/share-grants"
+const documentShareAuditPrefix = "documents/share-audit"
+const activeDocumentShareReplacements = new Set<string>()
+const documentShareAuditQueues = new Map<string, Promise<void>>()
 
 const permissionRank: Record<EffectiveDocumentPermission, number> = {
   none: 0,
@@ -64,13 +68,10 @@ export class DocumentPermissionService {
 
   async getShareInfo(user: AppUser, manifest: DocumentManifest): Promise<DocumentShareInfo> {
     const tenantId = tenantIdForManifest(manifest)
-    const [ledger, folderPermission] = await Promise.all([
-      this.loadLedger(),
+    const [directDocumentGrants, folderPermission] = await Promise.all([
+      this.loadDocumentGrants(tenantId, manifest.documentId),
       this.resolveFolderPermission(user, manifest)
     ])
-    const directDocumentGrants = ledger.grants
-      .filter((grant) => grant.tenantId === tenantId && grant.documentId === manifest.documentId)
-      .sort((a, b) => a.principalType.localeCompare(b.principalType) || a.principalId.localeCompare(b.principalId))
     const directPermission = await this.resolveDirectDocumentPermission(user, manifest.documentId, directDocumentGrants)
     return {
       inheritedFolderGrants: this.folderIds(manifest).map((folderId) => ({ folderId, permissionLevel: folderPermission })),
@@ -81,13 +82,12 @@ export class DocumentPermissionService {
 
   async resolveEffectiveDocumentPermission(user: AppUser, manifest: DocumentManifest): Promise<EffectiveDocumentPermission> {
     if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return "full"
-    const ledger = await this.loadLedger()
     const folderPermission = await this.resolveFolderPermission(user, manifest)
     const tenantId = tenantIdForManifest(manifest)
     const directPermission = await this.resolveDirectDocumentPermission(
       user,
       manifest.documentId,
-      ledger.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === manifest.documentId)
+      await this.loadDocumentGrants(tenantId, manifest.documentId)
     )
     return calculateEffectiveDocumentPermission(folderPermission, directPermission)
   }
@@ -99,31 +99,28 @@ export class DocumentPermissionService {
     reason: string
   ): Promise<DocumentShareInfo> {
     validateDocumentShareRequest(grants, reason)
-    const now = new Date().toISOString()
-    const ledger = await this.loadLedger()
     const tenantId = tenantIdForManifest(manifest)
-    const before = ledger.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === manifest.documentId)
-    const normalized = normalizeGrantInputs(grants)
-    const nextGrants: DocumentShareGrant[] = normalized.map((grant) => ({
-      documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
-      itemType: "documentShareGrant",
-      tenantId,
-      documentId: manifest.documentId,
-      principalType: grant.principalType,
-      principalId: grant.principalId,
-      permissionLevel: grant.permissionLevel,
-      createdBy: actor.userId,
-      reason,
-      createdAt: now,
-      updatedAt: now
-    }))
-    ledger.grants = [
-      ...ledger.grants.filter((grant) => !(grant.tenantId === tenantId && grant.documentId === manifest.documentId)),
-      ...nextGrants
-    ]
-    appendAudit(ledger, actor, "document:share", tenantId, manifest.documentId, before, nextGrants, reason, now)
-    await this.saveLedger(ledger)
-    return this.getShareInfo(actor, manifest)
+    return this.runDocumentShareReplacement(tenantId, manifest.documentId, async () => {
+      const now = new Date().toISOString()
+      const before = await this.loadDocumentGrants(tenantId, manifest.documentId)
+      const normalized = normalizeGrantInputs(grants)
+      const nextGrants: DocumentShareGrant[] = normalized.map((grant) => ({
+        documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
+        itemType: "documentShareGrant",
+        tenantId,
+        documentId: manifest.documentId,
+        principalType: grant.principalType,
+        principalId: grant.principalId,
+        permissionLevel: grant.permissionLevel,
+        createdBy: actor.userId,
+        reason,
+        createdAt: now,
+        updatedAt: now
+      }))
+      await this.saveDocumentGrants(tenantId, manifest.documentId, nextGrants)
+      await this.appendDocumentAudit(actor, "document:share", tenantId, manifest.documentId, before, nextGrants, reason, now)
+      return this.getShareInfo(actor, manifest)
+    })
   }
 
   async appendDocumentAudit(
@@ -133,11 +130,14 @@ export class DocumentPermissionService {
     documentId: string,
     before: unknown,
     after: unknown,
-    reason: string
+    reason: string,
+    createdAt = new Date().toISOString()
   ): Promise<void> {
-    const ledger = await this.loadLedger()
-    appendAudit(ledger, actor, action, tenantId, documentId, before, after, reason, new Date().toISOString())
-    await this.saveLedger(ledger)
+    await this.runDocumentAuditAppend(tenantId, documentId, async () => {
+      const auditLog = await this.loadDocumentAudit(tenantId, documentId)
+      auditLog.unshift(buildAuditEntry(actor, action, tenantId, documentId, before, after, reason, createdAt))
+      await this.saveDocumentAudit(tenantId, documentId, auditLog.slice(0, 500))
+    })
   }
 
   async listAuditLog(): Promise<DocumentShareAuditLogEntry[]> {
@@ -146,25 +146,128 @@ export class DocumentPermissionService {
   }
 
   async loadLedger(): Promise<DocumentShareLedger> {
+    const [grants, auditLog] = await Promise.all([
+      this.loadAllDocumentGrants(),
+      this.loadAllDocumentAudit()
+    ])
     try {
-      const raw = JSON.parse(await this.deps.objectStore.getText(documentShareLedgerKey)) as Partial<DocumentShareLedger>
+      const raw = JSON.parse(await this.deps.objectStore.getText(documentShareLegacyLedgerKey)) as Partial<DocumentShareLedger>
       return {
         schemaVersion: 1,
-        grants: Array.isArray(raw.grants) ? raw.grants : [],
-        auditLog: Array.isArray(raw.auditLog) ? raw.auditLog : []
+        grants: mergeGrants(grants, Array.isArray(raw.grants) ? raw.grants : []),
+        auditLog: mergeAuditEntries(auditLog, Array.isArray(raw.auditLog) ? raw.auditLog : [])
       }
     } catch (err) {
-      if (isMissingObjectError(err) || err instanceof SyntaxError) return { schemaVersion: 1, grants: [], auditLog: [] }
+      if (isMissingObjectError(err) || err instanceof SyntaxError) return { schemaVersion: 1, grants, auditLog }
       throw err
     }
   }
 
-  private async saveLedger(ledger: DocumentShareLedger): Promise<void> {
-    await this.deps.objectStore.putText(documentShareLedgerKey, JSON.stringify({
+  private async loadDocumentGrants(tenantId: string, documentId: string): Promise<DocumentShareGrant[]> {
+    const current = await this.loadDocumentGrantFile(tenantId, documentId)
+    if (current.length > 0) return current
+    return this.loadLegacyDocumentGrants(tenantId, documentId)
+  }
+
+  private async loadDocumentGrantFile(tenantId: string, documentId: string): Promise<DocumentShareGrant[]> {
+    try {
+      const raw = JSON.parse(await this.deps.objectStore.getText(documentShareGrantKey(tenantId, documentId))) as Partial<DocumentShareLedger>
+      return sortGrants(Array.isArray(raw.grants) ? raw.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === documentId) : [])
+    } catch (err) {
+      if (isMissingObjectError(err) || err instanceof SyntaxError) return []
+      throw err
+    }
+  }
+
+  private async loadLegacyDocumentGrants(tenantId: string, documentId: string): Promise<DocumentShareGrant[]> {
+    try {
+      const raw = JSON.parse(await this.deps.objectStore.getText(documentShareLegacyLedgerKey)) as Partial<DocumentShareLedger>
+      return sortGrants(Array.isArray(raw.grants) ? raw.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === documentId) : [])
+    } catch (err) {
+      if (isMissingObjectError(err) || err instanceof SyntaxError) return []
+      throw err
+    }
+  }
+
+  private async saveDocumentGrants(tenantId: string, documentId: string, grants: DocumentShareGrant[]): Promise<void> {
+    await this.deps.objectStore.putText(documentShareGrantKey(tenantId, documentId), JSON.stringify({
       schemaVersion: 1,
-      grants: ledger.grants,
-      auditLog: ledger.auditLog.slice(0, 500)
+      grants: sortGrants(grants)
     }, null, 2), "application/json")
+  }
+
+  private async loadDocumentAudit(tenantId: string, documentId: string): Promise<DocumentShareAuditLogEntry[]> {
+    try {
+      const raw = JSON.parse(await this.deps.objectStore.getText(documentShareAuditKey(tenantId, documentId))) as Partial<DocumentShareLedger>
+      return Array.isArray(raw.auditLog) ? raw.auditLog : []
+    } catch (err) {
+      if (isMissingObjectError(err) || err instanceof SyntaxError) return []
+      throw err
+    }
+  }
+
+  private async saveDocumentAudit(tenantId: string, documentId: string, auditLog: DocumentShareAuditLogEntry[]): Promise<void> {
+    await this.deps.objectStore.putText(documentShareAuditKey(tenantId, documentId), JSON.stringify({
+      schemaVersion: 1,
+      auditLog
+    }, null, 2), "application/json")
+  }
+
+  private async runDocumentShareReplacement<T>(tenantId: string, documentId: string, task: () => Promise<T>): Promise<T> {
+    const key = `${tenantId}:${documentId}`
+    if (activeDocumentShareReplacements.has(key)) throw new DocumentShareConflictError("document share grants changed concurrently")
+    activeDocumentShareReplacements.add(key)
+    try {
+      return await task()
+    } finally {
+      activeDocumentShareReplacements.delete(key)
+    }
+  }
+
+  private async runDocumentAuditAppend(tenantId: string, documentId: string, task: () => Promise<void>): Promise<void> {
+    const key = `${tenantId}:${documentId}`
+    const previous = documentShareAuditQueues.get(key) ?? Promise.resolve()
+    let release: () => void = () => undefined
+    const current = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const queued = previous.then(() => current, () => current)
+    documentShareAuditQueues.set(key, queued)
+    await previous.catch(() => undefined)
+    try {
+      await task()
+    } finally {
+      release()
+      if (documentShareAuditQueues.get(key) === queued) documentShareAuditQueues.delete(key)
+    }
+  }
+
+  private async loadAllDocumentGrants(): Promise<DocumentShareGrant[]> {
+    const keys = await this.deps.objectStore.listKeys(`${documentShareGrantPrefix}/`)
+    const entries = await Promise.all(keys.filter((key) => key.endsWith(".json")).map(async (key) => {
+      try {
+        const raw = JSON.parse(await this.deps.objectStore.getText(key)) as Partial<DocumentShareLedger>
+        return Array.isArray(raw.grants) ? raw.grants : []
+      } catch (err) {
+        if (isMissingObjectError(err) || err instanceof SyntaxError) return []
+        throw err
+      }
+    }))
+    return sortGrants(entries.flat())
+  }
+
+  private async loadAllDocumentAudit(): Promise<DocumentShareAuditLogEntry[]> {
+    const keys = await this.deps.objectStore.listKeys(`${documentShareAuditPrefix}/`)
+    const entries = await Promise.all(keys.filter((key) => key.endsWith(".json")).map(async (key) => {
+      try {
+        const raw = JSON.parse(await this.deps.objectStore.getText(key)) as Partial<DocumentShareLedger>
+        return Array.isArray(raw.auditLog) ? raw.auditLog : []
+      } catch (err) {
+        if (isMissingObjectError(err) || err instanceof SyntaxError) return []
+        throw err
+      }
+    }))
+    return entries.flat()
   }
 
   private async resolveFolderPermission(user: AppUser, manifest: DocumentManifest): Promise<EffectiveFolderPermission> {
@@ -236,7 +339,7 @@ export function canMoveDocument(
 }
 
 export function validateDocumentShareRequest(grants: DocumentShareGrantInput[], reason: string): void {
-  if (!reason.trim()) throw new Error("reason is required")
+  if (!reason.trim()) throw new DocumentShareValidationError("reason is required")
   normalizeGrantInputs(grants)
 }
 
@@ -252,9 +355,9 @@ function normalizeGrantInputs(grants: DocumentShareGrantInput[]): DocumentShareG
     principalId: grant.principalId.trim(),
     permissionLevel: grant.permissionLevel
   })).filter((grant) => {
-    if (!grant.principalId) throw new Error("principalId is required")
+    if (!grant.principalId) throw new DocumentShareValidationError("principalId is required")
     const key = `${grant.principalType}:${grant.principalId}`
-    if (seen.has(key)) throw new Error(`duplicate grant: ${key}`)
+    if (seen.has(key)) throw new DocumentShareValidationError(`duplicate grant: ${key}`)
     seen.add(key)
     return true
   })
@@ -275,8 +378,7 @@ function stringArray(value: unknown): string[] {
   return []
 }
 
-function appendAudit(
-  ledger: DocumentShareLedger,
+function buildAuditEntry(
   actor: AppUser,
   action: DocumentShareAuditAction,
   tenantId: string,
@@ -285,8 +387,8 @@ function appendAudit(
   after: unknown,
   reason: string,
   createdAt: string
-) {
-  ledger.auditLog.unshift({
+): DocumentShareAuditLogEntry {
+  return {
     auditId: `audit_${randomUUID().slice(0, 12)}`,
     action,
     tenantId,
@@ -296,8 +398,51 @@ function appendAudit(
     after: toJsonValue(after),
     reason,
     createdAt
-  })
-  ledger.auditLog = ledger.auditLog.slice(0, 500)
+  }
+}
+
+function sortGrants(grants: DocumentShareGrant[]): DocumentShareGrant[] {
+  return [...grants].sort((a, b) => a.principalType.localeCompare(b.principalType) || a.principalId.localeCompare(b.principalId))
+}
+
+function mergeGrants(primary: DocumentShareGrant[], legacy: DocumentShareGrant[]): DocumentShareGrant[] {
+  const byKey = new Map<string, DocumentShareGrant>()
+  for (const grant of [...legacy, ...primary]) {
+    byKey.set(`${grant.tenantId}:${grant.documentId}:${grant.principalType}:${grant.principalId}`, grant)
+  }
+  return sortGrants([...byKey.values()])
+}
+
+function mergeAuditEntries(primary: DocumentShareAuditLogEntry[], legacy: DocumentShareAuditLogEntry[]): DocumentShareAuditLogEntry[] {
+  const byId = new Map<string, DocumentShareAuditLogEntry>()
+  for (const entry of [...legacy, ...primary]) byId.set(entry.auditId, entry)
+  return [...byId.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
+function documentShareGrantKey(tenantId: string, documentId: string): string {
+  return `${documentShareGrantPrefix}/${encodePathPart(tenantId)}/${encodePathPart(documentId)}.json`
+}
+
+function documentShareAuditKey(tenantId: string, documentId: string): string {
+  return `${documentShareAuditPrefix}/${encodePathPart(tenantId)}/${encodePathPart(documentId)}.json`
+}
+
+function encodePathPart(value: string): string {
+  return encodeURIComponent(value).replace(/[!'()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)
+}
+
+export class DocumentShareValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "DocumentShareValidationError"
+  }
+}
+
+export class DocumentShareConflictError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "DocumentShareConflictError"
+  }
 }
 
 function toJsonValue(value: unknown): DocumentShareAuditLogEntry["before"] {

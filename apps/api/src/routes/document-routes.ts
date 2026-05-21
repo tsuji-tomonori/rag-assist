@@ -6,6 +6,7 @@ import { config } from "../config.js"
 import { eventPayload } from "../chat-run-events-stream.js"
 import type { AppUser } from "../auth.js"
 import { getPermissionsForGroups, hasPermission, requirePermission } from "../authorization.js"
+import { DocumentShareConflictError, DocumentShareValidationError } from "../documents/document-permission-service.js"
 import {
   CreateDocumentGroupRequestSchema,
   CreateDocumentUploadRequestSchema,
@@ -363,7 +364,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       try {
         return c.json(await service.updateDocumentShare(user, documentId, body), 200)
       } catch (err) {
-        if (err instanceof Error && err.message === "reason is required") return c.json({ error: err.message }, 400)
+        if (err instanceof DocumentShareValidationError) return c.json({ error: err.message }, 400)
+        if (err instanceof DocumentShareConflictError) return c.json({ error: err.message }, 409)
         if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
         throw err
