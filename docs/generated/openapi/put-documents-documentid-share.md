@@ -67,6 +67,7 @@ _なし_
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
+| `409` | 現在のリソース状態と要求された操作が競合しています。 | `application/json` | 2 field(s) |
 
 ##### `200` リクエストは成功し、レスポンス body に結果を返します。
 
@@ -119,6 +120,15 @@ Media type: `application/json`
 | `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
 
 ##### `404` 指定したリソースが見つかりません。
+
+Media type: `application/json`
+
+| 項目 | 型 | 必須 | 説明 | 制約 |
+| --- | --- | --- | --- | --- |
+| `error` | `string` | yes | エラー内容を表すメッセージ。 | - |
+| `details` | `object` | no | 補足情報または検証エラー詳細。 | - |
+
+##### `409` 現在のリソース状態と要求された操作が競合しています。
 
 Media type: `application/json`
 

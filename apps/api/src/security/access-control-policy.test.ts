@@ -270,6 +270,15 @@ test("protected API routes document three-layer authorization metadata", async (
   }
 })
 
+test("document share update documents conflict response in OpenAPI", async () => {
+  const response = await app.request("/openapi.json")
+  assert.equal(response.status, 200)
+  const document = await response.json() as {
+    paths?: Record<string, { put?: { responses?: Record<string, unknown> } }>
+  }
+  assert.ok(document.paths?.["/documents/{documentId}/share"]?.put?.responses?.["409"])
+})
+
 test("debug routes remain protected and document the debug permission migration contract", async () => {
   const policies = await openApiRoutePolicies()
 

@@ -353,6 +353,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         200: { description: "Updated document share grants", content: { "application/json": { schema: DocumentShareResponseSchema } } },
         400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Document share update conflict", content: { "application/json": { schema: ErrorResponseSchema } } },
         404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
     }),

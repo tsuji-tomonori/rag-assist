@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 import type { AppUser } from "../auth.js"
 import { folderPermissionSatisfies, hasPermission, type EffectiveFolderPermission } from "../authorization.js"
 import type { GroupMembershipStore } from "../adapters/group-membership-store.js"
@@ -48,8 +48,7 @@ function tenantIdForManifest(manifest: DocumentManifest): string {
 const documentShareLegacyLedgerKey = "documents/share-grants.json"
 const documentShareGrantPrefix = "documents/share-grants"
 const documentShareAuditPrefix = "documents/share-audit"
-const activeDocumentShareReplacements = new Set<string>()
-const documentShareAuditQueues = new Map<string, Promise<void>>()
+const maxAuditAppendAttempts = 5
 
 const permissionRank: Record<EffectiveDocumentPermission, number> = {
   none: 0,
@@ -100,27 +99,26 @@ export class DocumentPermissionService {
   ): Promise<DocumentShareInfo> {
     validateDocumentShareRequest(grants, reason)
     const tenantId = tenantIdForManifest(manifest)
-    return this.runDocumentShareReplacement(tenantId, manifest.documentId, async () => {
-      const now = new Date().toISOString()
-      const before = await this.loadDocumentGrants(tenantId, manifest.documentId)
-      const normalized = normalizeGrantInputs(grants)
-      const nextGrants: DocumentShareGrant[] = normalized.map((grant) => ({
-        documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
-        itemType: "documentShareGrant",
-        tenantId,
-        documentId: manifest.documentId,
-        principalType: grant.principalType,
-        principalId: grant.principalId,
-        permissionLevel: grant.permissionLevel,
-        createdBy: actor.userId,
-        reason,
-        createdAt: now,
-        updatedAt: now
-      }))
-      await this.saveDocumentGrants(tenantId, manifest.documentId, nextGrants)
-      await this.appendDocumentAudit(actor, "document:share", tenantId, manifest.documentId, before, nextGrants, reason, now)
-      return this.getShareInfo(actor, manifest)
-    })
+    const current = await this.loadDocumentGrantFile(tenantId, manifest.documentId)
+    const before = current?.grants ?? (await this.loadLegacyDocumentGrants(tenantId, manifest.documentId))
+    const now = new Date().toISOString()
+    const normalized = normalizeGrantInputs(grants)
+    const nextGrants: DocumentShareGrant[] = normalized.map((grant) => ({
+      documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
+      itemType: "documentShareGrant",
+      tenantId,
+      documentId: manifest.documentId,
+      principalType: grant.principalType,
+      principalId: grant.principalId,
+      permissionLevel: grant.permissionLevel,
+      createdBy: actor.userId,
+      reason,
+      createdAt: now,
+      updatedAt: now
+    }))
+    await this.saveDocumentGrants(tenantId, manifest.documentId, nextGrants, current?.version)
+    await this.appendDocumentAudit(actor, "document:share", tenantId, manifest.documentId, before, nextGrants, reason, now)
+    return this.getShareInfo(actor, manifest)
   }
 
   async appendDocumentAudit(
@@ -133,11 +131,17 @@ export class DocumentPermissionService {
     reason: string,
     createdAt = new Date().toISOString()
   ): Promise<void> {
-    await this.runDocumentAuditAppend(tenantId, documentId, async () => {
-      const auditLog = await this.loadDocumentAudit(tenantId, documentId)
+    for (let attempt = 1; attempt <= maxAuditAppendAttempts; attempt += 1) {
+      const current = await this.loadDocumentAudit(tenantId, documentId)
+      const auditLog = current?.auditLog ?? []
       auditLog.unshift(buildAuditEntry(actor, action, tenantId, documentId, before, after, reason, createdAt))
-      await this.saveDocumentAudit(tenantId, documentId, auditLog.slice(0, 500))
-    })
+      try {
+        await this.saveDocumentAudit(tenantId, documentId, auditLog.slice(0, 500), current?.version)
+        return
+      } catch (err) {
+        if (!isConditionalWriteError(err) || attempt === maxAuditAppendAttempts) throw err
+      }
+    }
   }
 
   async listAuditLog(): Promise<DocumentShareAuditLogEntry[]> {
@@ -165,16 +169,21 @@ export class DocumentPermissionService {
 
   private async loadDocumentGrants(tenantId: string, documentId: string): Promise<DocumentShareGrant[]> {
     const current = await this.loadDocumentGrantFile(tenantId, documentId)
-    if (current.length > 0) return current
+    if (current) return current.grants
     return this.loadLegacyDocumentGrants(tenantId, documentId)
   }
 
-  private async loadDocumentGrantFile(tenantId: string, documentId: string): Promise<DocumentShareGrant[]> {
+  private async loadDocumentGrantFile(tenantId: string, documentId: string): Promise<{ grants: DocumentShareGrant[]; version: string } | undefined> {
     try {
-      const raw = JSON.parse(await this.deps.objectStore.getText(documentShareGrantKey(tenantId, documentId))) as Partial<DocumentShareLedger>
-      return sortGrants(Array.isArray(raw.grants) ? raw.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === documentId) : [])
+      const file = await getTextWithVersion(this.deps.objectStore, documentShareGrantKey(tenantId, documentId))
+      const raw = JSON.parse(file.text) as Partial<DocumentShareLedger>
+      return {
+        grants: sortGrants(Array.isArray(raw.grants) ? raw.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === documentId) : []),
+        version: file.version
+      }
     } catch (err) {
-      if (isMissingObjectError(err) || err instanceof SyntaxError) return []
+      if (isMissingObjectError(err)) return undefined
+      if (err instanceof SyntaxError) return { grants: [], version: "" }
       throw err
     }
   }
@@ -189,57 +198,35 @@ export class DocumentPermissionService {
     }
   }
 
-  private async saveDocumentGrants(tenantId: string, documentId: string, grants: DocumentShareGrant[]): Promise<void> {
-    await this.deps.objectStore.putText(documentShareGrantKey(tenantId, documentId), JSON.stringify({
-      schemaVersion: 1,
-      grants: sortGrants(grants)
-    }, null, 2), "application/json")
-  }
-
-  private async loadDocumentAudit(tenantId: string, documentId: string): Promise<DocumentShareAuditLogEntry[]> {
+  private async saveDocumentGrants(tenantId: string, documentId: string, grants: DocumentShareGrant[], expectedVersion: string | undefined): Promise<void> {
     try {
-      const raw = JSON.parse(await this.deps.objectStore.getText(documentShareAuditKey(tenantId, documentId))) as Partial<DocumentShareLedger>
-      return Array.isArray(raw.auditLog) ? raw.auditLog : []
+      await putTextIfVersion(this.deps.objectStore, documentShareGrantKey(tenantId, documentId), JSON.stringify({
+        schemaVersion: 1,
+        grants: sortGrants(grants)
+      }, null, 2), expectedVersion, "application/json")
     } catch (err) {
-      if (isMissingObjectError(err) || err instanceof SyntaxError) return []
+      if (isConditionalWriteError(err)) throw new DocumentShareConflictError("document share grants changed concurrently")
       throw err
     }
   }
 
-  private async saveDocumentAudit(tenantId: string, documentId: string, auditLog: DocumentShareAuditLogEntry[]): Promise<void> {
-    await this.deps.objectStore.putText(documentShareAuditKey(tenantId, documentId), JSON.stringify({
+  private async loadDocumentAudit(tenantId: string, documentId: string): Promise<{ auditLog: DocumentShareAuditLogEntry[]; version: string } | undefined> {
+    try {
+      const file = await getTextWithVersion(this.deps.objectStore, documentShareAuditKey(tenantId, documentId))
+      const raw = JSON.parse(file.text) as Partial<DocumentShareLedger>
+      return { auditLog: Array.isArray(raw.auditLog) ? raw.auditLog : [], version: file.version }
+    } catch (err) {
+      if (isMissingObjectError(err)) return undefined
+      if (err instanceof SyntaxError) return { auditLog: [], version: "" }
+      throw err
+    }
+  }
+
+  private async saveDocumentAudit(tenantId: string, documentId: string, auditLog: DocumentShareAuditLogEntry[], expectedVersion: string | undefined): Promise<void> {
+    await putTextIfVersion(this.deps.objectStore, documentShareAuditKey(tenantId, documentId), JSON.stringify({
       schemaVersion: 1,
       auditLog
-    }, null, 2), "application/json")
-  }
-
-  private async runDocumentShareReplacement<T>(tenantId: string, documentId: string, task: () => Promise<T>): Promise<T> {
-    const key = `${tenantId}:${documentId}`
-    if (activeDocumentShareReplacements.has(key)) throw new DocumentShareConflictError("document share grants changed concurrently")
-    activeDocumentShareReplacements.add(key)
-    try {
-      return await task()
-    } finally {
-      activeDocumentShareReplacements.delete(key)
-    }
-  }
-
-  private async runDocumentAuditAppend(tenantId: string, documentId: string, task: () => Promise<void>): Promise<void> {
-    const key = `${tenantId}:${documentId}`
-    const previous = documentShareAuditQueues.get(key) ?? Promise.resolve()
-    let release: () => void = () => undefined
-    const current = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    const queued = previous.then(() => current, () => current)
-    documentShareAuditQueues.set(key, queued)
-    await previous.catch(() => undefined)
-    try {
-      await task()
-    } finally {
-      release()
-      if (documentShareAuditQueues.get(key) === queued) documentShareAuditQueues.delete(key)
-    }
+    }, null, 2), expectedVersion, "application/json")
   }
 
   private async loadAllDocumentGrants(): Promise<DocumentShareGrant[]> {
@@ -427,6 +414,37 @@ function documentShareAuditKey(tenantId: string, documentId: string): string {
   return `${documentShareAuditPrefix}/${encodePathPart(tenantId)}/${encodePathPart(documentId)}.json`
 }
 
+async function getTextWithVersion(objectStore: ObjectStore, key: string): Promise<{ text: string; version: string }> {
+  if (typeof objectStore.getTextWithVersion === "function") return objectStore.getTextWithVersion(key)
+  const text = await objectStore.getText(key)
+  return { text, version: versionForText(text) }
+}
+
+async function putTextIfVersion(
+  objectStore: ObjectStore,
+  key: string,
+  text: string,
+  expectedVersion: string | undefined,
+  contentType: string
+): Promise<void> {
+  if (typeof objectStore.putTextIfVersion === "function") {
+    await objectStore.putTextIfVersion(key, text, expectedVersion, contentType)
+    return
+  }
+  if (expectedVersion !== undefined) {
+    const current = await getTextWithVersion(objectStore, key)
+    if (current.version !== expectedVersion) throw conditionalWriteError(key)
+  } else {
+    try {
+      await objectStore.getText(key)
+      throw conditionalWriteError(key)
+    } catch (err) {
+      if (!isMissingObjectError(err)) throw err
+    }
+  }
+  await objectStore.putText(key, text, contentType)
+}
+
 function encodePathPart(value: string): string {
   return encodeURIComponent(value).replace(/[!'()*]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)
 }
@@ -456,4 +474,23 @@ function isMissingObjectError(err: unknown): boolean {
     candidate?.name === "NoSuchKey" ||
     candidate?.$metadata?.httpStatusCode === 404 ||
     (typeof candidate?.message === "string" && candidate.message.includes("NoSuchKey"))
+}
+
+function isConditionalWriteError(err: unknown): boolean {
+  const candidate = err as { code?: string; name?: string; message?: string; $metadata?: { httpStatusCode?: number } }
+  return candidate?.code === "PRECONDITION_FAILED" ||
+    candidate?.name === "PreconditionFailed" ||
+    candidate?.$metadata?.httpStatusCode === 409 ||
+    candidate?.$metadata?.httpStatusCode === 412 ||
+    (typeof candidate?.message === "string" && candidate.message.includes("Conditional write failed"))
+}
+
+function conditionalWriteError(key: string): Error {
+  const err = new Error(`Conditional write failed for ${key}`)
+  Object.assign(err, { code: "PRECONDITION_FAILED" })
+  return err
+}
+
+function versionForText(text: string): string {
+  return createHash("sha256").update(text).digest("hex")
 }
