@@ -49,6 +49,7 @@ export type DocumentShareAuditAction = "document:share" | "document:move"
 export type DocumentShareAuditLogEntry = {
   auditId: string
   action: DocumentShareAuditAction
+  tenantId?: string
   actorUserId: string
   documentId: string
   before?: JsonValue
@@ -394,6 +395,8 @@ export type DocumentManifest = {
   fileProfile?: PdfFileProfile
   createdAt: string
   updatedAt?: string
+  currentUserEffectivePermission?: EffectiveDocumentPermission
+  capabilities?: DocumentCapabilities
 }
 
 export type DocumentManifestSummary = Pick<
@@ -417,7 +420,18 @@ export type DocumentListItemSummary = DocumentManifestSummary & Pick<
   | "metadata"
   | "embeddingModelId"
   | "embeddingDimensions"
->
+> & {
+  currentUserEffectivePermission?: EffectiveDocumentPermission
+  capabilities?: DocumentCapabilities
+}
+
+export type DocumentCapabilities = {
+  canRead: boolean
+  canShare: boolean
+  canMove: boolean
+  canDelete: boolean
+  canReindex: boolean
+}
 
 export type ParsedDocumentPreview = {
   documentId: string

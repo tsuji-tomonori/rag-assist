@@ -376,10 +376,21 @@ export class MemoRagService {
     const accessible = user
       ? await Promise.all(activeManifests.map(async (manifest) => [manifest, await this.canAccessDocumentManifest(user, manifest, documentGroups)] as const))
       : activeManifests.map((manifest) => [manifest, true] as const)
-    return accessible
+    const permissionService = user ? new DocumentPermissionService(this.deps) : undefined
+    const withCapabilities = await Promise.all(accessible
       .filter(([, allowed]) => allowed)
       .map(([manifest]) => manifest)
-      .map((manifest) => user ? this.sanitizeDirectSharedManifestForList(user, manifest, documentGroups) : manifest)
+      .map(async (manifest) => {
+        if (!user || !permissionService) return manifest
+        const permission = await permissionService.resolveEffectiveDocumentPermission(user, manifest)
+        const sanitized = this.sanitizeDirectSharedManifestForList(user, manifest, documentGroups)
+        return {
+          ...sanitized,
+          currentUserEffectivePermission: permission,
+          capabilities: documentCapabilities(permission, user)
+        }
+      }))
+    return withCapabilities
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
 
@@ -559,7 +570,7 @@ export class MemoRagService {
     const manifest = await this.getManifest(documentId)
     const permissionService = new DocumentPermissionService(this.deps)
     const effectivePermission = await permissionService.resolveEffectiveDocumentPermission(actor, manifest)
-    if (effectivePermission === "none") throw forbiddenError("Forbidden")
+    if (!canShareDocument(effectivePermission, actor)) throw forbiddenError("Forbidden")
     return permissionService.getShareInfo(actor, manifest)
   }
 
@@ -627,7 +638,7 @@ export class MemoRagService {
       this.deps.memoryVectorStore.updateMetadataForDocument?.(documentId, { fileName: nextFileName, groupId: destination.groupId, folderId: destination.groupId, groupIds: [destination.groupId], folderIds: [destination.groupId] })
     ])
     const after = { folderIds: [destination.groupId], fileName: nextFileName }
-    await permissionService.appendDocumentAudit(actor, "document:move", documentId, before, after, input.reason)
+    await permissionService.appendDocumentAudit(actor, "document:move", documentTenantId(manifest), documentId, before, after, input.reason)
     return { document: next, before, after, directDocumentGrantsPreserved: true }
   }
 
@@ -2925,6 +2936,22 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGr
 
 function documentFolderIds(manifest: DocumentManifest): string[] {
   return stringArray(manifest.metadata?.folderIds ?? manifest.metadata?.folderId ?? manifest.metadata?.groupIds ?? manifest.metadata?.groupId) ?? []
+}
+
+function documentTenantId(manifest: DocumentManifest): string {
+  return typeof manifest.metadata?.tenantId === "string" ? manifest.metadata.tenantId : "default"
+}
+
+function documentCapabilities(permission: "none" | "readOnly" | "full", user: AppUser) {
+  const full = permission === "full"
+  const read = permission === "readOnly" || full
+  return {
+    canRead: read,
+    canShare: full && hasPermission(user, "rag:doc:share"),
+    canMove: full && hasPermission(user, "rag:doc:move"),
+    canDelete: full && hasPermission(user, "rag:doc:delete:group"),
+    canReindex: full && hasPermission(user, "rag:index:rebuild:group")
+  }
 }
 
 function canManageManifest(manifest: DocumentManifest, user: AppUser, documentGroups: DocumentGroup[] = []): boolean {

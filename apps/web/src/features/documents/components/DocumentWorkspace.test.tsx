@@ -229,7 +229,18 @@ describe("DocumentWorkspace", () => {
     const onLoadDocumentShare = vi.fn().mockResolvedValue({
       documentId: "doc-1",
       inheritedFolderGrants: [{ folderId: "group-1", permissionLevel: "readOnly" }],
-      directDocumentGrants: [],
+      directDocumentGrants: [{
+        documentShareGrantId: "grant-1",
+        tenantId: "default",
+        documentId: "doc-1",
+        principalType: "user",
+        principalId: "user-old",
+        permissionLevel: "readOnly",
+        createdBy: "user-a",
+        reason: "old",
+        createdAt: "2026-05-01T00:00:00.000Z",
+        updatedAt: "2026-05-01T00:00:00.000Z"
+      }],
       currentUserEffectivePermission: "full"
     })
     const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
@@ -264,6 +275,11 @@ describe("DocumentWorkspace", () => {
     expect(onLoadDocumentShare).toHaveBeenCalledWith("doc-1")
     const shareDialog = await screen.findByRole("dialog", { name: "ファイル共有" })
     expect(within(shareDialog).getByText("ファイル名: requirements.md")).toBeInTheDocument()
+    expect(within(shareDialog).getByText("継承: group-1 readOnly")).toBeInTheDocument()
+    expect(within(shareDialog).getByText(/直接: user:user-old readOnly/)).toBeInTheDocument()
+    expect(within(shareDialog).getByText("継承: group-1 readOnly").closest("span")?.querySelector("button")).toBeNull()
+    await userEvent.click(within(shareDialog).getByRole("button", { name: "削除" }))
+    expect(within(shareDialog).queryByText(/user-old/)).not.toBeInTheDocument()
     await userEvent.type(within(shareDialog).getByLabelText("共有先ID"), "user-b")
     await userEvent.type(within(shareDialog).getByLabelText("理由"), "確認依頼")
     await userEvent.click(within(shareDialog).getByRole("button", { name: "保存" }))
@@ -282,6 +298,77 @@ describe("DocumentWorkspace", () => {
       reason: "整理のため",
       expectedUpdatedAt: "2026-05-01T00:00:00.000Z"
     })
+  })
+
+  it("文書行の操作可否は backend capabilities を優先する", () => {
+    render(
+      <DocumentWorkspace
+        documents={[
+          { documentId: "doc-readonly", fileName: "readonly.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-01T00:00:00.000Z", currentUserEffectivePermission: "readOnly", capabilities: { canRead: true, canShare: false, canMove: false, canDelete: false, canReindex: false } },
+          { documentId: "doc-full", fileName: "full.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-02T00:00:00.000Z", currentUserEffectivePermission: "full", capabilities: { canRead: true, canShare: true, canMove: true, canDelete: true, canReindex: true } }
+        ]}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.queryByRole("button", { name: "readonly.mdを共有" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "readonly.mdを移動" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "readonly.mdを削除" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "full.mdを共有" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "full.mdを移動" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "full.mdを削除" })).toBeEnabled()
+  })
+
+  it("文書移動モーダルは移動先の同名ファイル衝突を事前に表示する", async () => {
+    render(
+      <DocumentWorkspace
+        documents={[
+          { documentId: "doc-1", fileName: "policy.pdf", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-02T00:00:00.000Z", metadata: { groupIds: ["group-1"] }, currentUserEffectivePermission: "full", capabilities: { canRead: true, canShare: true, canMove: true, canDelete: true, canReindex: true } },
+          { documentId: "doc-2", fileName: "policy.pdf", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-01T00:00:00.000Z", metadata: { groupIds: ["group-2"] }, currentUserEffectivePermission: "readOnly", capabilities: { canRead: true, canShare: false, canMove: false, canDelete: false, canReindex: false } }
+        ]}
+        documentGroups={[...documentGroups, { ...documentGroups[0]!, groupId: "group-2", name: "移動先", canonicalPath: "/移動先", normalizedCanonicalPath: "/移動先" }]}
+        uploadGroupId="group-1"
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "policy.pdfを移動" }))
+    const dialog = screen.getByRole("dialog", { name: "ファイル移動" })
+    await userEvent.selectOptions(within(dialog).getByLabelText("移動先フォルダ"), "group-2")
+    await userEvent.type(within(dialog).getByLabelText("理由"), "整理")
+    expect(within(dialog).getByRole("alert")).toHaveTextContent("同名ファイル")
+    expect(within(dialog).getByRole("button", { name: "移動" })).toBeDisabled()
+    await userEvent.clear(within(dialog).getByLabelText("移動後の表示名"))
+    await userEvent.type(within(dialog).getByLabelText("移動後の表示名"), "policy-renamed.pdf")
+    expect(within(dialog).getByRole("button", { name: "移動" })).toBeEnabled()
   })
 
   it("API 由来の ParsedDocument preview と抽出品質を詳細に表示する", async () => {
@@ -552,7 +639,7 @@ describe("DocumentWorkspace", () => {
     expect(onRollbackReindex).toHaveBeenCalledWith("migration-2")
   })
 
-  it.skip("最近の操作に実データと現在セッション操作を表示する", async () => {
+  it.todo("最近の操作に実データと現在セッション操作を表示する", async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -634,7 +721,7 @@ describe("DocumentWorkspace", () => {
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "文書を削除しますか" })).not.toBeInTheDocument())
   })
 
-  it.skip("確認ダイアログは失敗時に閉じず、失敗ログを残す", async () => {
+  it.todo("確認ダイアログは失敗時に閉じず、失敗ログを残す", async () => {
     const onDelete = vi.fn().mockResolvedValue({ ok: false, error: "delete failed" })
 
     render(
@@ -712,7 +799,7 @@ describe("DocumentWorkspace", () => {
     expect(deleteButton).toHaveFocus()
   })
 
-  it.skip("操作データがない場合は最近の操作の空状態を表示する", () => {
+  it.todo("操作データがない場合は最近の操作の空状態を表示する", () => {
     render(
       <DocumentWorkspace
         documents={[]}
@@ -738,7 +825,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByRole("list", { name: "最近の操作" })).toHaveTextContent("最近の操作はありません。")
   })
 
-  it.skip("フォルダ管理と保存先フォルダ選択を通知する", async () => {
+  it.todo("フォルダ管理と保存先フォルダ選択を通知する", async () => {
     const onUploadGroupChange = vi.fn()
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
     const onShareGroup = vi.fn().mockResolvedValue(undefined)
@@ -841,7 +928,7 @@ describe("DocumentWorkspace", () => {
     expect(child).toHaveStyle({ paddingLeft: "52px" })
   })
 
-  it.skip("選択フォルダの名前、説明、移動先を更新し、root移動をnullで送信する", async () => {
+  it.todo("選択フォルダの名前、説明、移動先を更新し、root移動をnullで送信する", async () => {
     const childGroup: DocumentGroup = {
       groupId: "group-child",
       name: "人事",
@@ -915,7 +1002,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it.skip("設定込みでフォルダを作成し、作成後に保存先へ移動する", async () => {
+  it.todo("設定込みでフォルダを作成し、作成後に保存先へ移動する", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue({
       groupId: "group-new",
       name: "人事規程",
@@ -978,7 +1065,7 @@ describe("DocumentWorkspace", () => {
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-new")
   })
 
-  it.skip("新規フォルダ作成で実データ由来のshared group候補を選択してpayloadへ反映する", async () => {
+  it.todo("新規フォルダ作成で実データ由来のshared group候補を選択してpayloadへ反映する", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -1029,7 +1116,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it.skip("新規フォルダ作成のshared group候補がない場合は架空候補を表示しない", () => {
+  it.todo("新規フォルダ作成のshared group候補がない場合は架空候補を表示しない", () => {
     render(
       <DocumentWorkspace
         documents={documents}
@@ -1058,7 +1145,7 @@ describe("DocumentWorkspace", () => {
     expect(within(selector).queryByRole("checkbox", { name: "RAG_GROUP_MANAGER" })).not.toBeInTheDocument()
   })
 
-  it.skip("フォルダ作成のshared groupsと管理者IDをvalidationする", async () => {
+  it.todo("フォルダ作成のshared groupsと管理者IDをvalidationする", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -1096,7 +1183,7 @@ describe("DocumentWorkspace", () => {
     expect(onCreateGroup).not.toHaveBeenCalled()
   })
 
-  it.skip("共有group入力の重複と空値をvalidationする", async () => {
+  it.todo("共有group入力の重複と空値をvalidationする", async () => {
     const onShareGroup = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -1131,7 +1218,7 @@ describe("DocumentWorkspace", () => {
     expect(onShareGroup).not.toHaveBeenCalled()
   })
 
-  it.skip("実データ由来の共有group候補を選択して共有差分とpayloadに反映する", async () => {
+  it.todo("実データ由来の共有group候補を選択して共有差分とpayloadに反映する", async () => {
     const onShareGroup = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -1181,7 +1268,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it.skip("未変更の共有更新を抑止し、全解除には専用確認を要求する", async () => {
+  it.todo("未変更の共有更新を抑止し、全解除には専用確認を要求する", async () => {
     const onShareGroup = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -1230,7 +1317,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it.skip("共有group候補がない場合は架空候補を表示しない", () => {
+  it.todo("共有group候補がない場合は架空候補を表示しない", () => {
     render(
       <DocumentWorkspace
         documents={documents}
@@ -1559,7 +1646,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByRole("dialog", { name: "再インデックスをステージングしますか" })).toBeInTheDocument()
   })
 
-  it.skip("ヘッダーの追加と共有ボタンを既存操作へ接続する", async () => {
+  it.todo("ヘッダーの追加と共有ボタンを既存操作へ接続する", async () => {
     const inputClick = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => undefined)
 
     const onUploadGroupChange = vi.fn()
@@ -1622,7 +1709,7 @@ describe("DocumentWorkspace", () => {
     inputClick.mockRestore()
   })
 
-  it.skip("本番UI用の固定フォルダ、固定容量、架空共有先を表示しない", () => {
+  it.todo("本番UI用の固定フォルダ、固定容量、架空共有先を表示しない", () => {
     render(
       <DocumentWorkspace
         documents={documents}
@@ -1652,7 +1739,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
   })
 
-  it.skip("空のドキュメント状態と未共有グループを実データのまま表示する", async () => {
+  it.todo("空のドキュメント状態と未共有グループを実データのまま表示する", async () => {
     render(
       <DocumentWorkspace
         documents={[]}
@@ -1682,7 +1769,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByText("0 / 0 件を表示（全体 0 件）")).toBeInTheDocument()
   })
 
-  it.skip("組織公開とユーザー共有先、文字列のgroupId metadataを表示に反映する", async () => {
+  it.todo("組織公開とユーザー共有先、文字列のgroupId metadataを表示に反映する", async () => {
     const groupedDocuments = [
       {
         ...documents[0]!,
@@ -1721,7 +1808,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.getAllByText("requirements.md").length).toBeGreaterThanOrEqual(1)
   })
 
-  it.skip("権限や入力が不足するフォーム操作では更新APIを呼ばない", async () => {
+  it.todo("権限や入力が不足するフォーム操作では更新APIを呼ばない", async () => {
     const onUpload = vi.fn().mockResolvedValue(undefined)
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
     const onShareGroup = vi.fn().mockResolvedValue(undefined)
@@ -1791,7 +1878,7 @@ describe("DocumentWorkspace", () => {
     expect(onStageReindex).not.toHaveBeenCalled()
   })
 
-  it.skip("親フォルダから継承する新規フォルダでは explicit policy 項目を送らない", async () => {
+  it.todo("親フォルダから継承する新規フォルダでは explicit policy 項目を送らない", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -1827,7 +1914,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it.skip("選択フォルダが readOnly の場合は global write 権限があっても書き込み操作を無効化する", async () => {
+  it.todo("選択フォルダが readOnly の場合は global write 権限があっても書き込み操作を無効化する", async () => {
     const onDelete = vi.fn()
     const onStageReindex = vi.fn()
     const readOnlyGroup: DocumentGroup = {
@@ -1933,7 +2020,7 @@ describe("DocumentWorkspace", () => {
     expect(onStageReindex).not.toHaveBeenCalled()
   })
 
-  it.skip("共有更新は選択中フォルダではなく共有対象フォルダの full 権限を要求する", async () => {
+  it.todo("共有更新は選択中フォルダではなく共有対象フォルダの full 権限を要求する", async () => {
     const onShareGroup = vi.fn().mockResolvedValue(undefined)
     const fullGroup: DocumentGroup = {
       ...documentGroups[0]!,
@@ -1985,7 +2072,7 @@ describe("DocumentWorkspace", () => {
     expect(onShareGroup).not.toHaveBeenCalled()
   })
 
-  it.skip("親フォルダから継承する新規フォルダでは managerUserIds も送らない", async () => {
+  it.todo("親フォルダから継承する新規フォルダでは managerUserIds も送らない", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -2024,7 +2111,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it.skip("readOnly parent を選んだ新規フォルダ作成は disabled で onCreateGroup を呼ばない", async () => {
+  it.todo("readOnly parent を選んだ新規フォルダ作成は disabled で onCreateGroup を呼ばない", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
     const readOnlyParent: DocumentGroup = {
       ...documentGroups[0]!,
@@ -2066,7 +2153,7 @@ describe("DocumentWorkspace", () => {
     expect(onCreateGroup).not.toHaveBeenCalled()
   })
 
-  it.skip("selected folder が readOnly でも parent 未指定の root 作成は feature permission があれば可能", async () => {
+  it.todo("selected folder が readOnly でも parent 未指定の root 作成は feature permission があれば可能", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
     const readOnlyGroup: DocumentGroup = {
       ...documentGroups[0]!,
@@ -2108,7 +2195,7 @@ describe("DocumentWorkspace", () => {
     expect(onCreateGroup).toHaveBeenCalledWith({ name: "ルート作成", visibility: "private" })
   })
 
-  it.skip("full source folder を readOnly parent 配下へ移動する更新は disabled", async () => {
+  it.todo("full source folder を readOnly parent 配下へ移動する更新は disabled", async () => {
     const onShareGroup = vi.fn().mockResolvedValue(undefined)
     const fullGroup: DocumentGroup = {
       ...documentGroups[0]!,
@@ -2157,7 +2244,7 @@ describe("DocumentWorkspace", () => {
     expect(onShareGroup).not.toHaveBeenCalled()
   })
 
-  it.skip("ファイルアップロードとmimeType由来の種別表示を処理する", async () => {
+  it.todo("ファイルアップロードとmimeType由来の種別表示を処理する", async () => {
     const onUpload = vi.fn().mockResolvedValue(undefined)
     const file = new File(["hello"], "memo.txt", { type: "text/plain" })
 
@@ -2192,7 +2279,7 @@ describe("DocumentWorkspace", () => {
     expect(onUpload).toHaveBeenCalledWith(file)
   })
 
-  it.skip("アップロード完了後に返却された文書の操作ボタンを表示する", async () => {
+  it.todo("アップロード完了後に返却された文書の操作ボタンを表示する", async () => {
     const uploadedDocument: DocumentManifest = {
       documentId: "doc-uploaded",
       fileName: "memo.txt",
@@ -2257,7 +2344,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByRole("heading", { name: "社内規定" })).toBeInTheDocument()
   })
 
-  it.skip("返却文書がない完了状態では文書操作ボタンを表示しない", () => {
+  it.todo("返却文書がない完了状態では文書操作ボタンを表示しない", () => {
     render(
       <DocumentWorkspace
         documents={documents}
@@ -2286,7 +2373,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByText("アップロードは完了しました。文書一覧の更新後に詳細を開けます。")).toBeInTheDocument()
   })
 
-  it.skip("アップロード進捗と対象行だけのloadingを表示する", () => {
+  it.todo("アップロード進捗と対象行だけのloadingを表示する", () => {
     render(
       <DocumentWorkspace
         documents={[

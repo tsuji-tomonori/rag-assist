@@ -41,6 +41,10 @@ export type DocumentShareInfo = {
   currentUserEffectivePermission: EffectiveDocumentPermission
 }
 
+function tenantIdForManifest(manifest: DocumentManifest): string {
+  return typeof manifest.metadata?.tenantId === "string" ? manifest.metadata.tenantId : "default"
+}
+
 const documentShareLedgerKey = "documents/share-grants.json"
 
 const permissionRank: Record<EffectiveDocumentPermission, number> = {
@@ -59,12 +63,13 @@ export class DocumentPermissionService {
   }
 
   async getShareInfo(user: AppUser, manifest: DocumentManifest): Promise<DocumentShareInfo> {
+    const tenantId = tenantIdForManifest(manifest)
     const [ledger, folderPermission] = await Promise.all([
       this.loadLedger(),
       this.resolveFolderPermission(user, manifest)
     ])
     const directDocumentGrants = ledger.grants
-      .filter((grant) => grant.documentId === manifest.documentId)
+      .filter((grant) => grant.tenantId === tenantId && grant.documentId === manifest.documentId)
       .sort((a, b) => a.principalType.localeCompare(b.principalType) || a.principalId.localeCompare(b.principalId))
     const directPermission = await this.resolveDirectDocumentPermission(user, manifest.documentId, directDocumentGrants)
     return {
@@ -78,10 +83,11 @@ export class DocumentPermissionService {
     if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return "full"
     const ledger = await this.loadLedger()
     const folderPermission = await this.resolveFolderPermission(user, manifest)
+    const tenantId = tenantIdForManifest(manifest)
     const directPermission = await this.resolveDirectDocumentPermission(
       user,
       manifest.documentId,
-      ledger.grants.filter((grant) => grant.documentId === manifest.documentId)
+      ledger.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === manifest.documentId)
     )
     return calculateEffectiveDocumentPermission(folderPermission, directPermission)
   }
@@ -95,12 +101,13 @@ export class DocumentPermissionService {
     validateDocumentShareRequest(grants, reason)
     const now = new Date().toISOString()
     const ledger = await this.loadLedger()
-    const before = ledger.grants.filter((grant) => grant.documentId === manifest.documentId)
+    const tenantId = tenantIdForManifest(manifest)
+    const before = ledger.grants.filter((grant) => grant.tenantId === tenantId && grant.documentId === manifest.documentId)
     const normalized = normalizeGrantInputs(grants)
     const nextGrants: DocumentShareGrant[] = normalized.map((grant) => ({
       documentShareGrantId: `docshare_${randomUUID().slice(0, 12)}`,
       itemType: "documentShareGrant",
-      tenantId: String(manifest.metadata?.tenantId ?? "default"),
+      tenantId,
       documentId: manifest.documentId,
       principalType: grant.principalType,
       principalId: grant.principalId,
@@ -111,10 +118,10 @@ export class DocumentPermissionService {
       updatedAt: now
     }))
     ledger.grants = [
-      ...ledger.grants.filter((grant) => grant.documentId !== manifest.documentId),
+      ...ledger.grants.filter((grant) => !(grant.tenantId === tenantId && grant.documentId === manifest.documentId)),
       ...nextGrants
     ]
-    appendAudit(ledger, actor, "document:share", manifest.documentId, before, nextGrants, reason, now)
+    appendAudit(ledger, actor, "document:share", tenantId, manifest.documentId, before, nextGrants, reason, now)
     await this.saveLedger(ledger)
     return this.getShareInfo(actor, manifest)
   }
@@ -122,13 +129,14 @@ export class DocumentPermissionService {
   async appendDocumentAudit(
     actor: AppUser,
     action: DocumentShareAuditAction,
+    tenantId: string,
     documentId: string,
     before: unknown,
     after: unknown,
     reason: string
   ): Promise<void> {
     const ledger = await this.loadLedger()
-    appendAudit(ledger, actor, action, documentId, before, after, reason, new Date().toISOString())
+    appendAudit(ledger, actor, action, tenantId, documentId, before, after, reason, new Date().toISOString())
     await this.saveLedger(ledger)
   }
 
@@ -271,6 +279,7 @@ function appendAudit(
   ledger: DocumentShareLedger,
   actor: AppUser,
   action: DocumentShareAuditAction,
+  tenantId: string,
   documentId: string,
   before: unknown,
   after: unknown,
@@ -280,6 +289,7 @@ function appendAudit(
   ledger.auditLog.unshift({
     auditId: `audit_${randomUUID().slice(0, 12)}`,
     action,
+    tenantId,
     actorUserId: actor.userId,
     documentId,
     before: toJsonValue(before),

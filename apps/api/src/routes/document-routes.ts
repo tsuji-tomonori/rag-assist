@@ -141,7 +141,9 @@ function documentListItemSummary(manifest: DocumentManifest): DocumentListItemSu
     ...documentManifestSummary(manifest),
     metadata: manifest.metadata,
     embeddingModelId: manifest.embeddingModelId,
-    embeddingDimensions: manifest.embeddingDimensions
+    embeddingDimensions: manifest.embeddingDimensions,
+    currentUserEffectivePermission: manifest.currentUserEffectivePermission,
+    capabilities: manifest.capabilities
   }
 }
 
@@ -310,7 +312,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "get",
       path: "/documents/{documentId}/share",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:read", operationKey: "document.share.read", resourceCondition: "documentGroupRead" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:share", operationKey: "document.share.read", resourceCondition: "documentEffectiveFull" }),
       request: {
         params: z.object({ documentId: z.string().min(1) })
       },
@@ -322,7 +324,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     }),
     async (c) => {
       const user = c.get("user")
-      requirePermission(user, "rag:doc:read")
+      requirePermission(user, "rag:doc:share")
       const { documentId } = validParam<{ documentId: string }>(c)
       try {
         return c.json(await service.getDocumentShareInfo(user, documentId), 200)
@@ -338,7 +340,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "put",
       path: "/documents/{documentId}/share",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:share", operationKey: "document.share.update", resourceCondition: "documentGroupFull" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:share", operationKey: "document.share.update", resourceCondition: "documentEffectiveFull" }),
       request: {
         params: z.object({ documentId: z.string().min(1) }),
         body: {
@@ -373,7 +375,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/{documentId}/move",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:move", operationKey: "document.move", resourceCondition: "documentGroupFull" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:move", operationKey: "document.move", resourceCondition: "documentMove" }),
       request: {
         params: z.object({ documentId: z.string().min(1) }),
         body: {

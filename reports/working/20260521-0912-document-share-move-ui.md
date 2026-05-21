@@ -22,6 +22,10 @@
 - Web UI から右側カラムを削除し、フォルダ操作/アップロード/ファイル共有/ファイル移動をモーダル化した。
 - Web API client/hook に `PUT`、文書共有、文書移動の呼び出しを追加した。
 - API 単体テストと UI テストを追加・更新した。
+- 追加レビュー指摘への対応として、共有設定取得を full 限定に変更し、`tenantId` による直接共有 grant 分離を保存・検索・権限計算に適用した。
+- 文書一覧レスポンスに `currentUserEffectivePermission` と `capabilities` を追加し、Web の行操作可否を backend capabilities 優先に変更した。
+- 文書共有モーダルで direct grant の削除を可能にし、継承 grant は削除不可の表示にした。
+- 文書移動モーダルで既存一覧ベースの同名ファイル衝突検知を追加した。
 
 ## 成果物
 
@@ -46,11 +50,11 @@
 - `npm run typecheck -w @memorag-mvp/api`: pass
 - `npm run test -w @memorag-mvp/api`: pass（310 tests）
 - `npm run typecheck -w @memorag-mvp/web`: pass
-- `npm run test -w @memorag-mvp/web`: pass（232 passed / 29 skipped）
+- `npm run test -w @memorag-mvp/web`: pass（234 passed / 29 todo）
 
 ## 未対応・制約・リスク
 
-- Web の旧右ペイン前提テスト 29 件は新仕様と矛盾するため skip に変更した。恒久的には旧テストの観点を新モーダル単位へ再設計する必要がある。
+- Web の旧右ペイン前提テスト 29 件は skip から todo に変更した。権限/capabilities の重要観点は新規テストで追加したが、旧フォーム・最近の操作・アップロード完了パネルの観点は新モーダル単位へ再設計する必要がある。
 - E2E は未実行。環境起動とユーザー切替シナリオ整備が必要。
 - Vector metadata 更新は local vector store に実装した。外部 vector store 実装では `updateMetadataForDocument` の追加対応が必要になる可能性がある。
 - Durable docs の明確な更新先はこの作業中に特定できなかったため、API 契約は OpenAPI contract test と route-level policy test で確認した。

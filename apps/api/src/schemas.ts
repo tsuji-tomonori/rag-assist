@@ -202,7 +202,8 @@ export const DocumentManifestSchema = z.object({
   reindexMigrationId: z.string().optional(),
   chunkCount: z.number(),
   memoryCardCount: z.number(),
-  createdAt: z.string()
+  createdAt: z.string(),
+  updatedAt: z.string().optional()
 })
 
 export const DocumentGroupSchema = z.object({
@@ -377,7 +378,15 @@ export const DocumentManifestSummarySchema = DocumentManifestSchema.pick({
 export const DocumentListItemSummarySchema = DocumentManifestSummarySchema.extend({
   metadata: z.record(MetadataValueSchema).optional(),
   embeddingModelId: z.string().optional(),
-  embeddingDimensions: z.number().int().positive().optional()
+  embeddingDimensions: z.number().int().positive().optional(),
+  currentUserEffectivePermission: z.enum(["none", "readOnly", "full"]).optional(),
+  capabilities: z.object({
+    canRead: z.boolean(),
+    canShare: z.boolean(),
+    canMove: z.boolean(),
+    canDelete: z.boolean(),
+    canReindex: z.boolean()
+  }).optional()
 })
 
 export const DocumentListResponseSchema = z.object({

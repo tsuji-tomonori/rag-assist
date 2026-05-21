@@ -127,6 +127,7 @@ export function DocumentWorkspace({
   const [documentShareTarget, setDocumentShareTarget] = useState<DocumentManifest | null>(null)
   const [documentMoveTarget, setDocumentMoveTarget] = useState<DocumentManifest | null>(null)
   const [documentShareInfo, setDocumentShareInfo] = useState<DocumentShareInfo | null>(null)
+  const [documentShareDraftGrants, setDocumentShareDraftGrants] = useState<DocumentShareGrantInput[]>([])
   const [documentSharePrincipalType, setDocumentSharePrincipalType] = useState<"user" | "group">("user")
   const [documentSharePrincipalId, setDocumentSharePrincipalId] = useState("")
   const [documentSharePermissionLevel, setDocumentSharePermissionLevel] = useState<"readOnly" | "full">("readOnly")
@@ -251,6 +252,12 @@ export function DocumentWorkspace({
     editParentCanManage &&
     operationState.sharingGroupId === null
   const editDestinationLabel = editGroupParentId === rootFolderParentValue ? "ルート" : editParentGroup?.canonicalPath ?? "選択不可"
+  const documentMoveTitle = documentMoveNewTitle.trim() || documentMoveTarget?.fileName || ""
+  const documentMoveNameConflict = Boolean(documentMoveTarget && documentMoveDestinationId && documents.some((document) => (
+    document.documentId !== documentMoveTarget.documentId &&
+    document.fileName === documentMoveTitle &&
+    documentGroupIds(document).includes(documentMoveDestinationId)
+  )))
 
   useEffect(() => {
     if (!urlState) return
@@ -502,7 +509,13 @@ export function DocumentWorkspace({
     setDocumentShareTarget(document)
     setDocumentShareReason("")
     setDocumentSharePrincipalId("")
-    setDocumentShareInfo(await onLoadDocumentShare?.(document.documentId) ?? null)
+    const info = await onLoadDocumentShare?.(document.documentId) ?? null
+    setDocumentShareInfo(info)
+    setDocumentShareDraftGrants(info?.directDocumentGrants.map((grant) => ({
+      principalType: grant.principalType,
+      principalId: grant.principalId,
+      permissionLevel: grant.permissionLevel
+    })) ?? [])
   }
 
   function openDocumentMove(document: DocumentManifest) {
@@ -515,22 +528,18 @@ export function DocumentWorkspace({
   async function onDocumentShareSubmit(event: FormEvent) {
     event.preventDefault()
     if (!documentShareTarget || !onShareDocument) return
-    const existing = documentShareInfo?.directDocumentGrants.map((grant) => ({
-      principalType: grant.principalType,
-      principalId: grant.principalId,
-      permissionLevel: grant.permissionLevel
-    })) ?? []
     const next = documentSharePrincipalId.trim()
       ? [
-          ...existing.filter((grant) => !(grant.principalType === documentSharePrincipalType && grant.principalId === documentSharePrincipalId.trim())),
+          ...documentShareDraftGrants.filter((grant) => !(grant.principalType === documentSharePrincipalType && grant.principalId === documentSharePrincipalId.trim())),
           { principalType: documentSharePrincipalType, principalId: documentSharePrincipalId.trim(), permissionLevel: documentSharePermissionLevel }
         ]
-      : existing
+      : documentShareDraftGrants
     const result = normalizeOperationResult(await onShareDocument(documentShareTarget.documentId, { grants: next, reason: documentShareReason }))
     if (result.ok) {
       recordSessionOperation("文書共有更新", documentShareTarget.fileName, `direct grants: ${next.length}`, "反映済み")
       setDocumentShareTarget(null)
       setDocumentShareInfo(null)
+      setDocumentShareDraftGrants([])
     } else {
       recordSessionOperation("文書共有更新", documentShareTarget.fileName, result.error, "失敗")
     }
@@ -614,10 +623,10 @@ export function DocumentWorkspace({
           canWrite={canWriteSelectedFolder}
           canDelete={canDeleteSelectedFolder}
           canReindex={canReindexSelectedFolder}
-          canDeleteDocument={(document) => canDelete && canManageDocument(document, documentGroups)}
-          canReindexDocument={(document) => canReindex && canManageDocument(document, documentGroups)}
-          canShareDocument={(document) => canWrite && canManageDocument(document, documentGroups)}
-          canMoveDocument={(document) => canWrite && canManageDocument(document, documentGroups)}
+          canDeleteDocument={(document) => canDelete && canDeleteDocument(document, documentGroups)}
+          canReindexDocument={(document) => canReindex && canReindexDocument(document, documentGroups)}
+          canShareDocument={(document) => canWrite && canShareDocument(document, documentGroups)}
+          canMoveDocument={(document) => canWrite && canMoveDocument(document, documentGroups)}
           canUploadToDestination={canUploadToDestination}
           migrations={migrations}
           selectedMigrationId={selectedMigrationId}
@@ -707,8 +716,21 @@ export function DocumentWorkspace({
             <div className="share-diff-preview">
               <span>現在の権限: {documentShareInfo?.currentUserEffectivePermission ?? "確認中"}</span>
               <span>継承: {documentShareInfo?.inheritedFolderGrants.map((grant) => `${grant.folderId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
-              <span>直接: {documentShareInfo?.directDocumentGrants.map((grant) => `${grant.principalType}:${grant.principalId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
             </div>
+            <ul className="share-grant-list" aria-label="直接共有">
+              {documentShareDraftGrants.length === 0 && <li>直接共有はありません。</li>}
+              {documentShareDraftGrants.map((grant) => (
+                <li key={`${grant.principalType}:${grant.principalId}`}>
+                  <span>直接: {grant.principalType}:{grant.principalId} {grant.permissionLevel}</span>
+                  <button
+                    type="button"
+                    onClick={() => setDocumentShareDraftGrants((current) => current.filter((item) => !(item.principalType === grant.principalType && item.principalId === grant.principalId)))}
+                  >
+                    削除
+                  </button>
+                </li>
+              ))}
+            </ul>
             <label><span>共有先種別</span><select value={documentSharePrincipalType} onChange={(event) => setDocumentSharePrincipalType(event.target.value as "user" | "group")}><option value="user">user</option><option value="group">group</option></select></label>
             <label><span>共有先ID</span><input value={documentSharePrincipalId} onChange={(event) => setDocumentSharePrincipalId(event.target.value)} /></label>
             <label><span>権限</span><select value={documentSharePermissionLevel} onChange={(event) => setDocumentSharePermissionLevel(event.target.value as "readOnly" | "full")}><option value="readOnly">readOnly</option><option value="full">full</option></select></label>
@@ -724,8 +746,9 @@ export function DocumentWorkspace({
             <label><span>移動先フォルダ</span><select value={documentMoveDestinationId} onChange={(event) => setDocumentMoveDestinationId(event.target.value)}><option value="">選択してください</option>{documentGroups.filter(canManageDocumentGroup).map((group) => <option value={group.groupId} key={group.groupId}>{group.canonicalPath ?? group.name}</option>)}</select></label>
             <label><span>移動後の表示名</span><input value={documentMoveNewTitle} onChange={(event) => setDocumentMoveNewTitle(event.target.value)} /></label>
             <p className="modal-note">直接共有は維持され、継承共有は移動先フォルダの設定に変わります。</p>
+            {documentMoveNameConflict && <p className="modal-note" role="alert">移動先に同名ファイルが存在します。別の表示名を入力してください。</p>}
             <label><span>理由</span><textarea value={documentMoveReason} onChange={(event) => setDocumentMoveReason(event.target.value)} /></label>
-            <button type="submit" disabled={!documentMoveDestinationId || !documentMoveReason.trim() || operationState.movingDocumentId === documentMoveTarget.documentId}>移動</button>
+            <button type="submit" disabled={!documentMoveDestinationId || documentMoveNameConflict || !documentMoveReason.trim() || operationState.movingDocumentId === documentMoveTarget.documentId}>移動</button>
           </form>
         </WorkspaceModal>
       )}
@@ -826,10 +849,27 @@ function canManageDocumentGroup(group: DocumentGroup): boolean {
 }
 
 function canManageDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  if (document.currentUserEffectivePermission) return document.currentUserEffectivePermission === "full"
   const groupIds = documentGroupIds(document)
   if (groupIds.length === 0) return true
   return groupIds.every((groupId) => {
     const group = groups.find((candidate) => candidate.groupId === groupId)
     return Boolean(group && canManageDocumentGroup(group))
   })
+}
+
+function canShareDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  return document.capabilities?.canShare ?? canManageDocument(document, groups)
+}
+
+function canMoveDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  return document.capabilities?.canMove ?? canManageDocument(document, groups)
+}
+
+function canDeleteDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  return document.capabilities?.canDelete ?? canManageDocument(document, groups)
+}
+
+function canReindexDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  return document.capabilities?.canReindex ?? canManageDocument(document, groups)
 }

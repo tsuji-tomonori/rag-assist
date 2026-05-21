@@ -15,6 +15,8 @@ export type AuthorizationResourceCondition =
   | "agentWritebackFull"
   | "documentGroupRead"
   | "documentGroupFull"
+  | "documentEffectiveFull"
+  | "documentMove"
   | "documentUploadSession"
   | "benchmarkSeedScope"
   | "documentIngestRun"
