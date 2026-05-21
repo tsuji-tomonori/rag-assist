@@ -68,6 +68,7 @@ Logical ID: `ApiFunctionCE271BD4`
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
 | `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
 | `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
 | `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
 | `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
 | `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
@@ -124,6 +125,7 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
 | `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
 | `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
 | `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
 | `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
 | `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
@@ -177,6 +179,7 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
 | `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
 | `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
 | `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
 | `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
 | `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
@@ -230,6 +233,7 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
 | `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
 | `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
 | `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
 | `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
 | `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
@@ -317,6 +321,7 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
 | `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
 | `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
 | `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
 | `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
 | `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
@@ -371,6 +376,7 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
 | `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
 | `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
 | `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
 | `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
 | `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |
@@ -429,6 +435,7 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS` | 900 |
 | `DEFAULT_MEMORY_MODEL_ID` | amazon.nova-lite-v1:0 |
 | `DEFAULT_MODEL_ID` | amazon.nova-lite-v1:0 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | ANSWER_EDITOR |
 | `DOCS_BUCKET_NAME` | Ref:DocumentsBucket9EC9DEB9 |
 | `DOCUMENT_GROUPS_TABLE_NAME` | Ref:DocumentGroupsTableA5108040 |
 | `DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME` | Ref:DocumentIngestRunEventsTableF4692EBE |

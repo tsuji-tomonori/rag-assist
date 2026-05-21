@@ -24,6 +24,21 @@ test("dynamoConversationHistoryStore_listPaginatesUserPartition", async () => {
   assert.deepEqual(sent[1]?.input.ExclusiveStartKey, marshall({ userId: "user-a", id: "conv-1" }))
 })
 
+test("conversationHistoryStore_doesNotSliceBeforeFavoriteEnrichment", async () => {
+  const store = new DynamoDbConversationHistoryStore("ConversationHistoryTable", { send: async () => ({
+    Items: Array.from({ length: 21 }, (_, index) => marshall(history(
+      `conv-${index + 1}`,
+      `2026-05-${String(index + 1).padStart(2, "0")}T00:00:00.000Z`
+    )))
+  }) } as never)
+
+  const histories = await store.list("user-a")
+
+  assert.equal(histories.length, 21)
+  assert.equal(histories[0]?.id, "conv-21")
+  assert.equal(histories.at(-1)?.id, "conv-1")
+})
+
 function history(id: string, updatedAt: string) {
   return {
     schemaVersion: 1,

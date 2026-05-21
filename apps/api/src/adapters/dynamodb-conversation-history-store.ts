@@ -45,7 +45,6 @@ export class DynamoDbConversationHistoryStore implements ConversationHistoryStor
     } while (ExclusiveStartKey)
     return items
       .sort(compareHistoryItems)
-      .slice(0, 20)
   }
 
   async delete(userId: string, id: string): Promise<void> {

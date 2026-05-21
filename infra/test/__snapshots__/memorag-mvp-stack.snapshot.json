@@ -3379,6 +3379,7 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
             },
@@ -4280,6 +4281,7 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
             },
@@ -4789,6 +4791,7 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
             },
@@ -5111,6 +5114,7 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
             },
@@ -5425,6 +5429,7 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
             },
@@ -5874,6 +5879,7 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
             },
@@ -6201,6 +6207,7 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
             },

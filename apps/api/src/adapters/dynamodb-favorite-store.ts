@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto"
-import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
+import { DeleteItemCommand, GetItemCommand, QueryCommand, UpdateItemCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
 import type { FavoriteItem, FavoriteTargetType } from "../types.js"
 import { createDynamoDbClient } from "./dynamodb-client.js"
@@ -16,24 +16,40 @@ export class DynamoDbFavoriteStore implements FavoriteStore {
     const now = new Date().toISOString()
     const targetKey = favoriteTargetKey(input.targetType, input.targetId)
     const favoriteId = stableFavoriteId(ownerUserId, targetKey)
-    const item: FavoriteItem = {
-      favoriteId,
-      ownerUserId,
-      targetKey,
-      targetType: input.targetType,
-      targetId: input.targetId,
-      label: input.label,
-      note: input.note,
-      createdAt: now,
-      updatedAt: now
+    const setExpressions = [
+      "favoriteId = if_not_exists(favoriteId, :favoriteId)",
+      "targetType = if_not_exists(targetType, :targetType)",
+      "targetId = if_not_exists(targetId, :targetId)",
+      "createdAt = if_not_exists(createdAt, :createdAt)",
+      "updatedAt = :updatedAt"
+    ]
+    const values: Record<string, unknown> = {
+      ":favoriteId": favoriteId,
+      ":targetType": input.targetType,
+      ":targetId": input.targetId,
+      ":createdAt": now,
+      ":updatedAt": now
     }
-    await this.client.send(
-      new PutItemCommand({
-        TableName: this.tableName,
-        Item: marshall(item, { removeUndefinedValues: true })
-      })
+    if (input.label !== undefined) {
+      setExpressions.push("#label = :label")
+      values[":label"] = input.label
+    }
+    if (input.note !== undefined) {
+      setExpressions.push("note = :note")
+      values[":note"] = input.note
+    }
+    const commandInput = {
+      TableName: this.tableName,
+      Key: marshall({ ownerUserId, targetKey }),
+      UpdateExpression: `SET ${setExpressions.join(", ")}`,
+      ExpressionAttributeValues: marshall(values, { removeUndefinedValues: true }),
+      ReturnValues: "ALL_NEW"
+    } as const
+    const result = await this.client.send(
+      new UpdateItemCommand(input.label !== undefined ? { ...commandInput, ExpressionAttributeNames: { "#label": "label" } } : commandInput)
     )
-    return item
+    if (!result.Attributes) throw new Error("Favorite save failed")
+    return unmarshall(result.Attributes) as FavoriteItem
   }
 
   async list(ownerUserId: string): Promise<FavoriteItem[]> {

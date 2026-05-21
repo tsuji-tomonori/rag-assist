@@ -66,7 +66,7 @@ task benchmark:sample
 | `QUESTION_TABLE_NAME` | 担当者問い合わせ DynamoDB table | `memorag-human-questions` |
 | `CONVERSATION_HISTORY_TABLE_NAME` | 会話履歴 DynamoDB table | `memorag-conversation-history` |
 | `FAVORITES_TABLE_NAME` | お気に入り DynamoDB table。production では必須 | `memorag-favorites` |
-| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | `POST /questions` で担当者・担当グループ未指定の問い合わせに付与する既定担当グループ。通常担当者が新規問い合わせを Query できるよう、ANSWER_EDITOR の所属サポートグループ名に合わせる | 未設定 |
+| `DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID` | `POST /questions` で担当者・担当グループ未指定の問い合わせに付与する既定担当グループ。CDK では MVP の default queue として `ANSWER_EDITOR` を設定し、通常担当者全員が新規問い合わせを Query できるようにする | 未設定 |
 | `DEFAULT_MODEL_ID` | 回答生成モデル | `amazon.nova-lite-v1:0` |
 | `DEFAULT_MEMORY_MODEL_ID` | memory card/clue生成モデル | `DEFAULT_MODEL_ID` |
 | `EMBEDDING_MODEL_ID` | 埋め込みモデル | `amazon.titan-embed-text-v2:0` |

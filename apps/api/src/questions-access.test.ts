@@ -20,7 +20,7 @@ test("question requester can read answers and resolve only their own ticket", as
   const otherRequester = await startLocalServer(dataDir, "CHAT_USER", "requester-2", basePort + 1)
   const admin = await startLocalServer(dataDir, "SYSTEM_ADMIN", "admin-1", basePort + 2)
   const searchManager = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "manager-1", basePort + 3)
-  const answerEditor = await startLocalServer(dataDir, "ANSWER_EDITOR,SUPPORT_TEAM", "answerer-1", basePort + 4)
+  const answerEditor = await startLocalServer(dataDir, "ANSWER_EDITOR", "answerer-1", basePort + 4)
 
   try {
     const created = await postJson<{ questionId: string; requesterUserId?: string }>(requester, "/questions", {
@@ -52,7 +52,7 @@ test("question requester can read answers and resolve only their own ticket", as
     assert.equal(requesterList.status, 403)
 
     const editorList = await getJson<{ questions: Array<{ questionId: string; assigneeGroupId?: string }> }>(answerEditor, "/questions")
-    assert.ok(editorList.questions.some((item) => item.questionId === created.questionId && item.assigneeGroupId === "SUPPORT_TEAM"))
+    assert.ok(editorList.questions.some((item) => item.questionId === created.questionId && item.assigneeGroupId === "ANSWER_EDITOR"))
 
     const openResolve = await fetch(url(requester, `/questions/${created.questionId}/resolve`), { method: "POST" })
     assert.equal(openResolve.status, 409)
@@ -150,7 +150,7 @@ async function startLocalServer(dataDir: string, groups: string, userId: string,
       USE_LOCAL_QUESTION_STORE: "true",
       MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS: "true",
       LOCAL_DATA_DIR: dataDir,
-      DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID: "SUPPORT_TEAM",
+      DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID: "ANSWER_EDITOR",
       AUTH_ENABLED: "false",
       LOCAL_AUTH_GROUPS: groups,
       LOCAL_AUTH_USER_ID: userId

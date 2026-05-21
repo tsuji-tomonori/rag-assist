@@ -262,6 +262,7 @@ test("implements the designed serverless resources", () => {
     Environment: Match.objectLike({
       Variables: Match.objectLike({
         QUESTION_TABLE_NAME: Match.anyValue(),
+        DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID: "ANSWER_EDITOR",
         CONVERSATION_HISTORY_TABLE_NAME: Match.anyValue(),
         FAVORITES_TABLE_NAME: Match.anyValue(),
         BENCHMARK_RUNS_TABLE_NAME: Match.anyValue(),
@@ -402,6 +403,19 @@ test("implements the designed serverless resources", () => {
   assert.match(documentIngestRunDefinition, /States\.ALL/)
   for (const stateMachine of stateMachines) {
     assert.equal((stateMachine as any).Properties.TracingConfiguration, undefined)
+  }
+})
+
+test("stackProvidesDefaultSupportAssigneeGroupIdToApiFunctions", () => {
+  const template = synthesize()
+  for (const logicalIdPrefix of [
+    "ApiFunction",
+    "HeavyApiFunction",
+    "ChatRunWorkerFunction",
+    "DocumentIngestRunWorkerFunction"
+  ]) {
+    const fn = getResourceByLogicalIdPrefix(template, logicalIdPrefix)
+    assert.equal(fn.Properties.Environment.Variables.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID, "ANSWER_EDITOR")
   }
 })
 

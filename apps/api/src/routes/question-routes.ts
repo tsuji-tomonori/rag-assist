@@ -1,6 +1,7 @@
 import { z } from "@hono/zod-openapi"
 import { applicationRoles, hasPermission, requirePermission } from "../authorization.js"
 import type { AppUser } from "../auth.js"
+import { config } from "../config.js"
 import type { HumanQuestion } from "../types.js"
 import {
   AnswerQuestionRequestSchema,
@@ -199,7 +200,8 @@ function canAccessAssignedTicket(user: AppUser, question: HumanQuestion): boolea
   return Boolean(question.assigneeGroupId && supportGroupIds(user).includes(question.assigneeGroupId))
 }
 
-function supportGroupIds(user: AppUser): string[] {
+export function supportGroupIds(user: AppUser): string[] {
   const roleNames = new Set<string>(applicationRoles)
-  return user.cognitoGroups.filter((group) => !roleNames.has(group))
+  const defaultSupportGroup = config.defaultSupportAssigneeGroupId.trim()
+  return user.cognitoGroups.filter((group) => group === defaultSupportGroup || !roleNames.has(group))
 }

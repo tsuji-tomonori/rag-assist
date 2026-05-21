@@ -78,6 +78,7 @@ export class MemoRagMvpStack extends Stack {
     const evidenceVectorIndexName = "evidence-index"
     const benchmarkRunnerAuthSecretIdOverride = String(this.node.tryGetContext("benchmarkRunnerAuthSecretId") ?? "")
     const benchmarkRunnerUsername = String(this.node.tryGetContext("benchmarkRunnerUsername") ?? "benchmark-runner@memorag.local")
+    const defaultSupportAssigneeGroupId = String(this.node.tryGetContext("defaultSupportAssigneeGroupId") ?? "ANSWER_EDITOR")
 
     const accessLogsBucket = new s3.Bucket(this, "AccessLogsBucket", {
       encryption: s3.BucketEncryption.S3_MANAGED,
@@ -376,6 +377,7 @@ export class MemoRagMvpStack extends Stack {
       MOCK_BEDROCK: "false",
       DOCS_BUCKET_NAME: docsBucket.bucketName,
       QUESTION_TABLE_NAME: questionsTable.tableName,
+      DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID: defaultSupportAssigneeGroupId,
       CONVERSATION_HISTORY_TABLE_NAME: conversationHistoryTable.tableName,
       FAVORITES_TABLE_NAME: favoritesTable.tableName,
       BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
