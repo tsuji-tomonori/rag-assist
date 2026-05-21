@@ -47,7 +47,7 @@ export function DocumentFilePanel({
   canReindexDocument,
   canUploadToDestination,
   uploadDisabledReason,
-  canCreateGroup,
+  canOpenCreateFolderForm,
   migrations,
   selectedMigrationId,
   uploadInputRef,
@@ -93,7 +93,7 @@ export function DocumentFilePanel({
   canReindexDocument: (document: DocumentManifest) => boolean
   canUploadToDestination: boolean
   uploadDisabledReason: string | null
-  canCreateGroup: boolean
+  canOpenCreateFolderForm: boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
   uploadInputRef: RefObject<HTMLInputElement | null>
@@ -120,7 +120,7 @@ export function DocumentFilePanel({
         <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
           <button
             type="button"
-            title={uploadDisabledReason ?? `ファイルをアップロード: ${selectedFolder.group ? selectedFolder.name : uploadDestinationLabel}`}
+            title={uploadDisabledReason ?? `ファイルをアップロード: ${uploadDestinationLabel}`}
             aria-label="ファイルをアップロード"
             aria-describedby={uploadDisabledReason ? "document-upload-shortcut-reason" : undefined}
             disabled={!canUploadToDestination || operationState.isUploading}
@@ -133,7 +133,7 @@ export function DocumentFilePanel({
             type="button"
             title="フォルダを作成"
             aria-label="フォルダを作成"
-            disabled={!canCreateGroup}
+            disabled={!canOpenCreateFolderForm}
             onClick={() => createGroupNameRef.current?.focus()}
           >
             <Icon name="plus" />

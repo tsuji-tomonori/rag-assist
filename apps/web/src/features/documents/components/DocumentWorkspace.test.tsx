@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
-import { DocumentWorkspace } from "./DocumentWorkspace.js"
+import { DocumentWorkspace, getCreateFolderDisabledReason } from "./DocumentWorkspace.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-05-01T00:00:00.000Z" }
@@ -61,6 +61,7 @@ const documentGroups: DocumentGroup[] = [
     sharedUserIds: [],
     sharedGroups: ["HR"],
     managerUserIds: ["user-1"],
+    effectivePermission: "full",
     createdAt: "2026-05-01T00:00:00.000Z",
     updatedAt: "2026-05-01T00:00:00.000Z"
   }
@@ -75,6 +76,7 @@ const organizationGroup: DocumentGroup = {
   sharedUserIds: ["user-2"],
   sharedGroups: [],
   managerUserIds: ["user-1"],
+  effectivePermission: "full",
   createdAt: "2026-05-01T00:00:00.000Z",
   updatedAt: "2026-05-01T00:00:00.000Z"
 }
@@ -179,6 +181,78 @@ describe("DocumentWorkspace", () => {
 
     expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
     expect(screen.getAllByText("保存先フォルダを選択するとアップロードできます。").length).toBeGreaterThanOrEqual(1)
+  })
+
+  it("フォルダ作成ショートカットは名前未入力でも有効で、新規フォルダ名入力へfocusする", async () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        loading={false}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    const shortcut = screen.getByRole("button", { name: "フォルダを作成" })
+    expect(shortcut).toBeEnabled()
+
+    await userEvent.click(shortcut)
+
+    expect(screen.getByLabelText("新規フォルダ名")).toHaveFocus()
+    expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeDisabled()
+  })
+
+  it("アップロードショートカットは実際の保存先フォルダ名をtitleに表示する", async () => {
+    const destinationGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-2",
+      name: "アップロード先",
+      ...canonicalGroupFields("アップロード先"),
+      effectivePermission: "full"
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[documentGroups[0]!, destinationGroup]}
+        uploadGroupId="group-2"
+        loading={false}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "/ ドキュメントグループ/社内規定 0件" }))
+
+    expect(screen.getAllByRole("button", { name: "ファイルをアップロード" })[0]).toHaveAttribute("title", expect.stringContaining("アップロード先"))
   })
 
   it("rag:group:create があれば文書アップロード権限がなくてもフォルダ作成できる", async () => {
@@ -865,6 +939,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-02T00:00:00.000Z",
       updatedAt: "2026-05-02T00:00:00.000Z"
     }
@@ -913,6 +988,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-02T00:00:00.000Z",
       updatedAt: "2026-05-02T00:00:00.000Z"
     }
@@ -927,6 +1003,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-03T00:00:00.000Z",
       updatedAt: "2026-05-03T00:00:00.000Z"
     }
@@ -2182,6 +2259,57 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByText("親フォルダの管理権限が必要です。")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
     expect(onCreateGroup).not.toHaveBeenCalled()
+  })
+
+  it("選択済み親フォルダが現在のdocumentGroupsに存在しない場合はフォルダ作成を無効化する", () => {
+    expect(getCreateFolderDisabledReason({
+      canCreateGroup: true,
+      groupParentId: "missing-group",
+      createParentGroup: undefined,
+      createParentCanManage: false,
+      hasName: true,
+      hasValidationError: false,
+      creatingGroup: false
+    })).toBe("親フォルダを選択し直してください。")
+  })
+
+  it("effectivePermission未設定のフォルダでは管理操作を有効化しない", async () => {
+    const groupWithoutEffectivePermission: DocumentGroup = {
+      ...documentGroups[0]!,
+      effectivePermission: undefined
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[groupWithoutEffectivePermission]}
+        uploadGroupId="group-1"
+        loading={false}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "配下資料")
+    await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), groupWithoutEffectivePermission.groupId)
+
+    expect(screen.getByRole("button", { name: "共有設定を編集" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeDisabled()
+    expect(screen.getByText("親フォルダの管理権限が必要です。")).toBeInTheDocument()
   })
 
   it("selected folder が readOnly でも parent 未指定の root 作成は feature permission があれば可能", async () => {

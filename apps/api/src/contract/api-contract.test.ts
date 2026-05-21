@@ -469,7 +469,7 @@ test("document group create route requires rag:group:create", async () => {
   }
 })
 
-test("document group create route rejects read-only parent and duplicate canonical path", async () => {
+test("document group create route rejects inaccessible parent and duplicate canonical path", async () => {
   const port = 18000 + Math.floor(Math.random() * 1000)
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-group-create-boundary-"))
   const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
@@ -541,6 +541,72 @@ test("document group create route rejects read-only parent and duplicate canonic
     assert.equal(child.status, 403)
   } finally {
     await stopServer(outsiderServer)
+  }
+})
+
+test("document group create route rejects read-only parent folders", async () => {
+  const port = 18000 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-group-create-readonly-parent-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+
+  const ownerServer = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_USER_ID: "owner-1",
+      LOCAL_AUTH_GROUPS: "RAG_GROUP_MANAGER"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  let parentGroupId = ""
+  try {
+    await waitUntilReady(ownerServer, port)
+    const createParent = await fetch(`http://127.0.0.1:${port}/document-groups`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "閲覧共有親", visibility: "shared", sharedGroups: ["READERS"] })
+    })
+    assert.equal(createParent.status, 200)
+    const parent = (await createParent.json()) as { groupId: string }
+    parentGroupId = parent.groupId
+  } finally {
+    await stopServer(ownerServer)
+  }
+
+  const readOnlyServer = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_USER_ID: "readonly-user",
+      LOCAL_AUTH_GROUPS: "RAG_GROUP_MANAGER,READERS"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(readOnlyServer, port)
+    const child = await fetch(`http://127.0.0.1:${port}/document-groups`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "配下資料", parentGroupId })
+    })
+
+    assert.equal(child.status, 403)
+  } finally {
+    await stopServer(readOnlyServer)
   }
 })
 

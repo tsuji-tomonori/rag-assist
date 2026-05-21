@@ -279,6 +279,32 @@ describe("useDocuments", () => {
     expect(uploadDocumentFile).toHaveBeenCalled()
   })
 
+  it("create-onlyユーザーでは作成成功後の一覧refresh 403を作成失敗扱いにしない", async () => {
+    const setError = vi.fn()
+    const createdGroup = documentGroupFixture({
+      groupId: "group-created",
+      name: "新規資料",
+      canonicalPath: "/新規資料",
+      normalizedCanonicalPath: "/新規資料",
+      normalizedName: "新規資料"
+    })
+    vi.mocked(createDocumentGroup).mockResolvedValueOnce(createdGroup)
+    vi.mocked(listDocumentGroups).mockRejectedValueOnce(new Error("403 Forbidden"))
+
+    const { result } = renderHook(() => useDocuments(createProps({
+      canCreateDocumentGroups: true,
+      canShareDocumentGroups: false,
+      canWriteDocuments: false,
+      setError
+    })))
+
+    const createResult = await act(() => result.current.onCreateDocumentGroup({ name: "新規資料", visibility: "private" }))
+
+    expect(createResult).toEqual(createdGroup)
+    expect(result.current.operationState.creatingGroup).toBe(false)
+    expect(setError).toHaveBeenCalledWith("403 Forbidden")
+  })
+
   it("資料グループの取得、保存先指定、一時添付、共有更新を扱う", async () => {
     const props = createProps()
     const { result } = renderHook(() => useDocuments(props))

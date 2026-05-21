@@ -214,8 +214,10 @@ export function DocumentWorkspace({
     (validatesCreateManagers && (createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0))
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
   const createParentCanManage = groupParentId ? Boolean(createParentGroup && canManageDocumentGroup(createParentGroup)) : true
+  const canOpenCreateFolderForm = canCreateGroupFeature && !operationState.creatingGroup
   const createGroupDisabledReason = getCreateFolderDisabledReason({
     canCreateGroup: canCreateGroupFeature,
+    groupParentId,
     createParentGroup,
     createParentCanManage,
     hasName: Boolean(groupName.trim()),
@@ -562,7 +564,7 @@ export function DocumentWorkspace({
           canReindexDocument={(document) => canReindex && canManageDocument(document, documentGroups)}
           canUploadToDestination={canUploadToDestination}
           uploadDisabledReason={uploadDisabledReason}
-          canCreateGroup={canCreateGroupFeature}
+          canOpenCreateFolderForm={canOpenCreateFolderForm}
           migrations={migrations}
           selectedMigrationId={selectedMigrationId}
           uploadInputRef={uploadInputRef}
@@ -751,8 +753,9 @@ function getUploadDisabledReason({
   return null
 }
 
-function getCreateFolderDisabledReason({
+export function getCreateFolderDisabledReason({
   canCreateGroup,
+  groupParentId,
   createParentGroup,
   createParentCanManage,
   hasName,
@@ -760,6 +763,7 @@ function getCreateFolderDisabledReason({
   creatingGroup
 }: {
   canCreateGroup: boolean
+  groupParentId: string
   createParentGroup?: DocumentGroup
   createParentCanManage: boolean
   hasName: boolean
@@ -769,7 +773,8 @@ function getCreateFolderDisabledReason({
   if (!canCreateGroup) return "フォルダを作成する権限がありません。"
   if (creatingGroup) return "フォルダを作成中です。"
   if (!hasName) return "新規フォルダ名を入力してください。"
-  if (createParentGroup && !createParentCanManage) return "親フォルダの管理権限が必要です。"
+  if (groupParentId && !createParentGroup) return "親フォルダを選択し直してください。"
+  if (groupParentId && !createParentCanManage) return "親フォルダの管理権限が必要です。"
   if (hasValidationError) return "入力内容を修正してください。"
   return null
 }
@@ -793,7 +798,7 @@ function descendantGroupIds(groups: DocumentGroup[], rootGroupId: string): Set<s
 }
 
 function canManageDocumentGroup(group: DocumentGroup): boolean {
-  return group.effectivePermission === undefined || group.effectivePermission === "full"
+  return group.effectivePermission === "full"
 }
 
 function canManageDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {

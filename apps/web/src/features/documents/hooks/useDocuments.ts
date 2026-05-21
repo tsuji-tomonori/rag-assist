@@ -179,7 +179,11 @@ export function useDocuments({
     setError(null)
     try {
       const group = await createDocumentGroup(input)
-      await refreshDocumentGroups()
+      try {
+        await refreshDocumentGroups()
+      } catch (refreshErr) {
+        setError(refreshErr instanceof Error ? refreshErr.message : String(refreshErr))
+      }
       return group
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
