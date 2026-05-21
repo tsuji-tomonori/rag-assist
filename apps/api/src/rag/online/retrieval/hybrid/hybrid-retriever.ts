@@ -4,6 +4,7 @@ import type { Dependencies } from "../../../../dependencies.js"
 import { folderPermissionSatisfies } from "../../../../authorization.js"
 import { normalizeSearchTopK, ragRuntimePolicy } from "../../../../chat-orchestration/runtime-policy.js"
 import { FolderPermissionService } from "../../../../folders/folder-permission-service.js"
+import { DocumentPermissionService } from "../../../../documents/document-permission-service.js"
 import { loadChunksForManifest } from "../../../_shared/storage/manifest-chunks.js"
 import { isQualityApprovedForNormalRag, qualityProfileCacheKey } from "../../../_shared/policies/quality-policy.js"
 import { loadPublishedAliasMap } from "../../../../search/alias-artifacts.js"
@@ -266,8 +267,9 @@ export async function getLexicalIndex(
   const keys = (await deps.objectStore.listKeys("manifests/")).filter((key) => key.endsWith(".json")).sort()
   const manifests = await Promise.all(keys.map(async (key) => JSON.parse(await deps.objectStore.getText(key)) as DocumentManifest))
   const access = new FolderPermissionService(deps)
+  const documentAccess = new DocumentPermissionService(deps)
   const activeManifests = manifests.filter(isActiveManifest)
-  const accessible = await Promise.all(activeManifests.map(async (manifest) => [manifest, await canAccessManifest(manifest, user, access)] as const))
+  const accessible = await Promise.all(activeManifests.map(async (manifest) => [manifest, await canAccessManifest(manifest, user, access, documentAccess)] as const))
   const visible = accessible
     .filter(([, allowed]) => allowed)
     .map(([manifest]) => manifest)
@@ -709,14 +711,16 @@ function normalize(text: string): string {
   return text.normalize("NFKC").toLowerCase().trim()
 }
 
-async function canAccessManifest(manifest: DocumentManifest, user: AppUser, access: FolderPermissionService): Promise<boolean> {
+async function canAccessManifest(manifest: DocumentManifest, user: AppUser, access: FolderPermissionService, documentAccess: DocumentPermissionService): Promise<boolean> {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
   const folderIds = folderScopeIds(metadata)
   const scopeType = stringValue(metadata.scopeType)
   if (folderIds.length > 0) {
     const permissions = await access.resolveEffectiveFolderPermissions(user, folderIds)
-    return folderIds.some((folderId) => folderPermissionSatisfies(permissions[folderId] ?? "none", "readOnly"))
+    if (folderIds.some((folderId) => folderPermissionSatisfies(permissions[folderId] ?? "none", "readOnly"))) return true
+    const permission = await documentAccess.resolveEffectiveDocumentPermission(user, manifest)
+    return permission === "readOnly" || permission === "full"
   }
   if (scopeType === "group" || scopeType === "folder") return false
   if (stringValue(metadata.ownerUserId) === user.userId) return true
@@ -737,6 +741,7 @@ async function filterAccessibleVectorHits(
 ): Promise<RetrievedVector[]> {
   const manifestCache = new Map<string, DocumentManifest | undefined>()
   const access = new FolderPermissionService(deps)
+  const documentAccess = new DocumentPermissionService(deps)
   const result: RetrievedVector[] = []
   for (const hit of hits) {
     if (!canAccessVectorMetadata(hit.metadata, user)) continue
@@ -744,7 +749,7 @@ async function filterAccessibleVectorHits(
     if (
       !manifest ||
       !isActiveManifest(manifest) ||
-      !(await canAccessManifest(manifest, user, access)) ||
+      !(await canAccessManifest(manifest, user, access, documentAccess)) ||
       !manifestMatchesScope(manifest, scope) ||
       !isQualityApprovedForNormalRag(manifest)
     ) {

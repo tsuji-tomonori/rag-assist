@@ -45,11 +45,18 @@ export function DocumentFilePanel({
   canReindex,
   canDeleteDocument,
   canReindexDocument,
+  canShareDocument,
+  canMoveDocument,
   canUploadToDestination,
   migrations,
   selectedMigrationId,
   uploadInputRef,
   shareSelectRef,
+  onOpenFolderInfo,
+  onOpenFolderShare,
+  onOpenFolderRename,
+  onOpenFolderMove,
+  onOpenUpload,
   onDocumentQueryChange,
   onDocumentTypeFilterChange,
   onDocumentStatusFilterChange,
@@ -58,7 +65,9 @@ export function DocumentFilePanel({
   onDocumentPageChange,
   onDocumentPageSizeChange,
   onSelectDocument,
-  onConfirmAction
+  onConfirmAction,
+  onShareDocument,
+  onMoveDocument
 }: {
   documents: DocumentManifest[]
   documentGroups: DocumentGroup[]
@@ -88,11 +97,18 @@ export function DocumentFilePanel({
   canReindex: boolean
   canDeleteDocument: (document: DocumentManifest) => boolean
   canReindexDocument: (document: DocumentManifest) => boolean
+  canShareDocument: (document: DocumentManifest) => boolean
+  canMoveDocument: (document: DocumentManifest) => boolean
   canUploadToDestination: boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
   uploadInputRef: RefObject<HTMLInputElement | null>
   shareSelectRef: RefObject<HTMLSelectElement | null>
+  onOpenFolderInfo: () => void
+  onOpenFolderShare: () => void
+  onOpenFolderRename: () => void
+  onOpenFolderMove: () => void
+  onOpenUpload: () => void
   onDocumentQueryChange: (value: string) => void
   onDocumentTypeFilterChange: (value: string) => void
   onDocumentStatusFilterChange: (value: string) => void
@@ -102,6 +118,8 @@ export function DocumentFilePanel({
   onDocumentPageSizeChange: (pageSize: number) => void
   onSelectDocument: (document: DocumentManifest) => void
   onConfirmAction: (action: ConfirmAction) => void
+  onShareDocument: (document: DocumentManifest) => void
+  onMoveDocument: (document: DocumentManifest) => void
 }) {
   return (
     <section className="document-file-panel" aria-label="登録文書一覧">
@@ -111,25 +129,12 @@ export function DocumentFilePanel({
           <span className={uploadGroupId ? "upload-destination-chip" : "upload-destination-chip missing"}>保存先: {uploadDestinationLabel}</span>
         </div>
         <span className="sr-only">登録文書</span>
-        <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
-          <button
-            type="button"
-            title={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
-            aria-label={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
-            disabled={!canUploadToDestination || operationState.isUploading}
-            onClick={() => uploadInputRef.current?.click()}
-          >
-            <Icon name="plus" />
-          </button>
-          <button
-            type="button"
-            title="共有設定を編集"
-            aria-label="共有設定を編集"
-            disabled={!canWrite || operationState.sharingGroupId !== null}
-            onClick={() => shareSelectRef.current?.focus()}
-          >
-            <Icon name="share" />
-          </button>
+        <div className="document-folder-actions" aria-label="フォルダ操作">
+          <button type="button" onClick={onOpenFolderInfo}>フォルダ情報</button>
+          <button type="button" disabled={!canWrite || operationState.sharingGroupId !== null} onClick={onOpenFolderShare}>フォルダ共有</button>
+          <button type="button" disabled={!canWrite} onClick={onOpenFolderRename}>フォルダ名変更</button>
+          <button type="button" disabled={!canWrite} onClick={onOpenFolderMove}>フォルダ移動</button>
+          <button type="button" disabled={!canWrite || operationState.isUploading} onClick={onOpenUpload}>アップロード</button>
         </div>
       </div>
 
@@ -204,6 +209,8 @@ export function DocumentFilePanel({
             const groupLabel = documentGroupNames(document, documentGroups).join(", ") || "未設定"
             const canDeleteRow = canDelete && canDeleteDocument(document)
             const canReindexRow = canReindex && canReindexDocument(document)
+            const canShareRow = canShareDocument(document)
+            const canMoveRow = canMoveDocument(document)
             return (
               <div
                 className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
@@ -230,6 +237,45 @@ export function DocumentFilePanel({
                 <span role="cell" data-label="所属フォルダ">{groupLabel}</span>
                 <span role="cell" className="document-actions-cell" data-label="操作">
                   <span className="document-action-buttons">
+                    <button
+                      type="button"
+                      title={`${document.fileName}の詳細`}
+                      aria-label={`${document.fileName}の詳細`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onSelectDocument(document)
+                      }}
+                    >
+                      詳細
+                    </button>
+                    {canShareRow && (
+                      <button
+                        type="button"
+                        title={`${document.fileName}を共有`}
+                        aria-label={`${document.fileName}を共有`}
+                        disabled={operationState.sharingDocumentId === document.documentId}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onShareDocument(document)
+                        }}
+                      >
+                        共有
+                      </button>
+                    )}
+                    {canMoveRow && (
+                      <button
+                        type="button"
+                        title={`${document.fileName}を移動`}
+                        aria-label={`${document.fileName}を移動`}
+                        disabled={operationState.movingDocumentId === document.documentId}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onMoveDocument(document)
+                        }}
+                      >
+                        移動
+                      </button>
+                    )}
                     <button
                       type="button"
                       title={`${document.fileName}の再インデックスをステージング`}

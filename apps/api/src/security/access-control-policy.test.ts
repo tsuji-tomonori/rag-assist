@@ -36,6 +36,9 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /document-groups", { operationKey: "folder.create.group", resourceCondition: "documentGroupFull" }],
   ["POST /document-groups/{groupId}/share", { operationKey: "folder.share", resourceCondition: "documentGroupFull" }],
   ["GET /documents", { operationKey: "document.read", resourceCondition: "benchmarkSeedScope" }],
+  ["GET /documents/{documentId}/share", { operationKey: "document.share.read", resourceCondition: "documentGroupRead" }],
+  ["PUT /documents/{documentId}/share", { operationKey: "document.share.update", resourceCondition: "documentGroupFull" }],
+  ["POST /documents/{documentId}/move", { operationKey: "document.move", resourceCondition: "documentGroupFull" }],
   ["GET /documents/{documentId}/parsed-preview", { operationKey: "document.parsed_preview.read", resourceCondition: "documentGroupRead" }],
   ["POST /documents", { operationKey: "document.upload", resourceCondition: "benchmarkSeedScope" }],
   ["POST /documents/{documentId}/reindex", { operationKey: "document.reindex", resourceCondition: "documentGroupFull" }],
@@ -461,7 +464,7 @@ function findNamedRouteBlock(source: string, routeName: string): string {
 }
 
 function extractRoutes(source: string): Array<Pick<RoutePolicy, "method" | "path">> {
-  return [...source.matchAll(/method:\s*["'](get|post|delete)["'],\s*path:\s*["']([^"']+)["']/g)].map((match) => ({
+  return [...source.matchAll(/method:\s*["'](get|post|put|delete)["'],\s*path:\s*["']([^"']+)["']/g)].map((match) => ({
     method: match[1] ?? "",
     path: match[2] ?? ""
   }))

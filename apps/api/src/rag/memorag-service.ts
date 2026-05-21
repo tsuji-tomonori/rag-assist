@@ -24,6 +24,13 @@ import { embedWithCache, mapWithConcurrency } from "./offline/pre-retrieval/embe
 import { buildPipelineVersions } from "./offline/pre-retrieval/indexing/index-version-store.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
 import { canAccessDocumentGroup, canManageDocumentGroup, documentGroupHasLegacyExplicitPolicy, resolveDocumentGroupPermissionDetail } from "../folders/document-group-permissions.js"
+import {
+  canMoveDocument,
+  canShareDocument,
+  DocumentPermissionService,
+  validateDocumentMoveRequest,
+  type DocumentShareGrantInput
+} from "../documents/document-permission-service.js"
 
 type StartDocumentIngestRunInput = {
   uploadId: string
@@ -362,11 +369,17 @@ export class MemoRagService {
         }))
     )
     const documentGroups = user ? normalizeDocumentGroups(await this.deps.documentGroupStore.list()) : []
-    return manifests
+    const activeManifests = manifests
       .filter((manifest): manifest is DocumentManifest => manifest !== undefined)
       .filter((manifest) => (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active")
       .filter((manifest) => stringValue(manifest.metadata?.scopeType) !== "chat")
-      .filter((manifest) => !user || canAccessManifest(manifest, user, documentGroups))
+    const accessible = user
+      ? await Promise.all(activeManifests.map(async (manifest) => [manifest, await this.canAccessDocumentManifest(user, manifest, documentGroups)] as const))
+      : activeManifests.map((manifest) => [manifest, true] as const)
+    return accessible
+      .filter(([, allowed]) => allowed)
+      .map(([manifest]) => manifest)
+      .map((manifest) => user ? this.sanitizeDirectSharedManifestForList(user, manifest, documentGroups) : manifest)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
 
@@ -387,7 +400,7 @@ export class MemoRagService {
     })
     if (!manifest) return undefined
     const documentGroups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
-    if (!canAccessManifest(manifest, user, documentGroups)) throw forbiddenError("Forbidden")
+    if (!(await this.canAccessDocumentManifest(user, manifest, documentGroups))) throw forbiddenError("Forbidden")
     return buildParsedDocumentPreview(manifest)
   }
 
@@ -537,9 +550,108 @@ export class MemoRagService {
 
   private async assertDocumentManifestWritable(actor: AppUser, manifest: DocumentManifest): Promise<void> {
     const documentGroups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
-    if (!canManageManifest(manifest, actor, documentGroups)) {
+    if (!(await this.canManageDocumentManifest(actor, manifest, documentGroups))) {
       throw forbiddenError(`Forbidden: cannot manage document ${manifest.documentId}`)
     }
+  }
+
+  async getDocumentShareInfo(actor: AppUser, documentId: string) {
+    const manifest = await this.getManifest(documentId)
+    const permissionService = new DocumentPermissionService(this.deps)
+    const effectivePermission = await permissionService.resolveEffectiveDocumentPermission(actor, manifest)
+    if (effectivePermission === "none") throw forbiddenError("Forbidden")
+    return permissionService.getShareInfo(actor, manifest)
+  }
+
+  async updateDocumentShare(actor: AppUser, documentId: string, input: { grants: DocumentShareGrantInput[]; reason: string }) {
+    const manifest = await this.getManifest(documentId)
+    const permissionService = new DocumentPermissionService(this.deps)
+    const effectivePermission = await permissionService.resolveEffectiveDocumentPermission(actor, manifest)
+    if (!canShareDocument(effectivePermission, actor)) throw forbiddenError("Forbidden")
+    return permissionService.replaceDocumentShareGrants(actor, manifest, input.grants, input.reason)
+  }
+
+  async moveDocument(actor: AppUser, documentId: string, input: {
+    destinationFolderId: string
+    newTitle?: string
+    reason: string
+    expectedUpdatedAt?: string
+  }): Promise<{
+    document: DocumentManifest
+    before: { folderIds: string[]; fileName: string }
+    after: { folderIds: string[]; fileName: string }
+    directDocumentGrantsPreserved: boolean
+  }> {
+    validateDocumentMoveRequest(input)
+    const manifest = await this.getManifest(documentId)
+    const currentUpdatedAt = manifest.updatedAt ?? manifest.createdAt
+    if (input.expectedUpdatedAt && input.expectedUpdatedAt !== currentUpdatedAt) {
+      throw new Error("Document changed before move")
+    }
+
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
+    const destination = groups.find((group) => group.groupId === input.destinationFolderId)
+    if (!destination || destination.status === "archived") throw new Error("Destination folder not found or inactive")
+    const permissionService = new DocumentPermissionService(this.deps)
+    const documentPermission = await permissionService.resolveEffectiveDocumentPermission(actor, manifest)
+    const destinationPermission = resolveDocumentGroupPermissionDetail(destination, actor, groups).permission
+    if (!canMoveDocument(documentPermission, destinationPermission, actor)) throw forbiddenError("Forbidden")
+
+    const before = { folderIds: documentFolderIds(manifest), fileName: manifest.fileName }
+    const nextFileName = input.newTitle?.trim() || manifest.fileName
+    const siblingConflict = (await this.listDocuments(actor)).some((candidate) => {
+      if (candidate.documentId === manifest.documentId) return false
+      if (candidate.fileName !== nextFileName) return false
+      return documentFolderIds(candidate).includes(destination.groupId)
+    })
+    if (siblingConflict) throw new Error("Destination folder already has a document with the same file name")
+
+    const now = new Date().toISOString()
+    const metadata = {
+      ...(manifest.metadata ?? {}),
+      scopeType: "group",
+      groupId: destination.groupId,
+      folderId: destination.groupId,
+      groupIds: [destination.groupId],
+      folderIds: [destination.groupId]
+    }
+    const next: DocumentManifest = {
+      ...manifest,
+      fileName: nextFileName,
+      metadata,
+      updatedAt: now
+    }
+    await this.deps.objectStore.putText(next.manifestObjectKey, JSON.stringify(next, null, 2), "application/json")
+    await Promise.all([
+      this.deps.evidenceVectorStore.updateMetadataForDocument?.(documentId, { fileName: nextFileName, groupId: destination.groupId, folderId: destination.groupId, groupIds: [destination.groupId], folderIds: [destination.groupId] }),
+      this.deps.memoryVectorStore.updateMetadataForDocument?.(documentId, { fileName: nextFileName, groupId: destination.groupId, folderId: destination.groupId, groupIds: [destination.groupId], folderIds: [destination.groupId] })
+    ])
+    const after = { folderIds: [destination.groupId], fileName: nextFileName }
+    await permissionService.appendDocumentAudit(actor, "document:move", documentId, before, after, input.reason)
+    return { document: next, before, after, directDocumentGrantsPreserved: true }
+  }
+
+  private async canAccessDocumentManifest(actor: AppUser, manifest: DocumentManifest, documentGroups: DocumentGroup[]): Promise<boolean> {
+    if (canAccessManifest(manifest, actor, documentGroups)) return true
+    const permission = await new DocumentPermissionService(this.deps).resolveEffectiveDocumentPermission(actor, manifest)
+    return permission === "readOnly" || permission === "full"
+  }
+
+  private async canManageDocumentManifest(actor: AppUser, manifest: DocumentManifest, documentGroups: DocumentGroup[]): Promise<boolean> {
+    if (canManageManifest(manifest, actor, documentGroups)) return true
+    const permission = await new DocumentPermissionService(this.deps).resolveEffectiveDocumentPermission(actor, manifest)
+    return permission === "full"
+  }
+
+  private sanitizeDirectSharedManifestForList(actor: AppUser, manifest: DocumentManifest, documentGroups: DocumentGroup[]): DocumentManifest {
+    if (canAccessManifest(manifest, actor, documentGroups)) return manifest
+    const metadata = { ...(manifest.metadata ?? {}) }
+    delete metadata.groupId
+    delete metadata.groupIds
+    delete metadata.folderId
+    delete metadata.folderIds
+    metadata.folderLabel = "共有文書"
+    return { ...manifest, metadata }
   }
 
   async assertSearchScopeReadable(actor: AppUser, scope: ChatInput["searchScope"]): Promise<void> {
@@ -2809,6 +2921,10 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGr
   const allowedUsers = stringArray(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId) ?? []
   if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
   return true
+}
+
+function documentFolderIds(manifest: DocumentManifest): string[] {
+  return stringArray(manifest.metadata?.folderIds ?? manifest.metadata?.folderId ?? manifest.metadata?.groupIds ?? manifest.metadata?.groupId) ?? []
 }
 
 function canManageManifest(manifest: DocumentManifest, user: AppUser, documentGroups: DocumentGroup[] = []): boolean {

@@ -39,6 +39,17 @@ export async function post<T>(requestPath: string, body: unknown): Promise<T> {
   return response.json() as Promise<T>
 }
 
+export async function put<T>(requestPath: string, body: unknown): Promise<T> {
+  const apiBaseUrl = await getApiBaseUrl()
+  const response = await fetch(`${apiBaseUrl}${requestPath}`, {
+    method: "PUT",
+    headers: createHeaders(true),
+    body: JSON.stringify(body)
+  })
+  if (!response.ok) throw new Error(await response.text())
+  return response.json() as Promise<T>
+}
+
 export async function del<T = void>(requestPath: string, parseJson = false): Promise<T> {
   const apiBaseUrl = await getApiBaseUrl()
   const response = await fetch(`${apiBaseUrl}${requestPath}`, { method: "DELETE", headers: createHeaders() })

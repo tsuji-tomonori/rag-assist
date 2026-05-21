@@ -1,4 +1,4 @@
-import { createHeaders, del, get, post } from "../../../shared/api/http.js"
+import { createHeaders, del, get, post, put } from "../../../shared/api/http.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 
 export type UpdateDocumentGroupInput = {
@@ -9,6 +9,30 @@ export type UpdateDocumentGroupInput = {
   sharedUserIds?: string[]
   sharedGroups?: string[]
   managerUserIds?: string[]
+}
+
+export type DocumentPermissionLevel = "readOnly" | "full"
+
+export type DocumentShareGrantInput = {
+  principalType: "user" | "group"
+  principalId: string
+  permissionLevel: DocumentPermissionLevel
+}
+
+export type DocumentShareGrant = DocumentShareGrantInput & {
+  documentShareGrantId: string
+  tenantId: string
+  documentId: string
+  createdBy: string
+  reason: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type DocumentShareInfo = {
+  inheritedFolderGrants: Array<{ folderId: string; permissionLevel: "none" | DocumentPermissionLevel }>
+  directDocumentGrants: DocumentShareGrant[]
+  currentUserEffectivePermission: "none" | DocumentPermissionLevel
 }
 
 export async function uploadDocument(input: {
@@ -191,6 +215,26 @@ export async function updateDocumentGroup(groupId: string, input: UpdateDocument
 
 export async function shareDocumentGroup(groupId: string, input: UpdateDocumentGroupInput): Promise<DocumentGroup> {
   return updateDocumentGroup(groupId, input)
+}
+
+export async function getDocumentShare(documentId: string): Promise<DocumentShareInfo> {
+  return get<DocumentShareInfo>(`/documents/${encodeURIComponent(documentId)}/share`)
+}
+
+export async function updateDocumentShare(documentId: string, input: {
+  grants: DocumentShareGrantInput[]
+  reason: string
+}): Promise<DocumentShareInfo> {
+  return put<DocumentShareInfo>(`/documents/${encodeURIComponent(documentId)}/share`, input)
+}
+
+export async function moveDocument(documentId: string, input: {
+  destinationFolderId: string
+  newTitle?: string
+  reason: string
+  expectedUpdatedAt?: string
+}): Promise<{ document: DocumentManifest }> {
+  return post<{ document: DocumentManifest }>(`/documents/${encodeURIComponent(documentId)}/move`, input)
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {

@@ -34,6 +34,8 @@ export const emptyOperationState: DocumentOperationState = {
   isUploading: false,
   creatingGroup: false,
   sharingGroupId: null,
+  sharingDocumentId: null,
+  movingDocumentId: null,
   deletingDocumentId: null,
   stagingReindexDocumentId: null,
   cutoverMigrationId: null,

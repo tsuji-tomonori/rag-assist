@@ -243,6 +243,58 @@ export const FolderPolicyEntrySchema = z.object({
   permissionLevel: z.enum(["readOnly", "full"])
 })
 
+export const DocumentShareGrantSchema = z.object({
+  documentShareGrantId: z.string(),
+  itemType: z.literal("documentShareGrant").optional(),
+  tenantId: z.string(),
+  documentId: z.string(),
+  principalType: z.enum(["user", "group"]),
+  principalId: z.string(),
+  permissionLevel: z.enum(["readOnly", "full"]),
+  createdBy: z.string(),
+  reason: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const DocumentShareRequestSchema = z.object({
+  grants: z.array(z.object({
+    principalType: z.enum(["user", "group"]),
+    principalId: z.string().min(1),
+    permissionLevel: z.enum(["readOnly", "full"])
+  })),
+  reason: z.string().min(1)
+})
+
+export const DocumentShareResponseSchema = z.object({
+  inheritedFolderGrants: z.array(z.object({
+    folderId: z.string(),
+    permissionLevel: z.enum(["none", "readOnly", "full"])
+  })),
+  directDocumentGrants: z.array(DocumentShareGrantSchema),
+  currentUserEffectivePermission: z.enum(["none", "readOnly", "full"])
+})
+
+export const DocumentMoveRequestSchema = z.object({
+  destinationFolderId: z.string().min(1),
+  newTitle: z.string().min(1).optional(),
+  reason: z.string().min(1),
+  expectedUpdatedAt: z.string().optional()
+})
+
+export const DocumentMoveResponseSchema = z.object({
+  document: DocumentManifestSchema,
+  before: z.object({
+    folderIds: z.array(z.string()),
+    fileName: z.string()
+  }),
+  after: z.object({
+    folderIds: z.array(z.string()),
+    fileName: z.string()
+  }),
+  directDocumentGrantsPreserved: z.boolean()
+})
+
 export const FolderPolicySchema = z.object({
   policyId: z.string(),
   itemType: z.literal("folderPolicy").optional(),

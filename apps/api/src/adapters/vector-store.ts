@@ -17,4 +17,5 @@ export interface VectorStore {
   put(records: VectorRecord[]): Promise<void>
   query(vector: number[], topK: number, filter?: VectorFilter): Promise<RetrievedVector[]>
   delete(keys: string[]): Promise<void>
+  updateMetadataForDocument?(documentId: string, metadata: Partial<VectorRecord["metadata"]>): Promise<void>
 }

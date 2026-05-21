@@ -14,6 +14,9 @@ import type { AppUser } from "../auth.js"
 import { LocalDocumentIngestRunEventStore } from "../adapters/local-document-ingest-run-event-store.js"
 import { LocalDocumentIngestRunStore } from "../adapters/local-document-ingest-run-store.js"
 import { LocalDocumentGroupStore } from "../adapters/local-document-group-store.js"
+import { LocalFolderPolicyStore } from "../adapters/local-folder-policy-store.js"
+import { LocalUserGroupStore } from "../adapters/local-user-group-store.js"
+import { LocalGroupMembershipStore } from "../adapters/local-group-membership-store.js"
 import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
@@ -2373,6 +2376,9 @@ async function createService(options: {
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
     documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
     documentGroupStore: new LocalDocumentGroupStore(dataDir),
+    folderPolicyStore: new LocalFolderPolicyStore(dataDir),
+    userGroupStore: new LocalUserGroupStore(dataDir),
+    groupMembershipStore: new LocalGroupMembershipStore(dataDir),
     codeBuildLogReader: options.codeBuildLogReader ?? { getText: async () => undefined },
     asyncAgentProviders: options.asyncAgentProviders ?? defaultTestAsyncAgentProviders(),
     userDirectory: options.userDirectory

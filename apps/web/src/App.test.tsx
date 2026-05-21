@@ -573,10 +573,12 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
-    await userEvent.selectOptions(screen.getByLabelText("保存先フォルダ"), "group-1")
-    const input = screen.getByLabelText("文書アップロード").querySelector<HTMLInputElement>('input[type="file"]')
-    await userEvent.upload(input as HTMLInputElement, new File(["管理資料"], "admin-upload.txt", { type: "text/plain" }))
     await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+    const uploadDialog = screen.getByRole("dialog", { name: "アップロード" })
+    await userEvent.selectOptions(within(uploadDialog).getByLabelText("保存先フォルダ"), "group-1")
+    const input = within(uploadDialog).getByLabelText("文書アップロード") as HTMLInputElement
+    await userEvent.upload(input, new File(["管理資料"], "admin-upload.txt", { type: "text/plain" }))
+    await userEvent.click(within(uploadDialog).getByRole("button", { name: "アップロード" }))
 
     await waitFor(() =>
       expect(

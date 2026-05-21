@@ -1,12 +1,11 @@
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
-import type { UpdateDocumentGroupInput } from "../api/documentsApi.js"
+import type { DocumentShareGrantInput, DocumentShareInfo, UpdateDocumentGroupInput } from "../api/documentsApi.js"
 import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
 import { DocumentDetailDrawer } from "./workspace/DocumentDetailDrawer.js"
-import { DocumentDetailPanel } from "./workspace/DocumentDetailPanel.js"
 import { DocumentFilePanel } from "./workspace/DocumentFilePanel.js"
 import { DocumentFolderTree } from "./workspace/DocumentFolderTree.js"
 import {
@@ -56,6 +55,9 @@ export function DocumentWorkspace({
   onUpload,
   onCreateGroup,
   onShareGroup,
+  onLoadDocumentShare,
+  onShareDocument,
+  onMoveDocument,
   onDelete,
   onStageReindex,
   onCutoverReindex,
@@ -79,6 +81,9 @@ export function DocumentWorkspace({
   onUpload: (file: File) => Promise<DocumentUploadResult | DocumentOperationResult | void>
   onCreateGroup: (input: CreateDocumentGroupInput) => Promise<DocumentGroup | void>
   onShareGroup: (groupId: string, input: UpdateDocumentGroupInput) => Promise<DocumentOperationResult | void>
+  onLoadDocumentShare?: (documentId: string) => Promise<DocumentShareInfo | undefined>
+  onShareDocument?: (documentId: string, input: { grants: DocumentShareGrantInput[]; reason: string }) => Promise<DocumentOperationResult | void>
+  onMoveDocument?: (documentId: string, input: { destinationFolderId: string; newTitle?: string; reason: string; expectedUpdatedAt?: string }) => Promise<DocumentOperationResult | void>
   onDelete: (documentId: string) => Promise<DocumentOperationResult | void>
   onStageReindex: (documentId: string) => Promise<DocumentOperationResult | void>
   onCutoverReindex: (migrationId: string) => Promise<DocumentOperationResult | void>
@@ -118,6 +123,17 @@ export function DocumentWorkspace({
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const [lastUploadedDocument, setLastUploadedDocument] = useState<DocumentManifest | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
+  const [activeFolderModal, setActiveFolderModal] = useState<"info" | "share" | "rename" | "move" | "upload" | null>(null)
+  const [documentShareTarget, setDocumentShareTarget] = useState<DocumentManifest | null>(null)
+  const [documentMoveTarget, setDocumentMoveTarget] = useState<DocumentManifest | null>(null)
+  const [documentShareInfo, setDocumentShareInfo] = useState<DocumentShareInfo | null>(null)
+  const [documentSharePrincipalType, setDocumentSharePrincipalType] = useState<"user" | "group">("user")
+  const [documentSharePrincipalId, setDocumentSharePrincipalId] = useState("")
+  const [documentSharePermissionLevel, setDocumentSharePermissionLevel] = useState<"readOnly" | "full">("readOnly")
+  const [documentShareReason, setDocumentShareReason] = useState("")
+  const [documentMoveDestinationId, setDocumentMoveDestinationId] = useState("")
+  const [documentMoveNewTitle, setDocumentMoveNewTitle] = useState("")
+  const [documentMoveReason, setDocumentMoveReason] = useState("")
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
   const operationEventSeqRef = useRef(0)
@@ -482,6 +498,61 @@ export function DocumentWorkspace({
     onUploadGroupChange(groupId)
   }
 
+  async function openDocumentShare(document: DocumentManifest) {
+    setDocumentShareTarget(document)
+    setDocumentShareReason("")
+    setDocumentSharePrincipalId("")
+    setDocumentShareInfo(await onLoadDocumentShare?.(document.documentId) ?? null)
+  }
+
+  function openDocumentMove(document: DocumentManifest) {
+    setDocumentMoveTarget(document)
+    setDocumentMoveDestinationId("")
+    setDocumentMoveNewTitle(document.fileName)
+    setDocumentMoveReason("")
+  }
+
+  async function onDocumentShareSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!documentShareTarget || !onShareDocument) return
+    const existing = documentShareInfo?.directDocumentGrants.map((grant) => ({
+      principalType: grant.principalType,
+      principalId: grant.principalId,
+      permissionLevel: grant.permissionLevel
+    })) ?? []
+    const next = documentSharePrincipalId.trim()
+      ? [
+          ...existing.filter((grant) => !(grant.principalType === documentSharePrincipalType && grant.principalId === documentSharePrincipalId.trim())),
+          { principalType: documentSharePrincipalType, principalId: documentSharePrincipalId.trim(), permissionLevel: documentSharePermissionLevel }
+        ]
+      : existing
+    const result = normalizeOperationResult(await onShareDocument(documentShareTarget.documentId, { grants: next, reason: documentShareReason }))
+    if (result.ok) {
+      recordSessionOperation("文書共有更新", documentShareTarget.fileName, `direct grants: ${next.length}`, "反映済み")
+      setDocumentShareTarget(null)
+      setDocumentShareInfo(null)
+    } else {
+      recordSessionOperation("文書共有更新", documentShareTarget.fileName, result.error, "失敗")
+    }
+  }
+
+  async function onDocumentMoveSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!documentMoveTarget || !documentMoveDestinationId || !onMoveDocument) return
+    const result = normalizeOperationResult(await onMoveDocument(documentMoveTarget.documentId, {
+      destinationFolderId: documentMoveDestinationId,
+      ...(documentMoveNewTitle.trim() && documentMoveNewTitle.trim() !== documentMoveTarget.fileName ? { newTitle: documentMoveNewTitle.trim() } : {}),
+      reason: documentMoveReason,
+      expectedUpdatedAt: documentMoveTarget.updatedAt ?? documentMoveTarget.createdAt
+    }))
+    if (result.ok) {
+      recordSessionOperation("文書移動", documentMoveTarget.fileName, `移動先: ${documentMoveDestinationId}`, "反映済み")
+      setDocumentMoveTarget(null)
+    } else {
+      recordSessionOperation("文書移動", documentMoveTarget.fileName, result.error, "失敗")
+    }
+  }
+
   const selectedDocumentCanManage = selectedDocument ? canManageDocument(selectedDocument, documentGroups) : selectedFolderCanManage
 
   return (
@@ -545,11 +616,18 @@ export function DocumentWorkspace({
           canReindex={canReindexSelectedFolder}
           canDeleteDocument={(document) => canDelete && canManageDocument(document, documentGroups)}
           canReindexDocument={(document) => canReindex && canManageDocument(document, documentGroups)}
+          canShareDocument={(document) => canWrite && canManageDocument(document, documentGroups)}
+          canMoveDocument={(document) => canWrite && canManageDocument(document, documentGroups)}
           canUploadToDestination={canUploadToDestination}
           migrations={migrations}
           selectedMigrationId={selectedMigrationId}
           uploadInputRef={uploadInputRef}
           shareSelectRef={shareSelectRef}
+          onOpenFolderInfo={() => setActiveFolderModal("info")}
+          onOpenFolderShare={() => setActiveFolderModal("share")}
+          onOpenFolderRename={() => setActiveFolderModal("rename")}
+          onOpenFolderMove={() => setActiveFolderModal("move")}
+          onOpenUpload={() => setActiveFolderModal("upload")}
           onDocumentQueryChange={setDocumentQuery}
           onDocumentTypeFilterChange={setDocumentTypeFilter}
           onDocumentStatusFilterChange={setDocumentStatusFilter}
@@ -565,90 +643,92 @@ export function DocumentWorkspace({
             setSelectedMigrationId("")
           }}
           onConfirmAction={onDocumentConfirmAction}
-        />
-        <DocumentDetailPanel
-          documentGroups={documentGroups}
-          selectedFolder={selectedFolder}
-          selectedGroupId={selectedGroupId}
-          selectedSharedEntries={selectedSharedEntries}
-          shareHasValidationError={shareHasValidationError}
-          shareHasEmptyToken={shareHasEmptyToken}
-          shareHasDuplicate={shareHasDuplicate}
-          shareDuplicates={shareDraft.duplicates}
-          shareDiff={shareDiff}
-          shareDraftGroups={shareDraft.groups}
-          shareGroupOptions={shareGroupOptions}
-          shareHasChanges={shareHasChanges}
-          shareRequiresClearConfirmation={shareRequiresClearConfirmation}
-          shareClearConfirmed={shareClearConfirmed}
-          visibleDocuments={visibleDocuments}
-          visibleChunkCount={visibleChunkCount}
-          uploadGroupId={uploadGroupId}
-          uploadFile={uploadFile}
-          uploadDestinationLabel={uploadDestinationLabel}
-          uploadState={uploadState}
-          uploadedDocument={lastUploadedDocument}
-          uploadedDocumentGroupId={uploadedDocumentGroupId(lastUploadedDocument, uploadState?.groupId, uploadGroupId)}
-          recentOperationEvents={recentOperationEvents}
-          groupName={groupName}
-          groupDescription={groupDescription}
-          groupParentId={groupParentId}
-          groupVisibility={groupVisibility}
-          groupSharedGroups={groupSharedGroups}
-          groupManagerUserIds={groupManagerUserIds}
-          moveToCreatedGroup={moveToCreatedGroup}
-          createSharedDraft={createSharedDraft}
-          createShareGroupOptions={createShareGroupOptions}
-          createManagerDraft={createManagerDraft}
-          validatesCreateSharedGroups={validatesCreateSharedGroups}
-          validatesCreateManagers={validatesCreateManagers}
-          createHasValidationError={createHasValidationError}
-          createParentGroup={createParentGroup}
-          canCreateGroup={canCreateGroup}
-          createVisibilityLabel={createVisibilityLabel}
-          shareGroupId={shareGroupId}
-          shareGroups={shareGroups}
-          editTargetGroup={editTargetGroup}
-          editGroupName={editGroupName}
-          editGroupDescription={editGroupDescription}
-          editGroupParentId={editGroupParentId}
-          editMoveTargetGroups={editMoveTargetGroups}
-          editParentInvalid={editParentInvalid}
-          editHasChanges={editHasChanges}
-          editCanSubmit={editCanSubmit}
-          editDestinationLabel={editDestinationLabel}
-          canWrite={canWrite}
-          canSubmitShare={canSubmitShare}
-          canUploadToDestination={canUploadToDestination}
-          operationState={operationState}
-          uploadInputRef={uploadInputRef}
-          shareSelectRef={shareSelectRef}
-          onUploadFileChange={onUploadFileChange}
-          onGroupNameChange={setGroupName}
-          onGroupDescriptionChange={setGroupDescription}
-          onGroupParentIdChange={setGroupParentId}
-          onGroupVisibilityChange={setGroupVisibility}
-          onGroupSharedGroupsChange={setGroupSharedGroups}
-          onGroupManagerUserIdsChange={setGroupManagerUserIds}
-          onMoveToCreatedGroupChange={setMoveToCreatedGroup}
-          onShareGroupIdChange={setShareGroupId}
-          onShareGroupsChange={updateShareGroups}
-          onShareClearConfirmedChange={setShareClearConfirmed}
-          onShareGroupOptionChange={toggleShareGroupOption}
-          onCreateShareGroupOptionChange={toggleCreateShareGroupOption}
-          onEditGroupNameChange={setEditGroupName}
-          onEditGroupDescriptionChange={setEditGroupDescription}
-          onEditGroupParentIdChange={setEditGroupParentId}
-          onUploadGroupChange={onUploadGroupChange}
-          onUploadSubmit={(event) => void onSubmit(event)}
-          onOpenUploadedDocument={openUploadedDocument}
-          onAskUploadedDocument={onAskDocument}
-          onShowUploadedFolder={showUploadedFolder}
-          onCreateGroupSubmit={(event) => void onCreateGroupSubmit(event)}
-          onShareSubmit={(event) => void onShareSubmit(event)}
-          onEditGroupSubmit={(event) => void onEditGroupSubmit(event)}
+          onShareDocument={(document) => void openDocumentShare(document)}
+          onMoveDocument={openDocumentMove}
         />
       </div>
+      {activeFolderModal === "info" && (
+        <WorkspaceModal title="フォルダ情報" onClose={() => setActiveFolderModal(null)}>
+          <dl className="folder-stats modal-stats">
+            <div><dt>パス</dt><dd>{selectedFolder.path}</dd></div>
+            <div><dt>管理者</dt><dd>{selectedFolder.group?.adminPrincipalId ?? "未設定"}</dd></div>
+            <div><dt>ファイル数</dt><dd>{visibleDocuments.length}</dd></div>
+            <div><dt>トークン数</dt><dd>{visibleChunkCount}</dd></div>
+            <div><dt>状態</dt><dd>{selectedFolder.group?.status ?? "active"}</dd></div>
+          </dl>
+        </WorkspaceModal>
+      )}
+      {activeFolderModal === "share" && (
+        <WorkspaceModal title="フォルダ共有" onClose={() => setActiveFolderModal(null)}>
+          <form className="compact-form" onSubmit={(event) => void onShareSubmit(event)}>
+            <label><span>共有フォルダ</span><select ref={shareSelectRef} value={shareGroupId || selectedGroupId} disabled={!canWrite || operationState.sharingGroupId !== null} onChange={(event) => setShareGroupId(event.target.value)}><option value="">選択してください</option>{documentGroups.map((group) => <option value={group.groupId} key={group.groupId}>{group.name}</option>)}</select></label>
+            <label><span>共有 group</span><input value={shareGroups} disabled={!canWrite || operationState.sharingGroupId !== null} onChange={(event) => updateShareGroups(event.target.value)} placeholder="group をカンマ区切りで入力" /></label>
+            <div className="share-diff-preview"><span>追加: {shareDiff.added.join(", ") || "なし"}</span><span>削除: {shareDiff.removed.join(", ") || "なし"}</span></div>
+            {shareRequiresClearConfirmation && <label className="share-clear-confirm"><input type="checkbox" checked={shareClearConfirmed} onChange={(event) => setShareClearConfirmed(event.target.checked)} /><span>既存共有をすべて削除することを確認しました</span></label>}
+            <button type="submit" disabled={!canSubmitShare}>保存</button>
+          </form>
+        </WorkspaceModal>
+      )}
+      {(activeFolderModal === "rename" || activeFolderModal === "move") && (
+        <WorkspaceModal title={activeFolderModal === "rename" ? "フォルダ名変更" : "フォルダ移動"} onClose={() => setActiveFolderModal(null)}>
+          <form className="compact-form" onSubmit={(event) => void onEditGroupSubmit(event)}>
+            {activeFolderModal === "rename" && <label><span>フォルダ名</span><input value={editGroupName} disabled={!canWrite || !editTargetGroup} onChange={(event) => setEditGroupName(event.target.value)} /></label>}
+            {activeFolderModal === "move" && <label><span>移動先フォルダ</span><select value={editGroupParentId} disabled={!canWrite || !editTargetGroup} onChange={(event) => setEditGroupParentId(event.target.value)}><option value={rootFolderParentValue}>ルート</option>{editMoveTargetGroups.map((group) => <option value={group.groupId} key={group.groupId}>{group.canonicalPath ?? group.name}</option>)}</select></label>}
+            <p className="modal-note">移動先: {editDestinationLabel}</p>
+            <button type="submit" disabled={!editCanSubmit}>保存</button>
+          </form>
+        </WorkspaceModal>
+      )}
+      {activeFolderModal === "upload" && (
+        <WorkspaceModal title="アップロード" onClose={() => setActiveFolderModal(null)}>
+          <form className="compact-form" onSubmit={(event) => void onSubmit(event)}>
+            <label>
+              <span>保存先フォルダ</span>
+              <select value={uploadGroupId} disabled={!canWrite || operationState.isUploading} onChange={(event) => onUploadGroupChange(event.target.value)}>
+                <option value="">選択してください</option>
+                {documentGroups.filter(canManageDocumentGroup).map((group) => (
+                  <option value={group.groupId} key={group.groupId}>{group.canonicalPath ?? group.name}</option>
+                ))}
+              </select>
+            </label>
+            <p className="modal-note">アップロード先: {uploadDestinationLabel}</p>
+            <label>
+              <span>文書アップロード</span>
+              <input ref={uploadInputRef} type="file" onChange={(event) => onUploadFileChange(event.target.files?.[0] ?? null)} />
+            </label>
+            <button type="submit" disabled={!uploadFile || !canUploadToDestination || operationState.isUploading}>アップロード</button>
+          </form>
+        </WorkspaceModal>
+      )}
+      {documentShareTarget && (
+        <WorkspaceModal title="ファイル共有" onClose={() => setDocumentShareTarget(null)}>
+          <form className="compact-form" onSubmit={(event) => void onDocumentShareSubmit(event)}>
+            <p className="modal-note">ファイル名: {documentShareTarget.fileName}</p>
+            <div className="share-diff-preview">
+              <span>現在の権限: {documentShareInfo?.currentUserEffectivePermission ?? "確認中"}</span>
+              <span>継承: {documentShareInfo?.inheritedFolderGrants.map((grant) => `${grant.folderId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
+              <span>直接: {documentShareInfo?.directDocumentGrants.map((grant) => `${grant.principalType}:${grant.principalId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
+            </div>
+            <label><span>共有先種別</span><select value={documentSharePrincipalType} onChange={(event) => setDocumentSharePrincipalType(event.target.value as "user" | "group")}><option value="user">user</option><option value="group">group</option></select></label>
+            <label><span>共有先ID</span><input value={documentSharePrincipalId} onChange={(event) => setDocumentSharePrincipalId(event.target.value)} /></label>
+            <label><span>権限</span><select value={documentSharePermissionLevel} onChange={(event) => setDocumentSharePermissionLevel(event.target.value as "readOnly" | "full")}><option value="readOnly">readOnly</option><option value="full">full</option></select></label>
+            <label><span>理由</span><textarea value={documentShareReason} onChange={(event) => setDocumentShareReason(event.target.value)} /></label>
+            <button type="submit" disabled={!documentShareReason.trim() || operationState.sharingDocumentId === documentShareTarget.documentId}>保存</button>
+          </form>
+        </WorkspaceModal>
+      )}
+      {documentMoveTarget && (
+        <WorkspaceModal title="ファイル移動" onClose={() => setDocumentMoveTarget(null)}>
+          <form className="compact-form" onSubmit={(event) => void onDocumentMoveSubmit(event)}>
+            <p className="modal-note">ファイル名: {documentMoveTarget.fileName}</p>
+            <label><span>移動先フォルダ</span><select value={documentMoveDestinationId} onChange={(event) => setDocumentMoveDestinationId(event.target.value)}><option value="">選択してください</option>{documentGroups.filter(canManageDocumentGroup).map((group) => <option value={group.groupId} key={group.groupId}>{group.canonicalPath ?? group.name}</option>)}</select></label>
+            <label><span>移動後の表示名</span><input value={documentMoveNewTitle} onChange={(event) => setDocumentMoveNewTitle(event.target.value)} /></label>
+            <p className="modal-note">直接共有は維持され、継承共有は移動先フォルダの設定に変わります。</p>
+            <label><span>理由</span><textarea value={documentMoveReason} onChange={(event) => setDocumentMoveReason(event.target.value)} /></label>
+            <button type="submit" disabled={!documentMoveDestinationId || !documentMoveReason.trim() || operationState.movingDocumentId === documentMoveTarget.documentId}>移動</button>
+          </form>
+        </WorkspaceModal>
+      )}
       {confirmAction && (
         <DocumentConfirmDialog
           action={confirmAction}
@@ -695,6 +775,20 @@ function normalizeOperationResult(result: DocumentOperationResult | void): Docum
 
 function normalizeUploadResult(result: DocumentUploadResult | DocumentOperationResult | void): { ok: true; document?: DocumentManifest } | { ok: false; error: string } {
   return result ?? { ok: true }
+}
+
+function WorkspaceModal({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
+  return (
+    <div className="document-modal-backdrop" role="presentation">
+      <section className="document-modal" role="dialog" aria-modal="true" aria-label={title}>
+        <header>
+          <h3>{title}</h3>
+          <button type="button" onClick={onClose} aria-label={`${title}を閉じる`}>×</button>
+        </header>
+        {children}
+      </section>
+    </div>
+  )
 }
 
 function uploadedDocumentGroupId(document: DocumentManifest | null, uploadStateGroupId: string | undefined, uploadGroupId: string): string {
