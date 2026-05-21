@@ -75,6 +75,9 @@ let cached: Dependencies | undefined
 
 export function createDependencies(): Dependencies {
   if (cached) return cached
+  if (process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS === "true" && config.nodeEnv === "production") {
+    throw new Error("MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS is not allowed in production")
+  }
 
   const objectStore = config.useLocalVectorStore
     ? new LocalObjectStore(config.localDataDir)
@@ -89,7 +92,7 @@ export function createDependencies(): Dependencies {
     : new S3VectorsStore(config.vectorBucketName, config.evidenceVectorIndexName)
 
   const textModel = config.mockBedrock ? new MockBedrockTextModel() : new BedrockTextModel()
-  const useLegacyLocalStoresForTests = process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS === "true"
+  const useLegacyLocalStoresForTests = config.nodeEnv === "test" && process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS === "true"
   const questionStore = useLegacyLocalStoresForTests ? new LocalQuestionStore(config.localDataDir) : new DynamoDbQuestionStore(config.questionTableName)
   const conversationHistoryStore = useLegacyLocalStoresForTests ? new LocalConversationHistoryStore(config.localDataDir) : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
   const favoriteStore = useLegacyLocalStoresForTests ? new LocalFavoriteStore(config.localDataDir) : new DynamoDbFavoriteStore(config.favoritesTableName)

@@ -37,16 +37,19 @@ export class DynamoDbFavoriteStore implements FavoriteStore {
   }
 
   async list(ownerUserId: string): Promise<FavoriteItem[]> {
-    const result = await this.client.send(
-      new QueryCommand({
+    const items: FavoriteItem[] = []
+    let ExclusiveStartKey: Record<string, unknown> | undefined
+    do {
+      const result = await this.client.send(new QueryCommand({
         TableName: this.tableName,
         KeyConditionExpression: "ownerUserId = :ownerUserId",
-        ExpressionAttributeValues: marshall({ ":ownerUserId": ownerUserId })
-      })
-    )
-    return (result.Items ?? [])
-      .map((item) => unmarshall(item) as FavoriteItem)
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        ExpressionAttributeValues: marshall({ ":ownerUserId": ownerUserId }),
+        ExclusiveStartKey: ExclusiveStartKey as never
+      }))
+      items.push(...(result.Items ?? []).map((item) => unmarshall(item) as FavoriteItem))
+      ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined
+    } while (ExclusiveStartKey)
+    return items.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }
 
   async get(ownerUserId: string, targetType: FavoriteTargetType, targetId: string): Promise<FavoriteItem | undefined> {

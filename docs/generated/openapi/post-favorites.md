@@ -6,7 +6,7 @@
 
 Summary: お気に入り shortcut を作成する
 
-会話、文書、フォルダなどの対象を shortcut として保存します。対象本体は作成しません。
+権限再確認 resolver が実装済みの会話、文書、フォルダを shortcut として保存します。対象本体は作成しません。
 
 ## Headers
 
@@ -28,7 +28,7 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
-| `targetType` | `enum(chatSession \| chatMessage \| folder \| document \| agentExecutionPreset \| skill \| agentProfile \| benchmarkRun)` | yes | `data.targetType` の値。項目名は target type を表します。 | enum=chatSession, chatMessage, folder, document, agentExecutionPreset, skill, agentProfile, benchmarkRun |
+| `targetType` | `enum(chatSession \| folder \| document)` | yes | `data.targetType` の値。項目名は target type を表します。 | enum=chatSession, folder, document |
 | `targetId` | `string` | yes | `data.targetId` の値。項目名は target id を表します。 | minLength=1 |
 | `label` | `string` | no | `data.label` の値。項目名は label を表します。 | maxLength=200 |
 | `note` | `string` | no | `data.note` の値。項目名は note を表します。 | maxLength=1000 |

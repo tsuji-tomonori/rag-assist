@@ -1103,6 +1103,12 @@ export const FavoriteTargetTypeSchema = z.enum([
   "benchmarkRun"
 ])
 
+export const CreateFavoriteTargetTypeSchema = z.enum([
+  "chatSession",
+  "folder",
+  "document"
+])
+
 export const FavoriteSchema = z.object({
   favoriteId: z.string(),
   targetType: FavoriteTargetTypeSchema,
@@ -1119,7 +1125,7 @@ export const FavoriteListResponseSchema = z.object({
 })
 
 export const CreateFavoriteRequestSchema = z.object({
-  targetType: FavoriteTargetTypeSchema,
+  targetType: CreateFavoriteTargetTypeSchema,
   targetId: z.string().min(1),
   label: z.string().max(200).optional(),
   note: z.string().max(1000).optional()

@@ -31,15 +31,19 @@ export class DynamoDbConversationHistoryStore implements ConversationHistoryStor
   }
 
   async list(userId: string): Promise<ConversationHistoryItem[]> {
-    const result = await this.client.send(
-      new QueryCommand({
+    const items: ConversationHistoryItem[] = []
+    let ExclusiveStartKey: Record<string, unknown> | undefined
+    do {
+      const result = await this.client.send(new QueryCommand({
         TableName: this.tableName,
         KeyConditionExpression: "userId = :userId",
-        ExpressionAttributeValues: marshall({ ":userId": userId })
-      })
-    )
-    return (result.Items ?? [])
-      .map((item) => stripUserId(unmarshall(item) as StoredConversationHistoryItem))
+        ExpressionAttributeValues: marshall({ ":userId": userId }),
+        ExclusiveStartKey: ExclusiveStartKey as never
+      }))
+      items.push(...(result.Items ?? []).map((item) => stripUserId(unmarshall(item) as StoredConversationHistoryItem)))
+      ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined
+    } while (ExclusiveStartKey)
+    return items
       .sort(compareHistoryItems)
       .slice(0, 20)
   }

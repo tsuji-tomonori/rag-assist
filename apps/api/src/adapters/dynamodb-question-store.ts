@@ -137,16 +137,21 @@ export class DynamoDbQuestionStore implements QuestionStore {
 
   private async queryByIndex(indexName: string, keyName: string, keyValue: string): Promise<HumanQuestion[]> {
     if (!keyValue) return []
-    const result = await this.client.send(
-      new QueryCommand({
+    const items: HumanQuestion[] = []
+    let ExclusiveStartKey: Record<string, unknown> | undefined
+    do {
+      const result = await this.client.send(new QueryCommand({
         TableName: this.tableName,
         IndexName: indexName,
         KeyConditionExpression: "#pk = :pk",
         ExpressionAttributeNames: { "#pk": keyName },
-        ExpressionAttributeValues: marshall({ ":pk": keyValue })
-      })
-    )
-    return (result.Items ?? []).map((item) => unmarshall(item) as HumanQuestion)
+        ExpressionAttributeValues: marshall({ ":pk": keyValue }),
+        ExclusiveStartKey: ExclusiveStartKey as never
+      }))
+      items.push(...(result.Items ?? []).map((item) => unmarshall(item) as HumanQuestion))
+      ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined
+    } while (ExclusiveStartKey)
+    return items
   }
 }
 

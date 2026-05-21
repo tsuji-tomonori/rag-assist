@@ -1331,11 +1331,16 @@ export class MemoRagService {
   }
 
   async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
+    const defaultAssigneeGroupId = process.env.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID || config.defaultSupportAssigneeGroupId || undefined
+    const assigneeGroupId = input.assigneeUserId || input.assigneeGroupId
+      ? input.assigneeGroupId
+      : defaultAssigneeGroupId
     return this.deps.questionStore.create({
       ...input,
       requesterUserId: user?.userId,
       requesterName: input.requesterName?.trim() || userDisplayName(user),
       requesterDepartment: input.requesterDepartment?.trim() || "未設定",
+      assigneeGroupId,
       sanitizedDiagnostics: sanitizeSupportDiagnostics(input.sanitizedDiagnostics, input.answerUnavailableReason)
     })
   }
@@ -1705,9 +1710,12 @@ export class MemoRagService {
     return this.deps.conversationHistoryStore.delete(userId, id)
   }
 
-  async saveFavorite(ownerUserId: string, input: { targetType: FavoriteTargetType; targetId: string; label?: string; note?: string }): Promise<FavoriteListItem> {
-    const favorite = await this.deps.favoriteStore.save(ownerUserId, input)
-    return { ...stripFavoriteStorageKeys(favorite), accessible: true }
+  async saveFavorite(user: AppUser, input: { targetType: FavoriteTargetType; targetId: string; label?: string; note?: string }): Promise<FavoriteListItem> {
+    if (!favoriteTargetResolverImplemented(input.targetType)) {
+      throw new Error(`Unsupported favorite target type: ${input.targetType}`)
+    }
+    const favorite = await this.deps.favoriteStore.save(user.userId, input)
+    return this.resolveFavoriteVisibility(user, favorite)
   }
 
   async deleteFavorite(ownerUserId: string, targetType: FavoriteTargetType, targetId: string): Promise<void> {
@@ -1734,8 +1742,24 @@ export class MemoRagService {
         const folder = folders.get(favorite.targetId)
         return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
       }
-      return favoriteListItem(favorite, true)
+      return favoriteListItem(favorite, false)
     })
+  }
+
+  private async resolveFavoriteVisibility(user: AppUser, favorite: FavoriteItem): Promise<FavoriteListItem> {
+    if (favorite.targetType === "chatSession") {
+      const history = await this.deps.conversationHistoryStore.list(user.userId)
+      return favoriteListItem(favorite, history.some((item) => item.id === favorite.targetId))
+    }
+    if (favorite.targetType === "document") {
+      const document = (await this.listDocuments(user)).find((item) => item.documentId === favorite.targetId)
+      return favoriteListItem(favorite, Boolean(document), document?.fileName)
+    }
+    if (favorite.targetType === "folder") {
+      const folder = (await this.listDocumentGroups(user)).find((item) => item.groupId === favorite.targetId)
+      return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
+    }
+    return favoriteListItem(favorite, false)
   }
 
   listBenchmarkSuites(): BenchmarkSuite[] {
@@ -3090,6 +3114,10 @@ function favoriteListItem(favorite: FavoriteItem, accessible: boolean, resolvedL
     label: resolvedLabel ?? visible.label,
     accessible: true
   }
+}
+
+function favoriteTargetResolverImplemented(targetType: FavoriteTargetType): boolean {
+  return targetType === "chatSession" || targetType === "document" || targetType === "folder"
 }
 
 function forbiddenError(message: string): Error & { status: number } {

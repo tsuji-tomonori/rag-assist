@@ -8,7 +8,7 @@ class FakeDynamoClient {
   readonly puts: PutItemCommand[] = []
   private scanCount = 0
 
-  constructor(private readonly items: Record<string, unknown>[]) {}
+  constructor(private readonly items: Record<string, unknown>[], private readonly putError?: Error) {}
 
   async send(command: ScanCommand | PutItemCommand) {
     if (command instanceof ScanCommand) {
@@ -17,6 +17,7 @@ class FakeDynamoClient {
     }
     if (command instanceof PutItemCommand) {
       this.puts.push(command)
+      if (this.putError) throw this.putError
       return {}
     }
     throw new Error("unexpected command")
@@ -44,12 +45,13 @@ test("favoriteBackfillCreatesFavoriteForHistoryFavoriteFlag", async () => {
     client: client as never
   })
 
-  assert.deepEqual(result, { scanned: 1, created: 1 })
+  assert.deepEqual(result, { scanned: 1, created: 1, skippedExisting: 0 })
   assert.equal(client.puts.length, 1)
   const put = client.puts[0]
   assert.ok(put)
   const item = unmarshall(put.input.Item!)
   assert.equal(put.input.TableName, "favorites")
+  assert.equal(put.input.ConditionExpression, "attribute_not_exists(ownerUserId) AND attribute_not_exists(targetKey)")
   assert.deepEqual(item, {
     favoriteId: "fav-user-a-chatSession-conv-1",
     ownerUserId: "user-a",
@@ -92,6 +94,31 @@ test("favoriteBackfillDoesNotCreateFavoriteForFalseFlag", async () => {
     client: client as never
   })
 
-  assert.deepEqual(result, { scanned: 2, created: 0 })
+  assert.deepEqual(result, { scanned: 2, created: 0, skippedExisting: 0 })
   assert.equal(client.puts.length, 0)
+})
+
+test("favoriteBackfillDoesNotOverwriteExistingFavorite", async () => {
+  const conditionalError = Object.assign(new Error("already exists"), { name: "ConditionalCheckFailedException" })
+  const client = new FakeDynamoClient([historyItem({ isFavorite: true })], conditionalError)
+
+  const result = await backfillFavoritesFromConversationHistory({
+    conversationHistoryTableName: "history",
+    favoritesTableName: "favorites",
+    client: client as never
+  })
+
+  assert.deepEqual(result, { scanned: 1, created: 0, skippedExisting: 1 })
+  assert.equal(client.puts.length, 1)
+  assert.equal(client.puts[0]?.input.ConditionExpression, "attribute_not_exists(ownerUserId) AND attribute_not_exists(targetKey)")
+})
+
+test("favoriteBackfillPropagatesNonConditionalPutErrors", async () => {
+  const client = new FakeDynamoClient([historyItem({ isFavorite: true })], Object.assign(new Error("ddb unavailable"), { name: "InternalServerError" }))
+
+  await assert.rejects(() => backfillFavoritesFromConversationHistory({
+    conversationHistoryTableName: "history",
+    favoritesTableName: "favorites",
+    client: client as never
+  }), /ddb unavailable/)
 })

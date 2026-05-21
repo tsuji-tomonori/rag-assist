@@ -42,7 +42,7 @@ export function registerFavoriteRoutes({ app, service }: ApiRouteContext) {
       const user = c.get("user")
       requirePermission(user, "chat:create")
       const body = validJson<z.infer<typeof CreateFavoriteRequestSchema>>(c)
-      return c.json(FavoriteSchema.parse(await service.saveFavorite(user.userId, body)), 200)
+      return c.json(FavoriteSchema.parse(await service.saveFavorite(user, body)), 200)
     }
   )
 

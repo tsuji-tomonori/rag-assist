@@ -383,7 +383,7 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /favorites": {
     summary: "お気に入り shortcut を作成する",
-    description: "会話、文書、フォルダなどの対象を shortcut として保存します。対象本体は作成しません。"
+    description: "権限再確認 resolver が実装済みの会話、文書、フォルダを shortcut として保存します。対象本体は作成しません。"
   },
   "DELETE /favorites/{targetType}/{targetId}": {
     summary: "お気に入り shortcut を削除する",

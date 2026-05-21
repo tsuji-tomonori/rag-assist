@@ -5,6 +5,9 @@ import path from "node:path"
 import { spawn, type ChildProcess } from "node:child_process"
 import test from "node:test"
 
+const apiRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..")
+const repoRoot = path.resolve(apiRoot, "../..")
+
 type LocalServer = {
   port: number
   process: ChildProcess
@@ -17,6 +20,7 @@ test("question requester can read answers and resolve only their own ticket", as
   const otherRequester = await startLocalServer(dataDir, "CHAT_USER", "requester-2", basePort + 1)
   const admin = await startLocalServer(dataDir, "SYSTEM_ADMIN", "admin-1", basePort + 2)
   const searchManager = await startLocalServer(dataDir, "RAG_GROUP_MANAGER", "manager-1", basePort + 3)
+  const answerEditor = await startLocalServer(dataDir, "ANSWER_EDITOR,SUPPORT_TEAM", "answerer-1", basePort + 4)
 
   try {
     const created = await postJson<{ questionId: string; requesterUserId?: string }>(requester, "/questions", {
@@ -46,6 +50,9 @@ test("question requester can read answers and resolve only their own ticket", as
 
     const requesterList = await fetch(url(requester, "/questions"))
     assert.equal(requesterList.status, 403)
+
+    const editorList = await getJson<{ questions: Array<{ questionId: string; assigneeGroupId?: string }> }>(answerEditor, "/questions")
+    assert.ok(editorList.questions.some((item) => item.questionId === created.questionId && item.assigneeGroupId === "SUPPORT_TEAM"))
 
     const openResolve = await fetch(url(requester, `/questions/${created.questionId}/resolve`), { method: "POST" })
     assert.equal(openResolve.status, 409)
@@ -126,21 +133,24 @@ test("question requester can read answers and resolve only their own ticket", as
     otherRequester.process.kill("SIGTERM")
     admin.process.kill("SIGTERM")
     searchManager.process.kill("SIGTERM")
+    answerEditor.process.kill("SIGTERM")
   }
 })
 
 async function startLocalServer(dataDir: string, groups: string, userId: string, port: number): Promise<LocalServer> {
-  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const tsxBin = path.resolve(repoRoot, "node_modules/.bin/tsx")
   const child = spawn(tsxBin, ["src/local.ts"], {
-    cwd: process.cwd(),
+    cwd: apiRoot,
     env: {
       ...process.env,
+      NODE_ENV: "test",
       PORT: String(port),
       MOCK_BEDROCK: "true",
       USE_LOCAL_VECTOR_STORE: "true",
       USE_LOCAL_QUESTION_STORE: "true",
       MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS: "true",
       LOCAL_DATA_DIR: dataDir,
+      DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID: "SUPPORT_TEAM",
       AUTH_ENABLED: "false",
       LOCAL_AUTH_GROUPS: groups,
       LOCAL_AUTH_USER_ID: userId

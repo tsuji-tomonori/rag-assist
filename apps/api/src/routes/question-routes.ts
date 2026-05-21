@@ -189,8 +189,8 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
   )
 }
 
-function canReadAllTickets(user: AppUser): boolean {
-  return hasPermission(user, "support:ticket:read:all") || user.cognitoGroups.includes("SYSTEM_ADMIN")
+export function canReadAllTickets(user: AppUser): boolean {
+  return hasPermission(user, "support:ticket:read:all")
 }
 
 function canAccessAssignedTicket(user: AppUser, question: HumanQuestion): boolean {

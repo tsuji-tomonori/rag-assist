@@ -76,6 +76,7 @@ export const config = {
   localDataDir: process.env.LOCAL_DATA_DIR ?? ".local-data",
   docsBucketName,
   questionTableName: process.env.QUESTION_TABLE_NAME ?? "memorag-human-questions",
+  defaultSupportAssigneeGroupId: process.env.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID ?? "",
   conversationHistoryTableName: process.env.CONVERSATION_HISTORY_TABLE_NAME ?? "memorag-conversation-history",
   favoritesTableName: favoritesTableName || "memorag-favorites",
   dynamoDbEndpoint: process.env.DYNAMODB_ENDPOINT ?? "",

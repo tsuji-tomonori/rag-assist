@@ -51,6 +51,26 @@ test("dynamoQuestionStore_listAssignedToUserDeduplicatesAndSortsByUpdatedAtDesc"
   assert.deepEqual(questions.map((item) => item.questionId), ["ticket-2", "ticket-1"])
 })
 
+test("dynamoQuestionStore_queryByIndexPaginatesUntilLastEvaluatedKeyIsEmpty", async () => {
+  const sent: QueryCommand[] = []
+  const store = new DynamoDbQuestionStore("HumanQuestionsTable", { send: async (command: QueryCommand) => {
+    sent.push(command)
+    if (sent.length === 1) {
+      return {
+        Items: [marshall(question("ticket-1", "2026-05-01T00:00:00.000Z"))],
+        LastEvaluatedKey: marshall({ questionId: "ticket-1" })
+      }
+    }
+    return { Items: [marshall(question("ticket-2", "2026-05-02T00:00:00.000Z"))] }
+  } } as never)
+
+  const questions = await store.listRequestedByUser("user-a")
+
+  assert.deepEqual(questions.map((item) => item.questionId), ["ticket-1", "ticket-2"])
+  assert.equal(sent.length, 2)
+  assert.deepEqual(sent[1]?.input.ExclusiveStartKey, marshall({ questionId: "ticket-1" }))
+})
+
 function question(questionId: string, updatedAt: string) {
   return {
     questionId,

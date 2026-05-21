@@ -27,6 +27,7 @@ DYNAMODB_ENDPOINT=http://localhost:8000 \
 QUESTION_TABLE_NAME=memorag-human-questions \
 CONVERSATION_HISTORY_TABLE_NAME=memorag-conversation-history \
 FAVORITES_TABLE_NAME=memorag-favorites \
+DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID=SUPPORT_TEAM \
 LOCAL_DATA_DIR=.local-data \
 npm run start -w @memorag-mvp/api
 ```

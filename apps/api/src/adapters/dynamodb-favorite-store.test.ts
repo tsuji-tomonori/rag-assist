@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import { DeleteItemCommand, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb"
-import { unmarshall } from "@aws-sdk/util-dynamodb"
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
 import { DynamoDbFavoriteStore } from "./dynamodb-favorite-store.js"
 
 test("dynamoFavoriteStore_saveUsesOwnerUserIdAndTargetKey", async () => {
@@ -38,6 +38,26 @@ test("dynamoFavoriteStore_listQueriesOnlyOwnerPartition", async () => {
   assert.equal(command.input.KeyConditionExpression, "ownerUserId = :ownerUserId")
 })
 
+test("dynamoFavoriteStore_listPaginatesOwnerPartition", async () => {
+  const sent: QueryCommand[] = []
+  const store = new DynamoDbFavoriteStore("FavoritesTable", { send: async (command: QueryCommand) => {
+    sent.push(command)
+    if (sent.length === 1) {
+      return {
+        Items: [marshall(favorite("fav-1", "2026-05-01T00:00:00.000Z"))],
+        LastEvaluatedKey: marshall({ ownerUserId: "user-a", targetKey: "document#doc-1" })
+      }
+    }
+    return { Items: [marshall(favorite("fav-2", "2026-05-02T00:00:00.000Z", "doc-2"))] }
+  } } as never)
+
+  const favorites = await store.list("user-a")
+
+  assert.deepEqual(favorites.map((item) => item.favoriteId), ["fav-2", "fav-1"])
+  assert.equal(sent.length, 2)
+  assert.deepEqual(sent[1]?.input.ExclusiveStartKey, marshall({ ownerUserId: "user-a", targetKey: "document#doc-1" }))
+})
+
 test("dynamoFavoriteStore_deleteRemovesOnlyFavoriteItem", async () => {
   const sent: unknown[] = []
   const store = new DynamoDbFavoriteStore("FavoritesTable", { send: async (command: unknown) => {
@@ -51,3 +71,16 @@ test("dynamoFavoriteStore_deleteRemovesOnlyFavoriteItem", async () => {
   assert.ok(command instanceof DeleteItemCommand)
   assert.deepEqual(unmarshall(command.input.Key ?? {}), { ownerUserId: "user-a", targetKey: "document#doc-1" })
 })
+
+function favorite(favoriteId: string, updatedAt: string, targetId = "doc-1") {
+  return {
+    favoriteId,
+    ownerUserId: "user-a",
+    targetKey: `document#${targetId}`,
+    targetType: "document",
+    targetId,
+    label: targetId,
+    createdAt: updatedAt,
+    updatedAt
+  }
+}

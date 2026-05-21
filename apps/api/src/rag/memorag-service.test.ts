@@ -1196,6 +1196,60 @@ test("service delegates human question lifecycle to the question store", async (
   assert.equal(resolved.status, "resolved")
 })
 
+test("questionCreate_setsDefaultAssigneeGroupWhenMissing", async () => {
+  const previous = process.env.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID
+  process.env.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID = "support-default"
+  try {
+    const { service } = await createService()
+    const question = await service.createQuestion({
+      title: "資料外の質問",
+      question: "担当者へ確認してください。"
+    }, { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] })
+
+    assert.equal(question.assigneeGroupId, "support-default")
+  } finally {
+    if (previous === undefined) delete process.env.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID
+    else process.env.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID = previous
+  }
+})
+
+test("favoriteList_marksUnsupportedTargetTypeInaccessible", async () => {
+  const { service, deps } = await createService()
+  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  await deps.favoriteStore.save(user.userId, { targetType: "skill", targetId: "skill-1", label: "Skill 1" })
+
+  const favorites = await service.listFavorites(user)
+
+  assert.equal(favorites[0]?.targetType, "skill")
+  assert.equal(favorites[0]?.accessible, false)
+  assert.equal(favorites[0]?.label, "この項目には現在アクセスできません")
+})
+
+test("favoriteCreateDoesNotReturnAccessibleTrueWithoutResolver", async () => {
+  const { service } = await createService()
+  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await assert.rejects(() => service.saveFavorite(user, { targetType: "skill", targetId: "skill-1" }), /Unsupported favorite target type/)
+})
+
+test("favoriteCreateRechecksChatSessionOwner", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const other: AppUser = { userId: "other-1", email: "other@example.com", cognitoGroups: ["CHAT_USER"] }
+  await service.saveConversationHistory(owner.userId, {
+    id: "conv-1",
+    title: "会話",
+    messages: [],
+    updatedAt: "2026-05-21T00:00:00.000Z"
+  })
+
+  const ownerFavorite = await service.saveFavorite(owner, { targetType: "chatSession", targetId: "conv-1", label: "会話" })
+  const otherFavorite = await service.saveFavorite(other, { targetType: "chatSession", targetId: "conv-1", label: "会話" })
+
+  assert.equal(ownerFavorite.accessible, true)
+  assert.equal(otherFavorite.accessible, false)
+})
+
 test("service preserves asynchronous chat run options and can mark worker failures", async () => {
   const { service, deps } = await createService()
   const user = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }

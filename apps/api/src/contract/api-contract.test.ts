@@ -7,6 +7,7 @@ import test from "node:test"
 import { isBenchmarkSeedUpload, isBenchmarkSeedUploadedObjectIngest } from "../app.js"
 import { authorizeDocumentDelete, authorizeDocumentUpload, authorizeUploadedDocumentIngest } from "../routes/benchmark-seed.js"
 
+process.env.NODE_ENV = "test"
 process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS = "true"
 
 type OpenApiDoc = {

@@ -12,10 +12,11 @@ export async function backfillFavoritesFromConversationHistory(input: {
   conversationHistoryTableName: string
   favoritesTableName: string
   client?: DynamoDBClient
-}): Promise<{ scanned: number; created: number }> {
+}): Promise<{ scanned: number; created: number; skippedExisting: number }> {
   const client = input.client ?? createDynamoDbClient()
   let scanned = 0
   let created = 0
+  let skippedExisting = 0
   let ExclusiveStartKey: Record<string, unknown> | undefined
   do {
     const page = await client.send(new ScanCommand({
@@ -27,14 +28,23 @@ export async function backfillFavoritesFromConversationHistory(input: {
       scanned += 1
       const history = unmarshall(raw) as StoredHistory
       if (history.isFavorite !== true) continue
-      await client.send(new PutItemCommand({
-        TableName: input.favoritesTableName,
-        Item: marshall(toFavorite(history), { removeUndefinedValues: true })
-      }))
-      created += 1
+      try {
+        await client.send(new PutItemCommand({
+          TableName: input.favoritesTableName,
+          Item: marshall(toFavorite(history), { removeUndefinedValues: true }),
+          ConditionExpression: "attribute_not_exists(ownerUserId) AND attribute_not_exists(targetKey)"
+        }))
+        created += 1
+      } catch (err) {
+        if (err instanceof Error && err.name === "ConditionalCheckFailedException") {
+          skippedExisting += 1
+          continue
+        }
+        throw err
+      }
     }
   } while (ExclusiveStartKey)
-  return { scanned, created }
+  return { scanned, created, skippedExisting }
 }
 
 function toFavorite(history: StoredHistory): FavoriteItem {
