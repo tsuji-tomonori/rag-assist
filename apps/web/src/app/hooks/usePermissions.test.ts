@@ -23,6 +23,8 @@ describe("usePermissions", () => {
     const { result } = renderHook(() => usePermissions(user([
       "chat:create",
       "rag:doc:write:group",
+      "rag:group:create",
+      "rag:group:assign_manager",
       "rag:alias:read",
       "benchmark:read",
       "benchmark:run",
@@ -35,6 +37,8 @@ describe("usePermissions", () => {
     ])))
 
     expect(result.current.canCreateChat).toBe(true)
+    expect(result.current.canCreateDocumentGroups).toBe(true)
+    expect(result.current.canShareDocumentGroups).toBe(true)
     expect(result.current.canManageDocuments).toBe(true)
     expect(result.current.canManageAliases).toBe(true)
     expect(result.current.canReadBenchmarkRuns).toBe(true)
@@ -46,5 +50,17 @@ describe("usePermissions", () => {
     expect(result.current.canSeeAdminSettings).toBe(true)
     expect(result.current.canCancelBenchmark).toBe(false)
     expect(result.current.canCancelAgent).toBe(false)
+  })
+
+  it("separates document upload, group create, and group share permissions", () => {
+    const createOnly = renderHook(() => usePermissions(user(["rag:group:create"])))
+    expect(createOnly.result.current.canCreateDocumentGroups).toBe(true)
+    expect(createOnly.result.current.canWriteDocuments).toBe(false)
+    expect(createOnly.result.current.canManageDocuments).toBe(true)
+
+    const uploadOnly = renderHook(() => usePermissions(user(["rag:doc:write:group"])))
+    expect(uploadOnly.result.current.canCreateDocumentGroups).toBe(false)
+    expect(uploadOnly.result.current.canWriteDocuments).toBe(true)
+    expect(uploadOnly.result.current.canManageDocuments).toBe(true)
   })
 })

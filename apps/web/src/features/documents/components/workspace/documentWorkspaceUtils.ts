@@ -269,6 +269,32 @@ export function operationResultClassName(result: DocumentOperationEvent["result"
   return "done"
 }
 
+export function getCreateFolderDisabledReason({
+  canCreateGroup,
+  groupParentId,
+  createParentGroup,
+  createParentCanManage,
+  hasName,
+  hasValidationError,
+  creatingGroup
+}: {
+  canCreateGroup: boolean
+  groupParentId: string
+  createParentGroup?: DocumentGroup
+  createParentCanManage: boolean
+  hasName: boolean
+  hasValidationError: boolean
+  creatingGroup: boolean
+}): string | null {
+  if (!canCreateGroup) return "フォルダを作成する権限がありません。"
+  if (creatingGroup) return "フォルダを作成中です。"
+  if (!hasName) return "新規フォルダ名を入力してください。"
+  if (groupParentId && !createParentGroup) return "親フォルダを選択し直してください。"
+  if (groupParentId && !createParentCanManage) return "親フォルダの管理権限が必要です。"
+  if (hasValidationError) return "入力内容を修正してください。"
+  return null
+}
+
 function migrationActionLabel(status: ReindexMigration["status"]): string {
   if (status === "cutover") return "reindex cutover"
   if (status === "rolled_back") return "reindex rollback"

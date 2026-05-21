@@ -44,6 +44,9 @@ export function DocumentFilePanel({
   canCreateGroups,
   canShareGroups,
   canReindex,
+  canUploadToDestination,
+  uploadDisabledReason,
+  canOpenCreateFolderForm,
   canDeleteDocument,
   canReindexDocument,
   migrations,
@@ -89,6 +92,9 @@ export function DocumentFilePanel({
   canCreateGroups: boolean
   canShareGroups: boolean
   canReindex: boolean
+  canUploadToDestination: boolean
+  uploadDisabledReason: string | null
+  canOpenCreateFolderForm: boolean
   canDeleteDocument: (document: DocumentManifest) => boolean
   canReindexDocument: (document: DocumentManifest) => boolean
   migrations: ReindexMigration[]
@@ -117,21 +123,22 @@ export function DocumentFilePanel({
         <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
           <button
             type="button"
-            title={selectedFolder.group ? "このフォルダに子フォルダを作成" : "新規フォルダを作成"}
-            aria-label={selectedFolder.group ? "このフォルダに子フォルダを作成" : "新規フォルダを作成"}
-            disabled={!canCreateGroups || operationState.creatingGroup}
-            onClick={onOpenCreateFolder}
-          >
-            <Icon name="plus" />
-          </button>
-          <button
-            type="button"
-            title={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
-            aria-label={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
-            disabled={!canWrite || operationState.isUploading}
+            title={uploadDisabledReason ?? `ファイルをアップロード: ${uploadDestinationLabel}`}
+            aria-label="ファイルをアップロード"
+            aria-describedby={uploadDisabledReason ? "upload-shortcut-disabled-reason" : undefined}
+            disabled={!canUploadToDestination || operationState.isUploading}
             onClick={onOpenUploadPicker}
           >
             <Icon name="download" />
+          </button>
+          <button
+            type="button"
+            title={operationState.creatingGroup ? "フォルダを作成中です。" : "フォルダを作成"}
+            aria-label="フォルダを作成"
+            disabled={!canOpenCreateFolderForm}
+            onClick={onOpenCreateFolder}
+          >
+            <Icon name="plus" />
           </button>
           <button
             type="button"
@@ -144,6 +151,7 @@ export function DocumentFilePanel({
           </button>
         </div>
       </div>
+      {uploadDisabledReason && <p className="field-hint" id="upload-shortcut-disabled-reason">{uploadDisabledReason}</p>}
 
       <div className="document-filter-bar" aria-label="文書検索と絞り込み">
         <label>
@@ -204,7 +212,7 @@ export function DocumentFilePanel({
           <EmptyState
             title="登録済みドキュメントはありません。"
             description={documentGroups.length === 0 ? "まずフォルダを作成し、保存先を選択してからファイルをアップロードしてください。" : "保存先フォルダを選択してファイルをアップロードしてください。"}
-            action={<button type="button" disabled={!canWrite || !uploadGroupId} onClick={onOpenUploadPicker}>ファイルをアップロード</button>}
+            action={<button type="button" disabled={!canUploadToDestination} onClick={onOpenUploadPicker}>ファイルをアップロード</button>}
           />
         ) : filteredDocumentsCount === 0 ? (
           <EmptyState

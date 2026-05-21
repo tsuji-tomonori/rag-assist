@@ -187,7 +187,11 @@ export function useDocuments({
     setError(null)
     try {
       const group = await createDocumentGroup(safeInput)
-      await refreshDocumentGroups()
+      try {
+        await refreshDocumentGroups()
+      } catch (refreshError) {
+        setError(refreshError instanceof Error ? refreshError.message : String(refreshError))
+      }
       return group
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

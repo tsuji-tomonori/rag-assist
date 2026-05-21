@@ -131,7 +131,7 @@ async function openFolderSettings() {
 
 async function openCreateFolderSettings() {
   if (screen.queryByRole("dialog", { name: "フォルダ設定" })) return
-  await userEvent.click(screen.getByRole("button", { name: /新規フォルダを作成|このフォルダに子フォルダを作成/ }))
+  await userEvent.click(screen.getByRole("button", { name: "フォルダを作成" }))
 }
 
 describe("DocumentWorkspace", () => {
@@ -1621,7 +1621,8 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByTitle("保存先を選択してアップロード")).toBeEnabled()
+    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
+    expect(screen.getByText("保存先フォルダを選択するとアップロードできます。")).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
@@ -1651,7 +1652,7 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
     expect(screen.getByText((_, element) => element?.textContent === "保存先: 社内規定")).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTitle("このフォルダにアップロード"))
+    await userEvent.click(screen.getByTitle("ファイルをアップロード: 社内規定"))
     expect(screen.getByRole("dialog", { name: "フォルダ設定" })).toBeInTheDocument()
     expect(screen.getByLabelText("アップロードする文書を選択")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
@@ -1923,7 +1924,7 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /閲覧のみフォルダ/ }))
 
-    expect(screen.getByTitle("このフォルダにアップロード")).toBeDisabled()
+    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
     expect(screen.getByTitle("フォルダ設定を開く")).toBeEnabled()
     expect(screen.getByTitle("requirements.mdを削除")).toBeDisabled()
     expect(screen.getByTitle("requirements.mdの再インデックスをステージング")).toBeDisabled()
@@ -1978,7 +1979,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByTitle("保存先を選択してアップロード"))
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を開く" }))
     const uploadDestination = screen.getByLabelText("保存先フォルダ")
     expect(within(uploadDestination).queryByRole("option", { name: "権限未設定フォルダ" })).not.toBeInTheDocument()
     expect(within(uploadDestination).getByRole("option", { name: "full folder" })).toBeInTheDocument()
@@ -2160,7 +2161,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    await userEvent.click(screen.getByTitle("保存先を選択してアップロード"))
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を開く" }))
     const uploadDestination = screen.getByLabelText("保存先フォルダ")
     expect(within(uploadDestination).getByRole("option", { name: "アップロード可能" })).toBeInTheDocument()
     expect(within(uploadDestination).queryByRole("option", { name: "閲覧のみ" })).not.toBeInTheDocument()
@@ -2204,8 +2205,8 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByTitle("保存先を選択してアップロード")).toBeDisabled()
-    await userEvent.click(screen.getByTitle("保存先を選択してアップロード"))
+    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "ファイルをアップロード" }))
     expect(onUpload).not.toHaveBeenCalled()
   })
 

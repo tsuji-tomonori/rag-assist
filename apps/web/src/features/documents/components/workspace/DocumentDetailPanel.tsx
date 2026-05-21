@@ -46,6 +46,7 @@ export function DocumentDetailPanel({
   createHasValidationError,
   createParentGroup,
   canCreateGroup,
+  createGroupDisabledReason,
   createVisibilityLabel,
   shareGroupId,
   shareGroups,
@@ -63,8 +64,10 @@ export function DocumentDetailPanel({
   canShareGroups,
   canSubmitShare,
   canUploadToDestination,
+  uploadDisabledReason,
   operationState,
   uploadInputRef,
+  createGroupNameRef,
   shareSelectRef,
   onUploadFileChange,
   onGroupNameChange,
@@ -129,6 +132,7 @@ export function DocumentDetailPanel({
   createHasValidationError: boolean
   createParentGroup?: DocumentGroup
   canCreateGroup: boolean
+  createGroupDisabledReason: string | null
   createVisibilityLabel: string
   shareGroupId: string
   shareGroups: string
@@ -146,8 +150,10 @@ export function DocumentDetailPanel({
   canShareGroups: boolean
   canSubmitShare: boolean
   canUploadToDestination: boolean
+  uploadDisabledReason: string | null
   operationState: DocumentOperationState
   uploadInputRef: RefObject<HTMLInputElement | null>
+  createGroupNameRef: RefObject<HTMLInputElement | null>
   shareSelectRef: RefObject<HTMLSelectElement | null>
   onUploadFileChange: (file: File | null) => void
   onGroupNameChange: (value: string) => void
@@ -367,7 +373,7 @@ export function DocumentDetailPanel({
             <span>{uploadFile ? `一時選択: ${uploadFile.name} / 保存先: ${uploadDestinationLabel}` : "ファイルをアップロード"}</span>
             <input ref={uploadInputRef} type="file" aria-label="アップロードする文書を選択" disabled={!canUploadToDestination || operationState.isUploading} onChange={(event) => onUploadFileChange(event.target.files?.[0] ?? null)} />
           </label>
-          {!uploadGroupId && <p className="field-hint">保存先フォルダを選択するとアップロードできます。</p>}
+          {uploadDisabledReason && <p className="field-hint">{uploadDisabledReason}</p>}
           <button type="submit" disabled={!canUploadToDestination || !uploadFile || operationState.isUploading}>
             {operationState.isUploading && <LoadingSpinner className="button-spinner" />}
             <span>アップロード</span>
@@ -387,7 +393,7 @@ export function DocumentDetailPanel({
         <form className="compact-form" onSubmit={onCreateGroupSubmit}>
           <label>
             <span>新規フォルダ名</span>
-            <input value={groupName} disabled={!canCreateGroups || operationState.creatingGroup} onChange={(event) => onGroupNameChange(event.target.value)} placeholder="フォルダ名" />
+            <input ref={createGroupNameRef} value={groupName} disabled={!canCreateGroups || operationState.creatingGroup} onChange={(event) => onGroupNameChange(event.target.value)} placeholder="フォルダ名" />
           </label>
           <label>
             <span>説明</span>
@@ -465,6 +471,7 @@ export function DocumentDetailPanel({
             {validatesCreateSharedGroups && createSharedDraft.duplicates.length > 0 && <p className="error">重複している shared group: {createSharedDraft.duplicates.join(", ")}</p>}
             {validatesCreateManagers && createManagerDraft.hasEmptyToken && <p className="error">管理者 user IDs に空の指定があります。余分なカンマを削除してください。</p>}
             {validatesCreateManagers && createManagerDraft.duplicates.length > 0 && <p className="error">重複している管理者 user ID: {createManagerDraft.duplicates.join(", ")}</p>}
+            {createGroupDisabledReason && createGroupDisabledReason !== "新規フォルダ名を入力してください。" && <p className="error">{createGroupDisabledReason}</p>}
             {!createHasValidationError && <p>入力値だけを作成 payload に含めます。group / user の存在確認は API 作成時に行われます。</p>}
           </div>
           <div className="share-diff-preview" id="create-group-preview" aria-label="新規フォルダ作成プレビュー">

@@ -19,6 +19,7 @@ import {
   documentStatusLabel,
   emptyOperationState,
   fileTypeLabel,
+  getCreateFolderDisabledReason,
   parseListInput,
   parseSharedGroups,
   rootFolderParentValue,
@@ -45,10 +46,13 @@ export function DocumentWorkspace({
   documents,
   documentGroups = [],
   loading,
-  canWrite,
+  canWrite: legacyCanWrite,
   canDelete,
-  canCreateGroups,
-  canShareGroups,
+  canCreateGroup: canCreateGroupProp,
+  canShareGroup: canShareGroupProp,
+  canUpload: canUploadProp,
+  canCreateGroups: legacyCanCreateGroups,
+  canShareGroups: legacyCanShareGroups,
   canReindex,
   uploadGroupId = "",
   operationState = emptyOperationState,
@@ -70,10 +74,13 @@ export function DocumentWorkspace({
   documents: DocumentManifest[]
   documentGroups?: DocumentGroup[]
   loading: boolean
-  canWrite: boolean
+  canWrite?: boolean
   canDelete: boolean
-  canCreateGroups: boolean
-  canShareGroups: boolean
+  canCreateGroup?: boolean
+  canShareGroup?: boolean
+  canUpload?: boolean
+  canCreateGroups?: boolean
+  canShareGroups?: boolean
   canReindex: boolean
   uploadGroupId?: string
   operationState?: DocumentOperationState
@@ -124,8 +131,12 @@ export function DocumentWorkspace({
   const [lastUploadedDocument, setLastUploadedDocument] = useState<DocumentManifest | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
+  const createGroupNameRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
   const operationEventSeqRef = useRef(0)
+  const canWrite = canUploadProp ?? legacyCanWrite ?? false
+  const canCreateGroups = canCreateGroupProp ?? legacyCanCreateGroups ?? false
+  const canShareGroups = canShareGroupProp ?? legacyCanShareGroups ?? false
 
   const folders = useMemo<WorkspaceFolder[]>(() => {
     return buildWorkspaceFolders(documentGroups, documents)
@@ -145,6 +156,13 @@ export function DocumentWorkspace({
   const canDeleteSelectedFolder = canDelete && selectedFolderCanManage
   const canReindexSelectedFolder = canReindex && selectedFolderCanManage
   const canUploadToDestination = canWrite && Boolean(uploadGroupId) && Boolean(uploadDestination && canManageDocumentGroup(uploadDestination))
+  const uploadDisabledReason = getUploadDisabledReason({
+    canUpload: canWrite,
+    uploadGroupId,
+    uploadDestination,
+    canUploadToDestination,
+    isUploading: operationState.isUploading
+  })
   const folderDocuments = selectedGroupId ? documents.filter((document) => documentGroupIds(document).includes(selectedGroupId)) : documents
   const documentTypeOptions = uniqueSorted(folderDocuments.map(fileTypeLabel))
   const documentStatusOptions = uniqueSorted(folderDocuments.map(documentStatusLabel))
@@ -209,11 +227,17 @@ export function DocumentWorkspace({
     (validatesCreateManagers && (createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0))
   const createParentGroup = documentGroups.find((group) => group.groupId === groupParentId)
   const createParentCanManage = groupParentId ? Boolean(createParentGroup && canManageDocumentGroup(createParentGroup)) : true
-  const canCreateGroup = canCreateGroups &&
-    createParentCanManage &&
-    Boolean(groupName.trim()) &&
-    !createHasValidationError &&
-    !operationState.creatingGroup
+  const createGroupDisabledReason = getCreateFolderDisabledReason({
+    canCreateGroup: canCreateGroups,
+    groupParentId,
+    createParentGroup,
+    createParentCanManage,
+    hasName: Boolean(groupName.trim()),
+    hasValidationError: createHasValidationError,
+    creatingGroup: operationState.creatingGroup
+  })
+  const canOpenCreateFolderForm = canCreateGroups && !operationState.creatingGroup
+  const canCreateGroup = createGroupDisabledReason === null
   const createVisibilityLabel = groupVisibility === "inherit" ? "親フォルダから継承" : visibilityLabelValue(groupVisibility)
   const editTargetGroup = selectedFolder.group
   const editDescendantGroupIds = descendantGroupIds(documentGroups, selectedGroupId)
@@ -495,6 +519,7 @@ export function DocumentWorkspace({
   function openCreateFolderModal() {
     setGroupParentId(selectedGroupId)
     setFolderSettingsOpen(true)
+    window.setTimeout(() => createGroupNameRef.current?.focus(), 0)
   }
 
   function openFolderSettingsModal() {
@@ -568,6 +593,9 @@ export function DocumentWorkspace({
           canCreateGroups={canCreateGroups}
           canShareGroups={canShareGroups}
           canReindex={canReindexSelectedFolder}
+          canUploadToDestination={canUploadToDestination}
+          uploadDisabledReason={uploadDisabledReason}
+          canOpenCreateFolderForm={canOpenCreateFolderForm}
           canDeleteDocument={(document) => canDelete && canManageDocument(document, documentGroups)}
           canReindexDocument={(document) => canReindex && canManageDocument(document, documentGroups)}
           migrations={migrations}
@@ -650,6 +678,7 @@ export function DocumentWorkspace({
               createHasValidationError={createHasValidationError}
               createParentGroup={createParentGroup}
               canCreateGroup={canCreateGroup}
+              createGroupDisabledReason={createGroupDisabledReason}
               createVisibilityLabel={createVisibilityLabel}
               shareGroupId={shareGroupId}
               shareGroups={shareGroups}
@@ -667,8 +696,10 @@ export function DocumentWorkspace({
               canShareGroups={canShareGroups}
               canSubmitShare={canSubmitShare}
               canUploadToDestination={canUploadToDestination}
+              uploadDisabledReason={uploadDisabledReason}
               operationState={operationState}
               uploadInputRef={uploadInputRef}
+              createGroupNameRef={createGroupNameRef}
               shareSelectRef={shareSelectRef}
               onUploadFileChange={onUploadFileChange}
               onGroupNameChange={setGroupName}
@@ -787,4 +818,25 @@ function canManageDocument(document: DocumentManifest, groups: DocumentGroup[]):
     const group = groups.find((candidate) => candidate.groupId === groupId)
     return Boolean(group && canManageDocumentGroup(group))
   })
+}
+
+function getUploadDisabledReason({
+  canUpload,
+  uploadGroupId,
+  uploadDestination,
+  canUploadToDestination,
+  isUploading
+}: {
+  canUpload: boolean
+  uploadGroupId: string
+  uploadDestination?: DocumentGroup
+  canUploadToDestination: boolean
+  isUploading: boolean
+}): string | null {
+  if (!canUpload) return "文書をアップロードする権限がありません。"
+  if (isUploading) return "アップロード中です。"
+  if (!uploadGroupId) return "保存先フォルダを選択するとアップロードできます。"
+  if (!uploadDestination) return "保存先フォルダを選択してください。"
+  if (!canUploadToDestination) return "保存先フォルダの管理権限が必要です。"
+  return null
 }
