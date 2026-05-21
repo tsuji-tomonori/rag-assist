@@ -1,6 +1,6 @@
 # PR326 legacy POST /documents benchmark seed metadata 境界修正
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - 対象 PR: https://github.com/tsuji-tomonori/rag-assist/pull/326
 
@@ -57,3 +57,14 @@ API shape や利用手順は変えず、既存の benchmark seed 権限境界を
 ## リスク
 
 - 通常文書 metadata に benchmark seed 専用 key を使う既存クライアントがある場合は 403 になる。ただし該当 key は benchmark seed 境界の予約 key として扱うため、意図した fail-closed 変更と判断する。
+
+## 完了記録
+
+- 実装 commit: `9d100bdc8ada005d5bf715fb21cda332050fbc47`
+- PR body 更新: GitHub Apps 経由で実施
+- 受け入れ条件確認コメント: https://github.com/tsuji-tomonori/rag-assist/pull/326#issuecomment-4503863952
+- セルフレビューコメント: https://github.com/tsuji-tomonori/rag-assist/pull/326#issuecomment-4503865112
+- 検証:
+  - `../../node_modules/.bin/tsx --test src/contract/api-contract.test.ts`: pass
+  - `npm run typecheck -w @memorag-mvp/api`: pass
+  - `git diff --check`: pass
