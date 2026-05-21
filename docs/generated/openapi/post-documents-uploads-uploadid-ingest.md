@@ -6,7 +6,7 @@
 
 Summary: アップロード済み文書を取り込む
 
-アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。後方互換用の同期 API であり、大きな PDF、OCR fallback、embedding が絡む通常運用では POST /document-ingest-runs を使います。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。
+アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。通常文書は group scope と対象フォルダの full 権限が必要です。後方互換用の同期 API であり、大きな PDF、OCR fallback、embedding が絡む通常運用では POST /document-ingest-runs を使います。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。
 
 ## Headers
 

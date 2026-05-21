@@ -255,7 +255,7 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /documents": {
     summary: "文書を同期登録する（非推奨）",
-    description: "小さなテキスト互換用の同期登録 API です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
+    description: "小さなテキスト互換用の同期登録 API です。通常文書は group scope と対象フォルダの full 権限が必要です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
   },
   "POST /documents/uploads": {
     summary: "文書アップロード URL を作成する",
@@ -267,11 +267,11 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /documents/uploads/{uploadId}/ingest": {
     summary: "アップロード済み文書を取り込む",
-    description: "アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。後方互換用の同期 API であり、大きな PDF、OCR fallback、embedding が絡む通常運用では POST /document-ingest-runs を使います。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
+    description: "アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。通常文書は group scope と対象フォルダの full 権限が必要です。後方互換用の同期 API であり、大きな PDF、OCR fallback、embedding が絡む通常運用では POST /document-ingest-runs を使います。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
   },
   "POST /document-ingest-runs": {
     summary: "非同期文書取り込みを開始する",
-    description: "アップロード済み文書の非同期取り込み run を開始し、進捗参照用 ID を返します。"
+    description: "アップロード済み文書の非同期取り込み run を開始し、進捗参照用 ID を返します。通常文書は group scope と対象フォルダの full 権限が必要です。"
   },
   "GET /document-ingest-runs/{runId}": {
     summary: "文書取り込み run を取得する",

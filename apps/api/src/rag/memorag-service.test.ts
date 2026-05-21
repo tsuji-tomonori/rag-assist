@@ -91,7 +91,12 @@ test("service manages async agent run metadata without provider execution or moc
   const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
   const other: AppUser = { userId: "other-user", email: "other@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
   const admin: AppUser = { userId: "agent-admin", email: "agent-admin@example.com", cognitoGroups: ["ASYNC_AGENT_ADMIN"] }
-  const manifest = await service.ingest({ fileName: "agent-source.md", text: "非同期エージェントの対象資料です。", skipMemory: true })
+  const manifest = await service.ingest({
+    fileName: "agent-source.md",
+    text: "非同期エージェントの対象資料です。",
+    skipMemory: true,
+    metadata: { allowedUsers: [owner.userId] }
+  })
   const group = await service.createDocumentGroup(owner, { name: "Agent source group" })
 
   const run = await service.createAsyncAgentRun(owner, {
@@ -217,7 +222,8 @@ test("service listDocuments filters manifests by ACL for callers", async () => {
   const general = await service.ingest({
     fileName: "general.md",
     text: "通常利用者向けの資料です。",
-    skipMemory: true
+    skipMemory: true,
+    metadata: { aclGroups: ["CHAT_USER", "BENCHMARK_RUNNER"] }
   })
   const benchmark = await service.ingest({
     fileName: "handbook.md",
@@ -237,6 +243,20 @@ test("service listDocuments filters manifests by ACL for callers", async () => {
   assert.deepEqual((await service.listDocuments(chatUser)).map((doc) => doc.documentId), [general.documentId])
   assert.deepEqual((await service.listDocuments(benchmarkRunner)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
   assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
+})
+
+test("service listDocuments hides normal manifests without group owner or ACL from callers", async () => {
+  const { service } = await createService()
+  const hidden = await service.ingest({
+    fileName: "no-acl.md",
+    text: "ACL がない通常資料です。",
+    skipMemory: true
+  })
+  const caller = { userId: "chat-1", email: "chat@example.com", cognitoGroups: ["CHAT_USER"] }
+  const systemAdmin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+
+  assert.deepEqual((await service.listDocuments(caller)).map((doc) => doc.documentId), [])
+  assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId), [hidden.documentId])
 })
 
 test("service persists document quality profile and excludes ineligible documents from normal RAG search", async () => {
@@ -396,7 +416,8 @@ test("service listDocuments denies group-scoped manifests to non-members without
   const publicDoc = await service.ingest({
     fileName: "public.md",
     text: "全員が読める一般資料です。",
-    skipMemory: true
+    skipMemory: true,
+    metadata: { aclGroups: ["CHAT_USER"] }
   })
   const groupDoc = await service.ingest({
     fileName: "group-secret.md",
@@ -959,14 +980,14 @@ test("service enforces full document group permission for delete and reindex ope
 
 test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
   const { service } = await createService()
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const manifest = await service.ingest({
     fileName: "policy.md",
     text: "# 申請手順\n申請期限は翌月5営業日です。\n\n# 例外\n例外承認者は部長です。",
-    metadata: { tenantId: "tenant-a" }
+    metadata: { tenantId: "tenant-a", ownerUserId: actor.userId }
   })
 
   assert.ok(manifest.chunks?.some((chunk) => chunk.sectionPath?.includes("申請手順")))
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const reindexed = await service.reindexDocument(actor, manifest.documentId)
   assert.notEqual(reindexed.documentId, manifest.documentId)
   assert.equal(reindexed.metadata?.stagedFromDocumentId, manifest.documentId)
@@ -981,6 +1002,7 @@ test("service reindexes documents through embedding cache compatible pipeline ve
 
 test("service stages and rolls back structured blue-green reindex migrations", async () => {
   const { service, dataDir } = await createService()
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const textractJson = JSON.stringify({
     Blocks: [
       { Id: "table-1", BlockType: "TABLE", Page: 1, Confidence: 92, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2"] }] },
@@ -990,7 +1012,7 @@ test("service stages and rolls back structured blue-green reindex migrations", a
       { Id: "word-2", BlockType: "WORD", Text: "期限" }
     ]
   })
-  const manifest = await service.ingest({ fileName: "policy.textract.json", textractJson, skipMemory: true })
+  const manifest = await service.ingest({ fileName: "policy.textract.json", textractJson, skipMemory: true, metadata: { ownerUserId: actor.userId } })
 
   assert.equal(manifest.chunks?.[0]?.chunkKind, "table")
   assert.equal(manifest.chunks?.[0]?.tableId, "table-1")
@@ -1004,7 +1026,6 @@ test("service stages and rolls back structured blue-green reindex migrations", a
   assert.equal(structuredBlocks.schemaVersion, 2)
   assert.equal(structuredBlocks.parsedDocument?.tables?.[0]?.id, "table-1")
 
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const staged = await service.stageReindexMigration(actor, manifest.documentId)
   assert.equal(staged.status, "staged")
   assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
@@ -1036,12 +1057,13 @@ test("service restores staging state when cutover vector activation fails after 
     evidencePutErrorAfterWriteWhen: (records) =>
       failActivePut && records.some((record) => record.key.startsWith(stagedDocumentId) && record.metadata.lifecycleStatus === "active")
   })
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const manifest = await service.ingest({
     fileName: "policy.md",
     text: "申請期限は翌月5営業日です。",
-    skipMemory: true
+    skipMemory: true,
+    metadata: { ownerUserId: actor.userId }
   })
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const staged = await service.stageReindexMigration(actor, manifest.documentId)
   stagedDocumentId = staged.stagedDocumentId
 

@@ -61,6 +61,7 @@ const documentGroups: DocumentGroup[] = [
     sharedUserIds: [],
     sharedGroups: ["HR"],
     managerUserIds: ["user-1"],
+    effectivePermission: "full",
     createdAt: "2026-05-01T00:00:00.000Z",
     updatedAt: "2026-05-01T00:00:00.000Z"
   }
@@ -75,6 +76,7 @@ const organizationGroup: DocumentGroup = {
   sharedUserIds: ["user-2"],
   sharedGroups: [],
   managerUserIds: ["user-1"],
+  effectivePermission: "full",
   createdAt: "2026-05-01T00:00:00.000Z",
   updatedAt: "2026-05-01T00:00:00.000Z"
 }
@@ -122,6 +124,16 @@ function createDeferred<T>() {
   return { promise, resolve, reject }
 }
 
+async function openFolderSettings() {
+  if (screen.queryByRole("dialog", { name: "フォルダ設定" })) return
+  await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を開く" }))
+}
+
+async function openCreateFolderSettings() {
+  if (screen.queryByRole("dialog", { name: "フォルダ設定" })) return
+  await userEvent.click(screen.getByRole("button", { name: /新規フォルダを作成|このフォルダに子フォルダを作成/ }))
+}
+
 describe("DocumentWorkspace", () => {
   it("登録文書を表示し、削除操作を通知する", async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
@@ -133,6 +145,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={migrations}
         onUpload={vi.fn()}
@@ -163,6 +177,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -223,6 +239,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -257,6 +275,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -287,6 +307,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -334,6 +356,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -373,6 +397,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -402,6 +428,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={false}
+        canCreateGroups={false}
+        canShareGroups={false}
         canReindex={false}
         migrations={[]}
         onUpload={vi.fn()}
@@ -428,6 +456,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={migrations}
         onUpload={vi.fn()}
@@ -465,6 +495,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={migrations}
         onUploadGroupChange={vi.fn()}
@@ -479,6 +511,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     const recentOperations = screen.getByRole("list", { name: "最近の操作" })
     expect(screen.getByRole("heading", { name: "最近の操作" })).toBeInTheDocument()
     expect(within(recentOperations).getByText("文書更新")).toBeInTheDocument()
@@ -508,6 +541,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -547,6 +582,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -566,6 +603,8 @@ describe("DocumentWorkspace", () => {
 
     expect(screen.getByRole("dialog", { name: "文書を削除しますか" })).toBeInTheDocument()
     expect(screen.getByRole("alert")).toHaveTextContent("delete failed")
+    await userEvent.click(screen.getByRole("button", { name: "キャンセル" }))
+    await openFolderSettings()
     const recentOperations = screen.getByRole("list", { name: "最近の操作" })
     expect(within(recentOperations).getByText("文書削除")).toBeInTheDocument()
     expect(within(recentOperations).getByText("失敗")).toBeInTheDocument()
@@ -583,6 +622,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -614,7 +655,7 @@ describe("DocumentWorkspace", () => {
     expect(deleteButton).toHaveFocus()
   })
 
-  it("操作データがない場合は最近の操作の空状態を表示する", () => {
+  it("操作データがない場合は最近の操作の空状態を表示する", async () => {
     render(
       <DocumentWorkspace
         documents={[]}
@@ -623,6 +664,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -637,6 +680,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     expect(screen.getByRole("list", { name: "最近の操作" })).toHaveTextContent("最近の操作はありません。")
   })
 
@@ -659,6 +703,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={false}
         migrations={[]}
         onUploadGroupChange={onUploadGroupChange}
@@ -674,18 +720,22 @@ describe("DocumentWorkspace", () => {
     )
 
     expect(screen.getByRole("button", { name: /社内規定/ })).toBeInTheDocument()
+    await openFolderSettings()
     expect(screen.getByRole("heading", { name: "フォルダ情報 / 共有設定" })).toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByLabelText("保存先フォルダ"), "group-1")
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
 
     await userEvent.click(screen.getByRole("button", { name: /すべてのドキュメント/ }))
     expect(onUploadGroupChange).toHaveBeenCalledWith("")
 
+    await openCreateFolderSettings()
     await userEvent.type(screen.getByLabelText("新規フォルダ名"), "個人メモ")
     await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
     expect(onCreateGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
 
+    await openFolderSettings()
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
     await userEvent.clear(screen.getByLabelText("共有 Cognito group"))
     await userEvent.type(screen.getByLabelText("共有 Cognito group"), "HR, RAG_GROUP_MANAGER")
@@ -710,6 +760,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-02T00:00:00.000Z",
       updatedAt: "2026-05-02T00:00:00.000Z"
     }
@@ -722,6 +773,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -756,6 +809,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-02T00:00:00.000Z",
       updatedAt: "2026-05-02T00:00:00.000Z"
     }
@@ -770,6 +824,7 @@ describe("DocumentWorkspace", () => {
       sharedUserIds: [],
       sharedGroups: [],
       managerUserIds: ["user-1"],
+      effectivePermission: "full",
       createdAt: "2026-05-03T00:00:00.000Z",
       updatedAt: "2026-05-03T00:00:00.000Z"
     }
@@ -783,6 +838,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -798,6 +855,7 @@ describe("DocumentWorkspace", () => {
     )
 
     await userEvent.click(screen.getByRole("button", { name: "/ ドキュメントグループ/社内規定/人事 0件" }))
+    await openFolderSettings()
     await userEvent.clear(screen.getByLabelText("編集後フォルダ名"))
     await userEvent.type(screen.getByLabelText("編集後フォルダ名"), "人事改定")
     await userEvent.clear(screen.getByLabelText("編集後説明"))
@@ -840,6 +898,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={onUploadGroupChange}
@@ -854,6 +914,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openCreateFolderSettings()
     await userEvent.type(screen.getByLabelText("新規フォルダ名"), "人事規程")
     await userEvent.type(screen.getByLabelText("説明"), "人事部門の就業規則")
     await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), "group-1")
@@ -880,7 +941,7 @@ describe("DocumentWorkspace", () => {
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-new")
   })
 
-  it("新規フォルダ作成で実データ由来のshared group候補を選択してpayloadへ反映する", async () => {
+  it("作成権限のみでは新規フォルダ作成時の共有・管理者フィールドを送らない", async () => {
     const onCreateGroup = vi.fn().mockResolvedValue(undefined)
 
     render(
@@ -891,6 +952,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={false}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -905,6 +968,45 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openCreateFolderSettings()
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "作成のみ")
+
+    expect(screen.getByLabelText("公開範囲")).toBeDisabled()
+    expect(screen.getByLabelText("初期 shared groups")).toBeDisabled()
+    expect(screen.getByLabelText("管理者 user IDs")).toBeDisabled()
+
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+    expect(onCreateGroup).toHaveBeenCalledWith({ name: "作成のみ" })
+  })
+
+  it("新規フォルダ作成で実データ由来のshared group候補を選択してpayloadへ反映する", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await openCreateFolderSettings()
     await userEvent.type(screen.getByLabelText("新規フォルダ名"), "共有資料")
     await userEvent.selectOptions(screen.getByLabelText("公開範囲"), "shared")
 
@@ -931,7 +1033,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it("新規フォルダ作成のshared group候補がない場合は架空候補を表示しない", () => {
+  it("新規フォルダ作成のshared group候補がない場合は架空候補を表示しない", async () => {
     render(
       <DocumentWorkspace
         documents={documents}
@@ -940,6 +1042,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -954,6 +1058,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openCreateFolderSettings()
     const selector = screen.getByRole("group", { name: "初期 shared group 候補" })
     expect(selector).toHaveTextContent("候補はありません。必要な group 名を入力してください。")
     expect(within(selector).queryByRole("checkbox", { name: "CHAT_USER" })).not.toBeInTheDocument()
@@ -971,6 +1076,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -985,6 +1092,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openCreateFolderSettings()
     await userEvent.type(screen.getByLabelText("新規フォルダ名"), "監査資料")
     await userEvent.selectOptions(screen.getByLabelText("公開範囲"), "shared")
     await userEvent.type(screen.getByLabelText("初期 shared groups"), "AUDIT,,AUDIT")
@@ -1009,6 +1117,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1023,6 +1133,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
     await userEvent.clear(screen.getByLabelText("共有 Cognito group"))
     await userEvent.type(screen.getByLabelText("共有 Cognito group"), "HR,,HR")
@@ -1044,6 +1155,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1058,6 +1171,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
 
     const selector = screen.getByRole("group", { name: "共有 group 候補" })
@@ -1094,6 +1208,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1108,6 +1224,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), "group-1")
 
     const shareInput = screen.getByLabelText("共有 Cognito group")
@@ -1132,7 +1249,7 @@ describe("DocumentWorkspace", () => {
     })
   })
 
-  it("共有group候補がない場合は架空候補を表示しない", () => {
+  it("共有group候補がない場合は架空候補を表示しない", async () => {
     render(
       <DocumentWorkspace
         documents={documents}
@@ -1141,6 +1258,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1155,6 +1274,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     expect(screen.getByRole("group", { name: "共有 group 候補" })).toHaveTextContent("候補はありません。必要な group 名を入力してください。")
     expect(screen.queryByRole("checkbox", { name: "CHAT_USER" })).not.toBeInTheDocument()
     expect(screen.queryByRole("checkbox", { name: "RAG_GROUP_MANAGER" })).not.toBeInTheDocument()
@@ -1170,6 +1290,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -1204,6 +1326,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1242,6 +1366,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1298,6 +1424,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={migrations}
         urlState={{
@@ -1340,6 +1468,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={migrations}
         onUrlStateChange={onUrlStateChange}
@@ -1403,6 +1533,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1445,6 +1577,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -1462,8 +1596,6 @@ describe("DocumentWorkspace", () => {
   })
 
   it("ヘッダーの追加と共有ボタンを既存操作へ接続する", async () => {
-    const inputClick = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => undefined)
-
     const onUploadGroupChange = vi.fn()
     const { rerender } = render(
       <DocumentWorkspace
@@ -1473,6 +1605,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={onUploadGroupChange}
@@ -1487,7 +1621,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByTitle("保存先を選択してアップロード")).toBeDisabled()
+    expect(screen.getByTitle("保存先を選択してアップロード")).toBeEnabled()
 
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
@@ -1499,6 +1633,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={onUploadGroupChange}
@@ -1516,12 +1652,13 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByText((_, element) => element?.textContent === "保存先: 社内規定")).toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("このフォルダにアップロード"))
-    expect(inputClick).toHaveBeenCalled()
+    expect(screen.getByRole("dialog", { name: "フォルダ設定" })).toBeInTheDocument()
+    expect(screen.getByLabelText("アップロードする文書を選択")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
 
-    await userEvent.click(screen.getByTitle("共有設定を編集"))
-    expect(screen.getByLabelText("共有フォルダ")).toHaveFocus()
-
-    inputClick.mockRestore()
+    await userEvent.click(screen.getByTitle("フォルダ設定を開く"))
+    expect(screen.getByRole("dialog", { name: "フォルダ設定" })).toBeInTheDocument()
+    expect(screen.getByLabelText("共有フォルダ")).toBeInTheDocument()
   })
 
   it("本番UI用の固定フォルダ、固定容量、架空共有先を表示しない", () => {
@@ -1532,6 +1669,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -1563,6 +1702,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1580,6 +1721,7 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
 
     expect(screen.getByText("登録済みドキュメントはありません。")).toBeInTheDocument()
+    await openFolderSettings()
     expect(screen.getByText("共有先は設定されていません。")).toBeInTheDocument()
     expect(screen.getByText("0 / 0 件を表示（全体 0 件）")).toBeInTheDocument()
   })
@@ -1600,6 +1742,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1615,6 +1759,7 @@ describe("DocumentWorkspace", () => {
     )
 
     await userEvent.click(screen.getByRole("button", { name: /全社公開/ }))
+    await openFolderSettings()
 
     expect(screen.getAllByText("組織全体").length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText("公開範囲").length).toBeGreaterThanOrEqual(1)
@@ -1635,6 +1780,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={false}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={onUpload}
@@ -1648,6 +1795,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     await userEvent.click(screen.getByRole("button", { name: "共有更新" }))
     await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
     await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
@@ -1668,6 +1816,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={false}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={false}
         migrations={[]}
         onUpload={vi.fn()}
@@ -1704,6 +1854,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1718,6 +1870,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openCreateFolderSettings()
     await userEvent.type(screen.getByLabelText("新規フォルダ名"), "継承フォルダ")
     await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), "group-1")
     await userEvent.selectOptions(screen.getByLabelText("公開範囲"), "inherit")
@@ -1752,6 +1905,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1769,7 +1924,7 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /閲覧のみフォルダ/ }))
 
     expect(screen.getByTitle("このフォルダにアップロード")).toBeDisabled()
-    expect(screen.getByTitle("共有設定を編集")).toBeDisabled()
+    expect(screen.getByTitle("フォルダ設定を開く")).toBeEnabled()
     expect(screen.getByTitle("requirements.mdを削除")).toBeDisabled()
     expect(screen.getByTitle("requirements.mdの再インデックスをステージング")).toBeDisabled()
 
@@ -1777,6 +1932,76 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
     expect(onDelete).not.toHaveBeenCalled()
     expect(onStageReindex).not.toHaveBeenCalled()
+  })
+
+  it("effectivePermission が欠落したフォルダは full とみなさない", async () => {
+    const onUpload = vi.fn().mockResolvedValue(undefined)
+    const onDelete = vi.fn()
+    const onStageReindex = vi.fn()
+    const onShareGroup = vi.fn().mockResolvedValue(undefined)
+    const fullGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-full-missing-check",
+      name: "full folder",
+      ...canonicalGroupFields("full folder"),
+      effectivePermission: "full"
+    }
+    const missingPermissionGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-missing-permission",
+      name: "権限未設定フォルダ",
+      ...canonicalGroupFields("権限未設定フォルダ"),
+      effectivePermission: undefined
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={[{ ...documents[0]!, metadata: { groupIds: [missingPermissionGroup.groupId] } }]}
+        documentGroups={[missingPermissionGroup, fullGroup]}
+        uploadGroupId={missingPermissionGroup.groupId}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={onUpload}
+        onCreateGroup={vi.fn()}
+        onShareGroup={onShareGroup}
+        onDelete={onDelete}
+        onStageReindex={onStageReindex}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByTitle("保存先を選択してアップロード"))
+    const uploadDestination = screen.getByLabelText("保存先フォルダ")
+    expect(within(uploadDestination).queryByRole("option", { name: "権限未設定フォルダ" })).not.toBeInTheDocument()
+    expect(within(uploadDestination).getByRole("option", { name: "full folder" })).toBeInTheDocument()
+    expect(screen.getByLabelText("アップロードする文書を選択")).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+    expect(onUpload).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を閉じる" }))
+
+    await userEvent.click(screen.getByRole("button", { name: /権限未設定フォルダ/ }))
+    expect(screen.getByTitle("requirements.mdを削除")).toBeDisabled()
+    expect(screen.getByTitle("requirements.mdの再インデックスをステージング")).toBeDisabled()
+    await userEvent.click(screen.getByTitle("requirements.mdを削除"))
+    await userEvent.click(screen.getByTitle("requirements.mdの再インデックスをステージング"))
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(onStageReindex).not.toHaveBeenCalled()
+
+    await openFolderSettings()
+    await userEvent.clear(screen.getByLabelText("共有 Cognito group"))
+    await userEvent.type(screen.getByLabelText("共有 Cognito group"), "RAG_READERS")
+
+    expect(screen.getByRole("button", { name: "共有更新" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "共有更新" }))
+    expect(onShareGroup).not.toHaveBeenCalled()
   })
 
   it("すべてのドキュメントでは文書ごとの所属フォルダ権限で削除と再インデックスを無効化する", async () => {
@@ -1810,6 +2035,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1863,6 +2090,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1878,6 +2107,7 @@ describe("DocumentWorkspace", () => {
     )
 
     await userEvent.click(screen.getByRole("button", { name: /full folder/ }))
+    await openFolderSettings()
     await userEvent.selectOptions(screen.getByLabelText("共有フォルダ"), readOnlyGroup.groupId)
     await userEvent.clear(screen.getByLabelText("共有 Cognito group"))
     await userEvent.type(screen.getByLabelText("共有 Cognito group"), "RAG_READERS")
@@ -1885,6 +2115,98 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByRole("button", { name: "共有更新" })).toBeDisabled()
     await userEvent.click(screen.getByRole("button", { name: "共有更新" }))
     expect(onShareGroup).not.toHaveBeenCalled()
+  })
+
+  it("アップロード先候補は full 権限フォルダだけに限定する", async () => {
+    const onUpload = vi.fn().mockResolvedValue(undefined)
+    const fullGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-full-upload",
+      name: "アップロード可能",
+      ...canonicalGroupFields("アップロード可能"),
+      effectivePermission: "full"
+    }
+    const readOnlyGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-readonly-upload",
+      name: "閲覧のみ",
+      ...canonicalGroupFields("閲覧のみ"),
+      effectivePermission: "readOnly",
+      policySource: "inherited",
+      inheritedFromFolderId: fullGroup.groupId
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[readOnlyGroup, fullGroup]}
+        uploadGroupId={fullGroup.groupId}
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={onUpload}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByTitle("保存先を選択してアップロード"))
+    const uploadDestination = screen.getByLabelText("保存先フォルダ")
+    expect(within(uploadDestination).getByRole("option", { name: "アップロード可能" })).toBeInTheDocument()
+    expect(within(uploadDestination).queryByRole("option", { name: "閲覧のみ" })).not.toBeInTheDocument()
+
+    await userEvent.upload(screen.getByLabelText("アップロードする文書を選択"), new File(["hello"], "full.txt", { type: "text/plain" }))
+    await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
+    expect(onUpload).toHaveBeenCalled()
+  })
+
+  it("write 権限がなければ full 権限フォルダがあってもアップロードしない", async () => {
+    const onUpload = vi.fn().mockResolvedValue(undefined)
+    const fullGroup: DocumentGroup = {
+      ...documentGroups[0]!,
+      groupId: "group-full-upload",
+      name: "アップロード可能",
+      ...canonicalGroupFields("アップロード可能"),
+      effectivePermission: "full"
+    }
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={[fullGroup]}
+        uploadGroupId={fullGroup.groupId}
+        loading={false}
+        canWrite={false}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={onUpload}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByTitle("保存先を選択してアップロード")).toBeDisabled()
+    await userEvent.click(screen.getByTitle("保存先を選択してアップロード"))
+    expect(onUpload).not.toHaveBeenCalled()
   })
 
   it("親フォルダから継承する新規フォルダでは managerUserIds も送らない", async () => {
@@ -1898,6 +2220,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1912,6 +2236,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openCreateFolderSettings()
     await userEvent.type(screen.getByLabelText("新規フォルダ名"), "継承フォルダ")
     await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), "group-1")
     await userEvent.type(screen.getByLabelText("管理者 user IDs"), "user-extra")
@@ -1946,6 +2271,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -1960,6 +2287,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openCreateFolderSettings()
     await userEvent.type(screen.getByLabelText("新規フォルダ名"), "作成不可")
     await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), readOnlyParent.groupId)
 
@@ -1988,6 +2316,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -2003,7 +2333,9 @@ describe("DocumentWorkspace", () => {
     )
 
     await userEvent.click(screen.getByRole("button", { name: /閲覧のみフォルダ/ }))
+    await openCreateFolderSettings()
     await userEvent.type(screen.getByLabelText("新規フォルダ名"), "ルート作成")
+    await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), "")
 
     expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeEnabled()
     await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
@@ -2037,6 +2369,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -2052,6 +2386,7 @@ describe("DocumentWorkspace", () => {
     )
 
     await userEvent.click(screen.getByRole("button", { name: /full folder/ }))
+    await openFolderSettings()
     await userEvent.selectOptions(screen.getByLabelText("移動先フォルダ"), readOnlyParent.groupId)
 
     expect(screen.getByRole("button", { name: "フォルダ更新" })).toBeDisabled()
@@ -2074,6 +2409,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={onUpload}
@@ -2087,6 +2424,7 @@ describe("DocumentWorkspace", () => {
 
     expect(screen.getAllByText("Text").length).toBeGreaterThanOrEqual(1)
 
+    await openFolderSettings()
     await userEvent.upload(screen.getByLabelText("アップロードする文書を選択"), file)
     expect(screen.getByText("一時選択: memo.txt / 保存先: 社内規定")).toBeInTheDocument()
 
@@ -2119,6 +2457,8 @@ describe("DocumentWorkspace", () => {
       loading: false,
       canWrite: true,
       canDelete: true,
+      canCreateGroups: true,
+      canShareGroups: true,
       canReindex: true,
       migrations: [],
       onUpload,
@@ -2132,6 +2472,7 @@ describe("DocumentWorkspace", () => {
 
     const { rerender } = render(<DocumentWorkspace {...baseProps} uploadState={null} />)
 
+    await openFolderSettings()
     await userEvent.upload(screen.getByLabelText("アップロードする文書を選択"), file)
     await userEvent.click(screen.getByRole("button", { name: "アップロード" }))
 
@@ -2159,7 +2500,7 @@ describe("DocumentWorkspace", () => {
     expect(screen.getByRole("heading", { name: "社内規定" })).toBeInTheDocument()
   })
 
-  it("返却文書がない完了状態では文書操作ボタンを表示しない", () => {
+  it("返却文書がない完了状態では文書操作ボタンを表示しない", async () => {
     render(
       <DocumentWorkspace
         documents={documents}
@@ -2172,6 +2513,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUpload={vi.fn()}
@@ -2183,12 +2526,13 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     expect(screen.queryByRole("button", { name: "詳細を開く" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "この資料に質問する" })).not.toBeInTheDocument()
     expect(screen.getByText("アップロードは完了しました。文書一覧の更新後に詳細を開けます。")).toBeInTheDocument()
   })
 
-  it("アップロード進捗と対象行だけのloadingを表示する", () => {
+  it("アップロード進捗と対象行だけのloadingを表示する", async () => {
     render(
       <DocumentWorkspace
         documents={[
@@ -2215,6 +2559,8 @@ describe("DocumentWorkspace", () => {
         loading={false}
         canWrite={true}
         canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
         canReindex={true}
         migrations={[]}
         onUploadGroupChange={vi.fn()}
@@ -2229,6 +2575,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
+    await openFolderSettings()
     expect(screen.getByText("ベクトル化中")).toBeInTheDocument()
     expect(screen.getAllByText("run ID: run-123").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByTitle("policy.pdfを削除")).toBeDisabled()

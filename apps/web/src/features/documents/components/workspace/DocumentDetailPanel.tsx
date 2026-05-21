@@ -59,6 +59,8 @@ export function DocumentDetailPanel({
   editCanSubmit,
   editDestinationLabel,
   canWrite,
+  canCreateGroups,
+  canShareGroups,
   canSubmitShare,
   canUploadToDestination,
   operationState,
@@ -140,6 +142,8 @@ export function DocumentDetailPanel({
   editCanSubmit: boolean
   editDestinationLabel: string
   canWrite: boolean
+  canCreateGroups: boolean
+  canShareGroups: boolean
   canSubmitShare: boolean
   canUploadToDestination: boolean
   operationState: DocumentOperationState
@@ -200,7 +204,7 @@ export function DocumentDetailPanel({
         <form className="compact-form" onSubmit={onShareSubmit}>
           <label>
             <span>共有フォルダ</span>
-            <select ref={shareSelectRef} value={shareGroupId || selectedGroupId} disabled={!canWrite || operationState.sharingGroupId !== null} onChange={(event) => onShareGroupIdChange(event.target.value)}>
+            <select ref={shareSelectRef} value={shareGroupId || selectedGroupId} disabled={!canShareGroups || operationState.sharingGroupId !== null} onChange={(event) => onShareGroupIdChange(event.target.value)}>
               <option value="">選択してください</option>
               {documentGroups.map((group) => (
                 <option value={group.groupId} key={group.groupId}>{group.name}</option>
@@ -211,7 +215,7 @@ export function DocumentDetailPanel({
             <span>共有 Cognito group</span>
             <input
               value={shareGroups}
-              disabled={!canWrite || operationState.sharingGroupId !== null}
+              disabled={!canShareGroups || operationState.sharingGroupId !== null}
               onChange={(event) => onShareGroupsChange(event.target.value)}
               placeholder="Cognito group をカンマ区切りで入力"
               aria-invalid={shareHasValidationError || undefined}
@@ -237,7 +241,7 @@ export function DocumentDetailPanel({
                       <input
                         type="checkbox"
                         checked={checked}
-                        disabled={!canWrite || operationState.sharingGroupId !== null}
+                        disabled={!canShareGroups || operationState.sharingGroupId !== null}
                         onChange={(event) => onShareGroupOptionChange(groupName, event.target.checked)}
                       />
                       <span>{groupName}</span>
@@ -257,7 +261,7 @@ export function DocumentDetailPanel({
               <input
                 type="checkbox"
                 checked={shareClearConfirmed}
-                disabled={!canWrite || operationState.sharingGroupId !== null}
+                disabled={!canShareGroups || operationState.sharingGroupId !== null}
                 onChange={(event) => onShareClearConfirmedChange(event.target.checked)}
               />
               <span>既存共有をすべて削除することを確認しました</span>
@@ -296,7 +300,7 @@ export function DocumentDetailPanel({
             <span>編集後フォルダ名</span>
             <input
               value={editGroupName}
-              disabled={!canWrite || !editTargetGroup || operationState.sharingGroupId !== null}
+              disabled={!canShareGroups || !editTargetGroup || operationState.sharingGroupId !== null}
               onChange={(event) => onEditGroupNameChange(event.target.value)}
               placeholder="フォルダ名"
               aria-invalid={(Boolean(editTargetGroup) && !editGroupName.trim()) || undefined}
@@ -307,7 +311,7 @@ export function DocumentDetailPanel({
             <span>編集後説明</span>
             <textarea
               value={editGroupDescription}
-              disabled={!canWrite || !editTargetGroup || operationState.sharingGroupId !== null}
+              disabled={!canShareGroups || !editTargetGroup || operationState.sharingGroupId !== null}
               onChange={(event) => onEditGroupDescriptionChange(event.target.value)}
               placeholder="フォルダの用途や対象資料"
               aria-describedby="edit-folder-preview"
@@ -317,7 +321,7 @@ export function DocumentDetailPanel({
             <span>移動先フォルダ</span>
             <select
               value={editGroupParentId}
-              disabled={!canWrite || !editTargetGroup || operationState.sharingGroupId !== null}
+              disabled={!canShareGroups || !editTargetGroup || operationState.sharingGroupId !== null}
               onChange={(event) => onEditGroupParentIdChange(event.target.value)}
               aria-invalid={editParentInvalid || undefined}
               aria-describedby="edit-folder-validation edit-folder-preview"
@@ -353,7 +357,7 @@ export function DocumentDetailPanel({
             <span>保存先フォルダ</span>
             <select value={uploadGroupId} disabled={!canWrite || operationState.isUploading} onChange={(event) => onUploadGroupChange(event.target.value)}>
               <option value="">保存先を選択</option>
-              {documentGroups.map((group) => (
+              {documentGroups.filter(canUploadToGroup).map((group) => (
                 <option value={group.groupId} key={group.groupId}>{group.name}</option>
               ))}
             </select>
@@ -383,15 +387,15 @@ export function DocumentDetailPanel({
         <form className="compact-form" onSubmit={onCreateGroupSubmit}>
           <label>
             <span>新規フォルダ名</span>
-            <input value={groupName} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onGroupNameChange(event.target.value)} placeholder="フォルダ名" />
+            <input value={groupName} disabled={!canCreateGroups || operationState.creatingGroup} onChange={(event) => onGroupNameChange(event.target.value)} placeholder="フォルダ名" />
           </label>
           <label>
             <span>説明</span>
-            <textarea value={groupDescription} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onGroupDescriptionChange(event.target.value)} placeholder="フォルダの用途や対象資料" />
+            <textarea value={groupDescription} disabled={!canCreateGroups || operationState.creatingGroup} onChange={(event) => onGroupDescriptionChange(event.target.value)} placeholder="フォルダの用途や対象資料" />
           </label>
           <label>
             <span>親フォルダ</span>
-            <select value={groupParentId} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onGroupParentIdChange(event.target.value)}>
+            <select value={groupParentId} disabled={!canCreateGroups || operationState.creatingGroup} onChange={(event) => onGroupParentIdChange(event.target.value)}>
               <option value="">親フォルダなし</option>
               {documentGroups.map((group) => (
                 <option value={group.groupId} key={group.groupId}>{group.name}</option>
@@ -400,7 +404,7 @@ export function DocumentDetailPanel({
           </label>
           <label>
             <span>公開範囲</span>
-            <select value={groupVisibility} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onGroupVisibilityChange(event.target.value as "inherit" | "private" | "shared" | "org")}>
+            <select value={groupVisibility} disabled={!canCreateGroups || !canShareGroups || operationState.creatingGroup} onChange={(event) => onGroupVisibilityChange(event.target.value as "inherit" | "private" | "shared" | "org")}>
               <option value="inherit">親フォルダから継承</option>
               <option value="private">非公開</option>
               <option value="shared">指定 group 共有</option>
@@ -411,7 +415,7 @@ export function DocumentDetailPanel({
             <span>初期 shared groups</span>
             <input
               value={groupSharedGroups}
-              disabled={!canWrite || operationState.creatingGroup || groupVisibility !== "shared"}
+              disabled={!canCreateGroups || !canShareGroups || operationState.creatingGroup || groupVisibility !== "shared"}
               onChange={(event) => onGroupSharedGroupsChange(event.target.value)}
               placeholder="Cognito group をカンマ区切りで入力"
               aria-invalid={(validatesCreateSharedGroups && (createSharedDraft.hasEmptyToken || createSharedDraft.duplicates.length > 0)) || undefined}
@@ -431,7 +435,7 @@ export function DocumentDetailPanel({
                       <input
                         type="checkbox"
                         checked={checked}
-                        disabled={!canWrite || operationState.creatingGroup || groupVisibility !== "shared"}
+                        disabled={!canCreateGroups || !canShareGroups || operationState.creatingGroup || groupVisibility !== "shared"}
                         onChange={(event) => onCreateShareGroupOptionChange(groupName, event.target.checked)}
                       />
                       <span>{groupName}</span>
@@ -445,7 +449,7 @@ export function DocumentDetailPanel({
             <span>管理者 user IDs</span>
             <input
               value={groupManagerUserIds}
-              disabled={!canWrite || operationState.creatingGroup || groupVisibility === "inherit"}
+              disabled={!canCreateGroups || !canShareGroups || operationState.creatingGroup || groupVisibility === "inherit"}
               onChange={(event) => onGroupManagerUserIdsChange(event.target.value)}
               placeholder="User ID をカンマ区切りで入力"
               aria-invalid={(createManagerDraft.hasEmptyToken || createManagerDraft.duplicates.length > 0) || undefined}
@@ -453,7 +457,7 @@ export function DocumentDetailPanel({
             />
           </label>
           <label className="compact-checkbox">
-            <input type="checkbox" checked={moveToCreatedGroup} disabled={!canWrite || operationState.creatingGroup} onChange={(event) => onMoveToCreatedGroupChange(event.target.checked)} />
+            <input type="checkbox" checked={moveToCreatedGroup} disabled={!canCreateGroups || operationState.creatingGroup} onChange={(event) => onMoveToCreatedGroupChange(event.target.checked)} />
             <span>作成後にこのフォルダへ移動</span>
           </label>
           <div className="share-validation" id="create-group-validation" aria-live="polite">
@@ -579,4 +583,8 @@ function UploadProgressPanel({
       )}
     </div>
   )
+}
+
+function canUploadToGroup(group: DocumentGroup): boolean {
+  return group.effectivePermission === "full"
 }

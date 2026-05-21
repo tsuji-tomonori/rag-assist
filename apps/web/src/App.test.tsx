@@ -18,6 +18,7 @@ const documentGroups = [
     sharedUserIds: [],
     sharedGroups: [],
     managerUserIds: ["local-dev"],
+    effectivePermission: "full",
     createdAt: "2026-04-30T00:00:00.000Z",
     updatedAt: "2026-04-30T00:00:00.000Z"
   }
@@ -573,6 +574,7 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
+    await userEvent.click(screen.getByTitle("保存先を選択してアップロード"))
     await userEvent.selectOptions(screen.getByLabelText("保存先フォルダ"), "group-1")
     const input = screen.getByLabelText("文書アップロード").querySelector<HTMLInputElement>('input[type="file"]')
     await userEvent.upload(input as HTMLInputElement, new File(["管理資料"], "admin-upload.txt", { type: "text/plain" }))
