@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto"
-import { DeleteItemCommand, DynamoDBClient, GetItemCommand, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb"
+import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
 import type { FavoriteItem, FavoriteTargetType } from "../types.js"
 import { createDynamoDbClient } from "./dynamodb-client.js"

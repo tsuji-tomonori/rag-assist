@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import test from "node:test"
-import { QueryCommand } from "@aws-sdk/client-dynamodb"
+import type { QueryCommand } from "@aws-sdk/client-dynamodb"
 import { marshall } from "@aws-sdk/util-dynamodb"
 import { DynamoDbQuestionStore } from "./dynamodb-question-store.js"
 

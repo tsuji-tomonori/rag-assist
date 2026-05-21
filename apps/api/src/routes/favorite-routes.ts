@@ -52,7 +52,7 @@ export function registerFavoriteRoutes({ app, service }: ApiRouteContext) {
       path: "/favorites/{targetType}/{targetId}",
       "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "chat:delete:own", operationKey: "favorite.delete.self", resourceCondition: "self" }),
       request: {
-        params: z.object({ targetType: FavoriteTargetTypeSchema, targetId: z.string().min(1) })
+        params: FavoriteTargetTypeParamSchema
       },
       responses: {
         200: { description: "Deleted favorite", content: { "application/json": { schema: z.object({ targetType: FavoriteTargetTypeSchema, targetId: z.string() }) } } },

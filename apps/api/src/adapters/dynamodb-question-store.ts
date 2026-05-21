@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { DynamoDBClient, GetItemCommand, PutItemCommand, QueryCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb"
+import { GetItemCommand, PutItemCommand, QueryCommand, UpdateItemCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
 import type { HumanQuestion } from "../types.js"
 import type { AnswerQuestionInput, CreateQuestionInput, QuestionStore } from "./question-store.js"

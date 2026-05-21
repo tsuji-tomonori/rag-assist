@@ -1,4 +1,4 @@
-import { DynamoDBClient, PutItemCommand, ScanCommand } from "@aws-sdk/client-dynamodb"
+import { PutItemCommand, ScanCommand, type DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
 import type { ConversationHistoryItem, FavoriteItem } from "../types.js"
 import { createDynamoDbClient } from "../adapters/dynamodb-client.js"
