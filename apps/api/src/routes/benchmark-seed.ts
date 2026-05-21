@@ -55,6 +55,7 @@ export function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof Docu
     if (hasPermission(user, "benchmark:seed_corpus")) return
     throw new HTTPException(403, { message: "Forbidden" })
   }
+  if (hasBenchmarkSeedReservedDocumentMetadata(body)) throw new HTTPException(403, { message: "Forbidden" })
   if (hasPermission(user, "rag:doc:write:group")) return
   throw new HTTPException(403, { message: "Forbidden" })
 }
@@ -87,7 +88,7 @@ export function isBenchmarkSeedUploadedObjectIngest(body: z.infer<typeof IngestU
   return false
 }
 
-function hasBenchmarkSeedReservedDocumentMetadata(body: z.infer<typeof IngestUploadedDocumentRequestSchema>): boolean {
+function hasBenchmarkSeedReservedDocumentMetadata(body: { metadata?: Record<string, unknown> }): boolean {
   const metadata = body.metadata
   if (!metadata) return false
   return Object.keys(metadata).some((key) => benchmarkSeedReservedDocumentMetadataKeys.has(key))

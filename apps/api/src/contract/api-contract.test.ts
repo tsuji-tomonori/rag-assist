@@ -1131,6 +1131,43 @@ test("document writer cannot bypass group scope with benchmark seed metadata", a
     })
     assert.equal(scopedSeedUpload.status, 403)
 
+    const extraKeySeedUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ...seedBody,
+        metadata: { ...seedBody.metadata, tenantId: "extra" },
+        scope: { scopeType: "group", groupIds: [group.groupId] }
+      })
+    })
+    assert.equal(extraKeySeedUpload.status, 403)
+
+    const partialBenchmarkSeedMetadataUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "partial-seed.md",
+        text: "partial benchmark seed reserved metadata",
+        mimeType: "text/markdown",
+        metadata: { benchmarkSeed: true },
+        scope: { scopeType: "group", groupIds: [group.groupId] }
+      })
+    })
+    assert.equal(partialBenchmarkSeedMetadataUpload.status, 403)
+
+    const partialBenchmarkSuiteMetadataUpload = await fetch(`http://127.0.0.1:${port}/documents`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        fileName: "partial-suite.md",
+        text: "partial benchmark suite reserved metadata",
+        mimeType: "text/markdown",
+        metadata: { benchmarkSuiteId: "standard-agent-v1" },
+        scope: { scopeType: "group", groupIds: [group.groupId] }
+      })
+    })
+    assert.equal(partialBenchmarkSuiteMetadataUpload.status, 403)
+
     const documentUploadSession = await fetch(`http://127.0.0.1:${port}/documents/uploads`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -1346,6 +1383,8 @@ test("benchmark seed authorization rejects non-isolated document operations", as
   assert.doesNotThrow(() => authorizeDocumentUpload(manager, { fileName: "general.txt", text: "general" }))
   assert.throws(() => authorizeDocumentUpload(manager, seedBody), { message: /^Forbidden$/ })
   assert.throws(() => authorizeDocumentUpload(manager, { ...seedBody, scope: { scopeType: "group", groupIds: ["group-1"] } }), { message: /^Forbidden$/ })
+  assert.throws(() => authorizeDocumentUpload(manager, { ...seedBody, metadata: { ...seedBody.metadata, tenantId: "extra" }, scope: { scopeType: "group", groupIds: ["group-1"] } }), { message: /^Forbidden$/ })
+  assert.throws(() => authorizeDocumentUpload(manager, { fileName: "partial.txt", text: "partial", metadata: { benchmarkSeed: true }, scope: { scopeType: "group", groupIds: ["group-1"] } }), { message: /^Forbidden$/ })
   assert.throws(() => authorizeDocumentUpload(runner, { fileName: "general.txt", text: "general" }), { message: /^Forbidden$/ })
   assert.doesNotThrow(() => authorizeUploadedDocumentIngest(chatUser, "chatAttachment", { fileName: "note.txt", mimeType: "text/plain" }))
   assert.doesNotThrow(() => authorizeUploadedDocumentIngest(runner, "benchmarkSeed", { fileName: "source.txt", mimeType: "text/plain", metadata: seedBody.metadata }))
