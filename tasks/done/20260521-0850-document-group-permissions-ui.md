@@ -1,6 +1,6 @@
 # Document group permissions UI fix
 
-状態: doing
+状態: done
 
 ## 背景
 
