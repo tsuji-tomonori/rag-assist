@@ -1,5 +1,5 @@
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../../types.js"
-import type { DocumentOperationState, DocumentUploadState } from "../../hooks/useDocuments.js"
+import type { DocumentOperationState } from "../../hooks/useDocuments.js"
 
 export type WorkspaceFolder = {
   id: string
@@ -17,16 +17,6 @@ export type ConfirmAction =
   | { kind: "rollback"; migration: ReindexMigration }
 
 export type DocumentSortKey = "updatedDesc" | "updatedAsc" | "fileNameAsc" | "chunkDesc" | "typeAsc"
-
-export type DocumentOperationEvent = {
-  id: string
-  actionLabel: string
-  target: string
-  occurredAt?: string
-  actor?: string
-  result: "反映済み" | "要求済み" | "進行中" | "失敗"
-  detail?: string
-}
 
 export const rootFolderParentValue = "__root__"
 
@@ -120,31 +110,6 @@ export function documentGroupNames(document: DocumentManifest, documentGroups: D
   return documentGroupIds(document).map((groupId) => documentGroups.find((group) => group.groupId === groupId)?.name ?? groupId)
 }
 
-export function sharedEntries(group: DocumentGroup): Array<{ kind: string; value: string }> {
-  const entries = [
-    ...group.sharedGroups.map((value) => ({ kind: "Cognito group", value })),
-    ...group.sharedUserIds.map((value) => ({ kind: "User ID", value }))
-  ]
-  if (group.visibility === "org") entries.unshift({ kind: "公開範囲", value: "組織全体" })
-  return entries
-}
-
-export function uploadStepClassName(index: number, activeIndex: number, phase: NonNullable<DocumentUploadState>["phase"]): string {
-  if (phase === "failed") return "failed"
-  if (index < activeIndex) return "done"
-  if (index === activeIndex) return "active"
-  return ""
-}
-
-export function uploadErrorLabel(errorKind: NonNullable<DocumentUploadState>["errorKind"]): string {
-  if (errorKind === "fileType") return "ファイル形式"
-  if (errorKind === "extraction") return "抽出失敗"
-  if (errorKind === "timeout") return "タイムアウト"
-  if (errorKind === "permission") return "権限不足"
-  if (errorKind === "network") return "ネットワーク失敗"
-  return "不明"
-}
-
 export function uniqueSorted(values: string[]): string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right, "ja"))
 }
@@ -203,78 +168,6 @@ export function visibilityLabel(group: DocumentGroup): string {
   if (group.visibility === "org") return `${group.name}: 組織全体`
   if (group.visibility === "shared") return `${group.name}: shared`
   return `${group.name}: private`
-}
-
-export function visibilityLabelValue(visibility: "private" | "shared" | "org"): string {
-  if (visibility === "org") return "組織全体"
-  if (visibility === "shared") return "指定 group 共有"
-  return "非公開"
-}
-
-export function buildOperationEvents({
-  documents,
-  documentGroups,
-  migrations,
-  uploadState,
-  sessionOperationEvents
-}: {
-  documents: DocumentManifest[]
-  documentGroups: DocumentGroup[]
-  migrations: ReindexMigration[]
-  uploadState: DocumentUploadState
-  sessionOperationEvents: DocumentOperationEvent[]
-}): DocumentOperationEvent[] {
-  const documentEvents = documents.map((document) => ({
-    id: `document-${document.documentId}`,
-    actionLabel: "文書更新",
-    target: document.fileName,
-    occurredAt: documentUpdatedAt(document),
-    result: "反映済み" as const,
-    detail: `documentId: ${document.documentId}`
-  }))
-  const groupEvents = documentGroups.map((group) => ({
-    id: `group-${group.groupId}`,
-    actionLabel: group.updatedAt === group.createdAt ? "フォルダ作成" : "フォルダ更新",
-    target: group.name,
-    occurredAt: group.updatedAt,
-    actor: group.ownerUserId,
-    result: "反映済み" as const,
-    detail: `公開範囲: ${visibilityLabelValue(group.visibility)}`
-  }))
-  const migrationEvents = migrations.map((migration) => ({
-    id: `migration-${migration.migrationId}`,
-    actionLabel: migrationActionLabel(migration.status),
-    target: `${migration.sourceDocumentId} → ${migration.stagedDocumentId}`,
-    occurredAt: migration.updatedAt,
-    actor: migration.createdBy,
-    result: "反映済み" as const,
-    detail: `migrationId: ${migration.migrationId}`
-  }))
-  const uploadEvent = uploadState ? [{
-    id: `upload-${uploadState.fileName}`,
-    actionLabel: "アップロード",
-    target: uploadState.fileName,
-    occurredAt: uploadState.updatedAt,
-    result: uploadState.phase === "failed" ? "失敗" as const : uploadState.phase === "complete" ? "反映済み" as const : "進行中" as const,
-    detail: uploadState.runId ? `run ID: ${uploadState.runId}` : undefined
-  }] : []
-
-  return [...sessionOperationEvents, ...uploadEvent, ...migrationEvents, ...groupEvents, ...documentEvents]
-    .sort((left, right) => (right.occurredAt ?? "").localeCompare(left.occurredAt ?? ""))
-    .slice(0, 8)
-}
-
-export function operationResultClassName(result: DocumentOperationEvent["result"]): string {
-  if (result === "失敗") return "failed"
-  if (result === "進行中") return "active"
-  if (result === "要求済み") return "requested"
-  return "done"
-}
-
-function migrationActionLabel(status: ReindexMigration["status"]): string {
-  if (status === "cutover") return "reindex cutover"
-  if (status === "rolled_back") return "reindex rollback"
-  return "reindex stage"
 }
 
 function compareDocumentUpdatedAt(left: DocumentManifest, right: DocumentManifest): number {

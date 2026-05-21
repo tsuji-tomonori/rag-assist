@@ -285,6 +285,21 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "文書を再インデックスする",
     description: "指定した文書を現在設定の embedding / memory モデルで再処理します。"
   },
+  "GET /documents/{documentId}/share": {
+    summary: "文書共有設定を取得する",
+    description:
+      "指定した文書の直接共有とフォルダ由来の継承共有を取得します。文書の実効 full 権限と document share permission を持つユーザーだけが共有先一覧を取得できます。"
+  },
+  "PUT /documents/{documentId}/share": {
+    summary: "文書共有設定を更新する",
+    description:
+      "指定した文書の直接共有 grant を置き換えます。フォルダ由来権限は打ち消さず、文書の実効 full 権限、document share permission、理由入力を要求します。"
+  },
+  "POST /documents/{documentId}/move": {
+    summary: "文書を別フォルダへ移動する",
+    description:
+      "指定した文書を移動先フォルダへ移動し、manifest、chunk、vector metadata の folder 情報を更新します。文書の実効 full 権限、移動先フォルダ full 権限、理由入力、optimistic lock を要求します。"
+  },
   "GET /documents/reindex-migrations": {
     summary: "再インデックス移行一覧を取得する",
     description: "blue-green 再インデックスの migration 状態と履歴を取得します。"

@@ -21,9 +21,9 @@
 | --- | --- | --- |
 | 画面 | 9 | [web-screens.md](web-screens.md) |
 | 機能領域 | 11 | [web-features.md](web-features.md) |
-| コンポーネント | 57 | [web-components.md](web-components.md) |
-| UI 操作要素 | 293 | [web-features.md](web-features.md) |
-| 操作説明 | 293 | [web-accessibility.md](web-accessibility.md) |
+| コンポーネント | 56 | [web-components.md](web-components.md) |
+| UI 操作要素 | 294 | [web-features.md](web-features.md) |
+| 操作説明 | 294 | [web-accessibility.md](web-accessibility.md) |
 
 ## 初めて見る人向けの導線
 

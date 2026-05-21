@@ -47,11 +47,9 @@ export function DocumentFilePanel({
   canReindexDocument,
   canShareDocument,
   canMoveDocument,
-  canUploadToDestination,
   migrations,
   selectedMigrationId,
   uploadInputRef,
-  shareSelectRef,
   onOpenFolderInfo,
   onOpenFolderShare,
   onOpenFolderRename,
@@ -99,11 +97,9 @@ export function DocumentFilePanel({
   canReindexDocument: (document: DocumentManifest) => boolean
   canShareDocument: (document: DocumentManifest) => boolean
   canMoveDocument: (document: DocumentManifest) => boolean
-  canUploadToDestination: boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
   uploadInputRef: RefObject<HTMLInputElement | null>
-  shareSelectRef: RefObject<HTMLSelectElement | null>
   onOpenFolderInfo: () => void
   onOpenFolderShare: () => void
   onOpenFolderRename: () => void
