@@ -55,8 +55,7 @@ task benchmark:sample
 | `PORT` | API listen port | `8787` |
 | `MOCK_BEDROCK` | Bedrockモック利用 | `false` |
 | `USE_LOCAL_VECTOR_STORE` | ファイルベースstore利用 | production以外は`true` |
-| `USE_LOCAL_QUESTION_STORE` | 担当者問い合わせのローカルstore利用 | production以外は`true` |
-| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | 会話履歴のローカルstore利用 | production以外は`true` |
+| `DYNAMODB_ENDPOINT` | ローカル検証で使う DynamoDB endpoint。担当者問い合わせ、会話履歴、お気に入りは runtime で DynamoDB-backed store を使う | 未設定 |
 | `LOCAL_DATA_DIR` | ローカル保存先 | `.local-data` |
 | `AUTH_ENABLED` | Cognito JWT認証をAPIで有効化。production では `true` 必須 | production以外は`false` |
 | `CORS_ALLOWED_ORIGINS` | API CORS 許可 origin のカンマ区切り allowlist。独自ドメイン未確定期間は一時的に production でも `*` を許容する。ドメイン確定後は具体 origin に戻す | production以外は`*` |
@@ -66,6 +65,7 @@ task benchmark:sample
 | `COGNITO_APP_CLIENT_ID` | Cognito App Client ID。`AUTH_ENABLED=true` では必須 | 未設定 |
 | `QUESTION_TABLE_NAME` | 担当者問い合わせ DynamoDB table | `memorag-human-questions` |
 | `CONVERSATION_HISTORY_TABLE_NAME` | 会話履歴 DynamoDB table | `memorag-conversation-history` |
+| `FAVORITES_TABLE_NAME` | お気に入り DynamoDB table。production では必須 | `memorag-favorites` |
 | `DEFAULT_MODEL_ID` | 回答生成モデル | `amazon.nova-lite-v1:0` |
 | `DEFAULT_MEMORY_MODEL_ID` | memory card/clue生成モデル | `DEFAULT_MODEL_ID` |
 | `EMBEDDING_MODEL_ID` | 埋め込みモデル | `amazon.titan-embed-text-v2:0` |

@@ -2,6 +2,7 @@ import type { ComponentProps } from "react"
 import type { AdminWorkspace } from "../../features/admin/components/AdminWorkspace.js"
 import type { BenchmarkWorkspace } from "../../features/benchmark/components/BenchmarkWorkspace.js"
 import type { DocumentWorkspace } from "../../features/documents/components/DocumentWorkspace.js"
+import type { FavoritesWorkspace } from "../../features/favorites/components/FavoritesWorkspace.js"
 import type { HistoryWorkspace } from "../../features/history/components/HistoryWorkspace.js"
 import type { AssigneeWorkspace } from "../../features/questions/components/AssigneeWorkspace.js"
 import type { PersonalSettingsView } from "../components/PersonalSettingsView.js"
@@ -11,6 +12,7 @@ export type BenchmarkRouteProps = ComponentProps<typeof BenchmarkWorkspace>
 export type DocumentRouteProps = ComponentProps<typeof DocumentWorkspace>
 export type AdminRouteProps = ComponentProps<typeof AdminWorkspace>
 export type HistoryRouteProps = ComponentProps<typeof HistoryWorkspace>
+export type FavoritesRouteProps = ComponentProps<typeof FavoritesWorkspace>
 export type ProfileRouteProps = ComponentProps<typeof PersonalSettingsView>
 
 export function buildAssigneeRouteProps(props: AssigneeRouteProps): AssigneeRouteProps {
@@ -30,6 +32,10 @@ export function buildAdminRouteProps(props: AdminRouteProps): AdminRouteProps {
 }
 
 export function buildHistoryRouteProps(props: HistoryRouteProps): HistoryRouteProps {
+  return props
+}
+
+export function buildFavoritesRouteProps(props: FavoritesRouteProps): FavoritesRouteProps {
   return props
 }
 

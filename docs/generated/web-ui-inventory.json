@@ -163,6 +163,13 @@
       "interactionCount": 102
     },
     {
+      "feature": "favorites",
+      "label": "favorites",
+      "screens": [],
+      "componentCount": 1,
+      "interactionCount": 1
+    },
+    {
       "feature": "history",
       "label": "履歴",
       "screens": [
@@ -215,6 +222,7 @@
         "BenchmarkWorkspace",
         "ChatView",
         "DocumentWorkspace",
+        "FavoritesWorkspace",
         "HistoryWorkspace",
         "PersonalSettingsView"
       ],
@@ -1079,6 +1087,26 @@
         "input",
         "label",
         "p",
+        "small",
+        "span",
+        "strong"
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "file": "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx",
+      "feature": "favorites",
+      "exports": [
+        "FavoritesWorkspace"
+      ],
+      "jsxUsages": [
+        "Icon",
+        "button",
+        "div",
+        "h2",
+        "h3",
+        "header",
+        "section",
         "small",
         "span",
         "strong"
@@ -10295,6 +10323,50 @@
         {
           "name": "onClick",
           "value": "() => onSelectFolder(folder.id, folder.group?.groupId ?? \"\")"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx:34:button",
+      "file": "apps/web/src/features/favorites/components/FavoritesWorkspace.tsx",
+      "line": 34,
+      "feature": "favorites",
+      "component": "FavoritesWorkspace",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "チャットへ戻る",
+      "a11y": {
+        "accessibleName": "チャットへ戻る",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "onBack"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "onBack"
+        },
+        {
+          "name": "title",
+          "value": "チャットへ戻る"
+        },
+        {
+          "name": "aria-label",
+          "value": "チャットへ戻る"
         }
       ],
       "certainty": "confirmed"

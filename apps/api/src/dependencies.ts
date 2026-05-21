@@ -14,6 +14,9 @@ import type { QuestionStore } from "./adapters/question-store.js"
 import { DynamoDbConversationHistoryStore } from "./adapters/dynamodb-conversation-history-store.js"
 import { LocalConversationHistoryStore } from "./adapters/local-conversation-history-store.js"
 import type { ConversationHistoryStore } from "./adapters/conversation-history-store.js"
+import { DynamoDbFavoriteStore } from "./adapters/dynamodb-favorite-store.js"
+import type { FavoriteStore } from "./adapters/favorite-store.js"
+import { LocalFavoriteStore } from "./adapters/local-favorite-store.js"
 import { DynamoDbBenchmarkRunStore } from "./adapters/dynamodb-benchmark-run-store.js"
 import { LocalBenchmarkRunStore } from "./adapters/local-benchmark-run-store.js"
 import type { BenchmarkRunStore } from "./adapters/benchmark-run-store.js"
@@ -53,6 +56,7 @@ export type Dependencies = {
   textModel: TextModel
   questionStore: QuestionStore
   conversationHistoryStore: ConversationHistoryStore
+  favoriteStore: FavoriteStore
   benchmarkRunStore: BenchmarkRunStore
   chatRunStore: ChatRunStore
   chatRunEventStore: ChatRunEventStore
@@ -85,12 +89,10 @@ export function createDependencies(): Dependencies {
     : new S3VectorsStore(config.vectorBucketName, config.evidenceVectorIndexName)
 
   const textModel = config.mockBedrock ? new MockBedrockTextModel() : new BedrockTextModel()
-  const questionStore = config.useLocalQuestionStore
-    ? new LocalQuestionStore(config.localDataDir)
-    : new DynamoDbQuestionStore(config.questionTableName)
-  const conversationHistoryStore = config.useLocalConversationHistoryStore
-    ? new LocalConversationHistoryStore(config.localDataDir)
-    : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
+  const useLegacyLocalStoresForTests = process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS === "true"
+  const questionStore = useLegacyLocalStoresForTests ? new LocalQuestionStore(config.localDataDir) : new DynamoDbQuestionStore(config.questionTableName)
+  const conversationHistoryStore = useLegacyLocalStoresForTests ? new LocalConversationHistoryStore(config.localDataDir) : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
+  const favoriteStore = useLegacyLocalStoresForTests ? new LocalFavoriteStore(config.localDataDir) : new DynamoDbFavoriteStore(config.favoritesTableName)
   const benchmarkRunStore = config.useLocalBenchmarkRunStore
     ? new LocalBenchmarkRunStore(config.localDataDir)
     : new DynamoDbBenchmarkRunStore(config.benchmarkRunsTableName)
@@ -122,6 +124,10 @@ export function createDependencies(): Dependencies {
   const asyncAgentProviders = createDefaultAsyncAgentProviderRegistry()
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
   return cached
+}
+
+export function resetDependenciesForTest(): void {
+  cached = undefined
 }

@@ -1,5 +1,7 @@
 import { z } from "@hono/zod-openapi"
-import { hasPermission, requirePermission } from "../authorization.js"
+import { applicationRoles, hasPermission, requirePermission } from "../authorization.js"
+import type { AppUser } from "../auth.js"
+import type { HumanQuestion } from "../types.js"
 import {
   AnswerQuestionRequestSchema,
   CreateSearchImprovementCandidateRequestSchema,
@@ -56,8 +58,10 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "answer:edit")
-      return c.json({ questions: await service.listQuestions() }, 200)
+      const user = c.get("user")
+      if (canReadAllTickets(user)) return c.json({ questions: await service.listAllQuestionsForAdmin() }, 200)
+      requirePermission(user, "answer:edit")
+      return c.json({ questions: await service.listAssignedQuestions(user.userId, supportGroupIds(user)) }, 200)
     }
   )
 
@@ -79,7 +83,7 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
       const { questionId } = validParam<{ questionId: string }>(c)
       const question = await service.getQuestion(questionId)
       if (!question) return c.json({ error: "Question not found" }, 404)
-      if (hasPermission(user, "answer:edit")) return c.json(question, 200)
+      if (canReadAllTickets(user) || (hasPermission(user, "answer:edit") && canAccessAssignedTicket(user, question))) return c.json(question, 200)
       if (question.requesterUserId && question.requesterUserId === user.userId) return c.json(requesterVisibleQuestion(question), 200)
       return c.json({ error: "Question not found" }, 404)
     }
@@ -105,9 +109,14 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
     }),
     async (c) => {
       const user = c.get("user")
-      requirePermission(user, "answer:publish")
+      if (!hasPermission(user, "answer:edit") && !hasPermission(user, "answer:publish")) requirePermission(user, "answer:publish")
       try {
         const { questionId } = validParam<{ questionId: string }>(c)
+        const question = await service.getQuestion(questionId)
+        if (!question) return c.json({ error: "Question not found" }, 404)
+        if (!hasPermission(user, "answer:publish") && !canAccessAssignedTicket(user, question)) {
+          return c.json({ error: "Question not found" }, 404)
+        }
         const body = validJson<z.infer<typeof AnswerQuestionRequestSchema>>(c)
         return c.json(await service.answerQuestion(questionId, body, user), 200)
       } catch (err) {
@@ -178,4 +187,19 @@ export function registerQuestionRoutes({ app, service }: ApiRouteContext) {
       }
     }
   )
+}
+
+function canReadAllTickets(user: AppUser): boolean {
+  return hasPermission(user, "support:ticket:read:all") || user.cognitoGroups.includes("SYSTEM_ADMIN")
+}
+
+function canAccessAssignedTicket(user: AppUser, question: HumanQuestion): boolean {
+  if (!hasPermission(user, "answer:edit")) return false
+  if (question.assigneeUserId === user.userId) return true
+  return Boolean(question.assigneeGroupId && supportGroupIds(user).includes(question.assigneeGroupId))
+}
+
+function supportGroupIds(user: AppUser): string[] {
+  const roleNames = new Set<string>(applicationRoles)
+  return user.cognitoGroups.filter((group) => !roleNames.has(group))
 }

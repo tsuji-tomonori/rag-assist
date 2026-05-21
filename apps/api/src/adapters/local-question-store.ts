@@ -50,9 +50,21 @@ export class LocalQuestionStore implements QuestionStore {
     return question
   }
 
-  async list(): Promise<HumanQuestion[]> {
+  async listAssignedToUser(userId: string, groupIds: string[]): Promise<HumanQuestion[]> {
     const db = await this.load()
-    return [...db.questions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    return sortQuestions(db.questions.filter((question) =>
+      question.assigneeUserId === userId || (question.assigneeGroupId ? groupIds.includes(question.assigneeGroupId) : false)
+    ))
+  }
+
+  async listRequestedByUser(userId: string): Promise<HumanQuestion[]> {
+    const db = await this.load()
+    return sortQuestions(db.questions.filter((question) => question.requesterUserId === userId))
+  }
+
+  async listAllForAdmin(): Promise<HumanQuestion[]> {
+    const db = await this.load()
+    return sortQuestions(db.questions)
   }
 
   async get(questionId: string): Promise<HumanQuestion | undefined> {
@@ -110,4 +122,8 @@ export class LocalQuestionStore implements QuestionStore {
     await mkdir(path.dirname(this.filePath), { recursive: true })
     await writeFile(this.filePath, JSON.stringify(db, null, 2))
   }
+}
+
+function sortQuestions(questions: HumanQuestion[]): HumanQuestion[] {
+  return [...questions].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 }

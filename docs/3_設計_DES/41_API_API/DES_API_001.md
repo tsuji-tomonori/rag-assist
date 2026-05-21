@@ -55,8 +55,11 @@
 | `POST /questions/{questionId}/search-improvement-candidates` | 問い合わせ由来の検索改善候補作成 | `FR-023`, `FR-037`, `NFR-012` |
 | `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-021`, `NFR-011` |
 | `GET /conversation-history` | 自分の会話履歴一覧 | `FR-022`, `NFR-005` |
-| `POST /conversation-history` | 会話履歴 item 保存とお気に入り状態更新 | `FR-022`, `FR-028`, `NFR-005` |
+| `POST /conversation-history` | 会話履歴 item 保存 | `FR-022`, `NFR-005` |
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-022`, `NFR-005` |
+| `GET /favorites` | 自分のお気に入り shortcut 一覧 | `FR-028`, `NFR-005`, `NFR-011` |
+| `POST /favorites` | お気に入り shortcut 作成 | `FR-028`, `NFR-005`, `NFR-011` |
+| `DELETE /favorites/{targetType}/{targetId}` | お気に入り shortcut 削除 | `FR-028`, `NFR-005`, `NFR-011` |
 | `GET /debug-runs` | debug trace 一覧 | `FR-010`, `NFR-010` |
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
 | `POST /debug-runs/{runId}/download` | debug trace JSON ダウンロード URL 生成 | `FR-010`, `NFR-010` |

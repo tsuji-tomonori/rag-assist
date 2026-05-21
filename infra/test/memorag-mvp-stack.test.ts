@@ -189,12 +189,26 @@ test("implements the designed serverless resources", () => {
   template.hasResourceProperties("AWS::DynamoDB::Table", {
     KeySchema: [{ AttributeName: "questionId", KeyType: "HASH" }],
     BillingMode: "PAY_PER_REQUEST",
+    GlobalSecondaryIndexes: Match.arrayWith([
+      Match.objectLike({ IndexName: "RequesterUpdatedAtIndex" }),
+      Match.objectLike({ IndexName: "AssigneeUserUpdatedAtIndex" }),
+      Match.objectLike({ IndexName: "AssigneeGroupUpdatedAtIndex" }),
+      Match.objectLike({ IndexName: "StatusUpdatedAtIndex" })
+    ]),
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
   template.hasResourceProperties("AWS::DynamoDB::Table", {
     KeySchema: [
       { AttributeName: "userId", KeyType: "HASH" },
       { AttributeName: "id", KeyType: "RANGE" }
+    ],
+    BillingMode: "PAY_PER_REQUEST",
+    PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+  })
+  template.hasResourceProperties("AWS::DynamoDB::Table", {
+    KeySchema: [
+      { AttributeName: "ownerUserId", KeyType: "HASH" },
+      { AttributeName: "targetKey", KeyType: "RANGE" }
     ],
     BillingMode: "PAY_PER_REQUEST",
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
@@ -249,6 +263,7 @@ test("implements the designed serverless resources", () => {
       Variables: Match.objectLike({
         QUESTION_TABLE_NAME: Match.anyValue(),
         CONVERSATION_HISTORY_TABLE_NAME: Match.anyValue(),
+        FAVORITES_TABLE_NAME: Match.anyValue(),
         BENCHMARK_RUNS_TABLE_NAME: Match.anyValue(),
         CHAT_RUNS_TABLE_NAME: Match.anyValue(),
         CHAT_RUN_EVENTS_TABLE_NAME: Match.anyValue(),
@@ -256,8 +271,6 @@ test("implements the designed serverless resources", () => {
         BENCHMARK_STATE_MACHINE_ARN: Match.anyValue(),
         BENCHMARK_TARGET_API_BASE_URL: Match.anyValue(),
         CHAT_RUN_STATE_MACHINE_ARN: Match.anyValue(),
-        USE_LOCAL_QUESTION_STORE: "false",
-        USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
         USE_LOCAL_BENCHMARK_RUN_STORE: "false",
         USE_LOCAL_CHAT_RUN_STORE: "false",
         AUTH_ENABLED: "true",
@@ -320,7 +333,7 @@ test("implements the designed serverless resources", () => {
   const getLogEventsResource = JSON.stringify(getLogEventsStatement.Resource)
   assert.match(getLogEventsResource, /log-stream:\*/)
   assert.doesNotMatch(getLogEventsResource, /\*.*log-stream:\*/)
-  template.hasResourceProperties("AWS::IAM::Policy", {
+  template.hasResourceProperties("AWS::IAM::ManagedPolicy", {
     PolicyDocument: Match.objectLike({
       Statement: Match.arrayWith([
         Match.objectLike({
@@ -350,7 +363,7 @@ test("implements the designed serverless resources", () => {
       ])
     })
   })
-  template.hasResourceProperties("AWS::IAM::Policy", {
+  template.hasResourceProperties("AWS::IAM::ManagedPolicy", {
     PolicyDocument: Match.objectLike({
       Statement: Match.arrayWith([
         Match.objectLike({

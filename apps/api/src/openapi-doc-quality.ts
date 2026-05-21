@@ -371,11 +371,23 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /conversation-history": {
     summary: "会話履歴を保存する",
-    description: "会話履歴 item を保存し、お気に入り状態などの表示情報を更新します。"
+    description: "会話履歴 item をログインユーザー自身の履歴として保存します。お気に入り状態は /favorites で管理します。"
   },
   "DELETE /conversation-history/{id}": {
     summary: "会話履歴を削除する",
     description: "ログインユーザー自身の指定した会話履歴 item を削除します。"
+  },
+  "GET /favorites": {
+    summary: "お気に入り shortcut 一覧を取得する",
+    description: "ログインユーザー自身のお気に入り shortcut を取得し、対象への現在権限を再確認して返します。"
+  },
+  "POST /favorites": {
+    summary: "お気に入り shortcut を作成する",
+    description: "会話、文書、フォルダなどの対象を shortcut として保存します。対象本体は作成しません。"
+  },
+  "DELETE /favorites/{targetType}/{targetId}": {
+    summary: "お気に入り shortcut を削除する",
+    description: "指定したお気に入り shortcut だけを削除します。会話、文書、フォルダなどの対象本体は削除しません。"
   },
   "GET /debug-runs": {
     summary: "debug trace 一覧を取得する",

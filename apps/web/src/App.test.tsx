@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import App from "./App.js"
-import type { AliasAuditLogItem, AliasDefinition, BenchmarkRun, ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
+import type { AliasAuditLogItem, AliasDefinition, BenchmarkRun, ConversationHistoryItem, FavoriteItem, HumanQuestion, Permission } from "./api.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
@@ -216,6 +216,17 @@ function historyItem(id: string, title: string, text: string, updatedAt: string,
 
 function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHistoryItem[] = [], initialBenchmarkRuns: BenchmarkRun[] = []) {
   let storedHistory: ConversationHistoryItem[] = initialHistory
+  let storedFavorites: FavoriteItem[] = initialHistory
+    .filter((item) => item.isFavorite)
+    .map((item) => ({
+      favoriteId: `local-dev#chatSession#${item.id}`,
+      targetType: "chatSession",
+      targetId: item.id,
+      label: item.title,
+      accessible: true,
+      createdAt: item.updatedAt,
+      updatedAt: item.updatedAt
+    }))
   let benchmarkRuns: BenchmarkRun[] = initialBenchmarkRuns
   let managedUsers = [
     {
@@ -382,6 +393,29 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       const body = parseRequestJson(init) as ConversationHistoryItem
       storedHistory = [body, ...storedHistory.filter((item) => item.id !== body.id)]
       return Promise.resolve(response(body))
+    }
+    if (requestUrl.endsWith("/favorites") && isGet(init)) return Promise.resolve(response({ favorites: storedFavorites }))
+    if (requestUrl.endsWith("/favorites") && init?.method === "POST") {
+      const body = parseRequestJson(init) as { targetType: FavoriteItem["targetType"]; targetId: string; label?: string; note?: string }
+      const now = "2026-05-21T09:15:00.000Z"
+      const favorite: FavoriteItem = {
+        favoriteId: `local-dev#${body.targetType}#${body.targetId}`,
+        targetType: body.targetType,
+        targetId: body.targetId,
+        label: body.label,
+        note: body.note,
+        accessible: true,
+        createdAt: now,
+        updatedAt: now
+      }
+      storedFavorites = [favorite, ...storedFavorites.filter((item) => !(item.targetType === favorite.targetType && item.targetId === favorite.targetId))]
+      return Promise.resolve(response(favorite))
+    }
+    if (requestUrl.includes("/favorites/") && init?.method === "DELETE") {
+      const [encodedTargetType, encodedTargetId] = (requestUrl.split("/favorites/")[1] ?? "").split("/")
+      const [targetType, targetId] = [encodedTargetType, encodedTargetId].map((value) => decodeURIComponent(value ?? ""))
+      storedFavorites = storedFavorites.filter((item) => !(item.targetType === targetType && item.targetId === targetId))
+      return Promise.resolve(response({ targetType, targetId }))
     }
     if (requestUrl.includes("/conversation-history/") && init?.method === "DELETE") {
       const id = decodeURIComponent(requestUrl.split("/conversation-history/")[1] ?? "")
@@ -1020,16 +1054,17 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("お気に入りに追加"))
     await waitFor(() => {
       const favoriteSave = fetchMock.mock.calls.find(([url, init]) => {
-        if (!String(url).endsWith("/conversation-history") || (init as RequestInit | undefined)?.method !== "POST") return false
-        return parseRequestJson(init as RequestInit).isFavorite === true
+        if (!String(url).endsWith("/favorites") || (init as RequestInit | undefined)?.method !== "POST") return false
+        return parseRequestJson(init as RequestInit).targetType === "chatSession"
       })
       expect(favoriteSave).toBeTruthy()
     })
     expect(screen.getByText(/1 件のお気に入り/)).toBeInTheDocument()
     await userEvent.click(screen.getByTitle("お気に入り"))
     expect(await screen.findByRole("heading", { name: "お気に入り" })).toBeInTheDocument()
-    expect(screen.getByText("1 件を表示中")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /分類一.*メッセージ/ })).toBeInTheDocument()
+    expect(screen.getByText("1 件のショートカット")).toBeInTheDocument()
+    expect(screen.getByText("会話")).toBeInTheDocument()
+    expect(screen.getByText("分類一")).toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("履歴"))
     await userEvent.selectOptions(screen.getByLabelText("履歴の並び順"), "messages")

@@ -1,8 +1,8 @@
 import { DeleteItemCommand, DynamoDBClient, PutItemCommand, QueryCommand } from "@aws-sdk/client-dynamodb"
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"
-import { config } from "../config.js"
 import { CONVERSATION_HISTORY_SCHEMA_VERSION, type ConversationHistoryItem, type ConversationHistorySchemaVersion } from "../types.js"
 import { normalizeConversationHistoryInput, type ConversationHistoryStore, type SaveConversationHistoryInput } from "./conversation-history-store.js"
+import { createDynamoDbClient } from "./dynamodb-client.js"
 
 type StoredConversationHistoryItem = Omit<ConversationHistoryItem, "schemaVersion"> & {
   schemaVersion?: ConversationHistorySchemaVersion
@@ -12,7 +12,7 @@ type StoredConversationHistoryItem = Omit<ConversationHistoryItem, "schemaVersio
 export class DynamoDbConversationHistoryStore implements ConversationHistoryStore {
   private readonly client: DynamoDBClient
 
-  constructor(private readonly tableName: string, client = new DynamoDBClient({ region: config.region })) {
+  constructor(private readonly tableName: string, client = createDynamoDbClient()) {
     this.client = client
   }
 

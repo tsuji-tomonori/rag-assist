@@ -9,7 +9,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -1340,8 +1340,16 @@ export class MemoRagService {
     })
   }
 
-  async listQuestions(): Promise<HumanQuestion[]> {
-    return this.deps.questionStore.list()
+  async listAssignedQuestions(userId: string, groupIds: string[]): Promise<HumanQuestion[]> {
+    return this.deps.questionStore.listAssignedToUser(userId, groupIds)
+  }
+
+  async listRequestedQuestions(userId: string): Promise<HumanQuestion[]> {
+    return this.deps.questionStore.listRequestedByUser(userId)
+  }
+
+  async listAllQuestionsForAdmin(): Promise<HumanQuestion[]> {
+    return this.deps.questionStore.listAllForAdmin()
   }
 
   async getQuestion(questionId: string): Promise<HumanQuestion | undefined> {
@@ -1677,15 +1685,57 @@ export class MemoRagService {
   }
 
   async saveConversationHistory(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
-    return this.deps.conversationHistoryStore.save(userId, input)
+    return this.deps.conversationHistoryStore.save(userId, { ...input, isFavorite: false })
   }
 
   async listConversationHistory(userId: string): Promise<ConversationHistoryItem[]> {
-    return this.deps.conversationHistoryStore.list(userId)
+    const [history, favorites] = await Promise.all([
+      this.deps.conversationHistoryStore.list(userId),
+      this.deps.favoriteStore.list(userId)
+    ])
+    const favoriteChatSessionIds = new Set(favorites
+      .filter((favorite) => favorite.targetType === "chatSession")
+      .map((favorite) => favorite.targetId))
+    return history
+      .map((item) => ({ ...item, isFavorite: favoriteChatSessionIds.has(item.id) }))
+      .sort(compareConversationHistoryForDisplay)
   }
 
   async deleteConversationHistory(userId: string, id: string): Promise<void> {
     return this.deps.conversationHistoryStore.delete(userId, id)
+  }
+
+  async saveFavorite(ownerUserId: string, input: { targetType: FavoriteTargetType; targetId: string; label?: string; note?: string }): Promise<FavoriteListItem> {
+    const favorite = await this.deps.favoriteStore.save(ownerUserId, input)
+    return { ...stripFavoriteStorageKeys(favorite), accessible: true }
+  }
+
+  async deleteFavorite(ownerUserId: string, targetType: FavoriteTargetType, targetId: string): Promise<void> {
+    await this.deps.favoriteStore.delete(ownerUserId, targetType, targetId)
+  }
+
+  async listFavorites(user: AppUser): Promise<FavoriteListItem[]> {
+    const [favorites, history] = await Promise.all([
+      this.deps.favoriteStore.list(user.userId),
+      this.deps.conversationHistoryStore.list(user.userId)
+    ])
+    const historyIds = new Set(history.map((item) => item.id))
+    const documents = new Map((await this.listDocuments(user)).map((document) => [document.documentId, document]))
+    const folders = new Map((await this.listDocumentGroups(user)).map((folder) => [folder.groupId, folder]))
+    return favorites.map((favorite) => {
+      if (favorite.targetType === "chatSession") {
+        return favoriteListItem(favorite, historyIds.has(favorite.targetId))
+      }
+      if (favorite.targetType === "document") {
+        const document = documents.get(favorite.targetId)
+        return favoriteListItem(favorite, Boolean(document), document?.fileName)
+      }
+      if (favorite.targetType === "folder") {
+        const folder = folders.get(favorite.targetId)
+        return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
+      }
+      return favoriteListItem(favorite, true)
+    })
   }
 
   listBenchmarkSuites(): BenchmarkSuite[] {
@@ -3010,6 +3060,36 @@ function uniqueStrings(values: string[]): string[] {
 
 function userDisplayName(user?: AppUser): string {
   return user?.email?.trim() || user?.userId?.trim() || "未設定"
+}
+
+function compareConversationHistoryForDisplay(a: ConversationHistoryItem, b: ConversationHistoryItem): number {
+  if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
+  return b.updatedAt.localeCompare(a.updatedAt)
+}
+
+function stripFavoriteStorageKeys(favorite: FavoriteItem): Omit<FavoriteItem, "ownerUserId" | "targetKey"> {
+  const { ownerUserId: _ownerUserId, targetKey: _targetKey, ...visible } = favorite
+  return visible
+}
+
+function favoriteListItem(favorite: FavoriteItem, accessible: boolean, resolvedLabel?: string): FavoriteListItem {
+  const visible = stripFavoriteStorageKeys(favorite)
+  if (!accessible) {
+    return {
+      favoriteId: visible.favoriteId,
+      targetType: visible.targetType,
+      targetId: visible.targetId,
+      accessible: false,
+      label: "この項目には現在アクセスできません",
+      createdAt: visible.createdAt,
+      updatedAt: visible.updatedAt
+    }
+  }
+  return {
+    ...visible,
+    label: resolvedLabel ?? visible.label,
+    accessible: true
+  }
 }
 
 function forbiddenError(message: string): Error & { status: number } {

@@ -76,6 +76,7 @@ Logical ID: `ApiFunctionCE271BD4`
 | `EMBEDDING_DIMENSIONS` | 1024 |
 | `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
 | `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
 | `MEMORY_VECTOR_INDEX_NAME` | memory-index |
 | `MIN_RETRIEVAL_SCORE` | 0.20 |
 | `MOCK_BEDROCK` | false |
@@ -85,8 +86,6 @@ Logical ID: `ApiFunctionCE271BD4`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
-| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
-| `USE_LOCAL_QUESTION_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -132,6 +131,7 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `EMBEDDING_DIMENSIONS` | 1024 |
 | `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
 | `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
 | `MEMORY_VECTOR_INDEX_NAME` | memory-index |
 | `MIN_RETRIEVAL_SCORE` | 0.20 |
 | `MOCK_BEDROCK` | false |
@@ -139,8 +139,6 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
-| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
-| `USE_LOCAL_QUESTION_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -186,6 +184,7 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `EMBEDDING_DIMENSIONS` | 1024 |
 | `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
 | `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
 | `MEMORY_VECTOR_INDEX_NAME` | memory-index |
 | `MIN_RETRIEVAL_SCORE` | 0.20 |
 | `MOCK_BEDROCK` | false |
@@ -193,8 +192,6 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
-| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
-| `USE_LOCAL_QUESTION_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -240,6 +237,7 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `EMBEDDING_DIMENSIONS` | 1024 |
 | `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
 | `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
 | `MEMORY_VECTOR_INDEX_NAME` | memory-index |
 | `MIN_RETRIEVAL_SCORE` | 0.20 |
 | `MOCK_BEDROCK` | false |
@@ -247,8 +245,6 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
-| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
-| `USE_LOCAL_QUESTION_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -328,6 +324,7 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `EMBEDDING_DIMENSIONS` | 1024 |
 | `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
 | `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
 | `MEMORY_VECTOR_INDEX_NAME` | memory-index |
 | `MIN_RETRIEVAL_SCORE` | 0.20 |
 | `MOCK_BEDROCK` | false |
@@ -335,8 +332,6 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
-| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
-| `USE_LOCAL_QUESTION_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -383,6 +378,7 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `EMBEDDING_DIMENSIONS` | 1024 |
 | `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
 | `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
 | `MEMORY_VECTOR_INDEX_NAME` | memory-index |
 | `MIN_RETRIEVAL_SCORE` | 0.20 |
 | `MOCK_BEDROCK` | false |
@@ -392,8 +388,6 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
-| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
-| `USE_LOCAL_QUESTION_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -443,6 +437,7 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `EMBEDDING_DIMENSIONS` | 1024 |
 | `EMBEDDING_MODEL_ID` | amazon.titan-embed-text-v2:0 |
 | `EVIDENCE_VECTOR_INDEX_NAME` | evidence-index |
+| `FAVORITES_TABLE_NAME` | Ref:FavoritesTable4DA8A306 |
 | `MEMORY_VECTOR_INDEX_NAME` | memory-index |
 | `MIN_RETRIEVAL_SCORE` | 0.20 |
 | `MOCK_BEDROCK` | false |
@@ -452,8 +447,6 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
-| `USE_LOCAL_CONVERSATION_HISTORY_STORE` | false |
-| `USE_LOCAL_QUESTION_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 

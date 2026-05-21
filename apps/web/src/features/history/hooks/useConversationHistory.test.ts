@@ -68,9 +68,11 @@ describe("useConversationHistory", () => {
 
     await act(() => result.current.refreshHistory())
     act(() => result.current.updateHistoryQuestionTickets([question({ updatedAt: "2026-05-06T02:00:00.000Z", status: "answered" })]))
-    act(() => result.current.toggleFavorite(result.current.history[0]!))
     await act(async () => {
-      await Promise.resolve()
+      await result.current.toggleFavorite(result.current.history[0]!, {
+        addFavorite: vi.fn().mockRejectedValue(new Error("favorite failed")),
+        removeFavorite: vi.fn()
+      })
     })
     act(() => result.current.deleteHistoryItem("conv-1"))
     await act(async () => {

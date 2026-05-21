@@ -8,6 +8,7 @@ import { setTimeout as delay } from "node:timers/promises"
 import test from "node:test"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
+import { LocalFavoriteStore } from "../adapters/local-favorite-store.js"
 import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
 import type { AppUser } from "../auth.js"
@@ -1179,7 +1180,7 @@ test("service delegates human question lifecycle to the question store", async (
     qualityWarnings: ["検索語対応づけの確認が必要"],
     suggestedNextActions: ["search_improvement_review"]
   })
-  assert.equal((await service.listQuestions())[0]?.questionId, question.questionId)
+  assert.equal((await service.listAllQuestionsForAdmin())[0]?.questionId, question.questionId)
   assert.equal((await service.getQuestion(question.questionId))?.questionId, question.questionId)
 
   const answered = await service.answerQuestion(question.questionId, {
@@ -2367,6 +2368,7 @@ async function createService(options: {
     textModel: options.textModel ?? new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    favoriteStore: new LocalFavoriteStore(dataDir),
     benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),

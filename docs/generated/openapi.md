@@ -79,6 +79,9 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/documents/uploads` | 文書アップロード URL を作成する | [詳細](openapi/post-documents-uploads.md) |
 | `POST` | `/documents/uploads/{uploadId}/content` | 文書アップロード内容を保存する | [詳細](openapi/post-documents-uploads-uploadid-content.md) |
 | `POST` | `/documents/uploads/{uploadId}/ingest` | アップロード済み文書を取り込む | [詳細](openapi/post-documents-uploads-uploadid-ingest.md) |
+| `GET` | `/favorites` | お気に入り shortcut 一覧を取得する | [詳細](openapi/get-favorites.md) |
+| `POST` | `/favorites` | お気に入り shortcut を作成する | [詳細](openapi/post-favorites.md) |
+| `DELETE` | `/favorites/{targetType}/{targetId}` | お気に入り shortcut を削除する | [詳細](openapi/delete-favorites-targettype-targetid.md) |
 | `GET` | `/health` | ヘルスチェックを取得する | [詳細](openapi/get-health.md) |
 | `GET` | `/me` | ログインユーザー情報を取得する | [詳細](openapi/get-me.md) |
 | `POST` | `/questions` | 担当者問い合わせを作成する | [詳細](openapi/post-questions.md) |

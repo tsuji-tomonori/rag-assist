@@ -1,6 +1,6 @@
 # Local Verification
 
-このMVPはローカルではAWSへ接続しない。`MOCK_BEDROCK=true`、`USE_LOCAL_VECTOR_STORE=true`、`USE_LOCAL_QUESTION_STORE=true`、`USE_LOCAL_CONVERSATION_HISTORY_STORE=true` を指定し、Bedrockモックと `.local-data` のファイルstoreで検証する。
+このMVPはローカルではAWSへ接続しない。`MOCK_BEDROCK=true`、`USE_LOCAL_VECTOR_STORE=true` を指定し、Bedrockモックと `.local-data` のファイルstoreで文書系を検証する。担当者問い合わせ、会話履歴、お気に入りは runtime でも DynamoDB-backed store を使うため、ローカルでは DynamoDB Local を起動して `DYNAMODB_ENDPOINT=http://localhost:8000` を指定する。
 
 ## 実行手順
 
@@ -23,8 +23,10 @@ API起動:
 PORT=8787 \
 MOCK_BEDROCK=true \
 USE_LOCAL_VECTOR_STORE=true \
-USE_LOCAL_QUESTION_STORE=true \
-USE_LOCAL_CONVERSATION_HISTORY_STORE=true \
+DYNAMODB_ENDPOINT=http://localhost:8000 \
+QUESTION_TABLE_NAME=memorag-human-questions \
+CONVERSATION_HISTORY_TABLE_NAME=memorag-conversation-history \
+FAVORITES_TABLE_NAME=memorag-favorites \
 LOCAL_DATA_DIR=.local-data \
 npm run start -w @memorag-mvp/api
 ```
@@ -48,7 +50,11 @@ curl -fsS http://localhost:8787/questions \
 
 curl -fsS http://localhost:8787/conversation-history \
   -H 'Content-Type: application/json' \
-  -d '{"schemaVersion":1,"id":"local-history-001","title":"ローカル検証","updatedAt":"2026-05-02T00:00:00.000Z","isFavorite":true,"messages":[{"role":"user","text":"経費精算の期限は？","createdAt":"2026-05-02T00:00:00.000Z"}]}'
+  -d '{"schemaVersion":1,"id":"local-history-001","title":"ローカル検証","updatedAt":"2026-05-02T00:00:00.000Z","messages":[{"role":"user","text":"経費精算の期限は？","createdAt":"2026-05-02T00:00:00.000Z"}]}'
+
+curl -fsS http://localhost:8787/favorites \
+  -H 'Content-Type: application/json' \
+  -d '{"targetType":"chatSession","targetId":"local-history-001","label":"ローカル検証"}'
 
 curl -fsS http://localhost:8787/openapi.json >/dev/null
 ```
@@ -148,7 +154,8 @@ summary JSON と Markdown report には `evaluatorProfile` が出力される。
 - `/documents` が `documentId`、`chunkCount`、`memoryCardCount` を返す。
 - `/chat` が回答本文と `citations`、`retrieved` を返す。
 - `/questions` が `questionId` と `status: "open"` を返す。
-- `/conversation-history` が `schemaVersion: 1` と `isFavorite` を含む履歴 item を保存できる。
+- `/conversation-history` が `schemaVersion: 1` を含む履歴 item を保存できる。
+- `/favorites` が `chatSession` のお気に入り shortcut を保存できる。
 - `/openapi.json` がJSONとして取得できる。
 - benchmark CLIが `.local-data/benchmark-results.jsonl`、`.local-data/benchmark-summary.json`、`.local-data/benchmark-report.md` を作成する。
 - benchmark summary が回答可能問題、不回答問題、fact slot 付き問題、確認質問問題の評価に必要な集計項目を出力する。
