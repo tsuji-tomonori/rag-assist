@@ -40,16 +40,19 @@ export function DocumentFilePanel({
   documentStatusOptions,
   selectedDocument,
   operationState,
-  canWrite,
+  canShare,
   canDelete,
   canReindex,
   canDeleteDocument,
   canReindexDocument,
   canUploadToDestination,
+  uploadDisabledReason,
+  canCreateGroup,
   migrations,
   selectedMigrationId,
   uploadInputRef,
   shareSelectRef,
+  createGroupNameRef,
   onDocumentQueryChange,
   onDocumentTypeFilterChange,
   onDocumentStatusFilterChange,
@@ -83,16 +86,19 @@ export function DocumentFilePanel({
   documentStatusOptions: string[]
   selectedDocument: DocumentManifest | null
   operationState: DocumentOperationState
-  canWrite: boolean
+  canShare: boolean
   canDelete: boolean
   canReindex: boolean
   canDeleteDocument: (document: DocumentManifest) => boolean
   canReindexDocument: (document: DocumentManifest) => boolean
   canUploadToDestination: boolean
+  uploadDisabledReason: string | null
+  canCreateGroup: boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
   uploadInputRef: RefObject<HTMLInputElement | null>
   shareSelectRef: RefObject<HTMLSelectElement | null>
+  createGroupNameRef: RefObject<HTMLInputElement | null>
   onDocumentQueryChange: (value: string) => void
   onDocumentTypeFilterChange: (value: string) => void
   onDocumentStatusFilterChange: (value: string) => void
@@ -114,10 +120,21 @@ export function DocumentFilePanel({
         <div className="document-folder-actions" aria-label="フォルダ操作ショートカット">
           <button
             type="button"
-            title={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
-            aria-label={selectedFolder.group ? "このフォルダにアップロード" : "保存先を選択してアップロード"}
+            title={uploadDisabledReason ?? `ファイルをアップロード: ${selectedFolder.group ? selectedFolder.name : uploadDestinationLabel}`}
+            aria-label="ファイルをアップロード"
+            aria-describedby={uploadDisabledReason ? "document-upload-shortcut-reason" : undefined}
             disabled={!canUploadToDestination || operationState.isUploading}
             onClick={() => uploadInputRef.current?.click()}
+          >
+            <Icon name="download" />
+          </button>
+          {uploadDisabledReason && <span id="document-upload-shortcut-reason" className="sr-only">{uploadDisabledReason}</span>}
+          <button
+            type="button"
+            title="フォルダを作成"
+            aria-label="フォルダを作成"
+            disabled={!canCreateGroup}
+            onClick={() => createGroupNameRef.current?.focus()}
           >
             <Icon name="plus" />
           </button>
@@ -125,7 +142,7 @@ export function DocumentFilePanel({
             type="button"
             title="共有設定を編集"
             aria-label="共有設定を編集"
-            disabled={!canWrite || operationState.sharingGroupId !== null}
+            disabled={!canShare || operationState.sharingGroupId !== null}
             onClick={() => shareSelectRef.current?.focus()}
           >
             <Icon name="share" />
@@ -192,7 +209,7 @@ export function DocumentFilePanel({
           <EmptyState
             title="登録済みドキュメントはありません。"
             description={documentGroups.length === 0 ? "まずフォルダを作成し、保存先を選択してからファイルをアップロードしてください。" : "保存先フォルダを選択してファイルをアップロードしてください。"}
-            action={<button type="button" disabled={!canWrite || !uploadGroupId} onClick={() => uploadInputRef.current?.click()}>ファイルをアップロード</button>}
+            action={<button type="button" disabled={!canUploadToDestination} onClick={() => uploadInputRef.current?.click()}>ファイルをアップロード</button>}
           />
         ) : filteredDocumentsCount === 0 ? (
           <EmptyState

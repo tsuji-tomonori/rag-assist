@@ -123,6 +123,131 @@ function createDeferred<T>() {
 }
 
 describe("DocumentWorkspace", () => {
+  it("右上ショートカットはフォルダ作成ではなくアップロードとして表示する", () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "フォルダを作成" })).toBeInTheDocument()
+  })
+
+  it("保存先未選択ではアップロードを無効化し、理由を表示する", () => {
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
+        canDelete={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
+    expect(screen.getAllByText("保存先フォルダを選択するとアップロードできます。").length).toBeGreaterThanOrEqual(1)
+  })
+
+  it("rag:group:create があれば文書アップロード権限がなくてもフォルダ作成できる", async () => {
+    const onCreateGroup = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canCreateGroup={true}
+        canShareGroup={false}
+        canUpload={false}
+        canDelete={false}
+        canReindex={false}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.type(screen.getByLabelText("新規フォルダ名"), "新規資料")
+    expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeEnabled()
+
+    await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
+    expect(onCreateGroup).toHaveBeenCalledWith({ name: "新規資料", visibility: "private" })
+  })
+
+  it("rag:doc:write:group だけではフォルダ作成できない", async () => {
+    const onCreateGroup = vi.fn()
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId=""
+        loading={false}
+        canCreateGroup={false}
+        canShareGroup={false}
+        canUpload={true}
+        canDelete={false}
+        canReindex={false}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={onCreateGroup}
+        onShareGroup={vi.fn()}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    expect(screen.getByLabelText("新規フォルダ名")).toBeDisabled()
+    expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeDisabled()
+    expect(screen.getByText("フォルダを作成する権限がありません。")).toBeInTheDocument()
+    expect(onCreateGroup).not.toHaveBeenCalled()
+  })
+
   it("登録文書を表示し、削除操作を通知する", async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
 
@@ -131,7 +256,9 @@ describe("DocumentWorkspace", () => {
         documents={documents}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={migrations}
@@ -161,7 +288,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -221,7 +350,9 @@ describe("DocumentWorkspace", () => {
         documents={[parsedDocument]}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -255,7 +386,9 @@ describe("DocumentWorkspace", () => {
         documents={documents}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -285,7 +418,9 @@ describe("DocumentWorkspace", () => {
         documents={paginatedDocuments}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -332,7 +467,9 @@ describe("DocumentWorkspace", () => {
         ]}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -371,7 +508,9 @@ describe("DocumentWorkspace", () => {
         documents={paginatedDocuments}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -400,7 +539,9 @@ describe("DocumentWorkspace", () => {
         documents={documents}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={false}
         canReindex={false}
         migrations={[]}
@@ -426,7 +567,9 @@ describe("DocumentWorkspace", () => {
         documents={documents}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={migrations}
@@ -463,7 +606,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={migrations}
@@ -506,7 +651,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -545,7 +692,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -581,7 +730,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -621,7 +772,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -657,7 +810,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={false}
         migrations={[]}
@@ -720,7 +875,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[...documentGroups, childGroup]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -781,7 +938,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[...documentGroups, childGroup, grandchildGroup]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -838,7 +997,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -889,7 +1050,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -938,7 +1101,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[{ ...documentGroups[0]!, sharedGroups: [] }]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -969,7 +1134,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1007,7 +1174,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1042,7 +1211,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1092,7 +1263,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1139,7 +1312,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[{ ...documentGroups[0]!, sharedGroups: [] }]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1168,7 +1343,9 @@ describe("DocumentWorkspace", () => {
         documents={typedDocuments}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1202,7 +1379,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[documentGroups[0]!, organizationGroup]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1240,7 +1419,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1296,7 +1477,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={migrations}
@@ -1338,7 +1521,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={migrations}
@@ -1401,7 +1586,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1443,7 +1630,9 @@ describe("DocumentWorkspace", () => {
         documents={documents}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1471,7 +1660,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1487,7 +1678,7 @@ describe("DocumentWorkspace", () => {
       />
     )
 
-    expect(screen.getByTitle("保存先を選択してアップロード")).toBeDisabled()
+    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
 
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
     expect(onUploadGroupChange).toHaveBeenCalledWith("group-1")
@@ -1497,7 +1688,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId="group-1"
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1515,7 +1708,7 @@ describe("DocumentWorkspace", () => {
     await userEvent.click(screen.getByRole("button", { name: /社内規定/ }))
     expect(screen.getByText((_, element) => element?.textContent === "保存先: 社内規定")).toBeInTheDocument()
 
-    await userEvent.click(screen.getByTitle("このフォルダにアップロード"))
+    await userEvent.click(screen.getAllByRole("button", { name: "ファイルをアップロード" })[0]!)
     expect(inputClick).toHaveBeenCalled()
 
     await userEvent.click(screen.getByTitle("共有設定を編集"))
@@ -1530,7 +1723,9 @@ describe("DocumentWorkspace", () => {
         documents={documents}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1561,7 +1756,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[{ ...documentGroups[0]!, sharedGroups: [] }]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1598,7 +1795,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[organizationGroup]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1633,7 +1832,9 @@ describe("DocumentWorkspace", () => {
         documents={documents}
         {...documentGroupProps}
         loading={false}
-        canWrite={false}
+        canCreateGroup={false}
+        canShareGroup={false}
+        canUpload={false}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1666,7 +1867,9 @@ describe("DocumentWorkspace", () => {
         documents={documents}
         {...documentGroupProps}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={false}
         canReindex={false}
         migrations={[]}
@@ -1702,7 +1905,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1750,7 +1955,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[readOnlyGroup]}
         uploadGroupId={readOnlyGroup.groupId}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1768,7 +1975,7 @@ describe("DocumentWorkspace", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /閲覧のみフォルダ/ }))
 
-    expect(screen.getByTitle("このフォルダにアップロード")).toBeDisabled()
+    expect(screen.getByRole("button", { name: "ファイルをアップロード" })).toBeDisabled()
     expect(screen.getByTitle("共有設定を編集")).toBeDisabled()
     expect(screen.getByTitle("requirements.mdを削除")).toBeDisabled()
     expect(screen.getByTitle("requirements.mdの再インデックスをステージング")).toBeDisabled()
@@ -1808,7 +2015,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[fullGroup, readOnlyGroup]}
         uploadGroupId={fullGroup.groupId}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1861,7 +2070,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[fullGroup, readOnlyGroup]}
         uploadGroupId={fullGroup.groupId}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1896,7 +2107,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={documentGroups}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1944,7 +2157,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[readOnlyParent]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -1964,6 +2179,7 @@ describe("DocumentWorkspace", () => {
     await userEvent.selectOptions(screen.getByLabelText("親フォルダ"), readOnlyParent.groupId)
 
     expect(screen.getByRole("button", { name: "新規フォルダ" })).toBeDisabled()
+    expect(screen.getByText("親フォルダの管理権限が必要です。")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "新規フォルダ" }))
     expect(onCreateGroup).not.toHaveBeenCalled()
   })
@@ -1986,7 +2202,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[readOnlyGroup]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -2035,7 +2253,9 @@ describe("DocumentWorkspace", () => {
         documentGroups={[fullGroup, readOnlyParent]}
         uploadGroupId=""
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -2072,7 +2292,9 @@ describe("DocumentWorkspace", () => {
         onCreateGroup={vi.fn()}
         onShareGroup={vi.fn()}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -2117,7 +2339,9 @@ describe("DocumentWorkspace", () => {
       onCreateGroup: vi.fn(),
       onShareGroup: vi.fn(),
       loading: false,
-      canWrite: true,
+      canCreateGroup: true,
+      canShareGroup: true,
+      canUpload: true,
       canDelete: true,
       canReindex: true,
       migrations: [],
@@ -2170,7 +2394,9 @@ describe("DocumentWorkspace", () => {
         onCreateGroup={vi.fn()}
         onShareGroup={vi.fn()}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}
@@ -2213,7 +2439,9 @@ describe("DocumentWorkspace", () => {
           runId: "run-123"
         }}
         loading={false}
-        canWrite={true}
+        canCreateGroup={true}
+        canShareGroup={true}
+        canUpload={true}
         canDelete={true}
         canReindex={true}
         migrations={[]}

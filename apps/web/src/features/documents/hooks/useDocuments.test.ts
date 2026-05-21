@@ -21,6 +21,8 @@ function createProps(overrides: Partial<Parameters<typeof useDocuments>[0]> = {}
   return {
     modelId: "model",
     embeddingModelId: "embedding",
+    canCreateDocumentGroups: true,
+    canShareDocumentGroups: true,
     canWriteDocuments: true,
     canDeleteDocuments: true,
     canReindexDocuments: true,
@@ -213,7 +215,11 @@ describe("useDocuments", () => {
       embeddingModelId: "embedding"
     }))
 
-    const readonly = renderHook(() => useDocuments(createProps({ canWriteDocuments: false })))
+    const readonly = renderHook(() => useDocuments(createProps({
+      canCreateDocumentGroups: false,
+      canShareDocumentGroups: false,
+      canWriteDocuments: false
+    })))
     const readonlyUploadResult = await act(() => readonly.result.current.onUploadDocumentFile(file))
     await act(() => readonly.result.current.onCreateDocumentGroup({ name: "readonly", visibility: "private" }))
     const readonlyShareResult = await act(() => readonly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
@@ -232,6 +238,45 @@ describe("useDocuments", () => {
     expect(deleteResult).toEqual({ ok: true })
     expect(result.current.selectedDocumentId).toBe("all")
     expect(result.current.operationState.deletingDocumentId).toBeNull()
+  })
+
+  it("フォルダ作成と共有更新の権限を文書アップロード権限から分離する", async () => {
+    const createOnly = renderHook(() => useDocuments(createProps({
+      canCreateDocumentGroups: true,
+      canShareDocumentGroups: false,
+      canWriteDocuments: false
+    })))
+
+    await act(() => createOnly.result.current.onCreateDocumentGroup({ name: "個人メモ", visibility: "private" }))
+    const createOnlyUploadResult = await act(() => createOnly.result.current.onUploadDocumentFile(new File(["body"], "memo.txt")))
+    const createOnlyShareResult = await act(() => createOnly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+
+    expect(createDocumentGroup).toHaveBeenCalledWith({ name: "個人メモ", visibility: "private" })
+    expect(uploadDocumentFile).not.toHaveBeenCalled()
+    expect(updateDocumentGroup).not.toHaveBeenCalled()
+    expect(createOnlyUploadResult).toEqual({ ok: false, error: "文書をアップロードする権限がありません" })
+    expect(createOnlyShareResult).toEqual({ ok: false, error: "フォルダ設定を更新する権限がありません" })
+
+    vi.clearAllMocks()
+    vi.mocked(listDocumentGroups).mockResolvedValue([documentGroupFixture()])
+    vi.mocked(listDocuments).mockResolvedValue([{ documentId: "doc-1", fileName: "a.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" }])
+    vi.mocked(createDocumentGroup).mockResolvedValue(documentGroupFixture())
+    vi.mocked(updateDocumentGroup).mockResolvedValue(documentGroupFixture())
+    vi.mocked(uploadDocumentFile).mockResolvedValue({ documentId: "doc-2", fileName: "b.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now" })
+
+    const uploadOnly = renderHook(() => useDocuments(createProps({
+      canCreateDocumentGroups: false,
+      canShareDocumentGroups: true,
+      canWriteDocuments: true
+    })))
+    const uploadOnlyCreateResult = await act(() => uploadOnly.result.current.onCreateDocumentGroup({ name: "作れない", visibility: "private" }))
+    await act(() => uploadOnly.result.current.onShareDocumentGroup("group-1", { visibility: "shared" }))
+    await act(() => uploadOnly.result.current.onUploadDocumentFile(new File(["body"], "upload.txt")))
+
+    expect(uploadOnlyCreateResult).toBeUndefined()
+    expect(createDocumentGroup).not.toHaveBeenCalled()
+    expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { visibility: "shared" })
+    expect(uploadDocumentFile).toHaveBeenCalled()
   })
 
   it("資料グループの取得、保存先指定、一時添付、共有更新を扱う", async () => {
