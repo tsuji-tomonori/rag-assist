@@ -1,6 +1,6 @@
 # DynamoDB GSI diff guard
 
-状態: do
+状態: done
 
 ## 背景
 
