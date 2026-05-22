@@ -38,7 +38,7 @@
 | `apps/web/src/styles/features/chat.css` | CSS | 補助テキストとボタンラベルの適用範囲を分離 | R1, R2 |
 | `apps/web/src/styles/responsive.css` | CSS | responsive 側の補助テキスト指定を直下 `span` に限定 | R1 |
 | `apps/web/src/features/chat/components/QuestionEscalationPanel.test.tsx` | TypeScript test | CSS セレクタとボタン enabled 状態の回帰テスト | R3 |
-| `tasks/do/20260522-2320-question-escalation-button-label.md` | Markdown | 作業タスク、受け入れ条件、RCA、検証計画 | R4 |
+| `tasks/done/20260522-2320-question-escalation-button-label.md` | Markdown | 作業タスク、受け入れ条件、RCA、検証計画、完了状態 | R4 |
 
 ## 6. 指示へのfit評価
 
