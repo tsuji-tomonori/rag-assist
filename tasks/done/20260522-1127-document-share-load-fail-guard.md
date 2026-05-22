@@ -1,6 +1,6 @@
 # ファイル共有モーダル load failure guard 修正
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - 対象 PR: https://github.com/tsuji-tomonori/rag-assist/pull/331
 
@@ -108,4 +108,10 @@ PR #331 の再レビューで、共有情報ロード失敗時に `documentShare
 - [x] UT-UI-DOC-SHARE-LOAD-FAIL-004: docA の share info 取得失敗時、理由入力後も `onShareDocument(docA, { grants: [] })` は呼ばれない。根拠: 追加テスト「共有モーダルは既存 direct grant がある文書の取得失敗時に空 grants を送信しない」。
 - [x] 変更範囲に見合う Web test/typecheck/lint/inventory check と coverage が pass する。根拠: 上記検証結果。
 - [x] 作業レポートを `reports/working/` に保存する。根拠: `reports/working/20260522-1127-document-share-load-fail-guard.md`。
-- [ ] PR 本文と PR コメントに日本語で結果を反映する。push 後に実施予定。
+- [x] PR 本文と PR コメントに日本語で結果を反映する。根拠: GitHub App で PR 本文、受け入れ条件コメント、セルフレビューコメントを更新済み。
+
+## PR コメント結果
+
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
+- PR 本文更新: load failure guard、最新ローカル検証、作業レポートを反映済み
