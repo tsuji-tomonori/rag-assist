@@ -1,7 +1,7 @@
 # CloudFront単一入口構成の正式方針化 作業レポート
 
 - 作成日: 2026-05-22
-- 対象タスク: `tasks/do/20260522-2107-cloudfront-single-entry-policy.md`
+- 対象タスク: `tasks/done/20260522-2107-cloudfront-single-entry-policy.md`
 - タスク種別: ドキュメント更新
 
 ## 受けた指示
@@ -34,6 +34,8 @@ CloudFrontを唯一の本番公開入口として正式採用し、SPA、REST AP
 - `docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_005.md` を追加した。
 - `docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/REQ_TECHNICAL_CONSTRAINT_003.md` を追加した。
 - `docs/ARCHITECTURE.md`、`docs/REQUIREMENTS.md`、`docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md` の索引・トレーサビリティを更新した。
+- PR #335 を作成し、受け入れ条件確認コメントとセルフレビューコメントをGitHub Appsで投稿した。
+- PRコメント後にtask mdを `tasks/done/` へ移動した。
 
 ## 成果物
 
@@ -44,19 +46,26 @@ CloudFrontを唯一の本番公開入口として正式採用し、SPA、REST AP
 | `docs/ARCHITECTURE.md` | ADR索引とASR対応の更新 |
 | `docs/REQUIREMENTS.md` | TC-003索引とトレーサビリティの更新 |
 | `docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md` | 変更管理トレーサビリティの更新 |
-| `tasks/do/20260522-2107-cloudfront-single-entry-policy.md` | 作業task md |
+| `tasks/done/20260522-2107-cloudfront-single-entry-policy.md` | 完了済み作業task md |
 
 ## 検証
 
 ### 実行した検証
 
 - `git diff --check`: pass
-- `pre-commit run --files docs/ARCHITECTURE.md docs/REQUIREMENTS.md docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_005.md docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/REQ_TECHNICAL_CONSTRAINT_003.md tasks/do/20260522-2107-cloudfront-single-entry-policy.md reports/working/20260522-2107-cloudfront-single-entry-policy.md`: pass
+- `pre-commit run --files docs/ARCHITECTURE.md docs/REQUIREMENTS.md docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_005.md docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/REQ_TECHNICAL_CONSTRAINT_003.md tasks/done/20260522-2107-cloudfront-single-entry-policy.md reports/working/20260522-2107-cloudfront-single-entry-policy.md`: pass
 
 ### 未実施・制約
 
 - AWS実環境でのCloudFront、S3、API Gateway、Cognito、WebSocket接続確認: 未実施。理由: 本タスクは方針文書化であり、インフラ実装を含まないため。
 - API middleware、SPA相対パス化、WebSocket ticket実装のテスト: 未実施。理由: 本タスクではコード実装を含まないため。
+
+## PR
+
+- PR: `https://github.com/tsuji-tomonori/rag-assist/pull/335`
+- PR作成: `gh pr create` を使用。理由: GitHub Appsの利用可能ツールにPR作成ツールが見つからなかったため。
+- PRコメント: GitHub Appsで受け入れ条件確認コメントとセルフレビューコメントを投稿済み。
+- CI確認: 未実施。理由: PR作成直後のため、ローカル対象検証までを確認した。
 
 ## Fit評価
 
@@ -68,4 +77,4 @@ CloudFrontを唯一の本番公開入口として正式採用し、SPA、REST AP
 
 - CloudFront behavior、OAC、API Gateway origin、Cognito callback、WebSocket authorizer、DynamoDB connection tableは未実装。
 - 既存SPAやAPIにdirect origin設定が残っているかのコード調査は、後続のPhase 1実装タスクで行う必要がある。
-- PR作成後の受け入れ条件コメントとtask done化は、PR作成後に別commitとして実施する。
+- 後続PRでは、実インフラ・アプリケーション実装時に `TC-003` の各受け入れ条件を実環境または自動テストで検証する必要がある。
