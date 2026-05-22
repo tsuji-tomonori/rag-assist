@@ -65,7 +65,7 @@ CloudFrontを唯一の本番公開入口として正式採用し、SPA、REST AP
 - PR: `https://github.com/tsuji-tomonori/rag-assist/pull/335`
 - PR作成: `gh pr create` を使用。理由: GitHub Appsの利用可能ツールにPR作成ツールが見つからなかったため。
 - PRコメント: GitHub Appsで受け入れ条件確認コメントとセルフレビューコメントを投稿済み。
-- CI確認: 未実施。理由: PR作成直後のため、ローカル対象検証までを確認した。
+- CI確認: `gh pr checks 335` を実行し、`validate-semver-label` pass、`Lint, type-check, test, build, and synth` pendingを確認した。
 
 ## Fit評価
 
