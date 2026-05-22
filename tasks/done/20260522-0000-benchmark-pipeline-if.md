@@ -1,6 +1,6 @@
 # Benchmark pipeline I/F と suite 構成の追加
 
-状態: in_progress
+状態: done
 
 ## 背景
 
