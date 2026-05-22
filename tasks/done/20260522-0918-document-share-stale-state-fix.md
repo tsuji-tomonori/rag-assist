@@ -1,6 +1,6 @@
 # ファイル共有モーダル stale state 修正
 
-- 状態: in_progress
+- 状態: done
 - タスク種別: 修正
 - 対象 PR: https://github.com/tsuji-tomonori/rag-assist/pull/331
 
@@ -107,7 +107,13 @@ PR #331 の再レビューで、ファイル共有モーダルに前回対象文
 - [x] UT-UI-DOC-SHARE-STALE-002: docB の `onLoadDocumentShare` pending 中に理由を入力しても `onShareDocument` は呼ばれない。根拠: 追加テスト「共有モーダルの読み込み中に理由を入力しても保存しない」。
 - [x] UT-UI-DOC-SHARE-STALE-003: docB 読み込み完了後に userB/readOnly を追加して保存すると、docB の documentId と docB 用 grants だけで `onShareDocument` が呼ばれる。根拠: 追加テスト「共有モーダルは読み込み完了後に現在文書の grants だけを保存する」。
 - [x] UT-UI-DOC-SHARE-STALE-004: docA の遅延レスポンスが docB 表示後に返っても、docA の share info は docB のモーダル state に反映されない。根拠: 追加テスト「共有モーダルは前文書の遅延レスポンスを現在文書に反映しない」。
-- [ ] PR 本文の API 記述が `GET /documents/{documentId}/share`、`PUT /documents/{documentId}/share`、`POST /documents/{documentId}/move` と一致する。push 後に PR 本文を更新予定。
+- [x] PR 本文の API 記述が `GET /documents/{documentId}/share`、`PUT /documents/{documentId}/share`、`POST /documents/{documentId}/move` と一致する。根拠: GitHub App で PR 本文を更新済み。
 - [x] 変更範囲に見合う Web test/typecheck/lint と `git diff --check` が pass する。根拠: 上記検証結果。
 - [x] 作業レポートを `reports/working/` に保存する。根拠: `reports/working/20260522-0923-document-share-stale-state-fix.md`。
-- [ ] PR に日本語で受け入れ条件確認とセルフレビューをコメントする。push 後に実施予定。
+- [x] PR に日本語で受け入れ条件確認とセルフレビューをコメントする。根拠: PR #331 に受け入れ条件確認コメントとセルフレビューコメントを投稿済み。
+
+## PR コメント結果
+
+- 受け入れ条件確認コメント: 投稿済み
+- セルフレビューコメント: 投稿済み
+- PR 本文更新: API route 記述、stale grants race 修正、最新検証結果、作業レポートを反映済み
