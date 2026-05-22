@@ -598,7 +598,7 @@ export function DocumentWorkspace({
 
   async function onDocumentShareSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!documentShareTarget || !onShareDocument || documentShareLoading) return
+    if (!documentShareTarget || !onShareDocument || documentShareLoading || !documentShareInfo) return
     const next = documentSharePrincipalId.trim()
       ? [
           ...documentShareDraftGrants.filter((grant) => !(grant.principalType === documentSharePrincipalType && grant.principalId === documentSharePrincipalId.trim())),
@@ -838,6 +838,9 @@ export function DocumentWorkspace({
         <WorkspaceModal title="ファイル共有" onClose={closeDocumentShareModal}>
           <form className="compact-form" onSubmit={(event) => void onDocumentShareSubmit(event)}>
             <p className="modal-note">ファイル名: {documentShareTarget.fileName}</p>
+            {!documentShareLoading && documentShareInfo === null && (
+              <p className="modal-note" role="alert">共有設定を取得できませんでした。再度開き直してください。</p>
+            )}
             <div className="share-diff-preview">
               <span>現在の権限: {documentShareInfo?.currentUserEffectivePermission ?? "確認中"}</span>
               <span>継承: {documentShareLoading ? "確認中" : documentShareInfo?.inheritedFolderGrants.map((grant) => `${grant.folderId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
@@ -873,7 +876,7 @@ export function DocumentWorkspace({
               </select>
             </label>
             <label><span>理由</span><textarea value={documentShareReason} onChange={(event) => setDocumentShareReason(event.target.value)} /></label>
-            <button type="submit" disabled={documentShareLoading || !documentShareReason.trim() || operationState.sharingDocumentId === documentShareTarget.documentId}>保存</button>
+            <button type="submit" disabled={documentShareLoading || documentShareInfo === null || !documentShareReason.trim() || operationState.sharingDocumentId === documentShareTarget.documentId}>保存</button>
           </form>
         </WorkspaceModal>
       )}

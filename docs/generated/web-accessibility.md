@@ -191,31 +191,31 @@
 | ドキュメント | DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:640 |
 | ドキュメント | DocumentWorkspace | button | フォルダ設定を閉じる | 「フォルダ設定を閉じる」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:743 |
 | ドキュメント | DocumentWorkspace | form | ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存 | 「ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:839 |
-| ドキュメント | DocumentWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:851 |
-| ドキュメント | DocumentWorkspace | label | 共有先種別 | 「共有先種別」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:860 |
-| ドキュメント | DocumentWorkspace | select | user / group | 「user / group」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:862 |
-| ドキュメント | DocumentWorkspace | option | user | 「user」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:863 |
-| ドキュメント | DocumentWorkspace | option | group | 「group」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:864 |
-| ドキュメント | DocumentWorkspace | label | 共有先ID | 「共有先ID」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:867 |
-| ドキュメント | DocumentWorkspace | input | 共有先ID | 「共有先ID」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:867 |
-| ドキュメント | DocumentWorkspace | label | 権限 | 「権限」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:868 |
-| ドキュメント | DocumentWorkspace | select | readOnly / full | 「readOnly / full」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:870 |
-| ドキュメント | DocumentWorkspace | option | readOnly | 「readOnly」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:871 |
-| ドキュメント | DocumentWorkspace | option | full | 「full」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:872 |
-| ドキュメント | DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:875 |
-| ドキュメント | DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:875 |
-| ドキュメント | DocumentWorkspace | button | 保存 | 「保存」を実行するボタン。 | 状態: disabled=documentShareLoading \|\| !documentShareReason.trim() \|\| operationState.sharingDocumentId =… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:876 |
-| ドキュメント | DocumentWorkspace | form | ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動 | 「ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:882 |
-| ドキュメント | DocumentWorkspace | label | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:884 |
-| ドキュメント | DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:886 |
-| ドキュメント | DocumentWorkspace | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:887 |
-| ドキュメント | DocumentWorkspace | option | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:889 |
-| ドキュメント | DocumentWorkspace | label | 移動後の表示名 | 「移動後の表示名」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:893 |
-| ドキュメント | DocumentWorkspace | input | 移動後の表示名 | 「移動後の表示名」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:893 |
-| ドキュメント | DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 |
-| ドキュメント | DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 |
-| ドキュメント | DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | 状態: disabled=!documentMoveDestinationId \|\| documentMoveNameConflict \|\| !documentMoveReason.trim() \|\| o… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:897 |
-| ドキュメント | WorkspaceModal | button | `${title}を閉じる` | 「`${title}を閉じる`」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:959 |
+| ドキュメント | DocumentWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:854 |
+| ドキュメント | DocumentWorkspace | label | 共有先種別 | 「共有先種別」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:863 |
+| ドキュメント | DocumentWorkspace | select | user / group | 「user / group」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:865 |
+| ドキュメント | DocumentWorkspace | option | user | 「user」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:866 |
+| ドキュメント | DocumentWorkspace | option | group | 「group」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:867 |
+| ドキュメント | DocumentWorkspace | label | 共有先ID | 「共有先ID」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:870 |
+| ドキュメント | DocumentWorkspace | input | 共有先ID | 「共有先ID」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:870 |
+| ドキュメント | DocumentWorkspace | label | 権限 | 「権限」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:871 |
+| ドキュメント | DocumentWorkspace | select | readOnly / full | 「readOnly / full」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:873 |
+| ドキュメント | DocumentWorkspace | option | readOnly | 「readOnly」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:874 |
+| ドキュメント | DocumentWorkspace | option | full | 「full」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:875 |
+| ドキュメント | DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:878 |
+| ドキュメント | DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:878 |
+| ドキュメント | DocumentWorkspace | button | 保存 | 「保存」を実行するボタン。 | 状態: disabled=documentShareLoading \|\| documentShareInfo === null \|\| !documentShareReason.trim() \|\| oper… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:879 |
+| ドキュメント | DocumentWorkspace | form | ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動 | 「ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動」を入力・送信するフォーム。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:885 |
+| ドキュメント | DocumentWorkspace | label | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:887 |
+| ドキュメント | DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:889 |
+| ドキュメント | DocumentWorkspace | option | 選択してください | 「選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:890 |
+| ドキュメント | DocumentWorkspace | option | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」を表す option 要素。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:892 |
+| ドキュメント | DocumentWorkspace | label | 移動後の表示名 | 「移動後の表示名」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 |
+| ドキュメント | DocumentWorkspace | input | 移動後の表示名 | 「移動後の表示名」を入力または選択する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 |
+| ドキュメント | DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:899 |
+| ドキュメント | DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:899 |
+| ドキュメント | DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | 状態: disabled=!documentMoveDestinationId \|\| documentMoveNameConflict \|\| !documentMoveReason.trim() \|\| o… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:900 |
+| ドキュメント | WorkspaceModal | button | `${title}を閉じる` | 「`${title}を閉じる`」を実行するボタン。 | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:962 |
 | ドキュメント | DocumentDetailDrawer | button | 文書詳細を閉じる | 「文書詳細を閉じる」を実行するボタン。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:61 |
 | ドキュメント | DocumentDetailDrawer | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | 状態: disabled=!onAskDocument | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:88 |
 | ドキュメント | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:92 |

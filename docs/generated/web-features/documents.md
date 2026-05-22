@@ -34,10 +34,10 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/documents/components/DocumentWorkspace.tsx:640 | confirmed |
 | DocumentWorkspace | button | フォルダ設定を閉じる | 「フォルダ設定を閉じる」を実行するボタン。 | - | onClick=() => setFolderSettingsOpen(false) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:743 | confirmed |
-| DocumentWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | onClick=() => setDocumentShareDraftGrants((current) => current.filter((item) => !(item.principalT… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:851 | confirmed |
-| DocumentWorkspace | button | 保存 | 「保存」を実行するボタン。 | 状態: disabled=documentShareLoading \|\| !documentShareReason.trim() \|\| operationState.sharingDocumentId =… | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:876 | confirmed |
-| DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | 状態: disabled=!documentMoveDestinationId \|\| documentMoveNameConflict \|\| !documentMoveReason.trim() \|\| o… | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:897 | confirmed |
-| WorkspaceModal | button | `${title}を閉じる` | 「`${title}を閉じる`」を実行するボタン。 | - | onClick=onClose | apps/web/src/features/documents/components/DocumentWorkspace.tsx:959 | confirmed |
+| DocumentWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | onClick=() => setDocumentShareDraftGrants((current) => current.filter((item) => !(item.principalT… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:854 | confirmed |
+| DocumentWorkspace | button | 保存 | 「保存」を実行するボタン。 | 状態: disabled=documentShareLoading \|\| documentShareInfo === null \|\| !documentShareReason.trim() \|\| oper… | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:879 | confirmed |
+| DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | 状態: disabled=!documentMoveDestinationId \|\| documentMoveNameConflict \|\| !documentMoveReason.trim() \|\| o… | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:900 | confirmed |
+| WorkspaceModal | button | `${title}を閉じる` | 「`${title}を閉じる`」を実行するボタン。 | - | onClick=onClose | apps/web/src/features/documents/components/DocumentWorkspace.tsx:962 | confirmed |
 | DocumentDetailDrawer | button | 文書詳細を閉じる | 「文書詳細を閉じる」を実行するボタン。 | - | onClick=onClose | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:61 | confirmed |
 | DocumentDetailDrawer | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | 状態: disabled=!onAskDocument | onClick=() => onAskDocument?.() | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:88 | confirmed |
 | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | onClick=onCopyDocumentId | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:92 | unknown |
@@ -71,7 +71,7 @@
 | コンポーネント | ラベル | フォーム説明 | 状態・補足 | 送信ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- |
 | DocumentWorkspace | ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存 | 「ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存」を入力・送信するフォーム。 | - | onSubmit=(event) => void onDocumentShareSubmit(event) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:839 | confirmed |
-| DocumentWorkspace | ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動 | 「ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動」を入力・送信するフォーム。 | - | onSubmit=(event) => void onDocumentMoveSubmit(event) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:882 | confirmed |
+| DocumentWorkspace | ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動 | 「ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動」を入力・送信するフォーム。 | - | onSubmit=(event) => void onDocumentMoveSubmit(event) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:885 | confirmed |
 | DocumentDetailPanel | 共有フォルダ / 選択してください / 共有 Cognito group / 既存 shared group 候補 / 追加: / 削除: / 変更なし: / 共有更新 | 「共有フォルダ / 選択してください / 共有 Cognito group / 既存 shared group 候補 / 追加: / 削除: / 変更なし: / 共有更新」を入力・送信するフォーム。 | - | onSubmit=onShareSubmit | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:210 | confirmed |
 | DocumentDetailPanel | 編集後フォルダ名 / 編集後説明 / 移動先フォルダ / ルート / 現在 path: / 移動先: / 子孫: / フォルダ更新 | 「編集後フォルダ名 / 編集後説明 / 移動先フォルダ / ルート / 現在 path: / 移動先: / 子孫: / フォルダ更新」を入力・送信するフォーム。 | - | onSubmit=onEditGroupSubmit | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:304 | confirmed |
 | DocumentDetailPanel | 保存先フォルダ / 保存先を選択 / アップロード | 「保存先フォルダ / 保存先を選択 / アップロード」を入力・送信するフォーム。 | - | onSubmit=onUploadSubmit | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:361 | confirmed |
@@ -81,13 +81,13 @@
 
 | コンポーネント | 要素 | ラベル | 入力項目の説明 | 状態・補足 | ハンドラ | 場所 | 確度 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| DocumentWorkspace | select | user / group | 「user / group」を選ぶ選択項目。 | - | onChange=(event) => setDocumentSharePrincipalType(event.target.value as "user" \| "group") | apps/web/src/features/documents/components/DocumentWorkspace.tsx:862 | confirmed |
-| DocumentWorkspace | input | 共有先ID | 「共有先ID」を入力または選択する項目。 | - | onChange=(event) => setDocumentSharePrincipalId(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:867 | confirmed |
-| DocumentWorkspace | select | readOnly / full | 「readOnly / full」を選ぶ選択項目。 | - | onChange=(event) => setDocumentSharePermissionLevel(event.target.value as "readOnly" \| "full") | apps/web/src/features/documents/components/DocumentWorkspace.tsx:870 | confirmed |
-| DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | onChange=(event) => setDocumentShareReason(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:875 | confirmed |
-| DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | - | onChange=(event) => setDocumentMoveDestinationId(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:886 | confirmed |
-| DocumentWorkspace | input | 移動後の表示名 | 「移動後の表示名」を入力または選択する項目。 | - | onChange=(event) => setDocumentMoveNewTitle(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:893 | confirmed |
-| DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | onChange=(event) => setDocumentMoveReason(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 | confirmed |
+| DocumentWorkspace | select | user / group | 「user / group」を選ぶ選択項目。 | - | onChange=(event) => setDocumentSharePrincipalType(event.target.value as "user" \| "group") | apps/web/src/features/documents/components/DocumentWorkspace.tsx:865 | confirmed |
+| DocumentWorkspace | input | 共有先ID | 「共有先ID」を入力または選択する項目。 | - | onChange=(event) => setDocumentSharePrincipalId(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:870 | confirmed |
+| DocumentWorkspace | select | readOnly / full | 「readOnly / full」を選ぶ選択項目。 | - | onChange=(event) => setDocumentSharePermissionLevel(event.target.value as "readOnly" \| "full") | apps/web/src/features/documents/components/DocumentWorkspace.tsx:873 | confirmed |
+| DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | onChange=(event) => setDocumentShareReason(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:878 | confirmed |
+| DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | - | onChange=(event) => setDocumentMoveDestinationId(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:889 | confirmed |
+| DocumentWorkspace | input | 移動後の表示名 | 「移動後の表示名」を入力または選択する項目。 | - | onChange=(event) => setDocumentMoveNewTitle(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 | confirmed |
+| DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | onChange=(event) => setDocumentMoveReason(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:899 | confirmed |
 | DocumentDetailPanel | select | 選択してください | 「選択してください」を選ぶ選択項目。 | 状態: disabled=!canShareGroups \|\| operationState.sharingGroupId !== null | onChange=(event) => onShareGroupIdChange(event.target.value) | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:213 | confirmed |
 | DocumentDetailPanel | input | Cognito group をカンマ区切りで入力 | 「Cognito group をカンマ区切りで入力」を入力または選択する項目。 | 説明参照: share-groups-validation share-groups-diff<br>状態: aria-invalid=shareHasValidationError \|\| undefined, disabled=!canShareGroups \|\| operationState.sharingGroupId !== null | onChange=(event) => onShareGroupsChange(event.target.value) | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:222 | confirmed |
 | DocumentDetailPanel | input | 未推定 | input 要素。静的解析では具体的な操作名を推定できません。 | 状態: disabled=!canShareGroups \|\| operationState.sharingGroupId !== null | onChange=(event) => onShareGroupOptionChange(groupName, event.target.checked) | apps/web/src/features/documents/components/workspace/DocumentDetailPanel.tsx:247 | unknown |
@@ -120,31 +120,31 @@
 | DocumentWorkspace | button | 管理者設定へ戻る | 「管理者設定へ戻る」を実行するボタン。 | - | onClick=onBack | apps/web/src/features/documents/components/DocumentWorkspace.tsx:640 | confirmed |
 | DocumentWorkspace | button | フォルダ設定を閉じる | 「フォルダ設定を閉じる」を実行するボタン。 | - | onClick=() => setFolderSettingsOpen(false) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:743 | confirmed |
 | DocumentWorkspace | form | ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存 | 「ファイル名: / 現在の権限: / 継承: / 共有先種別 / 共有先ID / 権限 / 理由 / 保存」を入力・送信するフォーム。 | - | onSubmit=(event) => void onDocumentShareSubmit(event) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:839 | confirmed |
-| DocumentWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | onClick=() => setDocumentShareDraftGrants((current) => current.filter((item) => !(item.principalT… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:851 | confirmed |
-| DocumentWorkspace | label | 共有先種別 | 「共有先種別」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:860 | confirmed |
-| DocumentWorkspace | select | user / group | 「user / group」を選ぶ選択項目。 | - | onChange=(event) => setDocumentSharePrincipalType(event.target.value as "user" \| "group") | apps/web/src/features/documents/components/DocumentWorkspace.tsx:862 | confirmed |
-| DocumentWorkspace | option | user | 「user」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:863 | confirmed |
-| DocumentWorkspace | option | group | 「group」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:864 | confirmed |
-| DocumentWorkspace | label | 共有先ID | 「共有先ID」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:867 | confirmed |
-| DocumentWorkspace | input | 共有先ID | 「共有先ID」を入力または選択する項目。 | - | onChange=(event) => setDocumentSharePrincipalId(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:867 | confirmed |
-| DocumentWorkspace | label | 権限 | 「権限」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:868 | confirmed |
-| DocumentWorkspace | select | readOnly / full | 「readOnly / full」を選ぶ選択項目。 | - | onChange=(event) => setDocumentSharePermissionLevel(event.target.value as "readOnly" \| "full") | apps/web/src/features/documents/components/DocumentWorkspace.tsx:870 | confirmed |
-| DocumentWorkspace | option | readOnly | 「readOnly」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:871 | confirmed |
-| DocumentWorkspace | option | full | 「full」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:872 | confirmed |
-| DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:875 | confirmed |
-| DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | onChange=(event) => setDocumentShareReason(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:875 | confirmed |
-| DocumentWorkspace | button | 保存 | 「保存」を実行するボタン。 | 状態: disabled=documentShareLoading \|\| !documentShareReason.trim() \|\| operationState.sharingDocumentId =… | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:876 | confirmed |
-| DocumentWorkspace | form | ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動 | 「ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動」を入力・送信するフォーム。 | - | onSubmit=(event) => void onDocumentMoveSubmit(event) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:882 | confirmed |
-| DocumentWorkspace | label | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:884 | confirmed |
-| DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | - | onChange=(event) => setDocumentMoveDestinationId(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:886 | confirmed |
-| DocumentWorkspace | option | 選択してください | 「選択してください」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:887 | confirmed |
-| DocumentWorkspace | option | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:889 | confirmed |
-| DocumentWorkspace | label | 移動後の表示名 | 「移動後の表示名」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:893 | confirmed |
-| DocumentWorkspace | input | 移動後の表示名 | 「移動後の表示名」を入力または選択する項目。 | - | onChange=(event) => setDocumentMoveNewTitle(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:893 | confirmed |
-| DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 | confirmed |
-| DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | onChange=(event) => setDocumentMoveReason(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 | confirmed |
-| DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | 状態: disabled=!documentMoveDestinationId \|\| documentMoveNameConflict \|\| !documentMoveReason.trim() \|\| o… | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:897 | confirmed |
-| WorkspaceModal | button | `${title}を閉じる` | 「`${title}を閉じる`」を実行するボタン。 | - | onClick=onClose | apps/web/src/features/documents/components/DocumentWorkspace.tsx:959 | confirmed |
+| DocumentWorkspace | button | 削除 | 「削除」を実行するボタン。 | - | onClick=() => setDocumentShareDraftGrants((current) => current.filter((item) => !(item.principalT… | apps/web/src/features/documents/components/DocumentWorkspace.tsx:854 | confirmed |
+| DocumentWorkspace | label | 共有先種別 | 「共有先種別」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:863 | confirmed |
+| DocumentWorkspace | select | user / group | 「user / group」を選ぶ選択項目。 | - | onChange=(event) => setDocumentSharePrincipalType(event.target.value as "user" \| "group") | apps/web/src/features/documents/components/DocumentWorkspace.tsx:865 | confirmed |
+| DocumentWorkspace | option | user | 「user」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:866 | confirmed |
+| DocumentWorkspace | option | group | 「group」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:867 | confirmed |
+| DocumentWorkspace | label | 共有先ID | 「共有先ID」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:870 | confirmed |
+| DocumentWorkspace | input | 共有先ID | 「共有先ID」を入力または選択する項目。 | - | onChange=(event) => setDocumentSharePrincipalId(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:870 | confirmed |
+| DocumentWorkspace | label | 権限 | 「権限」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:871 | confirmed |
+| DocumentWorkspace | select | readOnly / full | 「readOnly / full」を選ぶ選択項目。 | - | onChange=(event) => setDocumentSharePermissionLevel(event.target.value as "readOnly" \| "full") | apps/web/src/features/documents/components/DocumentWorkspace.tsx:873 | confirmed |
+| DocumentWorkspace | option | readOnly | 「readOnly」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:874 | confirmed |
+| DocumentWorkspace | option | full | 「full」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:875 | confirmed |
+| DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:878 | confirmed |
+| DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | onChange=(event) => setDocumentShareReason(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:878 | confirmed |
+| DocumentWorkspace | button | 保存 | 「保存」を実行するボタン。 | 状態: disabled=documentShareLoading \|\| documentShareInfo === null \|\| !documentShareReason.trim() \|\| oper… | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:879 | confirmed |
+| DocumentWorkspace | form | ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動 | 「ファイル名: / 移動先フォルダ / 選択してください / 移動後の表示名 / 直接共有は維持され、継承共有は移動先フォルダの設定に変わります。 / 理由 / 移動」を入力・送信するフォーム。 | - | onSubmit=(event) => void onDocumentMoveSubmit(event) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:885 | confirmed |
+| DocumentWorkspace | label | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:887 | confirmed |
+| DocumentWorkspace | select | 選択してください | 「選択してください」を選ぶ選択項目。 | - | onChange=(event) => setDocumentMoveDestinationId(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:889 | confirmed |
+| DocumentWorkspace | option | 選択してください | 「選択してください」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:890 | confirmed |
+| DocumentWorkspace | option | 移動先フォルダ / 選択してください | 「移動先フォルダ / 選択してください」を表す option 要素。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:892 | confirmed |
+| DocumentWorkspace | label | 移動後の表示名 | 「移動後の表示名」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 | confirmed |
+| DocumentWorkspace | input | 移動後の表示名 | 「移動後の表示名」を入力または選択する項目。 | - | onChange=(event) => setDocumentMoveNewTitle(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:896 | confirmed |
+| DocumentWorkspace | label | 理由 | 「理由」に紐づく入力ラベル。 | - | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:899 | confirmed |
+| DocumentWorkspace | textarea | 理由 | 「理由」を複数行で入力する項目。 | - | onChange=(event) => setDocumentMoveReason(event.target.value) | apps/web/src/features/documents/components/DocumentWorkspace.tsx:899 | confirmed |
+| DocumentWorkspace | button | 移動 | 「移動」を実行するボタン。 | 状態: disabled=!documentMoveDestinationId \|\| documentMoveNameConflict \|\| !documentMoveReason.trim() \|\| o… | - | apps/web/src/features/documents/components/DocumentWorkspace.tsx:900 | confirmed |
+| WorkspaceModal | button | `${title}を閉じる` | 「`${title}を閉じる`」を実行するボタン。 | - | onClick=onClose | apps/web/src/features/documents/components/DocumentWorkspace.tsx:962 | confirmed |
 | DocumentDetailDrawer | button | 文書詳細を閉じる | 「文書詳細を閉じる」を実行するボタン。 | - | onClick=onClose | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:61 | confirmed |
 | DocumentDetailDrawer | button | この資料に質問する | 「この資料に質問する」を実行するボタン。 | 状態: disabled=!onAskDocument | onClick=() => onAskDocument?.() | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:88 | confirmed |
 | DocumentDetailDrawer | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | - | onClick=onCopyDocumentId | apps/web/src/features/documents/components/workspace/DocumentDetailDrawer.tsx:92 | unknown |

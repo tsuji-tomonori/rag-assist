@@ -419,6 +419,88 @@ describe("DocumentWorkspace", () => {
     expect(within(dialog).getByText("現在の権限: full")).toBeInTheDocument()
   })
 
+  it("共有モーダルは共有設定取得失敗時に alert を表示し保存を無効化する", async () => {
+    const onLoadDocumentShare = vi.fn().mockResolvedValue(undefined)
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("共有設定を取得できませんでした。")
+    expect(within(dialog).getByRole("button", { name: "保存" })).toBeDisabled()
+  })
+
+  it("共有モーダルは共有設定取得失敗時に理由を入力しても保存しない", async () => {
+    const onLoadDocumentShare = vi.fn().mockResolvedValue(undefined)
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
+
+    await userEvent.type(within(dialog).getByLabelText("理由"), "取得失敗後の保存")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(within(dialog).getByRole("button", { name: "保存" })).toBeDisabled()
+    expect(onShareDocument).not.toHaveBeenCalled()
+  })
+
+  it("共有モーダルは取得失敗後に再オープンして成功すると取得済み grants を保存できる", async () => {
+    const onLoadDocumentShare = vi.fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(shareInfo("doc-a", [
+        {
+          documentShareGrantId: "grant-restored",
+          principalType: "user",
+          principalId: "user-restored",
+          permissionLevel: "readOnly",
+          tenantId: "default",
+          documentId: "doc-a",
+          createdBy: "user-1",
+          reason: "existing",
+          createdAt: "2026-05-01T00:00:00.000Z",
+          updatedAt: "2026-05-01T00:00:00.000Z"
+        }
+      ]))
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    let dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole("button", { name: "ファイル共有を閉じる" }))
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByText("直接: user:user-restored readOnly")).toBeInTheDocument()
+
+    await userEvent.type(within(dialog).getByLabelText("理由"), "正常取得後の保存")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(onShareDocument).toHaveBeenCalledWith("doc-a", {
+      grants: [{ principalType: "user", principalId: "user-restored", permissionLevel: "readOnly" }],
+      reason: "正常取得後の保存"
+    })
+  })
+
+  it("共有モーダルは既存 direct grant がある文書の取得失敗時に空 grants を送信しない", async () => {
+    const onLoadDocumentShare = vi.fn().mockResolvedValue(undefined)
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
+
+    await userEvent.type(within(dialog).getByLabelText("理由"), "既存共有を残す")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(onShareDocument).not.toHaveBeenCalledWith("doc-a", { grants: [], reason: "既存共有を残す" })
+    expect(onShareDocument).not.toHaveBeenCalled()
+  })
+
   it("ファイル移動モーダルで同名衝突を検知してリネーム移動できる", async () => {
     const onMoveDocument = vi.fn().mockResolvedValue({ ok: true })
 
