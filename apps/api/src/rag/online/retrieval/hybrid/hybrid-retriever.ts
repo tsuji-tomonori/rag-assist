@@ -725,7 +725,13 @@ async function canAccessManifest(manifest: DocumentManifest, user: AppUser, acce
   }
   if (scopeType === "group" || scopeType === "folder") return false
   if (stringValue(metadata.ownerUserId) === user.userId) return true
+  if (!hasExplicitMetadataAcl(metadata)) return false
   return canAccessMetadata(metadata, user)
+}
+
+function hasExplicitMetadataAcl(metadata: Record<string, JsonValue>): boolean {
+  return stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group).length > 0
+    || stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId).length > 0
 }
 
 function isActiveManifest(manifest: DocumentManifest): boolean {
@@ -780,16 +786,19 @@ async function getCachedManifest(
 function canAccessVectorMetadata(metadata: VectorMetadata, user: AppUser): boolean {
   if ((metadata.lifecycleStatus ?? "active") !== "active") return false
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
-  const scopeType = metadata.scopeType
-  if (scopeType === "group" || scopeType === "chat") return true
-  return canAccessMetadata(metadata as unknown as Record<string, JsonValue>, user)
+  const vectorMetadata = metadata as unknown as Record<string, JsonValue>
+  const scopeType = stringValue(vectorMetadata.scopeType)
+  if (scopeType === "group" || scopeType === "folder" || scopeType === "chat") return true
+  if (!hasExplicitMetadataAcl(vectorMetadata)) return true
+  return canAccessMetadata(vectorMetadata, user)
 }
 
 function canAccessMetadata(metadata: Record<string, JsonValue>, user: AppUser): boolean {
   const groups = new Set(user.cognitoGroups)
   const aclGroups = stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group)
-  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   const allowedUsers = stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId)
+  if (aclGroups.length === 0 && allowedUsers.length === 0) return false
+  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
   return true
 }

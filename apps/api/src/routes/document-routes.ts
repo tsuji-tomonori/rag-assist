@@ -39,8 +39,10 @@ import {
   authorizeDocumentDelete,
   authorizeDocumentUpload,
   authorizeUploadedDocumentIngest,
+  isBenchmarkSeedUpload,
   isBenchmarkSeedUploadedObjectIngest
 } from "./benchmark-seed.js"
+import { documentGroupHasLegacyExplicitPolicy } from "../folders/document-group-permissions.js"
 
 const uploadObjectKeyPrefix = "uploads"
 
@@ -173,6 +175,14 @@ async function scopedMetadata(
     }
   }
 
+  if (purpose === "document") {
+    if (!scope || scope.scopeType !== "group" || !scope.groupIds?.length) {
+      throw new HTTPException(400, { message: "document upload requires group scope" })
+    }
+    await service.assertDocumentGroupsWritable(user, scope.groupIds)
+    return { ...base, scopeType: "group", ownerUserId: user.userId, groupIds: scope.groupIds }
+  }
+
   if (!scope) return metadata
   const groupIds = scope.groupIds ?? []
   if (scope.scopeType === "group" && groupIds.length === 0) throw new HTTPException(400, { message: "group scope requires non-empty groupIds" })
@@ -240,6 +250,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const user = c.get("user")
       requirePermission(user, "rag:group:create")
       const body = validJson<z.infer<typeof CreateDocumentGroupRequestSchema>>(c)
+      if (documentGroupHasLegacyExplicitPolicy(body)) requirePermission(user, "rag:group:assign_manager")
       try {
         return c.json(await service.createDocumentGroup(user, body), 200)
       } catch (err) {
@@ -436,7 +447,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
       authorizeDocumentUpload(user, body)
       if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
-      const metadata = await scopedMetadata(service, user, body.metadata, body.scope)
+      const purpose: UploadPurpose = isBenchmarkSeedUpload(body) ? "benchmarkSeed" : "document"
+      const metadata = await scopedMetadata(service, user, body.metadata, body.scope, purpose)
       const manifest = await service.ingest({ ...body, metadata })
       return c.json(documentManifestSummary(manifest), 200)
     }

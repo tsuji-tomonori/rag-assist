@@ -88,7 +88,7 @@ test("local question store creates, lists, answers, resolves, and rejects missin
   const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-question-test-"))
   const store = new LocalQuestionStore(dataDir)
 
-  assert.deepEqual(await store.list(), [])
+  assert.deepEqual(await store.listAllForAdmin(), [])
 
   const question = await store.create({
     title: "資料外の確認",
@@ -108,7 +108,8 @@ test("local question store creates, lists, answers, resolves, and rejects missin
   assert.equal(question.requesterDepartment, "未設定")
   assert.equal(question.assigneeDepartment, "未設定")
   assert.equal((await store.get(question.questionId))?.questionId, question.questionId)
-  assert.deepEqual((await store.list()).map((item) => item.questionId), [question.questionId])
+  assert.deepEqual((await store.listAllForAdmin()).map((item) => item.questionId), [question.questionId])
+  assert.deepEqual((await store.listRequestedByUser("user-1")).map((item) => item.questionId), [question.questionId])
 
   const answered = await store.answer(question.questionId, {
     answerTitle: "回答",

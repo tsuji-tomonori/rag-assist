@@ -7,6 +7,7 @@ import type { AppUser } from "../auth.js"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
+import { LocalFavoriteStore } from "../adapters/local-favorite-store.js"
 import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
 import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
@@ -838,6 +839,7 @@ function createLocalDeps(dataDir: string): Dependencies {
     textModel: new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    favoriteStore: new LocalFavoriteStore(dataDir),
     benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),

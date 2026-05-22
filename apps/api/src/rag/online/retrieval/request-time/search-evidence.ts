@@ -240,14 +240,21 @@ function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: Do
     return groupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))
   }
   if (stringValue(metadata.ownerUserId) === user.userId) return true
+  if (!hasExplicitMetadataAcl(metadata)) return false
   return canAccessMetadata(metadata, user)
+}
+
+function hasExplicitMetadataAcl(metadata: Record<string, JsonValue>): boolean {
+  return stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group).length > 0
+    || stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId).length > 0
 }
 
 function canAccessMetadata(metadata: Record<string, JsonValue>, user: AppUser): boolean {
   const groups = new Set(user.cognitoGroups)
   const aclGroups = stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group)
-  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   const allowedUsers = stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId)
+  if (aclGroups.length === 0 && allowedUsers.length === 0) return false
+  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
   return true
 }

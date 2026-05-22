@@ -255,7 +255,7 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /documents": {
     summary: "文書を同期登録する（非推奨）",
-    description: "小さなテキスト互換用の同期登録 API です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
+    description: "小さなテキスト互換用の同期登録 API です。通常文書は group scope と対象フォルダの full 権限が必要です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
   },
   "POST /documents/uploads": {
     summary: "文書アップロード URL を作成する",
@@ -267,11 +267,11 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /documents/uploads/{uploadId}/ingest": {
     summary: "アップロード済み文書を取り込む",
-    description: "アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。後方互換用の同期 API であり、大きな PDF、OCR fallback、embedding が絡む通常運用では POST /document-ingest-runs を使います。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
+    description: "アップロードセッションの文書を同期的に解析し、RAG 利用可能な文書として登録します。通常文書は group scope と対象フォルダの full 権限が必要です。後方互換用の同期 API であり、大きな PDF、OCR fallback、embedding が絡む通常運用では POST /document-ingest-runs を使います。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。"
   },
   "POST /document-ingest-runs": {
     summary: "非同期文書取り込みを開始する",
-    description: "アップロード済み文書の非同期取り込み run を開始し、進捗参照用 ID を返します。"
+    description: "アップロード済み文書の非同期取り込み run を開始し、進捗参照用 ID を返します。通常文書は group scope と対象フォルダの full 権限が必要です。"
   },
   "GET /document-ingest-runs/{runId}": {
     summary: "文書取り込み run を取得する",
@@ -386,11 +386,23 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
   },
   "POST /conversation-history": {
     summary: "会話履歴を保存する",
-    description: "会話履歴 item を保存し、お気に入り状態などの表示情報を更新します。"
+    description: "会話履歴 item をログインユーザー自身の履歴として保存します。お気に入り状態は /favorites で管理します。"
   },
   "DELETE /conversation-history/{id}": {
     summary: "会話履歴を削除する",
     description: "ログインユーザー自身の指定した会話履歴 item を削除します。"
+  },
+  "GET /favorites": {
+    summary: "お気に入り shortcut 一覧を取得する",
+    description: "ログインユーザー自身のお気に入り shortcut を取得し、対象への現在権限を再確認して返します。"
+  },
+  "POST /favorites": {
+    summary: "お気に入り shortcut を作成する",
+    description: "権限再確認 resolver が実装済みの会話、文書、フォルダを shortcut として保存します。対象本体は作成しません。"
+  },
+  "DELETE /favorites/{targetType}/{targetId}": {
+    summary: "お気に入り shortcut を削除する",
+    description: "指定したお気に入り shortcut だけを削除します。会話、文書、フォルダなどの対象本体は削除しません。"
   },
   "GET /debug-runs": {
     summary: "debug trace 一覧を取得する",

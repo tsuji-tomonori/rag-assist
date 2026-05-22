@@ -28,7 +28,6 @@ export class LocalConversationHistoryStore implements ConversationHistoryStore {
     const otherUsers = db.conversations.filter((conversation) => conversation.userId !== userId)
     const currentUser = [item, ...db.conversations.filter((conversation) => conversation.userId === userId && conversation.id !== item.id)]
       .sort(compareHistoryItems)
-      .slice(0, 20)
     db.conversations = [...currentUser, ...otherUsers]
     await this.saveFile(db)
     return stripUserId(item)
@@ -39,7 +38,6 @@ export class LocalConversationHistoryStore implements ConversationHistoryStore {
     return db.conversations
       .filter((conversation) => conversation.userId === userId)
       .sort(compareHistoryItems)
-      .slice(0, 20)
       .map(stripUserId)
   }
 

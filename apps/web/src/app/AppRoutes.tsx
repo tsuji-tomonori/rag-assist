@@ -4,6 +4,7 @@ import { AsyncAgentWorkspace } from "../features/agents/components/AsyncAgentWor
 import { BenchmarkWorkspace } from "../features/benchmark/components/BenchmarkWorkspace.js"
 import { ChatView } from "../features/chat/components/ChatView.js"
 import { DocumentWorkspace } from "../features/documents/components/DocumentWorkspace.js"
+import { FavoritesWorkspace } from "../features/favorites/components/FavoritesWorkspace.js"
 import { HistoryWorkspace } from "../features/history/components/HistoryWorkspace.js"
 import { AssigneeWorkspace } from "../features/questions/components/AssigneeWorkspace.js"
 import { PersonalSettingsView } from "./components/PersonalSettingsView.js"
@@ -23,6 +24,7 @@ export type AppRoutesProps = {
   documentProps: ComponentProps<typeof DocumentWorkspace>
   adminProps: ComponentProps<typeof AdminWorkspace>
   historyProps: ComponentProps<typeof HistoryWorkspace>
+  favoritesProps: ComponentProps<typeof FavoritesWorkspace>
   profileProps: ComponentProps<typeof PersonalSettingsView>
 }
 
@@ -40,6 +42,7 @@ export function AppRoutes({
   documentProps,
   adminProps,
   historyProps,
+  favoritesProps,
   profileProps
 }: AppRoutesProps) {
   if (activeView === "chat") return <ChatView {...chatProps} />
@@ -49,5 +52,6 @@ export function AppRoutes({
   if (activeView === "documents" && canManageDocuments) return <DocumentWorkspace {...documentProps} />
   if (activeView === "admin" && canSeeAdminSettings) return <AdminWorkspace {...adminProps} />
   if (activeView === "profile") return <PersonalSettingsView {...profileProps} />
-  return <HistoryWorkspace {...historyProps} favoriteOnly={activeView === "favorites"} />
+  if (activeView === "favorites") return <FavoritesWorkspace {...favoritesProps} />
+  return <HistoryWorkspace {...historyProps} />
 }
