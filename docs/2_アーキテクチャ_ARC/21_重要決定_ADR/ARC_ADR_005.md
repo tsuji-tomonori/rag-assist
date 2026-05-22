@@ -33,9 +33,11 @@ CloudFront behaviorは次の3系統に固定する。
 | --- | --- | --- |
 | `default (*)` | S3 SPA bucket | 静的アセット配信。OAC必須。`index.html` は短TTL、hashed assetsは長TTL。 |
 | `/api/*` | API Gateway REST API | `/api` prefixを削除してoriginへ転送する。キャッシュは無効化する。`Authorization` を転送する。 |
-| `/ws/*` | API Gateway WebSocket API | `/ws` prefixを削除してoriginへ転送する。WebSocket upgrade系headerとquery stringをoriginへ渡す。 |
+| `/ws/*` | API Gateway WebSocket API | `/ws` prefixを削除してoriginへ転送する。viewerの `Host` はoriginへ渡さない。WebSocket upgrade系request headerとquery stringをoriginへ渡す。キャッシュは無効化する。 |
 
 REST API behaviorのorigin request policyは、API Gateway向けに `AllViewerExceptHostHeader` を基本とする。cache policyは `CachingDisabled` を基本とする。
+
+WebSocket API behaviorもAPI Gateway origin向けであるため、viewerの `Host` はoriginへ渡さず、origin requestではAPI Gateway origin domainの `Host` を使う。WebSocket handshakeに必要な `Sec-WebSocket-Key` と `Sec-WebSocket-Version` はoriginへ転送し、clientが使う場合は `Sec-WebSocket-Protocol` と `Sec-WebSocket-Extensions` も転送する。`Sec-WebSocket-Accept` はoriginからviewerへ返るhandshake responseとして通す。
 
 本番APIのCORSは、広いallowlistやwildcardでブラウザ導線を成立させる用途に使わない。本番ブラウザ導線はsame-origin前提とし、CORS allowlistはlocal、dev、preview環境に限定する。
 

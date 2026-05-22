@@ -36,6 +36,8 @@ CloudFrontを唯一の本番公開入口として正式採用し、SPA、REST AP
 - `docs/ARCHITECTURE.md`、`docs/REQUIREMENTS.md`、`docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md` の索引・トレーサビリティを更新した。
 - PR #335 を作成し、受け入れ条件確認コメントとセルフレビューコメントをGitHub Appsで投稿した。
 - PRコメント後にtask mdを `tasks/done/` へ移動した。
+- PRレビューのBlocker 2件に対応し、hidden Unicode制御文字検出とWebSocket behaviorのHost header方針を追加した。
+- Minor指摘に対応し、TC-003のDraft理由・昇格条件と、TC-003の後続実装追跡タスクを追加した。
 
 ## 成果物
 
@@ -47,6 +49,8 @@ CloudFrontを唯一の本番公開入口として正式採用し、SPA、REST AP
 | `docs/REQUIREMENTS.md` | TC-003索引とトレーサビリティの更新 |
 | `docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md` | 変更管理トレーサビリティの更新 |
 | `tasks/done/20260522-2107-cloudfront-single-entry-policy.md` | 完了済み作業task md |
+| `tasks/todo/20260522-2120-cloudfront-single-entry-implementation.md` | TC-003後続実装の追跡task md |
+| `scripts/check-hidden-unicode.mjs` | hidden / bidirectional Unicode制御文字検出スクリプト |
 
 ## 検証
 
@@ -54,11 +58,16 @@ CloudFrontを唯一の本番公開入口として正式採用し、SPA、REST AP
 
 - `git diff --check`: pass
 - `pre-commit run --files docs/ARCHITECTURE.md docs/REQUIREMENTS.md docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_005.md docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/REQ_TECHNICAL_CONSTRAINT_003.md tasks/done/20260522-2107-cloudfront-single-entry-policy.md reports/working/20260522-2107-cloudfront-single-entry-policy.md`: pass
+- `node` inline hidden/bidirectional Unicode control character check for review-specified files: pass
+- `npm run docs:hidden-unicode:check`: pass
+- `node --check scripts/check-hidden-unicode.mjs`: pass
+- `pre-commit run --files .pre-commit-config.yaml package.json scripts/check-hidden-unicode.mjs docs/ARCHITECTURE.md docs/REQUIREMENTS.md docs/1_要求_REQ/31_変更管理_CHANGE/REQ_CHANGE_001.md docs/2_アーキテクチャ_ARC/21_重要決定_ADR/ARC_ADR_005.md docs/1_要求_REQ/11_製品要求_PRODUCT/11_非機能要求_NON_FUNCTIONAL/01_技術制約_TECHNICAL_CONSTRAINT/REQ_TECHNICAL_CONSTRAINT_003.md tasks/todo/20260522-2120-cloudfront-single-entry-implementation.md tasks/done/20260522-2107-cloudfront-single-entry-policy.md reports/working/20260522-2107-cloudfront-single-entry-policy.md`: pass
 
 ### 未実施・制約
 
 - AWS実環境でのCloudFront、S3、API Gateway、Cognito、WebSocket接続確認: 未実施。理由: 本タスクは方針文書化であり、インフラ実装を含まないため。
 - API middleware、SPA相対パス化、WebSocket ticket実装のテスト: 未実施。理由: 本タスクではコード実装を含まないため。
+- `./node_modules/.bin/eslint scripts/check-hidden-unicode.mjs --max-warnings=0`: 未実施。理由: このworktreeに `node_modules` がなく、実行ファイルが存在しなかったため。代替として `node --check` とpre-commitを実行した。
 
 ## PR
 

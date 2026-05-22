@@ -21,6 +21,12 @@
 - AC-TC003-006: API behaviorはcache policyを無効化し、認証付きAPI応答をCloudFront cacheに保存しないこと。
 - AC-TC003-007: REST API behaviorはviewerの `Host` をoriginへそのまま渡さないorigin request policyを使うこと。
 - AC-TC003-008: WebSocket behaviorはupgradeに必要なheaderとquery stringをoriginへ転送すること。
+- AC-TC003-036: WebSocket behaviorはviewerの `Host` headerをAPI Gateway WebSocket originへ転送しないこと。
+- AC-TC003-037: WebSocket behaviorはquery stringをoriginへ転送すること。
+- AC-TC003-038: WebSocket behaviorは `Sec-WebSocket-Key` と `Sec-WebSocket-Version` をoriginへ転送すること。
+- AC-TC003-039: WebSocket behaviorはclientが使う場合に `Sec-WebSocket-Protocol` と `Sec-WebSocket-Extensions` をoriginへ転送すること。
+- AC-TC003-040: WebSocket behaviorはcache policyを無効化すること。
+- AC-TC003-041: WebSocket originへ送られる `Host` はCloudFront viewer domainではなくAPI Gateway origin domainであること。
 
 ### SPA / CORS
 
@@ -73,6 +79,11 @@
 - 意図: SPA / REST / WebSocketの入口をCloudFrontへ集約し、LLM、RAG、tool、workerへ権限判断を委譲しない実装方針を固定する。
 - 区分: 技術制約。
 
+## 状態管理
+
+- Draft理由: 本要件はCloudFront単一入口構成の受け入れ条件を先に固定するための要求定義であり、CloudFront/CDK、API middleware、SPA相対パス化、Cognito callback、WebSocket ticket実装は未完了である。
+- 昇格条件: 後続実装で `AC-TC003-001` から `AC-TC003-041` を自動テストまたは実環境検証で確認し、CloudFront/CDK、API middleware、SPA、Cognito、WebSocket ticketの設計文書または実装PRへ紐づいた時点で Accepted / Verified 相当へ更新する。
+
 ## 要求属性
 
 | 属性 | 記入内容 |
@@ -84,7 +95,7 @@
 | 種類 | 技術制約 |
 | 依存関係 | `ARC_ADR_005`, Cognito Hosted UI, API Gateway REST API, API Gateway WebSocket API, CloudFront, S3 OAC |
 | 衝突 | direct execute-api接続や広いCORS allowlistを前提にした既存設定がある場合は移行が必要 |
-| 受け入れ基準 | `AC-TC003-001` から `AC-TC003-035` |
+| 受け入れ基準 | `AC-TC003-001` から `AC-TC003-041` |
 | 優先度 | A |
 | 安定性 | High |
 | 変更履歴 | 2026-05-22 初版 |
