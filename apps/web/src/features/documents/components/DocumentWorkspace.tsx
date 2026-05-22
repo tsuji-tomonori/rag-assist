@@ -140,6 +140,7 @@ export function DocumentWorkspace({
   const [documentMoveTarget, setDocumentMoveTarget] = useState<DocumentManifest | null>(null)
   const [documentShareInfo, setDocumentShareInfo] = useState<DocumentShareInfo | null>(null)
   const [documentShareDraftGrants, setDocumentShareDraftGrants] = useState<DocumentShareGrantInput[]>([])
+  const [documentShareLoading, setDocumentShareLoading] = useState(false)
   const [documentSharePrincipalType, setDocumentSharePrincipalType] = useState<"user" | "group">("user")
   const [documentSharePrincipalId, setDocumentSharePrincipalId] = useState("")
   const [documentSharePermissionLevel, setDocumentSharePermissionLevel] = useState<"readOnly" | "full">("readOnly")
@@ -151,6 +152,7 @@ export function DocumentWorkspace({
   const createGroupNameRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
   const operationEventSeqRef = useRef(0)
+  const documentShareRequestRef = useRef<string | null>(null)
   const canWrite = canUploadProp ?? legacyCanWrite ?? false
   const canCreateGroups = canCreateGroupProp ?? legacyCanCreateGroups ?? false
   const canShareGroups = canShareGroupProp ?? legacyCanShareGroups ?? false
@@ -554,16 +556,37 @@ export function DocumentWorkspace({
   }
 
   async function openDocumentShare(document: DocumentManifest) {
+    const loadedDocumentId = document.documentId
+    documentShareRequestRef.current = loadedDocumentId
     setDocumentShareTarget(document)
+    setDocumentShareInfo(null)
+    setDocumentShareDraftGrants([])
     setDocumentShareReason("")
     setDocumentSharePrincipalId("")
-    const info = await onLoadDocumentShare?.(document.documentId) ?? null
+    setDocumentSharePrincipalType("user")
+    setDocumentSharePermissionLevel("readOnly")
+    setDocumentShareLoading(true)
+    const info = await onLoadDocumentShare?.(loadedDocumentId) ?? null
+    if (documentShareRequestRef.current !== loadedDocumentId) return
     setDocumentShareInfo(info)
     setDocumentShareDraftGrants(info?.directDocumentGrants.map((grant) => ({
       principalType: grant.principalType,
       principalId: grant.principalId,
       permissionLevel: grant.permissionLevel
     })) ?? [])
+    setDocumentShareLoading(false)
+  }
+
+  function closeDocumentShareModal() {
+    documentShareRequestRef.current = null
+    setDocumentShareTarget(null)
+    setDocumentShareInfo(null)
+    setDocumentShareDraftGrants([])
+    setDocumentShareLoading(false)
+    setDocumentShareReason("")
+    setDocumentSharePrincipalId("")
+    setDocumentSharePrincipalType("user")
+    setDocumentSharePermissionLevel("readOnly")
   }
 
   function openDocumentMove(document: DocumentManifest) {
@@ -575,7 +598,7 @@ export function DocumentWorkspace({
 
   async function onDocumentShareSubmit(event: FormEvent) {
     event.preventDefault()
-    if (!documentShareTarget || !onShareDocument) return
+    if (!documentShareTarget || !onShareDocument || documentShareLoading) return
     const next = documentSharePrincipalId.trim()
       ? [
           ...documentShareDraftGrants.filter((grant) => !(grant.principalType === documentSharePrincipalType && grant.principalId === documentSharePrincipalId.trim())),
@@ -585,9 +608,7 @@ export function DocumentWorkspace({
     const result = normalizeOperationResult(await onShareDocument(documentShareTarget.documentId, { grants: next, reason: documentShareReason }))
     if (result.ok) {
       recordSessionOperation("ファイル共有", documentShareTarget.fileName, `direct grants: ${next.length}`, "反映済み")
-      setDocumentShareTarget(null)
-      setDocumentShareInfo(null)
-      setDocumentShareDraftGrants([])
+      closeDocumentShareModal()
     } else {
       recordSessionOperation("ファイル共有", documentShareTarget.fileName, `error: ${result.error}`, "失敗")
     }
@@ -814,15 +835,16 @@ export function DocumentWorkspace({
         </div>
       )}
       {documentShareTarget && (
-        <WorkspaceModal title="ファイル共有" onClose={() => setDocumentShareTarget(null)}>
+        <WorkspaceModal title="ファイル共有" onClose={closeDocumentShareModal}>
           <form className="compact-form" onSubmit={(event) => void onDocumentShareSubmit(event)}>
             <p className="modal-note">ファイル名: {documentShareTarget.fileName}</p>
             <div className="share-diff-preview">
               <span>現在の権限: {documentShareInfo?.currentUserEffectivePermission ?? "確認中"}</span>
-              <span>継承: {documentShareInfo?.inheritedFolderGrants.map((grant) => `${grant.folderId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
+              <span>継承: {documentShareLoading ? "確認中" : documentShareInfo?.inheritedFolderGrants.map((grant) => `${grant.folderId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
             </div>
             <ul className="share-grant-list" aria-label="直接共有">
-              {documentShareDraftGrants.length === 0 && <li>直接共有はありません。</li>}
+              {documentShareLoading && <li>直接共有を読み込み中です。</li>}
+              {!documentShareLoading && documentShareDraftGrants.length === 0 && <li>直接共有はありません。</li>}
               {documentShareDraftGrants.map((grant) => (
                 <li key={`${grant.principalType}:${grant.principalId}`}>
                   <span>直接: {grant.principalType}:{grant.principalId} {grant.permissionLevel}</span>
@@ -851,7 +873,7 @@ export function DocumentWorkspace({
               </select>
             </label>
             <label><span>理由</span><textarea value={documentShareReason} onChange={(event) => setDocumentShareReason(event.target.value)} /></label>
-            <button type="submit" disabled={!documentShareReason.trim() || operationState.sharingDocumentId === documentShareTarget.documentId}>保存</button>
+            <button type="submit" disabled={documentShareLoading || !documentShareReason.trim() || operationState.sharingDocumentId === documentShareTarget.documentId}>保存</button>
           </form>
         </WorkspaceModal>
       )}
