@@ -1,6 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
+import type { DocumentShareInfo } from "../api/documentsApi.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentWorkspace } from "./DocumentWorkspace.js"
 
@@ -114,6 +115,19 @@ const documentGroupProps = {
   onShareGroup: vi.fn()
 }
 
+const shareDocuments: DocumentManifest[] = [
+  { documentId: "doc-a", fileName: "doc-a.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-01T00:00:00.000Z", capabilities: { canRead: true, canShare: true, canMove: true, canDelete: true, canReindex: true } },
+  { documentId: "doc-b", fileName: "doc-b.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-02T00:00:00.000Z", capabilities: { canRead: true, canShare: true, canMove: true, canDelete: true, canReindex: true } }
+]
+
+function shareInfo(documentId: string, grants: DocumentShareInfo["directDocumentGrants"]): DocumentShareInfo {
+  return {
+    currentUserEffectivePermission: "full",
+    directDocumentGrants: grants.map((grant) => ({ ...grant, documentId })),
+    inheritedFolderGrants: []
+  }
+}
+
 function createDeferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void
   let reject!: (reason?: unknown) => void
@@ -122,6 +136,40 @@ function createDeferred<T>() {
     reject = nextReject
   })
   return { promise, resolve, reject }
+}
+
+function renderShareWorkspace({
+  onLoadDocumentShare,
+  onShareDocument
+}: {
+  onLoadDocumentShare: (documentId: string) => Promise<DocumentShareInfo | undefined>
+  onShareDocument: (documentId: string, input: { grants: { principalType: "user" | "group"; principalId: string; permissionLevel: "readOnly" | "full" }[]; reason: string }) => Promise<{ ok: true } | void>
+}) {
+  return render(
+    <DocumentWorkspace
+      documents={shareDocuments}
+      documentGroups={documentGroups}
+      uploadGroupId="group-1"
+      loading={false}
+      canWrite={true}
+      canDelete={true}
+      canCreateGroups={true}
+      canShareGroups={true}
+      canReindex={true}
+      migrations={[]}
+      onUploadGroupChange={vi.fn()}
+      onUpload={vi.fn()}
+      onCreateGroup={vi.fn()}
+      onShareGroup={vi.fn()}
+      onLoadDocumentShare={onLoadDocumentShare}
+      onShareDocument={onShareDocument}
+      onDelete={vi.fn()}
+      onStageReindex={vi.fn()}
+      onCutoverReindex={vi.fn()}
+      onRollbackReindex={vi.fn()}
+      onBack={vi.fn()}
+    />
+  )
 }
 
 async function openFolderSettings() {
@@ -200,6 +248,309 @@ describe("DocumentWorkspace", () => {
     expect(container.querySelector('[data-label="ファイル名"]')).not.toBeNull()
     expect(container.querySelector('[data-label="所属フォルダ"]')).not.toBeNull()
     expect(container.querySelector('[data-label="操作"] .document-action-buttons')).not.toBeNull()
+  })
+
+  it("ファイル共有モーダルで直接共有を更新できる", async () => {
+    const onLoadDocumentShare = vi.fn().mockResolvedValue({
+      documentId: "doc-1",
+      currentUserEffectivePermission: "full",
+      directDocumentGrants: [
+        { principalType: "user", principalId: "user-old", permissionLevel: "readOnly", tenantId: "default", grantedBy: "user-1", grantedAt: "2026-05-01T00:00:00.000Z" }
+      ],
+      inheritedFolderGrants: [
+        { folderId: "group-1", folderName: "社内規定", permissionLevel: "readOnly" }
+      ]
+    })
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+
+    render(
+      <DocumentWorkspace
+        documents={documents}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onLoadDocumentShare={onLoadDocumentShare}
+        onShareDocument={onShareDocument}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "requirements.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(onLoadDocumentShare).toHaveBeenCalledWith("doc-1")
+    expect(await within(dialog).findByText("現在の権限: full")).toBeInTheDocument()
+    expect(within(dialog).getByText("継承: group-1 readOnly")).toBeInTheDocument()
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "削除" }))
+    await userEvent.selectOptions(within(dialog).getByLabelText("共有先種別"), "group")
+    await userEvent.type(within(dialog).getByLabelText("共有先ID"), "HR")
+    await userEvent.selectOptions(within(dialog).getByLabelText("権限"), "full")
+    await userEvent.type(within(dialog).getByLabelText("理由"), "チームレビュー")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(onShareDocument).toHaveBeenCalledWith("doc-1", {
+      grants: [{ principalType: "group", principalId: "HR", permissionLevel: "full" }],
+      reason: "チームレビュー"
+    })
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "ファイル共有" })).not.toBeInTheDocument())
+  })
+
+  it("共有モーダルで別文書を開いた直後に前回の直接共有を表示せず保存を無効化する", async () => {
+    const docBLoad = createDeferred<DocumentShareInfo>()
+    const onLoadDocumentShare = vi.fn((documentId: string) => {
+      if (documentId === "doc-a") {
+        return Promise.resolve(shareInfo("doc-a", [
+          {
+            documentShareGrantId: "grant-old",
+            principalType: "user",
+            principalId: "user-old",
+            permissionLevel: "readOnly",
+            tenantId: "default",
+            documentId: "doc-a",
+            createdBy: "user-1",
+            reason: "existing",
+            createdAt: "2026-05-01T00:00:00.000Z",
+            updatedAt: "2026-05-01T00:00:00.000Z"
+          }
+        ]))
+      }
+      return docBLoad.promise
+    })
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    let dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByText("直接: user:user-old readOnly")).toBeInTheDocument()
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "ファイル共有を閉じる" }))
+    await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
+    dialog = screen.getByRole("dialog", { name: "ファイル共有" })
+
+    expect(within(dialog).queryByText("直接: user:user-old readOnly")).not.toBeInTheDocument()
+    expect(within(dialog).getByText("直接共有を読み込み中です。")).toBeInTheDocument()
+    expect(within(dialog).getByRole("button", { name: "保存" })).toBeDisabled()
+  })
+
+  it("共有モーダルの読み込み中に理由を入力しても保存しない", async () => {
+    const docBLoad = createDeferred<DocumentShareInfo>()
+    const onLoadDocumentShare = vi.fn(() => docBLoad.promise)
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+
+    await userEvent.type(within(dialog).getByLabelText("理由"), "急ぎの共有")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(within(dialog).getByRole("button", { name: "保存" })).toBeDisabled()
+    expect(onShareDocument).not.toHaveBeenCalled()
+  })
+
+  it("共有モーダルは読み込み完了後に現在文書の grants だけを保存する", async () => {
+    const docBLoad = createDeferred<DocumentShareInfo>()
+    const onLoadDocumentShare = vi.fn((documentId: string) => documentId === "doc-b" ? docBLoad.promise : Promise.resolve(shareInfo(documentId, [])))
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    docBLoad.resolve(shareInfo("doc-b", []))
+    expect(await within(dialog).findByText("現在の権限: full")).toBeInTheDocument()
+
+    await userEvent.type(within(dialog).getByLabelText("共有先ID"), "userB")
+    await userEvent.selectOptions(within(dialog).getByLabelText("権限"), "readOnly")
+    await userEvent.type(within(dialog).getByLabelText("理由"), "docBだけ共有")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(onShareDocument).toHaveBeenCalledWith("doc-b", {
+      grants: [{ principalType: "user", principalId: "userB", permissionLevel: "readOnly" }],
+      reason: "docBだけ共有"
+    })
+  })
+
+  it("共有モーダルは前文書の遅延レスポンスを現在文書に反映しない", async () => {
+    const docALoad = createDeferred<DocumentShareInfo>()
+    const docBLoad = createDeferred<DocumentShareInfo>()
+    const onLoadDocumentShare = vi.fn((documentId: string) => documentId === "doc-a" ? docALoad.promise : docBLoad.promise)
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    let dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    await userEvent.click(within(dialog).getByRole("button", { name: "ファイル共有を閉じる" }))
+    await userEvent.click(screen.getByRole("button", { name: "doc-b.mdを共有" }))
+    dialog = screen.getByRole("dialog", { name: "ファイル共有" })
+
+    docBLoad.resolve(shareInfo("doc-b", []))
+    expect(await within(dialog).findByText("直接共有はありません。")).toBeInTheDocument()
+
+    docALoad.resolve(shareInfo("doc-a", [
+      {
+        documentShareGrantId: "grant-old",
+        principalType: "user",
+        principalId: "user-old",
+        permissionLevel: "readOnly",
+        tenantId: "default",
+        documentId: "doc-a",
+        createdBy: "user-1",
+        reason: "existing",
+        createdAt: "2026-05-01T00:00:00.000Z",
+        updatedAt: "2026-05-01T00:00:00.000Z"
+      }
+    ]))
+
+    await waitFor(() => expect(within(dialog).queryByText("直接: user:user-old readOnly")).not.toBeInTheDocument())
+    expect(within(dialog).getByText("現在の権限: full")).toBeInTheDocument()
+  })
+
+  it("共有モーダルは共有設定取得失敗時に alert を表示し保存を無効化する", async () => {
+    const onLoadDocumentShare = vi.fn().mockResolvedValue(undefined)
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("共有設定を取得できませんでした。")
+    expect(within(dialog).getByRole("button", { name: "保存" })).toBeDisabled()
+  })
+
+  it("共有モーダルは共有設定取得失敗時に理由を入力しても保存しない", async () => {
+    const onLoadDocumentShare = vi.fn().mockResolvedValue(undefined)
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
+
+    await userEvent.type(within(dialog).getByLabelText("理由"), "取得失敗後の保存")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(within(dialog).getByRole("button", { name: "保存" })).toBeDisabled()
+    expect(onShareDocument).not.toHaveBeenCalled()
+  })
+
+  it("共有モーダルは取得失敗後に再オープンして成功すると取得済み grants を保存できる", async () => {
+    const onLoadDocumentShare = vi.fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(shareInfo("doc-a", [
+        {
+          documentShareGrantId: "grant-restored",
+          principalType: "user",
+          principalId: "user-restored",
+          permissionLevel: "readOnly",
+          tenantId: "default",
+          documentId: "doc-a",
+          createdBy: "user-1",
+          reason: "existing",
+          createdAt: "2026-05-01T00:00:00.000Z",
+          updatedAt: "2026-05-01T00:00:00.000Z"
+        }
+      ]))
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    let dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole("button", { name: "ファイル共有を閉じる" }))
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByText("直接: user:user-restored readOnly")).toBeInTheDocument()
+
+    await userEvent.type(within(dialog).getByLabelText("理由"), "正常取得後の保存")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(onShareDocument).toHaveBeenCalledWith("doc-a", {
+      grants: [{ principalType: "user", principalId: "user-restored", permissionLevel: "readOnly" }],
+      reason: "正常取得後の保存"
+    })
+  })
+
+  it("共有モーダルは既存 direct grant がある文書の取得失敗時に空 grants を送信しない", async () => {
+    const onLoadDocumentShare = vi.fn().mockResolvedValue(undefined)
+    const onShareDocument = vi.fn().mockResolvedValue({ ok: true })
+    renderShareWorkspace({ onLoadDocumentShare, onShareDocument })
+
+    await userEvent.click(screen.getByRole("button", { name: "doc-a.mdを共有" }))
+    const dialog = await screen.findByRole("dialog", { name: "ファイル共有" })
+    expect(await within(dialog).findByRole("alert")).toBeInTheDocument()
+
+    await userEvent.type(within(dialog).getByLabelText("理由"), "既存共有を残す")
+    await userEvent.click(within(dialog).getByRole("button", { name: "保存" }))
+
+    expect(onShareDocument).not.toHaveBeenCalledWith("doc-a", { grants: [], reason: "既存共有を残す" })
+    expect(onShareDocument).not.toHaveBeenCalled()
+  })
+
+  it("ファイル移動モーダルで同名衝突を検知してリネーム移動できる", async () => {
+    const onMoveDocument = vi.fn().mockResolvedValue({ ok: true })
+
+    render(
+      <DocumentWorkspace
+        documents={[
+          { ...documents[0]!, updatedAt: "2026-05-02T00:00:00.000Z" },
+          { documentId: "doc-conflict", fileName: "requirements.md", chunkCount: 1, memoryCardCount: 0, createdAt: "2026-05-01T00:00:00.000Z", metadata: { groupIds: ["group-1"] } }
+        ]}
+        documentGroups={documentGroups}
+        uploadGroupId="group-1"
+        loading={false}
+        canWrite={true}
+        canDelete={true}
+        canCreateGroups={true}
+        canShareGroups={true}
+        canReindex={true}
+        migrations={[]}
+        onUploadGroupChange={vi.fn()}
+        onUpload={vi.fn()}
+        onCreateGroup={vi.fn()}
+        onShareGroup={vi.fn()}
+        onMoveDocument={onMoveDocument}
+        onDelete={vi.fn()}
+        onStageReindex={vi.fn()}
+        onCutoverReindex={vi.fn()}
+        onRollbackReindex={vi.fn()}
+        onBack={vi.fn()}
+      />
+    )
+
+    await userEvent.click(screen.getAllByRole("button", { name: "requirements.mdを移動" })[0]!)
+    const dialog = screen.getByRole("dialog", { name: "ファイル移動" })
+    await userEvent.selectOptions(within(dialog).getByLabelText("移動先フォルダ"), "group-1")
+    await userEvent.type(within(dialog).getByLabelText("理由"), "整理")
+
+    expect(within(dialog).getByRole("alert")).toHaveTextContent("移動先に同名ファイルが存在します。")
+    expect(within(dialog).getByRole("button", { name: "移動" })).toBeDisabled()
+
+    await userEvent.clear(within(dialog).getByLabelText("移動後の表示名"))
+    await userEvent.type(within(dialog).getByLabelText("移動後の表示名"), "requirements-renamed.md")
+    await userEvent.click(within(dialog).getByRole("button", { name: "移動" }))
+
+    expect(onMoveDocument).toHaveBeenCalledWith("doc-1", {
+      destinationFolderId: "group-1",
+      newTitle: "requirements-renamed.md",
+      reason: "整理",
+      expectedUpdatedAt: "2026-05-02T00:00:00.000Z"
+    })
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "ファイル移動" })).not.toBeInTheDocument())
   })
 
   it("API 由来の ParsedDocument preview と抽出品質を詳細に表示する", async () => {

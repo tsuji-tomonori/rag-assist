@@ -55,7 +55,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 16 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 23 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `500` | サーバー内部で処理エラーが発生しました。 | `application/json` | 2 field(s) |
@@ -82,6 +82,13 @@ Media type: `application/json`
 | `documents[].metadata` | `object` | no | `response.documents[].metadata` の値。項目名は metadata を表します。 | - |
 | `documents[].embeddingModelId` | `string` | no | embedding 生成に利用する model ID。 | - |
 | `documents[].embeddingDimensions` | `integer` | no | `response.documents[].embeddingDimensions` の値。項目名は embedding dimensions を表します。 | minimum=0 |
+| `documents[].currentUserEffectivePermission` | `enum(none \| readOnly \| full)` | no | `response.documents[].currentUserEffectivePermission` の値。項目名は current user effective permission を表します。 | enum=none, readOnly, full |
+| `documents[].capabilities` | `object` | no | `response.documents[].capabilities` の値。項目名は capabilities を表します。 | - |
+| `documents[].capabilities.canRead` | `boolean` | yes | `response.documents[].capabilities.canRead` の値。項目名は can read を表します。 | - |
+| `documents[].capabilities.canShare` | `boolean` | yes | `response.documents[].capabilities.canShare` の値。項目名は can share を表します。 | - |
+| `documents[].capabilities.canMove` | `boolean` | yes | `response.documents[].capabilities.canMove` の値。項目名は can move を表します。 | - |
+| `documents[].capabilities.canDelete` | `boolean` | yes | `response.documents[].capabilities.canDelete` の値。項目名は can delete を表します。 | - |
+| `documents[].capabilities.canReindex` | `boolean` | yes | `response.documents[].capabilities.canReindex` の値。項目名は can reindex を表します。 | - |
 
 ##### `401` 認証が必要です。
 

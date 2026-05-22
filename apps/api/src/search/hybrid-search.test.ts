@@ -20,6 +20,7 @@ import { LocalGroupMembershipStore } from "../adapters/local-group-membership-st
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import type { Dependencies } from "../dependencies.js"
+import { DocumentPermissionService } from "../documents/document-permission-service.js"
 import { MemoRagService } from "../rag/memorag-service.js"
 import { adaptiveEffectiveMinScore, bm25Score, bm25Search, buildLexicalIndex, getLexicalIndex, rrfFuse, searchRag, tokenizeQuery } from "./hybrid-search.js"
 import type { DocumentGroup, FolderPolicy, GroupMembership, JsonValue, UserGroup } from "../types.js"
@@ -442,6 +443,73 @@ test("search removes folder policy documents immediately after group membership 
   }, member)
   assert.equal(semanticRevoked.results.some((result) => result.fileName === "folder-policy-secret.md"), false)
   assert.equal(semanticRevoked.diagnostics.semanticCount, 0)
+})
+
+test("direct document grants do not expand folder-scoped RAG search without folder permission", async () => {
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-direct-share-scope-"))
+  const deps = createLocalDeps(dataDir)
+  const objectStore = deps.objectStore as LocalObjectStore
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
+  const manager: AppUser = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+
+  await deps.documentGroupStore.create(folder("folder-a", "/folder-a", { hasExplicitPolicy: true, policyId: "policy-folder-a" }))
+  await deps.folderPolicyStore.save(policy("policy-folder-a", "folder-a", [
+    { principalType: "user", principalId: "owner-1", permissionLevel: "full" }
+  ]))
+  await putFolderPolicySearchManifest(objectStore, {
+    documentId: "direct-shared-doc",
+    fileName: "direct-shared-doc.md",
+    text: "nectarine direct shared scope boundary content.",
+    metadata: {
+      scopeType: "folder",
+      folderId: "folder-a",
+      tenantId: "tenant-a"
+    }
+  })
+  const manifest = JSON.parse(await objectStore.getText("manifests/direct-shared-doc.json"))
+  await new DocumentPermissionService(deps).replaceDocumentShareGrants(manager, manifest, [
+    { principalType: "user", principalId: reader.userId, permissionLevel: "readOnly" }
+  ], "direct read for all and document scopes")
+
+  const allScope = await searchRag(deps, {
+    query: "nectarine direct",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0
+  }, reader)
+  assert.equal(allScope.results[0]?.fileName, "direct-shared-doc.md")
+
+  const folderScopeWithoutFolderPermission = await searchRag(deps, {
+    query: "nectarine direct",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0,
+    scope: { mode: "groups", groupIds: ["folder-a"] }
+  }, reader)
+  assert.equal(folderScopeWithoutFolderPermission.results.some((result) => result.fileName === "direct-shared-doc.md"), false)
+  assert.equal(folderScopeWithoutFolderPermission.diagnostics.index?.visibleManifestCount, 0)
+
+  const documentScope = await searchRag(deps, {
+    query: "nectarine direct",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0,
+    scope: { mode: "documents", documentIds: ["direct-shared-doc"] }
+  }, reader)
+  assert.equal(documentScope.results[0]?.fileName, "direct-shared-doc.md")
+
+  await deps.folderPolicyStore.save(policy("policy-folder-a", "folder-a", [
+    { principalType: "user", principalId: "owner-1", permissionLevel: "full" },
+    { principalType: "user", principalId: reader.userId, permissionLevel: "readOnly" }
+  ]))
+  const folderScopeWithFolderPermission = await searchRag(deps, {
+    query: "nectarine direct",
+    topK: 10,
+    lexicalTopK: 10,
+    semanticTopK: 0,
+    scope: { mode: "groups", groupIds: ["folder-a"] }
+  }, reader)
+  assert.equal(folderScopeWithFolderPermission.results[0]?.fileName, "direct-shared-doc.md")
 })
 
 test("folder-scoped search includes manifests that use folderId metadata", async () => {
