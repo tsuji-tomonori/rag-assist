@@ -1,6 +1,6 @@
 # 非同期エージェント入口停止
 
-状態: do
+状態: done
 
 ## 背景
 
@@ -42,7 +42,7 @@
 - [x] `ChatOrchestrationRun` / RAG answer path を削らない。
 - [x] 最小十分なテストと差分チェックを実行する。
 - [x] 作業レポートを `reports/working/` に残す。
-- [ ] commit / push / PR 作成 / 受け入れ条件コメント / セルフレビューコメントを行う。
+- [x] commit / push / PR 作成 / 受け入れ条件コメント / セルフレビューコメントを行う。
 
 ## 受け入れ条件
 
