@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "benchmark.conversation_fixture.v1",
+  "fixtureId": "multiturn_base",
+  "turns": []
+}

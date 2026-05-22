@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "benchmark.run.v1",
+  "suiteId": "leave_policy_v1",
+  "runLabel": "leave_policy_v1_default",
+  "seedManifestPath": "${ARTIFACT_DIR}/init/${CORPUS_VERSION}/seed_manifest.json",
+  "casesPath": "./cases.jsonl",
+  "pipeline": {
+    "pipelineId": "rag_chat_benchmark_v1",
+    "stages": [
+      "permission_fixture",
+      "retrieval_eval",
+      "answer_eval",
+      "answerability_gate_eval",
+      "support_verification_eval",
+      "citation_eval",
+      "cost_latency_eval",
+      "regression_compare",
+      "artifact_export"
+    ]
+  },
+  "targetConfigPath": "./config/target.dev.json",
+  "answerPolicyPath": "./config/answer_policy.json",
+  "promotionGatePath": "./config/promotion_gate.json",
+  "permissionFixturePath": "./config/permission_fixture.json",
+  "output": {
+    "artifactDir": "${ARTIFACT_DIR}/runs/${RUN_ID}",
+    "format": ["json", "jsonl", "md"],
+    "includeDebugTraceLink": true,
+    "includeCaseLevelResult": true
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rag-assist.local/schemas/benchmark.run.schema.json",
+  "title": "Benchmark run spec",
+  "type": "object",
+  "required": ["schemaVersion", "suiteId", "runLabel", "seedManifestPath", "casesPath", "pipeline", "output"],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "const": "benchmark.run.v1" },
+    "suiteId": { "type": "string", "minLength": 1 },
+    "runLabel": { "type": "string", "minLength": 1 },
+    "seedManifestPath": { "type": "string", "minLength": 1 },
+    "casesPath": { "type": "string", "minLength": 1 },
+    "pipeline": {
+      "type": "object",
+      "required": ["pipelineId", "stages"],
+      "additionalProperties": false,
+      "properties": {
+        "pipelineId": { "const": "rag_chat_benchmark_v1" },
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "targetConfig": { "type": "object" },
+    "targetConfigPath": { "type": "string" },
+    "answerPolicy": { "type": "object" },
+    "answerPolicyPath": { "type": "string" },
+    "promotionGate": { "type": "object" },
+    "promotionGatePath": { "type": "string" },
+    "permissionFixturePath": { "type": "string" },
+    "output": {
+      "type": "object",
+      "required": ["artifactDir", "format", "includeCaseLevelResult"],
+      "additionalProperties": false,
+      "properties": {
+        "artifactDir": { "type": "string", "minLength": 1 },
+        "format": {
+          "type": "array",
+          "items": { "enum": ["json", "jsonl", "md"] }
+        },
+        "includeDebugTraceLink": { "type": "boolean" },
+        "includeCaseLevelResult": { "type": "boolean" }
+      }
+    }
+  }
+}

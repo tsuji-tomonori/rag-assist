@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "benchmark.permission_fixture.v1",
+  "fixtureId": "read_only_scope",
+  "principalType": "service_user",
+  "allowedActions": ["benchmark:query"],
+  "deniedActions": ["benchmark:seed_corpus", "benchmark:promote_result"]
+}

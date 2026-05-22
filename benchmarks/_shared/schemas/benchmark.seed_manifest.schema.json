@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rag-assist.local/schemas/benchmark.seed_manifest.schema.json",
+  "title": "Benchmark seed manifest",
+  "type": "object",
+  "required": ["schemaVersion", "suiteId", "corpusVersion", "benchmarkScopeId", "createdAt", "documents", "skipped"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": "benchmark.seed_manifest.v1" },
+    "suiteId": { "type": "string" },
+    "corpusVersion": { "type": "string" },
+    "benchmarkScopeId": { "type": "string" },
+    "createdAt": { "type": "string" },
+    "documents": { "type": "array" },
+    "skipped": { "type": "array" }
+  }
+}

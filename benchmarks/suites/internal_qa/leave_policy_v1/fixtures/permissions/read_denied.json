@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "benchmark.permission_fixture.v1",
+  "fixtureId": "read_denied",
+  "allowedScopes": []
+}

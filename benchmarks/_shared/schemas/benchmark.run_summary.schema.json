@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rag-assist.local/schemas/benchmark.run_summary.schema.json",
+  "title": "Benchmark run summary",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "suiteId", "runLabel", "status", "startedAt", "targetConfig", "caseCount", "metrics", "promotionGate", "artifacts"],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "const": "benchmark.run_summary.v1" },
+    "runId": { "type": "string" },
+    "suiteId": { "type": "string" },
+    "runLabel": { "type": "string" },
+    "status": { "enum": ["completed", "failed", "partial", "blocked"] },
+    "startedAt": { "type": "string" },
+    "completedAt": { "type": "string" },
+    "targetConfig": { "type": "object" },
+    "caseCount": { "type": "integer", "minimum": 0 },
+    "passedCount": { "type": "integer", "minimum": 0 },
+    "failedCount": { "type": "integer", "minimum": 0 },
+    "skippedCount": { "type": "integer", "minimum": 0 },
+    "metrics": { "type": "object" },
+    "promotionGate": { "type": "object" },
+    "artifacts": { "type": "object" }
+  }
+}

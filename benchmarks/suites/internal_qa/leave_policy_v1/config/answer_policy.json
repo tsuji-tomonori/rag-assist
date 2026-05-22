@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "benchmark.answer_policy.v1",
+  "answerStyle": "benchmark_grounded_short",
+  "forbidExternalKnowledge": true,
+  "forbidConversationHistoryOnlyAnswer": true,
+  "requireReferenceLikeShortAnswer": true,
+  "fixedRefusalMessage": "現在の回答範囲で参照できる資料内には、十分な根拠が見つかりませんでした。",
+  "switchBy": "benchmark_metadata",
+  "forbidDatasetRowIdBranching": true
+}

@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "benchmark.evaluator.v1",
+  "evaluator": "support_verification",
+  "description": "回答文が citation または computed facts に支持されるかを判定する。"
+}

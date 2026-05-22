@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "benchmark.target_config.v1",
+  "modelId": "gpt-4.1",
+  "embeddingModelId": "text-embedding-3-large",
+  "retrieverVersion": "retriever_local",
+  "rerankerVersion": "reranker_local",
+  "chunkerVersion": "chunker_hybrid_v3",
+  "promptVersion": "rag_answer_v5",
+  "contextCompressionVersion": "conversation_summary_v2",
+  "indexVersion": "idx_local",
+  "searchTermMappingVersion": "mapping_local"
+}

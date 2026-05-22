@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "benchmark.evaluator.v1",
+  "evaluator": "answer_unavailable",
+  "description": "回答不能期待と実結果が一致するかを判定する。"
+}
