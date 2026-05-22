@@ -215,6 +215,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     onAsk,
     submitClarificationOption,
     startClarificationFreeform,
+    activeTemporaryAttachments,
+    removeTemporaryAttachment,
     newConversation
   } = useChatSession({
     canCreateChat,
@@ -469,6 +471,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       canWriteDocuments,
       modelId,
       file,
+      activeTemporaryAttachments,
       selectedGroupId,
       documentScope: chatDocumentScope,
       documentGroups,
@@ -488,6 +491,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onSetQuestion: setQuestion,
       onModelChange: setModelId,
       onSetFile: setFile,
+      onRemoveTemporaryAttachment: removeTemporaryAttachment,
       onClearDocumentScope: () => setChatDocumentScope(null),
       onCreateQuestion,
       onResolveQuestion,

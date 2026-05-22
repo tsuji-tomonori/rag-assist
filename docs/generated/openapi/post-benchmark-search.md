@@ -46,6 +46,7 @@ Media type: `application/json`
 | `scope.documentIds` | `array<string>` | no | `data.scope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
 | `scope.includeTemporary` | `boolean` | no | `data.scope.includeTemporary` の値。項目名は include temporary を表します。 | - |
 | `scope.temporaryScopeId` | `string` | no | `data.scope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
+| `scope.temporaryScopeIds` | `array<string>` | no | `data.scope.temporaryScopeIds` の値。項目名は temporary scope ids を表します。 | maxItems=20 |
 | `benchmarkSuiteId` | `string` | no | `data.benchmarkSuiteId` の値。項目名は benchmark suite id を表します。 | - |
 | `user` | `object` | no | `data.user` の値。項目名は user を表します。 | - |
 | `user.userId` | `string` | no | 対象ユーザーを一意に識別する ID。 | minLength=1<br>maxLength=160 |

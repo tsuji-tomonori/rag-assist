@@ -126,6 +126,9 @@ function summarizeUpdate(label: string, update: ChatOrchestrationUpdate): string
   if (update.toolIntent) return `tool_intent search=${update.toolIntent.needsSearch}, temporal=${update.toolIntent.needsTemporalCalculation}, arithmetic=${update.toolIntent.needsArithmeticCalculation}`
   if (update.temporalContext) return `today=${update.temporalContext.today}, source=${update.temporalContext.source}`
   if (update.conversationState) return `conversation=${update.conversationState.conversationId ?? "none"}, dependency=${update.conversationState.turnDependency}, citations=${update.conversationState.previousCitationCount}`
+  if (update.normalizedSearchScope) {
+    return `baseScope=${update.normalizedSearchScope.mode ?? "all"}, temporaryScopeCount=${update.normalizedSearchScope.temporaryScopeIds.length}, previousCitationAnchorCount=${update.normalizedSearchScope.previousCitationAnchors.length}`
+  }
   if (update.decontextualizedQuery) return `standalone_query=${update.decontextualizedQuery.standaloneQuestion}, queries=${update.decontextualizedQuery.retrievalQueries.length}`
   if (update.answerSupport) return `answer_support=${update.answerSupport.supported ? "supported" : "unsupported"}, unsupported=${update.answerSupport.unsupportedSentences.length}`
   if (update.retrievalEvaluation) {
@@ -156,6 +159,7 @@ function detailUpdate(update: ChatOrchestrationUpdate): string | undefined {
   if (update.toolIntent) return JSON.stringify(update.toolIntent, null, 2)
   if (update.temporalContext) return JSON.stringify(update.temporalContext, null, 2)
   if (update.conversationState) return JSON.stringify(update.conversationState, null, 2)
+  if (update.normalizedSearchScope) return JSON.stringify(update.normalizedSearchScope, null, 2)
   if (update.decontextualizedQuery) return JSON.stringify(update.decontextualizedQuery, null, 2)
   if (update.answerSupport) return formatAnswerSupportDetail(update.answerSupport)
   if (update.retrievalEvaluation) return formatRetrievalEvaluationDetail(update.retrievalEvaluation)
@@ -279,6 +283,7 @@ function outputUpdate(update: ChatOrchestrationUpdate): Record<string, JsonValue
     "normalizedQuery",
     "clarificationContext",
     "conversationState",
+    "normalizedSearchScope",
     "decontextualizedQuery",
     "clues",
     "expandedQueries",

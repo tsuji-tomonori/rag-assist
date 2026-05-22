@@ -79,6 +79,7 @@ const disabledTool = (
 const implementedRagTools: ChatToolDefinition[] = [
   ragTool("rag.decontextualize_query", "文脈独立化クエリ生成", "省略を含む multi-turn 質問を standalone question と retrieval query に変換する。", [
     "build_conversation_state",
+    "search_scope_normalize",
     "decontextualize_query"
   ], "chat:create"),
   ragTool("rag.plan_required_facts", "必須事実計画", "質問に回答するために必要な RequiredFact を汎用的に計画する。", [

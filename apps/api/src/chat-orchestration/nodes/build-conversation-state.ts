@@ -15,6 +15,13 @@ export async function buildConversationState(state: ChatOrchestrationState): Pro
     ? (turn.citations ?? []) as Array<{ documentId?: string; fileName?: string; chunkId?: string; pageStart?: number; pageEnd?: number }>
     : [])
   const previousCitations = uniqueCitations(citations).slice(0, 12)
+  const previousCitationAnchors = previousCitations.map((citation) => ({
+    documentId: citation.documentId,
+    fileName: citation.fileName,
+    chunkId: citation.chunkId,
+    pageStart: citation.pageStart,
+    pageEnd: citation.pageEnd
+  }))
   const activeDocuments = unique([
     ...(conversation?.state?.activeDocuments ?? []),
     ...citations.flatMap((citation) => [citation.documentId, citation.fileName]).filter((value): value is string => Boolean(value))
@@ -42,6 +49,7 @@ export async function buildConversationState(state: ChatOrchestrationState): Pro
       activeTopics,
       constraints: unique(conversation?.state?.constraints ?? []).slice(0, 6),
       previousCitations,
+      previousCitationAnchors,
       previousCitationCount: citations.length,
       turnDependency
     }
@@ -77,8 +85,11 @@ function buildRetrievalQueries(
   conversationState: ChatOrchestrationState["conversationState"]
 ): string[] {
   if ((conversationState?.previousCitationCount ?? 0) > 0 && isCompactFollowUpQuestion(question)) {
-    const citationAnchor = conversationState?.previousCitations
-      ?.map((citation) => citation.fileName ?? citation.documentId ?? citation.chunkId)
+    const citationAnchor = [
+      ...(conversationState?.previousCitationAnchors ?? []),
+      ...(conversationState?.previousCitations ?? [])
+    ]
+      .map(formatCitationAnchor)
       .find((value): value is string => Boolean(value))
     const documentAnchor = citationAnchor ?? conversationState?.activeDocuments?.[0]
     return unique([
@@ -93,11 +104,16 @@ function buildRetrievalQueries(
     question,
     ...(conversationState?.activeDocuments ?? []).slice(0, 3).map((document) => `${standaloneQuestion} ${document}`),
     ...(conversationState?.activeEntities ?? []).slice(0, 4).map((entity) => `${standaloneQuestion} ${entity}`),
-    ...(conversationState?.previousCitations ?? []).slice(0, 3).flatMap((citation) => {
-      const anchors = [citation.fileName, citation.documentId, citation.chunkId].filter((value): value is string => Boolean(value))
-      return anchors.map((anchor) => `${standaloneQuestion} ${anchor}`)
-    })
+    ...(conversationState?.previousCitationAnchors ?? conversationState?.previousCitations ?? []).slice(0, 3).map((citation) => `${standaloneQuestion} ${formatCitationAnchor(citation)}`)
   ]).slice(0, 8)
+}
+
+function formatCitationAnchor(citation: { documentId?: string; fileName?: string; chunkId?: string; pageStart?: number; pageEnd?: number }): string {
+  return [
+    citation.fileName ?? citation.documentId,
+    citation.chunkId,
+    citation.pageStart ? `p.${citation.pageStart}${citation.pageEnd && citation.pageEnd !== citation.pageStart ? `-${citation.pageEnd}` : ""}` : undefined
+  ].filter(Boolean).join(" ")
 }
 
 function inferTurnDependency(question: string, historyCount: number, explicit?: string): string {

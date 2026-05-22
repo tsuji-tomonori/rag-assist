@@ -37,7 +37,7 @@ test("non-RAG and follow-up dependent tools remain disabled metadata, not execut
 test("RAG tool node mappings fix existing graph trace labels without changing runtime policy", () => {
   const mapping = new Map(RAG_CHAT_TOOL_NODE_MAPPINGS.map((item) => [item.toolId, item.traceLabels]))
 
-  assert.deepEqual(mapping.get("rag.decontextualize_query"), ["build_conversation_state", "decontextualize_query"])
+  assert.deepEqual(mapping.get("rag.decontextualize_query"), ["build_conversation_state", "search_scope_normalize", "decontextualize_query"])
   assert.deepEqual(mapping.get("rag.select_final_context"), ["rerank_chunks"])
   assert.deepEqual(mapping.get("rag.verify_answer_support"), ["verify_answer_support"])
   assert.deepEqual(mapping.get("rag.repair_supported_only"), ["verify_answer_support"])

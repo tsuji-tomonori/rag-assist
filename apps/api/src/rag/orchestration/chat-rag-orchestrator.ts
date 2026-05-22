@@ -10,6 +10,7 @@ import type { DocumentManifest, RetrievedVector } from "../../types.js"
 import { analyzeInput } from "../../chat-orchestration/nodes/analyze-input.js"
 import { answerabilityGate } from "../online/post-retrieval/answerability/answerability-gate.js"
 import { buildConversationState, decontextualizeQuery } from "../../chat-orchestration/nodes/build-conversation-state.js"
+import { normalizeSearchScopeNode } from "../../chat-orchestration/nodes/search-scope-normalize.js"
 import { buildTemporalContext } from "../../chat-orchestration/nodes/build-temporal-context.js"
 import { clarificationGate } from "../../chat-orchestration/nodes/clarification-gate.js"
 import { detectToolIntent } from "../../chat-orchestration/nodes/detect-tool-intent.js"
@@ -248,6 +249,7 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
     buildTemporalContext: tracedNode("build_temporal_context", buildTemporalContext),
     detectToolIntent: tracedNode("detect_tool_intent", detectToolIntent),
     buildConversationState: tracedNode("build_conversation_state", buildConversationState),
+    normalizeSearchScope: tracedNode("search_scope_normalize", normalizeSearchScopeNode),
     decontextualizeQuery: tracedNode("decontextualize_query", decontextualizeQuery),
     normalizeQuery: tracedNode("normalize_query", normalizeQuery),
     retrieveMemory: tracedNode("retrieve_memory", createRetrieveMemoryNode(deps, user)),
@@ -281,6 +283,7 @@ export function createChatOrchestrationGraph(deps: Dependencies, user: AppUser =
       }
       state = await applyNode(state, "detect_tool_intent", nodes.detectToolIntent, progress)
       state = await applyNode(state, "build_conversation_state", nodes.buildConversationState, progress)
+      state = await applyNode(state, "search_scope_normalize", nodes.normalizeSearchScope, progress)
       state = await applyNode(state, "decontextualize_query", nodes.decontextualizeQuery, progress)
 
       if (state.toolIntent?.canAnswerFromQuestionOnly) {
@@ -621,6 +624,20 @@ export async function runChatOrchestration(deps: Dependencies, input: ChatInput,
     },
     searchFilters: input.searchFilters,
     searchScope: input.searchScope,
+    sessionDocumentContext: input.sessionDocumentContext
+      ? {
+          sessionId: input.sessionDocumentContext.sessionId,
+          activeTemporaryScopeIds: input.sessionDocumentContext.activeTemporaryScopeIds ?? [],
+          activeTemporaryDocumentIds: input.sessionDocumentContext.activeTemporaryDocumentIds ?? [],
+          previousCitationAnchors: input.sessionDocumentContext.previousCitationAnchors ?? [],
+          memorySourceChunkIds: input.sessionDocumentContext.memorySourceChunkIds ?? [],
+          disabledTemporaryScopeIds: input.sessionDocumentContext.disabledTemporaryScopeIds ?? [],
+          expiresAtByTemporaryScopeId: input.sessionDocumentContext.expiresAtByTemporaryScopeId ?? {},
+          updatedAt: input.sessionDocumentContext.updatedAt
+        }
+      : undefined,
+    removedTemporaryScopeIds: input.removedTemporaryScopeIds ?? [],
+    normalizedSearchScope: undefined,
     memoryCards: [],
     clues: [],
     expandedQueries: [],

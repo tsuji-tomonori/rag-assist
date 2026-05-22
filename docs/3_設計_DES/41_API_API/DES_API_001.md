@@ -163,7 +163,9 @@ npm run docs:openapi:check
 
 `conversationHistory` は現在の質問の照応、省略、条件引き継ぎを解決するための入力であり、回答根拠としては扱わない。回答根拠は `retrieved` から選ばれた `finalEvidence` と `computedFacts` に限定する。
 
-`searchScope` は質問ごとの検索境界である。`mode=groups` は利用者が参照できる指定資料グループだけを検索し、`includeTemporary=true` の場合は同一 `temporaryScopeId` の一時添付も追加で検索する。`temporaryScopeId` は UI の会話 ID と対応し、別チャットからは参照できない。
+`searchScope` は質問ごとの検索境界である。`mode=groups` は利用者が参照できる指定資料グループだけを検索し、`includeTemporary=true` の場合は同一 `temporaryScopeId` または `temporaryScopeIds` の一時添付も追加で検索する。`temporaryScopeId` は UI の会話 ID と対応し、別チャットからは参照できない。
+
+`sessionDocumentContext` は ChatSession 内の一時添付、前回 citation anchor、memory source chunk を通常フォルダ文書と分けて RAG pipeline に渡す任意入力である。`search_scope_normalize` は毎ターン `searchScope` と `sessionDocumentContext.activeTemporaryScopeIds` を合成し、削除済みまたは TTL 期限切れの temporary scope を除外する。前回 citation は assistant の過去回答本文ではなく source chunk anchor として再検索・再認可される。
 
 ## `POST /chat-runs`
 

@@ -12,6 +12,11 @@ export type ChatDocumentScope = {
   fileName: string
 } | null
 
+export type ActiveTemporaryAttachment = {
+  temporaryScopeId: string
+  fileName: string
+}
+
 type PendingClarificationFreeform = {
   originalQuestion: string
   seedText: string
@@ -145,6 +150,8 @@ export function useChatSession({
   const [pendingActivity, setPendingActivity] = useState<string | null>(null)
   const [pendingDebugQuestion, setPendingDebugQuestion] = useState<string | null>(null)
   const [pendingClarificationFreeform, setPendingClarificationFreeform] = useState<PendingClarificationFreeform | null>(null)
+  const [activeTemporaryAttachments, setActiveTemporaryAttachments] = useState<ActiveTemporaryAttachment[]>([])
+  const [disabledTemporaryScopeIds, setDisabledTemporaryScopeIds] = useState<string[]>([])
   const [conversationKey, setConversationKey] = useState(0)
   const [submitShortcut, setSubmitShortcut] = useState<SubmitShortcut>("enter")
   const canAsk = useMemo(
@@ -211,23 +218,35 @@ export function useChatSession({
     try {
       if (hasAttachment && file && canWriteDocuments) {
         await ingestDocument(file, { purpose: "chatAttachment", temporaryScopeId: currentConversationId })
+        setActiveTemporaryAttachments((prev) => uniqueTemporaryAttachments([
+          ...prev,
+          { temporaryScopeId: currentConversationId, fileName: file.name }
+        ]))
+        setDisabledTemporaryScopeIds((prev) => prev.filter((id) => id !== currentConversationId))
         setFile(null)
       }
 
       if (typedQuestion.length > 0) {
+        const activeTemporaryScopeIds = uniqueStrings([
+          ...activeTemporaryAttachments.map((attachment) => attachment.temporaryScopeId),
+          ...(hasAttachment ? [currentConversationId] : [])
+        ]).filter((id) => !disabledTemporaryScopeIds.includes(id))
+        const includeTemporary = activeTemporaryScopeIds.length > 0
         const searchScope = documentScope
           ? {
               mode: "documents" as const,
               documentIds: [documentScope.documentId],
-              includeTemporary: hasAttachment,
-              temporaryScopeId: hasAttachment ? currentConversationId : undefined
+              includeTemporary,
+              temporaryScopeId: activeTemporaryScopeIds[0],
+              temporaryScopeIds: activeTemporaryScopeIds
             }
-          : selectedGroupId !== "all" || hasAttachment
+          : selectedGroupId !== "all" || includeTemporary
             ? {
                 mode: selectedGroupId !== "all" ? "groups" as const : undefined,
                 groupIds: selectedGroupId !== "all" ? [selectedGroupId] : undefined,
-                includeTemporary: hasAttachment,
-                temporaryScopeId: hasAttachment ? currentConversationId : undefined
+                includeTemporary,
+                temporaryScopeId: activeTemporaryScopeIds[0],
+                temporaryScopeIds: activeTemporaryScopeIds
               }
             : undefined
         const started = await startChatRun({
@@ -239,6 +258,17 @@ export function useChatSession({
           topK: 6,
           minScore,
           searchScope,
+          sessionDocumentContext: {
+            sessionId: currentConversationId,
+            activeTemporaryScopeIds,
+            activeTemporaryDocumentIds: [],
+            previousCitationAnchors: [],
+            memorySourceChunkIds: [],
+            disabledTemporaryScopeIds,
+            expiresAtByTemporaryScopeId: {},
+            updatedAt: new Date().toISOString()
+          },
+          removedTemporaryScopeIds: disabledTemporaryScopeIds,
           includeDebug: debugMode && canReadDebugRuns
         })
         let result: ChatResponse | undefined
@@ -333,6 +363,8 @@ export function useChatSession({
     setPendingActivity(null)
     setPendingDebugQuestion(null)
     setPendingClarificationFreeform(null)
+    setActiveTemporaryAttachments([])
+    setDisabledTemporaryScopeIds([])
     setSelectedRunId("")
     setExpandedStepId(null)
     setAllExpanded(false)
@@ -355,6 +387,28 @@ export function useChatSession({
     onAsk,
     submitClarificationOption,
     startClarificationFreeform,
+    activeTemporaryAttachments,
+    removeTemporaryAttachment,
     newConversation
   }
+
+  function removeTemporaryAttachment(temporaryScopeId: string) {
+    setActiveTemporaryAttachments((prev) => prev.filter((attachment) => attachment.temporaryScopeId !== temporaryScopeId))
+    setDisabledTemporaryScopeIds((prev) => uniqueStrings([...prev, temporaryScopeId]))
+  }
+}
+
+function uniqueTemporaryAttachments(items: ActiveTemporaryAttachment[]): ActiveTemporaryAttachment[] {
+  const seen = new Set<string>()
+  const result: ActiveTemporaryAttachment[] = []
+  for (const item of items) {
+    if (seen.has(item.temporaryScopeId)) continue
+    seen.add(item.temporaryScopeId)
+    result.push(item)
+  }
+  return result
+}
+
+function uniqueStrings(items: string[]): string[] {
+  return [...new Set(items)]
 }

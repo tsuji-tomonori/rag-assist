@@ -87,6 +87,7 @@ export type SearchScope = {
   documentIds?: string[]
   includeTemporary?: boolean
   temporaryScopeId?: string
+  temporaryScopeIds?: string[]
 }
 
 export type DocumentGroup = {

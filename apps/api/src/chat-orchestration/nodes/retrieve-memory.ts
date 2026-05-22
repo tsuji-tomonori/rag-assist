@@ -110,9 +110,8 @@ function stringValue(value: JsonValue | undefined): string | undefined {
 function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | undefined): boolean {
   const metadata = manifest.metadata ?? {}
   const scopeType = stringValue(metadata.scopeType)
-  const temporaryMatch = Boolean(
-    scope?.includeTemporary && scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId
-  )
+  const temporaryScopeIds = new Set([...(scope?.temporaryScopeId ? [scope.temporaryScopeId] : []), ...(scope?.temporaryScopeIds ?? [])])
+  const temporaryMatch = Boolean(scope?.includeTemporary && temporaryScopeIds.has(stringValue(metadata.temporaryScopeId) ?? ""))
   if (!scope || scope.mode === "all" || !scope.mode) {
     if (scopeType !== "chat") return true
     return temporaryMatch
@@ -127,7 +126,7 @@ function manifestMatchesScope(manifest: DocumentManifest, scope: SearchScope | u
     return temporaryMatch || requested.has(manifest.documentId)
   }
   if (scope.mode === "temporary") {
-    return Boolean(scope.temporaryScopeId && stringValue(metadata.temporaryScopeId) === scope.temporaryScopeId)
+    return temporaryScopeIds.has(stringValue(metadata.temporaryScopeId) ?? "")
   }
   return true
 }

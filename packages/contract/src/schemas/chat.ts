@@ -170,7 +170,28 @@ export const SearchScopeSchema = z.object({
   groupIds: z.array(z.string().min(1)).max(20).optional(),
   documentIds: z.array(z.string().min(1)).max(100).optional(),
   includeTemporary: z.boolean().optional(),
-  temporaryScopeId: z.string().min(1).optional()
+  temporaryScopeId: z.string().min(1).optional(),
+  temporaryScopeIds: z.array(z.string().min(1)).max(20).optional()
+})
+
+export const PreviousCitationAnchorSchema = z.object({
+  documentId: z.string().optional(),
+  fileName: z.string().optional(),
+  chunkId: z.string().optional(),
+  pageStart: z.number().int().min(1).optional(),
+  pageEnd: z.number().int().min(1).optional(),
+  headingPath: z.array(z.string()).optional()
+})
+
+export const SessionDocumentContextSchema = z.object({
+  sessionId: z.string(),
+  activeTemporaryScopeIds: z.array(z.string()).default(() => []),
+  activeTemporaryDocumentIds: z.array(z.string()).default(() => []),
+  previousCitationAnchors: z.array(PreviousCitationAnchorSchema).default(() => []),
+  memorySourceChunkIds: z.array(z.string()).default(() => []),
+  disabledTemporaryScopeIds: z.array(z.string()).default(() => []),
+  expiresAtByTemporaryScopeId: z.record(z.string(), z.string()).default(() => ({})),
+  updatedAt: z.string().optional()
 })
 
 export const ChatRequestSchema = z.object({
@@ -189,7 +210,9 @@ export const ChatRequestSchema = z.object({
   includeDebug: z.boolean().optional(),
   debug: z.boolean().optional(),
   useMemory: z.boolean().optional(),
-  searchScope: SearchScopeSchema.optional()
+  searchScope: SearchScopeSchema.optional(),
+  sessionDocumentContext: SessionDocumentContextSchema.optional(),
+  removedTemporaryScopeIds: z.array(z.string()).optional()
 })
 
 export const CitationSchema = z.object({
@@ -361,6 +384,8 @@ export type ConversationCitationMemoryItem = z.output<typeof ConversationCitatio
 export type ConversationTaskState = z.output<typeof ConversationTaskStateSchema>
 export type ClarificationContext = z.output<typeof ClarificationContextSchema>
 export type SearchScope = z.output<typeof SearchScopeSchema>
+export type PreviousCitationAnchor = z.output<typeof PreviousCitationAnchorSchema>
+export type SessionDocumentContext = z.output<typeof SessionDocumentContextSchema>
 export type ChatRequest = z.input<typeof ChatRequestSchema>
 export type Citation = z.output<typeof CitationSchema>
 export type ClarificationOption = z.output<typeof ClarificationOptionSchema>

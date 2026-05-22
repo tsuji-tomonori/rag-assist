@@ -185,6 +185,15 @@ test("lexical index and search handle empty inputs, scoped manifests, artifact m
   )
   assert.equal(memoryIndex.diagnostics?.cache, "memory")
 
+  const multiTemporaryIndex = await getLexicalIndex(
+    deps,
+    { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] },
+    { tenantId: "tenant-a" },
+    { mode: "temporary", temporaryScopeIds: ["tmp-other", "tmp-1"], includeTemporary: true }
+  )
+  assert.equal(multiTemporaryIndex.docs.length, 1)
+  assert.equal(multiTemporaryIndex.docs[0]?.documentId, "active")
+
   const semanticDeps = {
     ...deps,
     evidenceVectorStore: {

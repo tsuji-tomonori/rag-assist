@@ -1,7 +1,7 @@
 import { useRef, type FormEvent } from "react"
 import type { SubmitShortcut } from "../../../app/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
-import type { ChatDocumentScope } from "../hooks/useChatSession.js"
+import type { ActiveTemporaryAttachment, ChatDocumentScope } from "../hooks/useChatSession.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingSpinner } from "../../../shared/components/LoadingSpinner.js"
 
@@ -11,6 +11,7 @@ export function ChatComposer({
   submitShortcut,
   modelId,
   file,
+  activeTemporaryAttachments,
   selectedGroupId,
   documentScope,
   documentGroups,
@@ -21,6 +22,7 @@ export function ChatComposer({
   onSetQuestion,
   onModelChange,
   onSetFile,
+  onRemoveTemporaryAttachment,
   onClearDocumentScope
 }: {
   onAsk: (event: FormEvent) => Promise<void>
@@ -28,6 +30,7 @@ export function ChatComposer({
   submitShortcut: SubmitShortcut
   modelId: string
   file: File | null
+  activeTemporaryAttachments: ActiveTemporaryAttachment[]
   selectedGroupId: string
   documentScope?: ChatDocumentScope
   documentGroups: DocumentGroup[]
@@ -38,6 +41,7 @@ export function ChatComposer({
   onSetQuestion: (value: string) => void
   onModelChange: (modelId: string) => void
   onSetFile: (file: File | null) => void
+  onRemoveTemporaryAttachment: (temporaryScopeId: string) => void
   onClearDocumentScope?: () => void
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -137,6 +141,20 @@ export function ChatComposer({
             <span className="file-chip">{`参照: ${selectedGroupName}`}</span>
           )}
           {file && <span className="file-chip">{`一時添付: ${file.name}`}</span>}
+          {activeTemporaryAttachments.map((attachment) => (
+            <span className="file-chip" key={attachment.temporaryScopeId}>
+              <span>{`一時添付: ${attachment.fileName}`}</span>
+              <button
+                type="button"
+                aria-label={`${attachment.fileName} の一時添付を解除`}
+                title="一時添付を解除"
+                disabled={loading}
+                onClick={() => onRemoveTemporaryAttachment(attachment.temporaryScopeId)}
+              >
+                <Icon name="close" />
+              </button>
+            </span>
+          ))}
         </div>
         <div className="composer-shortcut-toggle">
           <Icon name="settings" />

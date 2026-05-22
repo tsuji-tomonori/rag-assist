@@ -21,7 +21,7 @@ export async function chat(input: {
   maxIterations?: number
   includeDebug?: boolean
   searchScope?: SearchScope
-} & Pick<ChatRequest, "conversationHistory" | "memoryTopK">): Promise<ChatResponse> {
+} & Pick<ChatRequest, "conversationHistory" | "memoryTopK" | "sessionDocumentContext" | "removedTemporaryScopeIds">): Promise<ChatResponse> {
   return (await getOrpcClient()).chat.create(input)
 }
 
@@ -42,7 +42,7 @@ export async function startChatRun(input: {
   maxIterations?: number
   includeDebug?: boolean
   searchScope?: SearchScope
-} & Pick<ChatRequest, "conversationHistory" | "memoryTopK">): Promise<ChatRunStartResponse> {
+} & Pick<ChatRequest, "conversationHistory" | "memoryTopK" | "sessionDocumentContext" | "removedTemporaryScopeIds">): Promise<ChatRunStartResponse> {
   return (await getOrpcClient()).chat.startRun(input)
 }
 

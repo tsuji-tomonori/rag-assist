@@ -29,6 +29,26 @@ export type ConversationInput = {
   }
 }
 
+export type PreviousCitationAnchor = {
+  documentId?: string
+  fileName?: string
+  chunkId?: string
+  pageStart?: number
+  pageEnd?: number
+  headingPath?: string[]
+}
+
+export type SessionDocumentContext = {
+  sessionId: string
+  activeTemporaryScopeIds?: string[]
+  activeTemporaryDocumentIds?: string[]
+  previousCitationAnchors?: PreviousCitationAnchor[]
+  memorySourceChunkIds?: string[]
+  disabledTemporaryScopeIds?: string[]
+  expiresAtByTemporaryScopeId?: Record<string, string>
+  updatedAt?: string
+}
+
 export type ChatInput = {
   question: string
   conversationHistory?: ConversationHistoryTurn[]
@@ -51,6 +71,8 @@ export type ChatInput = {
   maxIterations?: number
   searchFilters?: SearchInput["filters"]
   searchScope?: SearchScope
+  sessionDocumentContext?: SessionDocumentContext
+  removedTemporaryScopeIds?: string[]
   asOfDate?: string
   asOfDateSource?: "benchmark" | "test"
 }

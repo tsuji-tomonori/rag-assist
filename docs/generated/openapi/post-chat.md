@@ -85,6 +85,23 @@ Media type: `application/json`
 | `searchScope.documentIds` | `array<string>` | no | `data.searchScope.documentIds` の値。項目名は document ids を表します。 | maxItems=100 |
 | `searchScope.includeTemporary` | `boolean` | no | `data.searchScope.includeTemporary` の値。項目名は include temporary を表します。 | - |
 | `searchScope.temporaryScopeId` | `string` | no | `data.searchScope.temporaryScopeId` の値。項目名は temporary scope id を表します。 | minLength=1 |
+| `searchScope.temporaryScopeIds` | `array<string>` | no | `data.searchScope.temporaryScopeIds` の値。項目名は temporary scope ids を表します。 | maxItems=20 |
+| `sessionDocumentContext` | `object` | no | `data.sessionDocumentContext` の値。項目名は session document context を表します。 | - |
+| `sessionDocumentContext.sessionId` | `string` | yes | `data.sessionDocumentContext.sessionId` の値。項目名は session id を表します。 | - |
+| `sessionDocumentContext.activeTemporaryScopeIds` | `array<string>` | no | `data.sessionDocumentContext.activeTemporaryScopeIds` の値。項目名は active temporary scope ids を表します。 | - |
+| `sessionDocumentContext.activeTemporaryDocumentIds` | `array<string>` | no | `data.sessionDocumentContext.activeTemporaryDocumentIds` の値。項目名は active temporary document ids を表します。 | - |
+| `sessionDocumentContext.previousCitationAnchors` | `array<object>` | no | `data.sessionDocumentContext.previousCitationAnchors` の値。項目名は previous citation anchors を表します。 | - |
+| `sessionDocumentContext.previousCitationAnchors[].documentId` | `string` | no | 対象文書を一意に識別する ID。 | - |
+| `sessionDocumentContext.previousCitationAnchors[].fileName` | `string` | no | 登録またはアップロードするファイル名。 | - |
+| `sessionDocumentContext.previousCitationAnchors[].chunkId` | `string` | no | `data.sessionDocumentContext.previousCitationAnchors[].chunkId` の値。項目名は chunk id を表します。 | - |
+| `sessionDocumentContext.previousCitationAnchors[].pageStart` | `integer` | no | `data.sessionDocumentContext.previousCitationAnchors[].pageStart` の値。項目名は page start を表します。 | minimum=1 |
+| `sessionDocumentContext.previousCitationAnchors[].pageEnd` | `integer` | no | `data.sessionDocumentContext.previousCitationAnchors[].pageEnd` の値。項目名は page end を表します。 | minimum=1 |
+| `sessionDocumentContext.previousCitationAnchors[].headingPath` | `array<string>` | no | `data.sessionDocumentContext.previousCitationAnchors[].headingPath` の値。項目名は heading path を表します。 | - |
+| `sessionDocumentContext.memorySourceChunkIds` | `array<string>` | no | `data.sessionDocumentContext.memorySourceChunkIds` の値。項目名は memory source chunk ids を表します。 | - |
+| `sessionDocumentContext.disabledTemporaryScopeIds` | `array<string>` | no | `data.sessionDocumentContext.disabledTemporaryScopeIds` の値。項目名は disabled temporary scope ids を表します。 | - |
+| `sessionDocumentContext.expiresAtByTemporaryScopeId` | `object` | no | `data.sessionDocumentContext.expiresAtByTemporaryScopeId` の値。項目名は expires at by temporary scope id を表します。 | - |
+| `sessionDocumentContext.updatedAt` | `string` | no | レコードを最後に更新した日時。 | - |
+| `removedTemporaryScopeIds` | `array<string>` | no | `data.removedTemporaryScopeIds` の値。項目名は removed temporary scope ids を表します。 | - |
 
 ## Authorization
 

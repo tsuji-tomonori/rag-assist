@@ -257,6 +257,8 @@ describe("useAppShellState", () => {
       onAsk: chatMock.onAsk,
       submitClarificationOption: chatMock.submitClarificationOption,
       startClarificationFreeform: chatMock.startClarificationFreeform,
+      activeTemporaryAttachments: [],
+      removeTemporaryAttachment: vi.fn(),
       newConversation: chatMock.newConversation
     }))
   })

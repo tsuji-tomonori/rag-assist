@@ -208,6 +208,16 @@ const ConversationCitationSchema = z.object({
   text: z.string().optional()
 })
 
+const PreviousCitationAnchorSchema = ConversationCitationSchema.pick({
+  documentId: true,
+  fileName: true,
+  chunkId: true,
+  pageStart: true,
+  pageEnd: true
+}).extend({
+  headingPath: z.array(z.string()).optional()
+})
+
 export const ConversationTurnSchema = z.object({
   role: z.enum(["user", "assistant"]),
   text: z.string(),
@@ -232,7 +242,8 @@ export const ConversationInputSchema = z.object({
     activeEntities: z.array(z.string()).optional(),
     activeDocuments: z.array(z.string()).optional(),
     activeTopics: z.array(z.string()).optional(),
-    constraints: z.array(z.string()).optional()
+    constraints: z.array(z.string()).optional(),
+    disabledTemporaryScopeIds: z.array(z.string()).optional()
   }).optional()
 })
 
@@ -245,6 +256,7 @@ export const ConversationStateSchema = z.object({
   activeTopics: z.array(z.string()).default(() => []),
   constraints: z.array(z.string()).default(() => []),
   previousCitations: z.array(ConversationCitationSchema).default(() => []),
+  previousCitationAnchors: z.array(PreviousCitationAnchorSchema).default(() => []),
   previousCitationCount: z.number().int().nonnegative().default(0),
   turnDependency: z.string().default("standalone")
 })
@@ -256,6 +268,17 @@ export const DecontextualizedQuerySchema = z.object({
   carriedDocuments: z.array(z.string()).default(() => []),
   turnDependency: z.string().default("standalone"),
   shouldUsePreviousCitations: z.boolean().default(false)
+})
+
+export const SessionDocumentContextSchema = z.object({
+  sessionId: z.string(),
+  activeTemporaryScopeIds: z.array(z.string()).default(() => []),
+  activeTemporaryDocumentIds: z.array(z.string()).default(() => []),
+  previousCitationAnchors: z.array(PreviousCitationAnchorSchema).default(() => []),
+  memorySourceChunkIds: z.array(z.string()).default(() => []),
+  disabledTemporaryScopeIds: z.array(z.string()).default(() => []),
+  expiresAtByTemporaryScopeId: z.record(z.string(), z.string()).default(() => ({})),
+  updatedAt: z.string().optional()
 })
 
 export const DebugStepSchema = z.object({
@@ -292,7 +315,25 @@ const SearchScopeSchema = z.object({
   groupIds: z.array(z.string()).optional(),
   documentIds: z.array(z.string()).optional(),
   includeTemporary: z.boolean().optional(),
-  temporaryScopeId: z.string().optional()
+  temporaryScopeId: z.string().optional(),
+  temporaryScopeIds: z.array(z.string()).optional()
+})
+
+const NormalizedSearchScopeSchema = z.object({
+  baseScope: SearchScopeSchema.default({ mode: "all" }),
+  mode: z.enum(["all", "groups", "documents", "temporary"]).optional(),
+  groupIds: z.array(z.string()).default(() => []),
+  documentIds: z.array(z.string()).default(() => []),
+  includeTemporary: z.boolean().default(false),
+  temporaryScopeId: z.string().optional(),
+  temporaryScopeIds: z.array(z.string()).default(() => []),
+  previousCitationAnchors: z.array(PreviousCitationAnchorSchema).default(() => []),
+  excludedTemporaryScopes: z
+    .array(z.object({
+      temporaryScopeId: z.string(),
+      reason: z.enum(["removed", "disabled", "expired", "session_mismatch"])
+    }))
+    .default(() => [])
 })
 
 const SearchBudgetSchema = z.object({
@@ -566,10 +607,13 @@ export const ChatOrchestrationStateSchema = z.object({
   strictGrounded: z.boolean().default(true),
   clarificationContext: ClarificationContextSchema.optional(),
   conversation: ConversationInputSchema.optional(),
+  sessionDocumentContext: SessionDocumentContextSchema.optional(),
+  removedTemporaryScopeIds: z.array(z.string()).default(() => []),
   conversationState: ConversationStateSchema.optional(),
   decontextualizedQuery: DecontextualizedQuerySchema.optional(),
   searchFilters: SearchFiltersSchema.optional(),
   searchScope: SearchScopeSchema.optional(),
+  normalizedSearchScope: NormalizedSearchScopeSchema.optional(),
 
   iteration: z.number().int().min(0).default(0),
   referenceQueue: z.array(ReferenceTargetSchema).default(() => []),
@@ -699,6 +743,9 @@ export type ClarificationContext = z.infer<typeof ClarificationContextSchema>
 export type ConversationInputState = z.infer<typeof ConversationInputSchema>
 export type ConversationState = z.infer<typeof ConversationStateSchema>
 export type DecontextualizedQuery = z.infer<typeof DecontextualizedQuerySchema>
+export type PreviousCitationAnchor = z.infer<typeof PreviousCitationAnchorSchema>
+export type SessionDocumentContext = z.infer<typeof SessionDocumentContextSchema>
+export type NormalizedSearchScope = z.infer<typeof NormalizedSearchScopeSchema>
 
 export function requiredFactNecessity(fact: RequiredFact): RequiredFactNecessity {
   return fact.necessity ?? "primary"

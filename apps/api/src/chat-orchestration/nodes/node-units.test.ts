@@ -15,6 +15,7 @@ import { createRetrievalEvaluatorNode, retrievalEvaluator } from "./retrieval-ev
 import { createRetrieveMemoryNode } from "./retrieve-memory.js"
 import { normalizeQuery } from "./normalize-query.js"
 import { rerankChunks } from "./rerank-chunks.js"
+import { normalizeSearchScope, normalizeSearchScopeNode } from "./search-scope-normalize.js"
 import { createSearchEvidenceNode } from "./search-evidence.js"
 import { createSufficientContextGateNode } from "./sufficient-context-gate.js"
 import { validateCitations } from "./validate-citations.js"
@@ -370,6 +371,232 @@ test("conversation state decontextualizes follow-up questions without using expe
   assert.match(rewriteUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /経費精算/)
   assert.ok(rewriteUpdate.decontextualizedQuery?.retrievalQueries.some((query) => query.includes("handbook.md")))
   assert.ok((rewriteUpdate.decontextualizedQuery?.retrievalQueries.length ?? 0) <= 3)
+})
+
+test("normalizeSearchScope_inheritsActiveTemporaryScope", () => {
+  const normalized = normalizeSearchScope({
+    sessionId: "conv-1",
+    sessionDefaultScope: { mode: "all" },
+    sessionDocumentContext: {
+      sessionId: "conv-1",
+      activeTemporaryScopeIds: ["temp_1"],
+      activeTemporaryDocumentIds: [],
+      previousCitationAnchors: [],
+      memorySourceChunkIds: [],
+      disabledTemporaryScopeIds: [],
+      expiresAtByTemporaryScopeId: {},
+      updatedAt: "2026-05-22T00:00:00.000Z"
+    },
+    removedTemporaryScopeIds: [],
+    now: new Date("2026-05-22T00:00:00.000Z")
+  })
+
+  assert.deepEqual(normalized.temporaryScopeIds, ["temp_1"])
+  assert.equal(normalized.includeTemporary, true)
+})
+
+test("normalizeSearchScope_keepsTemporaryWhenBaseScopeIsAll", () => {
+  const normalized = normalizeSearchScope({
+    sessionId: "conv-1",
+    userSelectedScope: { mode: "all" },
+    sessionDefaultScope: { mode: "all" },
+    sessionDocumentContext: {
+      sessionId: "conv-1",
+      activeTemporaryScopeIds: ["temp_1"],
+      activeTemporaryDocumentIds: [],
+      previousCitationAnchors: [],
+      memorySourceChunkIds: [],
+      disabledTemporaryScopeIds: [],
+      expiresAtByTemporaryScopeId: {},
+      updatedAt: "2026-05-22T00:00:00.000Z"
+    },
+    removedTemporaryScopeIds: [],
+    now: new Date("2026-05-22T00:00:00.000Z")
+  })
+
+  assert.equal(normalized.baseScope.mode, "all")
+  assert.deepEqual(normalized.temporaryScopeIds, ["temp_1"])
+})
+
+test("normalizeSearchScope_excludesRemovedTemporaryScope", () => {
+  const normalized = normalizeSearchScope({
+    sessionId: "conv-1",
+    sessionDefaultScope: { mode: "all" },
+    sessionDocumentContext: {
+      sessionId: "conv-1",
+      activeTemporaryScopeIds: ["temp_1"],
+      activeTemporaryDocumentIds: [],
+      previousCitationAnchors: [],
+      memorySourceChunkIds: [],
+      disabledTemporaryScopeIds: [],
+      expiresAtByTemporaryScopeId: {},
+      updatedAt: "2026-05-22T00:00:00.000Z"
+    },
+    removedTemporaryScopeIds: ["temp_1"],
+    now: new Date("2026-05-22T00:00:00.000Z")
+  })
+
+  assert.deepEqual(normalized.temporaryScopeIds, [])
+  assert.deepEqual(normalized.excludedTemporaryScopes, [{ temporaryScopeId: "temp_1", reason: "removed" }])
+})
+
+test("normalizeSearchScope_excludesExpiredTemporaryScope", () => {
+  const normalized = normalizeSearchScope({
+    sessionId: "conv-1",
+    sessionDefaultScope: { mode: "all" },
+    sessionDocumentContext: {
+      sessionId: "conv-1",
+      activeTemporaryScopeIds: ["temp_1"],
+      activeTemporaryDocumentIds: [],
+      previousCitationAnchors: [],
+      memorySourceChunkIds: [],
+      disabledTemporaryScopeIds: [],
+      expiresAtByTemporaryScopeId: { temp_1: "2026-05-21T23:59:59.000Z" },
+      updatedAt: "2026-05-22T00:00:00.000Z"
+    },
+    removedTemporaryScopeIds: [],
+    now: new Date("2026-05-22T00:00:00.000Z")
+  })
+
+  assert.deepEqual(normalized.temporaryScopeIds, [])
+  assert.deepEqual(normalized.excludedTemporaryScopes, [{ temporaryScopeId: "temp_1", reason: "expired" }])
+})
+
+test("temporaryScope_isNotVisibleAcrossDifferentSession", () => {
+  const normalized = normalizeSearchScope({
+    sessionId: "conv-b",
+    sessionDefaultScope: { mode: "all" },
+    sessionDocumentContext: {
+      sessionId: "conv-a",
+      activeTemporaryScopeIds: ["temp_1"],
+      activeTemporaryDocumentIds: [],
+      previousCitationAnchors: [],
+      memorySourceChunkIds: [],
+      disabledTemporaryScopeIds: [],
+      expiresAtByTemporaryScopeId: {},
+      updatedAt: "2026-05-22T00:00:00.000Z"
+    },
+    removedTemporaryScopeIds: [],
+    now: new Date("2026-05-22T00:00:00.000Z")
+  })
+
+  assert.deepEqual(normalized.temporaryScopeIds, [])
+})
+
+test("temporaryScope_requiresSameSessionId", () => {
+  const normalized = normalizeSearchScope({
+    sessionId: "conv-b",
+    userSelectedScope: { mode: "temporary", temporaryScopeId: "temp_1", includeTemporary: true },
+    sessionDefaultScope: { mode: "all" },
+    sessionDocumentContext: {
+      sessionId: "conv-a",
+      activeTemporaryScopeIds: ["temp_1"],
+      activeTemporaryDocumentIds: [],
+      previousCitationAnchors: [],
+      memorySourceChunkIds: [],
+      disabledTemporaryScopeIds: [],
+      expiresAtByTemporaryScopeId: {},
+      updatedAt: "2026-05-22T00:00:00.000Z"
+    },
+    removedTemporaryScopeIds: [],
+    now: new Date("2026-05-22T00:00:00.000Z")
+  })
+
+  assert.deepEqual(normalized.temporaryScopeIds, [])
+  assert.deepEqual(normalized.excludedTemporaryScopes, [{ temporaryScopeId: "temp_1", reason: "session_mismatch" }])
+})
+
+test("buildConversationState_collectsPreviousCitationAnchors", async () => {
+  const conversationUpdate = await buildConversationState(state({
+    question: "定義は",
+    conversation: {
+      conversationId: "conv-rag",
+      turns: [
+        { role: "user", text: "RAGとは？" },
+        {
+          role: "assistant",
+          text: "RAGは検索拡張生成です。",
+          citations: [{ documentId: "doc_1", fileName: "rag.pdf", chunkId: "chunk_1", pageStart: 3, pageEnd: 3 }]
+        }
+      ]
+    }
+  }))
+
+  assert.deepEqual(conversationUpdate.conversationState?.previousCitationAnchors, [{
+    documentId: "doc_1",
+    fileName: "rag.pdf",
+    chunkId: "chunk_1",
+    pageStart: 3,
+    pageEnd: 3
+  }])
+})
+
+test("decontextualizeQuery_rewritesFollowUpUsingActiveTopic", async () => {
+  const queryUpdate = await decontextualizeQuery(state({
+    question: "定義は",
+    conversationState: {
+      activeEntities: [],
+      activeDocuments: [],
+      activeTopics: ["RAG"],
+      constraints: [],
+      previousCitations: [],
+      previousCitationAnchors: [],
+      previousCitationCount: 0,
+      turnDependency: "coreference"
+    }
+  }))
+
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /RAG/)
+  assert.match(queryUpdate.decontextualizedQuery?.standaloneQuestion ?? "", /定義/)
+})
+
+test("decontextualizeQuery_usesPreviousCitationForShortFollowUp", async () => {
+  const queryUpdate = await decontextualizeQuery(state({
+    question: "それの定義は",
+    conversationState: {
+      activeEntities: ["RAG"],
+      activeDocuments: ["rag.pdf"],
+      activeTopics: ["RAG"],
+      constraints: [],
+      previousCitations: [{ documentId: "doc_1", fileName: "rag.pdf", chunkId: "chunk_1" }],
+      previousCitationAnchors: [{ documentId: "doc_1", fileName: "rag.pdf", chunkId: "chunk_1" }],
+      previousCitationCount: 1,
+      turnDependency: "coreference"
+    }
+  }))
+
+  assert.ok(queryUpdate.decontextualizedQuery?.retrievalQueries.some((query) => query.includes("rag.pdf chunk_1")))
+})
+
+test("debugTrace_recordsScopeNormalization", async () => {
+  const update = await tracedNode("search_scope_normalize", normalizeSearchScopeNode)(state({
+    question: "RAGの定義は",
+    conversation: { conversationId: "conv-1", turns: [] },
+    sessionDocumentContext: {
+      sessionId: "conv-1",
+      activeTemporaryScopeIds: ["temp_1"],
+      activeTemporaryDocumentIds: [],
+      previousCitationAnchors: [{ documentId: "doc_1", chunkId: "chunk_1" }],
+      memorySourceChunkIds: [],
+      disabledTemporaryScopeIds: [],
+      expiresAtByTemporaryScopeId: {},
+      updatedAt: "2026-05-22T00:00:00.000Z"
+    },
+    conversationState: {
+      activeEntities: [],
+      activeDocuments: [],
+      activeTopics: [],
+      constraints: [],
+      previousCitations: [{ documentId: "doc_1", chunkId: "chunk_1" }],
+      previousCitationAnchors: [{ documentId: "doc_1", chunkId: "chunk_1" }],
+      previousCitationCount: 1,
+      turnDependency: "coreference"
+    },
+    temporalContext: { nowIso: "2026-05-22T00:00:00.000Z", today: "2026-05-22", timezone: "Asia/Tokyo", source: "test" }
+  }))
+
+  assert.match(Array.isArray(update.trace) ? update.trace[0]?.summary ?? "" : update.trace?.summary ?? "", /temporaryScopeCount=1/)
+  assert.match(Array.isArray(update.trace) ? update.trace[0]?.summary ?? "" : update.trace?.summary ?? "", /previousCitationAnchorCount=1/)
 })
 
 test("classification answers require actual requirements classification terms", async () => {

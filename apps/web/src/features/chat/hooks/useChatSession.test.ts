@@ -429,8 +429,13 @@ describe("useChatSession", () => {
         mode: "groups",
         groupIds: ["group-1"],
         includeTemporary: true,
-        temporaryScopeId: "conv-1"
-      }
+        temporaryScopeId: "conv-1",
+        temporaryScopeIds: ["conv-1"]
+      },
+      sessionDocumentContext: expect.objectContaining({
+        sessionId: "conv-1",
+        activeTemporaryScopeIds: ["conv-1"]
+      })
     }))
   })
 
@@ -463,8 +468,96 @@ describe("useChatSession", () => {
         mode: "documents",
         documentIds: ["doc-1"],
         includeTemporary: false,
-        temporaryScopeId: undefined
+        temporaryScopeId: undefined,
+        temporaryScopeIds: []
       }
+    }))
+  })
+
+  it("composer_showsTemporaryAttachmentChipAfterFirstAnswer", async () => {
+    const file = new File(["RAGの定義"], "rag_engineer_guide.pdf", { type: "application/pdf" })
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    chatApiMock.streamChatRunEvents.mockImplementation(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "RAGの定義です。",
+          isAnswerable: true,
+          citations: [],
+          retrieved: []
+        }
+      })
+    })
+    const { result } = renderHook(() => useChatSession(createProps({
+      file,
+      setFile: vi.fn(),
+      ingestDocument: vi.fn(),
+      currentConversationId: "conv-1"
+    })))
+
+    act(() => result.current.setQuestion("RAGとは？"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(result.current.activeTemporaryAttachments).toEqual([{ temporaryScopeId: "conv-1", fileName: "rag_engineer_guide.pdf" }])
+
+    act(() => result.current.setQuestion("RAGの定義は"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(chatApiMock.startChatRun).toHaveBeenLastCalledWith(expect.objectContaining({
+      searchScope: expect.objectContaining({
+        includeTemporary: true,
+        temporaryScopeIds: ["conv-1"]
+      }),
+      sessionDocumentContext: expect.objectContaining({
+        activeTemporaryScopeIds: ["conv-1"]
+      })
+    }))
+  })
+
+  it("composer_removeTemporaryAttachmentUpdatesSessionContext", async () => {
+    const file = new File(["RAGの定義"], "rag_engineer_guide.pdf", { type: "application/pdf" })
+    chatApiMock.startChatRun.mockResolvedValue({ runId: "chat-run-1", status: "queued", eventsPath: "/chat-runs/chat-run-1/events" })
+    chatApiMock.streamChatRunEvents.mockImplementation(async (_runId, onEvent) => {
+      onEvent({
+        id: 1,
+        type: "final",
+        data: {
+          answer: "RAGの定義です。",
+          isAnswerable: true,
+          citations: [],
+          retrieved: []
+        }
+      })
+    })
+    const { result } = renderHook(() => useChatSession(createProps({
+      file,
+      ingestDocument: vi.fn(),
+      currentConversationId: "conv-1"
+    })))
+
+    act(() => result.current.setQuestion("RAGとは？"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    act(() => result.current.removeTemporaryAttachment("conv-1"))
+    act(() => result.current.setQuestion("RAGの定義は"))
+    await act(async () => {
+      await result.current.onAsk({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(chatApiMock.startChatRun).toHaveBeenLastCalledWith(expect.objectContaining({
+      searchScope: undefined,
+      removedTemporaryScopeIds: ["conv-1"],
+      sessionDocumentContext: expect.objectContaining({
+        disabledTemporaryScopeIds: ["conv-1"],
+        activeTemporaryScopeIds: []
+      })
     }))
   })
 })

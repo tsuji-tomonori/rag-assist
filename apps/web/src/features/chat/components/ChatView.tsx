@@ -3,7 +3,7 @@ import type { SubmitShortcut } from "../../../app/types.js"
 import type { createQuestion } from "../../questions/api/questionsApi.js"
 import type { DebugTrace } from "../../debug/types.js"
 import type { DocumentGroup } from "../../documents/types.js"
-import type { ChatDocumentScope } from "../hooks/useChatSession.js"
+import type { ActiveTemporaryAttachment, ChatDocumentScope } from "../hooks/useChatSession.js"
 import type { HumanQuestion } from "../../questions/types.js"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { DebugPanel } from "../../debug/components/DebugPanel.js"
@@ -25,6 +25,7 @@ export function ChatView({
   canWriteDocuments,
   modelId,
   file,
+  activeTemporaryAttachments,
   selectedGroupId,
   documentScope,
   documentGroups,
@@ -44,6 +45,7 @@ export function ChatView({
   onSetQuestion,
   onModelChange,
   onSetFile,
+  onRemoveTemporaryAttachment,
   onClearDocumentScope,
   onCreateQuestion,
   onResolveQuestion,
@@ -62,6 +64,7 @@ export function ChatView({
   canWriteDocuments: boolean
   modelId: string
   file: File | null
+  activeTemporaryAttachments: ActiveTemporaryAttachment[]
   selectedGroupId: string
   documentScope?: ChatDocumentScope
   documentGroups: DocumentGroup[]
@@ -81,6 +84,7 @@ export function ChatView({
   onSetQuestion: (value: string) => void
   onModelChange: (modelId: string) => void
   onSetFile: (file: File | null) => void
+  onRemoveTemporaryAttachment: (temporaryScopeId: string) => void
   onClearDocumentScope?: () => void
   onCreateQuestion: (messageIndex: number, message: Message, input: Parameters<typeof createQuestion>[0]) => Promise<void>
   onResolveQuestion: (questionId: string) => Promise<void>
@@ -114,6 +118,7 @@ export function ChatView({
           submitShortcut={submitShortcut}
           modelId={modelId}
           file={file}
+          activeTemporaryAttachments={activeTemporaryAttachments}
           selectedGroupId={selectedGroupId}
           documentScope={documentScope}
           documentGroups={documentGroups}
@@ -124,6 +129,7 @@ export function ChatView({
           onSetQuestion={onSetQuestion}
           onModelChange={onModelChange}
           onSetFile={onSetFile}
+          onRemoveTemporaryAttachment={onRemoveTemporaryAttachment}
           onClearDocumentScope={onClearDocumentScope}
         />
         <ChatRunIdBar

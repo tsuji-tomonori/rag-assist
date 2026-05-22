@@ -741,7 +741,28 @@ export const SearchScopeSchema = z.object({
   groupIds: z.array(z.string().min(1)).max(20).optional(),
   documentIds: z.array(z.string().min(1)).max(100).optional(),
   includeTemporary: z.boolean().optional(),
-  temporaryScopeId: z.string().min(1).optional()
+  temporaryScopeId: z.string().min(1).optional(),
+  temporaryScopeIds: z.array(z.string().min(1)).max(20).optional()
+})
+
+const PreviousCitationAnchorSchema = z.object({
+  documentId: z.string().optional(),
+  fileName: z.string().optional(),
+  chunkId: z.string().optional(),
+  pageStart: z.number().int().min(1).optional(),
+  pageEnd: z.number().int().min(1).optional(),
+  headingPath: z.array(z.string()).optional()
+})
+
+const SessionDocumentContextSchema = z.object({
+  sessionId: z.string(),
+  activeTemporaryScopeIds: z.array(z.string()).default(() => []),
+  activeTemporaryDocumentIds: z.array(z.string()).default(() => []),
+  previousCitationAnchors: z.array(PreviousCitationAnchorSchema).default(() => []),
+  memorySourceChunkIds: z.array(z.string()).default(() => []),
+  disabledTemporaryScopeIds: z.array(z.string()).default(() => []),
+  expiresAtByTemporaryScopeId: z.record(z.string(), z.string()).default(() => ({})),
+  updatedAt: z.string().optional()
 })
 
 export const ChatRequestSchema = z.object({
@@ -765,7 +786,9 @@ export const ChatRequestSchema = z.object({
   includeDebug: z.boolean().optional().openapi({ example: false }),
   debug: z.boolean().optional().openapi({ example: false }),
   useMemory: z.boolean().optional().openapi({ example: true }),
-  searchScope: SearchScopeSchema.optional()
+  searchScope: SearchScopeSchema.optional(),
+  sessionDocumentContext: SessionDocumentContextSchema.optional(),
+  removedTemporaryScopeIds: z.array(z.string()).optional()
 })
 
 export const SearchRequestSchema = z.object({
