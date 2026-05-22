@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "benchmark.permission_fixture.v1",
+  "fixtureId": "leave_policy_benchmark_operator",
+  "principalType": "service_user",
+  "allowedScopes": ["scope_bench_leave_policy_v1"],
+  "allowedActions": ["benchmark:query", "benchmark:seed_corpus"],
+  "deniedActions": ["benchmark:promote_result"]
+}

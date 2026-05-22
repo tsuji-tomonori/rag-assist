@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "benchmark.permission_fixture.v1",
+  "fixtureId": "no_document_access",
+  "principalType": "service_user",
+  "allowedScopes": [],
+  "deniedScopes": ["benchmark_scope"]
+}

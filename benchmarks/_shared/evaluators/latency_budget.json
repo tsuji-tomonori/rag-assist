@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "benchmark.evaluator.v1",
+  "evaluator": "latency_budget",
+  "description": "case latency と run p95 が promotion gate の閾値内かを判定する。"
+}

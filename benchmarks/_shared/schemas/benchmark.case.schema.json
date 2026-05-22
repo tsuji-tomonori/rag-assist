@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rag-assist.local/schemas/benchmark.case.schema.json",
+  "title": "Benchmark case",
+  "type": "object",
+  "required": ["caseId", "useCase", "question", "answerUnavailableExpected", "judge", "tags"],
+  "additionalProperties": true,
+  "properties": {
+    "caseId": { "type": "string", "minLength": 1 },
+    "suiteId": { "type": "string", "minLength": 1 },
+    "useCase": {
+      "enum": ["internal_qa", "long_pdf_qa", "multiturn_chat", "design_drawing_qa", "knowledge_quality", "parse_quality", "async_agent_task"]
+    },
+    "question": { "type": "string", "minLength": 1 },
+    "turns": { "type": "array" },
+    "searchScope": { "type": "object" },
+    "expectedAnswer": { "type": ["string", "null"] },
+    "expectedDocumentKeys": { "type": "array", "items": { "type": "string" } },
+    "expectedPages": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+    "expectedChunkIds": { "type": "array", "items": { "type": "string" } },
+    "answerUnavailableExpected": { "type": "boolean" },
+    "expectedUnavailableReason": { "type": "string" },
+    "judge": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } }
+  }
+}

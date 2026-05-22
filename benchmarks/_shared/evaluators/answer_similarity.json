@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "benchmark.evaluator.v1",
+  "evaluator": "answer_similarity",
+  "description": "期待回答と生成回答の一致度を判定する。"
+}

@@ -1,0 +1,5 @@
+{
+  "schemaVersion": "benchmark.permission_fixture.v1",
+  "fixtureId": "read_allowed",
+  "allowedScopes": ["scope_bench_leave_policy_v1"]
+}

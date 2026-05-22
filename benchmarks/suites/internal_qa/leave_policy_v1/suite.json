@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "benchmark.suite.v1",
+  "suiteId": "leave_policy_v1",
+  "useCase": "internal_qa",
+  "name": "社内QA: 休暇制度 v1",
+  "description": "休暇制度に関するRAG回答、citation、answer_unavailableを評価する。",
+  "status": "active",
+  "owners": ["rag-benchmark-admin"],
+  "tags": ["internal_qa", "leave", "policy"]
+}

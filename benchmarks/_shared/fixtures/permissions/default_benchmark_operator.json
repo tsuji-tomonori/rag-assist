@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "benchmark.permission_fixture.v1",
+  "fixtureId": "default_benchmark_operator",
+  "principalType": "service_user",
+  "allowedScopes": ["benchmark_scope"],
+  "deniedScopes": []
+}

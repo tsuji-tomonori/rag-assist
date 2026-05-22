@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "benchmark.corpus.v1",
+  "suiteId": "leave_policy_v1",
+  "corpusVersion": "2026-05-21.001",
+  "benchmarkScope": {
+    "scopeType": "benchmark",
+    "folderLabel": "bench/internal_qa/leave_policy_v1"
+  },
+  "documents": [
+    {
+      "documentKey": "employee_handbook",
+      "filePath": "./corpus/pdfs/employee_handbook.pdf",
+      "title": "社員ハンドブック",
+      "mimeType": "application/pdf",
+      "expectedPageCount": 2,
+      "tags": ["handbook", "leave"]
+    },
+    {
+      "documentKey": "leave_policy",
+      "filePath": "./corpus/pdfs/leave_policy.pdf",
+      "title": "休暇制度規程",
+      "mimeType": "application/pdf",
+      "expectedPageCount": 2,
+      "tags": ["leave", "policy"]
+    }
+  ]
+}

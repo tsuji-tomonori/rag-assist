@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rag-assist.local/schemas/benchmark.corpus.schema.json",
+  "title": "Benchmark corpus",
+  "type": "object",
+  "required": ["schemaVersion", "suiteId", "corpusVersion", "benchmarkScope", "documents"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": "benchmark.corpus.v1" },
+    "suiteId": { "type": "string", "minLength": 1 },
+    "corpusVersion": { "type": "string", "minLength": 1 },
+    "benchmarkScope": {
+      "type": "object",
+      "required": ["scopeType", "folderLabel"],
+      "additionalProperties": false,
+      "properties": {
+        "scopeType": { "const": "benchmark" },
+        "folderLabel": { "type": "string", "minLength": 1 }
+      }
+    },
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["documentKey", "filePath", "title", "mimeType", "tags"],
+        "additionalProperties": false,
+        "properties": {
+          "documentKey": { "type": "string", "minLength": 1 },
+          "filePath": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "mimeType": { "type": "string", "minLength": 1 },
+          "expectedPageCount": { "type": "integer", "minimum": 1 },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

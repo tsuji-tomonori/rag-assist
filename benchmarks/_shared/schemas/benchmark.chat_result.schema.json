@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rag-assist.local/schemas/benchmark.chat_result.schema.json",
+  "title": "Benchmark chat result",
+  "type": "object",
+  "required": ["schemaVersion", "caseId", "status", "metrics"],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "const": "benchmark.chat_result.v1" },
+    "caseId": { "type": "string" },
+    "chatRunId": { "type": "string" },
+    "ragRunId": { "type": "string" },
+    "status": { "enum": ["answered", "answer_unavailable", "timeout", "error", "invalid_result"] },
+    "answer": { "type": "object" },
+    "metrics": { "type": "object" },
+    "trace": { "type": "object" }
+  }
+}

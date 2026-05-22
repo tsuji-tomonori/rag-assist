@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "benchmark.promotion_gate.v1",
+  "minRecallAtK": 0.95,
+  "minCitationPrecision": 0.98,
+  "minFaithfulness": 0.98,
+  "maxUnsupportedSentenceRate": 0,
+  "maxFalseRefusalRate": 0.02,
+  "maxAnswerUnavailableFalseNegativeRate": 0.01,
+  "maxLatencyP95Ms": 15000,
+  "maxCostPerCase": 0.1,
+  "requireNoCriticalRegression": true
+}
