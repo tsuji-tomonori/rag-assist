@@ -30,11 +30,6 @@ const benchmarkMock = vi.hoisted(() => ({
   onStartBenchmark: vi.fn(),
   onCancelBenchmark: vi.fn()
 }))
-const agentsMock = vi.hoisted(() => ({
-  refreshAgentRuns: vi.fn(),
-  refreshAgentProviders: vi.fn(),
-  onCancelAgentRun: vi.fn()
-}))
 const historyMock = vi.hoisted(() => ({
   setCurrentConversationId: vi.fn(),
   refreshHistory: vi.fn(),
@@ -112,13 +107,6 @@ vi.mock("../../features/benchmark/hooks/useBenchmarkRuns.js", () => ({
     benchmarkModelId: "model",
     benchmarkConcurrency: 1,
     ...benchmarkMock
-  }))
-}))
-vi.mock("../../features/agents/hooks/useAsyncAgentRuns.js", () => ({
-  useAsyncAgentRuns: vi.fn(() => ({
-    agentRuns: [],
-    agentProviders: [{ provider: "codex", displayName: "Codex", availability: "not_configured", configuredModelIds: [] }],
-    ...agentsMock
   }))
 }))
 vi.mock("../../features/history/hooks/useConversationHistory.js", () => ({
@@ -224,8 +212,6 @@ describe("useAppShellState", () => {
       documentsMock.refreshReindexMigrations,
       benchmarkMock.refreshBenchmarkRuns,
       benchmarkMock.refreshBenchmarkSuites,
-      agentsMock.refreshAgentRuns,
-      agentsMock.refreshAgentProviders,
       historyMock.refreshHistory,
       debugMock.refreshDebugRuns,
       questionsMock.refreshQuestions,

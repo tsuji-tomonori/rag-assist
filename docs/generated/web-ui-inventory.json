@@ -53,17 +53,6 @@
       "certainty": "confirmed"
     },
     {
-      "view": "agents",
-      "label": "非同期エージェント",
-      "routePath": "/",
-      "routeKind": "client-state",
-      "screenComponent": "AsyncAgentWorkspace",
-      "permissions": [
-        "canReadAgentRuns"
-      ],
-      "certainty": "confirmed"
-    },
-    {
       "view": "admin",
       "label": "管理者設定",
       "routePath": "/",
@@ -119,7 +108,7 @@
         "profile"
       ],
       "componentCount": 7,
-      "interactionCount": 19
+      "interactionCount": 18
     },
     {
       "feature": "auth",
@@ -218,7 +207,6 @@
       "jsxUsages": [
         "AdminWorkspace",
         "AssigneeWorkspace",
-        "AsyncAgentWorkspace",
         "BenchmarkWorkspace",
         "ChatView",
         "DocumentWorkspace",
@@ -1499,9 +1487,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:26:a",
+      "id": "apps/web/src/app/components/RailNav.tsx:24:a",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 26,
+      "line": 24,
       "feature": "app",
       "component": "RailNav",
       "element": "a",
@@ -1526,9 +1514,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:30:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:28:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 30,
+      "line": 28,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1572,9 +1560,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:35:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:33:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 35,
+      "line": 33,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1618,9 +1606,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:40:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:38:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 40,
+      "line": 38,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1664,9 +1652,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:45:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:43:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 45,
+      "line": 43,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1710,55 +1698,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:51:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:48:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 51,
-      "feature": "app",
-      "component": "RailNav",
-      "element": "button",
-      "isIntrinsic": true,
-      "label": "非同期エージェント",
-      "a11y": {
-        "accessibleName": "エージェント",
-        "accessibleNameSource": "visible-text",
-        "descriptionRefs": "-",
-        "role": "-",
-        "state": [
-          "aria-current=activeView === \"agents\" ? \"page\" : undefined"
-        ],
-        "status": "ok",
-        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
-      },
-      "handlers": [
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"agents\")"
-        }
-      ],
-      "attributes": [
-        {
-          "name": "type",
-          "value": "button"
-        },
-        {
-          "name": "title",
-          "value": "非同期エージェント"
-        },
-        {
-          "name": "aria-current",
-          "value": "activeView === \"agents\" ? \"page\" : undefined"
-        },
-        {
-          "name": "onClick",
-          "value": "() => onChangeView(\"agents\")"
-        }
-      ],
-      "certainty": "confirmed"
-    },
-    {
-      "id": "apps/web/src/app/components/RailNav.tsx:56:button",
-      "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 56,
+      "line": 48,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1802,9 +1744,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:61:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:53:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 61,
+      "line": 53,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1848,9 +1790,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:67:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:59:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 67,
+      "line": 59,
       "feature": "app",
       "component": "RailNav",
       "element": "button",
@@ -1894,9 +1836,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/app/components/RailNav.tsx:73:button",
+      "id": "apps/web/src/app/components/RailNav.tsx:65:button",
       "file": "apps/web/src/app/components/RailNav.tsx",
-      "line": 73,
+      "line": 65,
       "feature": "app",
       "component": "RailNav",
       "element": "button",

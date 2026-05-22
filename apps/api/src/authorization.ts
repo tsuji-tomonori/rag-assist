@@ -168,7 +168,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
   BENCHMARK_OPERATOR: ["benchmark:read", "benchmark:run"],
   BENCHMARK_RUNNER: ["benchmark:query", "benchmark:seed_corpus"],
   ASYNC_AGENT_USER: [
-    "agent:run","agent:cancel","agent:read:self","agent:trace:read:self","agent:artifact:download",
+    "agent:cancel","agent:read:self","agent:trace:read:self","agent:artifact:download",
     "skill:read","agent_profile:read","agent_preset:read:self","agent_preset:create:self","agent_preset:update:self","agent_preset:delete:self"
   ],
   SKILL_PROFILE_ADMIN: [
@@ -176,7 +176,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "agent_profile:read","agent_profile:create","agent_profile:update","agent_profile:delete","agent_profile:share","agent_profile:generate_with_ai"
   ],
   ASYNC_AGENT_ADMIN: [
-    "agent:run","agent:cancel","agent:read:self","agent:read:managed","agent:trace:read:self","agent:trace:read:sanitized","agent:artifact:download","agent:artifact:writeback","agent:settings:manage","agent:provider:manage",
+    "agent:cancel","agent:read:self","agent:read:managed","agent:trace:read:self","agent:trace:read:sanitized","agent:artifact:download","agent:settings:manage",
     "skill:read","agent_profile:read","agent_preset:read:self"
   ],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
@@ -188,7 +188,7 @@ export const rolePermissions: Record<Role, Permission[]> = {
     "rag:alias:read","rag:alias:write:group","rag:alias:review:group","rag:alias:disable:group","rag:alias:publish:group",
     "benchmark:read","benchmark:query","benchmark:run","benchmark:seed_corpus","benchmark:cancel","benchmark:download",
     "debug:trace:read:self","debug:trace:read:sanitized","debug:trace:read:internal","debug:trace:export","debug:ingest:read","debug:chunk:read","debug:replay","debug:settings:update","debug:answer_generation:read","debug:answer_generation:export",
-    "agent:run","agent:cancel","agent:read:self","agent:read:managed","agent:trace:read:self","agent:trace:read:sanitized","agent:trace:read:internal","agent:artifact:download","agent:artifact:writeback","agent:settings:manage","agent:provider:manage",
+    "agent:cancel","agent:read:self","agent:read:managed","agent:trace:read:self","agent:trace:read:sanitized","agent:trace:read:internal","agent:artifact:download","agent:settings:manage",
     "skill:read","skill:create","skill:update","skill:delete","skill:share","skill:generate_with_ai",
     "agent_profile:read","agent_profile:create","agent_profile:update","agent_profile:delete","agent_profile:share","agent_profile:generate_with_ai",
     "agent_preset:read:self","agent_preset:create:self","agent_preset:update:self","agent_preset:delete:self",
