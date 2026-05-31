@@ -144,7 +144,7 @@
         "chat"
       ],
       "componentCount": 16,
-      "interactionCount": 41
+      "interactionCount": 42
     },
     {
       "feature": "debug",
@@ -5194,9 +5194,9 @@
       "certainty": "unknown"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:50:form",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:54:form",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 50,
+      "line": 54,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "form",
@@ -5230,9 +5230,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:51:textarea",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:55:textarea",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 51,
+      "line": 55,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "textarea",
@@ -5292,9 +5292,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:83:input",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:87:input",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 83,
+      "line": 87,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "input",
@@ -5338,9 +5338,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:92:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:96:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 92,
+      "line": 96,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",
@@ -5379,9 +5379,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:107:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:111:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 107,
+      "line": 111,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",
@@ -5421,9 +5421,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:119:label",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:123:label",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 119,
+      "line": 123,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "label",
@@ -5443,9 +5443,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:121:select",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:125:select",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 121,
+      "line": 125,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "select",
@@ -5489,9 +5489,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:122:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:126:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 122,
+      "line": 126,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -5516,9 +5516,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:123:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:127:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 123,
+      "line": 127,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -5543,9 +5543,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:124:option",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:128:option",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 124,
+      "line": 128,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "option",
@@ -5570,9 +5570,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:131:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:135:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 131,
+      "line": 135,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",
@@ -5620,9 +5620,59 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:145:button",
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:147:button",
       "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
-      "line": 145,
+      "line": 147,
+      "feature": "chat",
+      "component": "ChatComposer",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "`${attachment.fileName} の一時添付を解除`",
+      "a11y": {
+        "accessibleName": "`${attachment.fileName} の一時添付を解除`",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [
+          "disabled=loading"
+        ],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => onRemoveTemporaryAttachment(attachment.temporaryScopeId)"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "aria-label",
+          "value": "`${attachment.fileName} の一時添付を解除`"
+        },
+        {
+          "name": "title",
+          "value": "一時添付を解除"
+        },
+        {
+          "name": "disabled",
+          "value": "loading"
+        },
+        {
+          "name": "onClick",
+          "value": "() => onRemoveTemporaryAttachment(attachment.temporaryScopeId)"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/chat/components/ChatComposer.tsx:163:button",
+      "file": "apps/web/src/features/chat/components/ChatComposer.tsx",
+      "line": 163,
       "feature": "chat",
       "component": "ChatComposer",
       "element": "button",

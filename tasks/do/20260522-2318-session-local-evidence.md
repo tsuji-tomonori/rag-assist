@@ -26,6 +26,20 @@
   - conversation state / decontextualized query / retriever input に anchor を明示的に渡す。
   - TTL、removed、session mismatch を unit test で固定する。
 
+## CI 失敗の軽量なぜなぜ分析
+
+- 問題文: PR #338 の MemoRAG CI で `npm run docs:web-inventory:check` と `npm exec -w @memorag-mvp/web -- vitest run --coverage` が失敗した。
+- 確認済み事実:
+  - `docs:web-inventory:check` は `docs/generated/web-overview.md`、`docs/generated/web-features.md`、`docs/generated/web-accessibility.md`、`docs/generated/web-ui-inventory.json`、`docs/generated/web-features/chat.md` が最新でないとして失敗した。
+  - Web test は `src/App.test.tsx` の `keeps the chat request payload unchanged` で、実 payload に `sessionDocumentContext` と `removedTemporaryScopeIds` が追加された一方、期待値が旧 payload のままだったため失敗した。
+- 推定原因:
+  - Web の chat payload 仕様変更に対して、生成 inventory と最上位 App test の契約期待値が更新されていなかった。
+- 根本原因:
+  - session-local evidence の API/UI contract 追加に伴う web 側派生成物・統合テスト expectation の追随が漏れた。
+- 対策:
+  - Web inventory を generator で再生成する。
+  - App test の chat request payload expectation を、新しい session-local evidence fields を検証する形へ更新する。
+
 ## 作業範囲
 
 - API の RAG orchestration state / conversation state / search scope 正規化。
@@ -43,6 +57,8 @@
 - MT-UI-001 から MT-UI-004 は実装可能な既存 UI state に対してテストし、実装外の項目は未達として明記する。
 - `npm run test -w @memorag-mvp/api` または変更範囲に対するより狭い API test が pass する。
 - Web を変更した場合は `npm run test -w @memorag-mvp/web` または対象 test が pass する。
+- `npm run docs:web-inventory:check` が pass する。
+- `npm exec -w @memorag-mvp/web -- vitest run --coverage` の CI 失敗が再現しない。
 - `git diff --check` が pass する。
 
 ## 検証計画

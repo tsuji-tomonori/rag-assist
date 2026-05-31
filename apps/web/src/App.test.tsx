@@ -687,14 +687,25 @@ describe("App chat and upload flow", () => {
 
     await screen.findByText("ソフトウェア要求は製品要求とプロジェクト要求に分類されます。")
 
-    expect(requestBody(findRequest(fetchMock, "/rpc/chat/startRun", "POST"))).toEqual({
+    expect(requestBody(findRequest(fetchMock, "/rpc/chat/startRun", "POST"))).toMatchObject({
       question: "ソフトウェア要求の分類を洗い出して",
       modelId: "amazon.nova-lite-v1:0",
       embeddingModelId: "amazon.titan-embed-text-v2:0",
       clueModelId: "amazon.nova-lite-v1:0",
       topK: 6,
       minScore: 0.2,
-      includeDebug: false
+      includeDebug: false,
+      removedTemporaryScopeIds: [],
+      sessionDocumentContext: {
+        sessionId: expect.stringMatching(/^conv-/),
+        activeTemporaryScopeIds: [],
+        activeTemporaryDocumentIds: [],
+        previousCitationAnchors: [],
+        memorySourceChunkIds: [],
+        disabledTemporaryScopeIds: [],
+        expiresAtByTemporaryScopeId: {},
+        updatedAt: expect.any(String)
+      }
     })
   })
 
