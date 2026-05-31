@@ -40,6 +40,7 @@
 | `CHG-002` | なし | なし | `docs/spec-recovery` | `REQ_CHANGE_002` |
 | `TC-001` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001` | `SQ-001` |
 | `TC-002` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_API_001` | 各要求の受け入れ条件 |
+| `TC-003` | `ASR-SEC-001`, `ASR-OPER-001` | `ARC_ADR_005` | CloudFront / API middleware / WebSocket ticket design TBD。追跡: `tasks/todo/20260522-2120-cloudfront-single-entry-implementation.md` | `REQ_TECHNICAL_CONSTRAINT_003` |
 
 ## 機能分類トレーサビリティ
 
