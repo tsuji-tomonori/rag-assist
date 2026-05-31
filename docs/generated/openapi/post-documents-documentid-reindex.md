@@ -59,7 +59,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 105 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 106 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -175,6 +175,7 @@ Media type: `application/json`
 | `chunkCount` | `number` | yes | `response.chunkCount` の値。項目名は chunk count を表します。 | - |
 | `memoryCardCount` | `number` | yes | `response.memoryCardCount` の値。項目名は memory card count を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
+| `updatedAt` | `string` | no | レコードを最後に更新した日時。 | - |
 
 ##### `401` 認証が必要です。
 

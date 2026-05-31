@@ -8,7 +8,7 @@ import {
 } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { config } from "../config.js"
-import type { ObjectStore } from "./object-store.js"
+import type { ObjectStore, VersionedText } from "./object-store.js"
 
 export class S3ObjectStore implements ObjectStore {
   private readonly client = new S3Client({ region: config.region })
@@ -28,6 +28,19 @@ export class S3ObjectStore implements ObjectStore {
     )
   }
 
+  async putTextIfVersion(key: string, text: string, expectedVersion: string | undefined, contentType = "text/plain; charset=utf-8"): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: text,
+        ContentType: contentType,
+        IfMatch: expectedVersion,
+        IfNoneMatch: expectedVersion === undefined ? "*" : undefined
+      })
+    )
+  }
+
   async putBytes(key: string, bytes: Uint8Array, contentType = "application/octet-stream"): Promise<void> {
     await this.client.send(
       new PutObjectCommand({
@@ -42,6 +55,14 @@ export class S3ObjectStore implements ObjectStore {
   async getText(key: string): Promise<string> {
     const response = await this.client.send(new GetObjectCommand({ Bucket: this.bucketName, Key: key }))
     return response.Body?.transformToString("utf-8") ?? ""
+  }
+
+  async getTextWithVersion(key: string): Promise<VersionedText> {
+    const response = await this.client.send(new GetObjectCommand({ Bucket: this.bucketName, Key: key }))
+    return {
+      text: (await response.Body?.transformToString("utf-8")) ?? "",
+      version: response.ETag ?? ""
+    }
   }
 
   async getBytes(key: string): Promise<Buffer> {

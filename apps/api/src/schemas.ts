@@ -202,7 +202,8 @@ export const DocumentManifestSchema = z.object({
   reindexMigrationId: z.string().optional(),
   chunkCount: z.number(),
   memoryCardCount: z.number(),
-  createdAt: z.string()
+  createdAt: z.string(),
+  updatedAt: z.string().optional()
 })
 
 export const DocumentGroupSchema = z.object({
@@ -241,6 +242,58 @@ export const FolderPolicyEntrySchema = z.object({
   principalType: z.enum(["user", "group"]),
   principalId: z.string(),
   permissionLevel: z.enum(["readOnly", "full"])
+})
+
+export const DocumentShareGrantSchema = z.object({
+  documentShareGrantId: z.string(),
+  itemType: z.literal("documentShareGrant").optional(),
+  tenantId: z.string(),
+  documentId: z.string(),
+  principalType: z.enum(["user", "group"]),
+  principalId: z.string(),
+  permissionLevel: z.enum(["readOnly", "full"]),
+  createdBy: z.string(),
+  reason: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+})
+
+export const DocumentShareRequestSchema = z.object({
+  grants: z.array(z.object({
+    principalType: z.enum(["user", "group"]),
+    principalId: z.string().min(1),
+    permissionLevel: z.enum(["readOnly", "full"])
+  })),
+  reason: z.string().min(1)
+})
+
+export const DocumentShareResponseSchema = z.object({
+  inheritedFolderGrants: z.array(z.object({
+    folderId: z.string(),
+    permissionLevel: z.enum(["none", "readOnly", "full"])
+  })),
+  directDocumentGrants: z.array(DocumentShareGrantSchema),
+  currentUserEffectivePermission: z.enum(["none", "readOnly", "full"])
+})
+
+export const DocumentMoveRequestSchema = z.object({
+  destinationFolderId: z.string().min(1),
+  newTitle: z.string().min(1).optional(),
+  reason: z.string().min(1),
+  expectedUpdatedAt: z.string().optional()
+})
+
+export const DocumentMoveResponseSchema = z.object({
+  document: DocumentManifestSchema,
+  before: z.object({
+    folderIds: z.array(z.string()),
+    fileName: z.string()
+  }),
+  after: z.object({
+    folderIds: z.array(z.string()),
+    fileName: z.string()
+  }),
+  directDocumentGrantsPreserved: z.boolean()
 })
 
 export const FolderPolicySchema = z.object({
@@ -325,7 +378,15 @@ export const DocumentManifestSummarySchema = DocumentManifestSchema.pick({
 export const DocumentListItemSummarySchema = DocumentManifestSummarySchema.extend({
   metadata: z.record(MetadataValueSchema).optional(),
   embeddingModelId: z.string().optional(),
-  embeddingDimensions: z.number().int().positive().optional()
+  embeddingDimensions: z.number().int().positive().optional(),
+  currentUserEffectivePermission: z.enum(["none", "readOnly", "full"]).optional(),
+  capabilities: z.object({
+    canRead: z.boolean(),
+    canShare: z.boolean(),
+    canMove: z.boolean(),
+    canDelete: z.boolean(),
+    canReindex: z.boolean()
+  }).optional()
 })
 
 export const DocumentListResponseSchema = z.object({

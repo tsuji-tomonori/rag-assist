@@ -61,9 +61,12 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/documents` | 登録文書一覧を取得する | [詳細](openapi/get-documents.md) |
 | `POST` | `/documents` | 文書を同期登録する（非推奨） | [詳細](openapi/post-documents.md) |
 | `DELETE` | `/documents/{documentId}` | 文書を削除する | [詳細](openapi/delete-documents-documentid.md) |
+| `POST` | `/documents/{documentId}/move` | 文書を別フォルダへ移動する | [詳細](openapi/post-documents-documentid-move.md) |
 | `GET` | `/documents/{documentId}/parsed-preview` | ParsedDocument preview を取得する | [詳細](openapi/get-documents-documentid-parsed-preview.md) |
 | `POST` | `/documents/{documentId}/reindex` | 文書を再インデックスする | [詳細](openapi/post-documents-documentid-reindex.md) |
 | `POST` | `/documents/{documentId}/reindex/stage` | 再インデックスを stage する | [詳細](openapi/post-documents-documentid-reindex-stage.md) |
+| `GET` | `/documents/{documentId}/share` | 文書共有設定を取得する | [詳細](openapi/get-documents-documentid-share.md) |
+| `PUT` | `/documents/{documentId}/share` | 文書共有設定を更新する | [詳細](openapi/put-documents-documentid-share.md) |
 | `GET` | `/documents/reindex-migrations` | 再インデックス移行一覧を取得する | [詳細](openapi/get-documents-reindex-migrations.md) |
 | `POST` | `/documents/reindex-migrations/{migrationId}/cutover` | 再インデックス結果へ切り替える | [詳細](openapi/post-documents-reindex-migrations-migrationid-cutover.md) |
 | `POST` | `/documents/reindex-migrations/{migrationId}/rollback` | 再インデックス切替を戻す | [詳細](openapi/post-documents-reindex-migrations-migrationid-rollback.md) |

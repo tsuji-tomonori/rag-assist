@@ -22,10 +22,46 @@ export type FolderStatus = "active" | "archived"
 export type FolderPolicySource = "explicit" | "inherited" | "ownerDefault" | "none"
 export type FolderPrincipalType = "user" | "group"
 export type FolderPolicyPermissionLevel = "readOnly" | "full"
+export type DocumentPermissionLevel = "readOnly" | "full"
+export type EffectiveDocumentPermission = "none" | DocumentPermissionLevel
 export type FolderPolicyEntry = {
   principalType: FolderPrincipalType
   principalId: string
   permissionLevel: FolderPolicyPermissionLevel
+}
+
+export type DocumentShareGrant = {
+  documentShareGrantId: string
+  itemType?: "documentShareGrant"
+  tenantId: string
+  documentId: string
+  principalType: FolderPrincipalType
+  principalId: string
+  permissionLevel: DocumentPermissionLevel
+  createdBy: string
+  reason: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type DocumentShareAuditAction = "document:share" | "document:move"
+
+export type DocumentShareAuditLogEntry = {
+  auditId: string
+  action: DocumentShareAuditAction
+  tenantId?: string
+  actorUserId: string
+  documentId: string
+  before?: JsonValue
+  after?: JsonValue
+  reason: string
+  createdAt: string
+}
+
+export type DocumentShareLedger = {
+  schemaVersion: 1
+  grants: DocumentShareGrant[]
+  auditLog: DocumentShareAuditLogEntry[]
 }
 
 export type FolderPolicy = {
@@ -283,7 +319,9 @@ export type VectorMetadata = {
   benchmarkSuiteId?: string
   scopeType?: DocumentScopeType
   groupId?: string
+  folderId?: string
   groupIds?: string[]
+  folderIds?: string[]
   ownerUserId?: string
   temporaryScopeId?: string
   expiresAt?: string
@@ -356,6 +394,9 @@ export type DocumentManifest = {
   extractionCounters?: Record<string, number>
   fileProfile?: PdfFileProfile
   createdAt: string
+  updatedAt?: string
+  currentUserEffectivePermission?: EffectiveDocumentPermission
+  capabilities?: DocumentCapabilities
 }
 
 export type DocumentManifestSummary = Pick<
@@ -379,7 +420,18 @@ export type DocumentListItemSummary = DocumentManifestSummary & Pick<
   | "metadata"
   | "embeddingModelId"
   | "embeddingDimensions"
->
+> & {
+  currentUserEffectivePermission?: EffectiveDocumentPermission
+  capabilities?: DocumentCapabilities
+}
+
+export type DocumentCapabilities = {
+  canRead: boolean
+  canShare: boolean
+  canMove: boolean
+  canDelete: boolean
+  canReindex: boolean
+}
 
 export type ParsedDocumentPreview = {
   documentId: string

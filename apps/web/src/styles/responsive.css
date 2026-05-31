@@ -404,7 +404,7 @@
     flex-direction: column;
   }
 
-  .question-form-actions span {
+  .question-form-actions > span {
     margin-right: 0;
   }
 }

@@ -36,6 +36,9 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /document-groups", { operationKey: "folder.create.group", resourceCondition: "documentGroupFull" }],
   ["POST /document-groups/{groupId}/share", { operationKey: "folder.share", resourceCondition: "documentGroupFull" }],
   ["GET /documents", { operationKey: "document.read", resourceCondition: "benchmarkSeedScope" }],
+  ["GET /documents/{documentId}/share", { operationKey: "document.share.read", resourceCondition: "documentEffectiveFull" }],
+  ["PUT /documents/{documentId}/share", { operationKey: "document.share.update", resourceCondition: "documentEffectiveFull" }],
+  ["POST /documents/{documentId}/move", { operationKey: "document.move", resourceCondition: "documentMove" }],
   ["GET /documents/{documentId}/parsed-preview", { operationKey: "document.parsed_preview.read", resourceCondition: "documentGroupRead" }],
   ["POST /documents", { operationKey: "document.upload", resourceCondition: "benchmarkSeedScope" }],
   ["POST /documents/{documentId}/reindex", { operationKey: "document.reindex", resourceCondition: "documentGroupFull" }],
@@ -274,6 +277,15 @@ test("protected API routes document three-layer authorization metadata", async (
   }
 })
 
+test("document share update documents conflict response in OpenAPI", async () => {
+  const response = await app.request("/openapi.json")
+  assert.equal(response.status, 200)
+  const document = await response.json() as {
+    paths?: Record<string, { put?: { responses?: Record<string, unknown> } }>
+  }
+  assert.ok(document.paths?.["/documents/{documentId}/share"]?.put?.responses?.["409"])
+})
+
 test("debug routes remain protected and document the debug permission migration contract", async () => {
   const policies = await openApiRoutePolicies()
 
@@ -463,7 +475,7 @@ function findNamedRouteBlock(source: string, routeName: string): string {
 }
 
 function extractRoutes(source: string): Array<Pick<RoutePolicy, "method" | "path">> {
-  return [...source.matchAll(/method:\s*["'](get|post|delete)["'],\s*path:\s*["']([^"']+)["']/g)].map((match) => ({
+  return [...source.matchAll(/method:\s*["'](get|post|put|delete)["'],\s*path:\s*["']([^"']+)["']/g)].map((match) => ({
     method: match[1] ?? "",
     path: match[2] ?? ""
   }))

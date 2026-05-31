@@ -566,11 +566,18 @@
   margin-top: 14px;
 }
 
-.question-form-actions span {
+.question-form-actions > span {
   margin-right: auto;
   color: #68758f;
   font-size: 12px;
   font-weight: 800;
+}
+
+.question-form-actions button span {
+  margin-right: 0;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .question-form-actions button,

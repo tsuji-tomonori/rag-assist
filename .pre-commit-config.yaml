@@ -6,6 +6,11 @@ repos:
         entry: ./tools/git-secrets/pre-commit-scan
         language: system
         files: .
+      - id: hidden-unicode-control
+        name: hidden Unicode control characters
+        entry: node scripts/check-hidden-unicode.mjs
+        language: system
+        files: ^(docs|reports|tasks)/.*\.md$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

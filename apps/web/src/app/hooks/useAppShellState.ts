@@ -120,7 +120,10 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     onCutoverReindex,
     onRollbackReindex,
     onCreateDocumentGroup,
-    onShareDocumentGroup
+    onShareDocumentGroup,
+    onLoadDocumentShare,
+    onShareDocument,
+    onMoveDocument
   } = useDocuments({
     modelId,
     embeddingModelId,
@@ -522,6 +525,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onUpload: onUploadDocumentFile,
       onCreateGroup: onCreateDocumentGroup,
       onShareGroup: onShareDocumentGroup,
+      onLoadDocumentShare,
+      onShareDocument,
+      onMoveDocument,
       onDelete,
       onStageReindex,
       onCutoverReindex,

@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, updateDocumentGroup, uploadDocumentFile } from "../api/documentsApi.js"
+import { createDocumentGroup, cutoverReindexMigration, deleteDocument, getDocumentShare, listDocumentGroups, listDocuments, listReindexMigrations, moveDocument, rollbackReindexMigration, stageReindexMigration, updateDocumentGroup, updateDocumentShare, uploadDocumentFile } from "../api/documentsApi.js"
 import type { DocumentGroup } from "../types.js"
 import { useDocuments } from "./useDocuments.js"
 
@@ -8,12 +8,15 @@ vi.mock("../api/documentsApi.js", () => ({
   createDocumentGroup: vi.fn(),
   cutoverReindexMigration: vi.fn(),
   deleteDocument: vi.fn(),
+  getDocumentShare: vi.fn(),
   listDocumentGroups: vi.fn(),
   listDocuments: vi.fn(),
   listReindexMigrations: vi.fn(),
+  moveDocument: vi.fn(),
   rollbackReindexMigration: vi.fn(),
   stageReindexMigration: vi.fn(),
   updateDocumentGroup: vi.fn(),
+  updateDocumentShare: vi.fn(),
   uploadDocumentFile: vi.fn()
 }))
 
@@ -114,6 +117,19 @@ describe("useDocuments", () => {
       updatedAt: "now",
       previousManifestObjectKey: "manifests/doc-1.json",
       stagedManifestObjectKey: "manifests/doc-1-staged.json"
+    })
+    vi.mocked(getDocumentShare).mockResolvedValue({
+      inheritedFolderGrants: [],
+      directDocumentGrants: [],
+      currentUserEffectivePermission: "full"
+    })
+    vi.mocked(updateDocumentShare).mockResolvedValue({
+      inheritedFolderGrants: [],
+      directDocumentGrants: [],
+      currentUserEffectivePermission: "full"
+    })
+    vi.mocked(moveDocument).mockResolvedValue({
+      document: { documentId: "doc-1", fileName: "a.txt", chunkCount: 1, memoryCardCount: 1, createdAt: "now", metadata: { groupId: "group-2" } }
     })
   })
 
@@ -280,6 +296,42 @@ describe("useDocuments", () => {
     expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { visibility: "shared", sharedGroups: ["HR"] })
     expect(updateDocumentGroup).toHaveBeenCalledWith("group-1", { name: "社内規定改定", description: "", parentGroupId: null })
     expect(listDocumentGroups).toHaveBeenCalledTimes(4)
+  })
+
+  it("文書共有と文書移動の操作状態を更新して一覧を再取得する", async () => {
+    const props = createProps()
+    const { result } = renderHook(() => useDocuments(props))
+
+    const shareInfo = await act(() => result.current.onLoadDocumentShare("doc-1"))
+    const shareResult = await act(() => result.current.onShareDocument("doc-1", {
+      grants: [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }],
+      reason: "確認依頼"
+    }))
+    act(() => result.current.setSelectedDocumentId("doc-1"))
+    const moveResult = await act(() => result.current.onMoveDocument("doc-1", {
+      destinationFolderId: "group-2",
+      newTitle: "moved.txt",
+      reason: "整理",
+      expectedUpdatedAt: "now"
+    }))
+
+    expect(shareInfo).toEqual(expect.objectContaining({ currentUserEffectivePermission: "full" }))
+    expect(updateDocumentShare).toHaveBeenCalledWith("doc-1", {
+      grants: [{ principalType: "user", principalId: "user-b", permissionLevel: "readOnly" }],
+      reason: "確認依頼"
+    })
+    expect(moveDocument).toHaveBeenCalledWith("doc-1", {
+      destinationFolderId: "group-2",
+      newTitle: "moved.txt",
+      reason: "整理",
+      expectedUpdatedAt: "now"
+    })
+    expect(shareResult).toEqual({ ok: true })
+    expect(moveResult).toEqual({ ok: true })
+    expect(result.current.selectedDocumentId).toBe("all")
+    expect(result.current.operationState.sharingDocumentId).toBeNull()
+    expect(result.current.operationState.movingDocumentId).toBeNull()
+    expect(listDocuments).toHaveBeenCalledTimes(2)
   })
 
   it("アップロード進捗と失敗原因を操作単位の状態に反映する", async () => {

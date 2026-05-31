@@ -56,6 +56,15 @@ export class LocalVectorStore implements VectorStore {
     await this.save({ records: db.records.filter((record) => !set.has(record.key)) })
   }
 
+  async updateMetadataForDocument(documentId: string, metadata: Partial<VectorRecord["metadata"]>): Promise<void> {
+    const db = await this.load()
+    await this.save({
+      records: db.records.map((record) => record.metadata.documentId === documentId
+        ? { ...record, metadata: { ...record.metadata, ...metadata } }
+        : record)
+    })
+  }
+
   private async load(): Promise<Persisted> {
     try {
       const raw = await fs.readFile(this.filePath, "utf-8")
