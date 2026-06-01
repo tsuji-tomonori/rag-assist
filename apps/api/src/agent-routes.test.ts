@@ -1,186 +1,31 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import app from "./app.js"
-import { createDependencies } from "./dependencies.js"
-import type { AsyncAgentRun } from "./types.js"
 
-test("async agent providers report honest not configured state", async () => {
-  const response = await app.request("/agents/providers")
-  assert.equal(response.status, 200)
-  const body = await response.json() as { providers: Array<{ provider: string; availability: string; configuredModelIds: string[] }> }
-
-  assert.ok(body.providers.some((provider) => provider.provider === "claude_code" && provider.availability === "not_configured"))
-  assert.ok(body.providers.every((provider) => provider.configuredModelIds.length === 0))
-})
-
-test("creating async agent run returns blocked metadata without mock artifacts", async () => {
-  const response = await app.request("/agents/runs", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      provider: "codex",
-      modelId: "codex-placeholder",
-      instruction: "仕様差分を確認する",
-      selectedFolderIds: [],
-      selectedDocumentIds: [],
-      selectedSkillIds: [],
-      selectedAgentProfileIds: []
-    })
-  })
-  assert.equal(response.status, 200)
-  const run = await response.json() as {
-    agentRunId: string
-    runId: string
-    status: string
-    providerAvailability: string
-    failureReasonCode?: string
-    artifacts: unknown[]
-    artifactIds: string[]
-    workspaceMounts: unknown[]
-  }
-
-  assert.equal(run.runId, run.agentRunId)
-  assert.equal(run.status, "blocked")
-  assert.equal(run.providerAvailability, "not_configured")
-  assert.equal(run.failureReasonCode, "not_configured")
-  assert.deepEqual(run.artifacts, [])
-  assert.deepEqual(run.artifactIds, [])
-  assert.deepEqual(run.workspaceMounts, [])
-
-  const listResponse = await app.request("/agents/runs")
-  assert.equal(listResponse.status, 200)
-  const listBody = await listResponse.json() as { agentRuns: Array<{ agentRunId: string }> }
-  assert.ok(listBody.agentRuns.some((item) => item.agentRunId === run.agentRunId))
-
-  const artifactResponse = await app.request(`/agents/runs/${encodeURIComponent(run.agentRunId)}/artifacts`)
-  assert.equal(artifactResponse.status, 200)
-  assert.deepEqual(await artifactResponse.json(), { artifacts: [] })
-
-  const detailResponse = await app.request(`/agents/runs/${encodeURIComponent(run.agentRunId)}`)
-  assert.equal(detailResponse.status, 200)
-  const detail = await detailResponse.json() as { agentRunId: string; runId: string; status: string }
-  assert.equal(detail.agentRunId, run.agentRunId)
-  assert.equal(detail.runId, run.runId)
-  assert.equal(detail.status, "blocked")
-
-  const cancelResponse = await app.request(`/agents/runs/${encodeURIComponent(run.agentRunId)}/cancel`, { method: "POST" })
-  assert.equal(cancelResponse.status, 200)
-  const cancelled = await cancelResponse.json() as { agentRunId: string; status: string; failureReasonCode?: string }
-  assert.equal(cancelled.agentRunId, run.agentRunId)
-  assert.equal(cancelled.status, "cancelled")
-  assert.equal(cancelled.failureReasonCode, "cancelled")
-})
-
-test("async agent run routes report missing runs and artifacts honestly", async () => {
-  const missingRunResponse = await app.request("/agents/runs/missing-agent-run")
-  assert.equal(missingRunResponse.status, 404)
-  assert.deepEqual(await missingRunResponse.json(), { error: "Async agent run not found" })
-
-  const missingCancelResponse = await app.request("/agents/runs/missing-agent-run/cancel", { method: "POST" })
-  assert.equal(missingCancelResponse.status, 404)
-  assert.deepEqual(await missingCancelResponse.json(), { error: "Async agent run not found" })
-
-  const missingArtifactsResponse = await app.request("/agents/runs/missing-agent-run/artifacts")
-  assert.equal(missingArtifactsResponse.status, 404)
-  assert.deepEqual(await missingArtifactsResponse.json(), { error: "Async agent run not found" })
-
-  const missingArtifactResponse = await app.request("/agents/runs/missing-agent-run/artifacts/missing-artifact")
-  assert.equal(missingArtifactResponse.status, 404)
-  assert.deepEqual(await missingArtifactResponse.json(), { error: "Async agent artifact not found" })
-})
-
-test("async agent artifact route returns only persisted metadata", async () => {
-  const deps = createDependencies()
-  const now = "2026-05-14T00:00:00.000Z"
-  const run: AsyncAgentRun = {
-    agentRunId: "agent_route_artifact_fixture",
-    runId: "agent_route_artifact_fixture",
-    tenantId: "default",
-    requesterUserId: "local-user",
-    provider: "codex",
-    modelId: "codex-placeholder",
-    status: "blocked",
-    providerAvailability: "not_configured",
-    failureReasonCode: "not_configured",
-    instruction: "artifact route fixture",
-    selectedFolderIds: [],
-    selectedDocumentIds: [],
-    selectedSkillIds: [],
-    selectedAgentProfileIds: [],
-    workspaceId: "workspace_agent_route_artifact_fixture",
-    workspaceMounts: [],
-    artifactIds: ["artifact_route_report"],
-    artifacts: [{
-      artifactId: "artifact_route_report",
-      agentRunId: "agent_route_artifact_fixture",
-      artifactType: "report",
-      fileName: "report.md",
-      mimeType: "text/markdown",
-      size: 32,
-      storageRef: "agent-artifacts/agent_route_artifact_fixture/report.md",
-      createdAt: now,
-      writebackStatus: "not_requested"
+test("async agent API entrypoints are disabled", async () => {
+  const requests: Array<[string, RequestInit | undefined]> = [
+    ["/agents/providers", undefined],
+    ["/agents/provider-settings", undefined],
+    ["/agents/runs", undefined],
+    ["/agents/runs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider: "codex", modelId: "codex-placeholder", instruction: "仕様差分を確認する" })
     }],
-    createdBy: "local-user",
-    createdAt: now,
-    completedAt: now,
-    updatedAt: now
+    ["/agents/runs/missing-agent-run", undefined],
+    ["/agents/runs/missing-agent-run/cancel", { method: "POST" }],
+    ["/agents/runs/missing-agent-run/artifacts", undefined],
+    ["/agents/runs/missing-agent-run/artifacts/missing-artifact", undefined],
+    ["/agents/runs/missing-agent-run/artifacts/missing-artifact/writeback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ writebackStatus: "approved" })
+    }]
+  ]
+
+  for (const [path, init] of requests) {
+    const response = await app.request(path, init)
+    assert.equal(response.status, 404, `${init?.method ?? "GET"} ${path}`)
+    assert.deepEqual(await response.json(), { error: "Not found" })
   }
-  await deps.objectStore.putText("agent-runs/agent_route_artifact_fixture.json", JSON.stringify(run), "application/json; charset=utf-8")
-
-  const response = await app.request("/agents/runs/agent_route_artifact_fixture/artifacts/artifact_route_report")
-  assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), run.artifacts[0])
-})
-
-test("async agent run read, cancel, and artifact detail endpoints keep metadata read-only", async () => {
-  const createResponse = await app.request("/agents/runs", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      provider: "custom",
-      modelId: "custom-placeholder",
-      instruction: "生成物を作らず状態だけ確認する"
-    })
-  })
-  assert.equal(createResponse.status, 200)
-  const created = await createResponse.json() as {
-    agentRunId: string
-    status: string
-    providerAvailability: string
-    failureReasonCode?: string
-  }
-  assert.equal(created.status, "blocked")
-  assert.equal(created.providerAvailability, "disabled")
-  assert.equal(created.failureReasonCode, "not_configured")
-
-  const getResponse = await app.request(`/agents/runs/${encodeURIComponent(created.agentRunId)}`)
-  assert.equal(getResponse.status, 200)
-  const fetched = await getResponse.json() as { agentRunId: string; artifacts: unknown[]; workspaceMounts: unknown[] }
-  assert.equal(fetched.agentRunId, created.agentRunId)
-  assert.deepEqual(fetched.artifacts, [])
-  assert.deepEqual(fetched.workspaceMounts, [])
-
-  const cancelResponse = await app.request(`/agents/runs/${encodeURIComponent(created.agentRunId)}/cancel`, { method: "POST" })
-  assert.equal(cancelResponse.status, 200)
-  const cancelled = await cancelResponse.json() as { agentRunId: string; status: string; failureReasonCode?: string }
-  assert.equal(cancelled.agentRunId, created.agentRunId)
-  assert.equal(cancelled.status, "cancelled")
-  assert.equal(cancelled.failureReasonCode, "cancelled")
-
-  const missingRunResponse = await app.request("/agents/runs/missing-agent-run")
-  assert.equal(missingRunResponse.status, 404)
-  assert.deepEqual(await missingRunResponse.json(), { error: "Async agent run not found" })
-
-  const missingCancelResponse = await app.request("/agents/runs/missing-agent-run/cancel", { method: "POST" })
-  assert.equal(missingCancelResponse.status, 404)
-  assert.deepEqual(await missingCancelResponse.json(), { error: "Async agent run not found" })
-
-  const missingArtifactListResponse = await app.request("/agents/runs/missing-agent-run/artifacts")
-  assert.equal(missingArtifactListResponse.status, 404)
-  assert.deepEqual(await missingArtifactListResponse.json(), { error: "Async agent run not found" })
-
-  const missingArtifactResponse = await app.request(`/agents/runs/${encodeURIComponent(created.agentRunId)}/artifacts/missing-artifact`)
-  assert.equal(missingArtifactResponse.status, 404)
-  assert.deepEqual(await missingArtifactResponse.json(), { error: "Async agent artifact not found" })
 })

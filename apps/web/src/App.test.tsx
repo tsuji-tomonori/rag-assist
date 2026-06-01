@@ -169,9 +169,9 @@ const rolePermissions: Record<string, Permission[]> = {
   ],
   BENCHMARK_OPERATOR: ["benchmark:read", "benchmark:run"],
   BENCHMARK_RUNNER: ["benchmark:query", "benchmark:seed_corpus"],
-  ASYNC_AGENT_USER: ["agent:run", "agent:cancel", "agent:read:self", "agent:artifact:download", "skill:read", "agent_profile:read", "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self"],
+  ASYNC_AGENT_USER: ["agent:cancel", "agent:read:self", "agent:artifact:download", "skill:read", "agent_profile:read", "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self"],
   SKILL_PROFILE_ADMIN: ["skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai", "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai"],
-  ASYNC_AGENT_ADMIN: ["agent:run", "agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:artifact:writeback", "agent:settings:manage", "agent:provider:manage", "skill:read", "agent_profile:read", "agent_preset:read:self"],
+  ASYNC_AGENT_ADMIN: ["agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:settings:manage", "skill:read", "agent_profile:read", "agent_preset:read:self"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   COST_AUDITOR: ["cost:read:all"],
@@ -180,7 +180,7 @@ const rolePermissions: Record<string, Permission[]> = {
     "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
     "rag:alias:read", "rag:alias:write:group", "rag:alias:review:group", "rag:alias:disable:group", "rag:alias:publish:group",
     "benchmark:read", "benchmark:query", "benchmark:run", "benchmark:cancel", "benchmark:download",
-    "agent:run", "agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:artifact:writeback", "agent:settings:manage", "agent:provider:manage",
+    "agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:settings:manage",
     "skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai",
     "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai",
     "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self",
@@ -1413,10 +1413,10 @@ describe("App chat and upload flow", () => {
     },
     {
       groups: ["ASYNC_AGENT_USER"],
-      visible: ["チャット", "履歴", "お気に入り", "非同期エージェント"],
-      hidden: ["担当者対応", "性能テスト", "ドキュメント", "管理者設定"],
-      expectedGetSuffixes: ["/me", "/agents/runs", "/agents/providers"],
-      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+      visible: ["チャット", "履歴", "お気に入り"],
+      hidden: ["担当者対応", "性能テスト", "非同期エージェント", "ドキュメント", "管理者設定"],
+      expectedGetSuffixes: ["/me"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/agents/runs", "/agents/providers", "/documents", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
     },
     {
       groups: ["USER_ADMIN"],
