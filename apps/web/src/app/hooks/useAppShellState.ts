@@ -8,6 +8,7 @@ import {
   buildAssigneeRouteProps,
   buildBenchmarkRouteProps,
   buildDocumentRouteProps,
+  buildFavoritesRouteProps,
   buildHistoryRouteProps,
   buildProfileRouteProps
 } from "../routeProps/featureRouteProps.js"
@@ -15,13 +16,13 @@ import type { AppView } from "../types.js"
 import { useCurrentUser } from "./useCurrentUser.js"
 import { usePermissions } from "./usePermissions.js"
 import { useAdminData } from "../../features/admin/hooks/useAdminData.js"
-import { useAsyncAgentRuns } from "../../features/agents/hooks/useAsyncAgentRuns.js"
 import { useBenchmarkRuns } from "../../features/benchmark/hooks/useBenchmarkRuns.js"
 import type { ChatDocumentScope } from "../../features/chat/hooks/useChatSession.js"
 import { useChatSession } from "../../features/chat/hooks/useChatSession.js"
 import { useDebugRuns, useDebugSelection } from "../../features/debug/hooks/useDebugRuns.js"
 import type { DocumentWorkspaceUrlState } from "../../features/documents/components/DocumentWorkspace.js"
 import { useDocuments } from "../../features/documents/hooks/useDocuments.js"
+import { useFavorites } from "../../features/favorites/hooks/useFavorites.js"
 import { useConversationHistory } from "../../features/history/hooks/useConversationHistory.js"
 import { useQuestions } from "../../features/questions/hooks/useQuestions.js"
 
@@ -66,6 +67,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   const {
     canCreateChat,
     canReadDocuments,
+    canCreateDocumentGroups,
+    canShareDocumentGroups,
     canWriteDocuments,
     canDeleteDocuments,
     canReindexDocuments,
@@ -82,9 +85,6 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     canRunBenchmark,
     canCancelBenchmark,
     canDownloadBenchmark,
-    canReadAgentRuns,
-    canRunAgent,
-    canCancelAgent,
     canReadUsers,
     canCreateUsers,
     canSuspendUsers,
@@ -120,11 +120,17 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     onCutoverReindex,
     onRollbackReindex,
     onCreateDocumentGroup,
-    onShareDocumentGroup
+    onShareDocumentGroup,
+    onLoadDocumentShare,
+    onShareDocument,
+    onMoveDocument
   } = useDocuments({
     modelId,
     embeddingModelId,
     canWriteDocuments,
+    canCreateDocumentGroups,
+    canShareDocumentGroups,
+    canDeleteDocuments,
     canReindexDocuments,
     setLoading,
     setError
@@ -151,17 +157,6 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
   })
 
   const {
-    agentRuns,
-    agentProviders,
-    refreshAgentRuns,
-    refreshAgentProviders,
-    onCancelAgentRun
-  } = useAsyncAgentRuns({
-    setLoading,
-    setError
-  })
-
-  const {
     history,
     currentConversationId,
     setCurrentConversationId,
@@ -172,6 +167,13 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     updateHistoryQuestionTickets,
     createConversationId
   } = useConversationHistory({ setError })
+
+  const {
+    favorites,
+    refreshFavorites,
+    addFavorite,
+    removeFavorite
+  } = useFavorites({ setError })
 
   const {
     debugRuns,
@@ -326,10 +328,6 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       loaders.push(refreshBenchmarkRuns().catch((err) => console.warn("Failed to load benchmark runs", err)))
       loaders.push(refreshBenchmarkSuites().catch((err) => console.warn("Failed to load benchmark suites", err)))
     }
-    if (canReadAgentRuns) {
-      loaders.push(refreshAgentRuns().catch((err) => console.warn("Failed to load async agent runs", err)))
-      loaders.push(refreshAgentProviders().catch((err) => console.warn("Failed to load async agent providers", err)))
-    }
     if (canReadUsers) loaders.push(refreshManagedUsers().catch((err) => console.warn("Failed to load managed users", err)))
     if (canOpenAdminSettings) loaders.push(refreshAccessRoles().catch((err) => console.warn("Failed to load access roles", err)))
     if (canReadAdminAuditLog) loaders.push(refreshAdminAuditLog().catch((err) => console.warn("Failed to load admin audit log", err)))
@@ -337,7 +335,10 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     if (canReadCosts) loaders.push(refreshCostAudit().catch((err) => console.warn("Failed to load cost audit", err)))
     if (canReadAliases) loaders.push(refreshAliases().catch((err) => console.warn("Failed to load aliases", err)))
     if (canAnswerQuestions) loaders.push(refreshQuestions().catch((err) => console.warn("Failed to load questions", err)))
-    if (canReadHistory) loaders.push(refreshHistory().catch((err) => console.warn("Failed to load conversation history", err)))
+    if (canReadHistory) {
+      loaders.push(refreshHistory().catch((err) => console.warn("Failed to load conversation history", err)))
+      loaders.push(refreshFavorites().catch((err) => console.warn("Failed to load favorites", err)))
+    }
     if (loaders.length === 0) return
     setLoading(true)
     void Promise.all(loaders).finally(() => setLoading(false))
@@ -348,10 +349,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     if (!currentUser) return
     if (activeView === "assignee" && !canAnswerQuestions) setActiveView("chat")
     if (activeView === "benchmark" && !canReadBenchmarkRuns) setActiveView("chat")
-    if (activeView === "agents" && !canReadAgentRuns) setActiveView("chat")
     if (activeView === "documents" && !canManageDocuments) setActiveView("chat")
     if (activeView === "admin" && !canSeeAdminSettings) setActiveView("chat")
-  }, [activeView, canAnswerQuestions, canManageDocuments, canReadAgentRuns, canReadBenchmarkRuns, canSeeAdminSettings, currentUser, setActiveView])
+  }, [activeView, canAnswerQuestions, canManageDocuments, canReadBenchmarkRuns, canSeeAdminSettings, currentUser, setActiveView])
 
   useEffect(() => {
     if (!canReadDebugRuns && debugMode) setDebugMode(false)
@@ -419,7 +419,6 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     authSession,
     canAnswerQuestions,
     canReadBenchmarkRuns,
-    canReadAgentRuns,
     canManageDocuments,
     canSeeAdminSettings,
     onChangeView: setActiveView
@@ -439,7 +438,6 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     activeView,
     canAnswerQuestions,
     canReadBenchmarkRuns,
-    canReadAgentRuns,
     canManageDocuments,
     canSeeAdminSettings,
     chatProps: {
@@ -513,27 +511,13 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onCancel: onCancelBenchmark,
       onBack: () => setActiveView("chat")
     }),
-    agentProps: {
-      providers: agentProviders,
-      runs: agentRuns,
-      loading,
-      canRun: canRunAgent,
-      canCancel: canCancelAgent,
-      onRefresh: () => {
-        setLoading(true)
-        setError(null)
-        void Promise.all([refreshAgentRuns(), refreshAgentProviders()])
-          .catch((err) => setError(err instanceof Error ? err.message : String(err)))
-          .finally(() => setLoading(false))
-      },
-      onCancel: onCancelAgentRun,
-      onBack: () => setActiveView("chat")
-    },
     documentProps: buildDocumentRouteProps({
       documents,
       documentGroups,
       loading,
-      canWrite: canWriteDocuments,
+      canCreateGroup: canCreateDocumentGroups,
+      canShareGroup: canShareDocumentGroups,
+      canUpload: canWriteDocuments,
       canDelete: canDeleteDocuments,
       canReindex: canReindexDocuments,
       uploadGroupId,
@@ -544,6 +528,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onUpload: onUploadDocumentFile,
       onCreateGroup: onCreateDocumentGroup,
       onShareGroup: onShareDocumentGroup,
+      onLoadDocumentShare,
+      onShareDocument,
+      onMoveDocument,
       onDelete,
       onStageReindex,
       onCutoverReindex,
@@ -638,7 +625,13 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
         setPendingDebugQuestion(null)
       },
       onDelete: deleteHistoryItem,
-      onToggleFavorite: toggleFavorite,
+      onToggleFavorite: (item) => {
+        void toggleFavorite(item, { addFavorite, removeFavorite })
+      },
+      onBack: () => setActiveView("chat")
+    }),
+    favoritesProps: buildFavoritesRouteProps({
+      favorites,
       onBack: () => setActiveView("chat")
     }),
     profileProps: buildProfileRouteProps({
@@ -660,7 +653,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
 }
 
 const documentSortKeys = new Set(["updatedDesc", "updatedAsc", "fileNameAsc", "chunkDesc", "typeAsc"])
-const appViews = new Set(["chat", "assignee", "history", "favorites", "benchmark", "agents", "admin", "documents", "profile"])
+const appViews = new Set(["chat", "assignee", "history", "favorites", "benchmark", "admin", "documents", "profile"])
 
 function readInitialAppViewFromLocation(): AppView {
   if (typeof window === "undefined") return "chat"

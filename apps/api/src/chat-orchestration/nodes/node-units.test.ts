@@ -1210,6 +1210,62 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   const guardedMemory = await createRetrieveMemoryNode(guardedDeps, { userId: "user-a", cognitoGroups: ["GROUP_A"] })(state({ memoryTopK: 3 }))
   assert.deepEqual(guardedMemory.memoryCards?.map((hit) => hit.key), ["active-memory"])
 
+  const ownerBypassDeps = createDeps()
+  const ownerBypassObjectStore = ownerBypassDeps.objectStore
+  const ownerBypassGroup = {
+    groupId: "private-group",
+    name: "Private group",
+    visibility: "private",
+    ownerUserId: "group-admin",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: ["group-admin"],
+    createdAt: "2026-05-03T00:00:00.000Z",
+    updatedAt: "2026-05-03T00:00:00.000Z"
+  }
+  ownerBypassDeps.documentGroupStore = {
+    list: async () => [ownerBypassGroup],
+    get: async () => ownerBypassGroup,
+    create: async () => ownerBypassGroup,
+    updateSharing: async () => ownerBypassGroup,
+    findByAdminAndCanonicalPath: async () => undefined
+  } as unknown as Dependencies["documentGroupStore"]
+  ownerBypassDeps.objectStore = {
+    ...ownerBypassObjectStore,
+    getText: async (key: string) => {
+      if (key === "manifests/doc-1.json") {
+        const manifest = JSON.parse(await ownerBypassObjectStore.getText(key)) as Record<string, unknown>
+        return JSON.stringify({
+          ...manifest,
+          metadata: {
+            scopeType: "group",
+            ownerUserId: "uploader",
+            groupIds: [ownerBypassGroup.groupId]
+          }
+        })
+      }
+      return ownerBypassObjectStore.getText(key)
+    }
+  }
+  ownerBypassDeps.memoryVectorStore = {
+    put: async () => undefined,
+    query: async () => [{
+      ...chunk,
+      key: "owner-owned-group-memory",
+      metadata: {
+        ...chunk.metadata,
+        kind: "memory",
+        memoryId: "memory-owner-bypass",
+        scopeType: "group",
+        ownerUserId: "uploader",
+        groupIds: [ownerBypassGroup.groupId]
+      }
+    }],
+    delete: async () => undefined
+  }
+  const ownerBypassMemory = await createRetrieveMemoryNode(ownerBypassDeps, { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["CHAT_USER"] })(state({ memoryTopK: 5 }))
+  assert.deepEqual(ownerBypassMemory.memoryCards, [])
+
   const noMemoryClues = await createGenerateCluesNode(deps)(state({ memoryCards: [], expandedQueries: ["standalone question", "retrieval query"] }))
   assert.deepEqual(noMemoryClues, { clues: [], expandedQueries: ["standalone question", "retrieval query", "question"] })
 
@@ -1292,6 +1348,62 @@ test("query nodes handle memory-disabled, fallback, generated clue, and search m
   assert.equal(memoryExpanded.retrievedChunks?.[0]?.metadata.sources?.includes("memory"), true)
   assert.equal(memoryExpanded.retrievedChunks?.[0]?.metadata.chunkId, "chunk-0000")
   assert.equal(memoryExpanded.retrievalDiagnostics?.sourceCounts.memory, 1)
+
+  const unauthorizedExpansionDeps = createDeps()
+  const unauthorizedExpansionObjectStore = unauthorizedExpansionDeps.objectStore
+  unauthorizedExpansionDeps.documentGroupStore = {
+    list: async () => [ownerBypassGroup],
+    get: async () => ownerBypassGroup,
+    create: async () => ownerBypassGroup,
+    updateSharing: async () => ownerBypassGroup,
+    findByAdminAndCanonicalPath: async () => undefined
+  } as unknown as Dependencies["documentGroupStore"]
+  unauthorizedExpansionDeps.objectStore = {
+    ...unauthorizedExpansionObjectStore,
+    getText: async (key: string) => {
+      if (key === "manifests/doc-1.json") {
+        const manifest = JSON.parse(await unauthorizedExpansionObjectStore.getText(key)) as Record<string, unknown>
+        return JSON.stringify({
+          ...manifest,
+          metadata: {
+            scopeType: "group",
+            ownerUserId: "uploader",
+            groupIds: [ownerBypassGroup.groupId]
+          }
+        })
+      }
+      return unauthorizedExpansionObjectStore.getText(key)
+    }
+  }
+  unauthorizedExpansionDeps.evidenceVectorStore = {
+    put: async () => undefined,
+    query: async () => [],
+    delete: async () => undefined
+  }
+  const unauthorizedMemoryExpanded = await createSearchEvidenceNode(unauthorizedExpansionDeps, { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["CHAT_USER"] })(
+    state({
+      normalizedQuery: "not-in-document",
+      queryEmbeddings: [{ query: "not-in-document", vector: [1, 0] }],
+      memoryCards: [{
+        ...chunk,
+        key: "doc-1-memory-owner-bypass",
+        score: 0.82,
+        metadata: {
+          ...chunk.metadata,
+          kind: "memory",
+          chunkId: undefined,
+          memoryId: "memory-owner-bypass",
+          scopeType: "group",
+          ownerUserId: "uploader",
+          groupIds: [ownerBypassGroup.groupId],
+          sourceChunkIds: ["chunk-0000"],
+          text: "Level: section\nSource chunks: chunk-0000"
+        }
+      }]
+    })
+  )
+  assert.deepEqual(unauthorizedMemoryExpanded.retrievedChunks, [])
+  assert.equal(unauthorizedMemoryExpanded.retrievalDiagnostics?.sourceCounts.memory, 0)
 
   const excludedExpansionDeps = createDeps()
   const excludedObjectStore = excludedExpansionDeps.objectStore
@@ -2318,7 +2430,9 @@ function createDeps(): Dependencies {
       create: async () => {
         throw new Error("not used")
       },
-      list: async () => [],
+      listAssignedToUser: async () => [],
+      listRequestedByUser: async () => [],
+      listAllForAdmin: async () => [],
       get: async () => undefined,
       answer: async () => {
         throw new Error("not used")
@@ -2332,6 +2446,14 @@ function createDeps(): Dependencies {
         throw new Error("not used")
       },
       list: async () => [],
+      delete: async () => undefined
+    },
+    favoriteStore: {
+      save: async () => {
+        throw new Error("not used")
+      },
+      list: async () => [],
+      get: async () => undefined,
       delete: async () => undefined
     }
   } as unknown as Dependencies

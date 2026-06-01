@@ -596,3 +596,25 @@
   - 実 AWS/S3 への admin export 保存と署名付き URL の実ダウンロードは未検証。
   - ParsedDocument preview、ChatToolInvocation execution、Async agent writeback/provider settings/benchmark runner など、章別仕様差分全体の残 task は未完了。
   - 未達/未検証条件が残るため、この task md は `tasks/done/` に移動していない。
+
+## 進捗メモ 2026-06-01 追記 32
+
+- PR #339 が `origin/main` と conflict したため、`origin/main` を merge し、UsageEvent / PricingCatalog / admin usage-cost 実装を main 側の RAG runtime layout と統合した。
+- `pricing-catalog` / `usage-tracking-text-model` は `apps/api/src/rag/_shared/usage/` へ配置し、既存 import 互換用の root shim を追加した。
+- `admin-routes` の重複 `POST /admin/audit-log/export` を解消し、OpenAPI generated docs を再生成した。
+- stateless chat request でも request 単位の UsageEvent が残るよう `rag.chat_request` を追加し、async agent の idempotency key は既存 test 期待に合わせて `async-agent:${run.agentRunId}` に戻した。
+- 検証:
+  - `npm run typecheck -w @memorag-mvp/web`: pass
+  - `npm run typecheck -w @memorag-mvp/api`: pass
+  - `npm test -w @memorag-mvp/api`: pass（377 件。sandbox の tsx IPC 制約により `require_escalated` で再実行）
+  - `npm run test -w @memorag-mvp/web`: pass（35 files / 283 件）
+  - `npm test -w @memorag-mvp/infra`: pass（24 件）
+  - `npm run docs:openapi`: pass
+  - `npm run docs:openapi:check`: pass
+  - `git diff --check`: pass
+- 未完了:
+  - 実 AWS Bedrock / DynamoDB での provider usage 永続化は未検証。
+  - 実 AWS/S3 への admin export 保存と署名付き URL の実ダウンロードは未検証。
+  - 最新 push 後の GitHub Actions CI は未確認。
+  - ParsedDocument preview、ChatToolInvocation execution、Async agent writeback/provider settings/benchmark runner など、章別仕様差分全体の残 task は未完了。
+  - 未達/未検証条件が残るため、この task md は引き続き `tasks/do/` に維持する。

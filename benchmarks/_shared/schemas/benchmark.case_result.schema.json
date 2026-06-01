@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rag-assist.local/schemas/benchmark.case_result.schema.json",
+  "title": "Benchmark case result",
+  "type": "object",
+  "required": ["schemaVersion", "caseId", "status", "scores", "judgements", "failures", "artifacts"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": "benchmark.case_evaluation_result.v1" },
+    "caseId": { "type": "string" },
+    "status": { "enum": ["passed", "failed", "skipped"] },
+    "scores": { "type": "object" },
+    "judgements": { "type": "array" },
+    "failures": { "type": "array" },
+    "artifacts": { "type": "object" }
+  }
+}

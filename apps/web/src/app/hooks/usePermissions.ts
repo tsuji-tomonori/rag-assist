@@ -8,6 +8,8 @@ export function usePermissions(currentUser: CurrentUser | null) {
     const canReadDocuments = hasPermission("rag:doc:read")
     const canWriteDocuments = hasPermission("rag:doc:write:group")
     const canDeleteDocuments = hasPermission("rag:doc:delete:group")
+    const canCreateDocumentGroups = hasPermission("rag:group:create")
+    const canShareDocumentGroups = hasPermission("rag:group:assign_manager")
     const canReindexDocuments = hasPermission("rag:index:rebuild:group")
     const canReadAliases = hasPermission("rag:alias:read")
     const canWriteAliases = hasPermission("rag:alias:write:group")
@@ -22,9 +24,9 @@ export function usePermissions(currentUser: CurrentUser | null) {
     const canRunBenchmark = hasPermission("benchmark:run")
     const canCancelBenchmark = hasPermission("benchmark:cancel")
     const canDownloadBenchmark = hasPermission("benchmark:download")
-    const canReadAgentRuns = hasPermission("agent:read:self") || hasPermission("agent:read:managed")
-    const canRunAgent = hasPermission("agent:run")
-    const canCancelAgent = hasPermission("agent:cancel")
+    const canReadAgentRuns = false
+    const canRunAgent = false
+    const canCancelAgent = false
     const canReadUsers = hasPermission("user:read")
     const canCreateUsers = hasPermission("user:create")
     const canSuspendUsers = hasPermission("user:suspend")
@@ -34,7 +36,12 @@ export function usePermissions(currentUser: CurrentUser | null) {
     const canReadUsage = hasPermission("usage:read:all_users")
     const canReadCosts = hasPermission("cost:read:all")
     const canReadAdminAuditLog = canOpenAdminSettings
-    const canManageDocuments = canWriteDocuments || canDeleteDocuments || canReindexDocuments
+    const canManageDocuments =
+      canWriteDocuments ||
+      canDeleteDocuments ||
+      canCreateDocumentGroups ||
+      canShareDocumentGroups ||
+      canReindexDocuments
     const canManageAliases = canReadAliases || canWriteAliases || canReviewAliases || canDisableAliases || canPublishAliases
     const canManageUsers = canReadUsers || canCreateUsers || canAssignRoles || canSuspendUsers || canUnsuspendUsers || canDeleteUsers
     const canAuditOperations = canReadUsage || canReadCosts
@@ -46,6 +53,8 @@ export function usePermissions(currentUser: CurrentUser | null) {
       canReadDocuments,
       canWriteDocuments,
       canDeleteDocuments,
+      canCreateDocumentGroups,
+      canShareDocumentGroups,
       canReindexDocuments,
       canReadAliases,
       canWriteAliases,

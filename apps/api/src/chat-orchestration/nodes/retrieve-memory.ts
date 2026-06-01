@@ -1,6 +1,7 @@
 import type { AppUser } from "../../auth.js"
 import { config } from "../../config.js"
 import type { Dependencies } from "../../dependencies.js"
+import { canAccessDocumentGroup } from "../../folders/document-group-permissions.js"
 import { isQualityApprovedForNormalRag } from "../../rag/quality.js"
 import type { DocumentGroup, DocumentManifest, JsonValue, RetrievedVector, SearchScope, VectorMetadata } from "../../types.js"
 import { ragRuntimePolicy } from "../runtime-policy.js"
@@ -72,11 +73,19 @@ function isActiveManifest(manifest: DocumentManifest): boolean {
 function canAccessManifest(manifest: DocumentManifest, user: AppUser, groups: DocumentGroup[] = []): boolean {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
-  if (stringValue(metadata.ownerUserId) === user.userId) return true
   const groupIds = stringValues(metadata.groupIds ?? metadata.groupId)
-  if (groupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user))) return true
-  if (stringValue(metadata.scopeType) === "group") return false
+  const scopeType = stringValue(metadata.scopeType)
+  if (groupIds.length > 0 || scopeType === "group") {
+    return groupIds.some((groupId) => canAccessDocumentGroup(groups.find((group) => group.groupId === groupId), user, groups))
+  }
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
+  if (!hasExplicitMetadataAcl(metadata)) return false
   return canAccessMetadata(metadata, user)
+}
+
+function hasExplicitMetadataAcl(metadata: Record<string, JsonValue>): boolean {
+  return stringValues(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group).length > 0
+    || stringValues(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId).length > 0
 }
 
 function canAccessMetadata(metadata: Record<string, JsonValue>, user: AppUser): boolean {
@@ -129,12 +138,4 @@ async function loadDocumentGroups(deps: Pick<Dependencies, "documentGroupStore">
   } catch {
     return []
   }
-}
-
-function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
-  if (!group) return false
-  if (group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId) || group.sharedUserIds.includes(user.userId)) return true
-  if (user.email && group.sharedUserIds.includes(user.email)) return true
-  if (group.visibility === "org") return true
-  return group.sharedGroups.some((sharedGroup) => user.cognitoGroups.includes(sharedGroup))
 }

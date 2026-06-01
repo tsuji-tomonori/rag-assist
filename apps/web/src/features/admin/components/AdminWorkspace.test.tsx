@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { cleanup, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { CurrentUser } from "../../../shared/types/common.js"
@@ -72,14 +72,14 @@ const usageSummary: UserUsageSummary = {
   email: "managed@example.com",
   displayName: "管理対象ユーザー",
   chatMessages: 3,
-  chatRequestCount: 3,
-  llmCallCount: 2,
-  inputTokens: 1200,
-  outputTokens: 300,
-  totalTokens: 1500,
-  estimatedCostUsd: 0.00168,
-  actualTokenEventCount: 0,
-  estimatedTokenEventCount: 2,
+  chatRequestCount: 2,
+  llmCallCount: 3,
+  inputTokens: 100,
+  outputTokens: 50,
+  totalTokens: 150,
+  estimatedCostUsd: 0.002,
+  actualTokenEventCount: 3,
+  estimatedTokenEventCount: 0,
   missingTokenEventCount: 0,
   conversationCount: 2,
   questionCount: 1,
@@ -88,36 +88,17 @@ const usageSummary: UserUsageSummary = {
   debugRunCount: 1
 }
 
-const missingUsageSummary: UserUsageSummary = {
-  ...usageSummary,
-  userId: "missing-usage",
-  email: "missing@example.com",
-  chatMessages: 1,
-  chatRequestCount: 1,
-  llmCallCount: 1,
-  inputTokens: 0,
-  outputTokens: 0,
-  totalTokens: 0,
-  estimatedCostUsd: 0,
-  actualTokenEventCount: 0,
-  estimatedTokenEventCount: 0,
-  missingTokenEventCount: 1
-}
-
-const idleUsageSummary: UserUsageSummary = {
-  ...usageSummary,
-  userId: "idle-usage",
-  email: "idle@example.com",
-  chatMessages: 0,
-  chatRequestCount: 0,
-  llmCallCount: 0,
-  inputTokens: 0,
-  outputTokens: 0,
-  totalTokens: 0,
-  estimatedCostUsd: 0,
-  actualTokenEventCount: 0,
-  estimatedTokenEventCount: 0,
-  missingTokenEventCount: 0
+const usageSummaryResponse: UsageSummaryResponse = {
+  periodStart: "2026-05-01T00:00:00.000Z",
+  periodEnd: "2026-05-31T00:00:00.000Z",
+  users: [usageSummary],
+  breakdowns: {
+    byFeature: [{ key: "chat", label: "chat", inputTokens: 100, outputTokens: 50, totalTokens: 150, estimatedCostUsd: 0.002, actualTokenEventCount: 3, estimatedTokenEventCount: 0, missingTokenEventCount: 0 }],
+    byModel: [{ key: "model", label: "model", inputTokens: 100, outputTokens: 50, totalTokens: 150, estimatedCostUsd: 0.002, actualTokenEventCount: 3, estimatedTokenEventCount: 0, missingTokenEventCount: 0 }],
+    byGroup: []
+  },
+  totals: { inputTokens: 100, outputTokens: 50, totalTokens: 150, estimatedCostUsd: 0.002 },
+  dataCompleteness: { actualTokenEventCount: 3, estimatedTokenEventCount: 0, missingTokenEventCount: 0 }
 }
 
 const costAudit: CostAuditSummary = {
@@ -133,75 +114,14 @@ const costAudit: CostAuditSummary = {
       unit: "tokens",
       unitCostUsd: 0.001,
       estimatedCostUsd: 1.2,
-      confidence: "estimated_usage"
+      confidence: "estimated_usage",
+      pricingVersion: "bedrock-2026-05-01"
     }
   ],
   users: [{ userId: "managed-1", email: "managed@example.com", estimatedCostUsd: 1.2 }],
-  pricingVersion: "bedrock-2026-06-local-v1",
+  pricingVersion: "bedrock-2026-05-01",
   pricingCatalogUpdatedAt: "2026-05-01T00:00:00.000Z",
-  dataCompleteness: {
-    actualTokenEventCount: 0,
-    estimatedTokenEventCount: 2,
-    missingTokenEventCount: 0
-  }
-}
-
-const usageSummaryResponse: UsageSummaryResponse = {
-  periodStart: "2026-05-01T00:00:00.000Z",
-  periodEnd: "2026-05-31T00:00:00.000Z",
-  users: [usageSummary],
-  breakdowns: {
-    byFeature: [
-      {
-        key: "rag.generate_answer",
-        label: "rag.generate_answer",
-        inputTokens: 1000,
-        outputTokens: 250,
-        totalTokens: 1250,
-        estimatedCostUsd: 0.0014,
-        actualTokenEventCount: 0,
-        estimatedTokenEventCount: 1,
-        missingTokenEventCount: 0
-      }
-    ],
-    byModel: [
-      {
-        key: "amazon.nova-lite-v1:0",
-        label: "amazon.nova-lite-v1:0",
-        inputTokens: 1200,
-        outputTokens: 300,
-        totalTokens: 1500,
-        estimatedCostUsd: 0.00168,
-        actualTokenEventCount: 0,
-        estimatedTokenEventCount: 2,
-        missingTokenEventCount: 0
-      }
-    ],
-    byGroup: [
-      {
-        key: "SYSTEM_ADMIN",
-        label: "SYSTEM_ADMIN",
-        inputTokens: 1200,
-        outputTokens: 300,
-        totalTokens: 1500,
-        estimatedCostUsd: 0.00168,
-        actualTokenEventCount: 0,
-        estimatedTokenEventCount: 2,
-        missingTokenEventCount: 0
-      }
-    ]
-  },
-  totals: {
-    inputTokens: 1200,
-    outputTokens: 300,
-    totalTokens: 1500,
-    estimatedCostUsd: 0.00168
-  },
-  dataCompleteness: {
-    actualTokenEventCount: 0,
-    estimatedTokenEventCount: 2,
-    missingTokenEventCount: 0
-  }
+  dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 1, missingTokenEventCount: 0 }
 }
 
 function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspace>[0]> = {}) {
@@ -271,6 +191,7 @@ describe("AdminWorkspace", () => {
       canReadUsage: true,
       canReadCosts: true,
       usageSummaries: [usageSummary],
+      usageSummary: usageSummaryResponse,
       costAudit
     })
 
@@ -278,6 +199,32 @@ describe("AdminWorkspace", () => {
     expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("1 users")
     expect(screen.getByLabelText("コスト監査")).toHaveTextContent("$12.3400")
     expect(screen.queryByRole("button", { name: /ユーザー管理/ })).not.toBeInTheDocument()
+  })
+
+  it("overview は API field が未提供の action card と count を表示しない", () => {
+    renderAdminWorkspace({
+      documentsCount: null,
+      openQuestionsCount: null,
+      debugRunsCount: null,
+      benchmarkRunsCount: null,
+      managedUsers: null,
+      accessRoles: null,
+      usageSummaries: null,
+      usageSummary: null,
+      aliases: null,
+      canReadUsers: true,
+      canReadUsage: true
+    })
+
+    expect(screen.queryByRole("button", { name: /ドキュメント管理/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /担当者対応/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /デバッグ/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /性能テスト/ })).not.toBeInTheDocument()
+    expect(screen.getByLabelText("ユーザー管理")).toHaveTextContent("未提供")
+    expect(screen.getByLabelText("アクセス管理")).toHaveTextContent("ロール定義 API field は未提供")
+    expect(screen.getByLabelText("Alias管理")).toHaveTextContent("Alias API field は未提供")
+    expect(screen.queryByText("0 users")).not.toBeInTheDocument()
+    expect(screen.queryByText("0 aliases")).not.toBeInTheDocument()
   })
 
   it("Alias 管理を表示し、作成と公開操作を通知する", async () => {
@@ -308,6 +255,20 @@ describe("AdminWorkspace", () => {
       scope: { department: "SRE" }
     })
     expect(onPublishAliases).toHaveBeenCalledTimes(1)
+  })
+
+  it("Alias API field 未提供または公開対象なしでは公開 control を表示しない", async () => {
+    renderAdminWorkspace({ aliases: null, aliasAuditLog: null })
+    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
+
+    expect(screen.getByText("Alias API field は未提供です。")).toBeInTheDocument()
+    expect(screen.getByText("Alias監査ログ API field は未提供です。")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "公開" })).not.toBeInTheDocument()
+
+    cleanup()
+    renderAdminWorkspace({ aliases: aliases.filter((alias) => alias.status !== "approved"), aliasAuditLog: [] })
+    await userEvent.click(screen.getByRole("button", { name: "Alias" }))
+    expect(screen.queryByRole("button", { name: "公開" })).not.toBeInTheDocument()
   })
 
   it("Alias の下書き化、承認、差戻、無効化操作を通知する", async () => {
@@ -385,102 +346,70 @@ describe("AdminWorkspace", () => {
     expect(onAssignRoles).toHaveBeenCalledWith("managed-1", ["SYSTEM_ADMIN"])
   })
 
+  it("ロール API field が未提供のとき fake group を作成・付与しない", async () => {
+    const onCreateUser = vi.fn().mockResolvedValue(undefined)
+    const onAssignRoles = vi.fn().mockResolvedValue(undefined)
+
+    renderAdminWorkspace({
+      managedUsers: [{ ...managedUser, groups: [] }],
+      accessRoles: null,
+      canReadUsers: true,
+      canCreateUsers: true,
+      canAssignRoles: true,
+      onCreateUser,
+      onAssignRoles
+    })
+    await userEvent.click(screen.getByRole("button", { name: "Users" }))
+
+    expect(screen.getAllByText("未提供").length).toBeGreaterThan(0)
+    expect(screen.getByText("ロール定義は未提供")).toBeInTheDocument()
+    expect(screen.queryByLabelText("managed@example.comに付与するロール")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "付与" })).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("メール"), "new@example.com")
+    await userEvent.click(screen.getByRole("button", { name: "作成" }))
+
+    expect(onCreateUser).toHaveBeenCalledWith({
+      email: "new@example.com",
+      displayName: undefined,
+      groups: undefined
+    })
+    expect(onAssignRoles).not.toHaveBeenCalled()
+  })
+
   it("usage/cost/audit の未提供と空状態を正直に表示する", async () => {
     renderAdminWorkspace({
       canReadUsage: true,
       canReadCosts: true,
       canReadAdminAuditLog: true,
       usageSummaries: [],
+      usageSummary: { ...usageSummaryResponse, users: [], breakdowns: { byFeature: [], byModel: [], byGroup: [] }, totals: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 }, dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 0, missingTokenEventCount: 0 } },
       costAudit: null,
       adminAuditLog: []
     })
 
     await userEvent.click(screen.getByRole("button", { name: "Usage / Cost" }))
-    expect(screen.getAllByText("未計測または利用なし").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText("権限内の usage event は空です。")).toBeInTheDocument()
     expect(screen.getByText("コスト summary は未提供です。")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Audit" }))
-    expect(screen.getByText(/横断 audit と reason は未提供です。/)).toBeInTheDocument()
+    expect(screen.getByText(/export には生成時刻と redaction policy を含めます。/)).toBeInTheDocument()
     expect(screen.getByText("管理操作履歴はありません。")).toBeInTheDocument()
   })
 
-  it("usage/cost で推定、未計測、利用なしを区別して表示する", async () => {
-    const onExportCostSummary = vi.fn().mockResolvedValue(undefined)
+  it("usage/audit API field 未提供を空件数に変換しない", async () => {
     renderAdminWorkspace({
       canReadUsage: true,
-      canReadCosts: true,
-      usageSummaries: [usageSummary, missingUsageSummary, idleUsageSummary],
-      usageSummary: {
-        ...usageSummaryResponse,
-        users: [usageSummary, missingUsageSummary, idleUsageSummary],
-        dataCompleteness: {
-          actualTokenEventCount: 0,
-          estimatedTokenEventCount: 2,
-          missingTokenEventCount: 1
-        }
-      },
-      costAudit: {
-        ...costAudit,
-        dataCompleteness: {
-          actualTokenEventCount: 0,
-          estimatedTokenEventCount: 2,
-          missingTokenEventCount: 1
-        },
-        items: [
-          ...costAudit.items,
-          {
-            service: "bedrock",
-            category: "chat missing",
-            usage: 0,
-            unit: "tokens",
-            unitCostUsd: 0,
-            estimatedCostUsd: 0,
-            confidence: "missing_usage",
-            pricingVersion: "bedrock-2026-06-local-v1"
-          }
-        ]
-      },
-      onExportCostSummary
+      canReadAdminAuditLog: true,
+      usageSummaries: null,
+      usageSummary: null,
+      adminAuditLog: null
     })
 
     await userEvent.click(screen.getByRole("button", { name: "Usage / Cost" }))
-
-    expect(screen.getAllByText("推定 2").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText("一部未計測 1").length).toBeGreaterThanOrEqual(2)
-    expect(screen.getAllByText("1,500 tokens").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByLabelText("機能別")).toHaveTextContent("rag.generate_answer")
-    expect(screen.getByLabelText("モデル別")).toHaveTextContent("amazon.nova-lite-v1:0")
-    expect(screen.getByLabelText("グループ別")).toHaveTextContent("SYSTEM_ADMIN")
-    expect(screen.getAllByText("$0.0017").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText("未計測または利用なし").length).toBeGreaterThanOrEqual(1)
-    expect(screen.getByText("一部未計測: 1")).toBeInTheDocument()
-    expect(screen.getByText("version: bedrock-2026-06-local-v1")).toBeInTheDocument()
-    expect(screen.getByText("未計測")).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "コスト summary をエクスポート" }))
-    expect(onExportCostSummary).toHaveBeenCalledTimes(1)
-  })
-
-  it("audit export 操作を通知する", async () => {
-    const onExportAdminAuditLog = vi.fn().mockResolvedValue(undefined)
-    renderAdminWorkspace({
-      canReadAdminAuditLog: true,
-      adminAuditLog: [
-        {
-          auditId: "audit-1",
-          action: "user:create",
-          actorUserId: "admin",
-          targetUserId: "managed-1",
-          targetEmail: "managed@example.com",
-          beforeGroups: [],
-          afterGroups: ["CHAT_USER"],
-          createdAt: "2026-05-01T00:00:00.000Z"
-        }
-      ],
-      onExportAdminAuditLog
-    })
-
+    expect(screen.getByText("利用状況 API field は未提供です。")).toBeInTheDocument()
+    expect(screen.queryByText("0 users")).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Audit" }))
-    expect(screen.getByText(/横断 audit と reason は未提供です。/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "監査ログをエクスポート" }))
-    expect(onExportAdminAuditLog).toHaveBeenCalledTimes(1)
+    expect(screen.getByText("管理操作履歴 API field は未提供です。")).toBeInTheDocument()
+    expect(screen.queryByText("0 件")).not.toBeInTheDocument()
   })
 })

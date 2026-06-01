@@ -9,7 +9,8 @@
     "synth:yaml": "mkdir -p cdk.out && cdk synth > cdk.out/MemoRagMvpStack.template.yaml",
     "test": "npm run bundle && node --test -r ts-node/register test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "check:dynamodb-gsi-update-limit": "node -r ts-node/register scripts/check-dynamodb-gsi-update-limit.ts"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.1041.0",

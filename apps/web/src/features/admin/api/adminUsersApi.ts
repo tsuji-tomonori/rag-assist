@@ -1,9 +1,9 @@
 import { del, get, post } from "../../../shared/api/http.js"
 import type { ManagedUser } from "../types.js"
 
-export async function listManagedUsers(): Promise<ManagedUser[]> {
+export async function listManagedUsers(): Promise<ManagedUser[] | null> {
   const result = await get<{ users?: ManagedUser[] }>("/admin/users")
-  return result.users ?? []
+  return Array.isArray(result.users) ? result.users : null
 }
 
 export async function createManagedUser(input: { email: string; displayName?: string; groups?: string[] }): Promise<ManagedUser> {

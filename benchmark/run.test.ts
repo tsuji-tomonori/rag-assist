@@ -9,6 +9,10 @@ import test from "node:test"
 import { fileURLToPath } from "node:url"
 
 type SummaryArtifact = {
+  suite: {
+    runner: string
+    useCase: string
+  }
   evaluatorProfile: {
     id: string
     version: string
@@ -46,6 +50,11 @@ type SummaryArtifact = {
     groundedFileAccuracy?: number | null
     groundedPageAccuracy?: number | null
     expectedPageHitRate?: number | null
+    asyncProviderAvailabilityAccuracy?: number | null
+    asyncStatusAccuracy?: number | null
+    asyncFailureReasonCodeAccuracy?: number | null
+    asyncNoMockArtifactRate?: number | null
+    asyncArtifactMetadataRedactionPassRate?: number | null
   }
   turnDependencyMetrics?: Record<string, {
     total: number
@@ -797,6 +806,106 @@ test("benchmark runner applies suite evaluator profile to retrieval K and thresh
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()))
   }
+})
+
+test("async agent benchmark runner evaluates unavailable providers and redacted artifact metadata from run metadata", async () => {
+  const paths = artifactPaths("async-agent")
+  const datasetPath = path.join(paths.dir, "dataset.jsonl")
+  writeFileSync(datasetPath, `${[
+    {
+      id: "async-not-configured",
+      question: "Codex provider が未設定なら正直に blocked を返す",
+      expectedProviderAvailability: "not_configured",
+      expectedAsyncAgentStatus: "blocked",
+      expectedFailureReasonCode: "not_configured",
+      expectedNoArtifacts: true,
+      asyncAgentRun: {
+        agentRunId: "agent_not_configured",
+        runId: "agent_not_configured",
+        provider: "codex",
+        modelId: "codex-placeholder",
+        status: "blocked",
+        providerAvailability: "not_configured",
+        failureReasonCode: "not_configured",
+        failureReason: "Codex provider is not configured",
+        artifactIds: [],
+        artifacts: []
+      }
+    },
+    {
+      id: "async-provider-unavailable",
+      question: "unknown provider は利用不可として artifact を作らない",
+      expectedProviderAvailability: "provider_unavailable",
+      expectedAsyncAgentStatus: "blocked",
+      expectedFailureReasonCode: "provider_unavailable",
+      expectedNoArtifacts: true,
+      asyncAgentRun: {
+        agentRunId: "agent_unavailable",
+        runId: "agent_unavailable",
+        provider: "custom",
+        modelId: "custom-model",
+        status: "blocked",
+        providerAvailability: "provider_unavailable",
+        failureReasonCode: "provider_unavailable",
+        failureReason: "Provider is unavailable",
+        artifactIds: [],
+        artifacts: []
+      }
+    },
+    {
+      id: "async-redacted-artifact",
+      question: "artifact metadata は signed URL や secret を含まない",
+      expectedProviderAvailability: "available",
+      expectedAsyncAgentStatus: "completed",
+      expectedArtifactMetadataRedacted: true,
+      asyncAgentRun: {
+        agentRunId: "agent_completed",
+        runId: "agent_completed",
+        provider: "claude_code",
+        modelId: "claude-code-default",
+        status: "completed",
+        providerAvailability: "available",
+        artifactIds: ["artifact_report"],
+        artifacts: [{
+          artifactId: "artifact_report",
+          artifactType: "markdown",
+          fileName: "report.md",
+          mimeType: "text/markdown",
+          size: 128,
+          storageRef: "agent-runs/agent_completed/artifacts/artifact_report/report.md",
+          writebackStatus: "not_requested"
+        }]
+      }
+    }
+  ].map((row) => JSON.stringify(row)).join("\n")}\n`, "utf-8")
+
+  const result = await runBenchmarkRunner({
+    BENCHMARK_RUNNER: "async_agent",
+    BENCHMARK_USE_CASE: "async_agent_task",
+    BENCHMARK_SUITE_ID: "async-agent-task-v1",
+    DATASET: datasetPath,
+    OUTPUT: paths.output,
+    SUMMARY: paths.summary,
+    REPORT: paths.report
+  })
+
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`)
+  const summary = readSummary(paths.summary)
+  assert.equal(summary.suite.runner, "async_agent")
+  assert.equal(summary.suite.useCase, "async_agent_task")
+  assert.equal(summary.total, 3)
+  assert.equal(summary.metrics?.asyncProviderAvailabilityAccuracy, 1)
+  assert.equal(summary.metrics?.asyncStatusAccuracy, 1)
+  assert.equal(summary.metrics?.asyncFailureReasonCodeAccuracy, 1)
+  assert.equal(summary.metrics?.asyncNoMockArtifactRate, 1)
+  assert.equal(summary.metrics?.asyncArtifactMetadataRedactionPassRate, 1)
+  assert.equal(summary.failures.length, 0)
+
+  const resultRows = readResultRows(paths.output)
+  assert.deepEqual(resultRows.map((row) => row.evaluation.failureReasons), [[], [], []])
+  const report = readFileSync(paths.report, "utf-8")
+  assert.match(report, /async_provider_availability_accuracy/)
+  assert.match(report, /async_artifact_metadata_redaction_pass_rate/)
 })
 
 function artifactPaths(name: string): { dir: string; output: string; summary: string; report: string } {

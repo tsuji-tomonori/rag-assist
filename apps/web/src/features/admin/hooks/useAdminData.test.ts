@@ -5,8 +5,8 @@ import { assignUserRoles, createManagedUser, deleteManagedUser, listManagedUsers
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
-import { getUsageSummary } from "../api/usageApi.js"
 import { downloadAdminAuditLogExport, downloadAdminCostSummaryExport } from "../../../shared/utils/downloads.js"
+import { getUsageSummary } from "../api/usageApi.js"
 import { useAdminData } from "./useAdminData.js"
 
 vi.mock("../api/accessRolesApi.js", () => ({ listAccessRoles: vi.fn().mockResolvedValue([]) }))
@@ -29,11 +29,8 @@ vi.mock("../api/aliasesApi.js", () => ({
 }))
 vi.mock("../api/auditLogApi.js", () => ({ listAdminAuditLog: vi.fn().mockResolvedValue([]) }))
 vi.mock("../api/costApi.js", () => ({ getCostAuditSummary: vi.fn().mockResolvedValue(null) }))
-vi.mock("../api/usageApi.js", () => ({ getUsageSummary: vi.fn().mockResolvedValue({ periodStart: "2026-05-01", periodEnd: "2026-05-31", users: [], breakdowns: { byFeature: [], byModel: [], byGroup: [] }, totals: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 }, dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 0, missingTokenEventCount: 0 } }) }))
-vi.mock("../../../shared/utils/downloads.js", () => ({
-  downloadAdminAuditLogExport: vi.fn(),
-  downloadAdminCostSummaryExport: vi.fn()
-}))
+vi.mock("../../../shared/utils/downloads.js", () => ({ downloadAdminAuditLogExport: vi.fn(), downloadAdminCostSummaryExport: vi.fn() }))
+vi.mock("../api/usageApi.js", () => ({ getUsageSummary: vi.fn().mockResolvedValue(null), listUsageSummaries: vi.fn().mockResolvedValue([]) }))
 
 function createProps(overrides: Partial<Parameters<typeof useAdminData>[0]> = {}): Parameters<typeof useAdminData>[0] {
   return {
@@ -61,10 +58,43 @@ describe("useAdminData", () => {
     vi.mocked(listManagedUsers).mockResolvedValue([{ userId: "user-1", email: "b@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" }])
     vi.mocked(listAccessRoles).mockResolvedValue([{ role: "CHAT_USER", permissions: ["chat:create"] }])
     vi.mocked(listAdminAuditLog).mockResolvedValue([{ auditId: "audit-1", action: "user:create", actorUserId: "admin", targetUserId: "user-1", targetEmail: "b@example.com", beforeGroups: [], afterGroups: [], createdAt: "now" }])
-    vi.mocked(getUsageSummary).mockResolvedValue({ periodStart: "2026-05-01", periodEnd: "2026-05-31", users: [{ userId: "user-1", email: "b@example.com", chatMessages: 1, chatRequestCount: 1, llmCallCount: 1, inputTokens: 20, outputTokens: 5, totalTokens: 25, estimatedCostUsd: 0.000028, actualTokenEventCount: 0, estimatedTokenEventCount: 1, missingTokenEventCount: 0, conversationCount: 1, questionCount: 0, documentCount: 0, benchmarkRunCount: 0, debugRunCount: 0 }], breakdowns: { byFeature: [], byModel: [], byGroup: [] }, totals: { inputTokens: 20, outputTokens: 5, totalTokens: 25, estimatedCostUsd: 0.000028 }, dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 1, missingTokenEventCount: 0 } })
-    vi.mocked(getCostAuditSummary).mockResolvedValue({ periodStart: "2026-05-01", periodEnd: "2026-05-31", currency: "USD", totalEstimatedUsd: 1, items: [], users: [], pricingVersion: "bedrock-2026-06-local-v1", pricingCatalogUpdatedAt: "now", dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 1, missingTokenEventCount: 0 } })
-    vi.mocked(downloadAdminAuditLogExport).mockResolvedValue(undefined)
-    vi.mocked(downloadAdminCostSummaryExport).mockResolvedValue(undefined)
+    vi.mocked(getUsageSummary).mockResolvedValue({
+      periodStart: "2026-05-01",
+      periodEnd: "2026-05-31",
+      users: [{
+        userId: "user-1",
+        email: "b@example.com",
+        chatMessages: 1,
+        chatRequestCount: 1,
+        llmCallCount: 1,
+        inputTokens: 10,
+        outputTokens: 5,
+        totalTokens: 15,
+        estimatedCostUsd: 0.001,
+        actualTokenEventCount: 1,
+        estimatedTokenEventCount: 0,
+        missingTokenEventCount: 0,
+        conversationCount: 1,
+        questionCount: 0,
+        documentCount: 0,
+        benchmarkRunCount: 0,
+        debugRunCount: 0
+      }],
+      breakdowns: { byFeature: [], byModel: [], byGroup: [] },
+      totals: { inputTokens: 10, outputTokens: 5, totalTokens: 15, estimatedCostUsd: 0.001 },
+      dataCompleteness: { actualTokenEventCount: 1, estimatedTokenEventCount: 0, missingTokenEventCount: 0 }
+    })
+    vi.mocked(getCostAuditSummary).mockResolvedValue({
+      periodStart: "2026-05-01",
+      periodEnd: "2026-05-31",
+      currency: "USD",
+      totalEstimatedUsd: 1,
+      items: [],
+      users: [],
+      pricingVersion: "bedrock-2026-05-01",
+      pricingCatalogUpdatedAt: "now",
+      dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 0, missingTokenEventCount: 0 }
+    })
     vi.mocked(assignUserRoles).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["SYSTEM_ADMIN"], createdAt: "now", updatedAt: "now" })
     vi.mocked(createManagedUser).mockResolvedValue({ userId: "user-2", email: "c@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(suspendManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "suspended", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
@@ -75,6 +105,8 @@ describe("useAdminData", () => {
     vi.mocked(reviewAlias).mockResolvedValue({ aliasId: "alias-1", term: "pto", expansions: ["有給休暇"], status: "approved", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
     vi.mocked(disableAlias).mockResolvedValue({ aliasId: "alias-1", term: "pto", expansions: ["有給休暇"], status: "disabled", createdBy: "user-1", createdAt: "now", updatedAt: "now" })
     vi.mocked(publishAliases).mockResolvedValue({ version: "alias-v1", publishedAt: "now", aliasCount: 1 })
+    vi.mocked(downloadAdminAuditLogExport).mockResolvedValue(undefined)
+    vi.mocked(downloadAdminCostSummaryExport).mockResolvedValue(undefined)
   })
 
   it("Alias 管理操作後に alias 一覧と監査ログを再取得する", async () => {
@@ -132,31 +164,33 @@ describe("useAdminData", () => {
     expect(result.current.costAudit?.totalEstimatedUsd).toBe(1)
   })
 
-  it("権限がある export 操作だけ signed export download を開始する", async () => {
+  it("API field が未提供の場合は空配列に変換せず null のまま保持する", async () => {
+    vi.mocked(listManagedUsers).mockResolvedValueOnce(null)
+    vi.mocked(listAdminAuditLog).mockResolvedValueOnce(null)
+    vi.mocked(listAccessRoles).mockResolvedValueOnce(null)
+    vi.mocked(getUsageSummary).mockResolvedValueOnce(null)
+    vi.mocked(getCostAuditSummary).mockResolvedValueOnce(null)
+    vi.mocked(listAliases).mockResolvedValueOnce(null)
+    vi.mocked(listAliasAuditLog).mockResolvedValueOnce(null)
     const { result } = renderHook(() => useAdminData(createProps({
+      canReadUsers: true,
       canReadAdminAuditLog: true,
-      canReadCosts: true
+      canOpenAdminSettings: true,
+      canReadUsage: true,
+      canReadCosts: true,
+      canReadAliases: true
     })))
 
-    await act(() => result.current.onExportAdminAuditLog())
-    await act(() => result.current.onExportCostSummary())
+    await act(() => result.current.refreshAdminData())
 
-    expect(downloadAdminAuditLogExport).toHaveBeenCalledTimes(1)
-    expect(downloadAdminCostSummaryExport).toHaveBeenCalledTimes(1)
-    expect(result.current.adminAuditLog).toEqual([])
-  })
-
-  it("権限がない export 操作は download を開始しない", async () => {
-    const { result } = renderHook(() => useAdminData(createProps({
-      canReadAdminAuditLog: false,
-      canReadCosts: false
-    })))
-
-    await act(() => result.current.onExportAdminAuditLog())
-    await act(() => result.current.onExportCostSummary())
-
-    expect(downloadAdminAuditLogExport).not.toHaveBeenCalled()
-    expect(downloadAdminCostSummaryExport).not.toHaveBeenCalled()
+    expect(result.current.managedUsers).toBeNull()
+    expect(result.current.adminAuditLog).toBeNull()
+    expect(result.current.accessRoles).toBeNull()
+    expect(result.current.usageSummaries).toBeNull()
+    expect(result.current.usageSummary).toBeNull()
+    expect(result.current.costAudit).toBeNull()
+    expect(result.current.aliases).toBeNull()
+    expect(result.current.aliasAuditLog).toBeNull()
   })
 
   it("読み取り権限がない admin データは再取得しない", async () => {
@@ -188,7 +222,7 @@ describe("useAdminData", () => {
     expect(suspendManagedUser).toHaveBeenCalledWith("user-1")
     expect(unsuspendManagedUser).toHaveBeenCalledWith("user-1")
     expect(deleteManagedUser).toHaveBeenCalledTimes(1)
-    expect(result.current.managedUsers.some((user) => user.userId === "user-1")).toBe(false)
+    expect(result.current.managedUsers?.some((user) => user.userId === "user-1")).toBe(false)
     expect(props.setLoading).toHaveBeenLastCalledWith(false)
   })
 

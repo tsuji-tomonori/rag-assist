@@ -1,9 +1,9 @@
 import { get, post } from "../../../shared/api/http.js"
 import type { AliasAuditLogItem, AliasDefinition } from "../types.js"
 
-export async function listAliases(): Promise<AliasDefinition[]> {
+export async function listAliases(): Promise<AliasDefinition[] | null> {
   const result = await get<{ aliases?: AliasDefinition[] }>("/admin/aliases")
-  return result.aliases ?? []
+  return Array.isArray(result.aliases) ? result.aliases : null
 }
 
 export async function createAlias(input: {
@@ -34,7 +34,7 @@ export async function publishAliases(): Promise<{ version: string; publishedAt: 
   return post<{ version: string; publishedAt: string; aliasCount: number }>("/admin/aliases/publish", {})
 }
 
-export async function listAliasAuditLog(): Promise<AliasAuditLogItem[]> {
+export async function listAliasAuditLog(): Promise<AliasAuditLogItem[] | null> {
   const result = await get<{ auditLog?: AliasAuditLogItem[] }>("/admin/aliases/audit-log")
-  return result.auditLog ?? []
+  return Array.isArray(result.auditLog) ? result.auditLog : null
 }

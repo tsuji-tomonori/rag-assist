@@ -66,18 +66,18 @@ export function AdminWorkspace({
   onBack
 }: {
   user: CurrentUser | null
-  documentsCount: number
-  openQuestionsCount: number
-  debugRunsCount: number
-  benchmarkRunsCount: number
-  managedUsers: ManagedUser[]
-  adminAuditLog: ManagedUserAuditLogEntry[]
-  accessRoles: AccessRoleDefinition[]
-  usageSummaries: UserUsageSummary[]
+  documentsCount: number | null
+  openQuestionsCount: number | null
+  debugRunsCount: number | null
+  benchmarkRunsCount: number | null
+  managedUsers: ManagedUser[] | null
+  adminAuditLog: ManagedUserAuditLogEntry[] | null
+  accessRoles: AccessRoleDefinition[] | null
+  usageSummaries: UserUsageSummary[] | null
   usageSummary: UsageSummaryResponse | null
   costAudit: CostAuditSummary | null
-  aliases: AliasDefinition[]
-  aliasAuditLog: AliasAuditLogItem[]
+  aliases: AliasDefinition[] | null
+  aliasAuditLog: AliasAuditLogItem[] | null
   loading: boolean
   canManageDocuments: boolean
   canAnswerQuestions: boolean
@@ -209,7 +209,7 @@ export function AdminWorkspace({
 
         {(canReadUsage || canReadCosts) && (
           <div className="admin-combined-section" hidden={resolvedActiveSection !== "usage-cost"}>
-            {canReadUsage && <AdminUsagePanel usageSummaries={usageSummaries} usageSummary={usageSummary} />}
+            {canReadUsage && <AdminUsagePanel usageSummary={usageSummary} />}
             {canReadCosts && <AdminCostPanel costAudit={costAudit} onExportCostSummary={onExportCostSummary} />}
           </div>
         )}

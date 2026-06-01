@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { Icon } from "../../../../shared/components/Icon.js"
 import { formatDateTime } from "../../../../shared/utils/format.js"
 import type { DocumentGroup, DocumentManifest } from "../../types.js"
@@ -43,6 +44,11 @@ export function DocumentDetailDrawer({
   const memoryModel = metadataString(document, "memoryModelId") ?? metadataString(document, "memoryModel")
   const fileSize = metadataNumber(document, "fileSizeBytes") ?? metadataNumber(document, "fileSize")
   const updatedAt = metadataString(document, "updatedAt")
+  const extractionWarnings = document.extractionWarnings ?? document.parsedDocument?.warnings
+  const extractionCounters = document.extractionCounters ?? document.parsedDocument?.counters
+  const parsedPreview = document.parsedDocument?.text.trim()
+  const parsedCountItems = parsedDocumentCountItems(document)
+  const qualityItems = documentQualityItems(document)
 
   return (
     <div className="document-drawer-backdrop" role="presentation">
@@ -72,9 +78,11 @@ export function DocumentDetailDrawer({
           <DetailRow label="embedding model" value={embeddingModel ?? "利用不可"} />
           <DetailRow label="memory model" value={memoryModel ?? "利用不可"} />
           <DetailRow label="最新 reindex 状態" value={latestMigrationStatus} />
-          <DetailRow label="抽出テキスト preview" value="利用不可" />
-          <DetailRow label="代表チャンク preview" value="利用不可" />
-          <DetailRow label="エラー履歴" value="利用不可" />
+          <DetailRow label="抽出品質" value={qualityItems.length > 0 ? <InlineList items={qualityItems} /> : "利用不可"} />
+          <DetailRow label="抽出警告" value={extractionWarnings && extractionWarnings.length > 0 ? <WarningList warnings={extractionWarnings} /> : extractionWarnings ? "警告はありません。" : "利用不可"} />
+          <DetailRow label="抽出カウンター" value={extractionCounters && Object.keys(extractionCounters).length > 0 ? <CounterList counters={extractionCounters} /> : extractionCounters ? "カウンターはありません。" : "利用不可"} />
+          <DetailRow label="ParsedDocument summary" value={document.parsedDocument ? <ParsedDocumentSummary document={document} countItems={parsedCountItems} /> : "利用不可"} />
+          <DetailRow label="抽出テキスト preview" value={parsedPreview ? truncateText(parsedPreview, 360) : document.parsedDocument ? "抽出テキストは空です。" : "利用不可"} />
         </dl>
         <div className="document-drawer-actions">
           <button type="button" disabled={!onAskDocument} onClick={() => onAskDocument?.()}>
@@ -99,11 +107,86 @@ export function DocumentDetailDrawer({
   )
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <dt>{label}</dt>
       <dd>{value}</dd>
     </div>
   )
+}
+
+function ParsedDocumentSummary({ document, countItems }: { document: DocumentManifest; countItems: string[] }) {
+  const parsedDocument = document.parsedDocument
+  if (!parsedDocument) return null
+
+  return (
+    <span>
+      schemaVersion: {parsedDocument.schemaVersion} / extractor: {parsedDocument.sourceExtractorVersion}
+      {(document.fileProfile ?? parsedDocument.fileProfile) ? ` / fileProfile: ${document.fileProfile ?? parsedDocument.fileProfile}` : ""}
+      {countItems.length > 0 ? ` / ${countItems.join(" / ")}` : ""}
+    </span>
+  )
+}
+
+function WarningList({ warnings }: { warnings: NonNullable<DocumentManifest["extractionWarnings"]> }) {
+  return (
+    <ul>
+      {warnings.map((warning, index) => (
+        <li key={`${warning.code}-${index}`}>
+          {warning.severity}: {warning.code} - {warning.message}
+          {warning.page ? `（page ${warning.page}）` : ""}
+          {typeof warning.confidence === "number" ? ` confidence ${formatNumber(warning.confidence)}` : ""}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function CounterList({ counters }: { counters: Record<string, number> }) {
+  return <InlineList items={Object.entries(counters).map(([key, value]) => `${key}: ${formatNumber(value)}`)} />
+}
+
+function InlineList({ items }: { items: string[] }) {
+  return <span>{items.join(" / ")}</span>
+}
+
+function parsedDocumentCountItems(document: DocumentManifest): string[] {
+  const parsedDocument = document.parsedDocument
+  if (!parsedDocument) return []
+  return [
+    arrayCountItem("pages", parsedDocument.pages),
+    arrayCountItem("blocks", parsedDocument.blocks),
+    arrayCountItem("tables", parsedDocument.tables),
+    arrayCountItem("figures", parsedDocument.figures)
+  ].filter((item): item is string => Boolean(item))
+}
+
+function documentQualityItems(document: DocumentManifest): string[] {
+  const profile = document.qualityProfile
+  if (!profile) return []
+  return [
+    profile.knowledgeQualityStatus ? `knowledge: ${profile.knowledgeQualityStatus}` : undefined,
+    profile.verificationStatus ? `verification: ${profile.verificationStatus}` : undefined,
+    profile.freshnessStatus ? `freshness: ${profile.freshnessStatus}` : undefined,
+    profile.supersessionStatus ? `supersession: ${profile.supersessionStatus}` : undefined,
+    profile.extractionQualityStatus ? `extraction: ${profile.extractionQualityStatus}` : undefined,
+    profile.ragEligibility ? `RAG: ${profile.ragEligibility}` : undefined,
+    typeof profile.confidence === "number" ? `confidence: ${formatNumber(profile.confidence)}` : undefined,
+    profile.flags && profile.flags.length > 0 ? `flags: ${profile.flags.join(", ")}` : undefined,
+    profile.updatedAt ? `updated: ${formatDateTime(profile.updatedAt)}` : undefined,
+    profile.updatedBy ? `updatedBy: ${profile.updatedBy}` : undefined
+  ].filter((item): item is string => Boolean(item))
+}
+
+function arrayCountItem(label: string, value: unknown[] | undefined): string | undefined {
+  return Array.isArray(value) ? `${label}: ${value.length}` : undefined
+}
+
+function truncateText(value: string, maxLength: number): string {
+  return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value
+}
+
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2)
 }

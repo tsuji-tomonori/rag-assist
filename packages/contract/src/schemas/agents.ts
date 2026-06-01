@@ -37,7 +37,28 @@ export const AgentArtifactSchema = z.object({
   size: z.number().int().nonnegative(),
   storageRef: z.string(),
   createdAt: z.string(),
-  writebackStatus: z.enum(["not_requested", "pending_approval", "approved", "rejected", "applied"]).optional()
+  writebackStatus: z.enum(["not_requested", "pending_approval", "approved", "rejected", "applied"]).optional(),
+  writebackTarget: z.object({
+    sourceType: z.enum(["folder", "document"]),
+    sourceId: z.string(),
+    targetPath: z.string().optional()
+  }).optional(),
+  writebackRequestedBy: z.string().optional(),
+  writebackRequestedAt: z.string().optional(),
+  writebackReviewedBy: z.string().optional(),
+  writebackReviewedAt: z.string().optional(),
+  writebackAppliedBy: z.string().optional(),
+  writebackAppliedAt: z.string().optional(),
+  writebackDecisionReason: z.string().optional()
+})
+
+export const AgentProviderSettingSchema = z.object({
+  provider: AgentRuntimeProviderSchema,
+  displayName: z.string(),
+  availability: AgentProviderAvailabilitySchema,
+  credentialMode: z.enum(["environment", "not_configured", "disabled"]),
+  configuredModelIds: z.array(z.string()),
+  reason: z.string().optional()
 })
 
 export const SkillDefinitionSchema = z.object({
@@ -121,6 +142,7 @@ export type AgentModelSelection = z.infer<typeof AgentModelSelectionSchema>
 export type AsyncAgentRun = z.infer<typeof AsyncAgentRunSchema>
 export type AgentWorkspaceMount = z.infer<typeof AgentWorkspaceMountSchema>
 export type AgentArtifact = z.infer<typeof AgentArtifactSchema>
+export type AgentProviderSetting = z.infer<typeof AgentProviderSettingSchema>
 export type SkillDefinition = z.infer<typeof SkillDefinitionSchema>
 export type AgentProfileDefinition = z.infer<typeof AgentProfileDefinitionSchema>
 export type AgentExecutionPreset = z.infer<typeof AgentExecutionPresetSchema>

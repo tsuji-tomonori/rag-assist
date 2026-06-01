@@ -18,6 +18,92 @@ export type QualityFlag =
   | "low_extraction_confidence"
   | "manual_rag_exclusion"
 
+export type FolderStatus = "active" | "archived"
+export type FolderPolicySource = "explicit" | "inherited" | "ownerDefault" | "none"
+export type FolderPrincipalType = "user" | "group"
+export type FolderPolicyPermissionLevel = "readOnly" | "full"
+export type DocumentPermissionLevel = "readOnly" | "full"
+export type EffectiveDocumentPermission = "none" | DocumentPermissionLevel
+export type FolderPolicyEntry = {
+  principalType: FolderPrincipalType
+  principalId: string
+  permissionLevel: FolderPolicyPermissionLevel
+}
+
+export type DocumentShareGrant = {
+  documentShareGrantId: string
+  itemType?: "documentShareGrant"
+  tenantId: string
+  documentId: string
+  principalType: FolderPrincipalType
+  principalId: string
+  permissionLevel: DocumentPermissionLevel
+  createdBy: string
+  reason: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type DocumentShareAuditAction = "document:share" | "document:move"
+
+export type DocumentShareAuditLogEntry = {
+  auditId: string
+  action: DocumentShareAuditAction
+  tenantId?: string
+  actorUserId: string
+  documentId: string
+  before?: JsonValue
+  after?: JsonValue
+  reason: string
+  createdAt: string
+}
+
+export type DocumentShareLedger = {
+  schemaVersion: 1
+  grants: DocumentShareGrant[]
+  auditLog: DocumentShareAuditLogEntry[]
+}
+
+export type FolderPolicy = {
+  policyId: string
+  itemType?: "folderPolicy"
+  tenantId: string
+  folderId: string
+  entries: FolderPolicyEntry[]
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type UserGroupType = "department" | "project" | "team" | "admin" | "folderPolicy" | "system" | "custom"
+export type UserGroup = {
+  groupId: string
+  itemType?: "userGroup"
+  tenantId?: string
+  name: string
+  type: UserGroupType
+  parentGroupId?: string
+  ancestorGroupIds: string[]
+  status: FolderStatus
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type GroupMembershipSource = "manual" | "external" | "system"
+export type GroupMembership = {
+  membershipId?: string
+  itemType?: "groupMembership"
+  tenantId?: string
+  groupId: string
+  memberType: FolderPrincipalType
+  memberId: string
+  permissionLevel: FolderPolicyPermissionLevel
+  source: GroupMembershipSource
+  createdAt: string
+  updatedAt: string
+}
+
 export type DocumentQualityProfile = {
   knowledgeQualityStatus?: KnowledgeQualityStatus
   verificationStatus?: VerificationStatus
@@ -41,7 +127,17 @@ export type SearchScope = {
 
 export type DocumentGroup = {
   groupId: string
+  schemaVersion?: number
+  itemType?: "documentGroup"
+  tenantId?: string
+  adminPrincipalType?: "user" | "group"
+  adminPrincipalId?: string
   name: string
+  normalizedName?: string
+  canonicalPath?: string
+  normalizedCanonicalPath?: string
+  adminPathPk?: string
+  parentPathPk?: string
   description?: string
   parentGroupId?: string
   ancestorGroupIds?: string[]
@@ -50,6 +146,13 @@ export type DocumentGroup = {
   sharedUserIds: string[]
   sharedGroups: string[]
   managerUserIds: string[]
+  hasExplicitPolicy?: boolean
+  policyId?: string
+  status?: FolderStatus
+  createdBy?: string
+  effectivePermission?: "none" | "readOnly" | "full"
+  policySource?: FolderPolicySource
+  inheritedFromFolderId?: string
   createdAt: string
   updatedAt: string
 }
@@ -216,7 +319,9 @@ export type VectorMetadata = {
   benchmarkSuiteId?: string
   scopeType?: DocumentScopeType
   groupId?: string
+  folderId?: string
   groupIds?: string[]
+  folderIds?: string[]
   ownerUserId?: string
   temporaryScopeId?: string
   expiresAt?: string
@@ -289,6 +394,9 @@ export type DocumentManifest = {
   extractionCounters?: Record<string, number>
   fileProfile?: PdfFileProfile
   createdAt: string
+  updatedAt?: string
+  currentUserEffectivePermission?: EffectiveDocumentPermission
+  capabilities?: DocumentCapabilities
 }
 
 export type DocumentManifestSummary = Pick<
@@ -312,7 +420,39 @@ export type DocumentListItemSummary = DocumentManifestSummary & Pick<
   | "metadata"
   | "embeddingModelId"
   | "embeddingDimensions"
->
+> & {
+  currentUserEffectivePermission?: EffectiveDocumentPermission
+  capabilities?: DocumentCapabilities
+}
+
+export type DocumentCapabilities = {
+  canRead: boolean
+  canShare: boolean
+  canMove: boolean
+  canDelete: boolean
+  canReindex: boolean
+}
+
+export type ParsedDocumentPreview = {
+  documentId: string
+  fileName: string
+  sourceExtractorVersion?: string
+  fileProfile?: PdfFileProfile
+  textPreview?: string
+  pageCount: number
+  blockCount: number
+  tableCount: number
+  figureCount: number
+  warnings: ExtractionWarning[]
+  counters?: Record<string, number>
+  pages?: ParsedPage[]
+  blocks?: ParsedBlock[]
+  tables?: ExtractedTable[]
+  figures?: ExtractedFigure[]
+  qualityProfile?: DocumentQualityProfile
+  available: boolean
+  unavailableReason?: string
+}
 
 export type MemoryCard = {
   id: string
@@ -595,6 +735,15 @@ export type AgentArtifact = {
   writebackDecisionReason?: string
 }
 
+export type AgentProviderSetting = {
+  provider: AgentRuntimeProvider
+  displayName: string
+  availability: AgentProviderAvailability
+  credentialMode: "environment" | "not_configured" | "disabled"
+  configuredModelIds: string[]
+  reason?: string
+}
+
 export type SkillDefinition = {
   skillId: string
   tenantId: string
@@ -676,6 +825,50 @@ export type AsyncAgentRun = {
   updatedAt: string
 }
 
+export type QualityActionCard = {
+  actionId: string
+  documentId: string
+  fileName: string
+  severity: "info" | "warning" | "blocked"
+  reasonCodes: string[]
+  suggestedAction: "review_extraction" | "reparse_document" | "verify_document" | "update_freshness" | "rag_exclusion_review"
+  title: string
+  description: string
+  createdAt: string
+}
+
+export type AdminExportArtifact = {
+  exportType: "audit_log" | "cost_summary"
+  url: string
+  expiresInSeconds: number
+  objectKey: string
+  generatedAt: string
+  redaction: {
+    policyVersion: string
+    redactedFields: string[]
+    notes: string[]
+  }
+}
+
+export type DebugReplayPlan = {
+  runId: string
+  targetType: DebugTraceTargetType
+  sourceTraceVisibility: DebugTraceVisibility
+  createdAt: string
+  replayable: boolean
+  blockedReason?: string
+  inputSummary: {
+    question: string
+    modelId: string
+    embeddingModelId: string
+    topK: number
+    memoryTopK: number
+    minScore: number
+    citationCount: number
+  }
+  redaction: DebugTraceExportRedaction
+}
+
 export type ChatResponsePayload = {
   responseType?: "answer" | "refusal" | "clarification"
   answer: string
@@ -686,78 +879,6 @@ export type ChatResponsePayload = {
   retrieved: Citation[]
   finalEvidence?: Citation[]
   debug?: DebugTrace
-}
-
-export type ParsedDocumentPreview = {
-  documentId: string
-  fileName: string
-  available: boolean
-  unavailableReason?: "not_parsed" | "legacy_manifest" | "no_access"
-  fileProfile?: PdfFileProfile
-  sourceExtractorVersion?: string
-  counters?: Record<string, number>
-  warnings: ExtractionWarning[]
-  pageCount: number
-  blockCount: number
-  tableCount: number
-  figureCount: number
-  lowConfidenceCount: number
-  tables: Array<{
-    id: string
-    pageStart?: number
-    pageEnd?: number
-    rowCount: number
-    columnCount: number
-    confidence?: number
-  }>
-  figures: Array<{
-    id: string
-    pageStart?: number
-    pageEnd?: number
-    caption?: string
-    confidence?: number
-  }>
-}
-
-export type QualityActionCard = {
-  actionId: string
-  documentId: string
-  fileName: string
-  actionType: "quality_review" | "extraction_review" | "rag_exclusion_review"
-  severity: "info" | "warning" | "error"
-  reason: string
-  source: "quality_profile" | "extraction_warning" | "parsed_document"
-  createdAt: string
-}
-
-export type AdminExportArtifact = {
-  url: string
-  expiresInSeconds: number
-  objectKey: string
-  exportType: "audit_log" | "cost_summary"
-  generatedAt: string
-}
-
-export type AgentProviderSetting = {
-  provider: AgentRuntimeProvider
-  availability: AgentProviderAvailability
-  credentialMode: "environment" | "tenant_managed" | "not_configured" | "disabled"
-  secretConfigured: boolean
-  configuredModelIds: string[]
-  updatedAt?: string
-}
-
-export type DebugReplayPlan = {
-  runId: string
-  replayable: boolean
-  targetType: DebugTraceTargetType
-  visibility: DebugTraceVisibility
-  sanitizePolicyVersion: typeof DEBUG_TRACE_SANITIZE_POLICY_VERSION
-  stepCount: number
-  citationCount: number
-  toolInvocationCount: number
-  blockedReason?: string
-  notes: string[]
 }
 
 export type ChatRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
@@ -1042,83 +1163,9 @@ export type ReindexMigration = {
   stagedManifestObjectKey: string
 }
 
-export type UserUsageSummary = {
-  userId: string
-  email: string
-  displayName?: string
-  chatMessages: number
-  chatRequestCount: number
-  llmCallCount: number
-  inputTokens: number
-  outputTokens: number
-  totalTokens: number
-  estimatedCostUsd: number
-  actualTokenEventCount: number
-  estimatedTokenEventCount: number
-  missingTokenEventCount: number
-  conversationCount: number
-  questionCount: number
-  documentCount: number
-  benchmarkRunCount: number
-  debugRunCount: number
-  lastActivityAt?: string
-}
-
-export type UsageSummaryBreakdown = {
-  key: string
-  label: string
-  inputTokens: number
-  outputTokens: number
-  totalTokens: number
-  estimatedCostUsd: number
-  actualTokenEventCount: number
-  estimatedTokenEventCount: number
-  missingTokenEventCount: number
-}
-
-export type UsageSummaryBreakdowns = {
-  byFeature: UsageSummaryBreakdown[]
-  byModel: UsageSummaryBreakdown[]
-  byGroup: UsageSummaryBreakdown[]
-}
-
-export type CostAuditItem = {
-  service: string
-  category: string
-  usage: number
-  unit: string
-  unitCostUsd: number
-  estimatedCostUsd: number
-  confidence: "actual_usage" | "estimated_usage" | "manual_estimate" | "missing_usage"
-  pricingVersion?: string
-}
-
-export type UserCostSummary = {
-  userId: string
-  email: string
-  estimatedCostUsd: number
-}
-
-export type CostAuditSummary = {
-  periodStart: string
-  periodEnd: string
-  currency: "USD"
-  totalEstimatedUsd: number
-  items: CostAuditItem[]
-  users: UserCostSummary[]
-  pricingVersion: string
-  pricingCatalogUpdatedAt: string
-  dataCompleteness: UsageDataCompleteness
-}
-
-export type UsageDataCompleteness = {
-  actualTokenEventCount: number
-  estimatedTokenEventCount: number
-  missingTokenEventCount: number
-}
-
 export type UsageEventFeature =
   | "chat"
+  | "rag.chat_request"
   | "rag.query_rewrite"
   | "rag.answerability"
   | "rag.retrieval_judge"
@@ -1160,6 +1207,81 @@ export type UsageEvent = {
   errorCode?: string
   idempotencyKey: string
   createdAt: string
+}
+
+export type UsageDataCompleteness = {
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
+}
+
+export type UsageSummaryBreakdown = {
+  key: string
+  label: string
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  estimatedCostUsd: number
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
+}
+
+export type UsageSummaryBreakdowns = {
+  byFeature: UsageSummaryBreakdown[]
+  byModel: UsageSummaryBreakdown[]
+  byGroup: UsageSummaryBreakdown[]
+}
+
+export type UserUsageSummary = {
+  userId: string
+  email: string
+  displayName?: string
+  chatMessages: number
+  chatRequestCount: number
+  llmCallCount: number
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  estimatedCostUsd: number
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
+  conversationCount: number
+  questionCount: number
+  documentCount: number
+  benchmarkRunCount: number
+  debugRunCount: number
+  lastActivityAt?: string
+}
+
+export type CostAuditItem = {
+  service: string
+  category: string
+  usage: number
+  unit: string
+  unitCostUsd: number
+  estimatedCostUsd: number
+  confidence: "actual_usage" | "estimated_usage" | "manual_estimate" | "missing_usage"
+  pricingVersion?: string
+}
+
+export type UserCostSummary = {
+  userId: string
+  email: string
+  estimatedCostUsd: number
+}
+
+export type CostAuditSummary = {
+  periodStart: string
+  periodEnd: string
+  currency: "USD"
+  totalEstimatedUsd: number
+  items: CostAuditItem[]
+  users: UserCostSummary[]
+  pricingVersion: string
+  pricingCatalogUpdatedAt: string
+  dataCompleteness: UsageDataCompleteness
 }
 
 export type QuestionStatus = "open" | "in_progress" | "waiting_requester" | "answered" | "resolved"
@@ -1283,6 +1405,32 @@ export type HumanQuestion = {
   updatedAt: string
   answeredAt?: string
   resolvedAt?: string
+}
+
+export type FavoriteTargetType =
+  | "chatSession"
+  | "chatMessage"
+  | "folder"
+  | "document"
+  | "agentExecutionPreset"
+  | "skill"
+  | "agentProfile"
+  | "benchmarkRun"
+
+export type FavoriteItem = {
+  favoriteId: string
+  ownerUserId: string
+  targetKey: string
+  targetType: FavoriteTargetType
+  targetId: string
+  label?: string
+  note?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type FavoriteListItem = Omit<FavoriteItem, "ownerUserId" | "targetKey"> & {
+  accessible: boolean
 }
 
 export type ConversationMessage = {

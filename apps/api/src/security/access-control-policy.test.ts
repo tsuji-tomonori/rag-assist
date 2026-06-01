@@ -24,6 +24,8 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /chat", { operationKey: "chat.send", resourceCondition: "documentGroupRead" }],
   ["POST /chat-runs", { operationKey: "chat.run.start", resourceCondition: "documentGroupRead" }],
   ["GET /chat-runs/{runId}/events", { operationKey: "chat.run.events.read", resourceCondition: "ownedRun" }],
+  ["GET /chat-tools", { operationKey: "chat_tool.registry.read", resourceCondition: "none" }],
+  ["GET /chat-tool-invocations", { operationKey: "chat_tool.invocation.read", resourceCondition: "ownedRun" }],
   ["POST /search", { operationKey: "document.search", resourceCondition: "documentGroupRead" }],
   ["GET /conversation-history", { operationKey: "history.read.self", resourceCondition: "self" }],
   ["POST /questions", { operationKey: "support.ticket.create.self", resourceCondition: "self" }],
@@ -34,22 +36,27 @@ const operationMatrixSubset = new Map<string, { operationKey: string; resourceCo
   ["POST /document-groups", { operationKey: "folder.create.group", resourceCondition: "documentGroupFull" }],
   ["POST /document-groups/{groupId}/share", { operationKey: "folder.share", resourceCondition: "documentGroupFull" }],
   ["GET /documents", { operationKey: "document.read", resourceCondition: "benchmarkSeedScope" }],
+  ["GET /documents/{documentId}/share", { operationKey: "document.share.read", resourceCondition: "documentEffectiveFull" }],
+  ["PUT /documents/{documentId}/share", { operationKey: "document.share.update", resourceCondition: "documentEffectiveFull" }],
+  ["POST /documents/{documentId}/move", { operationKey: "document.move", resourceCondition: "documentMove" }],
+  ["GET /documents/{documentId}/parsed-preview", { operationKey: "document.parsed_preview.read", resourceCondition: "documentGroupRead" }],
   ["POST /documents", { operationKey: "document.upload", resourceCondition: "benchmarkSeedScope" }],
+  ["POST /documents/{documentId}/reindex", { operationKey: "document.reindex", resourceCondition: "documentGroupFull" }],
+  ["POST /documents/{documentId}/reindex/stage", { operationKey: "document.reindex.stage", resourceCondition: "documentGroupFull" }],
+  ["POST /documents/reindex-migrations/{migrationId}/cutover", { operationKey: "document.reindex.cutover", resourceCondition: "documentGroupFull" }],
+  ["POST /documents/reindex-migrations/{migrationId}/rollback", { operationKey: "document.reindex.rollback", resourceCondition: "documentGroupFull" }],
+  ["POST /admin/audit-log/export", { operationKey: "audit.export", resourceCondition: "none" }],
+  ["GET /admin/quality-actions", { operationKey: "quality.action.read", resourceCondition: "documentGroupRead" }],
+  ["POST /admin/costs/export", { operationKey: "cost.export", resourceCondition: "none" }],
   ["POST /documents/uploads", { operationKey: "document.upload_session.create", resourceCondition: "documentUploadSession" }],
   ["POST /benchmark-runs", { operationKey: "benchmark.run", resourceCondition: "documentGroupRead" }],
-  ["POST /admin/users/{userId}/roles", { operationKey: "role.assign", resourceCondition: "roleAssignment" }],
-  ["GET /agents/providers", { operationKey: "agent.provider.read", resourceCondition: "none" }],
-  ["POST /agents/runs", { operationKey: "agent.run.create", resourceCondition: "agentWorkspaceReadOnly" }],
-  ["GET /agents/runs", { operationKey: "agent.run.read", resourceCondition: "agentRunSelfOrManaged" }],
-  ["GET /agents/runs/{agentRunId}", { operationKey: "agent.run.read", resourceCondition: "agentRunSelfOrManaged" }],
-  ["POST /agents/runs/{agentRunId}/cancel", { operationKey: "agent.run.cancel", resourceCondition: "agentRunSelfOrManaged" }],
-  ["GET /agents/runs/{agentRunId}/artifacts", { operationKey: "agent.artifact.read", resourceCondition: "agentRunSelfOrManaged" }],
-  ["GET /agents/runs/{agentRunId}/artifacts/{artifactId}", { operationKey: "agent.artifact.read", resourceCondition: "agentRunSelfOrManaged" }]
+  ["POST /admin/users/{userId}/roles", { operationKey: "role.assign", resourceCondition: "roleAssignment" }]
 ])
 
 const debugRoutePermissions = new Map<string, { permission: Permission; conditional?: Permission; operationKey: string }>([
   ["GET /debug-runs", { permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized" }],
   ["GET /debug-runs/{runId}", { permission: "chat:admin:read_all", operationKey: "debug.trace.read.sanitized" }],
+  ["POST /debug-runs/{runId}/replay-plan", { permission: "chat:admin:read_all", conditional: "debug:replay", operationKey: "debug.trace.replay_plan" }],
   ["POST /debug-runs/{runId}/download", { permission: "chat:admin:read_all", conditional: "debug:trace:export", operationKey: "debug.trace.export" }]
 ])
 
@@ -79,8 +86,8 @@ test("public allowlist, CORS, and preflight preserve the 14D middleware boundary
   assert.doesNotMatch(middlewareBlock, /["']\/debug-runs["']/, "debug routes must not be added to the public allowlist")
 
   const configSource = await readFile(path.resolve(process.cwd(), "src/config.ts"), "utf8")
-  assert.match(configSource, /CORS_ALLOWED_ORIGINS must not include \* in production/, "production config must reject wildcard CORS origins")
-  assert.match(configSource, /validateCorsAllowedOrigins\(csvEnv\("CORS_ALLOWED_ORIGINS"/, "CORS origins must pass through the production wildcard guard")
+  assert.doesNotMatch(configSource, /CORS_ALLOWED_ORIGINS must not include \* in production/, "production config must temporarily allow wildcard CORS origins")
+  assert.match(configSource, /csvEnv\("CORS_ALLOWED_ORIGINS",\s*isProduction \? \[\] : \["\*"\]\)/, "production must still require explicit CORS origins")
 })
 
 test("protected API routes keep route-level permission checks", async () => {
@@ -190,6 +197,22 @@ test("protected API routes keep route-level permission checks", async () => {
   }
 })
 
+test("document group create requires assign_manager for initial sharing payloads", async () => {
+  const source = await readRouteSources()
+  const block = findRouteBlock(source, {
+    method: "post",
+    path: "/document-groups",
+    mode: "required",
+    permission: "rag:group:create"
+  })
+
+  assert.match(
+    block,
+    /documentGroupHasLegacyExplicitPolicy\(body\)[\s\S]*?requirePermission\([^)]*["']rag:group:assign_manager["']\)/,
+    "POST /document-groups must require rag:group:assign_manager when the create body includes visibility/shared/manager fields"
+  )
+})
+
 test("protected API routes must be explicitly reviewed before they change", async () => {
   const source = await readRouteSources()
   const documentedProtectedRoutes = (await openApiRoutePolicies())
@@ -254,6 +277,15 @@ test("protected API routes document three-layer authorization metadata", async (
   }
 })
 
+test("document share update documents conflict response in OpenAPI", async () => {
+  const response = await app.request("/openapi.json")
+  assert.equal(response.status, 200)
+  const document = await response.json() as {
+    paths?: Record<string, { put?: { responses?: Record<string, unknown> } }>
+  }
+  assert.ok(document.paths?.["/documents/{documentId}/share"]?.put?.responses?.["409"])
+})
+
 test("debug routes remain protected and document the debug permission migration contract", async () => {
   const policies = await openApiRoutePolicies()
 
@@ -266,7 +298,7 @@ test("debug routes remain protected and document the debug permission migration 
     assert.equal(policy.resourceCondition, "ownedRun", `${route} must stay scoped to ownedRun metadata`)
     assert.match(
       (policy.operation["x-memorag-authorization"]?.notes ?? []).join("\n"),
-      /debug:trace:(read:sanitized|export)/,
+      /debug:(trace:(read:sanitized|export)|replay)/,
       `${route} must document debug:* migration or alias notes`
     )
     if (expected.conditional) {
@@ -286,7 +318,7 @@ test("debug permissions are defined without removing the existing admin debug ga
   assert.match(authorizationSource, /SYSTEM_ADMIN:[\s\S]*chat:admin:read_all[\s\S]*debug:trace:read:sanitized/, "SYSTEM_ADMIN must keep chat admin debug visibility while gaining debug:* permissions")
 })
 
-test("async agent permissions and route metadata preserve G1 execution boundaries", async () => {
+test("async agent permissions remain typed but are removed from role seeds and active routes", async () => {
   const authorizationSource = await readFile(path.resolve(process.cwd(), "src/authorization.ts"), "utf8")
   for (const permission of [
     "agent:run",
@@ -303,26 +335,23 @@ test("async agent permissions and route metadata preserve G1 execution boundarie
   ]) {
     assert.match(authorizationSource, new RegExp(`["']${escapeRegex(permission)}["']`), `${permission} must be part of the permission contract`)
   }
-  assert.match(authorizationSource, /ASYNC_AGENT_USER:[\s\S]*agent:run[\s\S]*agent:read:self[\s\S]*agent_preset:create:self/, "ASYNC_AGENT_USER role preset must include self-run and preset permissions")
-  assert.match(authorizationSource, /ASYNC_AGENT_ADMIN:[\s\S]*agent:read:managed[\s\S]*agent:provider:manage/, "ASYNC_AGENT_ADMIN role preset must include managed-read and provider-management permissions")
+  assert.doesNotMatch(authorizationSource, /ASYNC_AGENT_USER:[\s\S]*agent:run/, "ASYNC_AGENT_USER role preset must not grant agent:run")
+  assert.doesNotMatch(authorizationSource, /ASYNC_AGENT_ADMIN:[\s\S]*agent:provider:manage/, "ASYNC_AGENT_ADMIN role preset must not grant provider management")
+  assert.doesNotMatch(authorizationSource, /ASYNC_AGENT_ADMIN:[\s\S]*agent:artifact:writeback/, "ASYNC_AGENT_ADMIN role preset must not grant writeback")
 
   const policies = await openApiRoutePolicies()
   for (const route of [
     "POST /agents/runs",
+    "GET /agents/provider-settings",
     "GET /agents/runs",
     "GET /agents/runs/{agentRunId}",
     "POST /agents/runs/{agentRunId}/cancel",
     "GET /agents/runs/{agentRunId}/artifacts",
+    "POST /agents/runs/{agentRunId}/artifacts/{artifactId}/writeback",
     "GET /agents/runs/{agentRunId}/artifacts/{artifactId}"
   ]) {
     const policy = policies.find((item) => routeKey(item) === route)
-    assert.ok(policy, `${route} must be present in OpenAPI policies`)
-    assert.notEqual(policy.mode, "public", `${route} must not become public`)
-    assert.match(
-      (policy.operation["x-memorag-authorization"]?.notes ?? []).join("\n"),
-      /mock|readOnly|managed|provider|artifact|workspace|writeback/i,
-      `${route} must document async agent provider/resource boundary notes`
-    )
+    assert.equal(policy, undefined, `${route} must not be present in OpenAPI policies while async agent entrypoints are disabled`)
   }
 })
 
@@ -446,7 +475,7 @@ function findNamedRouteBlock(source: string, routeName: string): string {
 }
 
 function extractRoutes(source: string): Array<Pick<RoutePolicy, "method" | "path">> {
-  return [...source.matchAll(/method:\s*["'](get|post|delete)["'],\s*path:\s*["']([^"']+)["']/g)].map((match) => ({
+  return [...source.matchAll(/method:\s*["'](get|post|put|delete)["'],\s*path:\s*["']([^"']+)["']/g)].map((match) => ({
     method: match[1] ?? "",
     path: match[2] ?? ""
   }))

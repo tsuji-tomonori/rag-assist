@@ -36,7 +36,9 @@ export type AnswerQuestionInput = {
 
 export interface QuestionStore {
   create(input: CreateQuestionInput): Promise<HumanQuestion>
-  list(): Promise<HumanQuestion[]>
+  listAssignedToUser(userId: string, groupIds: string[]): Promise<HumanQuestion[]>
+  listRequestedByUser(userId: string): Promise<HumanQuestion[]>
+  listAllForAdmin(): Promise<HumanQuestion[]>
   get(questionId: string): Promise<HumanQuestion | undefined>
   answer(questionId: string, input: AnswerQuestionInput): Promise<HumanQuestion>
   resolve(questionId: string): Promise<HumanQuestion>

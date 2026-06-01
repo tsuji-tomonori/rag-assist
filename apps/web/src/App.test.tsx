@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import App from "./App.js"
-import type { AliasAuditLogItem, AliasDefinition, BenchmarkRun, ConversationHistoryItem, HumanQuestion, Permission } from "./api.js"
+import type { AliasAuditLogItem, AliasDefinition, BenchmarkRun, ConversationHistoryItem, FavoriteItem, HumanQuestion, Permission } from "./api.js"
 
 const documents = [
   { documentId: "doc-1", fileName: "requirements.md", chunkCount: 2, memoryCardCount: 1, createdAt: "2026-04-30T00:00:00.000Z" },
@@ -18,6 +18,7 @@ const documentGroups = [
     sharedUserIds: [],
     sharedGroups: [],
     managerUserIds: ["local-dev"],
+    effectivePermission: "full",
     createdAt: "2026-04-30T00:00:00.000Z",
     updatedAt: "2026-04-30T00:00:00.000Z"
   }
@@ -168,9 +169,9 @@ const rolePermissions: Record<string, Permission[]> = {
   ],
   BENCHMARK_OPERATOR: ["benchmark:read", "benchmark:run"],
   BENCHMARK_RUNNER: ["benchmark:query", "benchmark:seed_corpus"],
-  ASYNC_AGENT_USER: ["agent:run", "agent:cancel", "agent:read:self", "agent:artifact:download", "skill:read", "agent_profile:read", "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self"],
+  ASYNC_AGENT_USER: ["agent:cancel", "agent:read:self", "agent:artifact:download", "skill:read", "agent_profile:read", "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self"],
   SKILL_PROFILE_ADMIN: ["skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai", "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai"],
-  ASYNC_AGENT_ADMIN: ["agent:run", "agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:artifact:writeback", "agent:settings:manage", "agent:provider:manage", "skill:read", "agent_profile:read", "agent_preset:read:self"],
+  ASYNC_AGENT_ADMIN: ["agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:settings:manage", "skill:read", "agent_profile:read", "agent_preset:read:self"],
   USER_ADMIN: ["user:create", "user:read", "user:suspend", "user:unsuspend", "user:delete", "usage:read:all_users"],
   ACCESS_ADMIN: ["access:role:create", "access:role:update", "access:role:assign", "access:policy:read"],
   COST_AUDITOR: ["cost:read:all"],
@@ -179,7 +180,7 @@ const rolePermissions: Record<string, Permission[]> = {
     "answer:edit", "answer:publish", "rag:group:create", "rag:group:assign_manager", "rag:doc:read", "rag:doc:write:group", "rag:doc:delete:group", "rag:index:rebuild:group",
     "rag:alias:read", "rag:alias:write:group", "rag:alias:review:group", "rag:alias:disable:group", "rag:alias:publish:group",
     "benchmark:read", "benchmark:query", "benchmark:run", "benchmark:cancel", "benchmark:download",
-    "agent:run", "agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:artifact:writeback", "agent:settings:manage", "agent:provider:manage",
+    "agent:cancel", "agent:read:self", "agent:read:managed", "agent:artifact:download", "agent:settings:manage",
     "skill:read", "skill:create", "skill:update", "skill:delete", "skill:share", "skill:generate_with_ai",
     "agent_profile:read", "agent_profile:create", "agent_profile:update", "agent_profile:delete", "agent_profile:share", "agent_profile:generate_with_ai",
     "agent_preset:read:self", "agent_preset:create:self", "agent_preset:update:self", "agent_preset:delete:self",
@@ -216,6 +217,17 @@ function historyItem(id: string, title: string, text: string, updatedAt: string,
 
 function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHistoryItem[] = [], initialBenchmarkRuns: BenchmarkRun[] = []) {
   let storedHistory: ConversationHistoryItem[] = initialHistory
+  let storedFavorites: FavoriteItem[] = initialHistory
+    .filter((item) => item.isFavorite)
+    .map((item) => ({
+      favoriteId: `local-dev#chatSession#${item.id}`,
+      targetType: "chatSession",
+      targetId: item.id,
+      label: item.title,
+      accessible: true,
+      createdAt: item.updatedAt,
+      updatedAt: item.updatedAt
+    }))
   let benchmarkRuns: BenchmarkRun[] = initialBenchmarkRuns
   let managedUsers = [
     {
@@ -382,6 +394,29 @@ function mockAppFetch(groups = ["SYSTEM_ADMIN"], initialHistory: ConversationHis
       const body = parseRequestJson(init) as ConversationHistoryItem
       storedHistory = [body, ...storedHistory.filter((item) => item.id !== body.id)]
       return Promise.resolve(response(body))
+    }
+    if (requestUrl.endsWith("/favorites") && isGet(init)) return Promise.resolve(response({ favorites: storedFavorites }))
+    if (requestUrl.endsWith("/favorites") && init?.method === "POST") {
+      const body = parseRequestJson(init) as { targetType: FavoriteItem["targetType"]; targetId: string; label?: string; note?: string }
+      const now = "2026-05-21T09:15:00.000Z"
+      const favorite: FavoriteItem = {
+        favoriteId: `local-dev#${body.targetType}#${body.targetId}`,
+        targetType: body.targetType,
+        targetId: body.targetId,
+        label: body.label,
+        note: body.note,
+        accessible: true,
+        createdAt: now,
+        updatedAt: now
+      }
+      storedFavorites = [favorite, ...storedFavorites.filter((item) => !(item.targetType === favorite.targetType && item.targetId === favorite.targetId))]
+      return Promise.resolve(response(favorite))
+    }
+    if (requestUrl.includes("/favorites/") && init?.method === "DELETE") {
+      const [encodedTargetType, encodedTargetId] = (requestUrl.split("/favorites/")[1] ?? "").split("/")
+      const [targetType, targetId] = [encodedTargetType, encodedTargetId].map((value) => decodeURIComponent(value ?? ""))
+      storedFavorites = storedFavorites.filter((item) => !(item.targetType === targetType && item.targetId === targetId))
+      return Promise.resolve(response({ targetType, targetId }))
     }
     if (requestUrl.includes("/conversation-history/") && init?.method === "DELETE") {
       const id = decodeURIComponent(requestUrl.split("/conversation-history/")[1] ?? "")
@@ -573,6 +608,7 @@ describe("App document management", () => {
     await renderAuthenticatedApp()
 
     await userEvent.click(await screen.findByTitle("ドキュメント"))
+    await userEvent.click(screen.getByRole("button", { name: "フォルダ設定を開く" }))
     await userEvent.selectOptions(screen.getByLabelText("保存先フォルダ"), "group-1")
     const input = screen.getByLabelText("文書アップロード").querySelector<HTMLInputElement>('input[type="file"]')
     await userEvent.upload(input as HTMLInputElement, new File(["管理資料"], "admin-upload.txt", { type: "text/plain" }))
@@ -1020,16 +1056,17 @@ describe("App chat and upload flow", () => {
     await userEvent.click(screen.getByTitle("お気に入りに追加"))
     await waitFor(() => {
       const favoriteSave = fetchMock.mock.calls.find(([url, init]) => {
-        if (!String(url).endsWith("/conversation-history") || (init as RequestInit | undefined)?.method !== "POST") return false
-        return parseRequestJson(init as RequestInit).isFavorite === true
+        if (!String(url).endsWith("/favorites") || (init as RequestInit | undefined)?.method !== "POST") return false
+        return parseRequestJson(init as RequestInit).targetType === "chatSession"
       })
       expect(favoriteSave).toBeTruthy()
     })
     expect(screen.getByText(/1 件のお気に入り/)).toBeInTheDocument()
     await userEvent.click(screen.getByTitle("お気に入り"))
     expect(await screen.findByRole("heading", { name: "お気に入り" })).toBeInTheDocument()
-    expect(screen.getByText("1 件を表示中")).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: /分類一.*メッセージ/ })).toBeInTheDocument()
+    expect(screen.getByText("1 件のショートカット")).toBeInTheDocument()
+    expect(screen.getByText("会話")).toBeInTheDocument()
+    expect(screen.getByText("分類一")).toBeInTheDocument()
 
     await userEvent.click(screen.getByTitle("履歴"))
     await userEvent.selectOptions(screen.getByLabelText("履歴の並び順"), "messages")
@@ -1376,10 +1413,10 @@ describe("App chat and upload flow", () => {
     },
     {
       groups: ["ASYNC_AGENT_USER"],
-      visible: ["チャット", "履歴", "お気に入り", "非同期エージェント"],
-      hidden: ["担当者対応", "性能テスト", "ドキュメント", "管理者設定"],
-      expectedGetSuffixes: ["/me", "/agents/runs", "/agents/providers"],
-      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/documents", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
+      visible: ["チャット", "履歴", "お気に入り"],
+      hidden: ["担当者対応", "性能テスト", "非同期エージェント", "ドキュメント", "管理者設定"],
+      expectedGetSuffixes: ["/me"],
+      forbiddenGetSuffixes: ["/questions", "/debug-runs", "/benchmark-runs", "/agents/runs", "/agents/providers", "/documents", "/admin/users", "/admin/roles", "/admin/usage", "/admin/costs"]
     },
     {
       groups: ["USER_ADMIN"],

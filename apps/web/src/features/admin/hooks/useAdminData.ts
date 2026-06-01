@@ -4,9 +4,9 @@ import { assignUserRoles, createManagedUser, deleteManagedUser, listManagedUsers
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
-import { getUsageSummary } from "../api/usageApi.js"
 import { downloadAdminAuditLogExport, downloadAdminCostSummaryExport } from "../../../shared/utils/downloads.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UsageSummaryResponse, UserUsageSummary } from "../types.js"
+import { getUsageSummary } from "../api/usageApi.js"
+import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UsageSummaryResponse } from "../types.js"
 
 export function useAdminData({
   canReadAdminAuditLog,
@@ -35,14 +35,13 @@ export function useAdminData({
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
 }) {
-  const [managedUsers, setManagedUsers] = useState<ManagedUser[]>([])
-  const [adminAuditLog, setAdminAuditLog] = useState<ManagedUserAuditLogEntry[]>([])
-  const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[]>([])
-  const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[]>([])
+  const [managedUsers, setManagedUsers] = useState<ManagedUser[] | null>(null)
+  const [adminAuditLog, setAdminAuditLog] = useState<ManagedUserAuditLogEntry[] | null>(null)
+  const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[] | null>(null)
   const [usageSummary, setUsageSummary] = useState<UsageSummaryResponse | null>(null)
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
-  const [aliases, setAliases] = useState<AliasDefinition[]>([])
-  const [aliasAuditLog, setAliasAuditLog] = useState<AliasAuditLogItem[]>([])
+  const [aliases, setAliases] = useState<AliasDefinition[] | null>(null)
+  const [aliasAuditLog, setAliasAuditLog] = useState<AliasAuditLogItem[] | null>(null)
 
   async function refreshManagedUsers() {
     setManagedUsers(await listManagedUsers())
@@ -57,9 +56,7 @@ export function useAdminData({
   }
 
   async function refreshUsageSummaries() {
-    const nextUsageSummary = await getUsageSummary()
-    setUsageSummary(nextUsageSummary)
-    setUsageSummaries(nextUsageSummary.users)
+    setUsageSummary(await getUsageSummary())
   }
 
   async function refreshCostAudit() {
@@ -97,7 +94,7 @@ export function useAdminData({
     setError(null)
     try {
       const updated = await assignUserRoles(userId, groups)
-      setManagedUsers((prev) => [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
+      setManagedUsers((prev) => [updated, ...(prev ?? []).filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email)))
       await refreshAdminSideEffects()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -111,7 +108,7 @@ export function useAdminData({
     setError(null)
     try {
       const created = await createManagedUser(input)
-      setManagedUsers((prev) => [created, ...prev.filter((user) => user.userId !== created.userId)].sort((a, b) => a.email.localeCompare(b.email)))
+      setManagedUsers((prev) => [created, ...(prev ?? []).filter((user) => user.userId !== created.userId)].sort((a, b) => a.email.localeCompare(b.email)))
       await refreshAdminSideEffects()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -127,8 +124,9 @@ export function useAdminData({
       const updated =
         action === "suspend" ? await suspendManagedUser(userId) : action === "unsuspend" ? await unsuspendManagedUser(userId) : await deleteManagedUser(userId)
       setManagedUsers((prev) => {
-        if (updated.status === "deleted") return prev.filter((user) => user.userId !== userId)
-        return [updated, ...prev.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
+        const current = prev ?? []
+        if (updated.status === "deleted") return current.filter((user) => user.userId !== userId)
+        return [updated, ...current.filter((user) => user.userId !== userId)].sort((a, b) => a.email.localeCompare(b.email))
       })
       await refreshAdminSideEffects()
     } catch (err) {
@@ -171,8 +169,19 @@ export function useAdminData({
     setLoading(true)
     setError(null)
     try {
-      await reviewAlias(aliasId, decision, comment)
-      await refreshAliases()
+      const reviewed = await reviewAlias(aliasId, decision, comment)
+      const [nextAliases, nextAuditLog] = await Promise.all([listAliases(), listAliasAuditLog()])
+      setAliases(nextAliases === null ? null : nextAliases.map((alias) => {
+        if (alias.aliasId !== aliasId) return alias
+        return reviewed.aliasId === aliasId
+          ? reviewed
+          : {
+              ...alias,
+              status: decision === "approve" ? "approved" : "draft",
+              updatedAt: new Date().toISOString()
+            }
+      }))
+      setAliasAuditLog(nextAuditLog)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -209,7 +218,6 @@ export function useAdminData({
   }
 
   async function onExportAdminAuditLog() {
-    if (!canReadAdminAuditLog) return
     setLoading(true)
     setError(null)
     try {
@@ -222,7 +230,6 @@ export function useAdminData({
   }
 
   async function onExportCostSummary() {
-    if (!canReadCosts) return
     setLoading(true)
     setError(null)
     try {
@@ -238,7 +245,7 @@ export function useAdminData({
     managedUsers,
     adminAuditLog,
     accessRoles,
-    usageSummaries,
+    usageSummaries: usageSummary?.users ?? null,
     usageSummary,
     costAudit,
     aliases,

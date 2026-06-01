@@ -19,9 +19,10 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/admin/aliases/audit-log` | 検索 alias 監査ログを取得する | [詳細](openapi/get-admin-aliases-audit-log.md) |
 | `POST` | `/admin/aliases/publish` | 検索 alias を公開する | [詳細](openapi/post-admin-aliases-publish.md) |
 | `GET` | `/admin/audit-log` | 管理操作履歴を取得する | [詳細](openapi/get-admin-audit-log.md) |
-| `POST` | `/admin/audit-log/export` | 管理監査ログ export を作成する | [詳細](openapi/post-admin-audit-log-export.md) |
+| `POST` | `/admin/audit-log/export` | 管理操作履歴 export URL を作成する | [詳細](openapi/post-admin-audit-log-export.md) |
 | `GET` | `/admin/costs` | 概算コストを取得する | [詳細](openapi/get-admin-costs.md) |
-| `POST` | `/admin/costs/export` | 概算コスト export を作成する | [詳細](openapi/post-admin-costs-export.md) |
+| `POST` | `/admin/costs/export` | 概算コスト export URL を作成する | [詳細](openapi/post-admin-costs-export.md) |
+| `GET` | `/admin/quality-actions` | 文書品質 action card 一覧を取得する | [詳細](openapi/get-admin-quality-actions.md) |
 | `GET` | `/admin/roles` | 利用可能なロール一覧を取得する | [詳細](openapi/get-admin-roles.md) |
 | `GET` | `/admin/usage` | 利用状況を取得する | [詳細](openapi/get-admin-usage.md) |
 | `POST` | `/admin/users` | 管理対象ユーザーを作成する | [詳細](openapi/post-admin-users.md) |
@@ -30,13 +31,6 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/admin/users/{userId}/roles` | ユーザーのロールを更新する | [詳細](openapi/post-admin-users-userid-roles.md) |
 | `POST` | `/admin/users/{userId}/suspend` | ユーザーを停止する | [詳細](openapi/post-admin-users-userid-suspend.md) |
 | `POST` | `/admin/users/{userId}/unsuspend` | ユーザー停止を解除する | [詳細](openapi/post-admin-users-userid-unsuspend.md) |
-| `GET` | `/agents/providers` | 非同期エージェント provider 状態を取得する | [詳細](openapi/get-agents-providers.md) |
-| `POST` | `/agents/runs` | 非同期エージェント run を作成する | [詳細](openapi/post-agents-runs.md) |
-| `GET` | `/agents/runs` | 非同期エージェント run 一覧を取得する | [詳細](openapi/get-agents-runs.md) |
-| `GET` | `/agents/runs/{agentRunId}` | 非同期エージェント run 詳細を取得する | [詳細](openapi/get-agents-runs-agentrunid.md) |
-| `GET` | `/agents/runs/{agentRunId}/artifacts` | 非同期エージェント artifact metadata 一覧を取得する | [詳細](openapi/get-agents-runs-agentrunid-artifacts.md) |
-| `GET` | `/agents/runs/{agentRunId}/artifacts/{artifactId}` | 非同期エージェント artifact metadata を取得する | [詳細](openapi/get-agents-runs-agentrunid-artifacts-artifactid.md) |
-| `POST` | `/agents/runs/{agentRunId}/cancel` | 非同期エージェント run をキャンセルする | [詳細](openapi/post-agents-runs-agentrunid-cancel.md) |
 | `POST` | `/benchmark-runs` | 非同期 benchmark run を開始する | [詳細](openapi/post-benchmark-runs.md) |
 | `GET` | `/benchmark-runs` | benchmark run 一覧を取得する | [詳細](openapi/get-benchmark-runs.md) |
 | `GET` | `/benchmark-runs/{runId}` | benchmark run 詳細を取得する | [詳細](openapi/get-benchmark-runs-runid.md) |
@@ -49,29 +43,39 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `POST` | `/chat` | 同期チャット回答を生成する | [詳細](openapi/post-chat.md) |
 | `POST` | `/chat-runs` | 非同期チャット run を開始する | [詳細](openapi/post-chat-runs.md) |
 | `GET` | `/chat-runs/{runId}/events` | チャット run イベントを購読する | [詳細](openapi/get-chat-runs-runid-events.md) |
+| `GET` | `/chat-tool-invocations` | チャット tool invocation 監査一覧を取得する | [詳細](openapi/get-chat-tool-invocations.md) |
+| `GET` | `/chat-tools` | チャット tool registry を取得する | [詳細](openapi/get-chat-tools.md) |
 | `GET` | `/conversation-history` | 会話履歴一覧を取得する | [詳細](openapi/get-conversation-history.md) |
 | `POST` | `/conversation-history` | 会話履歴を保存する | [詳細](openapi/post-conversation-history.md) |
 | `DELETE` | `/conversation-history/{id}` | 会話履歴を削除する | [詳細](openapi/delete-conversation-history-id.md) |
 | `GET` | `/debug-runs` | debug trace 一覧を取得する | [詳細](openapi/get-debug-runs.md) |
 | `GET` | `/debug-runs/{runId}` | debug trace 詳細を取得する | [詳細](openapi/get-debug-runs-runid.md) |
 | `POST` | `/debug-runs/{runId}/download` | debug trace ダウンロード URL を作成する | [詳細](openapi/post-debug-runs-runid-download.md) |
+| `POST` | `/debug-runs/{runId}/replay-plan` | debug replay plan を作成する | [詳細](openapi/post-debug-runs-runid-replay-plan.md) |
 | `GET` | `/document-groups` | 文書グループ一覧を取得する | [詳細](openapi/get-document-groups.md) |
 | `POST` | `/document-groups` | 文書グループを作成する | [詳細](openapi/post-document-groups.md) |
-| `POST` | `/document-groups/{groupId}/share` | 文書グループ共有設定を更新する | [詳細](openapi/post-document-groups-groupid-share.md) |
+| `POST` | `/document-groups/{groupId}/share` | 文書グループ設定を更新する | [詳細](openapi/post-document-groups-groupid-share.md) |
 | `POST` | `/document-ingest-runs` | 非同期文書取り込みを開始する | [詳細](openapi/post-document-ingest-runs.md) |
 | `GET` | `/document-ingest-runs/{runId}` | 文書取り込み run を取得する | [詳細](openapi/get-document-ingest-runs-runid.md) |
 | `GET` | `/document-ingest-runs/{runId}/events` | 文書取り込みイベントを購読する | [詳細](openapi/get-document-ingest-runs-runid-events.md) |
 | `GET` | `/documents` | 登録文書一覧を取得する | [詳細](openapi/get-documents.md) |
 | `POST` | `/documents` | 文書を同期登録する（非推奨） | [詳細](openapi/post-documents.md) |
 | `DELETE` | `/documents/{documentId}` | 文書を削除する | [詳細](openapi/delete-documents-documentid.md) |
+| `POST` | `/documents/{documentId}/move` | 文書を別フォルダへ移動する | [詳細](openapi/post-documents-documentid-move.md) |
+| `GET` | `/documents/{documentId}/parsed-preview` | ParsedDocument preview を取得する | [詳細](openapi/get-documents-documentid-parsed-preview.md) |
 | `POST` | `/documents/{documentId}/reindex` | 文書を再インデックスする | [詳細](openapi/post-documents-documentid-reindex.md) |
 | `POST` | `/documents/{documentId}/reindex/stage` | 再インデックスを stage する | [詳細](openapi/post-documents-documentid-reindex-stage.md) |
+| `GET` | `/documents/{documentId}/share` | 文書共有設定を取得する | [詳細](openapi/get-documents-documentid-share.md) |
+| `PUT` | `/documents/{documentId}/share` | 文書共有設定を更新する | [詳細](openapi/put-documents-documentid-share.md) |
 | `GET` | `/documents/reindex-migrations` | 再インデックス移行一覧を取得する | [詳細](openapi/get-documents-reindex-migrations.md) |
 | `POST` | `/documents/reindex-migrations/{migrationId}/cutover` | 再インデックス結果へ切り替える | [詳細](openapi/post-documents-reindex-migrations-migrationid-cutover.md) |
 | `POST` | `/documents/reindex-migrations/{migrationId}/rollback` | 再インデックス切替を戻す | [詳細](openapi/post-documents-reindex-migrations-migrationid-rollback.md) |
 | `POST` | `/documents/uploads` | 文書アップロード URL を作成する | [詳細](openapi/post-documents-uploads.md) |
 | `POST` | `/documents/uploads/{uploadId}/content` | 文書アップロード内容を保存する | [詳細](openapi/post-documents-uploads-uploadid-content.md) |
 | `POST` | `/documents/uploads/{uploadId}/ingest` | アップロード済み文書を取り込む | [詳細](openapi/post-documents-uploads-uploadid-ingest.md) |
+| `GET` | `/favorites` | お気に入り shortcut 一覧を取得する | [詳細](openapi/get-favorites.md) |
+| `POST` | `/favorites` | お気に入り shortcut を作成する | [詳細](openapi/post-favorites.md) |
+| `DELETE` | `/favorites/{targetType}/{targetId}` | お気に入り shortcut を削除する | [詳細](openapi/delete-favorites-targettype-targetid.md) |
 | `GET` | `/health` | ヘルスチェックを取得する | [詳細](openapi/get-health.md) |
 | `GET` | `/me` | ログインユーザー情報を取得する | [詳細](openapi/get-me.md) |
 | `POST` | `/questions` | 担当者問い合わせを作成する | [詳細](openapi/post-questions.md) |

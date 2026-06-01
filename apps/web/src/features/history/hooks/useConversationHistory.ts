@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { deleteConversationHistory, listConversationHistory, saveConversationHistory } from "../api/conversationHistoryApi.js"
 import type { ConversationHistoryItem } from "../types.js"
 import type { Message } from "../../chat/types.js"
+import type { FavoriteItem } from "../../favorites/types.js"
+import { deleteFavorite, saveFavorite } from "../../favorites/api/favoritesApi.js"
 import type { HumanQuestion } from "../../questions/types.js"
 
 export function useConversationHistory({ setError }: { setError: (error: string | null) => void }) {
@@ -29,13 +31,23 @@ export function useConversationHistory({ setError }: { setError: (error: string 
     rememberConversation(buildConversationHistoryItem(id, titleCandidate, messages, existingFavorite))
   }, [rememberConversation])
 
-  const toggleFavorite = useCallback((item: ConversationHistoryItem) => {
+  const toggleFavorite = useCallback(async (item: ConversationHistoryItem, favoriteApi: {
+    addFavorite: (input: { targetType: "chatSession"; targetId: string; label?: string }) => Promise<FavoriteItem>
+    removeFavorite: (targetType: "chatSession", targetId: string) => Promise<void>
+  } = {
+    addFavorite: saveFavorite,
+    removeFavorite: deleteFavorite
+  }) => {
     const nextItem = { ...item, isFavorite: !item.isFavorite }
     setHistory((prev) => [nextItem, ...prev.filter((entry) => entry.id !== nextItem.id)].sort(compareConversationHistory).slice(0, 20))
-    saveConversationHistory(nextItem).catch((err) => {
+    try {
+      if (nextItem.isFavorite) await favoriteApi.addFavorite({ targetType: "chatSession", targetId: item.id, label: item.title })
+      else await favoriteApi.removeFavorite("chatSession", item.id)
+    } catch (err) {
       console.warn("Failed to update conversation favorite", err)
       setError(err instanceof Error ? err.message : String(err))
-    })
+      setHistory((prev) => [item, ...prev.filter((entry) => entry.id !== item.id)].sort(compareConversationHistory).slice(0, 20))
+    }
   }, [setError])
 
   const deleteHistoryItem = useCallback((id: string) => {

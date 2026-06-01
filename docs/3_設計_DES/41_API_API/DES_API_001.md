@@ -55,8 +55,11 @@
 | `POST /questions/{questionId}/search-improvement-candidates` | 問い合わせ由来の検索改善候補作成 | `FR-023`, `FR-037`, `NFR-012` |
 | `POST /questions/{questionId}/resolve` | 問い合わせ解決済み化 | `FR-021`, `NFR-011` |
 | `GET /conversation-history` | 自分の会話履歴一覧 | `FR-022`, `NFR-005` |
-| `POST /conversation-history` | 会話履歴 item 保存とお気に入り状態更新 | `FR-022`, `FR-028`, `NFR-005` |
+| `POST /conversation-history` | 会話履歴 item 保存 | `FR-022`, `NFR-005` |
 | `DELETE /conversation-history/{id}` | 自分の会話履歴削除 | `FR-022`, `NFR-005` |
+| `GET /favorites` | 自分のお気に入り shortcut 一覧 | `FR-028`, `NFR-005`, `NFR-011` |
+| `POST /favorites` | お気に入り shortcut 作成 | `FR-028`, `NFR-005`, `NFR-011` |
+| `DELETE /favorites/{targetType}/{targetId}` | お気に入り shortcut 削除 | `FR-028`, `NFR-005`, `NFR-011` |
 | `GET /debug-runs` | debug trace 一覧 | `FR-010`, `NFR-010` |
 | `GET /debug-runs/{runId}` | debug trace 詳細 | `FR-010`, `NFR-010` |
 | `POST /debug-runs/{runId}/download` | debug trace JSON ダウンロード URL 生成 | `FR-010`, `NFR-010` |
@@ -284,7 +287,15 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
   "groups": [
     {
       "groupId": "docgrp_company_policy",
+      "tenantId": "default",
+      "adminPrincipalType": "user",
+      "adminPrincipalId": "user-001",
       "name": "社内規定",
+      "normalizedName": "社内規定",
+      "canonicalPath": "/社内規定",
+      "normalizedCanonicalPath": "/社内規定",
+      "adminPathPk": "default#user#user-001",
+      "parentPathPk": "default#user#user-001#ROOT",
       "visibility": "private",
       "ownerUserId": "user-001",
       "sharedUserIds": ["user-002"],
@@ -303,6 +314,8 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 {
   "name": "社内規定",
   "description": "就業規則と人事関連規定",
+  "adminPrincipalType": "user",
+  "adminPrincipalId": "user-001",
   "visibility": "private",
   "sharedGroups": ["HR"],
   "managerUserIds": ["user-001"]
@@ -313,6 +326,7 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 
 ```json
 {
+  "name": "人事規定",
   "visibility": "org",
   "sharedUserIds": ["user-002@example.com"],
   "sharedGroups": ["HR"],
@@ -320,7 +334,7 @@ local 開発では Hono の `GET /chat-runs/{runId}/events` が同じ `ChatRunEv
 }
 ```
 
-資料グループの作成は `rag:group:create`、共有設定更新は `rag:group:assign_manager` を要求する。グループへ文書を保存する `POST /documents`、`POST /documents/uploads/{uploadId}/ingest`、`POST /document-ingest-runs` は既存の文書書き込み権限に加え、対象グループの manager 権限を確認する。`POST /documents` は小さなテキスト互換用であり、大容量ファイルは upload session と非同期 ingest run を使う。外部返却は summary に限定し、full manifest、chunk metadata、vector key、ファイル本体は返さない。一時添付は `purpose=chatAttachment` と `scope.scopeType=chat` を使い、`chat:create` を持つ利用者が同一チャット内だけで参照できる。
+資料グループの作成は `rag:group:create`、共有設定更新は `rag:group:assign_manager` を要求する。`POST /document-groups/{groupId}/share` は共有設定に加えて `name` と `description` の更新も受け付け、rename / move 時は `tenantId + adminPrincipalType + adminPrincipalId + normalizedCanonicalPath` の重複を拒否する。DynamoDB 環境では `AdminCanonicalPathIndex` で path lookup を行い、一意性は transaction lock item で保証する。グループへ文書を保存する `POST /documents`、`POST /documents/uploads/{uploadId}/ingest`、`POST /document-ingest-runs` は既存の文書書き込み権限に加え、対象グループの manager 権限を確認する。`POST /documents` は小さなテキスト互換用であり、大容量ファイルは upload session と非同期 ingest run を使う。外部返却は summary に限定し、full manifest、chunk metadata、vector key、ファイル本体は返さない。一時添付は `purpose=chatAttachment` と `scope.scopeType=chat` を使い、`chat:create` を持つ利用者が同一チャット内だけで参照できる。
 
 ## `POST /conversation-history`
 

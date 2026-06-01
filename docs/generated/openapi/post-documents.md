@@ -6,7 +6,7 @@
 
 Summary: 文書を同期登録する（非推奨）
 
-小さなテキスト互換用の同期登録 API です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。
+小さなテキスト互換用の同期登録 API です。通常文書は group scope と対象フォルダの full 権限が必要です。大容量ファイルや base64 ファイルアップロード用途では非推奨です。ファイルは POST /documents/uploads で upload session を作成し、S3 またはローカル upload URL に転送してから POST /document-ingest-runs で非同期取り込みを開始してください。レスポンスは文書 summary のみ返し、full manifest、chunk metadata、vector key は返しません。
 
 ## Headers
 

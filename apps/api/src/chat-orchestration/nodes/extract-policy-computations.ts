@@ -1,5 +1,5 @@
-import { parseJsonObject } from "../../rag/json.js"
-import { buildPolicyComputationExtractionPrompt } from "../../rag/prompts.js"
+import { parseJsonObject } from "../../rag/_shared/json.js"
+import { buildPolicyComputationExtractionPrompt } from "../../rag/online/generation/prompt/grounded-prompt-builder.js"
 import type { Dependencies } from "../../dependencies.js"
 import { PolicyComputationExtractionSchema, policyExtractionToComputedFacts } from "../policy-computation.js"
 import type { ChatOrchestrationState, ChatOrchestrationUpdate } from "../state.js"

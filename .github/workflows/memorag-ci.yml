@@ -136,6 +136,18 @@ jobs:
           npm run cdk -w @memorag-mvp/infra -- synth > infra/cdk.out/MemoRagMvpStack.template.yaml
         continue-on-error: true
 
+      - name: Check DynamoDB GSI update limit
+        id: dynamodb_gsi_guard
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "DynamoDB GSI update limit guard skipped outside pull_request events."
+            exit 0
+          fi
+          git fetch --depth=1 origin "${{ github.base_ref }}"
+          git show FETCH_HEAD:infra/test/__snapshots__/memorag-mvp-stack.snapshot.json > /tmp/memorag-base-template.json
+          npm run check:dynamodb-gsi-update-limit -w @memorag-mvp/infra -- /tmp/memorag-base-template.json test/__snapshots__/memorag-mvp-stack.snapshot.json
+        continue-on-error: true
+
       - name: Upload CDK synth artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
@@ -210,6 +222,7 @@ jobs:
               ['web', 'Build', '${{ steps.web_build.outcome }}', '-', '`npm run build -w @memorag-mvp/web`'],
               ['benchmark', 'Build', '${{ steps.benchmark_build.outcome }}', '-', '`npm run build -w @memorag-mvp/benchmark`'],
               ['infra', 'CDK synth', '${{ steps.cdk_synth.outcome }}', 'cdk-nag enabled', '`npm run cdk -w @memorag-mvp/infra -- synth`'],
+              ['infra', 'DynamoDB GSI update limit guard', '${{ steps.dynamodb_gsi_guard.outcome }}', 'existing table GSI add/delete <= 1', '`npm run check:dynamodb-gsi-update-limit -w @memorag-mvp/infra -- <base> test/__snapshots__/memorag-mvp-stack.snapshot.json`'],
             ];
             const icon = (outcome) => outcome === 'success' ? ':white_check_mark:' : ':x:';
             const overall = results.every(([, , outcome]) => outcome === 'success') ? 'success' : 'failure';
@@ -266,5 +279,5 @@ jobs:
           echo "CI result comment was skipped because this PR is from a fork and GITHUB_TOKEN has read-only permissions." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail when CI checks failed
-        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.openapi_docs.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.web_inventory.outcome != 'success' || steps.infra_inventory.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.benchmark_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success') }}
+        if: ${{ always() && (steps.install.outcome != 'success' || steps.web_lint.outcome != 'success' || steps.api_lint.outcome != 'success' || steps.infra_lint.outcome != 'success' || steps.infra_typecheck.outcome != 'success' || steps.api_typecheck.outcome != 'success' || steps.openapi_docs.outcome != 'success' || steps.web_typecheck.outcome != 'success' || steps.web_inventory.outcome != 'success' || steps.infra_inventory.outcome != 'success' || steps.benchmark_typecheck.outcome != 'success' || steps.infra_test.outcome != 'success' || steps.benchmark_test.outcome != 'success' || steps.api_test.outcome != 'success' || steps.web_test.outcome != 'success' || steps.infra_build.outcome != 'success' || steps.api_build.outcome != 'success' || steps.web_build.outcome != 'success' || steps.benchmark_build.outcome != 'success' || steps.cdk_synth.outcome != 'success' || steps.dynamodb_gsi_guard.outcome != 'success') }}
         run: exit 1

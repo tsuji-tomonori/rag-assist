@@ -37,18 +37,14 @@ function csvEnv(name: string, defaultValue: readonly string[] = []): readonly st
   return raw.split(",").map((value) => value.trim()).filter(Boolean)
 }
 
-function validateCorsAllowedOrigins(origins: readonly string[]): readonly string[] {
-  if (isProduction && origins.includes("*")) throw new Error("CORS_ALLOWED_ORIGINS must not include * in production")
-  return origins
-}
-
 function requireProductionValue(name: string, value: string): void {
   if (isProduction && value.trim().length === 0) throw new Error(`${name} is required in production`)
 }
 
 const authEnabled = boolEnv("AUTH_ENABLED", isProduction)
-const corsAllowedOrigins = validateCorsAllowedOrigins(csvEnv("CORS_ALLOWED_ORIGINS", isProduction ? [] : ["*"]))
+const corsAllowedOrigins = csvEnv("CORS_ALLOWED_ORIGINS", isProduction ? [] : ["*"])
 const docsBucketName = process.env.DOCS_BUCKET_NAME ?? ""
+const favoritesTableName = process.env.FAVORITES_TABLE_NAME ?? ""
 const cognitoRegion = process.env.COGNITO_REGION ?? region
 const cognitoUserPoolId = process.env.COGNITO_USER_POOL_ID ?? ""
 const cognitoAppClientId = process.env.COGNITO_APP_CLIENT_ID ?? ""
@@ -56,6 +52,7 @@ const cognitoAppClientId = process.env.COGNITO_APP_CLIENT_ID ?? ""
 if (isProduction && !authEnabled) throw new Error("AUTH_ENABLED must be true in production")
 if (isProduction && corsAllowedOrigins.length === 0) throw new Error("CORS_ALLOWED_ORIGINS is required in production")
 requireProductionValue("DOCS_BUCKET_NAME", docsBucketName)
+requireProductionValue("FAVORITES_TABLE_NAME", favoritesTableName)
 if (authEnabled) {
   requireProductionValue("COGNITO_REGION", cognitoRegion)
   requireProductionValue("COGNITO_USER_POOL_ID", cognitoUserPoolId)
@@ -80,7 +77,10 @@ export const config = {
   localDataDir: process.env.LOCAL_DATA_DIR ?? ".local-data",
   docsBucketName,
   questionTableName: process.env.QUESTION_TABLE_NAME ?? "memorag-human-questions",
+  defaultSupportAssigneeGroupId: process.env.DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID ?? "",
   conversationHistoryTableName: process.env.CONVERSATION_HISTORY_TABLE_NAME ?? "memorag-conversation-history",
+  favoritesTableName: favoritesTableName || "memorag-favorites",
+  dynamoDbEndpoint: process.env.DYNAMODB_ENDPOINT ?? "",
   benchmarkRunsTableName: process.env.BENCHMARK_RUNS_TABLE_NAME ?? "memorag-benchmark-runs",
   chatRunsTableName: process.env.CHAT_RUNS_TABLE_NAME ?? "memorag-chat-runs",
   chatRunEventsTableName: process.env.CHAT_RUN_EVENTS_TABLE_NAME ?? "memorag-chat-run-events",

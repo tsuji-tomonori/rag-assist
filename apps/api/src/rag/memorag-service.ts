@@ -6,44 +6,33 @@ import { config } from "../config.js"
 import { hasPermission, rolePermissions, type Role } from "../authorization.js"
 import type { Dependencies } from "../dependencies.js"
 import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentProviderInput, type AsyncAgentProviderResult } from "../async-agent/provider.js"
-import { runChatOrchestration } from "../chat-orchestration/graph.js"
+import { runChatOrchestration } from "./orchestration/chat-rag-orchestrator.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatToolInvocation, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StructuredBlock, type UsageDataCompleteness, type UsageEvent, type UsageSummaryBreakdowns, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type ChatToolInvocation, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type ExtractionWarning, type FavoriteItem, type FavoriteListItem, type FavoriteTargetType, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StructuredBlock, type UsageDataCompleteness, type UsageEvent, type UsageSummaryBreakdowns, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
-import { searchRag, type SearchInput, type SearchResponse } from "../search/hybrid-search.js"
-import { chunkStructuredBlocks, chunkText, summarizeDocumentStatistics } from "./chunk.js"
-import { embedWithCache, mapWithConcurrency } from "./embedding-cache.js"
-import { parseJsonObject } from "./json.js"
-import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./manifest-chunks.js"
-import { buildPipelineVersions } from "./pipeline-versions.js"
-import { buildMemoryCardPrompt } from "./prompts.js"
-import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./quality.js"
-import { extractDocumentFromUpload } from "./text-extract.js"
+import type { DocumentGroupPathUpdate } from "../adapters/document-group-store.js"
+import { searchRag, type SearchInput, type SearchResponse } from "./online/retrieval/hybrid/hybrid-retriever.js"
+import { parseJsonObject } from "./_shared/json.js"
+import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./_shared/storage/manifest-chunks.js"
+import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./_shared/policies/quality-policy.js"
+import { buildMemoryCardPrompt } from "./offline/generation/prompt-assets/memory-card-prompt.js"
+import { putDocumentVectorRecords, runIngestPipeline, type IngestInput } from "./offline/pre-retrieval/ingestion/ingest-run.service.js"
+import { embedWithCache, mapWithConcurrency } from "./offline/pre-retrieval/embedding/embedding-cache.js"
+import { buildPipelineVersions } from "./offline/pre-retrieval/indexing/index-version-store.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
-import { UsageTrackingTextModel } from "./usage-tracking-text-model.js"
-import { calculateUsageEventCost, defaultPricingCatalogUpdatedAt, defaultPricingVersion, pricingVersionForEvents } from "./pricing-catalog.js"
-
-type IngestInput = {
-  fileName: string
-  text?: string
-  contentBase64?: string
-  contentBytes?: Buffer
-  textractJson?: string
-  mimeType?: string
-  sourceS3Object?: {
-    bucketName: string
-    key: string
-  }
-  metadata?: Record<string, JsonValue>
-  embeddingModelId?: string
-  memoryModelId?: string
-  skipMemory?: boolean
-  structuredBlocks?: StructuredBlock[]
-  sourceExtractorVersion?: string
-}
+import { calculateUsageEventCost, defaultPricingCatalogUpdatedAt, defaultPricingVersion, pricingVersionForEvents } from "./_shared/usage/pricing-catalog.js"
+import { UsageTrackingTextModel } from "./_shared/usage/usage-tracking-text-model.js"
+import { canAccessDocumentGroup, canManageDocumentGroup, documentGroupHasLegacyExplicitPolicy, resolveDocumentGroupPermissionDetail } from "../folders/document-group-permissions.js"
+import {
+  canMoveDocument,
+  canShareDocument,
+  DocumentPermissionService,
+  validateDocumentMoveRequest,
+  type DocumentShareGrantInput
+} from "../documents/document-permission-service.js"
 
 type StartDocumentIngestRunInput = {
   uploadId: string
@@ -118,6 +107,10 @@ type AliasInput = {
     benchmarkSuiteId?: string
   }
 }
+
+const defaultTenantId = "default"
+const rootParentPathSegment = "ROOT"
+const maxDocumentGroupPathTransactionItems = 8
 
 type SearchImprovementCandidateInput = Pick<AliasInput, "scope"> & {
   term: string
@@ -249,212 +242,19 @@ export class MemoRagService {
   constructor(private readonly deps: Dependencies) {}
 
   async ingest(input: IngestInput, deps: Dependencies = this.deps): Promise<DocumentManifest> {
-    const documentId = randomUUID()
-    const createdAt = new Date().toISOString()
-    const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
-    logIngestStage({ stage: "extract", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length })
-    const extracted = input.structuredBlocks?.length
-      ? {
-          text: input.text ?? input.structuredBlocks.map((block) => block.text).join("\n\n"),
-          blocks: input.structuredBlocks,
-          sourceExtractorVersion: input.sourceExtractorVersion ?? "structured-blocks-ledger-v1"
-        }
-      : await extractDocumentFromUpload(input)
-    logIngestStage({
-      stage: "extract",
-      phase: "end",
-      documentId,
-      fileName: input.fileName,
-      mimeType: input.mimeType,
-      fileSizeBytes: input.contentBytes?.length,
-      textLength: extracted.text.length,
-      blockCount: extracted.blocks?.length,
-      sourceExtractorVersion: extracted.sourceExtractorVersion
-    })
-    const pipelineVersions = buildPipelineVersions({
-      embeddingModelId,
-      embeddingDimensions: config.embeddingDimensions,
-      sourceExtractorVersion: extracted.sourceExtractorVersion
-    })
-    const text = extracted.text
-    if (!text) throw new Error("Uploaded document did not contain extractable text")
-
-    logIngestStage({ stage: "chunk", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, textLength: text.length })
-    const chunks = extracted.blocks?.length
-      ? chunkStructuredBlocks(extracted.blocks, config.chunkSizeChars, config.chunkOverlapChars)
-      : chunkText(text, config.chunkSizeChars, config.chunkOverlapChars)
-    if (chunks.length === 0) throw new Error("No chunks were produced from the uploaded document")
-    logIngestStage({ stage: "chunk", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, textLength: text.length, chunkCount: chunks.length })
-
-    const sourceObjectKey = `documents/${documentId}/source.txt`
-    const structuredBlocksObjectKey = extracted.blocks?.length ? `documents/${documentId}/structured-blocks.json` : undefined
-    const memoryCardsObjectKey = input.skipMemory ? undefined : `documents/${documentId}/memory-cards.json`
-    const manifestObjectKey = `manifests/${documentId}.json`
-    await deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")
-    if (structuredBlocksObjectKey && extracted.blocks) {
-      await deps.objectStore.putText(
-        structuredBlocksObjectKey,
-        JSON.stringify({ schemaVersion: 2, blocks: extracted.blocks, parsedDocument: extracted.parsedDocument }, null, 2),
-        "application/json"
-      )
-    }
-
-    const documentStatistics = summarizeDocumentStatistics(chunks)
-    const memoryCards = input.skipMemory
-      ? []
-      : await this.createMemoryCards({
-          fileName: input.fileName,
-          text,
-          chunks,
-          documentStatistics,
-          modelId: input.memoryModelId
-        }, deps)
-    if (memoryCardsObjectKey) {
-      await deps.objectStore.putText(memoryCardsObjectKey, JSON.stringify({ schemaVersion: 1, memoryCards }, null, 2), "application/json")
-    }
-
-    const evidenceVectorKeys: string[] = []
-    const memoryVectorKeys: string[] = []
-    const evidenceRecords: VectorRecord[] = []
-    const memoryRecords: VectorRecord[] = []
-    const filterableMetadata = toFilterableVectorMetadata(input.metadata)
-    const qualityProfile = documentQualityProfileFromMetadata(input.metadata)
-
-    logIngestStage({ stage: "embedding", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length })
-    const evidenceRows = await mapWithConcurrency(chunks, config.embeddingConcurrency, async (chunk) => {
-      const vector = await embedWithCache(deps, {
-        text: chunk.text,
-        modelId: embeddingModelId,
-        dimensions: config.embeddingDimensions
-      })
-      const key = `${documentId}-${chunk.id}`
-      evidenceVectorKeys.push(key)
-      return {
-        key,
-        vector,
-        metadata: {
-          kind: "chunk",
-          documentId,
-          fileName: input.fileName,
-          chunkId: chunk.id,
-          objectKey: sourceObjectKey,
-          text: chunk.text,
-          sectionPath: chunk.sectionPath,
-          heading: chunk.heading,
-          parentSectionId: chunk.parentSectionId,
-          previousChunkId: chunk.previousChunkId,
-          nextChunkId: chunk.nextChunkId,
-          chunkHash: chunk.chunkHash,
-          pageStart: chunk.pageStart,
-          pageEnd: chunk.pageEnd,
-          chunkKind: chunk.chunkKind,
-          sourceBlockId: chunk.sourceBlockId,
-          normalizedFrom: chunk.normalizedFrom,
-          tableColumnCount: chunk.tableColumnCount,
-          tableId: chunk.tableId,
-          tableRowCount: chunk.tableRowCount,
-          tableConfidence: chunk.tableConfidence,
-          listDepth: chunk.listDepth,
-          codeLanguage: chunk.codeLanguage,
-          figureCaption: chunk.figureCaption,
-          figureId: chunk.figureId,
-          confidence: chunk.confidence,
-          readingOrder: chunk.readingOrder,
-          bbox: chunk.bbox,
-          sourceLocation: chunk.sourceLocation,
-          extractionMethod: chunk.extractionMethod,
-          lifecycleStatus: lifecycleStatus(input.metadata),
-          ...filterableMetadata,
-          createdAt
-        }
-      } satisfies VectorRecord
-    })
-    evidenceRecords.push(...evidenceRows)
-
-    const memoryRows = await mapWithConcurrency(memoryCards, config.embeddingConcurrency, async (card) => {
-      const vector = await embedWithCache(deps, {
-        text: card.text,
-        modelId: embeddingModelId,
-        dimensions: config.embeddingDimensions
-      })
-      const key = `${documentId}-${card.id}`
-      memoryVectorKeys.push(key)
-      return {
-        key,
-        vector,
-        metadata: {
-          kind: "memory",
-          documentId,
-          fileName: input.fileName,
-          memoryId: card.id,
-          objectKey: sourceObjectKey,
-          text: card.text,
-          sectionPath: card.sectionPath,
-          pageStart: card.pageStart,
-          pageEnd: card.pageEnd,
-          sourceChunkIds: card.sourceChunkIds,
-          lifecycleStatus: lifecycleStatus(input.metadata),
-          ...filterableMetadata,
-          createdAt
-        }
-      } satisfies VectorRecord
-    })
-    memoryRecords.push(...memoryRows)
-    logIngestStage({ stage: "embedding", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length, memoryCardCount: memoryCards.length })
-
-    logIngestStage({ stage: "vector_put", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: evidenceRecords.length, memoryCardCount: memoryRecords.length })
-    await deps.evidenceVectorStore.put(evidenceRecords)
-    await deps.memoryVectorStore.put(memoryRecords)
-    logIngestStage({ stage: "vector_put", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: evidenceRecords.length, memoryCardCount: memoryRecords.length })
-
-    const manifest: DocumentManifest = {
-      documentId,
-      fileName: input.fileName,
-      mimeType: input.mimeType,
-      metadata: input.metadata,
-      qualityProfile,
-      sourceObjectKey,
-      structuredBlocksObjectKey,
-      memoryCardsObjectKey,
-      manifestObjectKey,
-      vectorKeys: [...evidenceVectorKeys, ...memoryVectorKeys],
-      memoryVectorKeys,
-      evidenceVectorKeys,
-      embeddingModelId,
-      embeddingDimensions: config.embeddingDimensions,
-      chunkerVersion: pipelineVersions.chunkerVersion,
-      sourceExtractorVersion: pipelineVersions.sourceExtractorVersion,
-      memoryPromptVersion: pipelineVersions.memoryPromptVersion,
-      indexVersion: pipelineVersions.indexVersion,
-      pipelineVersions,
-      documentStatistics,
-      chunks: chunks.map(toChunkMetadata),
-      lifecycleStatus: lifecycleStatus(input.metadata),
-      activeDocumentId: stringValue(input.metadata?.activeDocumentId),
-      stagedFromDocumentId: stringValue(input.metadata?.stagedFromDocumentId),
-      reindexMigrationId: stringValue(input.metadata?.reindexMigrationId),
-      chunkCount: chunks.length,
-      memoryCardCount: memoryCards.length,
-      parsedDocument: extracted.parsedDocument,
-      extractionWarnings: extracted.warnings,
-      extractionCounters: extracted.counters,
-      fileProfile: extracted.fileProfile,
-      createdAt
-    }
-
-    await deps.objectStore.putText(manifestObjectKey, JSON.stringify(manifest, null, 2), "application/json")
-    return manifest
+    return runIngestPipeline(deps, input, (memoryInput) => this.createMemoryCards(memoryInput, deps))
   }
 
   async reindexDocument(actor: AppUser, documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<DocumentManifest> {
     const migration = await this.stageReindexMigration(actor, documentId, input)
-    await this.cutoverReindexMigration(migration.migrationId)
+    await this.cutoverReindexMigration(actor, migration.migrationId)
     return this.getManifest(migration.stagedDocumentId)
   }
 
   async stageReindexMigration(actor: AppUser, documentId: string, input: { embeddingModelId?: string; memoryModelId?: string } = {}): Promise<ReindexMigration> {
     const manifestKey = `manifests/${documentId}.json`
     const manifest = JSON.parse(await this.deps.objectStore.getText(manifestKey)) as DocumentManifest
+    await this.assertDocumentManifestWritable(actor, manifest)
     if ((manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") !== "active") {
       throw new Error("Only active documents can be staged for reindex")
     }
@@ -495,13 +295,14 @@ export class MemoRagService {
     return migration
   }
 
-  async cutoverReindexMigration(migrationId: string): Promise<ReindexMigration> {
+  async cutoverReindexMigration(actor: AppUser, migrationId: string): Promise<ReindexMigration> {
     const ledger = await this.loadReindexMigrationLedger()
     const migration = ledger.find((candidate) => candidate.migrationId === migrationId)
     if (!migration) throw new Error("Reindex migration not found")
     if (migration.status !== "staged") throw new Error(`Reindex migration is ${migration.status}`)
     const source = await this.getManifest(migration.sourceDocumentId)
     const staged = await this.getManifest(migration.stagedDocumentId)
+    await this.assertDocumentManifestWritable(actor, source)
     try {
       await this.reputDocumentVectorsWithLifecycle(staged, "active")
       await this.markManifestLifecycle(staged, "active", { activeDocumentId: staged.documentId })
@@ -520,13 +321,14 @@ export class MemoRagService {
     return migration
   }
 
-  async rollbackReindexMigration(migrationId: string): Promise<ReindexMigration> {
+  async rollbackReindexMigration(actor: AppUser, migrationId: string): Promise<ReindexMigration> {
     const ledger = await this.loadReindexMigrationLedger()
     const migration = ledger.find((candidate) => candidate.migrationId === migrationId)
     if (!migration) throw new Error("Reindex migration not found")
     if (migration.status !== "cutover") throw new Error(`Reindex migration is ${migration.status}`)
     const staged = await this.getManifest(migration.stagedDocumentId)
     const previous = JSON.parse(await this.deps.objectStore.getText(migration.previousManifestObjectKey)) as DocumentManifest
+    await this.assertDocumentManifestWritable(actor, previous)
     const text = await this.deps.objectStore.getText(previous.sourceObjectKey)
     const structuredBlocks = await this.loadStructuredBlocks(previous)
     await this.deps.evidenceVectorStore.delete(staged.evidenceVectorKeys ?? staged.vectorKeys)
@@ -572,17 +374,40 @@ export class MemoRagService {
           throw error
         }))
     )
-    const documentGroups = user ? (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup) : []
-    return manifests
+    const documentGroups = user ? normalizeDocumentGroups(await this.deps.documentGroupStore.list()) : []
+    const activeManifests = manifests
       .filter((manifest): manifest is DocumentManifest => manifest !== undefined)
       .filter((manifest) => (manifest.lifecycleStatus ?? stringValue(manifest.metadata?.lifecycleStatus) ?? "active") === "active")
       .filter((manifest) => stringValue(manifest.metadata?.scopeType) !== "chat")
-      .filter((manifest) => !user || canAccessManifest(manifest, user, documentGroups))
+    const accessible = user
+      ? await Promise.all(activeManifests.map(async (manifest) => [manifest, await this.canAccessDocumentManifest(user, manifest, documentGroups)] as const))
+      : activeManifests.map((manifest) => [manifest, true] as const)
+    const permissionService = user ? new DocumentPermissionService(this.deps) : undefined
+    const withCapabilities = await Promise.all(accessible
+      .filter(([, allowed]) => allowed)
+      .map(([manifest]) => manifest)
+      .map(async (manifest) => {
+        if (!user || !permissionService) return manifest
+        const permission = await permissionService.resolveEffectiveDocumentPermission(user, manifest)
+        const sanitized = this.sanitizeDirectSharedManifestForList(user, manifest, documentGroups)
+        return {
+          ...sanitized,
+          currentUserEffectivePermission: permission,
+          capabilities: documentCapabilities(permission, user)
+        }
+      }))
+    return withCapabilities
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
 
   async getDocumentManifest(documentId: string): Promise<DocumentManifest> {
     return this.getManifest(documentId)
+  }
+
+  async assertDocumentWritable(actor: AppUser, documentId: string): Promise<DocumentManifest> {
+    const manifest = await this.getManifest(documentId)
+    await this.assertDocumentManifestWritable(actor, manifest)
+    return manifest
   }
 
   async getParsedDocumentPreview(user: AppUser, documentId: string): Promise<ParsedDocumentPreview | undefined> {
@@ -591,21 +416,32 @@ export class MemoRagService {
       throw error
     })
     if (!manifest) return undefined
-    const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
-    if (!canAccessManifest(manifest, user, groups)) throw forbiddenError("Forbidden")
+    const documentGroups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
+    if (!(await this.canAccessDocumentManifest(user, manifest, documentGroups))) throw forbiddenError("Forbidden")
     return buildParsedDocumentPreview(manifest)
   }
 
   async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
-    const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     return groups
-      .filter((group) => canAccessDocumentGroup(group, user))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((group) => {
+        const detail = resolveDocumentGroupPermissionDetail(group, user, groups)
+        return {
+          ...group,
+          effectivePermission: detail.permission,
+          policySource: detail.policySource,
+          inheritedFromFolderId: detail.inheritedFromFolderId
+        }
+      })
+      .filter((group) => group.effectivePermission !== "none")
+      .sort((a, b) => (a.normalizedCanonicalPath ?? a.name).localeCompare(b.normalizedCanonicalPath ?? b.name))
   }
 
   async createDocumentGroup(actor: AppUser, input: {
     name: string
     description?: string
+    adminPrincipalType?: DocumentGroup["adminPrincipalType"]
+    adminPrincipalId?: string
     parentGroupId?: string
     visibility?: DocumentGroup["visibility"]
     sharedUserIds?: string[]
@@ -613,12 +449,32 @@ export class MemoRagService {
     managerUserIds?: string[]
   }): Promise<DocumentGroup> {
     const now = new Date().toISOString()
-    const parent = input.parentGroupId ? normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(input.parentGroupId)) : undefined
+    const name = validateDocumentGroupName(input.name)
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
+    const parent = input.parentGroupId ? groups.find((group) => group.groupId === input.parentGroupId) : undefined
     if (input.parentGroupId && !parent) throw new Error("Parent document group not found")
-    if (parent && !canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot create a child group under this parent")
+    if (parent && !canManageDocumentGroup(parent, actor, groups)) throw forbiddenError("Forbidden: cannot create a child group under this parent")
+    const principal = resolveDocumentGroupAdminPrincipal(actor, input, parent)
+    const pathFields = documentGroupPathFields({
+      tenantId: principal.tenantId,
+      adminPrincipalType: principal.adminPrincipalType,
+      adminPrincipalId: principal.adminPrincipalId,
+      parent,
+      name
+    })
+    if (groups.some((group) => group.adminPathPk === pathFields.adminPathPk && group.normalizedCanonicalPath === pathFields.normalizedCanonicalPath)) {
+      throw new Error("Document group canonical path already exists")
+    }
+    const hasExplicitPolicy = documentGroupHasLegacyExplicitPolicy(input)
     const group: DocumentGroup = {
       groupId: `docgrp_${randomUUID().slice(0, 12)}`,
-      name: input.name.trim(),
+      schemaVersion: 2,
+      itemType: "documentGroup",
+      tenantId: principal.tenantId,
+      adminPrincipalType: principal.adminPrincipalType,
+      adminPrincipalId: principal.adminPrincipalId,
+      name,
+      ...pathFields,
       description: input.description?.trim() || undefined,
       parentGroupId: parent?.groupId,
       ancestorGroupIds: parent ? [...(parent.ancestorGroupIds ?? []), parent.groupId] : [],
@@ -627,62 +483,205 @@ export class MemoRagService {
       sharedUserIds: uniqueStrings(input.sharedUserIds ?? []),
       sharedGroups: uniqueStrings(input.sharedGroups ?? []),
       managerUserIds: uniqueStrings([actor.userId, ...(input.managerUserIds ?? [])]),
+      ...(hasExplicitPolicy ? { hasExplicitPolicy: true } : {}),
+      status: "active",
+      createdBy: actor.userId,
       createdAt: now,
       updatedAt: now
     }
-    return this.deps.documentGroupStore.create(group)
+    return this.deps.documentGroupStore.createWithPathLock(group)
   }
 
   async updateDocumentGroupSharing(actor: AppUser, groupId: string, input: {
+    name?: string
+    description?: string
     visibility?: DocumentGroup["visibility"]
-    parentGroupId?: string
+    parentGroupId?: string | null
     sharedUserIds?: string[]
     sharedGroups?: string[]
     managerUserIds?: string[]
   }): Promise<DocumentGroup | undefined> {
-    const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
+    const group = groups.find((item) => item.groupId === groupId)
     if (!group) return undefined
-    if (!canManageDocumentGroup(group, actor)) throw forbiddenError("Forbidden: only group managers can update sharing")
+    if (!canManageDocumentGroup(group, actor, groups)) throw forbiddenError("Forbidden: only group managers can update sharing")
     const update: Partial<DocumentGroup> = {}
+    let targetName = group.name
+    if (input.name !== undefined) {
+      targetName = validateDocumentGroupName(input.name)
+      update.name = targetName
+      update.normalizedName = normalizeDocumentGroupName(targetName)
+    }
+    if (input.description !== undefined) update.description = input.description.trim() || undefined
     if (input.visibility !== undefined) update.visibility = input.visibility
     if (input.sharedUserIds !== undefined) update.sharedUserIds = uniqueStrings(input.sharedUserIds)
     if (input.sharedGroups !== undefined) update.sharedGroups = uniqueStrings(input.sharedGroups)
     if (input.managerUserIds !== undefined) update.managerUserIds = uniqueStrings([group.ownerUserId, ...input.managerUserIds])
+    if (documentGroupHasLegacyExplicitPolicy(input)) update.hasExplicitPolicy = true
     let parentChanged = false
+    let parent = group.parentGroupId ? groups.find((item) => item.groupId === group.parentGroupId) : undefined
     if (input.parentGroupId !== undefined) {
       parentChanged = true
       const parentGroupId = input.parentGroupId
-      if (parentGroupId === group.groupId) throw new Error("Document group cannot be its own parent")
-      const parent = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(parentGroupId))
-      if (!parent) throw new Error("Parent document group not found")
-      if ((parent.ancestorGroupIds ?? []).includes(group.groupId)) throw new Error("Document group cannot move under its descendant")
-      if (!canManageDocumentGroup(parent, actor)) throw forbiddenError("Forbidden: cannot move group under this parent")
-      update.parentGroupId = parent.groupId
-      update.ancestorGroupIds = [...(parent.ancestorGroupIds ?? []), parent.groupId]
+      if (parentGroupId === null) {
+        parent = undefined
+        update.parentGroupId = undefined
+        update.ancestorGroupIds = []
+      } else {
+        if (parentGroupId === group.groupId) throw new Error("Document group cannot be its own parent")
+        parent = groups.find((item) => item.groupId === parentGroupId)
+        if (!parent) throw new Error("Parent document group not found")
+        if ((parent.ancestorGroupIds ?? []).includes(group.groupId)) throw new Error("Document group cannot move under its descendant")
+        if (!canManageDocumentGroup(parent, actor, groups)) throw forbiddenError("Forbidden: cannot move group under this parent")
+        update.parentGroupId = parent.groupId
+        update.ancestorGroupIds = [...(parent.ancestorGroupIds ?? []), parent.groupId]
+      }
     }
-    const updated = await this.deps.documentGroupStore.update(groupId, { ...update, updatedAt: new Date().toISOString() })
-    if (parentChanged) await this.refreshDescendantDocumentGroupAncestors(updated)
-    return updated
+    const now = new Date().toISOString()
+    if (parentChanged || input.name !== undefined) {
+      const pathUpdates = buildDocumentGroupPathUpdates(groups, group, { ...update, name: targetName, updatedAt: now }, parent)
+      if (pathUpdates.length > maxDocumentGroupPathTransactionItems) throw new Error("Document group subtree is too large for synchronous path update")
+      for (const next of pathUpdates.map((updateItem) => updateItem.next)) {
+        const conflict = groups.find((candidate) => (
+          candidate.groupId !== next.groupId &&
+          !pathUpdates.some((updateItem) => updateItem.current.groupId === candidate.groupId) &&
+          candidate.adminPathPk === next.adminPathPk &&
+          candidate.normalizedCanonicalPath === next.normalizedCanonicalPath
+        ))
+        if (conflict) throw new Error("Document group canonical path already exists")
+      }
+      const updated = await this.deps.documentGroupStore.updateWithPathLocks(pathUpdates)
+      return updated.find((item) => item.groupId === groupId)
+    }
+    return this.deps.documentGroupStore.update(groupId, { ...update, updatedAt: now })
   }
 
   async assertDocumentGroupsWritable(actor: AppUser, groupIds: string[]): Promise<void> {
     if (groupIds.length === 0) return
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     for (const groupId of groupIds) {
-      const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
-      if (!group || !canManageDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot write document group ${groupId}`)
+      const group = groups.find((item) => item.groupId === groupId)
+      if (!group || !canManageDocumentGroup(group, actor, groups)) throw forbiddenError(`Forbidden: cannot write document group ${groupId}`)
     }
+  }
+
+  private async assertDocumentManifestWritable(actor: AppUser, manifest: DocumentManifest): Promise<void> {
+    const documentGroups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
+    if (!(await this.canManageDocumentManifest(actor, manifest, documentGroups))) {
+      throw forbiddenError(`Forbidden: cannot manage document ${manifest.documentId}`)
+    }
+  }
+
+  async getDocumentShareInfo(actor: AppUser, documentId: string) {
+    const manifest = await this.getManifest(documentId)
+    const permissionService = new DocumentPermissionService(this.deps)
+    const effectivePermission = await permissionService.resolveEffectiveDocumentPermission(actor, manifest)
+    if (!canShareDocument(effectivePermission, actor)) throw forbiddenError("Forbidden")
+    return permissionService.getShareInfo(actor, manifest)
+  }
+
+  async updateDocumentShare(actor: AppUser, documentId: string, input: { grants: DocumentShareGrantInput[]; reason: string }) {
+    const manifest = await this.getManifest(documentId)
+    const permissionService = new DocumentPermissionService(this.deps)
+    const effectivePermission = await permissionService.resolveEffectiveDocumentPermission(actor, manifest)
+    if (!canShareDocument(effectivePermission, actor)) throw forbiddenError("Forbidden")
+    return permissionService.replaceDocumentShareGrants(actor, manifest, input.grants, input.reason)
+  }
+
+  async moveDocument(actor: AppUser, documentId: string, input: {
+    destinationFolderId: string
+    newTitle?: string
+    reason: string
+    expectedUpdatedAt?: string
+  }): Promise<{
+    document: DocumentManifest
+    before: { folderIds: string[]; fileName: string }
+    after: { folderIds: string[]; fileName: string }
+    directDocumentGrantsPreserved: boolean
+  }> {
+    validateDocumentMoveRequest(input)
+    const manifest = await this.getManifest(documentId)
+    const currentUpdatedAt = manifest.updatedAt ?? manifest.createdAt
+    if (input.expectedUpdatedAt && input.expectedUpdatedAt !== currentUpdatedAt) {
+      throw new Error("Document changed before move")
+    }
+
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
+    const destination = groups.find((group) => group.groupId === input.destinationFolderId)
+    if (!destination || destination.status === "archived") throw new Error("Destination folder not found or inactive")
+    const permissionService = new DocumentPermissionService(this.deps)
+    const documentPermission = await permissionService.resolveEffectiveDocumentPermission(actor, manifest)
+    const destinationPermission = resolveDocumentGroupPermissionDetail(destination, actor, groups).permission
+    if (!canMoveDocument(documentPermission, destinationPermission, actor)) throw forbiddenError("Forbidden")
+
+    const before = { folderIds: documentFolderIds(manifest), fileName: manifest.fileName }
+    const nextFileName = input.newTitle?.trim() || manifest.fileName
+    const siblingConflict = (await this.listDocuments(actor)).some((candidate) => {
+      if (candidate.documentId === manifest.documentId) return false
+      if (candidate.fileName !== nextFileName) return false
+      return documentFolderIds(candidate).includes(destination.groupId)
+    })
+    if (siblingConflict) throw new Error("Destination folder already has a document with the same file name")
+
+    const now = new Date().toISOString()
+    const metadata = {
+      ...(manifest.metadata ?? {}),
+      scopeType: "group",
+      groupId: destination.groupId,
+      folderId: destination.groupId,
+      groupIds: [destination.groupId],
+      folderIds: [destination.groupId]
+    }
+    const next: DocumentManifest = {
+      ...manifest,
+      fileName: nextFileName,
+      metadata,
+      updatedAt: now
+    }
+    await this.deps.objectStore.putText(next.manifestObjectKey, JSON.stringify(next, null, 2), "application/json")
+    await Promise.all([
+      this.deps.evidenceVectorStore.updateMetadataForDocument?.(documentId, { fileName: nextFileName, groupId: destination.groupId, folderId: destination.groupId, groupIds: [destination.groupId], folderIds: [destination.groupId] }),
+      this.deps.memoryVectorStore.updateMetadataForDocument?.(documentId, { fileName: nextFileName, groupId: destination.groupId, folderId: destination.groupId, groupIds: [destination.groupId], folderIds: [destination.groupId] })
+    ])
+    const after = { folderIds: [destination.groupId], fileName: nextFileName }
+    await permissionService.appendDocumentAudit(actor, "document:move", documentTenantId(manifest), documentId, before, after, input.reason)
+    return { document: next, before, after, directDocumentGrantsPreserved: true }
+  }
+
+  private async canAccessDocumentManifest(actor: AppUser, manifest: DocumentManifest, documentGroups: DocumentGroup[]): Promise<boolean> {
+    if (canAccessManifest(manifest, actor, documentGroups)) return true
+    const permission = await new DocumentPermissionService(this.deps).resolveEffectiveDocumentPermission(actor, manifest)
+    return permission === "readOnly" || permission === "full"
+  }
+
+  private async canManageDocumentManifest(actor: AppUser, manifest: DocumentManifest, documentGroups: DocumentGroup[]): Promise<boolean> {
+    if (canManageManifest(manifest, actor, documentGroups)) return true
+    const permission = await new DocumentPermissionService(this.deps).resolveEffectiveDocumentPermission(actor, manifest)
+    return permission === "full"
+  }
+
+  private sanitizeDirectSharedManifestForList(actor: AppUser, manifest: DocumentManifest, documentGroups: DocumentGroup[]): DocumentManifest {
+    if (canAccessManifest(manifest, actor, documentGroups)) return manifest
+    const metadata = { ...(manifest.metadata ?? {}) }
+    delete metadata.groupId
+    delete metadata.groupIds
+    delete metadata.folderId
+    delete metadata.folderIds
+    metadata.folderLabel = "共有文書"
+    return { ...manifest, metadata }
   }
 
   async assertSearchScopeReadable(actor: AppUser, scope: ChatInput["searchScope"]): Promise<void> {
     if (!scope?.groupIds?.length) return
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     for (const groupId of scope.groupIds) {
-      const group = normalizeOptionalDocumentGroup(await this.deps.documentGroupStore.get(groupId))
-      if (!group || !canAccessDocumentGroup(group, actor)) throw forbiddenError(`Forbidden: cannot read document group ${groupId}`)
+      const group = groups.find((item) => item.groupId === groupId)
+      if (!group || !canAccessDocumentGroup(group, actor, groups)) throw forbiddenError(`Forbidden: cannot read document group ${groupId}`)
     }
   }
 
   private async refreshDescendantDocumentGroupAncestors(root: DocumentGroup): Promise<void> {
-    const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    const groups = normalizeDocumentGroups(await this.deps.documentGroupStore.list())
     const byParent = new Map<string, DocumentGroup[]>()
     for (const group of groups) {
       if (!group.parentGroupId) continue
@@ -893,10 +892,6 @@ export class MemoRagService {
     return [...(db.auditLog ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 100)
   }
 
-  async listUsageEvents(): Promise<UsageEvent[]> {
-    return this.deps.usageEventStore?.list() ?? []
-  }
-
   async assignUserRoles(actor: AppUser, userId: string, groups: string[]): Promise<ManagedUser | undefined> {
     const normalizedGroups = normalizeRoles(groups)
     const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
@@ -922,6 +917,10 @@ export class MemoRagService {
 
   async deleteManagedUser(actor: AppUser, userId: string): Promise<ManagedUser | undefined> {
     return this.updateManagedUserStatus(actor, userId, "deleted")
+  }
+
+  async listUsageEvents(): Promise<UsageEvent[]> {
+    return this.deps.usageEventStore?.list() ?? []
   }
 
   async listUsageSummaries(actor: AppUser, period = currentUsageSummaryPeriod()): Promise<UserUsageSummary[]> {
@@ -1007,7 +1006,6 @@ export class MemoRagService {
     const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
     const usageEvents = filterUsageEventsByPeriod(await this.listUsageEvents(), period)
     const activeUsersById = new Map(db.users.filter((user) => user.status !== "deleted").map((user) => [user.userId, user]))
-
     return {
       byFeature: summarizeUsageBreakdown(usageEvents, (event) => [{ key: event.feature, label: event.feature }]),
       byModel: summarizeUsageBreakdown(usageEvents, (event) => [{ key: event.modelId, label: event.modelId }]),
@@ -1057,6 +1055,110 @@ export class MemoRagService {
     }
   }
 
+  async listQualityActionCards(actor: AppUser): Promise<QualityActionCard[]> {
+    const documents = await this.listDocuments(actor)
+    return documents
+      .flatMap((manifest) => qualityActionCardsForManifest(manifest))
+      .sort((a, b) => {
+        const severityRank = { blocked: 0, warning: 1, info: 2 } satisfies Record<QualityActionCard["severity"], number>
+        return severityRank[a.severity] - severityRank[b.severity] || b.createdAt.localeCompare(a.createdAt)
+      })
+      .slice(0, 200)
+  }
+
+  async createAdminExportDownloadUrl(actor: AppUser, exportType: AdminExportArtifact["exportType"]): Promise<AdminExportArtifact> {
+    if (!config.debugDownloadBucketName) throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
+    const generatedAt = new Date().toISOString()
+    const body = await this.buildAdminExportPayload(actor, exportType, generatedAt)
+    const redaction = adminExportRedaction(body)
+    const safeType = exportType.replace(/[^a-z0-9_-]/g, "_")
+    const objectKey = `downloads/admin-${safeType}-${generatedAt.replace(/[-:.]/g, "")}.json`
+    const fileName = objectKey.split("/").at(-1) ?? "admin-export.json"
+    const contentDisposition = `attachment; filename="${fileName}"`
+    const s3 = new S3Client({ region: config.region })
+    await s3.send(new PutObjectCommand({
+      Bucket: config.debugDownloadBucketName,
+      Key: objectKey,
+      Body: JSON.stringify(body, null, 2),
+      ContentType: "application/json; charset=utf-8",
+      ContentDisposition: contentDisposition
+    }))
+
+    const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
+    const url = await getSignedUrl(s3, new GetObjectCommand({
+      Bucket: config.debugDownloadBucketName,
+      Key: objectKey,
+      ResponseContentType: "application/json; charset=utf-8",
+      ResponseContentDisposition: contentDisposition
+    }), { expiresIn: expiresInSeconds })
+    return { exportType, url, expiresInSeconds, objectKey, generatedAt, redaction }
+  }
+
+  async buildAdminExportPayload(actor: AppUser, exportType: AdminExportArtifact["exportType"], generatedAt = new Date().toISOString()): Promise<JsonValue> {
+    const redaction = defaultAdminExportRedaction()
+    return exportType === "audit_log"
+      ? { schemaVersion: 1, exportType, generatedBy: actor.userId, generatedAt, redaction, auditLog: await this.listAdminAuditLog(actor) }
+      : { schemaVersion: 1, exportType, generatedBy: actor.userId, generatedAt, redaction, costSummary: await this.getCostAuditSummary(actor) }
+  }
+
+  private depsWithUsageTracking(
+    user: AppUser | undefined,
+    sessionId: string | undefined,
+    orchestrationRunId = sessionId,
+    context: { ingestRunId?: string; toolInvocationId?: string } = {}
+  ): Dependencies {
+    if (!user || !this.deps.usageEventStore) return this.deps
+    return {
+      ...this.deps,
+      textModel: new UsageTrackingTextModel(this.deps.textModel, this.deps.usageEventStore, {
+        userId: user.userId,
+        sessionId,
+        orchestrationRunId,
+        ingestRunId: context.ingestRunId,
+        toolInvocationId: context.toolInvocationId
+      })
+    }
+  }
+
+  private async recordUsageEvent(input: {
+    userId: string
+    sessionId?: string
+    orchestrationRunId?: string
+    benchmarkRunId?: string
+    debugTraceId?: string
+    feature: UsageEvent["feature"]
+    provider?: UsageEvent["provider"]
+    modelId: string
+    status: UsageEvent["status"]
+    errorCode?: string
+    idempotencyKey: string
+  }): Promise<void> {
+    if (!this.deps.usageEventStore) return
+    const now = new Date().toISOString()
+    await this.deps.usageEventStore.putOnce({
+      eventId: randomUUID(),
+      tenantId: "default",
+      userId: input.userId,
+      sessionId: input.sessionId,
+      orchestrationRunId: input.orchestrationRunId,
+      benchmarkRunId: input.benchmarkRunId,
+      debugTraceId: input.debugTraceId,
+      feature: input.feature,
+      provider: input.provider ?? (config.mockBedrock ? "mock" : "bedrock"),
+      modelId: input.modelId,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      tokenSource: "unknown",
+      usageConfidence: "missing",
+      pricingVersion: defaultPricingVersion,
+      status: input.status,
+      errorCode: input.errorCode,
+      idempotencyKey: input.idempotencyKey,
+      createdAt: now
+    })
+  }
+
   async listDebugRuns(): Promise<DebugTrace[]> {
     const keys = await this.deps.objectStore.listKeys("debug-runs/")
     const traces = await Promise.all(
@@ -1074,26 +1176,78 @@ export class MemoRagService {
     return normalizeDebugTrace(JSON.parse(await this.deps.objectStore.getText(key)))
   }
 
+  async listChatToolInvocations(): Promise<ChatToolInvocation[]> {
+    const debugRuns = await this.listDebugRuns()
+    return debugRuns
+      .flatMap((trace) => trace.toolInvocations ?? [])
+      .sort((a, b) => (b.startedAt ?? b.completedAt ?? "").localeCompare(a.startedAt ?? a.completedAt ?? ""))
+      .slice(0, 200)
+  }
+
+  async createDebugReplayPlan(runId: string): Promise<DebugReplayPlan | undefined> {
+    const trace = await this.getDebugRun(runId)
+    if (!trace) return undefined
+    const redaction = trace.exportRedaction ?? {
+      policyVersion: DEBUG_TRACE_SANITIZE_POLICY_VERSION,
+      visibility: trace.visibility ?? "operator_sanitized",
+      redactedFields: ["rawPrompt", "credentials", "internalReasoning", "unauthorizedDocuments", "internalPolicyDetails"],
+      notes: ["replay plan is metadata-only and does not execute model/tool calls"]
+    }
+    return {
+      runId: trace.runId,
+      targetType: trace.targetType ?? "rag_run",
+      sourceTraceVisibility: trace.visibility ?? "operator_sanitized",
+      createdAt: new Date().toISOString(),
+      replayable: false,
+      blockedReason: "Replay execution is disabled until operator approval and current permission checks are completed.",
+      inputSummary: {
+        question: trace.question,
+        modelId: trace.modelId,
+        embeddingModelId: trace.embeddingModelId,
+        topK: trace.topK,
+        memoryTopK: trace.memoryTopK,
+        minScore: trace.minScore,
+        citationCount: trace.citations.length
+      },
+      redaction
+    }
+  }
+
   async chat(input: ChatInput, user?: AppUser): Promise<ChatOrchestrationResult> {
     if (user) await this.assertSearchScopeReadable(user, input.searchScope)
     const sessionId = input.conversation?.conversationId
     const usageRunId = sessionId
       ? `${sessionId}:turn:${input.conversation?.turnId ?? randomUUID()}`
       : `chat:${randomUUID()}`
-    const result = await runChatOrchestration(this.depsWithUsageTracking(user, sessionId, usageRunId), input, user)
-    if (user && result.debug?.runId) {
-      await this.recordUsageEvent({
-        userId: user.userId,
-        sessionId,
-        orchestrationRunId: usageRunId,
-        debugTraceId: result.debug.runId,
-        feature: "debug",
-        modelId: input.modelId ?? config.defaultModelId,
-        status: "succeeded",
-        idempotencyKey: `debug:${result.debug.runId}`
-      })
+    try {
+      const result = await runChatOrchestration(this.depsWithUsageTracking(user, sessionId, usageRunId), input, user)
+      if (user) {
+        await this.recordUsageEvent({
+          userId: user.userId,
+          sessionId,
+          orchestrationRunId: usageRunId,
+          feature: "rag.chat_request",
+          modelId: input.modelId ?? config.defaultModelId,
+          status: "succeeded",
+          idempotencyKey: `${usageRunId}:chat_request`
+        })
+      }
+      return result
+    } catch (err) {
+      if (user) {
+        await this.recordUsageEvent({
+          userId: user.userId,
+          sessionId,
+          orchestrationRunId: usageRunId,
+          feature: "rag.chat_request",
+          modelId: input.modelId ?? config.defaultModelId,
+          status: "failed",
+          errorCode: errorCodeFromUnknown(err),
+          idempotencyKey: `${usageRunId}:chat_request`
+        })
+      }
+      throw err
     }
-    return result
   }
 
   async startChatRun(input: ChatInput, user: AppUser): Promise<{ runId: string; status: ChatRun["status"]; eventsPath: string }> {
@@ -1167,11 +1321,9 @@ export class MemoRagService {
     })
 
     try {
+      const chatUser = { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["CHAT_USER"] }
       const result = await runChatOrchestration(
-        this.depsWithUsageTracking(
-          { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["CHAT_USER"] },
-          run.runId
-        ),
+        this.depsWithUsageTracking(chatUser, runId, runId),
         {
           question: run.question,
           conversationHistory: run.conversationHistory,
@@ -1188,7 +1340,7 @@ export class MemoRagService {
           searchScope: run.searchScope,
           includeDebug: run.includeDebug
         },
-        { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["CHAT_USER"] },
+        chatUser,
         {
           emit: async (event) => {
             await this.deps.chatRunEventStore.append({
@@ -1213,18 +1365,6 @@ export class MemoRagService {
       if (result.needsClarification !== undefined) finalEventData.needsClarification = result.needsClarification
       if (result.clarification) finalEventData.clarification = result.clarification as unknown as JsonValue
       if (result.debug?.runId) finalEventData.debugRunId = result.debug.runId
-      if (result.debug?.runId) {
-        await this.recordUsageEvent({
-          userId: run.createdBy,
-          sessionId: run.runId,
-          orchestrationRunId: run.runId,
-          debugTraceId: result.debug.runId,
-          feature: "debug",
-          modelId: run.modelId,
-          status: "succeeded",
-          idempotencyKey: `debug:${result.debug.runId}`
-        })
-      }
       await this.deps.chatRunEventStore.append({
         runId,
         type: "final",
@@ -1384,6 +1524,7 @@ export class MemoRagService {
         data: { status: "running", stage: "extracting", counters: { fileSizeBytes: contentBytes.length } },
         ttl
       })
+      const ingestUser = { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["CHAT_USER"] }
       const manifest = await this.ingest({
         fileName: run.fileName,
         mimeType: run.mimeType,
@@ -1393,12 +1534,7 @@ export class MemoRagService {
         skipMemory: run.skipMemory,
         contentBytes,
         sourceS3Object
-      }, this.depsWithUsageTracking(
-        { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["RAG_UPLOADER"] },
-        undefined,
-        run.runId,
-        { ingestRunId: run.runId }
-      ))
+      }, this.depsWithUsageTracking(ingestUser, runId, runId, { ingestRunId: runId }))
       await this.deps.objectStore.deleteObject(run.objectKey)
       const manifestSummary = toDocumentManifestSummary(manifest)
       const completedAt = new Date().toISOString()
@@ -1476,22 +1612,34 @@ export class MemoRagService {
 
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
     await this.assertSearchScopeReadable(user, input.scope)
-    const usageRunId = `search:${randomUUID()}`
-    return searchRag(this.depsWithUsageTracking(user, undefined, usageRunId), input, user)
+    return searchRag(this.depsWithUsageTracking(user, undefined, `search:${randomUUID()}`), input, user)
   }
 
   async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
+    const defaultAssigneeGroupId = config.defaultSupportAssigneeGroupId || undefined
+    const assigneeGroupId = input.assigneeUserId || input.assigneeGroupId
+      ? input.assigneeGroupId
+      : defaultAssigneeGroupId
     return this.deps.questionStore.create({
       ...input,
       requesterUserId: user?.userId,
       requesterName: input.requesterName?.trim() || userDisplayName(user),
       requesterDepartment: input.requesterDepartment?.trim() || "未設定",
+      assigneeGroupId,
       sanitizedDiagnostics: sanitizeSupportDiagnostics(input.sanitizedDiagnostics, input.answerUnavailableReason)
     })
   }
 
-  async listQuestions(): Promise<HumanQuestion[]> {
-    return this.deps.questionStore.list()
+  async listAssignedQuestions(userId: string, groupIds: string[]): Promise<HumanQuestion[]> {
+    return this.deps.questionStore.listAssignedToUser(userId, groupIds)
+  }
+
+  async listRequestedQuestions(userId: string): Promise<HumanQuestion[]> {
+    return this.deps.questionStore.listRequestedByUser(userId)
+  }
+
+  async listAllQuestionsForAdmin(): Promise<HumanQuestion[]> {
+    return this.deps.questionStore.listAllForAdmin()
   }
 
   async getQuestion(questionId: string): Promise<HumanQuestion | undefined> {
@@ -1560,7 +1708,6 @@ export class MemoRagService {
       })
       db.usage[actor.userId] = {
         chatMessages: 0,
-        chatRequestCount: 0,
         conversationCount: 0,
         questionCount: 0,
         benchmarkRunCount: 0,
@@ -1601,7 +1748,6 @@ export class MemoRagService {
       })
       db.usage[directoryUser.userId] ??= {
         chatMessages: 0,
-        chatRequestCount: 0,
         conversationCount: 0,
         questionCount: 0,
         benchmarkRunCount: 0,
@@ -1756,8 +1902,7 @@ export class MemoRagService {
       }
     }))
 
-    await this.deps.evidenceVectorStore.put(evidenceRecords)
-    await this.deps.memoryVectorStore.put(memoryRecords)
+    await putDocumentVectorRecords(this.deps, { evidenceRecords, memoryRecords })
   }
 
   private async restoreFailedCutoverState(source: DocumentManifest, staged: DocumentManifest): Promise<void> {
@@ -1830,15 +1975,77 @@ export class MemoRagService {
   }
 
   async saveConversationHistory(userId: string, input: SaveConversationHistoryInput): Promise<ConversationHistoryItem> {
-    return this.deps.conversationHistoryStore.save(userId, input)
+    return this.deps.conversationHistoryStore.save(userId, { ...input, isFavorite: false })
   }
 
   async listConversationHistory(userId: string): Promise<ConversationHistoryItem[]> {
-    return this.deps.conversationHistoryStore.list(userId)
+    const [history, favorites] = await Promise.all([
+      this.deps.conversationHistoryStore.list(userId),
+      this.deps.favoriteStore.list(userId)
+    ])
+    const favoriteChatSessionIds = new Set(favorites
+      .filter((favorite) => favorite.targetType === "chatSession")
+      .map((favorite) => favorite.targetId))
+    return history
+      .map((item) => ({ ...item, isFavorite: favoriteChatSessionIds.has(item.id) }))
+      .sort(compareConversationHistoryForDisplay)
+      .slice(0, 20)
   }
 
   async deleteConversationHistory(userId: string, id: string): Promise<void> {
     return this.deps.conversationHistoryStore.delete(userId, id)
+  }
+
+  async saveFavorite(user: AppUser, input: { targetType: FavoriteTargetType; targetId: string; label?: string; note?: string }): Promise<FavoriteListItem> {
+    if (!favoriteTargetResolverImplemented(input.targetType)) {
+      throw new Error(`Unsupported favorite target type: ${input.targetType}`)
+    }
+    const favorite = await this.deps.favoriteStore.save(user.userId, input)
+    return this.resolveFavoriteVisibility(user, favorite)
+  }
+
+  async deleteFavorite(ownerUserId: string, targetType: FavoriteTargetType, targetId: string): Promise<void> {
+    await this.deps.favoriteStore.delete(ownerUserId, targetType, targetId)
+  }
+
+  async listFavorites(user: AppUser): Promise<FavoriteListItem[]> {
+    const [favorites, history] = await Promise.all([
+      this.deps.favoriteStore.list(user.userId),
+      this.deps.conversationHistoryStore.list(user.userId)
+    ])
+    const historyIds = new Set(history.map((item) => item.id))
+    const documents = new Map((await this.listDocuments(user)).map((document) => [document.documentId, document]))
+    const folders = new Map((await this.listDocumentGroups(user)).map((folder) => [folder.groupId, folder]))
+    return favorites.map((favorite) => {
+      if (favorite.targetType === "chatSession") {
+        return favoriteListItem(favorite, historyIds.has(favorite.targetId))
+      }
+      if (favorite.targetType === "document") {
+        const document = documents.get(favorite.targetId)
+        return favoriteListItem(favorite, Boolean(document), document?.fileName)
+      }
+      if (favorite.targetType === "folder") {
+        const folder = folders.get(favorite.targetId)
+        return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
+      }
+      return favoriteListItem(favorite, false)
+    })
+  }
+
+  private async resolveFavoriteVisibility(user: AppUser, favorite: FavoriteItem): Promise<FavoriteListItem> {
+    if (favorite.targetType === "chatSession") {
+      const history = await this.deps.conversationHistoryStore.list(user.userId)
+      return favoriteListItem(favorite, history.some((item) => item.id === favorite.targetId))
+    }
+    if (favorite.targetType === "document") {
+      const document = (await this.listDocuments(user)).find((item) => item.documentId === favorite.targetId)
+      return favoriteListItem(favorite, Boolean(document), document?.fileName)
+    }
+    if (favorite.targetType === "folder") {
+      const folder = (await this.listDocumentGroups(user)).find((item) => item.groupId === favorite.targetId)
+      return favoriteListItem(favorite, Boolean(folder), folder?.canonicalPath ?? folder?.name)
+    }
+    return favoriteListItem(favorite, false)
   }
 
   listBenchmarkSuites(): BenchmarkSuite[] {
@@ -1858,15 +2065,15 @@ export class MemoRagService {
   listAgentProviderSettings(): AgentProviderSetting[] {
     return this.listAgentRuntimeProviders().map((provider) => ({
       provider: provider.provider,
+      displayName: provider.displayName,
       availability: provider.availability,
       credentialMode: provider.availability === "disabled"
         ? "disabled"
         : provider.availability === "not_configured"
           ? "not_configured"
           : "environment",
-      secretConfigured: provider.availability === "available",
       configuredModelIds: provider.configuredModelIds,
-      updatedAt: undefined
+      reason: provider.reason
     }))
   }
 
@@ -1985,7 +2192,7 @@ export class MemoRagService {
     artifactId: string,
     input: {
       action: "request" | "approve" | "reject" | "apply"
-      target?: { sourceType: "folder" | "document"; sourceId: string; targetPath?: string }
+      target?: NonNullable<AsyncAgentRun["artifacts"][number]["writebackTarget"]>
       reason?: string
     }
   ): Promise<AsyncAgentRun["artifacts"][number] | undefined> {
@@ -1994,49 +2201,47 @@ export class MemoRagService {
     const artifact = run.artifacts.find((candidate) => candidate.artifactId === artifactId)
     if (!artifact) return undefined
     const now = new Date().toISOString()
-    const next = { ...artifact }
+    const target = input.target ?? artifact.writebackTarget
+    if ((input.action === "request" || input.action === "approve" || input.action === "apply") && !target) {
+      throw new Error("Writeback target is required")
+    }
+    if (target) await this.assertAsyncAgentWritebackTargetFull(user, target)
 
+    const nextArtifact = { ...artifact }
     if (input.action === "request") {
-      if (!input.target) throw new Error("writeback target is required")
-      await this.assertAsyncAgentWritebackTargetFull(user, input.target)
-      next.writebackStatus = "pending_approval"
-      next.writebackTarget = input.target
-      next.writebackRequestedBy = user.userId
-      next.writebackRequestedAt = now
-      next.writebackDecisionReason = trimOptional(input.reason)
+      nextArtifact.writebackStatus = "pending_approval"
+      nextArtifact.writebackTarget = target
+      nextArtifact.writebackRequestedBy = user.userId
+      nextArtifact.writebackRequestedAt = now
+      nextArtifact.writebackDecisionReason = trimOptional(input.reason)
     } else if (input.action === "approve") {
-      await this.assertAsyncAgentWritebackTargetFull(user, next.writebackTarget)
-      if (next.writebackStatus !== "pending_approval") throw new Error("writeback is not pending approval")
-      next.writebackStatus = "approved"
-      next.writebackReviewedBy = user.userId
-      next.writebackReviewedAt = now
-      next.writebackDecisionReason = trimOptional(input.reason)
+      if (artifact.writebackStatus !== "pending_approval") throw new Error("Only pending writeback can be approved")
+      nextArtifact.writebackStatus = "approved"
+      nextArtifact.writebackReviewedBy = user.userId
+      nextArtifact.writebackReviewedAt = now
+      nextArtifact.writebackDecisionReason = trimOptional(input.reason)
     } else if (input.action === "reject") {
-      if (next.writebackStatus !== "pending_approval") throw new Error("writeback is not pending approval")
-      next.writebackStatus = "rejected"
-      next.writebackReviewedBy = user.userId
-      next.writebackReviewedAt = now
-      next.writebackDecisionReason = trimOptional(input.reason)
+      if (artifact.writebackStatus !== "pending_approval") throw new Error("Only pending writeback can be rejected")
+      nextArtifact.writebackStatus = "rejected"
+      nextArtifact.writebackReviewedBy = user.userId
+      nextArtifact.writebackReviewedAt = now
+      nextArtifact.writebackDecisionReason = trimOptional(input.reason)
     } else {
-      await this.assertAsyncAgentWritebackTargetFull(user, next.writebackTarget)
-      if (next.writebackStatus !== "approved") throw new Error("writeback is not approved")
-      // This marks an approved writeback as applied. File mutation is intentionally handled by a later
-      // storage adapter so provider output never overwrites a document without this audited state change.
-      next.writebackStatus = "applied"
-      next.writebackAppliedBy = user.userId
-      next.writebackAppliedAt = now
-      next.writebackDecisionReason = trimOptional(input.reason)
+      if (artifact.writebackStatus !== "approved") throw new Error("Only approved writeback can be applied")
+      nextArtifact.writebackStatus = "applied"
+      nextArtifact.writebackAppliedBy = user.userId
+      nextArtifact.writebackAppliedAt = now
+      nextArtifact.writebackDecisionReason = trimOptional(input.reason)
     }
 
-    const artifacts = run.artifacts.map((candidate) => candidate.artifactId === artifactId ? next : candidate)
-    const updated: AsyncAgentRun = {
+    const updatedRun: AsyncAgentRun = {
       ...run,
       status: input.action === "request" ? "waiting_for_approval" : run.status,
-      artifacts,
-      updatedAt: now
+      updatedAt: now,
+      artifacts: run.artifacts.map((candidate) => candidate.artifactId === artifactId ? nextArtifact : candidate)
     }
-    await this.saveAsyncAgentRun(updated)
-    return next
+    await this.saveAsyncAgentRun(updatedRun)
+    return nextArtifact
   }
 
   async executeAsyncAgentRun(runId: string): Promise<AsyncAgentRun> {
@@ -2059,8 +2264,8 @@ export class MemoRagService {
       await this.saveAsyncAgentRun(updated)
       await this.recordUsageEvent({
         userId: run.requesterUserId,
+        orchestrationRunId: run.agentRunId,
         feature: "async_agent",
-        provider: "custom",
         modelId: run.modelId,
         status: "failed",
         errorCode: updated.failureReasonCode,
@@ -2118,13 +2323,13 @@ export class MemoRagService {
     }
     await this.saveAsyncAgentRun(updated)
     await this.recordUsageEvent({
-      userId: updated.requesterUserId,
+      userId: run.requesterUserId,
+      orchestrationRunId: run.agentRunId,
       feature: "async_agent",
-      provider: "custom",
-      modelId: updated.modelId,
-      status: updated.status === "completed" ? "succeeded" : "failed",
-      errorCode: updated.failureReasonCode,
-      idempotencyKey: `async-agent:${updated.agentRunId}`
+      modelId: run.modelId,
+      status: result.status === "completed" ? "succeeded" : "failed",
+      errorCode: result.status === "completed" ? undefined : "execution_error",
+      idempotencyKey: `async-agent:${run.agentRunId}`
     })
     return updated
   }
@@ -2207,11 +2412,11 @@ export class MemoRagService {
     await this.deps.benchmarkRunStore.create(run)
     await this.recordUsageEvent({
       userId: user.userId,
-      benchmarkRunId: run.runId,
+      benchmarkRunId: runId,
       feature: "benchmark",
       modelId: run.modelId ?? config.defaultModelId,
       status: "succeeded",
-      idempotencyKey: `benchmark:${run.runId}:queued`
+      idempotencyKey: `${runId}:benchmark:queued`
     })
     if (!config.benchmarkStateMachineArn) return run
 
@@ -2315,13 +2520,13 @@ export class MemoRagService {
 
   private async assertAsyncAgentWritebackTargetFull(
     user: AppUser,
-    target: { sourceType: "folder" | "document"; sourceId: string } | undefined
+    target: NonNullable<AsyncAgentRun["artifacts"][number]["writebackTarget"]>
   ): Promise<void> {
-    if (!target) throw forbiddenError("Forbidden")
     if (target.sourceType === "folder") {
       await this.assertDocumentGroupsWritable(user, [target.sourceId])
       return
     }
+
     const manifest = await this.getManifest(target.sourceId)
     const groupIds = stringArray(manifest.metadata?.groupIds ?? manifest.metadata?.groupId) ?? []
     if (groupIds.length > 0) {
@@ -2331,127 +2536,6 @@ export class MemoRagService {
     if (stringValue(manifest.metadata?.ownerUserId) === user.userId && hasPermission(user, "rag:doc:write:group")) return
     if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return
     throw forbiddenError("Forbidden")
-  }
-
-  async listChatToolInvocations(): Promise<ChatToolInvocation[]> {
-    return (await this.listDebugRuns())
-      .flatMap((trace) => trace.toolInvocations ?? [])
-      .sort((a, b) => (b.completedAt ?? b.startedAt ?? "").localeCompare(a.completedAt ?? a.startedAt ?? ""))
-      .slice(0, 200)
-  }
-
-  async createDebugReplayPlan(runId: string): Promise<DebugReplayPlan | undefined> {
-    const trace = await this.getDebugRun(runId)
-    if (!trace) return undefined
-    const visibility = trace.visibility ?? "operator_sanitized"
-    return {
-      runId: trace.runId,
-      replayable: visibility !== "internal_restricted",
-      targetType: trace.targetType ?? "rag_run",
-      visibility,
-      sanitizePolicyVersion: trace.sanitizePolicyVersion ?? DEBUG_TRACE_SANITIZE_POLICY_VERSION,
-      stepCount: trace.steps.length,
-      citationCount: trace.citations.length,
-      toolInvocationCount: trace.toolInvocations?.length ?? 0,
-      blockedReason: visibility === "internal_restricted" ? "internal restricted trace cannot be replayed from the API" : undefined,
-      notes: [
-        "Replay plan is generated from sanitized trace metadata only.",
-        "Raw prompts, credentials, internal reasoning, and unauthorized document details are not included."
-      ]
-    }
-  }
-
-  async listQualityActionCards(user: AppUser): Promise<QualityActionCard[]> {
-    const documents = await this.listDocuments(user)
-    return documents.flatMap((manifest) => qualityActionCardsForManifest(manifest)).slice(0, 200)
-  }
-
-  async createAdminExportDownloadUrl(actor: AppUser, exportType: AdminExportArtifact["exportType"]): Promise<AdminExportArtifact> {
-    if (!config.debugDownloadBucketName) throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
-    const generatedAt = new Date().toISOString()
-    const payload = await this.buildAdminExportPayload(actor, exportType, generatedAt)
-    const objectKey = `admin-exports/${exportType}/${generatedAt.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}-${randomUUID().slice(0, 8)}.json`
-    const body = JSON.stringify(payload, null, 2)
-    const s3 = new S3Client({ region: config.region })
-    await s3.send(new PutObjectCommand({
-      Bucket: config.debugDownloadBucketName,
-      Key: objectKey,
-      Body: body,
-      ContentType: "application/json; charset=utf-8",
-      ContentDisposition: `attachment; filename="${exportType}-${generatedAt.slice(0, 10)}.json"`
-    }))
-    const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
-    const url = await getSignedUrl(s3, new GetObjectCommand({
-      Bucket: config.debugDownloadBucketName,
-      Key: objectKey,
-      ResponseContentType: "application/json; charset=utf-8",
-      ResponseContentDisposition: `attachment; filename="${exportType}-${generatedAt.slice(0, 10)}.json"`
-    }), { expiresIn: expiresInSeconds })
-    return { url, expiresInSeconds, objectKey, exportType, generatedAt }
-  }
-
-  async buildAdminExportPayload(actor: AppUser, exportType: AdminExportArtifact["exportType"], generatedAt = new Date().toISOString()): Promise<JsonValue> {
-    return exportType === "audit_log"
-      ? { schemaVersion: 1, exportType, generatedBy: actor.userId, generatedAt, auditLog: await this.listAdminAuditLog(actor) }
-      : { schemaVersion: 1, exportType, generatedBy: actor.userId, generatedAt, costSummary: await this.getCostAuditSummary(actor) }
-  }
-
-  private depsWithUsageTracking(
-    user: AppUser | undefined,
-    sessionId: string | undefined,
-    orchestrationRunId = sessionId,
-    context: { ingestRunId?: string; toolInvocationId?: string } = {}
-  ): Dependencies {
-    if (!user || !this.deps.usageEventStore) return this.deps
-    return {
-      ...this.deps,
-      textModel: new UsageTrackingTextModel(this.deps.textModel, this.deps.usageEventStore, {
-        userId: user.userId,
-        sessionId,
-        orchestrationRunId,
-        ingestRunId: context.ingestRunId,
-        toolInvocationId: context.toolInvocationId
-      })
-    }
-  }
-
-  private async recordUsageEvent(input: {
-    userId: string
-    sessionId?: string
-    orchestrationRunId?: string
-    benchmarkRunId?: string
-    debugTraceId?: string
-    feature: UsageEvent["feature"]
-    provider?: UsageEvent["provider"]
-    modelId: string
-    status: UsageEvent["status"]
-    errorCode?: string
-    idempotencyKey: string
-  }): Promise<void> {
-    if (!this.deps.usageEventStore) return
-    const now = new Date().toISOString()
-    await this.deps.usageEventStore.putOnce({
-      eventId: randomUUID(),
-      tenantId: "default",
-      userId: input.userId,
-      sessionId: input.sessionId,
-      orchestrationRunId: input.orchestrationRunId,
-      benchmarkRunId: input.benchmarkRunId,
-      debugTraceId: input.debugTraceId,
-      feature: input.feature,
-      provider: input.provider ?? (config.mockBedrock ? "mock" : "bedrock"),
-      modelId: input.modelId,
-      inputTokens: 0,
-      outputTokens: 0,
-      totalTokens: 0,
-      tokenSource: "unknown",
-      usageConfidence: "missing",
-      pricingVersion: defaultPricingVersion,
-      status: input.status,
-      errorCode: input.errorCode,
-      idempotencyKey: input.idempotencyKey,
-      createdAt: now
-    })
   }
 
   private canReadAsyncAgentRun(user: AppUser, run: AsyncAgentRun): boolean {
@@ -2567,10 +2651,7 @@ export class MemoRagService {
     return { url, expiresInSeconds, objectKey: downloadMetadata.objectKey }
   }
 
-  private async createMemoryCards(
-    input: { fileName: string; text: string; chunks: Chunk[]; documentStatistics?: DocumentManifest["documentStatistics"]; modelId?: string },
-    deps: Pick<Dependencies, "textModel"> = this.deps
-  ): Promise<MemoryCard[]> {
+  private async createMemoryCards(input: { fileName: string; text: string; chunks: Chunk[]; documentStatistics?: DocumentManifest["documentStatistics"]; modelId?: string }, deps: Dependencies = this.deps): Promise<MemoryCard[]> {
     const raw = await deps.textModel.generate(
       buildMemoryCardPrompt(input.fileName, input.text),
       llmOptions("memoryCard", input.modelId ?? config.defaultMemoryModelId)
@@ -2684,6 +2765,22 @@ function createBenchmarkRunId(now: string): string {
   return `bench_${compact}_${randomUUID().slice(0, 8)}`
 }
 
+function defaultAdminExportRedaction(): AdminExportArtifact["redaction"] {
+  return {
+    policyVersion: "admin-export-redaction-v1",
+    redactedFields: ["credentials", "secrets", "rawPrompt", "internalReasoning"],
+    notes: ["管理 export は署名付き URL と sanitize 済み集計・監査メタデータだけを返します。"]
+  }
+}
+
+function adminExportRedaction(payload: JsonValue): AdminExportArtifact["redaction"] {
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const redaction = (payload as { redaction?: AdminExportArtifact["redaction"] }).redaction
+    if (redaction) return redaction
+  }
+  return defaultAdminExportRedaction()
+}
+
 function createAsyncAgentRunId(now: string): string {
   const compact = now.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")
   return `agent_${compact}_${randomUUID().slice(0, 8)}`
@@ -2718,6 +2815,100 @@ function normalizeAsyncAgentRun(run: AsyncAgentRun): AsyncAgentRun {
   }
 }
 
+function buildParsedDocumentPreview(manifest: DocumentManifest): ParsedDocumentPreview {
+  const parsed = manifest.parsedDocument
+  const warnings = [
+    ...(manifest.extractionWarnings ?? []),
+    ...(parsed?.warnings ?? [])
+  ].slice(0, 50)
+  if (!parsed) {
+    return {
+      documentId: manifest.documentId,
+      fileName: manifest.fileName,
+      sourceExtractorVersion: manifest.sourceExtractorVersion,
+      fileProfile: manifest.fileProfile,
+      pageCount: 0,
+      blockCount: manifest.chunks?.length ?? 0,
+      tableCount: 0,
+      figureCount: 0,
+      warnings,
+      counters: manifest.extractionCounters,
+      qualityProfile: manifest.qualityProfile ?? documentQualityProfileFromMetadata(manifest.metadata),
+      available: false,
+      unavailableReason: "parsed document preview is not available for this manifest"
+    }
+  }
+
+  return {
+    documentId: manifest.documentId,
+    fileName: manifest.fileName,
+    sourceExtractorVersion: parsed.sourceExtractorVersion ?? manifest.sourceExtractorVersion,
+    fileProfile: parsed.fileProfile ?? manifest.fileProfile,
+    textPreview: parsed.text.replace(/\s+/g, " ").trim().slice(0, 4000) || undefined,
+    pageCount: parsed.pages?.length ?? 0,
+    blockCount: parsed.blocks?.length ?? 0,
+    tableCount: parsed.tables?.length ?? 0,
+    figureCount: parsed.figures?.length ?? 0,
+    warnings,
+    counters: parsed.counters ?? manifest.extractionCounters,
+    pages: parsed.pages?.slice(0, 10),
+    blocks: parsed.blocks?.slice(0, 50),
+    tables: parsed.tables?.slice(0, 20),
+    figures: parsed.figures?.slice(0, 20),
+    qualityProfile: manifest.qualityProfile ?? documentQualityProfileFromMetadata(manifest.metadata),
+    available: true
+  }
+}
+
+function qualityActionCardsForManifest(manifest: DocumentManifest): QualityActionCard[] {
+  const profile = manifest.qualityProfile ?? documentQualityProfileFromMetadata(manifest.metadata)
+  const gate = qualityGateForNormalRag(manifest)
+  const reasons = [
+    ...(profile?.knowledgeQualityStatus === "blocked" ? ["knowledge_quality_blocked"] : []),
+    ...(profile?.ragEligibility === "excluded" ? ["rag_excluded"] : []),
+    ...(profile?.verificationStatus === "unverified" ? ["verification_required"] : []),
+    ...(profile?.verificationStatus === "rejected" ? ["verification_rejected"] : []),
+    ...(profile?.freshnessStatus === "stale" ? ["freshness_review_required"] : []),
+    ...(profile?.freshnessStatus === "expired" ? ["freshness_expired"] : []),
+    ...(profile?.supersessionStatus === "superseded" ? ["superseded_by_newer_document"] : []),
+    ...(profile?.extractionQualityStatus === "low" || profile?.extractionQualityStatus === "unusable" ? ["low_extraction_confidence"] : []),
+    ...(profile?.flags ?? []),
+    ...lowConfidenceWarningCodes(manifest.extractionWarnings ?? manifest.parsedDocument?.warnings ?? [])
+  ]
+  const uniqueReasons = uniqueStrings(reasons)
+  if (uniqueReasons.length === 0 && gate.approved) return []
+
+  const severity: QualityActionCard["severity"] = !gate.approved
+    ? "blocked"
+    : uniqueReasons.some((reason) => reason.includes("low") || reason.includes("required") || reason.includes("stale"))
+      ? "warning"
+      : "info"
+  const suggestedAction: QualityActionCard["suggestedAction"] = uniqueReasons.some((reason) => reason.includes("extraction") || reason.includes("confidence"))
+    ? "review_extraction"
+    : uniqueReasons.some((reason) => reason.includes("freshness"))
+      ? "update_freshness"
+      : uniqueReasons.some((reason) => reason.includes("excluded"))
+        ? "rag_exclusion_review"
+        : "verify_document"
+  return [{
+    actionId: `quality_${manifest.documentId}`,
+    documentId: manifest.documentId,
+    fileName: manifest.fileName,
+    severity,
+    reasonCodes: uniqueReasons,
+    suggestedAction,
+    title: severity === "blocked" ? "通常 RAG から除外中の文書" : "文書品質の確認が必要",
+    description: uniqueReasons.join(", "),
+    createdAt: profile?.updatedAt ?? manifest.createdAt
+  }]
+}
+
+function lowConfidenceWarningCodes(warnings: ExtractionWarning[]): string[] {
+  return warnings
+    .filter((warning) => warning.severity === "error" || (warning.confidence !== undefined && warning.confidence < 70))
+    .map((warning) => warning.code || "low_confidence_extraction_warning")
+}
+
 function toDocumentManifestSummary(manifest: DocumentManifest): DocumentManifestSummary {
   return {
     documentId: manifest.documentId,
@@ -2738,11 +2929,6 @@ function toDocumentManifestSummary(manifest: DocumentManifest): DocumentManifest
 function toJsonValue(value: unknown): JsonValue | undefined {
   if (value === undefined) return undefined
   return JSON.parse(JSON.stringify(value)) as JsonValue
-}
-
-function toChunkMetadata(chunk: Chunk): NonNullable<DocumentManifest["chunks"]>[number] {
-  const { text: _text, ...metadata } = chunk
-  return metadata
 }
 
 function artifactExtension(artifact: BenchmarkDownloadArtifact): string {
@@ -2954,89 +3140,23 @@ function summarizeUsageCompleteness(events: UsageEvent[]): UsageDataCompleteness
   }
 }
 
-function countChatRequests(events: UsageEvent[]): number {
-  const requestIds = new Set(
-    events
-      .filter((event) => isLlmUsageEvent(event))
-      .map((event) => event.orchestrationRunId ?? event.sessionId ?? event.messageId)
-      .filter((value): value is string => Boolean(value))
-  )
-  return requestIds.size
-}
-
 function isLlmUsageEvent(event: UsageEvent): boolean {
   return event.feature === "chat" || event.feature.startsWith("rag.")
 }
 
-function buildParsedDocumentPreview(manifest: DocumentManifest): ParsedDocumentPreview {
-  const parsed = manifest.parsedDocument
-  const warnings = manifest.extractionWarnings ?? parsed?.warnings ?? []
-  const tables = parsed?.tables ?? []
-  const figures = parsed?.figures ?? []
-  const lowConfidenceCount = [
-    ...warnings.filter((warning) => typeof warning.confidence === "number" && warning.confidence < 70),
-    ...tables.filter((table) => typeof table.confidence === "number" && table.confidence < 0.7),
-    ...figures.filter((figure) => typeof figure.confidence === "number" && figure.confidence < 0.7)
-  ].length
-  return {
-    documentId: manifest.documentId,
-    fileName: manifest.fileName,
-    available: Boolean(parsed),
-    unavailableReason: parsed ? undefined : "not_parsed",
-    fileProfile: manifest.fileProfile ?? parsed?.fileProfile,
-    sourceExtractorVersion: manifest.sourceExtractorVersion ?? parsed?.sourceExtractorVersion,
-    counters: manifest.extractionCounters ?? parsed?.counters,
-    warnings,
-    pageCount: parsed?.pages?.length ?? 0,
-    blockCount: parsed?.blocks?.length ?? 0,
-    tableCount: tables.length,
-    figureCount: figures.length,
-    lowConfidenceCount,
-    tables: tables.slice(0, 100).map((table) => ({
-      id: table.id,
-      pageStart: table.pageStart,
-      pageEnd: table.pageEnd,
-      rowCount: table.rowCount,
-      columnCount: table.columnCount,
-      confidence: table.confidence
-    })),
-    figures: figures.slice(0, 100).map((figure) => ({
-      id: figure.id,
-      pageStart: figure.pageStart,
-      pageEnd: figure.pageEnd,
-      caption: figure.caption,
-      confidence: figure.confidence
-    }))
+function countChatRequests(events: UsageEvent[]): number {
+  const keys = new Set<string>()
+  for (const event of events.filter(isLlmUsageEvent)) {
+    keys.add(event.orchestrationRunId ?? event.sessionId ?? event.idempotencyKey)
   }
+  return keys.size
 }
 
-function qualityActionCardsForManifest(manifest: DocumentManifest): QualityActionCard[] {
-  const now = new Date().toISOString()
-  const quality = qualityGateForNormalRag(manifest)
-  const qualityActions = quality.reasons.map((reason) => ({
-    actionId: `quality-${manifest.documentId}-${reason}`,
-    documentId: manifest.documentId,
-    fileName: manifest.fileName,
-    actionType: reason === "low_confidence_extraction_warning" ? "extraction_review" as const : "quality_review" as const,
-    severity: "warning" as const,
-    reason,
-    source: reason === "low_confidence_extraction_warning" ? "extraction_warning" as const : "quality_profile" as const,
-    createdAt: manifest.qualityProfile?.updatedAt ?? manifest.createdAt ?? now
-  }))
-  const parsed = buildParsedDocumentPreview(manifest)
-  const parsedAction = parsed.lowConfidenceCount > 0
-    ? [{
-        actionId: `parsed-${manifest.documentId}-low-confidence`,
-        documentId: manifest.documentId,
-        fileName: manifest.fileName,
-        actionType: "extraction_review" as const,
-        severity: "warning" as const,
-        reason: "low_confidence_parsed_document",
-        source: "parsed_document" as const,
-        createdAt: manifest.createdAt ?? now
-      }]
-    : []
-  return [...qualityActions, ...parsedAction]
+function errorCodeFromUnknown(err: unknown): string {
+  const candidate = err as { code?: unknown; name?: unknown }
+  if (typeof candidate.code === "string" && candidate.code.trim()) return candidate.code
+  if (typeof candidate.name === "string" && candidate.name.trim()) return candidate.name
+  return "unknown_error"
 }
 
 function isMissingObjectError(err: unknown): boolean {
@@ -3178,53 +3298,236 @@ function objectValue(value: JsonValue | undefined): Record<string, JsonValue> | 
   return value && typeof value === "object" && !Array.isArray(value) ? value : undefined
 }
 
-function lifecycleStatus(metadata: Record<string, JsonValue> | undefined): VectorRecord["metadata"]["lifecycleStatus"] {
-  const value = stringValue(metadata?.lifecycleStatus)
-  return value === "staging" || value === "superseded" ? value : "active"
-}
-
 function canAccessManifest(manifest: DocumentManifest, user: AppUser, documentGroups: DocumentGroup[] = []): boolean {
   if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
   const metadata = manifest.metadata ?? {}
-  if (stringValue(metadata.ownerUserId) === user.userId) return true
   const groupIds = stringArray(metadata.groupIds ?? metadata.groupId) ?? []
-  if (groupIds.some((groupId) => canAccessDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user))) return true
-  if (stringValue(metadata.scopeType) === "group") return false
+  const scopeType = stringValue(metadata.scopeType)
+  if (groupIds.length > 0 || scopeType === "group") {
+    return groupIds.some((groupId) => canAccessDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user, documentGroups))
+  }
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
   const groups = new Set(user.cognitoGroups)
   const aclGroups = stringArray(metadata.aclGroups ?? metadata.allowedGroups ?? metadata.aclGroup ?? metadata.group) ?? []
-  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   const allowedUsers = stringArray(metadata.allowedUsers ?? metadata.userIds ?? metadata.privateToUserId) ?? []
+  if (aclGroups.length === 0 && allowedUsers.length === 0) return false
+  if (aclGroups.length > 0 && !aclGroups.some((group) => groups.has(group))) return false
   if (allowedUsers.length > 0 && !allowedUsers.includes(user.userId) && (!user.email || !allowedUsers.includes(user.email))) return false
   return true
 }
 
-function canAccessDocumentGroup(group: DocumentGroup | undefined, user: AppUser): boolean {
-  if (!group) return false
-  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
-  if (group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId) || group.sharedUserIds.includes(user.userId)) return true
-  if (user.email && group.sharedUserIds.includes(user.email)) return true
-  if (group.visibility === "org") return true
-  return group.sharedGroups.some((sharedGroup) => user.cognitoGroups.includes(sharedGroup))
+function documentFolderIds(manifest: DocumentManifest): string[] {
+  return stringArray(manifest.metadata?.folderIds ?? manifest.metadata?.folderId ?? manifest.metadata?.groupIds ?? manifest.metadata?.groupId) ?? []
 }
 
-function canManageDocumentGroup(group: DocumentGroup, user: AppUser): boolean {
-  return user.cognitoGroups.includes("SYSTEM_ADMIN") || group.ownerUserId === user.userId || group.managerUserIds.includes(user.userId)
+function documentTenantId(manifest: DocumentManifest): string {
+  return typeof manifest.metadata?.tenantId === "string" ? manifest.metadata.tenantId : "default"
 }
 
-function normalizeDocumentGroup(group: DocumentGroup): DocumentGroup {
+function documentCapabilities(permission: "none" | "readOnly" | "full", user: AppUser) {
+  const full = permission === "full"
+  const read = permission === "readOnly" || full
   return {
-    ...group,
-    ancestorGroupIds: uniqueStrings(group.ancestorGroupIds ?? []),
-    visibility: group.visibility ?? "private",
-    sharedUserIds: uniqueStrings(group.sharedUserIds ?? []),
-    sharedGroups: uniqueStrings(group.sharedGroups ?? []),
-    managerUserIds: uniqueStrings([group.ownerUserId, ...(group.managerUserIds ?? [])])
+    canRead: read,
+    canShare: full && hasPermission(user, "rag:doc:share"),
+    canMove: full && hasPermission(user, "rag:doc:move"),
+    canDelete: full && hasPermission(user, "rag:doc:delete:group"),
+    canReindex: full && hasPermission(user, "rag:index:rebuild:group")
   }
 }
 
-function normalizeOptionalDocumentGroup(group: DocumentGroup | undefined): DocumentGroup | undefined {
-  return group ? normalizeDocumentGroup(group) : undefined
+function canManageManifest(manifest: DocumentManifest, user: AppUser, documentGroups: DocumentGroup[] = []): boolean {
+  if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return true
+  const metadata = manifest.metadata ?? {}
+  const groupIds = stringArray(metadata.groupIds ?? metadata.groupId) ?? []
+  const scopeType = stringValue(metadata.scopeType)
+  if (groupIds.length > 0 || scopeType === "group") {
+    if (groupIds.length === 0) return false
+    return groupIds.every((groupId) => canManageDocumentGroup(documentGroups.find((group) => group.groupId === groupId), user, documentGroups))
+  }
+  if (stringValue(metadata.ownerUserId) === user.userId) return true
+  return false
 }
+
+function validateDocumentGroupName(name: string): string {
+  const trimmed = name.trim()
+  if (!trimmed) throw new Error("Document group name is required")
+  if (trimmed.includes("/") || containsControlCharacter(trimmed)) throw new Error("Document group name contains unsupported characters")
+  return trimmed
+}
+
+function containsControlCharacter(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) return true
+  }
+  return false
+}
+
+function normalizeDocumentGroupName(name: string): string {
+  return name.trim().normalize("NFKC").toLocaleLowerCase("ja-JP")
+}
+
+function resolveDocumentGroupAdminPrincipal(
+  actor: AppUser,
+  input: { adminPrincipalType?: DocumentGroup["adminPrincipalType"]; adminPrincipalId?: string },
+  parent?: DocumentGroup
+): { tenantId: string; adminPrincipalType: "user" | "group"; adminPrincipalId: string } {
+  if (parent?.adminPrincipalType && parent.adminPrincipalId) {
+    return {
+      tenantId: parent.tenantId ?? defaultTenantId,
+      adminPrincipalType: parent.adminPrincipalType,
+      adminPrincipalId: parent.adminPrincipalId
+    }
+  }
+  const adminPrincipalType = input.adminPrincipalType ?? "user"
+  const adminPrincipalId = (input.adminPrincipalId ?? (adminPrincipalType === "user" ? actor.userId : "")).trim()
+  if (!adminPrincipalId) throw new Error("adminPrincipalId is required")
+  if (adminPrincipalType === "user" && adminPrincipalId !== actor.userId && !actor.cognitoGroups.includes("SYSTEM_ADMIN")) {
+    throw forbiddenError("Forbidden: cannot create a user-managed group for another user")
+  }
+  if (adminPrincipalType === "group" && !actor.cognitoGroups.includes(adminPrincipalId) && !actor.cognitoGroups.includes("SYSTEM_ADMIN")) {
+    throw forbiddenError("Forbidden: cannot create a group-managed folder without group membership")
+  }
+  return { tenantId: defaultTenantId, adminPrincipalType, adminPrincipalId }
+}
+
+function documentGroupPathFields(input: {
+  tenantId: string
+  adminPrincipalType: "user" | "group"
+  adminPrincipalId: string
+  parent?: DocumentGroup
+  name: string
+}): Pick<DocumentGroup, "normalizedName" | "canonicalPath" | "normalizedCanonicalPath" | "adminPathPk" | "parentPathPk"> {
+  const normalizedName = normalizeDocumentGroupName(input.name)
+  const adminPathPk = documentGroupAdminPathPk(input.tenantId, input.adminPrincipalType, input.adminPrincipalId)
+  const parentCanonicalPath = input.parent?.canonicalPath
+  const parentNormalizedCanonicalPath = input.parent?.normalizedCanonicalPath
+  return {
+    normalizedName,
+    canonicalPath: parentCanonicalPath ? `${parentCanonicalPath}/${input.name}` : `/${input.name}`,
+    normalizedCanonicalPath: parentNormalizedCanonicalPath ? `${parentNormalizedCanonicalPath}/${normalizedName}` : `/${normalizedName}`,
+    adminPathPk,
+    parentPathPk: documentGroupParentPathPk(adminPathPk, input.parent?.groupId)
+  }
+}
+
+function documentGroupAdminPathPk(tenantId: string, adminPrincipalType: "user" | "group", adminPrincipalId: string): string {
+  return `${tenantId}#${adminPrincipalType}#${adminPrincipalId}`
+}
+
+function documentGroupParentPathPk(adminPathPk: string, parentGroupId?: string): string {
+  return `${adminPathPk}#${parentGroupId ?? rootParentPathSegment}`
+}
+
+function buildDocumentGroupPathUpdates(
+  groups: DocumentGroup[],
+  root: DocumentGroup,
+  rootUpdate: Partial<DocumentGroup>,
+  parent?: DocumentGroup
+): DocumentGroupPathUpdate[] {
+  const childrenByParentId = new Map<string, DocumentGroup[]>()
+  for (const group of groups) {
+    if (!group.parentGroupId) continue
+    childrenByParentId.set(group.parentGroupId, [...(childrenByParentId.get(group.parentGroupId) ?? []), group])
+  }
+
+  const updates: DocumentGroupPathUpdate[] = []
+  const queue: Array<{ current: DocumentGroup; patch: Partial<DocumentGroup>; parent?: DocumentGroup }> = [{ current: root, patch: rootUpdate, parent }]
+  while (queue.length > 0) {
+    const item = queue.shift()
+    if (!item) continue
+    const currentParent = item.parent
+    const nextName = item.patch.name ?? item.current.name
+    const tenantId = currentParent?.tenantId ?? item.current.tenantId ?? defaultTenantId
+    const adminPrincipalType = currentParent?.adminPrincipalType ?? item.current.adminPrincipalType ?? "user"
+    const adminPrincipalId = currentParent?.adminPrincipalId ?? item.current.adminPrincipalId ?? item.current.ownerUserId
+    const pathFields = documentGroupPathFields({
+      tenantId,
+      adminPrincipalType,
+      adminPrincipalId,
+      parent: currentParent,
+      name: nextName
+    })
+    const next: DocumentGroup = {
+      ...item.current,
+      ...item.patch,
+      schemaVersion: 2,
+      itemType: "documentGroup",
+      tenantId,
+      adminPrincipalType,
+      adminPrincipalId,
+      name: nextName,
+      ...pathFields
+    }
+    updates.push({ current: item.current, next })
+    for (const child of childrenByParentId.get(item.current.groupId) ?? []) {
+      queue.push({
+        current: child,
+        parent: next,
+        patch: {
+          ancestorGroupIds: [...(next.ancestorGroupIds ?? []), next.groupId],
+          updatedAt: next.updatedAt
+        }
+      })
+    }
+  }
+  return updates
+}
+
+function normalizeDocumentGroups(groups: DocumentGroup[]): DocumentGroup[] {
+  const byId = new Map(groups.map((group) => [group.groupId, group]))
+  const normalized = new Map<string, DocumentGroup>()
+  const visiting = new Set<string>()
+  const visit = (group: DocumentGroup): DocumentGroup => {
+    const cached = normalized.get(group.groupId)
+    if (cached) return cached
+    if (visiting.has(group.groupId)) return normalizeDocumentGroup(group)
+    visiting.add(group.groupId)
+    const parent = group.parentGroupId ? byId.get(group.parentGroupId) : undefined
+    const normalizedParent = parent ? visit(parent) : undefined
+    const result = normalizeDocumentGroup(group, normalizedParent)
+    visiting.delete(group.groupId)
+    normalized.set(group.groupId, result)
+    return result
+  }
+  return groups.map(visit)
+}
+
+function normalizeDocumentGroup(group: DocumentGroup, parent?: DocumentGroup): DocumentGroup {
+  const name = group.name.trim() || group.groupId
+  const tenantId = group.tenantId ?? parent?.tenantId ?? defaultTenantId
+  const adminPrincipalType = group.adminPrincipalType ?? parent?.adminPrincipalType ?? "user"
+  const adminPrincipalId = group.adminPrincipalId ?? parent?.adminPrincipalId ?? group.ownerUserId
+  const pathFields = group.canonicalPath && group.normalizedCanonicalPath && group.adminPathPk && group.parentPathPk
+    ? {
+        normalizedName: group.normalizedName ?? normalizeDocumentGroupName(name),
+        canonicalPath: group.canonicalPath,
+        normalizedCanonicalPath: group.normalizedCanonicalPath,
+        adminPathPk: group.adminPathPk,
+        parentPathPk: group.parentPathPk
+      }
+    : documentGroupPathFields({ tenantId, adminPrincipalType, adminPrincipalId, parent, name })
+  return {
+    ...group,
+    schemaVersion: group.schemaVersion ?? 1,
+    itemType: "documentGroup",
+    tenantId,
+    adminPrincipalType,
+    adminPrincipalId,
+    name,
+    ...pathFields,
+    ancestorGroupIds: parent ? [...(parent.ancestorGroupIds ?? []), parent.groupId] : uniqueStrings(group.ancestorGroupIds ?? []),
+    visibility: group.visibility ?? "private",
+    sharedUserIds: uniqueStrings(group.sharedUserIds ?? []),
+    sharedGroups: uniqueStrings(group.sharedGroups ?? []),
+    managerUserIds: uniqueStrings([group.ownerUserId, ...(group.managerUserIds ?? [])]),
+    ...(group.hasExplicitPolicy !== undefined || group.policyId ? { hasExplicitPolicy: group.hasExplicitPolicy ?? true } : {}),
+    status: group.status ?? "active",
+    createdBy: group.createdBy ?? group.ownerUserId
+  }
+}
+
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort()
@@ -3232,6 +3535,40 @@ function uniqueStrings(values: string[]): string[] {
 
 function userDisplayName(user?: AppUser): string {
   return user?.email?.trim() || user?.userId?.trim() || "未設定"
+}
+
+function compareConversationHistoryForDisplay(a: ConversationHistoryItem, b: ConversationHistoryItem): number {
+  if (Boolean(a.isFavorite) !== Boolean(b.isFavorite)) return a.isFavorite ? -1 : 1
+  return b.updatedAt.localeCompare(a.updatedAt)
+}
+
+function stripFavoriteStorageKeys(favorite: FavoriteItem): Omit<FavoriteItem, "ownerUserId" | "targetKey"> {
+  const { ownerUserId: _ownerUserId, targetKey: _targetKey, ...visible } = favorite
+  return visible
+}
+
+function favoriteListItem(favorite: FavoriteItem, accessible: boolean, resolvedLabel?: string): FavoriteListItem {
+  const visible = stripFavoriteStorageKeys(favorite)
+  if (!accessible) {
+    return {
+      favoriteId: visible.favoriteId,
+      targetType: visible.targetType,
+      targetId: visible.targetId,
+      accessible: false,
+      label: "この項目には現在アクセスできません",
+      createdAt: visible.createdAt,
+      updatedAt: visible.updatedAt
+    }
+  }
+  return {
+    ...visible,
+    label: resolvedLabel ?? visible.label,
+    accessible: true
+  }
+}
+
+function favoriteTargetResolverImplemented(targetType: FavoriteTargetType): boolean {
+  return targetType === "chatSession" || targetType === "document" || targetType === "folder"
 }
 
 function forbiddenError(message: string): Error & { status: number } {

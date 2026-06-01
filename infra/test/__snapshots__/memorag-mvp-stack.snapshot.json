@@ -998,9 +998,95 @@
           {
             "AttributeName": "questionId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "requesterUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "updatedAt",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "assigneeUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "assigneeGroupId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "status",
+            "AttributeType": "S"
           }
         ],
         "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "RequesterUpdatedAtIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "requesterUserId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          },
+          {
+            "IndexName": "AssigneeUserUpdatedAtIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "assigneeUserId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          },
+          {
+            "IndexName": "AssigneeGroupUpdatedAtIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "assigneeGroupId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          },
+          {
+            "IndexName": "StatusUpdatedAtIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "status",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "updatedAt",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
         "KeySchema": [
           {
             "AttributeName": "questionId",
@@ -1061,6 +1147,63 @@
           },
           {
             "AttributeName": "id",
+            "KeyType": "RANGE"
+          }
+        ],
+        "PointInTimeRecoverySpecification": {
+          "PointInTimeRecoveryEnabled": true
+        },
+        "Tags": [
+          {
+            "Key": "Application",
+            "Value": "MemoRAG"
+          },
+          {
+            "Key": "CostCenter",
+            "Value": "memorag-mvp"
+          },
+          {
+            "Key": "Environment",
+            "Value": "dev"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "aws-cdk"
+          },
+          {
+            "Key": "Project",
+            "Value": "memorag-bedrock-mvp"
+          },
+          {
+            "Key": "Repository",
+            "Value": "tsuji-tomonori/rag-assist"
+          }
+        ]
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "FavoritesTable4DA8A306": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "ownerUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "targetKey",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST",
+        "KeySchema": [
+          {
+            "AttributeName": "ownerUserId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "targetKey",
             "KeyType": "RANGE"
           }
         ],
@@ -1430,9 +1573,35 @@
           {
             "AttributeName": "groupId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "adminPathPk",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "normalizedCanonicalPath",
+            "AttributeType": "S"
           }
         ],
         "BillingMode": "PAY_PER_REQUEST",
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "AdminCanonicalPathIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "adminPathPk",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "normalizedCanonicalPath",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            }
+          }
+        ],
         "KeySchema": [
           {
             "AttributeName": "groupId",
@@ -2728,6 +2897,20 @@
                     "HumanQuestionsTable5DA9688B",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "HumanQuestionsTable5DA9688B",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -2743,6 +2926,20 @@
                     "HumanQuestionsTable5DA9688B",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "HumanQuestionsTable5DA9688B",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -2779,6 +2976,44 @@
                 {
                   "Fn::GetAtt": [
                     "ConversationHistoryTable59A3534C",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FavoritesTable4DA8A306",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FavoritesTable4DA8A306",
                     "Arn"
                   ]
                 }
@@ -2992,44 +3227,6 @@
                 {
                   "Fn::GetAtt": [
                     "DocumentIngestRunEventsTableF4692EBE",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunEventsTableF4692EBE",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentGroupsTableA5108040",
                     "Arn"
                   ]
                 }
@@ -3070,8 +3267,74 @@
               "Resource": [
                 {
                   "Fn::GetAtt": [
+                    "DocumentIngestRunEventsTableF4692EBE",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
                     "DocumentGroupsTableA5108040",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -3203,8 +3466,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -3232,8 +3499,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "USE_LOCAL_USAGE_EVENT_STORE": "false",
@@ -3576,6 +3841,20 @@
                     "HumanQuestionsTable5DA9688B",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "HumanQuestionsTable5DA9688B",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3591,6 +3870,20 @@
                     "HumanQuestionsTable5DA9688B",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "HumanQuestionsTable5DA9688B",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -3627,6 +3920,44 @@
                 {
                   "Fn::GetAtt": [
                     "ConversationHistoryTable59A3534C",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FavoritesTable4DA8A306",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "FavoritesTable4DA8A306",
                     "Arn"
                   ]
                 }
@@ -3840,44 +4171,6 @@
                 {
                   "Fn::GetAtt": [
                     "DocumentIngestRunEventsTableF4692EBE",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:GetRecords",
-                "dynamodb:GetShardIterator"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentIngestRunEventsTableF4692EBE",
-                    "Arn"
-                  ]
-                }
-              ]
-            },
-            {
-              "Action": [
-                "dynamodb:BatchGetItem",
-                "dynamodb:Query",
-                "dynamodb:GetItem",
-                "dynamodb:Scan",
-                "dynamodb:ConditionCheckItem",
-                "dynamodb:BatchWriteItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:DescribeTable"
-              ],
-              "Effect": "Allow",
-              "Resource": [
-                {
-                  "Fn::GetAtt": [
-                    "DocumentGroupsTableA5108040",
                     "Arn"
                   ]
                 }
@@ -3918,8 +4211,74 @@
               "Resource": [
                 {
                   "Fn::GetAtt": [
+                    "DocumentIngestRunEventsTableF4692EBE",
+                    "Arn"
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
                     "DocumentGroupsTableA5108040",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "DocumentGroupsTableA5108040",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -4051,8 +4410,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -4080,8 +4443,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "USE_LOCAL_USAGE_EVENT_STORE": "false",
@@ -4504,6 +4865,20 @@
                     "DocumentGroupsTableA5108040",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -4518,6 +4893,20 @@
                   "Fn::GetAtt": [
                     "DocumentGroupsTableA5108040",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -4573,8 +4962,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -4602,8 +4995,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "USE_LOCAL_USAGE_EVENT_STORE": "false",
@@ -4898,8 +5289,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -4927,8 +5322,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "USE_LOCAL_USAGE_EVENT_STORE": "false",
@@ -5215,8 +5608,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -5244,8 +5641,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "USE_LOCAL_USAGE_EVENT_STORE": "false",
@@ -5561,6 +5956,20 @@
                     "DocumentGroupsTableA5108040",
                     "Arn"
                   ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
+                  ]
                 }
               ]
             },
@@ -5575,6 +5984,20 @@
                   "Fn::GetAtt": [
                     "DocumentGroupsTableA5108040",
                     "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "DocumentGroupsTableA5108040",
+                          "Arn"
+                        ]
+                      },
+                      "/index/*"
+                    ]
                   ]
                 }
               ]
@@ -5639,8 +6062,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -5668,8 +6095,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "USE_LOCAL_USAGE_EVENT_STORE": "false",
@@ -5969,8 +6394,12 @@
             "QUESTION_TABLE_NAME": {
               "Ref": "HumanQuestionsTable5DA9688B"
             },
+            "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
             "CONVERSATION_HISTORY_TABLE_NAME": {
               "Ref": "ConversationHistoryTable59A3534C"
+            },
+            "FAVORITES_TABLE_NAME": {
+              "Ref": "FavoritesTable4DA8A306"
             },
             "BENCHMARK_RUNS_TABLE_NAME": {
               "Ref": "BenchmarkRunsTableD0841636"
@@ -5998,8 +6427,6 @@
             },
             "BENCHMARK_DEFAULT_DATASET_KEY": "datasets/agent/standard-v1.jsonl",
             "BENCHMARK_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
-            "USE_LOCAL_QUESTION_STORE": "false",
-            "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
             "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
             "USE_LOCAL_CHAT_RUN_STORE": "false",
             "USE_LOCAL_USAGE_EVENT_STORE": "false",

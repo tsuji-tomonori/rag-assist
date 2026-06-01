@@ -10,7 +10,7 @@
 
 用途概要: DynamoDB table
 
-リソース数: 8
+リソース数: 9
 
 ## Logical ID 一覧
 
@@ -23,6 +23,7 @@
 | [Document Groups Table](#document-groups-table) | `DocumentGroupsTableA5108040` | Document Groups Table (DynamoDB table) |
 | [Document Ingest Run Events Table](#document-ingest-run-events-table) | `DocumentIngestRunEventsTableF4692EBE` | Document Ingest Run Events Table (DynamoDB table) |
 | [Document Ingest Runs Table](#document-ingest-runs-table) | `DocumentIngestRunsTableEA8F8CCA` | Document Ingest Runs Table (DynamoDB table) |
+| [Favorites Table](#favorites-table) | `FavoritesTable4DA8A306` | Favorites Table (DynamoDB table) |
 | [Human Questions Table](#human-questions-table) | `HumanQuestionsTable5DA9688B` | Human Questions Table (DynamoDB table) |
 
 ## Logical ID 別設定
@@ -90,7 +91,7 @@ Logical ID: `DocumentGroupsTableA5108040`
 | 設定項目 | 値 |
 | --- | --- |
 | `keySchema` | [{"AttributeName":"groupId","KeyType":"HASH"}] |
-| `attributeDefinitions` | [{"AttributeName":"groupId","AttributeType":"S"}] |
+| `attributeDefinitions` | [{"AttributeName":"groupId","AttributeType":"S"},{"AttributeName":"adminPathPk","AttributeType":"S"},{"AttributeName":"normalizedCanonicalPath","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |
 
@@ -122,6 +123,19 @@ Logical ID: `DocumentIngestRunsTableEA8F8CCA`
 | `pointInTimeRecoveryEnabled` | true |
 | `timeToLive` | {"AttributeName":"ttl","Enabled":true} |
 
+### Favorites Table
+
+Logical ID: `FavoritesTable4DA8A306`
+
+用途推定: Favorites Table (DynamoDB table)
+
+| 設定項目 | 値 |
+| --- | --- |
+| `keySchema` | [{"AttributeName":"ownerUserId","KeyType":"HASH"},{"AttributeName":"targetKey","KeyType":"RANGE"}] |
+| `attributeDefinitions` | [{"AttributeName":"ownerUserId","AttributeType":"S"},{"AttributeName":"targetKey","AttributeType":"S"}] |
+| `billingMode` | PAY_PER_REQUEST |
+| `pointInTimeRecoveryEnabled` | true |
+
 ### Human Questions Table
 
 Logical ID: `HumanQuestionsTable5DA9688B`
@@ -131,6 +145,6 @@ Logical ID: `HumanQuestionsTable5DA9688B`
 | 設定項目 | 値 |
 | --- | --- |
 | `keySchema` | [{"AttributeName":"questionId","KeyType":"HASH"}] |
-| `attributeDefinitions` | [{"AttributeName":"questionId","AttributeType":"S"}] |
+| `attributeDefinitions` | [{"AttributeName":"questionId","AttributeType":"S"},{"AttributeName":"requesterUserId","AttributeType":"S"},{"AttributeName":"updatedAt","AttributeType":"S"},{"AttributeName":"assigneeUserId","AttributeType":"S"},{"AttributeName":"assigneeGroupId","AttributeType":"S"},{"AttributeName":"status","AttributeType":"S"}] |
 | `billingMode` | PAY_PER_REQUEST |
 | `pointInTimeRecoveryEnabled` | true |

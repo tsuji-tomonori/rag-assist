@@ -6,6 +6,7 @@ import test from "node:test"
 import type { Dependencies } from "../dependencies.js"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
+import { LocalFavoriteStore } from "../adapters/local-favorite-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
@@ -13,6 +14,9 @@ import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.j
 import { LocalDocumentIngestRunStore } from "../adapters/local-document-ingest-run-store.js"
 import { LocalDocumentIngestRunEventStore } from "../adapters/local-document-ingest-run-event-store.js"
 import { LocalDocumentGroupStore } from "../adapters/local-document-group-store.js"
+import { LocalFolderPolicyStore } from "../adapters/local-folder-policy-store.js"
+import { LocalUserGroupStore } from "../adapters/local-user-group-store.js"
+import { LocalGroupMembershipStore } from "../adapters/local-group-membership-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
 import { MemoRagService } from "../rag/memorag-service.js"
@@ -993,12 +997,16 @@ async function createTestDeps(): Promise<Dependencies> {
     textModel: new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    favoriteStore: new LocalFavoriteStore(dataDir),
     benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
     documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
-    documentGroupStore: new LocalDocumentGroupStore(dataDir)
+    documentGroupStore: new LocalDocumentGroupStore(dataDir),
+    folderPolicyStore: new LocalFolderPolicyStore(dataDir),
+    userGroupStore: new LocalUserGroupStore(dataDir),
+    groupMembershipStore: new LocalGroupMembershipStore(dataDir)
   }
 }
 

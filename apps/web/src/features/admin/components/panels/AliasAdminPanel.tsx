@@ -19,8 +19,8 @@ export function AliasAdminPanel({
   onDisable,
   onPublish
 }: {
-  aliases: AliasDefinition[]
-  auditLog: AliasAuditLogItem[]
+  aliases: AliasDefinition[] | null
+  auditLog: AliasAuditLogItem[] | null
   loading: boolean
   canWrite: boolean
   canReview: boolean
@@ -37,6 +37,8 @@ export function AliasAdminPanel({
   const [department, setDepartment] = useState("")
   const [disableCandidate, setDisableCandidate] = useState<AliasDefinition | null>(null)
   const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
+  const approvedAliases = aliases?.filter((alias) => alias.status === "approved") ?? []
+  const canShowPublish = canPublish && approvedAliases.length > 0
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -59,11 +61,13 @@ export function AliasAdminPanel({
       <div className="document-list-head">
         <h3>Alias管理</h3>
         <div className="inline-action-group">
-          <span>{aliases.length} 件</span>
-          <button type="button" disabled={!canPublish || loading} onClick={() => setPublishConfirmOpen(true)}>
-            {loading && <LoadingSpinner className="button-spinner" />}
-            <span>公開</span>
-          </button>
+          <span>{aliases ? `${aliases.length} 件` : "未提供"}</span>
+          {canShowPublish && (
+            <button type="button" disabled={loading} onClick={() => setPublishConfirmOpen(true)}>
+              {loading && <LoadingSpinner className="button-spinner" />}
+              <span>公開</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -89,7 +93,9 @@ export function AliasAdminPanel({
       )}
 
       <div className="alias-list">
-        {aliases.length === 0 ? (
+        {aliases === null ? (
+          <EmptyState title="Alias API field は未提供です。" description="権限内の API response に aliases field がありません。" />
+        ) : aliases.length === 0 ? (
           <EmptyState title="登録済み alias はありません。" />
         ) : (
           aliases.map((alias) => (
@@ -126,7 +132,7 @@ export function AliasAdminPanel({
         <ConfirmDialog
           title="Alias を公開しますか？"
           description="承認済み alias を公開バージョンへ反映します。検索時の用語展開に影響します。"
-          details={[`対象件数: ${aliases.filter((alias) => alias.status === "approved").length} 件`, "影響: 公開後の検索結果が変わる可能性があります。"]}
+          details={[`対象件数: ${approvedAliases.length} 件`, "影響: 公開後の検索結果が変わる可能性があります。"]}
           confirmLabel="公開"
           tone="warning"
           loading={loading}
@@ -155,7 +161,11 @@ export function AliasAdminPanel({
       )}
 
       <div className="alias-audit-list" aria-label="Alias監査ログ">
-        {auditLog.slice(0, 8).map((item) => (
+        {auditLog === null ? (
+          <EmptyState title="Alias監査ログ API field は未提供です。" description="権限内の API response に auditLog field がありません。" />
+        ) : auditLog.length === 0 ? (
+          <EmptyState title="Alias監査ログはありません。" />
+        ) : auditLog.slice(0, 8).map((item) => (
           <div key={item.auditId}>
             <span>{formatDateTime(item.createdAt)}</span>
             <strong>{item.action}</strong>

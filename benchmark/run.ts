@@ -30,6 +30,14 @@ import type { BenchmarkRun, BenchmarkSuite, BenchmarkTargetConfig, BenchmarkUseC
 type DatasetRow = {
   id?: string
   question: string
+  agentRunId?: string
+  asyncAgentRun?: AsyncAgentRunMetadata
+  expectedAsyncAgentStatus?: AsyncAgentRunStatus
+  expectedProviderAvailability?: AgentProviderAvailability
+  expectedFailureReasonCode?: AsyncAgentFailureReasonCode
+  expectedNoArtifacts?: boolean
+  expectedArtifactMetadataRedacted?: boolean
+  artifactMetadataForbiddenPatterns?: string[]
   conversationId?: string
   turnId?: string
   turnIndex?: number
@@ -197,6 +205,44 @@ type DiagnosticGraphResolution = {
 
 type ClarificationResponseOption = NonNullable<NonNullable<BenchmarkResponse["clarification"]>["options"]>[number]
 
+type AgentProviderAvailability = "disabled" | "not_configured" | "provider_unavailable" | "available"
+
+type AsyncAgentRunStatus =
+  | "queued"
+  | "preparing_workspace"
+  | "running"
+  | "waiting_for_approval"
+  | "completed"
+  | "failed"
+  | "blocked"
+  | "cancelled"
+  | "expired"
+
+type AsyncAgentFailureReasonCode = "not_configured" | "provider_unavailable" | "cancelled" | "execution_error"
+
+type AsyncAgentArtifactMetadata = {
+  artifactId?: string
+  artifactType?: string
+  fileName?: string
+  mimeType?: string
+  size?: number
+  storageRef?: string
+  writebackStatus?: string
+}
+
+type AsyncAgentRunMetadata = {
+  agentRunId?: string
+  runId?: string
+  provider?: string
+  modelId?: string
+  status?: AsyncAgentRunStatus
+  providerAvailability?: AgentProviderAvailability
+  failureReasonCode?: AsyncAgentFailureReasonCode
+  failureReason?: string
+  artifactIds?: string[]
+  artifacts?: AsyncAgentArtifactMetadata[]
+}
+
 type RowEvaluation = {
   expectedAnswerable: boolean
   actualAnswerable: boolean
@@ -259,6 +305,11 @@ type RowEvaluation = {
   failureReasons: string[]
   failureDebugSignals: string[]
   failureCategories: FailureCategory[]
+  asyncProviderAvailabilityCorrect: boolean | null
+  asyncStatusCorrect: boolean | null
+  asyncFailureReasonCodeCorrect: boolean | null
+  asyncNoMockArtifacts: boolean | null
+  asyncArtifactMetadataRedacted: boolean | null
 }
 
 type BenchmarkResultRow = {
@@ -293,7 +344,7 @@ type BenchmarkResultRow = {
   evaluation: RowEvaluation
   evaluatorProfile: string
   metadata?: Record<string, unknown>
-  result: BenchmarkResponse
+  result: BenchmarkResponse & { asyncAgentRun?: AsyncAgentRunMetadata }
 }
 
 type Summary = {
@@ -374,6 +425,11 @@ type Summary = {
     p50LatencyMs: number | null
     p95LatencyMs: number | null
     averageLatencyMs: number | null
+    asyncProviderAvailabilityAccuracy: number | null
+    asyncStatusAccuracy: number | null
+    asyncFailureReasonCodeAccuracy: number | null
+    asyncNoMockArtifactRate: number | null
+    asyncArtifactMetadataRedactionPassRate: number | null
   }
   turnDependencyMetrics: Record<string, {
     total: number
@@ -433,6 +489,7 @@ const defaultModelId = process.env.MODEL_ID ?? "amazon.nova-lite-v1:0"
 const defaultEmbeddingModelId = process.env.EMBEDDING_MODEL_ID?.trim() || undefined
 const benchmarkSuiteId = process.env.BENCHMARK_SUITE_ID ?? "standard-agent-v1"
 const benchmarkCorpusSuiteId = process.env.BENCHMARK_CORPUS_SUITE_ID ?? benchmarkSuiteId
+const benchmarkRunner = benchmarkRunnerFromEnv()
 const benchmarkDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(benchmarkDir, "..")
 const datasetPath = resolveExistingPath(process.env.DATASET ?? "dataset.sample.jsonl", [process.cwd(), benchmarkDir, repoRoot])
@@ -456,7 +513,7 @@ const resolvedBenchmarkCorpusDir = benchmarkCorpusDir
 const suiteMetadata = createBenchmarkSuiteMetadata({
   suiteId: benchmarkSuiteId,
   useCase: benchmarkUseCaseFromEnv(),
-  runner: "agent",
+  runner: benchmarkRunner,
   corpus: {
     suiteId: benchmarkCorpusSuiteId,
     dir: process.env.BENCHMARK_CORPUS_DIR,
@@ -516,9 +573,12 @@ for (const row of orderRowsForConversationExecution(runnableRows)) {
   assertSuiteEvaluatorProfile(rowEvaluatorProfile, suiteEvaluatorProfile, row.id ?? row.question)
   const firstStartedAt = Date.now()
   const conversation = buildConversationInput(row)
-  const { status, body } = await runQuery(row, conversation)
+  const queryResult: { status: number; body: BenchmarkResponse & { asyncAgentRun?: AsyncAgentRunMetadata } } = benchmarkRunner === "async_agent"
+    ? await runAsyncAgentBenchmarkRow(row)
+    : await runQuery(row, conversation)
+  const { status, body } = queryResult
   const initialLatencyMs = Date.now() - firstStartedAt
-  const followUp = await runFollowUp(row, body)
+  const followUp = benchmarkRunner === "async_agent" ? undefined : await runFollowUp(row, body)
   const result: BenchmarkResultRow = {
     id: row.id,
     question: row.question,
@@ -541,14 +601,16 @@ for (const row of orderRowsForConversationExecution(runnableRows)) {
     status,
     latencyMs: initialLatencyMs,
     taskLatencyMs: initialLatencyMs + (followUp?.latencyMs ?? 0),
-    evaluation: evaluateRow(row, body, status, followUp, rowEvaluatorProfile),
+    evaluation: benchmarkRunner === "async_agent"
+      ? evaluateAsyncAgentRow(row, body.asyncAgentRun, status, body, rowEvaluatorProfile)
+      : evaluateRow(row, body, status, followUp, rowEvaluatorProfile),
     evaluatorProfile: profileKey(rowEvaluatorProfile),
     metadata: row.metadata,
     result: body
   }
   out.write(`${JSON.stringify(result)}\n`)
   results.push(result)
-  rememberConversationTurn(row, body)
+  if (benchmarkRunner !== "async_agent") rememberConversationTurn(row, body)
   count += 1
 }
 
@@ -618,6 +680,64 @@ async function runQuery(row: DatasetRow, conversation?: ConversationInput): Prom
     strictGrounded: row.strictGrounded,
     useMemory: row.useMemory
   })
+}
+
+async function runAsyncAgentBenchmarkRow(row: DatasetRow): Promise<{
+  status: number
+  body: BenchmarkResponse & { asyncAgentRun?: AsyncAgentRunMetadata }
+}> {
+  const inlineRun = row.asyncAgentRun ?? asyncAgentRunFromMetadata(row.metadata)
+  if (inlineRun) {
+    return {
+      status: 200,
+      body: {
+        responseType: "refusal",
+        isAnswerable: false,
+        answer: inlineRun.failureReason ?? inlineRun.status ?? "async agent run metadata evaluated",
+        asyncAgentRun: inlineRun
+      }
+    }
+  }
+
+  if (!row.agentRunId) {
+    return {
+      status: 0,
+      body: {
+        responseType: "refusal",
+        isAnswerable: false,
+        error: "async_agent_run_not_configured"
+      }
+    }
+  }
+
+  try {
+    const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/agents/runs/${encodeURIComponent(row.agentRunId)}`, {
+      headers: {
+        ...(apiAuthToken ? { Authorization: `Bearer ${apiAuthToken}` } : {})
+      }
+    })
+    const body = await response.json().catch(() => ({})) as unknown
+    const asyncAgentRun = isAsyncAgentRunMetadata(body) ? body : undefined
+    return {
+      status: response.status,
+      body: {
+        responseType: "refusal",
+        isAnswerable: false,
+        answer: asyncAgentRun?.failureReason ?? asyncAgentRun?.status ?? "",
+        asyncAgentRun,
+        ...(asyncAgentRun ? {} : { error: JSON.stringify(body) })
+      }
+    }
+  } catch (error) {
+    return {
+      status: 0,
+      body: {
+        responseType: "refusal",
+        isAnswerable: false,
+        error: error instanceof Error ? error.message : String(error)
+      }
+    }
+  }
 }
 
 async function runFollowUp(
@@ -981,7 +1101,88 @@ function evaluateRow(
     citationCount: citations.length,
     failureReasons,
     failureDebugSignals,
-    failureCategories
+    failureCategories,
+    asyncProviderAvailabilityCorrect: null,
+    asyncStatusCorrect: null,
+    asyncFailureReasonCodeCorrect: null,
+    asyncNoMockArtifacts: null,
+    asyncArtifactMetadataRedacted: null
+  }
+}
+
+function evaluateAsyncAgentRow(
+  row: DatasetRow,
+  run: AsyncAgentRunMetadata | undefined,
+  status: number,
+  body: BenchmarkResponse,
+  evaluatorProfile: EvaluatorProfile
+): RowEvaluation {
+  const base = evaluateRow(
+    {
+      ...row,
+      answerable: false,
+      expectedResponseType: "refusal",
+      expectedContains: undefined,
+      expectedRegex: undefined,
+      expectedFiles: undefined,
+      expectedFileNames: undefined,
+      expectedDocumentIds: undefined,
+      expectedPages: undefined,
+      expectedRegionIds: undefined
+    },
+    {
+      ...body,
+      responseType: "refusal",
+      isAnswerable: false,
+      answer: body.answer ?? run?.failureReason ?? run?.status ?? ""
+    },
+    status,
+    undefined,
+    evaluatorProfile
+  )
+  const failureReasons = [...base.failureReasons]
+  const expectedProviderAvailability = row.expectedProviderAvailability
+  const expectedStatus = row.expectedAsyncAgentStatus
+  const expectedFailureReasonCode = row.expectedFailureReasonCode
+
+  const asyncProviderAvailabilityCorrect = expectedProviderAvailability
+    ? run?.providerAvailability === expectedProviderAvailability
+    : null
+  if (asyncProviderAvailabilityCorrect === false) failureReasons.push("async_provider_availability_mismatch")
+
+  const asyncStatusCorrect = expectedStatus ? run?.status === expectedStatus : null
+  if (asyncStatusCorrect === false) failureReasons.push("async_status_mismatch")
+
+  const asyncFailureReasonCodeCorrect = expectedFailureReasonCode
+    ? run?.failureReasonCode === expectedFailureReasonCode
+    : null
+  if (asyncFailureReasonCodeCorrect === false) failureReasons.push("async_failure_reason_code_mismatch")
+
+  const artifacts = run?.artifacts ?? []
+  const artifactIds = run?.artifactIds ?? []
+  const unavailable = run?.providerAvailability === "not_configured" || run?.providerAvailability === "provider_unavailable" || run?.providerAvailability === "disabled"
+  const asyncNoMockArtifacts = row.expectedNoArtifacts === true || unavailable
+    ? artifacts.length === 0 && artifactIds.length === 0
+    : null
+  if (asyncNoMockArtifacts === false) failureReasons.push("async_mock_artifact_present")
+
+  const asyncArtifactMetadataRedacted = row.expectedArtifactMetadataRedacted === true
+    ? asyncAgentArtifactMetadataRedacted(run, row.artifactMetadataForbiddenPatterns ?? [])
+    : null
+  if (asyncArtifactMetadataRedacted === false) failureReasons.push("async_artifact_metadata_not_redacted")
+
+  return {
+    ...base,
+    answerCorrect: failureReasons.length === 0,
+    abstentionCorrect: failureReasons.length === 0,
+    failureReasons,
+    failureCategories: classifyFailureCategories(failureReasons),
+    failureDebugSignals: run ? base.failureDebugSignals : [...base.failureDebugSignals, "async_agent_run_metadata_missing"],
+    asyncProviderAvailabilityCorrect,
+    asyncStatusCorrect,
+    asyncFailureReasonCodeCorrect,
+    asyncNoMockArtifacts,
+    asyncArtifactMetadataRedacted
   }
 }
 
@@ -1043,6 +1244,46 @@ function extractStandaloneQuestion(body: BenchmarkResponse): string | undefined 
     }
   }
   return undefined
+}
+
+function asyncAgentRunFromMetadata(metadata: Record<string, unknown> | undefined): AsyncAgentRunMetadata | undefined {
+  const value = metadata?.asyncAgentRun
+  return isAsyncAgentRunMetadata(value) ? value : undefined
+}
+
+function isAsyncAgentRunMetadata(value: unknown): value is AsyncAgentRunMetadata {
+  if (!value || typeof value !== "object") return false
+  const candidate = value as AsyncAgentRunMetadata
+  return Boolean(candidate.agentRunId || candidate.runId || candidate.status || candidate.providerAvailability)
+}
+
+function asyncAgentArtifactMetadataRedacted(
+  run: AsyncAgentRunMetadata | undefined,
+  additionalForbiddenPatterns: string[]
+): boolean {
+  if (!run) return false
+  const metadataText = [
+    run.failureReason,
+    ...(run.artifacts ?? []).flatMap((artifact) => [
+      artifact.artifactId,
+      artifact.fileName,
+      artifact.mimeType,
+      artifact.storageRef,
+      artifact.writebackStatus
+    ])
+  ].filter((value): value is string => typeof value === "string").join("\n")
+  if (!metadataText) return true
+  return asyncAgentForbiddenMetadataPatterns(additionalForbiddenPatterns).every((pattern) => !safeRegexTest(pattern, metadataText))
+}
+
+function asyncAgentForbiddenMetadataPatterns(additionalPatterns: string[]): string[] {
+  return [
+    "Bearer\\s+[A-Za-z0-9._~+/=-]{8,}",
+    "(secret|token|api[_-]?key)(['\\\":=\\s]+)[A-Za-z0-9._~+/=-]{8,}",
+    "X-Amz-Signature=[A-Za-z0-9]+",
+    "https?://[^\\s]+[?&](X-Amz-Signature|Signature|token|api_key)=",
+    ...additionalPatterns
+  ]
 }
 
 function evaluateQueryRewrite(expected: string | undefined, actual: string | undefined): boolean | null {
@@ -1133,6 +1374,11 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
     .filter((value): value is number => value !== null)
   const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
   const llmJudgeCallCount = llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeCount ?? 0), 0)
+  const asyncProviderAvailabilityEvaluated = results.filter((row) => row.evaluation.asyncProviderAvailabilityCorrect !== null)
+  const asyncStatusEvaluated = results.filter((row) => row.evaluation.asyncStatusCorrect !== null)
+  const asyncFailureReasonCodeEvaluated = results.filter((row) => row.evaluation.asyncFailureReasonCodeCorrect !== null)
+  const asyncNoMockArtifactsEvaluated = results.filter((row) => row.evaluation.asyncNoMockArtifacts !== null)
+  const asyncArtifactMetadataRedactionEvaluated = results.filter((row) => row.evaluation.asyncArtifactMetadataRedacted !== null)
   const seedManifest = corpusSeed.map((seed) => ({
     fileName: seed.fileName,
     status: seed.status,
@@ -1400,7 +1646,27 @@ function summarize(results: BenchmarkResultRow[], corpusSeed: SeededDocument[], 
       ),
       p50LatencyMs: percentile(latencies, 0.5),
       p95LatencyMs: percentile(latencies, 0.95),
-      averageLatencyMs: results.length === 0 ? null : Math.round(results.reduce((sum, row) => sum + row.latencyMs, 0) / results.length)
+      averageLatencyMs: results.length === 0 ? null : Math.round(results.reduce((sum, row) => sum + row.latencyMs, 0) / results.length),
+      asyncProviderAvailabilityAccuracy: rate(
+        asyncProviderAvailabilityEvaluated.filter((row) => row.evaluation.asyncProviderAvailabilityCorrect === true).length,
+        asyncProviderAvailabilityEvaluated.length
+      ),
+      asyncStatusAccuracy: rate(
+        asyncStatusEvaluated.filter((row) => row.evaluation.asyncStatusCorrect === true).length,
+        asyncStatusEvaluated.length
+      ),
+      asyncFailureReasonCodeAccuracy: rate(
+        asyncFailureReasonCodeEvaluated.filter((row) => row.evaluation.asyncFailureReasonCodeCorrect === true).length,
+        asyncFailureReasonCodeEvaluated.length
+      ),
+      asyncNoMockArtifactRate: rate(
+        asyncNoMockArtifactsEvaluated.filter((row) => row.evaluation.asyncNoMockArtifacts === true).length,
+        asyncNoMockArtifactsEvaluated.length
+      ),
+      asyncArtifactMetadataRedactionPassRate: rate(
+        asyncArtifactMetadataRedactionEvaluated.filter((row) => row.evaluation.asyncArtifactMetadataRedacted === true).length,
+        asyncArtifactMetadataRedactionEvaluated.length
+      )
     },
     turnDependencyMetrics: summarizeTurnDependencyMetrics(results),
     failures: results
@@ -1455,6 +1721,12 @@ function benchmarkUseCaseFromEnv(): BenchmarkUseCase | undefined {
     return value
   }
   return undefined
+}
+
+function benchmarkRunnerFromEnv(): BenchmarkSuite["runner"] {
+  const value = process.env.BENCHMARK_RUNNER
+  if (value === "agent" || value === "search" || value === "conversation" || value === "async_agent") return value
+  return process.env.BENCHMARK_USE_CASE === "async_agent_task" ? "async_agent" : "agent"
 }
 
 function summarizeTurnDependencyMetrics(results: BenchmarkResultRow[]): Summary["turnDependencyMetrics"] {
@@ -1550,6 +1822,11 @@ type BenchmarkReportMetricName =
   | "p50_latency_ms"
   | "p95_latency_ms"
   | "average_latency_ms"
+  | "async_provider_availability_accuracy"
+  | "async_status_accuracy"
+  | "async_failure_reason_code_accuracy"
+  | "async_no_mock_artifact_rate"
+  | "async_artifact_metadata_redaction_pass_rate"
 
 function renderMarkdownReport(summary: Summary, results: BenchmarkResultRow[]): string {
   const coverageRows = buildCoverageReportRows(results)
@@ -1807,6 +2084,16 @@ function metricDescription(metric: BenchmarkReportMetricName): string {
       return "初回 API call latency の 95 パーセンタイル。遅い tail latency を見る。"
     case "average_latency_ms":
       return "初回 API call latency の平均。"
+    case "async_provider_availability_accuracy":
+      return "async agent run metadata の providerAvailability が dataset の期待値と一致した割合。"
+    case "async_status_accuracy":
+      return "async agent run metadata の status が dataset の期待値と一致した割合。"
+    case "async_failure_reason_code_accuracy":
+      return "async agent run metadata の failureReasonCode が dataset の期待値と一致した割合。"
+    case "async_no_mock_artifact_rate":
+      return "provider 未設定・利用不可など実行不能な async agent run が artifactIds/artifacts を返していない割合。"
+    case "async_artifact_metadata_redaction_pass_rate":
+      return "async agent artifact metadata と failure reason に secret、token、signed URL らしい値が残っていない割合。"
   }
 }
 
@@ -1944,6 +2231,16 @@ function buildCoverageReportRows(results: BenchmarkResultRow[]): CoverageReportR
       item: "llm_judge_call_count",
       count: llmJudgeCallCount,
       note: "LLM judge NO_CONFLICT / CONFLICT / UNCLEAR label-rate denominator"
+    },
+    {
+      item: "rows_with_async_agent_provider_availability_expectation",
+      count: results.filter((row) => row.evaluation.asyncProviderAvailabilityCorrect !== null).length,
+      note: "async_provider_availability_accuracy denominator"
+    },
+    {
+      item: "rows_with_async_agent_artifact_redaction_expectation",
+      count: results.filter((row) => row.evaluation.asyncArtifactMetadataRedacted !== null).length,
+      note: "async_artifact_metadata_redaction_pass_rate denominator"
     }
   ]
 }
@@ -1990,6 +2287,11 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
   const llmJudgeEvaluated = results.filter((row) => (row.evaluation.llmJudgeCount ?? 0) > 0)
   const llmJudgeCallCount = llmJudgeEvaluated.reduce((sum, row) => sum + (row.evaluation.llmJudgeCount ?? 0), 0)
   const nonClarificationRows = results.filter((row) => row.evaluation.actualResponseType !== "clarification")
+  const asyncProviderAvailabilityRows = results.filter((row) => row.evaluation.asyncProviderAvailabilityCorrect !== null)
+  const asyncStatusRows = results.filter((row) => row.evaluation.asyncStatusCorrect !== null)
+  const asyncFailureReasonRows = results.filter((row) => row.evaluation.asyncFailureReasonCodeCorrect !== null)
+  const asyncNoMockArtifactRows = results.filter((row) => row.evaluation.asyncNoMockArtifacts !== null)
+  const asyncArtifactRedactionRows = results.filter((row) => row.evaluation.asyncArtifactMetadataRedacted !== null)
 
   return [
     metricRateRow("answerable_accuracy", summary.metrics.answerableAccuracy, answerableRows.filter((row) => row.evaluation.answerCorrect).length, answerableRows.length, "通常QAの正答率。answerable rows が分母。"),
@@ -2043,7 +2345,12 @@ function buildMetricReportRows(summary: Summary, results: BenchmarkResultRow[]):
     metricRateRow("llm_judge_resolved_rate", summary.metrics.llmJudgeResolvedRate, llmJudgeEvaluated.filter((row) => row.evaluation.llmJudgeResolved === true).length, llmJudgeEvaluated.length, "LLM judge call がある行だけを評価。"),
     metricNullableRow("p50_latency_ms", formatNumber(summary.metrics.p50LatencyMs), summary.metrics.p50LatencyMs, `${results.length} rows`, "初回 API call latency の p50。"),
     metricNullableRow("p95_latency_ms", formatNumber(summary.metrics.p95LatencyMs), summary.metrics.p95LatencyMs, `${results.length} rows`, "初回 API call latency の p95。"),
-    metricNullableRow("average_latency_ms", formatNumber(summary.metrics.averageLatencyMs), summary.metrics.averageLatencyMs, `${results.length} rows`, "初回 API call latency の平均。")
+    metricNullableRow("average_latency_ms", formatNumber(summary.metrics.averageLatencyMs), summary.metrics.averageLatencyMs, `${results.length} rows`, "初回 API call latency の平均。"),
+    metricRateRow("async_provider_availability_accuracy", summary.metrics.asyncProviderAvailabilityAccuracy, asyncProviderAvailabilityRows.filter((row) => row.evaluation.asyncProviderAvailabilityCorrect === true).length, asyncProviderAvailabilityRows.length, "`expectedProviderAvailability` がある async_agent 行だけを評価。"),
+    metricRateRow("async_status_accuracy", summary.metrics.asyncStatusAccuracy, asyncStatusRows.filter((row) => row.evaluation.asyncStatusCorrect === true).length, asyncStatusRows.length, "`expectedAsyncAgentStatus` がある async_agent 行だけを評価。"),
+    metricRateRow("async_failure_reason_code_accuracy", summary.metrics.asyncFailureReasonCodeAccuracy, asyncFailureReasonRows.filter((row) => row.evaluation.asyncFailureReasonCodeCorrect === true).length, asyncFailureReasonRows.length, "`expectedFailureReasonCode` がある async_agent 行だけを評価。"),
+    metricRateRow("async_no_mock_artifact_rate", summary.metrics.asyncNoMockArtifactRate, asyncNoMockArtifactRows.filter((row) => row.evaluation.asyncNoMockArtifacts === true).length, asyncNoMockArtifactRows.length, "not_configured / provider_unavailable / disabled 行、または `expectedNoArtifacts` 行で artifact が空である割合。"),
+    metricRateRow("async_artifact_metadata_redaction_pass_rate", summary.metrics.asyncArtifactMetadataRedactionPassRate, asyncArtifactRedactionRows.filter((row) => row.evaluation.asyncArtifactMetadataRedacted === true).length, asyncArtifactRedactionRows.length, "`expectedArtifactMetadataRedacted` がある async_agent 行で artifact metadata と failure reason に secret-like pattern が残っていない割合。")
   ]
 }
 

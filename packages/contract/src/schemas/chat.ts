@@ -109,6 +109,15 @@ export const ChatToolInvocationSchema = z.object({
   completedAt: z.string().optional()
 })
 
+export const ChatToolDefinitionListResponseSchema = z.object({
+  registryVersion: z.string(),
+  tools: z.array(ChatToolDefinitionSchema)
+})
+
+export const ChatToolInvocationListResponseSchema = z.object({
+  invocations: z.array(ChatToolInvocationSchema)
+})
+
 export const ConversationDecontextualizedQuerySchema = z.object({
   originalQuestion: z.string(),
   standaloneQuestion: z.string(),
@@ -345,6 +354,8 @@ export type ConversationInput = z.input<typeof ConversationInputSchema>
 export type ChatOrchestrationMode = z.output<typeof ChatOrchestrationModeSchema>
 export type ChatToolDefinition = z.output<typeof ChatToolDefinitionSchema>
 export type ChatToolInvocation = z.output<typeof ChatToolInvocationSchema>
+export type ChatToolDefinitionListResponse = z.output<typeof ChatToolDefinitionListResponseSchema>
+export type ChatToolInvocationListResponse = z.output<typeof ChatToolInvocationListResponseSchema>
 export type ConversationDecontextualizedQuery = z.output<typeof ConversationDecontextualizedQuerySchema>
 export type ConversationCitationMemoryItem = z.output<typeof ConversationCitationMemoryItemSchema>
 export type ConversationTaskState = z.output<typeof ConversationTaskStateSchema>

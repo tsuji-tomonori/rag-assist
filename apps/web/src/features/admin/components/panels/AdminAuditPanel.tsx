@@ -3,21 +3,23 @@ import { Icon } from "../../../../shared/components/Icon.js"
 import { adminAuditActionLabel, adminAuditSummary, formatDateTime } from "../../../../shared/utils/format.js"
 import type { ManagedUserAuditLogEntry } from "../../types.js"
 
-export function AdminAuditPanel({ adminAuditLog, onExportAdminAuditLog }: { adminAuditLog: ManagedUserAuditLogEntry[]; onExportAdminAuditLog: () => Promise<void> }) {
+export function AdminAuditPanel({ adminAuditLog, onExportAdminAuditLog }: { adminAuditLog: ManagedUserAuditLogEntry[] | null; onExportAdminAuditLog: () => Promise<void> }) {
   return (
     <section className="admin-section-panel admin-audit-panel" aria-label="管理操作履歴">
       <div className="document-list-head">
         <h3>管理操作履歴</h3>
         <div className="inline-action-group">
-          <span>{adminAuditLog.length} 件</span>
-          <button type="button" onClick={() => void onExportAdminAuditLog()} title="監査ログをエクスポート" aria-label="監査ログをエクスポート">
+          <span>{adminAuditLog ? `${adminAuditLog.length} 件` : "未提供"}</span>
+          <button type="button" onClick={() => void onExportAdminAuditLog()} title="管理操作履歴をエクスポート" aria-label="管理操作履歴をエクスポート">
             <Icon name="download" />
           </button>
         </div>
       </div>
-      <p className="admin-panel-note">現行 API の managed user / role assign 監査ログです。横断 audit と reason は未提供です。</p>
+      <p className="admin-panel-note">現行 API の managed user / role assign 監査ログです。export には生成時刻と redaction policy を含めます。</p>
       <div className="admin-audit-list">
-        {adminAuditLog.length === 0 ? (
+        {adminAuditLog === null ? (
+          <EmptyState title="管理操作履歴 API field は未提供です。" description="権限内の API response に auditLog field がありません。" />
+        ) : adminAuditLog.length === 0 ? (
           <EmptyState title="管理操作履歴はありません。" />
         ) : (
           adminAuditLog.map((entry) => (

@@ -30,9 +30,9 @@ Logical ID: `ApiFunctionServiceRoleOverflowPolicy15B8AE146`
 | 設定項目 | 値 |
 | --- | --- |
 | `roles` | [Ref:ApiFunctionServiceRole52B9747B] |
-| `statementCount` | 6 |
-| `actions` | [codebuild:BatchGetBuilds, logs:GetLogEvents, states:DescribeExecution, states:StartExecution, states:StopExecution] |
-| `resources` | [GetAtt:BenchmarkProject1593465D.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:",{"Ref":"BenchmarkProjectLogGroup395F719E"},":log-stream…, Ref:BenchmarkStateMachine8C582B8A, Ref:ChatRunStateMachine52CAF7BA, Ref:DocumentIngestRunStateMachine2FD7D3D3] |
+| `statementCount` | 10 |
+| `actions` | [codebuild:BatchGetBuilds, cognito-idp:AdminAddUserToGroup, cognito-idp:AdminListGroupsForUser, cognito-idp:AdminRemoveUserFromGroup, cognito-idp:ListUsers, dynamodb:GetRecords, dynamodb:GetShardIterator, logs:GetLogEvents, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors, states:DescribeExecution, states:StartExecution, states:StopExecution, textract:DetectDocumentText, textract:GetDocumentTextDetection, textract:StartDocumentTextDetection] |
+| `resources` | [*, GetAtt:BenchmarkProject1593465D.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:",{"Ref":"BenchmarkProjectLogGroup395F719E"},":log-stream…, Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Ref:BenchmarkStateMachine8C582B8A, Ref:ChatRunStateMachine52CAF7BA, Ref:DocumentIngestRunStateMachine2FD7D3D3] |
 
 ### Heavy Api Function Service Role Overflow Policy13079BA64
 
@@ -43,6 +43,6 @@ Logical ID: `HeavyApiFunctionServiceRoleOverflowPolicy13079BA64`
 | 設定項目 | 値 |
 | --- | --- |
 | `roles` | [Ref:HeavyApiFunctionServiceRole25A7AE5E] |
-| `statementCount` | 6 |
-| `actions` | [codebuild:BatchGetBuilds, logs:GetLogEvents, states:DescribeExecution, states:StartExecution, states:StopExecution] |
-| `resources` | [GetAtt:BenchmarkProject1593465D.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:",{"Ref":"BenchmarkProjectLogGroup395F719E"},":log-stream…, Ref:BenchmarkStateMachine8C582B8A, Ref:ChatRunStateMachine52CAF7BA, Ref:DocumentIngestRunStateMachine2FD7D3D3] |
+| `statementCount` | 10 |
+| `actions` | [codebuild:BatchGetBuilds, cognito-idp:AdminAddUserToGroup, cognito-idp:AdminListGroupsForUser, cognito-idp:AdminRemoveUserFromGroup, cognito-idp:ListUsers, dynamodb:GetRecords, dynamodb:GetShardIterator, logs:GetLogEvents, s3vectors:DeleteVectors, s3vectors:GetVectors, s3vectors:ListVectors, s3vectors:PutVectors, s3vectors:QueryVectors, states:DescribeExecution, states:StartExecution, states:StopExecution, textract:DetectDocumentText, textract:GetDocumentTextDetection, textract:StartDocumentTextDetection] |
+| `resources` | [*, GetAtt:BenchmarkProject1593465D.Arn, GetAtt:DocumentGroupsTableA5108040.Arn, GetAtt:UserPool6BA7E5F2.Arn, Join:["",["arn:",{"Ref":"AWS::Partition"},":logs:ap-northeast-1:111111111111:log-group:",{"Ref":"BenchmarkProjectLogGroup395F719E"},":log-stream…, Join:["",[{"Fn::GetAtt":["DocumentGroupsTableA5108040","Arn"]},"/index/*"]], Ref:BenchmarkStateMachine8C582B8A, Ref:ChatRunStateMachine52CAF7BA, Ref:DocumentIngestRunStateMachine2FD7D3D3] |

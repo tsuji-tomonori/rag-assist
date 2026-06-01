@@ -6,6 +6,7 @@ export type WorkspaceFolder = {
   name: string
   path: string
   count: number
+  depth: number
   group?: DocumentGroup
 }
 
@@ -26,6 +27,8 @@ export type DocumentOperationEvent = {
   result: "反映済み" | "要求済み" | "進行中" | "失敗"
   detail?: string
 }
+
+export const rootFolderParentValue = "__root__"
 
 export const emptyOperationState: DocumentOperationState = {
   isUploading: false,
@@ -70,6 +73,42 @@ export function countDocumentsForGroup(documents: DocumentManifest[], groupId: s
   return documents.filter((document) => documentGroupIds(document).includes(groupId)).length
 }
 
+export function buildWorkspaceFolders(documentGroups: DocumentGroup[], documents: DocumentManifest[]): WorkspaceFolder[] {
+  const groupsById = new Map(documentGroups.map((group) => [group.groupId, group]))
+  const childrenByParentId = new Map<string, DocumentGroup[]>()
+  const roots: DocumentGroup[] = []
+  for (const group of documentGroups) {
+    if (group.parentGroupId && groupsById.has(group.parentGroupId)) {
+      childrenByParentId.set(group.parentGroupId, [...(childrenByParentId.get(group.parentGroupId) ?? []), group])
+    } else {
+      roots.push(group)
+    }
+  }
+
+  const folders: WorkspaceFolder[] = []
+  const visited = new Set<string>()
+  const appendGroup = (group: DocumentGroup, depth: number) => {
+    if (visited.has(group.groupId)) return
+    visited.add(group.groupId)
+    const canonicalPath = group.canonicalPath
+    folders.push({
+      id: group.groupId,
+      name: group.name,
+      path: `/ ドキュメントグループ${canonicalPath}`,
+      count: countDocumentsForGroup(documents, group.groupId),
+      depth,
+      group
+    })
+    for (const child of sortedGroups(childrenByParentId.get(group.groupId) ?? [])) {
+      appendGroup(child, depth + 1)
+    }
+  }
+
+  for (const root of sortedGroups(roots)) appendGroup(root, 0)
+  for (const group of sortedGroups(documentGroups)) appendGroup(group, 0)
+  return folders
+}
+
 export function documentGroupIds(document: DocumentManifest): string[] {
   const raw = document.metadata?.groupIds ?? document.metadata?.groupId
   return typeof raw === "string" ? [raw] : Array.isArray(raw) ? raw.filter((item): item is string => typeof item === "string") : []
@@ -106,6 +145,10 @@ export function uploadErrorLabel(errorKind: NonNullable<DocumentUploadState>["er
 
 export function uniqueSorted(values: string[]): string[] {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right, "ja"))
+}
+
+function sortedGroups(groups: DocumentGroup[]): DocumentGroup[] {
+  return [...groups].sort((left, right) => left.name.localeCompare(right.name, "ja") || left.groupId.localeCompare(right.groupId, "ja"))
 }
 
 export function documentStatusLabel(document: DocumentManifest): string {
@@ -224,6 +267,32 @@ export function operationResultClassName(result: DocumentOperationEvent["result"
   if (result === "進行中") return "active"
   if (result === "要求済み") return "requested"
   return "done"
+}
+
+export function getCreateFolderDisabledReason({
+  canCreateGroup,
+  groupParentId,
+  createParentGroup,
+  createParentCanManage,
+  hasName,
+  hasValidationError,
+  creatingGroup
+}: {
+  canCreateGroup: boolean
+  groupParentId: string
+  createParentGroup?: DocumentGroup
+  createParentCanManage: boolean
+  hasName: boolean
+  hasValidationError: boolean
+  creatingGroup: boolean
+}): string | null {
+  if (!canCreateGroup) return "フォルダを作成する権限がありません。"
+  if (creatingGroup) return "フォルダを作成中です。"
+  if (!hasName) return "新規フォルダ名を入力してください。"
+  if (groupParentId && !createParentGroup) return "親フォルダを選択し直してください。"
+  if (groupParentId && !createParentCanManage) return "親フォルダの管理権限が必要です。"
+  if (hasValidationError) return "入力内容を修正してください。"
+  return null
 }
 
 function migrationActionLabel(status: ReindexMigration["status"]): string {

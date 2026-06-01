@@ -1,11 +1,14 @@
 import { z } from "@hono/zod-openapi"
 import { streamSSE } from "hono/streaming"
 import { eventPayload } from "../chat-run-events-stream.js"
+import { CHAT_TOOL_DEFINITIONS, CHAT_TOOL_REGISTRY_VERSION } from "../chat-orchestration/tool-registry.js"
 import { getPermissionsForGroups, requirePermission } from "../authorization.js"
 import {
   ChatRequestSchema,
   ChatResponseSchema,
   ChatRunStartResponseSchema,
+  ChatToolDefinitionListResponseSchema,
+  ChatToolInvocationListResponseSchema,
   ErrorResponseSchema,
   SearchRequestSchema,
   SearchResponseSchema
@@ -131,6 +134,51 @@ export function registerChatRoutes({ app, deps, service }: ApiRouteContext) {
           })
         })
       })
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "get",
+      path: "/chat-tools",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "chat:create",
+        operationKey: "chat_tool.registry.read",
+        resourceCondition: "none",
+        notes: ["tool registry は enabled/disabled と required permission metadata のみを返し、実行 credential や mock tool output は返しません。"]
+      }),
+      responses: {
+        200: { description: "List chat tool registry metadata", content: { "application/json": { schema: ChatToolDefinitionListResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    (c) => {
+      requirePermission(c.get("user"), "chat:create")
+      return c.json({ registryVersion: CHAT_TOOL_REGISTRY_VERSION, tools: CHAT_TOOL_DEFINITIONS }, 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "get",
+      path: "/chat-tool-invocations",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "chat:admin:read_all",
+        conditionalPermissions: ["debug:trace:read:sanitized"],
+        operationKey: "chat_tool.invocation.read",
+        resourceCondition: "ownedRun",
+        notes: ["tool invocation は sanitize 済み DebugTrace 由来の input/output summary と状態だけを返します。"]
+      }),
+      responses: {
+        200: { description: "List sanitized chat tool invocation audit records", content: { "application/json": { schema: ChatToolInvocationListResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      requirePermission(c.get("user"), "chat:admin:read_all")
+      return c.json({ invocations: await service.listChatToolInvocations() }, 200)
     }
   )
 

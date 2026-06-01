@@ -39,12 +39,24 @@ const benchmarkSeedMetadataKeys = new Set([
   "drawingReferenceGraph",
   "drawingExtractionArtifacts"
 ])
+const benchmarkSeedReservedDocumentMetadataKeys = new Set([
+  "benchmarkSeed",
+  "benchmarkSuiteId",
+  "benchmarkSourceHash",
+  "benchmarkIngestSignature",
+  "benchmarkCorpusSkipMemory",
+  "benchmarkEmbeddingModelId"
+])
 
 type UploadPurpose = "document" | "benchmarkSeed" | "chatAttachment"
 
 export function authorizeDocumentUpload(user: AppUser, body: z.infer<typeof DocumentUploadRequestSchema>) {
+  if (isBenchmarkSeedUpload(body)) {
+    if (hasPermission(user, "benchmark:seed_corpus")) return
+    throw new HTTPException(403, { message: "Forbidden" })
+  }
+  if (hasBenchmarkSeedReservedDocumentMetadata(body)) throw new HTTPException(403, { message: "Forbidden" })
   if (hasPermission(user, "rag:doc:write:group")) return
-  if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUpload(body)) return
   throw new HTTPException(403, { message: "Forbidden" })
 }
 
@@ -74,6 +86,12 @@ export function isBenchmarkSeedUploadedObjectIngest(body: z.infer<typeof IngestU
   if (body.mimeType === "application/pdf") return /\.pdf$/i.test(body.fileName)
   if (!body.mimeType || body.mimeType === "text/markdown" || body.mimeType === "text/plain") return /\.(md|txt)$/i.test(body.fileName)
   return false
+}
+
+function hasBenchmarkSeedReservedDocumentMetadata(body: { metadata?: Record<string, unknown> }): boolean {
+  const metadata = body.metadata
+  if (!metadata) return false
+  return Object.keys(metadata).some((key) => benchmarkSeedReservedDocumentMetadataKeys.has(key))
 }
 
 function isBenchmarkSeedUploadMetadata(body: {
@@ -368,12 +386,23 @@ export function authorizeUploadedDocumentIngest(user: AppUser, purpose: UploadPu
     if (hasPermission(user, "benchmark:seed_corpus") && isBenchmarkSeedUploadedObjectIngest(body)) return
     throw new HTTPException(403, { message: "Forbidden" })
   }
+  if (hasBenchmarkSeedReservedDocumentMetadata(body)) throw new HTTPException(403, { message: "Forbidden" })
   if (hasPermission(user, "rag:doc:write:group")) return
   throw new HTTPException(403, { message: "Forbidden" })
 }
 
 export async function authorizeDocumentDelete(service: MemoRagService, user: AppUser, documentId: string) {
-  if (hasPermission(user, "rag:doc:delete:group")) return
+  if (hasPermission(user, "rag:doc:delete:group")) {
+    try {
+      await service.assertDocumentWritable(user, documentId)
+      return
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith("Forbidden")) {
+        throw new HTTPException(403, { message: "Forbidden" })
+      }
+      throw err
+    }
+  }
   if (!hasPermission(user, "benchmark:seed_corpus")) {
     throw new HTTPException(403, { message: "Forbidden" })
   }

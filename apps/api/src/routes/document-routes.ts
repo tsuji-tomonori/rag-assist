@@ -6,11 +6,16 @@ import { config } from "../config.js"
 import { eventPayload } from "../chat-run-events-stream.js"
 import type { AppUser } from "../auth.js"
 import { getPermissionsForGroups, hasPermission, requirePermission } from "../authorization.js"
+import { DocumentShareConflictError, DocumentShareValidationError } from "../documents/document-permission-service.js"
 import {
   CreateDocumentGroupRequestSchema,
   CreateDocumentUploadRequestSchema,
   CreateDocumentUploadResponseSchema,
   DeleteDocumentResponseSchema,
+  DocumentMoveRequestSchema,
+  DocumentMoveResponseSchema,
+  DocumentShareRequestSchema,
+  DocumentShareResponseSchema,
   DocumentGroupListResponseSchema,
   DocumentGroupSchema,
   DocumentIngestRunSchema,
@@ -21,6 +26,7 @@ import {
   DocumentUploadRequestSchema,
   ErrorResponseSchema,
   IngestUploadedDocumentRequestSchema,
+  ParsedDocumentPreviewSchema,
   ReindexMigrationListResponseSchema,
   ReindexMigrationSchema,
   ShareDocumentGroupRequestSchema,
@@ -33,8 +39,10 @@ import {
   authorizeDocumentDelete,
   authorizeDocumentUpload,
   authorizeUploadedDocumentIngest,
+  isBenchmarkSeedUpload,
   isBenchmarkSeedUploadedObjectIngest
 } from "./benchmark-seed.js"
+import { documentGroupHasLegacyExplicitPolicy } from "../folders/document-group-permissions.js"
 
 const uploadObjectKeyPrefix = "uploads"
 
@@ -136,8 +144,14 @@ function documentListItemSummary(manifest: DocumentManifest): DocumentListItemSu
     ...documentManifestSummary(manifest),
     metadata: manifest.metadata,
     embeddingModelId: manifest.embeddingModelId,
-    embeddingDimensions: manifest.embeddingDimensions
+    embeddingDimensions: manifest.embeddingDimensions,
+    currentUserEffectivePermission: manifest.currentUserEffectivePermission,
+    capabilities: manifest.capabilities
   }
+}
+
+function isForbiddenError(err: unknown): boolean {
+  return err instanceof Error && err.message.startsWith("Forbidden")
 }
 
 async function scopedMetadata(
@@ -159,6 +173,14 @@ async function scopedMetadata(
       temporaryScopeId,
       expiresAt: scope?.expiresAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     }
+  }
+
+  if (purpose === "document") {
+    if (!scope || scope.scopeType !== "group" || !scope.groupIds?.length) {
+      throw new HTTPException(400, { message: "document upload requires group scope" })
+    }
+    await service.assertDocumentGroupsWritable(user, scope.groupIds)
+    return { ...base, scopeType: "group", ownerUserId: user.userId, groupIds: scope.groupIds }
   }
 
   if (!scope) return metadata
@@ -228,7 +250,14 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       const user = c.get("user")
       requirePermission(user, "rag:group:create")
       const body = validJson<z.infer<typeof CreateDocumentGroupRequestSchema>>(c)
-      return c.json(await service.createDocumentGroup(user, body), 200)
+      if (documentGroupHasLegacyExplicitPolicy(body)) requirePermission(user, "rag:group:assign_manager")
+      try {
+        return c.json(await service.createDocumentGroup(user, body), 200)
+      } catch (err) {
+        if (isDocumentGroupInputError(err)) return c.json({ error: (err as Error).message }, 400)
+        if (err instanceof Error && err.message.startsWith("Forbidden:")) throw new HTTPException(403, { message: "Forbidden" })
+        throw err
+      }
     }
   )
 
@@ -245,7 +274,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         }
       },
       responses: {
-        200: { description: "Updated document group sharing", content: { "application/json": { schema: DocumentGroupSchema } } },
+        200: { description: "Updated document group settings", content: { "application/json": { schema: DocumentGroupSchema } } },
+        400: { description: "Invalid document group update", content: { "application/json": { schema: ErrorResponseSchema } } },
         403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
         404: { description: "Not found", content: { "application/json": { schema: ErrorResponseSchema } } }
       }
@@ -260,6 +290,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
         if (!group) return c.json({ error: "Document group not found" }, 404)
         return c.json(group, 200)
       } catch (err) {
+        if (isDocumentGroupInputError(err)) return c.json({ error: (err as Error).message }, 400)
         if (err instanceof Error && err.message.startsWith("Forbidden:")) throw new HTTPException(403, { message: "Forbidden" })
         throw err
       }
@@ -291,6 +322,108 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
 
   app.openapi(
     looseRoute({
+      method: "get",
+      path: "/documents/{documentId}/share",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:share", operationKey: "document.share.read", resourceCondition: "documentEffectiveFull" }),
+      request: {
+        params: z.object({ documentId: z.string().min(1) })
+      },
+      responses: {
+        200: { description: "Document share grants", content: { "application/json": { schema: DocumentShareResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:share")
+      const { documentId } = validParam<{ documentId: string }>(c)
+      try {
+        return c.json(await service.getDocumentShareInfo(user, documentId), 200)
+      } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
+        if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+        throw err
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "put",
+      path: "/documents/{documentId}/share",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:share", operationKey: "document.share.update", resourceCondition: "documentEffectiveFull" }),
+      request: {
+        params: z.object({ documentId: z.string().min(1) }),
+        body: {
+          required: true,
+          content: { "application/json": { schema: DocumentShareRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Updated document share grants", content: { "application/json": { schema: DocumentShareResponseSchema } } },
+        400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Document share update conflict", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:share")
+      const { documentId } = validParam<{ documentId: string }>(c)
+      const body = validJson<z.infer<typeof DocumentShareRequestSchema>>(c)
+      try {
+        return c.json(await service.updateDocumentShare(user, documentId, body), 200)
+      } catch (err) {
+        if (err instanceof DocumentShareValidationError) return c.json({ error: err.message }, 400)
+        if (err instanceof DocumentShareConflictError) return c.json({ error: err.message }, 409)
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
+        if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+        throw err
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/documents/{documentId}/move",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:move", operationKey: "document.move", resourceCondition: "documentMove" }),
+      request: {
+        params: z.object({ documentId: z.string().min(1) }),
+        body: {
+          required: true,
+          content: { "application/json": { schema: DocumentMoveRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Moved document", content: { "application/json": { schema: DocumentMoveResponseSchema } } },
+        400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Document or folder not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Conflict", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:move")
+      const { documentId } = validParam<{ documentId: string }>(c)
+      const body = validJson<z.infer<typeof DocumentMoveRequestSchema>>(c)
+      try {
+        return c.json(await service.moveDocument(user, documentId, body), 200)
+      } catch (err) {
+        if (err instanceof Error && (err.message.includes("required"))) return c.json({ error: err.message }, 400)
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
+        if (err instanceof Error && (err.message.includes("Destination folder not found") || err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document or folder not found" }, 404)
+        if (err instanceof Error && (err.message.includes("changed before move") || err.message.includes("same file name"))) return c.json({ error: err.message }, 409)
+        throw err
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
       method: "post",
       path: "/documents",
       "x-memorag-authorization": routeAuthorization({ mode: "benchmarkSeedOrPermission", permission: "rag:doc:write:group", conditionalPermissions: ["benchmark:seed_corpus"], operationKey: "document.upload", resourceCondition: "benchmarkSeedScope", notes: ["BENCHMARK_RUNNER は benchmark seed 用 upload body の場合だけ実行できます。"] }),
@@ -314,7 +447,8 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
       authorizeDocumentUpload(user, body)
       if (!body.text && !body.contentBase64 && !body.textractJson) return c.json({ error: "Either text, contentBase64, or textractJson is required" }, 400)
-      const metadata = await scopedMetadata(service, user, body.metadata, body.scope)
+      const purpose: UploadPurpose = isBenchmarkSeedUpload(body) ? "benchmarkSeed" : "document"
+      const metadata = await scopedMetadata(service, user, body.metadata, body.scope, purpose)
       const manifest = await service.ingest({ ...body, metadata })
       return c.json(documentManifestSummary(manifest), 200)
     }
@@ -552,7 +686,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/{documentId}/reindex",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group", operationKey: "document.reindex", resourceCondition: "documentGroupFull" }),
       request: {
         params: z.object({ documentId: z.string().min(1) }),
         body: {
@@ -573,6 +707,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       try {
         return c.json(await service.reindexDocument(user, documentId, body), 200)
       } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
         throw err
       }
@@ -598,7 +733,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/{documentId}/reindex/stage",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group", operationKey: "document.reindex.stage", resourceCondition: "documentGroupFull" }),
       request: {
         params: z.object({ documentId: z.string().min(1) }),
         body: {
@@ -619,6 +754,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       try {
         return c.json(await service.stageReindexMigration(user, documentId, body), 200)
       } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
         throw err
       }
@@ -629,7 +765,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/reindex-migrations/{migrationId}/cutover",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group", operationKey: "document.reindex.cutover", resourceCondition: "documentGroupFull" }),
       request: { params: z.object({ migrationId: z.string().min(1) }) },
       responses: {
         200: { description: "Cut over staged reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
@@ -637,11 +773,13 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "rag:index:rebuild:group")
+      const user = c.get("user")
+      requirePermission(user, "rag:index:rebuild:group")
       const { migrationId } = validParam<{ migrationId: string }>(c)
       try {
-        return c.json(await service.cutoverReindexMigration(migrationId), 200)
+        return c.json(await service.cutoverReindexMigration(user, migrationId), 200)
       } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
         throw err
       }
@@ -652,7 +790,7 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
     looseRoute({
       method: "post",
       path: "/documents/reindex-migrations/{migrationId}/rollback",
-      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group" }),
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:index:rebuild:group", operationKey: "document.reindex.rollback", resourceCondition: "documentGroupFull" }),
       request: { params: z.object({ migrationId: z.string().min(1) }) },
       responses: {
         200: { description: "Rolled back reindex migration", content: { "application/json": { schema: ReindexMigrationSchema } } },
@@ -660,12 +798,49 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
     }),
     async (c) => {
-      requirePermission(c.get("user"), "rag:index:rebuild:group")
+      const user = c.get("user")
+      requirePermission(user, "rag:index:rebuild:group")
       const { migrationId } = validParam<{ migrationId: string }>(c)
       try {
-        return c.json(await service.rollbackReindexMigration(migrationId), 200)
+        return c.json(await service.rollbackReindexMigration(user, migrationId), 200)
       } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
         if (err instanceof Error && err.message.includes("not found")) return c.json({ error: "Migration not found" }, 404)
+        throw err
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "get",
+      path: "/documents/{documentId}/parsed-preview",
+      "x-memorag-authorization": routeAuthorization({
+        mode: "required",
+        permission: "rag:doc:read",
+        operationKey: "document.parsed_preview.read",
+        resourceCondition: "documentGroupRead",
+        notes: ["ParsedDocument preview は caller が読める文書に限定し、全文・vector key・raw object key は返しません。"]
+      }),
+      request: {
+        params: z.object({ documentId: z.string().min(1) })
+      },
+      responses: {
+        200: { description: "Get parsed document preview metadata", content: { "application/json": { schema: ParsedDocumentPreviewSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:read")
+      const { documentId } = validParam<{ documentId: string }>(c)
+      try {
+        const preview = await service.getParsedDocumentPreview(user, documentId)
+        if (!preview) return c.json({ error: "Document not found" }, 404)
+        return c.json(preview, 200)
+      } catch (err) {
+        if (err instanceof Error && err.message.startsWith("Forbidden")) throw new HTTPException(403, { message: "Forbidden" })
         throw err
       }
     }
@@ -702,4 +877,17 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
     }
   )
+}
+
+function isDocumentGroupInputError(err: unknown): boolean {
+  return err instanceof Error && [
+    "Document group canonical path already exists",
+    "Document group name is required",
+    "Document group name contains unsupported characters",
+    "adminPrincipalId is required",
+    "Parent document group not found",
+    "Document group cannot be its own parent",
+    "Document group cannot move under its descendant",
+    "Document group subtree is too large for synchronous path update"
+  ].includes(err.message)
 }

@@ -2,7 +2,7 @@
   "generatedBy": "tools/infra-inventory/generate-infra-inventory.mjs",
   "source": "infra/test/__snapshots__/memorag-mvp-stack.snapshot.json",
   "stackName": "MemoRagMvpStack",
-  "totalResources": 217,
+  "totalResources": 218,
   "totalsByDomain": [
     {
       "domain": "Storage",
@@ -10,7 +10,7 @@
     },
     {
       "domain": "Data",
-      "count": 8
+      "count": 9
     },
     {
       "domain": "Compute",
@@ -53,7 +53,7 @@
     },
     {
       "type": "AWS::DynamoDB::Table",
-      "count": 8,
+      "count": 9,
       "purpose": "DynamoDB table"
     },
     {
@@ -490,6 +490,14 @@
           {
             "AttributeName": "groupId",
             "AttributeType": "S"
+          },
+          {
+            "AttributeName": "adminPathPk",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "normalizedCanonicalPath",
+            "AttributeType": "S"
           }
         ],
         "billingMode": "PAY_PER_REQUEST",
@@ -560,6 +568,37 @@
       "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
     },
     {
+      "logicalId": "FavoritesTable4DA8A306",
+      "logicalName": "Favorites Table",
+      "type": "AWS::DynamoDB::Table",
+      "purpose": "Favorites Table (DynamoDB table)",
+      "settings": {
+        "keySchema": [
+          {
+            "AttributeName": "ownerUserId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "targetKey",
+            "KeyType": "RANGE"
+          }
+        ],
+        "attributeDefinitions": [
+          {
+            "AttributeName": "ownerUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "targetKey",
+            "AttributeType": "S"
+          }
+        ],
+        "billingMode": "PAY_PER_REQUEST",
+        "pointInTimeRecoveryEnabled": true
+      },
+      "detailFilePath": "infra-inventory/aws-dynamodb-table.md"
+    },
+    {
       "logicalId": "HumanQuestionsTable5DA9688B",
       "logicalName": "Human Questions Table",
       "type": "AWS::DynamoDB::Table",
@@ -574,6 +613,26 @@
         "attributeDefinitions": [
           {
             "AttributeName": "questionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "requesterUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "updatedAt",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "assigneeUserId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "assigneeGroupId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "status",
             "AttributeType": "S"
           }
         ],
@@ -615,6 +674,7 @@
           "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
           "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
           "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
           "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
           "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
           "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
@@ -623,6 +683,7 @@
           "EMBEDDING_DIMENSIONS": "1024",
           "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
           "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
           "MEMORY_VECTOR_INDEX_NAME": "memory-index",
           "MIN_RETRIEVAL_SCORE": "0.20",
           "MOCK_BEDROCK": "false",
@@ -632,8 +693,6 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
-          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
-          "USE_LOCAL_QUESTION_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -671,6 +730,7 @@
           "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
           "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
           "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
           "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
           "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
           "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
@@ -678,6 +738,7 @@
           "EMBEDDING_DIMENSIONS": "1024",
           "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
           "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
           "MEMORY_VECTOR_INDEX_NAME": "memory-index",
           "MIN_RETRIEVAL_SCORE": "0.20",
           "MOCK_BEDROCK": "false",
@@ -685,8 +746,6 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
-          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
-          "USE_LOCAL_QUESTION_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -724,6 +783,7 @@
           "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
           "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
           "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
           "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
           "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
           "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
@@ -731,6 +791,7 @@
           "EMBEDDING_DIMENSIONS": "1024",
           "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
           "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
           "MEMORY_VECTOR_INDEX_NAME": "memory-index",
           "MIN_RETRIEVAL_SCORE": "0.20",
           "MOCK_BEDROCK": "false",
@@ -738,8 +799,6 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
-          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
-          "USE_LOCAL_QUESTION_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -777,6 +836,7 @@
           "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
           "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
           "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
           "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
           "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
           "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
@@ -784,6 +844,7 @@
           "EMBEDDING_DIMENSIONS": "1024",
           "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
           "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
           "MEMORY_VECTOR_INDEX_NAME": "memory-index",
           "MIN_RETRIEVAL_SCORE": "0.20",
           "MOCK_BEDROCK": "false",
@@ -791,8 +852,6 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
-          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
-          "USE_LOCAL_QUESTION_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -863,6 +922,7 @@
           "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
           "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
           "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
           "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
           "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
           "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
@@ -870,6 +930,7 @@
           "EMBEDDING_DIMENSIONS": "1024",
           "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
           "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
           "MEMORY_VECTOR_INDEX_NAME": "memory-index",
           "MIN_RETRIEVAL_SCORE": "0.20",
           "MOCK_BEDROCK": "false",
@@ -877,8 +938,6 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
-          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
-          "USE_LOCAL_QUESTION_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -917,6 +976,7 @@
           "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
           "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
           "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
           "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
           "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
           "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
@@ -924,6 +984,7 @@
           "EMBEDDING_DIMENSIONS": "1024",
           "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
           "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
           "MEMORY_VECTOR_INDEX_NAME": "memory-index",
           "MIN_RETRIEVAL_SCORE": "0.20",
           "MOCK_BEDROCK": "false",
@@ -933,8 +994,6 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
-          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
-          "USE_LOCAL_QUESTION_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -975,6 +1034,7 @@
           "DEBUG_DOWNLOAD_EXPIRES_IN_SECONDS": "900",
           "DEFAULT_MEMORY_MODEL_ID": "amazon.nova-lite-v1:0",
           "DEFAULT_MODEL_ID": "amazon.nova-lite-v1:0",
+          "DEFAULT_SUPPORT_ASSIGNEE_GROUP_ID": "ANSWER_EDITOR",
           "DOCS_BUCKET_NAME": "Ref:DocumentsBucket9EC9DEB9",
           "DOCUMENT_GROUPS_TABLE_NAME": "Ref:DocumentGroupsTableA5108040",
           "DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME": "Ref:DocumentIngestRunEventsTableF4692EBE",
@@ -983,6 +1043,7 @@
           "EMBEDDING_DIMENSIONS": "1024",
           "EMBEDDING_MODEL_ID": "amazon.titan-embed-text-v2:0",
           "EVIDENCE_VECTOR_INDEX_NAME": "evidence-index",
+          "FAVORITES_TABLE_NAME": "Ref:FavoritesTable4DA8A306",
           "MEMORY_VECTOR_INDEX_NAME": "memory-index",
           "MIN_RETRIEVAL_SCORE": "0.20",
           "MOCK_BEDROCK": "false",
@@ -992,8 +1053,6 @@
           "QUESTION_TABLE_NAME": "Ref:HumanQuestionsTable5DA9688B",
           "USE_LOCAL_BENCHMARK_RUN_STORE": "false",
           "USE_LOCAL_CHAT_RUN_STORE": "false",
-          "USE_LOCAL_CONVERSATION_HISTORY_STORE": "false",
-          "USE_LOCAL_QUESTION_STORE": "false",
           "USE_LOCAL_VECTOR_STORE": "false",
           "VECTOR_BUCKET_NAME": "Join:[\"\",[\"memorag-\",{\"Ref\":\"AWS::AccountId\"},\"-\",{\"Ref\":\"AWS::Region\"},\"-c85f22a0\"]]"
         },
@@ -2637,14 +2696,10 @@
         "roles": [
           "Ref:ApiFunctionServiceRole52B9747B"
         ],
-        "statementCount": 23,
+        "statementCount": 21,
         "actions": [
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
-          "cognito-idp:AdminAddUserToGroup",
-          "cognito-idp:AdminListGroupsForUser",
-          "cognito-idp:AdminRemoveUserFromGroup",
-          "cognito-idp:ListUsers",
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
           "dynamodb:ConditionCheckItem",
@@ -2666,15 +2721,7 @@
           "s3:PutObjectLegalHold",
           "s3:PutObjectRetention",
           "s3:PutObjectTagging",
-          "s3:PutObjectVersionTagging",
-          "s3vectors:DeleteVectors",
-          "s3vectors:GetVectors",
-          "s3vectors:ListVectors",
-          "s3vectors:PutVectors",
-          "s3vectors:QueryVectors",
-          "textract:DetectDocumentText",
-          "textract:GetDocumentTextDetection",
-          "textract:StartDocumentTextDetection"
+          "s3:PutObjectVersionTagging"
         ],
         "resources": [
           "*",
@@ -2688,11 +2735,13 @@
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:FavoritesTable4DA8A306.Arn",
           "GetAtt:HumanQuestionsTable5DA9688B.Arn",
-          "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
-          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -2938,6 +2987,7 @@
           "GetAtt:DocumentGroupsTableA5108040.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
       },
@@ -3090,6 +3140,7 @@
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
         ]
       },
@@ -3105,14 +3156,10 @@
         "roles": [
           "Ref:HeavyApiFunctionServiceRole25A7AE5E"
         ],
-        "statementCount": 23,
+        "statementCount": 21,
         "actions": [
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
-          "cognito-idp:AdminAddUserToGroup",
-          "cognito-idp:AdminListGroupsForUser",
-          "cognito-idp:AdminRemoveUserFromGroup",
-          "cognito-idp:ListUsers",
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
           "dynamodb:ConditionCheckItem",
@@ -3134,15 +3181,7 @@
           "s3:PutObjectLegalHold",
           "s3:PutObjectRetention",
           "s3:PutObjectTagging",
-          "s3:PutObjectVersionTagging",
-          "s3vectors:DeleteVectors",
-          "s3vectors:GetVectors",
-          "s3vectors:ListVectors",
-          "s3vectors:PutVectors",
-          "s3vectors:QueryVectors",
-          "textract:DetectDocumentText",
-          "textract:GetDocumentTextDetection",
-          "textract:StartDocumentTextDetection"
+          "s3:PutObjectVersionTagging"
         ],
         "resources": [
           "*",
@@ -3156,11 +3195,13 @@
           "GetAtt:DocumentIngestRunEventsTableF4692EBE.Arn",
           "GetAtt:DocumentIngestRunsTableEA8F8CCA.Arn",
           "GetAtt:DocumentsBucket9EC9DEB9.Arn",
+          "GetAtt:FavoritesTable4DA8A306.Arn",
           "GetAtt:HumanQuestionsTable5DA9688B.Arn",
-          "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"BenchmarkBucketDD7D1D2F\",\"Arn\"]},\"/*\"]]",
           "Join:[\"\",[{\"Fn::GetAtt\":[\"DebugDownloadBucketAB6A16BE\",\"Arn\"]},\"/*\"]]",
-          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]"
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentsBucket9EC9DEB9\",\"Arn\"]},\"/*\"]]",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"HumanQuestionsTable5DA9688B\",\"Arn\"]},\"/index/*\"]]"
         ]
       },
       "detailFilePath": "infra-inventory/aws-iam-policy.md"
@@ -3216,17 +3257,35 @@
         "roles": [
           "Ref:ApiFunctionServiceRole52B9747B"
         ],
-        "statementCount": 6,
+        "statementCount": 10,
         "actions": [
           "codebuild:BatchGetBuilds",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:ListUsers",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
           "logs:GetLogEvents",
+          "s3vectors:DeleteVectors",
+          "s3vectors:GetVectors",
+          "s3vectors:ListVectors",
+          "s3vectors:PutVectors",
+          "s3vectors:QueryVectors",
           "states:DescribeExecution",
           "states:StartExecution",
-          "states:StopExecution"
+          "states:StopExecution",
+          "textract:DetectDocumentText",
+          "textract:GetDocumentTextDetection",
+          "textract:StartDocumentTextDetection"
         ],
         "resources": [
+          "*",
           "GetAtt:BenchmarkProject1593465D.Arn",
+          "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:\",{\"Ref\":\"BenchmarkProjectLogGroup395F719E\"},\":log-stream…",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Ref:BenchmarkStateMachine8C582B8A",
           "Ref:ChatRunStateMachine52CAF7BA",
           "Ref:DocumentIngestRunStateMachine2FD7D3D3"
@@ -3243,17 +3302,35 @@
         "roles": [
           "Ref:HeavyApiFunctionServiceRole25A7AE5E"
         ],
-        "statementCount": 6,
+        "statementCount": 10,
         "actions": [
           "codebuild:BatchGetBuilds",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:ListUsers",
+          "dynamodb:GetRecords",
+          "dynamodb:GetShardIterator",
           "logs:GetLogEvents",
+          "s3vectors:DeleteVectors",
+          "s3vectors:GetVectors",
+          "s3vectors:ListVectors",
+          "s3vectors:PutVectors",
+          "s3vectors:QueryVectors",
           "states:DescribeExecution",
           "states:StartExecution",
-          "states:StopExecution"
+          "states:StopExecution",
+          "textract:DetectDocumentText",
+          "textract:GetDocumentTextDetection",
+          "textract:StartDocumentTextDetection"
         ],
         "resources": [
+          "*",
           "GetAtt:BenchmarkProject1593465D.Arn",
+          "GetAtt:DocumentGroupsTableA5108040.Arn",
+          "GetAtt:UserPool6BA7E5F2.Arn",
           "Join:[\"\",[\"arn:\",{\"Ref\":\"AWS::Partition\"},\":logs:ap-northeast-1:111111111111:log-group:\",{\"Ref\":\"BenchmarkProjectLogGroup395F719E\"},\":log-stream…",
+          "Join:[\"\",[{\"Fn::GetAtt\":[\"DocumentGroupsTableA5108040\",\"Arn\"]},\"/index/*\"]]",
           "Ref:BenchmarkStateMachine8C582B8A",
           "Ref:ChatRunStateMachine52CAF7BA",
           "Ref:DocumentIngestRunStateMachine2FD7D3D3"

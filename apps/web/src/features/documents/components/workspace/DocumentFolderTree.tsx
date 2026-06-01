@@ -60,10 +60,16 @@ export function DocumentFolderTree({
               type="button"
               key={folder.id}
               aria-current={selectedFolder.id === folder.id ? "true" : undefined}
+              aria-label={`${folder.path} ${folder.count}件`}
+              title={folder.path}
+              style={{ paddingLeft: `${34 + folder.depth * 18}px` }}
               onClick={() => onSelectFolder(folder.id, folder.group?.groupId ?? "")}
             >
               <Icon name="folder" />
-              <span>{folder.name}</span>
+              <span>
+                {folder.name}
+                <small>{folder.group?.canonicalPath ?? folder.path}</small>
+              </span>
               <strong>{folder.count}</strong>
             </button>
           ))}

@@ -8,12 +8,16 @@ import { setTimeout as delay } from "node:timers/promises"
 import test from "node:test"
 import { LocalObjectStore } from "../adapters/local-object-store.js"
 import { LocalConversationHistoryStore } from "../adapters/local-conversation-history-store.js"
+import { LocalFavoriteStore } from "../adapters/local-favorite-store.js"
 import { LocalChatRunEventStore } from "../adapters/local-chat-run-event-store.js"
 import { LocalChatRunStore } from "../adapters/local-chat-run-store.js"
 import type { AppUser } from "../auth.js"
 import { LocalDocumentIngestRunEventStore } from "../adapters/local-document-ingest-run-event-store.js"
 import { LocalDocumentIngestRunStore } from "../adapters/local-document-ingest-run-store.js"
 import { LocalDocumentGroupStore } from "../adapters/local-document-group-store.js"
+import { LocalFolderPolicyStore } from "../adapters/local-folder-policy-store.js"
+import { LocalUserGroupStore } from "../adapters/local-user-group-store.js"
+import { LocalGroupMembershipStore } from "../adapters/local-group-membership-store.js"
 import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js"
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
@@ -27,6 +31,7 @@ import { CommandAsyncAgentProvider } from "../async-agent/command-provider.js"
 import { AsyncAgentProviderRegistry, type AsyncAgentProviderAdapter, type AsyncAgentProviderInput } from "../async-agent/provider.js"
 import { ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import { authorizeDocumentDelete } from "../routes/benchmark-seed.js"
+import { config } from "../config.js"
 import { createBenchmarkArtifactDownloadMetadata, createDebugTraceDownloadMetadata, formatDebugTraceJson, MemoRagService } from "./memorag-service.js"
 
 test("service ingests text, lists manifests, persists debug traces, and deletes all document vectors", async () => {
@@ -92,7 +97,12 @@ test("service manages async agent run metadata without provider execution or moc
   const owner: AppUser = { userId: "agent-owner", email: "agent-owner@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
   const other: AppUser = { userId: "other-user", email: "other@example.com", cognitoGroups: ["ASYNC_AGENT_USER"] }
   const admin: AppUser = { userId: "agent-admin", email: "agent-admin@example.com", cognitoGroups: ["ASYNC_AGENT_ADMIN"] }
-  const manifest = await service.ingest({ fileName: "agent-source.md", text: "非同期エージェントの対象資料です。", skipMemory: true })
+  const manifest = await service.ingest({
+    fileName: "agent-source.md",
+    text: "非同期エージェントの対象資料です。",
+    skipMemory: true,
+    metadata: { allowedUsers: [owner.userId] }
+  })
   const group = await service.createDocumentGroup(owner, { name: "Agent source group" })
 
   const run = await service.createAsyncAgentRun(owner, {
@@ -218,7 +228,8 @@ test("service listDocuments filters manifests by ACL for callers", async () => {
   const general = await service.ingest({
     fileName: "general.md",
     text: "通常利用者向けの資料です。",
-    skipMemory: true
+    skipMemory: true,
+    metadata: { aclGroups: ["CHAT_USER", "BENCHMARK_RUNNER"] }
   })
   const benchmark = await service.ingest({
     fileName: "handbook.md",
@@ -238,6 +249,20 @@ test("service listDocuments filters manifests by ACL for callers", async () => {
   assert.deepEqual((await service.listDocuments(chatUser)).map((doc) => doc.documentId), [general.documentId])
   assert.deepEqual((await service.listDocuments(benchmarkRunner)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
   assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId).sort(), [benchmark.documentId, general.documentId].sort())
+})
+
+test("service listDocuments hides normal manifests without group owner or ACL from callers", async () => {
+  const { service } = await createService()
+  const hidden = await service.ingest({
+    fileName: "no-acl.md",
+    text: "ACL がない通常資料です。",
+    skipMemory: true
+  })
+  const caller = { userId: "chat-1", email: "chat@example.com", cognitoGroups: ["CHAT_USER"] }
+  const systemAdmin = { userId: "admin-1", email: "admin@example.com", cognitoGroups: ["SYSTEM_ADMIN"] }
+
+  assert.deepEqual((await service.listDocuments(caller)).map((doc) => doc.documentId), [])
+  assert.deepEqual((await service.listDocuments(systemAdmin)).map((doc) => doc.documentId), [hidden.documentId])
 })
 
 test("service persists document quality profile and excludes ineligible documents from normal RAG search", async () => {
@@ -397,7 +422,8 @@ test("service listDocuments denies group-scoped manifests to non-members without
   const publicDoc = await service.ingest({
     fileName: "public.md",
     text: "全員が読める一般資料です。",
-    skipMemory: true
+    skipMemory: true,
+    metadata: { aclGroups: ["CHAT_USER"] }
   })
   const groupDoc = await service.ingest({
     fileName: "group-secret.md",
@@ -452,6 +478,130 @@ test("service stores document group hierarchy outside S3 object keys", async () 
   assert.deepEqual(moved?.ancestorGroupIds, [anotherParent.groupId])
   assert.deepEqual(moved?.sharedGroups, ["HR"])
   assert.deepEqual((await deps.documentGroupStore.get(grandchild.groupId))?.ancestorGroupIds, [anotherParent.groupId, child.groupId])
+})
+
+test("service assigns canonical document group paths and rejects duplicate paths per admin principal", async () => {
+  const { service } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER", "TEAM_A"] }
+  const otherOwner = { userId: "owner-2", email: "owner2@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  const root = await service.createDocumentGroup(owner, { name: "Team" })
+  const child = await service.createDocumentGroup(owner, { name: "Spec", parentGroupId: root.groupId })
+  const rootSibling = await service.createDocumentGroup(owner, { name: "Spec" })
+  const otherOwnerRoot = await service.createDocumentGroup(otherOwner, { name: "Team" })
+  const groupManagedRoot = await service.createDocumentGroup(owner, {
+    name: "Team",
+    adminPrincipalType: "group",
+    adminPrincipalId: "TEAM_A"
+  })
+
+  assert.equal(root.canonicalPath, "/Team")
+  assert.equal(root.normalizedCanonicalPath, "/team")
+  assert.equal(root.adminPathPk, "default#user#owner-1")
+  assert.equal(child.canonicalPath, "/Team/Spec")
+  assert.equal(child.normalizedCanonicalPath, "/team/spec")
+  assert.equal(rootSibling.canonicalPath, "/Spec")
+  assert.equal(otherOwnerRoot.adminPathPk, "default#user#owner-2")
+  assert.equal(groupManagedRoot.adminPathPk, "default#group#TEAM_A")
+
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "team" }), /canonical path already exists/)
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "Forbidden/Name" }), /unsupported characters/)
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "Forbidden\u0001Name" }), /unsupported characters/)
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "   " }), /name is required/)
+  await assert.rejects(() => service.createDocumentGroup(owner, { name: "Group missing id", adminPrincipalType: "group" }), /adminPrincipalId is required/)
+  await assert.rejects(
+    () => service.createDocumentGroup(owner, { name: "Forbidden group", adminPrincipalType: "group", adminPrincipalId: "TEAM_B" }),
+    /cannot create a group-managed folder/
+  )
+})
+
+test("service recalculates descendant canonical paths and local lock items on move and rename", async () => {
+  const { service, dataDir } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const source = await service.createDocumentGroup(owner, { name: "Source" })
+  const target = await service.createDocumentGroup(owner, { name: "Target" })
+  const child = await service.createDocumentGroup(owner, { name: "Child", parentGroupId: source.groupId })
+  const grandchild = await service.createDocumentGroup(owner, { name: "Grandchild", parentGroupId: child.groupId })
+
+  const moved = await service.updateDocumentGroupSharing(owner, child.groupId, {
+    name: "Renamed",
+    parentGroupId: target.groupId
+  })
+  assert.equal(moved?.canonicalPath, "/Target/Renamed")
+  assert.deepEqual(moved?.ancestorGroupIds, [target.groupId])
+
+  const groups = await service.listDocumentGroups(owner)
+  const movedGrandchild = groups.find((group) => group.groupId === grandchild.groupId)
+  assert.equal(movedGrandchild?.canonicalPath, "/Target/Renamed/Grandchild")
+  assert.deepEqual(movedGrandchild?.ancestorGroupIds, [target.groupId, child.groupId])
+
+  const db = JSON.parse(await readFile(path.join(dataDir, "document-groups.json"), "utf-8")) as { pathLocks?: Array<{ lockedGroupId: string; normalizedCanonicalPath: string }> }
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/target/renamed"))
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === grandchild.groupId && lock.normalizedCanonicalPath === "/target/renamed/grandchild"))
+  assert.equal(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/source/child"), false)
+})
+
+test("service moves a document group subtree back to root with path locks", async () => {
+  const { service, dataDir } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const root = await service.createDocumentGroup(owner, { name: "Root" })
+  const child = await service.createDocumentGroup(owner, { name: "Child", parentGroupId: root.groupId })
+  const grandchild = await service.createDocumentGroup(owner, { name: "Grandchild", parentGroupId: child.groupId })
+
+  const moved = await service.updateDocumentGroupSharing(owner, child.groupId, { parentGroupId: null })
+
+  assert.equal(moved?.parentGroupId, undefined)
+  assert.deepEqual(moved?.ancestorGroupIds, [])
+  assert.equal(moved?.canonicalPath, "/Child")
+  assert.equal(moved?.normalizedCanonicalPath, "/child")
+
+  const groups = await service.listDocumentGroups(owner)
+  const movedGrandchild = groups.find((group) => group.groupId === grandchild.groupId)
+  assert.equal(movedGrandchild?.canonicalPath, "/Child/Grandchild")
+  assert.deepEqual(movedGrandchild?.ancestorGroupIds, [child.groupId])
+
+  const db = JSON.parse(await readFile(path.join(dataDir, "document-groups.json"), "utf-8")) as { pathLocks?: Array<{ lockedGroupId: string; normalizedCanonicalPath: string }> }
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/child"))
+  assert.ok(db.pathLocks?.some((lock) => lock.lockedGroupId === grandchild.groupId && lock.normalizedCanonicalPath === "/child/grandchild"))
+  assert.equal(db.pathLocks?.some((lock) => lock.lockedGroupId === child.groupId && lock.normalizedCanonicalPath === "/root/child"), false)
+
+  await assert.rejects(
+    () => service.updateDocumentGroupSharing(owner, child.groupId, { name: "Root", parentGroupId: null }),
+    /canonical path already exists/
+  )
+})
+
+test("service normalizes legacy document groups on read", async () => {
+  const { service, deps } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  await deps.documentGroupStore.create({
+    groupId: "legacy-parent",
+    name: "Legacy",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await deps.documentGroupStore.create({
+    groupId: "legacy-child",
+    name: "Child",
+    parentGroupId: "legacy-parent",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+
+  const groups = await service.listDocumentGroups(owner)
+  assert.equal(groups.find((group) => group.groupId === "legacy-parent")?.canonicalPath, "/Legacy")
+  assert.equal(groups.find((group) => group.groupId === "legacy-child")?.canonicalPath, "/Legacy/Child")
+  assert.equal(groups.find((group) => group.groupId === "legacy-child")?.adminPathPk, "default#user#owner-1")
 })
 
 test("service enforces document group management and search scope boundaries", async () => {
@@ -521,16 +671,329 @@ test("service enforces document group management and search scope boundaries", a
   await service.assertSearchScopeReadable(manager, { groupIds: [parent.groupId] })
 })
 
+test("service inherits parent document group sharing unless child has explicit policy", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
+  const outsider: AppUser = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["CHAT_USER"] }
+  const suspendedReader: AppUser = { ...reader, accountStatus: "suspended" }
+
+  const parent = await service.createDocumentGroup(owner, {
+    name: "Parent policy",
+    sharedUserIds: [reader.userId]
+  })
+  const inheritedChild = await service.createDocumentGroup(owner, {
+    name: "Inherited child",
+    parentGroupId: parent.groupId
+  })
+  const restrictedChild = await service.createDocumentGroup(owner, {
+    name: "Restricted child",
+    parentGroupId: parent.groupId,
+    visibility: "private"
+  })
+  await service.ingest({
+    fileName: "inherited-child.md",
+    text: "inherited pear policy is readable through the parent folder sharing.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [inheritedChild.groupId]
+    }
+  })
+  await service.ingest({
+    fileName: "restricted-child.md",
+    text: "restricted mango policy must not leak to the parent shared reader.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [restrictedChild.groupId]
+    }
+  })
+
+  assert.equal(inheritedChild.hasExplicitPolicy, undefined)
+  assert.equal(restrictedChild.hasExplicitPolicy, true)
+  assert.deepEqual((await service.listDocumentGroups(reader)).map((group) => group.groupId).sort(), [inheritedChild.groupId, parent.groupId].sort())
+  assert.equal((await service.listDocumentGroups(reader)).some((group) => group.groupId === restrictedChild.groupId), false)
+  assert.deepEqual(await service.listDocumentGroups(suspendedReader), [])
+  assert.deepEqual((await service.listDocuments(reader)).map((document) => document.fileName), ["inherited-child.md"])
+  await service.assertSearchScopeReadable(reader, { groupIds: [inheritedChild.groupId] })
+  await assert.rejects(() => service.assertDocumentGroupsWritable(reader, [inheritedChild.groupId]), /cannot write document group/)
+  await assert.rejects(() => service.assertSearchScopeReadable(reader, { groupIds: [restrictedChild.groupId] }), /cannot read document group/)
+  await assert.rejects(() => service.assertSearchScopeReadable(outsider, { groupIds: [inheritedChild.groupId] }), /cannot read document group/)
+
+  const inheritedSearch = await service.search({
+    query: "inherited pear",
+    topK: 10,
+    lexicalTopK: 20,
+    semanticTopK: 0,
+    scope: { mode: "groups", groupIds: [inheritedChild.groupId] }
+  }, reader)
+  assert.deepEqual(inheritedSearch.results.map((result) => result.fileName), ["inherited-child.md"])
+  assert.equal(JSON.stringify(inheritedSearch).includes("restricted-child"), false)
+
+  await assert.rejects(
+    () => service.search({ query: "restricted mango", topK: 10, scope: { mode: "groups", groupIds: [restrictedChild.groupId] } }, reader),
+    /cannot read document group/
+  )
+  await assert.rejects(
+    () => service.chat({ question: "restricted mango", searchScope: { mode: "groups", groupIds: [restrictedChild.groupId] } }, reader),
+    /cannot read document group/
+  )
+})
+
+test("service preserves legacy explicit shared child policy when hasExplicitPolicy is false", async () => {
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create({
+    groupId: "legacy-private-parent",
+    name: "Legacy private parent",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await deps.documentGroupStore.create({
+    groupId: "legacy-shared-child",
+    name: "Legacy shared child",
+    parentGroupId: "legacy-private-parent",
+    ownerUserId: owner.userId,
+    visibility: "shared",
+    sharedUserIds: [reader.userId],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await service.ingest({
+    fileName: "legacy-shared-child.md",
+    text: "legacy child policy should remain visible to the explicitly shared reader.",
+    skipMemory: true,
+    metadata: { scopeType: "group", ownerUserId: owner.userId, groupIds: ["legacy-shared-child"] }
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-private-parent"), false)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-shared-child"), true)
+  await service.assertSearchScopeReadable(reader, { groupIds: ["legacy-shared-child"] })
+  assert.deepEqual((await service.listDocuments(reader)).map((document) => document.fileName), ["legacy-shared-child.md"])
+})
+
+test("service preserves legacy explicit private child policy and does not leak parent sharing", async () => {
+  const { service, deps } = await createService()
+  const owner: AppUser = { userId: "owner-legacy", email: "owner-legacy@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-legacy", email: "reader-legacy@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await deps.documentGroupStore.create({
+    groupId: "legacy-shared-parent",
+    name: "Legacy shared parent",
+    ownerUserId: owner.userId,
+    visibility: "shared",
+    sharedUserIds: [reader.userId],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await deps.documentGroupStore.create({
+    groupId: "legacy-private-child",
+    name: "Legacy private child",
+    parentGroupId: "legacy-shared-parent",
+    ownerUserId: owner.userId,
+    visibility: "private",
+    sharedUserIds: [],
+    sharedGroups: [],
+    managerUserIds: [owner.userId],
+    hasExplicitPolicy: false,
+    createdAt: "2026-05-01T00:00:00.000Z",
+    updatedAt: "2026-05-01T00:00:00.000Z"
+  })
+  await service.ingest({
+    fileName: "legacy-private-child.md",
+    text: "legacy private child must not become visible through parent sharing.",
+    skipMemory: true,
+    metadata: { scopeType: "group", ownerUserId: owner.userId, groupIds: ["legacy-private-child"] }
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-shared-parent"), true)
+  assert.equal(visibleGroups.some((group) => group.groupId === "legacy-private-child"), false)
+  await assert.rejects(
+    () => service.assertSearchScopeReadable(reader, { groupIds: ["legacy-private-child"] }),
+    /cannot read document group/
+  )
+  assert.deepEqual(await service.listDocuments(reader), [])
+})
+
+test("service annotates visible document groups with effective permission and inheritance source", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const reader: AppUser = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  const parent = await service.createDocumentGroup(owner, {
+    name: "Shared parent for annotation",
+    sharedUserIds: [reader.userId]
+  })
+  const inheritedChild = await service.createDocumentGroup(owner, {
+    name: "Inherited child for annotation",
+    parentGroupId: parent.groupId
+  })
+  const explicitPrivateChild = await service.createDocumentGroup(owner, {
+    name: "Explicit private child for annotation",
+    parentGroupId: parent.groupId,
+    visibility: "private"
+  })
+
+  const visibleGroups = await service.listDocumentGroups(reader)
+  const visibleParent = visibleGroups.find((group) => group.groupId === parent.groupId)
+  const visibleInheritedChild = visibleGroups.find((group) => group.groupId === inheritedChild.groupId)
+
+  assert.equal(visibleParent?.effectivePermission, "readOnly")
+  assert.equal(visibleParent?.policySource, "explicit")
+  assert.equal(visibleInheritedChild?.effectivePermission, "readOnly")
+  assert.equal(visibleInheritedChild?.policySource, "inherited")
+  assert.equal(visibleInheritedChild?.inheritedFromFolderId, parent.groupId)
+  assert.equal(visibleGroups.some((group) => group.groupId === explicitPrivateChild.groupId), false)
+})
+
+test("service does not expose group scoped documents to ownerUserId without folder read permission", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass read group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-read.md",
+    text: "owner bypass read content must stay hidden without folder read permission.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  assert.equal((await service.listDocumentGroups(uploader)).some((candidate) => candidate.groupId === group.groupId), false)
+  assert.deepEqual((await service.listDocuments(uploader)).map((document) => document.documentId), [])
+  await assert.rejects(() => service.getParsedDocumentPreview(uploader, manifest.documentId), /Forbidden/)
+})
+
+test("service does not allow group scoped document owner to delete or reindex without folder full permission", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass manage group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-manage.md",
+    text: "owner bypass manage content must not be deleted or reindexed without folder full permission.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  await assert.rejects(
+    () => authorizeDocumentDelete(service, uploader, manifest.documentId),
+    /Forbidden|cannot manage document/
+  )
+  await assert.rejects(
+    () => service.stageReindexMigration(uploader, manifest.documentId),
+    /Forbidden|cannot manage document/
+  )
+  assert.deepEqual(await service.listReindexMigrations(), [])
+})
+
+test("search excludes owner-owned group scoped documents when folder permission is none", async () => {
+  const { service } = await createService()
+  const groupAdmin: AppUser = { userId: "group-admin", email: "group-admin@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const uploader: AppUser = { userId: "uploader", email: "uploader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(groupAdmin, {
+    name: "Owner bypass search group",
+    visibility: "private"
+  })
+  const manifest = await service.ingest({
+    fileName: "owner-bypass-search.md",
+    text: "revoked owner secret pear must not appear in all mode search.",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: uploader.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  const result = await service.search({
+    query: "owner secret pear",
+    topK: 10,
+    lexicalTopK: 20,
+    semanticTopK: 0
+  }, uploader)
+
+  assert.deepEqual(result.results, [])
+  assert.equal(JSON.stringify(result).includes("revoked owner secret pear"), false)
+  assert.equal(JSON.stringify(result).includes(manifest.documentId), false)
+})
+
+test("service enforces full document group permission for delete and reindex operations", async () => {
+  const { service } = await createService()
+  const owner = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const sharedReader = { userId: "reader-1", email: "reader@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const outsider = { userId: "outsider-1", email: "outsider@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
+  const group = await service.createDocumentGroup(owner, {
+    name: "Restricted group",
+    sharedUserIds: [sharedReader.userId]
+  })
+  const manifest = await service.ingest({
+    fileName: "restricted.md",
+    text: "restricted content",
+    skipMemory: true,
+    metadata: {
+      scopeType: "group",
+      ownerUserId: owner.userId,
+      groupIds: [group.groupId]
+    }
+  })
+
+  await assert.rejects(() => authorizeDocumentDelete(service, sharedReader, manifest.documentId), /Forbidden/)
+  await assert.rejects(() => authorizeDocumentDelete(service, outsider, manifest.documentId), /Forbidden/)
+  await authorizeDocumentDelete(service, owner, manifest.documentId)
+
+  await assert.rejects(() => service.stageReindexMigration(sharedReader, manifest.documentId), /cannot manage document/)
+  await assert.rejects(() => service.stageReindexMigration(outsider, manifest.documentId), /cannot manage document/)
+  const staged = await service.stageReindexMigration(owner, manifest.documentId)
+
+  await assert.rejects(() => service.cutoverReindexMigration(sharedReader, staged.migrationId), /cannot manage document/)
+  await service.cutoverReindexMigration(owner, staged.migrationId)
+  await assert.rejects(() => service.rollbackReindexMigration(sharedReader, staged.migrationId), /cannot manage document/)
+  await service.rollbackReindexMigration(owner, staged.migrationId)
+})
+
 test("service reindexes documents through embedding cache compatible pipeline versions", async () => {
   const { service } = await createService()
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const manifest = await service.ingest({
     fileName: "policy.md",
     text: "# 申請手順\n申請期限は翌月5営業日です。\n\n# 例外\n例外承認者は部長です。",
-    metadata: { tenantId: "tenant-a" }
+    metadata: { tenantId: "tenant-a", ownerUserId: actor.userId }
   })
 
   assert.ok(manifest.chunks?.some((chunk) => chunk.sectionPath?.includes("申請手順")))
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const reindexed = await service.reindexDocument(actor, manifest.documentId)
   assert.notEqual(reindexed.documentId, manifest.documentId)
   assert.equal(reindexed.metadata?.stagedFromDocumentId, manifest.documentId)
@@ -545,6 +1008,7 @@ test("service reindexes documents through embedding cache compatible pipeline ve
 
 test("service stages and rolls back structured blue-green reindex migrations", async () => {
   const { service, dataDir } = await createService()
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const textractJson = JSON.stringify({
     Blocks: [
       { Id: "table-1", BlockType: "TABLE", Page: 1, Confidence: 92, Relationships: [{ Type: "CHILD", Ids: ["cell-1", "cell-2"] }] },
@@ -554,7 +1018,7 @@ test("service stages and rolls back structured blue-green reindex migrations", a
       { Id: "word-2", BlockType: "WORD", Text: "期限" }
     ]
   })
-  const manifest = await service.ingest({ fileName: "policy.textract.json", textractJson, skipMemory: true })
+  const manifest = await service.ingest({ fileName: "policy.textract.json", textractJson, skipMemory: true, metadata: { ownerUserId: actor.userId } })
 
   assert.equal(manifest.chunks?.[0]?.chunkKind, "table")
   assert.equal(manifest.chunks?.[0]?.tableId, "table-1")
@@ -568,12 +1032,11 @@ test("service stages and rolls back structured blue-green reindex migrations", a
   assert.equal(structuredBlocks.schemaVersion, 2)
   assert.equal(structuredBlocks.parsedDocument?.tables?.[0]?.id, "table-1")
 
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const staged = await service.stageReindexMigration(actor, manifest.documentId)
   assert.equal(staged.status, "staged")
   assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
 
-  const cutover = await service.cutoverReindexMigration(staged.migrationId)
+  const cutover = await service.cutoverReindexMigration(actor, staged.migrationId)
   assert.equal(cutover.status, "cutover")
   const activeAfterCutover = await service.listDocuments()
   assert.deepEqual(activeAfterCutover.map((doc) => doc.documentId), [staged.stagedDocumentId])
@@ -586,7 +1049,7 @@ test("service stages and rolls back structured blue-green reindex migrations", a
     "active"
   )
 
-  const rolledBack = await service.rollbackReindexMigration(staged.migrationId)
+  const rolledBack = await service.rollbackReindexMigration(actor, staged.migrationId)
   assert.equal(rolledBack.status, "rolled_back")
   const activeAfterRollback = await service.listDocuments()
   assert.equal(activeAfterRollback.length, 1)
@@ -600,17 +1063,18 @@ test("service restores staging state when cutover vector activation fails after 
     evidencePutErrorAfterWriteWhen: (records) =>
       failActivePut && records.some((record) => record.key.startsWith(stagedDocumentId) && record.metadata.lifecycleStatus === "active")
   })
+  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const manifest = await service.ingest({
     fileName: "policy.md",
     text: "申請期限は翌月5営業日です。",
-    skipMemory: true
+    skipMemory: true,
+    metadata: { ownerUserId: actor.userId }
   })
-  const actor = { userId: "manager-1", email: "manager@example.com", cognitoGroups: ["RAG_GROUP_MANAGER"] }
   const staged = await service.stageReindexMigration(actor, manifest.documentId)
   stagedDocumentId = staged.stagedDocumentId
 
   failActivePut = true
-  await assert.rejects(() => service.cutoverReindexMigration(staged.migrationId), /simulated partial active put failure/)
+  await assert.rejects(() => service.cutoverReindexMigration(actor, staged.migrationId), /simulated partial active put failure/)
 
   assert.deepEqual((await service.listDocuments()).map((doc) => doc.documentId), [manifest.documentId])
   const stagedManifest = JSON.parse(await readFile(path.join(dataDir, `objects/manifests/${staged.stagedDocumentId}.json`), "utf-8")) as { lifecycleStatus?: string }
@@ -743,7 +1207,7 @@ test("service delegates human question lifecycle to the question store", async (
     qualityWarnings: ["検索語対応づけの確認が必要"],
     suggestedNextActions: ["search_improvement_review"]
   })
-  assert.equal((await service.listQuestions())[0]?.questionId, question.questionId)
+  assert.equal((await service.listAllQuestionsForAdmin())[0]?.questionId, question.questionId)
   assert.equal((await service.getQuestion(question.questionId))?.questionId, question.questionId)
 
   const answered = await service.answerQuestion(question.questionId, {
@@ -757,6 +1221,81 @@ test("service delegates human question lifecycle to the question store", async (
 
   const resolved = await service.resolveQuestion(question.questionId)
   assert.equal(resolved.status, "resolved")
+})
+
+test("questionCreate_setsDefaultAssigneeGroupWhenMissing", async () => {
+  const mutableConfig = config as { defaultSupportAssigneeGroupId: string }
+  const previous = mutableConfig.defaultSupportAssigneeGroupId
+  mutableConfig.defaultSupportAssigneeGroupId = "support-default"
+  try {
+    const { service } = await createService()
+    const question = await service.createQuestion({
+      title: "資料外の質問",
+      question: "担当者へ確認してください。"
+    }, { userId: "user-1", email: "requester@example.com", cognitoGroups: ["CHAT_USER"] })
+
+    assert.equal(question.assigneeGroupId, "support-default")
+  } finally {
+    mutableConfig.defaultSupportAssigneeGroupId = previous
+  }
+})
+
+test("conversationHistoryList_includesOldFavoriteBeforeRecentNonFavorites", async () => {
+  const { service, deps } = await createService()
+  const userId = "user-1"
+  for (let index = 1; index <= 21; index += 1) {
+    await service.saveConversationHistory(userId, {
+      id: `conv-${index}`,
+      title: `会話 ${index}`,
+      messages: [],
+      updatedAt: `2026-05-${String(index).padStart(2, "0")}T00:00:00.000Z`
+    })
+  }
+  await deps.favoriteStore.save(userId, { targetType: "chatSession", targetId: "conv-1", label: "古いお気に入り" })
+
+  const history = await service.listConversationHistory(userId)
+
+  assert.equal(history.length, 20)
+  assert.equal(history[0]?.id, "conv-1")
+  assert.equal(history[0]?.isFavorite, true)
+  assert.equal(history.some((item) => item.id === "conv-2"), false)
+})
+
+test("favoriteList_marksUnsupportedTargetTypeInaccessible", async () => {
+  const { service, deps } = await createService()
+  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+  await deps.favoriteStore.save(user.userId, { targetType: "skill", targetId: "skill-1", label: "Skill 1" })
+
+  const favorites = await service.listFavorites(user)
+
+  assert.equal(favorites[0]?.targetType, "skill")
+  assert.equal(favorites[0]?.accessible, false)
+  assert.equal(favorites[0]?.label, "この項目には現在アクセスできません")
+})
+
+test("favoriteCreateDoesNotReturnAccessibleTrueWithoutResolver", async () => {
+  const { service } = await createService()
+  const user: AppUser = { userId: "user-1", email: "user@example.com", cognitoGroups: ["CHAT_USER"] }
+
+  await assert.rejects(() => service.saveFavorite(user, { targetType: "skill", targetId: "skill-1" }), /Unsupported favorite target type/)
+})
+
+test("favoriteCreateRechecksChatSessionOwner", async () => {
+  const { service } = await createService()
+  const owner: AppUser = { userId: "owner-1", email: "owner@example.com", cognitoGroups: ["CHAT_USER"] }
+  const other: AppUser = { userId: "other-1", email: "other@example.com", cognitoGroups: ["CHAT_USER"] }
+  await service.saveConversationHistory(owner.userId, {
+    id: "conv-1",
+    title: "会話",
+    messages: [],
+    updatedAt: "2026-05-21T00:00:00.000Z"
+  })
+
+  const ownerFavorite = await service.saveFavorite(owner, { targetType: "chatSession", targetId: "conv-1", label: "会話" })
+  const otherFavorite = await service.saveFavorite(other, { targetType: "chatSession", targetId: "conv-1", label: "会話" })
+
+  assert.equal(ownerFavorite.accessible, true)
+  assert.equal(otherFavorite.accessible, false)
 })
 
 test("service preserves asynchronous chat run options and can mark worker failures", async () => {
@@ -1950,8 +2489,8 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   assert.equal((await service.publishAliases(admin)).aliasCount, 0)
   assert.equal((await service.listAliases())[0]?.status, "disabled")
 
-  await assert.rejects(() => service.cutoverReindexMigration("missing-migration"), /not found/)
-  await assert.rejects(() => service.rollbackReindexMigration("missing-migration"), /not found/)
+  await assert.rejects(() => service.cutoverReindexMigration(admin, "missing-migration"), /not found/)
+  await assert.rejects(() => service.rollbackReindexMigration(admin, "missing-migration"), /not found/)
 
   await assert.rejects(() => service.executeChatRun("missing-run"), /Chat run not found/)
   await assert.rejects(() => service.markChatRunFailed("missing-run", "timeout"), /Chat run not found/)
@@ -2066,6 +2605,7 @@ async function createService(options: {
     textModel: options.textModel ?? new MockBedrockTextModel(),
     questionStore: new LocalQuestionStore(dataDir),
     conversationHistoryStore: new LocalConversationHistoryStore(dataDir),
+    favoriteStore: new LocalFavoriteStore(dataDir),
     benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
@@ -2073,6 +2613,9 @@ async function createService(options: {
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
     documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
     documentGroupStore: new LocalDocumentGroupStore(dataDir),
+    folderPolicyStore: new LocalFolderPolicyStore(dataDir),
+    userGroupStore: new LocalUserGroupStore(dataDir),
+    groupMembershipStore: new LocalGroupMembershipStore(dataDir),
     codeBuildLogReader: options.codeBuildLogReader ?? { getText: async () => undefined },
     asyncAgentProviders: options.asyncAgentProviders ?? defaultTestAsyncAgentProviders(),
     userDirectory: options.userDirectory

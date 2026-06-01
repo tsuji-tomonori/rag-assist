@@ -147,6 +147,14 @@
     overflow: visible;
   }
 
+  .document-settings-modal {
+    max-height: calc(100vh - 28px);
+  }
+
+  .document-settings-modal .document-detail-panel {
+    grid-template-columns: 1fr;
+  }
+
   .phase2-admin-grid,
   .admin-combined-section {
     grid-template-columns: 1fr;
@@ -396,7 +404,7 @@
     flex-direction: column;
   }
 
-  .question-form-actions span {
+  .question-form-actions > span {
     margin-right: 0;
   }
 }

@@ -17,8 +17,8 @@ type CodeBuildSuiteManifest = {
 
 type CodeBuildSuite = {
   suiteId: string
-  mode: "agent" | "search"
-  runner: "agent" | "search" | "conversation"
+  mode: "agent" | "search" | "async_agent"
+  runner: "agent" | "search" | "conversation" | "async_agent"
   dataset: { source: "codebuild-input" | "prepare" | "local"; path?: string }
   corpus?: { dir?: string; suiteId?: string; source?: "local" | "codebuild-bucket"; s3Prefix?: string }
   metadata?: {
@@ -78,6 +78,7 @@ export function createRunnerEnv(manifest: CodeBuildSuiteManifest, suite: CodeBui
   if (suite.metadata?.datasetVersion) runnerEnv.BENCHMARK_DATASET_VERSION = suite.metadata.datasetVersion
   if (suite.metadata?.conversionVersion) runnerEnv.BENCHMARK_DATASET_CONVERSION_VERSION = suite.metadata.conversionVersion
   if (suite.metadata?.evaluatorProfile) runnerEnv.EVALUATOR_PROFILE = suite.metadata.evaluatorProfile
+  if (suite.runner === "async_agent") runnerEnv.BENCHMARK_RUNNER = "async_agent"
   runnerEnv.BENCHMARK_DATASET_SOURCE_TYPE = suite.dataset.source
   return suite.prepare?.env ? withTemplateEnv(runnerEnv, suite.prepare.env) : runnerEnv
 }
@@ -191,8 +192,8 @@ function validateManifest(manifest: CodeBuildSuiteManifest): void {
     if (!suite.suiteId) throw new Error("benchmark CodeBuild suite is missing suiteId")
     if (suiteIds.has(suite.suiteId)) throw new Error(`Duplicate benchmark suite: ${suite.suiteId}`)
     suiteIds.add(suite.suiteId)
-    if (!["agent", "search"].includes(suite.mode)) throw new Error(`Suite ${suite.suiteId} has invalid mode`)
-    if (!["agent", "search", "conversation"].includes(suite.runner)) throw new Error(`Suite ${suite.suiteId} has invalid runner`)
+    if (!["agent", "search", "async_agent"].includes(suite.mode)) throw new Error(`Suite ${suite.suiteId} has invalid mode`)
+    if (!["agent", "search", "conversation", "async_agent"].includes(suite.runner)) throw new Error(`Suite ${suite.suiteId} has invalid runner`)
     if (suite.dataset.source === "prepare" && !suite.prepare) {
       throw new Error(`Suite ${suite.suiteId} uses prepare dataset source without prepare script`)
     }

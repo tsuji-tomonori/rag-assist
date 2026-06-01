@@ -4,8 +4,8 @@ import { LocalObjectStore } from "./adapters/local-object-store.js"
 import type { ObjectStore } from "./adapters/object-store.js"
 import { S3ObjectStore } from "./adapters/s3-object-store.js"
 import type { TextModel } from "./adapters/text-model.js"
-import { ObjectStoreUsageEventStore, type UsageEventStore } from "./adapters/usage-event-store.js"
 import { DynamoDbUsageEventStore } from "./adapters/dynamodb-usage-event-store.js"
+import { ObjectStoreUsageEventStore, type UsageEventStore } from "./adapters/usage-event-store.js"
 import { LocalVectorStore } from "./adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "./adapters/mock-bedrock.js"
 import { S3VectorsStore } from "./adapters/s3-vectors-store.js"
@@ -16,6 +16,9 @@ import type { QuestionStore } from "./adapters/question-store.js"
 import { DynamoDbConversationHistoryStore } from "./adapters/dynamodb-conversation-history-store.js"
 import { LocalConversationHistoryStore } from "./adapters/local-conversation-history-store.js"
 import type { ConversationHistoryStore } from "./adapters/conversation-history-store.js"
+import { DynamoDbFavoriteStore } from "./adapters/dynamodb-favorite-store.js"
+import type { FavoriteStore } from "./adapters/favorite-store.js"
+import { LocalFavoriteStore } from "./adapters/local-favorite-store.js"
 import { DynamoDbBenchmarkRunStore } from "./adapters/dynamodb-benchmark-run-store.js"
 import { LocalBenchmarkRunStore } from "./adapters/local-benchmark-run-store.js"
 import type { BenchmarkRunStore } from "./adapters/benchmark-run-store.js"
@@ -34,6 +37,15 @@ import type { DocumentIngestRunEventStore } from "./adapters/document-ingest-run
 import { DynamoDbDocumentGroupStore } from "./adapters/dynamodb-document-group-store.js"
 import { LocalDocumentGroupStore } from "./adapters/local-document-group-store.js"
 import type { DocumentGroupStore } from "./adapters/document-group-store.js"
+import { DynamoDbFolderPolicyStore } from "./adapters/dynamodb-folder-policy-store.js"
+import { LocalFolderPolicyStore } from "./adapters/local-folder-policy-store.js"
+import type { FolderPolicyStore } from "./adapters/folder-policy-store.js"
+import { DynamoDbUserGroupStore } from "./adapters/dynamodb-user-group-store.js"
+import { LocalUserGroupStore } from "./adapters/local-user-group-store.js"
+import type { UserGroupStore } from "./adapters/user-group-store.js"
+import { DynamoDbGroupMembershipStore } from "./adapters/dynamodb-group-membership-store.js"
+import { LocalGroupMembershipStore } from "./adapters/local-group-membership-store.js"
+import type { GroupMembershipStore } from "./adapters/group-membership-store.js"
 import { CognitoUserDirectory, type UserDirectory } from "./adapters/user-directory.js"
 import { AwsCodeBuildLogReader, type CodeBuildLogReader } from "./adapters/codebuild-log-reader.js"
 import { createDefaultAsyncAgentProviderRegistry } from "./async-agent/claude-code-provider.js"
@@ -47,12 +59,16 @@ export type Dependencies = {
   usageEventStore?: UsageEventStore
   questionStore: QuestionStore
   conversationHistoryStore: ConversationHistoryStore
+  favoriteStore: FavoriteStore
   benchmarkRunStore: BenchmarkRunStore
   chatRunStore: ChatRunStore
   chatRunEventStore: ChatRunEventStore
   documentIngestRunStore: DocumentIngestRunStore
   documentIngestRunEventStore: DocumentIngestRunEventStore
   documentGroupStore: DocumentGroupStore
+  folderPolicyStore: FolderPolicyStore
+  userGroupStore: UserGroupStore
+  groupMembershipStore: GroupMembershipStore
   codeBuildLogReader?: CodeBuildLogReader
   asyncAgentProviders?: AsyncAgentProviderRegistry
   userDirectory?: UserDirectory
@@ -62,6 +78,9 @@ let cached: Dependencies | undefined
 
 export function createDependencies(): Dependencies {
   if (cached) return cached
+  if (process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS === "true" && config.nodeEnv === "production") {
+    throw new Error("MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS is not allowed in production")
+  }
 
   const objectStore = config.useLocalVectorStore
     ? new LocalObjectStore(config.localDataDir)
@@ -79,12 +98,10 @@ export function createDependencies(): Dependencies {
   const usageEventStore = config.useLocalUsageEventStore
     ? new ObjectStoreUsageEventStore(objectStore)
     : new DynamoDbUsageEventStore(config.usageEventsTableName)
-  const questionStore = config.useLocalQuestionStore
-    ? new LocalQuestionStore(config.localDataDir)
-    : new DynamoDbQuestionStore(config.questionTableName)
-  const conversationHistoryStore = config.useLocalConversationHistoryStore
-    ? new LocalConversationHistoryStore(config.localDataDir)
-    : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
+  const useLegacyLocalStoresForTests = config.nodeEnv === "test" && process.env.MEMORAG_ALLOW_LEGACY_LOCAL_STORE_FOR_TESTS === "true"
+  const questionStore = useLegacyLocalStoresForTests ? new LocalQuestionStore(config.localDataDir) : new DynamoDbQuestionStore(config.questionTableName)
+  const conversationHistoryStore = useLegacyLocalStoresForTests ? new LocalConversationHistoryStore(config.localDataDir) : new DynamoDbConversationHistoryStore(config.conversationHistoryTableName)
+  const favoriteStore = useLegacyLocalStoresForTests ? new LocalFavoriteStore(config.localDataDir) : new DynamoDbFavoriteStore(config.favoritesTableName)
   const benchmarkRunStore = config.useLocalBenchmarkRunStore
     ? new LocalBenchmarkRunStore(config.localDataDir)
     : new DynamoDbBenchmarkRunStore(config.benchmarkRunsTableName)
@@ -103,10 +120,23 @@ export function createDependencies(): Dependencies {
   const documentGroupStore = config.useLocalDocumentGroupStore
     ? new LocalDocumentGroupStore(config.localDataDir)
     : new DynamoDbDocumentGroupStore(config.documentGroupsTableName)
+  const folderPolicyStore = config.useLocalDocumentGroupStore
+    ? new LocalFolderPolicyStore(config.localDataDir)
+    : new DynamoDbFolderPolicyStore(config.documentGroupsTableName)
+  const userGroupStore = config.useLocalDocumentGroupStore
+    ? new LocalUserGroupStore(config.localDataDir)
+    : new DynamoDbUserGroupStore(config.documentGroupsTableName)
+  const groupMembershipStore = config.useLocalDocumentGroupStore
+    ? new LocalGroupMembershipStore(config.localDataDir)
+    : new DynamoDbGroupMembershipStore(config.documentGroupsTableName)
   const codeBuildLogReader = new AwsCodeBuildLogReader()
   const asyncAgentProviders = createDefaultAsyncAgentProviderRegistry()
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, usageEventStore, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, usageEventStore, questionStore, conversationHistoryStore, favoriteStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, folderPolicyStore, userGroupStore, groupMembershipStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
   return cached
+}
+
+export function resetDependenciesForTest(): void {
+  cached = undefined
 }
