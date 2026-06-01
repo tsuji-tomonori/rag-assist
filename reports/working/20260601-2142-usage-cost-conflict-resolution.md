@@ -16,7 +16,7 @@
 | R2 | 新しい RAG runtime layout と import 境界に合わせる | 高 | 対応 |
 | R3 | admin usage/cost/export の schema、OpenAPI、Web 表示を同期する | 高 | 対応 |
 | R4 | API/Web/infra/docs の必要検証を実行し、失敗時は修正する | 高 | 対応 |
-| R5 | 未実施の live AWS/CI 検証を未確認として記録する | 高 | 対応 |
+| R5 | 未実施の live AWS 検証を未確認として記録し、CI は最終結果を確認する | 高 | 対応 |
 | R6 | 章別仕様差分全体の残 task まで完了扱いしない | 高 | 対応 |
 
 ## 3. 検討・判断したこと
@@ -35,6 +35,8 @@
 - OpenAPI と infra snapshot を再生成し、型チェックと test を再実行した。
 - task 追記と本レポートを追加した。
 - PR #339 の GitHub Actions 失敗を確認し、Web lint、generated inventory、API coverage threshold の修正を追加した。
+- CI 修正 commit `82ee0a81` に対して GitHub Actions `MemoRAG CI` と `Validate Semver Label` が success であることを確認した。
+- `.workspace/plan-060101.txt` の単体テストベース完了条件を実装・test・CI に照合した。
 
 ## 5. 成果物
 
@@ -47,22 +49,22 @@
 | `apps/web/src/shared/utils/downloads.ts` | TypeScript | admin export download helper の lint 修正 | R4 |
 | `docs/generated/openapi*.md` | Markdown | API 生成ドキュメント | R3 |
 | `docs/generated/web-*` / `docs/generated/infra-*` | Markdown/JSON | generated inventory の同期 | R3-R4 |
-| `tasks/do/20260516-1625-full-spec-gap-implementation.md` | Markdown | 進捗メモ 32 | R5-R6 |
+| `tasks/do/20260516-1625-full-spec-gap-implementation.md` | Markdown | 進捗メモ 32-34 | R5-R6 |
 | `reports/working/20260601-2142-usage-cost-conflict-resolution.md` | Markdown | 本作業レポート | R5 |
 
 ## 6. 指示へのfit評価
 
 | 評価軸 | 評価 | 理由 |
 |---|---:|---|
-| 指示網羅性 | 4.5/5 | PR #339 の usage/cost 実装維持と conflict 解消は対応。章別仕様差分全体は未完了として扱った。 |
+| 指示網羅性 | 4.8/5 | PR #339 の usage/cost 実装維持、conflict 解消、CI 最終確認は対応。章別仕様差分全体は未完了として扱った。 |
 | 制約遵守 | 5/5 | 未実施検証を明示し、task done 移動を避けた。 |
-| 成果物品質 | 4.5/5 | API/Web/infra/docs のローカル検証は通過。live AWS smoke は未実施。 |
+| 成果物品質 | 4.7/5 | API/Web/infra/docs のローカル検証と GitHub Actions CI は通過。live AWS smoke は未実施。 |
 | 説明責任 | 5/5 | 判断、検証、未確認事項を task と report に記録した。 |
-| 検収容易性 | 4.5/5 | PR、task、report、検証コマンドを追跡可能にした。 |
+| 検収容易性 | 4.8/5 | PR、task、report、検証コマンド、CI 結果を追跡可能にした。 |
 
-総合fit: 4.7 / 5.0（約94%）
+総合fit: 4.9 / 5.0（約98%）
 
-理由: PR #339 の conflict 解消と usage/cost 実装のローカル検証は完了したが、実 AWS smoke と最新 push 後の GitHub Actions CI は未確認のため満点ではない。
+理由: PR #339 の conflict 解消、usage/cost 実装、ローカル検証、GitHub Actions CI 最終確認は完了した。実 AWS smoke と章別仕様差分全体の残 task は未完了のため満点ではない。
 
 ## 7. 実行した検証
 
@@ -80,10 +82,21 @@
 - `./node_modules/.bin/tsx --test apps/api/src/rag/usage-tracking-text-model.test.ts apps/api/src/rag/pricing-catalog.test.ts`: pass（19 件）
 - `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: local では tsx IPC sandbox 制約で失敗後、`require_escalated` で再実行。全件完走前に local timeout したが、途中集計で Branches 85.06-85.07% を確認。
 - `git diff --check`: pass
+- GitHub Actions `MemoRAG CI`: pass（commit `82ee0a81`）
+- GitHub Actions `Validate Semver Label`: pass（commit `82ee0a81`）
 
-## 8. 未対応・制約・リスク
+## 8. `.workspace/plan-060101.txt` 完了条件監査
+
+| 完了条件 | 対応状況 | 根拠 |
+|---|---|---|
+| `UT-USAGE-001/002/003` | 対応 | `UsageTrackingTextModel` test で provider usage、tokenizer estimate、missing confidence、idempotency を確認 |
+| `UT-CHAT-USAGE-001/002/003` | 対応 | `memorag-service` test で RAG step 別 UsageEvent と retry idempotency を確認 |
+| `UT-ADMIN-USAGE-001/002/003` | 対応 | API contract / service test で `users: []`、UsageEvent 集計、権限なし 403 を確認 |
+| `UT-COST-001/002/003` | 対応 | pricing catalog / service test で pricingVersion 別計算、過去 version 固定、missing cost 除外を確認 |
+| `UT-UI-USAGE-001/002/003` | 対応 | Web admin test と panel logic で `未計測または利用なし`、`一部未計測`、`推定` 表示を確認 |
+
+## 9. 未対応・制約・リスク
 
 - 実 AWS Bedrock / DynamoDB での provider usage 永続化は未検証。
 - 実 AWS/S3 への admin export 保存と署名付き URL の実ダウンロードは未検証。
-- CI 修正 commit の push 後に GitHub Actions の最終結果を確認する必要がある。
 - `tasks/do/20260516-1625-full-spec-gap-implementation.md` は章別仕様差分全体の残作業を含むため、今回の UsageEvent PR 更新だけでは `done` に移動しない。

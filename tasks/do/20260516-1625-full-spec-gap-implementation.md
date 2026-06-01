@@ -639,3 +639,21 @@
 - 未完了:
   - CI 修正 commit の push 後に GitHub Actions で最終確認が必要。
   - 実 AWS Bedrock / DynamoDB / S3 smoke は未検証。
+
+## 進捗メモ 2026-06-01 追記 34
+
+- PR #339 の commit `82ee0a81` に対して GitHub Actions の最終確認を実施し、`MemoRAG CI` と `Validate Semver Label` が success であることを確認した。
+- `.workspace/plan-060101.txt` の UsageEvent / cost 実装方針と単体テストベースの完了条件を、実装・test・CI 結果に照合した。
+- 完了条件の照合:
+  - `UT-USAGE-001/002/003`: `UsageTrackingTextModel` test で provider usage、tokenizer estimate、missing confidence、idempotency を確認済み。
+  - `UT-CHAT-USAGE-001/002/003`: `memorag-service` test で `rag.generate_answer`、query rewrite、answerability、support verification、retry idempotency を確認済み。
+  - `UT-ADMIN-USAGE-001/002/003`: API contract / service test で `users: []`、UsageEvent 集計、権限なし 403 を確認済み。
+  - `UT-COST-001/002/003`: pricing catalog / service test で pricingVersion 別計算、過去 version 固定、missing event の cost 除外と dataCompleteness 計上を確認済み。
+  - `UT-UI-USAGE-001/002/003`: Web admin test と panel logic で `未計測または利用なし`、`一部未計測`、`推定` 表示を確認済み。
+- 検証:
+  - GitHub Actions `MemoRAG CI`: success
+  - GitHub Actions `Validate Semver Label`: success
+- 未完了:
+  - 実 AWS Bedrock / DynamoDB / S3 smoke は未検証。
+  - ParsedDocument preview、ChatToolInvocation execution、Async agent writeback/provider settings/benchmark runner など、章別仕様差分全体の残 task は未完了。
+  - 未達/未検証条件が残るため、この task md は引き続き `tasks/do/` に維持する。
