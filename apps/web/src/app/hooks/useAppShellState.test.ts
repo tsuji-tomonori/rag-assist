@@ -1,5 +1,5 @@
-import { act, renderHook } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { act, cleanup, renderHook } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { AuthSession } from "../../authClient.js"
 import type { Permission } from "../../shared/types/common.js"
 import { useAppShellState } from "./useAppShellState.js"
@@ -247,12 +247,24 @@ describe("useAppShellState", () => {
     }))
   })
 
+  afterEach(() => {
+    cleanup()
+    vi.clearAllTimers()
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  const flushPromises = async () => {
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+  }
+
   it("wires navigation callbacks, admin refresh, history selection, and debug toggles", async () => {
     const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
 
-    await act(async () => {
-      await Promise.resolve()
-    })
+    await flushPromises()
     act(() => result.current.routeProps.adminProps.onOpenBenchmark())
     expect(result.current.railProps.activeView).toBe("benchmark")
 
@@ -260,6 +272,7 @@ describe("useAppShellState", () => {
       result.current.routeProps.benchmarkProps.onRefresh()
       await Promise.resolve()
     })
+    await flushPromises()
     expect(benchmarkMock.refreshBenchmarkRuns).toHaveBeenCalled()
 
     await act(async () => {
@@ -299,9 +312,7 @@ describe("useAppShellState", () => {
     window.history.replaceState(null, "", "/documents/reindex-migrations/migration-1?view=documents&group=group-1&document=doc-1&query=handbook&sort=fileNameAsc")
     const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
 
-    await act(async () => {
-      await Promise.resolve()
-    })
+    await flushPromises()
 
     expect(result.current.routeProps.activeView).toBe("documents")
     expect(result.current.routeProps.documentProps.urlState).toEqual({
@@ -359,9 +370,7 @@ describe("useAppShellState", () => {
   it("document workspace から対象文書スコープで chat へ移動する", async () => {
     const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
 
-    await act(async () => {
-      await Promise.resolve()
-    })
+    await flushPromises()
 
     act(() => {
       result.current.routeProps.documentProps.onAskDocument?.({
@@ -385,9 +394,7 @@ describe("useAppShellState", () => {
     })
     const { result } = renderHook(() => useAppShellState({ authSession: session, onSignOut: vi.fn() }))
 
-    await act(async () => {
-      await Promise.resolve()
-    })
+    await flushPromises()
 
     expect(result.current.error).toBe("user load failed")
     expect(result.current.routeProps.canSeeAdminSettings).toBe(false)

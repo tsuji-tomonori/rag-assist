@@ -37,6 +37,7 @@
 - PR #339 の GitHub Actions 失敗を確認し、Web lint、generated inventory、API coverage threshold の修正を追加した。
 - CI 修正 commit `82ee0a81` に対して GitHub Actions `MemoRAG CI` と `Validate Semver Label` が success であることを確認した。
 - `.workspace/plan-060101.txt` の単体テストベース完了条件を実装・test・CI に照合した。
+- docs 追記 commit `f5e60480` 後の CI 再実行で Web coverage step の unhandled rejection を確認し、`useAppShellState` の unmount cleanup と該当 test cleanup を修正した。
 
 ## 5. 成果物
 
@@ -47,9 +48,11 @@
 | `apps/api/src/routes/admin-routes.ts` | TypeScript | usage/cost/export route 統合 | R1-R3 |
 | `apps/web/src/features/admin/` | TypeScript/React | admin usage/cost 表示と export 操作 | R3 |
 | `apps/web/src/shared/utils/downloads.ts` | TypeScript | admin export download helper の lint 修正 | R4 |
+| `apps/web/src/app/hooks/useAppShellState.ts` | TypeScript | mount loader の unmount 後 state update 抑止 | R4 |
+| `apps/web/src/app/hooks/useAppShellState.test.ts` | TypeScript | CI teardown に残る非同期処理の cleanup 強化 | R4 |
 | `docs/generated/openapi*.md` | Markdown | API 生成ドキュメント | R3 |
 | `docs/generated/web-*` / `docs/generated/infra-*` | Markdown/JSON | generated inventory の同期 | R3-R4 |
-| `tasks/do/20260516-1625-full-spec-gap-implementation.md` | Markdown | 進捗メモ 32-34 | R5-R6 |
+| `tasks/do/20260516-1625-full-spec-gap-implementation.md` | Markdown | 進捗メモ 32-35 | R5-R6 |
 | `reports/working/20260601-2142-usage-cost-conflict-resolution.md` | Markdown | 本作業レポート | R5 |
 
 ## 6. 指示へのfit評価
@@ -84,6 +87,10 @@
 - `git diff --check`: pass
 - GitHub Actions `MemoRAG CI`: pass（commit `82ee0a81`）
 - GitHub Actions `Validate Semver Label`: pass（commit `82ee0a81`）
+- `npm run test -w @memorag-mvp/web -- src/app/hooks/useAppShellState.test.ts`: pass（1 file / 4 件）
+- `CI=true npm run test:coverage -w @memorag-mvp/web`: pass（35 files / 283 件、Statements 90.6%、Branches 86.31%）
+- `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: pass
+- `npm run typecheck -w @memorag-mvp/web`: pass
 
 ## 8. `.workspace/plan-060101.txt` 完了条件監査
 
@@ -99,4 +106,5 @@
 
 - 実 AWS Bedrock / DynamoDB での provider usage 永続化は未検証。
 - 実 AWS/S3 への admin export 保存と署名付き URL の実ダウンロードは未検証。
+- docs 追記 commit `f5e60480` 後の CI は Web coverage step の unhandled rejection で失敗した。修正済みだが、修正 commit push 後の GitHub Actions 最終確認が必要。
 - `tasks/do/20260516-1625-full-spec-gap-implementation.md` は章別仕様差分全体の残作業を含むため、今回の UsageEvent PR 更新だけでは `done` に移動しない。

@@ -657,3 +657,19 @@
   - 実 AWS Bedrock / DynamoDB / S3 smoke は未検証。
   - ParsedDocument preview、ChatToolInvocation execution、Async agent writeback/provider settings/benchmark runner など、章別仕様差分全体の残 task は未完了。
   - 未達/未検証条件が残るため、この task md は引き続き `tasks/do/` に維持する。
+
+## 進捗メモ 2026-06-02 追記 35
+
+- PR #339 の docs 追記 commit `f5e60480` 後に `MemoRAG CI` が再実行され、Web coverage step で `useAppShellState.test.ts` 実行中の unhandled rejection により failure になったことを確認した。
+- 失敗要因は coverage 閾値ではなく、全 test は pass した一方で `EnvironmentTeardownError: [vitest-worker]: Closing rpc while "onUserConsoleLog" was pending` が発生したことだった。
+- `useAppShellState` の初期 loader effect に unmount 後の `setLoading(false)` を避ける cancellation guard を追加した。
+- `useAppShellState.test.ts` に明示 cleanup、timer 復元、mock 復元、promise flush helper を追加し、CI teardown 中に非同期処理が残らないようにした。
+- 検証:
+  - `npm run test -w @memorag-mvp/web -- src/app/hooks/useAppShellState.test.ts`: pass（1 file / 4 件）
+  - `CI=true npm run test:coverage -w @memorag-mvp/web`: pass（35 files / 283 件、Statements 90.6%、Branches 86.31%）
+  - `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: pass
+  - `npm run typecheck -w @memorag-mvp/web`: pass
+  - `git diff --check`: pass
+- 未完了:
+  - CI 修正 commit push 後の GitHub Actions 最終確認が必要。
+  - 実 AWS Bedrock / DynamoDB / S3 smoke は未検証。

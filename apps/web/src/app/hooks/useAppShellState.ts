@@ -340,8 +340,14 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       loaders.push(refreshFavorites().catch((err) => console.warn("Failed to load favorites", err)))
     }
     if (loaders.length === 0) return
+    let cancelled = false
     setLoading(true)
-    void Promise.all(loaders).finally(() => setLoading(false))
+    void Promise.all(loaders).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authSession, currentUser])
 
