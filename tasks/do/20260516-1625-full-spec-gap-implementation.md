@@ -578,3 +578,21 @@
   - 実 AWS Bedrock / DynamoDB での provider usage 永続化は未検証。
   - 実 AWS/S3 への admin export 保存と署名付き URL の実ダウンロードは未検証。
   - 章別仕様差分全体の PR 作成、PR コメント、task done 移動は未実施。
+
+## 進捗メモ 2026-06-01 追記 31
+
+- 既存 dirty worktree を保持したまま `codex/usage-cost-events` branch を作成し、UsageEvent / cost audit / admin UI / infra / docs / task-report 差分を commit した。
+- branch を `origin/codex/usage-cost-events` へ push し、PR #339 `UsageEventベースの利用量コスト監査を追加` を作成した。
+- GitHub Apps で PR top-level comment として、受け入れ条件確認コメントとセルフレビューコメントを投稿した。
+- 受け入れ条件コメントでは、`.workspace/plan-060101.txt` の usage/cost 関連はローカル検証可能な範囲で満たした一方、実 AWS Bedrock/DynamoDB/S3 検証と章別仕様差分全体は未検証/未達として明記した。
+- 検証:
+  - commit hook: pass（`git-secrets`, trailing whitespace, EOF fixer, large file check, merge conflict check, mixed line ending）
+  - `git push -u origin codex/usage-cost-events`: pass
+  - PR 作成: pass（https://github.com/tsuji-tomonori/rag-assist/pull/339）
+  - PR 受け入れ条件コメント: posted
+  - PR セルフレビューコメント: posted
+- 未完了:
+  - 実 AWS Bedrock / DynamoDB での provider usage 永続化は未検証。
+  - 実 AWS/S3 への admin export 保存と署名付き URL の実ダウンロードは未検証。
+  - ParsedDocument preview、ChatToolInvocation execution、Async agent writeback/provider settings/benchmark runner など、章別仕様差分全体の残 task は未完了。
+  - 未達/未検証条件が残るため、この task md は `tasks/done/` に移動していない。
