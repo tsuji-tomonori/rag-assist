@@ -2,6 +2,7 @@ import type {
   DocumentManifest,
   DocumentQualityProfile,
   ExtractionQualityStatus,
+  ExtractionWarning,
   FreshnessStatus,
   JsonValue,
   KnowledgeQualityStatus,
@@ -28,6 +29,11 @@ const qualityFlags = new Set<QualityFlag>([
 export type QualityGateDecision = {
   approved: boolean
   profile: DocumentQualityProfile
+  reasons: string[]
+}
+
+type QualityGateInput = Pick<DocumentManifest, "metadata" | "qualityProfile"> & {
+  extractionWarnings?: ExtractionWarning[]
 }
 
 export function documentQualityProfileFromMetadata(metadata: Record<string, JsonValue> | undefined): DocumentQualityProfile | undefined {
@@ -70,25 +76,25 @@ export function resolveDocumentQualityProfile(manifest: Pick<DocumentManifest, "
   })
 }
 
-export function isQualityApprovedForNormalRag(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile">): boolean {
+export function isQualityApprovedForNormalRag(manifest: QualityGateInput): boolean {
   return qualityGateForNormalRag(manifest).approved
 }
 
-export function qualityGateForNormalRag(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile">): QualityGateDecision {
+export function qualityGateForNormalRag(manifest: QualityGateInput): QualityGateDecision {
   const profile = resolveDocumentQualityProfile(manifest)
-  return {
-    profile,
-    approved:
-      profile.knowledgeQualityStatus !== "blocked" &&
-      profile.ragEligibility === "eligible" &&
-      profile.verificationStatus !== "rejected" &&
-      profile.freshnessStatus !== "expired" &&
-      profile.supersessionStatus !== "superseded" &&
-      profile.extractionQualityStatus !== "unusable"
-  }
+  const reasons = [
+    profile.knowledgeQualityStatus === "blocked" ? "knowledge_quality_blocked" : undefined,
+    profile.ragEligibility !== "eligible" ? "rag_not_eligible" : undefined,
+    profile.verificationStatus === "rejected" ? "verification_rejected" : undefined,
+    profile.freshnessStatus === "expired" ? "freshness_expired" : undefined,
+    profile.supersessionStatus === "superseded" ? "superseded_document" : undefined,
+    profile.extractionQualityStatus === "unusable" ? "unusable_extraction_quality" : undefined,
+    hasLowConfidenceExtractionWarning(manifest.extractionWarnings) ? "low_confidence_extraction_warning" : undefined
+  ].filter((reason): reason is string => Boolean(reason))
+  return { profile, approved: reasons.length === 0, reasons }
 }
 
-export function qualityProfileCacheKey(manifest: Pick<DocumentManifest, "metadata" | "qualityProfile">): string {
+export function qualityProfileCacheKey(manifest: QualityGateInput): string {
   const profile = resolveDocumentQualityProfile(manifest)
   return JSON.stringify({
     knowledgeQualityStatus: profile.knowledgeQualityStatus,
@@ -98,8 +104,13 @@ export function qualityProfileCacheKey(manifest: Pick<DocumentManifest, "metadat
     extractionQualityStatus: profile.extractionQualityStatus,
     ragEligibility: profile.ragEligibility,
     confidence: profile.confidence,
-    flags: profile.flags
+    flags: profile.flags,
+    extractionRestrictions: hasLowConfidenceExtractionWarning(manifest.extractionWarnings) ? ["low_confidence_extraction_warning"] : []
   })
+}
+
+function hasLowConfidenceExtractionWarning(warnings: ExtractionWarning[] | undefined): boolean {
+  return warnings?.some((warning) => warning.code.includes("low_confidence") && warning.severity !== "info") ?? false
 }
 
 function objectValue(value: JsonValue | undefined): Record<string, JsonValue> | undefined {

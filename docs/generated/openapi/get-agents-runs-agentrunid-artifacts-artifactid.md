@@ -59,7 +59,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 9 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 20 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -79,6 +79,17 @@ Media type: `application/json`
 | `storageRef` | `string` | yes | `response.storageRef` の値。項目名は storage ref を表します。 | - |
 | `createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `writebackStatus` | `enum(not_requested \| pending_approval \| approved \| rejected \| applied)` | no | `response.writebackStatus` の値。項目名は writeback status を表します。 | enum=not_requested, pending_approval, approved, rejected, applied |
+| `writebackTarget` | `object` | no | `response.writebackTarget` の値。項目名は writeback target を表します。 | - |
+| `writebackTarget.sourceType` | `enum(folder \| document)` | yes | `response.writebackTarget.sourceType` の値。項目名は source type を表します。 | enum=folder, document |
+| `writebackTarget.sourceId` | `string` | yes | `response.writebackTarget.sourceId` の値。項目名は source id を表します。 | - |
+| `writebackTarget.targetPath` | `string` | no | `response.writebackTarget.targetPath` の値。項目名は target path を表します。 | - |
+| `writebackRequestedBy` | `string` | no | `response.writebackRequestedBy` の値。項目名は writeback requested by を表します。 | - |
+| `writebackRequestedAt` | `string` | no | `response.writebackRequestedAt` の値。項目名は writeback requested at を表します。 | - |
+| `writebackReviewedBy` | `string` | no | `response.writebackReviewedBy` の値。項目名は writeback reviewed by を表します。 | - |
+| `writebackReviewedAt` | `string` | no | `response.writebackReviewedAt` の値。項目名は writeback reviewed at を表します。 | - |
+| `writebackAppliedBy` | `string` | no | `response.writebackAppliedBy` の値。項目名は writeback applied by を表します。 | - |
+| `writebackAppliedAt` | `string` | no | `response.writebackAppliedAt` の値。項目名は writeback applied at を表します。 | - |
+| `writebackDecisionReason` | `string` | no | `response.writebackDecisionReason` の値。項目名は writeback decision reason を表します。 | - |
 
 ##### `401` 認証が必要です。
 

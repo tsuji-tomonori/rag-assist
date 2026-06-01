@@ -52,7 +52,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 11 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 62 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -62,17 +62,68 @@ Media type: `application/json`
 
 | 項目 | 型 | 必須 | 説明 | 制約 |
 | --- | --- | --- | --- | --- |
+| `periodStart` | `string` | yes | `response.periodStart` の値。項目名は period start を表します。 | - |
+| `periodEnd` | `string` | yes | `response.periodEnd` の値。項目名は period end を表します。 | - |
 | `users` | `array<object>` | yes | `response.users` の値。項目名は users を表します。 | - |
 | `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
 | `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
 | `users[].displayName` | `string` | no | 画面に表示するユーザー名。 | - |
 | `users[].chatMessages` | `integer` | yes | `response.users[].chatMessages` の値。項目名は chat messages を表します。 | minimum=0 |
+| `users[].chatRequestCount` | `integer` | yes | `response.users[].chatRequestCount` の値。項目名は chat request count を表します。 | minimum=0 |
+| `users[].llmCallCount` | `integer` | yes | `response.users[].llmCallCount` の値。項目名は llm call count を表します。 | minimum=0 |
+| `users[].inputTokens` | `integer` | yes | `response.users[].inputTokens` の値。項目名は input tokens を表します。 | minimum=0 |
+| `users[].outputTokens` | `integer` | yes | `response.users[].outputTokens` の値。項目名は output tokens を表します。 | minimum=0 |
+| `users[].totalTokens` | `integer` | yes | `response.users[].totalTokens` の値。項目名は total tokens を表します。 | minimum=0 |
+| `users[].estimatedCostUsd` | `number` | yes | `response.users[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
+| `users[].actualTokenEventCount` | `integer` | yes | `response.users[].actualTokenEventCount` の値。項目名は actual token event count を表します。 | minimum=0 |
+| `users[].estimatedTokenEventCount` | `integer` | yes | `response.users[].estimatedTokenEventCount` の値。項目名は estimated token event count を表します。 | minimum=0 |
+| `users[].missingTokenEventCount` | `integer` | yes | `response.users[].missingTokenEventCount` の値。項目名は missing token event count を表します。 | minimum=0 |
 | `users[].conversationCount` | `integer` | yes | `response.users[].conversationCount` の値。項目名は conversation count を表します。 | minimum=0 |
 | `users[].questionCount` | `integer` | yes | `response.users[].questionCount` の値。項目名は question count を表します。 | minimum=0 |
 | `users[].documentCount` | `integer` | yes | `response.users[].documentCount` の値。項目名は document count を表します。 | minimum=0 |
 | `users[].benchmarkRunCount` | `integer` | yes | `response.users[].benchmarkRunCount` の値。項目名は benchmark run count を表します。 | minimum=0 |
 | `users[].debugRunCount` | `integer` | yes | `response.users[].debugRunCount` の値。項目名は debug run count を表します。 | minimum=0 |
 | `users[].lastActivityAt` | `string` | no | `response.users[].lastActivityAt` の値。項目名は last activity at を表します。 | - |
+| `breakdowns` | `object` | yes | `response.breakdowns` の値。項目名は breakdowns を表します。 | - |
+| `breakdowns.byFeature` | `array<object>` | yes | `response.breakdowns.byFeature` の値。項目名は by feature を表します。 | - |
+| `breakdowns.byFeature[].key` | `string` | yes | object store または artifact の key。 | - |
+| `breakdowns.byFeature[].label` | `string` | yes | `response.breakdowns.byFeature[].label` の値。項目名は label を表します。 | - |
+| `breakdowns.byFeature[].inputTokens` | `integer` | yes | `response.breakdowns.byFeature[].inputTokens` の値。項目名は input tokens を表します。 | minimum=0 |
+| `breakdowns.byFeature[].outputTokens` | `integer` | yes | `response.breakdowns.byFeature[].outputTokens` の値。項目名は output tokens を表します。 | minimum=0 |
+| `breakdowns.byFeature[].totalTokens` | `integer` | yes | `response.breakdowns.byFeature[].totalTokens` の値。項目名は total tokens を表します。 | minimum=0 |
+| `breakdowns.byFeature[].estimatedCostUsd` | `number` | yes | `response.breakdowns.byFeature[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
+| `breakdowns.byFeature[].actualTokenEventCount` | `integer` | yes | `response.breakdowns.byFeature[].actualTokenEventCount` の値。項目名は actual token event count を表します。 | minimum=0 |
+| `breakdowns.byFeature[].estimatedTokenEventCount` | `integer` | yes | `response.breakdowns.byFeature[].estimatedTokenEventCount` の値。項目名は estimated token event count を表します。 | minimum=0 |
+| `breakdowns.byFeature[].missingTokenEventCount` | `integer` | yes | `response.breakdowns.byFeature[].missingTokenEventCount` の値。項目名は missing token event count を表します。 | minimum=0 |
+| `breakdowns.byModel` | `array<object>` | yes | `response.breakdowns.byModel` の値。項目名は by model を表します。 | - |
+| `breakdowns.byModel[].key` | `string` | yes | object store または artifact の key。 | - |
+| `breakdowns.byModel[].label` | `string` | yes | `response.breakdowns.byModel[].label` の値。項目名は label を表します。 | - |
+| `breakdowns.byModel[].inputTokens` | `integer` | yes | `response.breakdowns.byModel[].inputTokens` の値。項目名は input tokens を表します。 | minimum=0 |
+| `breakdowns.byModel[].outputTokens` | `integer` | yes | `response.breakdowns.byModel[].outputTokens` の値。項目名は output tokens を表します。 | minimum=0 |
+| `breakdowns.byModel[].totalTokens` | `integer` | yes | `response.breakdowns.byModel[].totalTokens` の値。項目名は total tokens を表します。 | minimum=0 |
+| `breakdowns.byModel[].estimatedCostUsd` | `number` | yes | `response.breakdowns.byModel[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
+| `breakdowns.byModel[].actualTokenEventCount` | `integer` | yes | `response.breakdowns.byModel[].actualTokenEventCount` の値。項目名は actual token event count を表します。 | minimum=0 |
+| `breakdowns.byModel[].estimatedTokenEventCount` | `integer` | yes | `response.breakdowns.byModel[].estimatedTokenEventCount` の値。項目名は estimated token event count を表します。 | minimum=0 |
+| `breakdowns.byModel[].missingTokenEventCount` | `integer` | yes | `response.breakdowns.byModel[].missingTokenEventCount` の値。項目名は missing token event count を表します。 | minimum=0 |
+| `breakdowns.byGroup` | `array<object>` | yes | `response.breakdowns.byGroup` の値。項目名は by group を表します。 | - |
+| `breakdowns.byGroup[].key` | `string` | yes | object store または artifact の key。 | - |
+| `breakdowns.byGroup[].label` | `string` | yes | `response.breakdowns.byGroup[].label` の値。項目名は label を表します。 | - |
+| `breakdowns.byGroup[].inputTokens` | `integer` | yes | `response.breakdowns.byGroup[].inputTokens` の値。項目名は input tokens を表します。 | minimum=0 |
+| `breakdowns.byGroup[].outputTokens` | `integer` | yes | `response.breakdowns.byGroup[].outputTokens` の値。項目名は output tokens を表します。 | minimum=0 |
+| `breakdowns.byGroup[].totalTokens` | `integer` | yes | `response.breakdowns.byGroup[].totalTokens` の値。項目名は total tokens を表します。 | minimum=0 |
+| `breakdowns.byGroup[].estimatedCostUsd` | `number` | yes | `response.breakdowns.byGroup[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
+| `breakdowns.byGroup[].actualTokenEventCount` | `integer` | yes | `response.breakdowns.byGroup[].actualTokenEventCount` の値。項目名は actual token event count を表します。 | minimum=0 |
+| `breakdowns.byGroup[].estimatedTokenEventCount` | `integer` | yes | `response.breakdowns.byGroup[].estimatedTokenEventCount` の値。項目名は estimated token event count を表します。 | minimum=0 |
+| `breakdowns.byGroup[].missingTokenEventCount` | `integer` | yes | `response.breakdowns.byGroup[].missingTokenEventCount` の値。項目名は missing token event count を表します。 | minimum=0 |
+| `totals` | `object` | yes | `response.totals` の値。項目名は totals を表します。 | - |
+| `totals.inputTokens` | `integer` | yes | `response.totals.inputTokens` の値。項目名は input tokens を表します。 | minimum=0 |
+| `totals.outputTokens` | `integer` | yes | `response.totals.outputTokens` の値。項目名は output tokens を表します。 | minimum=0 |
+| `totals.totalTokens` | `integer` | yes | `response.totals.totalTokens` の値。項目名は total tokens を表します。 | minimum=0 |
+| `totals.estimatedCostUsd` | `number` | yes | `response.totals.estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
+| `dataCompleteness` | `object` | yes | `response.dataCompleteness` の値。項目名は data completeness を表します。 | - |
+| `dataCompleteness.actualTokenEventCount` | `integer` | yes | `response.dataCompleteness.actualTokenEventCount` の値。項目名は actual token event count を表します。 | minimum=0 |
+| `dataCompleteness.estimatedTokenEventCount` | `integer` | yes | `response.dataCompleteness.estimatedTokenEventCount` の値。項目名は estimated token event count を表します。 | minimum=0 |
+| `dataCompleteness.missingTokenEventCount` | `integer` | yes | `response.dataCompleteness.missingTokenEventCount` の値。項目名は missing token event count を表します。 | minimum=0 |
 
 ##### `401` 認証が必要です。
 

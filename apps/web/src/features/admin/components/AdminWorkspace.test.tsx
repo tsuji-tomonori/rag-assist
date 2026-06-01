@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { CurrentUser } from "../../../shared/types/common.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, UserUsageSummary } from "../types.js"
+import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, UsageSummaryResponse, UserUsageSummary } from "../types.js"
 import { AdminWorkspace } from "./AdminWorkspace.js"
 
 const user: CurrentUser = {
@@ -72,11 +72,52 @@ const usageSummary: UserUsageSummary = {
   email: "managed@example.com",
   displayName: "管理対象ユーザー",
   chatMessages: 3,
+  chatRequestCount: 3,
+  llmCallCount: 2,
+  inputTokens: 1200,
+  outputTokens: 300,
+  totalTokens: 1500,
+  estimatedCostUsd: 0.00168,
+  actualTokenEventCount: 0,
+  estimatedTokenEventCount: 2,
+  missingTokenEventCount: 0,
   conversationCount: 2,
   questionCount: 1,
   documentCount: 4,
   benchmarkRunCount: 0,
   debugRunCount: 1
+}
+
+const missingUsageSummary: UserUsageSummary = {
+  ...usageSummary,
+  userId: "missing-usage",
+  email: "missing@example.com",
+  chatMessages: 1,
+  chatRequestCount: 1,
+  llmCallCount: 1,
+  inputTokens: 0,
+  outputTokens: 0,
+  totalTokens: 0,
+  estimatedCostUsd: 0,
+  actualTokenEventCount: 0,
+  estimatedTokenEventCount: 0,
+  missingTokenEventCount: 1
+}
+
+const idleUsageSummary: UserUsageSummary = {
+  ...usageSummary,
+  userId: "idle-usage",
+  email: "idle@example.com",
+  chatMessages: 0,
+  chatRequestCount: 0,
+  llmCallCount: 0,
+  inputTokens: 0,
+  outputTokens: 0,
+  totalTokens: 0,
+  estimatedCostUsd: 0,
+  actualTokenEventCount: 0,
+  estimatedTokenEventCount: 0,
+  missingTokenEventCount: 0
 }
 
 const costAudit: CostAuditSummary = {
@@ -96,7 +137,71 @@ const costAudit: CostAuditSummary = {
     }
   ],
   users: [{ userId: "managed-1", email: "managed@example.com", estimatedCostUsd: 1.2 }],
-  pricingCatalogUpdatedAt: "2026-05-01T00:00:00.000Z"
+  pricingVersion: "bedrock-2026-06-local-v1",
+  pricingCatalogUpdatedAt: "2026-05-01T00:00:00.000Z",
+  dataCompleteness: {
+    actualTokenEventCount: 0,
+    estimatedTokenEventCount: 2,
+    missingTokenEventCount: 0
+  }
+}
+
+const usageSummaryResponse: UsageSummaryResponse = {
+  periodStart: "2026-05-01T00:00:00.000Z",
+  periodEnd: "2026-05-31T00:00:00.000Z",
+  users: [usageSummary],
+  breakdowns: {
+    byFeature: [
+      {
+        key: "rag.generate_answer",
+        label: "rag.generate_answer",
+        inputTokens: 1000,
+        outputTokens: 250,
+        totalTokens: 1250,
+        estimatedCostUsd: 0.0014,
+        actualTokenEventCount: 0,
+        estimatedTokenEventCount: 1,
+        missingTokenEventCount: 0
+      }
+    ],
+    byModel: [
+      {
+        key: "amazon.nova-lite-v1:0",
+        label: "amazon.nova-lite-v1:0",
+        inputTokens: 1200,
+        outputTokens: 300,
+        totalTokens: 1500,
+        estimatedCostUsd: 0.00168,
+        actualTokenEventCount: 0,
+        estimatedTokenEventCount: 2,
+        missingTokenEventCount: 0
+      }
+    ],
+    byGroup: [
+      {
+        key: "SYSTEM_ADMIN",
+        label: "SYSTEM_ADMIN",
+        inputTokens: 1200,
+        outputTokens: 300,
+        totalTokens: 1500,
+        estimatedCostUsd: 0.00168,
+        actualTokenEventCount: 0,
+        estimatedTokenEventCount: 2,
+        missingTokenEventCount: 0
+      }
+    ]
+  },
+  totals: {
+    inputTokens: 1200,
+    outputTokens: 300,
+    totalTokens: 1500,
+    estimatedCostUsd: 0.00168
+  },
+  dataCompleteness: {
+    actualTokenEventCount: 0,
+    estimatedTokenEventCount: 2,
+    missingTokenEventCount: 0
+  }
 }
 
 function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspace>[0]> = {}) {
@@ -110,6 +215,7 @@ function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspac
     adminAuditLog: [],
     accessRoles: roles,
     usageSummaries: [],
+    usageSummary: null,
     costAudit: null,
     aliases,
     aliasAuditLog,
@@ -147,6 +253,8 @@ function renderAdminWorkspace(overrides: Partial<Parameters<typeof AdminWorkspac
     onReviewAlias: vi.fn().mockResolvedValue(undefined),
     onDisableAlias: vi.fn().mockResolvedValue(undefined),
     onPublishAliases: vi.fn().mockResolvedValue(undefined),
+    onExportAdminAuditLog: vi.fn().mockResolvedValue(undefined),
+    onExportCostSummary: vi.fn().mockResolvedValue(undefined),
     onBack: vi.fn(),
     ...overrides
   }
@@ -288,10 +396,91 @@ describe("AdminWorkspace", () => {
     })
 
     await userEvent.click(screen.getByRole("button", { name: "Usage / Cost" }))
-    expect(screen.getByText("利用状況はありません。")).toBeInTheDocument()
+    expect(screen.getAllByText("未計測または利用なし").length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText("コスト summary は未提供です。")).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Audit" }))
-    expect(screen.getByText(/横断 audit、reason、export は未提供です。/)).toBeInTheDocument()
+    expect(screen.getByText(/横断 audit と reason は未提供です。/)).toBeInTheDocument()
     expect(screen.getByText("管理操作履歴はありません。")).toBeInTheDocument()
+  })
+
+  it("usage/cost で推定、未計測、利用なしを区別して表示する", async () => {
+    const onExportCostSummary = vi.fn().mockResolvedValue(undefined)
+    renderAdminWorkspace({
+      canReadUsage: true,
+      canReadCosts: true,
+      usageSummaries: [usageSummary, missingUsageSummary, idleUsageSummary],
+      usageSummary: {
+        ...usageSummaryResponse,
+        users: [usageSummary, missingUsageSummary, idleUsageSummary],
+        dataCompleteness: {
+          actualTokenEventCount: 0,
+          estimatedTokenEventCount: 2,
+          missingTokenEventCount: 1
+        }
+      },
+      costAudit: {
+        ...costAudit,
+        dataCompleteness: {
+          actualTokenEventCount: 0,
+          estimatedTokenEventCount: 2,
+          missingTokenEventCount: 1
+        },
+        items: [
+          ...costAudit.items,
+          {
+            service: "bedrock",
+            category: "chat missing",
+            usage: 0,
+            unit: "tokens",
+            unitCostUsd: 0,
+            estimatedCostUsd: 0,
+            confidence: "missing_usage",
+            pricingVersion: "bedrock-2026-06-local-v1"
+          }
+        ]
+      },
+      onExportCostSummary
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "Usage / Cost" }))
+
+    expect(screen.getAllByText("推定 2").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("一部未計測 1").length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByText("1,500 tokens").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByLabelText("機能別")).toHaveTextContent("rag.generate_answer")
+    expect(screen.getByLabelText("モデル別")).toHaveTextContent("amazon.nova-lite-v1:0")
+    expect(screen.getByLabelText("グループ別")).toHaveTextContent("SYSTEM_ADMIN")
+    expect(screen.getAllByText("$0.0017").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText("未計測または利用なし").length).toBeGreaterThanOrEqual(1)
+    expect(screen.getByText("一部未計測: 1")).toBeInTheDocument()
+    expect(screen.getByText("version: bedrock-2026-06-local-v1")).toBeInTheDocument()
+    expect(screen.getByText("未計測")).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "コスト summary をエクスポート" }))
+    expect(onExportCostSummary).toHaveBeenCalledTimes(1)
+  })
+
+  it("audit export 操作を通知する", async () => {
+    const onExportAdminAuditLog = vi.fn().mockResolvedValue(undefined)
+    renderAdminWorkspace({
+      canReadAdminAuditLog: true,
+      adminAuditLog: [
+        {
+          auditId: "audit-1",
+          action: "user:create",
+          actorUserId: "admin",
+          targetUserId: "managed-1",
+          targetEmail: "managed@example.com",
+          beforeGroups: [],
+          afterGroups: ["CHAT_USER"],
+          createdAt: "2026-05-01T00:00:00.000Z"
+        }
+      ],
+      onExportAdminAuditLog
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "Audit" }))
+    expect(screen.getByText(/横断 audit と reason は未提供です。/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "監査ログをエクスポート" }))
+    expect(onExportAdminAuditLog).toHaveBeenCalledTimes(1)
   })
 })

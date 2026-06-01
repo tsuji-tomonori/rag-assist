@@ -247,6 +247,37 @@ export const DocumentListResponseSchema = z.object({
   documents: z.array(DocumentListItemSummarySchema)
 })
 
+export const ParsedDocumentPreviewSchema = z.object({
+  documentId: z.string(),
+  fileName: z.string(),
+  available: z.boolean(),
+  unavailableReason: z.enum(["not_parsed", "legacy_manifest", "no_access"]).optional(),
+  fileProfile: z.enum(["digital_text", "scanned_image", "mixed", "image_only", "unknown"]).optional(),
+  sourceExtractorVersion: z.string().optional(),
+  counters: z.record(z.string(), z.number()).optional(),
+  warnings: z.array(ExtractionWarningSchema),
+  pageCount: z.number().int().nonnegative(),
+  blockCount: z.number().int().nonnegative(),
+  tableCount: z.number().int().nonnegative(),
+  figureCount: z.number().int().nonnegative(),
+  lowConfidenceCount: z.number().int().nonnegative(),
+  tables: z.array(z.object({
+    id: z.string(),
+    pageStart: z.number().int().positive().optional(),
+    pageEnd: z.number().int().positive().optional(),
+    rowCount: z.number().int().nonnegative(),
+    columnCount: z.number().int().nonnegative(),
+    confidence: z.number().optional()
+  })),
+  figures: z.array(z.object({
+    id: z.string(),
+    pageStart: z.number().int().positive().optional(),
+    pageEnd: z.number().int().positive().optional(),
+    caption: z.string().optional(),
+    confidence: z.number().optional()
+  }))
+})
+
 export const StartDocumentIngestRunRequestSchema = IngestUploadedDocumentRequestSchema.extend({
   uploadId: z.string().min(1)
 })
@@ -455,6 +486,15 @@ export const UserUsageSummarySchema = z.object({
   email: z.string(),
   displayName: z.string().optional(),
   chatMessages: z.number().int().nonnegative(),
+  chatRequestCount: z.number().int().nonnegative(),
+  llmCallCount: z.number().int().nonnegative(),
+  inputTokens: z.number().int().nonnegative(),
+  outputTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+  estimatedCostUsd: z.number().nonnegative(),
+  actualTokenEventCount: z.number().int().nonnegative(),
+  estimatedTokenEventCount: z.number().int().nonnegative(),
+  missingTokenEventCount: z.number().int().nonnegative(),
   conversationCount: z.number().int().nonnegative(),
   questionCount: z.number().int().nonnegative(),
   documentCount: z.number().int().nonnegative(),
@@ -463,8 +503,38 @@ export const UserUsageSummarySchema = z.object({
   lastActivityAt: z.string().optional()
 })
 
+export const UsageSummaryBreakdownSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  inputTokens: z.number().int().nonnegative(),
+  outputTokens: z.number().int().nonnegative(),
+  totalTokens: z.number().int().nonnegative(),
+  estimatedCostUsd: z.number().nonnegative(),
+  actualTokenEventCount: z.number().int().nonnegative(),
+  estimatedTokenEventCount: z.number().int().nonnegative(),
+  missingTokenEventCount: z.number().int().nonnegative()
+})
+
 export const UsageSummaryListResponseSchema = z.object({
-  users: z.array(UserUsageSummarySchema)
+  periodStart: z.string(),
+  periodEnd: z.string(),
+  users: z.array(UserUsageSummarySchema),
+  breakdowns: z.object({
+    byFeature: z.array(UsageSummaryBreakdownSchema),
+    byModel: z.array(UsageSummaryBreakdownSchema),
+    byGroup: z.array(UsageSummaryBreakdownSchema)
+  }),
+  totals: z.object({
+    inputTokens: z.number().int().nonnegative(),
+    outputTokens: z.number().int().nonnegative(),
+    totalTokens: z.number().int().nonnegative(),
+    estimatedCostUsd: z.number().nonnegative()
+  }),
+  dataCompleteness: z.object({
+    actualTokenEventCount: z.number().int().nonnegative(),
+    estimatedTokenEventCount: z.number().int().nonnegative(),
+    missingTokenEventCount: z.number().int().nonnegative()
+  })
 })
 
 export const CostAuditItemSchema = z.object({
@@ -474,7 +544,8 @@ export const CostAuditItemSchema = z.object({
   unit: z.string(),
   unitCostUsd: z.number().nonnegative(),
   estimatedCostUsd: z.number().nonnegative(),
-  confidence: z.enum(["actual_usage", "estimated_usage", "manual_estimate"])
+  confidence: z.enum(["actual_usage", "estimated_usage", "manual_estimate", "missing_usage"]),
+  pricingVersion: z.string().optional()
 })
 
 export const UserCostSummarySchema = z.object({
@@ -490,7 +561,13 @@ export const CostAuditSummarySchema = z.object({
   totalEstimatedUsd: z.number().nonnegative(),
   items: z.array(CostAuditItemSchema),
   users: z.array(UserCostSummarySchema),
-  pricingCatalogUpdatedAt: z.string()
+  pricingVersion: z.string(),
+  pricingCatalogUpdatedAt: z.string(),
+  dataCompleteness: z.object({
+    actualTokenEventCount: z.number().int().nonnegative(),
+    estimatedTokenEventCount: z.number().int().nonnegative(),
+    missingTokenEventCount: z.number().int().nonnegative()
+  })
 })
 
 const ClarificationContextSchema = z.object({
@@ -1203,7 +1280,19 @@ export const AgentArtifactSchema = z.object({
   size: z.number().int().nonnegative(),
   storageRef: z.string(),
   createdAt: z.string(),
-  writebackStatus: z.enum(["not_requested", "pending_approval", "approved", "rejected", "applied"]).optional()
+  writebackStatus: z.enum(["not_requested", "pending_approval", "approved", "rejected", "applied"]).optional(),
+  writebackTarget: z.object({
+    sourceType: z.enum(["folder", "document"]),
+    sourceId: z.string(),
+    targetPath: z.string().optional()
+  }).optional(),
+  writebackRequestedBy: z.string().optional(),
+  writebackRequestedAt: z.string().optional(),
+  writebackReviewedBy: z.string().optional(),
+  writebackReviewedAt: z.string().optional(),
+  writebackAppliedBy: z.string().optional(),
+  writebackAppliedAt: z.string().optional(),
+  writebackDecisionReason: z.string().optional()
 })
 
 export const SkillDefinitionSchema = z.object({
@@ -1299,6 +1388,61 @@ export const AgentArtifactListResponseSchema = z.object({
   artifacts: z.array(AgentArtifactSchema)
 })
 
+export const AgentArtifactWritebackRequestSchema = z.object({
+  action: z.enum(["request", "approve", "reject", "apply"]),
+  target: z.object({
+    sourceType: z.enum(["folder", "document"]),
+    sourceId: z.string().min(1),
+    targetPath: z.string().min(1).max(500).optional()
+  }).optional(),
+  reason: z.string().max(1000).optional()
+})
+
+export const AgentProviderSettingSchema = z.object({
+  provider: AgentRuntimeProviderSchema,
+  availability: AgentProviderAvailabilitySchema,
+  credentialMode: z.enum(["environment", "tenant_managed", "not_configured", "disabled"]),
+  secretConfigured: z.boolean(),
+  configuredModelIds: z.array(z.string()),
+  updatedAt: z.string().optional()
+})
+
+export const AgentProviderSettingsResponseSchema = z.object({
+  providers: z.array(AgentProviderSettingSchema)
+})
+
+export const ChatToolDefinitionListResponseSchema = z.object({
+  registryVersion: z.string(),
+  tools: z.array(ChatToolDefinitionSchema)
+})
+
+export const ChatToolInvocationListResponseSchema = z.object({
+  invocations: z.array(ChatToolInvocationSchema)
+})
+
+export const QualityActionCardSchema = z.object({
+  actionId: z.string(),
+  documentId: z.string(),
+  fileName: z.string(),
+  actionType: z.enum(["quality_review", "extraction_review", "rag_exclusion_review"]),
+  severity: z.enum(["info", "warning", "error"]),
+  reason: z.string(),
+  source: z.enum(["quality_profile", "extraction_warning", "parsed_document"]),
+  createdAt: z.string()
+})
+
+export const QualityActionCardListResponseSchema = z.object({
+  actions: z.array(QualityActionCardSchema)
+})
+
+export const AdminExportResponseSchema = z.object({
+  url: z.string().url(),
+  expiresInSeconds: z.number().int().positive(),
+  objectKey: z.string(),
+  exportType: z.enum(["audit_log", "cost_summary"]),
+  generatedAt: z.string()
+})
+
 export const AgentProviderListResponseSchema = z.object({
   providers: z.array(AgentRuntimeProviderDefinitionSchema)
 })
@@ -1313,6 +1457,19 @@ export const DebugDownloadResponseSchema = z.object({
   url: z.string().url(),
   expiresInSeconds: z.number().int().positive(),
   objectKey: z.string()
+})
+
+export const DebugReplayPlanSchema = z.object({
+  runId: z.string(),
+  replayable: z.boolean(),
+  targetType: DebugTraceTargetTypeSchema,
+  visibility: DebugTraceVisibilitySchema,
+  sanitizePolicyVersion: DebugTraceSanitizePolicyVersionSchema,
+  stepCount: z.number().int().nonnegative(),
+  citationCount: z.number().int().nonnegative(),
+  toolInvocationCount: z.number().int().nonnegative(),
+  blockedReason: z.string().optional(),
+  notes: z.array(z.string())
 })
 
 export const WorkerTargetTypeSchema = z.enum(["chat_run", "document_ingest_run", "benchmark_run", "async_agent_run"])

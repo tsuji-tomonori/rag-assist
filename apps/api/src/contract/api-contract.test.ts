@@ -332,12 +332,92 @@ test("HTTP contract validates major endpoint responses against /openapi.json", a
     validateSchema(adminAuditLog.body, responseSchema(openapi, "/admin/audit-log", "get", 200), openapi)
 
     const usage = await getJson(`http://127.0.0.1:${port}/admin/usage`)
+    assert.match(usage.body.periodStart, /^\d{4}-\d{2}-01T00:00:00\.000Z$/)
+    assert.match(usage.body.periodEnd, /^\d{4}-\d{2}-\d{2}T/)
     assert.equal(Array.isArray(usage.body.users), true)
+    const localUsage = usage.body.users.find((user: { userId: string }) => user.userId === "local-dev")
+    assert.ok(localUsage)
+    assert.ok(localUsage.inputTokens > 0)
+    assert.ok(localUsage.outputTokens > 0)
+    assert.equal(localUsage.totalTokens, localUsage.inputTokens + localUsage.outputTokens)
+    assert.equal(localUsage.chatRequestCount, localUsage.chatMessages)
+    assert.ok(localUsage.llmCallCount >= 2)
+    assert.equal(usage.body.totals.totalTokens, usage.body.totals.inputTokens + usage.body.totals.outputTokens)
+    assert.ok(usage.body.dataCompleteness.actualTokenEventCount + usage.body.dataCompleteness.estimatedTokenEventCount > 0)
+    assert.equal(Array.isArray(usage.body.breakdowns.byFeature), true)
+    assert.equal(Array.isArray(usage.body.breakdowns.byModel), true)
+    assert.equal(Array.isArray(usage.body.breakdowns.byGroup), true)
+    const llmFeatureUsage = usage.body.breakdowns.byFeature.find((item: { key: string; totalTokens: number }) => (item.key === "chat" || item.key.startsWith("rag.")) && item.totalTokens > 0)
+    assert.ok(llmFeatureUsage)
+    const modelUsage = usage.body.breakdowns.byModel.find((item: { totalTokens: number }) => item.totalTokens > 0)
+    assert.ok(modelUsage)
+    const groupUsage = usage.body.breakdowns.byGroup.find((item: { totalTokens: number }) => item.totalTokens > 0)
+    assert.ok(groupUsage)
     validateSchema(usage.body, responseSchema(openapi, "/admin/usage", "get", 200), openapi)
 
     const costs = await getJson(`http://127.0.0.1:${port}/admin/costs`)
     assert.equal(costs.body.currency, "USD")
+    const chatCompletionCost = costs.body.items.find((item: { service: string; category: string }) => item.service === "Bedrock" && item.category === "chat completion tokens")
+    assert.ok(chatCompletionCost)
+    assert.ok(chatCompletionCost.usage > 0)
+    assert.ok(chatCompletionCost.estimatedCostUsd > 0)
+    assert.equal(typeof chatCompletionCost.pricingVersion, "string")
+    assert.equal(typeof costs.body.pricingVersion, "string")
+    assert.deepEqual(costs.body.dataCompleteness, usage.body.dataCompleteness)
+    assert.ok(costs.body.totalEstimatedUsd >= chatCompletionCost.estimatedCostUsd)
     validateSchema(costs.body, responseSchema(openapi, "/admin/costs", "get", 200), openapi)
+  } finally {
+    server.kill("SIGTERM")
+  }
+})
+
+test("admin usage returns explicit empty users and zero completeness when no usage events exist", async () => {
+  const port = 18600 + Math.floor(Math.random() * 1000)
+  const dataDir = await mkdtemp(path.join(tmpdir(), "memorag-contract-admin-usage-empty-"))
+  const tsxBin = path.resolve(process.cwd(), "../../node_modules/.bin/tsx")
+  const server = spawn(tsxBin, ["src/local.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MOCK_BEDROCK: "true",
+      USE_LOCAL_VECTOR_STORE: "true",
+      USE_LOCAL_QUESTION_STORE: "true",
+      LOCAL_DATA_DIR: dataDir,
+      AUTH_ENABLED: "false",
+      LOCAL_AUTH_GROUPS: "SYSTEM_ADMIN"
+    },
+    stdio: ["ignore", "pipe", "pipe"]
+  })
+
+  try {
+    await waitUntilReady(server, port)
+
+    const openapiRes = await fetch(`http://127.0.0.1:${port}/openapi.json`)
+    assert.equal(openapiRes.status, 200)
+    const openapi = (await openapiRes.json()) as OpenApiDoc
+    const usage = await getJson(`http://127.0.0.1:${port}/admin/usage`)
+
+    assert.match(usage.body.periodStart, /^\d{4}-\d{2}-01T00:00:00\.000Z$/)
+    assert.match(usage.body.periodEnd, /^\d{4}-\d{2}-\d{2}T/)
+    assert.deepEqual(usage.body.users, [])
+    assert.deepEqual(usage.body.totals, {
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      estimatedCostUsd: 0
+    })
+    assert.deepEqual(usage.body.breakdowns, {
+      byFeature: [],
+      byModel: [],
+      byGroup: []
+    })
+    assert.deepEqual(usage.body.dataCompleteness, {
+      actualTokenEventCount: 0,
+      estimatedTokenEventCount: 0,
+      missingTokenEventCount: 0
+    })
+    validateSchema(usage.body, responseSchema(openapi, "/admin/usage", "get", 200), openapi)
   } finally {
     server.kill("SIGTERM")
   }
@@ -1336,6 +1416,8 @@ test("Phase 2 admin endpoints enforce user, access, usage, and cost permissions"
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/aliases/publish`, { method: "POST" })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/usage`)).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/costs`)).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/audit-log/export`, { method: "POST" })).status, 403)
+    assert.equal((await fetch(`http://127.0.0.1:${port}/admin/costs/export`, { method: "POST" })).status, 403)
     assert.equal((await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/suspend`, { method: "POST" })).status, 403)
     assert.equal(
       (await fetch(`http://127.0.0.1:${port}/admin/users/local-dev/roles`, {

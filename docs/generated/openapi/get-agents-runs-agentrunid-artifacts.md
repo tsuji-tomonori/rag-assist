@@ -58,7 +58,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 10 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 21 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 | `404` | 指定したリソースが見つかりません。 | `application/json` | 2 field(s) |
@@ -79,6 +79,17 @@ Media type: `application/json`
 | `artifacts[].storageRef` | `string` | yes | `response.artifacts[].storageRef` の値。項目名は storage ref を表します。 | - |
 | `artifacts[].createdAt` | `string` | yes | レコードを作成した日時。 | - |
 | `artifacts[].writebackStatus` | `enum(not_requested \| pending_approval \| approved \| rejected \| applied)` | no | `response.artifacts[].writebackStatus` の値。項目名は writeback status を表します。 | enum=not_requested, pending_approval, approved, rejected, applied |
+| `artifacts[].writebackTarget` | `object` | no | `response.artifacts[].writebackTarget` の値。項目名は writeback target を表します。 | - |
+| `artifacts[].writebackTarget.sourceType` | `enum(folder \| document)` | yes | `response.artifacts[].writebackTarget.sourceType` の値。項目名は source type を表します。 | enum=folder, document |
+| `artifacts[].writebackTarget.sourceId` | `string` | yes | `response.artifacts[].writebackTarget.sourceId` の値。項目名は source id を表します。 | - |
+| `artifacts[].writebackTarget.targetPath` | `string` | no | `response.artifacts[].writebackTarget.targetPath` の値。項目名は target path を表します。 | - |
+| `artifacts[].writebackRequestedBy` | `string` | no | `response.artifacts[].writebackRequestedBy` の値。項目名は writeback requested by を表します。 | - |
+| `artifacts[].writebackRequestedAt` | `string` | no | `response.artifacts[].writebackRequestedAt` の値。項目名は writeback requested at を表します。 | - |
+| `artifacts[].writebackReviewedBy` | `string` | no | `response.artifacts[].writebackReviewedBy` の値。項目名は writeback reviewed by を表します。 | - |
+| `artifacts[].writebackReviewedAt` | `string` | no | `response.artifacts[].writebackReviewedAt` の値。項目名は writeback reviewed at を表します。 | - |
+| `artifacts[].writebackAppliedBy` | `string` | no | `response.artifacts[].writebackAppliedBy` の値。項目名は writeback applied by を表します。 | - |
+| `artifacts[].writebackAppliedAt` | `string` | no | `response.artifacts[].writebackAppliedAt` の値。項目名は writeback applied at を表します。 | - |
+| `artifacts[].writebackDecisionReason` | `string` | no | `response.artifacts[].writebackDecisionReason` の値。項目名は writeback decision reason を表します。 | - |
 
 ##### `401` 認証が必要です。
 

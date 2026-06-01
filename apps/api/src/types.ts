@@ -581,6 +581,18 @@ export type AgentArtifact = {
   storageRef: string
   createdAt: string
   writebackStatus?: "not_requested" | "pending_approval" | "approved" | "rejected" | "applied"
+  writebackTarget?: {
+    sourceType: "folder" | "document"
+    sourceId: string
+    targetPath?: string
+  }
+  writebackRequestedBy?: string
+  writebackRequestedAt?: string
+  writebackReviewedBy?: string
+  writebackReviewedAt?: string
+  writebackAppliedBy?: string
+  writebackAppliedAt?: string
+  writebackDecisionReason?: string
 }
 
 export type SkillDefinition = {
@@ -674,6 +686,78 @@ export type ChatResponsePayload = {
   retrieved: Citation[]
   finalEvidence?: Citation[]
   debug?: DebugTrace
+}
+
+export type ParsedDocumentPreview = {
+  documentId: string
+  fileName: string
+  available: boolean
+  unavailableReason?: "not_parsed" | "legacy_manifest" | "no_access"
+  fileProfile?: PdfFileProfile
+  sourceExtractorVersion?: string
+  counters?: Record<string, number>
+  warnings: ExtractionWarning[]
+  pageCount: number
+  blockCount: number
+  tableCount: number
+  figureCount: number
+  lowConfidenceCount: number
+  tables: Array<{
+    id: string
+    pageStart?: number
+    pageEnd?: number
+    rowCount: number
+    columnCount: number
+    confidence?: number
+  }>
+  figures: Array<{
+    id: string
+    pageStart?: number
+    pageEnd?: number
+    caption?: string
+    confidence?: number
+  }>
+}
+
+export type QualityActionCard = {
+  actionId: string
+  documentId: string
+  fileName: string
+  actionType: "quality_review" | "extraction_review" | "rag_exclusion_review"
+  severity: "info" | "warning" | "error"
+  reason: string
+  source: "quality_profile" | "extraction_warning" | "parsed_document"
+  createdAt: string
+}
+
+export type AdminExportArtifact = {
+  url: string
+  expiresInSeconds: number
+  objectKey: string
+  exportType: "audit_log" | "cost_summary"
+  generatedAt: string
+}
+
+export type AgentProviderSetting = {
+  provider: AgentRuntimeProvider
+  availability: AgentProviderAvailability
+  credentialMode: "environment" | "tenant_managed" | "not_configured" | "disabled"
+  secretConfigured: boolean
+  configuredModelIds: string[]
+  updatedAt?: string
+}
+
+export type DebugReplayPlan = {
+  runId: string
+  replayable: boolean
+  targetType: DebugTraceTargetType
+  visibility: DebugTraceVisibility
+  sanitizePolicyVersion: typeof DEBUG_TRACE_SANITIZE_POLICY_VERSION
+  stepCount: number
+  citationCount: number
+  toolInvocationCount: number
+  blockedReason?: string
+  notes: string[]
 }
 
 export type ChatRunStatus = "queued" | "running" | "succeeded" | "failed" | "cancelled"
@@ -963,12 +1047,39 @@ export type UserUsageSummary = {
   email: string
   displayName?: string
   chatMessages: number
+  chatRequestCount: number
+  llmCallCount: number
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  estimatedCostUsd: number
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
   conversationCount: number
   questionCount: number
   documentCount: number
   benchmarkRunCount: number
   debugRunCount: number
   lastActivityAt?: string
+}
+
+export type UsageSummaryBreakdown = {
+  key: string
+  label: string
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  estimatedCostUsd: number
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
+}
+
+export type UsageSummaryBreakdowns = {
+  byFeature: UsageSummaryBreakdown[]
+  byModel: UsageSummaryBreakdown[]
+  byGroup: UsageSummaryBreakdown[]
 }
 
 export type CostAuditItem = {
@@ -978,7 +1089,8 @@ export type CostAuditItem = {
   unit: string
   unitCostUsd: number
   estimatedCostUsd: number
-  confidence: "actual_usage" | "estimated_usage" | "manual_estimate"
+  confidence: "actual_usage" | "estimated_usage" | "manual_estimate" | "missing_usage"
+  pricingVersion?: string
 }
 
 export type UserCostSummary = {
@@ -994,7 +1106,60 @@ export type CostAuditSummary = {
   totalEstimatedUsd: number
   items: CostAuditItem[]
   users: UserCostSummary[]
+  pricingVersion: string
   pricingCatalogUpdatedAt: string
+  dataCompleteness: UsageDataCompleteness
+}
+
+export type UsageDataCompleteness = {
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
+}
+
+export type UsageEventFeature =
+  | "chat"
+  | "rag.query_rewrite"
+  | "rag.answerability"
+  | "rag.retrieval_judge"
+  | "rag.generate_answer"
+  | "rag.support_verification"
+  | "rag.answer_repair"
+  | "rag.memory_card"
+  | "embedding"
+  | "benchmark"
+  | "debug"
+  | "async_agent"
+
+export type UsageEvent = {
+  eventId: string
+  tenantId: string
+  userId: string
+  sessionId?: string
+  messageId?: string
+  orchestrationRunId?: string
+  ragRunId?: string
+  toolInvocationId?: string
+  ingestRunId?: string
+  benchmarkRunId?: string
+  debugTraceId?: string
+  feature: UsageEventFeature
+  provider: "bedrock" | "mock" | "custom"
+  modelId: string
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens?: number
+  cacheWriteTokens?: number
+  totalTokens: number
+  tokenSource: "provider_usage" | "tokenizer_estimate" | "mock_estimate" | "unknown"
+  usageConfidence: "actual" | "estimated" | "missing"
+  pricingVersion?: string
+  estimatedCostUsd?: number
+  latencyMs?: number
+  status: "succeeded" | "failed"
+  errorCode?: string
+  idempotencyKey: string
+  createdAt: string
 }
 
 export type QuestionStatus = "open" | "in_progress" | "waiting_requester" | "answered" | "resolved"

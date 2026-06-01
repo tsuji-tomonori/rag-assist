@@ -18,6 +18,7 @@ import { LocalBenchmarkRunStore } from "../adapters/local-benchmark-run-store.js
 import { LocalQuestionStore } from "../adapters/local-question-store.js"
 import { LocalVectorStore } from "../adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "../adapters/mock-bedrock.js"
+import { InMemoryUsageEventStore } from "../adapters/usage-event-store.js"
 import type { Dependencies } from "../dependencies.js"
 import type { AgentRuntimeProvider, AsyncAgentRun, BenchmarkRunner, DebugTrace, ManagedUser } from "../types.js"
 import type { UserDirectory } from "../adapters/user-directory.js"
@@ -1008,6 +1009,11 @@ test("service executes configured Claude Code provider with sanitized artifacts"
   assert.doesNotMatch(logText, /secret-token-value/)
   assert.match(reportText, /ANTHROPIC_API_KEY=\[REDACTED\]/)
   assert.match(logText, /Bearer \[REDACTED\]/)
+  const usageEvents = await service.listUsageEvents()
+  const agentUsage = usageEvents.find((event) => event.feature === "async_agent" && event.idempotencyKey === `async-agent:${run.agentRunId}`)
+  assert.equal(agentUsage?.usageConfidence, "missing")
+  assert.equal(agentUsage?.pricingVersion, "bedrock-2026-06-local-v1")
+  assert.equal(agentUsage?.status, "succeeded")
 })
 
 test("service records Claude Code provider failures without leaking raw secrets", async () => {
@@ -1347,6 +1353,22 @@ test("asynchronous chat run stores debug trace by reference", async () => {
   assert.equal(completed.status, "succeeded")
   assert.equal((completed as unknown as Record<string, unknown>).debug, undefined)
   assert.ok(completed.debugRunId)
+  const usageEvents = await service.listUsageEvents()
+  const usageFeatures = new Set(usageEvents.filter((event) => event.orchestrationRunId === "run-debug-reference").map((event) => event.feature))
+  assert.ok(usageFeatures.has("rag.query_rewrite"))
+  assert.ok(usageFeatures.has("rag.answerability"))
+  assert.ok(usageFeatures.has("rag.generate_answer"))
+  assert.ok(usageFeatures.has("rag.support_verification"))
+  const llmUsageEventKeys = usageEvents
+    .filter((event) => event.orchestrationRunId === "run-debug-reference" && event.feature.startsWith("rag."))
+    .map((event) => event.idempotencyKey)
+
+  await service.executeChatRun("run-debug-reference")
+  const retriedUsageEventKeys = (await service.listUsageEvents())
+    .filter((event) => event.orchestrationRunId === "run-debug-reference" && event.feature.startsWith("rag."))
+    .map((event) => event.idempotencyKey)
+  assert.deepEqual(new Set(retriedUsageEventKeys).size, retriedUsageEventKeys.length)
+  assert.ok(llmUsageEventKeys.every((key) => retriedUsageEventKeys.includes(key)))
 
   const events = await deps.chatRunEventStore.listAfter("run-debug-reference", 0)
   const final = events.find((event) => event.type === "final")
@@ -1354,6 +1376,46 @@ test("asynchronous chat run stores debug trace by reference", async () => {
   assert.equal(typeof (final.data as Record<string, unknown>).debugRunId, "string")
   assert.equal((final.data as Record<string, unknown>).debug, undefined)
   assert.ok(await service.getDebugRun(completed.debugRunId ?? ""))
+})
+
+test("service search records semantic embedding usage per request", async () => {
+  const { service } = await createService()
+  await service.ingest({
+    fileName: "search-usage.md",
+    text: "検索利用量の確認では semantic embedding の実行を usage event として記録します。",
+    skipMemory: true
+  })
+
+  const user = { userId: "search-user-1", email: "search@example.com", cognitoGroups: ["CHAT_USER"] }
+  await service.search({ query: "検索利用量", topK: 5, lexicalTopK: 0, semanticTopK: 3 }, user)
+  await service.search({ query: "検索利用量", topK: 5, lexicalTopK: 0, semanticTopK: 3 }, user)
+
+  const embeddingEvents = (await service.listUsageEvents()).filter((event) => event.feature === "embedding" && event.userId === user.userId)
+  assert.equal(embeddingEvents.length, 2)
+  assert.ok(embeddingEvents.every((event) => event.status === "succeeded"))
+  assert.ok(embeddingEvents.every((event) => event.orchestrationRunId?.startsWith("search:")))
+  assert.deepEqual(new Set(embeddingEvents.map((event) => event.idempotencyKey)).size, embeddingEvents.length)
+  assert.ok(embeddingEvents.every((event) => event.inputTokens > 0 && event.totalTokens === event.inputTokens))
+})
+
+test("service chat records usage per stateless request without idempotency collisions", async () => {
+  const { service } = await createService()
+  await service.ingest({
+    fileName: "chat-usage.md",
+    text: "利用量監査では同じ質問を複数回送っても、それぞれ別のチャット利用として記録します。",
+    skipMemory: true
+  })
+
+  const user = { userId: "chat-user-1", email: "chat@example.com", cognitoGroups: ["CHAT_USER"] }
+  await service.chat({ question: "利用量監査の扱いは？", minScore: 0.01 }, user)
+  const firstEvents = (await service.listUsageEvents()).filter((event) => event.userId === user.userId && event.feature.startsWith("rag."))
+  await service.chat({ question: "利用量監査の扱いは？", minScore: 0.01 }, user)
+  const secondEvents = (await service.listUsageEvents()).filter((event) => event.userId === user.userId && event.feature.startsWith("rag."))
+
+  assert.ok(firstEvents.length > 0)
+  assert.ok(secondEvents.length > firstEvents.length)
+  assert.ok(secondEvents.every((event) => event.orchestrationRunId?.startsWith("chat:")))
+  assert.deepEqual(new Set(secondEvents.map((event) => event.idempotencyKey)).size, secondEvents.length)
 })
 
 test("service executes asynchronous document ingest runs from uploaded object", async () => {
@@ -1380,6 +1442,12 @@ test("service executes asynchronous document ingest runs from uploaded object", 
   assert.equal(completed.stage, "done")
   assert.equal(completed.counters?.chunkCount, 1)
   assert.equal(events.at(-1)?.stage, "done")
+  const usageEvents = await service.listUsageEvents()
+  const ingestEmbeddingEvents = usageEvents.filter((event) => event.ingestRunId === started.runId && event.feature === "embedding")
+  assert.equal(ingestEmbeddingEvents.length, 1)
+  assert.equal(ingestEmbeddingEvents[0]?.userId, user.userId)
+  assert.equal(ingestEmbeddingEvents[0]?.orchestrationRunId, started.runId)
+  assert.ok((ingestEmbeddingEvents[0]?.inputTokens ?? 0) > 0)
 })
 
 test("service lists all Cognito directory users in the managed user ledger", async () => {
@@ -1798,10 +1866,73 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   assert.ok((await service.listAdminAuditLog(admin)).some((entry) => entry.action === "role:assign"))
 
   const usage = await service.listUsageSummaries(admin)
-  assert.equal(usage.find((item) => item.userId === managed.userId)?.chatMessages, 0)
+  assert.equal(usage.find((item) => item.userId === managed.userId), undefined)
+  const now = new Date()
+  const currentPeriodEventCreatedAt = now.toISOString()
+  const previousPeriodEventCreatedAt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1, 0, 0, 1)).toISOString()
+  await deps.usageEventStore?.putOnce({
+    eventId: "usage-event-1",
+    tenantId: "default",
+    userId: managed.userId,
+    sessionId: "chat-session-1",
+    orchestrationRunId: "chat-session-1",
+    feature: "rag.generate_answer",
+    provider: "mock",
+    modelId: "model-a",
+    inputTokens: 100,
+    outputTokens: 20,
+    totalTokens: 120,
+    tokenSource: "mock_estimate",
+    usageConfidence: "estimated",
+    pricingVersion: "v1",
+    estimatedCostUsd: 0.000128,
+    status: "succeeded",
+    idempotencyKey: "chat-session-1:finalAnswer:abc",
+    createdAt: currentPeriodEventCreatedAt
+  })
+  await deps.usageEventStore?.putOnce({
+    eventId: "usage-event-previous-period",
+    tenantId: "default",
+    userId: managed.userId,
+    sessionId: "old-chat-session",
+    orchestrationRunId: "old-chat-session",
+    feature: "rag.generate_answer",
+    provider: "mock",
+    modelId: "model-a",
+    inputTokens: 1000,
+    outputTokens: 200,
+    totalTokens: 1200,
+    tokenSource: "mock_estimate",
+    usageConfidence: "estimated",
+    pricingVersion: "v1",
+    estimatedCostUsd: 0.00128,
+    status: "succeeded",
+    idempotencyKey: "old-chat-session:finalAnswer:abc",
+    createdAt: previousPeriodEventCreatedAt
+  })
+  const eventUsage = await service.listUsageSummaries(admin)
+  const eventUsageItem = eventUsage.find((item) => item.userId === managed.userId)
+  assert.equal(eventUsageItem?.chatMessages, 1)
+  assert.equal(eventUsageItem?.chatRequestCount, 1)
+  assert.equal(eventUsageItem?.llmCallCount, 1)
+  assert.equal(eventUsageItem?.totalTokens, 120)
+  const breakdowns = await service.getUsageSummaryBreakdowns(admin)
+  assert.equal(breakdowns.byFeature.find((item) => item.key === "rag.generate_answer")?.totalTokens, 120)
   const cost = await service.getCostAuditSummary(admin)
   assert.equal(cost.currency, "USD")
+  assert.equal(cost.dataCompleteness.estimatedTokenEventCount, 1)
+  assert.equal(cost.items.find((item) => item.category === "chat completion tokens")?.usage, 120)
   assert.ok(cost.items.some((item) => item.category === "document chunks"))
+  const exportPayload = await service.buildAdminExportPayload(admin, "cost_summary", "2026-06-01T00:00:00.000Z") as {
+    costSummary?: {
+      pricingVersion?: string
+      items?: Array<{ pricingVersion?: string }>
+      dataCompleteness?: { estimatedTokenEventCount: number }
+    }
+  }
+  assert.equal(exportPayload.costSummary?.dataCompleteness?.estimatedTokenEventCount, 1)
+  assert.equal(exportPayload.costSummary?.pricingVersion, "v1")
+  assert.ok(exportPayload.costSummary?.items?.some((item) => item.pricingVersion === "v1"))
 
   const alias = await service.createAlias(admin, {
     term: "  PTO  ",
@@ -1877,6 +2008,11 @@ test("service covers admin defaults, alias misses, terminal async runs, and benc
   const searchRun = await service.createBenchmarkRun(chatUser, { suiteId: "search-smoke-v1", mode: "search", topK: 999 })
   assert.equal(searchRun.mode, "search")
   assert.equal(searchRun.topK, ragRuntimePolicy.retrieval.searchRagMaxTopK)
+  const benchmarkUsage = (await service.listUsageEvents()).find((event) => event.benchmarkRunId === searchRun.runId)
+  assert.equal(benchmarkUsage?.feature, "benchmark")
+  assert.equal(benchmarkUsage?.usageConfidence, "missing")
+  assert.equal(benchmarkUsage?.pricingVersion, "bedrock-2026-06-local-v1")
+  assert.equal(benchmarkUsage?.totalTokens, 0)
   assert.equal(await service.cancelBenchmarkRun("missing-benchmark-run"), undefined)
   assert.equal((await service.cancelBenchmarkRun(searchRun.runId))?.status, "cancelled")
   assert.equal(await service.createBenchmarkArtifactDownloadUrl(searchRun.runId, "logs"), undefined)
@@ -1933,6 +2069,7 @@ async function createService(options: {
     benchmarkRunStore: new LocalBenchmarkRunStore(dataDir),
     chatRunStore: new LocalChatRunStore(dataDir),
     chatRunEventStore: new LocalChatRunEventStore(dataDir),
+    usageEventStore: new InMemoryUsageEventStore(),
     documentIngestRunStore: new LocalDocumentIngestRunStore(dataDir),
     documentIngestRunEventStore: new LocalDocumentIngestRunEventStore(dataDir),
     documentGroupStore: new LocalDocumentGroupStore(dataDir),

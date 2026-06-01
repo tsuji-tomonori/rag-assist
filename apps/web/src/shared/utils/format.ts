@@ -58,6 +58,7 @@ export function managedUserStatusLabel(status: ManagedUser["status"]): string {
 export function costConfidenceLabel(confidence: CostAuditSummary["items"][number]["confidence"]): string {
   if (confidence === "actual_usage") return "実測"
   if (confidence === "estimated_usage") return "概算"
+  if (confidence === "missing_usage") return "未計測"
   return "手動見積"
 }
 

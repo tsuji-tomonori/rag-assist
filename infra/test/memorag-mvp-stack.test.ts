@@ -214,6 +214,11 @@ test("implements the designed serverless resources", () => {
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
   })
   template.hasResourceProperties("AWS::DynamoDB::Table", {
+    KeySchema: [{ AttributeName: "idempotencyKey", KeyType: "HASH" }],
+    BillingMode: "PAY_PER_REQUEST",
+    PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+  })
+  template.hasResourceProperties("AWS::DynamoDB::Table", {
     KeySchema: [{ AttributeName: "groupId", KeyType: "HASH" }],
     BillingMode: "PAY_PER_REQUEST",
     PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
@@ -242,6 +247,7 @@ test("implements the designed serverless resources", () => {
         BENCHMARK_RUNS_TABLE_NAME: Match.anyValue(),
         CHAT_RUNS_TABLE_NAME: Match.anyValue(),
         CHAT_RUN_EVENTS_TABLE_NAME: Match.anyValue(),
+        USAGE_EVENTS_TABLE_NAME: Match.anyValue(),
         BENCHMARK_BUCKET_NAME: Match.anyValue(),
         BENCHMARK_STATE_MACHINE_ARN: Match.anyValue(),
         BENCHMARK_TARGET_API_BASE_URL: Match.anyValue(),
@@ -250,6 +256,7 @@ test("implements the designed serverless resources", () => {
         USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
         USE_LOCAL_BENCHMARK_RUN_STORE: "false",
         USE_LOCAL_CHAT_RUN_STORE: "false",
+        USE_LOCAL_USAGE_EVENT_STORE: "false",
         AUTH_ENABLED: "true",
         CORS_ALLOWED_ORIGINS: "*",
         COGNITO_USER_POOL_ID: Match.anyValue(),
@@ -310,50 +317,23 @@ test("implements the designed serverless resources", () => {
   const getLogEventsResource = JSON.stringify(getLogEventsStatement.Resource)
   assert.match(getLogEventsResource, /log-stream:\*/)
   assert.doesNotMatch(getLogEventsResource, /\*.*log-stream:\*/)
-  template.hasResourceProperties("AWS::IAM::Policy", {
-    PolicyDocument: Match.objectLike({
-      Statement: Match.arrayWith([
-        Match.objectLike({
-          Action: Match.arrayWith([
-            "cognito-idp:ListUsers",
-            "cognito-idp:AdminListGroupsForUser",
-            "cognito-idp:AdminAddUserToGroup",
-            "cognito-idp:AdminRemoveUserFromGroup"
-          ]),
-          Resource: Match.anyValue()
-        })
-      ])
-    })
-  })
-  template.hasResourceProperties("AWS::IAM::Policy", {
-    PolicyDocument: Match.objectLike({
-      Statement: Match.arrayWith([
-        Match.objectLike({
-          Action: Match.arrayWith([
-            "cognito-idp:AdminGetUser",
-            "cognito-idp:AdminCreateUser",
-            "cognito-idp:AdminSetUserPassword",
-            "cognito-idp:AdminAddUserToGroup"
-          ]),
-          Resource: Match.anyValue()
-        })
-      ])
-    })
-  })
-  template.hasResourceProperties("AWS::IAM::Policy", {
-    PolicyDocument: Match.objectLike({
-      Statement: Match.arrayWith([
-        Match.objectLike({
-          Action: Match.arrayWith([
-            "textract:DetectDocumentText",
-            "textract:StartDocumentTextDetection",
-            "textract:GetDocumentTextDetection"
-          ]),
-          Resource: "*"
-        })
-      ])
-    })
-  })
+  assertPolicyActionSet(template, [
+    "cognito-idp:ListUsers",
+    "cognito-idp:AdminListGroupsForUser",
+    "cognito-idp:AdminAddUserToGroup",
+    "cognito-idp:AdminRemoveUserFromGroup"
+  ])
+  assertPolicyActionSet(template, [
+    "cognito-idp:AdminGetUser",
+    "cognito-idp:AdminCreateUser",
+    "cognito-idp:AdminSetUserPassword",
+    "cognito-idp:AdminAddUserToGroup"
+  ])
+  assertPolicyActionSet(template, [
+    "textract:DetectDocumentText",
+    "textract:StartDocumentTextDetection",
+    "textract:GetDocumentTextDetection"
+  ])
   template.hasResourceProperties("AWS::StepFunctions::StateMachine", {
     DefinitionString: Match.anyValue(),
     LoggingConfiguration: Match.objectLike({
@@ -615,4 +595,16 @@ function assertResourceTags(logicalId: string, resource: unknown, expectedTags: 
   for (const [key, expectedValue] of Object.entries(expectedTags)) {
     assert.equal(tagMap.get(key), expectedValue, `${logicalId} should have ${key}=${expectedValue}`)
   }
+}
+
+function assertPolicyActionSet(template: Template, expectedActions: string[]): void {
+  const resources = Object.values(template.toJSON().Resources ?? {})
+    .filter((resource: any) => resource.Type === "AWS::IAM::Policy" || resource.Type === "AWS::IAM::ManagedPolicy") as any[]
+  const matched = resources
+    .flatMap((resource) => resource.Properties?.PolicyDocument?.Statement ?? [])
+    .some((statement) => {
+      const actions = Array.isArray(statement.Action) ? statement.Action : [statement.Action]
+      return expectedActions.every((action) => actions.includes(action))
+    })
+  assert.equal(matched, true, `Expected IAM policy action set: ${expectedActions.join(", ")}`)
 }

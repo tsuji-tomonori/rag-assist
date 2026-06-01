@@ -78,6 +78,22 @@ test("normal RAG quality gate blocks every explicit disqualifier", () => {
   }
 })
 
+test("normal RAG quality gate blocks low confidence extraction evidence", () => {
+  const gate = qualityGateForNormalRag({
+    metadata: undefined,
+    qualityProfile: undefined,
+    extractionWarnings: [{
+      code: "ocr_low_confidence_block",
+      message: "OCR confidence is below review threshold.",
+      severity: "warning",
+      confidence: 62
+    }]
+  })
+
+  assert.equal(gate.approved, false)
+  assert.deepEqual(gate.reasons, ["low_confidence_extraction_warning"])
+})
+
 test("quality profile cache key is stable for gate-relevant fields", () => {
   assert.equal(
     qualityProfileCacheKey({
@@ -100,7 +116,8 @@ test("quality profile cache key is stable for gate-relevant fields", () => {
       extractionQualityStatus: "high",
       ragEligibility: "eligible",
       confidence: undefined,
-      flags: ["verification_required"]
+      flags: ["verification_required"],
+      extractionRestrictions: []
     })
   )
 })

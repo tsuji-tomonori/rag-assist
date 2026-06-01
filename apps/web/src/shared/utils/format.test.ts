@@ -37,7 +37,7 @@ describe("format utilities", () => {
 
   it("maps admin, benchmark, question, and cost labels", () => {
     expect(["active", "suspended", "deleted"].map((status) => managedUserStatusLabel(status as never))).toEqual(["有効", "停止中", "削除済み"])
-    expect(["actual_usage", "estimated_usage", "manual_estimate"].map((confidence) => costConfidenceLabel(confidence as never))).toEqual(["実測", "概算", "手動見積"])
+    expect(["actual_usage", "estimated_usage", "missing_usage", "manual_estimate"].map((confidence) => costConfidenceLabel(confidence as never))).toEqual(["実測", "概算", "未計測", "手動見積"])
     expect(["user:create", "role:assign", "user:suspend", "user:unsuspend", "user:delete"].map((action) => adminAuditActionLabel(action as never))).toEqual(["ユーザー作成", "ロール付与", "停止", "再開", "削除"])
     expect(["open", "answered", "resolved"].map((status) => statusLabel(status as never))).toEqual(["対応中", "回答済み", "解決済み"])
     expect(["queued", "running", "succeeded", "failed", "cancelled"].map((status) => runStatusLabel(status as never))).toEqual(["待機中", "実行中", "成功", "失敗", "取消済み"])

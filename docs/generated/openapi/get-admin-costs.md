@@ -52,7 +52,7 @@ _なし_
 
 | Status | 説明 | Media type | Body |
 | --- | --- | --- | --- |
-| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 17 field(s) |
+| `200` | リクエストは成功し、レスポンス body に結果を返します。 | `application/json` | 23 field(s) |
 | `401` | 認証が必要です。 | `application/json` | 2 field(s) |
 | `403` | 対象操作を実行する権限がありません。 | `application/json` | 2 field(s) |
 
@@ -73,12 +73,18 @@ Media type: `application/json`
 | `items[].unit` | `string` | yes | `response.items[].unit` の値。項目名は unit を表します。 | - |
 | `items[].unitCostUsd` | `number` | yes | `response.items[].unitCostUsd` の値。項目名は unit cost usd を表します。 | minimum=0 |
 | `items[].estimatedCostUsd` | `number` | yes | `response.items[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
-| `items[].confidence` | `enum(actual_usage \| estimated_usage \| manual_estimate)` | yes | `response.items[].confidence` の値。項目名は confidence を表します。 | enum=actual_usage, estimated_usage, manual_estimate |
+| `items[].confidence` | `enum(actual_usage \| estimated_usage \| manual_estimate \| missing_usage)` | yes | `response.items[].confidence` の値。項目名は confidence を表します。 | enum=actual_usage, estimated_usage, manual_estimate, missing_usage |
+| `items[].pricingVersion` | `string` | no | `response.items[].pricingVersion` の値。項目名は pricing version を表します。 | - |
 | `users` | `array<object>` | yes | `response.users` の値。項目名は users を表します。 | - |
 | `users[].userId` | `string` | yes | 対象ユーザーを一意に識別する ID。 | - |
 | `users[].email` | `string` | yes | ユーザーのメールアドレス。 | - |
 | `users[].estimatedCostUsd` | `number` | yes | `response.users[].estimatedCostUsd` の値。項目名は estimated cost usd を表します。 | minimum=0 |
+| `pricingVersion` | `string` | yes | `response.pricingVersion` の値。項目名は pricing version を表します。 | - |
 | `pricingCatalogUpdatedAt` | `string` | yes | `response.pricingCatalogUpdatedAt` の値。項目名は pricing catalog updated at を表します。 | - |
+| `dataCompleteness` | `object` | yes | `response.dataCompleteness` の値。項目名は data completeness を表します。 | - |
+| `dataCompleteness.actualTokenEventCount` | `integer` | yes | `response.dataCompleteness.actualTokenEventCount` の値。項目名は actual token event count を表します。 | minimum=0 |
+| `dataCompleteness.estimatedTokenEventCount` | `integer` | yes | `response.dataCompleteness.estimatedTokenEventCount` の値。項目名は estimated token event count を表します。 | minimum=0 |
+| `dataCompleteness.missingTokenEventCount` | `integer` | yes | `response.dataCompleteness.missingTokenEventCount` の値。項目名は missing token event count を表します。 | minimum=0 |
 
 ##### `401` 認証が必要です。
 

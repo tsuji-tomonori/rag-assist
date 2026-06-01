@@ -1,7 +1,10 @@
 import { get } from "../../../shared/api/http.js"
-import type { UserUsageSummary } from "../types.js"
+import type { UsageSummaryResponse, UserUsageSummary } from "../types.js"
+
+export async function getUsageSummary(): Promise<UsageSummaryResponse> {
+  return get<UsageSummaryResponse>("/admin/usage")
+}
 
 export async function listUsageSummaries(): Promise<UserUsageSummary[]> {
-  const result = await get<{ users?: UserUsageSummary[] }>("/admin/usage")
-  return result.users ?? []
+  return (await getUsageSummary()).users
 }

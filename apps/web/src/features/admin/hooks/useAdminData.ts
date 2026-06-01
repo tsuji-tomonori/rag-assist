@@ -4,8 +4,9 @@ import { assignUserRoles, createManagedUser, deleteManagedUser, listManagedUsers
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
-import { listUsageSummaries } from "../api/usageApi.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
+import { getUsageSummary } from "../api/usageApi.js"
+import { downloadAdminAuditLogExport, downloadAdminCostSummaryExport } from "../../../shared/utils/downloads.js"
+import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UsageSummaryResponse, UserUsageSummary } from "../types.js"
 
 export function useAdminData({
   canReadAdminAuditLog,
@@ -38,6 +39,7 @@ export function useAdminData({
   const [adminAuditLog, setAdminAuditLog] = useState<ManagedUserAuditLogEntry[]>([])
   const [accessRoles, setAccessRoles] = useState<AccessRoleDefinition[]>([])
   const [usageSummaries, setUsageSummaries] = useState<UserUsageSummary[]>([])
+  const [usageSummary, setUsageSummary] = useState<UsageSummaryResponse | null>(null)
   const [costAudit, setCostAudit] = useState<CostAuditSummary | null>(null)
   const [aliases, setAliases] = useState<AliasDefinition[]>([])
   const [aliasAuditLog, setAliasAuditLog] = useState<AliasAuditLogItem[]>([])
@@ -55,7 +57,9 @@ export function useAdminData({
   }
 
   async function refreshUsageSummaries() {
-    setUsageSummaries(await listUsageSummaries())
+    const nextUsageSummary = await getUsageSummary()
+    setUsageSummary(nextUsageSummary)
+    setUsageSummaries(nextUsageSummary.users)
   }
 
   async function refreshCostAudit() {
@@ -204,11 +208,38 @@ export function useAdminData({
     }
   }
 
+  async function onExportAdminAuditLog() {
+    if (!canReadAdminAuditLog) return
+    setLoading(true)
+    setError(null)
+    try {
+      await downloadAdminAuditLogExport()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function onExportCostSummary() {
+    if (!canReadCosts) return
+    setLoading(true)
+    setError(null)
+    try {
+      await downloadAdminCostSummaryExport()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return {
     managedUsers,
     adminAuditLog,
     accessRoles,
     usageSummaries,
+    usageSummary,
     costAudit,
     aliases,
     aliasAuditLog,
@@ -226,6 +257,8 @@ export function useAdminData({
     onUpdateAlias,
     onReviewAlias,
     onDisableAlias,
-    onPublishAliases
+    onPublishAliases,
+    onExportAdminAuditLog,
+    onExportCostSummary
   }
 }

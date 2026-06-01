@@ -9,7 +9,7 @@ import { sanitizeProviderText, type AsyncAgentProviderArtifact, type AsyncAgentP
 import { runChatOrchestration } from "../chat-orchestration/graph.js"
 import { llmOptions, normalizeMaxIterations, normalizeMemoryTopK, normalizeMinScore, normalizeSearchTopK, normalizeTopK, ragRuntimePolicy } from "../chat-orchestration/runtime-policy.js"
 import type { ChatInput, ChatOrchestrationResult } from "../chat-orchestration/types.js"
-import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AgentProviderAvailability, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type PublishedAliasArtifact, type ReindexMigration, type StructuredBlock, type UserUsageSummary, type VectorRecord } from "../types.js"
+import { DEBUG_TRACE_SANITIZE_POLICY_VERSION, DEBUG_TRACE_SCHEMA_VERSION, type AdminExportArtifact, type AgentProviderAvailability, type AgentProviderSetting, type AgentRuntimeProvider, type AsyncAgentRun, type AccessRoleDefinition, type AliasAuditLogItem, type AliasDefinition, type BenchmarkMode, type BenchmarkRun, type BenchmarkRunner, type BenchmarkRunThresholds, type BenchmarkSuite, type ChatToolInvocation, type ChatRun, type Chunk, type ConversationHistoryItem, type CostAuditSummary, type DebugReplayPlan, type DebugTrace, type DocumentGroup, type DocumentIngestRun, type DocumentManifest, type DocumentManifestSummary, type HumanQuestion, type JsonValue, type ManagedUser, type ManagedUserAuditAction, type ManagedUserAuditLogEntry, type MemoryCard, type ParsedDocumentPreview, type PublishedAliasArtifact, type QualityActionCard, type ReindexMigration, type StructuredBlock, type UsageDataCompleteness, type UsageEvent, type UsageSummaryBreakdowns, type UserUsageSummary, type VectorRecord } from "../types.js"
 import type { AppUser } from "../auth.js"
 import type { AnswerQuestionInput, CreateQuestionInput } from "../adapters/question-store.js"
 import type { SaveConversationHistoryInput } from "../adapters/conversation-history-store.js"
@@ -20,9 +20,11 @@ import { parseJsonObject } from "./json.js"
 import { loadChunksForManifest, loadStructuredBlocksForManifest } from "./manifest-chunks.js"
 import { buildPipelineVersions } from "./pipeline-versions.js"
 import { buildMemoryCardPrompt } from "./prompts.js"
-import { documentQualityProfileFromMetadata } from "./quality.js"
+import { documentQualityProfileFromMetadata, qualityGateForNormalRag } from "./quality.js"
 import { extractDocumentFromUpload } from "./text-extract.js"
 import { aliasArtifactLatestKey } from "../search/alias-artifacts.js"
+import { UsageTrackingTextModel } from "./usage-tracking-text-model.js"
+import { calculateUsageEventCost, defaultPricingCatalogUpdatedAt, defaultPricingVersion, pricingVersionForEvents } from "./pricing-catalog.js"
 
 type IngestInput = {
   fileName: string
@@ -73,6 +75,11 @@ type CreateBenchmarkRunInput = {
   minScore?: number
   concurrency?: number
   thresholds?: BenchmarkRunThresholds
+}
+
+type UsageSummaryPeriod = {
+  periodStart: string
+  periodEnd: string
 }
 
 type CreateAsyncAgentRunInput = {
@@ -138,7 +145,6 @@ type AliasLedger = {
 const adminLedgerKey = "admin/admin-ledger.json"
 const aliasLedgerKey = "admin/alias-ledger.json"
 const reindexMigrationLedgerKey = "admin/reindex-migrations.json"
-const pricingCatalogUpdatedAt = "2026-05-02T00:00:00.000Z"
 
 const benchmarkSuites: BenchmarkSuite[] = [
   {
@@ -242,7 +248,7 @@ const benchmarkSuites: BenchmarkSuite[] = [
 export class MemoRagService {
   constructor(private readonly deps: Dependencies) {}
 
-  async ingest(input: IngestInput): Promise<DocumentManifest> {
+  async ingest(input: IngestInput, deps: Dependencies = this.deps): Promise<DocumentManifest> {
     const documentId = randomUUID()
     const createdAt = new Date().toISOString()
     const embeddingModelId = input.embeddingModelId ?? config.embeddingModelId
@@ -284,9 +290,9 @@ export class MemoRagService {
     const structuredBlocksObjectKey = extracted.blocks?.length ? `documents/${documentId}/structured-blocks.json` : undefined
     const memoryCardsObjectKey = input.skipMemory ? undefined : `documents/${documentId}/memory-cards.json`
     const manifestObjectKey = `manifests/${documentId}.json`
-    await this.deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")
+    await deps.objectStore.putText(sourceObjectKey, text, "text/plain; charset=utf-8")
     if (structuredBlocksObjectKey && extracted.blocks) {
-      await this.deps.objectStore.putText(
+      await deps.objectStore.putText(
         structuredBlocksObjectKey,
         JSON.stringify({ schemaVersion: 2, blocks: extracted.blocks, parsedDocument: extracted.parsedDocument }, null, 2),
         "application/json"
@@ -302,9 +308,9 @@ export class MemoRagService {
           chunks,
           documentStatistics,
           modelId: input.memoryModelId
-        })
+        }, deps)
     if (memoryCardsObjectKey) {
-      await this.deps.objectStore.putText(memoryCardsObjectKey, JSON.stringify({ schemaVersion: 1, memoryCards }, null, 2), "application/json")
+      await deps.objectStore.putText(memoryCardsObjectKey, JSON.stringify({ schemaVersion: 1, memoryCards }, null, 2), "application/json")
     }
 
     const evidenceVectorKeys: string[] = []
@@ -316,7 +322,7 @@ export class MemoRagService {
 
     logIngestStage({ stage: "embedding", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length })
     const evidenceRows = await mapWithConcurrency(chunks, config.embeddingConcurrency, async (chunk) => {
-      const vector = await embedWithCache(this.deps, {
+      const vector = await embedWithCache(deps, {
         text: chunk.text,
         modelId: embeddingModelId,
         dimensions: config.embeddingDimensions
@@ -366,7 +372,7 @@ export class MemoRagService {
     evidenceRecords.push(...evidenceRows)
 
     const memoryRows = await mapWithConcurrency(memoryCards, config.embeddingConcurrency, async (card) => {
-      const vector = await embedWithCache(this.deps, {
+      const vector = await embedWithCache(deps, {
         text: card.text,
         modelId: embeddingModelId,
         dimensions: config.embeddingDimensions
@@ -397,8 +403,8 @@ export class MemoRagService {
     logIngestStage({ stage: "embedding", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: chunks.length, memoryCardCount: memoryCards.length })
 
     logIngestStage({ stage: "vector_put", phase: "start", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: evidenceRecords.length, memoryCardCount: memoryRecords.length })
-    await this.deps.evidenceVectorStore.put(evidenceRecords)
-    await this.deps.memoryVectorStore.put(memoryRecords)
+    await deps.evidenceVectorStore.put(evidenceRecords)
+    await deps.memoryVectorStore.put(memoryRecords)
     logIngestStage({ stage: "vector_put", phase: "end", documentId, fileName: input.fileName, mimeType: input.mimeType, fileSizeBytes: input.contentBytes?.length, chunkCount: evidenceRecords.length, memoryCardCount: memoryRecords.length })
 
     const manifest: DocumentManifest = {
@@ -436,7 +442,7 @@ export class MemoRagService {
       createdAt
     }
 
-    await this.deps.objectStore.putText(manifestObjectKey, JSON.stringify(manifest, null, 2), "application/json")
+    await deps.objectStore.putText(manifestObjectKey, JSON.stringify(manifest, null, 2), "application/json")
     return manifest
   }
 
@@ -577,6 +583,17 @@ export class MemoRagService {
 
   async getDocumentManifest(documentId: string): Promise<DocumentManifest> {
     return this.getManifest(documentId)
+  }
+
+  async getParsedDocumentPreview(user: AppUser, documentId: string): Promise<ParsedDocumentPreview | undefined> {
+    const manifest = await this.getManifest(documentId).catch((error: unknown) => {
+      if (isMissingObjectError(error)) return undefined
+      throw error
+    })
+    if (!manifest) return undefined
+    const groups = (await this.deps.documentGroupStore.list()).map(normalizeDocumentGroup)
+    if (!canAccessManifest(manifest, user, groups)) throw forbiddenError("Forbidden")
+    return buildParsedDocumentPreview(manifest)
   }
 
   async listDocumentGroups(user: AppUser): Promise<DocumentGroup[]> {
@@ -876,6 +893,10 @@ export class MemoRagService {
     return [...(db.auditLog ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 100)
   }
 
+  async listUsageEvents(): Promise<UsageEvent[]> {
+    return this.deps.usageEventStore?.list() ?? []
+  }
+
   async assignUserRoles(actor: AppUser, userId: string, groups: string[]): Promise<ManagedUser | undefined> {
     const normalizedGroups = normalizeRoles(groups)
     const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
@@ -903,19 +924,42 @@ export class MemoRagService {
     return this.updateManagedUserStatus(actor, userId, "deleted")
   }
 
-  async listUsageSummaries(actor: AppUser): Promise<UserUsageSummary[]> {
+  async listUsageSummaries(actor: AppUser, period = currentUsageSummaryPeriod()): Promise<UserUsageSummary[]> {
     const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
     const documents = await this.listDocuments()
-    const benchmarkRuns = await this.listBenchmarkRuns()
-    const debugRuns = await this.listDebugRuns()
+    const benchmarkRuns = (await this.listBenchmarkRuns()).filter((run) => isIsoDateInPeriod(run.updatedAt, period))
+    const debugRuns = (await this.listDebugRuns()).filter((run) => isIsoDateInPeriod(run.completedAt, period))
+    const usageEvents = filterUsageEventsByPeriod(await this.listUsageEvents(), period)
+    const eventsByUser = groupUsageEventsByUser(usageEvents)
 
     return db.users
       .filter((user) => user.status !== "deleted")
+      .filter((user) => {
+        const stored = db.usage[user.userId] ?? {}
+        const storedInPeriod = isIsoDateInPeriod(stored.lastActivityAt, period)
+        const events = eventsByUser.get(user.userId) ?? []
+        const userBenchmarkRuns = benchmarkRuns.filter((run) => run.createdBy === user.userId)
+        return events.length > 0
+          || userBenchmarkRuns.length > 0
+          || (storedInPeriod && (
+            (stored.chatMessages ?? 0) > 0
+            || (stored.conversationCount ?? 0) > 0
+            || (stored.questionCount ?? 0) > 0
+            || (stored.benchmarkRunCount ?? 0) > 0
+            || (stored.debugRunCount ?? 0) > 0
+          ))
+      })
       .map((user) => {
         const stored = db.usage[user.userId] ?? {}
+        const storedInPeriod = isIsoDateInPeriod(stored.lastActivityAt, period)
+        const events = eventsByUser.get(user.userId) ?? []
+        const llmEvents = events.filter((event) => isLlmUsageEvent(event))
+        const tokenSummary = summarizeUsageEvents(events)
+        const chatRequestCount = countChatRequests(events)
         const userBenchmarkRuns = benchmarkRuns.filter((run) => run.createdBy === user.userId)
         const lastActivityAt = [
           stored.lastActivityAt,
+          ...events.map((event) => event.createdAt),
           ...userBenchmarkRuns.map((run) => run.updatedAt),
           ...debugRuns.map((run) => run.completedAt)
         ].filter(Boolean).sort().at(-1)
@@ -923,27 +967,74 @@ export class MemoRagService {
           userId: user.userId,
           email: user.email,
           displayName: user.displayName,
-          chatMessages: stored.chatMessages ?? 0,
-          conversationCount: stored.conversationCount ?? 0,
-          questionCount: stored.questionCount ?? 0,
+          chatMessages: Math.max(storedInPeriod ? stored.chatMessages ?? 0 : 0, chatRequestCount),
+          chatRequestCount,
+          llmCallCount: llmEvents.length,
+          inputTokens: tokenSummary.inputTokens,
+          outputTokens: tokenSummary.outputTokens,
+          totalTokens: tokenSummary.totalTokens,
+          estimatedCostUsd: roundCost(tokenSummary.estimatedCostUsd),
+          actualTokenEventCount: tokenSummary.dataCompleteness.actualTokenEventCount,
+          estimatedTokenEventCount: tokenSummary.dataCompleteness.estimatedTokenEventCount,
+          missingTokenEventCount: tokenSummary.dataCompleteness.missingTokenEventCount,
+          conversationCount: storedInPeriod ? stored.conversationCount ?? 0 : 0,
+          questionCount: storedInPeriod ? stored.questionCount ?? 0 : 0,
           documentCount: user.groups.includes("RAG_GROUP_MANAGER") || user.groups.includes("SYSTEM_ADMIN") ? documents.length : 0,
-          benchmarkRunCount: (stored.benchmarkRunCount ?? 0) + userBenchmarkRuns.length,
-          debugRunCount: user.groups.includes("SYSTEM_ADMIN") ? debugRuns.length : (stored.debugRunCount ?? 0),
+          benchmarkRunCount: (storedInPeriod ? stored.benchmarkRunCount ?? 0 : 0) + userBenchmarkRuns.length,
+          debugRunCount: user.groups.includes("SYSTEM_ADMIN") ? debugRuns.length : (storedInPeriod ? stored.debugRunCount ?? 0 : 0),
           lastActivityAt
         }
       })
       .sort((a, b) => (b.lastActivityAt ?? "").localeCompare(a.lastActivityAt ?? ""))
   }
 
+  async getUsageSummaryTotals(actor: AppUser, period = currentUsageSummaryPeriod()): Promise<{ inputTokens: number; outputTokens: number; totalTokens: number; estimatedCostUsd: number; dataCompleteness: UsageDataCompleteness }> {
+    const users = await this.listUsageSummaries(actor, period)
+    return {
+      inputTokens: users.reduce((sum, user) => sum + user.inputTokens, 0),
+      outputTokens: users.reduce((sum, user) => sum + user.outputTokens, 0),
+      totalTokens: users.reduce((sum, user) => sum + user.totalTokens, 0),
+      estimatedCostUsd: roundCost(users.reduce((sum, user) => sum + user.estimatedCostUsd, 0)),
+      dataCompleteness: {
+        actualTokenEventCount: users.reduce((sum, user) => sum + user.actualTokenEventCount, 0),
+        estimatedTokenEventCount: users.reduce((sum, user) => sum + user.estimatedTokenEventCount, 0),
+        missingTokenEventCount: users.reduce((sum, user) => sum + user.missingTokenEventCount, 0)
+      }
+    }
+  }
+
+  async getUsageSummaryBreakdowns(actor: AppUser, period = currentUsageSummaryPeriod()): Promise<UsageSummaryBreakdowns> {
+    const db = await this.loadAdminLedger(actor, { syncUserDirectory: true })
+    const usageEvents = filterUsageEventsByPeriod(await this.listUsageEvents(), period)
+    const activeUsersById = new Map(db.users.filter((user) => user.status !== "deleted").map((user) => [user.userId, user]))
+
+    return {
+      byFeature: summarizeUsageBreakdown(usageEvents, (event) => [{ key: event.feature, label: event.feature }]),
+      byModel: summarizeUsageBreakdown(usageEvents, (event) => [{ key: event.modelId, label: event.modelId }]),
+      byGroup: summarizeUsageBreakdown(usageEvents, (event) => {
+        const user = activeUsersById.get(event.userId)
+        const groups = user?.groups?.length ? user.groups : ["unassigned"]
+        return groups.map((group) => ({ key: group, label: group }))
+      })
+    }
+  }
+
   async getCostAuditSummary(actor: AppUser): Promise<CostAuditSummary> {
-    const usage = await this.listUsageSummaries(actor)
+    const period = currentUsageSummaryPeriod()
+    const usage = await this.listUsageSummaries(actor, period)
     const documents = await this.listDocuments()
-    const benchmarkRuns = await this.listBenchmarkRuns()
-    const debugRuns = await this.listDebugRuns()
-    const totalChatMessages = usage.reduce((sum, user) => sum + user.chatMessages, 0)
+    const benchmarkRuns = (await this.listBenchmarkRuns()).filter((run) => isIsoDateInPeriod(run.updatedAt, period))
+    const debugRuns = (await this.listDebugRuns()).filter((run) => isIsoDateInPeriod(run.completedAt, period))
+    const totals = await this.getUsageSummaryTotals(actor, period)
+    const usageEvents = filterUsageEventsByPeriod(await this.listUsageEvents(), period)
+    const llmEvents = usageEvents.filter((event) => isLlmUsageEvent(event))
+    const embeddingEvents = usageEvents.filter((event) => event.feature === "embedding")
+    const llmSummary = summarizeUsageEvents(llmEvents)
+    const embeddingSummary = summarizeUsageEvents(embeddingEvents)
     const totalBenchmarkCases = benchmarkRuns.reduce((sum, run) => sum + (run.metrics?.total ?? 0), 0)
     const items = [
-      estimateCost("Bedrock", "chat completion", totalChatMessages, "message", 0.0008, "estimated_usage"),
+      estimateCost("Bedrock", "chat completion tokens", llmSummary.totalTokens, "token", 0, costConfidenceForUsageEvents(llmEvents), pricingVersionForEvents(llmEvents), llmSummary.estimatedCostUsd),
+      estimateCost("Bedrock", "embedding tokens", embeddingSummary.inputTokens, "token", 0, costConfidenceForUsageEvents(embeddingEvents), pricingVersionForEvents(embeddingEvents), embeddingSummary.estimatedCostUsd),
       estimateCost("S3 Vectors", "document chunks", documents.reduce((sum, document) => sum + document.chunkCount + document.memoryCardCount, 0), "vector", 0.00005, "estimated_usage"),
       estimateCost("Benchmark", "dataset cases", totalBenchmarkCases, "case", 0.0012, totalBenchmarkCases > 0 ? "actual_usage" : "manual_estimate"),
       estimateCost("Debug trace", "persisted traces", debugRuns.length, "trace", 0.0001, "estimated_usage")
@@ -951,18 +1042,18 @@ export class MemoRagService {
     const userCosts = usage.map((user) => ({
       userId: user.userId,
       email: user.email,
-      estimatedCostUsd: roundCost(user.chatMessages * 0.0008 + user.benchmarkRunCount * 0.012 + user.debugRunCount * 0.0001)
+      estimatedCostUsd: roundCost(user.estimatedCostUsd + user.benchmarkRunCount * 0.012 + user.debugRunCount * 0.0001)
     }))
-    const now = new Date()
-    const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
     return {
-      periodStart,
-      periodEnd: now.toISOString(),
+      periodStart: period.periodStart,
+      periodEnd: period.periodEnd,
       currency: "USD",
       totalEstimatedUsd: roundCost(items.reduce((sum, item) => sum + item.estimatedCostUsd, 0)),
       items: [...items],
       users: userCosts.sort((a, b) => b.estimatedCostUsd - a.estimatedCostUsd),
-      pricingCatalogUpdatedAt
+      pricingVersion: pricingVersionForEvents(usageEvents) ?? defaultPricingVersion,
+      pricingCatalogUpdatedAt: defaultPricingCatalogUpdatedAt,
+      dataCompleteness: totals.dataCompleteness
     }
   }
 
@@ -985,7 +1076,24 @@ export class MemoRagService {
 
   async chat(input: ChatInput, user?: AppUser): Promise<ChatOrchestrationResult> {
     if (user) await this.assertSearchScopeReadable(user, input.searchScope)
-    return runChatOrchestration(this.deps, input, user)
+    const sessionId = input.conversation?.conversationId
+    const usageRunId = sessionId
+      ? `${sessionId}:turn:${input.conversation?.turnId ?? randomUUID()}`
+      : `chat:${randomUUID()}`
+    const result = await runChatOrchestration(this.depsWithUsageTracking(user, sessionId, usageRunId), input, user)
+    if (user && result.debug?.runId) {
+      await this.recordUsageEvent({
+        userId: user.userId,
+        sessionId,
+        orchestrationRunId: usageRunId,
+        debugTraceId: result.debug.runId,
+        feature: "debug",
+        modelId: input.modelId ?? config.defaultModelId,
+        status: "succeeded",
+        idempotencyKey: `debug:${result.debug.runId}`
+      })
+    }
+    return result
   }
 
   async startChatRun(input: ChatInput, user: AppUser): Promise<{ runId: string; status: ChatRun["status"]; eventsPath: string }> {
@@ -1060,7 +1168,10 @@ export class MemoRagService {
 
     try {
       const result = await runChatOrchestration(
-        this.deps,
+        this.depsWithUsageTracking(
+          { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["CHAT_USER"] },
+          run.runId
+        ),
         {
           question: run.question,
           conversationHistory: run.conversationHistory,
@@ -1102,6 +1213,18 @@ export class MemoRagService {
       if (result.needsClarification !== undefined) finalEventData.needsClarification = result.needsClarification
       if (result.clarification) finalEventData.clarification = result.clarification as unknown as JsonValue
       if (result.debug?.runId) finalEventData.debugRunId = result.debug.runId
+      if (result.debug?.runId) {
+        await this.recordUsageEvent({
+          userId: run.createdBy,
+          sessionId: run.runId,
+          orchestrationRunId: run.runId,
+          debugTraceId: result.debug.runId,
+          feature: "debug",
+          modelId: run.modelId,
+          status: "succeeded",
+          idempotencyKey: `debug:${result.debug.runId}`
+        })
+      }
       await this.deps.chatRunEventStore.append({
         runId,
         type: "final",
@@ -1270,7 +1393,12 @@ export class MemoRagService {
         skipMemory: run.skipMemory,
         contentBytes,
         sourceS3Object
-      })
+      }, this.depsWithUsageTracking(
+        { userId: run.createdBy, email: run.userEmail, cognitoGroups: run.userGroups?.length ? run.userGroups : ["RAG_UPLOADER"] },
+        undefined,
+        run.runId,
+        { ingestRunId: run.runId }
+      ))
       await this.deps.objectStore.deleteObject(run.objectKey)
       const manifestSummary = toDocumentManifestSummary(manifest)
       const completedAt = new Date().toISOString()
@@ -1348,7 +1476,8 @@ export class MemoRagService {
 
   async search(input: SearchInput, user: AppUser): Promise<SearchResponse> {
     await this.assertSearchScopeReadable(user, input.scope)
-    return searchRag(this.deps, input, user)
+    const usageRunId = `search:${randomUUID()}`
+    return searchRag(this.depsWithUsageTracking(user, undefined, usageRunId), input, user)
   }
 
   async createQuestion(input: CreateQuestionInput, user?: AppUser): Promise<HumanQuestion> {
@@ -1431,6 +1560,7 @@ export class MemoRagService {
       })
       db.usage[actor.userId] = {
         chatMessages: 0,
+        chatRequestCount: 0,
         conversationCount: 0,
         questionCount: 0,
         benchmarkRunCount: 0,
@@ -1471,6 +1601,7 @@ export class MemoRagService {
       })
       db.usage[directoryUser.userId] ??= {
         chatMessages: 0,
+        chatRequestCount: 0,
         conversationCount: 0,
         questionCount: 0,
         benchmarkRunCount: 0,
@@ -1724,6 +1855,21 @@ export class MemoRagService {
     return this.deps.asyncAgentProviders?.list() ?? []
   }
 
+  listAgentProviderSettings(): AgentProviderSetting[] {
+    return this.listAgentRuntimeProviders().map((provider) => ({
+      provider: provider.provider,
+      availability: provider.availability,
+      credentialMode: provider.availability === "disabled"
+        ? "disabled"
+        : provider.availability === "not_configured"
+          ? "not_configured"
+          : "environment",
+      secretConfigured: provider.availability === "available",
+      configuredModelIds: provider.configuredModelIds,
+      updatedAt: undefined
+    }))
+  }
+
   async createAsyncAgentRun(user: AppUser, input: CreateAsyncAgentRunInput): Promise<AsyncAgentRun> {
     await this.assertAsyncAgentSelectionsReadable(user, input)
 
@@ -1833,6 +1979,66 @@ export class MemoRagService {
     return artifacts?.find((artifact) => artifact.artifactId === artifactId)
   }
 
+  async updateAsyncAgentArtifactWriteback(
+    user: AppUser,
+    agentRunId: string,
+    artifactId: string,
+    input: {
+      action: "request" | "approve" | "reject" | "apply"
+      target?: { sourceType: "folder" | "document"; sourceId: string; targetPath?: string }
+      reason?: string
+    }
+  ): Promise<AsyncAgentRun["artifacts"][number] | undefined> {
+    const run = await this.getAsyncAgentRun(user, agentRunId)
+    if (!run) return undefined
+    const artifact = run.artifacts.find((candidate) => candidate.artifactId === artifactId)
+    if (!artifact) return undefined
+    const now = new Date().toISOString()
+    const next = { ...artifact }
+
+    if (input.action === "request") {
+      if (!input.target) throw new Error("writeback target is required")
+      await this.assertAsyncAgentWritebackTargetFull(user, input.target)
+      next.writebackStatus = "pending_approval"
+      next.writebackTarget = input.target
+      next.writebackRequestedBy = user.userId
+      next.writebackRequestedAt = now
+      next.writebackDecisionReason = trimOptional(input.reason)
+    } else if (input.action === "approve") {
+      await this.assertAsyncAgentWritebackTargetFull(user, next.writebackTarget)
+      if (next.writebackStatus !== "pending_approval") throw new Error("writeback is not pending approval")
+      next.writebackStatus = "approved"
+      next.writebackReviewedBy = user.userId
+      next.writebackReviewedAt = now
+      next.writebackDecisionReason = trimOptional(input.reason)
+    } else if (input.action === "reject") {
+      if (next.writebackStatus !== "pending_approval") throw new Error("writeback is not pending approval")
+      next.writebackStatus = "rejected"
+      next.writebackReviewedBy = user.userId
+      next.writebackReviewedAt = now
+      next.writebackDecisionReason = trimOptional(input.reason)
+    } else {
+      await this.assertAsyncAgentWritebackTargetFull(user, next.writebackTarget)
+      if (next.writebackStatus !== "approved") throw new Error("writeback is not approved")
+      // This marks an approved writeback as applied. File mutation is intentionally handled by a later
+      // storage adapter so provider output never overwrites a document without this audited state change.
+      next.writebackStatus = "applied"
+      next.writebackAppliedBy = user.userId
+      next.writebackAppliedAt = now
+      next.writebackDecisionReason = trimOptional(input.reason)
+    }
+
+    const artifacts = run.artifacts.map((candidate) => candidate.artifactId === artifactId ? next : candidate)
+    const updated: AsyncAgentRun = {
+      ...run,
+      status: input.action === "request" ? "waiting_for_approval" : run.status,
+      artifacts,
+      updatedAt: now
+    }
+    await this.saveAsyncAgentRun(updated)
+    return next
+  }
+
   async executeAsyncAgentRun(runId: string): Promise<AsyncAgentRun> {
     const run = await this.loadAsyncAgentRun(runId)
     if (!run) throw new Error(`Async agent run not found: ${runId}`)
@@ -1851,6 +2057,15 @@ export class MemoRagService {
         updatedAt: now
       }
       await this.saveAsyncAgentRun(updated)
+      await this.recordUsageEvent({
+        userId: run.requesterUserId,
+        feature: "async_agent",
+        provider: "custom",
+        modelId: run.modelId,
+        status: "failed",
+        errorCode: updated.failureReasonCode,
+        idempotencyKey: `async-agent:${run.agentRunId}`
+      })
       return updated
     }
 
@@ -1902,6 +2117,15 @@ export class MemoRagService {
       artifactIds: artifacts.map((artifact) => artifact.artifactId)
     }
     await this.saveAsyncAgentRun(updated)
+    await this.recordUsageEvent({
+      userId: updated.requesterUserId,
+      feature: "async_agent",
+      provider: "custom",
+      modelId: updated.modelId,
+      status: updated.status === "completed" ? "succeeded" : "failed",
+      errorCode: updated.failureReasonCode,
+      idempotencyKey: `async-agent:${updated.agentRunId}`
+    })
     return updated
   }
 
@@ -1981,6 +2205,14 @@ export class MemoRagService {
     }
 
     await this.deps.benchmarkRunStore.create(run)
+    await this.recordUsageEvent({
+      userId: user.userId,
+      benchmarkRunId: run.runId,
+      feature: "benchmark",
+      modelId: run.modelId ?? config.defaultModelId,
+      status: "succeeded",
+      idempotencyKey: `benchmark:${run.runId}:queued`
+    })
     if (!config.benchmarkStateMachineArn) return run
 
     try {
@@ -2079,6 +2311,147 @@ export class MemoRagService {
 
     if ((input.selectedSkillIds?.length ?? 0) > 0 && !hasPermission(user, "skill:read")) throw forbiddenError("Forbidden")
     if ((input.selectedAgentProfileIds?.length ?? 0) > 0 && !hasPermission(user, "agent_profile:read")) throw forbiddenError("Forbidden")
+  }
+
+  private async assertAsyncAgentWritebackTargetFull(
+    user: AppUser,
+    target: { sourceType: "folder" | "document"; sourceId: string } | undefined
+  ): Promise<void> {
+    if (!target) throw forbiddenError("Forbidden")
+    if (target.sourceType === "folder") {
+      await this.assertDocumentGroupsWritable(user, [target.sourceId])
+      return
+    }
+    const manifest = await this.getManifest(target.sourceId)
+    const groupIds = stringArray(manifest.metadata?.groupIds ?? manifest.metadata?.groupId) ?? []
+    if (groupIds.length > 0) {
+      await this.assertDocumentGroupsWritable(user, groupIds)
+      return
+    }
+    if (stringValue(manifest.metadata?.ownerUserId) === user.userId && hasPermission(user, "rag:doc:write:group")) return
+    if (user.cognitoGroups.includes("SYSTEM_ADMIN")) return
+    throw forbiddenError("Forbidden")
+  }
+
+  async listChatToolInvocations(): Promise<ChatToolInvocation[]> {
+    return (await this.listDebugRuns())
+      .flatMap((trace) => trace.toolInvocations ?? [])
+      .sort((a, b) => (b.completedAt ?? b.startedAt ?? "").localeCompare(a.completedAt ?? a.startedAt ?? ""))
+      .slice(0, 200)
+  }
+
+  async createDebugReplayPlan(runId: string): Promise<DebugReplayPlan | undefined> {
+    const trace = await this.getDebugRun(runId)
+    if (!trace) return undefined
+    const visibility = trace.visibility ?? "operator_sanitized"
+    return {
+      runId: trace.runId,
+      replayable: visibility !== "internal_restricted",
+      targetType: trace.targetType ?? "rag_run",
+      visibility,
+      sanitizePolicyVersion: trace.sanitizePolicyVersion ?? DEBUG_TRACE_SANITIZE_POLICY_VERSION,
+      stepCount: trace.steps.length,
+      citationCount: trace.citations.length,
+      toolInvocationCount: trace.toolInvocations?.length ?? 0,
+      blockedReason: visibility === "internal_restricted" ? "internal restricted trace cannot be replayed from the API" : undefined,
+      notes: [
+        "Replay plan is generated from sanitized trace metadata only.",
+        "Raw prompts, credentials, internal reasoning, and unauthorized document details are not included."
+      ]
+    }
+  }
+
+  async listQualityActionCards(user: AppUser): Promise<QualityActionCard[]> {
+    const documents = await this.listDocuments(user)
+    return documents.flatMap((manifest) => qualityActionCardsForManifest(manifest)).slice(0, 200)
+  }
+
+  async createAdminExportDownloadUrl(actor: AppUser, exportType: AdminExportArtifact["exportType"]): Promise<AdminExportArtifact> {
+    if (!config.debugDownloadBucketName) throw new Error("DEBUG_DOWNLOAD_BUCKET_NAME is not configured")
+    const generatedAt = new Date().toISOString()
+    const payload = await this.buildAdminExportPayload(actor, exportType, generatedAt)
+    const objectKey = `admin-exports/${exportType}/${generatedAt.replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}-${randomUUID().slice(0, 8)}.json`
+    const body = JSON.stringify(payload, null, 2)
+    const s3 = new S3Client({ region: config.region })
+    await s3.send(new PutObjectCommand({
+      Bucket: config.debugDownloadBucketName,
+      Key: objectKey,
+      Body: body,
+      ContentType: "application/json; charset=utf-8",
+      ContentDisposition: `attachment; filename="${exportType}-${generatedAt.slice(0, 10)}.json"`
+    }))
+    const expiresInSeconds = Math.max(60, config.debugDownloadExpiresInSeconds)
+    const url = await getSignedUrl(s3, new GetObjectCommand({
+      Bucket: config.debugDownloadBucketName,
+      Key: objectKey,
+      ResponseContentType: "application/json; charset=utf-8",
+      ResponseContentDisposition: `attachment; filename="${exportType}-${generatedAt.slice(0, 10)}.json"`
+    }), { expiresIn: expiresInSeconds })
+    return { url, expiresInSeconds, objectKey, exportType, generatedAt }
+  }
+
+  async buildAdminExportPayload(actor: AppUser, exportType: AdminExportArtifact["exportType"], generatedAt = new Date().toISOString()): Promise<JsonValue> {
+    return exportType === "audit_log"
+      ? { schemaVersion: 1, exportType, generatedBy: actor.userId, generatedAt, auditLog: await this.listAdminAuditLog(actor) }
+      : { schemaVersion: 1, exportType, generatedBy: actor.userId, generatedAt, costSummary: await this.getCostAuditSummary(actor) }
+  }
+
+  private depsWithUsageTracking(
+    user: AppUser | undefined,
+    sessionId: string | undefined,
+    orchestrationRunId = sessionId,
+    context: { ingestRunId?: string; toolInvocationId?: string } = {}
+  ): Dependencies {
+    if (!user || !this.deps.usageEventStore) return this.deps
+    return {
+      ...this.deps,
+      textModel: new UsageTrackingTextModel(this.deps.textModel, this.deps.usageEventStore, {
+        userId: user.userId,
+        sessionId,
+        orchestrationRunId,
+        ingestRunId: context.ingestRunId,
+        toolInvocationId: context.toolInvocationId
+      })
+    }
+  }
+
+  private async recordUsageEvent(input: {
+    userId: string
+    sessionId?: string
+    orchestrationRunId?: string
+    benchmarkRunId?: string
+    debugTraceId?: string
+    feature: UsageEvent["feature"]
+    provider?: UsageEvent["provider"]
+    modelId: string
+    status: UsageEvent["status"]
+    errorCode?: string
+    idempotencyKey: string
+  }): Promise<void> {
+    if (!this.deps.usageEventStore) return
+    const now = new Date().toISOString()
+    await this.deps.usageEventStore.putOnce({
+      eventId: randomUUID(),
+      tenantId: "default",
+      userId: input.userId,
+      sessionId: input.sessionId,
+      orchestrationRunId: input.orchestrationRunId,
+      benchmarkRunId: input.benchmarkRunId,
+      debugTraceId: input.debugTraceId,
+      feature: input.feature,
+      provider: input.provider ?? (config.mockBedrock ? "mock" : "bedrock"),
+      modelId: input.modelId,
+      inputTokens: 0,
+      outputTokens: 0,
+      totalTokens: 0,
+      tokenSource: "unknown",
+      usageConfidence: "missing",
+      pricingVersion: defaultPricingVersion,
+      status: input.status,
+      errorCode: input.errorCode,
+      idempotencyKey: input.idempotencyKey,
+      createdAt: now
+    })
   }
 
   private canReadAsyncAgentRun(user: AppUser, run: AsyncAgentRun): boolean {
@@ -2194,8 +2567,11 @@ export class MemoRagService {
     return { url, expiresInSeconds, objectKey: downloadMetadata.objectKey }
   }
 
-  private async createMemoryCards(input: { fileName: string; text: string; chunks: Chunk[]; documentStatistics?: DocumentManifest["documentStatistics"]; modelId?: string }): Promise<MemoryCard[]> {
-    const raw = await this.deps.textModel.generate(
+  private async createMemoryCards(
+    input: { fileName: string; text: string; chunks: Chunk[]; documentStatistics?: DocumentManifest["documentStatistics"]; modelId?: string },
+    deps: Pick<Dependencies, "textModel"> = this.deps
+  ): Promise<MemoryCard[]> {
+    const raw = await deps.textModel.generate(
       buildMemoryCardPrompt(input.fileName, input.text),
       llmOptions("memoryCard", input.modelId ?? config.defaultMemoryModelId)
     )
@@ -2478,7 +2854,9 @@ function estimateCost(
   usage: number,
   unit: string,
   unitCostUsd: number,
-  confidence: "actual_usage" | "estimated_usage" | "manual_estimate"
+  confidence: "actual_usage" | "estimated_usage" | "manual_estimate" | "missing_usage",
+  pricingVersion?: string,
+  estimatedCostUsd?: number
 ) {
   return {
     service,
@@ -2486,13 +2864,179 @@ function estimateCost(
     usage,
     unit,
     unitCostUsd,
-    estimatedCostUsd: roundCost(usage * unitCostUsd),
-    confidence
+    estimatedCostUsd: roundCost(estimatedCostUsd ?? usage * unitCostUsd),
+    confidence,
+    pricingVersion
   }
 }
 
 function roundCost(value: number): number {
   return Math.round(value * 1000000) / 1000000
+}
+
+function groupUsageEventsByUser(events: UsageEvent[]): Map<string, UsageEvent[]> {
+  const grouped = new Map<string, UsageEvent[]>()
+  for (const event of events) {
+    const current = grouped.get(event.userId) ?? []
+    current.push(event)
+    grouped.set(event.userId, current)
+  }
+  return grouped
+}
+
+function currentUsageSummaryPeriod(now = new Date()): UsageSummaryPeriod {
+  return {
+    periodStart: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString(),
+    periodEnd: now.toISOString()
+  }
+}
+
+function filterUsageEventsByPeriod(events: UsageEvent[], period: UsageSummaryPeriod): UsageEvent[] {
+  return events.filter((event) => isIsoDateInPeriod(event.createdAt, period))
+}
+
+function isIsoDateInPeriod(value: string | undefined, period: UsageSummaryPeriod): boolean {
+  if (!value) return false
+  const timestamp = Date.parse(value)
+  if (!Number.isFinite(timestamp)) return false
+  return timestamp >= Date.parse(period.periodStart) && timestamp <= Date.parse(period.periodEnd)
+}
+
+function summarizeUsageBreakdown(events: UsageEvent[], groupBy: (event: UsageEvent) => Array<{ key: string; label: string }>): UsageSummaryBreakdowns["byFeature"] {
+  const grouped = new Map<string, { label: string; events: UsageEvent[] }>()
+  for (const event of events) {
+    for (const group of groupBy(event)) {
+      const current = grouped.get(group.key) ?? { label: group.label, events: [] }
+      current.events.push(event)
+      grouped.set(group.key, current)
+    }
+  }
+  return [...grouped.entries()]
+    .map(([key, group]) => {
+      const tokenSummary = summarizeUsageEvents(group.events)
+      return {
+        key,
+        label: group.label,
+        inputTokens: tokenSummary.inputTokens,
+        outputTokens: tokenSummary.outputTokens,
+        totalTokens: tokenSummary.totalTokens,
+        estimatedCostUsd: roundCost(tokenSummary.estimatedCostUsd),
+        actualTokenEventCount: tokenSummary.dataCompleteness.actualTokenEventCount,
+        estimatedTokenEventCount: tokenSummary.dataCompleteness.estimatedTokenEventCount,
+        missingTokenEventCount: tokenSummary.dataCompleteness.missingTokenEventCount
+      }
+    })
+    .sort((a, b) => b.totalTokens - a.totalTokens || a.key.localeCompare(b.key))
+}
+
+function summarizeUsageEvents(events: UsageEvent[]): { inputTokens: number; outputTokens: number; totalTokens: number; estimatedCostUsd: number; dataCompleteness: UsageDataCompleteness } {
+  return {
+    inputTokens: events.reduce((sum, event) => sum + event.inputTokens, 0),
+    outputTokens: events.reduce((sum, event) => sum + event.outputTokens, 0),
+    totalTokens: events.reduce((sum, event) => sum + event.totalTokens, 0),
+    estimatedCostUsd: events.reduce((sum, event) => sum + (calculateUsageEventCost(event).estimatedCostUsd ?? 0), 0),
+    dataCompleteness: summarizeUsageCompleteness(events)
+  }
+}
+
+function costConfidenceForUsageEvents(events: UsageEvent[]): "actual_usage" | "estimated_usage" | "missing_usage" {
+  const completeness = summarizeUsageCompleteness(events)
+  if (completeness.actualTokenEventCount > 0 && completeness.missingTokenEventCount === 0 && completeness.estimatedTokenEventCount === 0) return "actual_usage"
+  if (completeness.actualTokenEventCount > 0 || completeness.estimatedTokenEventCount > 0) return "estimated_usage"
+  return "missing_usage"
+}
+
+function summarizeUsageCompleteness(events: UsageEvent[]): UsageDataCompleteness {
+  return {
+    actualTokenEventCount: events.filter((event) => event.usageConfidence === "actual").length,
+    estimatedTokenEventCount: events.filter((event) => event.usageConfidence === "estimated").length,
+    missingTokenEventCount: events.filter((event) => event.usageConfidence === "missing").length
+  }
+}
+
+function countChatRequests(events: UsageEvent[]): number {
+  const requestIds = new Set(
+    events
+      .filter((event) => isLlmUsageEvent(event))
+      .map((event) => event.orchestrationRunId ?? event.sessionId ?? event.messageId)
+      .filter((value): value is string => Boolean(value))
+  )
+  return requestIds.size
+}
+
+function isLlmUsageEvent(event: UsageEvent): boolean {
+  return event.feature === "chat" || event.feature.startsWith("rag.")
+}
+
+function buildParsedDocumentPreview(manifest: DocumentManifest): ParsedDocumentPreview {
+  const parsed = manifest.parsedDocument
+  const warnings = manifest.extractionWarnings ?? parsed?.warnings ?? []
+  const tables = parsed?.tables ?? []
+  const figures = parsed?.figures ?? []
+  const lowConfidenceCount = [
+    ...warnings.filter((warning) => typeof warning.confidence === "number" && warning.confidence < 70),
+    ...tables.filter((table) => typeof table.confidence === "number" && table.confidence < 0.7),
+    ...figures.filter((figure) => typeof figure.confidence === "number" && figure.confidence < 0.7)
+  ].length
+  return {
+    documentId: manifest.documentId,
+    fileName: manifest.fileName,
+    available: Boolean(parsed),
+    unavailableReason: parsed ? undefined : "not_parsed",
+    fileProfile: manifest.fileProfile ?? parsed?.fileProfile,
+    sourceExtractorVersion: manifest.sourceExtractorVersion ?? parsed?.sourceExtractorVersion,
+    counters: manifest.extractionCounters ?? parsed?.counters,
+    warnings,
+    pageCount: parsed?.pages?.length ?? 0,
+    blockCount: parsed?.blocks?.length ?? 0,
+    tableCount: tables.length,
+    figureCount: figures.length,
+    lowConfidenceCount,
+    tables: tables.slice(0, 100).map((table) => ({
+      id: table.id,
+      pageStart: table.pageStart,
+      pageEnd: table.pageEnd,
+      rowCount: table.rowCount,
+      columnCount: table.columnCount,
+      confidence: table.confidence
+    })),
+    figures: figures.slice(0, 100).map((figure) => ({
+      id: figure.id,
+      pageStart: figure.pageStart,
+      pageEnd: figure.pageEnd,
+      caption: figure.caption,
+      confidence: figure.confidence
+    }))
+  }
+}
+
+function qualityActionCardsForManifest(manifest: DocumentManifest): QualityActionCard[] {
+  const now = new Date().toISOString()
+  const quality = qualityGateForNormalRag(manifest)
+  const qualityActions = quality.reasons.map((reason) => ({
+    actionId: `quality-${manifest.documentId}-${reason}`,
+    documentId: manifest.documentId,
+    fileName: manifest.fileName,
+    actionType: reason === "low_confidence_extraction_warning" ? "extraction_review" as const : "quality_review" as const,
+    severity: "warning" as const,
+    reason,
+    source: reason === "low_confidence_extraction_warning" ? "extraction_warning" as const : "quality_profile" as const,
+    createdAt: manifest.qualityProfile?.updatedAt ?? manifest.createdAt ?? now
+  }))
+  const parsed = buildParsedDocumentPreview(manifest)
+  const parsedAction = parsed.lowConfidenceCount > 0
+    ? [{
+        actionId: `parsed-${manifest.documentId}-low-confidence`,
+        documentId: manifest.documentId,
+        fileName: manifest.fileName,
+        actionType: "extraction_review" as const,
+        severity: "warning" as const,
+        reason: "low_confidence_parsed_document",
+        source: "parsed_document" as const,
+        createdAt: manifest.createdAt ?? now
+      }]
+    : []
+  return [...qualityActions, ...parsedAction]
 }
 
 function isMissingObjectError(err: unknown): boolean {

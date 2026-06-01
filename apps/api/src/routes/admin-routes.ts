@@ -3,6 +3,7 @@ import { requirePermission } from "../authorization.js"
 import {
   AccessRoleListResponseSchema,
   AdminAuditLogResponseSchema,
+  AdminExportResponseSchema,
   AliasAuditLogResponseSchema,
   AliasDefinitionSchema,
   AliasListResponseSchema,
@@ -355,7 +356,24 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
     async (c) => {
       const user = c.get("user")
       requirePermission(user, "usage:read:all_users")
-      return c.json({ users: await service.listUsageSummaries(user) }, 200)
+      const users = await service.listUsageSummaries(user)
+      const totals = await service.getUsageSummaryTotals(user)
+      const breakdowns = await service.getUsageSummaryBreakdowns(user)
+      const now = new Date()
+      const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+      return c.json({
+        periodStart,
+        periodEnd: now.toISOString(),
+        users,
+        breakdowns,
+        totals: {
+          inputTokens: totals.inputTokens,
+          outputTokens: totals.outputTokens,
+          totalTokens: totals.totalTokens,
+          estimatedCostUsd: totals.estimatedCostUsd
+        },
+        dataCompleteness: totals.dataCompleteness
+      }, 200)
     }
   )
 
@@ -372,6 +390,38 @@ export function registerAdminRoutes({ app, service }: ApiRouteContext) {
       const user = c.get("user")
       requirePermission(user, "cost:read:all")
       return c.json(await service.getCostAuditSummary(user), 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/admin/audit-log/export",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "access:policy:read", operationKey: "audit.export", resourceCondition: "none" }),
+      responses: {
+        200: { description: "Create signed admin audit log export URL", content: { "application/json": { schema: AdminExportResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "access:policy:read")
+      return c.json(await service.createAdminExportDownloadUrl(user, "audit_log"), 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/admin/costs/export",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "cost:read:all", operationKey: "cost.export", resourceCondition: "none" }),
+      responses: {
+        200: { description: "Create signed admin cost summary export URL", content: { "application/json": { schema: AdminExportResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "cost:read:all")
+      return c.json(await service.createAdminExportDownloadUrl(user, "cost_summary"), 200)
     }
   )
 }

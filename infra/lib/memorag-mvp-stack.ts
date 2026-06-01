@@ -181,6 +181,13 @@ export class MemoRagMvpStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     })
 
+    const usageEventsTable = new dynamodb.Table(this, "UsageEventsTable", {
+      partitionKey: { name: "idempotencyKey", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
+      removalPolicy: RemovalPolicy.DESTROY
+    })
+
     const documentIngestRunsTable = new dynamodb.Table(this, "DocumentIngestRunsTable", {
       partitionKey: { name: "runId", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -353,6 +360,7 @@ export class MemoRagMvpStack extends Stack {
       BENCHMARK_RUNS_TABLE_NAME: benchmarkRunsTable.tableName,
       CHAT_RUNS_TABLE_NAME: chatRunsTable.tableName,
       CHAT_RUN_EVENTS_TABLE_NAME: chatRunEventsTable.tableName,
+      USAGE_EVENTS_TABLE_NAME: usageEventsTable.tableName,
       DOCUMENT_INGEST_RUNS_TABLE_NAME: documentIngestRunsTable.tableName,
       DOCUMENT_INGEST_RUN_EVENTS_TABLE_NAME: documentIngestRunEventsTable.tableName,
       DOCUMENT_GROUPS_TABLE_NAME: documentGroupsTable.tableName,
@@ -363,6 +371,7 @@ export class MemoRagMvpStack extends Stack {
       USE_LOCAL_CONVERSATION_HISTORY_STORE: "false",
       USE_LOCAL_BENCHMARK_RUN_STORE: "false",
       USE_LOCAL_CHAT_RUN_STORE: "false",
+      USE_LOCAL_USAGE_EVENT_STORE: "false",
       VECTOR_BUCKET_NAME: vectorBucketName,
       MEMORY_VECTOR_INDEX_NAME: memoryVectorIndexName,
       EVIDENCE_VECTOR_INDEX_NAME: evidenceVectorIndexName,
@@ -496,6 +505,7 @@ export class MemoRagMvpStack extends Stack {
       benchmarkRunsTable.grantReadWriteData(fn)
       chatRunsTable.grantReadWriteData(fn)
       chatRunEventsTable.grantReadWriteData(fn)
+      usageEventsTable.grantReadWriteData(fn)
       documentIngestRunsTable.grantReadWriteData(fn)
       documentIngestRunEventsTable.grantReadWriteData(fn)
       documentGroupsTable.grantReadWriteData(fn)
@@ -508,6 +518,7 @@ export class MemoRagMvpStack extends Stack {
     chatRunsTable.grantReadData(chatRunEventsFn)
     chatRunEventsTable.grantReadWriteData(chatRunWorkerFn)
     chatRunEventsTable.grantReadWriteData(chatRunMarkFailedFn)
+    usageEventsTable.grantReadWriteData(chatRunWorkerFn)
     chatRunEventsTable.grantReadData(chatRunEventsFn)
     documentIngestRunsTable.grantReadWriteData(documentIngestRunWorkerFn)
     documentIngestRunsTable.grantReadWriteData(documentIngestRunMarkFailedFn)

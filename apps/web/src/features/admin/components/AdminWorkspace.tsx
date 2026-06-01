@@ -2,7 +2,7 @@ import { useState } from "react"
 import type { CurrentUser } from "../../../shared/types/common.js"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
-import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UserUsageSummary } from "../types.js"
+import type { AccessRoleDefinition, AliasAuditLogItem, AliasDefinition, CostAuditSummary, ManagedUser, ManagedUserAuditLogEntry, UsageSummaryResponse, UserUsageSummary } from "../types.js"
 import { AdminAuditPanel } from "./panels/AdminAuditPanel.js"
 import { AdminCostPanel } from "./panels/AdminCostPanel.js"
 import { AdminOverviewGrid } from "./panels/AdminOverviewGrid.js"
@@ -23,6 +23,7 @@ export function AdminWorkspace({
   adminAuditLog,
   accessRoles,
   usageSummaries,
+  usageSummary,
   costAudit,
   aliases,
   aliasAuditLog,
@@ -60,6 +61,8 @@ export function AdminWorkspace({
   onReviewAlias,
   onDisableAlias,
   onPublishAliases,
+  onExportAdminAuditLog,
+  onExportCostSummary,
   onBack
 }: {
   user: CurrentUser | null
@@ -71,6 +74,7 @@ export function AdminWorkspace({
   adminAuditLog: ManagedUserAuditLogEntry[]
   accessRoles: AccessRoleDefinition[]
   usageSummaries: UserUsageSummary[]
+  usageSummary: UsageSummaryResponse | null
   costAudit: CostAuditSummary | null
   aliases: AliasDefinition[]
   aliasAuditLog: AliasAuditLogItem[]
@@ -108,6 +112,8 @@ export function AdminWorkspace({
   onReviewAlias: (aliasId: string, decision: "approve" | "reject", comment?: string) => Promise<void>
   onDisableAlias: (aliasId: string) => Promise<void>
   onPublishAliases: () => Promise<void>
+  onExportAdminAuditLog: () => Promise<void>
+  onExportCostSummary: () => Promise<void>
   onBack: () => void
 }) {
   const [activeSection, setActiveSection] = useState<AdminSectionId>("overview")
@@ -203,14 +209,14 @@ export function AdminWorkspace({
 
         {(canReadUsage || canReadCosts) && (
           <div className="admin-combined-section" hidden={resolvedActiveSection !== "usage-cost"}>
-            {canReadUsage && <AdminUsagePanel usageSummaries={usageSummaries} />}
-            {canReadCosts && <AdminCostPanel costAudit={costAudit} />}
+            {canReadUsage && <AdminUsagePanel usageSummaries={usageSummaries} usageSummary={usageSummary} />}
+            {canReadCosts && <AdminCostPanel costAudit={costAudit} onExportCostSummary={onExportCostSummary} />}
           </div>
         )}
 
         {canReadAdminAuditLog && (
           <div hidden={resolvedActiveSection !== "audit"}>
-            <AdminAuditPanel adminAuditLog={adminAuditLog} />
+            <AdminAuditPanel adminAuditLog={adminAuditLog} onExportAdminAuditLog={onExportAdminAuditLog} />
           </div>
         )}
 

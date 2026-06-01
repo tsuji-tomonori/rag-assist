@@ -19,7 +19,9 @@ Grounded internal-document QA API. Answers only from uploaded documents; otherwi
 | `GET` | `/admin/aliases/audit-log` | 検索 alias 監査ログを取得する | [詳細](openapi/get-admin-aliases-audit-log.md) |
 | `POST` | `/admin/aliases/publish` | 検索 alias を公開する | [詳細](openapi/post-admin-aliases-publish.md) |
 | `GET` | `/admin/audit-log` | 管理操作履歴を取得する | [詳細](openapi/get-admin-audit-log.md) |
+| `POST` | `/admin/audit-log/export` | 管理監査ログ export を作成する | [詳細](openapi/post-admin-audit-log-export.md) |
 | `GET` | `/admin/costs` | 概算コストを取得する | [詳細](openapi/get-admin-costs.md) |
+| `POST` | `/admin/costs/export` | 概算コスト export を作成する | [詳細](openapi/post-admin-costs-export.md) |
 | `GET` | `/admin/roles` | 利用可能なロール一覧を取得する | [詳細](openapi/get-admin-roles.md) |
 | `GET` | `/admin/usage` | 利用状況を取得する | [詳細](openapi/get-admin-usage.md) |
 | `POST` | `/admin/users` | 管理対象ユーザーを作成する | [詳細](openapi/post-admin-users.md) |

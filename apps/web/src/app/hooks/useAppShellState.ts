@@ -250,6 +250,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     adminAuditLog,
     accessRoles,
     usageSummaries,
+    usageSummary,
     costAudit,
     aliases,
     aliasAuditLog,
@@ -267,7 +268,9 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
     onUpdateAlias,
     onReviewAlias,
     onDisableAlias,
-    onPublishAliases
+    onPublishAliases,
+    onExportAdminAuditLog,
+    onExportCostSummary
   } = useAdminData({
     canReadAdminAuditLog,
     canReadUsage,
@@ -564,6 +567,7 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       adminAuditLog,
       accessRoles,
       usageSummaries,
+      usageSummary,
       costAudit,
       aliases,
       aliasAuditLog,
@@ -618,6 +622,8 @@ export function useAppShellState({ authSession, onSignOut }: { authSession: Auth
       onReviewAlias,
       onDisableAlias,
       onPublishAliases,
+      onExportAdminAuditLog,
+      onExportCostSummary,
       onBack: () => setActiveView("chat")
     }),
     historyProps: buildHistoryRouteProps({

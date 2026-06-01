@@ -4,6 +4,8 @@ import { LocalObjectStore } from "./adapters/local-object-store.js"
 import type { ObjectStore } from "./adapters/object-store.js"
 import { S3ObjectStore } from "./adapters/s3-object-store.js"
 import type { TextModel } from "./adapters/text-model.js"
+import { ObjectStoreUsageEventStore, type UsageEventStore } from "./adapters/usage-event-store.js"
+import { DynamoDbUsageEventStore } from "./adapters/dynamodb-usage-event-store.js"
 import { LocalVectorStore } from "./adapters/local-vector-store.js"
 import { MockBedrockTextModel } from "./adapters/mock-bedrock.js"
 import { S3VectorsStore } from "./adapters/s3-vectors-store.js"
@@ -42,6 +44,7 @@ export type Dependencies = {
   memoryVectorStore: VectorStore
   evidenceVectorStore: VectorStore
   textModel: TextModel
+  usageEventStore?: UsageEventStore
   questionStore: QuestionStore
   conversationHistoryStore: ConversationHistoryStore
   benchmarkRunStore: BenchmarkRunStore
@@ -73,6 +76,9 @@ export function createDependencies(): Dependencies {
     : new S3VectorsStore(config.vectorBucketName, config.evidenceVectorIndexName)
 
   const textModel = config.mockBedrock ? new MockBedrockTextModel() : new BedrockTextModel()
+  const usageEventStore = config.useLocalUsageEventStore
+    ? new ObjectStoreUsageEventStore(objectStore)
+    : new DynamoDbUsageEventStore(config.usageEventsTableName)
   const questionStore = config.useLocalQuestionStore
     ? new LocalQuestionStore(config.localDataDir)
     : new DynamoDbQuestionStore(config.questionTableName)
@@ -101,6 +107,6 @@ export function createDependencies(): Dependencies {
   const asyncAgentProviders = createDefaultAsyncAgentProviderRegistry()
   const userDirectory = config.authEnabled && config.cognitoUserPoolId ? new CognitoUserDirectory() : undefined
 
-  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
+  cached = { objectStore, memoryVectorStore, evidenceVectorStore, textModel, usageEventStore, questionStore, conversationHistoryStore, benchmarkRunStore, chatRunStore, chatRunEventStore, documentIngestRunStore, documentIngestRunEventStore, documentGroupStore, codeBuildLogReader, asyncAgentProviders, userDirectory }
   return cached
 }

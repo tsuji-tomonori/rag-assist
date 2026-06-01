@@ -223,6 +223,14 @@ const operationDocs: Record<string, { summary: string; description: string }> = 
     summary: "概算コストを取得する",
     description: "モデル利用や処理量に基づく概算コストの監査向け summary を返します。"
   },
+  "POST /admin/audit-log/export": {
+    summary: "管理監査ログ export を作成する",
+    description: "管理操作の監査ログを JSON として保存し、署名付き download URL を返します。"
+  },
+  "POST /admin/costs/export": {
+    summary: "概算コスト export を作成する",
+    description: "pricingVersion と dataCompleteness を含む概算コスト summary を JSON として保存し、署名付き download URL を返します。"
+  },
   "GET /documents": {
     summary: "登録文書一覧を取得する",
     description: "ログインユーザーが参照できる登録済み文書の summary 一覧を返します。full manifest、chunk metadata、vector key は返しません。"

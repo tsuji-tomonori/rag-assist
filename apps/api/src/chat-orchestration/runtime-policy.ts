@@ -222,6 +222,7 @@ export function llmOptions(task: LlmTask, modelId: string): GenerateOptions {
   return {
     modelId,
     temperature: ragRuntimePolicy.llm.temperature,
-    maxTokens: ragRuntimePolicy.llm.maxTokens[task]
+    maxTokens: ragRuntimePolicy.llm.maxTokens[task],
+    usageTask: task
   }
 }

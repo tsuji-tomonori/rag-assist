@@ -29,6 +29,14 @@ export type ManagedUserAuditLogEntry = {
   createdAt: string
 }
 
+export type AdminExportArtifact = {
+  url: string
+  expiresInSeconds: number
+  objectKey: string
+  exportType: "audit_log" | "cost_summary"
+  generatedAt: string
+}
+
 export type AccessRoleDefinition = {
   role: string
   permissions: Permission[]
@@ -39,12 +47,51 @@ export type UserUsageSummary = {
   email: string
   displayName?: string
   chatMessages: number
+  chatRequestCount: number
+  llmCallCount: number
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  estimatedCostUsd: number
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
   conversationCount: number
   questionCount: number
   documentCount: number
   benchmarkRunCount: number
   debugRunCount: number
   lastActivityAt?: string
+}
+
+export type UsageSummaryBreakdown = {
+  key: string
+  label: string
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+  estimatedCostUsd: number
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
+}
+
+export type UsageSummaryResponse = {
+  periodStart: string
+  periodEnd: string
+  users: UserUsageSummary[]
+  breakdowns: {
+    byFeature: UsageSummaryBreakdown[]
+    byModel: UsageSummaryBreakdown[]
+    byGroup: UsageSummaryBreakdown[]
+  }
+  totals: {
+    inputTokens: number
+    outputTokens: number
+    totalTokens: number
+    estimatedCostUsd: number
+  }
+  dataCompleteness: UsageDataCompleteness
 }
 
 export type CostAuditItem = {
@@ -54,7 +101,8 @@ export type CostAuditItem = {
   unit: string
   unitCostUsd: number
   estimatedCostUsd: number
-  confidence: "actual_usage" | "estimated_usage" | "manual_estimate"
+  confidence: "actual_usage" | "estimated_usage" | "manual_estimate" | "missing_usage"
+  pricingVersion?: string
 }
 
 export type UserCostSummary = {
@@ -70,7 +118,15 @@ export type CostAuditSummary = {
   totalEstimatedUsd: number
   items: CostAuditItem[]
   users: UserCostSummary[]
+  pricingVersion: string
   pricingCatalogUpdatedAt: string
+  dataCompleteness: UsageDataCompleteness
+}
+
+export type UsageDataCompleteness = {
+  actualTokenEventCount: number
+  estimatedTokenEventCount: number
+  missingTokenEventCount: number
 }
 
 export type AliasDefinition = {

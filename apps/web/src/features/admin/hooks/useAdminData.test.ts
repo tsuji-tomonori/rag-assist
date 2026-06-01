@@ -5,7 +5,8 @@ import { assignUserRoles, createManagedUser, deleteManagedUser, listManagedUsers
 import { createAlias, disableAlias, listAliasAuditLog, listAliases, publishAliases, reviewAlias, updateAlias } from "../api/aliasesApi.js"
 import { listAdminAuditLog } from "../api/auditLogApi.js"
 import { getCostAuditSummary } from "../api/costApi.js"
-import { listUsageSummaries } from "../api/usageApi.js"
+import { getUsageSummary } from "../api/usageApi.js"
+import { downloadAdminAuditLogExport, downloadAdminCostSummaryExport } from "../../../shared/utils/downloads.js"
 import { useAdminData } from "./useAdminData.js"
 
 vi.mock("../api/accessRolesApi.js", () => ({ listAccessRoles: vi.fn().mockResolvedValue([]) }))
@@ -28,7 +29,11 @@ vi.mock("../api/aliasesApi.js", () => ({
 }))
 vi.mock("../api/auditLogApi.js", () => ({ listAdminAuditLog: vi.fn().mockResolvedValue([]) }))
 vi.mock("../api/costApi.js", () => ({ getCostAuditSummary: vi.fn().mockResolvedValue(null) }))
-vi.mock("../api/usageApi.js", () => ({ listUsageSummaries: vi.fn().mockResolvedValue([]) }))
+vi.mock("../api/usageApi.js", () => ({ getUsageSummary: vi.fn().mockResolvedValue({ periodStart: "2026-05-01", periodEnd: "2026-05-31", users: [], breakdowns: { byFeature: [], byModel: [], byGroup: [] }, totals: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 }, dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 0, missingTokenEventCount: 0 } }) }))
+vi.mock("../../../shared/utils/downloads.js", () => ({
+  downloadAdminAuditLogExport: vi.fn(),
+  downloadAdminCostSummaryExport: vi.fn()
+}))
 
 function createProps(overrides: Partial<Parameters<typeof useAdminData>[0]> = {}): Parameters<typeof useAdminData>[0] {
   return {
@@ -56,8 +61,10 @@ describe("useAdminData", () => {
     vi.mocked(listManagedUsers).mockResolvedValue([{ userId: "user-1", email: "b@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" }])
     vi.mocked(listAccessRoles).mockResolvedValue([{ role: "CHAT_USER", permissions: ["chat:create"] }])
     vi.mocked(listAdminAuditLog).mockResolvedValue([{ auditId: "audit-1", action: "user:create", actorUserId: "admin", targetUserId: "user-1", targetEmail: "b@example.com", beforeGroups: [], afterGroups: [], createdAt: "now" }])
-    vi.mocked(listUsageSummaries).mockResolvedValue([{ userId: "user-1", email: "b@example.com", chatMessages: 1, conversationCount: 1, questionCount: 0, documentCount: 0, benchmarkRunCount: 0, debugRunCount: 0 }])
-    vi.mocked(getCostAuditSummary).mockResolvedValue({ periodStart: "2026-05-01", periodEnd: "2026-05-31", currency: "USD", totalEstimatedUsd: 1, items: [], users: [], pricingCatalogUpdatedAt: "now" })
+    vi.mocked(getUsageSummary).mockResolvedValue({ periodStart: "2026-05-01", periodEnd: "2026-05-31", users: [{ userId: "user-1", email: "b@example.com", chatMessages: 1, chatRequestCount: 1, llmCallCount: 1, inputTokens: 20, outputTokens: 5, totalTokens: 25, estimatedCostUsd: 0.000028, actualTokenEventCount: 0, estimatedTokenEventCount: 1, missingTokenEventCount: 0, conversationCount: 1, questionCount: 0, documentCount: 0, benchmarkRunCount: 0, debugRunCount: 0 }], breakdowns: { byFeature: [], byModel: [], byGroup: [] }, totals: { inputTokens: 20, outputTokens: 5, totalTokens: 25, estimatedCostUsd: 0.000028 }, dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 1, missingTokenEventCount: 0 } })
+    vi.mocked(getCostAuditSummary).mockResolvedValue({ periodStart: "2026-05-01", periodEnd: "2026-05-31", currency: "USD", totalEstimatedUsd: 1, items: [], users: [], pricingVersion: "bedrock-2026-06-local-v1", pricingCatalogUpdatedAt: "now", dataCompleteness: { actualTokenEventCount: 0, estimatedTokenEventCount: 1, missingTokenEventCount: 0 } })
+    vi.mocked(downloadAdminAuditLogExport).mockResolvedValue(undefined)
+    vi.mocked(downloadAdminCostSummaryExport).mockResolvedValue(undefined)
     vi.mocked(assignUserRoles).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "active", groups: ["SYSTEM_ADMIN"], createdAt: "now", updatedAt: "now" })
     vi.mocked(createManagedUser).mockResolvedValue({ userId: "user-2", email: "c@example.com", status: "active", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
     vi.mocked(suspendManagedUser).mockResolvedValue({ userId: "user-1", email: "a@example.com", status: "suspended", groups: ["CHAT_USER"], createdAt: "now", updatedAt: "now" })
@@ -119,10 +126,37 @@ describe("useAdminData", () => {
     expect(listManagedUsers).toHaveBeenCalledTimes(1)
     expect(listAdminAuditLog).toHaveBeenCalledTimes(1)
     expect(listAccessRoles).toHaveBeenCalledTimes(1)
-    expect(listUsageSummaries).toHaveBeenCalledTimes(1)
+    expect(getUsageSummary).toHaveBeenCalledTimes(1)
     expect(getCostAuditSummary).toHaveBeenCalledTimes(1)
     expect(listAliases).toHaveBeenCalledTimes(1)
     expect(result.current.costAudit?.totalEstimatedUsd).toBe(1)
+  })
+
+  it("権限がある export 操作だけ signed export download を開始する", async () => {
+    const { result } = renderHook(() => useAdminData(createProps({
+      canReadAdminAuditLog: true,
+      canReadCosts: true
+    })))
+
+    await act(() => result.current.onExportAdminAuditLog())
+    await act(() => result.current.onExportCostSummary())
+
+    expect(downloadAdminAuditLogExport).toHaveBeenCalledTimes(1)
+    expect(downloadAdminCostSummaryExport).toHaveBeenCalledTimes(1)
+    expect(result.current.adminAuditLog).toEqual([])
+  })
+
+  it("権限がない export 操作は download を開始しない", async () => {
+    const { result } = renderHook(() => useAdminData(createProps({
+      canReadAdminAuditLog: false,
+      canReadCosts: false
+    })))
+
+    await act(() => result.current.onExportAdminAuditLog())
+    await act(() => result.current.onExportCostSummary())
+
+    expect(downloadAdminAuditLogExport).not.toHaveBeenCalled()
+    expect(downloadAdminCostSummaryExport).not.toHaveBeenCalled()
   })
 
   it("読み取り権限がない admin データは再取得しない", async () => {
@@ -133,7 +167,7 @@ describe("useAdminData", () => {
     expect(listManagedUsers).not.toHaveBeenCalled()
     expect(listAdminAuditLog).not.toHaveBeenCalled()
     expect(listAccessRoles).not.toHaveBeenCalled()
-    expect(listUsageSummaries).not.toHaveBeenCalled()
+    expect(getUsageSummary).not.toHaveBeenCalled()
     expect(getCostAuditSummary).not.toHaveBeenCalled()
     expect(listAliases).not.toHaveBeenCalled()
     expect(listAliasAuditLog).not.toHaveBeenCalled()
