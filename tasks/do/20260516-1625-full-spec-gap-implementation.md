@@ -618,3 +618,24 @@
   - 最新 push 後の GitHub Actions CI は未確認。
   - ParsedDocument preview、ChatToolInvocation execution、Async agent writeback/provider settings/benchmark runner など、章別仕様差分全体の残 task は未完了。
   - 未達/未検証条件が残るため、この task md は引き続き `tasks/do/` に維持する。
+
+## 進捗メモ 2026-06-01 追記 33
+
+- PR #339 の最新 push 後に `MemoRAG CI` が失敗したため、GitHub Actions log を確認した。
+- CI 失敗要因は Web lint、Web/infra generated inventory drift、API coverage branch threshold 未達であることを確認した。
+- `apps/web/src/shared/utils/downloads.ts` の sync helper に対する不要な `await` を除去した。
+- Web/infra inventory を再生成した。
+- API branch coverage の閾値未達に対し、UsageTrackingTextModel / PricingCatalog の境界条件 test を追加した。
+- 検証:
+  - `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: pass
+  - `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
+  - `npm run docs:web-inventory:check`: pass
+  - `npm run docs:infra-inventory:check`: pass
+  - `npm run typecheck -w @memorag-mvp/web`: pass
+  - `npm run typecheck -w @memorag-mvp/api`: pass
+  - `./node_modules/.bin/tsx --test apps/api/src/rag/usage-tracking-text-model.test.ts apps/api/src/rag/pricing-catalog.test.ts`: pass（19 件）
+  - `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: local では tsx IPC sandbox 制約で失敗後、`require_escalated` で再実行。全件完走前に local timeout したが、途中集計で Branches 85.06-85.07% を確認。
+  - `git diff --check`: pass
+- 未完了:
+  - CI 修正 commit の push 後に GitHub Actions で最終確認が必要。
+  - 実 AWS Bedrock / DynamoDB / S3 smoke は未検証。

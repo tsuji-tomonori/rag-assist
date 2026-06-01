@@ -78,6 +78,32 @@ test("usage tracking text model preserves provider cache token usage", async () 
   assert.equal(store.events[0]?.tokenSource, "provider_usage")
 })
 
+test("usage tracking text model clamps provider usage and falls back to chat feature", async () => {
+  const store = new MemoryUsageEventStore()
+  const model = new UsageTrackingTextModel(new FakeTextModel("回答", { inputTokens: -1.9, outputTokens: 2.9 }), store, {
+    tenantId: "tenant-a",
+    userId: "user-1",
+    messageId: "message-1",
+    ragRunId: "rag-1",
+    toolInvocationId: "tool-1",
+    ingestRunId: "ingest-1"
+  })
+  const observedUsage: TextModelTokenUsage[] = []
+
+  await model.generate("質問", { onUsage: (usage) => observedUsage.push(usage) })
+
+  assert.equal(observedUsage.length, 1)
+  assert.equal(store.events.length, 1)
+  assert.equal(store.events[0]?.tenantId, "tenant-a")
+  assert.equal(store.events[0]?.messageId, "message-1")
+  assert.equal(store.events[0]?.ragRunId, "rag-1")
+  assert.equal(store.events[0]?.toolInvocationId, "tool-1")
+  assert.equal(store.events[0]?.ingestRunId, "ingest-1")
+  assert.equal(store.events[0]?.feature, "chat")
+  assert.equal(store.events[0]?.inputTokens, 0)
+  assert.equal(store.events[0]?.outputTokens, 2)
+})
+
 test("usage tracking text model estimates tokens when provider usage is absent", async () => {
   const store = new MemoryUsageEventStore()
   const model = new UsageTrackingTextModel(new FakeTextModel("根拠に基づく回答です。"), store, { userId: "user-1" })
@@ -145,6 +171,20 @@ test("usage tracking text model estimates embedding tokens when provider usage i
   assert.equal(store.events[0]?.totalTokens, store.events[0]?.inputTokens)
   assert.equal(store.events[0]?.tokenSource, "tokenizer_estimate")
   assert.equal(store.events[0]?.usageConfidence, "estimated")
+})
+
+test("usage tracking text model marks empty embedding usage as missing", async () => {
+  const store = new MemoryUsageEventStore()
+  const model = new UsageTrackingTextModel(new FakeTextModel(""), store, { userId: "user-1" })
+
+  await model.embed("", {})
+
+  assert.equal(store.events.length, 1)
+  assert.equal(store.events[0]?.feature, "embedding")
+  assert.equal(store.events[0]?.inputTokens, 0)
+  assert.equal(store.events[0]?.tokenSource, "unknown")
+  assert.equal(store.events[0]?.usageConfidence, "missing")
+  assert.equal(store.events[0]?.estimatedCostUsd, undefined)
 })
 
 test("usage tracking text model records failed generate and embedding attempts", async () => {

@@ -19,7 +19,7 @@
 
 | 機能 | feature | 操作要素 | 主な UI 説明 | 詳細 |
 | --- | --- | --- | --- | --- |
-| 管理 | admin | 33 | 「チャットへ戻る」を実行するボタン。<br>「更新」を実行するボタン。<br>「管理対象ユーザー作成」を入力・送信するフォーム。<br>「メール」に紐づく入力ラベル。 ほか 22 件 | [admin.md](web-features/admin.md) |
+| 管理 | admin | 35 | 「チャットへ戻る」を実行するボタン。<br>「管理操作履歴をエクスポート」を実行するボタン。<br>「コスト summary をエクスポート」を実行するボタン。<br>「更新」を実行するボタン。 ほか 24 件 | [admin.md](web-features/admin.md) |
 | agents | agents | 4 | 「チャットへ戻る」を実行するボタン。<br>「非同期エージェント情報を更新」を実行するボタン。<br>「キャンセル」を実行するボタン。 | [agents.md](web-features/agents.md) |
 | アプリケーション枠 | app | 18 | 「チャットへ戻る」を実行するボタン。<br>「送信キー / Enterで送信 / Ctrl+Enterで送信」に紐づく入力ラベル。<br>「Enterで送信 / Ctrl+Enterで送信」を選ぶ選択項目。<br>「Enterで送信」を表す option 要素。 ほか 14 件 | [app.md](web-features/app.md) |
 | 認証 | auth | 26 | 「title」を入力・送信するフォーム。<br>「新しいパスワード」に紐づく入力ラベル。<br>「新しいパスワード」を入力または選択する項目。<br>「新しいパスワード（確認）」に紐づく入力ラベル。 ほか 14 件 | [auth.md](web-features/auth.md) |
@@ -54,8 +54,10 @@
 | アプリケーション枠 | TopBar | label | デバッグモード | 「デバッグモード」に紐づく入力ラベル。 | - | apps/web/src/app/components/TopBar.tsx:18 |
 | アプリケーション枠 | TopBar | input | デバッグモード | 「デバッグモード」を入力または選択する項目。 | - | apps/web/src/app/components/TopBar.tsx:20 |
 | アプリケーション枠 | TopBar | button | 新しい会話 | 「新しい会話」を実行するボタン。 | - | apps/web/src/app/components/TopBar.tsx:24 |
-| 管理 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:128 |
-| 管理 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | apps/web/src/features/admin/components/AdminWorkspace.tsx:140 |
+| 管理 | AdminWorkspace | button | チャットへ戻る | 「チャットへ戻る」を実行するボタン。 | - | apps/web/src/features/admin/components/AdminWorkspace.tsx:134 |
+| 管理 | AdminWorkspace | button | 未推定 | button 要素。静的解析では具体的な操作名を推定できません。 | 状態: aria-current=resolvedActiveSection === section.id ? "page" : undefined | apps/web/src/features/admin/components/AdminWorkspace.tsx:146 |
+| 管理 | AdminAuditPanel | button | 管理操作履歴をエクスポート | 「管理操作履歴をエクスポート」を実行するボタン。 | - | apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:13 |
+| 管理 | AdminCostPanel | button | コスト summary をエクスポート | 「コスト summary をエクスポート」を実行するボタン。 | - | apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:13 |
 | 管理 | AdminOverviewGrid | button | `${card.label}を開く` | 「`${card.label}を開く`」を実行するボタン。 | - | apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:189 |
 | 管理 | AdminUserPanel | button | 更新 | 「更新」を実行するボタン。 | 状態: disabled=loading | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:39 |
 | 管理 | AdminUserPanel | AdminCreateUserForm | 未推定 | AdminCreateUserForm 要素。静的解析では具体的な操作名を推定できません。 | - | apps/web/src/features/admin/components/panels/AdminUserPanel.tsx:45 |

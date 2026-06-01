@@ -34,6 +34,7 @@
 - `/admin/usage`、`/admin/costs`、admin export 周辺の schema / Web hook / panel / tests / OpenAPI generated docs を同期した。
 - OpenAPI と infra snapshot を再生成し、型チェックと test を再実行した。
 - task 追記と本レポートを追加した。
+- PR #339 の GitHub Actions 失敗を確認し、Web lint、generated inventory、API coverage threshold の修正を追加した。
 
 ## 5. 成果物
 
@@ -43,7 +44,9 @@
 | `apps/api/src/rag/_shared/usage/` | TypeScript | pricing catalog と usage tracking model | R1-R2 |
 | `apps/api/src/routes/admin-routes.ts` | TypeScript | usage/cost/export route 統合 | R1-R3 |
 | `apps/web/src/features/admin/` | TypeScript/React | admin usage/cost 表示と export 操作 | R3 |
+| `apps/web/src/shared/utils/downloads.ts` | TypeScript | admin export download helper の lint 修正 | R4 |
 | `docs/generated/openapi*.md` | Markdown | API 生成ドキュメント | R3 |
+| `docs/generated/web-*` / `docs/generated/infra-*` | Markdown/JSON | generated inventory の同期 | R3-R4 |
 | `tasks/do/20260516-1625-full-spec-gap-implementation.md` | Markdown | 進捗メモ 32 | R5-R6 |
 | `reports/working/20260601-2142-usage-cost-conflict-resolution.md` | Markdown | 本作業レポート | R5 |
 
@@ -70,11 +73,17 @@
 - `npm test -w @memorag-mvp/infra`: pass（24 件）
 - `npm run docs:openapi`: pass
 - `npm run docs:openapi:check`: pass
+- `npm exec -- eslint apps/web --cache --cache-location .eslintcache-web --max-warnings=0`: pass
+- `npm exec -- eslint apps/api --cache --cache-location .eslintcache-api --max-warnings=0`: pass
+- `npm run docs:web-inventory:check`: pass
+- `npm run docs:infra-inventory:check`: pass
+- `./node_modules/.bin/tsx --test apps/api/src/rag/usage-tracking-text-model.test.ts apps/api/src/rag/pricing-catalog.test.ts`: pass（19 件）
+- `npm exec -w @memorag-mvp/api -- c8 --check-coverage --statements 90 --branches 85 --functions 90 --lines 90 --reporter=text-summary --reporter=json-summary tsx --test src/**/*.test.ts src/**/**/*.test.ts`: local では tsx IPC sandbox 制約で失敗後、`require_escalated` で再実行。全件完走前に local timeout したが、途中集計で Branches 85.06-85.07% を確認。
 - `git diff --check`: pass
 
 ## 8. 未対応・制約・リスク
 
 - 実 AWS Bedrock / DynamoDB での provider usage 永続化は未検証。
 - 実 AWS/S3 への admin export 保存と署名付き URL の実ダウンロードは未検証。
-- 最新 push 後の GitHub Actions CI は未確認。
+- CI 修正 commit の push 後に GitHub Actions の最終結果を確認する必要がある。
 - `tasks/do/20260516-1625-full-spec-gap-implementation.md` は章別仕様差分全体の残作業を含むため、今回の UsageEvent PR 更新だけでは `done` に移動しない。

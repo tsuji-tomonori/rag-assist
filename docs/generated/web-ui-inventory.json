@@ -92,7 +92,7 @@
         "admin"
       ],
       "componentCount": 8,
-      "interactionCount": 33
+      "interactionCount": 35
     },
     {
       "feature": "agents",
@@ -324,7 +324,9 @@
       ],
       "jsxUsages": [
         "EmptyState",
+        "Icon",
         "article",
+        "button",
         "div",
         "h3",
         "p",
@@ -344,7 +346,9 @@
       ],
       "jsxUsages": [
         "EmptyState",
+        "Icon",
         "article",
+        "button",
         "div",
         "h3",
         "i",
@@ -398,12 +402,16 @@
         "AdminUsagePanel"
       ],
       "jsxUsages": [
+        "BreakdownList",
         "EmptyState",
+        "article",
         "div",
         "h3",
+        "h4",
         "p",
         "section",
-        "span"
+        "span",
+        "strong"
       ],
       "certainty": "confirmed"
     },
@@ -1990,9 +1998,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:128:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:134:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 128,
+      "line": 134,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -2034,9 +2042,9 @@
       "certainty": "confirmed"
     },
     {
-      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:140:button",
+      "id": "apps/web/src/features/admin/components/AdminWorkspace.tsx:146:button",
       "file": "apps/web/src/features/admin/components/AdminWorkspace.tsx",
-      "line": 140,
+      "line": 146,
       "feature": "admin",
       "component": "AdminWorkspace",
       "element": "button",
@@ -2074,6 +2082,94 @@
         }
       ],
       "certainty": "unknown"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx:13:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminAuditPanel.tsx",
+      "line": 13,
+      "feature": "admin",
+      "component": "AdminAuditPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "管理操作履歴をエクスポート",
+      "a11y": {
+        "accessibleName": "管理操作履歴をエクスポート",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onExportAdminAuditLog()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onExportAdminAuditLog()"
+        },
+        {
+          "name": "title",
+          "value": "管理操作履歴をエクスポート"
+        },
+        {
+          "name": "aria-label",
+          "value": "管理操作履歴をエクスポート"
+        }
+      ],
+      "certainty": "confirmed"
+    },
+    {
+      "id": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx:13:button",
+      "file": "apps/web/src/features/admin/components/panels/AdminCostPanel.tsx",
+      "line": 13,
+      "feature": "admin",
+      "component": "AdminCostPanel",
+      "element": "button",
+      "isIntrinsic": true,
+      "label": "コスト summary をエクスポート",
+      "a11y": {
+        "accessibleName": "コスト summary をエクスポート",
+        "accessibleNameSource": "aria-label",
+        "descriptionRefs": "-",
+        "role": "-",
+        "state": [],
+        "status": "ok",
+        "reason": "日本語のアクセシブル名または表示テキストを確認できます。"
+      },
+      "handlers": [
+        {
+          "name": "onClick",
+          "value": "() => void onExportCostSummary()"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "type",
+          "value": "button"
+        },
+        {
+          "name": "onClick",
+          "value": "() => void onExportCostSummary()"
+        },
+        {
+          "name": "title",
+          "value": "コスト summary をエクスポート"
+        },
+        {
+          "name": "aria-label",
+          "value": "コスト summary をエクスポート"
+        }
+      ],
+      "certainty": "confirmed"
     },
     {
       "id": "apps/web/src/features/admin/components/panels/AdminOverviewGrid.tsx:189:button",

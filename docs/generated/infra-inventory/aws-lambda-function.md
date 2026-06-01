@@ -85,8 +85,10 @@ Logical ID: `ApiFunctionCE271BD4`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -139,8 +141,10 @@ Logical ID: `ChatRunEventsStreamFunctionA12E11AC`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -193,8 +197,10 @@ Logical ID: `ChatRunMarkFailedFunction23223E28`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -247,8 +253,10 @@ Logical ID: `ChatRunWorkerFunction3C85A553`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -335,8 +343,10 @@ Logical ID: `DocumentIngestRunMarkFailedFunction41F16DD3`
 | `MOCK_BEDROCK` | false |
 | `NODE_ENV` | production |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -392,8 +402,10 @@ Logical ID: `DocumentIngestRunWorkerFunctionBBDBF694`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 
@@ -452,8 +464,10 @@ Logical ID: `HeavyApiFunction4BC152A5`
 | `PDF_OCR_FALLBACK_ENABLED` | true |
 | `PDF_OCR_FALLBACK_TIMEOUT_MS` | 45000 |
 | `QUESTION_TABLE_NAME` | Ref:HumanQuestionsTable5DA9688B |
+| `USAGE_EVENTS_TABLE_NAME` | Ref:UsageEventsTable215FE3DD |
 | `USE_LOCAL_BENCHMARK_RUN_STORE` | false |
 | `USE_LOCAL_CHAT_RUN_STORE` | false |
+| `USE_LOCAL_USAGE_EVENT_STORE` | false |
 | `USE_LOCAL_VECTOR_STORE` | false |
 | `VECTOR_BUCKET_NAME` | Join:["",["memorag-",{"Ref":"AWS::AccountId"},"-",{"Ref":"AWS::Region"},"-c85f22a0"]] |
 

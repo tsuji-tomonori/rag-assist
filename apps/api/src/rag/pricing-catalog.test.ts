@@ -2,7 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 
 import type { UsageEvent } from "../types.js"
-import { calculateUsageEventCost, type PricingCatalog } from "./pricing-catalog.js"
+import { calculateUsageEventCost, pricingVersionForEvents, type PricingCatalog } from "./pricing-catalog.js"
 
 const baseEvent: UsageEvent = {
   eventId: "event-1",
@@ -68,6 +68,19 @@ const catalog: PricingCatalog = [
     effectiveFrom: "2026-01-01T00:00:00.000Z",
     updatedBy: "test",
     updatedAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    pricingVersion: "v-invalid",
+    provider: "bedrock",
+    modelId: "model-invalid",
+    currency: "USD",
+    inputUsdPer1MToken: "not-a-number",
+    outputUsdPer1MToken: "also-invalid",
+    cacheReadUsdPer1MToken: "bad-cache-read",
+    cacheWriteUsdPer1MToken: "bad-cache-write",
+    effectiveFrom: "2026-04-01T00:00:00.000Z",
+    updatedBy: "test",
+    updatedAt: "2026-04-01T00:00:00.000Z"
   }
 ]
 
@@ -139,4 +152,37 @@ test("pricing catalog uses embedding price for embedding events", () => {
   }, catalog)
 
   assert.equal(result.estimatedCostUsd, 0.0005)
+})
+
+test("pricing catalog returns stored pricing metadata when catalog price is missing", () => {
+  const result = calculateUsageEventCost({
+    ...baseEvent,
+    pricingVersion: "v-missing"
+  }, catalog)
+
+  assert.equal(result.pricingVersion, "v-missing")
+  assert.equal(result.estimatedCostUsd, undefined)
+})
+
+test("pricing catalog treats invalid price strings as zero cost", () => {
+  const result = calculateUsageEventCost({
+    ...baseEvent,
+    modelId: "model-invalid",
+    cacheReadTokens: 100,
+    cacheWriteTokens: 100,
+    totalTokens: 1700,
+    pricingVersion: "v-invalid"
+  }, catalog)
+
+  assert.equal(result.pricingVersion, "v-invalid")
+  assert.equal(result.estimatedCostUsd, 0)
+})
+
+test("pricing catalog summarizes event pricing versions", () => {
+  assert.equal(pricingVersionForEvents([], catalog), undefined)
+  assert.equal(pricingVersionForEvents([{ ...baseEvent, pricingVersion: "v1" }], catalog), "v1")
+  assert.equal(pricingVersionForEvents([
+    { ...baseEvent, eventId: "event-1", idempotencyKey: "event-1", pricingVersion: "v1" },
+    { ...baseEvent, eventId: "event-2", idempotencyKey: "event-2", pricingVersion: "v2" }
+  ], catalog), "mixed")
 })

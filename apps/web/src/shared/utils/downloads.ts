@@ -21,11 +21,11 @@ export async function downloadDebugTrace(trace?: DebugTrace) {
 }
 
 export async function downloadAdminAuditLogExport() {
-  await downloadAdminExport(await createAdminAuditLogExport())
+  downloadAdminExport(await createAdminAuditLogExport())
 }
 
 export async function downloadAdminCostSummaryExport() {
-  await downloadAdminExport(await createCostSummaryExport())
+  downloadAdminExport(await createCostSummaryExport())
 }
 
 function downloadAdminExport(signed: AdminExportArtifact) {
