@@ -6,11 +6,16 @@ import { config } from "../config.js"
 import { eventPayload } from "../chat-run-events-stream.js"
 import type { AppUser } from "../auth.js"
 import { getPermissionsForGroups, hasPermission, requirePermission } from "../authorization.js"
+import { DocumentShareConflictError, DocumentShareValidationError } from "../documents/document-permission-service.js"
 import {
   CreateDocumentGroupRequestSchema,
   CreateDocumentUploadRequestSchema,
   CreateDocumentUploadResponseSchema,
   DeleteDocumentResponseSchema,
+  DocumentMoveRequestSchema,
+  DocumentMoveResponseSchema,
+  DocumentShareRequestSchema,
+  DocumentShareResponseSchema,
   DocumentGroupListResponseSchema,
   DocumentGroupSchema,
   DocumentIngestRunSchema,
@@ -139,7 +144,9 @@ function documentListItemSummary(manifest: DocumentManifest): DocumentListItemSu
     ...documentManifestSummary(manifest),
     metadata: manifest.metadata,
     embeddingModelId: manifest.embeddingModelId,
-    embeddingDimensions: manifest.embeddingDimensions
+    embeddingDimensions: manifest.embeddingDimensions,
+    currentUserEffectivePermission: manifest.currentUserEffectivePermission,
+    capabilities: manifest.capabilities
   }
 }
 
@@ -310,6 +317,108 @@ export function registerDocumentRoutes({ app, deps, service }: ApiRouteContext) 
       }
       const documents = (await service.listDocuments(user)).map(documentListItemSummary)
       return c.json({ documents }, 200)
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "get",
+      path: "/documents/{documentId}/share",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:share", operationKey: "document.share.read", resourceCondition: "documentEffectiveFull" }),
+      request: {
+        params: z.object({ documentId: z.string().min(1) })
+      },
+      responses: {
+        200: { description: "Document share grants", content: { "application/json": { schema: DocumentShareResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:share")
+      const { documentId } = validParam<{ documentId: string }>(c)
+      try {
+        return c.json(await service.getDocumentShareInfo(user, documentId), 200)
+      } catch (err) {
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
+        if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+        throw err
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "put",
+      path: "/documents/{documentId}/share",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:share", operationKey: "document.share.update", resourceCondition: "documentEffectiveFull" }),
+      request: {
+        params: z.object({ documentId: z.string().min(1) }),
+        body: {
+          required: true,
+          content: { "application/json": { schema: DocumentShareRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Updated document share grants", content: { "application/json": { schema: DocumentShareResponseSchema } } },
+        400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Document share update conflict", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Document not found", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:share")
+      const { documentId } = validParam<{ documentId: string }>(c)
+      const body = validJson<z.infer<typeof DocumentShareRequestSchema>>(c)
+      try {
+        return c.json(await service.updateDocumentShare(user, documentId, body), 200)
+      } catch (err) {
+        if (err instanceof DocumentShareValidationError) return c.json({ error: err.message }, 400)
+        if (err instanceof DocumentShareConflictError) return c.json({ error: err.message }, 409)
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
+        if (err instanceof Error && (err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document not found" }, 404)
+        throw err
+      }
+    }
+  )
+
+  app.openapi(
+    looseRoute({
+      method: "post",
+      path: "/documents/{documentId}/move",
+      "x-memorag-authorization": routeAuthorization({ mode: "required", permission: "rag:doc:move", operationKey: "document.move", resourceCondition: "documentMove" }),
+      request: {
+        params: z.object({ documentId: z.string().min(1) }),
+        body: {
+          required: true,
+          content: { "application/json": { schema: DocumentMoveRequestSchema } }
+        }
+      },
+      responses: {
+        200: { description: "Moved document", content: { "application/json": { schema: DocumentMoveResponseSchema } } },
+        400: { description: "Validation error", content: { "application/json": { schema: ErrorResponseSchema } } },
+        403: { description: "Forbidden", content: { "application/json": { schema: ErrorResponseSchema } } },
+        404: { description: "Document or folder not found", content: { "application/json": { schema: ErrorResponseSchema } } },
+        409: { description: "Conflict", content: { "application/json": { schema: ErrorResponseSchema } } }
+      }
+    }),
+    async (c) => {
+      const user = c.get("user")
+      requirePermission(user, "rag:doc:move")
+      const { documentId } = validParam<{ documentId: string }>(c)
+      const body = validJson<z.infer<typeof DocumentMoveRequestSchema>>(c)
+      try {
+        return c.json(await service.moveDocument(user, documentId, body), 200)
+      } catch (err) {
+        if (err instanceof Error && (err.message.includes("required"))) return c.json({ error: err.message }, 400)
+        if (isForbiddenError(err)) throw new HTTPException(403, { message: "Forbidden" })
+        if (err instanceof Error && (err.message.includes("Destination folder not found") || err.message.includes("ENOENT") || err.message.includes("NoSuchKey"))) return c.json({ error: "Document or folder not found" }, 404)
+        if (err instanceof Error && (err.message.includes("changed before move") || err.message.includes("same file name"))) return c.json({ error: err.message }, 409)
+        throw err
+      }
     }
   )
 

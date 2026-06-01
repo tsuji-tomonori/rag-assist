@@ -40,6 +40,22 @@
   - Web inventory を generator で再生成する。
   - App test の chat request payload expectation を、新しい session-local evidence fields を検証する形へ更新する。
 
+## main 追従競合の軽量なぜなぜ分析
+
+- 問題文: PR #338 が `origin/main` に対して `mergeStateStatus: DIRTY` となり、merge 時に `docs/generated/web-overview.md` が競合した。
+- 確認済み事実:
+  - `docs/generated/web-overview.md` は Web inventory generator の出力で、PR 側と main 側で UI 操作要素数が異なっていた。
+  - `origin/main` には document share / move UI と document permission service の変更が含まれていた。
+  - auto-merge 後、`manifestMatchesScopeForUser()` は main 側の folder permission scope filter と PR 側の複数 `temporaryScopeIds` 対応が同じ関数に合流していた。
+- 推定原因:
+  - generated docs は両ブランチの UI 変更を同時に反映する必要があり、静的な行単位 merge では正しい件数を決められなかった。
+  - 権限付き scope filter 追加と session-local temporary scope 複数 ID 対応が近接領域で交差した。
+- 根本原因:
+  - main 追従により generated inventory と RAG retriever scope filtering の両方で、手動解決または意味的確認が必要な変更が重なった。
+- 対策:
+  - Web inventory を generator で再生成し、両ブランチの UI を含む generated docs に更新する。
+  - `manifestMatchesScopeForUser()` でも `temporaryScopeIds` を見るよう修正し、複数 temporary scope の retrieval を維持する。
+
 ## 作業範囲
 
 - API の RAG orchestration state / conversation state / search scope 正規化。
@@ -59,6 +75,8 @@
 - Web を変更した場合は `npm run test -w @memorag-mvp/web` または対象 test が pass する。
 - `npm run docs:web-inventory:check` が pass する。
 - `npm exec -w @memorag-mvp/web -- vitest run --coverage` の CI 失敗が再現しない。
+- `origin/main` merge 後に conflict marker が残っていない。
+- `temporaryScopeIds` 複数指定が folder permission scope filter 経由でも失われない。
 - `git diff --check` が pass する。
 
 ## 検証計画

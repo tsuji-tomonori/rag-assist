@@ -37,7 +37,7 @@ app.use(
       return config.corsAllowedOrigins.includes(origin) ? origin : ""
     },
     allowHeaders: ["Content-Type", "Authorization", "Last-Event-ID"],
-    allowMethods: ["GET", "POST", "DELETE", "OPTIONS"]
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
   })
 )
 app.use("*", async (c, next) => {

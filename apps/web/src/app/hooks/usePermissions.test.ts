@@ -19,7 +19,7 @@ describe("usePermissions", () => {
     expect(Object.values(result.current).every((value) => value === false)).toBe(true)
   })
 
-  it("derives grouped admin, document, benchmark, agent, and alias capabilities", () => {
+  it("derives grouped admin, document, benchmark, and alias capabilities while async agent stays disabled", () => {
     const { result } = renderHook(() => usePermissions(user([
       "chat:create",
       "rag:doc:write:group",
@@ -43,8 +43,8 @@ describe("usePermissions", () => {
     expect(result.current.canManageAliases).toBe(true)
     expect(result.current.canReadBenchmarkRuns).toBe(true)
     expect(result.current.canRunBenchmark).toBe(true)
-    expect(result.current.canReadAgentRuns).toBe(true)
-    expect(result.current.canRunAgent).toBe(true)
+    expect(result.current.canReadAgentRuns).toBe(false)
+    expect(result.current.canRunAgent).toBe(false)
     expect(result.current.canManageUsers).toBe(true)
     expect(result.current.canAuditOperations).toBe(true)
     expect(result.current.canSeeAdminSettings).toBe(true)

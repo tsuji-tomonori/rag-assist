@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto"
 import { promises as fs } from "node:fs"
 import path from "node:path"
-import type { ObjectStore } from "./object-store.js"
+import type { ObjectStore, VersionedText } from "./object-store.js"
+
+const conditionalWriteQueues = new Map<string, Promise<void>>()
 
 export class LocalObjectStore implements ObjectStore {
   private readonly objectRoot: string
@@ -9,13 +12,23 @@ export class LocalObjectStore implements ObjectStore {
     this.objectRoot = path.join(baseDir, "objects")
   }
 
-  async putText(key: string, text: string): Promise<void> {
+  async putText(key: string, text: string, _contentType?: string): Promise<void> {
     const filePath = this.pathFor(key)
     await fs.mkdir(path.dirname(filePath), { recursive: true })
     await fs.writeFile(filePath, text, "utf-8")
   }
 
-  async putBytes(key: string, bytes: Uint8Array): Promise<void> {
+  async putTextIfVersion(key: string, text: string, expectedVersion: string | undefined, _contentType?: string): Promise<void> {
+    const filePath = this.pathFor(key)
+    await runConditionalWrite(filePath, async () => {
+      const currentVersion = await this.versionForFile(filePath)
+      if (currentVersion !== expectedVersion) throw conditionalWriteError(key)
+      await fs.mkdir(path.dirname(filePath), { recursive: true })
+      await fs.writeFile(filePath, text, "utf-8")
+    })
+  }
+
+  async putBytes(key: string, bytes: Uint8Array, _contentType?: string): Promise<void> {
     const filePath = this.pathFor(key)
     await fs.mkdir(path.dirname(filePath), { recursive: true })
     await fs.writeFile(filePath, bytes)
@@ -23,6 +36,12 @@ export class LocalObjectStore implements ObjectStore {
 
   async getText(key: string): Promise<string> {
     return fs.readFile(this.pathFor(key), "utf-8")
+  }
+
+  async getTextWithVersion(key: string): Promise<VersionedText> {
+    const filePath = this.pathFor(key)
+    const text = await fs.readFile(filePath, "utf-8")
+    return { text, version: versionForText(text) }
   }
 
   async getBytes(key: string): Promise<Buffer> {
@@ -52,6 +71,15 @@ export class LocalObjectStore implements ObjectStore {
     const safe = key.replace(/^\/+/, "")
     return path.join(this.objectRoot, safe)
   }
+
+  private async versionForFile(filePath: string): Promise<string | undefined> {
+    try {
+      return versionForText(await fs.readFile(filePath, "utf-8"))
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return undefined
+      throw err
+    }
+  }
 }
 
 async function walk(dir: string): Promise<string[]> {
@@ -63,4 +91,33 @@ async function walk(dir: string): Promise<string[]> {
     })
   )
   return files.flat()
+}
+
+async function runConditionalWrite(filePath: string, task: () => Promise<void>): Promise<void> {
+  const previous = conditionalWriteQueues.get(filePath) ?? Promise.resolve()
+  let release: () => void = () => undefined
+  const current = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const queued = previous.then(() => current, () => current)
+  conditionalWriteQueues.set(filePath, queued)
+  await previous.catch(() => undefined)
+  try {
+    await task()
+  } finally {
+    release()
+    if (conditionalWriteQueues.get(filePath) === queued) {
+      conditionalWriteQueues.delete(filePath)
+    }
+  }
+}
+
+function versionForText(text: string): string {
+  return createHash("sha256").update(text).digest("hex")
+}
+
+function conditionalWriteError(key: string): Error {
+  const err = new Error(`Conditional write failed for ${key}`)
+  Object.assign(err, { code: "PRECONDITION_FAILED" })
+  return err
 }

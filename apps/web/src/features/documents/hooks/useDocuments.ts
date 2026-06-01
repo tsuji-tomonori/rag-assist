@@ -1,12 +1,14 @@
 import { useState } from "react"
-import { createDocumentGroup, cutoverReindexMigration, deleteDocument, listDocumentGroups, listDocuments, listReindexMigrations, rollbackReindexMigration, stageReindexMigration, updateDocumentGroup, uploadDocumentFile } from "../api/documentsApi.js"
-import type { DocumentUploadProgress, UpdateDocumentGroupInput } from "../api/documentsApi.js"
+import { createDocumentGroup, cutoverReindexMigration, deleteDocument, getDocumentShare, listDocumentGroups, listDocuments, listReindexMigrations, moveDocument, rollbackReindexMigration, stageReindexMigration, updateDocumentGroup, updateDocumentShare, uploadDocumentFile } from "../api/documentsApi.js"
+import type { DocumentShareGrantInput, DocumentShareInfo, DocumentUploadProgress, UpdateDocumentGroupInput } from "../api/documentsApi.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 
 export type DocumentOperationState = {
   isUploading: boolean
   creatingGroup: boolean
   sharingGroupId: string | null
+  sharingDocumentId?: string | null
+  movingDocumentId?: string | null
   deletingDocumentId: string | null
   stagingReindexDocumentId: string | null
   cutoverMigrationId: string | null
@@ -71,6 +73,8 @@ export function useDocuments({
     isUploading: false,
     creatingGroup: false,
     sharingGroupId: null,
+    sharingDocumentId: null,
+    movingDocumentId: null,
     deletingDocumentId: null,
     stagingReindexDocumentId: null,
     cutoverMigrationId: null,
@@ -220,6 +224,49 @@ export function useDocuments({
     return onUpdateDocumentGroup(groupId, input)
   }
 
+  async function onLoadDocumentShare(documentId: string): Promise<DocumentShareInfo | undefined> {
+    try {
+      return await getDocumentShare(documentId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+      return undefined
+    }
+  }
+
+  async function onShareDocument(documentId: string, input: { grants: DocumentShareGrantInput[]; reason: string }): Promise<DocumentOperationResult> {
+    updateOperationState({ sharingDocumentId: documentId })
+    setError(null)
+    try {
+      await updateDocumentShare(documentId, input)
+      await refreshDocuments()
+      return { ok: true }
+    } catch (err) {
+      return operationError(err)
+    } finally {
+      updateOperationState({ sharingDocumentId: null })
+    }
+  }
+
+  async function onMoveDocument(documentId: string, input: {
+    destinationFolderId: string
+    newTitle?: string
+    reason: string
+    expectedUpdatedAt?: string
+  }): Promise<DocumentOperationResult> {
+    updateOperationState({ movingDocumentId: documentId })
+    setError(null)
+    try {
+      await moveDocument(documentId, input)
+      setSelectedDocumentId("all")
+      await refreshDocuments()
+      return { ok: true }
+    } catch (err) {
+      return operationError(err)
+    } finally {
+      updateOperationState({ movingDocumentId: null })
+    }
+  }
+
   async function onStageReindex(documentId: string): Promise<DocumentOperationResult> {
     if (!canReindexDocuments) return { ok: false, error: "再インデックスを実行する権限がありません" }
     updateOperationState({ stagingReindexDocumentId: documentId })
@@ -290,6 +337,9 @@ export function useDocuments({
     onRollbackReindex,
     onCreateDocumentGroup,
     onShareDocumentGroup,
+    onLoadDocumentShare,
+    onShareDocument,
+    onMoveDocument,
     onUpdateDocumentGroup
   }
 }

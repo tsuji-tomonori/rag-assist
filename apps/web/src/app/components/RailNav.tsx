@@ -7,7 +7,6 @@ export function RailNav({
   authSession,
   canAnswerQuestions,
   canReadBenchmarkRuns,
-  canReadAgentRuns,
   canManageDocuments,
   canSeeAdminSettings,
   onChangeView
@@ -16,7 +15,6 @@ export function RailNav({
   authSession: AuthSession
   canAnswerQuestions: boolean
   canReadBenchmarkRuns: boolean
-  canReadAgentRuns: boolean
   canManageDocuments: boolean
   canSeeAdminSettings: boolean
   onChangeView: (view: AppView) => void
@@ -45,12 +43,6 @@ export function RailNav({
           <button className={`rail-item ${activeView === "benchmark" ? "active" : ""}`} type="button" title="性能テスト" aria-current={activeView === "benchmark" ? "page" : undefined} onClick={() => onChangeView("benchmark")}>
             <Icon name="gauge" />
             <span>性能テスト</span>
-          </button>
-        )}
-        {canReadAgentRuns && (
-          <button className={`rail-item ${activeView === "agents" ? "active" : ""}`} type="button" title="非同期エージェント" aria-current={activeView === "agents" ? "page" : undefined} onClick={() => onChangeView("agents")}>
-            <Icon name="gauge" />
-            <span>エージェント</span>
           </button>
         )}
         <button className={`rail-item ${activeView === "favorites" ? "active" : ""}`} type="button" title="お気に入り" aria-current={activeView === "favorites" ? "page" : undefined} onClick={() => onChangeView("favorites")}>

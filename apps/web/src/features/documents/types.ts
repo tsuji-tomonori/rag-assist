@@ -53,6 +53,14 @@ export type DocumentManifest = {
   reindexMigrationId?: string
   chunkerVersion?: string
   sourceExtractorVersion?: string
+  currentUserEffectivePermission?: "none" | "readOnly" | "full"
+  capabilities?: {
+    canRead: boolean
+    canShare: boolean
+    canMove: boolean
+    canDelete: boolean
+    canReindex: boolean
+  }
 }
 
 export type DocumentGroup = {

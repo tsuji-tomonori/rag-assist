@@ -1,7 +1,7 @@
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import { type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react"
 import { Icon } from "../../../shared/components/Icon.js"
 import { LoadingStatus } from "../../../shared/components/LoadingSpinner.js"
-import type { UpdateDocumentGroupInput } from "../api/documentsApi.js"
+import type { DocumentShareGrantInput, DocumentShareInfo, UpdateDocumentGroupInput } from "../api/documentsApi.js"
 import type { CreateDocumentGroupInput, DocumentOperationResult, DocumentOperationState, DocumentUploadResult, DocumentUploadState } from "../hooks/useDocuments.js"
 import type { DocumentGroup, DocumentManifest, ReindexMigration } from "../types.js"
 import { DocumentConfirmDialog } from "./workspace/DocumentConfirmDialog.js"
@@ -62,6 +62,9 @@ export function DocumentWorkspace({
   onUpload,
   onCreateGroup,
   onShareGroup,
+  onLoadDocumentShare,
+  onShareDocument,
+  onMoveDocument,
   onDelete,
   onStageReindex,
   onCutoverReindex,
@@ -90,6 +93,9 @@ export function DocumentWorkspace({
   onUpload: (file: File) => Promise<DocumentUploadResult | DocumentOperationResult | void>
   onCreateGroup: (input: CreateDocumentGroupInput) => Promise<DocumentGroup | void>
   onShareGroup: (groupId: string, input: UpdateDocumentGroupInput) => Promise<DocumentOperationResult | void>
+  onLoadDocumentShare?: (documentId: string) => Promise<DocumentShareInfo | undefined>
+  onShareDocument?: (documentId: string, input: { grants: DocumentShareGrantInput[]; reason: string }) => Promise<DocumentOperationResult | void>
+  onMoveDocument?: (documentId: string, input: { destinationFolderId: string; newTitle?: string; reason: string; expectedUpdatedAt?: string }) => Promise<DocumentOperationResult | void>
   onDelete: (documentId: string) => Promise<DocumentOperationResult | void>
   onStageReindex: (documentId: string) => Promise<DocumentOperationResult | void>
   onCutoverReindex: (migrationId: string) => Promise<DocumentOperationResult | void>
@@ -130,10 +136,23 @@ export function DocumentWorkspace({
   const [copiedDocumentId, setCopiedDocumentId] = useState<string | null>(null)
   const [lastUploadedDocument, setLastUploadedDocument] = useState<DocumentManifest | null>(null)
   const [sessionOperationEvents, setSessionOperationEvents] = useState<DocumentOperationEvent[]>([])
+  const [documentShareTarget, setDocumentShareTarget] = useState<DocumentManifest | null>(null)
+  const [documentMoveTarget, setDocumentMoveTarget] = useState<DocumentManifest | null>(null)
+  const [documentShareInfo, setDocumentShareInfo] = useState<DocumentShareInfo | null>(null)
+  const [documentShareDraftGrants, setDocumentShareDraftGrants] = useState<DocumentShareGrantInput[]>([])
+  const [documentShareLoading, setDocumentShareLoading] = useState(false)
+  const [documentSharePrincipalType, setDocumentSharePrincipalType] = useState<"user" | "group">("user")
+  const [documentSharePrincipalId, setDocumentSharePrincipalId] = useState("")
+  const [documentSharePermissionLevel, setDocumentSharePermissionLevel] = useState<"readOnly" | "full">("readOnly")
+  const [documentShareReason, setDocumentShareReason] = useState("")
+  const [documentMoveDestinationId, setDocumentMoveDestinationId] = useState("")
+  const [documentMoveNewTitle, setDocumentMoveNewTitle] = useState("")
+  const [documentMoveReason, setDocumentMoveReason] = useState("")
   const uploadInputRef = useRef<HTMLInputElement | null>(null)
   const createGroupNameRef = useRef<HTMLInputElement | null>(null)
   const shareSelectRef = useRef<HTMLSelectElement | null>(null)
   const operationEventSeqRef = useRef(0)
+  const documentShareRequestRef = useRef<string | null>(null)
   const canWrite = canUploadProp ?? legacyCanWrite ?? false
   const canCreateGroups = canCreateGroupProp ?? legacyCanCreateGroups ?? false
   const canShareGroups = canShareGroupProp ?? legacyCanShareGroups ?? false
@@ -266,6 +285,12 @@ export function DocumentWorkspace({
     editParentCanManage &&
     operationState.sharingGroupId === null
   const editDestinationLabel = editGroupParentId === rootFolderParentValue ? "ルート" : editParentGroup?.canonicalPath ?? "選択不可"
+  const documentMoveTitle = documentMoveNewTitle.trim() || documentMoveTarget?.fileName || ""
+  const documentMoveNameConflict = Boolean(documentMoveTarget && documentMoveDestinationId && documents.some((document) => (
+    document.documentId !== documentMoveTarget.documentId &&
+    document.fileName === documentMoveTitle &&
+    documentGroupIds(document).includes(documentMoveDestinationId)
+  )))
 
   useEffect(() => {
     if (!urlState) return
@@ -530,6 +555,82 @@ export function DocumentWorkspace({
     setFolderSettingsOpen(true)
   }
 
+  async function openDocumentShare(document: DocumentManifest) {
+    const loadedDocumentId = document.documentId
+    documentShareRequestRef.current = loadedDocumentId
+    setDocumentShareTarget(document)
+    setDocumentShareInfo(null)
+    setDocumentShareDraftGrants([])
+    setDocumentShareReason("")
+    setDocumentSharePrincipalId("")
+    setDocumentSharePrincipalType("user")
+    setDocumentSharePermissionLevel("readOnly")
+    setDocumentShareLoading(true)
+    const info = await onLoadDocumentShare?.(loadedDocumentId) ?? null
+    if (documentShareRequestRef.current !== loadedDocumentId) return
+    setDocumentShareInfo(info)
+    setDocumentShareDraftGrants(info?.directDocumentGrants.map((grant) => ({
+      principalType: grant.principalType,
+      principalId: grant.principalId,
+      permissionLevel: grant.permissionLevel
+    })) ?? [])
+    setDocumentShareLoading(false)
+  }
+
+  function closeDocumentShareModal() {
+    documentShareRequestRef.current = null
+    setDocumentShareTarget(null)
+    setDocumentShareInfo(null)
+    setDocumentShareDraftGrants([])
+    setDocumentShareLoading(false)
+    setDocumentShareReason("")
+    setDocumentSharePrincipalId("")
+    setDocumentSharePrincipalType("user")
+    setDocumentSharePermissionLevel("readOnly")
+  }
+
+  function openDocumentMove(document: DocumentManifest) {
+    setDocumentMoveTarget(document)
+    setDocumentMoveDestinationId("")
+    setDocumentMoveNewTitle(document.fileName)
+    setDocumentMoveReason("")
+  }
+
+  async function onDocumentShareSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!documentShareTarget || !onShareDocument || documentShareLoading || !documentShareInfo) return
+    const next = documentSharePrincipalId.trim()
+      ? [
+          ...documentShareDraftGrants.filter((grant) => !(grant.principalType === documentSharePrincipalType && grant.principalId === documentSharePrincipalId.trim())),
+          { principalType: documentSharePrincipalType, principalId: documentSharePrincipalId.trim(), permissionLevel: documentSharePermissionLevel }
+        ]
+      : documentShareDraftGrants
+    const result = normalizeOperationResult(await onShareDocument(documentShareTarget.documentId, { grants: next, reason: documentShareReason }))
+    if (result.ok) {
+      recordSessionOperation("ファイル共有", documentShareTarget.fileName, `direct grants: ${next.length}`, "反映済み")
+      closeDocumentShareModal()
+    } else {
+      recordSessionOperation("ファイル共有", documentShareTarget.fileName, `error: ${result.error}`, "失敗")
+    }
+  }
+
+  async function onDocumentMoveSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!documentMoveTarget || !documentMoveDestinationId || !onMoveDocument) return
+    const result = normalizeOperationResult(await onMoveDocument(documentMoveTarget.documentId, {
+      destinationFolderId: documentMoveDestinationId,
+      ...(documentMoveNewTitle.trim() && documentMoveNewTitle.trim() !== documentMoveTarget.fileName ? { newTitle: documentMoveNewTitle.trim() } : {}),
+      reason: documentMoveReason,
+      expectedUpdatedAt: documentMoveTarget.updatedAt ?? documentMoveTarget.createdAt
+    }))
+    if (result.ok) {
+      recordSessionOperation("ファイル移動", documentMoveTarget.fileName, `移動先: ${documentMoveDestinationId}`, "反映済み")
+      setDocumentMoveTarget(null)
+    } else {
+      recordSessionOperation("ファイル移動", documentMoveTarget.fileName, `移動先: ${documentMoveDestinationId} / error: ${result.error}`, "失敗")
+    }
+  }
+
   const selectedDocumentCanManage = selectedDocument ? canManageDocument(selectedDocument, documentGroups) : selectedFolderCanManage
 
   return (
@@ -596,8 +697,10 @@ export function DocumentWorkspace({
           canUploadToDestination={canUploadToDestination}
           uploadDisabledReason={uploadDisabledReason}
           canOpenCreateFolderForm={canOpenCreateFolderForm}
-          canDeleteDocument={(document) => canDelete && canManageDocument(document, documentGroups)}
-          canReindexDocument={(document) => canReindex && canManageDocument(document, documentGroups)}
+          canDeleteDocument={(document) => canDelete && canDeleteDocument(document, documentGroups)}
+          canReindexDocument={(document) => canReindex && canReindexDocument(document, documentGroups)}
+          canShareDocument={(document) => Boolean(onShareDocument) && canShareDocument(document, documentGroups)}
+          canMoveDocument={(document) => Boolean(onMoveDocument) && canMoveDocument(document, documentGroups)}
           migrations={migrations}
           selectedMigrationId={selectedMigrationId}
           onDocumentQueryChange={setDocumentQuery}
@@ -615,6 +718,8 @@ export function DocumentWorkspace({
             setSelectedMigrationId("")
           }}
           onConfirmAction={onDocumentConfirmAction}
+          onShareDocument={(document) => void openDocumentShare(document)}
+          onMoveDocument={openDocumentMove}
           onOpenCreateFolder={openCreateFolderModal}
           onOpenFolderSettings={openFolderSettingsModal}
           onOpenUploadPicker={openUploadPicker}
@@ -729,6 +834,73 @@ export function DocumentWorkspace({
           </section>
         </div>
       )}
+      {documentShareTarget && (
+        <WorkspaceModal title="ファイル共有" onClose={closeDocumentShareModal}>
+          <form className="compact-form" onSubmit={(event) => void onDocumentShareSubmit(event)}>
+            <p className="modal-note">ファイル名: {documentShareTarget.fileName}</p>
+            {!documentShareLoading && documentShareInfo === null && (
+              <p className="modal-note" role="alert">共有設定を取得できませんでした。再度開き直してください。</p>
+            )}
+            <div className="share-diff-preview">
+              <span>現在の権限: {documentShareInfo?.currentUserEffectivePermission ?? "確認中"}</span>
+              <span>継承: {documentShareLoading ? "確認中" : documentShareInfo?.inheritedFolderGrants.map((grant) => `${grant.folderId} ${grant.permissionLevel}`).join(", ") || "なし"}</span>
+            </div>
+            <ul className="share-grant-list" aria-label="直接共有">
+              {documentShareLoading && <li>直接共有を読み込み中です。</li>}
+              {!documentShareLoading && documentShareDraftGrants.length === 0 && <li>直接共有はありません。</li>}
+              {documentShareDraftGrants.map((grant) => (
+                <li key={`${grant.principalType}:${grant.principalId}`}>
+                  <span>直接: {grant.principalType}:{grant.principalId} {grant.permissionLevel}</span>
+                  <button
+                    type="button"
+                    onClick={() => setDocumentShareDraftGrants((current) => current.filter((item) => !(item.principalType === grant.principalType && item.principalId === grant.principalId)))}
+                  >
+                    削除
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <label>
+              <span>共有先種別</span>
+              <select value={documentSharePrincipalType} onChange={(event) => setDocumentSharePrincipalType(event.target.value as "user" | "group")}>
+                <option value="user">user</option>
+                <option value="group">group</option>
+              </select>
+            </label>
+            <label><span>共有先ID</span><input value={documentSharePrincipalId} onChange={(event) => setDocumentSharePrincipalId(event.target.value)} /></label>
+            <label>
+              <span>権限</span>
+              <select value={documentSharePermissionLevel} onChange={(event) => setDocumentSharePermissionLevel(event.target.value as "readOnly" | "full")}>
+                <option value="readOnly">readOnly</option>
+                <option value="full">full</option>
+              </select>
+            </label>
+            <label><span>理由</span><textarea value={documentShareReason} onChange={(event) => setDocumentShareReason(event.target.value)} /></label>
+            <button type="submit" disabled={documentShareLoading || documentShareInfo === null || !documentShareReason.trim() || operationState.sharingDocumentId === documentShareTarget.documentId}>保存</button>
+          </form>
+        </WorkspaceModal>
+      )}
+      {documentMoveTarget && (
+        <WorkspaceModal title="ファイル移動" onClose={() => setDocumentMoveTarget(null)}>
+          <form className="compact-form" onSubmit={(event) => void onDocumentMoveSubmit(event)}>
+            <p className="modal-note">ファイル名: {documentMoveTarget.fileName}</p>
+            <label>
+              <span>移動先フォルダ</span>
+              <select value={documentMoveDestinationId} onChange={(event) => setDocumentMoveDestinationId(event.target.value)}>
+                <option value="">選択してください</option>
+                {documentGroups.filter(canManageDocumentGroup).map((group) => (
+                  <option value={group.groupId} key={group.groupId}>{group.canonicalPath ?? group.name}</option>
+                ))}
+              </select>
+            </label>
+            <label><span>移動後の表示名</span><input value={documentMoveNewTitle} onChange={(event) => setDocumentMoveNewTitle(event.target.value)} /></label>
+            <p className="modal-note">直接共有は維持され、継承共有は移動先フォルダの設定に変わります。</p>
+            {documentMoveNameConflict && <p className="modal-note" role="alert">移動先に同名ファイルが存在します。別の表示名を入力してください。</p>}
+            <label><span>理由</span><textarea value={documentMoveReason} onChange={(event) => setDocumentMoveReason(event.target.value)} /></label>
+            <button type="submit" disabled={!documentMoveDestinationId || documentMoveNameConflict || !documentMoveReason.trim() || operationState.movingDocumentId === documentMoveTarget.documentId}>移動</button>
+          </form>
+        </WorkspaceModal>
+      )}
       {confirmAction && (
         <DocumentConfirmDialog
           action={confirmAction}
@@ -781,6 +953,20 @@ function uploadedDocumentGroupId(document: DocumentManifest | null, uploadStateG
   return document ? documentGroupIds(document)[0] ?? uploadStateGroupId ?? uploadGroupId : ""
 }
 
+function WorkspaceModal({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
+  return (
+    <div className="document-modal-backdrop" role="presentation">
+      <section className="document-modal" role="dialog" aria-modal="true" aria-label={title}>
+        <header>
+          <h3>{title}</h3>
+          <button type="button" onClick={onClose} aria-label={`${title}を閉じる`}>×</button>
+        </header>
+        {children}
+      </section>
+    </div>
+  )
+}
+
 function isConfirmActionRunning(action: ConfirmAction | null, operationState: DocumentOperationState): boolean {
   if (!action) return false
   if (action.kind === "delete") return operationState.deletingDocumentId === action.document.documentId
@@ -812,12 +998,29 @@ function canManageDocumentGroup(group: DocumentGroup): boolean {
 }
 
 function canManageDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  if (document.currentUserEffectivePermission) return document.currentUserEffectivePermission === "full"
   const groupIds = documentGroupIds(document)
   if (groupIds.length === 0) return true
   return groupIds.every((groupId) => {
     const group = groups.find((candidate) => candidate.groupId === groupId)
     return Boolean(group && canManageDocumentGroup(group))
   })
+}
+
+function canShareDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  return document.capabilities?.canShare ?? canManageDocument(document, groups)
+}
+
+function canMoveDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  return document.capabilities?.canMove ?? canManageDocument(document, groups)
+}
+
+function canDeleteDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  return document.capabilities?.canDelete ?? canManageDocument(document, groups)
+}
+
+function canReindexDocument(document: DocumentManifest, groups: DocumentGroup[]): boolean {
+  return document.capabilities?.canReindex ?? canManageDocument(document, groups)
 }
 
 function getUploadDisabledReason({

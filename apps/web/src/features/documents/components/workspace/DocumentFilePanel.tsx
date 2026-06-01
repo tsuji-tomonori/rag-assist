@@ -49,6 +49,8 @@ export function DocumentFilePanel({
   canOpenCreateFolderForm,
   canDeleteDocument,
   canReindexDocument,
+  canShareDocument,
+  canMoveDocument,
   migrations,
   selectedMigrationId,
   onDocumentQueryChange,
@@ -60,6 +62,8 @@ export function DocumentFilePanel({
   onDocumentPageSizeChange,
   onSelectDocument,
   onConfirmAction,
+  onShareDocument,
+  onMoveDocument,
   onOpenCreateFolder,
   onOpenFolderSettings,
   onOpenUploadPicker
@@ -97,6 +101,8 @@ export function DocumentFilePanel({
   canOpenCreateFolderForm: boolean
   canDeleteDocument: (document: DocumentManifest) => boolean
   canReindexDocument: (document: DocumentManifest) => boolean
+  canShareDocument: (document: DocumentManifest) => boolean
+  canMoveDocument: (document: DocumentManifest) => boolean
   migrations: ReindexMigration[]
   selectedMigrationId?: string
   onDocumentQueryChange: (value: string) => void
@@ -108,6 +114,8 @@ export function DocumentFilePanel({
   onDocumentPageSizeChange: (pageSize: number) => void
   onSelectDocument: (document: DocumentManifest) => void
   onConfirmAction: (action: ConfirmAction) => void
+  onShareDocument: (document: DocumentManifest) => void
+  onMoveDocument: (document: DocumentManifest) => void
   onOpenCreateFolder: () => void
   onOpenFolderSettings: () => void
   onOpenUploadPicker: () => void
@@ -224,6 +232,8 @@ export function DocumentFilePanel({
             const groupLabel = documentGroupNames(document, documentGroups).join(", ") || "未設定"
             const canDeleteRow = canDelete && canDeleteDocument(document)
             const canReindexRow = canReindex && canReindexDocument(document)
+            const canShareRow = canShareDocument(document)
+            const canMoveRow = canMoveDocument(document)
             return (
               <div
                 className={`document-file-row ${selectedDocument?.documentId === document.documentId ? "selected" : ""}`}
@@ -250,6 +260,34 @@ export function DocumentFilePanel({
                 <span role="cell" data-label="所属フォルダ">{groupLabel}</span>
                 <span role="cell" className="document-actions-cell" data-label="操作">
                   <span className="document-action-buttons">
+                    {canShareRow && (
+                      <button
+                        type="button"
+                        title={`${document.fileName}を共有`}
+                        aria-label={`${document.fileName}を共有`}
+                        disabled={operationState.sharingDocumentId === document.documentId}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onShareDocument(document)
+                        }}
+                      >
+                        共有
+                      </button>
+                    )}
+                    {canMoveRow && (
+                      <button
+                        type="button"
+                        title={`${document.fileName}を移動`}
+                        aria-label={`${document.fileName}を移動`}
+                        disabled={operationState.movingDocumentId === document.documentId}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onMoveDocument(document)
+                        }}
+                      >
+                        移動
+                      </button>
+                    )}
                     <button
                       type="button"
                       title={`${document.fileName}の再インデックスをステージング`}
