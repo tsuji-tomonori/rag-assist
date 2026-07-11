@@ -203,7 +203,7 @@
 - Actor: Tech writer, Codex agent, reviewer
 - Intent: 実装レポートから要件・仕様・受け入れ条件を継続的に同期する
 - Outcome: 1 要件 1 ファイル、SWEBOK-lite、coverage test、traceability が保たれる
-- Component: `memorag-bedrock-mvp/docs` / `docs/spec-recovery` / validation scripts
+- Component: `docs` / `docs/spec-recovery` / validation scripts
 - Source: FACT-025
 - Confidence: confirmed
 
@@ -215,3 +215,57 @@
 - Component: Spec recovery process / Report inventory
 - Source: FACT-016
 - Confidence: confirmed
+
+## TASK-025: 認可文脈と tenant を server-side で確定する
+
+- Actor: Identity platform, Security
+- Intent: verified identity と membership から強制条件を構築する
+- Outcome: account、tenant、role、resource group を request で拡張できない
+- Component: Auth / Tenant / Worker context
+- Source: FACT-027, FACT-035, FACT-036
+- Confidence: inferred
+
+## TASK-026: 共有資源の実効権限を一意に管理する
+
+- Actor: Document owner, Share manager, Security
+- Intent: folder/direct/inherited permission と危険操作を全経路で一貫判定する
+- Outcome: single decision service、principal validation、reason/version/audit、deny-first revoke がある
+- Component: Folder / Document / Authorization
+- Source: FACT-029, FACT-030, FACT-037
+- Confidence: inferred
+
+## TASK-027: read-only 共有資料を利用する
+
+- Actor: General user
+- Intent: 許可された資料を発見・閲覧し chat scope に選ぶ
+- Outcome: read-only workspace と server capabilities があり、管理操作はできない
+- Component: Web Documents / Chat scope
+- Source: FACT-039
+- Confidence: inferred
+
+## TASK-028: 文書を検査・隔離・公開する
+
+- Actor: Document steward, RAG operator
+- Intent: provenance/owner/ACL/quality を検証して normal RAG publication を判断する
+- Outcome: unknown は approved に補完されず quarantined/rejected になる
+- Component: Ingest / Source registry / Quality gate
+- Source: FACT-031, FACT-038
+- Confidence: inferred
+
+## TASK-029: 全 RAG 経路で現在認可を強制する
+
+- Actor: RAG platform, Security
+- Intent: vector/memory/expansion/citation/cache/worker を含む全経路で revoke を反映する
+- Outcome: unauthorized evidence exposure 0、authorized top-K の post-filter underfill なし
+- Component: Retrieval / Worker / Cache
+- Source: FACT-028, FACT-029, FACT-030, FACT-035
+- Confidence: inferred
+
+## TASK-030: 安全性と品質を工程別に公開判定する
+
+- Actor: QA, RAG quality, Security, Business owner
+- Intent: stage/slice 別 metric と zero-tolerance security gate で release を判定する
+- Outcome: approved threshold profile の logical AND、unknown threshold は pass にしない
+- Component: Evaluation / Benchmark / Release
+- Source: FACT-032, FACT-033, FACT-034
+- Confidence: inferred

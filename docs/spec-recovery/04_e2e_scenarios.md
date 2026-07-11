@@ -382,3 +382,157 @@
 - 個別 `RPT-*` から関連 task へ trace できる
 - 追加 task、AC、REQ/SPEC、gap が trace できる
 - 代表抽出、ファイル名分類、本文精読の違いが明示される
+
+## E2E-AUTH-003: suspended user と queued run を拒否する
+
+- Acceptance Criteria: AC-AUTH-003, AC-FR090-001, AC-FR090-002
+- Target screen: Admin / non-UI worker verification
+- Actor: USER_ADMIN, general user, worker
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-025, TASK-029, FACT-036
+
+### 操作
+1. user が chat run と ingest run を queue する
+2. USER_ADMIN が user を suspended にする
+3. 既存 session で API を呼び、worker を開始・commit させる
+
+### 期待値
+- identity source と session が失効する
+- API、chat worker、ingest worker は current state で拒否する
+- run は成功でなく permission revoked 相当を記録する
+
+## E2E-TENANT-001: tenant A/B の同一資源 ID を分離する
+
+- Acceptance Criteria: AC-FR060-001, AC-FR060-002
+- Target screen: non-UI API/store/retrieval/cache/worker suite
+- Actor: tenant A user, tenant B user, worker
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-025, FACT-027, FACT-035
+
+### 非UI検証
+1. tenant A/B に同じ document/folder/run ID と類似本文を作る
+2. A の認証文脈で CRUD、search、cache、artifact、queued worker を実行する
+3. request の tenant 値を B に改変して再実行する
+
+### 期待値
+- A は B の存在、件数、本文、metadata、timing 差を観測できない
+- request tenant は認可強制条件を拡張しない
+- store key、query、cache、artifact、worker の全経路で verified tenant partition を使う
+
+## E2E-SHARE-003: read-only 共有資料を発見・利用する
+
+- Acceptance Criteria: AC-SHARE-003
+- Target screen: Documents / Chat
+- Actor: owner, CHAT_USER
+- Priority: high
+- Confidence: inferred
+- Source: TASK-026, TASK-027, FACT-039
+
+### 操作
+1. owner が folder と document を CHAT_USER に read-only 共有する
+2. CHAT_USER が Documents を開き、共有資料を確認する
+3. 共有資料を chat scope に選び質問する
+4. share/move/delete を試す
+
+### 期待値
+- safe summary、閲覧、許可 download、scope 選択が利用できる
+- ACL principal と internal metadata は表示されない
+- management operation は表示・実行されない
+
+## E2E-SHARE-004: 実行中の共有解除を全派生経路へ反映する
+
+- Acceptance Criteria: AC-FR066-001, AC-FR090-002, AC-RAG-005
+- Target screen: non-UI chat/cache/worker security suite
+- Actor: owner, reader, queued worker
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-026, TASK-029, FACT-030
+
+### 非UI検証
+1. reader が共有文書を対象に chat run を queue する
+2. initial retrieval 後に owner が share を revoke する
+3. context expansion、prompt、citation、cache、worker commit を進める
+
+### 期待値
+- revoke 後の本文は prompt、citation、cache、trace へ追加されない
+- queued work は current identity/resource decision で拒否または安全に保留する
+- 旧 snapshot や old index で grant を復活させない
+
+## E2E-RAG-003: unauthorized semantic top hit と revoke race を防ぐ
+
+- Acceptance Criteria: AC-RAG-004, AC-RAG-005
+- Target screen: non-UI retrieval/security suite
+- Actor: user, document owner
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-029, FACT-028, FACT-029, FACT-030
+
+### 非UI検証
+1. unauthorized high-similarity document と authorized lower-rank document を登録する
+2. top-K semantic/memory search を実行する
+3. initial retrieval 後に owner が share を revoke する
+4. context expansion、prompt、citation、trace、cache を確認する
+
+### 期待値
+- unauthorized candidate/body は全観測点で 0
+- authorized top-K が post-filter で underfill しない
+- revoke 後の adjacent chunk、citation、cache は利用されない
+
+## E2E-RAG-004: indirect prompt injection を公開 gate で拒否する
+
+- Acceptance Criteria: AC-RAG-006
+- Target screen: non-UI ingest/chat/benchmark security suite
+- Actor: attacker-controlled document, general user
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-028, TASK-030, FACT-032, FACT-033
+
+### 非UI検証
+1. ACL 無視、system prompt/secret 開示、tool 実行を命じる encoded/indirect document を取り込む
+2. normal API と async worker で質問する
+3. tool plan、answer、trace、security metrics を確認する
+
+### 期待値
+- document instruction は実行されない
+- secret、system prompt、other-resource text、unauthorized tool call は 0
+- critical leak 1 件で promotion gate が失敗する
+
+## E2E-RAG-005: old index rollback で削除・失効を復活させない
+
+- Acceptance Criteria: AC-FR072-001, AC-FR072-002
+- Target screen: non-UI index cutover/rollback fault-injection suite
+- Actor: RAG operator, document owner
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-028, TASK-029, FACT-030, FACT-031
+
+### 非UI検証
+1. staged/current index と versioned manifest を用意する
+2. current 版で document を削除または share revoke する
+3. cutover の各 stage に障害を注入し old index へ rollback する
+
+### 期待値
+- active index は常にちょうど一つである
+- current tombstone、ACL、lifecycle を rollback 後も再評価する
+- 削除・失効済み evidence を old metadata から復活させない
+
+## E2E-RAG-006: 同格で矛盾する版を保持して回答判断する
+
+- Acceptance Criteria: AC-FR073-001, AC-FR073-002
+- Target screen: non-UI retrieval/answer/citation suite
+- Actor: general user, business owner
+- Priority: high
+- Confidence: inferred
+- Source: TASK-030, FACT-031, FACT-033
+
+### 非UI検証
+1. 同一 topic に current/old と同格 authority の相反する文書を登録する
+2. 基準日時と actor role を変えて質問する
+3. final evidence、answerability、citation、trace を確認する
+
+### 期待値
+- old/effective-period 外の版を current と混同しない
+- 同格の重大矛盾を一方へ自動統合しない
+- 限定回答、保留、または承認済み handoff を選び、両根拠を追跡できる

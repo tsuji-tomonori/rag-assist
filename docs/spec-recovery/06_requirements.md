@@ -412,3 +412,77 @@ Allganize、MMRAG DocQA、NeoAI などの dataset は、source context、expecte
 
 ### Related specifications
 - SPEC-DOCS-001
+
+## REQ-AUTHZ-002: 認可は verified identity と current resource policy を一意に評価する
+
+- Type: security / authorization
+- Actor: all authenticated actors, workers
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-025, TASK-026, AC-AUTH-003
+
+### Description
+account、tenant、feature、resource を fail closed の論理積で評価し、list/search/memory/citation/operation が同一 decision service を使う。normal SYSTEM_ADMIN bypass は許可しない。
+
+### Canonical product requirements
+- FR-056–FR-060
+- FR-077–FR-080
+- FR-090
+- FR-091
+
+### Related specifications
+- SPEC-AUTHZ-001
+
+## REQ-SHARE-002: 共有資源は安全に変更・失効・利用できる
+
+- Type: functional / security / UI
+- Actor: document owner, share manager, general reader
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-026, TASK-027, AC-SHARE-003
+
+### Description
+folder/direct/inherited permission を一意に合成し、操作別認可、valid principal、version/audit、administrative-principal guard、move 両端認可と state coherence、deny-first revoke を要求する。read-only user は safe summary を発見・閲覧・chat 選択できる。
+
+### Canonical product requirements
+- FR-061–FR-067
+- FR-076, FR-081, FR-085–FR-087, FR-091
+
+### Related specifications
+- SPEC-SHARE-001
+
+## REQ-RAG-004: RAG 全経路は安全な document lifecycle と current authorization を維持する
+
+- Type: RAG / security / lifecycle
+- Actor: document steward, RAG platform, user
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-028, TASK-029, AC-RAG-004, AC-RAG-005, AC-RAG-006
+
+### Description
+unknown source を隔離し、抽出範囲と warning を保持して idempotent stage/reconciliation と versioned structure-aware chunking で取り込み、security/lifecycle/provenance を chunk へ継承する。vector/memory/expansion/citation/cache の全経路で current authorization を prompt 前に強制し、trace を再現可能かつ最小化する。本番 stage/slice signal の drift を監視して safe action へ接続する。
+
+### Canonical product requirements
+- FR-068–FR-074
+- FR-082–FR-084, FR-088, FR-089, FR-092, FR-093
+
+### Related specifications
+- SPEC-RAG-004
+
+## REQ-EVAL-002: RAG 公開判定は工程・slice・security gate の論理積である
+
+- Type: evaluation / service quality / release
+- Actor: QA, RAG quality, Security, Business owner
+- Priority: critical
+- Confidence: inferred
+- Source: TASK-030, AC-RAG-006
+
+### Description
+ingest/retrieval/evidence/generation/citation/security/E2E を別々に測り、approved threshold profile の全条件を満たす場合だけ公開する。unauthorized/injection critical leak は 0、unknown threshold は pass ではない。同じ metric/profile を本番監視でも集約し、違反を safe action へ接続する。
+
+### Canonical product requirements
+- FR-075, FR-092, FR-093
+- SQ-005–SQ-015
+
+### Related specifications
+- SPEC-EVAL-001

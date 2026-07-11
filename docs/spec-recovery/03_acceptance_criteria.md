@@ -268,6 +268,88 @@
 - 対応 dataset row は skippedRows として扱われる
 - benchmark runner 全体は可能な限り結果 artifact を生成する
 
+## 2026-07 権限・共有・RAG acceptance criteria
+
+### AC-AUTH-003: current identity と resource state を worker で再評価する
+
+- Task: TASK-025, TASK-029
+- Type: security
+- Confidence: inferred
+- Source: FACT-027, FACT-030, FACT-036
+
+#### Given
+- queued run の submit 後に account、role または share が revoke された
+
+#### When
+- worker が開始または durable result を commit する
+
+#### Then
+- current identity/tenant/resource state で拒否し、submit 時 snapshot で続行しない
+
+### AC-SHARE-003: read-only user が共有資料を利用できる
+
+- Task: TASK-026, TASK-027
+- Type: sharing_ui
+- Confidence: inferred
+- Source: FACT-037, FACT-039
+
+#### Given
+- CHAT_USER に folder または direct document の read-only share がある
+
+#### When
+- Web の documents/chat を開く
+
+#### Then
+- 許可 summary と chat scope 選択を表示し、share/move/delete は表示・実行しない
+
+### AC-RAG-004: unauthorized semantic top hit を候補境界で除外する
+
+- Task: TASK-029
+- Type: retrieval_security
+- Confidence: inferred
+- Source: FACT-028, FACT-029, FACT-035
+
+#### Given
+- unauthorized chunk が semantic 上位で authorized chunk が後続にある
+
+#### When
+- top-K retrieval を行う
+
+#### Then
+- unauthorized hit を engine partition/filter で除外し、authorized top-K を post-filter で underfill させない
+
+### AC-RAG-005: retrieval 後の revoke を expansion/citation へ反映する
+
+- Task: TASK-029
+- Type: revocation_security
+- Confidence: inferred
+- Source: FACT-029, FACT-030
+
+#### Given
+- initial retrieval 後、context expansion 前に share revoke が commit された
+
+#### When
+- adjacent chunk、citation、prompt を構築する
+
+#### Then
+- current policy で再認可し、revoked text を追加・保持・trace しない
+
+### AC-RAG-006: 文書内命令を実行しない
+
+- Task: TASK-028, TASK-030
+- Type: injection_security
+- Confidence: inferred
+- Source: FACT-032, FACT-033
+
+#### Given
+- document 内に ACL 無視、secret 開示、tool 実行の命令がある
+
+#### When
+- ingest、search、generation、tool planning を行う
+
+#### Then
+- untrusted data として扱い、system/security policy を変更せず、critical leak 0 を gate にする
+
 ## Coverage gaps
 
 ## AC-AUTH-001: 許可された認証フローだけで利用開始できる

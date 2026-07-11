@@ -409,3 +409,70 @@ Benchmark run は timeout、progress、metrics、raw results download、artifact
 
 ### Verification
 - AC-DOCS-001
+
+## SPEC-AUTHZ-001: verified context と canonical authorization decision
+
+- Requirement: REQ-AUTHZ-002, FR-056–FR-060, FR-077–FR-080, FR-090, FR-091
+- Type: security/authorization
+- Target: Auth middleware / Identity directory / Folder and document permission / Workers
+- Confidence: inferred
+- Source: OP-049, EXP-049, FACT-027, FACT-035–FACT-037
+
+### Specification
+server-derived subject/account/tenant/role/group を immutable request context にし、account+feature+tenant+resource を fail closed で評価する。全 path は同じ versioned decision と canonical role catalog を使い、administrative principal の invariant/移管を保つ。queued/long-running worker は start/read/side-effect/commit 前に current state を再評価する。normal SYSTEM_ADMIN bypass は行わず、権限外 caller へは non-enumeration/authorized-only response contract を適用する。
+
+### Verification
+- AC-AUTH-003
+- E2E-AUTH-003
+
+## SPEC-SHARE-001: folder/document sharing と read-only discovery
+
+- Requirement: REQ-SHARE-002, FR-061–FR-067, FR-076, FR-081, FR-085–FR-087, FR-091
+- Type: functional/security/UI
+- Target: FolderPolicy / Document grant / Share API / Documents and Chat UI
+- Confidence: inferred
+- Source: OP-050, EXP-050, FACT-037, FACT-039
+
+### Specification
+folder/direct/inherited grant を deterministic に合成し、document/folder/resource-group の operation matrix を default deny で強制する。share mutation は same-tenant active principal、full+feature、expected version、administrative-principal guard、audit を必須にする。move は source/destination full と派生 state coherence、revoke/delete は deny-first。read-only user には safe summary/view/chat scope を提供し management を拒否する。
+
+### Verification
+- AC-SHARE-003
+- E2E-SHARE-003
+- E2E-SHARE-004
+
+## SPEC-RAG-004: safe ingest/retrieval/evidence lifecycle
+
+- Requirement: REQ-RAG-004, FR-068–FR-074, FR-082–FR-084, FR-088, FR-089, FR-092, FR-093
+- Type: RAG/security/lifecycle
+- Target: Source registry / Ingest / Index / Retrieval / Prompt / Trace
+- Confidence: inferred
+- Source: OP-051–OP-053, EXP-051–EXP-053, FACT-028–FACT-033, FACT-038
+
+### Specification
+source admission は unknown/unsafe/unapproved を quarantine し、protected metadata を caller に自己承認させない。抽出は source span/warning を保持し、staged ingest は idempotent retry/reconciliation と versioned structure-aware chunking を行う。派生 record は parent security/lifecycle/provenance を継承する。lexical/vector/memory/expansion/cache/citation は prompt 前に current authorization を強制し、document instruction を untrusted data として隔離する。index transition は current deny/delete と exactly-one-active invariant を維持し、trace の再現情報と field-level minimization を独立に満たす。benchmark subject と degradation も通常認可・安全制御を拡張せず、本番 signal の drift/critical event は versioned alert と safe action へ接続する。
+
+### Verification
+- AC-RAG-004
+- AC-RAG-005
+- AC-RAG-006
+- E2E-RAG-003
+- E2E-RAG-004
+- E2E-RAG-005
+- E2E-RAG-006
+
+## SPEC-EVAL-001: stage/slice/security promotion gate
+
+- Requirement: REQ-EVAL-002, FR-075, FR-092, FR-093, SQ-005–SQ-015
+- Type: evaluation/release
+- Target: Benchmark datasets / Runner / Reports / CI promotion
+- Confidence: inferred
+- Source: OP-054, EXP-054, FACT-033, FACT-034
+
+### Specification
+versioned dataset と threshold profile で extraction/chunk/admission/manifest、authorized retrieval/false denial、evidence、faithfulness、citation、answerability、business outcome、authorization、injection、latency、reliability、cost を stage と重要 slice 別に測る。全条件の論理積だけを pass とし、unauthorized/injection critical leak は 0、未承認 threshold は pass にしない。expected field を product runtime から隔離し、production behavior の benchmark は production と同じ prompt/profile/path を使う。本番でも同じ metric identity を version/slice 別に集約し、missing signal を green にせず safe response へ接続する。
+
+### Verification
+- AC-RAG-006
+- E2E-RAG-004
+- SQ-005–SQ-015 の専用 AC

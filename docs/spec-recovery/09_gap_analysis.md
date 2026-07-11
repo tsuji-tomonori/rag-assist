@@ -1,5 +1,105 @@
 # Gap Analysis
 
+## GAP-018: authoritative account と tenant が runtime authorization に接続されていない
+
+- Category: missing_security_boundary
+- Related: FR-056, FR-058, FR-060, SQ-005, SQ-006, OQ-RD-001
+- Severity: critical
+- Confidence: confirmed
+- Evidence: `AppUser` に tenant がなく、suspend/delete は admin ledger のみ、worker は submit 時 group snapshot を再利用する。
+- Impact: stale session/queued work と multi-tenant 越境を fail closed にできない。
+- Recommended action: identity source、session revoke、server-derived tenant、worker start/commit reauthorization を P0 で実装する。詳細は `16_current_state_gap_analysis_202607.md` の GAP-RD-001/002/011。
+
+## GAP-019: folder/document authorization の source of truth が二重である
+
+- Category: conflicting_implementation
+- Related: FR-057, FR-059, FR-061, FR-063, FR-076, FR-077, FR-079, FR-081, OQ-RD-002, OQ-RD-007
+- Severity: critical
+- Confidence: conflict
+- Evidence: ADR-0004 は FolderPermissionService を単一源泉とするが、list/search-scope/memory 等は legacy helper、SYSTEM_ADMIN bypass も残る。
+- Impact: 同じ actor/resource でも list/evidence/memory/operation の結果が異なる。
+- Recommended action: versioned canonical decision service、principal namespace 分離、operation matrix と path parity test。詳細 GAP-RD-003/004/005。
+
+## GAP-020: read-only sharing の利用導線と安全な share mutation が不足する
+
+- Category: missing_product_behavior
+- Related: FR-062, FR-064, FR-065, FR-066, FR-076, FR-077, FR-085–FR-087, FR-091, OQ-RD-003, OQ-RD-011, OQ-RD-012
+- Severity: high
+- Confidence: confirmed
+- Evidence: Web documents view は manage permission のみ、principal existence/same-tenant check と folder audit がなく、reader response は ACL/metadata を過剰返却し得る。
+- Impact: 共有済み利用者が資料を使えない一方、誤共有・情報過剰露出の危険がある。
+- Recommended action: directory-backed principal、version/audit/administrative-principal guard、reader summary、read-only workspace、move state reconciliation。詳細 GAP-RD-006–008/023。
+
+## GAP-021: semantic/memory/context expansion は evidence 前認可を保証しない
+
+- Category: missing_security_case
+- Related: FR-066, FR-070, SQ-005, SQ-006
+- Severity: critical
+- Confidence: confirmed
+- Evidence: semantic/memory は finite query 後の post-filter、context expansion は current permission/lifecycle/quality を再確認しない。
+- Impact: underfill/side channel と revoke race による unauthorized prompt context。
+- Recommended action: authorization partition/filter、bounded refill、per-chunk reauthorization。詳細 GAP-RD-009/010。
+
+## GAP-022: ingest admission は unknown quality と hostile content を fail closed にしない
+
+- Category: missing_security_and_quality_gate
+- Related: FR-066, FR-068, FR-069, FR-070, FR-071, FR-072, FR-075, FR-082, FR-083, FR-092
+- Severity: critical
+- Confidence: conflict
+- Evidence: quality missing は良好値へ補完し、caller metadata self-assertion、classification/usage/quality の current use-purpose recheck、content safety/scoped-idempotency/fencing/compensation/injection quarantine が不足する。
+- Impact: unreviewed/poisoned/partial document や利用許可を剥奪した派生物が normal RAG/prompt/evaluation に公開され得る。
+- Recommended action: protected metadata、default unverified、derived immutable references、use-purpose recheck、fenced state machine/quarantine/reconciliation/attack corpus。詳細 GAP-RD-012–014。
+
+## GAP-023: claim-citation support と trace redaction が fail closed でない
+
+- Category: conflicting_quality_and_privacy
+- Related: FR-073, FR-074, FR-075, FR-088, SQ-007, SQ-010, SQ-011
+- Severity: high
+- Confidence: conflict
+- Evidence: missing citation/support IDs を自動補完し、trace は raw question/history/evidence/answer を持つが実 sanitize と宣言が一致しない。
+- Impact: unsupported claim に引用があるように見え、debug artifact が機微情報集積になる。
+- Recommended action: explicit claim mapping、field-level save/download allowlists。詳細 GAP-RD-015/018。
+
+## GAP-024: delete/reindex/rollback の lifecycle invariant がない
+
+- Category: missing_reliability_and_security
+- Related: FR-066, FR-072, SQ-006
+- Severity: critical
+- Confidence: confirmed
+- Evidence: delete/cutover/rollback は storage を順次更新し、deny-first、exactly-one-active、compensation/reconciliation を保証しない。
+- Impact: partial deletion、active version 0/複数、old ACL/deleted content 復活。
+- Recommended action: tombstone/outbox/version manifest/fault-injection tests。詳細 GAP-RD-016/017。
+
+## GAP-025: signup/auth edge/role catalog と accepted docs が衝突する
+
+- Category: documentation_implementation_conflict
+- Related: FR-025, FR-056, FR-057, FR-079, FR-080, FR-086, OQ-RD-008
+- Severity: high
+- Confidence: conflict
+- Evidence: self-signup、CloudFront/PKCE/CORS、backend/infra role catalog、last admin guard が docs と current infra/Web で不一致。
+- Impact: environment ごとに認証・public boundary・付与可能 role が変わる。
+- Recommended action: stakeholder decision 後に requirement/ADR/infra/Web/tests を同時同期する。詳細 GAP-RD-020–022。
+
+## GAP-026: product policy hardcode と evaluation profile の境界が曖昧である
+
+- Category: evaluation_leakage_and_production_equivalence
+- Related: FR-075, SQ-007, GAP-RD-019
+- Severity: high
+- Confidence: confirmed
+- Evidence: versioned evaluator/RAG profile は accepted benchmark contract だが、product runtime の answer policy に特定 domain の分類語・regex が固定され、document metadata で自動選択される。expected fields を評価側だけに閉じる taint/source scan と production-equivalence gate がない。
+- Impact: 正当な評価 profile 自体を禁止する誤修正、または dataset 固有分岐による見かけの改善のどちらも起き得る。
+- Recommended action: evaluator profile は評価層、product policy は承認済み versioned asset として分離し、expected field が runtime decision に流入しないことと本番同一経路を自動検証する。
+
+## GAP-027: 本番 RAG 品質・安全 monitoring の control loop がない
+
+- Category: missing_production_quality_security_monitoring
+- Related: FR-074, FR-075, FR-089, FR-093, SQ-005–SQ-015, GAP-RD-024
+- Severity: high
+- Confidence: confirmed
+- Evidence: per-run trace と release-time benchmark はあるが、本番 stage/slice 別 aggregation、drift/critical threshold、alert、quarantine/rollback/限定回答 action の versioned contract がない。
+- Impact: corpus、model、policy、dependency の変更後に生じる品質劣化、権限漏えい、injection regression を公開後に検出・封じ込められない。
+- Recommended action: production signal aggregation、approved monitoring profile、on-call alert、safe action runbook を接続し、synthetic drift/critical event と rollback drill で検証する。
+
 ## GAP-013: 章別 canonical 仕様と既存 REQ の対応表が未整備
 
 - Category: traceability_gap
@@ -160,7 +260,7 @@
 - Impact: 未分類のまま残る report はない。
 - Recommended action: 解決済み。
 
-## GAP-013: レポートごとの source ID は付与済み
+## GAP-017: レポートごとの source ID は付与済み
 
 - Category: resolved_traceability_gap
 - Related: SRC-023, FACT-016, TASK-024

@@ -2,7 +2,7 @@
 
 - 要件ID: `FR-041`
 - 種別: `REQ_FUNCTIONAL`
-- 状態: Draft
+- 状態: Superseded（2026-07-11、`CHG-003`）
 - 優先度: A
 
 ## 分類（L0-L3）
@@ -20,6 +20,8 @@
 
 - FR-041: 利用者は永続的な資料グループとチャット内一時添付を区別し、指定したスコープの資料だけを質問回答の根拠として利用できること。
 
+> この要求は、作成・共有・検索 scope・一時添付という複数の決定を含むため、新規実装の正規要求としては使用しない。置換先は下表の個別要求。互換 trace のため ID と履歴を保持する。
+
 ## 受け入れ条件（この要件専用）
 
 - AC-FR041-001: 管理権限を持つ利用者は、資料グループを作成し、資料をグループへ保存できること。
@@ -28,6 +30,18 @@
 - AC-FR041-004: 利用者がチャットへ一時添付した資料は、同一チャットの検索スコープだけに含まれること。
 - AC-FR041-005: 一時添付資料は、通常の文書一覧と永続資料グループ一覧に表示されないこと。
 - AC-FR041-006: グループ共有または一時添付の検索スコープは、既存の文書 ACL と role-level permission を迂回しないこと。
+
+## 受け入れ条件 disposition
+
+| Legacy AC | 置換先 | 扱い |
+| --- | --- | --- |
+| `AC-FR041-001` | `FR-001`, `FR-057`, `FR-060`, `FR-068`, `FR-076`, `FR-081` | group create と document register の操作別認可・admission へ分割 |
+| `AC-FR041-002` | `FR-062`, `FR-076`, `FR-081`, `FR-085`, `FR-086`, `OQ-RD-011` | userId/email は正規 subject ID へ統合。tenant/org/guest/public audience は未承認のため自動継承しない |
+| `AC-FR041-003` | `FR-061`, `FR-063`, `FR-064`, `FR-070` | 実効権限、read-only 利用、evidence 前認可へ分割 |
+| `AC-FR041-004`, `AC-FR041-005` | `FR-067` | owner/chat/expiry と永続一覧非混入へ統合 |
+| `AC-FR041-006` | `FR-057`, `FR-070` | feature/resource permission と全 retrieval path の hard boundary へ分割 |
+
+2026-07 baseline では旧 AC を新規実装の合否判定へ直接使わず、上表の置換先を正とする。
 
 ## 要件の源泉・背景
 
@@ -57,15 +71,18 @@
 | 安定性 | Medium |
 | 変更履歴 | 2026-05-08 初版 |
 
-## 妥当性確認
+## 妥当性確認（旧版履歴と現行 disposition）
+
+次表の `旧版` は初版作成時の履歴であり、2026-07 baseline の合格判定ではない。現行判定では、利用ニーズは維持する一方、複数の独立判断を一要求へ束ねた原子性違反のため Superseded とする。
 
 | 観点 | 確認結果 | メモ |
 |---|---|---|
-| 必要性 | OK | 用途別資料と一時添付の検索境界を明示するために必要 |
-| 十分性 | OK | 作成、保存、共有、指定検索、一時添付、認可境界を含む |
-| 理解容易性 | OK | 永続グループと一時スコープを分けて記述している |
-| 一貫性 | OK | 既存の文書登録、QA、Hybrid retrieval、認可要求と整合する |
-| 標準・契約適合 | OK | 1 要件 1 ファイルと要件内受け入れ条件を満たす |
+| 必要性 | 旧版 OK / 現行 confirmed | 用途別資料と一時添付の検索境界というニーズは置換先へ維持する |
+| 十分性 | 旧版 OK / 現行 superseded | 作成、共有、検索、一時添付、認可を含むこと自体が複合化の原因で、AC 単位に置換した |
+| 理解容易性 | 旧版 OK / 現行 partial | 永続グループと一時スコープは読めるが、独立した actor/trigger/decision が一文に混在する |
+| 一貫性 | 旧版 OK / 現行 conflict | tenant/org audience と現行 principal/tenant 方針は `OQ-RD-011` 未決定のためそのまま採用しない |
+| 標準・契約適合 | 旧版 OK / 現行 NG | 1 ファイルではあるが、SWEBOK-lite の 1 要件 1 検証可能決定を満たさない |
+| 原子性 | 現行 NG | create、share、search scope、temporary attachment、authorization boundary を分割する必要がある |
 | 実現可能性 | OK | metadata scope、group ledger、searchScope、route permission で実装可能 |
 | 検証可能性 | OK | API schema、route policy、search scope、UI hook/component test へ落とせる |
 | ニーズ適合 | OK | 社内規定フォルダ指定とチャット内一時添付の利用形態に合う |

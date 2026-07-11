@@ -121,3 +121,35 @@
 | EXP-046 | E2E-DBG-002 | セキュリティ | trace artifact は redaction 済みで admin only | Debug artifact | policy/API test | SPEC-DBG-002 |
 | EXP-047 | E2E-BENCH-002 | 評価/運用 | dataset adapter、metrics、skipped rows、artifact が一貫する | Benchmark | benchmark run | SPEC-BENCH-002 |
 | EXP-048 | E2E-DOCS-001 | トレーサビリティ | product behavior 関連レポートだけが task/AC/REQ/SPEC へ trace される | Spec recovery | docs validation | SPEC-DOCS-001 |
+
+## Group: 2026-07 authorization/share/RAG redefinition
+
+### Operations
+
+| OP ID | E2E | 画面 | 操作種別 | 操作対象 | 操作内容 | 入力データ | 備考 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| OP-049 | E2E-AUTH-003 | Admin/worker | suspend/recheck | user/run | suspend 後に session と queued run を再認可する | userId/runId | current state |
+| OP-050 | E2E-SHARE-003 | Documents | discover/select | shared folder/document | read-only 資料を発見し chat scope に選ぶ | principal/resource | safe summary |
+| OP-051 | E2E-RAG-003 | 非UI | retrieve | vector/memory | unauthorized top hit を含む top-K を検索する | query/auth context | hard filter |
+| OP-052 | E2E-RAG-003 | 非UI | revoke/expand | evidence | retrieval 後に revoke し expansion/citation を行う | policy version | current recheck |
+| OP-053 | E2E-RAG-004 | 非UI | attack | poisoned document | indirect injection を通常/async 経路で評価する | attack corpus | critical gate |
+| OP-054 | E2E-RAG-004 | Benchmark | promote | RAG candidate | stage/slice/security SLO を判定する | threshold profile | unknown is not pass |
+| OP-055 | E2E-TENANT-001 | 非UI | cross-tenant access | CRUD/search/cache/worker | 同一 resource ID で tenant partition を検証する | verified/request tenant | request cannot expand |
+| OP-056 | E2E-SHARE-004 | 非UI | revoke/race | queued chat/evidence | 実行途中に共有解除して派生経路を確認する | current policy version | deny-first |
+| OP-057 | E2E-RAG-005 | 非UI | cutover/rollback | staged/current/old index | 各 stage に障害を注入して rollback する | manifest/index versions | current deny |
+| OP-058 | E2E-RAG-006 | 非UI | conflict answer | current/old/equal-authority evidence | 基準日時と authority を変えて回答判断する | evidence versions | no silent merge |
+
+### Expectations
+
+| EXP ID | E2E | 種別 | 期待値 | 対象 | 検証方法 | 備考 |
+| --- | --- | --- | --- | --- | --- | --- |
+| EXP-049 | E2E-AUTH-003 | 認証・認可 | suspended account/session と stale queued worker は全て拒否される | Auth/Worker | integration | FR-058, FR-090 |
+| EXP-050 | E2E-SHARE-003 | 共有 UX | read-only は discover/view/select 可、management 不可 | Web/API | browser E2E | FR-064 |
+| EXP-051 | E2E-RAG-003 | 非漏えい | unauthorized evidence は candidate/prompt/cache/trace で 0 | Retrieval | security suite | SQ-005 |
+| EXP-052 | E2E-RAG-003 | 失効 | revoke 後の expansion/citation/cache は current deny を反映 | RAG lifecycle | race test | FR-066, FR-070 |
+| EXP-053 | E2E-RAG-004 | Injection | 文書命令で policy/secret/tool scope が変わらない | RAG security | attack corpus | FR-071 |
+| EXP-054 | E2E-RAG-004 | 公開判定 | critical leak または unknown threshold を合格扱いにしない | Promotion gate | benchmark | FR-075 |
+| EXP-055 | E2E-TENANT-001 | tenant 分離 | 他 tenant の存在・本文・件数・timing を全経路で露出しない | API/store/RAG | two-tenant negative suite | FR-060, SQ-005 |
+| EXP-056 | E2E-SHARE-004 | 失効 race | revoke 後の prompt/citation/cache/worker commit に本文を残さない | RAG lifecycle | race test | FR-066, FR-070, FR-090 |
+| EXP-057 | E2E-RAG-005 | index lifecycle | rollback 後も exactly-one-active と current deny/delete を維持する | Index/manifest | fault injection | FR-072, SQ-006 |
+| EXP-058 | E2E-RAG-006 | evidence conflict | 版・施行期間・同格矛盾を保持し限定回答/保留へ渡す | Evidence/answer | versioned conflict corpus | FR-073, SQ-010–SQ-012 |
