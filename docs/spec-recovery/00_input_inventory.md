@@ -8,12 +8,12 @@ commit、PR 作成、merge/rebase、競合解消、CI コメント投稿、task 
 
 | ID | 種別 | 日付 | 入力ソース | 信頼度 | 採用理由 |
 |---|---|---|---|---|---|
-| SRC-001 | product docs | 2026-05-01 | `memorag-bedrock-mvp/docs/REQUIREMENTS.md` | high | FR/NFR/SQ/TC の索引、ASR 対応、受け入れ観点の正規入口。 |
-| SRC-002 | architecture docs | 2026-05-01 | `memorag-bedrock-mvp/docs/ARCHITECTURE.md` | high | RAG runtime、認証認可、評価、運用の ASR と構成方針。 |
-| SRC-003 | API design docs | 2026-05-01 | `memorag-bedrock-mvp/docs/3_設計_DES/41_API_API/DES_API_001.md` | high | API surface、request/response、認可、SSE、検索経路。 |
-| SRC-004 | API examples | 2026-05-01 | `memorag-bedrock-mvp/docs/API_EXAMPLES.md` | high | 文書登録、非同期 chat run、検索、debug、削除の利用例。 |
-| SRC-005 | static policy test | current | `memorag-bedrock-mvp/apps/api/src/security/access-control-policy.test.ts` | high | route-level permission と所有者/seed 例外の静的保証。 |
-| SRC-006 | code | current | `memorag-bedrock-mvp/apps/api/src/authorization.ts` | high | role と permission の現行定義。 |
+| SRC-001 | product docs | 2026-05-01 | `docs/REQUIREMENTS.md` | high | FR/NFR/SQ/TC の索引、ASR 対応、受け入れ観点の正規入口。 |
+| SRC-002 | architecture docs | 2026-05-01 | `docs/ARCHITECTURE.md` | high | RAG runtime、認証認可、評価、運用の ASR と構成方針。 |
+| SRC-003 | API design docs | 2026-05-01 | `docs/3_設計_DES/41_API_API/DES_API_001.md` | high | API surface、request/response、認可、SSE、検索経路。 |
+| SRC-004 | API examples | 2026-05-01 | `docs/API_EXAMPLES.md` | high | 文書登録、非同期 chat run、検索、debug、削除の利用例。 |
+| SRC-005 | static policy test | current | `apps/api/src/security/access-control-policy.test.ts` | high | route-level permission と所有者/seed 例外の静的保証。 |
+| SRC-006 | code | current | `apps/api/src/authorization.ts` | high | role と permission の現行定義。 |
 | SRC-007 | work report | 2026-05-01 | `reports/working/20260501-0253-authn-authz-cognito-rbac-abac.md` | medium | Cognito JWT、RBAC、ログイン画面、ABAC 未実装の経緯。 |
 | SRC-008 | work report | 2026-05-02 | `reports/working/20260502-1208-search-api-hybrid-retriever.md` | medium | `POST /search`、BM25/vector/RRF、metadata/ACL filter。 |
 | SRC-009 | work report | 2026-05-02 | `reports/working/20260502-1136-sufficient-context-gate.md` | medium | sufficient context gate、回答不能制御、trace。 |
@@ -29,7 +29,7 @@ commit、PR 作成、merge/rebase、競合解消、CI コメント投稿、task 
 | SRC-019 | bug report | 2026-05-06 | `reports/bugs/20260506-2303-role-assignment-access-denied.md` | high | role 付与と Cognito group 同期、BENCHMARK_OPERATOR 分離。 |
 | SRC-020 | bug report | 2026-05-07 | `reports/bugs/20260507-2029-mmrag-textract-timeout.md` | medium | PDF OCR timeout、benchmark corpus skip、AWS rerun 未検証。 |
 | SRC-021 | bug report | 2026-05-08 | `reports/bugs/20260508-0902-cdk-benchmark-context-required.md` | high | CDK benchmark source context 省略時 failure と default/test。 |
-| SRC-022 | tests | current | `memorag-bedrock-mvp/apps/web/src/app/AppRoutes.tsx`, `usePermissions.ts`, feature hooks/tests | medium | UI view と permission-gated navigation の現行推定根拠。 |
+| SRC-022 | tests | current | `apps/web/src/app/AppRoutes.tsx`, `usePermissions.ts`, feature hooks/tests | medium | UI view と permission-gated navigation の現行推定根拠。 |
 | SRC-023 | report sweep | 2026-05-08 | `reports/working/*.md` 384 件、`reports/bugs/*.md` 7 件 | medium | 全量ファイル分類。commit/PR/merge only を除外し、仕様化対象カテゴリを確認。 |
 | SRC-024 | report category | 2026-05-08 | auth/RBAC/security 系 29 件 | medium | Cognito、login、password、role、permission、OIDC、CORS、self signup、admin permission 境界。 |
 | SRC-025 | report category | 2026-05-08 | chat/RAG answer/question 系 21 件 | medium | 非同期 chat、回答可能性 gate、回答支持検証、質問エスカレーション、担当者 UI。 |
@@ -41,6 +41,18 @@ commit、PR 作成、merge/rebase、競合解消、CI コメント投稿、task 
 | SRC-031 | report category | 2026-05-08 | API/infra/ops 系 11 件 | medium | API contract、OpenAPI/route split、APIGW request validation、cost/tag/anomaly、CodeBuild/CDK。 |
 | SRC-032 | report category | 2026-05-08 | docs/requirements/process 系 32 件 | low | docs/requirements/skill/process 改善。product behavior の根拠になるものだけ仕様へ反映。 |
 | SRC-033 | report reading inventory | 2026-05-08 | `docs/spec-recovery/12_report_reading_inventory.md` | medium | `reports/working/*.md` と `reports/bugs/*.md` の本文確認済み inventory。個別 `RPT-*` ID と分類、対象外理由、関連 task を記録。 |
+
+## 2026-07 再定義ソース
+
+| ID | 種別 | 日付 | 入力ソース | 信頼度 | 採用理由 |
+| --- | --- | --- | --- | --- | --- |
+| SRC-034 | reference PDF | 2026-07 | `.workspace/rag-engineering-guide.pdf` | high | ACL、document lifecycle、retrieval、generation、evaluation、security/operations を PDF pp.59–208 で確認。 |
+| SRC-035 | reference PDF | 2025-09 | `.workspace/swebok-v4.pdf` v4.0a | high | atomic/testable requirement、attributes、validation、trace を PDF pp.44–62 で確認。 |
+| SRC-036 | code audit | 2026-07-11 | `apps/api/src`, `apps/web/src`, `infra` at `e8ae57f6126aca802d85042a1697d07c836b3603` | high | identity/tenant/folder/document/retrieval/ingest/prompt/evaluation/infra の current state を確認。 |
+| SRC-037 | requirements/architecture audit | 2026-07-11 | `docs/1_要求_REQ`, `docs/2_アーキテクチャ_ARC`, `docs/3_設計_DES`, chapter spec | high | FR-025/041/052、NFR-011、ADR-0004/0005 と実装の conflict を確認。 |
+| SRC-038 | focused report audit | 2026-07-11 | authorization/share/scope/delete 関連 reports | high | direct grant、move、fail-closed、Cognito sync、未実施 E2E を本文確認。 |
+
+成果物は `13_requirements_redefinition_202607.md` から `17_traceability_matrix_202607.csv` に記録した。
 
 ## 作業レポート本文精読結果
 
@@ -62,4 +74,4 @@ commit、PR 作成、merge/rebase、競合解消、CI コメント投稿、task 
 ## ソース範囲外または未読代表外
 
 - `reports/working/` と `reports/bugs/` は本文確認済み。個別 `RPT-*` ID と分類結果は `12_report_reading_inventory.md` に記録した。
-- `memorag-bedrock-mvp/docs/1_要求_REQ/` 配下の個別 FR/NFR ファイルは索引と設計との整合確認に留め、全ファイルの受け入れ条件までは精査していない。
+- `docs/1_要求_REQ/` 配下の個別 FR/NFR ファイルは索引と設計との整合確認に留め、全ファイルの受け入れ条件までは精査していない。

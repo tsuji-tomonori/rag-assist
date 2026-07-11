@@ -22,15 +22,19 @@
 
 | 要求 | ASR | ADR | HLD/DLD/API/Data | 受入・評価 |
 | --- | --- | --- | --- | --- |
+| `FR-056`–`FR-060`, `FR-077`–`FR-080`, `FR-090`, `FR-091` | `ASR-SEC-001` | `ARC_ADR_004`, `ARC_ADR_005` | target design pending; gap: `docs/spec-recovery/16_current_state_gap_analysis_202607.md` | `AC-AUTH-003`, `E2E-TENANT-001`, `SQ-005`, `SQ-006` |
+| `FR-061`–`FR-067`, `FR-076`, `FR-081`, `FR-085`–`FR-087` | `ASR-SEC-001`, `ASR-RETRIEVAL-001` | `ARC_ADR_004` | target matrix: `docs/spec-recovery/14_authorization_sharing_matrix_202607.md` | `AC-SHARE-003`, `E2E-SHARE-004`, `SQ-005`, `SQ-006`, `SQ-009` |
+| `FR-068`–`FR-075`, `FR-082`–`FR-084`, `FR-087`–`FR-089`, `FR-092`, `FR-093`, `SQ-005`–`SQ-015` | `ASR-SEC-001`, `ASR-RETRIEVAL-001`, `ASR-EVAL-001`, `ASR-OPER-001` | ADR review pending | target lifecycle: `docs/spec-recovery/15_rag_lifecycle_matrix_202607.md` | `AC-RAG-004`–`AC-RAG-006`, `E2E-RAG-003`–`E2E-RAG-006` |
+| `CHG-003` | なし | なし | `REQUIREMENTS_BASELINE_202607.md`, `docs/spec-recovery/13_requirements_redefinition_202607.md`, `docs/spec-recovery/17_traceability_matrix_202607.csv` | `REQ_CHANGE_003` |
 | `FR-001`, `FR-002`, `FR-038` | `ASR-OPER-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DATA_001`, `DES_API_001` | 各要求の受け入れ条件 |
-| `FR-041` | `ASR-SEC-001`, `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_DATA_001`, `DES_API_001` | `REQ_FUNCTIONAL_041` |
+| `FR-041`（Superseded compatibility） | `ASR-SEC-001`, `ASR-RETRIEVAL-001` | `ARC_ADR_001` | AC disposition の置換先を正とする | `REQ_FUNCTIONAL_041` |
 | `FR-003`, `FR-004`, `FR-005`, `FR-029` | `ASR-TRUST-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001`, `DES_API_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
 | `FR-014`, `FR-015` | `ASR-GUARD-001` | `ARC_ADR_001` | `DES_DLD_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
 | `FR-016`, `FR-017`, `FR-018`, `FR-026` | `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_001`, `DES_DLD_002`, `DES_DATA_001` | `SQ-001` |
 | `FR-019`, `FR-020`, `FR-039`, `FR-040`, `SQ-002` | `ASR-EVAL-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DATA_001`, `DES_API_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
 | `NFR-010` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001` |
-| `FR-021`, `FR-031`, `FR-032`, `FR-033`, `FR-034`, `FR-035`, `FR-036`, `FR-037`, `FR-024`, `NFR-011`, `NFR-013` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_007`, `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001` |
-| `FR-025`, `NFR-011` | `ASR-SEC-002` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_004`, `DES_API_001` | `REQ_FUNCTIONAL_025` |
+| `FR-021`, `FR-031`, `FR-032`, `FR-033`, `FR-034`, `FR-035`, `FR-036`, `FR-037`, `FR-024`, `NFR-013` | `ASR-SEC-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_007`, `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001`; `NFR-011` は Superseded compatibility trace |
+| `FR-025` | `ASR-SEC-002` | `ARC_ADR_001` | `DES_HLD_001`, `DES_DLD_004`, `DES_API_001` | `REQ_FUNCTIONAL_025`; legacy trace は `NFR-011` disposition |
 | `FR-023`, `NFR-012` | `ASR-SEC-001`, `ASR-RETRIEVAL-001` | `ARC_ADR_001` | `DES_DLD_002`, `DES_DLD_003`, `DES_API_001`, `DES_DATA_001` | `REQ_ACCEPTANCE_001`, `SQ-001` |
 | `FR-042`, `FR-043`, `FR-044`, `SQ-004` | `ASR-TRUST-001` | `ARC_ADR_001` | `DES_HLD_001`, `DES_API_001` | 各要求の受け入れ条件 |
 | `FR-045`, `SQ-003` | `ASR-RETRIEVAL-001`, `ASR-GUARD-001` | `ARC_ADR_001` | `DES_DLD_001`, `DES_DLD_002`, `DES_DATA_001` | `SQ-001`, 各要求の受け入れ条件 |
@@ -51,14 +55,14 @@ L0-L3 の機能分類は `docs/1_要求_REQ/11_製品要求_PRODUCT/01_機能要
 
 | L1 主カテゴリ | 主分類の要求 | 主な L2 主機能群 | 関連カテゴリを持つ要求 |
 | --- | --- | --- | --- |
-| 1. 文書・知識ベース管理 | `FR-001`, `FR-002`, `FR-007`, `FR-008`, `FR-020`, `FR-038`, `FR-041` | 文書登録、QA利用可能化、文書削除、多抽象度メモリ生成、非同期文書取り込み、スコープ付き資料グループ管理 | `FR-024` は管理導線として関連する。`FR-020` は検索補助メモリとして検索品質制御にも関連する。`FR-038` は benchmark seed の前処理にも関連する。`FR-041` はチャットQA、検索品質制御、認可境界にも関連する。 |
+| 1. 文書・知識ベース管理 | `FR-001`, `FR-002`, `FR-007`, `FR-008`, `FR-020`, `FR-038`, `FR-041`（Superseded）, `FR-061`–`FR-067`, `FR-076`, `FR-081`, `FR-085`, `FR-086` | 文書登録、QA利用可能化、削除、取り込み、権限付き共有・ライフサイクル | 新共有要求は認証・認可と RAG lifecycle に関連する。 |
 | 2. チャットQA・根拠提示・回答不能制御 | `FR-003`, `FR-004`, `FR-005`, `FR-006`, `FR-009`, `FR-029`, `FR-042`, `FR-043` | 質問入力、根拠提示、回答不能表示、回答挙動調整、統合チャットUI、確認質問・曖昧性解消、チャットUI操作性 | `FR-005` はガードレールにも関連する。`FR-029` は検索候補、回答前ガード、benchmark 指標にも関連する。`FR-043` は機微情報非表示にも関連する。 |
-| 3. RAG検索品質制御 | `FR-016`, `FR-017`, `FR-018`, `FR-023`, `FR-026`, `FR-045` | 検索計画・行動追跡、Hybrid retrieval、検索結果統合、検索結果評価、検索alias管理、retrieval adoption gate | `FR-020` は検索補助メモリとして関連する。`FR-023` は監査にも関連する。`FR-029` は検索候補から確認質問 option を作るため関連する。`FR-045` は回答検証と benchmark 診断にも関連する。 |
+| 3. RAG検索品質制御 | `FR-016`, `FR-017`, `FR-018`, `FR-023`, `FR-026`, `FR-045`, `FR-068`–`FR-075`, `FR-082`–`FR-084`, `FR-087`–`FR-089`, `FR-092`, `FR-093` | 検索、evidence、security、lifecycle、chunking、evaluation gate、本番 monitoring | 新 RAG 要求は文書管理、認可、評価、運用にも関連する。 |
 | 4. 回答検証・ガードレール | `FR-014`, `FR-015` | 回答前ガード、回答後検証 | `FR-005` は回答不能制御として関連する。`FR-029` は回答生成前の分岐として関連する。 |
 | 5. 会話履歴・お気に入り | `FR-022`, `FR-028`, `FR-030`, `FR-044` | 会話履歴管理、お気に入り管理、会話履歴検索、履歴表示順 | なし。 |
 | 6. 問い合わせ・人手対応 | `FR-021`, `FR-031`, `FR-032`, `FR-033`, `FR-034`, `FR-035`, `FR-036`, `FR-037` | 問い合わせ管理 | `FR-024` は管理導線として関連する。`FR-034` と `FR-035` は会話履歴・お気に入りにも関連する。`FR-031`, `FR-032`, `FR-033`, `FR-036`, `FR-037` は認証・認可・管理・監査にも関連する。`FR-037` は文書・知識ベース管理、RAG検索品質制御、評価・debug・benchmark にも関連する。 |
 | 7. 評価・debug・benchmark | `FR-010`, `FR-011`, `FR-012`, `FR-013`, `FR-019`, `FR-039`, `FR-040`, `FR-046`, `FR-047`, `FR-048` | 実行履歴確認、実行結果ダウンロード、UI非依存評価、外部連携仕様、benchmark 指標、benchmark corpus seed、benchmark corpus 隔離、debug trace artifact、dataset adapter、benchmark 実行追跡 | `FR-024` は管理導線として関連する。`FR-027` は利用状況・コスト監査として関連する。`FR-029` は確認質問指標として関連する。`FR-039` は文書取り込みにも関連する。`FR-040` は検索品質制御と認可境界にも関連する。`FR-046` は認可境界にも関連する。 |
-| 8. 認証・認可・管理・監査 | `FR-024`, `FR-025`, `FR-027` | 通常利用者セルフサインアップ、Phase 1 RAG運用管理、Phase 2 管理・監査 | `FR-023` は alias audit として関連する。 |
+| 8. 認証・認可・管理・監査 | `FR-024`, `FR-025`, `FR-027`, `FR-052`（Superseded）, `FR-056`–`FR-060`, `FR-077`–`FR-080`, `FR-090`, `FR-091` | identity/account/tenant/resource/owner/role 認可、長時間処理の再認可、権限外資源の存在最小化、管理・監査 | 新認可要求は全 resource/RAG/worker 経路に関連する。 |
 
 ### 分類更新時の追加確認
 

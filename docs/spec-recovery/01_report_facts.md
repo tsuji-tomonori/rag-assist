@@ -1,5 +1,24 @@
 # Report Facts
 
+## 2026-07 権限・共有・RAG 再定義 facts
+
+| ID | Source | 抽出事実 | 対象 | 信頼度 |
+| --- | --- | --- | --- | --- |
+| FACT-027 | SRC-034 | 認可強制条件は verified identity から構築し client tenant/role を信頼しない。 | Auth/Tenant | confirmed |
+| FACT-028 | SRC-034 | ACL/tenant/delete/expiry は relevance でなく候補集合の hard boundary である。 | Retrieval | confirmed |
+| FACT-029 | SRC-034 | 権限外本文は prompt/cache/trace 前に除外する。 | RAG security | confirmed |
+| FACT-030 | SRC-034 | revoke/account-group change/delete は old index/cache/session/memory/queued work へ反映する。 | Lifecycle | confirmed |
+| FACT-031 | SRC-034 | 文書の ACL/lifecycle/provenance は全派生 chunk へ継承し、欠損は deny する。 | Ingest | confirmed |
+| FACT-032 | SRC-034 | 文書/tool output は instruction ではなく untrusted data である。 | Injection | confirmed |
+| FACT-033 | SRC-034 | RAG は ingestion/retrieval/post-retrieval/generation/citation/E2E を別々に評価する。 | Evaluation | confirmed |
+| FACT-034 | SRC-035 | 個別要求は atomic/testable で属性、AC、validation、bidirectional trace を持つ。 | Requirements | confirmed |
+| FACT-035 | SRC-036 | AppUser に tenant がなく semantic/memory retrieval は resource post-filter を含む。 | Auth/Retrieval | confirmed |
+| FACT-036 | SRC-036, SRC-038 | suspend/delete は admin ledger だけを更新し Cognito/session を無効化しない。 | Account lifecycle | confirmed |
+| FACT-037 | SRC-036, SRC-037 | FolderPermissionService と legacy helper が併存し ADR の single source と衝突する。 | Folder auth | conflict |
+| FACT-038 | SRC-036 | quality metadata 欠損を approved/verified/current/high/eligible に補完する。 | Ingest quality | confirmed |
+| FACT-039 | SRC-036 | CHAT_USER は read を持つが Web documents view は manage permission を要求する。 | Sharing UI | confirmed |
+| FACT-040 | SRC-036, SRC-037 | FR-025/Web self-signup と CDK disabled/post-confirmation 未接続が衝突する。 | Identity | conflict |
+
 | ID | Source | 原文/根拠要約 | 抽出事実 | 対象 | 信頼度 | 備考 |
 |---|---|---|---|---|---|---|
 | FACT-001 | SRC-001 | MemoRAG MVP は登録済み文書を対象に質問し、根拠付き回答または回答不能理由を返す。 | システムの中核目的は、登録文書に基づく自然言語 QA と根拠提示/回答不能制御である。 | RAG QA | confirmed | REQ/ASR の上位根拠。 |

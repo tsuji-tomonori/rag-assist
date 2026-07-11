@@ -48,16 +48,19 @@ L0. rag-assist / MemoRAG MVP 機能要件
 │  ├─ 03_文書削除/
 │  ├─ 05_多抽象度メモリ生成/
 │  ├─ 06_非同期文書取り込み/
-│  └─ 07_スコープ付き資料グループ管理/
+│  ├─ 07_スコープ付き資料グループ管理/
+│  └─ 08_権限付き共有・ライフサイクル/
 ├─ 02_チャットQA・根拠提示・回答不能制御/
 │  └─ 06_確認質問・曖昧性解消/
 │  └─ 07_チャットUI操作性/
 ├─ 03_RAG検索品質制御/
+│  └─ 07_安全なRAGライフサイクル/
 ├─ 04_回答検証・ガードレール/
 ├─ 05_会話履歴・お気に入り/
 ├─ 06_問い合わせ・人手対応/
 ├─ 07_評価・debug・benchmark/
 └─ 08_認証・認可・管理・監査/
+   └─ 07_信頼済み認証文脈と資源認可/
 ```
 
 ## L1-L3 主分類マップ
@@ -72,7 +75,18 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 1.3 文書削除 | [`FR-008`](01_文書・知識ベース管理/03_文書削除/REQ_FUNCTIONAL_008.md) | 文書削除時に紐づく管理情報も削除する。 |
 | 1.5 多抽象度メモリ生成 | [`FR-020`](01_文書・知識ベース管理/05_多抽象度メモリ生成/REQ_FUNCTIONAL_020.md) | raw chunk とは別に section / document / concept memory を生成する。 |
 | 1.6 非同期文書取り込み | [`FR-038`](01_文書・知識ベース管理/06_非同期文書取り込み/REQ_FUNCTIONAL_038.md) | 長時間の文書取り込みを非同期 run として追跡する。 |
-| 1.7 スコープ付き資料グループ管理 | [`FR-041`](01_文書・知識ベース管理/07_スコープ付き資料グループ管理/REQ_FUNCTIONAL_041.md) | 永続資料グループとチャット内一時添付を区別して質問回答に使う。 |
+| 1.7 スコープ付き資料グループ管理 | [`FR-041`](01_文書・知識ベース管理/07_スコープ付き資料グループ管理/REQ_FUNCTIONAL_041.md) | Superseded。互換 trace のため保持し、AC disposition table の置換先を正とする。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-061`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_061.md) | フォルダー実効権限と継承を一意に算出する。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-062`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_062.md) | 共有変更へ feature/full と active same-tenant principal 検証を要求する。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-063`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_063.md) | 文書 direct/folder/deny の実効権限を一つの規則で合成する。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-064`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_064.md) | read-only 共有資源を発見・閲覧・chat scope 選択できる。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-065`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_065.md) | 文書移動へ移動元と移動先の full を要求する。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-066`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_066.md) | revoke/delete を deny-first で全派生経路へ伝播する。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-067`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_067.md) | 一時添付を owner/tenant/chat/expiry に限定する。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-076`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_076.md) | 文書・folder・resource group の resource type × operation 認可行列を強制する。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-081`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_081.md) | resource group membership の tenant、principal、cycle integrity を守る。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-085`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_085.md) | 共有 policy を expected version で atomic に更新する。 |
+| 1.8 権限付き共有・ライフサイクル | [`FR-086`](01_文書・知識ベース管理/08_権限付き共有・ライフサイクル/REQ_FUNCTIONAL_086.md) | security mutation の actor/before/after/reason/result/version を監査する。 |
 
 ### 2. チャットQA・根拠提示・回答不能制御
 
@@ -98,6 +112,22 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 3.4 検索結果評価 | [`FR-016`](03_RAG検索品質制御/04_検索結果評価/REQ_FUNCTIONAL_016.md) | 検索結果品質を評価し、追加検索または拒否判断を選ぶ。 |
 | 3.5 検索alias管理 | [`FR-023`](03_RAG検索品質制御/05_検索alias管理/REQ_FUNCTIONAL_023.md) | tenant / source / docType / ACL scope を持つ versioned alias artifact を管理する。 |
 | 3.6 retrieval adoption gate | [`FR-045`](03_RAG検索品質制御/06_retrieval_adoption_gate/REQ_FUNCTIONAL_045.md) | 採用基準を満たす検索根拠だけを回答生成へ渡す。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-068`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_068.md) | source provenance/owner/ACL/quality を検査し、公開可だけを normal RAG に使う。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-069`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_069.md) | 文書の security/lifecycle/provenance を全派生 record へ継承する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-070`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_070.md) | 全 retrieval path で evidence 前認可を強制する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-071`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_071.md) | 取得文書を非信頼データとして prompt injection を防ぐ。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-072`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_072.md) | versioned index の切替・rollback 中も current deny/delete を維持する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-073`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_073.md) | 正本性・時点・矛盾・source span を evidence set に保持する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-074`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_074.md) | versioned decision を相関できる再現可能 trace を残す。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-075`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_075.md) | stage/slice/security gate の論理積で公開可否を判定する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-082`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_082.md) | 抽出範囲・span・warning を保持し silent truncation を禁止する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-083`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_083.md) | stage checkpoint と idempotency/reconciliation で取り込みを復旧する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-084`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_084.md) | benchmark simulated subject を runner と isolated scope に限定する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-087`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_087.md) | move 時の manifest/chunk/vector/index/path/grant を整合させる。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-088`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_088.md) | trace を field-level allowlist/redaction で最小化する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-089`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_089.md) | 縮退時も認可・分類・grounding・citation guard を維持する。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-092`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_092.md) | versioned policy で構造・budget・overlap・locator を保つ決定的 chunking を行う。 |
+| 3.7 安全な RAG ライフサイクル | [`FR-093`](03_RAG検索品質制御/07_安全なRAGライフサイクル/REQ_FUNCTIONAL_093.md) | 本番 RAG の品質・安全 drift を監視し、通知と安全な対応を行う。 |
 
 ### 4. 回答検証・ガードレール
 
@@ -155,7 +185,18 @@ L0. rag-assist / MemoRAG MVP 機能要件
 | 8.3 Phase 2 管理・監査 | [`FR-027`](08_認証・認可・管理・監査/03_Phase_2_管理・監査/REQ_FUNCTIONAL_027.md) | ユーザー、ロール、管理操作履歴、利用状況、コスト監査を扱う。 |
 | 8.4 非同期エージェント実行 | [`FR-050`](08_認証・認可・管理・監査/04_非同期エージェント実行/REQ_FUNCTIONAL_050.md) | provider を選択して非同期エージェント実行と writeback 承認を管理する。 |
 | 8.5 個人設定 | [`FR-051`](08_認証・認可・管理・監査/05_個人設定/REQ_FUNCTIONAL_051.md) | 利用者本人の既定モデル、回答範囲、通知、表示設定を保存する。 |
-| 8.6 3層認可モデル | [`FR-052`](08_認証・認可・管理・監査/06_3層認可モデル/REQ_FUNCTIONAL_052.md) | Account status、Feature permission、Resource permission で操作可否を判定する。 |
+| 8.6 3層認可モデル | [`FR-052`](08_認証・認可・管理・監査/06_3層認可モデル/REQ_FUNCTIONAL_052.md) | Superseded。互換 trace のため保持し、FR-056–FR-060 を正とする。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-056`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_056.md) | 認可文脈を verified identity/server data から構築する。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-057`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_057.md) | account/feature/tenant/resource の論理積を fail closed で評価する。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-058`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_058.md) | suspend/delete を identity/session/worker に反映する。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-059`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_059.md) | 資源認可を単一 contract にし break-glass を通常経路から分離する。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-060`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_060.md) | tenant を全 storage/search/session/cache/trace/worker の強制 partition にする。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-077`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_077.md) | active same-tenant administrative principal の `full` を通常 policy で剥奪させない。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-078`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_078.md) | 管理主体の削除・離脱前に全資源を後継へ移管する。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-079`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_079.md) | identity/API/Web/infra/worker で canonical role catalog version を共有する。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-080`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_080.md) | role 付与・剥奪へ same-tenant/self/last-admin guard と authoritative role set 確定を要求する。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-090`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_090.md) | queued/long-running 処理を開始・保護対象読取・副作用・commit 前に再認可する。 |
+| 8.7 信頼済み認証文脈と資源認可 | [`FR-091`](08_認証・認可・管理・監査/07_信頼済み認証文脈と資源認可/REQ_FUNCTIONAL_091.md) | 権限外 caller への response を非列挙・最小開示 contract に制限する。 |
 
 ## 関連カテゴリ
 
