@@ -627,11 +627,21 @@ export class MemoRagMvpStack extends Stack {
       event: events.RuleTargetInput.fromObject({ windowMinutes: 5 })
     }))
 
-    const ragAlertTopic = ragAlertTopicArn
-      ? sns.Topic.fromTopicArn(this, "RagQualityAlertTopic", ragAlertTopicArn)
+    const createdRagAlertTopic = ragAlertTopicArn
+      ? undefined
       : new sns.Topic(this, "RagQualityAlertTopic", {
           displayName: "MemoRAG production quality and safety alerts"
         })
+    const ragAlertTopic = ragAlertTopicArn
+      ? sns.Topic.fromTopicArn(this, "RagQualityAlertTopic", ragAlertTopicArn)
+      : createdRagAlertTopic as sns.Topic
+    createdRagAlertTopic?.addToResourcePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.DENY,
+      principals: [new iam.AnyPrincipal()],
+      actions: ["sns:Publish"],
+      resources: [createdRagAlertTopic.topicArn],
+      conditions: { Bool: { "aws:SecureTransport": "false" } }
+    }))
     if (!ragAlertTopicArn && ragAlertEmail) ragAlertTopic.addSubscription(new subscriptions.EmailSubscription(ragAlertEmail))
     ragQualityMonitorFn.addEnvironment("RAG_ALERT_TOPIC_ARN", ragAlertTopic.topicArn)
     ragAlertTopic.grantPublish(ragQualityMonitorFn)

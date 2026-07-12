@@ -9527,6 +9527,37 @@
         ]
       }
     },
+    "RagQualityAlertTopicPolicy15888B09": {
+      "Type": "AWS::SNS::TopicPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sns:Publish",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              },
+              "Effect": "Deny",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Resource": {
+                "Ref": "RagQualityAlertTopic3AFB5A32"
+              },
+              "Sid": "0"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Topics": [
+          {
+            "Ref": "RagQualityAlertTopic3AFB5A32"
+          }
+        ]
+      }
+    },
     "RagQualityControlLoopFailureAlarmD9AA7805": {
       "Type": "AWS::CloudWatch::Alarm",
       "Properties": {

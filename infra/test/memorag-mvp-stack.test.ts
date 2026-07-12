@@ -496,6 +496,16 @@ test("production monitoring requires an explicit quality and safety owner notifi
     Protocol: "email",
     Endpoint: "rag-on-call@example.com"
   })
+  template.hasResourceProperties("AWS::SNS::TopicPolicy", {
+    PolicyDocument: Match.objectLike({
+      Statement: Match.arrayWith([Match.objectLike({
+        Action: "sns:Publish",
+        Effect: "Deny",
+        Principal: { AWS: "*" },
+        Condition: { Bool: { "aws:SecureTransport": "false" } }
+      })])
+    })
+  })
 })
 
 test("stackProvidesDefaultSupportAssigneeGroupIdToApiFunctions", () => {
