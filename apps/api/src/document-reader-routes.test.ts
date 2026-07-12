@@ -35,17 +35,17 @@ test("FR-064/091 reader summaries, authorized-only pagination, extracted downloa
     const outsiderDestination = await postJson<{ groupId: string }>(outsiderManager, "/document-groups", { name: "Outsider Destination" })
 
     const visibleText1 = "Reader-downloadable extracted policy text one."
-    const visibleDocument1 = await postJson<{ documentId: string }>(setupOwner, "/documents", {
+    const visibleDocument1 = await uploadApprovedDocument(setupOwner, {
       fileName: "visible-one.md",
       text: visibleText1,
       scope: { scopeType: "group", groupIds: [visibleGroup1.groupId] }
     })
-    const visibleDocument2 = await postJson<{ documentId: string }>(setupOwner, "/documents", {
+    const visibleDocument2 = await uploadApprovedDocument(setupOwner, {
       fileName: "visible-two.md",
       text: "Reader-downloadable extracted policy text two.",
       scope: { scopeType: "group", groupIds: [visibleGroup2.groupId] }
     })
-    const hiddenDocument = await postJson<{ documentId: string }>(setupOwner, "/documents", {
+    const hiddenDocument = await uploadApprovedDocument(setupOwner, {
       fileName: "hidden-owner-policy.md",
       text: "This body must never be disclosed to outsider-1.",
       scope: { scopeType: "group", groupIds: [hiddenGroup.groupId] }
@@ -163,6 +163,47 @@ async function seedFolderReaderPolicy(dataDir: string, folderId: string, ownerUs
     createdAt: now,
     updatedAt: now
   })
+}
+
+async function uploadApprovedDocument(
+  server: LocalServer,
+  body: { fileName: string; text: string; scope: { scopeType: "group"; groupIds: string[] } }
+): Promise<{ documentId: string; fileName: string }> {
+  const uploaded = await postJson<{ documentId: string; fileName: string }>(server, "/documents", body)
+  const governance = await getJson<{ version: string }>(server, `/documents/${encodeURIComponent(uploaded.documentId)}/source-governance`)
+  const approved = await postJson<{ record: { activeDocumentId?: string } }>(
+    server,
+    `/documents/${encodeURIComponent(uploaded.documentId)}/source-governance/approve`,
+    sourceApproval(governance.version)
+  )
+  assert.ok(approved.record.activeDocumentId)
+  return { documentId: approved.record.activeDocumentId, fileName: uploaded.fileName }
+}
+
+function sourceApproval(expectedVersion: string) {
+  return {
+    expectedVersion,
+    reason: "integration fixture source review",
+    classification: { level: "internal", policyVersion: "classification-test-v1" },
+    usagePolicy: {
+      allowedPurposes: ["normal_rag"],
+      externalModelAllowed: false,
+      loggingAllowed: false,
+      evaluationAllowed: false,
+      policyVersion: "usage-test-v1"
+    },
+    qualityProfile: {
+      knowledgeQualityStatus: "approved",
+      verificationStatus: "verified",
+      freshnessStatus: "current",
+      supersessionStatus: "current",
+      extractionQualityStatus: "high",
+      ragEligibility: "eligible",
+      flags: []
+    },
+    qualityPolicyVersion: "quality-test-v1",
+    inspection: { status: "passed", profileVersion: "inspection-test-v1" }
+  }
 }
 
 function assertReaderGroupSummary(group: Record<string, unknown>) {

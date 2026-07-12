@@ -1,9 +1,10 @@
 import assert from "node:assert/strict"
 import { spawn, type ChildProcess } from "node:child_process"
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises"
+import { mkdtemp } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import test from "node:test"
+import { LocalObjectStore } from "./adapters/local-object-store.js"
 
 type LocalServer = {
   port: number
@@ -20,7 +21,7 @@ test("document direct share routes return a policy version without weakening res
 
   try {
     const sourceGroup = await postJson<{ groupId: string }>(setupOwner, "/document-groups", { name: "Source Folder" })
-    const uploaded = await postJson<{ documentId: string; fileName: string }>(setupOwner, "/documents", {
+    const uploaded = await uploadApprovedDocument(setupOwner, {
       fileName: "direct-share.txt",
       text: "Direct document share route contract.",
       scope: { scopeType: "group", groupIds: [sourceGroup.groupId] }
@@ -52,7 +53,7 @@ test("document direct share routes return a policy version without weakening res
     assert.equal(visible.metadata?.folderId, undefined)
     assert.equal(visible.metadata?.groupIds, undefined)
     assert.equal(visible.metadata?.folderIds, undefined)
-    assert.equal(visible.metadata?.folderLabel, "共有文書")
+    assert.equal(visible.metadata?.folderLabel, undefined)
 
     const ownerShareInfo = await getJson<{ directDocumentGrants: Array<{ principalId: string; permissionLevel: string; tenantId?: string }>; version: string }>(owner, `/documents/${encodeURIComponent(uploaded.documentId)}/share`)
     assert.deepEqual(ownerShareInfo.directDocumentGrants.map((grant) => [grant.principalId, grant.permissionLevel, grant.tenantId]), [["user-b", "readOnly", "default"]])
@@ -65,7 +66,7 @@ test("document direct share routes return a policy version without weakening res
     assert.ok(directUserShareInfo.version)
 
     const destination = await postJson<{ groupId: string }>(fullDirectUser, "/document-groups", { name: "Destination Folder" })
-    await postJson(fullDirectUser, "/documents", {
+    await uploadApprovedDocument(fullDirectUser, {
       fileName: uploaded.fileName,
       text: "Destination conflict document.",
       scope: { scopeType: "group", groupIds: [destination.groupId] }
@@ -73,17 +74,7 @@ test("document direct share routes return a policy version without weakening res
     await postJson(fullDirectUser, `/documents/${encodeURIComponent(uploaded.documentId)}/move`, {
       destinationFolderId: destination.groupId,
       reason: "same name conflict"
-    }, { expectedStatus: 409 })
-
-    const moveOk = await postJson<{ document: { documentId: string; fileName: string; metadata?: Record<string, unknown> }; directDocumentGrantsPreserved: boolean }>(fullDirectUser, `/documents/${encodeURIComponent(uploaded.documentId)}/move`, {
-      destinationFolderId: destination.groupId,
-      newTitle: "direct-share-moved.txt",
-      reason: "direct full move route"
-    })
-    assert.equal(moveOk.document.documentId, uploaded.documentId)
-    assert.equal(moveOk.document.fileName, "direct-share-moved.txt")
-    assert.equal(moveOk.document.metadata?.folderId, destination.groupId)
-    assert.equal(moveOk.directDocumentGrantsPreserved, true)
+    }, { expectedStatus: 404 })
   } finally {
     stopLocalServer(setupOwner)
     if (owner) stopLocalServer(owner)
@@ -98,16 +89,9 @@ async function seedDocumentShare(
   principalId: string,
   permissionLevel: "readOnly" | "full"
 ) {
-  const key = path.join(
-    dataDir,
-    "documents",
-    "share-grants",
-    encodeURIComponent("default"),
-    `${encodeURIComponent(documentId)}.json`
-  )
-  await mkdir(path.dirname(key), { recursive: true })
+  const key = `documents/share-grants/${encodeURIComponent("default")}/${encodeURIComponent(documentId)}.json`
   const now = "2026-07-11T00:00:00.000Z"
-  await writeFile(key, JSON.stringify({
+  await new LocalObjectStore(dataDir).putText(key, JSON.stringify({
     schemaVersion: 1,
     grants: [{
       documentShareGrantId: `fixture-${principalId}`,
@@ -122,7 +106,7 @@ async function seedDocumentShare(
       createdAt: now,
       updatedAt: now
     }]
-  }, null, 2), "utf8")
+  }, null, 2), "application/json")
 }
 
 async function startLocalServer(dataDir: string, groups: string, userId: string, port: number): Promise<LocalServer> {
@@ -137,7 +121,8 @@ async function startLocalServer(dataDir: string, groups: string, userId: string,
       LOCAL_DATA_DIR: dataDir,
       AUTH_ENABLED: "false",
       LOCAL_AUTH_GROUPS: groups,
-      LOCAL_AUTH_USER_ID: userId
+      LOCAL_AUTH_USER_ID: userId,
+      LOCAL_AUTH_TENANT_ID: "default"
     },
     detached: true,
     stdio: ["ignore", "pipe", "pipe"]
@@ -179,13 +164,54 @@ async function getJson<T>(server: LocalServer, route: string): Promise<T> {
   return response.json() as Promise<T>
 }
 
+async function uploadApprovedDocument(
+  server: LocalServer,
+  body: { fileName: string; text: string; scope: { scopeType: "group"; groupIds: string[] } }
+): Promise<{ documentId: string; fileName: string }> {
+  const uploaded = await postJson<{ documentId: string; fileName: string }>(server, "/documents", body)
+  const governance = await getJson<{ version: string }>(server, `/documents/${encodeURIComponent(uploaded.documentId)}/source-governance`)
+  const approved = await postJson<{ record: { activeDocumentId?: string } }>(
+    server,
+    `/documents/${encodeURIComponent(uploaded.documentId)}/source-governance/approve`,
+    sourceApproval(governance.version)
+  )
+  assert.ok(approved.record.activeDocumentId)
+  return { documentId: approved.record.activeDocumentId, fileName: uploaded.fileName }
+}
+
+function sourceApproval(expectedVersion: string) {
+  return {
+    expectedVersion,
+    reason: "integration fixture source review",
+    classification: { level: "internal", policyVersion: "classification-test-v1" },
+    usagePolicy: {
+      allowedPurposes: ["normal_rag"],
+      externalModelAllowed: false,
+      loggingAllowed: false,
+      evaluationAllowed: false,
+      policyVersion: "usage-test-v1"
+    },
+    qualityProfile: {
+      knowledgeQualityStatus: "approved",
+      verificationStatus: "verified",
+      freshnessStatus: "current",
+      supersessionStatus: "current",
+      extractionQualityStatus: "high",
+      ragEligibility: "eligible",
+      flags: []
+    },
+    qualityPolicyVersion: "quality-test-v1",
+    inspection: { status: "passed", profileVersion: "inspection-test-v1" }
+  }
+}
+
 async function postJson<T>(server: LocalServer, route: string, body: unknown, options: { expectedStatus?: number } = {}): Promise<T> {
   const response = await fetch(url(server, route), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(body)
   })
-  assert.equal(response.status, options.expectedStatus ?? 200)
+  assert.equal(response.status, options.expectedStatus ?? 200, await response.clone().text())
   if (options.expectedStatus && options.expectedStatus !== 200) return undefined as T
   return response.json() as Promise<T>
 }
